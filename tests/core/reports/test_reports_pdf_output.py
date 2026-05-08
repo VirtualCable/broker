@@ -27,15 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Generate the four optimised stats reports as PDF (and the CSV variants
-when they exist) and dump them on the user's Desktop. Useful to eyeball
-the output of the reports after the Window+Lag / bucketization
-optimisations.
-
-Files written under ~/Desktop/uds-reports/:
-    UsageByPool.pdf / UsageByPool.csv
-    UsageSummaryByUsersPool.pdf / UsageSummaryByUsersPool.csv
-    PoolPerformanceReport.pdf / PoolPerformanceReport.csv
-    StatsReportLogin.pdf / StatsReportLogin.csv
+when they exist). By default the binaries are written to a pytest
+``tmp_path``-style directory inside the test's working dir. To dump the
+files in a stable, human-eyeballable location set
+``UDS_REPORT_DUMP_DIR=/path`` (or the legacy ``=1`` to use
+``~/Desktop/uds-reports/``) before running pytest.
 
 Each test seeds a small but visually meaningful dataset (a few hundred
 events spread across ~3 months) so the resulting graphs and tables are
@@ -43,8 +39,10 @@ non-empty.
 """
 import datetime
 import logging
+import os
 import pathlib
 import random
+import tempfile
 
 import pytest
 
@@ -75,8 +73,16 @@ pytestmark = [
     pytest.mark.filterwarnings('ignore::DeprecationWarning'),
 ]
 
-# Output directory under the user's Desktop. Created if missing.
-OUTPUT_DIR = pathlib.Path.home() / 'Desktop' / 'uds-reports'
+def _resolve_output_dir() -> pathlib.Path:
+    env = os.environ.get('UDS_REPORT_DUMP_DIR')
+    if env in (None, '', '0'):
+        return pathlib.Path(tempfile.gettempdir()) / 'uds-reports'
+    if env == '1':
+        return pathlib.Path.home() / 'Desktop' / 'uds-reports'
+    return pathlib.Path(env)
+
+
+OUTPUT_DIR = _resolve_output_dir()
 
 # Date span for the seeded data.
 RANGE_START_DATE = datetime.date(2023, 11, 1)

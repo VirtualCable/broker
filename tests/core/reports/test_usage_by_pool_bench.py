@@ -44,10 +44,14 @@ Each class also asserts a basic correctness invariant (e.g. paired
 sessions == inserted pairs, total accesses == inserted ACCESS rows)
 so the bench doubles as a regression guard for the optimisations.
 """
+import collections.abc
 import datetime
 import logging
+import os
 import time
 import typing
+
+import pytest
 
 from uds import models
 from uds.core import types
@@ -61,6 +65,13 @@ from ...utils.test import UDSTransactionTestCase
 
 
 logger = logging.getLogger(__name__)
+
+# Benchmarks are slow (5000-row bulk inserts × 4 reports × REPEATS+warmup).
+# Off by default; opt in with UDS_BENCH=1.
+pytestmark = pytest.mark.skipif(
+    os.environ.get('UDS_BENCH', '') in ('', '0'),
+    reason='Benchmarks disabled. Set UDS_BENCH=1 to enable.',
+)
 
 # Event volumes to benchmark.
 SIZES: tuple[int, ...] = (50, 100, 1000, 5000)
@@ -147,7 +158,7 @@ def _build_auth_login_events(n_events: int) -> list[models.StatsEvents]:
 # --------------------------------------------------------------------------- #
 # Bench helpers                                                               #
 # --------------------------------------------------------------------------- #
-def _time_callable(fn: typing.Callable[[], typing.Any]) -> float:
+def _time_callable(fn: collections.abc.Callable[[], typing.Any]) -> float:
     """Warmup once, then time REPEATS runs of fn(). Return average seconds."""
     fn()  # warmup
     timings: list[float] = []
@@ -214,7 +225,7 @@ class UsageByPoolBenchmark(UDSTransactionTestCase):
             )
             data, _ = self._make_report().get_data()
             self.assertEqual(len(data), size)
-            for row in typing.cast(list[dict[str, typing.Any]], data):
+            for row in data:
                 self.assertEqual(row['time'], 5)
                 self.assertEqual(row['origin'], '10.0.0.1')
 
@@ -259,6 +270,7 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
     def test_aggregation_semantics(self) -> None:
         """Per-user aggregation: 1 session, hours = 5/3600 by construction."""
         size = 100
+        models.StatsEvents.objects.all().delete()
         models.StatsEvents.objects.bulk_create(
             _build_login_logout_pairs(self.pool.id, size),
             batch_size=1000,
@@ -266,7 +278,7 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
         data, name = self._make_report().get_data()
         self.assertEqual(name, self.pool.name)
         self.assertEqual(len(data), size)
-        for row in typing.cast(list[dict[str, typing.Any]], data):
+        for row in data:
             self.assertEqual(row['sessions'], 1)
             self.assertEqual(row['hours'], '{:.2f}'.format(5 / 3600))
 
