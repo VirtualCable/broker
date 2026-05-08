@@ -35,6 +35,8 @@ import io
 import logging
 import typing
 
+from django.db.models import F, Window
+from django.db.models.functions import Lag
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -70,53 +72,65 @@ class UsageByPool(StatsReport):
         self.pool.set_choices(vals)
 
     def get_data(self) -> tuple[list[dict[str, typing.Any]], str]:
-        # Generate the sampling intervals and get dataUsers from db
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
         logger.debug(self.pool.value)
         if '0-0-0-0' in self.pool.value:
-            pools = ServicePool.objects.all()
+            qs = ServicePool.objects.all()
         else:
-            pools = ServicePool.objects.filter(uuid__in=self.pool.value)
+            qs = ServicePool.objects.filter(uuid__in=self.pool.value)
+
+        # (uuid, name) per pool id. values_list avoids instantiating ServicePool
+        # rows just to read 2 fields.
+        pool_map: dict[int, tuple[str, str]] = {
+            p_id: (p_uuid, p_name)
+            for p_id, p_uuid, p_name in qs.values_list('id', 'uuid', 'name')
+        }
+
+        login = stats.events.types.stats.EventType.LOGIN
+        logout = stats.events.types.stats.EventType.LOGOUT
+
+        # LOGIN/LOGOUT pairing pushed to DB via window LAG over (owner_id, fld4) ordered by stamp.
+        # Preserves "last login wins" semantics: if prev event of same (pool, user) is LOGIN -> pair.
+        # Portable across MySQL 8+, PostgreSQL, SQLite 3.25+, Oracle (ANSI window functions).
+        partition = [F('owner_id'), F('fld4')]
+        items = (
+            StatsManager.manager()
+            .enumerate_events(
+                stats.events.types.stats.EventOwnerType.SERVICEPOOL,
+                (login, logout),
+                owner_id=list(pool_map.keys()),
+                since=start,
+                to=end,
+            )
+            .annotate(
+                prev_type=Window(Lag('event_type'), partition_by=partition, order_by=[F('stamp')]),
+                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by=[F('stamp')]),
+            )
+            .values('owner_id', 'event_type', 'stamp', 'fld2', 'fld4', 'prev_type', 'prev_stamp')
+        )
+
         data: list[dict[str, typing.Any]] = []
-        for pool in pools:
-            items = (
-                StatsManager.manager()
-                .enumerate_events(
-                    stats.events.types.stats.EventOwnerType.SERVICEPOOL,
-                    (stats.events.types.stats.EventType.LOGIN, stats.events.types.stats.EventType.LOGOUT),
-                    owner_id=pool.id,
-                    since=start,
-                    to=end,
-                )
-                .order_by('stamp')
+        for i in items:
+            if i['event_type'] != logout or i['prev_type'] != login:
+                continue
+            pool_uuid, pool_name = pool_map[i['owner_id']]
+            login_stamp = i['prev_stamp']
+            fld2 = i['fld2']
+            # ipv6 handled inline (was StatsEvents.src_ip property; we use .values()).
+            origin = fld2 if '[' in fld2 else fld2.split(':')[0]
+            data.append(
+                {
+                    'name': i['fld4'],
+                    'origin': origin,
+                    'date': timezone.make_aware(datetime.datetime.fromtimestamp(login_stamp)),
+                    'time': i['stamp'] - login_stamp,
+                    'pool': pool_uuid,
+                    'pool_name': pool_name,
+                }
             )
 
-            logins: dict[str, typing.Any] = {}
-            for i in items:
-                # if '\\' in i.fld1:
-                #    continue
-                full_username = i.full_username
-                if i.event_type == stats.events.types.stats.EventType.LOGIN:
-                    logins[full_username] = i.stamp
-                else:
-                    if full_username in logins:
-                        stamp = typing.cast(int, logins[full_username])
-                        del logins[full_username]
-                        total = i.stamp - stamp
-                        data.append(
-                            {
-                                'name': full_username,
-                                # ipv6 handled by src_ip property
-                                'origin': i.src_ip,
-                                'date': timezone.make_aware(datetime.datetime.fromtimestamp(stamp)),
-                                'time': total,
-                                'pool': pool.uuid,
-                                'pool_name': pool.name,
-                            }
-                        )
-
-        return data, ','.join([p.name for p in pools])
+        return data, ','.join(name for _uuid, name in pool_map.values())
 
     def generate(self) -> bytes:
         items, poolname = self.get_data()
