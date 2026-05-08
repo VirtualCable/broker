@@ -38,7 +38,6 @@ import typing
 import collections.abc
 
 import django.template.defaultfilters as filters
-from django.db.models import Count
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -107,49 +106,60 @@ class PoolPerformanceReport(StatsReport):
         else:
             x_label_format = 'SHORT_DATETIME_FORMAT'
 
-        sampling_intervals: list[tuple[int, int]] = []
         sampling_interval_seconds = (end - start) / sampling_points
+        # Precompute per-bucket (start, end, midpoint) once.
+        bucket_bounds: list[tuple[int, int, int]] = []
         for i in range(sampling_points):
-            sampling_intervals.append(
-                (int(start + i * sampling_interval_seconds), int(start + (i + 1) * sampling_interval_seconds))
-            )
-
-        # Store dataUsers for all pools
-        pools_data: list[dict[str, typing.Any]] = []
+            b_start = int(start + i * sampling_interval_seconds)
+            b_end = int(start + (i + 1) * sampling_interval_seconds)
+            bucket_bounds.append((b_start, b_end, (b_start + b_end) // 2))
 
         fld = StatsManager.manager().get_event_field_for('username')
 
+        pools_data: list[dict[str, typing.Any]] = []
         report_data: list[dict[str, typing.Any]] = []
+
         for p in self.list_pools():
+            # Single query per pool covering full range; bucketize in Python.
+            # Was: sampling_points queries per pool (up to 128) × len() rerun.
+            rows = (
+                StatsManager.manager()
+                .enumerate_events(
+                    events.types.stats.EventOwnerType.SERVICEPOOL,
+                    events.types.stats.EventType.ACCESS,
+                    since=start,
+                    to=end,
+                    owner_id=p[0],
+                )
+                .values('stamp', fld)
+            )
+
+            distinct_users: list[set[str]] = [set() for _ in range(sampling_points)]
+            accesses_count: list[int] = [0] * sampling_points
+            last_idx = sampling_points - 1
+            for row in rows:
+                idx = int((row['stamp'] - start) // sampling_interval_seconds)
+                if idx < 0:
+                    continue
+                if idx > last_idx:
+                    idx = last_idx
+                distinct_users[idx].add(row[fld])
+                accesses_count[idx] += 1
+
             data_users: list[tuple[int, int]] = []
             data_accesses: list[tuple[int, int]] = []
-            for interval in sampling_intervals:
-                key = (interval[0] + interval[1]) // 2
-                q = (
-                    StatsManager.manager()
-                    .enumerate_events(
-                        events.types.stats.EventOwnerType.SERVICEPOOL,
-                        events.types.stats.EventType.ACCESS,
-                        since=interval[0],
-                        to=interval[1],
-                        owner_id=p[0],
-                    )
-                    .values(fld)
-                    .annotate(cnt=Count(fld))
-                )
-                accesses = 0
-                for v in q:
-                    accesses += v['cnt']
-
-                data_users.append((key, len(q)))  # Store number of users
+            for i, (b_start, b_end, key) in enumerate(bucket_bounds):
+                users_n = len(distinct_users[i])
+                accesses = accesses_count[i]
+                data_users.append((key, users_n))
                 data_accesses.append((key, accesses))
                 report_data.append(
                     {
                         'name': p[1],
-                        'date': utils.timestamp_as_str(interval[0], 'SHORT_DATETIME_FORMAT')
+                        'date': utils.timestamp_as_str(b_start, 'SHORT_DATETIME_FORMAT')
                         + ' - '
-                        + utils.timestamp_as_str(interval[1], 'SHORT_DATETIME_FORMAT'),
-                        'users': len(q),
+                        + utils.timestamp_as_str(b_end, 'SHORT_DATETIME_FORMAT'),
+                        'users': users_n,
                         'accesses': accesses,
                     }
                 )

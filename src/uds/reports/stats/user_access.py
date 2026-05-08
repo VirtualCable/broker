@@ -91,33 +91,44 @@ class StatsReportLogin(StatsReport):
         else:
             x_label_format = 'SHORT_DATETIME_FORMAT'
 
-        sampling_intervals: list[tuple[int, int]] = []
         sampling_interval_seconds = (end - start) / sampling_points
+        bucket_bounds: list[tuple[int, int, int]] = []
         for i in range(sampling_points):
-            sampling_intervals.append(
-                (int(start + i * sampling_interval_seconds), int(start + (i + 1) * sampling_interval_seconds))
+            b_start = int(start + i * sampling_interval_seconds)
+            b_end = int(start + (i + 1) * sampling_interval_seconds)
+            bucket_bounds.append((b_start, b_end, (b_start + b_end) // 2))
+
+        # Single query covering the full range; bucketize in Python.
+        # Was: sampling_points queries (up to 128) doing COUNT(*) each.
+        counts = [0] * sampling_points
+        last_idx = sampling_points - 1
+        for row in (
+            StatsManager.manager()
+            .enumerate_events(
+                stats.events.types.stats.EventOwnerType.AUTHENTICATOR,
+                stats.events.types.stats.EventType.LOGIN,
+                since=start,
+                to=end,
             )
+            .values('stamp')
+        ):
+            idx = int((row['stamp'] - start) // sampling_interval_seconds)
+            if idx < 0:
+                continue
+            if idx > last_idx:
+                idx = last_idx
+            counts[idx] += 1
 
         data: list[tuple[int, int]] = []
         report_data: list[dict[str, typing.Any]] = []
-        for interval in sampling_intervals:
-            key = (interval[0] + interval[1]) // 2
-            val = (
-                StatsManager.manager()
-                .enumerate_events(
-                    stats.events.types.stats.EventOwnerType.AUTHENTICATOR,
-                    stats.events.types.stats.EventType.LOGIN,
-                    since=interval[0],
-                    to=interval[1],
-                )
-                .count()
-            )
+        for i, (b_start, b_end, key) in enumerate(bucket_bounds):
+            val = counts[i]
             data.append((key, val))
             report_data.append(
                 {
-                    'date': utils.timestamp_as_str(interval[0], 'SHORT_DATETIME_FORMAT')
+                    'date': utils.timestamp_as_str(b_start, 'SHORT_DATETIME_FORMAT')
                     + ' - '
-                    + utils.timestamp_as_str(interval[1], 'SHORT_DATETIME_FORMAT'),
+                    + utils.timestamp_as_str(b_end, 'SHORT_DATETIME_FORMAT'),
                     'users': val,
                 }
             )
@@ -131,15 +142,23 @@ class StatsReportLogin(StatsReport):
         data_week = [0] * 7
         data_hour = [0] * 24
         data_week_hour = [[0] * 24 for _ in range(7)]
-        for val in StatsManager.manager().enumerate_events(
-            stats.events.types.stats.EventOwnerType.AUTHENTICATOR, stats.events.types.stats.EventType.LOGIN, since=start, to=end
+        # .values('stamp') avoids model instantiation per row.
+        for row in (
+            StatsManager.manager()
+            .enumerate_events(
+                stats.events.types.stats.EventOwnerType.AUTHENTICATOR,
+                stats.events.types.stats.EventType.LOGIN,
+                since=start,
+                to=end,
+            )
+            .values('stamp')
         ):
-            s = datetime.datetime.fromtimestamp(val.stamp)
-            s = timezone.make_aware(s)
-            data_week[s.weekday()] += 1
-            data_hour[s.hour] += 1
-            data_week_hour[s.weekday()][s.hour] += 1
-            logger.debug('Data: %s %s', s.weekday(), s.hour)
+            s = timezone.make_aware(datetime.datetime.fromtimestamp(row['stamp']))
+            wd = s.weekday()
+            hr = s.hour
+            data_week[wd] += 1
+            data_hour[hr] += 1
+            data_week_hour[wd][hr] += 1
 
         return data_week, data_hour, data_week_hour
 
