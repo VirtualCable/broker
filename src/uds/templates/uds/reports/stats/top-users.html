@@ -1,0 +1,35 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Top users' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Top users' %}">
+        <meta name="keywords" content="uds,report,top,users">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }} - {% trans 'Top' %} {{ top_n }}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 35%">{% trans 'User' %}</th>
+                    <th style="width: 15%">{% trans 'Sessions' %}</th>
+                    <th style="width: 15%">{% trans 'Pools used' %}</th>
+                    <th style="width: 15%">{% trans 'Hours' %}</th>
+                    <th style="width: 20%">{% trans 'Average hours/session' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.user }}</td>
+                    <td>{{ d.sessions }}</td>
+                    <td>{{ d.pools }}</td>
+                    <td>{{ d.hours }}</td>
+                    <td>{{ d.average }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

@@ -1,0 +1,37 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Administrators activity' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Administrators activity' %}">
+        <meta name="keywords" content="uds,report,admin,activity">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        <table style="width: 100%; font-size: 0.75em;">
+            <thead>
+                <tr>
+                    <th style="width: 15%">{% trans 'User' %}</th>
+                    <th style="width: 10%">{% trans 'Requests' %}</th>
+                    <th style="width: 10%">{% trans 'Errors' %}</th>
+                    <th style="width: 10%">{% trans 'Error %' %}</th>
+                    <th style="width: 20%">{% trans 'Last seen' %}</th>
+                    <th style="width: 35%">{% trans 'Top endpoints' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.user }}</td>
+                    <td>{{ d.requests }}</td>
+                    <td>{{ d.errors }}</td>
+                    <td>{{ d.error_pct }}</td>
+                    <td>{{ d.last_seen }}</td>
+                    <td>{{ d.top_paths }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

@@ -1,0 +1,57 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'User services in error' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'User services in error' %}">
+        <meta name="keywords" content="uds,report,errors,userservice">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+
+        <h3>{% trans 'Errors per pool' %}</h3>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 70%">{% trans 'Pool' %}</th>
+                    <th style="width: 30%">{% trans 'Errors' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in per_pool %}
+                <tr>
+                    <td>{{ d.pool }}</td>
+                    <td>{{ d.count }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>{% trans 'Detail' %}</h3>
+        <table style="width: 100%; font-size: 0.75em;">
+            <thead>
+                <tr>
+                    <th style="width: 25%">{% trans 'Pool' %}</th>
+                    <th style="width: 25%">{% trans 'User service' %}</th>
+                    <th style="width: 20%">{% trans 'User' %}</th>
+                    <th style="width: 5%">{% trans 'State' %}</th>
+                    <th style="width: 5%">{% trans 'OS' %}</th>
+                    <th style="width: 20%">{% trans 'State date' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in detail %}
+                <tr>
+                    <td>{{ d.pool }}</td>
+                    <td>{{ d.name }}</td>
+                    <td>{{ d.user }}</td>
+                    <td>{{ d.state }}</td>
+                    <td>{{ d.os_state }}</td>
+                    <td>{{ d.state_date }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

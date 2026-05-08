@@ -1,0 +1,33 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Session duration histogram' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Session duration histogram' %}">
+        <meta name="keywords" content="uds,report,session,duration,histogram">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}
+           - {% trans 'Sessions' %}: {{ total_sessions }}
+           - {% trans 'Avg seconds' %}: {{ avg_seconds }}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 50%">{% trans 'Bucket' %}</th>
+                    <th style="width: 25%">{% trans 'Count' %}</th>
+                    <th style="width: 25%">{% trans 'Percent' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.bucket }}</td>
+                    <td>{{ d.count }}</td>
+                    <td>{{ d.pct }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

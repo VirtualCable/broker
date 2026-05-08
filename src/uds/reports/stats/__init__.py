@@ -41,3 +41,13 @@ from . import pool_users_summary
 from . import pools_usage_summary
 
 from . import auth_stats
+
+from . import peak_concurrency
+from . import pool_saturation
+from . import cache_efficiency
+from . import tunnel_usage
+from . import client_platforms
+from . import top_users
+from . import session_duration
+from . import userservice_errors
+from . import usage_by_group
