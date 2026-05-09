@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import collections
 import csv
 import io
 import logging
@@ -95,21 +96,19 @@ class UsageSummaryByUsersPool(StatsReport):
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=[F('fld4')], order_by='stamp'),
-                prev_stamp=Window(Lag('stamp'), partition_by=[F('fld4')], order_by='stamp'),
+                prev_type=Window(Lag('event_type'), partition_by=[F('fld4')], order_by=[F('stamp')]),
+                prev_stamp=Window(Lag('stamp'), partition_by=[F('fld4')], order_by=[F('stamp')]),
             )
             .values('event_type', 'stamp', 'fld4', 'prev_type', 'prev_stamp')
         )
 
-        users: dict[str, dict[str, int]] = {}
+        users: dict[str, dict[str, int]] = collections.defaultdict(
+            lambda: {'sessions': 0, 'time': 0}
+        )
         for i in items:
             if i['event_type'] != logout or i['prev_type'] != login:
                 continue
-            username = i['fld4']
-            entry = users.get(username)
-            if entry is None:
-                entry = {'sessions': 0, 'time': 0}
-                users[username] = entry
+            entry = users[i['fld4']]
             entry['sessions'] += 1
             entry['time'] += i['stamp'] - i['prev_stamp']
 
@@ -117,8 +116,8 @@ class UsageSummaryByUsersPool(StatsReport):
             {
                 'user': k,
                 'sessions': v['sessions'],
-                'hours': '{:.2f}'.format(float(v['time']) / 3600),
-                'average': '{:.2f}'.format(float(v['time']) / 3600 / v['sessions']),
+                'hours': '{:.2f}'.format(v['time'] / 3600),
+                'average': '{:.2f}'.format(v['time'] / 3600 / v['sessions']),
             }
             for k, v in users.items()
         ]

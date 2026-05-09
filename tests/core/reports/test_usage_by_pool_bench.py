@@ -29,10 +29,10 @@
 Benchmarks for the four optimised stats reports under
 `uds.reports.stats`.
 
-Each report's main data-extraction method is timed across
-SIZES = (50, 100, 1000, 5000) StatsEvents rows. For every size we
-warm up once (queryset compile, connection setup, ...) and then
-time `REPEATS` extra runs to dilute jitter.
+Each report's main data-extraction method is timed across the default
+sizes, or the sizes passed in UDS_BENCH_SIZES. For every size we warm up
+once (queryset compile, connection setup, ...) and then time `REPEATS`
+extra runs to dilute jitter.
 
 Reports covered:
 - UsageByPool             (LOGIN/LOGOUT pairing across pools, Window+Lag)
@@ -44,10 +44,14 @@ Each class also asserts a basic correctness invariant (e.g. paired
 sessions == inserted pairs, total accesses == inserted ACCESS rows)
 so the bench doubles as a regression guard for the optimisations.
 """
+import collections.abc
 import datetime
 import logging
+import os
 import time
 import typing
+
+import pytest
 
 from uds import models
 from uds.core import types
@@ -62,14 +66,43 @@ from ...utils.test import UDSTransactionTestCase
 
 logger = logging.getLogger(__name__)
 
+# Benchmarks are slow (5000-row bulk inserts × 4 reports × REPEATS+warmup).
+# Off by default; opt in with UDS_BENCH=1.
+pytestmark = pytest.mark.skipif(
+    os.environ.get('UDS_BENCH', '') in ('', '0'),
+    reason='Benchmarks disabled. Set UDS_BENCH=1 to enable.',
+)
+
 # Event volumes to benchmark.
-SIZES: tuple[int, ...] = (50, 100, 1000, 5000)
+DEFAULT_SIZES: tuple[int, ...] = (50, 100, 1000, 5000)
+SIZES_ENV: str = 'UDS_BENCH_SIZES'
+
+
+def _bench_sizes() -> tuple[int, ...]:
+    raw = os.environ.get(SIZES_ENV, '').strip()
+    if not raw:
+        return DEFAULT_SIZES
+
+    sizes = tuple(int(part.strip()) for part in raw.split(',') if part.strip())
+    if not sizes or any(size <= 0 for size in sizes):
+        raise ValueError(f'{SIZES_ENV} must contain positive integer sizes')
+    return sizes
+
+
+SIZES: tuple[int, ...] = _bench_sizes()
 # Number of timed runs per size (excluding the warmup).
 REPEATS: int = 3
 # Reference epoch base for stamps; arbitrary fixed value.
 BASE_STAMP: int = 1_700_000_000
 # Spacing between consecutive event stamps, in seconds.
 STAMP_STEP: int = 60
+# Date range covering all generated benchmark stamps. The report end date is
+# converted to midnight, so use the day after the last generated event.
+REPORT_START_DATE: datetime.date = datetime.datetime.fromtimestamp(BASE_STAMP).date()
+REPORT_END_DATE: datetime.date = (
+    datetime.datetime.fromtimestamp(BASE_STAMP + (max(SIZES) - 1) * STAMP_STEP).date()
+    + datetime.timedelta(days=1)
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -147,7 +180,7 @@ def _build_auth_login_events(n_events: int) -> list[models.StatsEvents]:
 # --------------------------------------------------------------------------- #
 # Bench helpers                                                               #
 # --------------------------------------------------------------------------- #
-def _time_callable(fn: typing.Callable[[], typing.Any]) -> float:
+def _time_callable(fn: collections.abc.Callable[[], typing.Any]) -> float:
     """Warmup once, then time REPEATS runs of fn(). Return average seconds."""
     fn()  # warmup
     timings: list[float] = []
@@ -214,7 +247,7 @@ class UsageByPoolBenchmark(UDSTransactionTestCase):
             )
             data, _ = self._make_report().get_data()
             self.assertEqual(len(data), size)
-            for row in typing.cast(list[dict[str, typing.Any]], data):
+            for row in data:
                 self.assertEqual(row['time'], 5)
                 self.assertEqual(row['origin'], '10.0.0.1')
 
@@ -259,6 +292,7 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
     def test_aggregation_semantics(self) -> None:
         """Per-user aggregation: 1 session, hours = 5/3600 by construction."""
         size = 100
+        models.StatsEvents.objects.all().delete()
         models.StatsEvents.objects.bulk_create(
             _build_login_logout_pairs(self.pool.id, size),
             batch_size=1000,
@@ -266,7 +300,7 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
         data, name = self._make_report().get_data()
         self.assertEqual(name, self.pool.name)
         self.assertEqual(len(data), size)
-        for row in typing.cast(list[dict[str, typing.Any]], data):
+        for row in data:
             self.assertEqual(row['sessions'], 1)
             self.assertEqual(row['hours'], '{:.2f}'.format(5 / 3600))
 
@@ -288,10 +322,8 @@ class PoolPerformanceBenchmark(UDSTransactionTestCase):
     def _make_report(self) -> PoolPerformanceReport:
         report = PoolPerformanceReport()
         report.pools.value = [self.pool.uuid]  # type: ignore[assignment]
-        # Tight range so events spread across multiple buckets.
-        # SIZES_max events × STAMP_STEP seconds = 5000 × 60 = 300000 s span.
-        report.start_date.value = datetime.date(2023, 11, 14)  # ~ BASE_STAMP
-        report.end_date.value = datetime.date(2024, 1, 1)
+        report.start_date.value = REPORT_START_DATE
+        report.end_date.value = REPORT_END_DATE
         report.sampling_points.value = self.SAMPLING_POINTS
         return report
 
@@ -326,8 +358,8 @@ class StatsReportLoginBenchmark(UDSTransactionTestCase):
 
     def _make_report(self) -> StatsReportLogin:
         report = StatsReportLogin()
-        report.start_date.value = datetime.date(2023, 11, 14)
-        report.end_date.value = datetime.date(2024, 1, 1)
+        report.start_date.value = REPORT_START_DATE
+        report.end_date.value = REPORT_END_DATE
         report.sampling_points.value = self.SAMPLING_POINTS
         return report
 

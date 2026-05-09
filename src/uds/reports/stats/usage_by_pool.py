@@ -76,11 +76,16 @@ class UsageByPool(StatsReport):
         end = self.end_date.as_timestamp()
         logger.debug(self.pool.value)
         if '0-0-0-0' in self.pool.value:
-            pools = ServicePool.objects.all()
+            qs = ServicePool.objects.all()
         else:
-            pools = ServicePool.objects.filter(uuid__in=self.pool.value)
+            qs = ServicePool.objects.filter(uuid__in=self.pool.value)
 
-        pool_map: dict[int, ServicePool] = {p.id: p for p in pools}
+        # (uuid, name) per pool id. values_list avoids instantiating ServicePool
+        # rows just to read 2 fields.
+        pool_map: dict[int, tuple[str, str]] = {
+            p_id: (p_uuid, p_name)
+            for p_id, p_uuid, p_name in qs.values_list('id', 'uuid', 'name')
+        }
 
         login = stats.events.types.stats.EventType.LOGIN
         logout = stats.events.types.stats.EventType.LOGOUT
@@ -99,8 +104,8 @@ class UsageByPool(StatsReport):
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=partition, order_by='stamp'),
-                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by='stamp'),
+                prev_type=Window(Lag('event_type'), partition_by=partition, order_by=[F('stamp')]),
+                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by=[F('stamp')]),
             )
             .values('owner_id', 'event_type', 'stamp', 'fld2', 'fld4', 'prev_type', 'prev_stamp')
         )
@@ -109,7 +114,7 @@ class UsageByPool(StatsReport):
         for i in items:
             if i['event_type'] != logout or i['prev_type'] != login:
                 continue
-            pool = pool_map[i['owner_id']]
+            pool_uuid, pool_name = pool_map[i['owner_id']]
             login_stamp = i['prev_stamp']
             fld2 = i['fld2']
             # ipv6 handled inline (was StatsEvents.src_ip property; we use .values()).
@@ -120,12 +125,12 @@ class UsageByPool(StatsReport):
                     'origin': origin,
                     'date': timezone.make_aware(datetime.datetime.fromtimestamp(login_stamp)),
                     'time': i['stamp'] - login_stamp,
-                    'pool': pool.uuid,
-                    'pool_name': pool.name,
+                    'pool': pool_uuid,
+                    'pool_name': pool_name,
                 }
             )
 
-        return data, ','.join([p.name for p in pools])
+        return data, ','.join(name for _uuid, name in pool_map.values())
 
     def generate(self) -> bytes:
         items, poolname = self.get_data()

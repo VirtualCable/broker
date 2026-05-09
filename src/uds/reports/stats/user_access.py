@@ -69,7 +69,7 @@ class StatsReportLogin(StatsReport):
         order=4,
         label=_('Number of intervals'),
         length=3,
-        min_value=0,
+        min_value=2,
         max_value=128,
         tooltip=_('Number of sampling points used in charts'),
         default=64,
@@ -78,12 +78,7 @@ class StatsReportLogin(StatsReport):
     def get_range_data(self) -> tuple[str, list[tuple[int, int]], list[dict[str, typing.Any]]]:
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
-        if self.sampling_points.as_int() < 2:
-            self.sampling_points.value = 2
-        if self.sampling_points.as_int() > 128:
-            self.sampling_points.value = 128
-
-        sampling_points = self.sampling_points.as_int()
+        sampling_points = max(2, min(128, self.sampling_points.as_int()))
 
         # x axis label format
         if end - start > 3600 * 24 * 2:
@@ -142,7 +137,10 @@ class StatsReportLogin(StatsReport):
         data_week = [0] * 7
         data_hour = [0] * 24
         data_week_hour = [[0] * 24 for _ in range(7)]
-        # .values('stamp') avoids model instantiation per row.
+        # Hoisted: 1 tz lookup + tz-aware fromtimestamp per row instead of
+        # make_aware() (which re-resolves the tz internally on every call).
+        tz = timezone.get_current_timezone()
+        from_ts = datetime.datetime.fromtimestamp
         for row in (
             StatsManager.manager()
             .enumerate_events(
@@ -153,7 +151,7 @@ class StatsReportLogin(StatsReport):
             )
             .values('stamp')
         ):
-            s = timezone.make_aware(datetime.datetime.fromtimestamp(row['stamp']))
+            s = from_ts(row['stamp'], tz)
             wd = s.weekday()
             hr = s.hour
             data_week[wd] += 1
@@ -250,7 +248,7 @@ class StatsReportLogin(StatsReport):
                 'data': report_data,
                 'beginning': self.start_date.as_date(),
                 'ending': self.end_date.as_date(),
-                'intervals': self.sampling_points.as_int(),
+                'intervals': max(2, min(128, self.sampling_points.as_int())),
             },
             header=gettext('Users access to UDS'),
             water=gettext('UDS Report for users access'),
