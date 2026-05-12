@@ -103,24 +103,24 @@ class InactiveUsersReport(ListReport):
             auths = list(Authenticator.objects.filter(uuid=self.authenticator.value))
             auth_label = auths[0].name if auths else ''
 
+        now = timezone.now()
         rows: list[dict[str, typing.Any]] = []
         for a in auths:
             qs = a.users.filter(last_access__lt=threshold)
             if not self.include_never.as_bool():
                 qs = qs.exclude(last_access=NEVER)
-            for u in qs.order_by('last_access'):
-                if u.last_access == NEVER:
-                    inactive_days = gettext('Never')
+            for u in qs.order_by('last_access').values('name', 'real_name', 'last_access'):
+                if u['last_access'] == NEVER:
+                    inactive_days: typing.Any = gettext('Never')
                     last_access: typing.Any = gettext('Never')
                 else:
-                    delta = timezone.now() - u.last_access
-                    inactive_days = delta.days
-                    last_access = u.last_access
+                    inactive_days = (now - u['last_access']).days
+                    last_access = u['last_access']
                 rows.append(
                     {
                         'auth': a.name,
-                        'name': u.name,
-                        'real_name': u.real_name,
+                        'name': u['name'],
+                        'real_name': u['real_name'],
                         'last_access': last_access,
                         'inactive_days': inactive_days,
                     }

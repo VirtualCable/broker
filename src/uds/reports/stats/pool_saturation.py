@@ -61,10 +61,13 @@ class PoolSaturationReport(StatsReport):
         self.pools.set_choices(vals)
 
     def get_data(self) -> list[dict[str, typing.Any]]:
+        # select_related('service'): get_max() walks self.service.get_instance().
         if '0-0-0-0' in self.pools.value:
-            pools = list(ServicePool.objects.all())
+            pools = list(ServicePool.objects.select_related('service').all())
         else:
-            pools = list(ServicePool.objects.filter(uuid__in=self.pools.value))
+            pools = list(
+                ServicePool.objects.select_related('service').filter(uuid__in=self.pools.value)
+            )
 
         start_dt = datetime.datetime.combine(self.start_date.as_date(), datetime.time.min)
         start_dt = timezone.make_aware(start_dt)

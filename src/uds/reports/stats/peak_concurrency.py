@@ -67,11 +67,11 @@ class PeakConcurrencyReport(StatsReport):
         end = self.end_date.as_timestamp()
 
         if '0-0-0-0' in self.pools.value:
-            pools = ServicePool.objects.all()
+            qs = ServicePool.objects.all()
         else:
-            pools = ServicePool.objects.filter(uuid__in=self.pools.value)
+            qs = ServicePool.objects.filter(uuid__in=self.pools.value)
 
-        pool_map: dict[int, ServicePool] = {p.id: p for p in pools}
+        pool_map: dict[int, str] = dict(qs.values_list('id', 'name'))
         if not pool_map:
             return []
 
@@ -95,7 +95,6 @@ class PeakConcurrencyReport(StatsReport):
             .values('owner_id', 'event_type', 'stamp', 'prev_type', 'prev_stamp')
         )
 
-        # Build delta events per pool: +1 at login, -1 at logout (paired only).
         deltas: dict[int, list[tuple[int, int]]] = {pid: [] for pid in pool_map}
         for i in items:
             if i['event_type'] != logout or i['prev_type'] != login:
@@ -104,21 +103,21 @@ class PeakConcurrencyReport(StatsReport):
             deltas[i['owner_id']].append((i['stamp'], -1))
 
         result: list[dict[str, typing.Any]] = []
-        for pid, pool in pool_map.items():
+        for pid, pool_name in pool_map.items():
             evs = deltas[pid]
             if not evs:
                 result.append(
                     {
-                        'pool': pool.name,
+                        'pool': pool_name,
                         'peak': 0,
                         'peak_at': '',
                         'sessions': 0,
                     }
                 )
                 continue
-            # Sort: process logouts before logins at equal timestamp to avoid
-            # counting a 0-duration overlap between back-to-back sessions.
-            evs.sort(key=lambda x: (x[0], -x[1]))
+            # At equal stamps, logouts (-1) must come before logins (+1) or
+            # session handovers count as a spurious +1 peak.
+            evs.sort(key=lambda x: (x[0], x[1]))
             cur = 0
             peak = 0
             peak_at = evs[0][0]
@@ -132,7 +131,7 @@ class PeakConcurrencyReport(StatsReport):
                     peak_at = stamp
             result.append(
                 {
-                    'pool': pool.name,
+                    'pool': pool_name,
                     'peak': peak,
                     'peak_at': timezone.make_aware(datetime.datetime.fromtimestamp(peak_at)),
                     'sessions': sessions,

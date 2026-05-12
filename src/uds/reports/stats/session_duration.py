@@ -45,13 +45,13 @@ logger = logging.getLogger(__name__)
 
 
 # (label, lower_bound_seconds, upper_bound_seconds_exclusive)
-BUCKETS: typing.Final[list[tuple[str, int, int]]] = [
+BUCKETS: typing.Final[tuple[tuple[str, int, int], ...]] = (
     ('< 5 min', 0, 5 * 60),
     ('5-30 min', 5 * 60, 30 * 60),
     ('30 min - 2 h', 30 * 60, 2 * 3600),
     ('2 - 8 h', 2 * 3600, 8 * 3600),
     ('> 8 h', 8 * 3600, 24 * 3600 * 365),
-]
+)
 
 
 class SessionDurationReport(StatsReport):

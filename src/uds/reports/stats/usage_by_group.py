@@ -31,15 +31,6 @@ import io
 import logging
 import typing
 
-
-# TypedDict para tipado estricto de los grupos
-class GroupEntry(typing.TypedDict):
-    group: str
-    sessions: int
-    time: int
-    users: set[str]
-
-
 from django.db.models import F, Window
 from django.db.models.functions import Lag
 from django.utils.translation import gettext, gettext_lazy as _
@@ -52,6 +43,13 @@ from uds.models import Authenticator, ServicePool
 from .base import StatsReport
 
 logger = logging.getLogger(__name__)
+
+
+class GroupEntry(typing.TypedDict):
+    group: str
+    sessions: int
+    time: int
+    users: set[str]
 
 
 class UsageByGroupReport(StatsReport):
@@ -86,10 +84,12 @@ class UsageByGroupReport(StatsReport):
         except Authenticator.DoesNotExist:
             return [], '', 0
 
-        # username -> list of group names (a user may be in many groups)
+        # username -> group names (a user can belong to many groups).
         user_groups: dict[str, list[str]] = {}
-        for u in auth.users.prefetch_related('groups').all():
-            user_groups[u.name] = [g.name for g in u.groups.all()]
+        for username, group_name in auth.users.values_list('name', 'groups__name'):
+            if not username or group_name is None:
+                continue
+            user_groups.setdefault(username, []).append(group_name)
 
         if '0-0-0-0' in self.pools.value:
             pool_ids = list(ServicePool.objects.values_list('id', flat=True))

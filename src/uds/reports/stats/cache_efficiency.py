@@ -64,18 +64,17 @@ class CacheEfficiencyReport(StatsReport):
         end = self.end_date.as_timestamp()
 
         if '0-0-0-0' in self.pools.value:
-            pools = list(ServicePool.objects.all())
+            qs = ServicePool.objects.all()
         else:
-            pools = list(ServicePool.objects.filter(uuid__in=self.pools.value))
+            qs = ServicePool.objects.filter(uuid__in=self.pools.value)
 
-        pool_map: dict[int, ServicePool] = {p.id: p for p in pools}
+        pool_map: dict[int, str] = dict(qs.values_list('id', 'name'))
         if not pool_map:
             return []
 
         hit = stats.events.types.stats.EventType.CACHE_HIT
         miss = stats.events.types.stats.EventType.CACHE_MISS
 
-        # Aggregate counts per (pool, event) in one query.
         rows = (
             StatsManager.manager()
             .enumerate_events(
@@ -89,19 +88,19 @@ class CacheEfficiencyReport(StatsReport):
             .annotate(c=Count('id'))
         )
 
-        agg: dict[int, dict[int, int]] = {pid: {hit.value: 0, miss.value: 0} for pid in pool_map}
+        agg: dict[int, dict[int, int]] = {pid: {hit: 0, miss: 0} for pid in pool_map}
         for r in rows:
             agg[r['owner_id']][r['event_type']] = r['c']
 
         result: list[dict[str, typing.Any]] = []
-        for pid, pool in pool_map.items():
-            hits = agg[pid][hit.value]
-            misses = agg[pid][miss.value]
+        for pid, pool_name in pool_map.items():
+            hits = agg[pid][hit]
+            misses = agg[pid][miss]
             total = hits + misses
             ratio = (hits * 100.0 / total) if total else 0.0
             result.append(
                 {
-                    'pool': pool.name,
+                    'pool': pool_name,
                     'hits': hits,
                     'misses': misses,
                     'total': total,

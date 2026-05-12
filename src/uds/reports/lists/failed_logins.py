@@ -100,29 +100,32 @@ class FailedLoginsReport(ListReport):
         end = timezone.make_aware(datetime.datetime.combine(self.end_date.as_date(), datetime.time.max))
 
         if self.authenticator.value == '0-0-0-0':
-            auths = list(Authenticator.objects.all())
+            auth_qs = Authenticator.objects.all()
         else:
-            auths = list(Authenticator.objects.filter(uuid=self.authenticator.value))
+            auth_qs = Authenticator.objects.filter(uuid=self.authenticator.value)
 
-        auth_map = {a.id: a for a in auths}
+        auth_map: dict[int, str] = dict(auth_qs.values_list('id', 'name'))
         if not auth_map:
             return [], []
 
-        rows = Log.objects.filter(
-            created__gte=start,
-            created__lte=end,
-            source=types.log.LogSource.WEB,
-            owner_type=types.log.LogObjectType.AUTHENTICATOR,
-            owner_id__in=list(auth_map.keys()),
-            level__gte=types.log.LogLevel.ERROR,
-        ).order_by('-created')
+        rows = (
+            Log.objects.filter(
+                created__gte=start,
+                created__lte=end,
+                source=types.log.LogSource.WEB,
+                owner_type=types.log.LogObjectType.AUTHENTICATOR,
+                owner_id__in=list(auth_map.keys()),
+                level__gte=types.log.LogLevel.ERROR,
+            )
+            .order_by('-created')
+            .values('created', 'data', 'owner_id')
+        )
 
         detail: list[dict[str, typing.Any]] = []
         per_user: dict[tuple[str, str], EntryDict] = {}
         for r in rows:
-            auth = auth_map.get(r.owner_id)
-            auth_name = auth.name if auth else ''
-            m = _LOGIN_RX.match(r.data)
+            auth_name = auth_map.get(r['owner_id'], '')
+            m = _LOGIN_RX.match(r['data'])
             if m:
                 user = m.group('user')
                 ip = m.group('ip')
@@ -130,10 +133,11 @@ class FailedLoginsReport(ListReport):
             else:
                 user = ''
                 ip = ''
-                message = r.data
+                message = r['data']
+            created = r['created']
             detail.append(
                 {
-                    'date': r.created,
+                    'date': created,
                     'auth': auth_name,
                     'user': user,
                     'ip': ip,
@@ -148,14 +152,14 @@ class FailedLoginsReport(ListReport):
                     user=user,
                     attempts=0,
                     ips=set(),
-                    last_attempt=r.created,
+                    last_attempt=created,
                 )
                 per_user[key] = entry
             entry['attempts'] += 1
             if ip:
                 entry['ips'].add(ip)
-            if r.created > entry['last_attempt']:
-                entry['last_attempt'] = r.created
+            if created > entry['last_attempt']:
+                entry['last_attempt'] = created
 
         summary = sorted(
             (

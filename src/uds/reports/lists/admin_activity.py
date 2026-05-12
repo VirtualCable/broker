@@ -93,7 +93,7 @@ class AdminActivityReport(ListReport):
 
     @staticmethod
     def _path_only(request: str) -> str:
-        # request is "<method> <full path>"; cut query string, keep path
+        # 'request' from the REST audit log: "<METHOD> <full path with query>".
         parts = request.split(' ', 1)
         path = parts[1] if len(parts) > 1 else parts[0]
         return path.split('?', 1)[0]
@@ -108,8 +108,8 @@ class AdminActivityReport(ListReport):
             created__lte=end,
             source=types.log.LogSource.REST,
             owner_type=types.log.LogObjectType.SYSLOG,
-        ):
-            m = _LOG_RX.match(entry.data)
+        ).values('created', 'data'):
+            m = _LOG_RX.match(entry['data'])
             if not m:
                 continue
             user = m.group('user') or gettext('Unknown')
@@ -117,13 +117,14 @@ class AdminActivityReport(ListReport):
                 code = int(m.group('response_code'))
             except (TypeError, ValueError):
                 code = 500
+            created = entry['created']
             entry_user = users.get(user)
             if entry_user is None:
                 entry_user = EntryUserDict(
                     user=user,
                     requests=0,
                     errors=0,
-                    last_seen=entry.created,
+                    last_seen=created,
                     paths={},
                 )
                 users[user] = entry_user
@@ -131,8 +132,8 @@ class AdminActivityReport(ListReport):
             entry_user['requests'] += 1
             if code >= 400:
                 entry_user['errors'] += 1
-            if entry.created > entry_user['last_seen']:
-                entry_user['last_seen'] = entry.created
+            if created > entry_user['last_seen']:
+                entry_user['last_seen'] = created
             path = self._path_only(m.group('request'))
             entry_user['paths'][path] = entry_user['paths'].get(path, 0) + 1
 

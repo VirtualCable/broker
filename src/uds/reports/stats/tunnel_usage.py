@@ -71,11 +71,11 @@ class TunnelUsageReport(StatsReport):
         end = self.end_date.as_timestamp()
 
         if '0-0-0-0' in self.pools.value:
-            pools = list(ServicePool.objects.all())
+            qs = ServicePool.objects.all()
         else:
-            pools = list(ServicePool.objects.filter(uuid__in=self.pools.value))
+            qs = ServicePool.objects.filter(uuid__in=self.pools.value)
 
-        pool_map: dict[int, ServicePool] = {p.id: p for p in pools}
+        pool_map: dict[int, str] = dict(qs.values_list('id', 'name'))
         if not pool_map:
             return []
 
@@ -99,7 +99,7 @@ class TunnelUsageReport(StatsReport):
         }
         for r in rows:
             entry = agg[r['owner_id']]
-            if r['event_type'] == topen.value:
+            if r['event_type'] == topen:
                 entry['opens'] += 1
             else:
                 entry['closes'] += 1
@@ -109,12 +109,12 @@ class TunnelUsageReport(StatsReport):
                 entry['received'] += _to_int(r['fld3'])
 
         result: list[dict[str, typing.Any]] = []
-        for pid, pool in pool_map.items():
+        for pid, pool_name in pool_map.items():
             e = agg[pid]
             avg_duration = (e['duration'] // e['closes']) if e['closes'] else 0
             result.append(
                 {
-                    'pool': pool.name,
+                    'pool': pool_name,
                     'opens': e['opens'],
                     'closes': e['closes'],
                     'duration': str(datetime.timedelta(seconds=e['duration'])),

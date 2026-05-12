@@ -71,31 +71,43 @@ class UserServiceErrorsReport(StatsReport):
         else:
             pool_filter = {'deployed_service__uuid__in': self.pools.value}
 
-        # state can be 'E' (ERROR) on UserService.state OR os_state.
+        # ERROR can live on state OR os_state.
         qs = UserService.objects.filter(
             state_date__gte=start_dt,
             state_date__lte=end_dt,
             **pool_filter,
         ).filter(Q(state=State.ERROR) | Q(os_state=State.ERROR))
 
-        # Aggregate per pool
-        agg = (
-            qs.values('deployed_service__uuid', 'deployed_service__name').annotate(c=Count('id')).order_by('-c')
-        )
-        per_pool = [{'pool': r['deployed_service__name'], 'count': r['c']} for r in agg]
-
-        # Detailed list (cap to a reasonable number to keep PDF small)
         detail: list[dict[str, typing.Any]] = []
+        per_pool_counts: dict[str, int] = {}
         for us in qs.select_related('deployed_service', 'user').order_by('-state_date')[:1000]:
+            pool_name = us.deployed_service.name
+            per_pool_counts[pool_name] = per_pool_counts.get(pool_name, 0) + 1
             detail.append(
                 {
-                    'pool': us.deployed_service.name,
+                    'pool': pool_name,
                     'name': us.friendly_name,
                     'user': us.user.pretty_name if us.user else '',
                     'state': us.state,
                     'os_state': us.os_state,
                     'state_date': us.state_date,
                 }
+            )
+
+        # Past the 1000-row cap the in-memory counts undercount; re-aggregate
+        # in SQL so totals stay honest.
+        if len(detail) >= 1000:
+            agg = (
+                qs.values('deployed_service__name')
+                .annotate(c=Count('id'))
+                .order_by('-c')
+            )
+            per_pool = [{'pool': r['deployed_service__name'], 'count': r['c']} for r in agg]
+        else:
+            per_pool = sorted(
+                ({'pool': name, 'count': c} for name, c in per_pool_counts.items()),
+                key=lambda r: r['count'],
+                reverse=True,
             )
 
         return per_pool, detail

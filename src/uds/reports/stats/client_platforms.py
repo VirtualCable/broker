@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import collections
 import csv
 import io
 import logging
@@ -77,15 +78,15 @@ class ClientPlatformsReport(StatsReport):
 
         total = sum(r['c'] for r in rows)
 
-        platforms: dict[str, int] = {}
-        browsers: dict[str, int] = {}
+        platforms: dict[str, int] = collections.defaultdict(int)
+        browsers: dict[str, int] = collections.defaultdict(int)
         combo: list[dict[str, typing.Any]] = []
         for r in rows:
             p = r['fld1'] or gettext('Unknown')
             b = r['fld2'] or gettext('Unknown')
             v = r['fld3']
-            platforms[p] = platforms.get(p, 0) + r['c']
-            browsers[b] = browsers.get(b, 0) + r['c']
+            platforms[p] += r['c']
+            browsers[b] += r['c']
             combo.append({'platform': p, 'browser': b, 'version': v, 'count': r['c']})
 
         def _pct(n: int) -> str:

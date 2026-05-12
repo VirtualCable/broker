@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import collections
 import csv
 import io
 import logging
@@ -105,15 +106,13 @@ class TopUsersReport(StatsReport):
             .values('event_type', 'stamp', 'fld4', 'prev_type', 'prev_stamp', 'owner_id')
         )
 
-        users: dict[str, UserEntry] = {}
+        users: dict[str, UserEntry] = collections.defaultdict(
+            lambda: UserEntry(sessions=0, time=0, pools=set())
+        )
         for i in items:
             if i['event_type'] != logout or i['prev_type'] != login:
                 continue
-            username = i['fld4'] or ''
-            entry = users.get(username)
-            if entry is None:
-                entry = UserEntry(sessions=0, time=0, pools=set())
-                users[username] = entry
+            entry = users[i['fld4'] or '']
             entry['sessions'] += 1
             entry['time'] += i['stamp'] - i['prev_stamp']
             entry['pools'].add(i['owner_id'])
