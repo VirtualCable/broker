@@ -1,6 +1,6 @@
 # Broker (and common)
 # Latest versions should work fine with master branch
-Django>=6.0.4
+Django>=6.0.5
 # Current "stable" ldap3 version (2.9.1) has a feature
 # that does not allows using latest pyasn, but "older" version
 # of pyasn has a bunerability (that should not affect us, but just in case..)
