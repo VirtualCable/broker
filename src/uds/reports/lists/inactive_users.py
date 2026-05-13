@@ -161,7 +161,11 @@ class InactiveUsersReportCSV(InactiveUsersReport):
                     auth = Authenticator.objects.get(uuid=self.authenticator.value)
                     self.filename = f'inactive_users_{auth.name}.csv'
                 except Authenticator.DoesNotExist:
-                    pass
+                    # Keep default filename when selected authenticator no longer exists.
+                    logger.debug(
+                        'Authenticator %s not found while generating inactive users CSV; using default filename.',
+                        self.authenticator.value,
+                    )
 
     def generate(self) -> bytes:
         output = io.StringIO()
