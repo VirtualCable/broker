@@ -84,7 +84,11 @@ class InactiveUsersReport(ListReport):
                     auth = Authenticator.objects.get(uuid=self.authenticator.value)
                     self.filename = f'inactive_users_{auth.name}.pdf'
                 except Authenticator.DoesNotExist:
-                    pass
+                    logger.warning(
+                        'Selected authenticator %s was not found; using default inactive users filename',
+                        self.authenticator.value,
+                    )
+                    self.filename = 'inactive_users.pdf'
 
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL AUTHENTICATORS'))] + [
