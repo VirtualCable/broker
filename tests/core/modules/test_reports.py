@@ -57,6 +57,7 @@ MUST_HAVE: typing.Final[list[str]] = [
     '38ec12dc-beaf-11e5-bd0a-10feed05884b',
     '302e1e76-30a8-11e7-9d1e-6762bbf028ca',
     '202c6438-30a8-11e7-80e4-77c1e4cb9e09',
+    '07c6eb22-1f38-4ee2-9152-dd77a470388d',
 ]
 
 
