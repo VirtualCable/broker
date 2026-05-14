@@ -1,0 +1,61 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Failed logins' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Failed logins' %}">
+        <meta name="keywords" content="uds,report,failed,login,authentication">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+
+        <h3>{% trans 'Summary by user' %}</h3>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 20%">{% trans 'Authenticator' %}</th>
+                    <th style="width: 20%">{% trans 'User' %}</th>
+                    <th style="width: 10%">{% trans 'Attempts' %}</th>
+                    <th style="width: 30%">{% trans 'IPs' %}</th>
+                    <th style="width: 20%">{% trans 'Last attempt' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in summary %}
+                <tr>
+                    <td>{{ d.auth }}</td>
+                    <td>{{ d.user }}</td>
+                    <td>{{ d.attempts }}</td>
+                    <td>{{ d.ips }}</td>
+                    <td>{{ d.last_attempt }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>{% trans 'Detail' %}</h3>
+        <table style="width: 100%; font-size: 0.75em;">
+            <thead>
+                <tr>
+                    <th style="width: 18%">{% trans 'Date' %}</th>
+                    <th style="width: 18%">{% trans 'Authenticator' %}</th>
+                    <th style="width: 16%">{% trans 'User' %}</th>
+                    <th style="width: 16%">{% trans 'IP' %}</th>
+                    <th style="width: 32%">{% trans 'Message' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in detail %}
+                <tr>
+                    <td>{{ d.date }}</td>
+                    <td>{{ d.auth }}</td>
+                    <td>{{ d.user }}</td>
+                    <td>{{ d.ip }}</td>
+                    <td>{{ d.message }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

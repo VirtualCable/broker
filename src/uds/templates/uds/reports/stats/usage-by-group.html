@@ -1,0 +1,35 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Usage by group' %} - {{ auth }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Usage by group' %} {{ auth }}">
+        <meta name="keywords" content="uds,report,usage,group">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'Authenticator' %}: {{ auth }} - {% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 35%">{% trans 'Group' %}</th>
+                    <th style="width: 15%">{% trans 'Sessions' %}</th>
+                    <th style="width: 15%">{% trans 'Distinct users' %}</th>
+                    <th style="width: 20%">{% trans 'Total time' %}</th>
+                    <th style="width: 15%">{% trans 'Average' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.group }}</td>
+                    <td>{{ d.sessions }}</td>
+                    <td>{{ d.users }}</td>
+                    <td>{{ d.time }}</td>
+                    <td>{{ d.avg }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

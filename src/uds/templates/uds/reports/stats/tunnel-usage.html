@@ -1,0 +1,39 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Tunnel usage' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Tunnel usage' %}">
+        <meta name="keywords" content="uds,report,tunnel,usage">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 25%">{% trans 'Pool' %}</th>
+                    <th style="width: 10%">{% trans 'Opens' %}</th>
+                    <th style="width: 10%">{% trans 'Closes' %}</th>
+                    <th style="width: 15%">{% trans 'Total time' %}</th>
+                    <th style="width: 15%">{% trans 'Mean time' %}</th>
+                    <th style="width: 12%">{% trans 'Bytes sent' %}</th>
+                    <th style="width: 13%">{% trans 'Bytes received' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.pool }}</td>
+                    <td>{{ d.opens }}</td>
+                    <td>{{ d.closes }}</td>
+                    <td>{{ d.duration }}</td>
+                    <td>{{ d.avg_duration }}</td>
+                    <td>{{ d.sent }}</td>
+                    <td>{{ d.received }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

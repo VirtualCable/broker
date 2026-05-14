@@ -33,3 +33,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # Make reports visible to autoloader
 from . import users
 from . import audit
+from . import inactive_users
+from . import admin_activity
+from . import failed_logins

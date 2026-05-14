@@ -1,0 +1,75 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Client platforms' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Client platforms breakdown' %}">
+        <meta name="keywords" content="uds,report,platform,browser,clients">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }} - {% trans 'Total events' %}: {{ total }}</p>
+
+        <h3>{% trans 'Platforms' %}</h3>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 60%">{% trans 'Platform' %}</th>
+                    <th style="width: 20%">{% trans 'Count' %}</th>
+                    <th style="width: 20%">%</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in platforms %}
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td>{{ d.count }}</td>
+                    <td>{{ d.pct }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>{% trans 'Browsers' %}</h3>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 60%">{% trans 'Browser' %}</th>
+                    <th style="width: 20%">{% trans 'Count' %}</th>
+                    <th style="width: 20%">%</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in browsers %}
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td>{{ d.count }}</td>
+                    <td>{{ d.pct }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>{% trans 'Detail' %}</h3>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 30%">{% trans 'Platform' %}</th>
+                    <th style="width: 30%">{% trans 'Browser' %}</th>
+                    <th style="width: 25%">{% trans 'Version' %}</th>
+                    <th style="width: 15%">{% trans 'Count' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in combo %}
+                <tr>
+                    <td>{{ d.platform }}</td>
+                    <td>{{ d.browser }}</td>
+                    <td>{{ d.version }}</td>
+                    <td>{{ d.count }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

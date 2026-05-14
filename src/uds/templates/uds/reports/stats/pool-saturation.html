@@ -1,0 +1,37 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Pool saturation' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Pool saturation' %}">
+        <meta name="keywords" content="uds,report,saturation,capacity,pools">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 30%">{% trans 'Pool' %}</th>
+                    <th style="width: 10%">{% trans 'Peak' %}</th>
+                    <th style="width: 25%">{% trans 'Peak at' %}</th>
+                    <th style="width: 10%">{% trans 'Average' %}</th>
+                    <th style="width: 10%">{% trans 'Max' %}</th>
+                    <th style="width: 15%">{% trans 'Saturation %' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.pool }}</td>
+                    <td>{{ d.peak }}</td>
+                    <td>{{ d.peak_at }}</td>
+                    <td>{{ d.avg }}</td>
+                    <td>{{ d.max }}</td>
+                    <td>{{ d.pct }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
