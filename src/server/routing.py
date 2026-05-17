@@ -18,5 +18,5 @@ from django.urls import re_path
 from uds.ws.routing import websocket_urlpatterns as uds_ws_routes
 
 websocket_urlpatterns: list[typing.Any]= [
-    typing.cast(typing.Any, re_path(r'^ws/', URLRouter(uds_ws_routes))),  # type:ignore
+    typing.cast(typing.Any, re_path(r'^uds/ws/', URLRouter(uds_ws_routes))),  # type:ignore
 ]
