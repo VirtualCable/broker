@@ -72,6 +72,7 @@ from uds.core import types
 
 from . import kem
 from . import rdp
+from . import certs
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ class CryptoManager(metaclass=singleton.Singleton):
         data: bytes = codecs.decode(value.encode(), 'base64')
 
         try:
-            # First, try new "cryptografy" decrpypting
+            # First, try new "cryptography" decrpypting
             decrypted: bytes = self._rsa.decrypt(
                 data,
                 padding.OAEP(
@@ -334,11 +335,10 @@ class CryptoManager(metaclass=singleton.Singleton):
         # Old sha1
         return secrets.compare_digest(
             hash_value,
-            str(
                 hashlib.sha1(
                     value
                 ).hexdigest()  # nosec: Old SHA1 password, not used anymore but need to be supported
-            ),
+            ,
         )
 
     def uuid(self, obj: typing.Any = None) -> str:
@@ -523,6 +523,3 @@ class CryptoManager(metaclass=singleton.Singleton):
 
     def check_cert_chain(self, cert_chain: pathlib.Path | str | None = None) -> None:
         return certs.check_cert_chain(cert_chain or certs.get_server_cert())
-
-    def sign_rdp(self, data: str) -> str:
-        return rdp.sign_rdp(data)
