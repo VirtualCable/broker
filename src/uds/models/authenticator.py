@@ -140,7 +140,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         """
         return auths.factory().lookup(self.data_type) is not None
 
-    def get_or_create_user(self, username: str, realname: typing.Optional[str] = None) -> 'User':
+    def get_or_create_user(self, username: str, realname: str | None = None) -> 'User':
         """
         Used to get or create a new user at database associated with this authenticator.
 

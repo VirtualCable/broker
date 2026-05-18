@@ -37,6 +37,9 @@ import re
 import socket
 import typing
 
+if typing.TYPE_CHECKING:
+    from uds.core import types
+
 
 class IpType(typing.NamedTuple):
     ip: int
@@ -91,7 +94,7 @@ def long_to_ip(n: int, version: typing.Literal[0, 4, 6] = 0) -> str:
     convert long int to ipv4 or ipv6 address, depending on size
     """
     if n > 2**32 or version == 6:
-        return str(ipaddress.IPv6Address(n).compressed)
+        return ipaddress.IPv6Address(n).compressed
     return str(ipaddress.IPv4Address(n))
 
 
@@ -261,8 +264,8 @@ def networks_from_str(
 
 
 def contains(
-    networks: typing.Union[str, NetworkType, list[NetworkType]],
-    ip: typing.Union[str, int],
+    networks: str | NetworkType | list[NetworkType],
+    ip: str | int,
     version: typing.Literal[0, 4, 6] = 0,
 ) -> bool:
     """
@@ -328,6 +331,56 @@ def is_valid_fqdn(fqdn: str) -> bool:
         is not None  # Allow for non qualified domain names (such as localhost, host1, etc)
         or re.match(r'^[a-z0-9-]+$', fqdn, re.IGNORECASE) is not None
     )
+
+
+def recover_ips(remote_addr: str, xff: str) -> 'types.net.IpInfo':
+    """
+    Computes the real client IP and proxy IP from a raw peer address and the
+    value of the X-Forwarded-For header, applying UDS proxy-trust rules.
+
+    This is the single authoritative implementation shared by both the HTTP
+    middleware (uds.middleware.request) and the WebSocket base consumer
+    (uds.ws.base).
+
+    Args:
+        remote_addr: Direct peer address (REMOTE_ADDR / scope['client'][0]).
+                     Empty when nginx connects via a Unix socket.
+        xff:         X-Forwarded-For header value (may be empty).
+
+    Returns:
+        types.net.IpInfo(ip, ip_proxy, ip_version)
+    """
+    # Local imports to avoid circular dependencies
+    from uds.core.util.config import GlobalConfig  # noqa: PLC0415
+    from uds.core.auths.auth import is_trusted_ip_forwarder  # noqa: PLC0415
+    from uds.core.types import net as types_net  # noqa: PLC0415
+
+    behind_proxy = GlobalConfig.BEHIND_PROXY.as_bool(False)
+
+    ip = remote_addr
+
+    # X-FORWARDED-FOR: CLIENT, ..., NEAR_PROXY, NGINX  ->  reversed: NGINX, NEAR_PROXY, ..., CLIENT
+    proxies = list(reversed([i.split('%')[0].strip() for i in xff.split(',')]))
+
+    # Remote addr is empty when using Unix sockets (nginx -> gunicorn)
+    if not ip:
+        ip = proxies[0] if proxies and proxies[0] else ''
+        proxies = proxies[1:]
+
+    ip_proxy = proxies[0] if proxies and proxies[0] else ip
+
+    if behind_proxy and is_trusted_ip_forwarder(ip):
+        ip = ip_proxy
+        ip_proxy = proxies[1] if len(proxies) > 1 else ip
+
+    # Normalise IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
+    if '.' in ip:
+        ip = ip.replace('::ffff:', '')
+        ip_proxy = ip_proxy.replace('::ffff:', '')
+
+    ip_version: typing.Literal[4, 6] = 4 if '.' in ip else 6
+
+    return types_net.IpInfo(ip=ip, ip_proxy=ip_proxy, ip_version=ip_version)
 
 
 def is_valid_host(host: str) -> bool:

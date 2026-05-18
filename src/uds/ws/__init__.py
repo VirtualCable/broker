@@ -1,83 +1,42 @@
 # -*- coding: utf-8 -*-
+
 #
-# Copyright (c) 2022-2026 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
 #
-# ...license...
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
+#    * Redistributions of source code must retain the above copyright notice,
+#      this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#      may be used to endorse or promote products derived from this software
+#      without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-WebSocket consumers for UDS.
-
-Consumers are the WebSocket equivalent of Django views.
-Subclass BaseUDSWebSocketConsumer and override handle_message().
+Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import json
-import logging
 
-from channels.generic.websocket import AsyncWebsocketConsumer
+import typing
 
-logger = logging.getLogger(__name__)
-
-
-class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer):
-    """
-    Base async WebSocket consumer for UDS.
-
-    Subclasses should override:
-        - authenticate() to validate the connecting client (return True/False)
-        - handle_message() to process incoming JSON messages
-    """
-
-    room_group_name: str = 'uds_default'
-
-    # --- Connection lifecycle ---
-
-    async def authenticate(self) -> bool:
-        """Override to validate the client. Return True to allow, False to reject."""
-        return True
-
-    async def connect(self) -> None:
-        if not await self.authenticate():
-            logger.warning('WebSocket rejected by authenticate()')
-            await self.close()
-            return
-
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        await self.accept()
-        logger.debug('WebSocket connected: %s', self.room_group_name)
-
-    async def disconnect(self, code: int) -> None:
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        logger.debug('WebSocket disconnected: %s (code: %s)', self.room_group_name, code)
-
-    # --- Message handling ---
-
-    async def receive(self, text_data: str | None = None, bytes_data: bytes | None = None) -> None:
-        """Parse incoming JSON and delegate to handle_message()."""
-        if text_data is None:
-            return  # ignore binary messages
-
-        try:
-            data = json.loads(text_data)
-        except json.JSONDecodeError:
-            await self.send(text_data=json.dumps({'error': 'Invalid JSON'}))
-            return
-
-        await self.handle_message(data)
-
-    async def handle_message(self, data: dict) -> None:
-        """Override this to process messages from the client."""
-        await self.send(text_data=json.dumps({'echo': data}))
-
-    # --- Group messaging helpers ---
-
-    async def send_to_group(self, event_type: str, payload: dict) -> None:
-        """Broadcast to all members of this consumer's room group."""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {'type': f'{event_type}.event', **payload},
-        )
-
-    async def broadcast_event(self, event: dict) -> None:
-        """Receive a group event and forward it to the WebSocket client."""
-        await self.send(text_data=json.dumps(event))
+"""
+WebSocket URL routing for the UDS app.
+Add your WebSocket routes here (equivalent to uds/urls.py for HTTP).
+"""
+websocket_urlpatterns: list[typing.Any] = [
+    # Add your WebSocket routes here, e.g.:
+    # re_path(r'^pool/(?P<pool_id>[0-9a-f-]+)/$', YourConsumer.as_asgi()),
+]

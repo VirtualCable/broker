@@ -30,6 +30,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 import dataclasses
+import typing
 
 
 @dataclasses.dataclass
@@ -37,3 +38,10 @@ class Iface:
     name: str
     mac: str
     ip: str
+
+
+@dataclasses.dataclass
+class IpInfo:
+    ip: str
+    ip_proxy: str
+    ip_version: typing.Literal[4, 6]

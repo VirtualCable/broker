@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
- Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 import datetime
 import logging
@@ -39,7 +39,6 @@ from uds.core.util import os_detector as OsDetector
 from uds.core.util.config import GlobalConfig
 from uds.core import consts, types
 from uds.core.auths.auth import (
-    is_trusted_ip_forwarder,
     root_user,
     weblogout,
 )
@@ -61,49 +60,17 @@ CHECK_SECONDS = 3600 * 24  # Once a day is more than enough
 
 def _fill_ips(request: 'ExtendedHttpRequest') -> None:
     """
-    Obtains the IP of a Django Request, even behind a proxy
-
-    Returns the obtained IP, that always will be a valid ip address.
+    Obtains the IP of a Django Request, even behind a proxy.
     """
-    behind_proxy = GlobalConfig.BEHIND_PROXY.as_bool(False)
+    from uds.core.util import net
 
-    request.ip = request.META.get('REMOTE_ADDR', '')
-
-    # X-FORWARDED-FOR: CLIENT, FAR_PROXY, PROXY, NEAR_PROXY, NGINX
-    # We will accept only 2 proxies, the last ones
-    # And the only trusted address, counting with NGINX, will be PROXY if behind_proxy is True
-    proxies = list(
-        reversed([i.split('%')[0].strip() for i in request.headers.get(consts.auth.X_FORWARDED_FOR_HEADER, '').split(",")])
+    info = net.recover_ips(
+        request.META.get('REMOTE_ADDR', ''),
+        request.headers.get(consts.auth.X_FORWARDED_FOR_HEADER, ''),
     )
-
-    # Original IP will be empty in case of nginx & gunicorn using sockets, as we do
-    if not request.ip:
-        request.ip = proxies[0]  # Stores the ip
-        proxies = proxies[1:]  # Remove from proxies list
-
-    request.ip_proxy = proxies[0] if proxies and proxies[0] else request.ip
-
-    # Basically, behind_proxy will ignore the LAST proxy, and will use the previous one
-    # as proxy_ip (if exists)
-    # So, with behind_proxy = True, and X-FORWARDED-FOR is (CLIENT, PROXY1, PROXY2, PROXY3) we will have:
-    #   request.ip = PROXY2
-    #   request.ip_proxy = PROXY1
-    # If behind_proxy = False, we will have:
-    #   request.ip = PROXY3
-    #   request.ip_proxy = PROXY2
-
-    if behind_proxy and is_trusted_ip_forwarder(request.ip):
-        request.ip = request.ip_proxy
-        request.ip_proxy = proxies[1] if len(proxies) > 1 else request.ip
-
-    # Check if ip are ipv6 and set version field
-    request.ip_version = 6 if '.' not in request.ip else 4
-
-    # If ipv4 ip, remove the ::ffff: prefix from ip and ip_proxy
-    if request.ip_version == 4:
-        request.ip = request.ip.replace('::ffff:', '')
-        request.ip_proxy = request.ip_proxy.replace('::ffff:', '')
-
+    request.ip = info.ip
+    request.ip_proxy = info.ip_proxy
+    request.ip_version = info.ip_version
     logger.debug('ip: %s, ip_proxy: %s', request.ip, request.ip_proxy)
 
 
@@ -112,7 +79,7 @@ def _get_user(request: 'ExtendedHttpRequest') -> None:
     Ensures request user is the correct user
     """
     user_id = request.session.get(consts.auth.SESSION_USER_KEY)
-    user: typing.Optional[User] = None
+    user: User | None = None
     if user_id:
         try:
             if user_id == consts.auth.ROOT_ID:
@@ -129,7 +96,7 @@ def _get_user(request: 'ExtendedHttpRequest') -> None:
     request.user = user
 
 
-def _process_request(request: 'ExtendedHttpRequest') -> typing.Optional['HttpResponse']:
+def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
     # Add IP to request, user, ...
     # Add IP to request
     _fill_ips(request)
@@ -160,9 +127,11 @@ def _process_request(request: 'ExtendedHttpRequest') -> typing.Optional['HttpRes
         request.session[consts.auth.SESSION_EXPIRY_KEY] = (
             now
             + datetime.timedelta(
-                seconds=GlobalConfig.SESSION_DURATION_ADMIN.as_int()
-                if request.user.is_staff()
-                else GlobalConfig.SESSION_DURATION_USER.as_int()
+                seconds=(
+                    GlobalConfig.SESSION_DURATION_ADMIN.as_int()
+                    if request.user.is_staff()
+                    else GlobalConfig.SESSION_DURATION_USER.as_int()
+                )
             )
         ).isoformat()  # store as ISO format, str, json serilizable
 

@@ -270,7 +270,7 @@ class User(UUIDModel, properties.PropertiesMixin):
         # Remove related stored values
         try:
             storage.StorageAsDict(
-                owner='manager' + str(to_delete.manager.uuid), group=None, atomic=False
+                owner='manager' + to_delete.manager.uuid, group=None, atomic=False
             ).clear()
         except Exception:
             logger.exception('Removing stored data')
