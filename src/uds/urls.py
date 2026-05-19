@@ -139,6 +139,12 @@ urlpatterns = [
         main.index,
         name='page.client-download',
     ),
+    # X509 Certificate authentication (nginx-managed)
+    re_path(
+        r'^uds/cert_auth/(?P<auth_uuid>[a-fA-F0-9-]+)/$',
+        auth.cert_auth,
+        name='page.auth.cert',
+    ),
     # Federated authentication
     re_path(
         r'^uds/page/auth/(?P<authenticator_name>[^/]+)$',

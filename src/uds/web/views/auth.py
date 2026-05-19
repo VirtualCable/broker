@@ -144,6 +144,51 @@ def auth_callback_stage2(request: 'ExtendedHttpRequestWithUser', ticket_id: str)
 
 
 @csrf_exempt
+def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
+    """
+    Endpoint for X509 Certificate authentication, managed by nginx.
+
+    Nginx requests a client certificate via TLS and passes
+    certificate info through headers:
+    - HTTP_X_CLIENT_CERT: PEM-encoded client certificate
+    - HTTP_X_CLIENT_SUBJECT: Client certificate subject DN
+    - HTTP_X_CLIENT_ISSUER: Client certificate issuer DN
+    - HTTP_X_CLIENT_VERIFY: SSL verify result
+
+    The authenticator is identified by the auth_uuid in the URL.
+    Only authenticators with auth_type_group == AuthTypeGroup.CERTIFICATE
+    are allowed.
+    """
+    try:
+        cert_pem = request.META.get('HTTP_X_CLIENT_CERT', '')
+        if not cert_pem:
+            raise exceptions.auth.InvalidUserException('No client certificate provided')
+
+        try:
+            authenticator = Authenticator.objects.get(uuid=auth_uuid)
+        except Authenticator.DoesNotExist:
+            raise exceptions.auth.InvalidAuthenticatorException()
+
+        auth_instance = authenticator.get_instance()
+
+        if auth_instance.auth_type_group != types.auth.AuthTypeGroup.CERTIFICATE:
+            raise exceptions.auth.InvalidAuthenticatorException()
+
+        params = types.auth.AuthCallbackParams.from_request(
+            request,
+            binary_data=cert_pem.encode() if isinstance(cert_pem, str) else cert_pem,
+        )
+        ticket = TicketStore.create({'params': params, 'auth': authenticator.uuid})
+        return HttpResponseRedirect(reverse('page.auth.callback_stage2', args=[ticket]))
+    except exceptions.auth.InvalidUserException:
+        return errors.error_view(request, types.errors.Error.ACCESS_DENIED)
+    except exceptions.auth.InvalidAuthenticatorException:
+        return errors.error_view(request, types.errors.Error.ACCESS_DENIED)
+    except Exception as e:
+        return errors.exception_view(request, e)
+
+
+@csrf_exempt
 def auth_info(request: 'HttpRequest', authenticator_name: str) -> HttpResponse:
     """
     This url is provided so authenticators can provide info (such as SAML metadata)

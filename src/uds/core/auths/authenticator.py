@@ -171,6 +171,9 @@ class Authenticator(Module):
     # : group class
     group_type: typing.ClassVar[type[Group]] = Group
 
+    # : Identifies the 'family' of authenticator for routing purposes
+    auth_type_group: typing.ClassVar[types.auth.AuthTypeGroup] = types.auth.AuthTypeGroup.GENERIC
+
     _db_obj: 'models.Authenticator | None' = None  # Cached dbAuth object
 
     def __init__(

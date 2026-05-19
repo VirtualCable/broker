@@ -68,6 +68,15 @@ class AuthenticationInternalUrl(enum.StrEnum):
         return reverse(self.value)
 
 
+class AuthTypeGroup(enum.IntEnum):
+    """
+    Identifies the 'family' of authenticator for routing purposes.
+    """
+
+    GENERIC = 0
+    CERTIFICATE = 1
+
+
 @dataclasses.dataclass(frozen=True)
 class AuthenticationResult:
     success: AuthenticationState
@@ -94,9 +103,10 @@ class AuthCallbackParams:
     get_params: 'QueryDict'
     post_params: 'QueryDict'
     query_string: str
+    binary_params: bytes | None = None
 
     @staticmethod
-    def from_request(request: 'HttpRequest') -> 'AuthCallbackParams':
+    def from_request(request: 'HttpRequest', binary_data: bytes | None = None) -> 'AuthCallbackParams':
         return AuthCallbackParams(
             https=request.is_secure(),
             host=request.META['HTTP_HOST'],
@@ -105,6 +115,7 @@ class AuthCallbackParams:
             get_params=request.GET.copy(),
             post_params=request.POST.copy(),
             query_string=request.META['QUERY_STRING'],
+            binary_params=binary_data,
         )
 
 
