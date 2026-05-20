@@ -88,7 +88,9 @@ class Config(Handler):
     }
 
     def get(self) -> typing.Any:
-        return CfgConfig.get_config_values(self.is_admin())
+        logger.debug('Getting config values for user %s', self.is_admin())
+
+        return CfgConfig.get_config_values(self.is_admin(), include_hidden=self._params.get('include_hidden', True))
 
     def put(self) -> typing.Any:
         for section, section_dict in typing.cast(dict[str, dict[str, dict[str, str]]], self._params).items():

@@ -284,7 +284,7 @@ class Config:
         return Config.Value(type=type, section=section, key=key, default=default, help=help)
 
     @staticmethod
-    def enumerate() -> collections.abc.Iterable['Config.Value']:
+    def enumerate(include_hidden: bool = False) -> collections.abc.Iterable['Config.Value']:
         GlobalConfig.initialize()  # Ensures DB contains all values
         for cfg in DBConfig.objects.all().order_by('key'):
             # Skip sections with name starting with "__" (not to be editted on configuration)
@@ -295,7 +295,7 @@ class Config:
             logger.debug('Key: %s, val: %s', cfg.section, cfg.key)
 
             # Hidden field, not to be edited by admin interface
-            if cfg.field_type == Config.FieldType.HIDDEN:
+            if cfg.field_type == Config.FieldType.HIDDEN and include_hidden is False:
                 continue
 
             logger.debug('%s.%s:%s,%s', cfg.section, cfg.key, cfg.value, cfg.field_type)
@@ -350,12 +350,13 @@ class Config:
     @staticmethod
     def get_config_values(
         include_passwords: bool = False,
+        include_hidden: bool = False,
     ) -> dict[str, dict[str, dict[str, typing.Any]]]:
         """
         Returns a dictionary with all config values
         """
         res: dict[str, dict[str, typing.Any]] = {}
-        for cfg in Config.enumerate():
+        for cfg in Config.enumerate(include_hidden=include_hidden):
             if cfg.get_type() == Config.FieldType.PASSWORD and include_passwords is False:
                 continue
 
@@ -364,7 +365,7 @@ class Config:
                 res[cfg.section()] = {}
             res[cfg.section()][cfg.key()] = {
                 # Password are now hashes, and cannot be reversed, so we do not show them
-                'value': cfg.get() if not cfg.get_type() == Config.FieldType.PASSWORD else '********',
+                'value': cfg.get() if cfg.get_type() not in (Config.FieldType.PASSWORD, Config.FieldType.HIDDEN) else '********',
                 'type': cfg.get_type(),
                 'params': cfg.get_params(),
                 'help': cfg.get_help(),

@@ -352,7 +352,7 @@ class Handler(abc.ABC):
         """
         True if user of this REST request is administrator and SOURCE is valid admint trusted sources
         """
-        return bool(self.recover_value('is_admin')) and self.is_ip_allowed()
+        return self._user.can_access(consts.UserRole.ADMIN) and self.is_ip_allowed()
 
     def is_staff_member(self) -> bool:
         """
