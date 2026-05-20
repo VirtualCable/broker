@@ -42,6 +42,7 @@ queries are expensive.
 
 Author: Virtual Cable S.L.
 """
+
 import datetime
 import logging
 import typing
@@ -56,6 +57,7 @@ from uds.REST import Handler
 
 # Report classes reused for their (already optimized) get_data() queries
 from uds.reports.lists.failed_logins import FailedLoginsReport
+from uds.reports.stats.base import StatsReport
 from uds.reports.stats.cache_efficiency import CacheEfficiencyReport
 from uds.reports.stats.client_platforms import ClientPlatformsReport
 from uds.reports.stats.peak_concurrency import PeakConcurrencyReport
@@ -85,26 +87,28 @@ def _report_data(
     report_cls: type['Report'],
     start_date: datetime.date,
     end_date: datetime.date,
-    **field_values: typing.Any,
 ) -> typing.Any:
     """
-    Instantiate a stats report, fill its date range (and any extra GUI field)
-    and return the result of its ``get_data()`` method.
+    Instantiate a stats report, fill its date range and return the result of
+    its ``get_data()`` method.
 
     ``init_gui()`` is intentionally not called: it only populates the choice
     fields shown on the report form, which ``get_data()`` does not need.
-    """
-    report = report_cls()
-    # All stats reports inherit a "pools" MultiChoiceField from StatsReport;
-    # '0-0-0-0' is the conventional "ALL POOLS" sentinel. Reports that ignore
-    # the field simply do not read it.
-    if isinstance(report, (PoolSaturationReport,)):
-        report.start_date.value = start_date
-        report.end_date.value = end_date
-        for name, value in field_values.items():
-            getattr(report, name).value = value
 
-    return report.get_data()  # type: ignore   // get data is present for sure
+    Reports that need extra GUI fields (TopUsersReport, FailedLoginsReport) are
+    built directly by their widget builder instead of going through this helper.
+    """
+    # Typed loosely: report instances expose date/pool GUI fields and get_data()
+    # dynamically per concrete class; the base Report does not declare them.
+    report: typing.Any = report_cls()
+    # Stats reports carry a "pools" MultiChoiceField; '0-0-0-0' is the ALL POOLS
+    # sentinel. List reports (e.g. FailedLoginsReport) have no pools field.
+    # Check report_cls (the type), not the instance, so `report` stays Any.
+    if issubclass(report_cls, StatsReport):
+        report.pools.value = ['0-0-0-0']
+    report.start_date.value = start_date
+    report.end_date.value = end_date
+    return report.get_data()
 
 
 class Dashboard(Handler):
@@ -178,7 +182,13 @@ class Dashboard(Handler):
             }
 
         def top_users() -> typing.Any:
-            return _report_data(TopUsersReport, start_date, end_date, top_n=TOP_ROWS, sort_by='time')
+            report: typing.Any = TopUsersReport()
+            report.pools.value = ['0-0-0-0']
+            report.start_date.value = start_date
+            report.end_date.value = end_date
+            report.top_n.value = TOP_ROWS
+            report.sort_by.value = 'time'
+            return report.get_data()
 
         def session_duration() -> typing.Any:
             rows, total_sessions, total_seconds = _report_data(SessionDurationReport, start_date, end_date)
@@ -195,7 +205,11 @@ class Dashboard(Handler):
             return per_pool[:TOP_ROWS]
 
         def failed_logins() -> typing.Any:
-            summary, _detail = _report_data(FailedLoginsReport, start_date, end_date, authenticator='0-0-0-0')
+            report: typing.Any = FailedLoginsReport()
+            report.start_date.value = start_date
+            report.end_date.value = end_date
+            report.authenticator.value = '0-0-0-0'
+            summary, _detail = report.get_data()
             return summary[:TOP_ROWS]
 
         return {
