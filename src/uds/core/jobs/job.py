@@ -44,9 +44,9 @@ class Job(Environmentable):
     frecuency: typing.ClassVar[int] = (
         24 * 3600 + 3
     )  # Defaults to a big one, and i know frecuency is written as frequency, but this is an "historical mistake" :)
-    frecuency_cfg: typing.ClassVar[
-        typing.Optional[Config.Value]
-    ] = None  # If we use a configuration variable from DB, we need to update the frecuency asap, but not before app is ready
+    frecuency_cfg: typing.ClassVar[Config.Value | None] = (
+        None  # If we use a configuration variable from DB, we need to update the frecuency asap, but not before app is ready
+    )
     friendly_name: typing.ClassVar[str] = 'Unknown'
 
     @classmethod
@@ -57,9 +57,7 @@ class Job(Environmentable):
         if cls.frecuency_cfg:
             try:
                 cls.frecuency = cls.frecuency_cfg.as_int(force=True)
-                logger.debug(
-                    'Setting frequency from DB setting for %s to %s', cls, cls.frecuency
-                )
+                logger.debug('Setting frequency from DB setting for %s to %s', cls, cls.frecuency)
             except Exception as e:
                 logger.error(
                     'Error setting default frequency for %s ()%s. Got default value of %s',
