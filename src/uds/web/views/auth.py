@@ -169,9 +169,9 @@ def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
         except Authenticator.DoesNotExist:
             raise exceptions.auth.InvalidAuthenticatorException()
 
-        auth_instance = authenticator.get_instance()
+        auth_type = authenticator.get_type()
 
-        if auth_instance.auth_type_group != types.auth.AuthTypeGroup.CERTIFICATE:
+        if auth_type.auth_type_group != types.auth.AuthTypeGroup.CERTIFICATE:
             raise exceptions.auth.InvalidAuthenticatorException()
 
         params = types.auth.AuthCallbackParams.from_request(

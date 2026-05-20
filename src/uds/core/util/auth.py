@@ -29,7 +29,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
 import collections.abc
 import re
 import logging
@@ -40,7 +39,7 @@ from uds.core.util import ensure
 logger = logging.getLogger(__name__)
 
 
-def validate_regex_field(field: ui.gui.TextField, field_value: typing.Optional[str] = None) -> None:
+def validate_regex_field(field: ui.gui.TextField, field_value: str | None = None) -> None:
     """
     Validates the multi line fields refering to attributes
     """
@@ -83,9 +82,7 @@ def get_attributes_regex_field(field: 'ui.gui.TextField|str') -> set[str]:
     return res
 
 
-def process_regex_field(
-    field: str, attributes: collections.abc.Mapping[str, typing.Union[str, list[str]]]
-) -> list[str]:
+def process_regex_field(field: str, attributes: collections.abc.Mapping[str, str | list[str]]) -> list[str]:
     """Proccesses a field, that can be a multiline field, and returns a list of values
 
     Args:
