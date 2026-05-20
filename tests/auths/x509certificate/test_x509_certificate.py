@@ -28,15 +28,15 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
-import typing
 from unittest import mock
+
+from django.http.request import QueryDict
 
 from tests.utils.test import UDSTestCase
 from uds.core import types, exceptions
 from uds.core.types.auth import AuthTypeGroup
 
 from uds.auths.X509Certificate.authenticator import (
-    X509CertificateAuthenticator,
     _verify_cert_signed_by_ca,
     _subject_to_mapping,
 )
@@ -129,8 +129,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -159,8 +159,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -179,8 +179,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
             )  # no binary_params
             gm = mock.MagicMock()
@@ -197,8 +197,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=wrong.client_pem.encode(),
             )
@@ -215,8 +215,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -234,8 +234,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -252,8 +252,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -271,8 +271,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -289,8 +289,8 @@ class TestAuthCallback(UDSTestCase):
                 host='test',
                 path='/',
                 port='443',
-                get_params={},
-                post_params={},
+                get_params=QueryDict(),
+                post_params=QueryDict(),
                 query_string='',
                 binary_params=fix.client_pem.encode(),
             )
@@ -300,7 +300,7 @@ class TestAuthCallback(UDSTestCase):
             self.assertEqual(result.success, types.auth.AuthenticationState.SUCCESS)
 
             # After auth_callback, realname should be stored
-            realname = instance.get_real_name(result.username)
+            realname = instance.get_real_name(result.username or '')
             self.assertEqual(realname, 'realnameuser')
 
     def test_get_real_name_fallback(self) -> None:
@@ -326,8 +326,8 @@ class TestGetJavascript(UDSTestCase):
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
             valid_uuid = 'a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5'
-            with mock.patch.object(instance, 'db_obj', return_value=mock.MagicMock(uuid=valid_uuid)):
-                js = instance.get_javascript(mock.MagicMock())
+            with mock.patch.object(instance, 'get_uuid', return_value=valid_uuid):
+                js = instance.get_javascript(mock.MagicMock()) or ''
                 self.assertIn(f'/uds/cert_auth/{valid_uuid}/', js)
                 self.assertIn('window.location', js)
 
@@ -335,7 +335,7 @@ class TestGetJavascript(UDSTestCase):
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
             valid_uuid = '00000000000000000000000000000000'
-            with mock.patch.object(instance, 'db_obj', return_value=mock.MagicMock(uuid=valid_uuid)):
+            with mock.patch.object(instance, 'get_uuid', return_value=valid_uuid):
                 js = instance.get_javascript(mock.MagicMock())
                 self.assertIsNotNone(js)
                 self.assertIsInstance(js, str)

@@ -264,7 +264,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
             return types.auth.FAILED_AUTH
 
     def get_javascript(self, request: 'ExtendedHttpRequest') -> str | None:
-        url = reverse('page.auth.cert', kwargs={'auth_uuid': self.db_obj().uuid})
+        url = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
         return f'window.location="{url}";'
 
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:

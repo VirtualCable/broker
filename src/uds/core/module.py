@@ -129,7 +129,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         self,
         environment: Environment,
         values: 'types.core.ValuesType' = None,
-        uuid: typing.Optional[str] = None,
+        uuid: str | None = None,
     ):
         """
         Do not forget to invoke this in your derived class using
@@ -189,7 +189,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
     def get_uuid(self) -> str:
         return self._uuid
 
-    def set_uuid(self, uuid: typing.Optional[str]) -> None:
+    def set_uuid(self, uuid: str | None) -> None:
         self._uuid = uuid or ''
 
     def destroy(self) -> None:
