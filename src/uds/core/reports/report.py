@@ -33,6 +33,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import codecs
 import logging
 import typing
+import abc
 
 from weasyprint import HTML, CSS, default_url_fetcher  # pyright: ignore[reportUnknownVariableType]
 
@@ -47,7 +48,7 @@ from . import stock
 logger = logging.getLogger(__name__)
 
 
-class Report(UserInterface):
+class Report(UserInterface, abc.ABC):
     mime_type: typing.ClassVar[str] = (
         'application/pdf'  # Report returns pdfs by default, but could be anything else
     )
@@ -80,7 +81,7 @@ class Report(UserInterface):
         super().__init__(values)
         self.initialize(values)
 
-    def initialize(self, values: typing.Optional[gui.ValuesType]) -> None:
+    def initialize(self, values: gui.ValuesType | None) -> None:
         """
         Invoked just right after initializing report, so we avoid rewriting __init__
         if values is None, we are initializing an "new" element, if values is a dict, is the values
@@ -89,6 +90,7 @@ class Report(UserInterface):
         This can be or can be not overriden
         """
 
+    @abc.abstractmethod
     def generate(self) -> 'bytes':
         """
         Generates the reports
@@ -108,7 +110,7 @@ class Report(UserInterface):
         if self.encoded:
             return codecs.encode(data, 'base64').decode().replace('\n', '')
         return data.decode('utf-8')
-
+    
     @classmethod
     def translated_name(cls) -> str:
         """
@@ -139,9 +141,9 @@ class Report(UserInterface):
     @staticmethod
     def as_pdf(
         html: str,
-        header: typing.Optional[str] = None,
-        water: typing.Optional[str] = None,
-        images: typing.Optional[dict[str, bytes]] = None,
+        header: str | None = None,
+        water: str | None = None,
+        images: dict[str, bytes] | None = None,
     ) -> bytes:
         """
         Renders an html as PDF.
@@ -160,7 +162,7 @@ class Report(UserInterface):
                 return {'string': image, 'mime_type': 'image/png'}
 
             if url.startswith('image://'):
-                img: typing.Optional[bytes] = b''  # Empty image
+                img: bytes | None = b''  # Empty image
                 if images:
                     img = images.get(url[8:])
                     logger.debug('Getting image %s? %s', url[8:], img is not None)
@@ -191,9 +193,9 @@ class Report(UserInterface):
     def template_as_pdf(
         template_name: str,
         dct: dict[str, typing.Any],
-        header: typing.Optional[str] = None,
-        water: typing.Optional[str] = None,
-        images: typing.Optional[dict[str, bytes]] = None,
+        header: str | None = None,
+        water: str | None = None,
+        images: dict[str, bytes] | None = None,
     ) -> bytes:
         """
         Renders a template as PDF

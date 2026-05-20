@@ -45,6 +45,7 @@ Author: Virtual Cable S.L.
 import datetime
 import logging
 import typing
+import collections.abc
 
 from uds import models
 from uds.core import consts, exceptions, types
@@ -97,13 +98,13 @@ def _report_data(
     # All stats reports inherit a "pools" MultiChoiceField from StatsReport;
     # '0-0-0-0' is the conventional "ALL POOLS" sentinel. Reports that ignore
     # the field simply do not read it.
-    if hasattr(report, 'pools'):
-        report.pools.value = ['0-0-0-0']
-    report.start_date.value = start_date
-    report.end_date.value = end_date
-    for name, value in field_values.items():
-        getattr(report, name).value = value
-    return report.get_data()
+    if isinstance(report, (PoolSaturationReport,)):
+        report.start_date.value = start_date
+        report.end_date.value = end_date
+        for name, value in field_values.items():
+            getattr(report, name).value = value
+
+    return report.get_data()  # type: ignore   // get data is present for sure
 
 
 class Dashboard(Handler):
@@ -131,17 +132,13 @@ class Dashboard(Handler):
             'assigned_user_services': users_with_valid_services.values('id').count(),
             'service_pools': models.ServicePool.objects.count(),
             'meta_pools': models.MetaPool.objects.count(),
-            'user_services': models.UserService.objects.exclude(
-                state__in=(State.REMOVED, State.ERROR)
-            ).count(),
+            'user_services': models.UserService.objects.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
             'restrained_service_pools': models.ServicePool.restraineds_queryset().count(),
             'authenticators': models.Authenticator.objects.count(),
-            'tunnels': models.Server.objects.filter(
-                type=types.servers.ServerType.TUNNEL
-            ).count(),
+            'tunnels': models.Server.objects.filter(type=types.servers.ServerType.TUNNEL).count(),
         }
 
-    def _widget(self, name: str, builder: typing.Callable[[], typing.Any]) -> typing.Any:
+    def _widget(self, name: str, builder: collections.abc.Callable[[], typing.Any]) -> typing.Any:
         """
         Run a single widget builder, isolating failures: a broken widget must
         not take the whole dashboard down with it.
@@ -173,9 +170,7 @@ class Dashboard(Handler):
             return _report_data(TunnelUsageReport, start_date, end_date)[:TOP_ROWS]
 
         def client_platforms() -> typing.Any:
-            platforms, browsers, _combo, total = _report_data(
-                ClientPlatformsReport, start_date, end_date
-            )
+            platforms, browsers, _combo, total = _report_data(ClientPlatformsReport, start_date, end_date)
             return {
                 'platforms': platforms[:TOP_ROWS],
                 'browsers': browsers[:TOP_ROWS],
@@ -183,14 +178,10 @@ class Dashboard(Handler):
             }
 
         def top_users() -> typing.Any:
-            return _report_data(
-                TopUsersReport, start_date, end_date, top_n=TOP_ROWS, sort_by='time'
-            )
+            return _report_data(TopUsersReport, start_date, end_date, top_n=TOP_ROWS, sort_by='time')
 
         def session_duration() -> typing.Any:
-            rows, total_sessions, total_seconds = _report_data(
-                SessionDurationReport, start_date, end_date
-            )
+            rows, total_sessions, total_seconds = _report_data(SessionDurationReport, start_date, end_date)
             avg_seconds = (total_seconds // total_sessions) if total_sessions else 0
             return {
                 'buckets': rows,
@@ -204,9 +195,7 @@ class Dashboard(Handler):
             return per_pool[:TOP_ROWS]
 
         def failed_logins() -> typing.Any:
-            summary, _detail = _report_data(
-                FailedLoginsReport, start_date, end_date, authenticator='0-0-0-0'
-            )
+            summary, _detail = _report_data(FailedLoginsReport, start_date, end_date, authenticator='0-0-0-0')
             return summary[:TOP_ROWS]
 
         return {
