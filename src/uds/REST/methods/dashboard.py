@@ -216,6 +216,9 @@ class Dashboard(Handler):
             'days': days,
             'since': since,
             'until': until,
+            # When this payload was built. Stays frozen in the cached copy, so
+            # the GUI "Updated" label reflects the real data age, not the fetch time.
+            'generated': until,
             'kpis': self._kpis(),
             'peak_concurrency': self._widget('peak_concurrency', peak_concurrency),
             'pool_saturation': self._widget('pool_saturation', pool_saturation),
@@ -237,9 +240,14 @@ class Dashboard(Handler):
         days = max(MIN_DAYS, min(MAX_DAYS, days))
 
         cache_key = f'dashboard-{days}'
-        cached: dict[str, typing.Any] | None = cache.get(cache_key)
-        if cached is not None:
-            return cached
+        # The GUI refresh button sends flush=1 to bypass the cached payload and
+        # force a rebuild from fresh queries; otherwise the range/timestamps and
+        # counters stay frozen for up to CACHE_TIME.
+        flush = str(self.query_params().get('flush', '')).lower() in ('1', 'true', 'yes')
+        if not flush:
+            cached: dict[str, typing.Any] | None = cache.get(cache_key)
+            if cached is not None:
+                return cached
 
         data = self._build(days)
         cache.put(cache_key, data, CACHE_TIME)
