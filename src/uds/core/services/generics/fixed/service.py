@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random  # Not for cryptographic purposes, just to randomize the assignation of machines
 import abc
 import contextlib
@@ -147,9 +148,16 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
             if not self.machines.value:
                 raise exceptions.ui.ValidationError(gettext('We need at least a machine'))
 
-            # Remove machines not in values from "assigned" set
+            # Do not allow removing machines that still have assigned user services.
+            # (their UserService rows would linger, counting against userservices_limit)
             with self._assigned_access() as assigned_vms:
-                assigned_vms &= set(self.machines.as_list())
+                removed_assigned = assigned_vms - set(self.machines.as_list())
+                if removed_assigned:
+                    raise exceptions.ui.ValidationError(
+                        gettext('Cannot remove machines with assigned services: {}').format(
+                            ', '.join(self.get_name(m) or m for m in sorted(removed_assigned))
+                        )
+                    )
             self.token.value = self.token.value.strip()
 
     @contextlib.contextmanager
