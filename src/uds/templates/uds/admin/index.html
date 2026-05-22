@@ -11,6 +11,12 @@
       height: 100%;
     }
 
+    /* Dark loading background: avoids the white flash when navigating in dark mode */
+    html.dark-theme,
+    html.dark-theme body {
+      background-color: #0f111a;
+    }
+
     .app-loading {
       position: relative;
       display: flex;
@@ -75,6 +81,13 @@
 
   <!-- just in case translations cannot be loaded, provide a fallback -->
   <script type="text/javascript">
+    // Apply the stored theme before first paint to avoid the white flash
+    try {
+      if (localStorage.getItem('blackTheme') === 'true') {
+        document.documentElement.classList.add('dark-theme');
+      }
+    } catch (e) { /* localStorage unavailable */ }
+
     django = {
       gettext: function (s) {
         return s;
@@ -101,6 +114,6 @@
       </svg>
     </div>
   </uds-root>
-<link rel="modulepreload" href="/uds/res/admin/chunk-4DTB3P4O.js?stamp=1779442788" integrity="sha384-gdNoIYDAixtoBX/GRVuVSRXdl8cXt8r/eRbf51/Rst7u92L8TkuZxd+S1QdPtX/B"><script src="/uds/res/admin/polyfills.js?stamp=1779442788" type="module" crossorigin="anonymous" integrity="sha384-Lov2zvNCUYj+QLZdfWW9mQb0bbObGhI6HGUI01dSPKR5uEce7CSjGPJFdCm8ZySE"></script><script src="/uds/res/admin/main.js?stamp=1779442788" type="module" crossorigin="anonymous" integrity="sha384-ZY2vWIXAgu+/uVVIVH8jvHesJ3ST46TH3KFmkyyScyLL6E1t6Tg/qzPixK/a0LH2"></script></body>
+<link rel="modulepreload" href="/uds/res/admin/chunk-4DTB3P4O.js?stamp=1779459056" integrity="sha384-gdNoIYDAixtoBX/GRVuVSRXdl8cXt8r/eRbf51/Rst7u92L8TkuZxd+S1QdPtX/B"><script src="/uds/res/admin/polyfills.js?stamp=1779459056" type="module" crossorigin="anonymous" integrity="sha384-Lov2zvNCUYj+QLZdfWW9mQb0bbObGhI6HGUI01dSPKR5uEce7CSjGPJFdCm8ZySE"></script><script src="/uds/res/admin/main.js?stamp=1779459056" type="module" crossorigin="anonymous" integrity="sha384-ZY2vWIXAgu+/uVVIVH8jvHesJ3ST46TH3KFmkyyScyLL6E1t6Tg/qzPixK/a0LH2"></script></body>
 
 </html>
