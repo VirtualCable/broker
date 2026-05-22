@@ -440,7 +440,6 @@ gettext("License expired");
 gettext("License expires in");
 gettext("days");
 gettext("License valid until");
-gettext("No license");
 gettext("Loading dashboard data...");
 gettext("Users");
 gettext("Groups");
