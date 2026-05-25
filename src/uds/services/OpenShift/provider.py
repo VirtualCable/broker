@@ -86,15 +86,23 @@ class OpenshiftProvider(ServiceProvider):
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field()
 
-    _cached_api: 'client.OpenshiftClient | None' = None  # Cached API client
+    _cached_api: 'client.OpenshiftClient | None' = None  # Cached API client — lock-free check-then-set benign here (worst case: duplicate client construct, no network I/O in __init__)
 
     def initialize(self, values: 'core_types.core.ValuesType') -> None:
-        # No port validation needed, URLs are used
-        pass
+        self._cached_api = None  # Force refresh on config change
+
+    def _urls_changed(self) -> bool:
+        return (
+            self._cached_api is not None
+            and (
+                self._cached_api.cluster_url != self.cluster_url.value
+                or self._cached_api.api_url != self.api_url.value
+            )
+        )
 
     @property
     def api(self) -> 'client.OpenshiftClient':
-        if self._cached_api is None:
+        if self._cached_api is None or self._urls_changed():
             self._cached_api = client.OpenshiftClient(
                 cluster_url=self.cluster_url.value,
                 api_url=self.api_url.value,
@@ -110,7 +118,7 @@ class OpenshiftProvider(ServiceProvider):
     def test_connection(self) -> bool:
         return self.api.test()
 
-    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT)
+    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: f'{x.cluster_url.value}|{x.api_url.value}|{x.username.value}|{x.namespace.value}|{x.verify_ssl.as_bool()}')
     def is_available(self) -> bool:
         return self.api.test()
 

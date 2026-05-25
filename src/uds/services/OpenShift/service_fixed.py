@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import logging
 import typing
@@ -48,7 +49,6 @@ if typing.TYPE_CHECKING:
 
 from .openshift import exceptions as oshift_exceptions
 from .openshift import exceptions as oshift_exceptions
-
 
 logger = logging.getLogger(__name__)
 

@@ -27,12 +27,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import typing
 import datetime
 import urllib.parse
 import logging
 import requests
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
 
 from uds.core.util import security
 from uds.core.util.cache import Cache
@@ -88,19 +91,33 @@ class OpenshiftClient:
 
     def get_token(self) -> str | None:
         try:
+            urllib3.disable_warnings(InsecureRequestWarning)
             url = (
                 f"{self.cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
             )
             r = requests.get(
-                url, auth=(self.username, self.password), timeout=15, allow_redirects=True, verify=False
+                url,
+                auth=(self.username, self.password),
+                timeout=15,
+                allow_redirects=False,
+                verify=self._verify_ssl,
             )
-            if "access_token=" not in r.url:
-                raise Exception("access_token not found in response URL")
-            token = r.url.split("access_token=")[1].split("&")[0]
+            if r.status_code not in (301, 302, 303, 307, 308):
+                raise exceptions.OpenshiftAuthError(
+                    f"Unexpected response status while fetching token: {r.status_code}"
+                )
+            location = r.headers.get('Location', '')
+            parsed = urllib.parse.urlparse(location)
+            params = urllib.parse.parse_qs(parsed.fragment) or urllib.parse.parse_qs(parsed.query)
+            token = params.get('access_token', [None])[0]
+            if not token:
+                raise exceptions.OpenshiftAuthError("access_token not found in redirect Location")
             return token
-        except Exception as ex:
-            logging.error(f"Could not obtain token: {ex}")
+        except exceptions.OpenshiftError:
             raise
+        except Exception as ex:
+            logger.error("Could not obtain token: %s", ex)
+            raise exceptions.OpenshiftConnectionError(str(ex))
 
     def connect(self, force: bool = False) -> requests.Session:
         # For testing, always use the fixed token
@@ -117,9 +134,7 @@ class OpenshiftClient:
     def get_api_url(self, path: str, *parameters: tuple[str, str]) -> str:
         url = self.api_url + path
         if parameters:
-            url += '?' + urllib.parse.urlencode(
-                parameters, doseq=True, safe='[]'
-            )
+            url += '?' + urllib.parse.urlencode(parameters, doseq=True, safe='[]')
         return url
 
     def do_request(
@@ -581,7 +596,11 @@ class OpenshiftClient:
             logger.error(f"Error testing Openshift by enumerating VMs: {e}")
             raise exceptions.OpenshiftConnectionError(str(e)) from e
 
-    @cached('vms', consts.CACHE_INFO_DURATION)
+    @cached(
+        'vms',
+        consts.CACHE_INFO_DURATION,
+        key_helper=lambda x: f'{x.cluster_url}|{x.api_url}|{x.username}|{x.namespace}|{x._verify_ssl}',
+    )
     def list_vms(self) -> collections.abc.Iterator[types.VM]:
         """
         Fetch all VMs from KubeVirt API in the current namespace as VMDefinition objects using do_request.

@@ -166,6 +166,8 @@ def create_client_mock() -> mock.Mock:
     client = mock.MagicMock()
 
     # Prepare deep copies of default data
+    client.cluster_url = PROVIDER_VALUES_DICT['cluster_url']
+    client.api_url = PROVIDER_VALUES_DICT['api_url']
     client.test.return_value = True
     client.list_vms.return_value = copy.deepcopy(DEF_VMS)
     client.start_vm_instance.return_value = True

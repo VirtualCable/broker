@@ -128,6 +128,86 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
             self.assertTrue(provider.api.stop_vm('vm-1'))
             self.assertTrue(provider.api.delete_vm('vm-1'))
 
+    # --- URL Change Detection ---
+    def test_urls_changed_none_cached_api(self) -> None:
+        """
+        _urls_changed() returns False when _cached_api is None.
+        """
+        provider = fixtures.create_provider()
+        provider._cached_api = None
+        self.assertFalse(provider._urls_changed())
+
+    def test_urls_changed_same_urls(self) -> None:
+        """
+        _urls_changed() returns False when cached client URLs match provider field values.
+        """
+        provider = fixtures.create_provider()
+        client_mock = fixtures.create_client_mock()
+        client_mock.cluster_url = fixtures.PROVIDER_VALUES_DICT['cluster_url']
+        client_mock.api_url = fixtures.PROVIDER_VALUES_DICT['api_url']
+        provider._cached_api = client_mock
+        self.assertFalse(provider._urls_changed())
+
+    def test_urls_changed_cluster_url_differs(self) -> None:
+        """
+        _urls_changed() returns True when cached client cluster_url differs.
+        """
+        provider = fixtures.create_provider()
+        client_mock = fixtures.create_client_mock()
+        client_mock.cluster_url = 'https://different-cluster.example.com'
+        client_mock.api_url = fixtures.PROVIDER_VALUES_DICT['api_url']
+        provider._cached_api = client_mock
+        self.assertTrue(provider._urls_changed())
+
+    def test_urls_changed_api_url_differs(self) -> None:
+        """
+        _urls_changed() returns True when cached client api_url differs.
+        """
+        provider = fixtures.create_provider()
+        client_mock = fixtures.create_client_mock()
+        client_mock.cluster_url = fixtures.PROVIDER_VALUES_DICT['cluster_url']
+        client_mock.api_url = 'https://different-api.example.com:6443'
+        provider._cached_api = client_mock
+        self.assertTrue(provider._urls_changed())
+
+    def test_initialize_resets_cached_api(self) -> None:
+        """
+        initialize() should set _cached_api to None to force refresh on config change.
+        """
+        provider = fixtures.create_provider()
+        provider._cached_api = mock.MagicMock()
+        provider.initialize({})
+        self.assertIsNone(provider._cached_api)
+
+    def test_api_recreates_client_when_urls_changed(self) -> None:
+        """
+        api property creates a new OpenshiftClient when URLs have changed.
+        """
+        provider = fixtures.create_provider()
+        old_client = fixtures.create_client_mock()
+        old_client.cluster_url = 'https://old-cluster.example.com'
+        old_client.api_url = 'https://old-api.example.com:6443'
+        provider._cached_api = old_client
+
+        with mock.patch('uds.services.OpenShift.provider.client.OpenshiftClient') as MockClient:
+            new_mock = mock.MagicMock()
+            MockClient.return_value = new_mock
+            result = provider.api
+            MockClient.assert_called_once()
+            self.assertIs(result, new_mock)
+
+    def test_api_reuses_client_when_urls_unchanged(self) -> None:
+        """
+        api property reuses the cached client when URLs haven't changed.
+        """
+        provider = fixtures.create_provider()
+        old_client = fixtures.create_client_mock()
+        old_client.cluster_url = fixtures.PROVIDER_VALUES_DICT['cluster_url']
+        old_client.api_url = fixtures.PROVIDER_VALUES_DICT['api_url']
+        provider._cached_api = old_client
+        result = provider.api
+        self.assertIs(result, old_client)
+
     # --- Name Sanitization ---
     def test_sanitized_name(self) -> None:
         """
