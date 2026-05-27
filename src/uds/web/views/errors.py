@@ -73,6 +73,6 @@ def error_message(request: 'HttpRequest', err: str) -> 'HttpResponse':
         err_int = 0
 
     return HttpResponse(
-        json.dumps({'error': types.errors.Error.from_int(err_int).message, 'code': str(err)}),
+        json.dumps({'error': types.errors.Error.from_int(err_int).message, 'code': err}),
         content_type='application/json',
     )
