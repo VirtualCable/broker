@@ -134,7 +134,7 @@ def sql_stamp() -> float:
     Returns:
         float: Unix timestamp
     """
-    return float(time.mktime(sql_now().timetuple())) + sql_now().microsecond / 1000000.0
+    return time.mktime(sql_now().timetuple()) + sql_now().microsecond / 1000000.0
 
 
 def generate_uuid() -> str:

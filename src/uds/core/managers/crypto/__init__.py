@@ -49,7 +49,7 @@ uuid7: None | collections.abc.Callable[[], 'uuid.UUID']
 try:
     from edwh_uuid7 import uuid7  # type: ignore
 except ImportError:
-    uuid7 = None  # type: ignore
+    uuid7 = None
 
 # For password secrets
 from argon2 import PasswordHasher, Type as ArgonType
