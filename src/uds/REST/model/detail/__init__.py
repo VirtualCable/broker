@@ -241,7 +241,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         if len(self._args) != 1:
             raise exceptions.rest.RequestError('Invalid DELETE request') from None
 
-        self.delete_item(parent, self._args[0])
+        self.delete_item(parent, process_uuid(self._args[0]))
 
         return consts.OK
 
@@ -369,7 +369,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             int: Position of the item in the default ordering, -1 if not found
         """
         # Find item in qs, may be none, then return -1
-        obj = qs.filter(uuid__iexact=item_uuid).first()
+        obj = qs.filter(uuid__iexact=process_uuid(item_uuid)).first()
         if obj:
             return model_utils.get_position_in_queryset(obj, qs)
         return -1

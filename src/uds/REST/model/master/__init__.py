@@ -239,7 +239,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             qs = qs.order_by('pk')
         
         # Find item in qs, may be none, then return -1
-        obj = qs.filter(uuid__iexact=item_uuid).first()
+        obj = qs.filter(uuid__iexact=model_utils.process_uuid(item_uuid)).first()
         if obj:
             return model_utils.get_position_in_queryset(obj, qs)
         return -1
@@ -257,11 +257,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
         """
 
-        # Basic model filter
-        qs = self.filter_model_queryset(query)
-
-        # Custom filtering from params (odata, etc)
-        qs = self.odata_filter(qs)
+        # Basic model filter +  Custom filtering from params (odata, etc)
+        qs = self.odata_filter(self.filter_model_queryset(query))
 
         for item in qs:
             try:

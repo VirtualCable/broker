@@ -216,7 +216,7 @@ class Tickets(Handler):
 
             # Will raise an exception if no auth found
             if auth_id:
-                auth = models.Authenticator.objects.get(uuid=process_uuid(auth_id.lower()))
+                auth = models.Authenticator.objects.get(uuid=process_uuid(auth_id))
             elif auth_name:
                 auth = models.Authenticator.objects.get(name=auth_name)
             else:

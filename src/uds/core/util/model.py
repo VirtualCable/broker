@@ -35,6 +35,7 @@ import logging
 import threading
 import datetime
 import time
+import re
 
 from django.db import connection
 from django.utils import timezone
@@ -44,6 +45,11 @@ from uds.core.managers.crypto import CryptoManager
 
 
 logger = logging.getLogger(__name__)
+
+_UUID_RE: typing.Final[typing.Pattern[str]] = re.compile(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    re.IGNORECASE,
+)
 
 CACHE_TIME_TIMEOUT: typing.Final[int] = 60  # Every 60 second, refresh the time from database (to avoid drifts)
 
@@ -147,7 +153,10 @@ def generate_uuid() -> str:
 def process_uuid(uuid: str) -> str:
     if isinstance(uuid, bytes):
         uuid = uuid.decode('utf8')
-    return uuid.lower()
+    uuid = uuid.lower()
+    if not _UUID_RE.match(uuid):
+        raise ValueError(f'Invalid UUID format: {uuid}')
+    return uuid
 
 
 def get_my_ip_from_db() -> str:

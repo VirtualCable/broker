@@ -160,6 +160,9 @@ class Dispatcher(View):
         except processors.ParametersException as e:
             return Dispatcher.error_response(http.HttpResponseBadRequest, handler, 'Invalid parameters', e)
 
+        except ValueError as e:
+            return Dispatcher.error_response(http.HttpResponseBadRequest, handler, 'Invalid value', e)
+
         except AttributeError:
             # Special case, allowed methods must be on response, so not using Dispatcher.error_response
             allowed_methods: list[str] = [n for n in ['get', 'post', 'put', 'delete'] if hasattr(handler, n)]
@@ -225,6 +228,8 @@ class Dispatcher(View):
             return Dispatcher.error_response(http.HttpResponseServerError, handler, 'Service error', e)
         except ObjectDoesNotExist as e:  # All DoesNotExist exceptions are not found
             return Dispatcher.error_response(http.HttpResponseNotFound, handler, 'Not found', e)
+        except ValueError as e:  #  I.e. invalid UUID, invalid parameters, etc
+            return Dispatcher.error_response(http.HttpResponseBadRequest, handler, 'Invalid value', e)
         except Exception as e:
             return Dispatcher.error_response(http.HttpResponseServerError, handler, 'Unexpected error', e)
 
