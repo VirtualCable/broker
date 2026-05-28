@@ -97,9 +97,9 @@ class GroupsTest(rest.test.RESTActorTestCase):
             group = response.json()
             self.assertTrue(rest.assertions.assert_group_is(i, group, compare_uuid=True))
 
-        # invalid user
+        # invalid group
         response = self.client.rest_get(f'{url}/invalid')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
 
     def test_group_create_edit(self) -> None:
         url = f'authenticators/{self.auth.uuid}/groups'

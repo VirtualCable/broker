@@ -114,7 +114,7 @@ class UsersTest(rest.test.RESTActorTestCase):
 
         # invalid user
         response = self.client.rest_get(f'{url}/invalid')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
 
     def test_users_log(self) -> None:
         url = f'authenticators/{self.auth.uuid}/users/'
@@ -126,7 +126,7 @@ class UsersTest(rest.test.RESTActorTestCase):
 
         # invalid user
         response = self.client.rest_get(url + 'invalid/log')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
 
     def test_user_create_edit(self) -> None:
         url = f'authenticators/{self.auth.uuid}/users'

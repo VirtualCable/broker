@@ -179,7 +179,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             case [consts.rest.GUI, for_type, *_fails]:
                 raise exceptions.rest.RequestError('Invalid GUI request') from None
             case [item_id, consts.rest.LOG]:
-                return self.get_logs(parent, item_id)
+                return self.get_logs(parent, process_uuid(item_id))
             case [consts.rest.LOG, *_fails]:
                 raise exceptions.rest.RequestError('Invalid log request') from None
             case [consts.rest.POSITION, item_uuid]:

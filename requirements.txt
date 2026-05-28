@@ -10,7 +10,6 @@ git+https://github.com/cannatag/ldap3.git
 pytest
 pytest-django
 lark
-ldap3
 aiosmtpd
 pillow
 cairosvg

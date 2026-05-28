@@ -487,7 +487,7 @@ class SAMLAuthenticator(auths.Authenticator):
                         timeout=10,
                     )
                     if resp.status_code != 200:
-                        raise Exception(f'Invalid response code: {resp.status_code} ({resp.content})')
+                        raise Exception(f'Invalid response code: {resp.status_code} ({resp.content!r})')
                     val = resp.content.decode()
                     # 10 years, unless edited the metadata will be kept
                     self.cache.put('idpMetadata', val, 86400 * 365 * 10)
