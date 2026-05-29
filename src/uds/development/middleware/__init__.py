@@ -26,26 +26,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import collections.abc
-import logging
 import typing
+import logging
 
-from django.http import HttpRequest
+from uds.middleware import builder
+
+if typing.TYPE_CHECKING:
+    from django.http import HttpResponse
+    from uds.core.types.requests import ExtendedHttpRequest
 
 logger = logging.getLogger(__name__)
 
 
-class RequestDebugMiddleware:
-    """
-    Used for logging some request data on develeopment
-    """
+def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
+    logger.info('Request: %s', request)
+    return None
 
-    def __init__(self, get_response: collections.abc.Callable[[typing.Any], typing.Any]):
-        self.get_response = get_response
 
-    def __call__(self, request: HttpRequest) -> typing.Any:
-        logger.info('Request: %s', request)
+def _process_response(request: 'ExtendedHttpRequest', response: 'HttpResponse') -> 'HttpResponse':
+    return response
 
-        response = self.get_response(request)
 
-        return response
+RequestDebugMiddleware = builder.build_middleware(_process_request, _process_response)

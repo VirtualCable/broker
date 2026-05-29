@@ -33,9 +33,8 @@ import logging
 import typing
 import collections.abc
 
+from asgiref.sync import sync_to_async
 from django.utils.decorators import sync_and_async_middleware
-
-from django.conf import settings
 
 from django.http import HttpResponse
 from uds.core.types.requests import ExtendedHttpRequest
@@ -58,20 +57,19 @@ def build_middleware(
 ]:
     """
     Creates a method to be used as a middleware, synchronously or asynchronously.
-    Currently, the is forced to sync an production, but it will be changed in the future to allow async
     """
 
     @sync_and_async_middleware
     def middleware(
         get_response: typing.Any,
     ) -> collections.abc.Callable[..., typing.Any] | collections.abc.Coroutine[typing.Any, None, None]:
-        if settings.DEBUG and inspect.iscoroutinefunction(get_response):
+        if inspect.iscoroutinefunction(get_response):
 
             async def async_middleware(
                 request: 'ExtendedHttpRequest',
             ) -> 'HttpResponse':
-                response = request_processor(request)
-                return response_processor(request, response or await get_response(request))
+                response = await sync_to_async(request_processor)(request)
+                return await sync_to_async(response_processor)(request, response or await get_response(request))
 
             return async_middleware
 
