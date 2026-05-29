@@ -51,73 +51,32 @@ https://thincast.com/en/products/client|Download from here
 ${msrd_li}
 `;
 
-// CLI binaries (run directly via exec). Returns the first resolved path, or null.
-function firstExecutable(names) {
-    for (const name of names) {
-        const path = Process.findExecutable(name);
-        if (path) {
-            return path;
-        }
-    }
-    return null;
-}
+const msrdExecutable = data.allow_msrdc ? msrdc_list.find(p => File.isDirectory(p)) : null;
+const udsrdpExecutable = Process.findExecutable('udsrdp') ? 'udsrdp' : null;
+const xfreeRdpExecutable = ['xfreerdp', 'xfreerdp3', 'xfreerdp2'].find(e => Process.findExecutable(e));
+const thincastExecutable = thincast_list.find(p => File.isDirectory(p));
+const executablePath = udsrdpExecutable || thincastExecutable || xfreeRdpExecutable;
 
-const udsrdpPath = Process.findExecutable('udsrdp');
-const xfreeRdpPath = firstExecutable(['xfreerdp', 'xfreerdp3', 'xfreerdp2']);
-// .app bundles (must be launched through `open -a`). msrdBundle stays null unless explicitly allowed.
-const thincastBundle = thincast_list.find(p => File.isDirectory(p));
-const msrdBundle = data.allow_msrdc ? msrdc_list.find(p => File.isDirectory(p)) : null;
-
-async function launchCli(exe) {
-    Logger.info(`Using RDP CLI client at ${exe}`);
-    let params;
+let params = [];
+// First preference is udsrdp, then thincast, then freerdp and then msrdc (if allowed)
+if (executablePath) {
+    Logger.info(`Using RDP client at ${executablePath}`);
     if (data.as_file) {
-        const rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file, 'rdp');
+        let rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file, 'rdp');
         Tasks.addEarlyUnlinkableFile(rdpFilePath);
-        params = [data.password ? `/p:${data.password}` : '/p:', rdpFilePath];
+        params = [executablePath, '--args', data.password ? `/p:${data.password}` : '/p:', rdpFilePath];
     } else {
-        params = [`/v:${data.address}`, ...(await fixSizeParameter(data.freerdp_params))];
+        params = [executablePath, `/v:${data.address}`, ...(await fixSizeParameter(data.freerdp_params))];
     }
-    Process.launch(exe, params);
-}
-
-async function launchThincast() {
-    Logger.info(`Using Thincast at ${thincastBundle}`);
-    let openArgs;
-    if (data.as_file) {
-        const rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file, 'rdp');
-        Tasks.addEarlyUnlinkableFile(rdpFilePath);
-        openArgs = ['-a', thincastBundle, '--args', data.password ? `/p:${data.password}` : '/p:', rdpFilePath];
-    } else {
-        const xfparms = await fixSizeParameter(data.freerdp_params);
-        openArgs = ['-a', thincastBundle, '--args', `/v:${data.address}`, ...xfparms];
-    }
-    Process.launch('/usr/bin/open', openArgs);
-}
-
-function launchMsrdc() {
-    Logger.info(`Using MSRDC at ${msrdBundle}`);
-    const rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file, 'rdp');
+} else if (msrdExecutable) {
+    let rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file, 'rdp');
     Tasks.addEarlyUnlinkableFile(rdpFilePath);
-    // The .rdp must be handed to the app as a document operand (openDocument event), NOT behind
-    // `--args`. With `--args` the path lands in the app's argv, which the modern "Windows App"
-    // (and Microsoft Remote Desktop) does not parse, yielding "The RDP file is not valid".
-    Process.launch('/usr/bin/open', ['-a', msrdBundle, rdpFilePath]);
-}
-
-// Preference order (per transport configuration):
-//   udsrdp first always.
-//   If allow_msrdc is enabled at the transport AND msrdc is available with an as_file, msrdc is second.
-//   Then thincast, then xfreerdp.
-if (udsrdpPath) {
-    await launchCli(udsrdpPath);
-} else if (msrdBundle && data.as_file) {
-    launchMsrdc();
-} else if (thincastBundle) {
-    await launchThincast();
-} else if (xfreeRdpPath) {
-    await launchCli(xfreeRdpPath);
+    // Open the .rdp as a file (open -a APP FILE); behind --args the app can't parse it.
+    params = ['-a', msrdExecutable, rdpFilePath];
 } else {
     Logger.error('No RDP client found on system');
     throw new Error(errorString);
 }
+
+// On MacOS, we do not need to wait for the app to end, just launch it
+Process.launch('/usr/bin/open', params);
