@@ -51,11 +51,19 @@ https://thincast.com/en/products/client|Download from here
 ${msrd_li}
 `;
 
-// CLI binaries (run directly via exec). findExecutable returns the resolved path or null.
+// CLI binaries (run directly via exec). Returns the first resolved path, or null.
+function firstExecutable(names) {
+    for (const name of names) {
+        const path = Process.findExecutable(name);
+        if (path) {
+            return path;
+        }
+    }
+    return null;
+}
+
 const udsrdpPath = Process.findExecutable('udsrdp');
-const xfreeRdpPath = ['xfreerdp', 'xfreerdp3', 'xfreerdp2']
-    .map(e => Process.findExecutable(e))
-    .find(p => p);
+const xfreeRdpPath = firstExecutable(['xfreerdp', 'xfreerdp3', 'xfreerdp2']);
 // .app bundles (must be launched through `open -a`). msrdBundle stays null unless explicitly allowed.
 const thincastBundle = thincast_list.find(p => File.isDirectory(p));
 const msrdBundle = data.allow_msrdc ? msrdc_list.find(p => File.isDirectory(p)) : null;
