@@ -107,6 +107,7 @@ class RDPTransport(BaseRDPTransport):
     def initialize(self, values: 'types.core.ValuesType') -> None:
         super().initialize(values)
         self.check_rdp_can_be_signed()
+        self.check_mac_msrdc()
 
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
