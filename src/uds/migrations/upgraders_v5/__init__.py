@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,8 +32,9 @@ Author: Adolfo Gomez, dkmaster at dkmon dot com
 # pyright: reportUnusedImport=false
 import typing
 
-from .services import upgrade_all_user_services
-
+from .services import upgrade_all_user_services, upgrade_all_publications, upgrade_all_providers
+from .auths import upgrade_authenticators
+from .osmanagers import upgrade_osmanagers
 
 if typing.TYPE_CHECKING:
     from django.apps.registry import Apps
@@ -43,10 +44,14 @@ def perform_upgrade(apps: 'Apps', schema_editor: 'BaseDatabaseSchemaEditor') -> 
     """
     Entry point for migration 0051 RunPython.
 
-    Iterates over all registered service types and forces lazy upgrade
-    of legacy UserService data (old format → AutoSerializable).
+    Forces lazy upgrade of legacy UserService and Publication data
+    (old format → AutoSerializable) for all registered service types.
     """
-    upgrade_all_user_services(apps)
+    upgrade_all_user_services()
+    upgrade_all_publications()
+    upgrade_all_providers()
+    upgrade_authenticators()
+    upgrade_osmanagers()
 
 
 def noop_reverse(apps: 'Apps', schema_editor: 'BaseDatabaseSchemaEditor') -> None:

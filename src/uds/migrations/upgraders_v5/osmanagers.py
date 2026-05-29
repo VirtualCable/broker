@@ -29,31 +29,55 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
-from .common import upgrade_user_services, upgrade_publications, upgrade_providers, upgrade_services
-from .service_types import SERVICE_TYPES, PROVIDER_TYPES
+import base64
+import dataclasses
+import logging
+import typing
+
+from django.db import models
+
+from uds.core.util.autoserializable import HEADER_BASE, HEADER_COMPRESSED, HEADER_ENCRYPTED
+from uds.models import OSManager
+
+logger = logging.getLogger(__name__)
+
+_NEW_FORMAT_PREFIXES: typing.Final[tuple[str, ...]] = tuple(
+    base64.b64encode(h).decode() for h in (HEADER_BASE, HEADER_COMPRESSED, HEADER_ENCRYPTED)
+)
 
 
-def upgrade_all_user_services() -> dict[str, int]:
+@dataclasses.dataclass(frozen=True)
+class OSManagerTypeInfo:
+    name: str = ''
+
+
+OSMANAGER_TYPES: typing.Final[dict[str, OSManagerTypeInfo]] = {
+    'LinuxManager': OSManagerTypeInfo(name='Linux OS Manager'),
+    'LinRandomPasswordManager': OSManagerTypeInfo(name='Linux Random Password'),
+    'WinDomainManager': OSManagerTypeInfo(name='Windows Domain'),
+    'WindowsManager': OSManagerTypeInfo(name='Windows OS Manager'),
+    'WinRandomPasswordManager': OSManagerTypeInfo(name='Windows Random Password'),
+}
+
+
+def upgrade_osmanagers() -> dict[str, int]:
     results: dict[str, int] = {}
-    for type_type, info in SERVICE_TYPES.items():
-        if info.us:
-            results[type_type] = upgrade_user_services(type_type)
-    return results
+    for type_type in OSMANAGER_TYPES:
+        qs = OSManager.objects.filter(data_type=type_type)
 
+        exclude_q = models.Q()
+        for prefix in _NEW_FORMAT_PREFIXES:
+            exclude_q |= models.Q(data__startswith=prefix)
+        qs = qs.exclude(exclude_q)
 
-def upgrade_all_publications() -> dict[str, int]:
-    results: dict[str, int] = {}
-    for type_type, info in SERVICE_TYPES.items():
-        if info.pub:
-            results[type_type] = upgrade_publications(type_type)
-    return results
+        upgraded = 0
+        for osm in qs.iterator(chunk_size=100):
+            try:
+                osm.get_instance()
+                upgraded += 1
+            except Exception:
+                logger.exception('Error upgrading OSManager %s', osm.uuid)
 
-
-def upgrade_all_providers() -> dict[str, int]:
-    results: dict[str, int] = {}
-    for type_type, info in PROVIDER_TYPES.items():
-        if info.prov:
-            results[type_type] = upgrade_providers(type_type)
-        if info.svc:
-            results[type_type] = upgrade_services(type_type)
+        logger.info('Upgraded %d OSManagers for %s', upgraded, type_type)
+        results[type_type] = upgraded
     return results

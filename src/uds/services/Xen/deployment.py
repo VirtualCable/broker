@@ -117,8 +117,8 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
             self._mac = vals[3].decode('utf8')
             self._vmid = vals[4].decode('utf8')
             self._reason = vals[5].decode('utf8')
-            self._queue = [
-                i.as_operation() for i in typing.cast(list[OldOperation], pickle.loads(vals[6]))
+            self._queue = [  # pyrefly: ignore
+                OldOperation(i).as_operation() for i in typing.cast(list[OldOperation], pickle.loads(vals[6]))
             ]  # nosec: not insecure, we are loading our own data
             self._task = vals[7].decode('utf8')
 

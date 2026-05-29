@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -35,52 +35,40 @@ import typing
 
 @dataclasses.dataclass(frozen=True)
 class ServiceTypeInfo:
-    """Metadata for one service type to be upgraded."""
+    us: bool = True
+    pub: bool = False
 
-    us: bool = True   # Has legacy UserService records to check
-    pub: bool = False  # Has legacy Publication records to check
+
+@dataclasses.dataclass(frozen=True)
+class ProviderTypeInfo:
+    prov: bool = True
+    svc: bool = False
 
 
 SERVICE_TYPES: typing.Final[dict[str, ServiceTypeInfo]] = {
-    # Xen
     'XenLinkedService': ServiceTypeInfo(us=True, pub=True),
-    'XenFixedService': ServiceTypeInfo(us=True, pub=False),
-    # Proxmox
     'ProxmoxLinkedService': ServiceTypeInfo(us=True, pub=True),
-    # OVirt
     'oVirtLinkedService': ServiceTypeInfo(us=True, pub=True),
-    # OpenStack
     'openStackLiveService': ServiceTypeInfo(us=True, pub=True),
-    # OpenNebula
     'openNebulaLiveService': ServiceTypeInfo(us=True, pub=True),
-    # OpenGnsys
-    'openGnsysMachine': ServiceTypeInfo(us=True, pub=True),
-    # Nutanix
+    'openGnsysMachine': ServiceTypeInfo(us=True, pub=False),
     'NutanixService': ServiceTypeInfo(us=True, pub=True),
-    'NutanixFixedService': ServiceTypeInfo(us=True, pub=False),
-    # Nutanix Prism (Central)
     'PrismCentralService': ServiceTypeInfo(us=True, pub=True),
-    'PrismCentralFixedService': ServiceTypeInfo(us=True, pub=False),
-    # HyperV
     'HyperVLinkedServiceNew': ServiceTypeInfo(us=True, pub=True),
     'HyperVLinkedServiceNewGen2': ServiceTypeInfo(us=True, pub=True),
-    'HyperVFixedService': ServiceTypeInfo(us=True, pub=False),
-    # RDS
     'RemoteAppService': ServiceTypeInfo(us=True, pub=False),
     'RemoteSessionService': ServiceTypeInfo(us=True, pub=False),
-    # VCloud
     'VCloudVapp': ServiceTypeInfo(us=True, pub=True),
-    # AWS
     'AWSEAMI': ServiceTypeInfo(us=True, pub=True),
-    'AWSFixedService': ServiceTypeInfo(us=True, pub=False),
-    # Azure
     'AzureVm': ServiceTypeInfo(us=True, pub=True),
-    'AzureFixedService': ServiceTypeInfo(us=True, pub=False),
-    # Physical Machines
     'IPSingleMachineService': ServiceTypeInfo(us=True, pub=False),
-    'IPMachinesService': ServiceTypeInfo(us=True, pub=False),
-    # Vmware
     'VCLinkedCloneService': ServiceTypeInfo(us=True, pub=True),
     'VCFullCloneService': ServiceTypeInfo(us=True, pub=True),
     'VCFixedMachinesService': ServiceTypeInfo(us=True, pub=False),
+}
+
+# Only provider/service types with unmarshal + mark_for_upgrade in their source
+PROVIDER_TYPES: typing.Final[dict[str, ProviderTypeInfo]] = {
+    'VmwareVCServiceProvider': ProviderTypeInfo(prov=True, svc=False),
+    'VCLinkedCloneService': ProviderTypeInfo(prov=False, svc=True),
 }

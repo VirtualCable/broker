@@ -256,7 +256,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         if op == Operation.FINISH:
             return types.states.TaskState.FINISHED
 
-        fncs: dict[int, typing.Optional[collections.abc.Callable[[], str]]] = {
+        fncs: dict[int, collections.abc.Callable[[], str]|None] = {
             Operation.CREATE: self._create,
             Operation.RETRY: self._retry,
             Operation.REMOVE: self._remove,
@@ -264,7 +264,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         }
 
         try:
-            exec_fnc: typing.Optional[collections.abc.Callable[[], str]] = fncs.get(op)
+            exec_fnc  = fncs.get(op)
 
             if exec_fnc is None:
                 return self._error(f'Unknown operation found at execution queue ({op})')
@@ -375,7 +375,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         if op == Operation.FINISH:
             return types.states.TaskState.FINISHED
 
-        fncs: dict[Operation, typing.Optional[collections.abc.Callable[[], types.states.TaskState]]] = {
+        fncs: dict[Operation, collections.abc.Callable[[], types.states.TaskState] | None] = {
             Operation.CREATE: self._create_checker,
             Operation.RETRY: self._retry,
             Operation.REMOVE: self._removed_checker,
@@ -383,7 +383,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         }
 
         try:
-            check_fnc: typing.Optional[typing.Optional[collections.abc.Callable[[], types.states.TaskState]]] = fncs.get(op)
+            check_fnc = fncs.get(op)
 
             if check_fnc is None:
                 return self._error(f'Unknown operation found at check queue ({op})')
