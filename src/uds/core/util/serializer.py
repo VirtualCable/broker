@@ -68,7 +68,7 @@ def serialize(obj: typing.Any) -> bytes:
     return CURRENT_SERIALIZER_VERSION + data
 
 
-def deserialize(data: typing.Optional[bytes]) -> typing.Any:
+def deserialize(data: bytes | None) -> typing.Any:
     """
     Deserializes an object from a json string
     """

@@ -73,7 +73,7 @@ UNASSIGNED: typing.Final[_Unassigned] = _Unassigned()
 T = typing.TypeVar('T')
 V = typing.TypeVar('V')
 
-DefaultValueType = T | collections.abc.Callable[[], T] | _Unassigned
+DefaultValueType: typing.TypeAlias = T | collections.abc.Callable[[], T] | _Unassigned
 
 logger = logging.getLogger(__name__)
 
@@ -672,7 +672,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
     def marshal(self) -> bytes:
         # Iterate over own members and extract fields
         fields: list[_MarshalInfo] = [
-            _MarshalInfo(name=v.name, type_name=str(v.__class__.__name__), value=v.marshal(self))
+            _MarshalInfo(name=v.name, type_name=v.__class__.__name__, value=v.marshal(self))
             for _, v in self._autoserializable_fields()
         ]
         self._dirty = False  # Marshal resets dirty flag
@@ -728,7 +728,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
 
         for _, v in self._autoserializable_fields():
             if v.name in fields:
-                if fields[v.name].type_name == str(v.__class__.__name__):
+                if fields[v.name].type_name == v.__class__.__name__:
                     v.unmarshal(self, fields[v.name].value)
                 else:
                     logger.warning(
