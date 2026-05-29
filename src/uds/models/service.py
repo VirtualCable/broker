@@ -114,7 +114,7 @@ class Service(ManagedObjectModel, TaggingMixin):
             self.id,
         )
 
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'services.Service':
+    def get_instance(self, values: dict[str, str] | None = None) -> 'services.Service':
         """
         Instantiates the object this record contains.
 
@@ -170,7 +170,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         # orphaned services?
         return self.provider.is_in_maintenance() if self.provider else True
 
-    def test_connectivity(self, host: str, port: typing.Union[str, int], timeout: float = 4) -> bool:
+    def test_connectivity(self, host: str, port: str | int, timeout: float = 4) -> bool:
         return net.test_connectivity(host, int(port), timeout)
 
     def notify_preconnect(self, userservice: 'UserService', info: 'types.connections.ConnectionData') -> None:

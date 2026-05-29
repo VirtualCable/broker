@@ -58,7 +58,7 @@ class ManagedObjectModel(UUIDModel):
     data = models.TextField(default='')
     comments = models.CharField(max_length=256)
 
-    _cached_instance: typing.Optional['Module'] = None
+    _cached_instance: 'Module | None' = None
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """
@@ -73,7 +73,7 @@ class ManagedObjectModel(UUIDModel):
         """
         return Environment.environment_for_table_record(self._meta.verbose_name or self._meta.db_table, self.id)
 
-    def deserialize(self, obj: 'Module', values: typing.Optional[collections.abc.Mapping[str, str]]) -> None:
+    def deserialize(self, obj: 'Module', values: collections.abc.Mapping[str, str] | None) -> None:
         """
         Conditionally deserializes obj if not initialized via user interface and data holds something
         """
@@ -88,7 +88,7 @@ class ManagedObjectModel(UUIDModel):
                 self.save(update_fields=['data'])
                 obj.mark_for_upgrade(False)
 
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'Module':
+    def get_instance(self, values: dict[str, str] | None = None) -> 'Module':
         """
         Instantiates the object this record contains.
 
