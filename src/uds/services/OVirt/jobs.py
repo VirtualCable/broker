@@ -53,9 +53,13 @@ logger = logging.getLogger(__name__)
 
 
 class OVirtDeferredRemoval(jobs.Job):
-    frecuency = 60 * 5  # Once every NN minutes
     friendly_name = 'Ovirt removal'
     counter = 0
+
+    def next_execution_delay(self) -> int:
+        return 60 * 5
+
+
 
     @staticmethod
     def remove(instance: 'OVirtProvider', vmid: str) -> None:

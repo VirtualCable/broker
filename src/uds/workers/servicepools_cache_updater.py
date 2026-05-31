@@ -64,11 +64,10 @@ class ServiceCacheUpdater(Job):
     This is included as a scheduled task that will run every X seconds, and scheduler will keep it so it will be only executed by one backend at a time
     """
 
-    frecuency = 19
-    frecuency_cfg = (
-        GlobalConfig.CACHE_CHECK_DELAY
-    )  # Request run cache manager every configured seconds (defaults to 20 seconds).
     friendly_name = 'Service Cache Updater'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.CACHE_CHECK_DELAY.as_int()
 
     @staticmethod
     def _notify_restrain(servicepool: 'ServicePool') -> None:

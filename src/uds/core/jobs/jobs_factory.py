@@ -30,7 +30,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import datetime
 import logging
 import typing
 
@@ -57,26 +56,17 @@ class JobsFactory(factory.Factory['Job']):
             # Ensure workers are initialized
             # That is, dynamic load of packages and registration of jobs on manager
             workers.initialize()
-            for name, type_ in self.objects().items():
+            for name, _type in self.objects().items():
                 try:
-                    type_.setup()
-                    # We use database server datetime
                     now = sql_now()
-                    next_ = now
                     Scheduler.objects.create(
                         name=name,
-                        frecuency=type_.frecuency,
                         last_execution=now,
-                        next_execution=next_,
+                        next_execution=now,
                         state=State.FOR_EXECUTE,
                     )
                 except Exception:  # already exists
                     logger.debug('Already added %s', name)
-                    job = Scheduler.objects.get(name=name)
-                    job.frecuency = type_.frecuency
-                    if job.next_execution > job.last_execution + datetime.timedelta(seconds=type_.frecuency):
-                        job.next_execution = job.last_execution + datetime.timedelta(seconds=type_.frecuency)
-                    job.save()
         except Exception as e:
             logger.debug(
                 'Exception at ensure_jobs_registered in JobsFactory: %s, %s',

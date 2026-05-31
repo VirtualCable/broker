@@ -56,8 +56,10 @@ def execution_timer() -> 'utils.ExecutionTimer':
 
 
 class DeferredDeletionWorker(Job):
-    frecuency = 7  # Frequency for this job, in seconds
     friendly_name = 'Deferred deletion runner'
+
+    def next_execution_delay(self) -> int:
+        return 7
 
     @staticmethod
     def add(service: 'DynamicService', vmid: str, execute_later: bool = False) -> None:

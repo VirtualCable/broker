@@ -53,8 +53,12 @@ logger = logging.getLogger(__name__)
 
 
 class ProxmoxDeferredRemoval(jobs.Job):
-    frecuency = 60 * 3  # Once every NN minutes
     friendly_name = 'Proxmox removal'
+
+    def next_execution_delay(self) -> int:
+        return 60 * 3
+
+
     counter = 0
 
     def get_vmid_stored_data_from(self, data: bytes) -> tuple[int, bool]:
@@ -156,8 +160,12 @@ class ProxmoxDeferredRemoval(jobs.Job):
 
 
 class ProxmoxVmidReleaser(jobs.Job):
-    frecuency = 60 * 60 * 24 * 30  # Once a month
     friendly_name = 'Proxmox maintenance'
+
+    def next_execution_delay(self) -> int:
+        return 60 * 60 * 24 * 30
+
+
 
     def run(self) -> None:
         logger.debug('Proxmox Vmid releader running')

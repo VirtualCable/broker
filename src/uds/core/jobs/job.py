@@ -32,39 +32,23 @@ import logging
 import typing
 
 from uds.core.environment import Environmentable
-from uds.core.util.config import Config
 
 
 logger = logging.getLogger(__name__)
 
 
 class Job(Environmentable):
-    # Default frecuency, once a day. Remenber that precision will be based on "granurality" of Scheduler
-    # If a job is used for delayed execution, this attribute is in fact ignored
-    frecuency: typing.ClassVar[int] = (
-        24 * 3600 + 3
-    )  # Defaults to a big one, and i know frecuency is written as frequency, but this is an "historical mistake" :)
-    frecuency_cfg: typing.ClassVar[Config.Value | None] = (
-        None  # If we use a configuration variable from DB, we need to update the frecuency asap, but not before app is ready
-    )
     friendly_name: typing.ClassVar[str] = 'Unknown'
 
-    @classmethod
-    def setup(cls: type['Job']) -> None:
+    def next_execution_delay(self) -> int:
         """
-        Sets ups frequency from configuration values
+        Returns the number of seconds until the next execution.
+
+        Override in subclasses to provide dynamic scheduling behaviour
+        (e.g. reading a GlobalConfig value, time-of-day logic, etc.).
+        Default implementation returns one day (86400 seconds).
         """
-        if cls.frecuency_cfg:
-            try:
-                cls.frecuency = cls.frecuency_cfg.as_int(force=True)
-                logger.debug('Setting frequency from DB setting for %s to %s', cls, cls.frecuency)
-            except Exception as e:
-                logger.error(
-                    'Error setting default frequency for %s ()%s. Got default value of %s',
-                    cls,
-                    e,
-                    cls.frecuency,
-                )
+        return 86400
 
     def execute(self) -> None:
         try:

@@ -47,7 +47,6 @@ class AssignedAndUnusedTest(UDSTestCase):
 
     def setUp(self) -> None:
         config.GlobalConfig.CHECK_UNUSED_TIME.set('600')
-        AssignedAndUnused.setup()
         # All created user services has "in_use" to False, os_state and state to USABLE
         self.userServices = fixtures_services.create_db_assigned_userservices(count=32)
 

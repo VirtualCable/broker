@@ -38,8 +38,10 @@ logger = logging.getLogger(__name__)
 
 
 class SystemInformation(Job):
-    frecuency = 300  # 5 minutes
     friendly_name = 'System Information update'
+
+    def next_execution_delay(self) -> int:
+        return 300
 
     def run(self) -> None:
         logger.debug('System information started')

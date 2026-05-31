@@ -51,11 +51,10 @@ logger = logging.getLogger(__name__)
 
 
 class UserServiceInfoItemsCleaner(Job):
-    frecuency = 600  # Constant time, every hour will check for old info items
-    # frecuency_cfg = (
-    #     GlobalConfig.KEEP_INFO_TIME
-    # )  # Request run cache "info" cleaner every configured seconds. If config value is changed, it will be used at next reload
     friendly_name = 'User Service Info Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return 600
 
     def run(self) -> None:
         remove_since = sql_now() - timedelta(seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True))
@@ -67,11 +66,10 @@ class UserServiceInfoItemsCleaner(Job):
 
 
 class UserServiceRemover(Job):
-    frecuency = 31
-    frecuency_cfg = (
-        GlobalConfig.REMOVAL_CHECK
-    )  # Request run cache "info" cleaner every configued seconds. If config value is changed, it will be used at next reload
     friendly_name = 'User Service Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.REMOVAL_CHECK.as_int()
 
     def run(self) -> None:
         # USER_SERVICE_REMOVAL_LIMIT is the maximum number of items to remove at once

@@ -38,6 +38,7 @@ from uds.core.util.stats import counters
 from uds.core.managers.stats import StatsManager
 from uds.core.jobs import Job
 from uds.core.util import config
+from uds.core.util.config import GlobalConfig
 
 
 logger = logging.getLogger(__name__)
@@ -48,8 +49,10 @@ class DeployedServiceStatsCollector(Job):
     This Job is responsible for collecting stats for every deployed service every ten minutes
     """
 
-    frecuency = 599  # Once every ten minutes
     friendly_name = 'Deployed Service Stats'
+
+    def next_execution_delay(self) -> int:
+        return 599
 
     def run(self) -> None:
         logger.debug('Starting Deployed service stats collector')
@@ -133,8 +136,10 @@ class StatsCleaner(Job):
         * Optimize table
     """
 
-    frecuency = 3600 * 24 * 15  # Ejecuted just once every 15 days
     friendly_name = 'Statistic housekeeping'
+
+    def next_execution_delay(self) -> int:
+        return 3600 * 24 * 15
 
     def run(self) -> None:
         logger.debug('Starting statistics cleanup')
@@ -157,11 +162,10 @@ class StatsAccumulator(Job):
     This is done by:
         * For HOUR, DAY
     """
-    frecuency = 3600  # Executed every hours
-    frecuency_cfg = (
-        config.GlobalConfig.STATS_ACCUM_FREQUENCY
-    )
     friendly_name = 'Statistics acummulator'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.STATS_ACCUM_FREQUENCY.as_int()
 
     def run(self) -> None:
         try:

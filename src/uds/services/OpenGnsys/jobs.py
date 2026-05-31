@@ -49,8 +49,12 @@ logger = logging.getLogger(__name__)
 
 
 class OpenGnsysMaintainer(jobs.Job):
-    frecuency = 60 * 60 * 4  # Once every 4 hours
     friendly_name = 'OpenGnsys cache renewal job'
+
+    def next_execution_delay(self) -> int:
+        return 60 * 60 * 4
+
+
 
     def run(self) -> None:
         logger.debug('Looking for OpenGnsys renewable cache elements')

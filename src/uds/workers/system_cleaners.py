@@ -43,8 +43,10 @@ logger = logging.getLogger(__name__)
 
 
 class CacheCleaner(Job):
-    frecuency = 3600 * 24  # Once a day
     friendly_name = 'Utility Cache Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return 3600 * 24
 
     def run(self) -> None:
         logger.debug('Starting cache cleanup')
@@ -53,8 +55,10 @@ class CacheCleaner(Job):
 
 
 class TicketStoreCleaner(Job):
-    frecuency = 60  # every minute (60 seconds)
     friendly_name = 'Ticket Storage Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return 60
 
     def run(self) -> None:
         logger.debug('Starting ticket storage cleanup')
@@ -63,8 +67,10 @@ class TicketStoreCleaner(Job):
 
 
 class SessionsCleaner(Job):
-    frecuency = 3600 * 24 * 7  # Once a week will be enough
     friendly_name = 'User Sessions cleaner'
+
+    def next_execution_delay(self) -> int:
+        return 3600 * 24 * 7
 
     def run(self) -> None:
         logger.debug('Starting session cleanup')

@@ -44,11 +44,10 @@ logger = logging.getLogger(__name__)
 
 
 class PublicationInfoItemsCleaner(Job):
-    frecuency = 3607
-    frecuency_cfg = (
-        GlobalConfig.CLEANUP_CHECK
-    )  # Request run cache "info" cleaner every configured seconds. If config value is changed, it will be used at next reload
     friendly_name = 'Publications Info Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.CLEANUP_CHECK.as_int()
 
     def run(self) -> None:
         remove_since = sql_now() - timedelta(
@@ -60,11 +59,10 @@ class PublicationInfoItemsCleaner(Job):
 
 
 class PublicationCleaner(Job):
-    frecuency = 31
-    frecuency_cfg = (
-        GlobalConfig.REMOVAL_CHECK
-    )  # Request run publication "removal" every configued seconds. If config value is changed, it will be used at next reload
     friendly_name = 'Publication Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.REMOVAL_CHECK.as_int()
 
     def run(self) -> None:
         removables = ServicePoolPublication.objects.filter(

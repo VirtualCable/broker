@@ -46,11 +46,10 @@ MAX_REMOVING_TIME = 3600 * 24 * 1  # 2 days, in seconds
 
 
 class DeployedServiceInfoItemsCleaner(Job):
-    frecuency = 600
-    # frecuency_cfg = (
-    #     GlobalConfig.CLEANUP_CHECK
-    # )  # Request run cache "info" cleaner every configured seconds. If config value is changed, it will be used at next reload
     friendly_name = 'Deployed Service Info Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return 600
 
     def run(self) -> None:
         remove_since = sql_now() - timedelta(
@@ -62,11 +61,10 @@ class DeployedServiceInfoItemsCleaner(Job):
 
 
 class DeployedServiceRemover(Job):
-    frecuency = 31
-    frecuency_cfg = (
-        GlobalConfig.REMOVAL_CHECK
-    )  # Request run publication "removal" every configued seconds. If config value is changed, it will be used at next reload
     friendly_name = 'Deployed Service Cleaner'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.REMOVAL_CHECK.as_int()
 
     def start_removal_of(self, service_pool: ServicePool) -> None:
         if (

@@ -47,9 +47,10 @@ logger = logging.getLogger(__name__)
 
 
 class AssignedAndUnused(Job):
-    frecuency = 60
-    # frecuency_cfg = GlobalConfig.CHECK_UNUSED_DELAY
     friendly_name = 'Unused services checker'
+
+    def next_execution_delay(self) -> int:
+        return 60
 
     def run(self) -> None:
         since_state = sql_now() - timedelta(

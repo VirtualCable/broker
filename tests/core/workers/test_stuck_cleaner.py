@@ -53,7 +53,6 @@ class StuckCleanerTest(UDSTestCase):
     userServices: list['models.UserService']
 
     def setUp(self) -> None:
-        StuckCleaner.setup()
 
         self.userServices = services_fixtures.create_db_assigned_userservices(count=128)
         # Set state date of all to 2 days ago

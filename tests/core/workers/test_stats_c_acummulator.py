@@ -88,7 +88,6 @@ class StatsAcummulatorTest(UDSTestCase):
 
         # Setup worker
         config.GlobalConfig.STATS_ACCUM_MAX_CHUNK_TIME.set(DAYS // 2 + 1)
-        stats_collector.StatsAccumulator.setup()
 
     def test_stats_accumulator(self) -> None:
         # Ensure first that we have correct number of base stats

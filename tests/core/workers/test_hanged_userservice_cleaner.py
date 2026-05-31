@@ -51,7 +51,6 @@ class HangedCleanerTest(UDSTestCase):
     def setUp(self) -> None:
         config.GlobalConfig.MAX_INITIALIZING_TIME.set(MAX_INIT)
         config.GlobalConfig.MAX_REMOVAL_TIME.set(MAX_INIT)
-        HangedCleaner.setup()
         # All created user services has "in_use" to False, os_state and state to USABLE
         self.userServices = fixtures_services.create_db_assigned_userservices(
             count=TEST_SERVICES

@@ -62,13 +62,13 @@ class JobThread(threading.Thread):
 
     _job_instance: 'Job'
     _db_job_id: int
-    _freq: int
+    _delay: int
 
     def __init__(self, job_instance: 'Job', db_job: DBScheduler) -> None:
         super().__init__()
         self._job_instance = job_instance
         self._db_job_id = db_job.id
-        self._freq = db_job.frecuency
+        self._delay = job_instance.next_execution_delay()
 
     def run(self) -> None:
         try:
@@ -107,7 +107,7 @@ class JobThread(threading.Thread):
             DBScheduler.objects.select_for_update().filter(id=self._db_job_id).update(
                 state=State.FOR_EXECUTE,
                 owner_server='',
-                next_execution=sql_now() + timedelta(seconds=self._freq),
+                next_execution=sql_now() + timedelta(seconds=self._delay),
             )
 
 
@@ -120,7 +120,7 @@ class Scheduler:
     granularity: typing.Final[int] = 2
 
     # to keep singleton Scheduler
-    _scheduler: typing.Optional['Scheduler'] = None
+    _scheduler: 'Scheduler | None' = None
     _hostname: str
     _keep_running: bool
 

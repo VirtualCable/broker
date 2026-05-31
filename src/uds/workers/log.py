@@ -48,9 +48,10 @@ logger = logging.getLogger(__name__)
 
 
 class LogMaintenance(Job):
-    frecuency = 3600  # Once every hour
-    # frecuency_cfg = GlobalConfig.XXXX
     friendly_name = 'Log maintenance'
+
+    def next_execution_delay(self) -> int:
+        return 3600
 
     def run(self) -> None:
         logger.debug('Starting Log maintenance')

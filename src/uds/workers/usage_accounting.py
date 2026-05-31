@@ -41,8 +41,10 @@ logger = logging.getLogger(__name__)
 
 
 class UsageAccounting(Job):
-    frecuency = 60
     friendly_name = 'Usage Accounting update'
+
+    def next_execution_delay(self) -> int:
+        return 60
 
     def run(self) -> None:
         with transaction.atomic():

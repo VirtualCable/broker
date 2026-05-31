@@ -43,8 +43,12 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramReceiver(jobs.Job):
-    frecuency = 60  # Once every 60 seconds
     friendly_name = 'Telegram Receiver'
+
+    def next_execution_delay(self) -> int:
+        return 60
+
+
 
     def run(self) -> None:
         logger.debug('Retrieving messages from Telegram')

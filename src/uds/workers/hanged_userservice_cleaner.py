@@ -45,9 +45,10 @@ logger = logging.getLogger(__name__)
 
 
 class HangedCleaner(Job):
-    frecuency = 3601
-    frecuency_cfg = GlobalConfig.MAX_INITIALIZING_TIME
     friendly_name = 'Hanged services checker'
+
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.MAX_INITIALIZING_TIME.as_int()
 
     def run(self) -> None:
         now = sql_now()

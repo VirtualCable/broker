@@ -41,8 +41,10 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduledAction(Job):
-    frecuency = 29  # Frecuncy for this job
     friendly_name = 'Scheduled action runner'
+
+    def next_execution_delay(self) -> int:
+        return 29
 
     def run(self) -> None:
         configured_action: CalendarAction

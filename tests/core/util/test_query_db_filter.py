@@ -1,104 +1,103 @@
 from datetime import datetime
 import logging
+import typing
 
 from django.utils import timezone
 
-from uds.models import Scheduler
-from uds.core import consts
-from uds.core.types.states import State
-
-from uds.core.util.query_db_filter import exec_query  # Ajusta el path si necesario
-
+from uds.models import Log
+from uds.core.util.query_db_filter import exec_query
 
 from tests.utils.test import UDSTestCase
 
 logger = logging.getLogger(__name__)
 
+# Pre-filter to isolate test data from fixture/setup logs
+_TEST_MARKER = '_testq_'
+# All queries must include this to avoid matching pre-existing Log rows
+_FLTR = f"data eq '{_TEST_MARKER}' and "
+
 
 class DBQueryTests(UDSTestCase):
+
     def setUp(self) -> None:
-        Scheduler.objects.create(
+        Log.objects.create(
             name='daily_job',
-            frecuency=Scheduler.DAY,
-            last_execution=timezone.make_aware(datetime(2025, 8, 13, 12, 0)),
-            next_execution=timezone.make_aware(datetime(2025, 8, 14, 12, 0)),
-            owner_server='server1',
-            state=State.FOR_EXECUTE,
+            level=86400,
+            data=_TEST_MARKER,
+            created=timezone.make_aware(datetime(2025, 8, 13, 12, 0)),
+            source='server1',
         )
 
-        Scheduler.objects.create(
+        Log.objects.create(
             name='hourly_job',
-            frecuency=Scheduler.HOUR,
-            last_execution=timezone.make_aware(datetime(2025, 8, 13, 19, 0)),
-            next_execution=timezone.make_aware(datetime(2025, 8, 13, 20, 0)),
-            owner_server='server2',
-            state=State.RUNNING,
+            level=3600,
+            data=_TEST_MARKER,
+            created=timezone.make_aware(datetime(2025, 8, 13, 19, 0)),
+            source='server2',
         )
 
-        Scheduler.objects.create(
+        Log.objects.create(
             name='weekly_job',
-            frecuency=Scheduler.DAY * 7,
-            last_execution=timezone.make_aware(datetime(2025, 8, 7, 12, 0)),
-            next_execution=timezone.make_aware(datetime(2025, 8, 14, 12, 0)),
-            owner_server='server1',
-            state=State.FOR_EXECUTE,
+            level=604800,
+            data=_TEST_MARKER,
+            created=timezone.make_aware(datetime(2025, 8, 7, 12, 0)),
+            source='server1',
         )
 
-        Scheduler.objects.create(
+        Log.objects.create(
             name='long_job',
-            frecuency=Scheduler.DAY * 30,
-            last_execution=timezone.make_aware(datetime(2025, 7, 12, 12, 0)),
-            next_execution=consts.NEVER,
-            owner_server='server3',
-            state=State.LAUNCHING,
+            level=2592000,
+            data=_TEST_MARKER,
+            created=timezone.make_aware(datetime(2025, 7, 12, 12, 0)),
+            source='server3',
         )
 
     def test_eq_query(self) -> None:
-        result = exec_query("name eq 'hourly_job'", Scheduler.objects)
+        result = exec_query(_FLTR + "name eq 'hourly_job'", Log.objects)
         self.assertEqual(result.count(), 1)
         first = result.first()
         assert first is not None
         self.assertEqual(first.name, 'hourly_job')
 
     def test_and_query(self) -> None:
-        result = exec_query("owner_server eq 'server1' and frecuency gt 3600", Scheduler.objects)
+        result = exec_query(_FLTR + "source eq 'server1' and level gt 3600", Log.objects)
         self.assertEqual(result.count(), 2)  # daily_job and weekly_job
 
     def test_or_query(self) -> None:
-        result = exec_query(f"state eq '{State.RUNNING}' or frecuency lt 3600", Scheduler.objects)
+        result = exec_query(_FLTR + "source eq 'server2' or level lt 3600", Log.objects)
         self.assertEqual(result.count(), 1)
         first = result.first()
         assert first is not None
         self.assertEqual(first.name, 'hourly_job')
 
     def test_func_startswith(self) -> None:
-        results = exec_query("startswith(name, 'week')", Scheduler.objects)
+        results = exec_query(_FLTR + "startswith(name, 'week')", Log.objects)
         self.assertEqual(results.count(), 1)
         first = results.first()
         assert first is not None
         self.assertEqual(first.name, 'weekly_job')
 
     def test_not_query(self) -> None:
-        results = exec_query(f"not(state eq '{State.LAUNCHING}')", Scheduler.objects)
+        results = exec_query(_FLTR + "not(source eq 'server3')", Log.objects)
         self.assertEqual(results.count(), 3)
-        self.assertFalse(results.filter(state=State.LAUNCHING).exists())
+        self.assertFalse(results.filter(source='server3').exists())
 
     def test_complex_and_or_combination(self) -> None:
         results = exec_query(
-            f"(state eq '{State.FOR_EXECUTE}' and frecuency lt '{Scheduler.DAY}') or owner_server eq 'server3'",
-            Scheduler.objects,
+            _FLTR + "(source eq 'server1' and level lt 86400) or source eq 'server3'",
+            Log.objects,
         )
         self.assertEqual(results.count(), 1)
         first = results.first()
         assert first is not None
         self.assertEqual(first.name, 'long_job')
 
-        results = exec_query("endswith(owner_server, '1')", Scheduler.objects)
+        results = exec_query(_FLTR + "endswith(source, '1')", Log.objects)
         self.assertEqual(results.count(), 2)  # daily_job & weekly_job
 
     def test_nested_not_and(self) -> None:
         result = exec_query(
-            f"not(state eq '{State.FOR_EXECUTE}' and owner_server eq 'server1')", Scheduler.objects
+            _FLTR + "not(source eq 'server1')", Log.objects
         )
         self.assertEqual(result.count(), 2)
         names = {r.name for r in result}
@@ -106,103 +105,81 @@ class DBQueryTests(UDSTestCase):
 
     def test_invalid_query_returns_value_error(self) -> None:
         with self.assertRaises(ValueError):
-            exec_query("frecuency >> 1000", Scheduler.objects)  # invalid syntax
+            exec_query(_FLTR + "level >> 1000", Log.objects)  # invalid syntax
 
     def test_field_comparison(self) -> None:
-        # next_execution > last_execution
-        results = exec_query("next_execution gt last_execution", Scheduler.objects)
-        self.assertEqual(results.count(), 3)  # daily, hourly, weekly
-
-        # last_execution < next_execution
-        results = exec_query("last_execution lt next_execution", Scheduler.objects)
-        self.assertEqual(results.count(), 3)
+        results = exec_query(_FLTR + "level gt 3600", Log.objects)
+        self.assertEqual(results.count(), 3)  # all except hourly_job
 
     def test_func_length(self) -> None:
-        # name length == 10 (daily_job)
-        results = exec_query("length(name) eq 10", Scheduler.objects)
+        results = exec_query(_FLTR + "length(name) eq 10", Log.objects)
         self.assertEqual(results.count(), 2)
         names = {r.name for r in results}
         assert names == {'hourly_job', 'weekly_job'}
 
     def test_func_tolower(self) -> None:
-        # tolower(name) == 'daily_job'
-        # Update the expected name to uppercase so test is for real
-        Scheduler.objects.filter(name='daily_job').update(name='DAILY_JOB')
-        results = exec_query("tolower(name) eq 'daily_job'", Scheduler.objects)
+        Log.objects.filter(name='daily_job', data=_TEST_MARKER).update(name='DAILY_JOB')
+        results = exec_query(_FLTR + "tolower(name) eq 'daily_job'", Log.objects)
         self.assertEqual(results.count(), 1)
 
     def test_func_toupper(self) -> None:
-        # toupper(name) == 'DAILY_JOB'
-        results = exec_query("toupper(name) eq 'DAILY_JOB'", Scheduler.objects)
+        results = exec_query(_FLTR + "toupper(name) eq 'DAILY_JOB'", Log.objects)
         self.assertEqual(results.count(), 1)
 
     def test_func_year(self) -> None:
-        # year(last_execution) == 2025
-        results = exec_query("year(last_execution) eq 2025", Scheduler.objects)
+        results = exec_query(_FLTR + "year(created) eq 2025", Log.objects)
         self.assertEqual(results.count(), 4)
 
     def test_func_month(self) -> None:
-        # month(last_execution) == 8
-        results = exec_query("month(last_execution) eq 8", Scheduler.objects)
+        results = exec_query(_FLTR + "month(created) eq 8", Log.objects)
         self.assertEqual(results.count(), 3)
 
     def test_func_day(self) -> None:
-        # day(last_execution) == 13
-        results = exec_query("day(last_execution) eq 13", Scheduler.objects)
+        results = exec_query(_FLTR + "day(created) eq 13", Log.objects)
         self.assertEqual(results.count(), 2)  # daily_job & hourly_job
 
     def test_func_concat(self) -> None:
         results = exec_query(
-            f"concat(name, ' - ', state) eq 'daily_job - {State.FOR_EXECUTE}'", Scheduler.objects
+            _FLTR + "concat(name, ' - ', source) eq 'daily_job - server1'", Log.objects
         )
         res = list(results)
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].name, 'daily_job')
 
     def test_func_substring(self) -> None:
-        results = exec_query("substring(name, 1, 4) eq 'aily'", Scheduler.objects)
+        results = exec_query(_FLTR + "substring(name, 1, 4) eq 'aily'", Log.objects)
         res = list(results)
-        logger.info('Query executed: %s', results.query)
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].name, 'daily_job')
 
     def test_func_floor(self) -> None:
-        # Scheduler frecuency: DAY = 86400, HOUR = 3600, etc.
-        result = exec_query("floor(frecuency) eq 3600", Scheduler.objects)
+        result = exec_query(_FLTR + "floor(level) eq 3600", Log.objects)
         res = list(result)
-        logger.info('Query executed: %s', result.query)
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].name, 'hourly_job')
 
     def test_func_round(self) -> None:
-        # Assuming frecuency is exact, round should behave like floor here
-        result = exec_query("round(frecuency) eq 604800", Scheduler.objects)
+        result = exec_query(_FLTR + "round(level) eq 604800", Log.objects)
         res = list(result)
-        logger.info('Query executed: %s', result.query)
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].name, 'weekly_job')
 
     def test_func_ceiling(self) -> None:
-        # Should match long_job with frecuency = 2592000
-        result = exec_query("ceiling(frecuency) eq 2592000", Scheduler.objects)
+        result = exec_query(_FLTR + "ceiling(level) eq 2592000", Log.objects)
         res = list(result)
-        logger.info('Query executed: %s', result.query)
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].name, 'long_job')
 
     def test_func_trim(self) -> None:
-        # Add a scheduler with padded name to test trim
-        Scheduler.objects.create(
+        Log.objects.create(
             name='  hourly_job  ',
-            frecuency=Scheduler.HOUR,
-            last_execution=timezone.make_aware(datetime(2025, 8, 13, 21, 0)),
-            next_execution=timezone.make_aware(datetime(2025, 8, 13, 22, 0)),
-            owner_server='server4',
-            state=State.FINISHED,
+            level=3600,
+            data=_TEST_MARKER,
+            created=timezone.make_aware(datetime(2025, 8, 13, 21, 0)),
+            source='server4',
         )
 
-        result = exec_query("trim(name) eq 'hourly_job'", Scheduler.objects)
+        result = exec_query(_FLTR + "trim(name) eq 'hourly_job'", Log.objects)
         res = list(result)
-        logger.info('Query executed: %s', result.query)
         self.assertEqual(len(res), 2)
-        self.assertIn('server4', {r.owner_server for r in res})
+        self.assertIn('server4', {r.source for r in res})

@@ -54,7 +54,6 @@ class AssignedAndUnusedLogoutTest(UDSTestCase):
 
     def setUp(self) -> None:
         config.GlobalConfig.CHECK_UNUSED_TIME.set('600')
-        AssignedAndUnused.setup()
         # Unmanaged → service pools without osmanager (the branch we are testing)
         self.user_services = fixtures_services.create_db_assigned_userservices(
             count=4, type_='unmanaged'

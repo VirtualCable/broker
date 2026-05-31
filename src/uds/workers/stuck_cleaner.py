@@ -52,8 +52,10 @@ class StuckCleaner(Job):
     We keep it in a new place to "control" more specific thins
     """
 
-    frecuency = 3601 * 8  # Executes every 8 hours
     friendly_name = 'Stuck States cleaner'
+
+    def next_execution_delay(self) -> int:
+        return 3601 * 8
 
     def run(self) -> None:
         since_state: datetime = sql_now() - timedelta(seconds=MAX_STUCK_TIME)

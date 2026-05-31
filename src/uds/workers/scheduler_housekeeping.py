@@ -50,8 +50,10 @@ class SchedulerHousekeeping(Job):
     Ensures no task is executed for more than 15 minutes
     """
 
-    frecuency = 301  # Frecuncy for this job
     friendly_name = 'Scheduler house keeping'
+
+    def next_execution_delay(self) -> int:
+        return 301
 
     def run(self) -> None:
         """

@@ -63,7 +63,6 @@ class Scheduler(models.Model):
     MIN = 60
 
     name = models.CharField(max_length=64, unique=True)
-    frecuency = models.PositiveIntegerField(default=DAY)
     last_execution = models.DateTimeField(db_index=True)
     next_execution = models.DateTimeField(default=consts.NEVER, db_index=True)
     owner_server = models.CharField(max_length=consts.system.MAX_DNS_NAME_LENGTH, db_index=True, default='')
@@ -88,7 +87,7 @@ class Scheduler(models.Model):
         """
         return Environment.environment_for_table_record(self._meta.verbose_name or self._meta.db_table, self.id)
 
-    def get_instance(self) -> typing.Optional[jobs.Job]:
+    def get_instance(self) -> jobs.Job | None:
         """
         Returns an instance of the class that this record of the Scheduler represents. This clas is derived
         of uds.core.jobs.Job.Job
@@ -110,7 +109,7 @@ class Scheduler(models.Model):
         to_delete.get_environment().clean_related_data()
 
     def __str__(self) -> str:
-        return f'Scheduled task {self.name}, every {self.frecuency}, last execution at {self.last_execution}, state = {self.state}'
+        return f'Scheduled task {self.name}, last execution at {self.last_execution}, state = {self.state}'
 
 
 # Connects a pre deletion signal to Scheduler
