@@ -317,41 +317,35 @@ class DummyStampProviderTest(UDSTestCase):
         self.assertFalse(provider.verify(hash_data, token[:10]))
 
 
-class ReanchorTest(UDSTestCase):
-    """Tests for periodic re-anchoring."""
+class CreateAnchorTest(UDSTestCase):
+    """Tests for explicit create_anchor() — called by the worker."""
 
     def setUp(self) -> None:
         super().setUp()
         ImmutableLogger._invalidate_cache()
-        ImmutableLogger.configure(
-            stamp_provider=DummyStampProvider(),
-            reanchor=__import__('datetime').timedelta(microseconds=1),  # force immediate trigger
-        )
+        ImmutableLogger.configure(stamp_provider=DummyStampProvider())
 
     def tearDown(self) -> None:
         ImmutableLogger._invalidate_cache()
         super().tearDown()
 
-    def test_reanchor_inserted(self) -> None:
-        from uds.core.util.model import sql_now
+    def test_create_anchor_inserts_entry(self) -> None:
+        ImmutableLogger.append(b'entry 1')
+        ImmutableLogger.append(b'entry 2')
 
-        # Init the chain first so append() doesn't auto-initialize
-        ImmutableLogger.initialize()
-        # Push last anchor stamp 10s into the past
-        ImmutableLogger._last_anchor_stamp = sql_now() - __import__('datetime').timedelta(seconds=10)
-        ImmutableLogger.append(b'entry after genesis')
+        # Explicitly create a re-anchor — same as what the worker does
+        last = ImmutableLog.objects.latest()
+        anchor = ImmutableLogger.create_anchor(bytes(last.entry_hash))
 
-        # Should have: genesis (anchor) + normal entry + re-anchor
-        self.assertEqual(ImmutableLog.objects.count(), 3)
-        anchors = ImmutableLog.objects.filter(anchor=True)
-        self.assertEqual(anchors.count(), 2)  # genesis + re-anchor
+        self.assertTrue(anchor.anchor)
+        self.assertEqual(anchor.sequence, 4)  # genesis(1) + entry(2) + entry(3) + anchor(4)
+        self.assertEqual(ImmutableLog.objects.count(), 4)
+        self.assertEqual(ImmutableLog.objects.filter(anchor=True).count(), 2)  # genesis + re-anchor
 
-    def test_reanchor_token_verifies(self) -> None:
-        from uds.core.util.model import sql_now
-
-        ImmutableLogger.initialize()
-        ImmutableLogger._last_anchor_stamp = sql_now() - __import__('datetime').timedelta(seconds=10)
-        ImmutableLogger.append(b'entry')
+    def test_create_anchor_chain_verifies(self) -> None:
+        ImmutableLogger.append(b'entry 1')
+        last = ImmutableLog.objects.latest()
+        ImmutableLogger.create_anchor(bytes(last.entry_hash))
 
         ok, msg = ImmutableLogger.verify()
         self.assertTrue(ok, msg=msg)

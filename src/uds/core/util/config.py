@@ -866,7 +866,7 @@ class GlobalConfig:
         'Immutable log reanchor interval',
         '14400',
         type=Config.FieldType.NUMERIC,
-        help=_('Interval in seconds between re-anchor points in the immutable log (if enabled)'),
+        help=_('Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)'),
     )
 
 

@@ -39,10 +39,10 @@ timestamp token.  The nonce (32 random bytes, 2^256 possibilities) makes it
 impossible to precompute or regenerate the same seed, even with knowledge of
 SECRET_KEY.  The RFC 3161 token proves the seed existed at a specific moment.
 
-Periodic re-anchoring: controlled by ``GlobalConfig.IMMUTABLE_LOG_REANCHOR``
-(seconds).  After the configured wall-clock interval since the last anchor,
-a re-anchor entry is inserted automatically.  It stores the TSA token for
-the previous entry's hash, freezing the chain up to that point.
+Periodic re-anchoring is handled by the ``ImmutableLogAnchorJob`` worker,
+controlled by ``GlobalConfig.IMMUTABLE_LOG_REANCHOR`` (seconds).  The worker
+inserts a re-anchor entry when the configured interval elapses since the
+last anchor.
 
 Genesis and re-anchor entries have ``anchor=True`` on the model.
 Data layout summary::
@@ -94,7 +94,7 @@ def _pack_genesis_data(nonce: bytes, token: bytes) -> bytes:
 
 def _unpack_genesis_data(data: bytes | memoryview) -> tuple[bytes, bytes]:
     """Unpack genesis data into (nonce, rfc3161_token)."""
-    data = bytes(data)  # ensure bytes, not memoryview
+    data = bytes(data)
     pos = 0
     nonce_len = struct.unpack_from('>H', data, pos)[0]
     pos += 2
@@ -117,13 +117,8 @@ class ImmutableLogger:
 
         from uds.core.audit.stamping import RFC3161StampProvider
 
-        # Optionally configure (otherwise reads from GlobalConfig)
-        ImmutableLogger.configure(
-            stamp_provider=RFC3161StampProvider(),
-        )
-
-        # Init chain
-        ImmutableLogger.initialize()
+        # Optionally configure the stamp provider (otherwise reads from GlobalConfig)
+        ImmutableLogger.configure(stamp_provider=RFC3161StampProvider())
 
         # Append (auto-initializes if chain is empty)
         ImmutableLogger.append_object({'event': 'login', 'user': 'admin'})
@@ -134,23 +129,11 @@ class ImmutableLogger:
 
     # -- configuration -----------------------------------------------------
 
-    REANCHOR: timedelta = timedelta(0)
-    """
-    Re-anchor trigger.  Read from ``GlobalConfig.IMMUTABLE_LOG_REANCHOR``
-    (seconds).  ``timedelta(0)`` = disabled.  Can be overridden via
-    :meth:`configure`.
-    """
-
-    _reanchor_configured: bool = False
-    """True if ``configure()`` has been called, so we don't re-read config."""
-
     _stamp_provider: StampProvider | None = None
     """Provider used for genesis and re-anchoring."""
 
     _last_hash: bytes | None = None
     _last_sequence: int | None = None
-    _entries_since_last_anchor: int = 0
-    _last_anchor_stamp: datetime | None = None
 
     @staticmethod
     def is_enabled() -> bool:
@@ -158,21 +141,7 @@ class ImmutableLogger:
         return config.GlobalConfig.IMMUTABLE_LOG_ENABLED.as_bool()
 
     @classmethod
-    def _get_reanchor_config(cls) -> timedelta:
-        """Read the re-anchor interval from GlobalConfig (seconds → timedelta)."""
-        if cls._reanchor_configured:
-            return cls.REANCHOR
-        seconds = config.GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
-        if seconds > 0:
-            return timedelta(seconds=seconds)
-        return timedelta(0)
-
-    @classmethod
-    def configure(
-        cls,
-        stamp_provider: StampProvider | None = None,
-        reanchor: timedelta | None = None,
-    ) -> None:
+    def configure(cls, stamp_provider: StampProvider | None = None) -> None:
         """
         Configure the logger before first use.
 
@@ -180,14 +149,9 @@ class ImmutableLogger:
             stamp_provider: Provider for RFC 3161 timestamping.
                             Defaults to reading from GlobalConfig
                             (TSA_PROVIDER_URL, etc.).
-            reanchor: Override the re-anchor interval.
-                      Defaults to ``GlobalConfig.IMMUTABLE_LOG_REANCHOR``.
         """
         if stamp_provider is not None:
             cls._stamp_provider = stamp_provider
-        if reanchor is not None:
-            cls.REANCHOR = reanchor
-            cls._reanchor_configured = True
 
     @classmethod
     def _get_stamp_provider(cls) -> StampProvider:
@@ -212,10 +176,10 @@ class ImmutableLogger:
         data: bytes,
     ) -> bytes:
         hasher = hashlib.new(HASH_ALGO)
-        hasher.update(previous_hash)  # 32 bytes
-        hasher.update(struct.pack('>q', int(stamp.timestamp() * 1_000_000)))  # 8 bytes (micros)
-        hasher.update(struct.pack('>Q', sequence))  # 8 bytes (uint64)
-        hasher.update(struct.pack('>I', len(data)))  # 4 bytes (data length)
+        hasher.update(previous_hash)
+        hasher.update(struct.pack('>q', int(stamp.timestamp() * 1_000_000)))
+        hasher.update(struct.pack('>Q', sequence))
+        hasher.update(struct.pack('>I', len(data)))
         hasher.update(data)
         return hasher.digest()
 
@@ -238,7 +202,6 @@ class ImmutableLogger:
         try:
             last = ImmutableLog.objects.latest()
             cls._last_sequence = last.sequence
-            # pyrefly: ignore[unnecessary-type-conversion]
             cls._last_hash = bytes(last.entry_hash)
         except ImmutableLog.DoesNotExist:
             cls._last_sequence = 0
@@ -250,18 +213,6 @@ class ImmutableLogger:
     def _invalidate_cache(cls) -> None:
         cls._last_hash = None
         cls._last_sequence = None
-        cls._entries_since_last_anchor = 0
-        cls._last_anchor_stamp = None
-
-    @classmethod
-    def _should_reanchor(cls) -> bool:
-        interval = cls._get_reanchor_config()
-        if interval == timedelta(0):
-            return False
-        if cls._last_anchor_stamp is None:
-            cls._last_anchor_stamp = sql_now()
-            return False
-        return sql_now() - cls._last_anchor_stamp >= interval
 
     @classmethod
     def _create_entry(
@@ -282,27 +233,6 @@ class ImmutableLogger:
 
         cls._last_sequence = entry.sequence
         cls._last_hash = entry_hash
-        return entry
-
-    @classmethod
-    def _append_reanchor(cls, stamped_hash: bytes) -> ImmutableLog:
-        """Insert a re-anchor entry that timestamps ``stamped_hash``."""
-        provider = cls._get_stamp_provider()
-        token = provider.stamp(stamped_hash)
-
-        last_seq, last_hash = cls._get_last()
-        entry = cls._create_entry(last_hash, last_seq + 1, token, anchor=True)
-
-        cls._last_anchor_stamp = entry.stamp
-        cls._entries_since_last_anchor = 0
-
-        logger.debug(
-            'Re-anchor #%d: stamped=%s token_len=%d provider=%s',
-            entry.sequence,
-            stamped_hash.hex()[:16],
-            len(token),
-            type(provider).__name__,
-        )
         return entry
 
     # -- public API -------------------------------------------------------
@@ -336,8 +266,6 @@ class ImmutableLogger:
 
         packed_data = _pack_genesis_data(nonce, token)
         entry = cls._create_entry(seed, 1, packed_data, anchor=True)
-        cls._entries_since_last_anchor = 0
-        cls._last_anchor_stamp = entry.stamp
 
         logger.info(
             'ImmutableLog initialized: seed=%s nonce=%s... provider=%s',
@@ -352,9 +280,7 @@ class ImmutableLogger:
         """
         Append a new immutable log entry with raw binary data.
 
-        Auto-initializes the chain if empty.  Automatically inserts a
-        re-anchor entry every ``REANCHOR_INTERVAL`` normal entries
-        (if configured).
+        Auto-initializes the chain if empty.
         """
         last_seq, last_hash = cls._get_last()
 
@@ -365,20 +291,36 @@ class ImmutableLogger:
         last_seq, last_hash = cls._get_last()
 
         entry = cls._create_entry(last_hash, last_seq + 1, data)
-        cls._entries_since_last_anchor += 1
 
         logger.debug('ImmutableLog append: #%d hash=%s', entry.sequence, entry.entry_hash.hex()[:16])
-
-        # Check if we should insert a re-anchor
-        if cls._should_reanchor():
-            cls._append_reanchor(entry.entry_hash)
-
         return entry
 
     @classmethod
     def append_object(cls, obj: typing.Any) -> ImmutableLog:
         """Append a log entry, serializing ``obj`` via pickle."""
         return cls.append(content_to_bytes(obj))
+
+    @classmethod
+    def create_anchor(cls, stamped_hash: bytes) -> ImmutableLog:
+        """
+        Insert a re-anchor entry that timestamps ``stamped_hash``.
+
+        Called by the ``ImmutableLogAnchorJob`` worker.
+        """
+        provider = cls._get_stamp_provider()
+        token = provider.stamp(stamped_hash)
+
+        last_seq, last_hash = cls._get_last()
+        entry = cls._create_entry(last_hash, last_seq + 1, token, anchor=True)
+
+        logger.debug(
+            'Re-anchor #%d: stamped=%s token_len=%d provider=%s',
+            entry.sequence,
+            stamped_hash.hex()[:16],
+            len(token),
+            type(provider).__name__,
+        )
+        return entry
 
     @classmethod
     def verify(
@@ -423,7 +365,6 @@ class ImmutableLogger:
 
         secret = settings.SECRET_KEY.encode('utf-8')
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
-        # Try to get tobytes if previous_hash is a memoryview (Django BinaryField may return that)
         stored_seed = bytes(genesis.previous_hash.tobytes() if hasattr(genesis.previous_hash, 'tobytes') else genesis.previous_hash)  # type: ignore
 
         if stored_seed != expected_seed:
@@ -440,24 +381,24 @@ class ImmutableLogger:
                 return False, 'Genesis RFC 3161 token verification failed.'
 
         # Walk the chain
-        expected_previous = bytes(genesis.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
+        expected_previous = bytes(genesis.entry_hash)
         reanchor_count = 0
 
         for entry in entries[1:]:
             computed = cls._compute_hash(
-                bytes(entry.previous_hash),  # pyrefly: ignore[unnecessary-type-conversion]
+                bytes(entry.previous_hash),
                 entry.stamp,
                 entry.sequence,
-                bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
+                bytes(entry.data),
             )
 
-            if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
+            if computed != bytes(entry.entry_hash):
                 return False, (
                     f'Hash mismatch at entry #{entry.sequence}: '
                     f'stored={entry.entry_hash.hex()} computed={computed.hex()}'
                 )
 
-            if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
+            if bytes(entry.previous_hash) != expected_previous:
                 return False, (
                     f'Chain break at entry #{entry.sequence}: '
                     f'expected prev={expected_previous.hex()} '
@@ -467,12 +408,12 @@ class ImmutableLogger:
             # Re-anchor verification
             if entry.anchor:
                 if reanchor_provider is not None:
-                    if not reanchor_provider.verify(expected_previous, bytes(entry.data)):  # pyrefly: ignore[unnecessary-type-conversion]
+                    if not reanchor_provider.verify(expected_previous, bytes(entry.data)):
                         return False, (f'Re-anchor TSA verification failed at entry #{entry.sequence}')
                 reanchor_count += 1
                 logger.debug('Re-anchor #%d verified OK', entry.sequence)
 
-            expected_previous = bytes(entry.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
+            expected_previous = bytes(entry.entry_hash)
 
         msg = f'Chain verified: {len(entries)} entries'
         if reanchor_count:
@@ -486,23 +427,17 @@ class ImmutableLogger:
         Return summary information about the chain.
 
         Keys:
-            total_entries, anchor_count, normal_count,
-            entries_since_last_anchor, last_anchor_stamp, reanchor_config.
+            total_entries, anchor_count, normal_count, reanchor_config.
         """
         total = ImmutableLog.objects.count()
         anchor_count = ImmutableLog.objects.filter(anchor=True).count()
+        seconds = config.GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
 
         return {
             'total_entries': total,
             'anchor_count': anchor_count,
             'normal_count': total - anchor_count,
-            'entries_since_last_anchor': cls._entries_since_last_anchor,
-            'last_anchor_stamp': cls._last_anchor_stamp,
-            'reanchor_config': (
-                f'{cls._get_reanchor_config().total_seconds():.0f}s'
-                if cls._get_reanchor_config()
-                else 'disabled'
-            ),
+            'reanchor_config': f'{seconds}s' if seconds > 0 else 'disabled',
         }
 
     @classmethod
@@ -535,7 +470,7 @@ class ImmutableLogger:
         secret = settings.SECRET_KEY.encode('utf-8')
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
 
-        if bytes(first.previous_hash) != expected_seed:  # pyrefly: ignore[unnecessary-type-conversion]
+        if bytes(first.previous_hash) != expected_seed:
             logger.error('Genesis seed mismatch')
             return
 
@@ -544,23 +479,23 @@ class ImmutableLogger:
             return
 
         yield first
-        expected_previous = bytes(first.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
+        expected_previous = bytes(first.entry_hash)
 
         for entry in entries[1:]:
-            if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
+            if bytes(entry.previous_hash) != expected_previous:
                 logger.error('Chain break at entry #%d', entry.sequence)
                 return
 
             computed = cls._compute_hash(
-                bytes(entry.previous_hash), entry.stamp, entry.sequence, bytes(entry.data)    # pyrefly: ignore[unnecessary-type-conversion]
+                bytes(entry.previous_hash), entry.stamp, entry.sequence, bytes(entry.data)
             )
-            if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
+            if computed != bytes(entry.entry_hash):
                 logger.error('Hash mismatch at entry #%d', entry.sequence)
                 return
 
             # Verify re-anchor
             if entry.anchor:
-                if reanchor_provider and not reanchor_provider.verify(expected_previous, bytes(entry.data)):  # pyrefly: ignore[unnecessary-type-conversion]
+                if reanchor_provider and not reanchor_provider.verify(expected_previous, bytes(entry.data)):
                     logger.error('Re-anchor TSA verification failed at entry #%d', entry.sequence)
                     return
 
