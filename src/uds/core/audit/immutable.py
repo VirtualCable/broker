@@ -1,9 +1,30 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2025 Virtual Cable S.L.U.
+# Copyright (c) 2012-2025 Virtual Cable S.L.U.
 # All rights reserved.
 #
-
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright notice,
+#      this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#    * Neither the name of Virtual Cable S.L.U. nor the names of its contributors
+#      may be used to endorse or promote products derived from this software
+#      without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
@@ -77,7 +98,7 @@ def _unpack_genesis_data(data: bytes | memoryview) -> tuple[bytes, bytes]:
     pos = 0
     nonce_len = struct.unpack_from('>H', data, pos)[0]
     pos += 2
-    nonce = data[pos:pos + nonce_len]
+    nonce = data[pos : pos + nonce_len]
     pos += nonce_len
     token = data[pos:]
     return nonce, token
@@ -217,6 +238,7 @@ class ImmutableLogger:
         try:
             last = ImmutableLog.objects.latest()
             cls._last_sequence = last.sequence
+            # pyrefly: ignore[unnecessary-type-conversion]
             cls._last_hash = bytes(last.entry_hash)
         except ImmutableLog.DoesNotExist:
             cls._last_sequence = 0
@@ -418,24 +440,24 @@ class ImmutableLogger:
                 return False, 'Genesis RFC 3161 token verification failed.'
 
         # Walk the chain
-        expected_previous = bytes(genesis.entry_hash)
+        expected_previous = bytes(genesis.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
         reanchor_count = 0
 
         for entry in entries[1:]:
             computed = cls._compute_hash(
-                bytes(entry.previous_hash),
+                bytes(entry.previous_hash),  # pyrefly: ignore[unnecessary-type-conversion]
                 entry.stamp,
                 entry.sequence,
-                bytes(entry.data),
+                bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
             )
 
-            if computed != bytes(entry.entry_hash):
+            if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
                 return False, (
                     f'Hash mismatch at entry #{entry.sequence}: '
                     f'stored={entry.entry_hash.hex()} computed={computed.hex()}'
                 )
 
-            if bytes(entry.previous_hash) != expected_previous:
+            if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
                 return False, (
                     f'Chain break at entry #{entry.sequence}: '
                     f'expected prev={expected_previous.hex()} '
@@ -445,12 +467,12 @@ class ImmutableLogger:
             # Re-anchor verification
             if entry.anchor:
                 if reanchor_provider is not None:
-                    if not reanchor_provider.verify(expected_previous, bytes(entry.data)):
+                    if not reanchor_provider.verify(expected_previous, bytes(entry.data)):  # pyrefly: ignore[unnecessary-type-conversion]
                         return False, (f'Re-anchor TSA verification failed at entry #{entry.sequence}')
                 reanchor_count += 1
                 logger.debug('Re-anchor #%d verified OK', entry.sequence)
 
-            expected_previous = bytes(entry.entry_hash)
+            expected_previous = bytes(entry.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
 
         msg = f'Chain verified: {len(entries)} entries'
         if reanchor_count:
@@ -513,7 +535,7 @@ class ImmutableLogger:
         secret = settings.SECRET_KEY.encode('utf-8')
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
 
-        if bytes(first.previous_hash) != expected_seed:
+        if bytes(first.previous_hash) != expected_seed:  # pyrefly: ignore[unnecessary-type-conversion]
             logger.error('Genesis seed mismatch')
             return
 
@@ -522,25 +544,25 @@ class ImmutableLogger:
             return
 
         yield first
-        expected_previous = bytes(first.entry_hash)
+        expected_previous = bytes(first.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
 
         for entry in entries[1:]:
-            if bytes(entry.previous_hash) != expected_previous:
+            if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
                 logger.error('Chain break at entry #%d', entry.sequence)
                 return
 
             computed = cls._compute_hash(
-                bytes(entry.previous_hash), entry.stamp, entry.sequence, bytes(entry.data)
+                bytes(entry.previous_hash), entry.stamp, entry.sequence, bytes(entry.data)    # pyrefly: ignore[unnecessary-type-conversion]
             )
-            if computed != bytes(entry.entry_hash):
+            if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
                 logger.error('Hash mismatch at entry #%d', entry.sequence)
                 return
 
             # Verify re-anchor
             if entry.anchor:
-                if reanchor_provider and not reanchor_provider.verify(expected_previous, bytes(entry.data)):
+                if reanchor_provider and not reanchor_provider.verify(expected_previous, bytes(entry.data)):  # pyrefly: ignore[unnecessary-type-conversion]
                     logger.error('Re-anchor TSA verification failed at entry #%d', entry.sequence)
                     return
 
-            expected_previous = bytes(entry.entry_hash)
+            expected_previous = entry.entry_hash
             yield entry
