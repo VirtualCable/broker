@@ -110,3 +110,6 @@ from .servers import Server, ServerGroup
 from .notifications import Notification, Notifier, LogLevel
 # Multi factor authentication
 from .mfa import MFA
+
+# Immutable audit log (blockchain-like hash chain)
+from .immutable_log import ImmutableLog
