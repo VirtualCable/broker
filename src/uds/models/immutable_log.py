@@ -33,7 +33,8 @@ import typing
 
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+
+from uds.core.util.model import sql_now
 
 HASH_SIZE = 32  # SHA-256
 
@@ -51,7 +52,7 @@ class ImmutableLog(models.Model):
     """
 
     sequence = models.BigIntegerField(unique=True, editable=False)
-    stamp = models.DateTimeField(default=timezone.now, editable=False, db_index=True)
+    stamp = models.DateTimeField(default=sql_now, editable=False, db_index=True)
     anchor = models.BooleanField(default=False, editable=False)
     """True if this entry is a genesis or re-anchor point (contains a TSA token)."""
     previous_hash = models.BinaryField(max_length=HASH_SIZE, editable=False)

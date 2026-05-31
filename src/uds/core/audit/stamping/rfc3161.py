@@ -33,7 +33,7 @@ RFC 3161 Time-Stamp Protocol (TSP) stamp provider.
 Compatible with any RFC 3161-compliant TSA such as:
 - https://freetsa.org/tsr
 - https://timestamp.digicert.com
-- https://time.certum.pl
+- .. (you can use your own TSA like OpenTimestamps)
 """
 
 import hashlib

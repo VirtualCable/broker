@@ -50,6 +50,7 @@ from uds.core.auths import Authenticator as AuthenticatorInstance, callbacks
 from uds.core.util import config, log, net
 from uds.core.util.stats import events
 from uds.core.managers.crypto import CryptoManager
+from uds.core.audit.immutable import ImmutableLogger
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -540,6 +541,17 @@ def log_login(
     except Exception:  # nosec: root user is not on any authenticator, will fail with an exception we can ingore
         logger.info('Root %s from %s where OS is %s', log_string, request.ip, request.os.os.name)
 
+    if ImmutableLogger.is_enabled():
+        ImmutableLogger.append_object({
+            't': 'login',
+            'a': authenticator.name,
+            'u': username,
+            'i': request.ip,
+            'o': request.os.os.name,
+            'r': log_string,
+            'e': as_error,
+        })
+
 
 def log_logout(request: 'types.requests.ExtendedHttpRequest') -> None:
     if request.user:
@@ -558,3 +570,11 @@ def log_logout(request: 'types.requests.ExtendedHttpRequest') -> None:
             )
         else:
             logger.info('Root has logged out from %s', request.ip)
+
+        if ImmutableLogger.is_enabled():
+            ImmutableLogger.append_object({
+                't': 'logout',
+                'u': request.user.name,
+                'a': request.user.manager.name if request.user.manager.id else 'root',
+                'i': request.ip,
+            })

@@ -33,6 +33,7 @@ import typing
 
 from uds import models
 from uds.core import consts
+from uds.core.audit.immutable import ImmutableLogger
 
 # Import for REST using this module can access constants easily
 # pylint: disable=unused-import
@@ -106,3 +107,13 @@ def log_operation(
         message=f'{handler.request.ip} [{username}]: [{handler.request.method}/{response_code}] {path}'[:4096],
         source=LogSource.REST,
     )
+
+    if ImmutableLogger.is_enabled():
+        ImmutableLogger.append_object({
+            't': 'rest',
+            'm': handler.request.method,
+            'p': path,
+            'c': response_code,
+            'i': handler.request.ip,
+            'u': username,
+        })

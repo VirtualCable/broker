@@ -365,7 +365,11 @@ class Config:
                 res[cfg.section()] = {}
             res[cfg.section()][cfg.key()] = {
                 # Password are now hashes, and cannot be reversed, so we do not show them
-                'value': cfg.get() if cfg.get_type() not in (Config.FieldType.PASSWORD, Config.FieldType.HIDDEN) else '********',
+                'value': (
+                    cfg.get()
+                    if cfg.get_type() not in (Config.FieldType.PASSWORD, Config.FieldType.HIDDEN)
+                    else '********'
+                ),
                 'type': cfg.get_type(),
                 'params': cfg.get_params(),
                 'help': cfg.get_help(),
@@ -832,6 +836,39 @@ class GlobalConfig:
         type=Config.FieldType.BOOLEAN,
         help=_('Allow biometric authentication'),
     )
+
+    # Immutable audit log configs
+    TSA_PROVIDER_URL: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        'TSA Provider URL',
+        'https://freetsa.org/tsr',
+        type=Config.FieldType.TEXT,
+        help=_('TSA Provider URL for timestamping signatures'),
+    )
+    TSA_PROVIDER_TIMEOUT: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        'TSA Provider Timeout',
+        '10',
+        type=Config.FieldType.NUMERIC,
+        help=_('TSA Provider Timeout in seconds'),
+    )
+    TSA_PROVIDER_VERIFY_SSL: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        'TSA Provider SSL Verify',
+        '1',
+        type=Config.FieldType.BOOLEAN,
+        help=_('TSA Provider SSL Verify'),
+    )
+    IMMUTABLE_LOG_ENABLED: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        'Enable immutable log',
+        '0',
+        type=Config.FieldType.BOOLEAN,
+        help=_('Enable immutable audit log for critical data (admin events, logins, etc.)'),
+    )
+    IMMUTABLE_LOG_REANCHOR: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        'Immutable log reanchor interval',
+        '14400',
+        type=Config.FieldType.NUMERIC,
+        help=_('Interval in seconds between re-anchor points in the immutable log (if enabled)'),
+    )
+
 
     @staticmethod
     def is_initialized() -> bool:

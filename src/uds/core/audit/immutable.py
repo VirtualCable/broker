@@ -18,8 +18,9 @@ timestamp token.  The nonce (32 random bytes, 2^256 possibilities) makes it
 impossible to precompute or regenerate the same seed, even with knowledge of
 SECRET_KEY.  The RFC 3161 token proves the seed existed at a specific moment.
 
-Periodic re-anchoring: every ``REANCHOR_INTERVAL`` normal entries, a
-re-anchor entry is inserted automatically.  It stores the TSA token for
+Periodic re-anchoring: controlled by ``GlobalConfig.IMMUTABLE_LOG_REANCHOR``
+(seconds).  After the configured wall-clock interval since the last anchor,
+a re-anchor entry is inserted automatically.  It stores the TSA token for
 the previous entry's hash, freezing the chain up to that point.
 
 Genesis and re-anchor entries have ``anchor=True`` on the model.
@@ -42,10 +43,11 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.utils import timezone as dj_timezone
 
 from uds.models.immutable_log import ImmutableLog
 from uds.core.audit.stamping import StampProvider, DummyStampProvider, RFC3161StampProvider
+from uds.core.util import config
+from uds.core.util.model import sql_now
 
 logger = logging.getLogger(__name__)
 
@@ -54,24 +56,14 @@ HASH_SIZE = 32
 NONCE_SIZE = 32  # 256 bits — 2^256 possibilities, brute-force infeasible
 
 
-# ======================================================================
-# Serialization helpers
-# ======================================================================
-
-
 def content_to_bytes(obj: typing.Any) -> bytes:
     """Serialize a Python object to bytes for storage in the immutable log."""
     return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def content_from_bytes(data: bytes) -> bytes:
+def content_from_bytes(data: bytes) -> typing.Any:
     """Deserialize bytes back to a Python object (use only on trusted data)."""
     return pickle.loads(data)
-
-
-# ======================================================================
-# Data packing helpers
-# ======================================================================
 
 
 def _pack_genesis_data(nonce: bytes, token: bytes) -> bytes:
@@ -79,8 +71,9 @@ def _pack_genesis_data(nonce: bytes, token: bytes) -> bytes:
     return struct.pack('>H', len(nonce)) + nonce + token
 
 
-def _unpack_genesis_data(data: bytes) -> tuple[bytes, bytes]:
+def _unpack_genesis_data(data: bytes | memoryview) -> tuple[bytes, bytes]:
     """Unpack genesis data into (nonce, rfc3161_token)."""
+    data = bytes(data)  # ensure bytes, not memoryview
     pos = 0
     nonce_len = struct.unpack_from('>H', data, pos)[0]
     pos += 2
@@ -103,10 +96,9 @@ class ImmutableLogger:
 
         from uds.core.audit.stamping import RFC3161StampProvider
 
-        # Configure the logger
+        # Optionally configure (otherwise reads from GlobalConfig)
         ImmutableLogger.configure(
             stamp_provider=RFC3161StampProvider(),
-            reanchor_interval=100,
         )
 
         # Init chain
@@ -121,64 +113,74 @@ class ImmutableLogger:
 
     # -- configuration -----------------------------------------------------
 
-    REANCHOR: int | timedelta = 0
+    REANCHOR: timedelta = timedelta(0)
     """
-    Re-anchor trigger.
+    Re-anchor trigger.  Read from ``GlobalConfig.IMMUTABLE_LOG_REANCHOR``
+    (seconds).  ``timedelta(0)`` = disabled.  Can be overridden via
+    :meth:`configure`.
+    """
 
-    - ``int``:  insert a re-anchor every N normal entries.
-    - ``timedelta``:  insert a re-anchor after the given wall-clock interval
-      since the last anchor was created.
-    - ``0``:  disabled.
-    """
+    _reanchor_configured: bool = False
+    """True if ``configure()`` has been called, so we don't re-read config."""
 
     _stamp_provider: StampProvider | None = None
     """Provider used for genesis and re-anchoring."""
-
-    # -- internal state ----------------------------------------------------
 
     _last_hash: bytes | None = None
     _last_sequence: int | None = None
     _entries_since_last_anchor: int = 0
     _last_anchor_stamp: datetime | None = None
 
-    # -- configuration API -------------------------------------------------
+    @staticmethod
+    def is_enabled() -> bool:
+        """Check if the immutable log is enabled"""
+        return config.GlobalConfig.IMMUTABLE_LOG_ENABLED.as_bool()
+
+    @classmethod
+    def _get_reanchor_config(cls) -> timedelta:
+        """Read the re-anchor interval from GlobalConfig (seconds → timedelta)."""
+        if cls._reanchor_configured:
+            return cls.REANCHOR
+        seconds = config.GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
+        if seconds > 0:
+            return timedelta(seconds=seconds)
+        return timedelta(0)
 
     @classmethod
     def configure(
         cls,
         stamp_provider: StampProvider | None = None,
-        reanchor: int | timedelta | None = None,
+        reanchor: timedelta | None = None,
     ) -> None:
         """
         Configure the logger before first use.
 
         Args:
             stamp_provider: Provider for RFC 3161 timestamping.
-                            Defaults to :class:`DummyStampProvider`.
-            reanchor: How often to insert a re-anchor entry.
-                      ``int`` → every N normal entries.
-                      ``timedelta`` → after that wall-clock interval.
-                      ``0`` → disabled.
+                            Defaults to reading from GlobalConfig
+                            (TSA_PROVIDER_URL, etc.).
+            reanchor: Override the re-anchor interval.
+                      Defaults to ``GlobalConfig.IMMUTABLE_LOG_REANCHOR``.
         """
         if stamp_provider is not None:
             cls._stamp_provider = stamp_provider
         if reanchor is not None:
             cls.REANCHOR = reanchor
+            cls._reanchor_configured = True
 
     @classmethod
     def _get_stamp_provider(cls) -> StampProvider:
         if cls._stamp_provider is None:
-            if getattr(settings, 'IMMUTABLE_LOG_STAMP_PROVIDER', None) == 'rfc3161':
+            if config.GlobalConfig.TSA_PROVIDER_URL.as_str():
                 cls._stamp_provider = RFC3161StampProvider(
-                    url=getattr(settings, 'IMMUTABLE_LOG_TSA_URL', 'http://localhost:8080/tsa'),
-                    timeout=getattr(settings, 'IMMUTABLE_LOG_TSA_TIMEOUT', 30),
-                    verify_ssl=getattr(settings, 'IMMUTABLE_LOG_TSA_VERIFY_SSL', True),
+                    url=config.GlobalConfig.TSA_PROVIDER_URL.as_str(),
+                    timeout=config.GlobalConfig.TSA_PROVIDER_TIMEOUT.as_int(),
+                    verify_ssl=config.GlobalConfig.TSA_PROVIDER_VERIFY_SSL.as_bool(),
                 )
             else:
                 cls._stamp_provider = DummyStampProvider()
-        return cls._stamp_provider
 
-    # -- internal helpers -------------------------------------------------
+        return cls._stamp_provider
 
     @classmethod
     def _compute_hash(
@@ -189,10 +191,10 @@ class ImmutableLogger:
         data: bytes,
     ) -> bytes:
         hasher = hashlib.new(HASH_ALGO)
-        hasher.update(previous_hash)                                         # 32 bytes
+        hasher.update(previous_hash)  # 32 bytes
         hasher.update(struct.pack('>q', int(stamp.timestamp() * 1_000_000)))  # 8 bytes (micros)
-        hasher.update(struct.pack('>Q', sequence))                            # 8 bytes (uint64)
-        hasher.update(struct.pack('>I', len(data)))                           # 4 bytes (data length)
+        hasher.update(struct.pack('>Q', sequence))  # 8 bytes (uint64)
+        hasher.update(struct.pack('>I', len(data)))  # 4 bytes (data length)
         hasher.update(data)
         return hasher.digest()
 
@@ -215,7 +217,7 @@ class ImmutableLogger:
         try:
             last = ImmutableLog.objects.latest()
             cls._last_sequence = last.sequence
-            cls._last_hash = last.entry_hash
+            cls._last_hash = bytes(last.entry_hash)
         except ImmutableLog.DoesNotExist:
             cls._last_sequence = 0
             cls._last_hash = cls._genesis_seed()[0]
@@ -231,22 +233,20 @@ class ImmutableLogger:
 
     @classmethod
     def _should_reanchor(cls) -> bool:
-        if cls.REANCHOR == 0:
+        interval = cls._get_reanchor_config()
+        if interval == timedelta(0):
             return False
-        if isinstance(cls.REANCHOR, int):
-            return cls._entries_since_last_anchor >= cls.REANCHOR
-        # timedelta: check wall-clock elapsed
         if cls._last_anchor_stamp is None:
-            cls._last_anchor_stamp = dj_timezone.now()
+            cls._last_anchor_stamp = sql_now()
             return False
-        return dj_timezone.now() - cls._last_anchor_stamp >= cls.REANCHOR
+        return sql_now() - cls._last_anchor_stamp >= interval
 
     @classmethod
     def _create_entry(
         cls, previous_hash: bytes, sequence: int, data: bytes, *, anchor: bool = False
     ) -> ImmutableLog:
         """Low-level: create an entry and update the cache."""
-        now = dj_timezone.now()
+        now = sql_now()
         entry_hash = cls._compute_hash(previous_hash, now, sequence, data)
 
         entry = ImmutableLog.objects.create(
@@ -401,11 +401,13 @@ class ImmutableLogger:
 
         secret = settings.SECRET_KEY.encode('utf-8')
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
+        # Try to get tobytes if previous_hash is a memoryview (Django BinaryField may return that)
+        stored_seed = bytes(genesis.previous_hash.tobytes() if hasattr(genesis.previous_hash, 'tobytes') else genesis.previous_hash)  # type: ignore
 
-        if genesis.previous_hash != expected_seed:
+        if stored_seed != expected_seed:
             return False, (
                 f'Genesis seed mismatch: '
-                f'stored={genesis.previous_hash.hex()} '
+                f'stored={stored_seed.hex()} '
                 f'expected={expected_seed.hex()} '
                 f'(nonce={nonce.hex()[:16]}...)'
             )
@@ -416,24 +418,24 @@ class ImmutableLogger:
                 return False, 'Genesis RFC 3161 token verification failed.'
 
         # Walk the chain
-        expected_previous = genesis.entry_hash
+        expected_previous = bytes(genesis.entry_hash)
         reanchor_count = 0
 
         for entry in entries[1:]:
             computed = cls._compute_hash(
-                entry.previous_hash,
+                bytes(entry.previous_hash),
                 entry.stamp,
                 entry.sequence,
-                entry.data,
+                bytes(entry.data),
             )
 
-            if computed != entry.entry_hash:
+            if computed != bytes(entry.entry_hash):
                 return False, (
                     f'Hash mismatch at entry #{entry.sequence}: '
                     f'stored={entry.entry_hash.hex()} computed={computed.hex()}'
                 )
 
-            if entry.previous_hash != expected_previous:
+            if bytes(entry.previous_hash) != expected_previous:
                 return False, (
                     f'Chain break at entry #{entry.sequence}: '
                     f'expected prev={expected_previous.hex()} '
@@ -443,14 +445,12 @@ class ImmutableLogger:
             # Re-anchor verification
             if entry.anchor:
                 if reanchor_provider is not None:
-                    if not reanchor_provider.verify(expected_previous, entry.data):
-                        return False, (
-                            f'Re-anchor TSA verification failed at entry #{entry.sequence}'
-                        )
+                    if not reanchor_provider.verify(expected_previous, bytes(entry.data)):
+                        return False, (f'Re-anchor TSA verification failed at entry #{entry.sequence}')
                 reanchor_count += 1
                 logger.debug('Re-anchor #%d verified OK', entry.sequence)
 
-            expected_previous = entry.entry_hash
+            expected_previous = bytes(entry.entry_hash)
 
         msg = f'Chain verified: {len(entries)} entries'
         if reanchor_count:
@@ -476,7 +476,11 @@ class ImmutableLogger:
             'normal_count': total - anchor_count,
             'entries_since_last_anchor': cls._entries_since_last_anchor,
             'last_anchor_stamp': cls._last_anchor_stamp,
-            'reanchor_config': str(cls.REANCHOR) if cls.REANCHOR else 'disabled',
+            'reanchor_config': (
+                f'{cls._get_reanchor_config().total_seconds():.0f}s'
+                if cls._get_reanchor_config()
+                else 'disabled'
+            ),
         }
 
     @classmethod
@@ -509,7 +513,7 @@ class ImmutableLogger:
         secret = settings.SECRET_KEY.encode('utf-8')
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
 
-        if first.previous_hash != expected_seed:
+        if bytes(first.previous_hash) != expected_seed:
             logger.error('Genesis seed mismatch')
             return
 
@@ -518,29 +522,25 @@ class ImmutableLogger:
             return
 
         yield first
-        expected_previous = first.entry_hash
+        expected_previous = bytes(first.entry_hash)
 
         for entry in entries[1:]:
-            if entry.previous_hash != expected_previous:
+            if bytes(entry.previous_hash) != expected_previous:
                 logger.error('Chain break at entry #%d', entry.sequence)
                 return
 
             computed = cls._compute_hash(
-                entry.previous_hash, entry.stamp, entry.sequence, entry.data
+                bytes(entry.previous_hash), entry.stamp, entry.sequence, bytes(entry.data)
             )
-            if computed != entry.entry_hash:
+            if computed != bytes(entry.entry_hash):
                 logger.error('Hash mismatch at entry #%d', entry.sequence)
                 return
 
             # Verify re-anchor
             if entry.anchor:
-                if reanchor_provider and not reanchor_provider.verify(
-                    expected_previous, entry.data
-                ):
-                    logger.error(
-                        'Re-anchor TSA verification failed at entry #%d', entry.sequence
-                    )
+                if reanchor_provider and not reanchor_provider.verify(expected_previous, bytes(entry.data)):
+                    logger.error('Re-anchor TSA verification failed at entry #%d', entry.sequence)
                     return
 
-            expected_previous = entry.entry_hash
+            expected_previous = bytes(entry.entry_hash)
             yield entry

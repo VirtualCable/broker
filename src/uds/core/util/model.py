@@ -46,7 +46,7 @@ from uds.core.managers.crypto import CryptoManager
 
 logger = logging.getLogger(__name__)
 
-_UUID_RE: typing.Final[typing.Pattern[str]] = re.compile(
+_UUID_RE: typing.Final[re.Pattern[str]] = re.compile(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
     re.IGNORECASE,
 )
@@ -100,7 +100,7 @@ class TimeTrack:
 
     @staticmethod
     def sql_now() -> datetime.datetime:
-        now = timezone.localtime()
+        now = timezone.now()
         with TimeTrack.lock:
             diff = now - TimeTrack.last_check
             # If in last_check is in the future, or more than CACHE_TIME_TIMEOUT seconds ago, we need to refresh
