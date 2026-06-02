@@ -60,7 +60,7 @@ import struct
 import typing
 import collections.abc
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
