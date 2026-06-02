@@ -52,7 +52,7 @@ class ImmutableLogAnchorJob(Job):
         interval = GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
         if interval <= 0:
             return 600
-        return min(max(interval, 120), 60 * 24)  # between 2 min and 24 h
+        return min(max(interval, 120), 60 * 60 * 24)  # between 2 min and 24 h
 
     def run(self) -> None:
         if not ImmutableLogger.is_enabled():

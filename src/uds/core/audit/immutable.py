@@ -501,8 +501,8 @@ class ImmutableLogger:
             # Verify re-anchor
             if entry.anchor:
                 if reanchor_provider and not reanchor_provider.verify(
-                    expected_previous, bytes(entry.data) # pyrefly: ignore[unnecessary-type-conversion]
-                ):  
+                    expected_previous, bytes(entry.data)  # pyrefly: ignore[unnecessary-type-conversion]
+                ):
                     logger.error('Re-anchor TSA verification failed at entry #%d', entry.sequence)
                     return
 
