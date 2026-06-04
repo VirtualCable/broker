@@ -1,6 +1,6 @@
 # Broker (and common)
 # Latest versions should work fine with master branch
-Django>=6.0.5
+Django>=6.0.6
 channels
 daphne
 # Current "stable" ldap3 version (2.9.1) has a feature
