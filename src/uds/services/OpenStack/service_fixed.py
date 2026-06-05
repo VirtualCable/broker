@@ -34,7 +34,7 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types
+from uds.core import exceptions, types
 from uds.core.services.generics.fixed.service import FixedService
 from uds.core.ui import gui
 
@@ -196,7 +196,27 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         return found_vmid
 
     def get_mac(self, vmid: str) -> str:
-        return self.api.get_server_info(vmid).addresses[0].mac
+        # Returning '' lets the caller retry instead of crashing when the mac cannot be
+        # resolved yet (machine missing, or external DHCP leaving 'addresses' empty).
+        try:
+            net_info = self.api.get_server_info(vmid).addresses
+        except exceptions.services.generics.NotFoundError:
+            return ''
+
+        if net_info and net_info[0].mac:
+            return net_info[0].mac
+
+        # external DHCP: 'addresses' is empty, fall back to the Neutron port mac.
+        # Swallow any API error (404/403/transient) so it never reaches the caller.
+        try:
+            ports = self.api.list_ports(device_id=vmid)
+        except exceptions.services.generics.Error as e:
+            logger.warning('Listing Neutron ports for %s failed, mac unresolved: %s', vmid, e)
+            return ''
+        for port in ports:
+            if port.mac_address:
+                return port.mac_address
+        return ''
 
     def get_ip(self, vmid: str) -> str:
         return self.api.get_server_info(vmid).addresses[0].ip

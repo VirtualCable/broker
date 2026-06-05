@@ -37,6 +37,7 @@ import typing
 from django.utils.translation import gettext_noop as _
 
 from uds.core import types
+from uds.core import exceptions
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.util import validators
 from uds.core.ui import gui
@@ -263,8 +264,28 @@ class OpenStackLiveService(DynamicService):
         *,
         for_unique_id: bool = False,
     ) -> str:
-        net_info = self.api.get_server_info(vmid).validated().addresses
-        return '' if not net_info else net_info[0].mac
+        # Returning '' makes the state checker retry instead of forcing the userservice
+        # to ERROR, so degrade to it whenever the mac cannot be resolved yet.
+        try:
+            net_info = self.api.get_server_info(vmid).validated().addresses
+        except exceptions.services.generics.NotFoundError:
+            return ''  # not created yet
+
+        if net_info and net_info[0].mac:
+            return net_info[0].mac
+
+        # 'addresses' is empty when OpenStack does not manage addressing (external DHCP);
+        # the Neutron port still carries the mac. Swallow any API error (404/403/transient)
+        # here too: it must never reach the state checker.
+        try:
+            ports = self.api.list_ports(device_id=vmid)
+        except exceptions.services.generics.Error as e:
+            logger.warning('Listing Neutron ports for %s failed, mac unresolved: %s', vmid, e)
+            return ''
+        for port in ports:
+            if port.mac_address:
+                return port.mac_address
+        return ''
 
     def is_running(
         self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str

@@ -246,6 +246,30 @@ class PortStatus(enum.StrEnum):
 
 
 @dataclasses.dataclass
+class PortInfo:
+    id: str
+    name: str
+    status: PortStatus
+    device_id: str  # Owner server id (the VM this port is attached to)
+    network_id: str
+    mac_address: str
+    fixed_ips: list[str]  # List of ip addresses assigned to the port (may be empty)
+
+    @staticmethod
+    def from_dict(d: dict[str, typing.Any]) -> 'PortInfo':
+        return PortInfo(
+            id=d['id'],
+            name=d.get('name') or d['id'],
+            status=PortStatus.from_str(d.get('status', PortStatus.ERROR.value)),
+            device_id=d.get('device_id') or '',
+            network_id=d.get('network_id') or '',
+            # Neutron always assigns a mac to the port, regardless of DHCP/IP allocation
+            mac_address=(d.get('mac_address') or '').upper(),
+            fixed_ips=[fi['ip_address'] for fi in d.get('fixed_ips', []) if fi.get('ip_address')],
+        )
+
+
+@dataclasses.dataclass
 class ServerInfo:
 
     @dataclasses.dataclass

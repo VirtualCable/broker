@@ -564,6 +564,29 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
             )
         ]
 
+    def list_ports(
+        self,
+        network_id: typing.Optional[str] = None,
+        device_id: typing.Optional[str] = None,
+    ) -> list[openstack_types.PortInfo]:
+        query = ''
+        if network_id is not None:
+            query += f'&network_id={network_id}'
+        if device_id is not None:
+            query += f'&device_id={device_id}'
+        if query:
+            query = '?' + query[1:]  # Replace leading '&' with '?'
+
+        return [
+            openstack_types.PortInfo.from_dict(p)
+            for p in self._get_recurring_from_endpoint(
+                endpoint_types=NETWORKS_ENDPOINT_TYPES,
+                path=f'/v2.0/ports{query}',
+                error_message='List ports',
+                key='ports',
+            )
+        ]
+
     @decorators.cached(prefix='sgps', timeout=consts.cache.EXTREME_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def list_security_groups(self) -> list[openstack_types.SecurityGroupInfo]:
         return [
