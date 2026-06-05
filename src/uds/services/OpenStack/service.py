@@ -54,7 +54,7 @@ if typing.TYPE_CHECKING:
     from .provider import OpenStackProvider
     from .provider_legacy import OpenStackProviderLegacy
 
-    AnyOpenStackProvider: typing.TypeAlias = typing.Union[OpenStackProvider, OpenStackProviderLegacy]
+    AnyOpenStackProvider: typing.TypeAlias = OpenStackProvider | OpenStackProviderLegacy
 
     from uds.core.services.generics.dynamic.userservice import DynamicUserService
     from uds.core.services.generics.dynamic.publication import DynamicPublication
@@ -186,7 +186,7 @@ class OpenStackLiveService(DynamicService):
 
     prov_uuid = gui.HiddenField()
 
-    cached_api: typing.Optional['client.OpenStackClient'] = None
+    cached_api: 'client.OpenStackClient | None' = None
 
     # Note: currently, Openstack does not provides a way of specifying how to stop the server
     # At least, i have not found it on the documentation
@@ -251,14 +251,14 @@ class OpenStackLiveService(DynamicService):
                 yield i.id
 
     def get_ip(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> str:
         net_info = self.api.get_server_info(vmid).validated().addresses
         return '' if not net_info else net_info[0].ip
 
     def get_mac(
         self,
-        caller_instance: typing.Optional['DynamicUserService | DynamicPublication'],
+        caller_instance: 'DynamicUserService | DynamicPublication | None',
         vmid: str,
         *,
         for_unique_id: bool = False,
@@ -267,19 +267,19 @@ class OpenStackLiveService(DynamicService):
         return '' if not net_info else net_info[0].mac
 
     def is_running(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> bool:
         return self.api.get_server_info(vmid).validated().power_state.is_running()
 
     def start(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
         if self.api.get_server_info(vmid).validated().power_state.is_running():
             return
         self.api.start_server(vmid)
 
     def stop(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
         if self.api.get_server_info(vmid).validated().power_state.is_stopped():
             return
@@ -290,13 +290,13 @@ class OpenStackLiveService(DynamicService):
     # We can anyway delete de machine even if it is not stopped
 
     def reset(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
         # Default is to stop "hard"
         return self.stop(caller_instance, vmid)
 
     def delete(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
         """
         Removes the machine, or queues it for removal, or whatever :)
@@ -318,7 +318,7 @@ class OpenStackLiveService(DynamicService):
     # default is_deleted is fine, returns True always
 
     def make_template(
-        self, template_name: str, description: typing.Optional[str] = None
+        self, template_name: str, description: str | None = None
     ) -> openstack_types.SnapshotInfo:
         # First, ensures that volume has not any running instances
         # if self.api.getVolume(self.volume.value)['status'] != 'available':
