@@ -106,20 +106,20 @@ def cache_key_helper(obj: 'OpenStackClient') -> str:
 class OpenStackClient:  # pylint: disable=too-many-public-methods
     _authenticated: bool
     # If we change the project id, we need to reauthenticate
-    _authenticated_projectid: typing.Optional[str]
+    _authenticated_projectid: str | None
     _identity_endpoint: str
-    _tokenid: typing.Optional[str]
-    _catalog: typing.Optional[list[dict[str, typing.Any]]]
+    _tokenid: str | None
+    _catalog: list[dict[str, typing.Any]] | None
     _is_legacy: bool
-    _access: typing.Optional[str]
+    _access: str | None
     _domain: str
     _username: str
     _password: str
     _auth_method: openstack_types.AuthMethod
-    _userid: typing.Optional[str]
-    _projectid: typing.Optional[str]
-    _project_name: typing.Optional[str]
-    _region: typing.Optional[str]
+    _userid: str | None
+    _projectid: str | None
+    _project_name: str | None
+    _region: str | None
     _timeout: int
     _session: 'requests.Session'
 
@@ -135,10 +135,10 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         password: str,
         port: int = -1,  # Only used for legacy
         use_ssl: bool = False,  # Only used for legacy
-        projectid: typing.Optional[str] = None,
-        region: typing.Optional[str] = None,
-        access: typing.Optional[openstack_types.AccessType] = None,
-        proxies: typing.Optional[dict[str, str]] = None,
+        projectid: str | None = None,
+        region: str | None = None,
+        access: openstack_types.AccessType | None = None,
+        proxies: dict[str, str] | None = None,
         timeout: int = 10,
         verify_ssl: bool = True,
         auth_method: openstack_types.AuthMethod = openstack_types.AuthMethod.PASSWORD,
@@ -289,7 +289,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         path: str,
         error_message: str,
         key: str,
-        params: typing.Optional[dict[str, str]] = None,
+        params: dict[str, str] | None = None,
     ) -> collections.abc.Iterable[typing.Any]:
         cache_key = ''.join(endpoint_types)
         found_endpoints = self._get_endpoints_iterable(cache_key, *endpoint_types)
@@ -476,7 +476,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
     def list_servers(
         self,
         detail: bool = False,
-        params: typing.Optional[dict[str, str]] = None,
+        params: dict[str, str] | None = None,
         **kwargs: typing.Any,
     ) -> list[openstack_types.ServerInfo]:
         return [
@@ -566,8 +566,8 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
 
     def list_ports(
         self,
-        network_id: typing.Optional[str] = None,
-        device_id: typing.Optional[str] = None,
+        network_id: str | None = None,
+        device_id: str | None = None,
     ) -> list[openstack_types.PortInfo]:
         query = ''
         if network_id is not None:
@@ -638,7 +638,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         return openstack_types.SnapshotInfo.from_dict(r.json()['snapshot'])
 
     def create_snapshot(
-        self, volume_id: str, name: str, description: typing.Optional[str] = None
+        self, volume_id: str, name: str, description: str | None = None
     ) -> openstack_types.SnapshotInfo:
         # First, get volume info to ensure it exists
         self.get_volume_info(volume_id, force=True)
@@ -856,8 +856,8 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         session: 'requests.Session',
         headers: dict[str, str],
         key: str,
-        params: typing.Optional[collections.abc.Mapping[str, str]] = None,
-        error_message: typing.Optional[str] = None,
+        params: collections.abc.Mapping[str, str] | None = None,
+        error_message: str | None = None,
         timeout: int = 10,
     ) -> collections.abc.Iterable[typing.Any]:
         counter = 0
@@ -885,7 +885,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def _ensure_valid_response(
-        response: 'requests.Response', error_message: typing.Optional[str] = None, expects_json: bool = True
+        response: 'requests.Response', error_message: str | None = None, expects_json: bool = True
     ) -> None:
         if response.ok is False:
             if response.status_code == 404:
