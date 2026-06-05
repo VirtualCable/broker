@@ -396,7 +396,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         self._authenticated = True
         # Extract the token id
         self._tokenid = r.headers['X-Subject-Token']
-        
+
         # get token info
         token = r.json()['token']
 
@@ -428,7 +428,6 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         else:
             # set cached to None, so we do not use cached credentials
             self.cache.delete('auth')
-            
 
         # logger.debug('The token {} will be valid for {}'.format(self._tokenId, validity))
 
@@ -587,7 +586,23 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
             path=f'/servers/{server_id}',
             error_message='Get Server information',
         )
-        return openstack_types.ServerInfo.from_dict(r.json()['server'])
+        server_info = openstack_types.ServerInfo.from_dict(r.json()['server'])
+        # # If no addresses got, try the servers get IPS
+        # if len(server_info.addresses) == 0 or server_info.addresses[0].mac == '':
+        #     try:
+        #         r = self._request_from_endpoint(
+        #             'get',
+        #             endpoints_types=COMPUTE_ENDPOINT_TYPES,
+        #             path=f'/servers/{server_id}/ips',
+        #             error_message='Get Server IPs information',
+        #         )
+        #         # First element, the network name, don't care about it
+        #         data: dict[str, typing.Any] = r.json()
+        #         addrs = openstack_types.ServerInfo.AddresInfo.from_addresses(data['addresses'])
+        #         server_info.addresses = addrs if len(addrs) and addrs[0].ip and addrs[0].mac else server_info.addresses
+        #     except Exception:
+        #         pass  # Not found, all is fine
+        return server_info
 
     @decorators.cached(prefix='vol', timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def get_volume_info(self, volume_id: str, **kwargs: typing.Any) -> openstack_types.VolumeInfo:
@@ -792,7 +807,9 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         try:
             values = r.json()['versions']['values']
         except Exception:
-            raise exceptions.services.generics.Error('Invalid response from OpenStack (Mayby invalid endpoint?)')
+            raise exceptions.services.generics.Error(
+                'Invalid response from OpenStack (Mayby invalid endpoint?)'
+            )
 
         for v in values:
             if v['id'] >= 'v3.1':
