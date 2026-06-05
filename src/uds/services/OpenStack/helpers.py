@@ -48,7 +48,7 @@ def get_api(parameters: dict[str, str]) -> tuple[client.OpenStackClient, bool]:
     from .provider import OpenStackProvider
 
     provider = typing.cast(
-        typing.Union[OpenStackProviderLegacy, OpenStackProvider],
+        OpenStackProviderLegacy | OpenStackProvider,
         models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance(),
     )
 

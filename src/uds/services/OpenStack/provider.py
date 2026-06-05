@@ -202,7 +202,7 @@ class OpenStackProvider(ServiceProvider):
     legacy = False
 
     # Own variables
-    _api: typing.Optional[client.OpenStackClient] = None
+    _api: client.OpenStackClient | None = None
 
     def initialize(self, values: 'types.core.ValuesType' = None) -> None:
         """
@@ -220,7 +220,7 @@ class OpenStackProvider(ServiceProvider):
                     )
 
     def api(
-        self, projectid: typing.Optional[str] = None, region: typing.Optional[str] = None
+        self, projectid: str | None = None, region: str | None = None
     ) -> client.OpenStackClient:
         projectid = projectid or self.project_id.value or None
         region = region or self.region.value or None
