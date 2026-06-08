@@ -545,12 +545,6 @@ class ServersGroups(ModelHandler[GroupItem]):
                 tooltip=_('Max expected users to consider in load calculation'),
                 default=100,
             )
-            .add_numeric(
-                name='weights_min_memory',
-                label=_('Minimum free memory in MB'),
-                tooltip=_('Minimum free memory in MB to consider server as available, 0 means no limit'),
-                default=0,
-            )
             .add_info(
                 name='title',
                 default=title,
