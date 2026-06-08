@@ -107,7 +107,7 @@ class ServerSubtype(metaclass=singleton.Singleton):
     def enum(self) -> collections.abc.Iterable[Info]:
         return self.registered.values()
 
-    def get(self, type: ServerType, subtype: str) -> Info|None:
+    def get(self, type: ServerType, subtype: str) -> Info | None:
         return self.registered.get((type, subtype))
 
 
@@ -142,7 +142,9 @@ class ServerStatsWeights:
     cpu: float = 0.3
     memory: float = 0.6
     users: float = 0.1
-    max_users: int = 100  # Max users to consider in load calculation
+    max_expected_users: int = 100  # Max expected users to consider in load calculation
+    min_memory: int = 0  # Minimum free memory in bytes to consider server as available, 0 means no limit
+    users_limit: int = 0  # Maximum number of users to consider server as available, 0 means no limit
 
     def normalize(self) -> 'ServerStatsWeights':
         total = self.cpu + self.memory + self.users
@@ -156,7 +158,9 @@ class ServerStatsWeights:
             'cpu': self.cpu,
             'memory': self.memory,
             'users': self.users,
-            'max_users': self.max_users,
+            'max_expected_users': self.max_expected_users,
+            'min_memory': self.min_memory,
+            'users_limit': self.users_limit,
         }
 
     @staticmethod
@@ -165,7 +169,9 @@ class ServerStatsWeights:
             data.get('cpu', 0.3),
             data.get('memory', 0.6),
             data.get('users', 0.1),
-            int(data.get('max_users', 100)),
+            int(data.get('max_expected_users', 100)),
+            int(data.get('min_memory', 0)),
+            int(data.get('users_limit', 0)),
         ).normalize()
 
 
@@ -197,7 +203,7 @@ class ServerStats:
 
         return self.stamp > sql_stamp() - consts.cache.DEFAULT_CACHE_TIMEOUT
 
-    def load(self, *, min_memory: int = 0, weights: ServerStatsWeights | None = None) -> float:
+    def load(self, *, weights: ServerStatsWeights | None = None) -> float:
         # Loads are calculated as:
         # 30% cpu usage
         # 60% memory usage
@@ -207,13 +213,15 @@ class ServerStats:
 
         weights = (weights or ServerStatsWeights()).normalize()
 
-        if self.memtotal - self.memused < min_memory:
+        if self.memtotal - self.memused < weights.min_memory or (
+            weights.users_limit > 0 and self.current_users >= weights.users_limit
+        ):
             return 1000000000  # At the end of the list
 
         w = (
             weights.cpu * self.cpuused
             + weights.memory * (self.memused / (self.memtotal or 1))
-            + weights.users * (min(1.0, self.current_users / weights.max_users))
+            + weights.users * (min(1.0, self.current_users / weights.max_expected_users))
         )
 
         return min(max(0.0, w), 1.0)
@@ -296,7 +304,7 @@ class ServerCounter(typing.NamedTuple):
 
     @staticmethod
     def from_iterable(
-        data: collections.abc.Iterable[typing.Any]|None,
+        data: collections.abc.Iterable[typing.Any] | None,
     ) -> 'ServerCounter | None':
         if data is None:
             return None
