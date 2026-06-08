@@ -143,8 +143,7 @@ class ServerStatsWeights:
     memory: float = 0.6
     users: float = 0.1
     max_expected_users: int = 100  # Max expected users to consider in load calculation
-    min_memory: int = 0  # Minimum free memory in bytes to consider server as available, 0 means no limit
-    users_limit: int = 0  # Maximum number of users to consider server as available, 0 means no limit
+    min_memory: int = 0  # Minimum free memory in bytes to consider server as available
 
     def normalize(self) -> 'ServerStatsWeights':
         total = self.cpu + self.memory + self.users
@@ -159,8 +158,6 @@ class ServerStatsWeights:
             'memory': self.memory,
             'users': self.users,
             'max_expected_users': self.max_expected_users,
-            'min_memory': self.min_memory,
-            'users_limit': self.users_limit,
         }
 
     @staticmethod
@@ -170,8 +167,6 @@ class ServerStatsWeights:
             data.get('memory', 0.6),
             data.get('users', 0.1),
             int(data.get('max_expected_users', 100)),
-            int(data.get('min_memory', 0)),
-            int(data.get('users_limit', 0)),
         ).normalize()
 
 
@@ -213,18 +208,20 @@ class ServerStats:
 
         weights = (weights or ServerStatsWeights()).normalize()
 
-        if self.memtotal - self.memused < weights.min_memory or (
-            weights.users_limit > 0 and self.current_users >= weights.users_limit
-        ):
-            return 1000000000  # At the end of the list
-
         w = (
             weights.cpu * self.cpuused
-            + weights.memory * (self.memused / (self.memtotal or 1))
+            + weights.memory * (self.memused / (self.memtotal or self.memused))
             + weights.users * (min(1.0, self.current_users / weights.max_expected_users))
         )
 
-        return min(max(0.0, w), 1.0)
+        w = min(max(0.0, w), 1.0)
+
+        if self.memtotal - self.memused < weights.min_memory or (
+            weights.users > 0 and self.current_users >= weights.users
+        ):
+            return 1000000 + w * 1000000  # At the end of the list
+
+        return w
 
     def adjust(self, users_increment: int) -> 'ServerStats':
         """

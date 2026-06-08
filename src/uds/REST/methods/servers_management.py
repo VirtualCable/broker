@@ -440,8 +440,6 @@ class GroupItem(types.rest.BaseRestItem):
     weights_memory: int
     weights_users: int
     weights_max_expected_users: int
-    weights_min_memory: int
-    weights_users_limit: int
 
 
 class ServersGroups(ModelHandler[GroupItem]):
@@ -553,12 +551,6 @@ class ServersGroups(ModelHandler[GroupItem]):
                 tooltip=_('Minimum free memory in MB to consider server as available, 0 means no limit'),
                 default=0,
             )
-            .add_numeric(
-                name='weights_users_limit',
-                label=_('Users limit'),
-                tooltip=_('Maximum number of users to consider server as available, 0 means no limit'),
-                default=0,
-            )
             .add_info(
                 name='title',
                 default=title,
@@ -599,24 +591,18 @@ class ServersGroups(ModelHandler[GroupItem]):
         max_expected_users = (
             int(args['weights_max_expected_users']) if args['weights_max_expected_users'] is not None else 100
         )
-        min_memory = int(args['weights_min_memory']) if args['weights_min_memory'] is not None else 0
-        users_limit = int(args['weights_users_limit']) if args['weights_users_limit'] is not None else 0
         # Normalize weights to sum 100 if they are not
         all_sum = cpu + memory + users
         cpu = cpu * 100 // all_sum if all_sum > 0 else 0
         memory = memory * 100 // all_sum if all_sum > 0 else 0
         users = 100 - cpu - memory
         max_expected_users = max_expected_users if max_expected_users > 0 else 100
-        min_memory = min_memory if min_memory > 0 else 0
-        users_limit = users_limit if users_limit > 0 else 0
         # Set property, autosaves
         item.weights = types.servers.ServerStatsWeights(
             cpu=float(cpu) / 100,
             memory=float(memory) / 100,
             users=float(users) / 100,
             max_expected_users=max_expected_users,
-            min_memory=min_memory * MB,  # Convert to bytes for storage
-            users_limit=users_limit,
         )
 
     def get_item(self, item: 'Model') -> GroupItem:
@@ -635,8 +621,6 @@ class ServersGroups(ModelHandler[GroupItem]):
             weights_memory=int(item.weights.memory * 100 + 0.5),
             weights_users=int(item.weights.users * 100 + 0.5),
             weights_max_expected_users=item.weights.max_expected_users,
-            weights_min_memory=item.weights.min_memory // MB,  # In MB for API
-            weights_users_limit=item.weights.users_limit,
         )
 
     def delete_item(self, item: 'Model') -> None:
