@@ -206,11 +206,11 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         if net_info and net_info[0].mac:
             return net_info[0].mac
 
-        # external DHCP: 'addresses' is empty, fall back to the Neutron port mac.
-        # Swallow any API error (404/403/transient) so it never reaches the caller.
+        # 'addresses' is empty under external DHCP, but the Neutron port still carries the mac.
         try:
             ports = self.api.list_ports(device_id=vmid)
         except exceptions.services.generics.Error as e:
+            # never let a transient/403 error reach the caller: '' just retries
             logger.warning('Listing Neutron ports for %s failed, mac unresolved: %s', vmid, e)
             return ''
         for port in ports:

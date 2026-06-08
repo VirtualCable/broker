@@ -269,17 +269,16 @@ class OpenStackLiveService(DynamicService):
         try:
             net_info = self.api.get_server_info(vmid).validated().addresses
         except exceptions.services.generics.NotFoundError:
-            return ''  # not created yet
+            return ''
 
         if net_info and net_info[0].mac:
             return net_info[0].mac
 
-        # 'addresses' is empty when OpenStack does not manage addressing (external DHCP);
-        # the Neutron port still carries the mac. Swallow any API error (404/403/transient)
-        # here too: it must never reach the state checker.
+        # 'addresses' is empty under external DHCP, but the Neutron port still carries the mac.
         try:
             ports = self.api.list_ports(device_id=vmid)
         except exceptions.services.generics.Error as e:
+            # never let a transient/403 error reach the state checker: '' just retries
             logger.warning('Listing Neutron ports for %s failed, mac unresolved: %s', vmid, e)
             return ''
         for port in ports:
