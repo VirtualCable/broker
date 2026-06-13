@@ -58,6 +58,223 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
+class X509CertificateAuthenticator(auths.Authenticator):
+    """
+    Authenticator that validates users via X509 client certificates.
+
+    Nginx requests the client certificate and forwards it to UDS.
+    The authenticator validates the certificate against a trusted CA,
+    extracts the username from the subject DN, and authenticates the user.
+    """
+
+    type_name = _('X509 Certificate Authenticator')
+    type_type = 'X509CertificateAuthenticator'
+    type_description = _('X509 Client Certificate Authenticator')
+    icon_file = 'auth.png'
+    auth_type_group: typing.ClassVar[types.auth.AuthTypeGroup] = types.auth.AuthTypeGroup.CERTIFICATE
+
+    # ---- Certificate fields ----
+    ca_certificate = gui.TextField(
+        length=16384,
+        lines=5,
+        label=_('CA Certificate'),
+        tooltip=_('PEM-encoded Certificate Authority certificate used to validate client certificates.'),
+        required=True,
+        tab=_('Certificates'),
+    )
+    trusted_issuer = gui.TextField(
+        length=512,
+        label=_('Trusted Issuer'),
+        order=10,
+        tooltip=_(
+            'Expected Issuer DN of client certificates. '
+            'Leave empty to accept any certificate signed by the configured CA. '
+            'The comparison strips spaces and is case-sensitive.'
+        ),
+        required=False,
+        tab=_('Certificates'),
+    )
+
+    username_attr = fields.username_attr_field(tab=_('Attributes'))
+    groups_attr = fields.groupname_attr_field(tab=_('Groups'))
+    realname_attr = fields.realname_attr_field(tab=_('Attributes'))
+
+    common_groups = gui.TextField(
+        length=256,
+        label=_('Common Groups'),
+        order=40,
+        tooltip=_('Comma-separated list of groups the user will be assigned to (in addition to groups_attr).'),
+        required=False,
+        tab=_('Groups'),
+    )
+
+    # ---- Revocation (TBD soon) ----
+    ocsp_url = gui.TextField(
+        length=256,
+        label=_('OCSP URL'),
+        order=50,
+        tooltip=_('OCSP responder URL for certificate revocation checking (not yet implemented).'),
+        required=False,
+        tab=_('Revocation'),
+    )
+    crl_url = gui.TextField(
+        length=256,
+        label=_('CRL URL'),
+        order=51,
+        tooltip=_('CRL distribution point URL for certificate revocation checking (not yet implemented).'),
+        required=False,
+        tab=_('Revocation'),
+    )
+
+    # ---- Remote bridge service ----
+    remote_url = gui.TextField(
+        length=512,
+        label=_('Remote URL'),
+        order=60,
+        tooltip=_(
+            'URL of the client-cert-auth bridge service. '
+            'E.g.: "cert-auth.example.com" or "https://cert-auth.example.com". '
+            'The /cert_auth/ path will be appended automatically.'
+        ),
+        required=True,
+        tab=_('Bridge'),
+    )
+    shared_secret = gui.PasswordField(
+        length=128,
+        label=_('Shared Secret'),
+        order=61,
+        tooltip=_('HMAC key shared with the client-cert-auth bridge service for encryption/signing.'),
+        required=True,
+        tab=_('Bridge'),
+    )
+
+    def initialize(self, values: dict[str, typing.Any] | None) -> None:
+        if not values:
+            return
+
+        if not self.ca_certificate.value.strip():
+            raise exceptions.ui.ValidationError(gettext('CA Certificate is required'))
+
+        try:
+            ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
+            bc = ca_cert.extensions.get_extension_for_class(x509.BasicConstraints)
+            if not bc.value.ca:
+                raise exceptions.ui.ValidationError(
+                    gettext(
+                        'The provided certificate is not a CA certificate (missing CA:TRUE in Basic Constraints)'
+                    )
+                )
+        except x509.ExtensionNotFound:
+            raise exceptions.ui.ValidationError(
+                gettext('The provided certificate does not have Basic Constraints extension')
+            ) from None
+        except ValueError as e:
+            raise exceptions.ui.ValidationError(gettext('Invalid PEM-encoded certificate: {}').format(e)) from e
+
+        auth_utils.validate_regex_field(self.username_attr)
+        auth_utils.validate_regex_field(self.realname_attr)
+        auth_utils.validate_regex_field(self.groups_attr)
+
+        # Validate remote URL
+        try:
+            self.remote_url.value = _normalize_remote_url(self.remote_url.value)
+        except ValueError as e:
+            raise exceptions.ui.ValidationError(gettext(str(e))) from e
+
+        if not self.shared_secret.value.strip():
+            raise exceptions.ui.ValidationError(gettext('Shared Secret is required'))
+
+    def auth_callback(
+        self,
+        parameters: types.auth.AuthCallbackParams,
+        groups_manager: auths.GroupsManager,
+        request: ExtendedHttpRequest,
+    ) -> types.auth.AuthenticationResult:
+        # Extract encrypted payload from POST params (sent by smartcard-auth-docker bridge)
+        payload_b64: str | None = parameters.post_params.get('payload')
+        if not payload_b64:
+            logger.error('No encrypted payload in POST parameters')
+            return types.auth.FAILED_AUTH
+
+        try:
+            # Decrypt and parse JSON payload
+            json_str: str = _decrypt_payload(payload_b64, self.shared_secret.value)
+            data: dict[str, str] = json.loads(json_str)
+            cert_pem: str = data.get('cert', _EMPTY_CERT_SENTINEL)
+            if cert_pem == _EMPTY_CERT_SENTINEL:
+                logger.warning('No client certificate provided (EMPTY sentinel)')
+                return types.auth.FAILED_AUTH
+
+            cert_bytes: bytes = cert_pem.encode()
+            client_cert: x509.Certificate = x509.load_pem_x509_certificate(cert_bytes)
+            ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
+
+            if not _verify_cert_signed_by_ca(client_cert, ca_cert):
+                logger.warning('Certificate not signed by configured CA')
+                return types.auth.FAILED_AUTH
+
+            if self.trusted_issuer.value.strip():
+                issuer_normalized = client_cert.issuer.rfc4514_string().replace(' ', '')
+                configured_normalized = self.trusted_issuer.value.replace(' ', '')
+                if issuer_normalized != configured_normalized:
+                    logger.warning(
+                        'Certificate issuer mismatch: expected %s, got %s',
+                        self.trusted_issuer.value,
+                        client_cert.issuer.rfc4514_string(),
+                    )
+                    return types.auth.FAILED_AUTH
+
+            subject_mapping = _subject_to_mapping(client_cert.subject)
+            username = ''.join(auth_utils.process_regex_field(self.username_attr.value, subject_mapping))
+            if not username:
+                logger.warning('Could not extract username from certificate subject')
+                return types.auth.FAILED_AUTH
+
+            username = username.replace(' ', '_')
+
+            realname = ' '.join(auth_utils.process_regex_field(self.realname_attr.value, subject_mapping))
+            if not realname:
+                realname = username.capitalize()  # type: ignore
+
+            # Extract groups from certificate subject via regex
+            groups: list[str] = auth_utils.process_regex_field(self.groups_attr.value, subject_mapping)
+            # Add static common groups
+            groups += [g.strip() for g in self.common_groups.value.split(',') if g.strip()]
+            groups_manager.validate(groups)
+
+            self.storage.save_pickled(username, [realname, groups])
+
+            return types.auth.AuthenticationResult(types.auth.AuthenticationState.SUCCESS, username=username)
+        except Exception as e:
+            logger.error('Error validating certificate: %s', e)
+            return types.auth.FAILED_AUTH
+
+    def get_javascript(self, request: ExtendedHttpRequest) -> str | None:
+        # Build UDS callback URL
+        callback_url: str = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
+        # Build absolute URL (the bridge needs the full UDS URL to POST back)
+        abs_callback: str = request.build_absolute_uri(callback_url)
+        # Sign it: base64url(callback).hmac_hex
+        signed: str = _encode_target_url(abs_callback, self.shared_secret.value)
+        # Redirect to bridge: https://bridge/cert_auth/<signed>
+        return f'window.location="{self.remote_url.value}{signed}";'
+
+    def get_groups(self, username: str, groups_manager: auths.GroupsManager) -> None:
+        data: list[str | list[str]] | None = self.storage.read_pickled(username)
+        if data and len(data) > 1:
+            groups_manager.validate(data[1])  # type: ignore
+        else:
+            # Fallback: static common groups only
+            groups_manager.validate([g.strip() for g in self.common_groups.value.split(',') if g.strip()])
+
+    def get_real_name(self, username: str) -> str:
+        data: list[str | list[str]] | None = self.storage.read_pickled(username)
+        if not data:
+            return username
+        return data[0]  # type: ignore
+
+
 # Map OID short names to human-readable names used in DN
 _OID_TO_SHORT: dict[x509.ObjectIdentifier, str] = {
     oid.NameOID.COMMON_NAME: 'CN',
@@ -89,6 +306,8 @@ def _subject_to_mapping(subject: x509.Name) -> dict[str, list[str]]:
     for attr in subject:
         short = _OID_TO_SHORT.get(attr.oid, attr.oid.dotted_string)
         val = attr.value.strip()
+        if isinstance(val, bytes):
+            val = val.decode(errors='ignore')
         if short not in result:
             result[short] = []
         result[short].append(val)
@@ -105,6 +324,9 @@ def _verify_cert_signed_by_ca(cert: x509.Certificate, ca_cert: x509.Certificate)
         tbs = cert.tbs_certificate_bytes
         sig = cert.signature
         hash_algo = cert.signature_hash_algorithm
+        if hash_algo is None:
+            logger.error('Certificate signature hash algorithm is None')
+            return False
 
         if isinstance(ca_public_key, rsa.RSAPublicKey):
             ca_public_key.verify(sig, tbs, padding.PKCS1v15(), hash_algo)
@@ -191,217 +413,3 @@ def _normalize_remote_url(url: str) -> str:
     # Append default route
     url += '/cert_auth/'
     return url
-
-
-class X509CertificateAuthenticator(auths.Authenticator):
-    """
-    Authenticator that validates users via X509 client certificates.
-
-    Nginx requests the client certificate and forwards it to UDS.
-    The authenticator validates the certificate against a trusted CA,
-    extracts the username from the subject DN, and authenticates the user.
-    """
-
-    type_name = _('X509 Certificate Authenticator')
-    type_type = 'X509CertificateAuthenticator'
-    type_description = _('X509 Client Certificate Authenticator')
-    icon_file = 'auth.png'
-    auth_type_group: typing.ClassVar[types.auth.AuthTypeGroup] = types.auth.AuthTypeGroup.CERTIFICATE
-
-    # ---- Certificate fields ----
-    ca_certificate = gui.TextField(
-        length=16384,
-        lines=5,
-        label=_('CA Certificate'),
-        tooltip=_('PEM-encoded Certificate Authority certificate used to validate client certificates.'),
-        required=True,
-        tab=_('Certificates'),
-    )
-    trusted_issuer = gui.TextField(
-        length=512,
-        label=_('Trusted Issuer'),
-        order=10,
-        tooltip=_(
-            'Expected Issuer DN of client certificates. '
-            'Leave empty to accept any certificate signed by the configured CA. '
-            'The comparison strips spaces and is case-sensitive.'
-        ),
-        required=False,
-        tab=_('Certificates'),
-    )
-
-    # ---- Attribute extraction ----
-    username_attr = fields.username_attr_field(tab=_('Attributes'))
-    realname_attr = fields.realname_attr_field(tab=_('Attributes'))
-
-    # ---- Groups ----
-    common_groups = gui.TextField(
-        length=256,
-        label=_('Common Groups'),
-        order=40,
-        tooltip=_('Comma-separated list of groups the user will be assigned to.'),
-        required=False,
-        tab=_('Groups'),
-    )
-
-    # ---- Revocation (future) ----
-    ocsp_url = gui.TextField(
-        length=256,
-        label=_('OCSP URL'),
-        order=50,
-        tooltip=_('OCSP responder URL for certificate revocation checking (not yet implemented).'),
-        required=False,
-        tab=_('Revocation'),
-    )
-    crl_url = gui.TextField(
-        length=256,
-        label=_('CRL URL'),
-        order=51,
-        tooltip=_('CRL distribution point URL for certificate revocation checking (not yet implemented).'),
-        required=False,
-        tab=_('Revocation'),
-    )
-
-    # ---- Remote bridge service ----
-    remote_url = gui.TextField(
-        length=512,
-        label=_('Remote URL'),
-        order=60,
-        tooltip=_(
-            'URL of the client-cert-auth bridge service. '
-            'E.g.: "cert-auth.example.com" or "https://cert-auth.example.com". '
-            'The /cert_auth/ path will be appended automatically.'
-        ),
-        required=True,
-        tab=_('Bridge'),
-    )
-    shared_secret = gui.PasswordField(
-        length=128,
-        label=_('Shared Secret'),
-        order=61,
-        tooltip=_('HMAC key shared with the client-cert-auth bridge service for encryption/signing.'),
-        required=True,
-        tab=_('Bridge'),
-    )
-
-    def initialize(self, values: dict[str, typing.Any] | None) -> None:
-        if not values:
-            return
-
-        if not self.ca_certificate.value.strip():
-            raise exceptions.ui.ValidationError(
-                gettext('CA Certificate is required')
-            )
-
-        try:
-            ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
-            bc = ca_cert.extensions.get_extension_for_class(x509.BasicConstraints)
-            if not bc.value.ca:
-                raise exceptions.ui.ValidationError(
-                    gettext('The provided certificate is not a CA certificate (missing CA:TRUE in Basic Constraints)')
-                )
-        except x509.ExtensionNotFound:
-            raise exceptions.ui.ValidationError(
-                gettext('The provided certificate does not have Basic Constraints extension')
-            ) from None
-        except ValueError as e:
-            raise exceptions.ui.ValidationError(
-                gettext('Invalid PEM-encoded certificate: {}').format(e)
-            ) from e
-
-        auth_utils.validate_regex_field(self.username_attr)
-        auth_utils.validate_regex_field(self.realname_attr)
-
-        # Validate remote URL
-        try:
-            self.remote_url.value = _normalize_remote_url(self.remote_url.value)
-        except ValueError as e:
-            raise exceptions.ui.ValidationError(gettext(str(e))) from e
-
-        if not self.shared_secret.value.strip():
-            raise exceptions.ui.ValidationError(
-                gettext('Shared Secret is required')
-            )
-
-    def auth_callback(
-        self,
-        parameters: types.auth.AuthCallbackParams,
-        groups_manager: auths.GroupsManager,
-        request: ExtendedHttpRequest,
-    ) -> types.auth.AuthenticationResult:
-        # Extract encrypted payload from POST params (sent by smartcard-auth-docker bridge)
-        payload_b64: str | None = parameters.post_params.get('payload')
-        if not payload_b64:
-            logger.error('No encrypted payload in POST parameters')
-            return types.auth.FAILED_AUTH
-
-        try:
-            # Decrypt and parse JSON payload
-            json_str: str = _decrypt_payload(payload_b64, self.shared_secret.value)
-            data: dict[str, str] = json.loads(json_str)
-            cert_pem: str = data.get('cert', _EMPTY_CERT_SENTINEL)
-            if cert_pem == _EMPTY_CERT_SENTINEL:
-                logger.warning('No client certificate provided (EMPTY sentinel)')
-                return types.auth.FAILED_AUTH
-
-            cert_bytes: bytes = cert_pem.encode()
-            client_cert: x509.Certificate = x509.load_pem_x509_certificate(cert_bytes)
-            ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
-
-            if not _verify_cert_signed_by_ca(client_cert, ca_cert):
-                logger.warning('Certificate not signed by configured CA')
-                return types.auth.FAILED_AUTH
-
-            if self.trusted_issuer.value.strip():
-                issuer_normalized = client_cert.issuer.rfc4514_string().replace(' ', '')
-                configured_normalized = self.trusted_issuer.value.replace(' ', '')
-                if issuer_normalized != configured_normalized:
-                    logger.warning(
-                        'Certificate issuer mismatch: expected %s, got %s',
-                        self.trusted_issuer.value,
-                        client_cert.issuer.rfc4514_string(),
-                    )
-                    return types.auth.FAILED_AUTH
-
-            subject_mapping = _subject_to_mapping(client_cert.subject)
-            username = ''.join(auth_utils.process_regex_field(self.username_attr.value, subject_mapping))
-            if not username:
-                logger.warning('Could not extract username from certificate subject')
-                return types.auth.FAILED_AUTH
-
-            username = username.replace(' ', '_')
-
-            realname = ' '.join(auth_utils.process_regex_field(self.realname_attr.value, subject_mapping))
-            if not realname:
-                realname = username.capitalize()  # type: ignore
-
-            groups = [g.strip() for g in self.common_groups.value.split(',') if g.strip()]
-            groups_manager.validate(groups)
-
-            self.storage.save_pickled(username, [realname])
-
-            return types.auth.AuthenticationResult(types.auth.AuthenticationState.SUCCESS, username=username)
-        except Exception as e:
-            logger.error('Error validating certificate: %s', e)
-            return types.auth.FAILED_AUTH
-
-    def get_javascript(self, request: ExtendedHttpRequest) -> str | None:
-        # Build UDS callback URL
-        callback_url: str = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
-        # Build absolute URL (the bridge needs the full UDS URL to POST back)
-        abs_callback: str = request.build_absolute_uri(callback_url)
-        # Sign it: base64url(callback).hmac_hex
-        signed: str = _encode_target_url(abs_callback, self.shared_secret.value)
-        # Redirect to bridge: https://bridge/cert_auth/<signed>
-        return f'window.location="{self.remote_url.value}{signed}";'
-
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
-        groups_manager.validate(
-            [g.strip() for g in self.common_groups.value.split(',') if g.strip()]
-        )
-
-    def get_real_name(self, username: str) -> str:
-        data = self.storage.read_pickled(username)
-        if not data:
-            return username
-        return data[0]
