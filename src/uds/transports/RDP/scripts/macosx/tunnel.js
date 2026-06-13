@@ -88,7 +88,8 @@ if (executablePath) {
 } else {
     let rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file.replace(/\{address\}/g, tunnelAddress), '.rdp');
     Tasks.addEarlyUnlinkableFile(rdpFilePath);
-    params = [msrdExecutable, '--args', rdpFilePath];
+    // Open the .rdp as a file (open -a APP FILE); behind --args the app can't parse it.
+    params = ['-a', msrdExecutable, rdpFilePath];
 }
 
 // On MacOS, we do not need to wait for the app to end, just launch it

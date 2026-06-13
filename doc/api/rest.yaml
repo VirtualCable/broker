@@ -3143,10 +3143,6 @@ components:
           description: User auto creation on AD.If active, uds will mirror the user
             on your active director. WARNING!! Existing coincident users may be deleted!.
           type: boolean
-        enable_user_mapping:
-          description: User mapping.If active, user mapping will be done. If not,
-            credential from user will be redirected to RDS server.
-          type: boolean
         last_activity_period:
           description: Last activity period.Period, in minutes, after which a server
             is considered inactive if no communication is received. (0 means no limit)
@@ -3156,25 +3152,11 @@ components:
             users to servers.0 means server with lower load is preferred, any other
             value means that server will be used until it reaches that load.
           type: number
-        max_session_duration:
-          description: Session duration.Max. session duration in hours. (Not used
-            if User mapping is disabled)
-          type: number
         server_group:
           description: Server group.Server group to use
           type: string
-        usermap_list:
-          description: Users.User list for mapping. (Not used if User mapping is disabled)
-          items:
-            type: string
-          type: array
-        usermap_password:
-          description: User's password.Default password for users in list mapping.
-            (Not used if User mapping is disabled)
-          type: string
       required:
       - server_group
-      - max_session_duration
       - ad_port
       - load_objective
       - last_activity_period

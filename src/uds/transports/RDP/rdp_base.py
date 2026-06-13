@@ -402,6 +402,19 @@ class BaseRDPTransport(transports.Transport):
                 _('RDP signing is enabled but certificate chain check failed, check logs for more details.')
             ) from e
 
+    def check_mac_msrdc(self) -> None:
+        # On Mac OS X, the Microsoft client (Windows App / Microsoft Remote Desktop) is a
+        # document-based app: it can only be driven through an RDP file. Without "Use RDP file
+        # for connections" the launch script never reaches the msrdc branch, so allowing it makes
+        # no sense. Block saving such a configuration.
+        if self.mac_allow_msrdc.as_bool() and not self.mac_use_rdp_file.as_bool():
+            raise exceptions.ui.ValidationError(
+                _(
+                    'Mac OS X: "Allow Microsoft Rdp Client" requires "Use RDP file for connections" '
+                    'to be enabled.'
+                )
+            )
+
     def initialize(self, values: types.core.ValuesType) -> None:
         if not values:
             return
