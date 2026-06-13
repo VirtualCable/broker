@@ -80,6 +80,7 @@ NO_MORE_NAMES: typing.Final[str] = 'NO-NAME-ERROR'
 # For convenience, same as NULL_MAC, but different meaning
 NO_MORE_MACS: typing.Final[str] = NULL_MAC
 
+UUID_ZERO: typing.Final[str] = '00000000-0000-0000-0000-000000000000'
 
 class UserRole(enum.StrEnum):
     """

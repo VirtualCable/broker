@@ -28,7 +28,14 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac as hmac_module
+import json
 import logging
+import re
 import typing
 
 from django.urls import reverse
@@ -43,6 +50,8 @@ try:
     from cryptography import x509
     from cryptography.x509 import oid
     from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives import padding as sym_padding
     import cryptography.exceptions
 except ImportError:
     raise exceptions.ui.ValidationError(
@@ -114,6 +123,81 @@ def _verify_cert_signed_by_ca(cert: x509.Certificate, ca_cert: x509.Certificate)
         return False
 
 
+# ---------------------------------------------------------------------------- #
+#                    Crypto helpers (mirrors smartcard-auth-docker)             #
+# ---------------------------------------------------------------------------- #
+
+_EMPTY_CERT_SENTINEL: str = 'EMPTY'
+
+
+def _derive_keys(shared_secret: str) -> tuple[bytes, bytes]:
+    """Derive encryption and MAC keys from shared secret."""
+    secret = shared_secret.encode()
+    enc_key = hashlib.sha256(secret + b'enc').digest()
+    mac_key = hashlib.sha256(secret + b'mac').digest()
+    return enc_key, mac_key
+
+
+def _hmac_sign(data: str, shared_secret: str) -> str:
+    """HMAC-SHA256 sign data, returns hex digest."""
+    mac_key = _derive_keys(shared_secret)[1]
+    h = hmac_module.new(mac_key, data.encode(), hashlib.sha256)
+    return h.hexdigest()
+
+
+def _encode_target_url(url: str, shared_secret: str) -> str:
+    """Encode callback URL as base64url(url).hmac_hex (signed URL path)."""
+    data_b64 = base64.urlsafe_b64encode(url.encode()).decode().rstrip('=')
+    sig = _hmac_sign(data_b64, shared_secret)
+    return f'{data_b64}.{sig}'
+
+
+def _decrypt_payload(payload_b64: str, shared_secret: str) -> str:
+    """Decrypt and verify AES-256-CBC + HMAC-SHA256 payload.
+
+    Returns the JSON plaintext.
+    Raises ValueError on HMAC mismatch or decryption failure.
+    """
+    enc_key, mac_key = _derive_keys(shared_secret)
+
+    raw = base64.b64decode(payload_b64)
+    iv = raw[:16]
+    mac = raw[-32:]
+    ciphertext = raw[16:-32]
+
+    # Verify HMAC with constant-time comparison
+    expected_mac = hmac_module.new(mac_key, iv + ciphertext, hashlib.sha256).digest()
+    if not hmac_module.compare_digest(mac, expected_mac):
+        raise ValueError('HMAC verification failed')
+
+    # Decrypt
+    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv))
+    decryptor = cipher.decryptor()
+    padded = decryptor.update(ciphertext) + decryptor.finalize()
+
+    # Unpad PKCS7
+    unpadder = sym_padding.PKCS7(128).unpadder()
+    plaintext = unpadder.update(padded) + unpadder.finalize()
+
+    return plaintext.decode()
+
+
+def _normalize_remote_url(url: str) -> str:
+    """Normalize remote URL: add https:// if missing, strip trailing /, append /cert_auth/."""
+    url = url.strip()
+    if not url:
+        raise ValueError('Remote URL is required')
+
+    # Add scheme if missing
+    if not re.match(r'^https?://', url):
+        url = 'https://' + url
+    # Strip trailing /
+    url = url.rstrip('/')
+    # Append default route
+    url += '/cert_auth/'
+    return url
+
+
 class X509CertificateAuthenticator(auths.Authenticator):
     """
     Authenticator that validates users via X509 client certificates.
@@ -183,6 +267,28 @@ class X509CertificateAuthenticator(auths.Authenticator):
         tab=_('Revocation'),
     )
 
+    # ---- Remote bridge service ----
+    remote_url = gui.TextField(
+        length=512,
+        label=_('Remote URL'),
+        order=60,
+        tooltip=_(
+            'URL of the client-cert-auth bridge service. '
+            'E.g.: "cert-auth.example.com" or "https://cert-auth.example.com". '
+            'The /cert_auth/ path will be appended automatically.'
+        ),
+        required=True,
+        tab=_('Bridge'),
+    )
+    shared_secret = gui.PasswordField(
+        length=128,
+        label=_('Shared Secret'),
+        order=61,
+        tooltip=_('HMAC key shared with the client-cert-auth bridge service for encryption/signing.'),
+        required=True,
+        tab=_('Bridge'),
+    )
+
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if not values:
             return
@@ -211,19 +317,40 @@ class X509CertificateAuthenticator(auths.Authenticator):
         auth_utils.validate_regex_field(self.username_attr)
         auth_utils.validate_regex_field(self.realname_attr)
 
+        # Validate remote URL
+        try:
+            self.remote_url.value = _normalize_remote_url(self.remote_url.value)
+        except ValueError as e:
+            raise exceptions.ui.ValidationError(gettext(str(e))) from e
+
+        if not self.shared_secret.value.strip():
+            raise exceptions.ui.ValidationError(
+                gettext('Shared Secret is required')
+            )
+
     def auth_callback(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        groups_manager: 'auths.GroupsManager',
-        request: 'ExtendedHttpRequest',
+        parameters: types.auth.AuthCallbackParams,
+        groups_manager: auths.GroupsManager,
+        request: ExtendedHttpRequest,
     ) -> types.auth.AuthenticationResult:
-        cert_bytes = parameters.binary_params
-        if not cert_bytes:
-            logger.error('No certificate data in callback parameters')
+        # Extract encrypted payload from POST params (sent by smartcard-auth-docker bridge)
+        payload_b64: str | None = parameters.post_params.get('payload')
+        if not payload_b64:
+            logger.error('No encrypted payload in POST parameters')
             return types.auth.FAILED_AUTH
 
         try:
-            client_cert = x509.load_pem_x509_certificate(cert_bytes)
+            # Decrypt and parse JSON payload
+            json_str: str = _decrypt_payload(payload_b64, self.shared_secret.value)
+            data: dict[str, str] = json.loads(json_str)
+            cert_pem: str = data.get('cert', _EMPTY_CERT_SENTINEL)
+            if cert_pem == _EMPTY_CERT_SENTINEL:
+                logger.warning('No client certificate provided (EMPTY sentinel)')
+                return types.auth.FAILED_AUTH
+
+            cert_bytes: bytes = cert_pem.encode()
+            client_cert: x509.Certificate = x509.load_pem_x509_certificate(cert_bytes)
             ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
 
             if not _verify_cert_signed_by_ca(client_cert, ca_cert):
@@ -263,9 +390,15 @@ class X509CertificateAuthenticator(auths.Authenticator):
             logger.error('Error validating certificate: %s', e)
             return types.auth.FAILED_AUTH
 
-    def get_javascript(self, request: 'ExtendedHttpRequest') -> str | None:
-        url = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
-        return f'window.location="{url}";'
+    def get_javascript(self, request: ExtendedHttpRequest) -> str | None:
+        # Build UDS callback URL
+        callback_url: str = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
+        # Build absolute URL (the bridge needs the full UDS URL to POST back)
+        abs_callback: str = request.build_absolute_uri(callback_url)
+        # Sign it: base64url(callback).hmac_hex
+        signed: str = _encode_target_url(abs_callback, self.shared_secret.value)
+        # Redirect to bridge: https://bridge/cert_auth/<signed>
+        return f'window.location="{self.remote_url.value}{signed}";'
 
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         groups_manager.validate(

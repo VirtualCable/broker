@@ -37,7 +37,7 @@ from django.urls import reverse
 from django.utils import formats
 from django.utils.translation import gettext
 
-from uds.core import types
+from uds.core import types, consts
 from uds.core.auths.auth import get_webpassword
 from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.userservice import UserServiceManager
@@ -91,7 +91,7 @@ def _service_info(
         'description': description,
         'group': group,
         'transports': transports,
-        'imageId': image and image.uuid or 'x',
+        'imageId': image and image.uuid or consts.UUID_ZERO,
         'show_transports': show_transports,
         'allow_users_remove': allow_users_remove,
         'allow_users_reset': allow_users_reset,
