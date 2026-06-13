@@ -121,19 +121,25 @@ class TestAuthenticatorInitialization(UDSTestCase):
 class TestAuthCallback(UDSTestCase):
     """Tests for the authenticator's auth_callback() method."""
 
+    def _make_params(self, cert_pem: str) -> types.auth.AuthCallbackParams:
+        """Build AuthCallbackParams with an encrypted bridge payload."""
+        payload = fixtures._encrypt_payload(cert_pem)
+        post_params = QueryDict('', mutable=True)
+        post_params['payload'] = payload
+        return types.auth.AuthCallbackParams(
+            https=True,
+            host='test',
+            path='/',
+            port='443',
+            get_params=QueryDict(),
+            post_params=post_params,
+            query_string='',
+        )
+
     def test_valid_cert_rsa(self) -> None:
         fix = fixtures.make_rsa_fixture(client_cn='rsauser')
         with fixtures.create_authenticator(fix) as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
 
@@ -147,23 +153,13 @@ class TestAuthCallback(UDSTestCase):
 
             # Verify groups
             gm.validate.assert_called_once()
-            # Should have been called with ['x509_users']
             groups_arg = gm.validate.call_args[0][0]
             self.assertIn('x509_users', groups_arg)
 
     def test_valid_cert_ec(self) -> None:
         fix = fixtures.make_ec_fixture(client_cn='ecuser')
         with fixtures.create_authenticator(fix) as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
 
@@ -180,9 +176,9 @@ class TestAuthCallback(UDSTestCase):
                 path='/',
                 port='443',
                 get_params=QueryDict(),
-                post_params=QueryDict(),
+                post_params=QueryDict(),  # no 'payload'
                 query_string='',
-            )  # no binary_params
+            )
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -192,16 +188,7 @@ class TestAuthCallback(UDSTestCase):
         fix = fixtures.make_rsa_fixture()
         wrong = fixtures.make_rsa_fixture(ca_cn='Other CA')
         with fixtures.create_authenticator(fix) as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=wrong.client_pem.encode(),
-            )
+            params = self._make_params(wrong.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -210,16 +197,7 @@ class TestAuthCallback(UDSTestCase):
     def test_trusted_issuer_match(self) -> None:
         fix = fixtures.make_rsa_fixture(client_cn='issuer_user')
         with fixtures.create_authenticator(fix, trusted_issuer=fix.client_issuer_dn) as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -229,16 +207,7 @@ class TestAuthCallback(UDSTestCase):
     def test_trusted_issuer_mismatch(self) -> None:
         fix = fixtures.make_rsa_fixture(client_cn='no_match')
         with fixtures.create_authenticator(fix, trusted_issuer='CN=Wrong Issuer') as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -247,16 +216,7 @@ class TestAuthCallback(UDSTestCase):
     def test_username_extraction_custom_regex(self) -> None:
         fix = fixtures.make_rsa_fixture(client_cn='john.doe')
         with fixtures.create_authenticator(fix, username_attr='CN=([^,]*)') as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -266,16 +226,7 @@ class TestAuthCallback(UDSTestCase):
     def test_no_username_match(self) -> None:
         fix = fixtures.make_rsa_fixture(client_cn='someone')
         with fixtures.create_authenticator(fix, username_attr='OU=([^,]*)') as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -284,16 +235,7 @@ class TestAuthCallback(UDSTestCase):
     def test_get_real_name_from_storage(self) -> None:
         fix = fixtures.make_rsa_fixture(client_cn='realnameuser')
         with fixtures.create_authenticator(fix) as instance:
-            params = types.auth.AuthCallbackParams(
-                https=True,
-                host='test',
-                path='/',
-                port='443',
-                get_params=QueryDict(),
-                post_params=QueryDict(),
-                query_string='',
-                binary_params=fix.client_pem.encode(),
-            )
+            params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
             result = instance.auth_callback(params, gm, request)
@@ -326,16 +268,20 @@ class TestGetJavascript(UDSTestCase):
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
             valid_uuid = 'a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5'
+            request = mock.MagicMock()
+            request.build_absolute_uri.return_value = 'https://example.com/uds/cert_auth'
             with mock.patch.object(instance, 'get_uuid', return_value=valid_uuid):
-                js = instance.get_javascript(mock.MagicMock()) or ''
-                self.assertIn(f'/uds/cert_auth/{valid_uuid}/', js)
+                js = instance.get_javascript(request) or ''
                 self.assertIn('window.location', js)
+                self.assertIn('https://cert-auth.example.com/cert_auth/', js)
 
     def test_javascript_not_none(self) -> None:
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
             valid_uuid = '00000000000000000000000000000000'
+            request = mock.MagicMock()
+            request.build_absolute_uri.return_value = 'https://example.com/uds/cert_auth'
             with mock.patch.object(instance, 'get_uuid', return_value=valid_uuid):
-                js = instance.get_javascript(mock.MagicMock())
+                js = instance.get_javascript(request)
                 self.assertIsNotNone(js)
                 self.assertIsInstance(js, str)

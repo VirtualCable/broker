@@ -151,7 +151,7 @@ class TestGetServicesData(UDSTransactionTestCase):
                 [(i['id'], i['name']) for i in user_service['transports']],
                 [(t.uuid, t.name) for t in found.transports.all()],
             )
-            self.assertEqual(user_service['imageId'], found.image and found.image.uuid or 'x')
+            self.assertEqual(user_service['imageId'], found.image.uuid if found.image else consts.UUID_ZERO)
             self.assertEqual(user_service['show_transports'], found.show_transports)
             self.assertEqual(user_service['allow_users_remove'], found.allow_users_remove)
             self.assertEqual(user_service['allow_users_reset'], found.allow_users_reset)

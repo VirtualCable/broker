@@ -28,17 +28,54 @@
 import contextlib
 import dataclasses
 import datetime
+import hashlib
+import hmac as hmac_module
+import json
+import os
 import typing
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, padding as sym_padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from uds.core.environment import Environment
 from uds.auths.X509Certificate.authenticator import X509CertificateAuthenticator
 from uds.core.types.auth import AuthTypeGroup
+
+# Test shared secret — must match DATA_TEMPLATE
+_TEST_SHARED_SECRET = 'test-shared-secret'
+
+
+def _derive_keys(shared_secret: str) -> tuple[bytes, bytes]:
+    secret = shared_secret.encode()
+    enc_key = hashlib.sha256(secret + b'enc').digest()
+    mac_key = hashlib.sha256(secret + b'mac').digest()
+    return enc_key, mac_key
+
+
+def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET) -> str:
+    """Simulate the bridge service: encrypt + sign a cert payload. Returns base64 string."""
+    import base64
+
+    payload = json.dumps({'cert': cert_pem}).encode()
+    enc_key, mac_key = _derive_keys(shared_secret)
+
+    # AES-256-CBC
+    iv = os.urandom(16)
+    padder = sym_padding.PKCS7(128).padder()
+    padded = padder.update(payload) + padder.finalize()
+
+    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(padded) + encryptor.finalize()
+
+    # HMAC
+    mac = hmac_module.new(mac_key, iv + ciphertext, hashlib.sha256).digest()
+
+    return base64.b64encode(iv + ciphertext + mac).decode()
 
 
 def _build_name(**kwargs: str) -> x509.Name:
@@ -158,6 +195,8 @@ DATA_TEMPLATE: dict[str, str] = {
     'username_attr': 'CN=([^,]*)',
     'realname_attr': 'CN=([^,]*)',
     'common_groups': 'x509_users',
+    'remote_url': 'https://cert-auth.example.com',
+    'shared_secret': _TEST_SHARED_SECRET,
 }
 
 
