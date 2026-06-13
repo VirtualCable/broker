@@ -46,17 +46,12 @@ from uds.core import auths, exceptions, types
 from uds.core.ui import gui
 from uds.core.util import auth as auth_utils, fields
 
-try:
-    from cryptography import x509
-    from cryptography.x509 import oid
-    from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.primitives import padding as sym_padding
-    import cryptography.exceptions
-except ImportError:
-    raise exceptions.ui.ValidationError(
-        gettext('Cryptography module is required for X509Certificate authenticator')
-    ) from None
+from cryptography import x509
+from cryptography.x509 import oid
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding as sym_padding
+import cryptography.exceptions
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
