@@ -49,34 +49,66 @@ _mypath: typing.Final[str] = os.path.dirname(__spec__.origin)  # type: ignore[ty
 #_mypath = os.path.dirname(typing.cast(str, sys.modules[__package__].__file__))  # pyright: ignore
 
 downloads_manager().register(
-    f'udsactor_{VERSION}_all.deb',
-    _('UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= 3.9)</b>'),
-    _mypath + f'/files/udsactor_{VERSION}_all.deb',
+    f'udsactor_{VERSION}_amd64-debian12.deb',
+    _('UDS Actor for Debian 12 / Ubuntu based Linux machines'),
+    _mypath + f'/files/udsactor_{VERSION}_amd64-debian12.deb',
     mimetype='application/x-debian-package',
 )
 
 downloads_manager().register(
-    f'udsactor-{VERSION}-1.noarch.rpm',
-    _('UDS Actor for Centos, Fedora, RH, Suse, ... Linux machines <b>(Requires python >= 3.9)</b>'),
-    _mypath + f'/files/udsactor-{VERSION}-1.noarch.rpm',
+    f'udsactor_{VERSION}_amd64-debian13.deb',
+    _('UDS Actor for Debian 13 / Ubuntu based Linux machines'),
+    _mypath + f'/files/udsactor_{VERSION}_amd64-debian13.deb',
+    mimetype='application/x-debian-package',
+)
+
+downloads_manager().register(
+    f'udsactor-unmanaged_{VERSION}_amd64-debian12.deb',
+    _(
+        'UDS Actor for Debian 12 / Ubuntu based Linux machines. Used ONLY for static machines.'
+    ),
+    _mypath + f'/files/udsactor-unmanaged_{VERSION}_amd64-debian12.deb',
+    mimetype='application/x-debian-package',
+)
+
+downloads_manager().register(
+    f'udsactor-unmanaged_{VERSION}_amd64-debian13.deb',
+    _(
+        'UDS Actor for Debian 13 / Ubuntu based Linux machines. Used ONLY for static machines.'
+    ),
+    _mypath + f'/files/udsactor-unmanaged_{VERSION}_amd64-debian13.deb',
+    mimetype='application/x-debian-package',
+)
+
+downloads_manager().register(
+    f'udsactor-{VERSION}.x86_64-fedora.rpm',
+    _('UDS Actor for Fedora / RHEL based Linux machines'),
+    _mypath + f'/files/udsactor-{VERSION}.x86_64-fedora.rpm',
     mimetype='application/x-redhat-package-manager',
 )
 
 downloads_manager().register(
-    f'udsactor-unmanaged_{VERSION}_all.deb',
-    _(
-        'UDS Actor for Debian based Linux machines. Used ONLY for static machines. <b>(Requires python >= 3.9)</b>'
-    ),
-    _mypath + f'/files/udsactor-unmanaged_{VERSION}_all.deb',
-    mimetype='application/x-debian-package',
+    f'udsactor-{VERSION}.x86_64-opensuse.rpm',
+    _('UDS Actor for openSUSE / SLES based Linux machines'),
+    _mypath + f'/files/udsactor-{VERSION}.x86_64-opensuse.rpm',
+    mimetype='application/x-redhat-package-manager',
 )
 
 downloads_manager().register(
-    f'udsactor-unmanaged-{VERSION}-1.noarch.rpm',
+    f'udsactor-unmanaged-{VERSION}.x86_64-fedora.rpm',
     _(
-        'UDS Actor for Centos, Fedora, RH, Suse, ... Linux machines. Used ONLY for static machines. <b>(Requires python >= 3.9)</b>'
+        'UDS Actor for Fedora / RHEL based Linux machines. Used ONLY for static machines.'
     ),
-    _mypath + f'/files/udsactor-unmanaged-{VERSION}-1.noarch.rpm',
+    _mypath + f'/files/udsactor-unmanaged-{VERSION}.x86_64-fedora.rpm',
+    mimetype='application/x-redhat-package-manager',
+)
+
+downloads_manager().register(
+    f'udsactor-unmanaged-{VERSION}.x86_64-opensuse.rpm',
+    _(
+        'UDS Actor for openSUSE / SLES based Linux machines. Used ONLY for static machines.'
+    ),
+    _mypath + f'/files/udsactor-unmanaged-{VERSION}.x86_64-opensuse.rpm',
     mimetype='application/x-redhat-package-manager',
 )
 
