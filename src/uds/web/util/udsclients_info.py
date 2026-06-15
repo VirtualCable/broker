@@ -16,41 +16,50 @@ PLUGINS: typing.Final[list[types.plugins.UDSClientPlugin]] = [
     )
     for url, description, name, legacy in (
         (
-            'UDSClientSetup-{version}.exe',
+            'UDSLauncherInstaller-{version}.exe',
             gettext('Windows client'),
             'Windows',
             False,
         ),
-        ('UDSClient-{version}.pkg', gettext('Mac OS X client'), 'MacOS', False),
         (
-            'udsclient3_{version}_all.deb',
-            gettext('Debian based Linux client') + ' ' + gettext('(requires Python-3.9 or newer)'),
+            'UDSLauncher-{version}.pkg',
+            gettext('macOS client (Apple Silicon)'),
+            'MacOS',
+            False,
+        ),
+        (
+            'UDSLauncher-{version}-intel.pkg',
+            gettext('macOS client (Intel)'),
+            'MacOS',
+            False,
+        ),
+        (
+            'udslauncher_{version}_amd64-debian12.deb',
+            gettext('Debian 12 / Ubuntu based Linux client'),
             'Linux',
             False,
         ),
         (
-            'udsclient3-{version}-1.noarch.rpm',
-            gettext('RPM based Linux client (Fedora, Suse, ...)')
-            + ' '
-            + gettext('(requires Python-3.9 or newer)'),
+            'udslauncher_{version}_amd64-debian13.deb',
+            gettext('Debian 13 / Ubuntu based Linux client'),
             'Linux',
             False,
         ),
         (
-            'udsclient3-x86_64-{version}.tar.gz',
-            gettext('Binary appimage X86_64 Linux client'),
+            'udslauncher-{version}.x86_64-fedora.rpm',
+            gettext('Fedora / RHEL based Linux client (RPM)'),
             'Linux',
             False,
         ),
         (
-            'udsclient3-armhf-{version}.tar.gz',
-            gettext('Binary appimage ARMHF Linux client (Raspberry, ...)'),
+            'udslauncher-{version}.x86_64-opensuse.rpm',
+            gettext('openSUSE / SLES based Linux client (RPM)'),
             'Linux',
             False,
         ),
         (
-            'udsclient3-{version}.tar.gz',
-            gettext('Generic .tar.gz Linux client') + ' ' + gettext('(requires Python-3.9 or newer)'),
+            'udslauncher-{version}-x86_64-appimage.AppImage',
+            gettext('Portable AppImage Linux client (x86_64)'),
             'Linux',
             False,
         ),
