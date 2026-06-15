@@ -37,7 +37,6 @@ import typing
 
 from uds.core import types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
-from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -88,7 +87,7 @@ class OldOperation(enum.IntEnum):
         }.get(self, types.services.Operation.UNKNOWN)
 
 
-class OpenStackLiveUserService(DynamicUserService, autoserializable.AutoSerializable):
+class OpenStackLiveUserService(DynamicUserService):
     """
     This class generates the user consumable elements of the service tree.
 

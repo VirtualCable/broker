@@ -52,6 +52,8 @@ from uds.REST.model import DetailHandler, ModelHandler
 
 logger = logging.getLogger(__name__)
 
+MB: typing.Final[int] = 1024 * 1024
+
 
 @dataclasses.dataclass
 class TokenItem(types.rest.BaseRestItem):
@@ -434,6 +436,10 @@ class GroupItem(types.rest.BaseRestItem):
     tags: list[str]
     servers_count: int
     permission: types.permissions.PermissionType
+    weights_cpu: int
+    weights_memory: int
+    weights_users: int
+    weights_max_expected_users: int
 
 
 class ServersGroups(ModelHandler[GroupItem]):
@@ -506,6 +512,39 @@ class ServersGroups(ModelHandler[GroupItem]):
             .add_stock_field(types.rest.stock.StockField.NAME)
             .add_stock_field(types.rest.stock.StockField.TAGS)
             .add_stock_field(types.rest.stock.StockField.COMMENTS)
+            # Add weigths fields
+            # class ServerStatsWeights:
+            # cpu: float = 0.3
+            # memory: float = 0.6
+            # users: float = 0.1
+            # max_expected_users: int = 100  # Max expected users to consider in load calculation
+            # min_memory: int = 0  # Minimum free memory in bytes to consider server as available, 0 means no limit
+            # users_limit: int = 0  # Maximum number of users to consider server as available, 0 means no limit
+            .new_tab(_('Load calculation weights'))
+            .add_numeric(
+                name='weights_cpu',
+                label=_('CPU weight'),
+                tooltip=_('Weight of CPU load on server load calculation. Value between 0 and 1'),
+                default=30,
+            )
+            .add_numeric(
+                name='weights_memory',
+                label=_('Memory weight'),
+                tooltip=_('Weight of memory load on server load calculation. Value between 0 and 1'),
+                default=60,
+            )
+            .add_numeric(
+                name='weights_users',
+                label=_('Users weight'),
+                tooltip=_('Weight of users load on server load calculation. Value between 0 and 1'),
+                default=10,
+            )
+            .add_numeric(
+                name='weights_max_expected_users',
+                label=_('Max expected users'),
+                tooltip=_('Max expected users to consider in load calculation'),
+                default=100,
+            )
             .add_info(
                 name='title',
                 default=title,
@@ -515,6 +554,7 @@ class ServersGroups(ModelHandler[GroupItem]):
 
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         # Allow from admin gui (data_type) or from API (type and subtype)
+        # Extract weights if they are on fields
         if 'data_type' in fields:
             type, subtype = typing.cast(str, fields['data_type'].split('@'))
             fields['type'] = types.servers.ServerType[type.upper()].value
@@ -524,6 +564,40 @@ class ServersGroups(ModelHandler[GroupItem]):
             raise exceptions.rest.RequestError('Type and subtype must be provided') from None
 
         return super().pre_save(fields)
+
+    def post_save(self, item: 'Model') -> None:
+        # Save weights if they are on fields
+        item = ensure.is_instance(item, models.ServerGroup)
+        weights_params = [
+            'weights_cpu',
+            'weights_memory',
+            'weights_users',
+            'weights_max_expected_users',
+            'weights_min_memory',
+            'weights_users_limit',
+        ]
+        args = self.fields_from_params(weights_params)
+        # Load parameters to be normalized
+        cpu = int(args['weights_cpu']) if args['weights_cpu'] is not None else 0
+        memory = int(args['weights_memory']) if args['weights_memory'] is not None else 0
+        users = int(args['weights_users']) if args['weights_users'] is not None else 0
+        # rest of parameters, not normalized
+        max_expected_users = (
+            int(args['weights_max_expected_users']) if args['weights_max_expected_users'] is not None else 100
+        )
+        # Normalize weights to sum 100 if they are not
+        all_sum = cpu + memory + users
+        cpu = cpu * 100 // all_sum if all_sum > 0 else 0
+        memory = memory * 100 // all_sum if all_sum > 0 else 0
+        users = 100 - cpu - memory
+        max_expected_users = max_expected_users if max_expected_users > 0 else 100
+        # Set property, autosaves
+        item.weights = types.servers.ServerStatsWeights(
+            cpu=float(cpu) / 100,
+            memory=float(memory) / 100,
+            users=float(users) / 100,
+            max_expected_users=max_expected_users,
+        )
 
     def get_item(self, item: 'Model') -> GroupItem:
         item = ensure.is_instance(item, models.ServerGroup)
@@ -537,6 +611,10 @@ class ServersGroups(ModelHandler[GroupItem]):
             tags=[tag.tag for tag in item.tags.all()],
             servers_count=item.servers.count(),
             permission=permissions.effective_permissions(self._user, item),
+            weights_cpu=int(item.weights.cpu * 100 + 0.5),
+            weights_memory=int(item.weights.memory * 100 + 0.5),
+            weights_users=int(item.weights.users * 100 + 0.5),
+            weights_max_expected_users=item.weights.max_expected_users,
         )
 
     def delete_item(self, item: 'Model') -> None:

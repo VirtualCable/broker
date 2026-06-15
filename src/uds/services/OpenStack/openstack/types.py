@@ -285,8 +285,8 @@ class ServerInfo:
             return ServerInfo.AddresInfo(
                 version=d.get('version') or 4,
                 ip=d.get('addr') or '',
-                mac=(d.get('OS-EXT-IPS-MAC:mac_addr') or '').upper(),
-                type=d.get('OS-EXT-IPS:type') or '',
+                mac=(d.get('mac_addr') or d.get('OS-EXT-IPS-MAC:mac_addr') or '').upper(),
+                type=d.get('type') or  d.get('OS-EXT-IPS:type') or '',
             )
 
         @staticmethod
@@ -299,6 +299,7 @@ class ServerInfo:
                         yield address_info
 
             return list(_build())
+
 
     id: str
     name: str

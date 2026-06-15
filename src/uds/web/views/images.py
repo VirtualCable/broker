@@ -51,7 +51,7 @@ def image(request: 'HttpRequest', image_id: str) -> 'HttpResponse':
     try:
         icon = Image.objects.get(uuid=process_uuid(image_id))
         return icon.image_as_response()
-    except Image.DoesNotExist:
+    except (Image.DoesNotExist, ValueError):
         return HttpResponse(DEFAULT_IMAGE, content_type='image/png')
 
 
@@ -74,7 +74,7 @@ def service_image(request: 'ExtendedHttpRequest', image_id: str) -> HttpResponse
     try:
         icon = Image.objects.get(uuid=process_uuid(image_id))
         return icon.image_as_response()
-    except Image.DoesNotExist:
+    except (Image.DoesNotExist, ValueError):
         pass  # Tries to get image from transport
 
     try:

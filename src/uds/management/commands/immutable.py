@@ -50,6 +50,7 @@ from django.core.management.base import BaseCommand
 
 from uds.core.audit.immutable import ImmutableLogger, content_from_bytes
 from uds.core.util import model
+from uds.core.util.config import GlobalConfig
 from uds.models.immutable_log import ImmutableLog
 
 logger = logging.getLogger(__name__)
@@ -165,8 +166,8 @@ class Command(BaseCommand):
 
         anchor_count = ImmutableLog.objects.filter(anchor=True).count()
         enabled = 'yes' if ImmutableLogger.is_enabled() else 'no'
-        interval = ImmutableLogger._get_reanchor_config()
-        reanchor_cfg = f'{interval.total_seconds():.0f}s' if interval else 'disabled'
+        interval = GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
+        reanchor_cfg = f'{interval}s' if interval > 0 else 'disabled'
 
         size_bytes = self._estimate_size()
 

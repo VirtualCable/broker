@@ -37,7 +37,7 @@ import collections.abc
 from django.db import models
 from django.utils.translation import gettext as _
 
-from uds.core.consts.images import DEFAULT_THUMB_BASE64
+from uds.core import consts
 
 from .uuid_model import UUIDModel
 from .image import Image
@@ -84,12 +84,12 @@ class ServicePoolGroup(UUIDModel):
             'name': self.name,
             'comments': self.comments,
             'priority': self.priority,
-            'imageUuid': self.image.uuid if self.image is not None else 'x',
+            'imageUuid': self.image.uuid if self.image is not None else consts.UUID_ZERO,
         }
 
     @property
     def thumb64(self) -> str:
-        return self.image.thumb64 if self.image else DEFAULT_THUMB_BASE64
+        return self.image.thumb64 if self.image else consts.images.DEFAULT_THUMB_BASE64
 
     @staticmethod
     def default() -> 'ServicePoolGroup':

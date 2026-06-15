@@ -153,6 +153,62 @@ class HTML5RDPTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
+    enable_webcam = ui.gui.CheckBoxField(
+        label=_('Enable Webcam'),
+        order=26,
+        tooltip=_(
+            'If checked, the local webcam/camera will be redirected to the remote session '
+            '(if client browser supports it)'
+        ),
+        default=False,
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_codec = ui.gui.ChoiceField(
+        label=_('Webcam codec'),
+        order=27,
+        tooltip=_('Codec used to stream the webcam to the remote session'),
+        default='best',
+        choices=[
+            ui.gui.choice_item('best', _('Best (H264, bandwidth efficient)')),
+            ui.gui.choice_item('fastest', _('Fastest (MJPEG, low latency)')),
+            ui.gui.choice_item('mjpeg', _('MJPEG')),
+            ui.gui.choice_item('h264', _('H264')),
+        ],
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_quality = ui.gui.NumericField(
+        label=_('Webcam quality'),
+        order=28,
+        length=3,  # max 100
+        tooltip=_('Webcam image quality (1-100). Only applies to MJPEG. Defaults to 80.'),
+        default=80,
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_fps = ui.gui.NumericField(
+        label=_('Webcam FPS'),
+        order=29,
+        length=3,
+        tooltip=_('Maximum webcam frames per second. Defaults to 15.'),
+        default=15,
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_max_width = ui.gui.NumericField(
+        label=_('Webcam max width'),
+        order=30,
+        length=5,
+        tooltip=_('Cap webcam width in pixels, keeping aspect ratio. 0 = original size.'),
+        default=0,
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_max_height = ui.gui.NumericField(
+        label=_('Webcam max height'),
+        order=31,
+        length=5,
+        tooltip=_('Cap webcam height in pixels, keeping aspect ratio. 0 = original size.'),
+        default=0,
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
     ticket_validity = fields.tunnel_ticket_validity_field()
 
     force_new_window = ui.gui.ChoiceField(
@@ -337,6 +393,20 @@ class HTML5RDPTransport(transports.Transport):
             'allow_quality_switch': self.allow_quality_switch.as_bool(),
             'title': f'RDP {ip}',
         }
+
+        # Webcam redirection (matches Rust WebcamSettings). Only sent when enabled,
+        # so the gateway keeps conn_data.webcam = None otherwise. WebcamSettings is
+        # #[serde(default)] on the gateway, so omitted keys fall back to its defaults.
+        # cam_width/cam_height are filled at runtime from the browser's getUserMedia.
+        if self.enable_webcam.as_bool():
+            extra['webcam'] = {
+                'enabled': True,
+                'codec': self.webcam_codec.value,
+                'quality': self.webcam_quality.as_int(),
+                'fps': self.webcam_fps.as_int(),
+                'max_width': self.webcam_max_width.as_int(),
+                'max_height': self.webcam_max_height.as_int(),
+            }
 
         ticket = models.TicketStore.create_for_tunnel(
             userservice=userservice,

@@ -120,7 +120,9 @@ def auth_callback_stage2(request: 'ExtendedHttpRequestWithUser', ticket_id: str)
 
         weblogin(request, response, result.user, '')  # Password is unavailable in this case
 
-        log_login(request, authenticator, result.user.name, 'Federated login')  # Nice login, just indicating it's federated
+        log_login(
+            request, authenticator, result.user.name, 'Federated login'
+        )  # Nice login, just indicating it's federated
 
         # If MFA is provided, we need to redirect to MFA page
         request.authorized = True
@@ -146,24 +148,13 @@ def auth_callback_stage2(request: 'ExtendedHttpRequestWithUser', ticket_id: str)
 @csrf_exempt
 def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
     """
-    Endpoint for X509 Certificate authentication, managed by nginx.
-
-    Nginx requests a client certificate via TLS and passes
-    certificate info through headers:
-    - HTTP_X_CLIENT_CERT: PEM-encoded client certificate
-    - HTTP_X_CLIENT_SUBJECT: Client certificate subject DN
-    - HTTP_X_CLIENT_ISSUER: Client certificate issuer DN
-    - HTTP_X_CLIENT_VERIFY: SSL verify result
+    Endpoint for X509 Certificate authentication, managed by client-cert-web-auth
 
     The authenticator is identified by the auth_uuid in the URL.
     Only authenticators with auth_type_group == AuthTypeGroup.CERTIFICATE
     are allowed.
     """
     try:
-        cert_pem = request.META.get('HTTP_X_CLIENT_CERT', '')
-        if not cert_pem:
-            raise exceptions.auth.InvalidUserException('No client certificate provided')
-
         try:
             authenticator = Authenticator.objects.get(uuid=auth_uuid)
         except Authenticator.DoesNotExist:
@@ -174,10 +165,7 @@ def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
         if auth_type.auth_type_group != types.auth.AuthTypeGroup.CERTIFICATE:
             raise exceptions.auth.InvalidAuthenticatorException()
 
-        params = types.auth.AuthCallbackParams.from_request(
-            request,
-            binary_data=cert_pem.encode() if isinstance(cert_pem, str) else cert_pem,
-        )
+        params = types.auth.AuthCallbackParams.from_request(request)
         ticket = TicketStore.create({'params': params, 'auth': authenticator.uuid})
         return HttpResponseRedirect(reverse('page.auth.callback_stage2', args=[ticket]))
     except exceptions.auth.InvalidUserException:
@@ -288,7 +276,9 @@ def ticket_auth(
         weblogin(request, None, usr, password)
 
         # Log the login
-        log_login(request, auth, username, 'Ticket authentication')  # Nice login, just indicating it's using a ticket
+        log_login(
+            request, auth, username, 'Ticket authentication'
+        )  # Nice login, just indicating it's using a ticket
 
         request.user = (
             usr  # Temporarily store this user as "authenticated" user, next requests will be done using session
@@ -308,11 +298,13 @@ def ticket_auth(
             info = UserServiceManager.manager().get_user_service_info(
                 request.user, request.os, request.ip, pool_uuid, None, False
             )
-            #_, userservice, _, transport, _ = res
+            # _, userservice, _, transport, _ = res
 
             transport_instance = info.transport.get_instance()
             if transport_instance.own_link is True:
-                link = reverse('webapi.transport_own_link', args=('A' + info.userservice.uuid, info.transport.uuid))
+                link = reverse(
+                    'webapi.transport_own_link', args=('A' + info.userservice.uuid, info.transport.uuid)
+                )
             else:
                 link = html.uds_access_link(request, 'A' + info.userservice.uuid, info.transport.uuid)
 

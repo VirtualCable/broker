@@ -60,7 +60,7 @@ import struct
 import typing
 import collections.abc
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -202,7 +202,7 @@ class ImmutableLogger:
         try:
             last = ImmutableLog.objects.latest()
             cls._last_sequence = last.sequence
-            cls._last_hash = bytes(last.entry_hash)
+            cls._last_hash = bytes(last.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
         except ImmutableLog.DoesNotExist:
             cls._last_sequence = 0
             cls._last_hash = cls._genesis_seed()[0]
@@ -381,24 +381,24 @@ class ImmutableLogger:
                 return False, 'Genesis RFC 3161 token verification failed.'
 
         # Walk the chain
-        expected_previous = bytes(genesis.entry_hash)
+        expected_previous = bytes(genesis.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
         reanchor_count = 0
 
         for entry in entries[1:]:
             computed = cls._compute_hash(
-                bytes(entry.previous_hash),
+                bytes(entry.previous_hash),  # pyrefly: ignore[unnecessary-type-conversion]
                 entry.stamp,
                 entry.sequence,
-                bytes(entry.data),
+                bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
             )
 
-            if computed != bytes(entry.entry_hash):
+            if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
                 return False, (
                     f'Hash mismatch at entry #{entry.sequence}: '
                     f'stored={entry.entry_hash.hex()} computed={computed.hex()}'
                 )
 
-            if bytes(entry.previous_hash) != expected_previous:
+            if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
                 return False, (
                     f'Chain break at entry #{entry.sequence}: '
                     f'expected prev={expected_previous.hex()} '
@@ -408,12 +408,14 @@ class ImmutableLogger:
             # Re-anchor verification
             if entry.anchor:
                 if reanchor_provider is not None:
-                    if not reanchor_provider.verify(expected_previous, bytes(entry.data)):
+                    if not reanchor_provider.verify(
+                        expected_previous, bytes(entry.data)  # pyrefly: ignore[unnecessary-type-conversion]
+                    ):
                         return False, (f'Re-anchor TSA verification failed at entry #{entry.sequence}')
                 reanchor_count += 1
                 logger.debug('Re-anchor #%d verified OK', entry.sequence)
 
-            expected_previous = bytes(entry.entry_hash)
+            expected_previous = bytes(entry.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
 
         msg = f'Chain verified: {len(entries)} entries'
         if reanchor_count:
@@ -470,7 +472,7 @@ class ImmutableLogger:
         secret = settings.SECRET_KEY.encode('utf-8')
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
 
-        if bytes(first.previous_hash) != expected_seed:
+        if bytes(first.previous_hash) != expected_seed:  # pyrefly: ignore[unnecessary-type-conversion]
             logger.error('Genesis seed mismatch')
             return
 
@@ -479,23 +481,28 @@ class ImmutableLogger:
             return
 
         yield first
-        expected_previous = bytes(first.entry_hash)
+        expected_previous = bytes(first.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
 
         for entry in entries[1:]:
-            if bytes(entry.previous_hash) != expected_previous:
+            if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
                 logger.error('Chain break at entry #%d', entry.sequence)
                 return
 
             computed = cls._compute_hash(
-                bytes(entry.previous_hash), entry.stamp, entry.sequence, bytes(entry.data)
+                bytes(entry.previous_hash),  # pyrefly: ignore[unnecessary-type-conversion]
+                entry.stamp,
+                entry.sequence,
+                bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
             )
-            if computed != bytes(entry.entry_hash):
+            if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
                 logger.error('Hash mismatch at entry #%d', entry.sequence)
                 return
 
             # Verify re-anchor
             if entry.anchor:
-                if reanchor_provider and not reanchor_provider.verify(expected_previous, bytes(entry.data)):
+                if reanchor_provider and not reanchor_provider.verify(
+                    expected_previous, bytes(entry.data)  # pyrefly: ignore[unnecessary-type-conversion]
+                ):
                     logger.error('Re-anchor TSA verification failed at entry #%d', entry.sequence)
                     return
 

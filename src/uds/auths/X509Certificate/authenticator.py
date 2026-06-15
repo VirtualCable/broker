@@ -28,7 +28,14 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac as hmac_module
+import json
 import logging
+import re
 import typing
 
 from django.urls import reverse
@@ -39,79 +46,17 @@ from uds.core import auths, exceptions, types
 from uds.core.ui import gui
 from uds.core.util import auth as auth_utils, fields
 
-try:
-    from cryptography import x509
-    from cryptography.x509 import oid
-    from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
-    import cryptography.exceptions
-except ImportError:
-    raise exceptions.ui.ValidationError(
-        gettext('Cryptography module is required for X509Certificate authenticator')
-    ) from None
+from cryptography import x509
+from cryptography.x509 import oid
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding as sym_padding
+import cryptography.exceptions
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
 logger = logging.getLogger(__name__)
-
-# Map OID short names to human-readable names used in DN
-_OID_TO_SHORT: dict[x509.ObjectIdentifier, str] = {
-    oid.NameOID.COMMON_NAME: 'CN',
-    oid.NameOID.ORGANIZATION_NAME: 'O',
-    oid.NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
-    oid.NameOID.COUNTRY_NAME: 'C',
-    oid.NameOID.STATE_OR_PROVINCE_NAME: 'ST',
-    oid.NameOID.LOCALITY_NAME: 'L',
-    oid.NameOID.SERIAL_NUMBER: 'SERIALNUMBER',
-    oid.NameOID.EMAIL_ADDRESS: 'E',
-    oid.NameOID.SURNAME: 'SN',
-    oid.NameOID.GIVEN_NAME: 'GN',
-    oid.NameOID.TITLE: 'T',
-    oid.NameOID.DOMAIN_COMPONENT: 'DC',
-    oid.NameOID.USER_ID: 'UID',
-    oid.NameOID.JURISDICTION_COUNTRY_NAME: 'JURISDICTIONC',
-    oid.NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: 'JURISDICTIONST',
-    oid.NameOID.JURISDICTION_LOCALITY_NAME: 'JURISDICTIONL',
-    oid.NameOID.BUSINESS_CATEGORY: 'BUSINESSCATEGORY',
-    oid.NameOID.POSTAL_CODE: 'POSTALCODE',
-    oid.NameOID.STREET_ADDRESS: 'STREET',
-    oid.NameOID.PSEUDONYM: 'PSEUDONYM',
-}
-
-
-def _subject_to_mapping(subject: x509.Name) -> dict[str, list[str]]:
-    """Convert x509 Name to a mapping suitable for process_regex_field."""
-    result: dict[str, list[str]] = {}
-    for attr in subject:
-        short = _OID_TO_SHORT.get(attr.oid, attr.oid.dotted_string)
-        val = attr.value.strip()
-        if short not in result:
-            result[short] = []
-        result[short].append(val)
-    return result
-
-
-def _verify_cert_signed_by_ca(cert: x509.Certificate, ca_cert: x509.Certificate) -> bool:
-    """Verify that the certificate was signed by the CA certificate."""
-    if cert.issuer != ca_cert.subject:
-        return False
-
-    try:
-        ca_public_key = ca_cert.public_key()
-        tbs = cert.tbs_certificate_bytes
-        sig = cert.signature
-        hash_algo = cert.signature_hash_algorithm
-
-        if isinstance(ca_public_key, rsa.RSAPublicKey):
-            ca_public_key.verify(sig, tbs, padding.PKCS1v15(), hash_algo)
-        elif isinstance(ca_public_key, ec.EllipticCurvePublicKey):
-            ca_public_key.verify(sig, tbs, ec.ECDSA(hash_algo))
-        else:
-            logger.error('Unsupported CA key type: %s', type(ca_public_key).__name__)
-            return False
-        return True
-    except cryptography.exceptions.InvalidSignature:
-        return False
 
 
 class X509CertificateAuthenticator(auths.Authenticator):
@@ -151,21 +96,20 @@ class X509CertificateAuthenticator(auths.Authenticator):
         tab=_('Certificates'),
     )
 
-    # ---- Attribute extraction ----
     username_attr = fields.username_attr_field(tab=_('Attributes'))
+    groups_attr = fields.groupname_attr_field(tab=_('Groups'))
     realname_attr = fields.realname_attr_field(tab=_('Attributes'))
 
-    # ---- Groups ----
     common_groups = gui.TextField(
         length=256,
         label=_('Common Groups'),
         order=40,
-        tooltip=_('Comma-separated list of groups the user will be assigned to.'),
+        tooltip=_('Comma-separated list of groups the user will be assigned to (in addition to groups_attr).'),
         required=False,
         tab=_('Groups'),
     )
 
-    # ---- Revocation (future) ----
+    # ---- Revocation (TBD soon) ----
     ocsp_url = gui.TextField(
         length=256,
         label=_('OCSP URL'),
@@ -183,47 +127,87 @@ class X509CertificateAuthenticator(auths.Authenticator):
         tab=_('Revocation'),
     )
 
+    # ---- Remote bridge service ----
+    remote_url = gui.TextField(
+        length=512,
+        label=_('Remote URL'),
+        order=60,
+        tooltip=_(
+            'URL of the client-cert-auth bridge service. '
+            'E.g.: "cert-auth.example.com" or "https://cert-auth.example.com". '
+            'The /cert_auth/ path will be appended automatically.'
+        ),
+        required=True,
+        tab=_('Bridge'),
+    )
+    shared_secret = gui.PasswordField(
+        length=128,
+        label=_('Shared Secret'),
+        order=61,
+        tooltip=_('HMAC key shared with the client-cert-auth bridge service for encryption/signing.'),
+        required=True,
+        tab=_('Bridge'),
+    )
+
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if not values:
             return
 
         if not self.ca_certificate.value.strip():
-            raise exceptions.ui.ValidationError(
-                gettext('CA Certificate is required')
-            )
+            raise exceptions.ui.ValidationError(gettext('CA Certificate is required'))
 
         try:
             ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
             bc = ca_cert.extensions.get_extension_for_class(x509.BasicConstraints)
             if not bc.value.ca:
                 raise exceptions.ui.ValidationError(
-                    gettext('The provided certificate is not a CA certificate (missing CA:TRUE in Basic Constraints)')
+                    gettext(
+                        'The provided certificate is not a CA certificate (missing CA:TRUE in Basic Constraints)'
+                    )
                 )
         except x509.ExtensionNotFound:
             raise exceptions.ui.ValidationError(
                 gettext('The provided certificate does not have Basic Constraints extension')
             ) from None
         except ValueError as e:
-            raise exceptions.ui.ValidationError(
-                gettext('Invalid PEM-encoded certificate: {}').format(e)
-            ) from e
+            raise exceptions.ui.ValidationError(gettext('Invalid PEM-encoded certificate: {}').format(e)) from e
 
         auth_utils.validate_regex_field(self.username_attr)
         auth_utils.validate_regex_field(self.realname_attr)
+        auth_utils.validate_regex_field(self.groups_attr)
+
+        # Validate remote URL
+        try:
+            self.remote_url.value = _normalize_remote_url(self.remote_url.value)
+        except ValueError as e:
+            raise exceptions.ui.ValidationError(gettext(str(e))) from e
+
+        if not self.shared_secret.value.strip():
+            raise exceptions.ui.ValidationError(gettext('Shared Secret is required'))
 
     def auth_callback(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        groups_manager: 'auths.GroupsManager',
-        request: 'ExtendedHttpRequest',
+        parameters: types.auth.AuthCallbackParams,
+        groups_manager: auths.GroupsManager,
+        request: ExtendedHttpRequest,
     ) -> types.auth.AuthenticationResult:
-        cert_bytes = parameters.binary_params
-        if not cert_bytes:
-            logger.error('No certificate data in callback parameters')
+        # Extract encrypted payload from POST params (sent by smartcard-auth-docker bridge)
+        payload_b64: str | None = parameters.post_params.get('payload')
+        if not payload_b64:
+            logger.error('No encrypted payload in POST parameters')
             return types.auth.FAILED_AUTH
 
         try:
-            client_cert = x509.load_pem_x509_certificate(cert_bytes)
+            # Decrypt and parse JSON payload
+            json_str: str = _decrypt_payload(payload_b64, self.shared_secret.value)
+            data: dict[str, str] = json.loads(json_str)
+            cert_pem: str = data.get('cert', _EMPTY_CERT_SENTINEL)
+            if cert_pem == _EMPTY_CERT_SENTINEL:
+                logger.warning('No client certificate provided (EMPTY sentinel)')
+                return types.auth.FAILED_AUTH
+
+            cert_bytes: bytes = cert_pem.encode()
+            client_cert: x509.Certificate = x509.load_pem_x509_certificate(cert_bytes)
             ca_cert = x509.load_pem_x509_certificate(self.ca_certificate.value.encode())
 
             if not _verify_cert_signed_by_ca(client_cert, ca_cert):
@@ -253,27 +237,179 @@ class X509CertificateAuthenticator(auths.Authenticator):
             if not realname:
                 realname = username.capitalize()  # type: ignore
 
-            groups = [g.strip() for g in self.common_groups.value.split(',') if g.strip()]
+            # Extract groups from certificate subject via regex
+            groups: list[str] = auth_utils.process_regex_field(self.groups_attr.value, subject_mapping)
+            # Add static common groups
+            groups += [g.strip() for g in self.common_groups.value.split(',') if g.strip()]
             groups_manager.validate(groups)
 
-            self.storage.save_pickled(username, [realname])
+            self.storage.save_pickled(username, [realname, groups])
 
             return types.auth.AuthenticationResult(types.auth.AuthenticationState.SUCCESS, username=username)
         except Exception as e:
             logger.error('Error validating certificate: %s', e)
             return types.auth.FAILED_AUTH
 
-    def get_javascript(self, request: 'ExtendedHttpRequest') -> str | None:
-        url = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
-        return f'window.location="{url}";'
+    def get_javascript(self, request: ExtendedHttpRequest) -> str | None:
+        # Build UDS callback URL
+        callback_url: str = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
+        # Build absolute URL (the bridge needs the full UDS URL to POST back)
+        abs_callback: str = request.build_absolute_uri(callback_url)
+        # Sign it: base64url(callback).hmac_hex
+        signed: str = _encode_target_url(abs_callback, self.shared_secret.value)
+        # Redirect to bridge: https://bridge/cert_auth/<signed>
+        return f'window.location="{self.remote_url.value}{signed}";'
 
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
-        groups_manager.validate(
-            [g.strip() for g in self.common_groups.value.split(',') if g.strip()]
-        )
+    def get_groups(self, username: str, groups_manager: auths.GroupsManager) -> None:
+        data: list[str | list[str]] | None = self.storage.read_pickled(username)
+        if data and len(data) > 1:
+            groups_manager.validate(data[1])  # type: ignore
+        else:
+            # Fallback: static common groups only
+            groups_manager.validate([g.strip() for g in self.common_groups.value.split(',') if g.strip()])
 
     def get_real_name(self, username: str) -> str:
-        data = self.storage.read_pickled(username)
+        data: list[str | list[str]] | None = self.storage.read_pickled(username)
         if not data:
             return username
-        return data[0]
+        return data[0]  # type: ignore
+
+
+# Map OID short names to human-readable names used in DN
+_OID_TO_SHORT: dict[x509.ObjectIdentifier, str] = {
+    oid.NameOID.COMMON_NAME: 'CN',
+    oid.NameOID.ORGANIZATION_NAME: 'O',
+    oid.NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
+    oid.NameOID.COUNTRY_NAME: 'C',
+    oid.NameOID.STATE_OR_PROVINCE_NAME: 'ST',
+    oid.NameOID.LOCALITY_NAME: 'L',
+    oid.NameOID.SERIAL_NUMBER: 'SERIALNUMBER',
+    oid.NameOID.EMAIL_ADDRESS: 'E',
+    oid.NameOID.SURNAME: 'SN',
+    oid.NameOID.GIVEN_NAME: 'GN',
+    oid.NameOID.TITLE: 'T',
+    oid.NameOID.DOMAIN_COMPONENT: 'DC',
+    oid.NameOID.USER_ID: 'UID',
+    oid.NameOID.JURISDICTION_COUNTRY_NAME: 'JURISDICTIONC',
+    oid.NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME: 'JURISDICTIONST',
+    oid.NameOID.JURISDICTION_LOCALITY_NAME: 'JURISDICTIONL',
+    oid.NameOID.BUSINESS_CATEGORY: 'BUSINESSCATEGORY',
+    oid.NameOID.POSTAL_CODE: 'POSTALCODE',
+    oid.NameOID.STREET_ADDRESS: 'STREET',
+    oid.NameOID.PSEUDONYM: 'PSEUDONYM',
+}
+
+
+def _subject_to_mapping(subject: x509.Name) -> dict[str, list[str]]:
+    """Convert x509 Name to a mapping suitable for process_regex_field."""
+    result: dict[str, list[str]] = {}
+    for attr in subject:
+        short = _OID_TO_SHORT.get(attr.oid, attr.oid.dotted_string)
+        val = attr.value.strip()
+        if isinstance(val, bytes):
+            val = val.decode(errors='ignore')
+        if short not in result:
+            result[short] = []
+        result[short].append(val)
+    return result
+
+
+def _verify_cert_signed_by_ca(cert: x509.Certificate, ca_cert: x509.Certificate) -> bool:
+    """Verify that the certificate was signed by the CA certificate."""
+    if cert.issuer != ca_cert.subject:
+        return False
+
+    try:
+        ca_public_key = ca_cert.public_key()
+        tbs = cert.tbs_certificate_bytes
+        sig = cert.signature
+        hash_algo = cert.signature_hash_algorithm
+        if hash_algo is None:
+            logger.error('Certificate signature hash algorithm is None')
+            return False
+
+        if isinstance(ca_public_key, rsa.RSAPublicKey):
+            ca_public_key.verify(sig, tbs, padding.PKCS1v15(), hash_algo)
+        elif isinstance(ca_public_key, ec.EllipticCurvePublicKey):
+            ca_public_key.verify(sig, tbs, ec.ECDSA(hash_algo))
+        else:
+            logger.error('Unsupported CA key type: %s', type(ca_public_key).__name__)
+            return False
+        return True
+    except cryptography.exceptions.InvalidSignature:
+        return False
+
+
+# ---------------------------------------------------------------------------- #
+#                    Crypto helpers (mirrors smartcard-auth-docker)             #
+# ---------------------------------------------------------------------------- #
+
+_EMPTY_CERT_SENTINEL: str = 'EMPTY'
+
+
+def _derive_keys(shared_secret: str) -> tuple[bytes, bytes]:
+    """Derive encryption and MAC keys from shared secret."""
+    secret = shared_secret.encode()
+    enc_key = hashlib.sha256(secret + b'enc').digest()
+    mac_key = hashlib.sha256(secret + b'mac').digest()
+    return enc_key, mac_key
+
+
+def _hmac_sign(data: str, shared_secret: str) -> str:
+    """HMAC-SHA256 sign data, returns hex digest."""
+    mac_key = _derive_keys(shared_secret)[1]
+    h = hmac_module.new(mac_key, data.encode(), hashlib.sha256)
+    return h.hexdigest()
+
+
+def _encode_target_url(url: str, shared_secret: str) -> str:
+    """Encode callback URL as base64url(url).hmac_hex (signed URL path)."""
+    data_b64 = base64.urlsafe_b64encode(url.encode()).decode().rstrip('=')
+    sig = _hmac_sign(data_b64, shared_secret)
+    return f'{data_b64}.{sig}'
+
+
+def _decrypt_payload(payload_b64: str, shared_secret: str) -> str:
+    """Decrypt and verify AES-256-CBC + HMAC-SHA256 payload.
+
+    Returns the JSON plaintext.
+    Raises ValueError on HMAC mismatch or decryption failure.
+    """
+    enc_key, mac_key = _derive_keys(shared_secret)
+
+    raw = base64.b64decode(payload_b64)
+    iv = raw[:16]
+    mac = raw[-32:]
+    ciphertext = raw[16:-32]
+
+    # Verify HMAC with constant-time comparison
+    expected_mac = hmac_module.new(mac_key, iv + ciphertext, hashlib.sha256).digest()
+    if not hmac_module.compare_digest(mac, expected_mac):
+        raise ValueError('HMAC verification failed')
+
+    # Decrypt
+    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv))
+    decryptor = cipher.decryptor()
+    padded = decryptor.update(ciphertext) + decryptor.finalize()
+
+    # Unpad PKCS7
+    unpadder = sym_padding.PKCS7(128).unpadder()
+    plaintext = unpadder.update(padded) + unpadder.finalize()
+
+    return plaintext.decode()
+
+
+def _normalize_remote_url(url: str) -> str:
+    """Normalize remote URL: add https:// if missing, strip trailing /, append /cert_auth/."""
+    url = url.strip()
+    if not url:
+        raise ValueError('Remote URL is required')
+
+    # Add scheme if missing
+    if not re.match(r'^https?://', url):
+        url = 'https://' + url
+    # Strip trailing /
+    url = url.rstrip('/')
+    # Append default route
+    url += '/cert_auth/'
+    return url

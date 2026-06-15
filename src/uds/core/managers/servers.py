@@ -82,7 +82,7 @@ class ServerManager(metaclass=singleton.Singleton):
         """Returns the property name for a user"""
         if isinstance(user, str):
             return ServerManager.BASE_PROPERTY_NAME + user
-        return ServerManager.BASE_PROPERTY_NAME + (str(user.uuid) if user else '_')
+        return ServerManager.BASE_PROPERTY_NAME + (user.uuid if user else '_')
 
     def get_unmanaged_usage(self, uuid: str) -> int:
         uuid = 'c' + uuid

@@ -396,7 +396,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         self._authenticated = True
         # Extract the token id
         self._tokenid = r.headers['X-Subject-Token']
-        
+
         # get token info
         token = r.json()['token']
 
@@ -428,7 +428,6 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         else:
             # set cached to None, so we do not use cached credentials
             self.cache.delete('auth')
-            
 
         # logger.debug('The token {} will be valid for {}'.format(self._tokenId, validity))
 
@@ -837,7 +836,9 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         try:
             values = r.json()['versions']['values']
         except Exception:
-            raise exceptions.services.generics.Error('Invalid response from OpenStack (Mayby invalid endpoint?)')
+            raise exceptions.services.generics.Error(
+                'Invalid response from OpenStack (Mayby invalid endpoint?)'
+            )
 
         for v in values:
             if v['id'] >= 'v3.1':

@@ -52,7 +52,7 @@ class ImmutableLogAnchorJob(Job):
         interval = GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
         if interval <= 0:
             return 600
-        return max(interval, 120)  # min 2 min
+        return min(max(interval, 120), 60 * 60 * 24)  # between 2 min and 24 h
 
     def run(self) -> None:
         if not ImmutableLogger.is_enabled():
@@ -63,6 +63,4 @@ class ImmutableLogAnchorJob(Job):
         if not ImmutableLog.objects.exists():
             return
         last = ImmutableLog.objects.latest()
-        if last.anchor:
-            return
-        ImmutableLogger.create_anchor(bytes(last.entry_hash))
+        ImmutableLogger.create_anchor(bytes(last.entry_hash))  # pyrefly: ignore[unnecessary-type-conversion]
