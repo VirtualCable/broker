@@ -611,6 +611,28 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
             error_message='Get Server information',
         )
         return openstack_types.ServerInfo.from_dict(r.json()['server'])
+    
+    @decorators.cached(prefix='svr_mac', timeout=consts.cache.SHORT_CACHE_TIMEOUT, key_helper=cache_key_helper)
+    def get_server_mac(self, server_id: str, **kwargs: typing.Any) -> str:
+        # Returning '' makes the state checker retry instead of forcing the userservice
+        # to ERROR, so degrade to it whenever the mac cannot be resolved yet.
+        net_info = self.get_server_info(server_id).validated().addresses
+
+        if net_info and net_info[0].mac:
+            return net_info[0].mac
+
+        # 'addresses' is empty under external DHCP, but the Neutron port still carries the mac.
+        try:
+            ports = self.list_ports(device_id=server_id)
+        except exceptions.services.generics.Error as e:
+            # never let a transient/403 error reach the state checker: '' just retries
+            logger.debug('Listing Neutron ports for %s failed, mac unresolved: %s', server_id, e)
+            return ''
+        for port in ports:
+            if port.mac_address:
+                return port.mac_address
+        return ''
+        
 
     @decorators.cached(prefix='vol', timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def get_volume_info(self, volume_id: str, **kwargs: typing.Any) -> openstack_types.VolumeInfo:
