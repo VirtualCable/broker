@@ -368,18 +368,23 @@ def _verify_cert_signed_by_ca(cert: x509.Certificate, ca_cert: x509.Certificate)
 _EMPTY_CERT_SENTINEL: str = 'EMPTY'
 
 
-def _derive_keys(shared_secret: str) -> tuple[bytes, bytes]:
-    """Derive encryption and MAC keys from shared secret."""
+def _derive_keys(shared_secret: str) -> tuple[bytes, bytes, bytes]:
+    """Derive encryption, MAC, and signing keys from shared secret.
+
+    Returns (enc_key, mac_key, sign_key) — three separate derived keys
+    so that a compromise of one usage does not affect the others.
+    """
     secret = shared_secret.encode()
     enc_key = hashlib.sha256(secret + b'enc').digest()
     mac_key = hashlib.sha256(secret + b'mac').digest()
-    return enc_key, mac_key
+    sign_key = hashlib.sha256(secret + b'sign').digest()
+    return enc_key, mac_key, sign_key
 
 
 def _hmac_sign(data: str, shared_secret: str) -> str:
     """HMAC-SHA256 sign data, returns hex digest."""
-    mac_key = _derive_keys(shared_secret)[1]
-    h = hmac_module.new(mac_key, data.encode(), hashlib.sha256)
+    _, _, sign_key = _derive_keys(shared_secret)
+    h = hmac_module.new(sign_key, data.encode(), hashlib.sha256)
     return h.hexdigest()
 
 
@@ -397,7 +402,7 @@ def _decrypt_payload(payload_b64: str, shared_secret: str) -> str:
     Returns the JSON plaintext.
     Raises ValueError on HMAC mismatch or decryption failure.
     """
-    enc_key, mac_key = _derive_keys(shared_secret)
+    enc_key, mac_key, _ = _derive_keys(shared_secret)
 
     raw = base64.b64decode(payload_b64)
     iv = raw[:16]

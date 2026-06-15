@@ -110,7 +110,7 @@ def process_regex_field(field: str, attributes: collections.abc.Mapping[str, str
 
                     val = [''.join(v) for v in attrs_values]  # flatten
                 elif '**' in attr_name:
-                    # Prepend the value after : to attribute value before :
+                    # Prepend the value after ** to attribute value before **
                     attr, prependable = attr_name.split('**')
                     val = [prependable + a for a in ensure.as_list(attributes.get(attr, []))]
                 else:

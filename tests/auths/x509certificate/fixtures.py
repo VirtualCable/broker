@@ -49,11 +49,12 @@ from uds.core.types.auth import AuthTypeGroup
 _TEST_SHARED_SECRET = 'test-shared-secret'
 
 
-def _derive_keys(shared_secret: str) -> tuple[bytes, bytes]:
+def _derive_keys(shared_secret: str) -> tuple[bytes, bytes, bytes]:
     secret = shared_secret.encode()
     enc_key = hashlib.sha256(secret + b'enc').digest()
     mac_key = hashlib.sha256(secret + b'mac').digest()
-    return enc_key, mac_key
+    sign_key = hashlib.sha256(secret + b'sign').digest()
+    return enc_key, mac_key, sign_key
 
 
 def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = '') -> str:
@@ -64,7 +65,7 @@ def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ti
     if ticket_id:
         data['ticket'] = ticket_id
     payload = json.dumps(data).encode()
-    enc_key, mac_key = _derive_keys(shared_secret)
+    enc_key, mac_key, _ = _derive_keys(shared_secret)
 
     # AES-256-CBC
     iv = os.urandom(16)
