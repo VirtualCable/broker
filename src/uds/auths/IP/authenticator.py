@@ -48,7 +48,7 @@ if typing.TYPE_CHECKING:
 
 
 class IPAuth(auths.Authenticator):
-    type_name = _('IP Authenticator')
+    type_name = _('IP')
     type_type = 'IPAuth'
     type_description = _('IP Authenticator')
     icon_file = 'auth.png'

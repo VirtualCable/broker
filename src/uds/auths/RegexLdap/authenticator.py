@@ -148,7 +148,7 @@ class RegexLdap(auths.Authenticator):
 
     mfa_attribute = fields.mfa_attr_field()
 
-    type_name = _('Regex LDAP Authenticator')
+    type_name = _('Regex LDAP')
     type_type = 'RegexLdapAuthenticator'
     type_description = _('Regular Expressions LDAP authenticator')
     icon_file = 'auth.png'

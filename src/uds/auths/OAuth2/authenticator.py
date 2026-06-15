@@ -57,7 +57,7 @@ class OAuth2Authenticator(auths.Authenticator):
     This class represents an OAuth2 Authenticator.
     """
 
-    type_name = _('OAuth2 Authenticator')
+    type_name = _('OAuth2')
     type_type = 'OAuth2Authenticator'
     type_description = _('OAuth2 Authenticator')
     icon_file = 'oauth2.png'

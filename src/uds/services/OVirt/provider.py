@@ -72,7 +72,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('oVirt/OLVM Platform Provider')
+    type_name = _('oVirt/OLVM')
     # : Type used internally to identify this provider
     type_type = 'oVirtPlatform'
     # : Description shown at administration interface for this provider
