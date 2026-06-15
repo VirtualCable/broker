@@ -563,6 +563,29 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
             )
         ]
 
+    def list_ports(
+        self,
+        network_id: str | None = None,
+        device_id: str | None = None,
+    ) -> list[openstack_types.PortInfo]:
+        query = ''
+        if network_id is not None:
+            query += f'&network_id={network_id}'
+        if device_id is not None:
+            query += f'&device_id={device_id}'
+        if query:
+            query = '?' + query[1:]  # Replace leading '&' with '?'
+
+        return [
+            openstack_types.PortInfo.from_dict(p)
+            for p in self._get_recurring_from_endpoint(
+                endpoint_types=NETWORKS_ENDPOINT_TYPES,
+                path=f'/v2.0/ports{query}',
+                error_message='List ports',
+                key='ports',
+            )
+        ]
+
     @decorators.cached(prefix='sgps', timeout=consts.cache.EXTREME_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def list_security_groups(self) -> list[openstack_types.SecurityGroupInfo]:
         return [
@@ -586,23 +609,29 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
             path=f'/servers/{server_id}',
             error_message='Get Server information',
         )
-        server_info = openstack_types.ServerInfo.from_dict(r.json()['server'])
-        # # If no addresses got, try the servers get IPS
-        # if len(server_info.addresses) == 0 or server_info.addresses[0].mac == '':
-        #     try:
-        #         r = self._request_from_endpoint(
-        #             'get',
-        #             endpoints_types=COMPUTE_ENDPOINT_TYPES,
-        #             path=f'/servers/{server_id}/ips',
-        #             error_message='Get Server IPs information',
-        #         )
-        #         # First element, the network name, don't care about it
-        #         data: dict[str, typing.Any] = r.json()
-        #         addrs = openstack_types.ServerInfo.AddresInfo.from_addresses(data['addresses'])
-        #         server_info.addresses = addrs if len(addrs) and addrs[0].ip and addrs[0].mac else server_info.addresses
-        #     except Exception:
-        #         pass  # Not found, all is fine
-        return server_info
+        return openstack_types.ServerInfo.from_dict(r.json()['server'])
+    
+    @decorators.cached(prefix='svr_mac', timeout=consts.cache.SHORT_CACHE_TIMEOUT, key_helper=cache_key_helper)
+    def get_server_mac(self, server_id: str, **kwargs: typing.Any) -> str:
+        # Returning '' makes the state checker retry instead of forcing the userservice
+        # to ERROR, so degrade to it whenever the mac cannot be resolved yet.
+        net_info = self.get_server_info(server_id).validated().addresses
+
+        if net_info and net_info[0].mac:
+            return net_info[0].mac
+
+        # 'addresses' is empty under external DHCP, but the Neutron port still carries the mac.
+        try:
+            ports = self.list_ports(device_id=server_id)
+        except exceptions.services.generics.Error as e:
+            # never let a transient/403 error reach the state checker: '' just retries
+            logger.debug('Listing Neutron ports for %s failed, mac unresolved: %s', server_id, e)
+            return ''
+        for port in ports:
+            if port.mac_address:
+                return port.mac_address
+        return ''
+        
 
     @decorators.cached(prefix='vol', timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def get_volume_info(self, volume_id: str, **kwargs: typing.Any) -> openstack_types.VolumeInfo:

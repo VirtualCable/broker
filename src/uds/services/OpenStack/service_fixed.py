@@ -48,7 +48,7 @@ if typing.TYPE_CHECKING:
     from .provider import OpenStackProvider
     from .provider_legacy import OpenStackProviderLegacy
 
-    AnyOpenStackProvider: typing.TypeAlias = typing.Union[OpenStackProvider, OpenStackProviderLegacy]
+    AnyOpenStackProvider: typing.TypeAlias = OpenStackProvider | OpenStackProviderLegacy
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
     prov_uuid = gui.HiddenField()
 
-    _api: typing.Optional['client.OpenStackClient'] = None
+    _api: 'client.OpenStackClient | None' = None
 
     @property
     def api(self) -> 'client.OpenStackClient':
@@ -164,7 +164,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
             ]
 
     def get_and_assign(self) -> str:
-        found_vmid: typing.Optional[str] = None
+        found_vmid: str | None = None
         try:
             with self._assigned_access() as assigned:
                 for checking_vmid in self.sorted_assignables_list():
@@ -196,7 +196,9 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         return found_vmid
 
     def get_mac(self, vmid: str) -> str:
-        return self.api.get_server_info(vmid).addresses[0].mac
+        # Returning '' lets the caller retry instead of crashing when the mac cannot be
+        # resolved yet (machine missing, or external DHCP leaving 'addresses' empty).
+        return self.api.get_server_mac(vmid) or ''
 
     def get_ip(self, vmid: str) -> str:
         return self.api.get_server_info(vmid).addresses[0].ip

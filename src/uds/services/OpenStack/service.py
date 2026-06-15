@@ -263,8 +263,7 @@ class OpenStackLiveService(DynamicService):
         *,
         for_unique_id: bool = False,
     ) -> str:
-        net_info = self.api.get_server_info(vmid).validated().addresses
-        return '' if not net_info else net_info[0].mac
+        return self.api.get_server_mac(vmid)
 
     def is_running(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str

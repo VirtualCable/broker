@@ -168,10 +168,11 @@ class OpenStackLiveUserService(DynamicUserService):
         """
         # Checks if machine has been created
         # Should have a mac address assigned and be running
-        if self.service().get_mac(self, self._vmid) and self.service().is_running(self, self._vmid):
-            server_info = self.service().api.get_server_info(self._vmid).validated()
-            self._mac = server_info.addresses[0].mac
-            self._ip = server_info.addresses[0].ip
+        mac = self.service().get_mac(self, self._vmid)
+        if mac and self.service().is_running(self, self._vmid):
+            self._mac = mac
+            # external DHCP leaves Nova 'addresses' empty; the guarded getters avoid indexing it
+            self._ip = self.service().get_ip(self, self._vmid)
             return types.states.TaskState.FINISHED
         
         return types.states.TaskState.RUNNING

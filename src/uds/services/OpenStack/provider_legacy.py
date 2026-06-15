@@ -175,7 +175,7 @@ class OpenStackProviderLegacy(ServiceProvider):
     legacy = True
 
     # Own variables
-    _api: typing.Optional[client.OpenStackClient] = None
+    _api: client.OpenStackClient | None = None
 
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
@@ -187,9 +187,9 @@ class OpenStackProviderLegacy(ServiceProvider):
             self.timeout.value = validators.validate_timeout(self.timeout.value)
 
     def api(
-        self, projectid: typing.Optional[str] = None, region: typing.Optional[str] = None
+        self, projectid: str | None = None, region: str | None = None
     ) -> client.OpenStackClient:
-        proxies: typing.Optional[dict[str, str]] = None
+        proxies: dict[str, str] | None = None
         if self.https_proxy.value.strip():
             proxies = {'https': self.https_proxy.value}
         return client.OpenStackClient(
