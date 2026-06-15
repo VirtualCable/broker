@@ -53,7 +53,7 @@ class RadiusAuth(auths.Authenticator):
     UDS Radius authenticator
     """
 
-    type_name = _('Radius Authenticator')
+    type_name = _('Radius')
     type_type = 'RadiusAuthenticator'
     type_description = _('Radius Authenticator')
     icon_file = 'radius.png'

@@ -68,7 +68,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
     extracts the username from the subject DN, and authenticates the user.
     """
 
-    type_name = _('X509 Certificate Authenticator')
+    type_name = _('X509 Certificate')
     type_type = 'X509CertificateAuthenticator'
     type_description = _('X509 Client Certificate Authenticator')
     icon_file = 'auth.png'

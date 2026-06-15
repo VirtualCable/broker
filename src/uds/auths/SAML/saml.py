@@ -74,7 +74,7 @@ class SAMLAuthenticator(auths.Authenticator):
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_name = _('SAML Authenticator')
+    type_name = _('SAML')
 
     # : Name of type used by Managers to identify this type of service
     # : We could have used here the Class name, but we decided that the

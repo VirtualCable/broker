@@ -77,7 +77,7 @@ class OGProvider(ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenGnsys Platform Provider')
+    type_name = _('OpenGnsys')
     # : Type used internally to identify this provider
     type_type = 'openGnsysPlatform'
     # : Description shown at administration interface for this provider

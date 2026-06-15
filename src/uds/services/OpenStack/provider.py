@@ -80,7 +80,7 @@ class OpenStackProvider(ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenStack Platform Provider')
+    type_name = _('OpenStack')
     # : Type used internally to identify this provider
     type_type = 'openStackPlatformNew'
     # : Description shown at administration interface for this provider
@@ -202,7 +202,7 @@ class OpenStackProvider(ServiceProvider):
     legacy = False
 
     # Own variables
-    _api: typing.Optional[client.OpenStackClient] = None
+    _api: client.OpenStackClient | None = None
 
     def initialize(self, values: 'types.core.ValuesType' = None) -> None:
         """
@@ -220,12 +220,12 @@ class OpenStackProvider(ServiceProvider):
                     )
 
     def api(
-        self, projectid: typing.Optional[str] = None, region: typing.Optional[str] = None
+        self, projectid: str | None = None, region: str | None = None
     ) -> client.OpenStackClient:
         projectid = projectid or self.project_id.value or None
         region = region or self.region.value or None
         if self._api is None:
-            proxies: 'dict[str, str]|None' = None
+            proxies: dict[str, str] | None = None
             if self.https_proxy.value.strip():
                 proxies = {'https': self.https_proxy.value}
             self._api = client.OpenStackClient(

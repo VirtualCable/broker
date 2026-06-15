@@ -59,7 +59,7 @@ def cache_key_helper(self: 'ProxmoxProvider') -> str:
 
 
 class ProxmoxProvider(services.ServiceProvider):
-    type_name = _('Proxmox Platform Provider')
+    type_name = _('Proxmox')
     type_type = 'ProxmoxPlatform'
     type_description = _('Proxmox platform service provider')
     icon_file = 'provider.png'
