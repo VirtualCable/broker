@@ -56,11 +56,14 @@ def _derive_keys(shared_secret: str) -> tuple[bytes, bytes]:
     return enc_key, mac_key
 
 
-def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET) -> str:
+def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = '') -> str:
     """Simulate the bridge service: encrypt + sign a cert payload. Returns base64 string."""
     import base64
 
-    payload = json.dumps({'cert': cert_pem}).encode()
+    data: dict[str, str] = {'cert': cert_pem}
+    if ticket_id:
+        data['ticket'] = ticket_id
+    payload = json.dumps(data).encode()
     enc_key, mac_key = _derive_keys(shared_secret)
 
     # AES-256-CBC

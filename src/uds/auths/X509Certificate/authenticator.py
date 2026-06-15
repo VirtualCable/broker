@@ -45,6 +45,7 @@ from django.utils.translation import gettext_noop as _
 from uds.core import auths, exceptions, types
 from uds.core.ui import gui
 from uds.core.util import auth as auth_utils, fields
+from uds.models import TicketStore
 
 from cryptography import x509
 from cryptography.x509 import oid
@@ -201,6 +202,19 @@ class X509CertificateAuthenticator(auths.Authenticator):
             # Decrypt and parse JSON payload
             json_str: str = _decrypt_payload(payload_b64, self.shared_secret.value)
             data: dict[str, str] = json.loads(json_str)
+
+            # --- Replay protection: validate nonce ticket ---
+            ticket_id: str | None = data.get('ticket')
+            if not ticket_id:
+                logger.warning('No replay-protection ticket in payload')
+                return types.auth.FAILED_AUTH
+            try:
+                TicketStore.get(ticket_id, owner=self.get_uuid(), secure=True, invalidate=True)
+            except TicketStore.DoesNotExist:
+                logger.warning('Replay-protection ticket invalid, expired, or already used (possible replay attack)')
+                return types.auth.FAILED_AUTH
+            # -------------------------------------------------
+
             cert_pem: str = data.get('cert', _EMPTY_CERT_SENTINEL)
             if cert_pem == _EMPTY_CERT_SENTINEL:
                 logger.warning('No client certificate provided (EMPTY sentinel)')
@@ -255,8 +269,15 @@ class X509CertificateAuthenticator(auths.Authenticator):
         callback_url: str = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
         # Build absolute URL (the bridge needs the full UDS URL to POST back)
         abs_callback: str = request.build_absolute_uri(callback_url)
-        # Sign it: base64url(callback).hmac_hex
-        signed: str = _encode_target_url(abs_callback, self.shared_secret.value)
+        # Create a nonce ticket to prevent replay attacks
+        ticket_id: str = TicketStore.create(
+            {'nonce': True},
+            validity=300,  # 5 minutes — enough for slow users
+            owner=self.get_uuid(),
+            secure=True,
+        )
+        # Sign both URL and ticket_id: base64url(json({url, ticket})).hmac_hex
+        signed: str = _encode_signed_data(abs_callback, ticket_id, self.shared_secret.value)
         # Redirect to bridge: https://bridge/cert_auth/<signed>
         return f'window.location="{self.remote_url.value}{signed}";'
 
@@ -362,9 +383,10 @@ def _hmac_sign(data: str, shared_secret: str) -> str:
     return h.hexdigest()
 
 
-def _encode_target_url(url: str, shared_secret: str) -> str:
-    """Encode callback URL as base64url(url).hmac_hex (signed URL path)."""
-    data_b64 = base64.urlsafe_b64encode(url.encode()).decode().rstrip('=')
+def _encode_signed_data(url: str, ticket_id: str, shared_secret: str) -> str:
+    """Encode JSON {url, ticket} as base64url(json).hmac_hex (signed URL path)."""
+    payload = json.dumps({'url': url, 'ticket': ticket_id}, separators=(',', ':'))
+    data_b64 = base64.urlsafe_b64encode(payload.encode()).decode().rstrip('=')
     sig = _hmac_sign(data_b64, shared_secret)
     return f'{data_b64}.{sig}'
 
