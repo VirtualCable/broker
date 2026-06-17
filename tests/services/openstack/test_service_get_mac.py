@@ -46,7 +46,17 @@ from . import fixtures
 
 from ...utils.test import UDSTransactionTestCase
 
+from uds.services.OpenStack.openstack import client
 from uds.services.OpenStack.openstack import types as openstack_types
+
+# Undecorated mac-resolution logic (the @cached wrapper would need a real cache backend).
+# Running it against the mocked api keeps these tests exercising the real behaviour while
+# the service simply delegates to api.get_server_mac().
+_real_get_server_mac = getattr(client.OpenStackClient.get_server_mac, '__wrapped__')
+
+
+def _bind_real_get_server_mac(api: mock.MagicMock) -> None:
+    api.get_server_mac.side_effect = lambda vmid, **kw: _real_get_server_mac(api, vmid, **kw)
 
 
 def _server_with_addresses(
@@ -75,6 +85,7 @@ class TestOpenStackGetMac(UDSTransactionTestCase):
         with fixtures.patched_provider() as prov:
             service = fixtures.create_live_service(prov)
         api = mock.MagicMock()
+        _bind_real_get_server_mac(api)
         service.cached_api = api  # property returns this without hitting the provider
         return service, api
 
@@ -105,14 +116,15 @@ class TestOpenStackGetMac(UDSTransactionTestCase):
         self.assertEqual(mac, 'FA:16:3E:AB:CD:EF')
         api.list_ports.assert_called_once_with(device_id='sid1')
 
-    def test_get_mac_empty_when_server_not_found(self) -> None:
-        # Machine still being prepared: server not queryable yet -> '' (retry, no ERROR)
+    def test_get_mac_raises_when_server_not_found(self) -> None:
+        # Server not queryable yet: get_server_mac does not swallow it; the caller/state
+        # checker handles the NotFoundError.
         service, api = self._service_with_api()
         api.get_server_info.side_effect = exceptions.services.generics.NotFoundError('Not found')
 
-        mac = service.get_mac(None, 'sid1', for_unique_id=True)
+        with self.assertRaises(exceptions.services.generics.NotFoundError):
+            service.get_mac(None, 'sid1', for_unique_id=True)
 
-        self.assertEqual(mac, '')
         api.list_ports.assert_not_called()
 
     def test_get_mac_empty_when_no_addresses_and_no_ports(self) -> None:

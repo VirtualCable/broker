@@ -43,7 +43,17 @@ from . import fixtures
 
 from ...utils.test import UDSTransactionTestCase
 
+from uds.services.OpenStack.openstack import client
 from uds.services.OpenStack.openstack import types as openstack_types
+
+# Undecorated mac-resolution logic (the @cached wrapper would need a real cache backend).
+# Running it against the mocked api keeps these tests exercising the real behaviour while
+# the service simply delegates to api.get_server_mac().
+_real_get_server_mac = getattr(client.OpenStackClient.get_server_mac, '__wrapped__')
+
+
+def _bind_real_get_server_mac(api: mock.MagicMock) -> None:
+    api.get_server_mac.side_effect = lambda vmid, **kw: _real_get_server_mac(api, vmid, **kw)
 
 
 def _server_with_addresses(
@@ -72,6 +82,7 @@ class TestOpenStackFixedGetMac(UDSTransactionTestCase):
         with fixtures.patched_provider() as prov:
             service = fixtures.create_fixed_service(prov)
         api = mock.MagicMock()
+        _bind_real_get_server_mac(api)
         service._api = api  # the api property returns the cached client without hitting the provider
         return service, api
 
@@ -98,14 +109,14 @@ class TestOpenStackFixedGetMac(UDSTransactionTestCase):
         self.assertEqual(mac, 'FA:16:3E:AB:CD:EF')
         api.list_ports.assert_called_once_with(device_id='sid1')
 
-    def test_get_mac_empty_when_server_not_found(self) -> None:
-        # Machine missing: no IndexError, no leak -> '' so the caller can retry
+    def test_get_mac_raises_when_server_not_found(self) -> None:
+        # Server missing: get_server_mac does not swallow it; the caller handles NotFoundError.
         service, api = self._service_with_api()
         api.get_server_info.side_effect = exceptions.services.generics.NotFoundError('Not found')
 
-        mac = service.get_mac('sid1')
+        with self.assertRaises(exceptions.services.generics.NotFoundError):
+            service.get_mac('sid1')
 
-        self.assertEqual(mac, '')
         api.list_ports.assert_not_called()
 
     def test_get_mac_empty_when_no_addresses_and_no_ports(self) -> None:
