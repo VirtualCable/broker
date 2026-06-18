@@ -106,7 +106,6 @@ def _process_response(
             "object-src 'none';",
             "base-uri 'self';",
             "frame-ancestors 'none';",
-            "form-action 'self';",
         ]
         response['Content-Security-Policy'] = " ".join(csp_parts)
 
