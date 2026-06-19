@@ -229,6 +229,8 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         order=27,
         length=3,  # max 100
         default=80,
+        min_value=1,
+        max_value=100,
         tooltip=_('Webcam image quality (1-100). Defaults to 80.'),
         tab=types.ui.Tab.PARAMETERS,
     )
@@ -237,7 +239,9 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         order=28,
         length=3,
         default=15,
-        tooltip=_('Maximum webcam frames per second. Defaults to 15.'),
+        min_value=1,
+        max_value=60,
+        tooltip=_('Maximum webcam frames per second (1-60). Defaults to 15.'),
         tab=types.ui.Tab.PARAMETERS,
     )
     webcam_max_width = gui.NumericField(
@@ -404,7 +408,9 @@ class BaseRDPEmbeddedTransport(transports.Transport):
                 enabled=True,
                 quality=self.webcam_quality.as_int(),
                 fps=self.webcam_fps.as_int(),
-                size_limit=(max_w, max_h) if max_w > 0 and max_h > 0 else None,
+                # 0 on an axis means "no cap" client-side, so send the pair whenever
+                # either dimension is set (capping a single axis keeps aspect ratio).
+                size_limit=(max_w, max_h) if max_w > 0 or max_h > 0 else None,
             )
 
         return RDPConnectionParams(
