@@ -37,7 +37,7 @@ from django.utils.translation import gettext_noop as _
 
 from uds.core import types
 
-from .common import BaseRDPEmbeddedTransport, RDPConnectionParams
+from .common import BaseRDPEmbeddedTransport
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -75,6 +75,14 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     use_sso = BaseRDPEmbeddedTransport.use_sso
     rdp_port = BaseRDPEmbeddedTransport.rdp_port
 
+    enable_audio = BaseRDPEmbeddedTransport.enable_audio
+    enable_microphone = BaseRDPEmbeddedTransport.enable_microphone
+    enable_webcam = BaseRDPEmbeddedTransport.enable_webcam
+    webcam_quality = BaseRDPEmbeddedTransport.webcam_quality
+    webcam_fps = BaseRDPEmbeddedTransport.webcam_fps
+    webcam_max_width = BaseRDPEmbeddedTransport.webcam_max_width
+    webcam_max_height = BaseRDPEmbeddedTransport.webcam_max_height
+
     screen_size = BaseRDPEmbeddedTransport.screen_size
 
     def get_transport_script(  # pylint: disable=too-many-locals
@@ -90,33 +98,8 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
         # We use helper to keep this clean
 
         ci = self.get_connection_info(userservice, user, password)
-        width, height = self.screen_size.value.split('x')
-        drives_to_redirect = (
-            None
-            if not self.allow_drives.as_bool()
-            else (
-                ["all"]
-                if not self.enforce_drives.as_bool()
-                else (
-                    ["fixed"]
-                    if not self.enforce_drives.value.strip()
-                    else [d.strip() for d in self.enforce_drives.value.split(',')]
-                )
-            )
-        )
 
-        data = RDPConnectionParams(
-            server=ip,
-            port=self.rdp_port.value,
-            user=ci.username,
-            password=ci.password if not self.use_sso.as_bool() else '__NO_PASSWORD__',
-            domain=ci.domain if not self.use_sso.as_bool() else 'UDS',
-            verify_cert=False,
-            use_nla=self.use_nla.as_bool(),
-            screen_width=int(width),
-            screen_height=int(height),
-            drives_to_redirect=drives_to_redirect,
-        )
+        data = self.build_connection_params(ip, ci)
         if os.os not in (types.os.KnownOS.WINDOWS, types.os.KnownOS.LINUX, types.os.KnownOS.MAC_OS):
             logger.error(
                 'Os not valid for RDP Transport: %s',
