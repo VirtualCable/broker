@@ -70,27 +70,55 @@ class RDPTunnelParams:
 
 
 @dataclasses.dataclass
+class WebcamParams:
+    # Matches uds-client `WebcamSettings` (crates/js/.../rdp.rs). codec/width/height
+    # are not read there (codec is hardcoded to Best), so we don't send them.
+    enabled: bool = True
+    quality: int | None = None
+    fps: int | None = None
+    size_limit: tuple[int, int] | None = None
+
+
+@dataclasses.dataclass
+class RDPOptions:
+    # Matches uds-client `JsRdpOptions`
+    use_nla: bool | None = None
+    verify_cert: bool | None = None
+
+
+@dataclasses.dataclass
+class RDPRedirections:
+    # Matches uds-client `RdpRedirections`
+    drives: list[str] | None = None
+    audio: bool | None = None
+    mic: bool | None = None
+    webcam: WebcamParams | None = None
+
+
+@dataclasses.dataclass
 class RDPConnectionParams:
+    # Shape matches what uds-client's `RDP.start(data)` expects: redirection and
+    # option flags live under nested `redirections`/`options` blocks, not top level.
     server: str
     port: int = 3389
     user: str | None = None
     password: str | None = None
     domain: str | None = None
-    verify_cert: bool | None = None
-    use_nla: bool | None = None
     screen_width: int | None = None
     screen_height: int | None = None
-    drives_to_redirect: list[str] | None = None
+    options: RDPOptions | None = None
+    redirections: RDPRedirections | None = None
     tunnel: RDPTunnelParams | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
-        def _as_dct(v: typing.Any) -> typing.Any:
-            if dataclasses.is_dataclass(v) and not isinstance(v, type):
-                return dataclasses.asdict(v)
+        # asdict() recurses nested dataclasses into dicts; then drop None values at every level.
+        def _prune(v: typing.Any) -> typing.Any:
+            if isinstance(v, dict):
+                items: dict[str, typing.Any] = typing.cast('dict[str, typing.Any]', v)
+                return {k: _prune(x) for k, x in items.items() if x is not None}
             return v
 
-        # Convert dataclass to dict and remove all empty values
-        return {k: _as_dct(v) for k, v in dataclasses.asdict(self).items() if v is not None}
+        return typing.cast('dict[str, typing.Any]', _prune(dataclasses.asdict(self)))
 
 
 class BaseRDPEmbeddedTransport(transports.Transport):
@@ -174,8 +202,67 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
-    rdp_port = gui.NumericField(
+    enable_audio = gui.CheckBoxField(
+        label=_('Enable Audio'),
+        order=24,
+        default=True,
+        tooltip=_('If checked, the audio will be redirected to the local machine'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    enable_microphone = gui.CheckBoxField(
+        label=_('Enable Microphone'),
+        order=25,
+        default=False,
+        tooltip=_('If checked, the local microphone will be redirected to the remote session'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    enable_webcam = gui.CheckBoxField(
+        label=_('Enable Webcam'),
+        order=26,
+        default=False,
+        tooltip=_('If checked, the local webcam/camera will be redirected to the remote session'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_quality = gui.NumericField(
+        label=_('Webcam quality'),
+        order=27,
+        length=3,  # max 100
+        default=80,
+        min_value=1,
+        max_value=100,
+        tooltip=_('Webcam image quality (1-100). Defaults to 80.'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_fps = gui.NumericField(
+        label=_('Webcam FPS'),
+        order=28,
+        length=3,
+        default=15,
+        min_value=1,
+        max_value=60,
+        tooltip=_('Maximum webcam frames per second (1-60). Defaults to 15.'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_max_width = gui.NumericField(
+        label=_('Webcam max width'),
+        order=29,
+        length=5,
+        default=0,
+        tooltip=_('Cap webcam width in pixels, keeping aspect ratio. 0 = original size.'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+    webcam_max_height = gui.NumericField(
+        label=_('Webcam max height'),
         order=30,
+        length=5,
+        default=0,
+        tooltip=_('Cap webcam height in pixels, keeping aspect ratio. 0 = original size.'),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    rdp_port = gui.NumericField(
+        order=35,
         length=5,  # That is, max allowed value is 65535
         label=_('RDP Port'),
         tooltip=_('Use this port as RDP port. Defaults to 3389.'),
@@ -287,6 +374,61 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             service_type=types.services.ServiceType.VDI,
             password=password,
             domain=domain,
+        )
+
+    def build_connection_params(
+        self,
+        server: str,
+        ci: types.connections.ConnectionData,
+        tunnel: 'RDPTunnelParams | None' = None,
+    ) -> RDPConnectionParams:
+        """Builds the RDPConnectionParams shared by direct and tunneled transports."""
+        width, height = self.screen_size.value.split('x')
+
+        # Empty list (not None): client falls back to its default ["all"] when the key
+        # is omitted, so "Allow none" must send [] explicitly to disable redirection.
+        drives = (
+            []
+            if not self.allow_drives.as_bool()
+            else (
+                ["all"]
+                if not self.enforce_drives.as_bool()
+                else (
+                    ["fixed"]
+                    if not self.enforce_drives.value.strip()
+                    else [d.strip() for d in self.enforce_drives.value.split(',')]
+                )
+            )
+        )
+
+        webcam = None
+        if self.enable_webcam.as_bool():
+            max_w, max_h = self.webcam_max_width.as_int(), self.webcam_max_height.as_int()
+            webcam = WebcamParams(
+                enabled=True,
+                quality=self.webcam_quality.as_int(),
+                fps=self.webcam_fps.as_int(),
+                # 0 on an axis means "no cap" client-side, so send the pair whenever
+                # either dimension is set (capping a single axis keeps aspect ratio).
+                size_limit=(max_w, max_h) if max_w > 0 or max_h > 0 else None,
+            )
+
+        return RDPConnectionParams(
+            server=server,
+            port=self.rdp_port.value,
+            user=ci.username,
+            password=ci.password if not self.use_sso.as_bool() else '__NO_PASSWORD__',
+            domain=ci.domain if not self.use_sso.as_bool() else 'UDS',
+            screen_width=int(width),
+            screen_height=int(height),
+            options=RDPOptions(use_nla=self.use_nla.as_bool(), verify_cert=False),
+            redirections=RDPRedirections(
+                drives=drives,
+                audio=self.enable_audio.as_bool(),
+                mic=self.enable_microphone.as_bool(),
+                webcam=webcam,
+            ),
+            tunnel=tunnel,
         )
 
     def get_connection_info(
