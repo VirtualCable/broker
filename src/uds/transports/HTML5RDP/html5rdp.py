@@ -381,12 +381,16 @@ class HTML5RDPTransport(transports.Transport):
             'user': creds_info.username or None,
             'password': creds_info.password or None,
             'domain': creds_info.domain or None,
-            'nla': self.nla.as_bool(),
-            'verify_ssl': False,
             'best_experience': self.best_experience.as_bool(),
-            'allow_audio': self.enable_audio.as_bool(),
-            'allow_mic': self.enable_microphone.as_bool(),
-            'allow_clipboard': self.allow_clipboard.as_bool(),
+            'options': {
+                'nla': self.nla.as_bool(),
+                'verify_ssl': False,
+            },
+            'redirections': {
+                'clipboard': self.allow_clipboard.as_bool(),
+                'audio': self.enable_audio.as_bool(),
+                'mic': self.enable_microphone.as_bool(),
+            },
             'allow_upload': self.enable_file_sharing.value in ('up', 'true'),
             'allow_download': self.enable_file_sharing.value in ('down', 'true'),
             'session_quality': self.session_quality.as_int(),
@@ -395,11 +399,11 @@ class HTML5RDPTransport(transports.Transport):
         }
 
         # Webcam redirection (matches Rust WebcamSettings). Only sent when enabled,
-        # so the gateway keeps conn_data.webcam = None otherwise. WebcamSettings is
+        # so the gateway keeps redirections.webcam = None otherwise. WebcamSettings is
         # #[serde(default)] on the gateway, so omitted keys fall back to its defaults.
         # cam_width/cam_height are filled at runtime from the browser's getUserMedia.
         if self.enable_webcam.as_bool():
-            extra['webcam'] = {
+            extra['redirections']['webcam'] = {
                 'enabled': True,
                 'codec': self.webcam_codec.value,
                 'quality': self.webcam_quality.as_int(),
