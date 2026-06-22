@@ -99,12 +99,12 @@ class HTML5RDPTest(UDSTestCase):
         link, extra = self._get_link_extra(transport, userservice, user, transport_model, ip='10.0.0.1')
 
         self.assertEqual(extra['user'], 'testuser')
-        self.assertEqual(extra['nla'], True)
-        self.assertEqual(extra['verify_ssl'], False)
+        self.assertEqual(extra['options']['nla'], True)
+        self.assertEqual(extra['options']['verify_ssl'], False)
         self.assertEqual(extra['best_experience'], True)
-        self.assertEqual(extra['allow_audio'], True)
-        self.assertEqual(extra['allow_mic'], False)
-        self.assertEqual(extra['allow_clipboard'], True)
+        self.assertEqual(extra['redirections']['audio'], True)
+        self.assertEqual(extra['redirections']['mic'], False)
+        self.assertEqual(extra['redirections']['clipboard'], True)
         self.assertEqual(extra['allow_upload'], True)
         self.assertEqual(extra['allow_download'], True)
         self.assertEqual(extra['session_quality'], 3)
@@ -141,11 +141,11 @@ class HTML5RDPTest(UDSTestCase):
 
         transport.nla.value = True
         _, extra = self._get_link_extra(transport, userservice, user, transport_model)
-        self.assertTrue(extra['nla'])
+        self.assertTrue(extra['options']['nla'])
 
         transport.nla.value = False
         _, extra = self._get_link_extra(transport, userservice, user, transport_model)
-        self.assertFalse(extra['nla'])
+        self.assertFalse(extra['options']['nla'])
 
     def test_clipboard_direct(self) -> None:
         """Test allow_clipboard field maps directly to extra."""
@@ -154,11 +154,11 @@ class HTML5RDPTest(UDSTestCase):
 
         transport.allow_clipboard.value = True
         _, extra = self._get_link_extra(transport, userservice, user, transport_model)
-        self.assertTrue(extra['allow_clipboard'])
+        self.assertTrue(extra['redirections']['clipboard'])
 
         transport.allow_clipboard.value = False
         _, extra = self._get_link_extra(transport, userservice, user, transport_model)
-        self.assertFalse(extra['allow_clipboard'])
+        self.assertFalse(extra['redirections']['clipboard'])
 
     def test_best_experience_direct(self) -> None:
         """Test best_experience field maps directly to extra."""
@@ -190,14 +190,20 @@ class HTML5RDPTest(UDSTestCase):
         userservice, user, transport_model = _make_mocks()
         _, extra = self._get_link_extra(transport, userservice, user, transport_model)
 
-        # Fields in rdphtml5 ConnectionData (excluding host/port/notify_ticket set by broker)
+        # Top-level fields in rdphtml5 ConnectionData (excluding host/port/notify_ticket set by broker)
         valid_rust_fields = {
-            'user_id', 'host', 'port', 'verify_ssl', 'user', 'password', 'domain',
-            'best_experience', 'nla', 'allow_audio', 'allow_mic', 'allow_clipboard',
+            'user_id', 'host', 'port', 'user', 'password', 'domain',
+            'best_experience', 'options', 'redirections',
             'allow_upload', 'allow_download', 'session_quality',
             'allow_quality_switch', 'notify_ticket', 'target_fps', 'rail_app',
             'rail_args', 'rail_working_dir', 'title',
         }
+        valid_options_fields = {'nla', 'verify_ssl'}
+        valid_redirections_fields = {'clipboard', 'audio', 'mic', 'webcam'}
 
         for key in extra:
             self.assertIn(key, valid_rust_fields, f"Extra key '{key}' not found in Rust ConnectionData")
+        for key in extra['options']:
+            self.assertIn(key, valid_options_fields, f"Options key '{key}' not found in Rust ConnectionData")
+        for key in extra['redirections']:
+            self.assertIn(key, valid_redirections_fields, f"Redirections key '{key}' not found in Rust ConnectionData")
