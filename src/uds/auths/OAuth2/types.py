@@ -46,7 +46,7 @@ class TokenInfo:
     refresh_token: str
     scope: str
     info: dict[str, typing.Any]
-    id_token: typing.Optional[str]
+    id_token: str | None
 
     @staticmethod
     def from_dict(dct: collections.abc.Mapping[str, typing.Any]) -> 'TokenInfo':
