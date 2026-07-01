@@ -250,7 +250,7 @@ def add(
         True if the operation was successful, raises LDAPError otherwise
     """
     try:
-        result = typing.cast(typing.Any, con.add(dn, attributes))
+        result = typing.cast(typing.Any, con.add(dn, attributes=attributes))
         if not result:
             _raise_for_result('Add', typing.cast(collections.abc.Mapping[str, typing.Any], con.result))
         return True

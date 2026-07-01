@@ -573,8 +573,6 @@ class ServersGroups(ModelHandler[GroupItem]):
             'weights_memory',
             'weights_users',
             'weights_max_expected_users',
-            'weights_min_memory',
-            'weights_users_limit',
         ]
         args = self.fields_from_params(weights_params)
         # Load parameters to be normalized
