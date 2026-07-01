@@ -126,21 +126,19 @@ class TestUserserviceManager(UDSTransactionTestCase):
         self.assertEqual(userservice.state, core_types.states.State.USABLE)
 
     def test_release_from_logout_missing_row_is_noop(self) -> None:
-        # Regression: a prior logout event may have already released AND cleaned the row
-        # before this one grabs the lock. The select_for_update re-read then raises
-        # DoesNotExist, which must be swallowed as a no-op instead of crashing the caller.
+        # Regression: a prior logout may release & clean the row before we lock it. The
+        # select_for_update re-read then raises DoesNotExist -> must be a no-op, not a crash.
         userservice = services_fixtures.create_db_assigned_userservices()[0]
-        # Simulate the row already gone by the time we re-read under lock
+        # Row already gone by the time we re-read under lock
         models.UserService.objects.filter(id=userservice.id).delete()
 
-        # Must not raise (DoesNotExist swallowed) and must leave nothing behind
+        # Must not raise (DoesNotExist swallowed) and leave nothing behind
         self.manager.release_from_logout(userservice)
 
         self.assertEqual(models.UserService.objects.all().count(), 0)
 
     def test_release_from_logout_l1_overflow_releases(self) -> None:
-        # An assigned logout on a pool whose L1 cache is already full/overflowing must
-        # release the machine rather than returning it to cache.
+        # Logout on a pool whose L1 cache already overflows -> release, do NOT cache
         userservice = services_fixtures.create_db_assigned_userservices()[0]
 
         stats = mock.NonCallableMagicMock()
@@ -156,12 +154,11 @@ class TestUserserviceManager(UDSTransactionTestCase):
 
         userservice.refresh_from_db()
         self.assertEqual(userservice.state, core_types.states.State.REMOVABLE)
-        # No clone created: the machine was released, not moved to cache
+        # No clone: released, not moved to cache
         self.assertEqual(models.UserService.objects.all().count(), 1)
 
     def test_release_from_logout_l1_growth_moves_to_cache(self) -> None:
-        # An assigned logout on a pool that still needs more L1 cache must move the
-        # machine back to L1 (clone-as-REMOVED bookkeeping), not release it.
+        # Logout on a pool still needing L1 growth -> move back to cache, do NOT release
         userservice = services_fixtures.create_db_assigned_userservices()[0]
         orig_uuid = userservice.uuid
 
@@ -176,8 +173,8 @@ class TestUserserviceManager(UDSTransactionTestCase):
             ):
                 self.manager.release_from_logout(userservice)
 
-        # forced_move_assigned_to_cache_l1 clones the record: original goes to L1 cache,
-        # a REMOVED copy is kept for tracking -> 2 rows total.
+        # forced_move clones the record: original -> L1 cache, a REMOVED copy kept for
+        # tracking -> 2 rows
         self.assertEqual(models.UserService.objects.all().count(), 2)
         moved = models.UserService.objects.get(uuid=orig_uuid)
         self.assertEqual(moved.cache_level, core_types.services.CacheLevel.L1)

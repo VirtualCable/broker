@@ -333,9 +333,8 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service_copy.state = State.REMOVED
         user_service_copy.os_state = State.USABLE
 
-        # Save the new element first: logging before save inserts an uds_log row with a
-        # NULL owner_id, which is silently swallowed here but poisons an enclosing
-        # transaction.atomic() (e.g. release_from_logout), breaking the following save().
+        # Save BEFORE logging: an unsaved copy has owner_id=None, and that failed uds_log
+        # insert poisons an enclosing atomic() (release_from_logout) -> next save() dies
         user_service_copy.save()
 
         log.log(user_service_copy, types.log.LogLevel.INFO, 'Service moved to cache')
@@ -542,7 +541,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             try:
                 userservice = UserService.objects.select_for_update().get(id=userservice.id)
             except UserService.DoesNotExist:
-                # A prior logout event already released and cleaned the row. Nothing to do.
+                # Row already released & cleaned by a prior logout, nothing to do
                 return
 
             if userservice.allow_putting_back_to_cache() is False:
