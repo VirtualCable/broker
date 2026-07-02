@@ -67,7 +67,7 @@ class LogManager(metaclass=singleton.Singleton):
         Logs a message associated to owner
         """
         # Ensure message fits on space
-        message = str(message)[:4000]
+        message = message[:4000]
 
         # now, we add new log
         try:
@@ -104,11 +104,11 @@ class LogManager(metaclass=singleton.Singleton):
 
     def log(
         self,
-        db_obj: typing.Optional['Model'],
+        db_obj: 'Model | None',
         level: int,
         message: str,
         source: str,
-        log_name: typing.Optional[str] = None,
+        log_name: str | None = None,
     ) -> None:
         """
         Do the logging for the requested object.
@@ -132,7 +132,7 @@ class LogManager(metaclass=singleton.Singleton):
                 logger.error('Error logging %s.%s-%s %s: %s (%s)', db_obj.__class__, obj_id, source, level, message, e)
 
     def get_logs(
-        self, db_obj: typing.Optional['Model'], limit: int = -1
+        self, db_obj: 'Model | None', limit: int = -1
     ) -> list[dict[str, typing.Any]]:
         """
         Get the logs associated with "wichObject", limiting to "limit" (default is GlobalConfig.MAX_LOGS_PER_ELEMENT)
@@ -153,7 +153,7 @@ class LogManager(metaclass=singleton.Singleton):
 
         return []
 
-    def clear_logs(self, db_object: typing.Optional['Model']) -> None:
+    def clear_logs(self, db_object: 'Model | None') -> None:
         """
         Clears all logs related to db_object
 

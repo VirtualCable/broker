@@ -35,8 +35,7 @@ import logging
 
 from uds.core import consts, types
 from uds.core.util.config import Config as CfgConfig
-from uds.REST import Handler
-
+from uds.REST import Handler, log
 
 logger = logging.getLogger(__name__)
 
@@ -97,14 +96,24 @@ class Config(Handler):
             for key, vals in section_dict.items():
                 config = CfgConfig.update(CfgConfig.SectionType.from_str(section), key, vals['value'])
                 if config is not None:
+                    log.log_audit(
+                        self,
+                        f'Updated config value {section}.{key} to {vals["value"] if not config.is_password else "********"}',
+                        level=log.LogLevel.INFO,
+                    )
                     logger.info(
-                        'Updating config value %s.%s to %s by %s',
+                        'Updated config value %s.%s to %s by %s',
                         section,
                         key,
                         vals['value'] if not config.is_password else '********',
                         self._user.name,
                     )
                 else:
+                    log.log_audit(
+                        self,
+                        f'Non existing config value {section}.{key} to {vals["value"]}',
+                        level=log.LogLevel.ERROR,
+                    )
                     logger.error(
                         'Non existing config value %s.%s to %s by %s',
                         section,

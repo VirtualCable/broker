@@ -35,6 +35,7 @@ import io
 import logging
 import re
 import typing
+import collections.abc
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -77,7 +78,7 @@ class ListReportAuditCSV(ListReport):
     uuid = 'b5f5ebc8-44e9-11ed-97a9-efa619da6a49'
 
     # Generator of data
-    def gen_data(self) -> typing.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
+    def gen_data(self) -> collections.abc.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
         # Xtract user method, response_code and request from data
         # the format is "user: [method/response_code] request"
         rx = re.compile(

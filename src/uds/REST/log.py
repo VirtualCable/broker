@@ -120,3 +120,36 @@ def log_operation(
             'i': handler.request.ip,
             'u': username,
         })
+
+def log_audit(
+    handler: 'Handler | None', action: str, level: LogLevel = LogLevel.INFO
+) -> None:
+    """
+    Logs a request
+    """
+    if not handler:
+        return  # Nothing to log
+
+    path = handler.request.path
+
+    path = replace_path(path)
+
+    # Maybe user is not set already, this may be called
+    user: typing.Any = handler.request.user
+
+    username = user.pretty_name if user else 'Unknown'
+    log(
+        None,  # > None Objects goes to SYSLOG (global log)
+        level=level,
+        message=f'{handler.request.ip} [{username}]: {action} {path}'[:4096],
+        source=LogSource.REST,
+    )
+
+    if ImmutableLogger.is_enabled():
+        ImmutableLogger.append_object({
+            't': 'rest',
+            'a': action,
+            'p': path,
+            'i': handler.request.ip,
+            'u': username,
+        })
