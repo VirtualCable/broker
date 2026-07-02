@@ -100,7 +100,10 @@ def log_operation(
 
     path = replace_path(path)
 
-    username = handler.request.user.pretty_name if handler.request.user else 'Unknown'
+    # Maybe user is not set already, this may be called
+    user: typing.Any = handler.request.user
+
+    username = user.pretty_name if user else 'Unknown'
     log(
         None,  # > None Objects goes to SYSLOG (global log)
         level=level,
