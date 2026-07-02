@@ -11,6 +11,7 @@ gettext("Search");
 gettext("No entries found");
 gettext("Select");
 gettext("Main");
+gettext("Advanced");
 gettext("Filter");
 gettext("No entries found");
 gettext("Main");
