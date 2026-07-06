@@ -48,13 +48,43 @@ if typing.TYPE_CHECKING:
 #   If path has ".../users/[uuid]/..." we will replace uuid with "user name" sourrounded by []
 #   If path has ".../groups/[uuid]/..." we will replace uuid with "group name" sourrounded by []
 UUID_REPLACER: tuple[
-    tuple[str, type[models.Provider | models.Service | models.ServicePool | models.User | models.Group]], ...
+    tuple[
+        str,
+        type[
+            models.Provider
+            | models.Service
+            | models.ServicePool
+            | models.MetaPool
+            | models.User
+            | models.Group
+            | models.Authenticator
+            | models.Transport
+            | models.OSManager
+            | models.Network
+            | models.Calendar
+            | models.Account
+            | models.MFA
+            | models.Image
+            | models.Notifier
+        ],
+    ],
+    ...,
 ] = (
     ('providers', models.Provider),
     ('services', models.Service),
     ('servicespools', models.ServicePool),
+    ('metapools', models.MetaPool),
     ('users', models.User),
     ('groups', models.Group),
+    ('authenticators', models.Authenticator),
+    ('transports', models.Transport),
+    ('osmanagers', models.OSManager),
+    ('networks', models.Network),
+    ('calendars', models.Calendar),
+    ('accounts', models.Account),
+    ('mfa', models.MFA),
+    ('gallery', models.Image),
+    ('messaging', models.Notifier),
 )
 
 

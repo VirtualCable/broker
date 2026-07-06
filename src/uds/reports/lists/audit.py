@@ -39,7 +39,6 @@ import collections.abc
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core import types
 from uds.core.ui import gui
@@ -78,17 +77,18 @@ class ListReportAuditCSV(ListReport):
     uuid = 'b5f5ebc8-44e9-11ed-97a9-efa619da6a49'
 
     # Generator of data
-    def gen_data(self) -> collections.abc.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
+    def gen_data(self) -> collections.abc.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
         # Xtract user method, response_code and request from data
-        # the format is "user: [method/response_code] request"
+        # the format is "ip [user]: [method/response_code] request"
         rx = re.compile(
             r'(?P<ip>[^\[ ]*) *(?P<user>.*?): \[(?P<method>[^/]*)/(?P<response_code>[^\]]*)\] (?P<request>.*)'
         )
+        # Audit actions (log_audit) have no [method/code], just: "ip [user]: action path"
+        rx_audit = re.compile(r'(?P<ip>[^\[ ]*) *\[(?P<user>[^\]]*)\]: (?P<request>.*)')
 
+        # as_datetime() already returns an aware datetime, so no make_aware here
         start = self.start_date.as_datetime().replace(hour=0, minute=0, second=0, microsecond=0)
-        start = timezone.make_aware(start)
         end = self.end_date.as_datetime().replace(hour=23, minute=59, second=59, microsecond=999999)
-        end = timezone.make_aware(end)
         for i in Log.objects.filter(
             created__gte=start,
             created__lte=end,
@@ -125,12 +125,26 @@ class ListReportAuditCSV(ListReport):
                 
                 yield (
                     i.created,
+                    i.level_as_str,
                     m.group('ip'),
                     m.group('user'),
                     m.group('method'),
                     response_code,
                     m.group('request'),
                 )
+            else:
+                # Audit action row (log_audit): no method/response_code
+                a = rx_audit.match(i.data)
+                if a:
+                    yield (
+                        i.created,
+                        i.level_as_str,
+                        a.group('ip'),
+                        a.group('user'),
+                        'AUDIT',
+                        '',
+                        a.group('request'),
+                    )
 
     def generate(self) -> bytes:
         output = io.StringIO()
@@ -139,6 +153,7 @@ class ListReportAuditCSV(ListReport):
         writer.writerow(
             [
                 gettext('Date'),
+                gettext('Level'),
                 gettext('IP'),
                 gettext('User'),
                 gettext('Method'),
