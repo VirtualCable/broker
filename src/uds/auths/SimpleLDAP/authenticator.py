@@ -182,12 +182,14 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
     # Label for password field
     label_password = _("Password")
 
-    _connection: typing.Optional['ldaputil.LDAPConnection'] = None
+    _connection: 'ldaputil.LDAPConnection | None' = None
 
-    def initialize(self, values: typing.Optional[dict[str, typing.Any]]) -> None:
+    def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if values:
             auth_utils.validate_regex_field(self.username_attr)
-            validators.validate_certificate(self.certificate.value)
+            self.certificate.value = self.certificate.value.strip()
+            if self.certificate.value:
+                validators.validate_certificate(self.certificate.value)
 
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
@@ -226,7 +228,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
         self.mark_for_upgrade()
 
     def mfa_storage_key(self, username: str) -> str:
-        return 'mfa_' + str(self.db_obj().uuid) + username
+        return 'mfa_' + self.db_obj().uuid + username
 
     def mfa_identifier(self, username: str) -> str:
         return self.storage.read_pickled(self.mfa_storage_key(username)) or ''
@@ -266,7 +268,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
             certificate_data=self.certificate.as_str(),
         )
 
-    def _get_user(self, username: str) -> typing.Optional[ldaputil.LDAPResultType]:
+    def _get_user(self, username: str) -> ldaputil.LDAPResultType | None:
         """
         Searches for the username and returns its LDAP entry.
         Args:
@@ -289,7 +291,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
             max_entries=LDAP_RESULT_LIMIT,
         )
 
-    def _get_group(self, groupname: str) -> typing.Optional[ldaputil.LDAPResultType]:
+    def _get_group(self, groupname: str) -> ldaputil.LDAPResultType | None:
         """
         Searches for the groupname and returns its LDAP entry.
         Args:
