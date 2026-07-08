@@ -83,22 +83,22 @@ class Publication(Environmentable, Serializable):
     # : change suggested_delay in your implementation.
     suggested_delay: int = 10
 
-    _osmanager: typing.Optional['osmanagers.OSManager']
+    _osmanager: 'osmanagers.OSManager | None'
     _service: 'services.Service'
     _revision: int
     _servicepool_name: str
     _uuid: str
 
-    _db_obj: typing.Optional['models.ServicePoolPublication']
+    _db_obj: 'models.ServicePoolPublication | None'
 
     def __init__(
         self,
         environment: 'Environment',
         *,
         service: 'services.Service',
-        osmanager: typing.Optional['osmanagers.OSManager'] = None,
+        osmanager: 'osmanagers.OSManager | None' = None,
         revision: int = -1,
-        servicepool_name: typing.Optional[str] = None,
+        servicepool_name: 'str | None' = None,
         uuid: str = '',
     ) -> None:
         """
@@ -154,7 +154,7 @@ class Publication(Environmentable, Serializable):
         """
         return self._service
 
-    def osmanager(self) -> typing.Optional['osmanagers.OSManager']:
+    def osmanager(self) -> 'osmanagers.OSManager | None':
         """
         Utility method to access os manager for this publication.
 

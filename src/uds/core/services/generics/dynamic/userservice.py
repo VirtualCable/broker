@@ -334,6 +334,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
 
     # Utility overrides for type checking...
     # Probably, overriden again on child classes
+    @typing.override
     def service(self) -> 'service.DynamicService':
         return typing.cast('service.DynamicService', super().service())
 
@@ -361,6 +362,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         pass
 
     @typing.final
+    @typing.override
     def get_name(self) -> str:
         if self._name == '':
             try:
@@ -370,6 +372,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._name
 
     @typing.final
+    @typing.override
     def set_ip(self, ip: str) -> None:
         if self.can_set_ip:
             logger.debug('Setting IP to %s', ip)
@@ -378,6 +381,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             logger.debug('Setting IP to %s (ignored)', ip)
 
     @typing.final
+    @typing.override
     def get_unique_id(self) -> str:
         # Provide self to the service, so it can some of our methods to generate the unique id
         # (for example, own mac generator, that will autorelease the mac as soon as the machine is removed)
@@ -388,6 +392,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._mac
 
     @typing.final
+    @typing.override
     def get_ip(self) -> str:
         if self._ip == '' or not self.can_cache_ip:
             try:
@@ -401,6 +406,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._ip
 
     @typing.final
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         """
         Deploys an service instance for an user.
@@ -415,6 +421,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         if level == types.services.CacheLevel.L1:
             self._set_queue(self._create_queue_l1_cache.copy())
@@ -424,6 +431,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def move_to_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         if level == types.services.CacheLevel.L1:
             self._set_queue(self._move_to_l1_queue.copy())
@@ -435,6 +443,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         # Eat the WAIT operation if it is in the queue
         # At most, we will have one WAIT operation in the queue
@@ -446,6 +455,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return types.states.TaskState.FINISHED
 
     @typing.final
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         # If already ready, return finished
         try:
@@ -467,6 +477,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
 
         return self._execute_queue()
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
         if self._vmid != '':
             self._set_queue(
@@ -479,6 +490,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Check what operation is going on, and acts acordly to it
@@ -526,6 +538,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             return self.error(e)
 
     @typing.final
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         Destroys the service
@@ -560,6 +573,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             # Do not execute anything.here, just continue normally
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def error_reason(self) -> str:
         return self._reason
 

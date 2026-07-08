@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 import logging
 import os
+import typing
 
 from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_noop as _
@@ -200,6 +201,7 @@ class BaseX2GOTransport(transports.Transport):
         tab=types.ui.Tab.ADVANCED,
     )
 
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
@@ -218,6 +220,7 @@ class BaseX2GOTransport(transports.Transport):
     def get_screen_size(self) -> tuple[int, int]:
         return CommonPrefs.get_wh(self.screen_size.value)
 
+    @typing.override
     def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
         v = self.process_user_password(userservice, user, '')
         return v.username
@@ -251,6 +254,7 @@ class BaseX2GOTransport(transports.Transport):
             password=password,
         )
 
+    @typing.override
     def get_connection_info(
         self,
         userservice: 'models.UserService | models.ServicePool',

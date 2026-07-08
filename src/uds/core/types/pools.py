@@ -30,7 +30,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 import enum
-import typing
 import dataclasses
 
 from django.utils.translation import gettext as _
@@ -101,7 +100,7 @@ class UsageInfoVars:
     left_count: str
     max_srvs: str
 
-    def __init__(self, pool_usage_info: typing.Optional[UsageInfo] = None):
+    def __init__(self, pool_usage_info: UsageInfo | None = None):
         if pool_usage_info is None:
             pool_usage_info = UsageInfo(0, 0)
 

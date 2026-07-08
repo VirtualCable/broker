@@ -105,11 +105,13 @@ class Transport(Module):
         Default implementation does nothing
         """
 
+    @typing.override
     def destroy(self) -> None:
         """
         Invoked when Transport is deleted
         """
 
+    @typing.override
     def db_obj(self) -> 'models.Transport':
         """
         Returns the database object for this provider
