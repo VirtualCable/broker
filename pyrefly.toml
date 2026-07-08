@@ -11,3 +11,6 @@ project-excludes = [
 
 python-platform = "linux"
 
+[errors]
+missing-override-decorator = true
+
