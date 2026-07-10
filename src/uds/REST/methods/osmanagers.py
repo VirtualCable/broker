@@ -87,6 +87,7 @@ class OsManagers(ModelHandler[OsManagerItem]):
         typed=types.rest.api.RestApiInfoGuiType.MULTIPLE_TYPES,
     )
 
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('deployed_count'):
             _, is_descending = field_info
@@ -111,10 +112,12 @@ class OsManagers(ModelHandler[OsManagerItem]):
         # Fill type and type_name
         return ret_value
 
+    @typing.override
     def get_item(self, item: 'Model') -> OsManagerItem:
         item = ensure.is_instance(item, OSManager)
         return self.os_manager_as_dict(item)
 
+    @typing.override
     def validate_delete(self, item: 'Model') -> None:
         item = ensure.is_instance(item, OSManager)
         # Only can delete if no ServicePools attached
@@ -125,10 +128,12 @@ class OsManagers(ModelHandler[OsManagerItem]):
 
     # Types related
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[osmanagers.OSManager]]:
         return osmanagers.factory().providers().values()
 
     # Gui related
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         try:
             osmanager_type = osmanagers.factory().lookup(for_type)

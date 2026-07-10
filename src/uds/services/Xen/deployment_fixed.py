@@ -60,18 +60,22 @@ class XenFixedUserService(FixedUserService, autoserializable.AutoSerializable):
     suggested_delay = 4
 
     # Utility overrides for type checking...
+    @typing.override
     def service(self) -> 'service_fixed.XenFixedService':
         return typing.cast('service_fixed.XenFixedService', super().service())
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
         if self._vmid:
             self.service().reset_vm(self._vmid)  # Reset in sync
             
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start(self) -> None:
         self._task = self.service().start_vm(self._vmid)
 
+    @typing.override
     def op_stop(self) -> None:
         self._task = self.service().stop_vm(self._vmid)
 
@@ -91,24 +95,28 @@ class XenFixedUserService(FixedUserService, autoserializable.AutoSerializable):
         return types.states.TaskState.RUNNING
 
     # Check methods
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks the state of a deploy for an user or cache
         """
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start_checker(self) -> types.states.TaskState:
         """
         Checks if machine has started
         """
         return self._check_task_finished()
 
+    @typing.override
     def op_stop_checker(self) -> types.states.TaskState:
         """
         Checks if machine has stoped
         """
         return self._check_task_finished()
 
+    @typing.override
     def op_deleted_checker(self) -> types.states.TaskState:
         """
         Checks if a machine has been removed

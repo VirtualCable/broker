@@ -156,6 +156,7 @@ class AdminActivityReport(ListReport):
         rows.sort(key=lambda r: r['requests'], reverse=True)
         return rows
 
+    @typing.override
     def generate(self) -> bytes:
         rows = self.get_data()
         return self.template_as_pdf(
@@ -180,6 +181,7 @@ class AdminActivityReportCSV(AdminActivityReport):
     end_date = AdminActivityReport.end_date
     top_paths = AdminActivityReport.top_paths
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

@@ -172,6 +172,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
         return self._api
 
     # There is more fields type, but not here the best place to cover it
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We will use the "autosave" feature for form fields
@@ -207,6 +208,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
         return self.test_connection()
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         """
         Test ovirt Connectivity

@@ -98,9 +98,11 @@ class Notifiers(ModelHandler[NotifierItem]):
     )
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[messaging.Notifier]]:
         return messaging.factory().providers().values()
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         notifier_type = messaging.factory().lookup(for_type)
 
@@ -134,6 +136,7 @@ class Notifiers(ModelHandler[NotifierItem]):
                 .build()
             )
 
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('type_name'):
             _, is_descending = field_info
@@ -141,6 +144,7 @@ class Notifiers(ModelHandler[NotifierItem]):
             return qs.order_by(order_by_field)
         return super().apply_sort(qs)
 
+    @typing.override
     def get_item(self, item: 'Model') -> NotifierItem:
         item = ensure.is_instance(item, Notifier)
         type_ = item.get_type()

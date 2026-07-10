@@ -64,6 +64,7 @@ class DelayedTaskThread(threading.Thread):
         super().__init__()
         self._task_instance = task_instance
 
+    @typing.override
     def run(self) -> None:
         try:
             self._task_instance.execute()

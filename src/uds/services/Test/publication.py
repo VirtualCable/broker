@@ -61,6 +61,7 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
     other = autoserializable.StringField()
     other2 = autoserializable.StringField(default='other2')
 
+    @typing.override
     def initialize(self) -> None:
         """
         This method will be invoked by default __init__ of base class, so it gives
@@ -76,6 +77,7 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
         self.reason = 'none'
         self.number = 10
 
+    @typing.override
     def publish(self) -> types.states.TaskState:
         logger.info('Publishing publication %s: %s remaining', self.name, self.number)
         self.number -= 1
@@ -84,22 +86,27 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
             self.state = types.states.TaskState.FINISHED
         return types.states.TaskState.from_str(self.state)
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         return types.states.TaskState.from_str(self.state)
 
+    @typing.override
     def finish(self) -> None:
         # Make simply a random string
         logger.info('Finishing publication %s', self.name)
         self.number = 0
         self.state = types.states.TaskState.FINISHED
 
+    @typing.override
     def error_reason(self) -> str:
         return self.reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         logger.info('Destroying publication %s', self.name)
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         logger.info('Canceling publication %s', self.name)
         return self.destroy()

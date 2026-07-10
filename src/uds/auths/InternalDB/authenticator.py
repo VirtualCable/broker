@@ -109,6 +109,7 @@ class InternalDBAuth(auths.Authenticator):
                 pass
         return ip
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         try:
             return self.db_obj().users.get(name=username.lower(), state=State.ACTIVE).mfa_data
@@ -116,6 +117,7 @@ class InternalDBAuth(auths.Authenticator):
             pass
         return ''
 
+    @typing.override
     def transformed_username(self, username: str, request: 'ExtendedHttpRequest') -> str:
         username = username.lower()
         if self.unique_by_host.as_bool():
@@ -154,6 +156,7 @@ class InternalDBAuth(auths.Authenticator):
 
         return username
 
+    @typing.override
     def authenticate(
         self,
         username: str,
@@ -180,6 +183,7 @@ class InternalDBAuth(auths.Authenticator):
         log_login(request, self.db_obj(), username, 'Invalid password', as_error=True)
         return types.auth.FAILED_AUTH
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         auth_db = self.db_obj()
         try:
@@ -195,6 +199,7 @@ class InternalDBAuth(auths.Authenticator):
                 pass
         groups_manager.validate(grps)
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         # Return the real name of the user, if it is set
         try:
@@ -203,15 +208,19 @@ class InternalDBAuth(auths.Authenticator):
         except Exception:
             return super().get_real_name(username)
 
+    @typing.override
     def create_user(self, user_data: dict[str, typing.Any]) -> None:
         pass
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         return types.core.TestResult(True)
 
+    @typing.override
     def check(self) -> str:
         return _("All seems fine in the authenticator.")
 
+    @typing.override
     def __str__(self) -> str:
         return "Internal DB Authenticator Authenticator"

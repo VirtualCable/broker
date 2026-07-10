@@ -136,6 +136,7 @@ class TopUsersReport(StatsReport):
 
         return rows[: self.top_n.as_int()]
 
+    @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
@@ -162,6 +163,7 @@ class TopUsersReportCSV(TopUsersReport):
     top_n = TopUsersReport.top_n
     sort_by = TopUsersReport.sort_by
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

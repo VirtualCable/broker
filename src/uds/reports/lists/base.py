@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 from django.utils.translation import gettext_noop as _
 from uds.core import reports
 
@@ -37,5 +38,6 @@ from uds.core import reports
 class ListReport(reports.Report):
     group = _('Lists')  # So we can make submenus with reports
 
+    @typing.override
     def generate(self) -> bytes:
         raise NotImplementedError('ListReport generate invoked and not implemented')

@@ -32,6 +32,7 @@ Dummy stamp provider for testing and development.
 Always returns a deterministic token and always verifies as valid.
 """
 
+import typing
 import hashlib
 import logging
 import time
@@ -52,12 +53,14 @@ class DummyStampProvider(StampProvider):
     def __init__(self, secret: bytes = b'dummy-stamp-secret'):
         self._secret = secret
 
+    @typing.override
     def stamp(self, hash_data: bytes) -> bytes:
         stamp_time = int(time.time()).to_bytes(8, 'big')
         token = hashlib.sha256(self._secret + stamp_time + hash_data).digest()
         logger.debug('Dummy stamp: hash=%s token=%s', hash_data.hex(), token.hex())
         return stamp_time + token
 
+    @typing.override
     def verify(self, hash_data: bytes, token: bytes) -> bool:
         if len(token) < 40:
             return False

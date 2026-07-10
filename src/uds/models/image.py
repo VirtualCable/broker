@@ -205,6 +205,7 @@ class Image(UUIDModel):
     def thumbnail_as_response(self) -> HttpResponse:
         return HttpResponse(self.thumb, content_type='image/png')
 
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         self.stamp = sql_now()
         return super().save(*args, **kwargs)

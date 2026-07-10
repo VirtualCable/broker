@@ -191,6 +191,7 @@ class OpenStackLiveService(DynamicService):
     # Note: currently, Openstack does not provides a way of specifying how to stop the server
     # At least, i have not found it on the documentation
 
+    @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         """
         We check here form values to see if they are valid.
@@ -201,9 +202,11 @@ class OpenStackLiveService(DynamicService):
         if values:
             validators.validate_basename(self.basename.value, self.lenname.as_int())
 
+    @typing.override
     def provider(self) -> 'AnyOpenStackProvider':
         return typing.cast('AnyOpenStackProvider', super().provider())
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Loads required values inside
@@ -241,21 +244,25 @@ class OpenStackLiveService(DynamicService):
 
         return self.cached_api
 
+    @typing.override
     def sanitized_name(self, name: str) -> str:
         return self.provider().sanitized_name(name)
 
+    @typing.override
     def find_duplicates(self, name: str, mac: str) -> collections.abc.Iterable[str]:
         # Only looks for name duplicates, the mac is created by openstack, so it should be unique
         for i in self.api.list_servers():
             if i.name == name:
                 yield i.id
 
+    @typing.override
     def get_ip(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> str:
         net_info = self.api.get_server_info(vmid).validated().addresses
         return '' if not net_info else net_info[0].ip
 
+    @typing.override
     def get_mac(
         self,
         caller_instance: 'DynamicUserService | DynamicPublication | None',
@@ -265,11 +272,13 @@ class OpenStackLiveService(DynamicService):
     ) -> str:
         return self.api.get_server_mac(vmid)
 
+    @typing.override
     def is_running(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> bool:
         return self.api.get_server_info(vmid).validated().power_state.is_running()
 
+    @typing.override
     def start(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
@@ -277,6 +286,7 @@ class OpenStackLiveService(DynamicService):
             return
         self.api.start_server(vmid)
 
+    @typing.override
     def stop(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
@@ -288,12 +298,14 @@ class OpenStackLiveService(DynamicService):
     # Note that on openstack, stop is "soft", but may fail to stop if no agent is installed or not responding
     # We can anyway delete de machine even if it is not stopped
 
+    @typing.override
     def reset(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
         # Default is to stop "hard"
         return self.stop(caller_instance, vmid)
 
+    @typing.override
     def delete(
         self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
     ) -> None:
@@ -307,6 +319,7 @@ class OpenStackLiveService(DynamicService):
             vmid = f'SS:{vmid}'
             super().delete(caller_instance, vmid)
 
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         kind, vmid = vmid.split(':')
         if kind == 'VM':
@@ -355,5 +368,6 @@ class OpenStackLiveService(DynamicService):
             security_groups_names=self.security_groups.value,
         )
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()

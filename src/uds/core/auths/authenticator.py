@@ -216,6 +216,7 @@ class Authenticator(Module):
         Default implementation does nothing
         """
 
+    @typing.override
     def db_obj(self) -> 'models.Authenticator':
         """
         Helper method to access the Authenticator database object

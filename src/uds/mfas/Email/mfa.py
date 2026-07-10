@@ -165,6 +165,7 @@ class EmailMFA(mfas.MFA):
         old_field_name='mailHtml',
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We will use the "autosave" feature for form fields
@@ -190,14 +191,17 @@ class EmailMFA(mfas.MFA):
         # now check from email and to email
         self.from_email.value = validators.validate_email(self.from_email.value)
 
+    @typing.override
     def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
         return gettext('Check your mail. You will receive an email with the verification code')
 
+    @typing.override
     def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> typing.Optional[bool]:
         return mfas.LoginAllowed.check_action(
             self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
         )
 
+    @typing.override
     def label(self) -> str:
         return 'OTP received via email'
 
@@ -243,6 +247,7 @@ class EmailMFA(mfas.MFA):
                 logger.error('Error sending email: %s', e)
                 raise
 
+    @typing.override
     def send_code(
         self,
         request: 'ExtendedHttpRequest',
@@ -298,6 +303,7 @@ class EmailMFA(mfas.MFA):
 
         return smtp
 
+    @typing.override
     def process(
         self,
         request: 'ExtendedHttpRequest',

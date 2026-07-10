@@ -166,6 +166,7 @@ class OAuth2Authenticator(auths.Authenticator):
     # Non serializable variables
     session: typing.ClassVar['requests.Session'] = security.secure_requests_session()
 
+    @typing.override
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if not values:
             return
@@ -204,6 +205,7 @@ class OAuth2Authenticator(auths.Authenticator):
             request: 'HttpRequest' = values['_request']
             self.redirection_endpoint.value = request.build_absolute_uri(self.callback_url())
 
+    @typing.override
     def auth_callback(
         self,
         parameters: 'types.auth.AuthCallbackParams',
@@ -226,6 +228,7 @@ class OAuth2Authenticator(auths.Authenticator):
                 logger.error('Invalid response type: %s', self.response_type.value)
                 return types.auth.FAILED_AUTH
 
+    @typing.override
     def logout(
         self,
         request: 'types.requests.ExtendedHttpRequest',
@@ -239,18 +242,21 @@ class OAuth2Authenticator(auths.Authenticator):
             url=self.logout_url.value.replace('{token}', urllib.parse.quote(token)),
         )
 
+    @typing.override
     def get_javascript(self, request: 'HttpRequest') -> str | None:
         """
         We will here compose the azure request and send it via http-redirect
         """
         return f'window.location="{self.get_login_url()}";'
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         data = self.storage.read_pickled(username)
         if not data:
             return
         groups_manager.validate(data[1])
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         data = self.storage.read_pickled(username)
         if not data:

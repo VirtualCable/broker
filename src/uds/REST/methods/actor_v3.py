@@ -246,6 +246,7 @@ class Test(ActorV3Action):
 
     NAME = 'test'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         # First, try to locate an user service providing this token.
         try:
@@ -286,6 +287,7 @@ class Register(ActorV3Action):
 
     NAME = 'register'
 
+    @typing.override
     def post(self) -> dict[str, typing.Any]:
         # If already exists a token for this MAC, return it instead of creating a new one, and update the information...
         # For actors we use MAC instead of IP, because VDI normally is a dynamic IP, and we do "our best" to locate the existing actor
@@ -372,6 +374,7 @@ class Initialize(ActorV3Action):
 
     NAME = 'initialize'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         """
         Initialize method expect a json POST with this fields:
@@ -511,6 +514,7 @@ class BaseReadyChange(ActorV3Action):
 
     NAME = 'notused'  # Not really important, this is not a "leaf" class and will not be directly available
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         """
         BaseReady method expect a json POST with this fields:
@@ -585,6 +589,7 @@ class Ready(BaseReadyChange):
 
     NAME = 'ready'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         """
         Ready method expect a json POST with this fields:
@@ -620,6 +625,7 @@ class Version(ActorV3Action):
 
     NAME = 'version'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         logger.debug('Version Args: %s,  Params: %s', self._args, self._params)
         userservice = self.get_userservice()
@@ -652,6 +658,7 @@ class Login(ActorV3Action):
             osmanagers.OSManager.logged_in(userservice, username)
         return osmanager
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         is_managed = self._params.get('type') != consts.actor.UNMANAGED
         src = types.connections.ConnectionSource('', '')
@@ -722,6 +729,7 @@ class Logout(ActorV3Action):
             if not osmanager or osmanager.is_removable_on_logout(userservice):
                 UserServiceManager.manager().release_from_logout(userservice)
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         is_managed = self._params.get('type') != consts.actor.UNMANAGED
 
@@ -751,6 +759,7 @@ class Log(ActorV3Action):
 
     NAME = 'log'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         logger.debug('Args: %s,  Params: %s', self._args, self._params)
         userservice = self.get_userservice()
@@ -776,6 +785,7 @@ class Ticket(ActorV3Action):
 
     NAME = 'ticket'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         logger.debug('Args: %s,  Params: %s', self._args, self._params)
 
@@ -820,6 +830,7 @@ class Ticket(ActorV3Action):
 class Unmanaged(ActorV3Action):
     NAME = 'unmanaged'
 
+    @typing.override
     def action(self) -> dict[str, typing.Any]:
         """
         unmanaged method expect a json POST with this fields:
@@ -907,6 +918,7 @@ class Unmanaged(ActorV3Action):
 class Notify(ActorV3Action):
     NAME = 'notify'
 
+    @typing.override
     def post(self) -> dict[str, typing.Any]:
         # Raplaces original post (non existent here)
         raise exceptions.rest.AccessDenied('Access denied')

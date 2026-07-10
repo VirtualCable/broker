@@ -45,11 +45,13 @@ logger = logging.getLogger(__name__)
 class TelegramReceiver(jobs.Job):
     friendly_name = 'Telegram Receiver'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60
 
 
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Retrieving messages from Telegram')
 

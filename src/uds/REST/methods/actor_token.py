@@ -88,6 +88,7 @@ class ActorTokens(ModelHandler[ActorTokenItem]):
         .build()
     )
 
+    @typing.override
     def get_item(self, item: 'models.Model') -> ActorTokenItem:
         item = ensure.is_instance(item, Server)
         data: dict[str, typing.Any] = item.data or {}
@@ -113,6 +114,7 @@ class ActorTokens(ModelHandler[ActorTokenItem]):
             os=item.os_type,
         )
 
+    @typing.override
     def delete(self) -> str:
         """
         Processes a DELETE request

@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Show current PUBLIC configuration of UDS broker (passwords are not shown)"
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '--csv',
@@ -61,6 +62,7 @@ class Command(BaseCommand):
             help='Shows configuration in YAML format',
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug("Show settings")
         config.GlobalConfig.initialize()

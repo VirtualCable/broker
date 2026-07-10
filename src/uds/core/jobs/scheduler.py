@@ -70,6 +70,7 @@ class JobThread(threading.Thread):
         self._db_job_id = db_job.id
         self._delay = job_instance.next_execution_delay()
 
+    @typing.override
     def run(self) -> None:
         try:
             self._job_instance.execute()

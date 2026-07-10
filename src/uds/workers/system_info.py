@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import logging
 
 from uds.core.util import cluster
@@ -40,9 +41,11 @@ logger = logging.getLogger(__name__)
 class SystemInformation(Job):
     friendly_name = 'System Information update'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 300
 
+    @typing.override
     def run(self) -> None:
         logger.debug('System information started')
         try:

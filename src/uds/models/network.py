@@ -198,6 +198,7 @@ class Network(UUIDModel, TaggingMixin):
     # utility method to allow "in" operator
     __contains__ = contains
 
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         """
         Overrides save to update the start, end and version fields

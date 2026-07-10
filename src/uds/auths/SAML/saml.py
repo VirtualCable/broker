@@ -367,6 +367,7 @@ class SAMLAuthenticator(auths.Authenticator):
 
     manage_url = gui.HiddenField(serializable=True, old_field_name='manageUrl')
 
+    @typing.override
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         """
         Simply check if we have
@@ -573,6 +574,7 @@ class SAMLAuthenticator(auths.Authenticator):
             return metadata
         return typing.cast(bytes, metadata).decode()
 
+    @typing.override
     def get_info(
         self, parameters: collections.abc.Mapping[str, str]
     ) -> tuple[str, str | None] | None:
@@ -595,6 +597,7 @@ class SAMLAuthenticator(auths.Authenticator):
     def mfa_clean(self, username: str) -> None:
         self.storage.remove(self.mfa_storage_key(username))
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         return self.storage.read_pickled(self.mfa_storage_key(username)) or ''
 
@@ -640,6 +643,7 @@ class SAMLAuthenticator(auths.Authenticator):
         )
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    @typing.override
     def auth_callback(
         self,
         parameters: 'types.auth.AuthCallbackParams',
@@ -754,6 +758,7 @@ class SAMLAuthenticator(auths.Authenticator):
             success=types.auth.AuthenticationState.SUCCESS, username=username
         )
 
+    @typing.override
     def logout(self, request: 'ExtendedHttpRequest', username: str) -> types.auth.AuthenticationResult:
         if not self.use_global_logout.as_bool():
             return types.auth.SUCCESS_AUTH
@@ -786,18 +791,21 @@ class SAMLAuthenticator(auths.Authenticator):
             ),
         )
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         data = self.storage.read_pickled(username)
         if not data:
             return
         groups_manager.validate(data[1])
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         data = self.storage.read_pickled(username)
         if not data:
             return username
         return data[0]
 
+    @typing.override
     def get_javascript(self, request: 'ExtendedHttpRequest') -> str | None:
         """
         We will here compose the saml request and send it via http-redirect
@@ -807,6 +815,7 @@ class SAMLAuthenticator(auths.Authenticator):
 
         return f'window.location="{auth.login()}";'  # pyright: ignore reportUnknownVariableType
 
+    @typing.override
     def remove_user(self, username: str) -> None:
         """
         Clean ups storage data

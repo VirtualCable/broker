@@ -69,6 +69,7 @@ class UDSFS(Operations):
 
         raise FuseOSError(errno.ENOENT)
 
+    @typing.override
     def getattr(self, path: typing.Optional[str], fh: typing.Any = None) -> dict[str, int]:
         # If root folder, return service creation date
         if path == '/':
@@ -78,6 +79,7 @@ class UDSFS(Operations):
         logger.debug('Attrs for %s: %s', path, attrs)
         return attrs
 
+    @typing.override
     def getxattr(self, path: str, name: str, position: int = 0) -> str:
         '''
         Get extended attribute for the given path. Right now, always returns an "empty" string
@@ -85,6 +87,7 @@ class UDSFS(Operations):
         logger.debug('Getting attr %s from %s (%s)', name, path, position)
         return ''
 
+    @typing.override
     def readdir(self, path: str, fh: typing.Any) -> list[str]:
         '''
         Read directory, that is composed of the dispatcher names and the "dot" entries
@@ -94,12 +97,14 @@ class UDSFS(Operations):
             return ['.', '..'] + list(self.dispatchers.keys())
         return typing.cast(list[str], self._dispatch(path, 'readdir'))
 
+    @typing.override
     def read(self, path: typing.Optional[str], size: int, offset: int, fh: typing.Any) -> bytes:
         '''
         Reads the content of the "virtual" file
         '''
         return typing.cast(bytes, self._dispatch(path, 'read', size, offset))
 
+    @typing.override
     def flush(self, path: typing.Optional[str], fh: typing.Any) -> None:
         '''
         Flushes the content of the "virtual" file
@@ -111,10 +116,12 @@ class Command(BaseCommand):
     args = "<mount_point> [-d]"
     help = "Mounts a FUSE filesystem for UDS. This command will not return until the filesystem is unmounted."
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument('mount_point', type=str, help='Mount point for the FUSE filesystem')
         parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug("Handling UDS FS")
 

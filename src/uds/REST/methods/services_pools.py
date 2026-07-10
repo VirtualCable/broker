@@ -180,6 +180,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('user_services_count'):
             # Annotate the count
@@ -233,6 +234,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
 
         return super().apply_sort(qs)
 
+    @typing.override
     def get_items(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> collections.abc.Generator[ServicePoolItem, None, None]:
@@ -282,6 +284,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         # return super().get_items(overview=kwargs.get('overview', True), prefetch=['service', 'service__provider', 'servicesPoolGroup', 'image', 'tags'])
         # return super(ServicesPools, self).get_items(*args, **kwargs)
 
+    @typing.override
     def get_item(self, item: 'Model') -> ServicePoolItem:
         item = ensure.is_instance(item, ServicePool)
         summary = 'summarize' in self._params
@@ -363,6 +366,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         return val
 
     # Gui related
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         # if OSManager.objects.count() < 1:  # No os managers, can't create db
         #    raise exceptions.rest.ResponseError(gettext('Create at least one OS Manager before creating a new service pool'))
@@ -514,6 +518,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         )
         return gui.build()
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         # logger.debug(self._params)
 
@@ -628,6 +633,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         except Exception as e:
             raise exceptions.rest.RequestError(str(e)) from e
 
+    @typing.override
     def post_save(self, item: 'Model') -> None:
         item = ensure.is_instance(item, ServicePool)
         if self.is_new() and self._params.get('publish_on_save', False) is True:
@@ -636,6 +642,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             except Exception as e:
                 logger.error('Could not publish service pool %s: %s', item.name, e)
 
+    @typing.override
     def delete_item(self, item: 'Model') -> None:
         item = ensure.is_instance(item, ServicePool)
         try:
@@ -646,6 +653,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             logger.exception('deleting service pool')
 
     # Logs
+    @typing.override
     def get_logs(self, item: 'Model') -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
         try:

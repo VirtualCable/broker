@@ -220,22 +220,27 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
 
     # Utility overrides for type checking...
     # Probably, overriden again on child classes
+    @typing.override
     def service(self) -> 'service.FixedService':
         return typing.cast('service.FixedService', super().service())
 
     @typing.final
+    @typing.override
     def get_name(self) -> str:
         return self._name
 
     @typing.final
+    @typing.override
     def set_ip(self, ip: str) -> None:
         logger.debug('Setting IP to %s (ignored!!)', ip)
 
     @typing.final
+    @typing.override
     def get_unique_id(self) -> str:
         return self._mac or self._name
 
     @typing.final
+    @typing.override
     def get_ip(self) -> str:
         try:
             if self._vmid:
@@ -248,6 +253,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         return ''
 
     @typing.final
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         """
         Deploys an service instance for an user.
@@ -259,12 +265,14 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         """
         Fixed Userservice does not provided "cached" elements
         """
         return self.error('Cache for fixed userservices not supported')
 
+    @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         """
         By default, process ready from os manager will return finished for most of the fixed services
@@ -272,6 +280,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         # If already ready, return finished
         try:
@@ -296,6 +305,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Check what operation is going on, and acts acordly to it
@@ -466,6 +476,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         return types.states.TaskState.FINISHED
 
     @typing.final
+    @typing.override
     def finish(self) -> None:
         """
         Invoked when the core notices that the deployment of a service has finished.
@@ -474,6 +485,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         logger.debug('Finished machine %s', self._name)
 
     @typing.final
+    @typing.override
     def error_reason(self) -> str:
         """
         Returns the reason of the error.
@@ -485,6 +497,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         return self._reason
 
     @typing.final
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         Invoked for destroying a deployed service
@@ -493,6 +506,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are

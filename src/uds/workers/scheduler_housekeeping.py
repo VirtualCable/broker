@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 from datetime import timedelta
 import time
 import logging
@@ -52,9 +53,11 @@ class SchedulerHousekeeping(Job):
 
     friendly_name = 'Scheduler house keeping'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 301
 
+    @typing.override
     def run(self) -> None:
         """
         Look for "hanged" scheduler tasks and reschedule them

@@ -30,6 +30,7 @@
 """
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import dataclasses
 import logging
 
@@ -83,6 +84,7 @@ class Networks(ModelHandler[NetworkItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         return (
             ui_utils.GuiBuilder()
@@ -99,6 +101,7 @@ class Networks(ModelHandler[NetworkItem]):
             .build()
         )
 
+    @typing.override
     def get_item(self, item: 'Model') -> NetworkItem:
         item = ensure.is_instance(item, Network)
         return NetworkItem(

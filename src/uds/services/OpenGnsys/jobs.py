@@ -51,11 +51,13 @@ logger = logging.getLogger(__name__)
 class OpenGnsysMaintainer(jobs.Job):
     friendly_name = 'OpenGnsys cache renewal job'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 60 * 4
 
 
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Looking for OpenGnsys renewable cache elements')
 

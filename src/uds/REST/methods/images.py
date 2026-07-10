@@ -75,11 +75,13 @@ class Images(ModelHandler[ImageItem]):
         .build()
     )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         fields['image'] = fields['data']
         del fields['data']
         # fields['data'] = Image.prepareForDb(Image.decode64(fields['data']))[2]
 
+    @typing.override
     def post_save(self, item: 'models.Model') -> None:
         item = ensure.is_instance(item, Image)
         # Updates the thumbnail and re-saves it
@@ -96,6 +98,7 @@ class Images(ModelHandler[ImageItem]):
         typed=types.rest.api.RestApiInfoGuiType.UNTYPED,
     )
 
+    @typing.override
     def get_item(self, item: 'models.Model') -> ImageItem:
         item = ensure.is_instance(item, Image)
         return ImageItem(
@@ -104,6 +107,7 @@ class Images(ModelHandler[ImageItem]):
             data=item.data64,
         )
 
+    @typing.override
     def get_item_summary(self, item: 'models.Model') -> ImageItem:
         item = ensure.is_instance(item, Image)
         return ImageItem(

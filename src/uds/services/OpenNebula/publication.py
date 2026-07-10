@@ -62,9 +62,11 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
     # _templateId: str = ''
     # _state: str = 'r'
 
+    @typing.override
     def service(self) -> 'OpenNebulaLiveService':
         return typing.cast('OpenNebulaLiveService', super().service())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
@@ -80,6 +82,7 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    @typing.override
     def publish(self) -> types.states.TaskState:
         """
         Realizes the publication of the service
@@ -99,6 +102,7 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Checks state of publication creation
@@ -125,6 +129,7 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
         self._state = 'ok'
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def error_reason(self) -> str:
         """
         If a publication produces an error, here we must notify the reason why
@@ -135,6 +140,7 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         This is called once a publication is no more needed.
@@ -163,6 +169,7 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         Do same thing as destroy

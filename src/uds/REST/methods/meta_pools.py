@@ -137,6 +137,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def get_item(self, item: 'models.Model') -> MetaPoolItem:
         item = ensure.is_instance(item, MetaPool)
         # if item does not have an associated service, hide it (the case, for example, for a removed service)
@@ -181,6 +182,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         )
 
     # Gui related
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
 
         return (
@@ -246,6 +248,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             .build()
         )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         # logger.debug(self._params)
         try:
@@ -278,6 +281,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
 
         logger.debug('Fields: %s', fields)
 
+    @typing.override
     def delete_item(self, item: 'models.Model') -> None:
         item = ensure.is_instance(item, MetaPool)
         item.delete()

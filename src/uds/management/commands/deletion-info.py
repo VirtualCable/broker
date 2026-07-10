@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Generate report of deletion queue"
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '--output',
@@ -53,6 +54,7 @@ class Command(BaseCommand):
             help='Output file',
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug("Show settings")
         config.GlobalConfig.initialize()

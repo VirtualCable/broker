@@ -88,6 +88,7 @@ class OpenshiftProvider(ServiceProvider):
 
     _cached_api: 'client.OpenshiftClient | None' = None  # Cached API client
 
+    @typing.override
     def initialize(self, values: 'core_types.core.ValuesType') -> None:
         # No port validation needed, URLs are used
         pass
@@ -115,6 +116,7 @@ class OpenshiftProvider(ServiceProvider):
         return self.api.test()
 
     @staticmethod
+    @typing.override
     def test(
         env: 'environment.Environment', data: 'core_types.core.ValuesType'
     ) -> 'core_types.core.TestResult':

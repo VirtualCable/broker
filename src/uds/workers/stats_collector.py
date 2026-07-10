@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import logging
 
 from uds import models
@@ -51,9 +52,11 @@ class DeployedServiceStatsCollector(Job):
 
     friendly_name = 'Deployed Service Stats'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 599
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting Deployed service stats collector')
 
@@ -138,9 +141,11 @@ class StatsCleaner(Job):
 
     friendly_name = 'Statistic housekeeping'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 3600 * 24 * 15
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting statistics cleanup')
         try:
@@ -164,9 +169,11 @@ class StatsAccumulator(Job):
     """
     friendly_name = 'Statistics acummulator'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.STATS_ACCUM_FREQUENCY.as_int()
 
+    @typing.override
     def run(self) -> None:
         try:
             StatsManager.manager().acummulate(config.GlobalConfig.STATS_ACCUM_MAX_CHUNK_TIME.as_int())

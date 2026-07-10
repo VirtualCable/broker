@@ -102,6 +102,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
     # Uses default FixedService.initialize
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Initialize the GUI elements for the service.
@@ -116,18 +117,21 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
             ]
         )
 
+    @typing.override
     def provider(self) -> 'OpenshiftProvider':
         """
         Get the Openshift provider.
         """
         return typing.cast('OpenshiftProvider', super().provider())
 
+    @typing.override
     def is_available(self) -> bool:
         """
         Checks if provider is available
         """
         return self.provider().is_available()
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
         Enumerates the assignable machines.
@@ -146,6 +150,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                 and k in servers  # Only machines not assigned, and that exists on provider will be available
             ]
 
+    @typing.override
     def get_and_assign(self) -> str:
         """
         Gets an available machine from the fixed list and assigns it.
@@ -182,6 +187,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
         return found_vmid
 
+    @typing.override
     def snapshot_recovery(self, userservice_instance: 'FixedUserService') -> None:
         """
         In fact, we do not support snaphots, but will use this to stop machine after logout if requested
@@ -206,6 +212,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         """
         return self.provider().sanitized_name(name)
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         """
         Returns the IP address of the machine.
@@ -217,6 +224,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
             return interfaces[0].ip_address
         return ''
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         """
         Returns the MAC address of the machine.
@@ -228,6 +236,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
             return interfaces[0].mac_address
         return ''
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
         """
         Returns the name of the machine.
@@ -239,6 +248,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                 return vm.name
         raise oshift_exceptions.OpenshiftNotFoundError(f'No VM found for VM ID {vmid}')
 
+    @typing.override
     def remove_and_free(self, vmid: str) -> types.states.TaskState:
         """
         Removes the VM from the assigned list and frees it.

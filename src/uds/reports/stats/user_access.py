@@ -160,6 +160,7 @@ class StatsReportLogin(StatsReport):
 
         return data_week, data_hour, data_week_hour
 
+    @typing.override
     def generate(self) -> bytes:
         x_label_format, data, report_data = self.get_range_data()
 
@@ -274,6 +275,7 @@ class StatsReportLoginCSV(StatsReportLogin):
     end_date = StatsReportLogin.end_date
     sampling_points = StatsReportLogin.sampling_points
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

@@ -106,6 +106,7 @@ class ClientPlatformsReport(StatsReport):
 
         return platforms_list, browsers_list, combo, total
 
+    @typing.override
     def generate(self) -> bytes:
         platforms, browsers, combo, total = self.get_data()
         return self.template_as_pdf(
@@ -132,6 +133,7 @@ class ClientPlatformsReportCSV(ClientPlatformsReport):
     start_date = ClientPlatformsReport.start_date
     end_date = ClientPlatformsReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

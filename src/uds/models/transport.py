@@ -90,9 +90,11 @@ class Transport(ManagedObjectModel, TaggingMixin):
         ordering = ('name',)
         app_label = 'uds'
 
+    @typing.override
     def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'transports.Transport':
         return typing.cast('transports.Transport', super().get_instance(values=values))
 
+    @typing.override
     def get_type(self) -> type['transports.Transport']:
         """
         Get the type of the object this record represents.

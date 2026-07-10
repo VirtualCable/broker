@@ -96,6 +96,7 @@ class Notifier(Module):
         """
         pass
 
+    @typing.override
     def db_obj(self) -> 'models.Notifier':
         """
         Helper method to access the Authenticator database object

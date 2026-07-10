@@ -81,6 +81,7 @@ class WinRandomPassManager(WindowsOsManager):
     idle = WindowsOsManager.idle
     dead_line = WindowsOsManager.deadline
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if values:
             self.user_account.value = self.user_account.value.strip()
@@ -90,6 +91,7 @@ class WinRandomPassManager(WindowsOsManager):
             if self.password.as_str() == '':
                 raise exceptions.ui.ValidationError(_('Must provide a password for the account!!!'))
 
+    @typing.override
     def update_credentials(self, userservice: 'UserService', username: str, password: str) -> tuple[str, str]:
         if username == self.user_account.value.strip():
             password = userservice.recover_value('winOsRandomPass')
@@ -116,6 +118,7 @@ class WinRandomPassManager(WindowsOsManager):
             )
         return rnd_password
 
+    @typing.override
     def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(
             action='rename',
@@ -127,6 +130,7 @@ class WinRandomPassManager(WindowsOsManager):
             },
         )
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)

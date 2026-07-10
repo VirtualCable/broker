@@ -58,6 +58,7 @@ def execution_timer() -> 'utils.ExecutionTimer':
 class DeferredDeletionWorker(Job):
     friendly_name = 'Deferred deletion runner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 7
 
@@ -281,6 +282,7 @@ class DeferredDeletionWorker(Job):
                     info, types.DeferredStorageGroup.DELETING, services, e, delay_rate=exec_time.delay_rate
                 )
 
+    @typing.override
     def run(self) -> None:
         self.process_to_stop()
         self.process_stopping()

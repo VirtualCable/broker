@@ -105,6 +105,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         app_label = 'uds'
         constraints = [models.UniqueConstraint(fields=['provider', 'name'], name='u_srv_provider_name')]
 
+    @typing.override
     def get_environment(self) -> Environment:
         """
         Returns an environment valid for the record this object represents
@@ -114,6 +115,7 @@ class Service(ManagedObjectModel, TaggingMixin):
             self.id,
         )
 
+    @typing.override
     def get_instance(self, values: dict[str, str] | None = None) -> 'services.Service':
         """
         Instantiates the object this record contains.
@@ -146,6 +148,7 @@ class Service(ManagedObjectModel, TaggingMixin):
 
         return obj
 
+    @typing.override
     def get_type(self) -> type['services.Service']:
         """
         Get the type of the object this record represents.

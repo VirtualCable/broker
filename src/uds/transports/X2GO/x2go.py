@@ -71,6 +71,7 @@ class X2GOTransport(BaseX2GOTransport):
     pack = BaseX2GOTransport.pack
     quality = BaseX2GOTransport.quality
 
+    @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
         userservice: 'models.UserService',

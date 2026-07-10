@@ -146,6 +146,7 @@ class OGProvider(ServiceProvider):
     # Own variables
     _api: typing.Optional[og.OpenGnsysClient] = None
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We will use the "autosave" feature for form fields
@@ -214,6 +215,7 @@ class OGProvider(ServiceProvider):
         return types.core.TestResult(True, _('OpenGnsys test connection passed'))
 
     @staticmethod
+    @typing.override
     def test(env: 'Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         """
         Test ovirt Connectivity

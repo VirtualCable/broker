@@ -96,6 +96,7 @@ class Command(BaseCommand):
     args = "None"
     help = "Executes the task manager as a daemon. No parameter show current status of task manager"
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '--start',
@@ -126,6 +127,7 @@ class Command(BaseCommand):
             help='Stop any running daemon',
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.info("Running task manager command")
 

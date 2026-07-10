@@ -100,6 +100,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
 
     # Uses default FixedService.initialize
 
+    @typing.override
     def init_gui(self) -> None:
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
@@ -108,6 +109,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
         with self.provider().get_connection() as api:
             self.folder.set_choices([gui.choice_item(folder, folder) for folder in api.list_folders()])
 
+    @typing.override
     def provider(self) -> 'XenProvider':
         return typing.cast('XenProvider', super().provider())
 
@@ -164,9 +166,11 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
 
         return ''  # Already stopped
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         # Obtain machines names and ids for asignables
         with self.provider().get_connection() as api:
@@ -182,6 +186,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                     and k in vms  # Only machines not assigned, and that exists on provider will be available
                 ]
 
+    @typing.override
     def assign_from_assignables(
         self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
     ) -> types.states.TaskState:
@@ -193,6 +198,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
 
         return xen_userservice_instance.error('VM not available!')
 
+    @typing.override
     def snapshot_creation(self, userservice_instance: FixedUserService) -> None:
         userservice_instance = typing.cast(XenFixedUserService, userservice_instance)
         with self.provider().get_connection() as api:
@@ -219,6 +225,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                         types.log.LogLevel.WARNING, 'Could not create SNAPSHOT for this VM. ({})'.format(e)
                     )
 
+    @typing.override
     def snapshot_recovery(self, userservice_instance: FixedUserService) -> None:
         userservice_instance = typing.cast(XenFixedUserService, userservice_instance)
         with self.provider().get_connection() as api:
@@ -236,6 +243,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                             types.log.LogLevel.WARNING, 'Could not restore SNAPSHOT for this VM. ({})'.format(e)
                         )
 
+    @typing.override
     def get_and_assign(self) -> str:
         found_vmid: typing.Optional[str] = None
         with self.provider().get_connection() as api:
@@ -267,20 +275,24 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
 
         return str(found_vmid)
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         with self.provider().get_connection() as conn:
             return conn.get_first_mac(vmid)
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         with self.provider().get_connection() as conn:
             return conn.get_first_ip(vmid)
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
         with self.provider().get_connection() as conn:
             return conn.get_vm_info(vmid).name
 
     # default remove_and_free is ok
 
+    @typing.override
     def is_ready(self, vmid: str) -> bool:
         with self.provider().get_connection() as conn:
             return conn.get_vm_info(vmid).power_state.is_running()

@@ -70,6 +70,7 @@ class PoolPerformanceReport(StatsReport):
 
     sampling_points = StatsReport.sampling_points
 
+    @typing.override
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
             gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
@@ -172,6 +173,7 @@ class PoolPerformanceReport(StatsReport):
 
         return x_label_format, pools_data, report_data
 
+    @typing.override
     def generate(self) -> bytes:
         # Generate the sampling intervals and get dataUsers from db
         x_label_format, pools_data, report_data = self.get_range_data()
@@ -245,6 +247,7 @@ class PoolPerformanceReportCSV(PoolPerformanceReport):
     end_date = PoolPerformanceReport.end_date
     sampling_points = PoolPerformanceReport.sampling_points
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

@@ -141,6 +141,7 @@ class BaseSpiceTransport(transports.Transport):
         old_field_name='overridedProxy',
     )
 
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
@@ -181,12 +182,14 @@ class BaseSpiceTransport(transports.Transport):
 
         return ready == 'Y'
 
+    @typing.override
     def get_available_error_msg(self, userservice: 'models.UserService', ip: str) -> str:
         msg = self.cache.get('cached_message')
         if msg is None:
             return transports.Transport.get_available_error_msg(self, userservice, ip)
         return msg
 
+    @typing.override
     def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
         v = self.process_user_password(userservice, user, '')
         return v.username
@@ -218,6 +221,7 @@ class BaseSpiceTransport(transports.Transport):
             password=password,
         )
 
+    @typing.override
     def get_connection_info(
         self,
         userservice: typing.Union['models.UserService', 'models.ServicePool'],

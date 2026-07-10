@@ -65,6 +65,7 @@ class Calendar(UUIDModel, TaggingMixin):
         app_label = 'uds'
 
     # Override default save to add uuid
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         logger.debug('Saving calendar')
 

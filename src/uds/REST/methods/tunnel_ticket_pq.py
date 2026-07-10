@@ -147,6 +147,7 @@ class TunnelRegisterPC(ServerRegisterBase):
     NAME = 'register'
 
     # Just a compatibility method for old tunnel servers
+    @typing.override
     def post(self) -> dict[str, typing.Any]:
         self._params['type'] = types.servers.ServerType.TUNNEL
         return super().post()

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 from datetime import timedelta
 import logging
 
@@ -47,9 +48,11 @@ logger = logging.getLogger(__name__)
 class HangedCleaner(Job):
     friendly_name = 'Hanged services checker'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.MAX_INITIALIZING_TIME.as_int()
 
+    @typing.override
     def run(self) -> None:
         now = sql_now()
         since_state = now - timedelta(

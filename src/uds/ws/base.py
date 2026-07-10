@@ -158,6 +158,7 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
         """
 
     # On connection, authenticate and accept or reject accordingly.
+    @typing.override
     async def connect(self) -> None:
         if not await self.authenticate():
             logger.warning('WebSocket rejected: path=%s', self.scope.get('path'))
@@ -167,11 +168,13 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
         await self.accept()
         logger.debug('WebSocket connected: %s (user=%s)', self.scope.get('path'), self.user)
 
+    @typing.override
     async def disconnect(self, code: int) -> None:
         logger.debug('WebSocket disconnected: %s (code=%s)', self.scope.get('path'), code)
 
     # --- Message handling ---
 
+    @typing.override
     async def receive(self, text_data: str | None = None, bytes_data: bytes | None = None) -> None:
         """Parse incoming JSON and delegate to handle_message()."""
         if text_data is None:

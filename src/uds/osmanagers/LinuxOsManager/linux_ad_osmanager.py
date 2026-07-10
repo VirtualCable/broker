@@ -148,6 +148,7 @@ class LinuxOsADManager(LinuxOsManager):
     idle = LinuxOsManager.idle
     deadline = LinuxOsManager.deadline
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if values:
             if self.domain.value.strip() == '':
@@ -160,6 +161,7 @@ class LinuxOsADManager(LinuxOsManager):
             # Remove spaces around , and = in ou
             self.ou.value = re.sub(r'\s*([,=])\s*', r'\1', self.ou.value.strip())
 
+    @typing.override
     def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(
             action='rename_ad',

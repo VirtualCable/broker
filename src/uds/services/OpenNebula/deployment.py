@@ -89,15 +89,18 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
     # _reason: str = ''
     # _queue: list[int]
 
+    @typing.override
     def service(self) -> 'OpenNebulaLiveService':
         return typing.cast('OpenNebulaLiveService', super().service())
 
+    @typing.override
     def publication(self) -> 'OpenNebulaLivePublication':
         pub = super().publication()
         if pub is None:
             raise Exception('No publication for this element!')
         return typing.cast('OpenNebulaLivePublication', pub)
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)
@@ -113,6 +116,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    @typing.override
     def get_name(self) -> str:
         if self._name == '':
             try:
@@ -123,16 +127,20 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
                 return consts.NO_MORE_NAMES
         return self._name
 
+    @typing.override
     def set_ip(self, ip: str) -> None:
         logger.debug('Setting IP to %s', ip)
         self._ip = ip
 
+    @typing.override
     def get_unique_id(self) -> str:
         return self._mac.upper()
 
+    @typing.override
     def get_ip(self) -> str:
         return self._ip
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         if self.cache.get('ready') == '1':
             return types.states.TaskState.FINISHED
@@ -152,12 +160,14 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
         if self._vmid != '':
             self.service().reset_machine(self._vmid)
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def get_console_connection(self) -> typing.Optional[types.services.ConsoleConnectionInfo]:
         return self.service().get_console_connection(self._vmid)
 
@@ -166,6 +176,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
     ) -> typing.Optional[types.services.ConsoleConnectionInfo]:
         return self.service().desktop_login(self._vmid, username, password, domain)
 
+    @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         # Here we will check for suspending the VM (when full ready)
         logger.debug('Checking if cache 2 for %s', self._name)
@@ -176,6 +187,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         # Do not need to go to level 2 (opWait is in fact "waiting for moving machine to cache level 2)
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         """
         Deploys an service instance for an user.
@@ -184,6 +196,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         self._init_queue_for_deploy(False)
         return self._execute_queue()
 
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         """
         Deploys an service instance for cache
@@ -398,6 +411,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         """
         return types.states.TaskState.FINISHED  # No check at all, always true
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Check what operation is going on, and acts based on it
@@ -437,6 +451,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         except Exception as e:
             return self._error(e)
 
+    @typing.override
     def move_to_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         """
         Moves machines between cache levels
@@ -451,6 +466,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
         return self._execute_queue()
 
+    @typing.override
     def error_reason(self) -> str:
         """
         Returns the reason of the error.
@@ -461,6 +477,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         Invoked for destroying a deployed service
@@ -481,6 +498,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         # Do not execute anything.here, just continue normally
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are

@@ -124,13 +124,16 @@ class OpenStackLiveUserService(DynamicUserService):
     ]
 
     # For typing check only...
+    @typing.override
     def service(self) -> 'OpenStackLiveService':
         return typing.cast('OpenStackLiveService', super().service())
 
     # For typing check only...
+    @typing.override
     def publication(self) -> 'OpenStackLivePublication':
         return typing.cast('OpenStackLivePublication', super().publication())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)
@@ -147,6 +150,7 @@ class OpenStackLiveUserService(DynamicUserService):
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
 
+    @typing.override
     def op_create(self) -> None:
         """
         Deploys a machine from template for user/cache
@@ -162,6 +166,7 @@ class OpenStackLiveUserService(DynamicUserService):
            
 
     # Check methods
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks the state of a deploy for an user or cache

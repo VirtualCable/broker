@@ -88,9 +88,11 @@ class TOTP_MFA(mfas.MFA):
 
     allow_skip_mfa_from_networks = fields.allow_skip_mfa_from_networks_field()
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         return super().initialize(values)
 
+    @typing.override
     def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> bool | None:
         return None
 
@@ -106,6 +108,7 @@ class TOTP_MFA(mfas.MFA):
             for i in models.Network.objects.filter(uuid__in=self.allow_skip_mfa_from_networks.value)
         )
 
+    @typing.override
     def label(self) -> str:
         return gettext('Authentication Code')
 
@@ -142,6 +145,7 @@ class TOTP_MFA(mfas.MFA):
             interval=TOTP_INTERVAL,
         )
 
+    @typing.override
     def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
         # Get data from storage related to this user
         qr_has_been_shown = self._user_data(userid)[1]
@@ -167,6 +171,7 @@ class TOTP_MFA(mfas.MFA):
             </div>
         '''
 
+    @typing.override
     def process(
         self,
         request: 'ExtendedHttpRequest',
@@ -181,6 +186,7 @@ class TOTP_MFA(mfas.MFA):
         # The data is provided by an external source, so we need to process anything on the request
         return mfas.MFA.RESULT.OK
 
+    @typing.override
     def validate(
         self,
         request: 'ExtendedHttpRequest',
@@ -210,5 +216,6 @@ class TOTP_MFA(mfas.MFA):
         if qr_has_been_shown is False:
             self._save_user_data(userid, (secret, True))  # Update user data to show QR code only once
 
+    @typing.override
     def reset_data(self, userid: str) -> None:
         self._remove_user_data(userid)

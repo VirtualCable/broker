@@ -415,6 +415,7 @@ class BaseRDPTransport(transports.Transport):
                 )
             )
 
+    @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         if not values:
             return
@@ -423,6 +424,7 @@ class BaseRDPTransport(transports.Transport):
             self.credssp.value = False   # Credssp and SSO are mutually exclusive, use_sso has preference
 
 
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
@@ -438,6 +440,7 @@ class BaseRDPTransport(transports.Transport):
             self.cache.put(ip, 'N', READY_CACHE_TIMEOUT)
         return ready == 'Y'
 
+    @typing.override
     def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
         v = self.process_user_password(userservice, user, '', alt_username=None)
         return v.username
@@ -497,6 +500,7 @@ class BaseRDPTransport(transports.Transport):
             domain=domain,
         )
 
+    @typing.override
     def get_connection_info(
         self,
         userservice: 'models.UserService | models.ServicePool',

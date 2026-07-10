@@ -398,6 +398,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         return []
 
     @classmethod
+    @typing.override
     def api_components(cls: type[typing.Self]) -> types.rest.api.Components:
         """
         Default implementation does not have any component types. (for Api specification purposes)
@@ -406,6 +407,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         return api_utils.get_component_from_type(cls)
 
     @classmethod
+    @typing.override
     def api_paths(
         cls: type[typing.Self], path: str, tags: list[str], security: str
     ) -> dict[str, types.rest.api.PathItem]:

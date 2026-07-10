@@ -69,6 +69,7 @@ class TestServiceNoCache(services.Service):
     publication_type = None
     user_service_type = TestUserService
 
+    @typing.override
     def provider(self) -> 'TestProvider':
         return typing.cast('TestProvider', super().provider())
 
@@ -104,6 +105,7 @@ class TestServiceCache(services.Service):
     # : Types of deploys (services in cache and/or assigned to users)
     user_service_type = TestUserService
 
+    @typing.override
     def provider(self) -> 'TestProvider':
         return typing.cast('TestProvider', super().provider())
 

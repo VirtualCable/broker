@@ -72,6 +72,7 @@ class MessageProcessorThread(BaseThread):
             self._cached_stamp = time.time()
         return self._cached_providers
 
+    @typing.override
     def run(self) -> None:
         while NotificationsManager.manager().ensure_local_db_exists() is False:
             logger.info('Waiting for local notifications database to be ready...')
@@ -150,5 +151,6 @@ class MessageProcessorThread(BaseThread):
                     break
                 time.sleep(1)
 
+    @typing.override
     def request_stop(self) -> None:
         self._keep_running = False

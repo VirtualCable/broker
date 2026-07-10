@@ -100,6 +100,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
 
     # Uses default FixedService.initialize
 
+    @typing.override
     def init_gui(self) -> None:
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
@@ -112,21 +113,25 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
             + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
         )
 
+    @typing.override
     def provider(self) -> 'ProxmoxProvider':
         return typing.cast('ProxmoxProvider', super().provider())
 
     def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().api.get_console_connection(int(vmid))
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 
     def get_vm_info(self, vmid: int) -> 'prox_types.VMInfo':
         return self.provider().api.get_vm_info(vmid).validate()
 
+    @typing.override
     def is_ready(self, vmid: str) -> bool:
         return self.provider().api.get_vm_info(int(vmid)).validate().status.is_running()
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         # Obtain machines names and ids for asignables
         # Only machines that already exists on proxmox and are not already assigned
@@ -145,6 +150,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                 and int(k) in vms  # Only machines not assigned, and that exists on provider will be available
             ]
 
+    @typing.override
     def assign_from_assignables(
         self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
     ) -> types.states.TaskState:
@@ -156,6 +162,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
 
         return proxmox_service_instance.error('VM not available!')
 
+    @typing.override
     def snapshot_creation(self, userservice_instance: FixedUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserServiceFixed, userservice_instance)
         if self.use_snapshots.as_bool():
@@ -173,6 +180,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
             except Exception as e:
                 self.do_log(types.log.LogLevel.WARNING, 'Could not create SNAPSHOT for this VM. ({})'.format(e))
 
+    @typing.override
     def snapshot_recovery(self, userservice_instance: FixedUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserServiceFixed, userservice_instance)
         if self.use_snapshots.as_bool():
@@ -189,6 +197,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                     types.log.LogLevel.WARNING, 'Could not restore SNAPSHOT for this VM. ({})'.format(e)
                 )
 
+    @typing.override
     def get_and_assign(self) -> str:
         found_vmid: str | None = None
         try:
@@ -220,12 +229,15 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
 
         return str(found_vmid)
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         config = self.provider().api.get_vm_config(int(vmid))
         return config.networks[0].macaddr.lower()
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         return self.provider().api.get_guest_ip_address(int(vmid))
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
         return self.provider().api.get_vm_info(int(vmid)).name or ''

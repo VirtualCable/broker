@@ -55,9 +55,11 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
     _task = autoserializable.StringField(default='')
 
     # Utility overrides for type checking...
+    @typing.override
     def service(self) -> 'ProxmoxService':
         return typing.cast('ProxmoxService', super().service())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
@@ -95,6 +97,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    @typing.override
     def op_create(self) -> None:
         # First we should create a full clone, so base machine do not get fullfilled with "garbage" delta disks...
         # Name is generated on op_initialize by DynamicPublication
@@ -102,6 +105,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
         self._vmid = str(task.vmid)
         self._task = ','.join((task.exec_result.node, task.exec_result.upid))
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         node, upid = self._task.split(',')
         task = self.service().provider().api.get_task_info(node, upid)
@@ -113,6 +117,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_create_completed(self) -> None:
         # Complete the creation, disabling ha protection and adding to HA and marking as template
         self.service().provider().api.set_vm_protection(int(self._vmid), protection=False)
@@ -125,6 +130,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
         task = self.service().provider().api.convert_vm_to_template(int(self._vmid))
         self._task = ','.join((task.node, task.upid))
 
+    @typing.override
     def op_create_completed_checker(self) -> types.states.TaskState:
         node, upid = self._task.split(',')
         task = self.service().provider().api.get_task_info(node, upid)
@@ -136,5 +142,6 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_delete(self) -> None:
         self.service().delete(self, self._vmid)

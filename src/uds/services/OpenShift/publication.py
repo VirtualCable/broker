@@ -36,12 +36,14 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
 
     _waiting_name = autoserializable.BoolField(default=False)
 
+    @typing.override
     def service(self) -> 'OpenshiftService':
         """
         Get the Openshift service.
         """
         return typing.cast('OpenshiftService', super().service())
 
+    @typing.override
     def op_create(self) -> None:
         """
         Starts the deployment process for a user or cache, cloning the template publication.
@@ -66,6 +68,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
             source_pvc_name=source_pvc_name,
         )
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks if the create operation has been completed successfully.
@@ -102,6 +105,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         logger.info(f"VM '{self._name}' is ready.")
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_create_completed(self) -> None:
         """
         Actions to perform once the create operation is completed.
@@ -114,6 +118,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         else:
             logger.info(f"VM '{self._name}' is not running or VM not found.")
 
+    @typing.override
     def op_create_completed_checker(self) -> TaskState:
         """
         Checks if the create operation has been completed successfully.
@@ -132,6 +137,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
     # Methods provided below are specific for this publication
     # and will be used by user deployments that uses this kind of publication
 
+    @typing.override
     def get_template_id(self) -> str:
         """
         Returns the template id associated with the publication

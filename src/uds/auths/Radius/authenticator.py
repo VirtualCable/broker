@@ -134,6 +134,7 @@ class RadiusAuth(auths.Authenticator):
         old_field_name='mfaAttr',
     )
 
+    @typing.override
     def initialize(self, values: typing.Optional[dict[str, typing.Any]]) -> None:
         pass
 
@@ -151,9 +152,11 @@ class RadiusAuth(auths.Authenticator):
     def mfa_storage_key(self, username: str) -> str:
         return 'mfa_' + str(self.db_obj().uuid) + username
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         return self.storage.read_pickled(self.mfa_storage_key(username)) or ''
 
+    @typing.override
     def authenticate(
         self,
         username: str,
@@ -198,13 +201,16 @@ class RadiusAuth(auths.Authenticator):
 
         return types.auth.SUCCESS_AUTH
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         with self.storage.as_dict() as storage:
             groups_manager.validate(storage.get(username, []))
 
+    @typing.override
     def create_user(self, user_data: dict[str, str]) -> None:
         pass
 
+    @typing.override
     def remove_user(self, username: str) -> None:
         with self.storage.as_dict() as storage:
             if username in storage:
@@ -212,6 +218,7 @@ class RadiusAuth(auths.Authenticator):
         return super().remove_user(username)
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         """Test the connection to the server ."""
         try:

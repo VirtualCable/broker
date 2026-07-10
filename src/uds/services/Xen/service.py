@@ -167,6 +167,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
     basename = DynamicService.basename
     lenname = DynamicService.lenname
 
+    @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         """
         We check here form values to see if they are valid.
@@ -180,9 +181,11 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             if int(self.memory.value) < 256:
                 raise exceptions.ui.ValidationError(_('The minimum allowed memory is 256 Mb'))
 
+    @typing.override
     def provider(self) -> 'XenProvider':
         return typing.cast('XenProvider', super().provider())
 
+    @typing.override
     def init_gui(self) -> None:
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
@@ -216,15 +219,18 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
                     )
                 )
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 
+    @typing.override
     def sanitized_name(self, name: str) -> str:
         """
         Xen Seems to allow all kind of names, but let's sanitize a bit
         """
         return re.sub(r'([^a-zA-Z0-9_ .-]+)', r'_', name)
 
+    @typing.override
     def find_duplicates(self, name: str, mac: str) -> collections.abc.Iterable[str]:
         """
         Checks if a machine with the same name or mac exists
@@ -310,6 +316,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
                 vm_opaque_ref, mac_info={'network': self.network.value, 'mac': mac}, memory=self.memory.value
             )
 
+    @typing.override
     def get_ip(
         self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
     ) -> str:
@@ -319,6 +326,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         """
         return ''  # No ip will be get, UDS will assign one (from actor)
 
+    @typing.override
     def get_mac(
         self,
         caller_instance: typing.Optional['DynamicUserService | DynamicPublication'],
@@ -334,6 +342,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         with self.provider().get_connection() as api:
             return api.get_first_mac(vmid)
     
+    @typing.override
     def is_running(
         self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
     ) -> bool:
@@ -346,6 +355,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
                 return True
             return False
 
+    @typing.override
     def start(
         self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
     ) -> None:
@@ -356,6 +366,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         with self.provider().get_connection() as api:
             api.start_vm(vmid)
 
+    @typing.override
     def stop(
         self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
     ) -> None:
@@ -366,12 +377,14 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         with self.provider().get_connection() as api:
             api.stop_vm(vmid)
 
+    @typing.override
     def shutdown(
         self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
     ) -> None:
         with self.provider().get_connection() as api:
             api.shutdown_vm(vmid)
 
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         """
         Removes the machine, or queues it for removal, or whatever :)

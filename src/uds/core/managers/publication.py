@@ -67,6 +67,7 @@ class PublicationOldMachinesCleaner(DelayedTask):
         super().__init__()
         self._id = publication_id
 
+    @typing.override
     def run(self) -> None:
         try:
             servicepool_publication: ServicePoolPublication = ServicePoolPublication.objects.get(pk=self._id)
@@ -101,6 +102,7 @@ class PublicationLauncher(DelayedTask):
         super().__init__()
         self._publication_id = publication.id
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Publishing')
         servicepool_publication: typing.Optional[ServicePoolPublication] = None
@@ -222,6 +224,7 @@ class PublicationFinishChecker(DelayedTask):
             PUBTAG + str(publication.id),
         )
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Checking publication finished %s', self._publishId)
         try:

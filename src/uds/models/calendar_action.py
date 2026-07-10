@@ -284,6 +284,7 @@ class CalendarAction(UUIDModel):
         if save:
             self.save()
 
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         last_execution = self.last_execution or sql_now()
         possible_next = calendar.CalendarChecker(self.calendar).next_event(

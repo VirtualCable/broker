@@ -139,6 +139,7 @@ class EmailNotifier(messaging.Notifier):
         old_field_name='enableHTML'
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType' = None) -> None:
         """
         We will use the "autosave" feature for form fields
@@ -167,6 +168,7 @@ class EmailNotifier(messaging.Notifier):
 
         # Done
 
+    @typing.override
     def notify(self, group: str, identificator: str, level: messaging.LogLevel, message: str) -> None:
         # Send and email with the notification
         with self.login() as smtp:

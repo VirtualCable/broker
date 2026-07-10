@@ -65,9 +65,11 @@ class OpenStackUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
     
 
     # Utility overrides for type checking...
+    @typing.override
     def service(self) -> 'service_fixed.OpenStackServiceFixed':
         return typing.cast('service_fixed.OpenStackServiceFixed', super().service())
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         if self.cache.get('ready') == '1':
             return types.states.TaskState.FINISHED
@@ -84,6 +86,7 @@ class OpenStackUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
         self.cache.put('ready', '1')
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
         """
         OpenStack, reset operation
@@ -96,6 +99,7 @@ class OpenStackUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
         
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start(self) -> None:
         try:
             server_info = self.service().api.get_server_info(self._vmid)

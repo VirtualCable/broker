@@ -80,6 +80,7 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         img_id = fields['image_id']
         fields['image_id'] = None
@@ -92,6 +93,7 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
             logger.exception('At image recovering')
 
     # Gui related
+    @typing.override
     def get_gui(self, for_type: str) -> list[typing.Any]:
         return (
             ui_utils.GuiBuilder()
@@ -103,6 +105,7 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
             .build()
         )
 
+    @typing.override
     def get_item(self, item: 'Model') -> ServicePoolGroupItem:
         item = ensure.is_instance(item, ServicePoolGroup)
         return ServicePoolGroupItem(
@@ -113,6 +116,7 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
             image_id=item.image.uuid if item.image else None,
         )
 
+    @typing.override
     def get_item_summary(self, item: 'Model') -> ServicePoolGroupItem:
         item = ensure.is_instance(item, ServicePoolGroup)
         return ServicePoolGroupItem(

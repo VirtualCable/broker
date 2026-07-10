@@ -130,38 +130,47 @@ class _ObservableList(list[T]):
         self._owner._dirty = True
         super().__init__(*args)
 
+    @typing.override
     def __setitem__(self, key: typing.SupportsIndex | slice, value: T | collections.abc.Iterable[T]) -> None:
         self._owner._dirty = True
         super().__setitem__(key, value)  # type: ignore
 
+    @typing.override
     def append(self, object: T, /) -> None:
         self._owner._dirty = True
         super().append(object)
 
+    @typing.override
     def extend(self, iterable: collections.abc.Iterable[T], /) -> None:
         self._owner._dirty = True
         super().extend(iterable)
 
+    @typing.override
     def clear(self) -> None:
         self._owner._dirty = True
         super().clear()
 
+    @typing.override
     def pop(self, index: typing.SupportsIndex = -1, /) -> T:
         self._owner._dirty = True
         return super().pop(index)
 
+    @typing.override
     def insert(self, index: typing.SupportsIndex, object: T, /) -> None:
         self._owner._dirty = True
         super().insert(index, object)
 
+    @typing.override
     def remove(self, value: T, /) -> None:
         self._owner._dirty = True
         super().remove(value)
 
+    @typing.override
     def sort(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         self._owner._dirty = True
         super().sort(*args, **kwargs)
 
+    @typing.override
     def __delitem__(self, key: typing.SupportsIndex | slice, /) -> None:
         self._owner._dirty = True
         super().__delitem__(key)
@@ -170,6 +179,7 @@ class _ObservableList(list[T]):
         self._owner._dirty = True
         return super().__iadd__(value)
 
+    @typing.override
     def __imul__(self, value: typing.SupportsIndex, /) -> typing.Self:
         self._owner._dirty = True
         return super().__imul__(value)
@@ -184,26 +194,32 @@ class _ObservableDict(dict[T, V]):
         self._owner._dirty = True
         super().__init__(*args, **kwargs)
 
+    @typing.override
     def __setitem__(self, key: T, value: V, /) -> None:
         self._owner._dirty = True
         super().__setitem__(key, value)
 
+    @typing.override
     def __delitem__(self, key: T, /) -> None:
         self._owner._dirty = True
         super().__delitem__(key)
 
+    @typing.override
     def clear(self) -> None:
         self._owner._dirty = True
         super().clear()
 
+    @typing.override
     def pop(self, *args: typing.Any, **kwargs: typing.Any) -> V:
         self._owner._dirty = True
         return super().pop(*args, **kwargs)
 
+    @typing.override
     def popitem(self) -> tuple[T, V]:
         self._owner._dirty = True
         return super().popitem()
 
+    @typing.override
     def update(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         self._owner._dirty = True
         super().update(*args, **kwargs)
@@ -399,9 +415,11 @@ class BoolField(_SerializableField[bool]):
     def __init__(self, default: bool = False):
         super().__init__(bool, default)
 
+    @typing.override
     def marshal(self, instance: 'AutoSerializable') -> bytes:
         return b'\xff' if self.__get__(instance) else b'\x00'
 
+    @typing.override
     def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
         self.__set__(instance, data != b'\x00')
 
@@ -429,10 +447,12 @@ class ListField(_SerializableField[list[T]], list[T]):
         super().__init__(_ObservableList, default)
         self._cast = cast
 
+    @typing.override
     def marshal(self, instance: 'AutoSerializable') -> bytes:
         # \x01 is the version of this field marshal format, so we can change it in the future
         return b'\x01' + json.dumps(self.__get__(instance)).encode()
 
+    @typing.override
     def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
         if data[0] != 1:
             raise ValueError('Invalid list data')
@@ -465,10 +485,12 @@ class DictField(_SerializableField[dict[T, V]], dict[T, V]):
         super().__init__(_ObservableDict, default)
         self._cast = cast
 
+    @typing.override
     def marshal(self, instance: 'AutoSerializable') -> bytes:
         # \x01 is the version of this field marshal format, so we can change it in the future
         return b'\x01' + json.dumps(self.__get__(instance)).encode()
 
+    @typing.override
     def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
         if data[0] != 1:
             raise ValueError('Invalid dict data')
@@ -501,6 +523,7 @@ class ObjectField(_SerializableField[T]):
     def __init__(self, obj_type: 'type[T]', default: DefaultValueType[T] = UNASSIGNED):
         super().__init__(obj_type, default)
 
+    @typing.override
     def marshal(self, instance: 'AutoSerializable') -> bytes:
         # if is a dataclass
         value = typing.cast(typing.Any, self.__get__(instance))
@@ -513,6 +536,7 @@ class ObjectField(_SerializableField[T]):
 
         return b'\x01' + json.dumps(to_marshal).encode()
 
+    @typing.override
     def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
         if data[0] != 1:
             raise ValueError('Invalid object data')
@@ -567,10 +591,12 @@ class PasswordField(StringField):
 
         return zlib.decompress(value)
 
+    @typing.override
     def marshal(self, instance: 'AutoSerializable') -> bytes:
         # \x01 is the version of this field marshal format, so we can change it in the future
         return b'\x01' + base64.b64encode(self._encrypt(self.__get__(instance)))
 
+    @typing.override
     def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
         if data[:1] != b'\x01':
             raise ValueError('Invalid password data')
@@ -669,6 +695,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
         """
         return bytes(a ^ b for a, b in zip(data, itertools.cycle(header)))
 
+    @typing.override
     def marshal(self) -> bytes:
         # Iterate over own members and extract fields
         fields: list[_MarshalInfo] = [
@@ -699,6 +726,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
 
     # Only override this for checking if data is valid
     # and, alternatively, retrieve it from a different source
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         # Check header
         if data[: len(HEADER_BASE)] != HEADER_BASE:
@@ -746,6 +774,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
     def as_dict(self) -> dict[str, typing.Any]:
         return {k: v.__get__(self) for k, v in self._autoserializable_fields()}
 
+    @typing.override
     def is_dirty(self) -> bool:
         return self._dirty or super().is_dirty()
 
@@ -778,9 +807,11 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
 class AutoSerializableCompressed(AutoSerializable):
     """This class allows the automatic serialization of fields in a class compressed with zlib."""
 
+    @typing.override
     def process_data(self, header: bytes, data: bytes) -> bytes:
         return HEADER_COMPRESSED + zlib.compress(data)
 
+    @typing.override
     def unprocess_data(self, header: bytes, data: bytes) -> bytes:
         # if decompress fails, return data as is
         try:
@@ -811,10 +842,12 @@ class AutoSerializableEncrypted(AutoSerializable):
 
         return fernet_key(seed + (self._crypt_key.encode()))
 
+    @typing.override
     def process_data(self, header: bytes, data: bytes) -> bytes:
         f = fernet.Fernet(self.key(header))
         return HEADER_ENCRYPTED + f.encrypt(data)
 
+    @typing.override
     def unprocess_data(self, header: bytes, data: bytes) -> bytes:
         # if decrypt fails, return data as is
         try:

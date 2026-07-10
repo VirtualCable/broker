@@ -33,6 +33,7 @@ Worker that periodically inserts re-anchor entries into the immutable
 audit log.  Controlled by ``GlobalConfig.IMMUTABLE_LOG_REANCHOR`` (seconds).
 """
 
+import typing
 import logging
 
 from uds.core.jobs import Job
@@ -46,6 +47,7 @@ logger = logging.getLogger(__name__)
 class ImmutableLogAnchorJob(Job):
     friendly_name = 'Immutable Log Anchor'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         if not ImmutableLogger.is_enabled():
             return 600  # disabled → check every 10 min
@@ -54,6 +56,7 @@ class ImmutableLogAnchorJob(Job):
             return 600
         return min(max(interval, 120), 60 * 60 * 24)  # between 2 min and 24 h
 
+    @typing.override
     def run(self) -> None:
         if not ImmutableLogger.is_enabled():
             return
