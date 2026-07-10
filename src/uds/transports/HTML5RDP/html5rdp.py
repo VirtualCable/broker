@@ -277,11 +277,13 @@ class HTML5RDPTransport(transports.Transport):
         tab=types.ui.Tab.ADVANCED,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if not values:
             return
 
     # Same check as normal RDP transport
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
@@ -297,10 +299,12 @@ class HTML5RDPTransport(transports.Transport):
             self.cache.put(ip, 'N', READY_CACHE_TIMEOUT)
         return ready == 'Y'
 
+    @typing.override
     def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
         v = self.get_connection_info(userservice, user, '')
         return v.username
 
+    @typing.override
     def get_connection_info(
         self,
         userservice: 'models.UserService | models.ServicePool',
@@ -364,6 +368,7 @@ class HTML5RDPTransport(transports.Transport):
             domain=domain,
         )
 
+    @typing.override
     def get_link(
         self,
         userservice: 'models.UserService',
