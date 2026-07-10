@@ -146,6 +146,7 @@ class ListReportAuditCSV(ListReport):
                         a.group('request'),
                     )
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
