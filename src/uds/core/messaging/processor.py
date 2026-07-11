@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 class MessageProcessorThread(BaseThread):
     _keep_running: bool = True
 
-    _cached_providers: typing.Optional[list[tuple[int, NotificationProviderModule]]]
+    _cached_providers: list[tuple[int, NotificationProviderModule]] | None
     _cached_stamp: float
 
     def __init__(self) -> None:
@@ -72,16 +72,32 @@ class MessageProcessorThread(BaseThread):
             self._cached_stamp = time.time()
         return self._cached_providers
 
+    @typing.override
     def run(self) -> None:
         while NotificationsManager.manager().ensure_local_db_exists() is False:
             logger.info('Waiting for local notifications database to be ready...')
             time.sleep(1)
 
+        # Get a "look" at the DB, and log the notifications number awaiting
+        # to be processed
+        def notify_awaiting() -> None:
+            waiting_notifications = Notification.get_persistent_queryset().count()
+            if waiting_notifications > 1024:
+                fnc = logger.error
+            elif waiting_notifications > 256:
+                fnc = logger.warning
+            else:
+                fnc = logger.info
+            fnc('Notifications awaiting processing: %d', waiting_notifications)
+
+        notify_awaiting()
+
         while self._keep_running:
             # Locate all notifications from "persistent" and try to process them
             # If no notification can be fully resolved, it will be kept in the database
             not_before = sql_now() - datetime.timedelta(seconds=DO_NOT_REPEAT.as_int())
-            for n in Notification.get_persistent_queryset().all():
+            # Limit to 128 notifications per iteration, to avoid long processing times and memory issues. If there are more, they will be processed in the next iteration.
+            for n in Notification.get_persistent_queryset().all()[:128]:
                 # If there are any other notification simmilar to this on default db, skip it
                 # Simmilar means that group, identificator and message are already been logged less than DO_NOT_REPEAT seconds ago
                 # from last time
@@ -150,5 +166,6 @@ class MessageProcessorThread(BaseThread):
                     break
                 time.sleep(1)
 
+    @typing.override
     def request_stop(self) -> None:
         self._keep_running = False

@@ -53,17 +53,21 @@ class BaseThread(threading.Thread, abc.ABC):
 
 
 class SchedulerThread(BaseThread):
+    @typing.override
     def run(self) -> None:
         Scheduler.scheduler().run()
 
+    @typing.override
     def request_stop(self) -> None:
         Scheduler.scheduler().notify_termination()
 
 
 class DelayedTaskThread(BaseThread):
+    @typing.override
     def run(self) -> None:
         DelayedTaskRunner.runner().run()
 
+    @typing.override
     def request_stop(self) -> None:
         DelayedTaskRunner.runner().request_stop()
 
