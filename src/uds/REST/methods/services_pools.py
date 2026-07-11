@@ -104,9 +104,13 @@ class ServicePoolItem(types.rest.BaseRestItem):
     usage: str | types.rest.NotRequired = types.rest.NotRequired.field()
 
 
-class ServicesPools(ModelHandler[ServicePoolItem]):
+class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
     """
-    Handles Services Pools REST requests
+    Shared implementation for the service-pools master handlers.
+
+    Not registered by itself (the dispatcher only registers leaf Handler
+    subclasses); the concrete `ServicesPools` and the restrained-only
+    `RestrainedServicesPools` below inherit from it.
     """
 
     MODEL = ServicePool
@@ -750,3 +754,29 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             source=types.log.LogSource.REST,
             log_name=self._params.get('log_name', None),
         )
+
+
+class ServicesPools(_ServicesPoolsMaster):
+    """
+    Handles Services Pools REST requests (registered as /servicespools).
+
+    All behaviour lives in `_ServicesPoolsMaster`; this concrete leaf exists so
+    the dispatcher (which only registers leaf Handler subclasses) keeps the
+    original endpoint name/URL unchanged.
+    """
+
+
+class RestrainedServicesPools(_ServicesPoolsMaster):
+    """
+    Read-only drilldown for the dashboard "Restrained pools" KPI: same columns
+    and serialization as the full pools table, but only pools currently in a
+    restrained state. Reuses the base serialization and filters on the already
+    computed `restrained` flag of each item.
+    """
+
+    def get_items(
+        self, *args: typing.Any, **kwargs: typing.Any
+    ) -> collections.abc.Generator[ServicePoolItem, None, None]:
+        for item in super().get_items(*args, **kwargs):
+            if getattr(item, 'restrained', False):
+                yield item
