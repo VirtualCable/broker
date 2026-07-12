@@ -50,6 +50,7 @@ class NotificationsManager(metaclass=singleton.Singleton):
     """
 
     _initialized: bool = False
+    _failure_logged: bool = False
 
     def ensure_local_db_exists(self) -> bool:
         if not apps.ready:
@@ -61,17 +62,20 @@ class NotificationsManager(metaclass=singleton.Singleton):
         # Note: On Notification model change, we must ensure that the table is removed on the migration itself
         from uds.models.notifications import Notification  # pylint: disable=import-outside-toplevel
 
+        connection = connections['persistent']
         try:
-            with connections['persistent'].schema_editor() as schema_editor:
-                schema_editor.create_model(Notification)
+            # Only create if missing, avoids re-issuing the CREATE on every call (floods sql.log)
+            if Notification._meta.db_table not in connection.introspection.table_names():
+                with connection.schema_editor() as schema_editor:
+                    schema_editor.create_model(Notification)
         except Exception:  # nosec: intentionally catching all exceptions
-            # if fails, check if exists or mayby we cannot create it already...
-            try:
-                Notification.get_persistent_queryset().count()
-            except Exception:
-                logger.info('Cannot create local notifications table right now. Will try later.')
-                return False
+            # Log the real cause once (readonly db, wrong owner, ...); will be retried later
+            if not self._failure_logged:
+                self._failure_logged = True
+                logger.warning('Cannot prepare local notifications database, will keep retrying', exc_info=True)
+            return False
 
+        self._failure_logged = False
         self._initialized = True
         return True
 
