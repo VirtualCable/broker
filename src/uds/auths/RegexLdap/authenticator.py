@@ -377,11 +377,16 @@ class RegexLdap(auths.Authenticator):
                     usr[self.mfa_attribute.value][0],
                 )
 
-            groups_manager.validate(self._get_groups(usr))
+            groups = self._get_groups(usr)
+            if not groups:
+                # No groups usually means a broken group query (referral, timeout, sizelimit...), not a groupless user
+                logger.warning('User %s authenticated but no groups resolved from LDAP (dn: %s)', username, usr['dn'])
+            groups_manager.validate(groups)
 
             return types.auth.SUCCESS_AUTH
 
         except Exception:
+            logger.exception('Error authenticating user %s against LDAP', username)
             return types.auth.FAILED_AUTH
 
     def create_user(self, user_data: dict[str, str]) -> None:

@@ -368,9 +368,14 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
                     self.mfa_storage_key(username),
                     user[self.mfa_attribute.as_str()][0],
                 )
-            groups_manager.validate(self._get_groups(user))
+            groups = self._get_groups(user)
+            if not groups:
+                # No groups usually means a broken group query (referral, timeout, sizelimit...), not a groupless user
+                logger.warning('User %s authenticated but no groups resolved from LDAP (dn: %s)', username, user['dn'])
+            groups_manager.validate(groups)
             return types.auth.SUCCESS_AUTH
         except Exception:
+            logger.exception('Error authenticating user %s against LDAP', username)
             return types.auth.FAILED_AUTH
 
     def create_user(self, user_data: dict[str, str]) -> None:
