@@ -770,13 +770,13 @@ class RestrainedServicesPools(_ServicesPoolsMaster):
     """
     Read-only drilldown for the dashboard "Restrained pools" KPI: same columns
     and serialization as the full pools table, but only pools currently in a
-    restrained state. Reuses the base serialization and filters on the already
-    computed `restrained` flag of each item.
+    restrained state.
+
+    Filters on the queryset (not on the serialized items) so paging and counting
+    are computed over the restrained pools only. `restraineds_queryset` is the
+    same source the dashboard KPI counts with, so card and table always agree.
     """
 
-    def get_items(
-        self, *args: typing.Any, **kwargs: typing.Any
-    ) -> collections.abc.Generator[ServicePoolItem, None, None]:
-        for item in super().get_items(*args, **kwargs):
-            if getattr(item, 'restrained', False):
-                yield item
+    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
+        qs = super().filter_model_queryset(qs)
+        return qs.filter(pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True))
