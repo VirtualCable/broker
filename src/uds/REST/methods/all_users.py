@@ -42,7 +42,7 @@ from django.db.models import Model
 from django.utils.translation import gettext_lazy as _
 
 from uds import models
-from uds.core import exceptions, types
+from uds.core import consts, exceptions, types
 from uds.core.types.rest import T_Item
 from uds.core.types.states import State
 from uds.core.util import ui as ui_utils
@@ -60,7 +60,16 @@ class _ReadOnlyModelHandler(ModelHandler[T_Item]):
     """
     Base for read-only global listings: writes are rejected so these
     dashboard drilldown endpoints never mutate data.
+
+    Admin only, like the Dashboard handler these listings back. Permissions can
+    only be granted on the objects that Permissions.get_class() accepts (pools,
+    authenticators, ...) and never on User/Group/UserService, so the per-item
+    READ check in ModelHandler.get_items() can never pass for a non-admin staff
+    member: with the default STAFF role these endpoints would answer 200 with an
+    always-empty list instead of denying access.
     """
+
+    ROLE = consts.UserRole.ADMIN
 
     def put(self) -> typing.Any:
         raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
@@ -101,6 +110,11 @@ class _AllUsersMaster(_ReadOnlyModelHandler[GlobalUserItem]):
         .datetime_column(name='last_access', title=_('Last access'))
         .row_style(prefix='row-state-', field='state')
     ).build()
+
+    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
+        # get_item() reads user.manager.name for every row: without this the
+        # listing costs one extra query per user.
+        return super().filter_model_queryset(qs).select_related('manager')
 
     def get_item(self, item: 'Model') -> GlobalUserItem:
         user = typing.cast('models.User', item)
@@ -164,6 +178,10 @@ class AllGroups(_ReadOnlyModelHandler[GlobalGroupItem]):
         )
         .row_style(prefix='row-state-', field='state')
     ).build()
+
+    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
+        # Same as the users listing: get_item() reads group.manager.name per row.
+        return super().filter_model_queryset(qs).select_related('manager')
 
     def get_item(self, item: 'Model') -> GlobalGroupItem:
         group = typing.cast('models.Group', item)

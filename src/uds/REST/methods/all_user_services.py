@@ -34,6 +34,8 @@ link to "all user services" and "all assigned services".
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import collections
+import functools
 import logging
 import typing
 
@@ -75,11 +77,35 @@ class _AllUserServicesMaster(_ReadOnlyModelHandler[UserServiceItem]):
 
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         qs = super().filter_model_queryset(qs)
-        return qs.exclude(state__in=_HIDDEN_STATES)
+        # get_item() walks deployed_service, publication and user.manager on every
+        # row; without this each one costs an extra query per user service.
+        return qs.exclude(state__in=_HIDDEN_STATES).select_related(
+            'deployed_service', 'publication', 'user__manager'
+        )
+
+    @functools.cached_property
+    def _properties(self) -> dict[str, dict[str, typing.Any]]:
+        """
+        Properties of every user service of this listing, in a single query.
+
+        userservice_item() reads them per item, and they do not live in a related
+        field (they are rows in the generic properties table), so serializing a
+        listing without this costs a handful of queries per row. Same approach the
+        pool-scoped assigned-services listing already takes.
+        """
+        props: dict[str, dict[str, typing.Any]] = collections.defaultdict(dict)
+        for owner_id, key, value in models.Properties.objects.filter(
+            owner_type='userservice',
+            owner_id__in=self.filter_model_queryset().values_list('uuid', flat=True),
+        ).values_list('owner_id', 'key', 'value'):
+            props[owner_id][key] = value
+        return props
 
     def get_item(self, item: 'Model') -> UserServiceItem:
         userservice = typing.cast('models.UserService', item)
-        rest_item = AssignedUserService.userservice_item(userservice)
+        rest_item = AssignedUserService.userservice_item(
+            userservice, self._properties.get(userservice.uuid, {})
+        )
         rest_item.pool_name = userservice.deployed_service.name
         return rest_item
 
