@@ -88,6 +88,7 @@ class Dispatcher(View):
         return err_cls(json.dumps({"error": msg}).encode(), content_type="application/json")
 
     @method_decorator(csrf_exempt)
+    @typing.override
     def dispatch(self, request: 'http.request.HttpRequest', path: str) -> 'http.HttpResponse':
         """
         Processes the REST request and routes it wherever it needs to be routed

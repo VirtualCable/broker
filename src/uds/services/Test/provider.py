@@ -90,6 +90,7 @@ class TestProvider(services.ServiceProvider):
 
     data: Data
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         self.data = TestProvider.Data()
         if values:
@@ -98,6 +99,7 @@ class TestProvider(services.ServiceProvider):
             return super().initialize(values)
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> types.core.TestResult:
         return types.core.TestResult(True, _('Nothing tested, but all went fine..'))
 

@@ -63,6 +63,7 @@ class CountersPoolAssigned(StatsReport):
     pools = StatsReport.pools
     start_date = StatsReport.start_date
 
+    @typing.override
     def init_gui(self) -> None:
         logger.debug('Initializing gui')
         vals = [gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name')]
@@ -106,6 +107,7 @@ class CountersPoolAssigned(StatsReport):
 
         return data
 
+    @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
 
@@ -146,6 +148,7 @@ class CountersPoolAssignedCSV(CountersPoolAssigned):
     start_date = CountersPoolAssigned.start_date
     pools = CountersPoolAssigned.pools
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

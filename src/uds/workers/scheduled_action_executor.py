@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import logging
 
 from uds.core import types
@@ -43,9 +44,11 @@ logger = logging.getLogger(__name__)
 class ScheduledAction(Job):
     friendly_name = 'Scheduled action runner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 29
 
+    @typing.override
     def run(self) -> None:
         configured_action: CalendarAction
         for configured_action in CalendarAction.objects.filter(

@@ -57,12 +57,15 @@ class SampleMFA(mfas.MFA):
         default=True,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         return super().initialize(values)
 
+    @typing.override
     def label(self) -> str:
         return 'Code is in log'
 
+    @typing.override
     def send_code(
         self, request: 'ExtendedHttpRequest', userid: str, username: str, identifier: str, code: str
     ) -> mfas.MFA.RESULT:

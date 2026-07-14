@@ -98,9 +98,11 @@ class AutoAttributes(Serializable):
             d[key] = Attribute(typ)
         self.attrs = d
         
+    @typing.override
     def marshal(self) -> bytes:
         return b'v1' + pickle.dumps(self.attrs)
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data:  # Can be empty
             return

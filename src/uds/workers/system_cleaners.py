@@ -45,9 +45,11 @@ logger = logging.getLogger(__name__)
 class CacheCleaner(Job):
     friendly_name = 'Utility Cache Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 3600 * 24
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting cache cleanup')
         Cache.purge_outdated()
@@ -57,9 +59,11 @@ class CacheCleaner(Job):
 class TicketStoreCleaner(Job):
     friendly_name = 'Ticket Storage Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting ticket storage cleanup')
         TicketStore.cleanup()
@@ -69,9 +73,11 @@ class TicketStoreCleaner(Job):
 class SessionsCleaner(Job):
     friendly_name = 'User Sessions cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 3600 * 24 * 7
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting session cleanup')
         try:

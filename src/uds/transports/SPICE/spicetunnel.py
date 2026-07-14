@@ -83,9 +83,11 @@ class TSPICETransport(BaseSpiceTransport):
     allow_smartcards = BaseSpiceTransport.allow_smartcards
     ssl_connection = BaseSpiceTransport.ssl_connection
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         pass
 
+    @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
         userservice: 'models.UserService',

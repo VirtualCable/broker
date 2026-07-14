@@ -124,6 +124,7 @@ class ReportAuto(Report, metaclass=ReportAutoType):
 
         return REPORT_AUTOMODEL[data_source]
 
+    @typing.override
     def init_gui(self) -> None:
         # Fills datasource
         fields.source_field_data(self.get_model(), self.source)

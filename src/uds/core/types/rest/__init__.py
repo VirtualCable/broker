@@ -112,6 +112,7 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
 
     item: T_Model
 
+    @typing.override
     def as_dict(self) -> dict[str, typing.Any]:
         """
         Returns a dictionary representation of the managed object item.
@@ -143,6 +144,7 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
         return base
 
     @classmethod
+    @typing.override
     def api_components(cls: type[typing.Self]) -> api.Components:
         component = super().api_components()
         # Add any additional components specific to this item, that are "type", "type_name" and "instance"

@@ -120,6 +120,7 @@ _FORMATTERS: dict[str, type[_RestLogFormatter | _LoginLogFormatter]] = {
 class Command(BaseCommand):
     help = 'Manage and verify the immutable audit log chain.'
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
@@ -146,6 +147,7 @@ class Command(BaseCommand):
             help='Filter exported entries by type (requires --export).',
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         if options['verify']:
             self._handle_verify()

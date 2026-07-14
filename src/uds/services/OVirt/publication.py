@@ -62,9 +62,11 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
     _template_id = autoserializable.StringField(default='')
     _state = autoserializable.StringField(default='r')
 
+    @typing.override
     def service(self) -> 'OVirtLinkedService':
         return typing.cast('OVirtLinkedService', super().service())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
@@ -88,6 +90,7 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
         self._destroy_after = destroy_after == 't'
         self.mark_for_upgrade()  # Mark so manager knows it has to be saved again
 
+    @typing.override
     def publish(self) -> types.states.TaskState:
         """
         Realizes the publication of the service
@@ -111,6 +114,7 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Checks state of publication creation
@@ -141,6 +145,7 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def error_reason(self) -> str:
         """
         If a publication produces an error, here we must notify the reason why
@@ -151,6 +156,7 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         This is called once a publication is no more needed.
@@ -176,6 +182,7 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         Do same thing as destroy

@@ -62,6 +62,7 @@ class UsageByPool(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         logger.debug('Initializing gui')
         vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
@@ -132,6 +133,7 @@ class UsageByPool(StatsReport):
 
         return data, ','.join(name for _uuid, name in pool_map.values())
 
+    @typing.override
     def generate(self) -> bytes:
         items, poolname = self.get_data()
 
@@ -157,6 +159,7 @@ class UsageByPoolCSV(UsageByPool):
     start_date = UsageByPool.start_date
     end_date = UsageByPool.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

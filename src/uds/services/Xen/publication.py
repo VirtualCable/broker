@@ -53,9 +53,11 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
 
     _task = autoserializable.StringField(default='')
 
+    @typing.override
     def service(self) -> 'XenLinkedService':
         return typing.cast('XenLinkedService', super().service())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
@@ -90,6 +92,7 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
         
         self.mark_for_upgrade()   # Force upgrade asap
         
+    @typing.override
     def op_create(self) -> None:
         # Name created by DynamicPublication
         comments = _('UDS pub for {0} at {1}').format(
@@ -99,6 +102,7 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
         self._task = self.service().start_deploy_of_template(self._name, comments)
         logger.debug('Task created: %s', self._task)
         
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks state of publication creation
@@ -121,6 +125,7 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
     # Methods provided below are specific for this publication type
     # and will be used by user deployments that uses this kind of publication
 
+    @typing.override
     def get_template_id(self) -> str:
         """
         Returns the template id associated with the publication

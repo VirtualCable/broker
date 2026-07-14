@@ -111,19 +111,19 @@ class ServiceProvider(module.Module):
     # : Default is return the GlobalConfig value of GlobalConfig.MAX_PREPARING_SERVICES
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value property)
     # : Note: This cannot be renamed with out a "migration", because it's used at database
-    concurrent_creation_limit: typing.Optional[typing.Union[int, gui.NumericField]] = None
+    concurrent_creation_limit: int | gui.NumericField | None = None
 
     # : This defines the maximum number of concurrent services that should be in state "removing" for this provider
     # : Default is return the GlobalConfig value of GlobalConfig.MAX_REMOVING_SERVICES
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value property)
     # : Note: This cannot be renamed with out a "migration", because it's used at database
-    concurrent_removal_limit: typing.Optional[typing.Union[int, gui.NumericField]] = None
+    concurrent_removal_limit: int | gui.NumericField | None = None
 
     # : This defines if the limits (concurrent... vars) should be taken into accout or simply ignored
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value)
-    ignore_limits: typing.Optional[typing.Union[bool, gui.CheckBoxField]] = None
+    ignore_limits: bool | gui.CheckBoxField | None = None
 
-    _db_obj: typing.Optional['models.Provider'] = None
+    _db_obj: 'models.Provider | None' = None
 
     @classmethod
     def get_provided_services(cls) -> list[type['Service']]:
@@ -133,7 +133,7 @@ class ServiceProvider(module.Module):
         return cls.offers
 
     @classmethod
-    def get_service_by_type(cls, type_name: str) -> typing.Optional[type['Service']]:
+    def get_service_by_type(cls, type_name: str) -> type['Service'] | None:
         """
         Tries to locate a child service which type corresponds with the
         one provided.
@@ -151,7 +151,7 @@ class ServiceProvider(module.Module):
         self,
         environment: environment.Environment,
         values: 'types.core.ValuesType' = None,
-        uuid: typing.Optional[str] = None,
+        uuid: 'str | None' = None,
     ):
         """
         Do not forget to invoke this in your derived class using "super(self.__class__, self).__init__(environment, values)"
@@ -185,6 +185,7 @@ class ServiceProvider(module.Module):
         Default implementation does nothing
         """
 
+    @typing.override
     def db_obj(self) -> 'models.Provider':
         """
         Returns the database object for this provider
@@ -231,6 +232,7 @@ class ServiceProvider(module.Module):
 
         return ret_val
 
+    @typing.override
     def do_log(
         self,
         level: 'types.log.LogLevel',
@@ -239,6 +241,7 @@ class ServiceProvider(module.Module):
     ) -> None:
         return super().do_log(level, message, source)
 
+    @typing.override
     def __str__(self) -> str:
         """
         Basic implementation, mostly used for debuging and testing, never used

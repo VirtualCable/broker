@@ -83,15 +83,18 @@ class SampleUserServiceTwo(services.UserService):
     _count: int
 
     # Utility overrides for type checking...
+    @typing.override
     def service(self) -> 'ServiceOne':
         return typing.cast('ServiceOne', super().service())
 
+    @typing.override
     def publication(self) -> 'SamplePublication':
         pub = super().publication()
         if pub is None:
             raise Exception('No publication for this element!')
         return typing.cast('SamplePublication', pub)
 
+    @typing.override
     def initialize(self) -> None:
         """
         Initialize default attributes values here. We can do whatever we like,
@@ -104,6 +107,7 @@ class SampleUserServiceTwo(services.UserService):
         self._count = 0
 
     # Serializable needed methods
+    @typing.override
     def marshal(self) -> bytes:
         """
         Marshal own data, in this sample we will marshal internal needed
@@ -123,6 +127,7 @@ class SampleUserServiceTwo(services.UserService):
         )
         return codecs.encode(data.encode(), encoding='zip')
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         We unmarshal the content.
@@ -135,6 +140,7 @@ class SampleUserServiceTwo(services.UserService):
             self._name, self._ip, self._mac, self._error, count = values[1:]
             self._count = int(count)
 
+    @typing.override
     def get_name(self) -> str:
         """
         We override this to return a name to display. Default implementation
@@ -161,6 +167,7 @@ class SampleUserServiceTwo(services.UserService):
         # self._name will be stored when object is marshaled
         return self._name
 
+    @typing.override
     def set_ip(self, ip: str) -> None:
         """
         In our case, there is no OS manager associated with this, so this method
@@ -175,6 +182,7 @@ class SampleUserServiceTwo(services.UserService):
         """
         self._ip = ip
 
+    @typing.override
     def get_unique_id(self) -> str:
         """
         Return and unique identifier for this service.
@@ -203,6 +211,7 @@ class SampleUserServiceTwo(services.UserService):
             self._mac = self.mac_generator().get('00:00:00:00:00:00-00:FF:FF:FF:FF:FF')
         return self._mac
 
+    @typing.override
     def get_ip(self) -> str:
         """
         We need to implement this method, so we can return the IP for transports
@@ -225,6 +234,7 @@ class SampleUserServiceTwo(services.UserService):
             return '192.168.0.34'  # Sample IP for testing purposes only
         return self._ip
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are
@@ -258,6 +268,7 @@ class SampleUserServiceTwo(services.UserService):
         # In our case, the service is always ready
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         """
         Deploys an service instance for an user.
@@ -297,6 +308,7 @@ class SampleUserServiceTwo(services.UserService):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         """
         Deploys a user deployment as cache.
@@ -316,6 +328,7 @@ class SampleUserServiceTwo(services.UserService):
         self._count = 0
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Our deployForUser method will initiate the consumable service deployment,
@@ -357,6 +370,7 @@ class SampleUserServiceTwo(services.UserService):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def finish(self) -> None:
         """
         Invoked when the core notices that the deployment of a service has finished.
@@ -371,6 +385,7 @@ class SampleUserServiceTwo(services.UserService):
         # We set count to 0, not needed but for sample purposes
         self._count = 0
 
+    @typing.override
     def user_logged_in(self, username: str) -> None:
         """
         This method must be available so os managers can invoke it whenever
@@ -388,6 +403,7 @@ class SampleUserServiceTwo(services.UserService):
         # We store the value at storage, but never get used, just an example
         self.storage.save_to_db('user', username)
 
+    @typing.override
     def user_logged_out(self, username: str) -> None:
         """
         This method must be available so os managers can invoke it whenever
@@ -405,6 +421,7 @@ class SampleUserServiceTwo(services.UserService):
         # We do nothing more that remove the user
         self.storage.remove('user')
 
+    @typing.override
     def error_reason(self) -> str:
         """
         Returns the reason of the error.
@@ -420,6 +437,7 @@ class SampleUserServiceTwo(services.UserService):
         """
         return self._error
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are
@@ -431,6 +449,7 @@ class SampleUserServiceTwo(services.UserService):
         """
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are

@@ -53,6 +53,7 @@ class Command(BaseCommand):
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         
+    @typing.override
     def add_arguments(self, parser: 'argparse.ArgumentParser') -> None:
 
         # quiet mode
@@ -65,6 +66,7 @@ class Command(BaseCommand):
         )
         
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         self.verbose = options['verbose']
 

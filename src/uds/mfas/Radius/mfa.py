@@ -146,12 +146,15 @@ class RadiusOTP(mfas.MFA):
             return mfas.MFA.RESULT.OK
         raise Exception('User not allowed to login')
 
+    @typing.override
     def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> typing.Optional[bool]:
         return None
 
+    @typing.override
     def label(self) -> str:
         return gettext('OTP Code')
 
+    @typing.override
     def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
         '''
         ToDo:
@@ -160,6 +163,7 @@ class RadiusOTP(mfas.MFA):
         '''
         return gettext('Please enter OTP')
 
+    @typing.override
     def process(
         self,
         request: 'ExtendedHttpRequest',
@@ -230,6 +234,7 @@ class RadiusOTP(mfas.MFA):
         # correct password and otp_needed
         return mfas.MFA.RESULT.OK
 
+    @typing.override
     def validate(
         self,
         request: 'ExtendedHttpRequest',

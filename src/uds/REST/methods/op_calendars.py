@@ -74,6 +74,7 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
             priority=item.priority,
         )
         
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         # parent can be a ServicePool or a metaPool
         if isinstance(parent, models.ServicePool):
@@ -83,18 +84,21 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
         parent = ensure.is_instance(parent, models.MetaPool)
         return self.calc_item_position(item_uuid, parent.calendarAccess.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[AccessCalendarItem]:
         # parent can be a ServicePool or a metaPool
         parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
 
         return [AccessCalendars.as_item(i) for i in self.filter_odata_queryset(parent.calendarAccess.all())]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> AccessCalendarItem:
         # parent can be a ServicePool or a metaPool
         parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
 
         return AccessCalendars.as_item(parent.calendarAccess.get(uuid=process_uuid(item)))
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         return (
             ui_utils.TableBuilder(_('Access calendars'))
@@ -104,6 +108,7 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: typing.Optional[str]) -> typing.Any:
         parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
         # If already exists
@@ -144,6 +149,7 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
 
         return {'id': calendar_access.uuid}
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
         calendar_access = parent.calendarAccess.get(uuid=process_uuid(self._args[0]))
@@ -196,20 +202,24 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
             last_execution=item.last_execution,
         )
         
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
         return self.calc_item_position(item_uuid, parent.calendaraction_set.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ActionCalendarItem]:
         parent = ensure.is_instance(parent, models.ServicePool)
         return [
             ActionsCalendars.as_dict(i) for i in self.filter_odata_queryset(parent.calendaraction_set.all())
         ]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> ActionCalendarItem:
         parent = ensure.is_instance(parent, models.ServicePool)
         return ActionsCalendars.as_dict(parent.calendaraction_set.get(uuid=process_uuid(item)))
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         return (
             ui_utils.TableBuilder(_('Scheduled actions'))
@@ -223,6 +233,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: typing.Optional[str]) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServicePool)
         # If already exists
@@ -266,6 +277,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
 
         return {'id': calendar_action.uuid}
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
         calendar_action = models.CalendarAction.objects.get(uuid=process_uuid(self._args[0]))

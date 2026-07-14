@@ -94,6 +94,7 @@ class PoolsUsageSummary(UsageByPool):
 
         return pools.values(), total_time, total_count or 1, len(unique_users)
 
+    @typing.override
     def generate(self) -> bytes:
         pools, total_time, total_count, unique_users = self.processed_data()
 
@@ -146,6 +147,7 @@ class PoolsUsageSummaryCSV(PoolsUsageSummary):
     start_date = PoolsUsageSummary.start_date
     end_date = PoolsUsageSummary.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

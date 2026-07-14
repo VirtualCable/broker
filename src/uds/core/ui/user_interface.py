@@ -561,6 +561,7 @@ class gui:
                     else types.ui.FieldPatternType(pattern)
                 )
 
+        @typing.override
         def validate(self) -> bool:
             return super().validate() and self._validate_pattern()
 
@@ -603,13 +604,14 @@ class gui:
             return True  # No pattern, so it's valid
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
         def value(self, value: str) -> None:
             super()._set_value(value)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
@@ -711,6 +713,7 @@ class gui:
             self._field_info.min_value = min_value
             self._field_info.max_value = max_value
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an int
@@ -718,7 +721,7 @@ class gui:
             super()._set_value(gui.as_int(value))
 
         @property
-        def value(self) -> int:
+        def value(self) -> int:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_int(super().value)
 
         @value.setter
@@ -773,13 +776,16 @@ class gui:
             return int(time.mktime(self.as_date().timetuple()))
             # return int(time.mktime(datetime.datetime.strptime(self.value, '%Y-%m-%d').timetuple()))
 
+        @typing.override
         def as_int(self) -> int:
             return self.as_timestamp()
 
+        @typing.override
         def as_str(self) -> str:
             return str(self.as_date())
 
         # Override value setter, so we can convert from datetime.datetime or str to datetime.date
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             if isinstance(value, datetime.datetime):
                 value = value.date()
@@ -793,13 +799,14 @@ class gui:
             super()._set_value(value)
 
         @property
-        def value(self) -> datetime.date:
+        def value(self) -> datetime.date:  # pyrefly: ignore[missing-override-decorator]
             return self.as_date()
 
         @value.setter
         def value(self, value: datetime.date | str) -> None:
             self._set_value(value)
 
+        @typing.override
         def gui_description(self) -> types.ui.FieldInfo:
             fldgui = super().gui_description()
             # Convert if needed value and default to string (YYYY-MM-DD)
@@ -856,12 +863,14 @@ class gui:
                 type=types.ui.FieldType.PASSWORD,
             )
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
             """
             super()._set_value(gui.as_str(value))
 
+        @typing.override
         def as_str(self) -> str:
             """Returns the password as string (stripped)"""
             return gui.as_str(self.value).strip()
@@ -869,7 +878,7 @@ class gui:
         as_clean_str = as_str  # Alias in facet, for coherence with other string fields
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)  # Avoid recursion
 
         @value.setter
@@ -933,9 +942,11 @@ class gui:
             )
             self._is_serializable = serializable
 
+        @typing.override
         def is_serializable(self) -> bool:
             return self._is_serializable
 
+        @typing.override
         def set_default(self, value: typing.Any) -> None:
             """
             Sets the default value of the field. Overriden for HiddenField
@@ -990,6 +1001,7 @@ class gui:
                 type=types.ui.FieldType.CHECKBOX,
             )
 
+        @typing.override
         def _set_value(self, value: str | bytes | bool) -> None:
             """
             Override to set value to True or False (bool)
@@ -998,7 +1010,7 @@ class gui:
             # self._fields_info.value = gui.as_bool(value)
 
         @property
-        def value(self) -> bool:
+        def value(self) -> bool:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_bool(super().value)
 
         @value.setter
@@ -1140,17 +1152,19 @@ class gui:
             """
             self._field_info.choices = gui.as_choices(values)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
             """
             super()._set_value(gui.as_str(value))
 
+        @typing.override
         def as_str(self) -> str:
             return gui.as_str(self.value)
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:    # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
@@ -1192,17 +1206,19 @@ class gui:
             """
             self._field_info.choices = gui.as_choices(values)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
             """
             super()._set_value(gui.as_str(value))
 
+        @typing.override
         def as_str(self) -> str:
             return gui.as_str(self.value)
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
@@ -1253,7 +1269,13 @@ class gui:
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None = None,
+            default: (
+                collections.abc.Callable[[], str]
+                | collections.abc.Callable[[], list[str]]
+                | list[str]
+                | str
+                | None
+            ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
         ):
@@ -1279,6 +1301,7 @@ class gui:
             """
             self._field_info.choices = gui.as_choices(choices)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an list of strings
@@ -1301,7 +1324,7 @@ class gui:
                 return []
 
         @property
-        def value(self) -> list[str]:
+        def value(self) -> list[str]:  # pyrefly: ignore[missing-override-decorator]
             return self.as_list()
 
         @value.setter
@@ -1343,7 +1366,13 @@ class gui:
             tooltip: str = '',
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None = None,
+            default: (
+                collections.abc.Callable[[], str]
+                | collections.abc.Callable[[], list[str]]
+                | list[str]
+                | str
+                | None
+            ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
         ) -> None:
@@ -1360,6 +1389,7 @@ class gui:
                 type=types.ui.FieldType.EDITABLELIST,
             )
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an list of strings
@@ -1382,7 +1412,7 @@ class gui:
                 return []
 
         @property
-        def value(self) -> list[str]:
+        def value(self) -> list[str]:  # pyrefly: ignore[missing-override-decorator]
             return self.as_list()
 
         @value.setter

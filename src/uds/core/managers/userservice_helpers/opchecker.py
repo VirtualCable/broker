@@ -152,6 +152,7 @@ class UpdateFromPreparing(StateUpdater):
 
         return state
 
+    @typing.override
     def state_finish(self) -> None:
         if self.userservice.destroy_after:  # Marked for destroyal
             del self.userservice.destroy_after  # Cleanup..
@@ -173,6 +174,7 @@ class UpdateFromPreparing(StateUpdater):
 
 
 class UpdateFromRemoving(StateUpdater):
+    @typing.override
     def state_finish(self) -> None:
         osmanager = self.userservice.get_instance().osmanager()
         if osmanager is not None:
@@ -182,6 +184,7 @@ class UpdateFromRemoving(StateUpdater):
 
 
 class UpdateFromCanceling(StateUpdater):
+    @typing.override
     def state_finish(self) -> None:
         osmanager = self.userservice.get_instance().osmanager()
         if osmanager is not None:
@@ -192,17 +195,20 @@ class UpdateFromCanceling(StateUpdater):
 class UpdateFromValid(StateUpdater):
     # Some operations, like "reset", are done on "valid" states
     # Simply, do nothing on finish except saving the state
+    @typing.override
     def state_finish(self) -> None:
         logger.debug('Finishing %s', self.userservice.friendly_name)
         # All done
         self.save()
 
 class UpdateFromOther(StateUpdater):
+    @typing.override
     def state_finish(self) -> None:
         self.set_error(
             f'Unknown running transition from {types.states.State.from_str(self.userservice.state).localized}'
         )
 
+    @typing.override
     def state_running(self) -> None:
         self.set_error(
             f'Unknown running transition from {types.states.State.from_str(self.userservice.state).localized}'
@@ -291,6 +297,7 @@ class UserServiceOpChecker(DelayedTask):
             USERSERVICE_TAG + userservice.uuid,
         )
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Checking user service finished %s', self._svrId)
         userservice: 'UserService|None' = None

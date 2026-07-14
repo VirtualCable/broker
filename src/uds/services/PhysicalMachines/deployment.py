@@ -65,26 +65,32 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
     _name = autoserializable.StringField(default='')
 
     # Utility overrides for type checking...
+    @typing.override
     def service(self) -> 'IPSingleMachineService':
         return typing.cast('IPSingleMachineService', super().service())
 
+    @typing.override
     def set_ip(self, ip: str) -> None:
         logger.debug('Setting IP to %s (ignored)', ip)
 
+    @typing.override
     def get_ip(self) -> str:
         # If single machine, ip is IP~counter,
         # If multiple and has a ';' on IP, the values is IP;MAC
         return self.service().get_host_mac()[0]
 
+    @typing.override
     def get_name(self) -> str:
         if not self._name:
             # Generate a name with the IP + simple counter
             self._name = f'{self.get_ip()}:{self.service().get_counter_and_inc()}'
         return self._name
 
+    @typing.override
     def get_unique_id(self) -> str:
         return self.get_name()
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         # If single machine, ip is IP~counter,
         # If multiple and has a ';' on IP, the values is IP;MAC
@@ -99,10 +105,12 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         logger.debug("Starting deploy of %s for user %s", self._ip, user)
         return self._deploy()
 
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         return self._error('Cache deploy not supported')
 
@@ -111,11 +119,13 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
         self._reason = reason or 'Unknown error'
         return types.states.TaskState.ERROR
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         if self._reason:
             return types.states.TaskState.ERROR
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def error_reason(self) -> str:
         """
         If a publication produces an error, here we must notify the reason why it happened. This will be called just after
@@ -123,14 +133,17 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         self._ip = ''
         self._reason = ''
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         return self.destroy()
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if autoserializable.is_autoserializable_data(data):
             return super().unmarshal(data)

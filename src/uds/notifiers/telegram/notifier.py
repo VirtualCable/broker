@@ -107,6 +107,7 @@ class TelegramNotifier(messaging.Notifier):
         old_field_name='checkDelay',
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType' = None) -> None:
         """
         We will use the "autosave" feature for form fields
@@ -123,10 +124,12 @@ class TelegramNotifier(messaging.Notifier):
                 raise exceptions.ui.ValidationError(_('Invalid value for {}').format(i.label))
             i.value = s
 
+    @typing.override
     def init_gui(self) -> None:
         self.secret.default = self.secret.default or secrets.token_urlsafe(8)
         return super().init_gui()
 
+    @typing.override
     def notify(self, group: str, identificator: str, level: messaging.LogLevel, message: str) -> None:
         telegram_msg = f'{group} - {identificator} - {str(level)}: {message}'
         logger.debug('Sending telegram message: %s', telegram_msg)

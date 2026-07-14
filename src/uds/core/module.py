@@ -158,6 +158,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         Serializable.__init__(self)
         self._uuid = uuid or ''
 
+    @typing.override
     def marshal(self) -> bytes:
         """
         By default and if not overriden by descendants, this method, overridden
@@ -166,6 +167,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         """
         return self.serialize_fields()
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         By default and if not overriden by descendants, this method recovers

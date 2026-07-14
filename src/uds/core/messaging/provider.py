@@ -73,7 +73,7 @@ class Notifier(Module):
     # : your own :py:meth:uds.core.module.BaseModule.icon method.
     icon_file: typing.ClassVar[str] = 'notifier.png'
 
-    _db_obj: typing.Optional['models.Notifier'] = None
+    _db_obj: 'models.Notifier | None' = None
 
     def __init__(self, environment: 'Environment', values: 'types.core.ValuesType') -> None:
         super().__init__(environment, values)
@@ -96,6 +96,7 @@ class Notifier(Module):
         """
         pass
 
+    @typing.override
     def db_obj(self) -> 'models.Notifier':
         """
         Helper method to access the Authenticator database object

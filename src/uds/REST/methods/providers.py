@@ -108,6 +108,7 @@ class Providers(ModelHandler[ProviderItem]):
         typed=types.rest.api.RestApiInfoGuiType.MULTIPLE_TYPES,
     )
 
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('services_count'):
             field_name, is_descending = field_info
@@ -123,6 +124,7 @@ class Providers(ModelHandler[ProviderItem]):
         
         return super().apply_sort(qs)
 
+    @typing.override
     def get_item(self, item: 'Model') -> ProviderItem:
         item = ensure.is_instance(item, Provider)
         type_ = item.get_type()
@@ -153,6 +155,7 @@ class Providers(ModelHandler[ProviderItem]):
             item=item,
         )
 
+    @typing.override
     def validate_delete(self, item: 'Model') -> None:
         item = ensure.is_instance(item, Provider)
         if item.services.count() > 0:
@@ -160,10 +163,12 @@ class Providers(ModelHandler[ProviderItem]):
 
     # Types related
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[services.ServiceProvider]]:
         return services.factory().providers().values()
 
     # Gui related
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         provider_type = services.factory().lookup(for_type)
         if provider_type:
@@ -215,6 +220,7 @@ class Providers(ModelHandler[ProviderItem]):
         item.save()
         return self.get_item(item)
 
+    @typing.override
     def test(self, type_: str) -> str:
         from uds.core.environment import Environment
 

@@ -143,15 +143,18 @@ class ProxmoxUserserviceLinked(DynamicUserService):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def service(self) -> 'ProxmoxService':
         return typing.cast('ProxmoxService', super().service())
 
+    @typing.override
     def publication(self) -> 'ProxmoxPublication':
         pub = super().publication()
         if pub is None:
             raise Exception('No publication for this element!')
         return typing.cast('ProxmoxPublication', pub)
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         Does nothing here also, all data are keeped at environment storage
@@ -174,12 +177,14 @@ class ProxmoxUserserviceLinked(DynamicUserService):
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    @typing.override
     def op_reset(self) -> None:
         if self._vmid:
             self.service().provider().api.reset_vm(int(self._vmid))
 
     # No need for op_reset_checker
 
+    @typing.override
     def op_create(self) -> None:
         template_id = int(self.publication().get_template_id())
         name = self.get_vmname()
@@ -189,9 +194,11 @@ class ProxmoxUserserviceLinked(DynamicUserService):
         self._store_task(task_result.exec_result)
         self._vmid = str(task_result.vmid)
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         return self._check_task_finished()
 
+    @typing.override
     def op_create_completed(self) -> None:
         # Note: service will only enable ha if it is configured to do so
         self.service().enable_vm_ha(int(self._vmid), True)  # Enable HA before continuing here
@@ -199,6 +206,7 @@ class ProxmoxUserserviceLinked(DynamicUserService):
         # Set vm mac address now on first interface
         self.service().provider().api.set_vm_net_mac(int(self._vmid), self.get_unique_id())
 
+    @typing.override
     def get_console_connection(
         self,
     ) -> types.services.ConsoleConnectionInfo | None:

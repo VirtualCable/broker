@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 
 # Decorator that tests that _vmid is not empty
 # Used by some default methods that require a vmid to work
-def must_have_vmid(fnc: collections.abc.Callable[[typing.Any], None]) -> collections.abc.Callable[['DynamicPublication'], None]:
+def must_have_vmid(
+    fnc: collections.abc.Callable[[typing.Any], None],
+) -> collections.abc.Callable[['DynamicPublication'], None]:
     @functools.wraps(fnc)
     def wrapper(self: 'DynamicPublication') -> None:
         if self._vmid == '':
@@ -193,6 +195,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         self._queue.insert(0, Operation.RETRY)
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def service(self) -> 'DynamicService':
         return typing.cast('DynamicService', super().service())
 
@@ -220,6 +223,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         pass
 
     @typing.final
+    @typing.override
     def publish(self) -> types.states.TaskState:
         """ """
         self._queue[:] = self._publish_queue.copy()
@@ -227,6 +231,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Check what operation is going on, and acts acordly to it
@@ -277,6 +282,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
             return self._error(e)
 
     @typing.final
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         Destroys the publication (or cancels it if it's in the middle of a creation process)
@@ -309,6 +315,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
             # Do not execute anything.here, just continue normally
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         Cancels the publication (or cancels it if it's in the middle of a creation process)
@@ -317,6 +324,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         return self.destroy()
 
     @typing.final
+    @typing.override
     def error_reason(self) -> str:
         return self._reason
 

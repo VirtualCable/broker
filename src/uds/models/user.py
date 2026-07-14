@@ -90,6 +90,7 @@ class User(UUIDModel, properties.PropertiesMixin):
         constraints = [models.UniqueConstraint(fields=['manager', 'name'], name='u_usr_manager_name')]
 
     # For properties
+    @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
         return self.uuid, 'user'
 

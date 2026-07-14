@@ -91,6 +91,7 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     tunnel = fields.tunnel_field()
     startup_time = fields.tunnel_startup_time_secs()
 
+    @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
         userservice: 'models.UserService',

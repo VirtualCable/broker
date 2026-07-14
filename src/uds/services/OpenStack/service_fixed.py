@@ -116,6 +116,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
     # Uses default FixedService.initialize
 
+    @typing.override
     def init_gui(self) -> None:
         api = self.provider().api()
 
@@ -143,12 +144,15 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
         self.prov_uuid.value = self.provider().get_uuid()
 
+    @typing.override
     def provider(self) -> 'AnyOpenStackProvider':
         return typing.cast('AnyOpenStackProvider', super().provider())
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         # Obtain machines names and ids for asignables
         servers = {
@@ -163,6 +167,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                 and k in servers  # Only machines not assigned, and that exists on provider will be available
             ]
 
+    @typing.override
     def get_and_assign(self) -> str:
         found_vmid: str | None = None
         try:
@@ -195,17 +200,21 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
         return found_vmid
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         # Returning '' lets the caller retry instead of crashing when the mac cannot be
         # resolved yet (machine missing, or external DHCP leaving 'addresses' empty).
         return self.api.get_server_mac(vmid) or ''
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         return self.api.get_server_info(vmid).addresses[0].ip
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
         return self.api.get_server_info(vmid).name
 
+    @typing.override
     def remove_and_free(self, vmid: str) -> types.states.TaskState:
         try:
             with self._assigned_access() as assigned:

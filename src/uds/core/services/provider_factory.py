@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import collections.abc
 import logging
 
@@ -49,7 +50,7 @@ class ServiceProviderFactory(factory.ModuleFactory[ServiceProvider]):
 
     It provides a way to register and recover providers providers.
     """
-
+    @typing.override
     def insert(self, type_: type[ServiceProvider]) -> None:
         """
         Inserts type_ as a service provider

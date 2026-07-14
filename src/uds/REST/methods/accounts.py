@@ -92,6 +92,7 @@ class Accounts(ModelHandler[AccountItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def get_item(self, item: 'models.Model') -> AccountItem:
         item = ensure.is_instance(item, Account)
         return AccountItem(
@@ -103,6 +104,7 @@ class Accounts(ModelHandler[AccountItem]):
             permission=permissions.effective_permissions(self._user, item),
         )
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         return (
             ui_utils.GuiBuilder()

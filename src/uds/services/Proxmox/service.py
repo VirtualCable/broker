@@ -178,6 +178,7 @@ class ProxmoxService(DynamicService):
 
     prov_uuid = gui.HiddenField(value=None)
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if values:
             self.basename.value = validators.validate_basename(
@@ -197,6 +198,7 @@ class ProxmoxService(DynamicService):
             # if int(self.memory.value) < 128:
             #     raise exceptions.ValidationException(_('The minimum allowed memory is 128 Mb'))
 
+    @typing.override
     def init_gui(self) -> None:
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
@@ -221,15 +223,18 @@ class ProxmoxService(DynamicService):
             + [gui.choice_item(group, group) for group in self.provider().api.list_ha_groups()]
         )
 
+    @typing.override
     def provider(self) -> 'ProxmoxProvider':
         return typing.cast('ProxmoxProvider', super().provider())
 
+    @typing.override
     def sanitized_name(self, name: str) -> str:
         """
         Proxmox only allows machine names with [a-zA-Z0-9_-]
         """
         return re.sub(r'[^a-zA-Z0-9-]', '-', name)
 
+    @typing.override
     def find_duplicates(self, name: str, mac: str) -> collections.abc.Iterable[str]:
         for i in self.provider().api.list_vms():
             if i.name and i.name.casefold() == name.casefold():
@@ -278,12 +283,15 @@ class ProxmoxService(DynamicService):
     def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().api.get_console_connection(int(vmid))
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 
+    @typing.override
     def get_ip(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> str:
         return self.provider().api.get_guest_ip_address(int(vmid))
 
+    @typing.override
     def get_mac(
         self,
         caller_instance: 'DynamicUserService | DynamicPublication | None',
@@ -298,6 +306,7 @@ class ProxmoxService(DynamicService):
             return self.mac_generator().get(self.get_macs_range())
         return self.provider().api.get_vm_config(int(vmid)).networks[0].macaddr.lower()
 
+    @typing.override
     def start(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
         if isinstance(caller_instance, ProxmoxUserserviceLinked):
             if self.is_running(caller_instance, vmid):  # If running, skip
@@ -307,6 +316,7 @@ class ProxmoxService(DynamicService):
         else:
             self.provider().api.start_vm(int(vmid))
 
+    @typing.override
     def stop(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
         if isinstance(caller_instance, ProxmoxUserserviceLinked):
             if self.is_running(caller_instance, vmid):
@@ -316,6 +326,7 @@ class ProxmoxService(DynamicService):
         else:
             self.provider().api.stop_vm(int(vmid))
 
+    @typing.override
     def shutdown(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
         if isinstance(caller_instance, ProxmoxUserserviceLinked):
             if self.is_running(caller_instance, vmid):
@@ -325,15 +336,18 @@ class ProxmoxService(DynamicService):
         else:
             self.provider().api.shutdown_vm(int(vmid))  # Just shutdown it, do not stores anything
 
+    @typing.override
     def is_running(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> bool:
         # Raise an exception if fails to get machine info
         return self.get_vm_info(int(vmid)).validate().status.is_running()
 
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         # All removals are deferred, so we can do it async
         # Try to stop it if already running... Hard stop
         self.provider().api.delete_vm(int(vmid))
 
+    @typing.override
     def is_deleted(self, vmid: str) -> bool:
         try:
             self.provider().api.get_vm_info(int(vmid))
@@ -341,6 +355,7 @@ class ProxmoxService(DynamicService):
         except Exception:
             return True
 
+    @typing.override
     def snapshot_creation(self, userservice_instance: DynamicUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserserviceLinked, userservice_instance)
         vmid = int(userservice_instance._vmid)
@@ -357,6 +372,7 @@ class ProxmoxService(DynamicService):
         except Exception as e:
             self.do_log(types.log.LogLevel.WARNING, 'Could not create SNAPSHOT for this VM. ({})'.format(e))
 
+    @typing.override
     def snapshot_recovery(self, userservice_instance: DynamicUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserserviceLinked, userservice_instance)
         vmid = int(userservice_instance._vmid)

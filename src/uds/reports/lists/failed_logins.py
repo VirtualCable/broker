@@ -87,6 +87,7 @@ class FailedLoginsReport(ListReport):
         required=True,
     )
 
+    @typing.override
     def init_gui(self) -> None:
         self.authenticator.set_choices(
             [gui.choice_item('0-0-0-0', gettext('ALL AUTHENTICATORS'))]
@@ -178,6 +179,7 @@ class FailedLoginsReport(ListReport):
 
         return summary, detail
 
+    @typing.override
     def generate(self) -> bytes:
         summary, detail = self.get_data()
         return self.template_as_pdf(
@@ -203,6 +205,7 @@ class FailedLoginsReportCSV(FailedLoginsReport):
     start_date = FailedLoginsReport.start_date
     end_date = FailedLoginsReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

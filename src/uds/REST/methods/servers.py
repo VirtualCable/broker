@@ -145,6 +145,7 @@ class ServerRegister(ServerRegisterBase):
 
 
     @classmethod
+    @typing.override
     def api_components(cls: type[typing.Self]) -> types.rest.api.Components:
         return types.rest.api.Components(schemas={
             'ServerRegisterItem': types.rest.api.Schema(

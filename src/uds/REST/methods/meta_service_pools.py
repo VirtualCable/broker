@@ -94,14 +94,17 @@ class MetaServicesPool(DetailHandler[MetaItem]):
             user_services_in_preparation=item.pool.userServices.filter(state=State.PREPARING).count(),
         )
         
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.MetaPool)
         return self.calc_item_position(item_uuid, parent.members.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['MetaItem']:
         parent = ensure.is_instance(parent, models.MetaPool)
         return [MetaServicesPool.as_dict(i) for i in self.filter_odata_queryset(parent.members.all())]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> 'MetaItem':
         parent = ensure.is_instance(parent, models.MetaPool)
         try:
@@ -109,6 +112,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
         except models.MetaPoolMember.DoesNotExist:
             raise exceptions.rest.NotFound(_('Meta pool member not found: {}').format(item)) from None
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, models.MetaPool)
         return (
@@ -120,6 +124,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.MetaPool)
         # If already exists
@@ -149,6 +154,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
 
         return {'id': member.uuid}
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.MetaPool)
         member = parent.members.get(uuid=process_uuid(self._args[0]))
@@ -207,6 +213,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             ):
                 yield u, properties.get(u.uuid, {})
                 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[UserServiceItem]:
         parent = ensure.is_instance(parent, models.MetaPool)
 
@@ -217,6 +224,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             }.values()
         )
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> UserServiceItem:
         parent = ensure.is_instance(parent, models.MetaPool)
 
@@ -231,6 +239,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             },
         )
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         parent = ensure.is_instance(parent, models.MetaPool)
         return (
@@ -250,6 +259,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             .build()
         )
 
+    @typing.override
     def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.MetaPool)
         try:
@@ -262,6 +272,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             logger.error('Error getting logs for %s', e)
             raise exceptions.rest.RequestError(f'Error retrieving logs for assigned service: {e}') from e
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.MetaPool)
         userservice = self._get_assigned_userservice(parent, item)
@@ -289,6 +300,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
         log.log(parent, types.log.LogLevel.INFO, log_str, types.log.LogSource.ADMIN)
 
     # Only owner is allowed to change right now
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.MetaPool)
         if item is None:

@@ -54,6 +54,7 @@ class UserServiceErrorsReport(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
             gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
@@ -112,6 +113,7 @@ class UserServiceErrorsReport(StatsReport):
 
         return per_pool, detail
 
+    @typing.override
     def generate(self) -> bytes:
         per_pool, detail = self.get_data()
         return self.template_as_pdf(
@@ -137,6 +139,7 @@ class UserServiceErrorsReportCSV(UserServiceErrorsReport):
     start_date = UserServiceErrorsReport.start_date
     end_date = UserServiceErrorsReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

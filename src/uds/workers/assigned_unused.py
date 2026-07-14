@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import logging
 from datetime import timedelta
 
@@ -49,9 +50,11 @@ logger = logging.getLogger(__name__)
 class AssignedAndUnused(Job):
     friendly_name = 'Unused services checker'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60
 
+    @typing.override
     def run(self) -> None:
         since_state = sql_now() - timedelta(
             seconds=GlobalConfig.CHECK_UNUSED_TIME.as_int()

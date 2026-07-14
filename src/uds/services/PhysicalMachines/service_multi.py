@@ -144,6 +144,7 @@ class IPMachinesService(services.Service):
     def enumerate_servers(self) -> collections.abc.Iterable['models.Server']:
         return fields.get_server_group_from_field(self.server_group).servers.filter(maintenance_mode=False)
 
+    @typing.override
     def get_token(self) -> str | None:
         return self.token.as_str() or None
 
@@ -152,6 +153,7 @@ class IPMachinesService(services.Service):
             return datetime.timedelta(days=365 * 32)  # 32 years (forever, or almost :) )
         return datetime.timedelta(hours=self.max_session_hours.value)
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         now = sql_now()
         return [
@@ -160,6 +162,7 @@ class IPMachinesService(services.Service):
             if server.locked_until is None or server.locked_until < now
         ]
 
+    @typing.override
     def assign_from_assignables(
         self,
         assignable_id: str,
@@ -223,6 +226,7 @@ class IPMachinesService(services.Service):
         except models.Server.DoesNotExist:
             pass
 
+    @typing.override
     def process_login(self, id: str, remote_login: bool) -> None:
         '''
         Process login for a machine not assigned to any user.
@@ -237,12 +241,14 @@ class IPMachinesService(services.Service):
             )
             self.lock_server(id)
 
+    @typing.override
     def process_logout(self, id: str, remote_login: bool) -> None:
         '''
         Process logout for a machine and release it.
         '''
         self.unlock_server(id)
 
+    @typing.override
     def notify_initialization(self, id: str) -> None:
         '''
         Notify that a machine has been initialized.
@@ -252,6 +258,7 @@ class IPMachinesService(services.Service):
         self.unlock_server(id)
 
     # Used by actor API. look parent documentation
+    @typing.override
     def get_valid_id(self, ids: collections.abc.Iterable[str]) -> str | None:
         # If locking not allowed, return None
         if self.lock_on_external_access.as_bool() is False:
@@ -263,6 +270,7 @@ class IPMachinesService(services.Service):
                 return server.uuid
         return None
 
+    @typing.override
     def provider(self) -> 'provider.PhysicalMachinesProvider':
         return typing.cast('provider.PhysicalMachinesProvider', super().provider())
 
@@ -279,5 +287,6 @@ class IPMachinesService(services.Service):
 
     # Phisical machines does not have "real" providers, so
     # always is available
+    @typing.override
     def is_available(self) -> bool:
         return True

@@ -243,6 +243,7 @@ class Service(Module):
         Default implementation does nothing
         """
 
+    @typing.override
     def db_obj(self) -> 'models.Service':
         """
         Returns the database object associated with this service
@@ -295,6 +296,7 @@ class Service(Module):
         """
         return False
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         # In fact, we will not unmarshal anything here, but setup maxDeployed
         # if userservices_limit_field exists and it is a gui.NumericField
@@ -490,6 +492,7 @@ class Service(Module):
         """
         return False
 
+    @typing.override
     def do_log(
         self,
         level: 'types.log.LogLevel',
@@ -508,6 +511,7 @@ class Service(Module):
             and cls.assign_from_assignables is not Service.assign_from_assignables
         )
 
+    @typing.override
     def __str__(self) -> str:
         """
         String method, mainly used for debugging purposes

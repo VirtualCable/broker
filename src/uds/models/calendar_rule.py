@@ -194,6 +194,7 @@ class CalendarRule(UUIDModel):
     def duration_as_minutes(self) -> int:
         return DurationInfo.from_str(self.duration_unit).value.minutes * self.duration
 
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         logger.debug('Saving...')
         self.calendar.modified = sql_now()

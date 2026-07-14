@@ -259,6 +259,7 @@ class Command(BaseCommand):
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
 
+    @typing.override
     def add_arguments(self, parser: 'argparse.ArgumentParser') -> None:
         # Accepts a list of valid entities to export
         parser.add_argument(
@@ -305,6 +306,7 @@ class Command(BaseCommand):
             help='Quiet mode',
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         self.verbose = options['verbose']
 

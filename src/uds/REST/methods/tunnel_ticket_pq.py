@@ -95,16 +95,15 @@ class TunnelTicketPQ(Handler):
                     log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
 
                     # Try to log Close event. Note that the userservice may already be gone
-                    if ticket.userservice:
-                        # If pool does not exists, do not log anything
-                        events.add_event(
-                            ticket.userservice.service_pool,
-                            events.types.stats.EventType.TUNNEL_CLOSE,
-                            duration=total_time,
-                            sent=req.sent,
-                            received=req.recv,
-                            tunnel=req.token,
-                        )
+                    # If pool does not exists, do not log anything
+                    events.add_event(
+                        ticket.userservice.service_pool,
+                        events.types.stats.EventType.TUNNEL_CLOSE,
+                        duration=total_time,
+                        sent=req.sent,
+                        received=req.recv,
+                        tunnel=req.token,
+                    )
                     return {}
 
                 case 'start':
@@ -148,6 +147,7 @@ class TunnelRegisterPC(ServerRegisterBase):
     NAME = 'register'
 
     # Just a compatibility method for old tunnel servers
+    @typing.override
     def post(self) -> dict[str, typing.Any]:
         self._params['type'] = types.servers.ServerType.TUNNEL
         return super().post()

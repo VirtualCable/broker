@@ -151,7 +151,7 @@ class TunnelTicketRequest:
             token=data['token'][:48],
             ticket=data['ticket'][:48],
             command=data['command'][:16],
-            kem_kyber_key=data.get('kem_kyber_key', '')[:16384],  # Kem keys can be large
+            kem_kyber_key=(data.get('kem_kyber_key') or '')[:16384],  # Kem keys can be large
             ip=data['ip'][:32],
             sent=int(data.get('sent') or 0),
             recv=int(data.get('recv') or 0),

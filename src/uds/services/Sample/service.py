@@ -147,6 +147,7 @@ class ServiceOne(services.Service):
         default='',  # Default value is the ID of the choicefield
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We check here form values to see if they are valid.

@@ -101,9 +101,11 @@ class Transports(ModelHandler[TransportItem]):
     )
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[transports.Transport]]:
         return transports.factory().providers().values()
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         transport_type = transports.factory().lookup(for_type)
 
@@ -154,6 +156,7 @@ class Transports(ModelHandler[TransportItem]):
                 .build()
             )
 
+    @typing.override
     def get_item(self, item: 'Model') -> TransportItem:
         item = ensure.is_instance(item, Transport)
         type_ = item.get_type()
@@ -176,6 +179,7 @@ class Transports(ModelHandler[TransportItem]):
             item=item,
         )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         fields['allowed_oss'] = ','.join(fields['allowed_oss'])
         # If label has spaces, replace them with underscores
@@ -186,6 +190,7 @@ class Transports(ModelHandler[TransportItem]):
                 gettext('Label must contain only letters, numbers, ":" and "-"')
             )
 
+    @typing.override
     def post_save(self, item: 'Model') -> None:
         item = ensure.is_instance(item, Transport)
         try:

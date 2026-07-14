@@ -295,6 +295,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.DISPLAY,
     )
 
+    @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         if not values:
             return
@@ -302,6 +303,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         if self.use_sso.as_bool():
             self.use_nla.value = False  # NLA and SSO are mutually exclusive
 
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
@@ -317,6 +319,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             self.cache.put(ip, 'N', READY_CACHE_TIMEOUT)
         return ready == 'Y'
 
+    @typing.override
     def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
         v = self.process_user_password(userservice, user, '', alt_username=None)
         return v.username
@@ -431,6 +434,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             tunnel=tunnel,
         )
 
+    @typing.override
     def get_connection_info(
         self,
         userservice: 'models.UserService | models.ServicePool',

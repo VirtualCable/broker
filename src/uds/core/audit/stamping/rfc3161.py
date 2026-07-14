@@ -36,6 +36,7 @@ Compatible with any RFC 3161-compliant TSA such as:
 - .. (you can use your own TSA like OpenTimestamps)
 """
 
+import typing
 import hashlib
 import logging
 import os
@@ -144,6 +145,7 @@ class RFC3161StampProvider(StampProvider):
         self._timeout = timeout
         self._verify_ssl = verify_ssl
 
+    @typing.override
     def stamp(self, hash_data: bytes) -> bytes:
         """
         Send a TimeStampReq to the TSA and return the TimeStampResp token.
@@ -188,6 +190,7 @@ class RFC3161StampProvider(StampProvider):
         )
         return token
 
+    @typing.override
     def verify(self, hash_data: bytes, token: bytes) -> bool:
         """
         Verify a token by re-stamping and comparing.

@@ -93,6 +93,7 @@ class IPAuth(auths.Authenticator):
             ip = ip.split(':')[-1]
         return ip
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         try:
             return self.db_obj().users.get(name=username.lower(), state=State.ACTIVE).mfa_data
@@ -100,6 +101,7 @@ class IPAuth(auths.Authenticator):
             pass
         return ''
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         # these groups are a bit special. They are in fact ip-ranges, and we must check that the ip is in betwen
         # The ranges are stored in group names
@@ -110,6 +112,7 @@ class IPAuth(auths.Authenticator):
             except Exception as e:
                 logger.error('Invalid network for IP auth: %s', e)
 
+    @typing.override
     def is_ip_allowed(self, request: 'types.requests.ExtendedHttpRequest') -> bool:
         """
         Used by the login interface to determine if the authenticator is visible on the login page.
@@ -120,6 +123,7 @@ class IPAuth(auths.Authenticator):
             return False
         return super().is_ip_allowed(request)
 
+    @typing.override
     def authenticate(
         self,
         username: str,
@@ -134,12 +138,15 @@ class IPAuth(auths.Authenticator):
         return types.auth.FAILED_AUTH
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         return types.core.TestResult(True)
 
+    @typing.override
     def check(self) -> str:
         return _("All seems to be fine.")
 
+    @typing.override
     def get_javascript(self, request: 'types.requests.ExtendedHttpRequest') -> typing.Optional[str]:
         # We will authenticate ip here, from request.ip
         # If valid, it will simply submit form with ip submited and a cached generated random password
@@ -159,5 +166,6 @@ class IPAuth(auths.Authenticator):
 
         return 'alert("invalid authhenticator"); window.location.reload();'
 
+    @typing.override
     def __str__(self) -> str:
         return "IP Authenticator"

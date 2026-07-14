@@ -80,6 +80,7 @@ class TestTransport(transports.Transport):
         tab=types.ui.Tab.ADVANCED,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if not values:
             return
@@ -88,10 +89,12 @@ class TestTransport(transports.Transport):
             raise exceptions.ui.ValidationError(_('The url must be http or https'))
 
     # Same check as normal RDP transport
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         # No check is done for URL transport
         return True
 
+    @typing.override
     def get_link(
         self,
         userservice: 'models.UserService',

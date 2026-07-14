@@ -137,6 +137,7 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         ],
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         Fixed token value, ensure we have at least one machine,
@@ -161,7 +162,7 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
             self.token.value = self.token.value.strip()
 
     @contextlib.contextmanager
-    def _assigned_access(self) -> collections.abc.Iterator[set[str]]:
+    def _assigned_access(self) -> collections.abc.Generator[set[str]]:
         with self.storage.as_dict(atomic=True) as d:
             machines: set[str] = d.get('vms', set())
             initial_machines = machines.copy()  # for comparison later
@@ -185,6 +186,7 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         """
         return
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         super().unmarshal(data)
         # Recover userservice limit from machines list
@@ -248,12 +250,15 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         raise NotImplementedError()
 
     @abc.abstractmethod
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
         Returns a list of tuples with the id and the name of the assignables
+        Redeclare as abstract as this is a MUST for derived classes
         """
         raise NotImplementedError()
 
+    @typing.override
     def assign_from_assignables(
         self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
     ) -> types.states.TaskState:
@@ -282,6 +287,7 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
 
         return machines.as_list()
 
+    @typing.override
     def allows_errored_userservice_cleanup(self) -> bool:
         """
         Returns if this service can clean errored services. This is used to check if a service can be cleaned
@@ -294,6 +300,7 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
             return self.maintain_on_error.value
         return False
 
+    @typing.override
     def get_token(self) -> str | None:
         if self.has_field('token') and self.token.value:
             return self.token.value

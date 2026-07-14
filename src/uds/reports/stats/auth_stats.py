@@ -64,6 +64,7 @@ class AuthenticatorsStats(StatsReportAuto):
     )  # Report description
     uuid = 'a5a43bc0-d543-11ea-af8f-af01fa65994e'
 
+    @typing.override
     def generate(self) -> bytes:
         stats: list[dict[str, typing.Any]] = []
 

@@ -120,6 +120,7 @@ class SampleAuth(auths.Authenticator):
 
     groups = gui.EditableListField(label=_('Groups'), default=['Gods', 'Daemons', 'Mortals'])
 
+    @typing.override
     def initialize(self, values: typing.Optional[dict[str, typing.Any]]) -> None:
         """
         Simply check if we have
@@ -133,6 +134,7 @@ class SampleAuth(auths.Authenticator):
         if values and len(self.groups.value) < 2:
             raise exceptions.ui.ValidationError(_('We need more than two groups!'))
 
+    @typing.override
     def search_users(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
         """
         Here we will receive a pattern for searching users.
@@ -145,6 +147,7 @@ class SampleAuth(auths.Authenticator):
         """
         return [types.auth.SearchResultItem(id=f'{pattern}-{a}', name=f'{pattern} number {a}') for a in range(1, 10)]
 
+    @typing.override
     def search_groups(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
         """
         Here we we will receive a patter for searching groups.
@@ -156,6 +159,7 @@ class SampleAuth(auths.Authenticator):
         pattern = pattern.lower()
         return [types.auth.SearchResultItem(id=g, name='') for g in self.groups.value if g.lower().find(pattern) != -1]
 
+    @typing.override
     def authenticate(
         self,
         username: str,
@@ -217,6 +221,7 @@ class SampleAuth(auths.Authenticator):
 
         return types.auth.SUCCESS_AUTH
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         """
         As with authenticator part related to groupsManager, this
@@ -232,6 +237,7 @@ class SampleAuth(auths.Authenticator):
             if len(set(g.lower()).intersection(username.lower())) >= 2:
                 groups_manager.validate(g)
 
+    @typing.override
     def get_javascript(self, request: 'HttpRequest') -> typing.Optional[str]:  # pylint: disable=unused-argument
         """
         If we override this method from the base one, we are telling UDS
@@ -259,6 +265,7 @@ class SampleAuth(auths.Authenticator):
         res += '\' + $(\'#logname\').val()); return false;">Login</a></p>'
         return res
 
+    @typing.override
     def auth_callback(
         self,
         parameters: 'types.auth.AuthCallbackParams',
@@ -282,6 +289,7 @@ class SampleAuth(auths.Authenticator):
 
         return types.auth.AuthenticationResult(types.auth.AuthenticationState.SUCCESS, username=user)
 
+    @typing.override
     def create_user(self, user_data: dict[str, str]) -> None:
         """
         This method provides a "check oportunity" to authenticators for users created
@@ -303,6 +311,7 @@ class SampleAuth(auths.Authenticator):
         user_data['real_name'] = user_data['name'] + ' ' + user_data['name']
         user_data['state'] = State.INACTIVE
 
+    @typing.override
     def modify_user(self, user_data: dict[str, str]) -> None:
         """
         This method provides a "check opportunity" to authenticator for users modified

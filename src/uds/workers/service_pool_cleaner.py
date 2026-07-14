@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 from datetime import timedelta
 import logging
 import collections.abc
@@ -48,9 +49,11 @@ MAX_REMOVING_TIME = 3600 * 24 * 1  # 2 days, in seconds
 class DeployedServiceInfoItemsCleaner(Job):
     friendly_name = 'Deployed Service Info Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 600
 
+    @typing.override
     def run(self) -> None:
         remove_since = sql_now() - timedelta(
             seconds=GlobalConfig.KEEP_INFO_TIME.as_int()
@@ -63,6 +66,7 @@ class DeployedServiceInfoItemsCleaner(Job):
 class DeployedServiceRemover(Job):
     friendly_name = 'Deployed Service Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.REMOVAL_CHECK.as_int()
 
@@ -163,6 +167,7 @@ class DeployedServiceRemover(Job):
 
         servicepool.removed()  # Mark it as removed, let model decide what to do
 
+    @typing.override
     def run(self) -> None:
         # First check if there is someone in "removable" estate
         removable_servicepools: collections.abc.Iterable[

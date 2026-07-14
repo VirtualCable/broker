@@ -151,6 +151,7 @@ class ProxmoxProvider(services.ServiceProvider):
         return self._cached_api
 
     # There is more fields type, but not here the best place to cover it
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We will use the "autosave" feature for form fields
@@ -221,6 +222,7 @@ class ProxmoxProvider(services.ServiceProvider):
         return self.macs_range.value
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         """
         Test Proxmox Connectivity

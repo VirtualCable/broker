@@ -35,4 +35,4 @@ import typing
 class CalendarAction(typing.TypedDict):
     id: str
     description: str
-    params: typing.Tuple[typing.Any, ...]
+    params: tuple[typing.Any, ...]

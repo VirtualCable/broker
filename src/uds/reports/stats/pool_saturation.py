@@ -54,6 +54,7 @@ class PoolSaturationReport(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
             gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
@@ -120,6 +121,7 @@ class PoolSaturationReport(StatsReport):
         result.sort(key=lambda r: r['pct_value'], reverse=True)
         return result
 
+    @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
@@ -144,6 +146,7 @@ class PoolSaturationReportCSV(PoolSaturationReport):
     start_date = PoolSaturationReport.start_date
     end_date = PoolSaturationReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

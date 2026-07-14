@@ -77,15 +77,19 @@ class LinuxOsManager(osmanagers.OSManager):
         default=True,
     )
 
+    @typing.override
     def manages_unused_userservices(self) -> bool:
         return fields.onlogout_field_is_removable(self.on_logout)
 
+    @typing.override
     def release(self, userservice: 'UserService') -> None:
         pass
 
+    @typing.override
     def ignore_deadline(self) -> bool:
         return not self.deadline.as_bool()
 
+    @typing.override
     def is_removable_on_logout(self, userservice: 'UserService') -> bool:
         """
         if a machine is removable on logout
@@ -104,9 +108,11 @@ class LinuxOsManager(osmanagers.OSManager):
         """
         return service.get_name()
 
+    @typing.override
     def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(action='rename', name=userservice.get_name())  # No custom data
 
+    @typing.override
     def handle_unused(self, userservice: 'UserService') -> None:
         """
         This will be invoked for every assigned and unused user service that has been in this state at least 1/2 of Globalconfig.CHECK_UNUSED_TIME
@@ -123,19 +129,23 @@ class LinuxOsManager(osmanagers.OSManager):
             # release_from_logout handles cache return if pool allows it, else releases
             UserServiceManager.manager().release_from_logout(userservice)
 
+    @typing.override
     def is_persistent(self) -> bool:
         return fields.onlogout_field_is_persistent(self.on_logout)
 
+    @typing.override
     def check_state(self, userservice: 'UserService') -> types.states.State:
         logger.debug('Checking state for service %s', userservice)
         return State.RUNNING
 
+    @typing.override
     def max_idle(self) -> int | None:
         if self.idle.as_int() <= 0:
             return None
 
         return self.idle.as_int()
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)

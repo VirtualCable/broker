@@ -87,6 +87,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         ordering = ('name',)
         app_label = 'uds'
 
+    @typing.override
     def get_instance(self, values: ui.gui.ValuesType = None) -> auths.Authenticator:
         """
         Instantiates the object this record contains.
@@ -120,6 +121,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
 
         return auth
 
+    @typing.override
     def get_type(self) -> type[auths.Authenticator]:
         """
         Get the type of the object this record represents.

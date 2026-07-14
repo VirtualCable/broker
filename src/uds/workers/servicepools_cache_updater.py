@@ -66,6 +66,7 @@ class ServiceCacheUpdater(Job):
 
     friendly_name = 'Service Cache Updater'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.CACHE_CHECK_DELAY.as_int()
 
@@ -269,6 +270,7 @@ class ServiceCacheUpdater(Job):
             cache: UserService = cache_items[0]
             cache.remove_or_cancel()
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting cache checking')
         # We need to get

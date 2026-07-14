@@ -90,6 +90,7 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
         tab=types.ui.Tab.ADVANCED,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         Fixed token value, ensure we have at least one machine,
@@ -107,11 +108,13 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
                         _('Snapshot on back to cache is not supported if try soft shutdown is not enabled')
                     )
 
+    @typing.override
     def allow_putting_back_to_cache(self) -> bool:
         if self.has_field('put_back_to_cache'):
             return self.put_back_to_cache.value != 'no'
         return False
 
+    @typing.override
     def restore_snapshot_on_back_to_cache(self) -> bool:
         if self.has_field('put_back_to_cache'):
             return self.put_back_to_cache.value == 'snapshot'
@@ -320,6 +323,7 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
             return self.maintain_on_error.value
         return False
 
+    @typing.override
     def allows_errored_userservice_cleanup(self) -> bool:
         """
         Returns if this service can clean errored services. This is used to check if a service can be cleaned

@@ -177,6 +177,7 @@ class OpenStackProviderLegacy(ServiceProvider):
     # Own variables
     _api: client.OpenStackClient | None = None
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We will use the "autosave" feature for form fields
@@ -228,6 +229,7 @@ class OpenStackProviderLegacy(ServiceProvider):
         return types.core.TestResult(True)
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         """
         Test ovirt Connectivity
