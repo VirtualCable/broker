@@ -32,8 +32,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+from unittest import mock
 
 from uds.services.OpenShift.openshift import client as openshift_client
+from uds.services.OpenShift.openshift import exceptions as openshift_exceptions
 from tests.utils.test import UDSTransactionTestCase
 from tests.utils import vars
 
@@ -165,3 +167,65 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         """
         phase = self.os_client.get_datavolume_phase('nonexistent-dv')
         self.assertIsInstance(phase, str)
+
+
+class TestOpenshiftClientToken(UDSTransactionTestCase):
+    """Offline tests for token retrieval and session/token caching."""
+
+    def _client(self) -> openshift_client.OpenshiftClient:
+        return openshift_client.OpenshiftClient(
+            cluster_url='https://oauth-openshift.apps-crc.testing',
+            api_url='https://api.crc.testing:6443',
+            username='kubeadmin',
+            password='test-password',
+            namespace='default',
+        )
+
+    def _redirect_response(self, token: str = 'a-token') -> mock.Mock:
+        response = mock.Mock()
+        response.status_code = 302
+        response.headers = {
+            'Location': f'https://oauth-openshift.apps-crc.testing/oauth/token/implicit'
+            f'#access_token={token}&expires_in=86400&token_type=Bearer'
+        }
+        return response
+
+    def test_get_token_from_redirect_fragment(self) -> None:
+        client = self._client()
+        with mock.patch('requests.get', return_value=self._redirect_response()) as requests_get:
+            self.assertEqual(client.get_token(), 'a-token')
+            # verify_ssl must be honored, not hardcoded to False
+            self.assertFalse(requests_get.call_args.kwargs['verify'])
+            self.assertFalse(requests_get.call_args.kwargs['allow_redirects'])
+
+    def test_get_token_on_non_redirect_raises_auth_error(self) -> None:
+        response = mock.Mock()
+        response.status_code = 401
+        response.headers = {}
+        client = self._client()
+        with mock.patch('requests.get', return_value=response):
+            with self.assertRaises(openshift_exceptions.OpenshiftAuthError):
+                client.get_token()
+
+    def test_connect_reuses_session_and_token(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, 'get_token', return_value='a-token') as get_token:
+            first = client.session
+            second = client.session
+            self.assertIs(first, second)
+            get_token.assert_called_once()  # no new OAuth round trip per request
+
+    def test_connect_refetches_token_after_invalidation(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, 'get_token', return_value='a-token') as get_token:
+            client.connect()
+            client._session = None  # what do_request does on a 401
+            client.connect()
+            self.assertEqual(get_token.call_count, 2)
+
+    def test_connect_refetches_token_when_forced(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, 'get_token', return_value='a-token') as get_token:
+            client.connect()
+            client.connect(force=True)
+            self.assertEqual(get_token.call_count, 2)

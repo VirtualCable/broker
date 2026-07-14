@@ -34,8 +34,6 @@ import datetime
 import urllib.parse
 import logging
 import requests
-import urllib3
-from urllib3.exceptions import InsecureRequestWarning
 
 from uds.core.util import security
 from uds.core.util.cache import Cache
@@ -89,9 +87,16 @@ class OpenshiftClient:
     def session(self) -> requests.Session:
         return self.connect()
 
+    def cache_key(self) -> str:
+        """
+        Identity of the connection parameters. Any change here must invalidate both the cached
+        client on the provider and any data cached through the `cached` decorator.
+        Password is deliberately excluded, it does not change what data we see.
+        """
+        return f'{self.cluster_url}|{self.api_url}|{self.username}|{self.namespace}|{self._verify_ssl}'
+
     def get_token(self) -> str | None:
         try:
-            urllib3.disable_warnings(InsecureRequestWarning)
             url = (
                 f"{self.cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
             )
@@ -120,15 +125,22 @@ class OpenshiftClient:
             raise exceptions.OpenshiftConnectionError(str(ex))
 
     def connect(self, force: bool = False) -> requests.Session:
-        # For testing, always use the fixed token
+        now = datetime.datetime.now()
+        if not force and self._session is not None and now < self._token_expiry:
+            return self._session
+
+        self._access_token = self.get_token() or ''
         session = self._session = security.secure_requests_session(verify=self._verify_ssl)
         session.headers.update(
             {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.get_token()}',
+                'Authorization': f'Bearer {self._access_token}',
             }
         )
+        # ponytail: fixed TTL instead of parsing expires_in from the redirect. do_request already
+        # drops _session on a 401, so an early expiry self-heals on the next request.
+        self._token_expiry = now + consts.TOKEN_VALIDITY
         return session
 
     def get_api_url(self, path: str, *parameters: tuple[str, str]) -> str:
@@ -596,11 +608,7 @@ class OpenshiftClient:
             logger.error(f"Error testing Openshift by enumerating VMs: {e}")
             raise exceptions.OpenshiftConnectionError(str(e)) from e
 
-    @cached(
-        'vms',
-        consts.CACHE_INFO_DURATION,
-        key_helper=lambda x: f'{x.cluster_url}|{x.api_url}|{x.username}|{x.namespace}|{x._verify_ssl}',
-    )
+    @cached('vms', consts.CACHE_INFO_DURATION, key_helper=lambda x: x.cache_key())
     def list_vms(self) -> collections.abc.Iterator[types.VM]:
         """
         Fetch all VMs from KubeVirt API in the current namespace as VMDefinition objects using do_request.

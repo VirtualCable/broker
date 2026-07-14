@@ -139,6 +139,13 @@ PROVIDER_VALUES_DICT: gui.ValuesDictType = {
     'timeout': 10,
 }
 
+# Connection identity matching PROVIDER_VALUES_DICT, as OpenshiftClient.cache_key() would build it
+CLIENT_CACHE_KEY = (
+    f'{PROVIDER_VALUES_DICT["cluster_url"]}|{PROVIDER_VALUES_DICT["api_url"]}|'
+    f'{PROVIDER_VALUES_DICT["username"]}|{PROVIDER_VALUES_DICT["namespace"]}|'
+    f'{PROVIDER_VALUES_DICT["verify_ssl"]}'
+)
+
 # Service values
 SERVICE_VALUES_DICT: gui.ValuesDictType = {
     'template': VMS[0].name,
@@ -168,6 +175,7 @@ def create_client_mock() -> mock.Mock:
     # Prepare deep copies of default data
     client.cluster_url = PROVIDER_VALUES_DICT['cluster_url']
     client.api_url = PROVIDER_VALUES_DICT['api_url']
+    client.cache_key.return_value = CLIENT_CACHE_KEY
     client.test.return_value = True
     client.list_vms.return_value = copy.deepcopy(DEF_VMS)
     client.start_vm_instance.return_value = True
