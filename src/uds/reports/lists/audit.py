@@ -33,7 +33,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import csv
 import io
 import logging
-import re
 import typing
 import collections.abc
 
@@ -48,6 +47,62 @@ from uds.models import Log
 from .base import ListReport
 
 logger = logging.getLogger(__name__)
+
+RESPONSE_CODES: typing.Final[dict[str, str]] = {
+    '200': 'OK',
+    '400': 'Bad Request',
+    '401': 'Unauthorized',
+    '403': 'Forbidden',
+    '404': 'Not Found',
+    '405': 'Method Not Allowed',
+    '500': 'Internal Server Error',
+    '501': 'Not Implemented',
+}
+
+RESPONSE_CODE_GROUPS: typing.Final[dict[int, str]] = {
+    1: 'Informational',
+    2: 'Success',
+    3: 'Redirection',
+    4: 'Client Error',
+    5: 'Server Error',
+}
+
+
+def _decode_response_code(code: str) -> str:
+    try:
+        group = int(code) // 100
+    except ValueError:
+        group = -1  # Unknown
+
+    return code + '/' + RESPONSE_CODES.get(code, RESPONSE_CODE_GROUPS.get(group, 'Unknown'))
+
+
+def _parse_log_data(data: str) -> tuple[str, str, str, str, str] | None:
+    """Splits a syslog REST entry into (ip, user, method, response_code, request).
+
+    Two formats are produced by uds.REST.log:
+      * log_operation: "ip [user]: [method/response_code] request"
+      * log_audit:     "ip [user]: action request"  (no method/response_code)
+
+    Parsed by splitting instead of by regex: data is attacker-influenced (it embeds the
+    request path), and the previous regexes backtracked polynomially on crafted input.
+    """
+    head, sep, rest = data.partition(']: ')
+    if not sep:
+        return None
+
+    ip, sep, user = head.partition(' [')
+    if not sep:
+        return None
+
+    if rest.startswith('['):
+        method_and_code, sep, request = rest[1:].partition('] ')
+        method, code_sep, code = method_and_code.partition('/')
+        if sep and code_sep:
+            return ip, user, method, _decode_response_code(code), request
+
+    # Audit action row (log_audit): no method/response_code
+    return ip, user, 'AUDIT', '', rest
 
 
 class ListReportAuditCSV(ListReport):
@@ -78,14 +133,6 @@ class ListReportAuditCSV(ListReport):
 
     # Generator of data
     def gen_data(self) -> collections.abc.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
-        # Xtract user method, response_code and request from data
-        # the format is "ip [user]: [method/response_code] request"
-        rx = re.compile(
-            r'(?P<ip>[^\[ ]*) *(?P<user>.*?): \[(?P<method>[^/]*)/(?P<response_code>[^\]]*)\] (?P<request>.*)'
-        )
-        # Audit actions (log_audit) have no [method/code], just: "ip [user]: action path"
-        rx_audit = re.compile(r'(?P<ip>[^\[ ]*) *\[(?P<user>[^\]]*)\]: (?P<request>.*)')
-
         # as_datetime() already returns an aware datetime, so no make_aware here
         start = self.start_date.as_datetime().replace(hour=0, minute=0, second=0, microsecond=0)
         end = self.end_date.as_datetime().replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -95,56 +142,21 @@ class ListReportAuditCSV(ListReport):
             source=types.log.LogSource.REST,
             owner_type=types.log.LogObjectType.SYSLOG,
         ).order_by('-created'):
-            # extract user, method, response_code and request from data field
-            m = rx.match(i.data)
-        
-            if m:
-                code: str = m.group('response_code')
-                try:
-                    code_grp = int(code) // 100
-                except Exception:
-                    code_grp = 500
-                    
-                response_code = code + '/' + {
-                    '200': 'OK',
-                    '400': 'Bad Request',
-                    '401': 'Unauthorized',
-                    '403': 'Forbidden',
-                    '404': 'Not Found',
-                    '405': 'Method Not Allowed',
-                    '500': 'Internal Server Error',
-                    '501': 'Not Implemented',
-                }.get(code, {
-                    1: 'Informational',
-                    2: 'Success',
-                    3: 'Redirection',
-                    4: 'Client Error',
-                    5: 'Server Error',
-                }.get(code_grp, 'Unknown')
-                )
-                
-                yield (
-                    i.created,
-                    i.level_as_str,
-                    m.group('ip'),
-                    m.group('user'),
-                    m.group('method'),
-                    response_code,
-                    m.group('request'),
-                )
-            else:
-                # Audit action row (log_audit): no method/response_code
-                a = rx_audit.match(i.data)
-                if a:
-                    yield (
-                        i.created,
-                        i.level_as_str,
-                        a.group('ip'),
-                        a.group('user'),
-                        'AUDIT',
-                        '',
-                        a.group('request'),
-                    )
+            # extract ip, user, method, response_code and request from data field
+            parsed = _parse_log_data(i.data)
+            if not parsed:
+                continue
+
+            ip, user, method, response_code, request = parsed
+            yield (
+                i.created,
+                i.level_as_str,
+                ip,
+                user,
+                method,
+                response_code,
+                request,
+            )
 
     @typing.override
     def generate(self) -> bytes:
