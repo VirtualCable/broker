@@ -119,6 +119,7 @@ class Users(DetailHandler[UserItem]):
             role=user.get_role().as_str(),
         )
         
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('role'):
             descending = '-' if field_info[1] else ''
@@ -126,17 +127,20 @@ class Users(DetailHandler[UserItem]):
 
         return super().apply_sort(qs)
 
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Authenticator)
 
         return self.calc_item_position(item_uuid, parent.users.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[UserItem]:
         parent = ensure.is_instance(parent, Authenticator)
 
         # Extract authenticator
         return [self.as_user_item(i) for i in self.odata_filter(parent.users.all())]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> UserItem:
         parent = ensure.is_instance(parent, Authenticator)
 
@@ -146,6 +150,7 @@ class Users(DetailHandler[UserItem]):
         user_item.groups = [g.db_obj().uuid for g in auth_usr.groups()]
         return user_item
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, Authenticator)
         return (
@@ -161,6 +166,7 @@ class Users(DetailHandler[UserItem]):
             .row_style(prefix='row-state-', field='state')
         ).build()
 
+    @typing.override
     def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, Authenticator)
         user = None
@@ -174,6 +180,7 @@ class Users(DetailHandler[UserItem]):
 
         return log.get_logs(user)
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, Authenticator)
         logger.debug('Saving user %s / %s', parent, item)
@@ -238,6 +245,7 @@ class Users(DetailHandler[UserItem]):
             logger.error('Error saving user %s: %s', item, e)
             raise exceptions.rest.ResponseError(_('Error saving user')) from e
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, Authenticator)
         try:
@@ -375,15 +383,18 @@ class Groups(DetailHandler[GroupItem]):
             val.groups = list(x.uuid for x in group.groups.all().order_by('name'))
         return val
 
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Authenticator)
         return self.calc_item_position(item_uuid, parent.groups.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['GroupItem']:
         parent = ensure.is_instance(parent, Authenticator)
         q = self.odata_filter(parent.groups.all())
         return [self.as_group_item(i) for i in q]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> 'GroupItem':
         parent = ensure.is_instance(parent, Authenticator)
         db_grp = parent.groups.filter(uuid=process_uuid(item)).first()
@@ -393,6 +404,7 @@ class Groups(DetailHandler[GroupItem]):
         grp.pools = [v.uuid for v in get_service_pools_for_groups([db_grp])]
         return grp
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, Authenticator)
         return (
@@ -403,6 +415,7 @@ class Groups(DetailHandler[GroupItem]):
             .dict_column(name='skip_mfa', title=_('Skip MFA'), dct=State.literals_dict())
         ).build()
 
+    @typing.override
     def enum_types(
         self, parent: 'Model', for_type: str | None
     ) -> collections.abc.Iterable[types.rest.TypeInfo]:
@@ -430,6 +443,7 @@ class Groups(DetailHandler[GroupItem]):
             logger.error('Type %s not found in %s', for_type, types_list)
             raise exceptions.rest.NotFound(_('Group type not found')) from None
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, Authenticator)
         group = None  # Avoid warning on reference before assignment
@@ -497,6 +511,7 @@ class Groups(DetailHandler[GroupItem]):
             logger.error('Error saving group %s: %s', item, e)
             raise exceptions.rest.ResponseError(_('Error saving group')) from e
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, Authenticator)
         try:

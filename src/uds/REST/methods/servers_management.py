@@ -98,6 +98,7 @@ class ServersTokens(ModelHandler[TokenItem]):
         .build()
     )
 
+    @typing.override
     def get_item(self, item: 'Model') -> TokenItem:
         item = typing.cast('models.Server', item)  # We will receive for sure
         return TokenItem(
@@ -114,6 +115,7 @@ class ServersTokens(ModelHandler[TokenItem]):
             os=item.os_type,
         )
 
+    @typing.override
     def delete(self) -> str:
         """
         Processes a DELETE request
@@ -167,14 +169,17 @@ class ServersServers(DetailHandler[ServerItem]):
             stamp=item.stamp,
         )
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ServerItem]:
         parent = typing.cast('models.ServerGroup', parent)  # We will receive for sure
         return [self.as_server_item(i) for i in self.filter_odata_queryset(parent.servers.all())]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> ServerItem:
         parent = typing.cast('models.ServerGroup', parent)  # We will receive for sure
         return self.as_server_item(parent.servers.get(uuid=process_uuid(item)))
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         parent = ensure.is_instance(parent, models.ServerGroup)
         table_info = (
@@ -196,6 +201,7 @@ class ServersServers(DetailHandler[ServerItem]):
             .build()
         )
 
+    @typing.override
     def get_gui(self, parent: 'Model', for_type: str) -> list[types.ui.GuiElement]:
         parent = ensure.is_instance(parent, models.ServerGroup)
         kind, subkind = parent.server_type, parent.subtype
@@ -241,6 +247,7 @@ class ServersServers(DetailHandler[ServerItem]):
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServerGroup)
         # Item is the uuid of the server to add
@@ -315,6 +322,7 @@ class ServersServers(DetailHandler[ServerItem]):
 
             return {'id': item}
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.ServerGroup)
         try:
@@ -485,6 +493,7 @@ class ServersGroups(ModelHandler[GroupItem]):
         typed=types.rest.api.RestApiInfoGuiType.MULTIPLE_TYPES,
     )
 
+    @typing.override
     def enum_types(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> collections.abc.Generator[types.rest.TypeInfo, None, None]:
@@ -497,6 +506,7 @@ class ServersGroups(ModelHandler[GroupItem]):
                 group=gettext('Managed') if i.managed else gettext('Unmanaged'),
             )
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         if '@' not in for_type:  # If no subtype, use default
             for_type += '@default'
@@ -552,6 +562,7 @@ class ServersGroups(ModelHandler[GroupItem]):
             .build()
         )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         # Allow from admin gui (data_type) or from API (type and subtype)
         # Extract weights if they are on fields
@@ -565,6 +576,7 @@ class ServersGroups(ModelHandler[GroupItem]):
 
         return super().pre_save(fields)
 
+    @typing.override
     def post_save(self, item: 'Model') -> None:
         # Save weights if they are on fields
         item = ensure.is_instance(item, models.ServerGroup)
@@ -597,6 +609,7 @@ class ServersGroups(ModelHandler[GroupItem]):
             max_expected_users=max_expected_users,
         )
 
+    @typing.override
     def get_item(self, item: 'Model') -> GroupItem:
         item = ensure.is_instance(item, models.ServerGroup)
         return GroupItem(
@@ -615,6 +628,7 @@ class ServersGroups(ModelHandler[GroupItem]):
             weights_max_expected_users=item.weights.max_expected_users,
         )
 
+    @typing.override
     def delete_item(self, item: 'Model') -> None:
         item = ensure.is_instance(item, models.ServerGroup)
         """

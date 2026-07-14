@@ -177,6 +177,7 @@ class MarshallerProcessor(ContentProcessor):
 
     marshaller: typing.ClassVar[typing.Any] = None
 
+    @typing.override
     def process_parameters(self) -> dict[str, typing.Any]:
         try:
             length = int(self._request.META.get('CONTENT_LENGTH') or '0')
@@ -198,6 +199,7 @@ class MarshallerProcessor(ContentProcessor):
             logger.exception('parsing %s: %s', self.mime_type, self._request.body.decode('utf8'))
             raise ParametersException(str(e))
 
+    @typing.override
     def render(self, obj: typing.Any) -> str:
         def none_transformer(dct: dict[str, typing.Any]) -> dict[str, typing.Any]:
             return dct
@@ -218,6 +220,7 @@ class JsonProcessor(MarshallerProcessor):
     extensions: typing.ClassVar[collections.abc.Iterable[str]] = ['json']
     marshaller: typing.ClassVar[typing.Any] = json
 
+    @typing.override
     def as_incremental(self, obj: typing.Any) -> collections.abc.Iterable[bytes]:
         for i in to_incremental_json(obj):
             yield i.encode('utf8')

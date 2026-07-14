@@ -70,6 +70,7 @@ class ImmutableLog(models.Model):
     def __repr__(self) -> str:
         return f'<ImmutableLog #{self.sequence} hash={self.entry_hash.hex()[:16]}...>'
 
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if self.pk is not None:
             raise ValidationError('ImmutableLog entries cannot be updated.')

@@ -89,6 +89,7 @@ class Calendars(ModelHandler[CalendarItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def get_item(self, item: 'models.Model') -> CalendarItem:
         item = ensure.is_instance(item, Calendar)
         return CalendarItem(
@@ -103,6 +104,7 @@ class Calendars(ModelHandler[CalendarItem]):
             permission=permissions.effective_permissions(self._user, item),
         )
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[typing.Any]:
         return (
             ui_utils.GuiBuilder()

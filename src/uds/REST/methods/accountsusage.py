@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import dataclasses
 import datetime
 import logging
@@ -89,16 +90,19 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
             permission=perm,
         )
 
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Account)
         return self.calc_item_position(item_uuid, parent.usages.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[AccountItem]:
         parent = ensure.is_instance(parent, Account)
         # Check what kind of access do we have to parent provider
         perm = permissions.effective_permissions(self._user, parent)
         return [AccountsUsage.as_dict(k, perm) for k in self.odata_filter(parent.usages.all())]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> AccountItem:
         parent = ensure.is_instance(parent, Account)
         # Check what kind of access do we have to parent provider
@@ -106,6 +110,7 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
             parent.usages.get(uuid=process_uuid(item)), permissions.effective_permissions(self._user, parent)
         )
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         parent = ensure.is_instance(parent, Account)
         return (
@@ -121,9 +126,11 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> AccountItem:
         raise exceptions.rest.RequestError('Accounts usage cannot be edited')
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, Account)
         logger.debug('Deleting account usage %s from %s', item, parent)

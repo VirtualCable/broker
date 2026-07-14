@@ -184,6 +184,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
 
     _connection: 'ldaputil.LDAPConnection | None' = None
 
+    @typing.override
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if values:
             auth_utils.validate_regex_field(self.username_attr)
@@ -191,6 +192,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
             if self.certificate.value:
                 validators.validate_certificate(self.certificate.value)
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)
@@ -230,6 +232,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
     def mfa_storage_key(self, username: str) -> str:
         return 'mfa_' + self.db_obj().uuid + username
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         return self.storage.read_pickled(self.mfa_storage_key(username)) or ''
 
@@ -343,6 +346,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
         """
         return ' '.join(auth_utils.process_regex_field(self.username_attr.value, user))
 
+    @typing.override
     def authenticate(
         self,
         username: str,
@@ -373,6 +377,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
         except Exception:
             return types.auth.FAILED_AUTH
 
+    @typing.override
     def create_user(self, user_data: dict[str, str]) -> None:
         res = self._get_user(user_data['name'])
         if res is None:
@@ -380,6 +385,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
         # Fills back realName field
         user_data['real_name'] = self._get_user_realname(res)
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         '''
         Tries to get the real name of an user
@@ -389,20 +395,24 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
             return username
         return self._get_user_realname(res)
 
+    @typing.override
     def modify_user(self, user_data: dict[str, str]) -> None:
         return self.create_user(user_data)
 
+    @typing.override
     def create_group(self, group_data: dict[str, str]) -> None:
         res = self._get_group(group_data['name'])
         if res is None:
             raise exceptions.auth.AuthenticatorException(_('Group not found'))
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         user = self._get_user(username)
         if user is None:
             raise exceptions.auth.AuthenticatorException(_('Username not found'))
         groups_manager.validate(self._get_groups(user))
 
+    @typing.override
     def search_users(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
         try:
             return [
@@ -421,6 +431,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
             logger.exception("Exception: ")
             raise exceptions.auth.AuthenticatorException(_('Too many results, be more specific')) from e
 
+    @typing.override
     def search_groups(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
         try:
             return [
@@ -438,6 +449,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
             raise exceptions.auth.AuthenticatorException(_('Too many results, be more specific')) from e
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         try:
             auth = SimpleLDAPAuthenticator(env, data)
@@ -555,6 +567,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
 
         return types.core.TestResult(True)
 
+    @typing.override
     def __str__(self) -> str:
         return (
             f'Ldap Auth: {self.username.as_str()}:{self.password.as_str()}@{self.host.as_str()}:{self.port.as_int()}, '

@@ -115,6 +115,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     # Own variables
     _api: typing.Optional[on.client.OpenNebulaClient] = None
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         '''
         We will use the "autosave" feature for form fields
@@ -285,6 +286,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
         return None
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         return OpenNebulaProvider(env, data).test_connection()
 

@@ -131,6 +131,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         return self.deployed_service
 
     # For properties
+    @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
         return self.uuid, 'userservice'
 

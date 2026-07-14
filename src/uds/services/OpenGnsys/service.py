@@ -147,6 +147,7 @@ class OGService(services.Service):
 
     prov_uuid = gui.HiddenField(value=None)
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Loads required values inside
@@ -156,6 +157,7 @@ class OGService(services.Service):
 
         self.prov_uuid.value = self.provider().db_obj().uuid
 
+    @typing.override
     def provider(self) -> 'OGProvider':
         return typing.cast('OGProvider', super().provider())
 
@@ -203,5 +205,6 @@ class OGService(services.Service):
     def try_start_if_unavailable(self) -> bool:
         return self.start_if_unavailable.as_bool()
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()

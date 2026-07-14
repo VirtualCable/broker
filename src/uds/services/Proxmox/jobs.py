@@ -55,6 +55,7 @@ logger = logging.getLogger(__name__)
 class ProxmoxDeferredRemoval(jobs.Job):
     friendly_name = 'Proxmox removal'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 3
 
@@ -118,6 +119,7 @@ class ProxmoxDeferredRemoval(jobs.Job):
 
         return counter < timeout
 
+    @typing.override
     def run(self) -> None:
         db_provider: Provider
         # Look for Providers of type proxmox
@@ -162,11 +164,13 @@ class ProxmoxDeferredRemoval(jobs.Job):
 class ProxmoxVmidReleaser(jobs.Job):
     friendly_name = 'Proxmox maintenance'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 60 * 24 * 30
 
 
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Proxmox Vmid releader running')
         gen = UniqueIDGenerator('proxmoxvmid', 'proxmox')

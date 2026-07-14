@@ -75,6 +75,7 @@ class InactiveUsersReport(ListReport):
         default=True,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if values:
             if self.authenticator.value == '0-0-0-0':
@@ -90,6 +91,7 @@ class InactiveUsersReport(ListReport):
                     )
                     self.filename = 'inactive_users.pdf'
 
+    @typing.override
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL AUTHENTICATORS'))] + [
             gui.choice_item(v.uuid, v.name) for v in Authenticator.objects.all().order_by('name')
@@ -132,6 +134,7 @@ class InactiveUsersReport(ListReport):
 
         return rows, auth_label
 
+    @typing.override
     def generate(self) -> bytes:
         rows, auth_label = self.get_data()
         return self.template_as_pdf(
@@ -156,6 +159,7 @@ class InactiveUsersReportCSV(InactiveUsersReport):
     days = InactiveUsersReport.days
     include_never = InactiveUsersReport.include_never
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if values:
             if self.authenticator.value == '0-0-0-0':
@@ -171,6 +175,7 @@ class InactiveUsersReportCSV(InactiveUsersReport):
                         self.authenticator.value,
                     )
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

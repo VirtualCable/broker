@@ -167,6 +167,7 @@ class HTML5SSHTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
+    @typing.override
     def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
@@ -182,6 +183,7 @@ class HTML5SSHTransport(transports.Transport):
             self.cache.put(ip, 'N', READY_CACHE_TIMEOUT)
         return ready == 'Y'
 
+    @typing.override
     def get_link(
         self,
         userservice: 'models.UserService',

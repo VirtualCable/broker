@@ -89,9 +89,11 @@ class MFA(ModelHandler[MFAItem]):
     )
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[mfas.MFA]]:
         return mfas.factory().providers().values()
 
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('type_name'):
             _, is_descending = field_info
@@ -99,6 +101,7 @@ class MFA(ModelHandler[MFAItem]):
             return qs.order_by(order_by_field)
         return super().apply_sort(qs)
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         mfa_type = mfas.factory().lookup(for_type)
 
@@ -134,6 +137,7 @@ class MFA(ModelHandler[MFAItem]):
                 .build()
             )
 
+    @typing.override
     def get_item(self, item: 'Model') -> MFAItem:
         item = ensure.is_instance(item, models.MFA)
         type_ = item.get_type()

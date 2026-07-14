@@ -31,6 +31,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import typing
 import dataclasses
 import logging
 import datetime
@@ -110,6 +111,7 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             in_use=item.in_use,
         )
         
+    @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Provider)
         return self.calc_item_position(
@@ -117,6 +119,7 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             UserService.objects.filter(deployed_service__service__provider=parent).order_by('creation_date'),
         )
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ServicesUsageItem]:
         parent = ensure.is_instance(parent, Provider)
         try:
@@ -131,12 +134,14 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             logger.error('Error getting services usage for %s: %s', parent.uuid, e)
             raise exceptions.rest.ResponseError(_('Error getting services usage')) from None
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> ServicesUsageItem:
         ensure.is_instance(parent, Provider)  # Just ensures type
         return ServicesUsage.item_as_dict(
             UserService.objects.filter(deployed_service__service_uuid=process_uuid(item)).get()
         )
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         ensure.is_instance(parent, Provider)  # Just ensures type
         return (
@@ -154,6 +159,7 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             .build()
         )
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, Provider)
         userservice: UserService

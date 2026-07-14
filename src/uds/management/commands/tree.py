@@ -117,6 +117,7 @@ def get_serialized_from_model(
 class Command(BaseCommand):
     help = "Outputs all UDS Trees of elements in YAML format"
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '--all-userservices',
@@ -135,6 +136,7 @@ class Command(BaseCommand):
         )
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug("Show Tree")
         # firt, genertate Provider-service-servicepool tree

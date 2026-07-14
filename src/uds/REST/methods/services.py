@@ -156,16 +156,19 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
 
         return ret_value
     
+    @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.Provider)
         return self.calc_item_position(item_uuid, parent.services.all())
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ServiceItem]:
         parent = ensure.is_instance(parent, models.Provider)
         # Check what kind of access do we have to parent provider
         perm = permissions.effective_permissions(self._user, parent)
         return [Services.service_item(k, perm) for k in self.odata_filter(parent.services.all())]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> ServiceItem:
         parent = ensure.is_instance(parent, models.Provider)
         # Check what kind of access do we have to parent provider
@@ -185,6 +188,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         except Exception:  # nosec: This is a delete, we don't care about exceptions
             pass
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> ServiceItem:
         parent = ensure.is_instance(parent, models.Provider)
         # Extract item db fields
@@ -253,6 +257,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             logger.exception('Saving Service')
             raise exceptions.rest.RequestError('incorrect invocation to PUT: {0}'.format(e)) from e
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.Provider)
         try:
@@ -268,6 +273,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
 
         raise exceptions.rest.RequestError('Item has associated deployed services')
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         parent = ensure.is_instance(parent, models.Provider)
         return (
@@ -292,6 +298,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             .build()
         )
 
+    @typing.override
     def enum_types(self, parent: 'Model', for_type: str | None) -> list[types.rest.TypeInfo]:
         parent = ensure.is_instance(parent, models.Provider)
         logger.debug('get_types parameters: %s, %s', parent, for_type)
@@ -309,6 +316,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         return offers
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[module.Module]]:
         """
         If the detail has any possible types, provide them overriding this method
@@ -318,6 +326,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             for service in parent_type.get_provided_services():
                 yield service
 
+    @typing.override
     def get_gui(self, parent: 'Model', for_type: str) -> list[types.ui.GuiElement]:
         parent = ensure.is_instance(parent, models.Provider)
         try:
@@ -360,6 +369,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             logger.exception('get_gui')
             raise exceptions.rest.ResponseError(str(e)) from e
 
+    @typing.override
     def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.Provider)
         try:

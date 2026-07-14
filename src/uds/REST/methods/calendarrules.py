@@ -94,16 +94,19 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             permission=perm,
         )
         
+    @typing.override
     def get_item_position(self, parent: 'models.Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Calendar)
         return self.calc_item_position(item_uuid, parent.rules.all())
 
+    @typing.override
     def get_items(self, parent: 'models.Model') -> types.rest.ItemsResult[CalendarRuleItem]:
         parent = ensure.is_instance(parent, Calendar)
         # Check what kind of access do we have to parent provider
         perm = permissions.effective_permissions(self._user, parent)
         return [CalendarRules.rule_as_dict(k, perm) for k in self.filter_odata_queryset(parent.rules.all())]
 
+    @typing.override
     def get_item(self, parent: 'models.Model', item: str) -> CalendarRuleItem:
         parent = ensure.is_instance(parent, Calendar)
         # Check what kind of access do we have to parent provider
@@ -111,6 +114,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             parent.rules.get(uuid=process_uuid(item)), permissions.effective_permissions(self._user, parent)
         )
 
+    @typing.override
     def get_table(self, parent: 'models.Model') -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, Calendar)
         return (
@@ -125,6 +129,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'models.Model', item: typing.Optional[str]) -> typing.Any:
         parent = ensure.is_instance(parent, Calendar)
 
@@ -169,6 +174,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             logger.exception('Saving calendar')
             raise exceptions.rest.RequestError(f'incorrect invocation to PUT: {e}') from e
 
+    @typing.override
     def delete_item(self, parent: 'models.Model', item: str) -> None:
         parent = ensure.is_instance(parent, Calendar)
         logger.debug('Deleting rule %s from %s', item, parent)

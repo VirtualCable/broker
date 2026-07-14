@@ -66,9 +66,11 @@ class ProxmoxUserServiceFixed(FixedUserService, autoserializable.AutoSerializabl
         return (vals[0], vals[1])
 
     # Utility overrides for type checking...
+    @typing.override
     def service(self) -> 'service_fixed.ProxmoxServiceFixed':
         return typing.cast('service_fixed.ProxmoxServiceFixed', super().service())
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
         """
         o Proxmox, reset operation just shutdowns it until v3 support is removed
@@ -81,6 +83,7 @@ class ProxmoxUserServiceFixed(FixedUserService, autoserializable.AutoSerializabl
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start(self) -> None:
         vminfo = self.service().get_vm_info(int(self._vmid)).validate()
 
@@ -108,12 +111,14 @@ class ProxmoxUserServiceFixed(FixedUserService, autoserializable.AutoSerializabl
         return types.states.TaskState.RUNNING
 
     # Check methods
+    @typing.override
     def op_start_checker(self) -> types.states.TaskState:
         """
         Checks if machine has started
         """
         return self._check_task_finished()
 
+    @typing.override
     def get_console_connection(
         self,
     ) -> types.services.ConsoleConnectionInfo | None:

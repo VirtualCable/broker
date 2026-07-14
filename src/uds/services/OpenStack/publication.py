@@ -52,9 +52,11 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
     """
     suggested_delay = 20  # : Suggested recheck time if publication is unfinished in seconds
 
+    @typing.override
     def service(self) -> 'OpenStackLiveService':
         return typing.cast('OpenStackLiveService', super().service())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
@@ -79,6 +81,7 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
 
         self.mark_for_upgrade()  # This will force remarshalling
 
+    @typing.override
     def op_create(self) -> None:
         """
         Realizes the publication of the service
@@ -90,6 +93,7 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
         if volume_snapshot_info.status == openstack_types.SnapshotStatus.ERROR:
             raise Exception('Error creating snapshot')
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks state of publication creation
@@ -103,6 +107,7 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
         
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def get_template_id(self) -> str:
         """
         Returns the template id associated with the publication

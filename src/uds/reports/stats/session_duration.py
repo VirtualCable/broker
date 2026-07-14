@@ -64,6 +64,7 @@ class SessionDurationReport(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
             gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
@@ -124,6 +125,7 @@ class SessionDurationReport(StatsReport):
 
         return rows, total_sessions, total_seconds
 
+    @typing.override
     def generate(self) -> bytes:
         rows, total_sessions, total_seconds = self.get_data()
         avg_seconds = (total_seconds // total_sessions) if total_sessions else 0
@@ -152,6 +154,7 @@ class SessionDurationReportCSV(SessionDurationReport):
     start_date = SessionDurationReport.start_date
     end_date = SessionDurationReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

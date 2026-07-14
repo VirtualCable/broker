@@ -84,6 +84,7 @@ class ServerGroup(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     servers: 'models.manager.RelatedManager[Server]'
 
     # For properties
+    @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
         return self.uuid, 'servergroup'
 
@@ -254,6 +255,7 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         app_label = 'uds'
 
     # For properties
+    @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
         return self.uuid, 'server'
 

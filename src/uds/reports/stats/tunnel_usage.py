@@ -60,6 +60,7 @@ class TunnelUsageReport(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
             gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
@@ -127,6 +128,7 @@ class TunnelUsageReport(StatsReport):
         result.sort(key=lambda r: r['opens'], reverse=True)
         return result
 
+    @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
@@ -151,6 +153,7 @@ class TunnelUsageReportCSV(TunnelUsageReport):
     start_date = TunnelUsageReport.start_date
     end_date = TunnelUsageReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

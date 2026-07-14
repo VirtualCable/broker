@@ -78,6 +78,7 @@ class Command(BaseCommand):
             
         return counter
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug('Maintenance called with args: %s, options: %s', args, options)
 

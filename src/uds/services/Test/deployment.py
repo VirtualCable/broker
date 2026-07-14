@@ -54,15 +54,18 @@ class TestUserService(services.UserService, autoserializable.AutoSerializable):
     ip = autoserializable.StringField(default='')
     mac = autoserializable.StringField(default='')
 
+    @typing.override
     def initialize(self) -> None:
         super().initialize()
 
     # : Recheck every five seconds by default (for task methods)
     suggested_delay = 5
 
+    @typing.override
     def service(self) -> 'TestServiceNoCache | TestServiceCache':
         return typing.cast('TestServiceNoCache', super().service())
 
+    @typing.override
     def get_name(self) -> str:
         if not self.name:
             self.name = self.name_generator().get(self.service().get_basename(), 3)
@@ -71,10 +74,12 @@ class TestUserService(services.UserService, autoserializable.AutoSerializable):
 
         return self.name
 
+    @typing.override
     def set_ip(self, ip: str) -> None:
         logger.info('Setting ip of deployment %s to %s', self, ip)
         self.ip = ip
 
+    @typing.override
     def get_unique_id(self) -> str:
         logger.info('Getting unique id of deployment %s', self)
         if not self.mac:
@@ -84,6 +89,7 @@ class TestUserService(services.UserService, autoserializable.AutoSerializable):
                 self.mac = self.db_obj().unique_id
         return self.mac
 
+    @typing.override
     def get_ip(self) -> str:
         logger.info('Getting ip of deployment %s', self)
         ip = typing.cast(str, self.storage.read_from_db('ip'))
@@ -91,21 +97,25 @@ class TestUserService(services.UserService, autoserializable.AutoSerializable):
             ip = '8.6.4.2'  # Sample IP for testing purposses only
         return ip
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         logger.info('Setting ready %s', self)
         self.ready = True
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         logger.info('Deploying for user %s %s', user, self)
         self.count = 3
         return types.states.TaskState.RUNNING
     
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         logger.info('Deploying for cache %s %s', level, self)
         self.count = 3
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         logger.info('Checking state of deployment %s', self)
         if self.count <= 0:
@@ -114,23 +124,29 @@ class TestUserService(services.UserService, autoserializable.AutoSerializable):
         self.count -= 1
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def finish(self) -> None:
         logger.info('Finishing deployment %s', self)
         self.count = -1
 
+    @typing.override
     def user_logged_in(self, username: str) -> None:
         logger.info('User %s has logged in', username)
 
+    @typing.override
     def user_logged_out(self, username: str) -> None:
         logger.info('User %s has logged out', username)
 
+    @typing.override
     def error_reason(self) -> str:
         return 'No error'
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         logger.info('Destroying deployment %s', self)
         self.count = -1
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         return self.destroy()

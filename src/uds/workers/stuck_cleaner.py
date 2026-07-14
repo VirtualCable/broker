@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 from datetime import datetime, timedelta
 import logging
 import collections.abc
@@ -54,9 +55,11 @@ class StuckCleaner(Job):
 
     friendly_name = 'Stuck States cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 3601 * 8
 
+    @typing.override
     def run(self) -> None:
         since_state: datetime = sql_now() - timedelta(seconds=MAX_STUCK_TIME)
         # Filter for locating machine stuck on removing, cancelling, etc..

@@ -92,6 +92,7 @@ def _generate_api() -> types.rest.api.OpenAPI:
 class Command(BaseCommand):
     help = 'Generates the OpenAPI specification file(s) for the UDS REST API'
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '-o',
@@ -112,6 +113,7 @@ class Command(BaseCommand):
             help='Output format. Can be specified multiple times. Defaults to both json and yaml',
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         output: str = options.get('output', '/tmp/uds_api')
         formats: list[str] = options.get('formats', [])

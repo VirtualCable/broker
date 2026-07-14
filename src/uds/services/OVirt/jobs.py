@@ -56,6 +56,7 @@ class OVirtDeferredRemoval(jobs.Job):
     friendly_name = 'Ovirt removal'
     counter = 0
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 5
 
@@ -86,6 +87,7 @@ class OVirtDeferredRemoval(jobs.Job):
         except Exception as e:
             logger.warning('Exception got queuing for Removal: %s', e)
 
+    @typing.override
     def run(self) -> None:
         from .provider import OVirtProvider
 

@@ -133,6 +133,7 @@ class WinDomainOsManager(WindowsOsManager):
     idle = WindowsOsManager.idle
     deadline = WindowsOsManager.deadline
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         super().initialize(values)
         if values:
@@ -271,6 +272,7 @@ class WinDomainOsManager(WindowsOsManager):
 
         return obj['dn']  # Returns the DN
 
+    @typing.override
     def on_ready(self, userservice: 'UserService') -> None:
         # No group to add
         if self.grp.as_str() == '':
@@ -324,6 +326,7 @@ class WinDomainOsManager(WindowsOsManager):
             log.log(userservice.service_pool, types.log.LogLevel.WARNING, error, types.log.LogSource.OSMANAGER)
             logger.error(error)
 
+    @typing.override
     def release(self, userservice: 'UserService') -> None:
         super().release(userservice)
 
@@ -381,6 +384,7 @@ class WinDomainOsManager(WindowsOsManager):
         except Exception:
             logger.exception('Deleting from AD: ')
 
+    @typing.override
     def check(self) -> str:
         try:
             ldap_connection = self._connect_ldap()
@@ -410,6 +414,7 @@ class WinDomainOsManager(WindowsOsManager):
 
     # pylint: disable=protected-access
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         logger.debug('Test invoked')
         wd = WinDomainOsManager(env, data)
@@ -454,6 +459,7 @@ class WinDomainOsManager(WindowsOsManager):
 
         return types.core.TestResult(True)
 
+    @typing.override
     def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(
             action='rename_ad',
@@ -467,6 +473,7 @@ class WinDomainOsManager(WindowsOsManager):
             },
         )
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)

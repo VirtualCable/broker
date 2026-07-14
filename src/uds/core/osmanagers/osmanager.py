@@ -99,6 +99,7 @@ class OSManager(Module):
         """
         pass
 
+    @typing.override
     def db_obj(self) -> 'models.OSManager':
         """
         Returns the database object for this provider
@@ -229,6 +230,7 @@ class OSManager(Module):
         """
         return username, password
 
+    @typing.override
     def destroy(self) -> None:
         """
         Invoked when OS Manager is deleted
@@ -373,5 +375,6 @@ class OSManager(Module):
         """
         return False
 
+    @typing.override
     def __str__(self) -> str:
         return "Base OS Manager"

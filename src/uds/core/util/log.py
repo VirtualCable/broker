@@ -147,6 +147,7 @@ class UDSLogHandler(logging.handlers.RotatingFileHandler):
     # Protects from recursive calls
     emiting: typing.ClassVar[bool] = False
 
+    @typing.override
     def emit(self, record: logging.LogRecord) -> None:
         # To avoid circular imports and loading manager before apps are ready
         # pylint: disable=import-outside-toplevel

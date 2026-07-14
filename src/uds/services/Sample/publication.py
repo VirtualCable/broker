@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import random
 import string
 import logging
@@ -86,6 +87,7 @@ class SamplePublication(services.Publication):
     _reason: str = ''
     _number: int = -1
 
+    @typing.override
     def initialize(self) -> None:
         """
         This method will be invoked by default __init__ of base class, so it gives
@@ -100,12 +102,14 @@ class SamplePublication(services.Publication):
         self._reason = ''  # No error, no reason for it
         self._number = 1
 
+    @typing.override
     def marshal(self) -> bytes:
         """
         returns data from an instance of Sample Publication serialized
         """
         return '\t'.join([self._name, self._reason, str(self._number)]).encode('utf8')
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
@@ -117,6 +121,7 @@ class SamplePublication(services.Publication):
         self._reason = vals[1]
         self._number = int(vals[2])
 
+    @typing.override
     def publish(self) -> types.states.TaskState:
         """
         This method is invoked whenever the administrator requests a new publication.
@@ -174,6 +179,7 @@ class SamplePublication(services.Publication):
         self._reason = ''
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Our publish method will initiate publication, but will not finish it.
@@ -204,6 +210,7 @@ class SamplePublication(services.Publication):
             return types.states.TaskState.FINISHED
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def finish(self) -> None:
         """
         Invoked when Publication manager noticed that the publication has finished.
@@ -218,6 +225,7 @@ class SamplePublication(services.Publication):
             random.SystemRandom().choices(string.ascii_uppercase + string.digits, k=10)
         )
 
+    @typing.override
     def error_reason(self) -> str:
         """
         If a publication produces an error, here we must notify the reason why
@@ -228,6 +236,7 @@ class SamplePublication(services.Publication):
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         This is called once a publication is no more needed.
@@ -245,6 +254,7 @@ class SamplePublication(services.Publication):
         # We do not do anything else to destroy this instance of publication
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         Invoked for canceling the current operation.

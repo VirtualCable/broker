@@ -57,6 +57,7 @@ class UUIDModel(models.Model):
         abstract = True
 
     # Override default save to add uuid
+    @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if not self.uuid:
             self.uuid = generate_uuid()

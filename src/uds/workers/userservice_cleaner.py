@@ -53,9 +53,11 @@ logger = logging.getLogger(__name__)
 class UserServiceInfoItemsCleaner(Job):
     friendly_name = 'User Service Info Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 600
 
+    @typing.override
     def run(self) -> None:
         remove_since = sql_now() - timedelta(seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True))
         logger.debug('Removing information user services from %s', remove_since)
@@ -68,9 +70,11 @@ class UserServiceInfoItemsCleaner(Job):
 class UserServiceRemover(Job):
     friendly_name = 'User Service Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.REMOVAL_CHECK.as_int()
 
+    @typing.override
     def run(self) -> None:
         # USER_SERVICE_REMOVAL_LIMIT is the maximum number of items to remove at once
         # This configuration value is cached at startup, so it is not updated until next reload

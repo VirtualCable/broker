@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import io
 import csv
 import logging
@@ -63,17 +64,20 @@ class ListReportUsers(ListReport):
     description = _('List users of platform')  # Report description
     uuid = '8cd1cfa6-ed48-11e4-83e5-10feed05884b'
 
+    @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         if values:
             auth = Authenticator.objects.get(uuid=self.authenticator.value)
             self.filename = auth.name + '.pdf'
 
+    @typing.override
     def init_gui(self) -> None:
         logger.debug('Initializing gui')
         vals = [gui.choice_item(v.uuid, v.name) for v in Authenticator.objects.all()]
 
         self.authenticator.set_choices(vals)
 
+    @typing.override
     def generate(self) -> bytes:
         auth = Authenticator.objects.get(uuid=self.authenticator.value)
         users = auth.users.order_by('name')
@@ -98,11 +102,13 @@ class ListReportsUsersCSV(ListReportUsers):
 
     authenticator = ListReportUsers.authenticator
 
+    @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         if values:
             auth = Authenticator.objects.get(uuid=self.authenticator.value)
             self.filename = auth.name + '.csv'
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

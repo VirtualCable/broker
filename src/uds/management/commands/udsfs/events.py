@@ -86,6 +86,7 @@ class EventFS(types.UDSFSInterface):
         '12',
     ]
 
+    @typing.override
     def getattr(self, path: list[str]) -> types.StatType:
         if len(path) < 1:
             return EventFS._directory_stats
@@ -106,6 +107,7 @@ class EventFS(types.UDSFSInterface):
 
         raise FileNotFoundError('No such file or directory')
 
+    @typing.override
     def readdir(self, path: list[str]) -> list[str]:
         if len(path) == 0:
             # List ., .. and last 4 years as folders
@@ -123,6 +125,7 @@ class EventFS(types.UDSFSInterface):
 
         raise FileNotFoundError('No such file or directory')
 
+    @typing.override
     def read(self, path: list[str], size: int, offset: int) -> bytes:
         logger.debug('Reading events for %s: offset: %s, size: %s', path, offset, size)
         # Compose

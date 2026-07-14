@@ -100,6 +100,7 @@ class Notifier(ManagedObjectModel, TaggingMixin):
         db_table = 'uds_notify_prov'
         app_label = 'uds'
 
+    @typing.override
     def get_type(self) -> type['NotificationProviderModule']:
         """
         Get the type of the object this record represents.
@@ -116,6 +117,7 @@ class Notifier(ManagedObjectModel, TaggingMixin):
             raise Exception(f'Notifier type not found: {self.data_type}')
         return kind
 
+    @typing.override
     def get_instance(
         self, values: typing.Optional[dict[str, str]] = None
     ) -> 'NotificationProviderModule':

@@ -175,6 +175,7 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         raise exceptions.rest.NotSupportedError(_('Testing not supported'))
 
     @classmethod
+    @typing.override
     def api_components(cls: type[typing.Self]) -> types.rest.api.Components:
         """
         Default implementation does not have any component types. (for Api specification purposes)
@@ -182,6 +183,7 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         return types.rest.api.Components()
 
     @classmethod
+    @typing.override
     def api_paths(
         cls: type[typing.Self], path: str, tags: list[str], security: str
     ) -> dict[str, types.rest.api.PathItem]:

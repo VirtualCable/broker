@@ -93,18 +93,22 @@ class OldOperation(enum.IntEnum):
 class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable):
     _task = autoserializable.StringField(default='')
 
+    @typing.override
     def initialize(self) -> None:
         self._queue = []
 
+    @typing.override
     def service(self) -> 'XenLinkedService':
         return typing.cast('XenLinkedService', super().service())
 
+    @typing.override
     def publication(self) -> 'XenPublication':
         pub = super().publication()
         if pub is None:
             raise Exception('No publication for this element!')
         return typing.cast('XenPublication', pub)
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)
@@ -124,6 +128,7 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
 
         self.mark_for_upgrade()  # Force upgrade
 
+    @typing.override
     def op_create(self) -> None:
         """
         Deploys a machine from template for user/cache
@@ -144,6 +149,7 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
         if not self._task:
             raise Exception('Can\'t create machine')
 
+    @typing.override
     def op_create_completed(self) -> None:
         """
         Provisions machine & changes the mac of the indicated nic
@@ -152,6 +158,7 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
             api.provision_vm(self._vmid)  # Let's try this in "sync" mode, this must be fast enough
             self.service().configure_vm(self._vmid, self.get_unique_id())
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks the state of a deploy for an user or cache

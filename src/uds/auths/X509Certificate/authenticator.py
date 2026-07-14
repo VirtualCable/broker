@@ -150,6 +150,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
         tab=_('Bridge'),
     )
 
+    @typing.override
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if not values:
             return
@@ -186,6 +187,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
         if not self.shared_secret.value.strip():
             raise exceptions.ui.ValidationError(gettext('Shared Secret is required'))
 
+    @typing.override
     def auth_callback(
         self,
         parameters: types.auth.AuthCallbackParams,
@@ -264,6 +266,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
             logger.error('Error validating certificate: %s', e)
             return types.auth.FAILED_AUTH
 
+    @typing.override
     def get_javascript(self, request: ExtendedHttpRequest) -> str | None:
         # Build UDS callback URL
         callback_url: str = reverse('page.auth.cert', kwargs={'auth_uuid': self.get_uuid()})
@@ -281,6 +284,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
         # Redirect to bridge: https://bridge/cert_auth/<signed>
         return f'window.location="{self.remote_url.value}{signed}";'
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: auths.GroupsManager) -> None:
         data: list[str | list[str]] | None = self.storage.read_pickled(username)
         if data and len(data) > 1:
@@ -289,6 +293,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
             # Fallback: static common groups only
             groups_manager.validate([g.strip() for g in self.common_groups.value.split(',') if g.strip()])
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         data: list[str | list[str]] | None = self.storage.read_pickled(username)
         if not data:

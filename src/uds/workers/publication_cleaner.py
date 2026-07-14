@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 from datetime import timedelta
 import logging
 
@@ -46,9 +47,11 @@ logger = logging.getLogger(__name__)
 class PublicationInfoItemsCleaner(Job):
     friendly_name = 'Publications Info Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.CLEANUP_CHECK.as_int()
 
+    @typing.override
     def run(self) -> None:
         remove_since = sql_now() - timedelta(
             seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True)
@@ -61,9 +64,11 @@ class PublicationInfoItemsCleaner(Job):
 class PublicationCleaner(Job):
     friendly_name = 'Publication Cleaner'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.REMOVAL_CHECK.as_int()
 
+    @typing.override
     def run(self) -> None:
         removables = ServicePoolPublication.objects.filter(
             state=State.REMOVABLE,

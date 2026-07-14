@@ -68,6 +68,7 @@ class Provider(ManagedObjectModel, TaggingMixin):
         ordering = ('name',)
         app_label = 'uds'
 
+    @typing.override
     def get_type(self) -> type['ServiceProvider']:
         """
         Get the type of the object this record represents.
@@ -81,6 +82,7 @@ class Provider(ManagedObjectModel, TaggingMixin):
 
         return services.factory().lookup(self.data_type) or services.ServiceProvider
 
+    @typing.override
     def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'ServiceProvider':
         prov: 'ServiceProvider' = typing.cast('ServiceProvider', super().get_instance(values=values))
         return prov

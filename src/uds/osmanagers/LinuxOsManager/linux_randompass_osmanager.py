@@ -69,11 +69,13 @@ class LinuxRandomPassManager(LinuxOsManager):
     idle = LinuxOsManager.idle
     deadline = LinuxOsManager.deadline
 
+    @typing.override
     def initialize(self, values: 'gui.ValuesType') -> None:
         if values is not None:
             if values['user_account'] == '':
                 raise exceptions.ui.ValidationError(_('Must provide an user account!!!'))
 
+    @typing.override
     def update_credentials(self, userservice: 'UserService', username: str, password: str) -> tuple[str, str]:
         if username == self.user_account.as_str():
             return (username, userservice.recover_value('linOsRandomPass'))
@@ -95,6 +97,7 @@ class LinuxRandomPassManager(LinuxOsManager):
 
         return random_password
 
+    @typing.override
     def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(
             action='rename',
@@ -106,6 +109,7 @@ class LinuxRandomPassManager(LinuxOsManager):
             },
         )
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             super().unmarshal(data)

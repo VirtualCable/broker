@@ -85,6 +85,7 @@ class XenFailure(XenAPI.Failure, XenFault):
         except Exception:
             return 'Unknown exception: {}'.format(typing.cast(typing.Any, self.details))
 
+    @typing.override
     def __str__(self) -> str:
         return self.as_human_readable()
 

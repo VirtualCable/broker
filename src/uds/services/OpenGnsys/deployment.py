@@ -100,18 +100,22 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
     # ]  # Do not initialize mutable, just declare and it is initialized on "initialize"
     # _uuid: str
 
+    @typing.override
     def initialize(self) -> None:
         self._queue = []
 
+    @typing.override
     def service(self) -> 'OGService':
         return typing.cast('OGService', super().service())
 
+    @typing.override
     def publication(self) -> 'OpenGnsysPublication':
         pub = super().publication()
         if pub is None:
             raise Exception('No publication for this element!')
         return typing.cast('OpenGnsysPublication', pub)
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         Does nothing here also, all data are kept at environment storage
@@ -133,15 +137,19 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    @typing.override
     def get_name(self) -> str:
         return self._name
 
+    @typing.override
     def get_unique_id(self) -> str:
         return self._mac.upper()
 
+    @typing.override
     def get_ip(self) -> str:
         return self._ip
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         """
         Notifies the current "deadline" to the user, before accessing by UDS
@@ -176,6 +184,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         except Exception as e:
             return self._error(f'Error setting ready state: {e}')
 
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         """
         Deploys an service instance for an user.
@@ -184,6 +193,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         self._init_queue_for_deploy()
         return self._execute_queue()
 
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         """
         Deploys an service instance for cache
@@ -362,6 +372,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         """
         return types.states.TaskState.FINISHED  # No check at all, always true
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Check what operation is going on, and acts acordly to it
@@ -397,6 +408,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         except Exception as e:
             return self._error(e)
 
+    @typing.override
     def error_reason(self) -> str:
         """
         Returns the reason of the error.
@@ -407,6 +419,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         Invoked for destroying a deployed service
@@ -417,6 +430,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         self._queue = [Operation.REMOVE, Operation.FINISH]
         return self._execute_queue()
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are

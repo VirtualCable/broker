@@ -50,9 +50,11 @@ logger = logging.getLogger(__name__)
 class LogMaintenance(Job):
     friendly_name = 'Log maintenance'
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return 3600
 
+    @typing.override
     def run(self) -> None:
         logger.debug('Starting Log maintenance')
         # Select all disctinct owner_id and owner_type and count of each

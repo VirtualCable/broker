@@ -168,6 +168,7 @@ class StatsFS(types.UDSFSInterface):
             extension,
         )
 
+    @typing.override
     def readdir(self, path: list[str]) -> list[str]:
         # If len(path) == 0, return the list of possible stats files (from _dispatchers)
         # else, raise an FileNotFoundError
@@ -187,6 +188,7 @@ class StatsFS(types.UDSFSInterface):
 
         raise FileNotFoundError
 
+    @typing.override
     def getattr(self, path: list[str]) -> types.StatType:
         logger.debug('Getting attributes for %s', path)
         # stats folder
@@ -222,6 +224,7 @@ class StatsFS(types.UDSFSInterface):
             st_mtime=interval.start_timestamp,
         )
 
+    @typing.override
     def read(self, path: list[str], size: int, offset: int) -> bytes:
         logger.debug('Reading data from %s: offset: %s, size: %s', path, offset, size)
 

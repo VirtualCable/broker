@@ -204,6 +204,7 @@ class OpenStackProvider(ServiceProvider):
     # Own variables
     _api: client.OpenStackClient | None = None
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType' = None) -> None:
         """
         We will use the "autosave" feature for form fields
@@ -276,6 +277,7 @@ class OpenStackProvider(ServiceProvider):
         return self.project_id.value, self.project_id.value
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         """
         Test ovirt Connectivity

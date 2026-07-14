@@ -80,12 +80,15 @@ class TestOSManager(osmanagers.OSManager):
         required=True,
     )
     
+    @typing.override
     def manages_unused_userservices(self) -> bool:
         return True
 
+    @typing.override
     def release(self, userservice: 'UserService') -> None:
         logger.debug('User service %s released', userservice)
 
+    @typing.override
     def is_removable_on_logout(self, userservice: 'UserService') -> bool:
         '''
         Says if a machine is removable on logout
@@ -104,9 +107,11 @@ class TestOSManager(osmanagers.OSManager):
         """
         return userservice.get_name()
 
+    @typing.override
     def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(action='rename', name=userservice.get_name())
 
+    @typing.override
     def handle_unused(self, userservice: 'UserService') -> None:
         """
         This will be invoked for every assigned and unused user service that has been in this state at least 1/2 of Globalconfig.CHECK_UNUSED_TIME
@@ -121,13 +126,16 @@ class TestOSManager(osmanagers.OSManager):
             )
             userservice.release()
 
+    @typing.override
     def is_persistent(self) -> bool:
         return self.on_logout.value == 'keep-always'
 
+    @typing.override
     def check_state(self, userservice: 'UserService') -> types.states.State:
         logger.debug('Checking state for service %s', userservice)
         return State.RUNNING
 
+    @typing.override
     def max_idle(self) -> typing.Optional[int]:
         """
         On production environments, will return no idle for non removable machines

@@ -221,6 +221,7 @@ def secure_requests_session(
     class UDSHTTPAdapter(requests.adapters.HTTPAdapter):
         _ssl_context: ssl.SSLContext
 
+        @typing.override
         def init_poolmanager(self, *args: typing.Any, **kwargs: typing.Any) -> None:
             # See urllib3.poolmanager.SSL_KEYWORDS for all available keys.
             self._ssl_context = kwargs['ssl_context'] = create_client_sslcontext(verify=verify is True)
@@ -231,6 +232,7 @@ def secure_requests_session(
                 )
             )
 
+        @typing.override
         def cert_verify(self, conn: typing.Any, url: typing.Any, verify: 'str|bool', cert: typing.Any) -> None:
             """Verify a SSL certificate. This method should not be called from user
             code, and is only exposed for use when subclassing the HTTPAdapter class

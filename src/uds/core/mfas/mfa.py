@@ -206,6 +206,7 @@ class MFA(Module):
         Default implementation does nothing
         """
 
+    @typing.override
     def db_obj(self) -> 'models.MFA':
         """
         Returns the database object for this provider

@@ -90,9 +90,11 @@ class TX2GOTransport(BaseX2GOTransport):
     pack = BaseX2GOTransport.pack
     quality = BaseX2GOTransport.quality
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         pass
 
+    @typing.override
     def get_transport_script(
         self,
         userservice: 'models.UserService',

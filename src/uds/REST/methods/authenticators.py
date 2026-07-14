@@ -73,6 +73,7 @@ class AuthenticatorTypeInfo(types.rest.ExtraTypeInfo):
     mfa_data_enabled: bool
     mfa_supported: bool
 
+    @typing.override
     def as_dict(self) -> dict[str, typing.Any]:
         return dataclasses.asdict(self)
 
@@ -129,10 +130,12 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     )
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[auths.Authenticator]]:
         return auths.factory().providers().values()
 
     @classmethod
+    @typing.override
     def extra_type_info(
         cls: type[typing.Self], type_: type['Module']
     ) -> AuthenticatorTypeInfo | None:
@@ -152,6 +155,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         # Not of my type
         return None
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         try:
             auth_type = auths.factory().lookup(for_type)
@@ -201,6 +205,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             logger.info('Authenticator type not found: %s', e)
             raise exceptions.rest.NotFound('Authenticator type not found') from e
 
+    @typing.override
     def get_item(self, item: 'models.Model') -> AuthenticatorItem:
         item = ensure.is_instance(item, Authenticator)
 
@@ -222,6 +227,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             type_info=type(self).as_typeinfo(item.get_type()),
         )
 
+    @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('users_count'):
             field_name, is_descending = field_info
@@ -245,6 +251,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
         return super().apply_sort(qs)
 
+    @typing.override
     def post_save(self, item: 'models.Model') -> None:
         item = ensure.is_instance(item, Authenticator)
         try:
@@ -305,6 +312,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             ]
             # self.invalidResponseException('{}'.format(e))
 
+    @typing.override
     def test(self, type_: str) -> typing.Any:
         auth_type = auths.factory().lookup(type_)
         if not auth_type:
@@ -318,6 +326,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                 return self.success()
             return res.error
 
+    @typing.override
     def pre_save(
         self, fields: dict[str, typing.Any]
     ) -> None:  # pylint: disable=too-many-branches,too-many-statements
@@ -337,6 +346,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         if fields['small_name'] and not re.match(r'^[a-zA-Z0-9:.-]+$', fields['small_name']):
             raise exceptions.rest.RequestError(_('Label must contain only letters, numbers, or symbols: - : .'))
 
+    @typing.override
     def delete_item(self, item: 'models.Model') -> None:
         # For every user, remove assigned services (mark them for removal)
         item = ensure.is_instance(item, Authenticator)

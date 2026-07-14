@@ -104,11 +104,13 @@ class RDPTransport(BaseRDPTransport):
     mac_use_rdp_file = BaseRDPTransport.mac_use_rdp_file
     sign_rdp_file = BaseRDPTransport.sign_rdp_file
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         super().initialize(values)
         self.check_rdp_can_be_signed()
         self.check_mac_msrdc()
 
+    @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
         userservice: 'models.UserService',

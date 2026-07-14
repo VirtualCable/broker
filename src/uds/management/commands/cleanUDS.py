@@ -50,6 +50,7 @@ class Command(BaseCommand):
     args = "None"
     help = "Clean up all uneeded data from UDS (cache, ...). This is mainly used for versions installations, so he have clean data"
 
+    @typing.override
     def handle(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         sys.stdout.write("Cleaning up UDS\n")
         GlobalConfig.initialize()

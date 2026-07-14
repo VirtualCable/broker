@@ -79,6 +79,7 @@ class OpenshiftService(DynamicService):
             self._cached_api = self.provider().api
         return self._cached_api
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         Initialize the service with the given values.
@@ -88,6 +89,7 @@ class OpenshiftService(DynamicService):
 
         self.basename.value = validators.validate_basename(self.basename.value, length=self.lenname.as_int())
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Initialize the GUI elements for the service.
@@ -102,21 +104,25 @@ class OpenshiftService(DynamicService):
             ]
         )
 
+    @typing.override
     def provider(self) -> 'OpenshiftProvider':
         """
         Get the Openshift provider.
         """
         return typing.cast('OpenshiftProvider', super().provider())
 
+    @typing.override
     def get_basename(self) -> str:
         """Returns configured basename for machines"""
         return self.basename.value
 
+    @typing.override
     def get_lenname(self) -> int:
         """Returns configured length for machine names"""
         return self.lenname.as_int()
 
     # Utility
+    @typing.override
     def sanitized_name(self, name: str) -> str:
         """Sanitizes a name for Azure (only allowed chars)
 
@@ -128,6 +134,7 @@ class OpenshiftService(DynamicService):
         """
         return self.provider().sanitized_name(name)
 
+    @typing.override
     def find_duplicates(self, name: str, mac: str) -> collections.abc.Iterable[str]:
         """
         Finds duplicate VMs by name.
@@ -136,12 +143,14 @@ class OpenshiftService(DynamicService):
             if vm.name == name:
                 yield vm.name
 
+    @typing.override
     def is_available(self) -> bool:
         """
         Checks if provider is available
         """
         return self.provider().is_available()
 
+    @typing.override
     def get_ip(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> str:
         """
         Returns the ip of the machine
@@ -155,6 +164,7 @@ class OpenshiftService(DynamicService):
             return interfaces[0].ip_address
         return ''
 
+    @typing.override
     def get_mac(
         self,
         caller_instance: 'DynamicUserService | DynamicPublication | None',
@@ -179,6 +189,7 @@ class OpenshiftService(DynamicService):
             return interfaces[0].mac_address
         return ''
 
+    @typing.override
     def is_running(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> bool:
         """
         Checks if the VM instance is currently running.
@@ -187,6 +198,7 @@ class OpenshiftService(DynamicService):
         # Use both status and phase to determine if running
         return vmi_info.status.is_running()
 
+    @typing.override
     def start(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
         """
         Starts the machine
@@ -194,6 +206,7 @@ class OpenshiftService(DynamicService):
         """
         self.api.start_vm(vmid)
 
+    @typing.override
     def stop(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
         """
         Stops the machine
@@ -201,12 +214,14 @@ class OpenshiftService(DynamicService):
         """
         self.api.stop_vm(vmid)
 
+    @typing.override
     def shutdown(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
         """
         Shutdowns the machine, same as stop (both tries soft shutdown, it's a openshift thing)
         """
         self.api.stop_vm(vmid)
 
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         """
         Deletes the VM
@@ -214,6 +229,7 @@ class OpenshiftService(DynamicService):
         logger.debug('Deleting Openshift VM %s', vmid)
         self.api.delete_vm(vmid)  # Force deletion, as we are not using soft delete
 
+    @typing.override
     def is_deleted(self, vmid: str) -> bool:
         """
         Checks if the VM and its associated DataVolume/PVC are deleted.

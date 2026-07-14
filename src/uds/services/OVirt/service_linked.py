@@ -196,6 +196,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
 
     prov_uuid = gui.HiddenField()
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We check here form values to see if they are valid.
@@ -210,6 +211,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
             if int(self.guaranteed_memory.value) > int(self.memory.value):
                 self.guaranteed_memory.value = self.memory.value
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Loads required values inside
@@ -226,6 +228,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
 
         self.cluster.set_choices(gui.choice_item(c.id, c.name) for c in self.provider().api.list_clusters())
 
+    @typing.override
     def provider(self) -> 'OVirtProvider':
         return typing.cast('OVirtProvider', super().provider())
 
@@ -338,6 +341,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
     def get_console_connection(self, vmid: str) -> typing.Optional[types.services.ConsoleConnectionInfo]:
         return self.provider().api.get_console_connection_info(vmid)
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 

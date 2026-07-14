@@ -165,6 +165,7 @@ class RegexLdap(auths.Authenticator):
 
     _connection: 'ldaputil.LDAPConnection | None' = None
 
+    @typing.override
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if values:
             auth_utils.validate_regex_field(self.username_attr)
@@ -173,9 +174,11 @@ class RegexLdap(auths.Authenticator):
     def mfa_storage_key(self, username: str) -> str:
         return 'mfa_' + self.db_obj().uuid + username
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         return self.storage.read_pickled(self.mfa_storage_key(username)) or ''
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data.startswith(b'v'):
             return super().unmarshal(data)
@@ -337,6 +340,7 @@ class RegexLdap(auths.Authenticator):
     def _get_real_name(self, user: ldaputil.LDAPResultType) -> str:
         return ' '.join(auth_utils.process_regex_field(self.username_attr.value, user))
 
+    @typing.override
     def authenticate(
         self,
         username: str,
@@ -384,6 +388,7 @@ class RegexLdap(auths.Authenticator):
         except Exception:
             return types.auth.FAILED_AUTH
 
+    @typing.override
     def create_user(self, user_data: dict[str, str]) -> None:
         """
         We must override this method in authenticators not based on external sources (i.e. database users, text file users, etc..)
@@ -399,6 +404,7 @@ class RegexLdap(auths.Authenticator):
         # Fills back realName field
         user_data['real_name'] = self._get_real_name(res)
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         """
         Tries to get the real name of an user
@@ -408,6 +414,7 @@ class RegexLdap(auths.Authenticator):
             return username
         return self._get_real_name(res)
 
+    @typing.override
     def modify_user(self, user_data: dict[str, str]) -> None:
         """
         We must override this method in authenticators not based on external sources (i.e. database users, text file users, etc..)
@@ -418,6 +425,7 @@ class RegexLdap(auths.Authenticator):
         """
         return self.create_user(user_data)
 
+    @typing.override
     def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
         """
         Looks for the real groups to which the specified user belongs
@@ -430,6 +438,7 @@ class RegexLdap(auths.Authenticator):
         groups = self._get_groups(user)
         groups_manager.validate(groups)
 
+    @typing.override
     def search_users(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
         try:
             for r in ldaputil.as_dict(
@@ -449,6 +458,7 @@ class RegexLdap(auths.Authenticator):
             raise exceptions.auth.AuthenticatorException(_('Too many results, be more specific')) from e
 
     @staticmethod
+    @typing.override
     def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
         try:
             auth = RegexLdap(env, data)
@@ -555,6 +565,7 @@ class RegexLdap(auths.Authenticator):
 
         return types.core.TestResult(True)
 
+    @typing.override
     def __str__(self) -> str:
         return (
             f'Ldap Auth: {self.username.as_str()}:{self.password.as_str()}@{self.host.as_str()}:{self.port.as_int()},'

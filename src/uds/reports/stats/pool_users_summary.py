@@ -70,6 +70,7 @@ class UsageSummaryByUsersPool(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         logger.debug('Initializing gui')
         vals = [gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all()]
@@ -127,6 +128,7 @@ class UsageSummaryByUsersPool(StatsReport):
     def get_data(self) -> tuple[list[dict[str, typing.Any]], str]:
         return self.get_pool_data(ServicePool.objects.get(uuid=self.pool.value))
 
+    @typing.override
     def generate(self) -> bytes:
         items, pool_name = self.get_data()
 
@@ -154,6 +156,7 @@ class UsageSummaryByUsersPoolCSV(UsageSummaryByUsersPool):
     start_date = UsageSummaryByUsersPool.start_date
     end_date = UsageSummaryByUsersPool.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

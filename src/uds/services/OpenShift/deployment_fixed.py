@@ -48,12 +48,14 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
     # : Recheck every ten seconds by default (for task methods)
     suggested_delay = 4
 
+    @typing.override
     def service(self) -> 'service_fixed.OpenshiftServiceFixed':
         """
         Get the Openshift service.
         """
         return typing.cast('service_fixed.OpenshiftServiceFixed', super().service())
 
+    @typing.override
     def op_start(self) -> None:
         """
         Start a VM by name.
@@ -63,6 +65,7 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
         if vm and vm.status.is_off():
             self.service().provider().api.start_vm(self._name)
 
+    @typing.override
     def op_stop(self) -> None:
         """
         Stop a VM by name.
@@ -93,6 +96,7 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
         return types.states.TaskState.RUNNING
 
     # Check methods
+    @typing.override
     def op_start_checker(self) -> types.states.TaskState:
         """
         Checks if machine has started
@@ -101,6 +105,7 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
             opensh_types.State.RUNNING,
         )
 
+    @typing.override
     def op_stop_checker(self) -> types.states.TaskState:
         """
         Checks if machine has stoped

@@ -58,26 +58,32 @@ class CaseInsensitiveDict(dict[str, VT]):
         super().__init__(*args, **kwargs)
         self._convert_keys()
 
+    @typing.override
     def __getitem__(self, key: str) -> VT:
         return super().__getitem__(CaseInsensitiveDict._k(key))
 
+    @typing.override
     def __setitem__(self, key: str, value: VT) -> None:
         super().__setitem__(CaseInsensitiveDict._k(key), value)
 
+    @typing.override
     def __delitem__(self, key: str) -> None:
         return super().__delitem__(CaseInsensitiveDict._k(key))
 
+    @typing.override
     def __contains__(self, key: typing.Any) -> bool:
         if not isinstance(key, str):
             return False
         return super().__contains__(key.lower())
 
+    @typing.override
     def pop(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> VT:
         return super().pop(CaseInsensitiveDict._k(key), *args, **kwargs)
 
     def get(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> typing.Optional[VT]:  # type: ignore
         return super().get(CaseInsensitiveDict._k(key), *args, **kwargs)
 
+    @typing.override
     def setdefault(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> VT:
         return super().setdefault(
             CaseInsensitiveDict._k(key), *args, **kwargs

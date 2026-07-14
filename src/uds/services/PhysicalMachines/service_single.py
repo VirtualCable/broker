@@ -86,6 +86,7 @@ class IPSingleMachineService(services.Service):
             return typing.cast(tuple[str, str], tuple(self.host.as_str().split(';', 2)[:2]))
         return self.host.as_str(), ''
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         if values is None:
             return
@@ -101,6 +102,7 @@ class IPSingleMachineService(services.Service):
     def get_unassigned_host(self) -> tuple[str, str] | None:
         return self.get_host_mac()
 
+    @typing.override
     def provider(self) -> 'provider.PhysicalMachinesProvider':
         return typing.cast('provider.PhysicalMachinesProvider', super().provider())
 
@@ -124,5 +126,6 @@ class IPSingleMachineService(services.Service):
 
     # Phisical machines does not have "real" providers, so
     # always is available
+    @typing.override
     def is_available(self) -> bool:
         return True

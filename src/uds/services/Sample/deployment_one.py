@@ -77,21 +77,25 @@ class SampleUserServiceOne(services.UserService):
     # : Recheck every five seconds by default (for task methods)
     suggested_delay = 5
 
+    @typing.override
     def service(self) -> 'sample_service.ServiceOne':
         return typing.cast('sample_service.ServiceOne', super().service())
 
     # Serializable needed methods
+    @typing.override
     def marshal(self) -> bytes:
         """
         Does nothing right here, we will use environment storage in this sample
         """
         return b''
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         Does nothing here also, all data are kept at environment storage
         """
 
+    @typing.override
     def get_name(self) -> str:
         """
         We override this to return a name to display. Default implementation
@@ -123,6 +127,7 @@ class SampleUserServiceOne(services.UserService):
 
         return name
 
+    @typing.override
     def set_ip(self, ip: str) -> None:
         """
         In our case, there is no OS manager associated with this, so this method
@@ -137,6 +142,7 @@ class SampleUserServiceOne(services.UserService):
         """
         self.storage.save_to_db('ip', ip)
 
+    @typing.override
     def get_unique_id(self) -> str:
         """
         Return and unique identifier for this service.
@@ -153,6 +159,7 @@ class SampleUserServiceOne(services.UserService):
             self.storage.save_to_db('mac', mac)
         return mac
 
+    @typing.override
     def get_ip(self) -> str:
         """
         We need to implement this method, so we can return the IP for transports
@@ -176,6 +183,7 @@ class SampleUserServiceOne(services.UserService):
             ip = '192.168.0.34'  # Sample IP for testing purposses only
         return ip
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         """
         This is a task method. As that, the expected return values are
@@ -209,6 +217,7 @@ class SampleUserServiceOne(services.UserService):
         # In our case, the service is always ready
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
         """
         Deploys an service instance for an user.
@@ -246,6 +255,7 @@ class SampleUserServiceOne(services.UserService):
 
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Our deployForUser method will initiate the consumable service deployment,
@@ -290,6 +300,7 @@ class SampleUserServiceOne(services.UserService):
         self.storage.save_to_db('count', str(count))
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def finish(self) -> None:
         """
         Invoked when the core notices that the deployment of a service has finished.
@@ -303,6 +314,7 @@ class SampleUserServiceOne(services.UserService):
         # Note that this is not really needed, is just a sample of storage use
         self.storage.remove('count')
 
+    @typing.override
     def user_logged_in(self, username: str) -> None:
         """
         This method must be available so os managers can invoke it whenever
@@ -320,6 +332,7 @@ class SampleUserServiceOne(services.UserService):
         # We store the value at storage, but never get used, just an example
         self.storage.save_to_db('user', username)
 
+    @typing.override
     def user_logged_out(self, username: str) -> None:
         """
         This method must be available so os managers can invoke it whenever
@@ -337,6 +350,7 @@ class SampleUserServiceOne(services.UserService):
         # We do nothing more that remove the user
         self.storage.remove('user')
 
+    @typing.override
     def error_reason(self) -> str:
         """
         Returns the reason of the error.
@@ -347,6 +361,7 @@ class SampleUserServiceOne(services.UserService):
         """
         return typing.cast(str, self.storage.read_from_db('error')) or 'No error'
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are
@@ -358,6 +373,7 @@ class SampleUserServiceOne(services.UserService):
         """
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         """
         This is a task method. As that, the excepted return values are

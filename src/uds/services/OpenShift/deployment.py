@@ -69,12 +69,14 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
         types.services.Operation.FINISH,
     ]
 
+    @typing.override
     def service(self) -> 'OpenshiftService':
         """
         Get the Openshift service.
         """
         return typing.cast('OpenshiftService', super().service())
 
+    @typing.override
     def publication(self) -> 'OpenshiftTemplatePublication':
         """
         Get the Openshift publication.
@@ -84,6 +86,7 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
             raise Exception('No publication for this element!')
         return typing.cast('OpenshiftTemplatePublication', pub)
 
+    @typing.override
     def op_create(self) -> None:
         """
         Starts the deployment process for a user or cache, cloning the template publication.
@@ -107,6 +110,7 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
         )
 
     # In fact, we probably don't need to check task status, but this way we can include the error
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks the state of a deploy for a user or cache, correctly waiting for the DataVolume and the VM.

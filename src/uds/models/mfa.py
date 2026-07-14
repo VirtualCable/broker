@@ -60,9 +60,11 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
     # objects: 'models.BaseManager[MFA]'
     authenticators: 'models.manager.RelatedManager[Authenticator]'
 
+    @typing.override
     def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'mfas.MFA':
         return typing.cast('mfas.MFA', super().get_instance(values=values))
 
+    @typing.override
     def get_type(self) -> type['mfas.MFA']:
         """Get the type of the object this record represents.
 

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import configparser
 import logging
 
@@ -62,6 +63,7 @@ class PhysicalMachinesProvider(services.ServiceProvider):
         tab=types.ui.Tab.ADVANCED,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """checks and initializes values
 

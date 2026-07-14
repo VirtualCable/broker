@@ -69,6 +69,7 @@ class UsageByGroupReport(StatsReport):
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
         self.authenticator.set_choices(
             [gui.choice_item(v.uuid, v.name) for v in Authenticator.objects.all().order_by('name')]
@@ -173,6 +174,7 @@ class UsageByGroupReport(StatsReport):
         rows.sort(key=lambda r: r['time_seconds'], reverse=True)
         return rows, auth.name, sum(r['time_seconds'] for r in rows)
 
+    @typing.override
     def generate(self) -> bytes:
         rows, auth_name, _total = self.get_data()
         return self.template_as_pdf(
@@ -199,6 +201,7 @@ class UsageByGroupReportCSV(UsageByGroupReport):
     start_date = UsageByGroupReport.start_date
     end_date = UsageByGroupReport.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)

@@ -260,6 +260,7 @@ class SMSMFA(mfas.MFA):
     login_without_mfa_policy_networks = fields.login_without_mfa_policy_networks_field()
     allow_skip_mfa_from_networks = fields.allow_skip_mfa_from_networks_field()
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         return super().initialize(values)
 
@@ -318,11 +319,13 @@ class SMSMFA(mfas.MFA):
                     session.headers[header_name.strip()] = header_value.strip()
         return session
 
+    @typing.override
     def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> typing.Optional[bool]:
         return mfas.LoginAllowed.check_action(
             self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
         )
 
+    @typing.override
     def process(
         self,
         request: 'ExtendedHttpRequest',
@@ -443,12 +446,15 @@ class SMSMFA(mfas.MFA):
             case _:
                 raise Exception('Unknown SMS sending method')
 
+    @typing.override
     def label(self) -> str:
         return gettext('MFA Code')
 
+    @typing.override
     def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
         return gettext('Check your phone. You will receive an SMS with the verification code')
 
+    @typing.override
     def send_code(
         self,
         request: 'ExtendedHttpRequest',

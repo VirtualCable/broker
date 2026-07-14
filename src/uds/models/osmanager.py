@@ -63,9 +63,11 @@ class OSManager(ManagedObjectModel, TaggingMixin):
         ordering = ('name',)
         app_label = 'uds'
 
+    @typing.override
     def get_instance(self, values: dict[str, str] | None = None) -> 'osmanagers.OSManager':
         return typing.cast('osmanagers.OSManager', super().get_instance(values=values))
 
+    @typing.override
     def get_type(self) -> type['osmanagers.OSManager']:
         """
         Get the type of the object this record represents.

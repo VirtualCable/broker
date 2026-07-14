@@ -59,6 +59,7 @@ class SafeTimeoutTransport(xmlrpc.client.SafeTransport):
     def set_timeout(self, timeout: int) -> None:
         self._timeout = timeout
 
+    @typing.override
     def make_connection(self, host: typing.Any) -> typing.Any:
         conn = super().make_connection(host)
         conn.timeout = self._timeout
@@ -71,6 +72,7 @@ class TimeoutTransport(xmlrpc.client.Transport):
     def set_timeout(self, timeout: int) -> None:
         self._timeout = timeout
 
+    @typing.override
     def make_connection(self, host: typing.Any) -> typing.Any:
         conn = super().make_connection(host)
         conn.timeout = self._timeout

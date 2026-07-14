@@ -92,12 +92,15 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
         def __init__(self, storage: 'StorageAsDict'):
             self._storage = storage
 
+        @typing.override
         def __contains__(self, key: object) -> bool:
             return key in self._storage
 
+        @typing.override
         def __iter__(self) -> collections.abc.Iterator[tuple[str, typing.Any]]:
             return self._storage.items_iter()
 
+        @typing.override
         def __len__(self) -> int:
             return len(self._storage)
 
@@ -107,12 +110,15 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
         def __init__(self, storage: 'StorageAsDict'):
             self._storage = storage
 
+        @typing.override
         def __contains__(self, key: object) -> bool:
             return key in self._storage
 
+        @typing.override
         def __iter__(self) -> collections.abc.Iterator[str]:
             return self._storage.keys_iter()
 
+        @typing.override
         def __len__(self) -> int:
             return len(self._storage)
 
@@ -122,12 +128,15 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
         def __init__(self, storage: 'StorageAsDict'):
             self._storage = storage
 
+        @typing.override
         def __contains__(self, value: object) -> bool:
             return value in self._storage.values_iter()
 
+        @typing.override
         def __iter__(self) -> collections.abc.Iterator[typing.Any]:
             return self._storage.values_iter()
 
+        @typing.override
         def __len__(self) -> int:
             return len(self._storage)
 
@@ -181,6 +190,7 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
             return _calculate_key(self._owner.encode(), key.encode())
         return _old_calculate_key(self._owner.encode(), key.encode())
 
+    @typing.override
     def __getitem__(self, key: str) -> typing.Any:
         if not isinstance(key, str):  # pyright: ignore reportUnnecessaryIsInstance
             raise TypeError(f'Key must be str, {type(key)} found')
@@ -204,6 +214,7 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
                 pass
         return None
 
+    @typing.override
     def __setitem__(self, key: str, value: typing.Any) -> None:
         if not isinstance(key, str):  # pyright: ignore reportUnnecessaryIsInstance
             raise TypeError(f'Key must be str type, {type(key)} found')
@@ -215,21 +226,25 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
             key=dbk, defaults={'data': data, 'attr1': self._group, 'owner': self._owner}
         )
 
+    @typing.override
     def __delitem__(self, key: str) -> None:
         dbk = self._key(key)
         DBStorage.objects.filter(key=dbk).delete()
 
+    @typing.override
     def __iter__(self) -> collections.abc.Iterator[str]:
         """
         Iterates through keys
         """
         return iter(_decode_value(i.key, i.data)[0] for i in self._filtered())
 
+    @typing.override
     def __contains__(self, key: object) -> bool:
         if isinstance(key, str):
             return self._filtered().filter(key=self._key(key)).exists()
         return False
 
+    @typing.override
     def __len__(self) -> int:
         return self._filtered().count()
 
@@ -246,21 +261,26 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
         return iter(_decode_value(i.key, i.data) for i in self._filtered(skip_locked=True))
 
     # Optimized methods, avoid re-reading from DB
+    @typing.override
     def items(self) -> collections.abc.ItemsView[str, typing.Any]:
         return StorageAsDict.DBBasedItemsView(self)
 
+    @typing.override
     def keys(self) -> collections.abc.KeysView[str]:
         return StorageAsDict.DBBasedKeysView(self)
 
+    @typing.override
     def values(self) -> collections.abc.ValuesView[typing.Any]:
         return StorageAsDict.DBBasedValuesView(self)
 
+    @typing.override
     def get(self, key: str, default: typing.Any = None) -> typing.Any:
         return self[key] or default
 
     def delete(self, key: str) -> None:
         self.__delitem__(key)  # pylint: disable=unnecessary-dunder-call
 
+    @typing.override
     def clear(self) -> None:
         self._filtered().delete()  # Removes all keys
 

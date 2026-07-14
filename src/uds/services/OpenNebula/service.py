@@ -134,6 +134,7 @@ class OpenNebulaLiveService(services.Service):
         required=True,
     )
 
+    @typing.override
     def initialize(self, values: 'types.core.ValuesType') -> None:
         """
         We check here form values to see if they are valid.
@@ -148,9 +149,11 @@ class OpenNebulaLiveService(services.Service):
             self.baseName.value, length=self.lenName.as_int()
         )
 
+    @typing.override
     def provider(self) -> 'OpenNebulaProvider':
         return typing.cast('OpenNebulaProvider', super().provider())
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Loads required values inside
@@ -310,5 +313,6 @@ class OpenNebulaLiveService(services.Service):
     ) -> typing.Optional[types.services.ConsoleConnectionInfo]:
         return self.provider().desktop_login(vmid, username, password, domain)
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()

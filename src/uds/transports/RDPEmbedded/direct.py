@@ -85,6 +85,7 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
 
     screen_size = BaseRDPEmbeddedTransport.screen_size
 
+    @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
         userservice: 'models.UserService',

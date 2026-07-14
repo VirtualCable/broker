@@ -74,10 +74,12 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
             maintenance=item.maintenance_mode,
         )
         
+    @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return self.calc_item_position(item_uuid, parent.servers.all())
 
+    @typing.override
     def get_items(
         self, parent: 'Model'
     ) -> types.rest.ItemsResult[TunnelServerItem]:
@@ -87,12 +89,14 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
                 for i in self.odata_filter(parent.servers.all())
             ]
 
+    @typing.override
     def get_item(
         self, parent: 'Model', item: str
     ) -> TunnelServerItem:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return TunnelServers.as_tunnel_server_item(parent.servers.get(uuid=process_uuid(item)))
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return (
@@ -110,6 +114,7 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
 
     # Cannot save a tunnel server, it's not editable...
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.ServerGroup)
         try:
@@ -180,6 +185,7 @@ class Tunnels(ModelHandler[TunnelItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         return (
             ui_utils.GuiBuilder()
@@ -202,6 +208,7 @@ class Tunnels(ModelHandler[TunnelItem]):
             .build()
         )
 
+    @typing.override
     def get_item(self, item: 'Model') -> TunnelItem:
         item = ensure.is_instance(item, models.ServerGroup)
         return TunnelItem(
@@ -216,12 +223,14 @@ class Tunnels(ModelHandler[TunnelItem]):
             permission=permissions.effective_permissions(self._user, item),
         )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         fields['type'] = types.servers.ServerType.TUNNEL.value
         fields['port'] = int(fields['port'])
         # Ensure host is a valid IP(4 or 6) or hostname
         validators.validate_host(fields['host'])
 
+    @typing.override
     def validate_delete(self, item: 'Model') -> None:
         item = ensure.is_instance(item, models.ServerGroup)
         # Only can delete if no ServicePools attached

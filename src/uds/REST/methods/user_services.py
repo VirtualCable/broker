@@ -145,6 +145,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
 
         return val
 
+    @typing.override
     def apply_sort(self, qs: QuerySet[typing.Any]) -> list[typing.Any] | QuerySet[typing.Any]:
         def annotated_sort(field: str, descending: bool) -> QuerySet[typing.Any]:
             prop_value_subquery = models.Properties.objects.filter(
@@ -168,6 +169,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         parent = ensure.is_instance(parent, models.ServicePool)
         return self.calc_item_position(item_uuid, self.get_qs(for_cached, parent).all())
     
+    @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         return self.do_get_item_position(for_cached=False, parent=parent, item_uuid=item_uuid)
 
@@ -218,9 +220,11 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             )
         ]
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['UserServiceItem']:
         return self.do_get_items(parent, for_cached=False)
 
+    @typing.override
     def get_item(
         self,
         parent: 'Model',
@@ -228,6 +232,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     ) -> 'UserServiceItem':
         return self.do_get_item(parent, item, for_cached=False)
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, models.ServicePool)
         table_info = ui_utils.TableBuilder(_('Assigned Services')).datetime_column(
@@ -252,6 +257,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             .with_filter_fields('creation_date', 'unique_id', 'friendly_name', 'state', 'in_use')
         ).build()
 
+    @typing.override
     def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.ServicePool)
         try:
@@ -265,6 +271,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             raise exceptions.rest.ResponseError(_('Error getting user service logs')) from e
 
     # This is also used by CachedService, so we use "userServices" directly and is valid for both
+    @typing.override
     def delete_item(self, parent: 'Model', item: str, cache: bool = False) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
         try:
@@ -294,6 +301,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         log.log(userservice, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
 
     # Only owner is allowed to change right now
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServicePool)
         if not item:
@@ -344,12 +352,15 @@ class CachedService(AssignedUserService):
 
     CUSTOM_METHODS = []  # Remove custom methods from assigned services
     
+    @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         return self.do_get_item_position(for_cached=True, parent=parent, item_uuid=item_uuid)
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['UserServiceItem']:
         return self.do_get_items(parent, for_cached=True)
 
+    @typing.override
     def get_item(
         self,
         parent: 'Model',
@@ -357,6 +368,7 @@ class CachedService(AssignedUserService):
     ) -> 'UserServiceItem':
         return self.do_get_item(parent, item, for_cached=True)
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, models.ServicePool)
         table_info = (
@@ -377,9 +389,11 @@ class CachedService(AssignedUserService):
 
         return table_info.build()
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str, cache: bool = False) -> None:
         return super().delete_item(parent, item, cache=True)
 
+    @typing.override
     def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.ServicePool)
         try:
@@ -408,6 +422,7 @@ class Groups(DetailHandler[GroupItem]):
     Processes the groups detail requests of a Service Pool
     """
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['GroupItem']:
         parent = typing.cast('models.ServicePool | models.MetaPool', parent)
 
@@ -427,9 +442,11 @@ class Groups(DetailHandler[GroupItem]):
             )
         ]
 
+    @typing.override
     def get_item(self, parent: Model, item: str) -> GroupItem:
         raise exceptions.rest.NotSupportedError('Single group retrieval not implemented inside assigned groups')
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         typing.cast('models.ServicePool | models.MetaPool', parent)  # Just ensures type
         return (
@@ -441,6 +458,7 @@ class Groups(DetailHandler[GroupItem]):
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = typing.cast('models.ServicePool | models.MetaPool', parent)
 
@@ -455,6 +473,7 @@ class Groups(DetailHandler[GroupItem]):
 
         return {'id': group.uuid}
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = typing.cast('models.ServicePool | models.MetaPool', parent)
         group: models.Group = models.Group.objects.get(uuid=process_uuid(self._args[0]))
@@ -482,6 +501,7 @@ class Transports(DetailHandler[TransportItem]):
     Processes the transports detail requests of a Service Pool
     """
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['TransportItem']:
         parent = ensure.is_instance(parent, models.ServicePool)
 
@@ -497,11 +517,13 @@ class Transports(DetailHandler[TransportItem]):
             for trans in self.filter_odata_queryset(parent.transports.all())
         ]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> TransportItem:
         raise exceptions.rest.NotSupportedError(
             'Single transport retrieval not implemented inside assigned transports'
         )
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         ensure.is_instance(parent, models.ServicePool)  # Just ensures type
         return (
@@ -513,6 +535,7 @@ class Transports(DetailHandler[TransportItem]):
             .build()
         )
 
+    @typing.override
     def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServicePool)
         transport: models.Transport = models.Transport.objects.get(uuid=process_uuid(self._params['id']))
@@ -526,6 +549,7 @@ class Transports(DetailHandler[TransportItem]):
 
         return {'id': transport.uuid}
 
+    @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
         transport: models.Transport = models.Transport.objects.get(uuid=process_uuid(self._args[0]))
@@ -612,6 +636,7 @@ class Publications(DetailHandler[PublicationItem]):
 
         return self.success()
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['PublicationItem']:
         parent = ensure.is_instance(parent, models.ServicePool)
         return [
@@ -626,11 +651,13 @@ class Publications(DetailHandler[PublicationItem]):
             for i in self.filter_odata_queryset(parent.publications.all())
         ]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> PublicationItem:
         raise exceptions.rest.NotSupportedError(
             'Single publication retrieval not implemented inside assigned publications'
         )
 
+    @typing.override
     def get_table(self, parent: 'Model') -> TableInfo:
         ensure.is_instance(parent, models.ServicePool)  # Just ensures type
         return (
@@ -655,6 +682,7 @@ class Changelog(DetailHandler[ChangelogItem]):
     Processes the transports detail requests of a Service Pool
     """
 
+    @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['ChangelogItem']:
         parent = ensure.is_instance(parent, models.ServicePool)
         return [
@@ -666,9 +694,11 @@ class Changelog(DetailHandler[ChangelogItem]):
             for i in self.filter_odata_queryset(parent.changelog.all())
         ]
 
+    @typing.override
     def get_item(self, parent: 'Model', item: str) -> ChangelogItem:
         raise exceptions.rest.NotSupportedError('Single changelog retrieval not implemented inside changelog')
 
+    @typing.override
     def get_table(self, parent: 'Model') -> types.rest.TableInfo:
         ensure.is_instance(parent, models.ServicePool)  # Just ensures type
         return (
