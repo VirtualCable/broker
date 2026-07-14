@@ -104,9 +104,13 @@ class ServicePoolItem(types.rest.BaseRestItem):
     usage: str | types.rest.NotRequired = types.rest.NotRequired.field()
 
 
-class ServicesPools(ModelHandler[ServicePoolItem]):
+class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
     """
-    Handles Services Pools REST requests
+    Shared implementation for the service-pools master handlers.
+
+    Not registered by itself (the dispatcher only registers leaf Handler
+    subclasses); the concrete `ServicesPools` and the restrained-only
+    `RestrainedServicesPools` below inherit from it.
     """
 
     MODEL = ServicePool
@@ -758,3 +762,30 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             source=types.log.LogSource.REST,
             log_name=self._params.get('log_name', None),
         )
+
+
+class ServicesPools(_ServicesPoolsMaster):
+    """
+    Handles Services Pools REST requests (registered as /servicespools).
+
+    All behaviour lives in `_ServicesPoolsMaster`; this concrete leaf exists so
+    the dispatcher (which only registers leaf Handler subclasses) keeps the
+    original endpoint name/URL unchanged.
+    """
+
+
+class RestrainedServicesPools(_ServicesPoolsMaster):
+    """
+    Read-only drilldown for the dashboard "Restrained pools" KPI: same columns
+    and serialization as the full pools table, but only pools currently in a
+    restrained state.
+
+    Filters on the queryset (not on the serialized items) so paging and counting
+    are computed over the restrained pools only. `restraineds_queryset` is the
+    same source the dashboard KPI counts with, so card and table always agree.
+    """
+
+    @typing.override
+    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
+        qs = super().filter_model_queryset(qs)
+        return qs.filter(pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True))
