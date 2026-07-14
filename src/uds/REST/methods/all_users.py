@@ -71,12 +71,15 @@ class _ReadOnlyModelHandler(ModelHandler[T_Item]):
 
     ROLE = consts.UserRole.ADMIN
 
+    @typing.override
     def put(self) -> typing.Any:
         raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
 
+    @typing.override
     def post(self) -> typing.Any:
         raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
 
+    @typing.override
     def delete(self) -> typing.Any:
         raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
 
@@ -111,11 +114,13 @@ class _AllUsersMaster(_ReadOnlyModelHandler[GlobalUserItem]):
         .row_style(prefix='row-state-', field='state')
     ).build()
 
+    @typing.override
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         # get_item() reads user.manager.name for every row: without this the
         # listing costs one extra query per user.
         return super().filter_model_queryset(qs).select_related('manager')
 
+    @typing.override
     def get_item(self, item: 'Model') -> GlobalUserItem:
         user = typing.cast('models.User', item)
         return GlobalUserItem(
@@ -145,6 +150,7 @@ class UsersWithServices(_AllUsersMaster):
     KPI drilldown.
     """
 
+    @typing.override
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         qs = super().filter_model_queryset(qs)
         return qs.filter(userServices__state__in=State.VALID_STATES).distinct()
@@ -179,10 +185,12 @@ class AllGroups(_ReadOnlyModelHandler[GlobalGroupItem]):
         .row_style(prefix='row-state-', field='state')
     ).build()
 
+    @typing.override
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         # Same as the users listing: get_item() reads group.manager.name per row.
         return super().filter_model_queryset(qs).select_related('manager')
 
+    @typing.override
     def get_item(self, item: 'Model') -> GlobalGroupItem:
         group = typing.cast('models.Group', item)
         return GlobalGroupItem(

@@ -777,6 +777,7 @@ class RestrainedServicesPools(_ServicesPoolsMaster):
     same source the dashboard KPI counts with, so card and table always agree.
     """
 
+    @typing.override
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         qs = super().filter_model_queryset(qs)
         return qs.filter(pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True))

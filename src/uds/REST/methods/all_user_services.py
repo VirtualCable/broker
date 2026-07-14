@@ -75,6 +75,7 @@ class _AllUserServicesMaster(_ReadOnlyModelHandler[UserServiceItem]):
         .row_style(prefix='row-state-', field='state')
     ).build()
 
+    @typing.override
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         qs = super().filter_model_queryset(qs)
         # get_item() walks deployed_service, publication and user.manager on every
@@ -101,6 +102,7 @@ class _AllUserServicesMaster(_ReadOnlyModelHandler[UserServiceItem]):
             props[owner_id][key] = value
         return props
 
+    @typing.override
     def get_item(self, item: 'Model') -> UserServiceItem:
         userservice = typing.cast('models.UserService', item)
         rest_item = AssignedUserService.userservice_item(
@@ -120,6 +122,7 @@ class AllAssignedServices(_AllUserServicesMaster):
     (cache entries excluded). Backs the "Assigned services" KPI drilldown.
     """
 
+    @typing.override
     def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
         qs = super().filter_model_queryset(qs)
         return qs.filter(user__isnull=False)
