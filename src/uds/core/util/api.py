@@ -337,7 +337,7 @@ def gen_response(
                     schema=types.rest.api.SchemaProperty(
                         type='array',
                         items=types.rest.api.SchemaProperty(
-                            type=f'#/components/schemas/{type}',
+                            type=type if type == 'object' else f'#/components/schemas/{type}',
                         ),
                     ),
                 ),
@@ -350,7 +350,7 @@ def gen_response(
                 content=types.rest.api.Content(
                     media_type='application/json',
                     schema=types.rest.api.SchemaProperty(
-                        type=f'#/components/schemas/{type}',
+                        type=type if type == 'object' else f'#/components/schemas/{type}',
                     ),
                 ),
             )
