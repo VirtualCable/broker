@@ -78,6 +78,22 @@ def _generate_api() -> types.rest.api.OpenAPI:
 
     process_node(root_node)
 
+    # Ensure all paths with {uuid} declare the uuid parameter in every operation
+    UUID_PARAM = types.rest.api.Parameter(
+        name='uuid',
+        in_='path',
+        required=True,
+        description='The UUID of the item',
+        schema=types.rest.api.Schema(type='string', format='uuid'),
+    )
+
+    for path, path_item in paths.items():
+        if '{uuid}' not in path:
+            continue
+        for operation in (path_item.get, path_item.post, path_item.put, path_item.delete):
+            if operation and not any(p.name == 'uuid' for p in operation.parameters):
+                operation.parameters.append(UUID_PARAM)
+
     comps.securitySchemes = {
         SECURITY_NAME: {
             'type': 'apiKey',
