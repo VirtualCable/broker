@@ -234,9 +234,6 @@ def register_user(
     This will work correctly with both internal or externals cause we first authenticate the user, if internal and user do not exists in database
     authenticate will return false, if external and return true, will create a reference in database
     """
-    username = auth_instance.transformed_username(username, request)
-    logger.debug('Transformed username: %s', username)
-
     usr = authenticator.get_or_create_user(username, username)
     usr.real_name = auth_instance.get_real_name(username) or usr.real_name or username
     usr.save()
@@ -290,6 +287,8 @@ def authenticate(
 
     gm = auths.GroupsManager(authenticator)
     auth_instance = authenticator.get_instance()
+    username = auth_instance.transformed_username(username, request)
+    logger.debug('Transformed username: %s', username)
 
     if auth_instance.is_ip_allowed(request=request) is False:
         log_login(
@@ -351,7 +350,7 @@ def authenticate_via_callback(
     auth_instance = authenticator.get_instance()
 
     # If there is no callback for this authenticator...
-    if auth_instance.auth_callback is auths.Authenticator.auth_callback:  # type: ignore   # mypy thins it's a comparison overlap
+    if auth_instance.auth_callback is auths.Authenticator.auth_callback:
         raise exceptions.auth.InvalidAuthenticatorException()
 
     result = auth_instance.auth_callback(params, gm, request)

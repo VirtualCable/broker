@@ -40,6 +40,7 @@ from django.utils.translation import gettext_noop as _
 
 from uds.core.module import Module
 from uds.core import consts, types
+from uds.core.util import auth as util_auth
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -419,7 +420,7 @@ class Authenticator(Module):
         :note: You don't need to implement this method if your authenticator (as most authenticators does), does not
                transforms username.
         """
-        return username
+        return util_auth.normalize_username(username)
 
     def logout(
         self,
