@@ -337,8 +337,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
                     return operation(item)
 
-            elif self._args[0] in (snake_case_name, snake_case_name):
-                operation = getattr(self, snake_case_name) or getattr(self, snake_case_name)
+            elif self._args[0] in (camel_case_name, snake_case_name):
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if not operation:
                     raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
 

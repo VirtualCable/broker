@@ -66,3 +66,14 @@ class ServicePoolTest(rest.test.RESTTestCase):
             # Get from DB the service pool
             db_pool = models.ServicePool.objects.get(uuid=service_pool['id'])
             self.assertTrue(rest.assertions.assert_servicepool_is(db_pool, service_pool))
+
+    def test_custom_method_camel_and_snake_case(self) -> None:
+        # 'all_user_services' is a no-parent custom method; both the snake_case
+        # and the camelCase spelling of the same method must resolve identically.
+        snake_response = self.client.rest_get('servicespools/all_user_services')
+        self.assertEqual(snake_response.status_code, 200)
+
+        camel_response = self.client.rest_get('servicespools/allUserServices')
+        self.assertEqual(camel_response.status_code, 200)
+
+        self.assertEqual(snake_response.json(), camel_response.json())
