@@ -48,6 +48,7 @@ from uds.core.util.model import process_uuid
 from uds.models import MFA, Authenticator, Network, Tag
 from uds.REST.model import ModelHandler
 
+from .all_users import groups_table, list_groups, list_users, users_table
 from .users_groups import Groups, Users
 
 # Not imported at runtime, just for type checking
@@ -104,7 +105,15 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     MODEL = Authenticator
     # Custom get method "search" that requires authenticator id
-    CUSTOM_METHODS = [types.rest.ModelCustomMethod('search', True)]
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('search', True),
+        # Dashboard KPI drilldowns (cross-authenticator, read-only), exposed here
+        # so they share the authenticators menu group instead of being separate
+        # top-level endpoints.
+        types.rest.ModelCustomMethod('all_users', False),
+        types.rest.ModelCustomMethod('users_with_services', False),
+        types.rest.ModelCustomMethod('all_groups', False),
+    ]
     DETAIL = {'users': Users, 'groups': Groups}
     FIELDS_TO_SAVE = ['name', 'comments', 'tags', 'priority', 'small_name', 'mfa_id:_', 'state', 'net_filtering']
 
@@ -128,6 +137,22 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     REST_API_INFO = types.rest.api.RestApiInfo(
         typed=types.rest.api.RestApiInfoGuiType.MULTIPLE_TYPES,
     )
+
+    # --- Dashboard KPI drilldowns (read-only custom methods) ------------------
+    # admin_only: users/groups are not permission objects, so a non-admin staff
+    # member must not receive the flat cross-authenticator list.
+
+    def all_users(self) -> typing.Any:
+        """"Users" KPI drilldown: every user across all authenticators."""
+        return self.custom_listing(users_table(), list_users(with_services_only=False), admin_only=True)
+
+    def users_with_services(self) -> typing.Any:
+        """"Users with services" KPI drilldown: users owning a valid user service."""
+        return self.custom_listing(users_table(), list_users(with_services_only=True), admin_only=True)
+
+    def all_groups(self) -> typing.Any:
+        """"Groups" KPI drilldown: every group/meta-group across authenticators."""
+        return self.custom_listing(groups_table(), list_groups(), admin_only=True)
 
     @classmethod
     @typing.override

@@ -50,6 +50,7 @@ from uds.core.types.states import State
 from uds.models import Account, Image, OSManager, Service, ServicePool, ServicePoolGroup, User
 from uds.REST.model import ModelHandler
 
+from .all_user_services import list_user_services, user_services_table
 from .op_calendars import AccessCalendars, ActionsCalendars
 from .services import Services, ServiceInfo
 from .user_services import AssignedUserService, CachedService, Changelog, Groups, Publications, Transports
@@ -109,8 +110,7 @@ class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
     Shared implementation for the service-pools master handlers.
 
     Not registered by itself (the dispatcher only registers leaf Handler
-    subclasses); the concrete `ServicesPools` and the restrained-only
-    `RestrainedServicesPools` below inherit from it.
+    subclasses); the concrete `ServicesPools` below inherits from it.
     """
 
     MODEL = ServicePool
@@ -177,6 +177,11 @@ class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
         types.rest.ModelCustomMethod('list_assignables', True),
         types.rest.ModelCustomMethod('create_from_assignable', True),
         types.rest.ModelCustomMethod('add_log', True),
+        # Dashboard KPI drilldowns, exposed here so they share the pools menu
+        # group instead of being separate top-level endpoints.
+        types.rest.ModelCustomMethod('restrained', False),
+        types.rest.ModelCustomMethod('all_user_services', False),
+        types.rest.ModelCustomMethod('all_assigned_services', False),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -763,6 +768,31 @@ class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
             log_name=self._params.get('log_name', None),
         )
 
+    # --- Dashboard KPI drilldowns (read-only custom methods) ------------------
+
+    def restrained(self) -> typing.Any:
+        """
+        "Restrained pools" KPI drilldown: the full pools table, restricted to
+        pools currently restrained. `restraineds_queryset` is the same source the
+        dashboard KPI counts with, so card and table always agree.
+        """
+        qs = self.filter_model_queryset().filter(
+            pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True)
+        )
+        return self.custom_listing(self.TABLE, self.get_items(query=qs))
+
+    def all_user_services(self) -> typing.Any:
+        """"User services" KPI drilldown: every non-removed user service, any pool."""
+        return self.custom_listing(
+            user_services_table(), list_user_services(assigned_only=False), admin_only=True
+        )
+
+    def all_assigned_services(self) -> typing.Any:
+        """"Assigned services" KPI drilldown: user services assigned to a user."""
+        return self.custom_listing(
+            user_services_table(), list_user_services(assigned_only=True), admin_only=True
+        )
+
 
 class ServicesPools(_ServicesPoolsMaster):
     """
@@ -772,20 +802,3 @@ class ServicesPools(_ServicesPoolsMaster):
     the dispatcher (which only registers leaf Handler subclasses) keeps the
     original endpoint name/URL unchanged.
     """
-
-
-class RestrainedServicesPools(_ServicesPoolsMaster):
-    """
-    Read-only drilldown for the dashboard "Restrained pools" KPI: same columns
-    and serialization as the full pools table, but only pools currently in a
-    restrained state.
-
-    Filters on the queryset (not on the serialized items) so paging and counting
-    are computed over the restrained pools only. `restraineds_queryset` is the
-    same source the dashboard KPI counts with, so card and table always agree.
-    """
-
-    @typing.override
-    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
-        qs = super().filter_model_queryset(qs)
-        return qs.filter(pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True))

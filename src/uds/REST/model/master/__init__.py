@@ -277,6 +277,33 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 logger.debug('Got exception processing item from model: %s', e)
                 # logger.exception('Exception getting item from {0}'.format(self.model))
 
+    def custom_listing(
+        self,
+        table: 'types.rest.TableInfo',
+        items: collections.abc.Iterable['types.rest.BaseRestItem'],
+        *,
+        admin_only: bool = False,
+    ) -> typing.Any:
+        """
+        Body for a read-only listing exposed as a GET custom method:
+        `/<handler>/<method>` returns the rows, `/<handler>/<method>/tableinfo`
+        the columns. Lets a cross-cutting listing (a dashboard KPI drilldown)
+        live under an existing handler and menu group instead of a separate
+        top-level endpoint.
+
+        admin_only guards listings whose items are not permission objects (User,
+        Group, UserService): per-item READ cannot be granted on them, so a
+        non-admin staff member must not receive the flat cross-scope list.
+        """
+        if admin_only and not self.is_admin():
+            raise exceptions.rest.AccessDenied('Only administrators can access this listing')
+        sub = self._args[1] if len(self._args) > 1 else ''
+        if sub == consts.rest.TABLEINFO:
+            return table.as_dict()
+        if sub == consts.rest.TYPES:  # untyped listing: the table still asks for types
+            return []
+        return [i.as_dict() for i in items]
+
     def get(self) -> typing.Any:
         logger.debug('method GET for %s, %s', self.__class__.__name__, self._args)
         number_of_args = len(self._args)

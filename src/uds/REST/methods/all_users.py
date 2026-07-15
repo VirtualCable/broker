@@ -29,59 +29,22 @@
 """
 Global (cross-authenticator) read-only listings used by the dashboard KPI
 drilldowns. UDS normally exposes users/groups only as details of an
-authenticator; these handlers provide flat, top-level tables so the summary
-cards can link to "all users" / "all groups" / "users with services".
+authenticator; these helpers build flat tables so the Authenticators handler
+can serve them as custom methods (all users / all groups / users with services)
+without a separate top-level endpoint and menu group.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 import dataclasses
-import logging
-import typing
 
-from django.db.models import Model
 from django.utils.translation import gettext_lazy as _
 
 from uds import models
-from uds.core import consts, exceptions, types
-from uds.core.types.rest import T_Item
+from uds.core import types
 from uds.core.types.states import State
 from uds.core.util import ui as ui_utils
 
-from ..model import ModelHandler
 from .users_groups import UserItem
-
-logger = logging.getLogger(__name__)
-
-
-# Note: T_Item must be referenced by plain name (not `types.rest.T_Item`), or the
-# type checkers do not see this class as generic and every get_item() override below
-# is reported as an inconsistent override.
-class _ReadOnlyModelHandler(ModelHandler[T_Item]):
-    """
-    Base for read-only global listings: writes are rejected so these
-    dashboard drilldown endpoints never mutate data.
-
-    Admin only, like the Dashboard handler these listings back. Permissions can
-    only be granted on the objects that Permissions.get_class() accepts (pools,
-    authenticators, ...) and never on User/Group/UserService, so the per-item
-    READ check in ModelHandler.get_items() can never pass for a non-admin staff
-    member: with the default STAFF role these endpoints would answer 200 with an
-    always-empty list instead of denying access.
-    """
-
-    ROLE = consts.UserRole.ADMIN
-
-    @typing.override
-    def put(self) -> typing.Any:
-        raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
-
-    @typing.override
-    def post(self) -> typing.Any:
-        raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
-
-    @typing.override
-    def delete(self) -> typing.Any:
-        raise exceptions.rest.NotSupportedError(_('This endpoint is read-only'))
 
 
 @dataclasses.dataclass
@@ -90,16 +53,18 @@ class GlobalUserItem(UserItem):
     authenticator: str = ''
 
 
-class _AllUsersMaster(_ReadOnlyModelHandler[GlobalUserItem]):
-    """
-    Not registered (has subclasses). Flat list of every user across all
-    authenticators. Groups are intentionally omitted to keep the list query
-    cheap (no per-user group lookup).
-    """
+@dataclasses.dataclass
+class GlobalGroupItem(types.rest.BaseRestItem):
+    id: str
+    name: str
+    comments: str
+    state: str
+    type: str
+    authenticator: str
 
-    MODEL = models.User
 
-    TABLE = (
+def users_table() -> 'types.rest.TableInfo':
+    return (
         ui_utils.TableBuilder(_('Users'))
         .icon(name='name', title=_('Username'))
         .text_column(name='authenticator', title=_('Authenticator'))
@@ -114,64 +79,9 @@ class _AllUsersMaster(_ReadOnlyModelHandler[GlobalUserItem]):
         .row_style(prefix='row-state-', field='state')
     ).build()
 
-    @typing.override
-    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
-        # get_item() reads user.manager.name for every row: without this the
-        # listing costs one extra query per user.
-        return super().filter_model_queryset(qs).select_related('manager')
 
-    @typing.override
-    def get_item(self, item: 'Model') -> GlobalUserItem:
-        user = typing.cast('models.User', item)
-        return GlobalUserItem(
-            id=user.uuid,
-            name=user.name,
-            real_name=user.real_name,
-            comments=user.comments,
-            state=user.state,
-            staff_member=user.staff_member,
-            is_admin=user.is_admin,
-            last_access=user.last_access,
-            mfa_data=user.mfa_data,
-            parent=user.parent,
-            role=user.get_role().as_str(),
-            authenticator=user.manager.name,
-        )
-
-
-class AllUsers(_AllUsersMaster):
-    """Registered as /allusers: every user across all authenticators."""
-
-
-class UsersWithServices(_AllUsersMaster):
-    """
-    Registered as /userswithservices: only users that currently own at least
-    one valid (usable/preparing) user service. Backs the "Users with services"
-    KPI drilldown.
-    """
-
-    @typing.override
-    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
-        qs = super().filter_model_queryset(qs)
-        return qs.filter(userServices__state__in=State.VALID_STATES).distinct()
-
-
-@dataclasses.dataclass
-class GlobalGroupItem(types.rest.BaseRestItem):
-    id: str
-    name: str
-    comments: str
-    state: str
-    type: str
-    authenticator: str
-
-
-class AllGroups(_ReadOnlyModelHandler[GlobalGroupItem]):
-    """Registered as /allgroups: every group/meta-group across authenticators."""
-
-    MODEL = models.Group
-
-    TABLE = (
+def groups_table() -> 'types.rest.TableInfo':
+    return (
         ui_utils.TableBuilder(_('Groups'))
         .icon(name='name', title=_('Group'))
         .text_column(name='authenticator', title=_('Authenticator'))
@@ -185,15 +95,44 @@ class AllGroups(_ReadOnlyModelHandler[GlobalGroupItem]):
         .row_style(prefix='row-state-', field='state')
     ).build()
 
-    @typing.override
-    def filter_model_queryset(self, qs: typing.Any = None) -> typing.Any:
-        # Same as the users listing: get_item() reads group.manager.name per row.
-        return super().filter_model_queryset(qs).select_related('manager')
 
-    @typing.override
-    def get_item(self, item: 'Model') -> GlobalGroupItem:
-        group = typing.cast('models.Group', item)
-        return GlobalGroupItem(
+def list_users(*, with_services_only: bool) -> list[GlobalUserItem]:
+    """
+    Flat list of every user across all authenticators (dashboard KPI drilldown).
+
+    Groups are intentionally omitted to keep the query cheap (no per-user group
+    lookup). `with_services_only` keeps just the users that currently own at
+    least one valid (usable/preparing) user service.
+    """
+    # select_related: reading user.manager.name would otherwise cost a query per row.
+    qs = models.User.objects.select_related('manager')
+    if with_services_only:
+        qs = qs.filter(userServices__state__in=State.VALID_STATES).distinct()
+
+    return [
+        GlobalUserItem(
+            id=user.uuid,
+            name=user.name,
+            real_name=user.real_name,
+            comments=user.comments,
+            state=user.state,
+            staff_member=user.staff_member,
+            is_admin=user.is_admin,
+            last_access=user.last_access,
+            mfa_data=user.mfa_data,
+            parent=user.parent,
+            role=user.get_role().as_str(),
+            authenticator=user.manager.name,
+        )
+        for user in qs
+    ]
+
+
+def list_groups() -> list[GlobalGroupItem]:
+    """Flat list of every group/meta-group across authenticators (KPI drilldown)."""
+    # select_related: same as list_users, group.manager.name is read per row.
+    return [
+        GlobalGroupItem(
             id=group.uuid,
             name=group.name,
             comments=group.comments,
@@ -201,3 +140,5 @@ class AllGroups(_ReadOnlyModelHandler[GlobalGroupItem]):
             type='meta' if group.is_meta else 'group',
             authenticator=group.manager.name,
         )
+        for group in models.Group.objects.select_related('manager')
+    ]
