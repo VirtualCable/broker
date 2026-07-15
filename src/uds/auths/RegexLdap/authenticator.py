@@ -43,8 +43,7 @@ from uds.core.ui import gui
 from uds.core.util import ensure, ldaputil, auth as auth_utils, fields
 
 try:
-    # pylint: disable=no-name-in-module
-    from . import extra  # type: ignore
+    from . import extra  # pyright: ignore  # pyrefly: ignore
 except Exception:
     extra = None
 
@@ -249,9 +248,9 @@ class RegexLdap(auths.Authenticator):
                 self.username.as_str(),
                 self.password.as_str(),
                 self.host.as_str(),
-                port=int(self.port.as_int()),
+                port=self.port.as_int(),
                 use_ssl=self.use_ssl.as_bool(),
-                timeout=int(self.timeout.as_int()),
+                timeout=self.timeout.as_int(),
                 debug=False,
             )
 
@@ -262,9 +261,9 @@ class RegexLdap(auths.Authenticator):
             username,
             password,
             self.host.as_str(),
-            port=int(self.port.as_int()),
+            port=self.port.as_int(),
             use_ssl=self.use_ssl.as_bool(),
-            timeout=int(self.timeout.as_int()),
+            timeout=self.timeout.as_int(),
             debug=False,
         )
 

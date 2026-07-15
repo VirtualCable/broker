@@ -12,6 +12,7 @@ import ssl
 # This is a workaround for the deprecation warning of pyasn1 when used by ldap3
 # It is not recommended to ignore warnings :)
 import warnings
+
 warnings.filterwarnings("ignore", module='pyasn1', category=DeprecationWarning)
 
 from ldap3 import (
@@ -33,7 +34,9 @@ from ldap3 import (
 from django.utils.translation import gettext as _
 from django.conf import settings
 
-from uds.core.util import utils
+from uds.core.util import utils, net as util_net
+from uds.core.util.cache import Cache, CacheLike
+from uds.core.util.backoff import Backoff
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +54,7 @@ MODIFY_INCREMENT = LDAP_MODIFY_INCREMENT
 LDAP_ALREADY_EXISTS_RESULT_CODES = frozenset({20, 68})
 LDAP_ALREADY_EXISTS_DESCRIPTIONS = frozenset({'attributeOrValueExists', 'entryAlreadyExists'})
 
-LDAPResultType = collections.abc.MutableMapping[str, typing.Any]
+LDAPResultType = dict[str, typing.Any]
 LDAPSearchResultType = list[dict[str, typing.Any]] | None
 
 LDAPConnection: typing.TypeAlias = Connection
@@ -82,10 +85,7 @@ def _raise_for_result(operation: str, result: collections.abc.Mapping[str, typin
     except (TypeError, ValueError):
         numeric_result = None
 
-    if (
-        numeric_result in LDAP_ALREADY_EXISTS_RESULT_CODES
-        or description in LDAP_ALREADY_EXISTS_DESCRIPTIONS
-    ):
+    if numeric_result in LDAP_ALREADY_EXISTS_RESULT_CODES or description in LDAP_ALREADY_EXISTS_DESCRIPTIONS:
         raise ALREADY_EXISTS(message)
 
     raise LDAPError(message)
@@ -261,7 +261,6 @@ def add(
         raise LDAPError(str(e)) from e
 
 
-
 def delete(con: Connection, dn: str, *, depth: int = 1) -> None:
     """
     Deletes an LDAP entry and its children up to a certain depth.
@@ -286,6 +285,7 @@ def delete(con: Connection, dn: str, *, depth: int = 1) -> None:
     except Exception as e:
         logger.exception('Exception in delete:')
         raise LDAPError(str(e)) from e
+
 
 def recursive_delete(con: Connection, base_dn: str) -> None:
     """
@@ -331,3 +331,138 @@ def get_root_dse(con: Connection) -> 'LDAPResultType | None':
         dct['dn'] = entry.entry_dn
         return dct
     return None
+
+
+def dn_from_domain(domain: str) -> str:
+    """
+    `'a.b.c'` -> `'dc=a,dc=b,dc=c'`. Empty / whitespace input -> empty string.
+    """
+    parts = [p.strip() for p in domain.split('.') if p.strip()]
+    if not parts:
+        return ''
+    return ','.join(f'dc={p}' for p in parts)
+
+
+BAD_COOLDOWN_DEFAULT: typing.Final[int] = 30    # 30s seed (transient glitches heal fast)
+BAD_COOLDOWN_MAX: typing.Final[int] = 28800      # 8h cap (matches daily DC cycle)
+BAD_COOLDOWN_OWNER: typing.Final[str] = 'ldap'  # namespace inside the global backoff cache
+
+
+def connect_with_pool(
+    user: str,
+    password: str,
+    hosts: collections.abc.Iterable[tuple[str, int]],
+    *,
+    use_ssl: bool = False,
+    verify_ssl: bool = True,
+    certificate_data: str | None = None,
+    timeout: int = 8,
+    cache: CacheLike | None = None,
+    ignore_referrals: bool = True,
+    allowed_referral_hosts: tuple[str, ...] = (),
+    bad_cooldown: int = BAD_COOLDOWN_DEFAULT,
+    probe: bool = True,
+    probe_timeout: float = 1.5,
+) -> 'LDAPConnection':
+    """
+    Try, in order, to bind against each `(host, port)`. Skips any host that
+    is currently in backoff (per-key exponential cooldown). A previously
+    successful ``(host, port)`` is tried first ("preferred").
+
+    Returns the first successful connection. Raises ``LDAPError`` if every
+    host fails.
+
+    ``cache`` defaults to a process-wide ``Cache('ldap')``; callers can pass
+    their own (typically only tests do this). ``Backoff`` shares that same
+    cache under the ``ldap`` namespace, so a host that fails for one AD
+    authenticator is also skipped for every other one — a broken DC is
+    broken for everyone.
+    """
+    host_list: list[tuple[str, int]] = [(h, p) for h, p in hosts if h and h.strip()]
+    if not host_list:
+        raise LDAPError(_('No LDAP servers configured'))
+
+    def _host_key(host: str, port: int) -> str:
+        return f'{host.lower().rstrip(".")}:{port}'
+
+    # Our own cache. ``Backoff`` receives the same instance for the badness
+    # state; both code paths use the ``ldap`` namespace.
+    ldap_cache: CacheLike = cache if cache is not None else Cache(BAD_COOLDOWN_OWNER)
+    bo = Backoff(
+        ldap_cache,
+        owner=BAD_COOLDOWN_OWNER,
+        fail_time=bad_cooldown,
+        max_time=BAD_COOLDOWN_MAX,
+    )
+
+    def _preferred() -> list[tuple[str, int]]:
+        """Returns the cached preferred host(s), in priority order.
+
+        Storage format is just the list — the cache serialises it.
+        """
+        return ldap_cache.get('ldap.preferred', default=[])
+
+    def _set_preferred(hosts: list[tuple[str, int]]) -> None:
+        """Store the hosts as the new preferred list (priority order)."""
+        ldap_cache.put('ldap.preferred', hosts or [], 3600)
+
+    # Order: preferred first (tried in priority order), then the rest in
+    # the order the caller supplied. Duplicates collapse, but we never drop
+    # a preferred entry even if it isn't in ``host_list`` — better to probe
+    # it (and let ``is_bad`` skip it if it's down) than to ignore it.
+    ordered: list[tuple[str, int]] = []
+    seen: set[tuple[str, int]] = set()
+    for h, p in (*_preferred(), *host_list):
+        if (h, p) not in seen:
+            seen.add((h, p))
+            ordered.append((h, p))
+
+    last_error: str = ''
+    for h, p in ordered:
+        key = _host_key(h, p)
+        if bo.is_bad(key):
+            logger.debug('Skipping bad host %s:%s (in cooldown)', h, p)
+            continue
+        if probe and not util_net.test_connectivity(h, p, timeout=probe_timeout):
+            logger.debug('Probe TCP failed for %s:%s, marking as bad', h, p)
+            bo.mark_bad(key)
+            continue
+        try:
+            con = connection(
+                user,
+                password,
+                h,
+                port=p,
+                use_ssl=use_ssl,
+                timeout=timeout,
+                debug=False,
+                verify_ssl=verify_ssl,
+                certificate_data=certificate_data,
+            )
+        except LDAPError as e:
+            last_error = str(e)
+            logger.debug('LDAPError connecting to %s:%s: %s', h, p, e)
+            bo.mark_bad(key)
+            continue
+        except Exception as e:  # pragma: no cover - safety net
+            last_error = str(e)
+            logger.debug('Exception connecting to %s:%s: %s', h, p, e)
+            bo.mark_bad(key)
+            continue
+
+        # Success
+        _set_preferred([(h, p)])
+        bo.clear_bad(key)
+        # ``ignore_referrals`` / ``allowed_referral_hosts`` are part of the
+        # API for symmetry with future ldap3 features that need them
+        # (``Connection`` constructor flags). For now ldap3 builds the
+        # ``Server`` with ``get_info=ALL`` which is enough; the flags are
+        # accepted but unused here. Explicit ``del`` keeps pyrefly happy.
+        del ignore_referrals, allowed_referral_hosts
+        return con
+
+    raise LDAPError(
+        _('Could not connect to any LDAP server ({}). Last error: {}').format(
+            ', '.join(f'{h}:{p}' for h, p in ordered), last_error
+        )
+    )

@@ -118,10 +118,7 @@ class OAuth2Authenticator(auths.Authenticator):
         tooltip=_('Response type for OAuth2.'),
         required=True,
         default='code',
-        choices=[
-            gui.choice_item(v, v.as_text)
-            for v in oauth2_types.ResponseType
-        ],
+        choices=[gui.choice_item(v, v.as_text) for v in oauth2_types.ResponseType],
         tab=types.ui.Tab.ADVANCED,
     )
     # In case of code, we need to get the token from the token endpoint
@@ -439,7 +436,7 @@ class OAuth2Authenticator(auths.Authenticator):
         for key in self.get_public_keys():
             logger.debug('Key = %s', key)
             try:
-                payload = jwt.decode(token, key=key, audience=self.client_id.value, algorithms=[info.get('alg', 'RSA256')])  # type: ignore
+                payload = jwt.decode(token_id, key=key, audience=self.client_id.value, algorithms=[info.get('alg', 'RSA256')])
                 # If reaches here, token is valid, raises jwt.InvalidTokenError otherwise
                 logger.debug('Payload: %s', payload)
                 if payload.get('nonce') != nonce:

@@ -213,7 +213,9 @@ class X509CertificateAuthenticator(auths.Authenticator):
             try:
                 TicketStore.get(ticket_id, owner=self.get_uuid(), secure=True, invalidate=True)
             except TicketStore.DoesNotExist:
-                logger.warning('Replay-protection ticket invalid, expired, or already used (possible replay attack)')
+                logger.warning(
+                    'Replay-protection ticket invalid, expired, or already used (possible replay attack)'
+                )
                 return types.auth.FAILED_AUTH
             # -------------------------------------------------
 
@@ -251,7 +253,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
 
             realname = ' '.join(auth_utils.process_regex_field(self.realname_attr.value, subject_mapping))
             if not realname:
-                realname = username.capitalize()  # type: ignore
+                realname = username.capitalize()
 
             # Extract groups from certificate subject via regex
             groups: list[str] = auth_utils.process_regex_field(self.groups_attr.value, subject_mapping)
@@ -288,7 +290,7 @@ class X509CertificateAuthenticator(auths.Authenticator):
     def get_groups(self, username: str, groups_manager: auths.GroupsManager) -> None:
         data: list[str | list[str]] | None = self.storage.read_pickled(username)
         if data and len(data) > 1:
-            groups_manager.validate(data[1])  # type: ignore
+            groups_manager.validate(data[1])
         else:
             # Fallback: static common groups only
             groups_manager.validate([g.strip() for g in self.common_groups.value.split(',') if g.strip()])
