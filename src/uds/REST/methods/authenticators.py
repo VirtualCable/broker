@@ -143,15 +143,15 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     # member must not receive the flat cross-authenticator list.
 
     def all_users(self) -> typing.Any:
-        """"Users" KPI drilldown: every user across all authenticators."""
+        '''"Users" KPI drilldown: every user across all authenticators.'''
         return self.custom_listing(users_table(), list_users(with_services_only=False), admin_only=True)
 
     def users_with_services(self) -> typing.Any:
-        """"Users with services" KPI drilldown: users owning a valid user service."""
+        '''"Users with services" KPI drilldown: users owning a valid user service.'''
         return self.custom_listing(users_table(), list_users(with_services_only=True), admin_only=True)
 
     def all_groups(self) -> typing.Any:
-        """"Groups" KPI drilldown: every group/meta-group across authenticators."""
+        '''"Groups" KPI drilldown: every group/meta-group across authenticators.'''
         return self.custom_listing(groups_table(), list_groups(), admin_only=True)
 
     @classmethod

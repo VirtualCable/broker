@@ -776,19 +776,19 @@ class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
         pools currently restrained. `restraineds_queryset` is the same source the
         dashboard KPI counts with, so card and table always agree.
         """
-        qs = self.filter_model_queryset().filter(
+        qs: QuerySet[ServicePool] = self.filter_model_queryset().filter(
             pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True)
         )
         return self.custom_listing(self.TABLE, self.get_items(query=qs))
 
     def all_user_services(self) -> typing.Any:
-        """"User services" KPI drilldown: every non-removed user service, any pool."""
+        '''"User services" KPI drilldown: every non-removed user service, any pool.'''
         return self.custom_listing(
             user_services_table(), list_user_services(assigned_only=False), admin_only=True
         )
 
     def all_assigned_services(self) -> typing.Any:
-        """"Assigned services" KPI drilldown: user services assigned to a user."""
+        '''"Assigned services" KPI drilldown: user services assigned to a user.'''
         return self.custom_listing(
             user_services_table(), list_user_services(assigned_only=True), admin_only=True
         )
