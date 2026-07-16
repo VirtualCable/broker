@@ -48,7 +48,7 @@ from uds.core.util.model import process_uuid
 from uds.models import MFA, Authenticator, Network, Tag
 from uds.REST.model import ModelHandler
 
-from .users_groups import Groups, Users
+from .users_groups import Groups, Users, UserItem
 
 # Not imported at runtime, just for type checking
 
@@ -104,9 +104,21 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     MODEL = Authenticator
     # Custom get method "search" that requires authenticator id
-    CUSTOM_METHODS = [types.rest.ModelCustomMethod('search', True)]
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('search', True),
+        types.rest.ModelCustomMethod('users_with_services', True),
+    ]
     DETAIL = {'users': Users, 'groups': Groups}
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags', 'priority', 'small_name', 'mfa_id:_', 'state', 'net_filtering']
+    FIELDS_TO_SAVE = [
+        'name',
+        'comments',
+        'tags',
+        'priority',
+        'small_name',
+        'mfa_id:_',
+        'state',
+        'net_filtering',
+    ]
 
     TABLE = (
         ui_utils.TableBuilder(_('Authenticators'))
@@ -136,9 +148,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     @classmethod
     @typing.override
-    def extra_type_info(
-        cls: type[typing.Self], type_: type['Module']
-    ) -> AuthenticatorTypeInfo | None:
+    def extra_type_info(cls: type[typing.Self], type_: type['Module']) -> AuthenticatorTypeInfo | None:
         if issubclass(type_, auths.Authenticator):
             return AuthenticatorTypeInfo(
                 search_users_supported=type_.search_users != auths.Authenticator.search_users,
@@ -311,6 +321,24 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                 types.auth.SearchResultItem(id=_('Too many results...'), name=_('Refine your query')).as_dict()
             ]
             # self.invalidResponseException('{}'.format(e))
+
+    # Custom method "users_with_services" method
+    def users_with_services(self, item: 'models.Model') -> list[UserItem]:
+        """
+        API:
+            Returns a list of users with services assigned in this authenticator
+        """
+        item = ensure.is_instance(item, Authenticator)
+        self.check_access(item, types.permissions.PermissionType.READ)
+
+        # all users from this authhenticator with userservices assigned, and not removed or canceled
+        # userServices is a RelatedManager, so we can filter it directly
+        users = item.users.filter(
+            userServices__isnull=False,
+            userServices__state__in=[types.states.State.ACTIVE, types.states.State.PREPARING],
+        ).distinct()
+
+        return [Users.as_user_item(i) for i in users]
 
     @typing.override
     def test(self, type_: str) -> typing.Any:

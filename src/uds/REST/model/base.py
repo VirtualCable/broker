@@ -126,7 +126,7 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
                     # If key is not present, and default = _, then it is not required skip it
                     if default == '_' and k not in self._params:
                         continue
-                    args[k] = self._params.get(k, default)
+                    args[k] = str(self._params.get(k, default))
                 else:  # Required field, with a possible default on defaults dict
                     if key not in self._params:
                         if defaults and key in defaults:
