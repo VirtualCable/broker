@@ -1025,7 +1025,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             logger.error(msg)
             raise InvalidServiceException(msg)
 
-        full_username = user.pretty_name if user else 'unknown'
+        full_username = user.pretty_name if user else 'unknown'  # pyrefly: ignore[redundant-condition]
 
         if not test_userservice_status:
             # traceLogger.info('GOT service "{}" for user "{}" with transport "{}" (NOT TESTED)'.format(userService.name, userName, trans.name))

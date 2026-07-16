@@ -91,7 +91,7 @@ def create_db_service(provider: models.Provider, use_caching_version: bool = Tru
 
 
 def create_db_osmanager(
-    osmanager: typing.Optional[OSManager] = None,
+    osmanager: OSManager | None = None,
 ) -> models.OSManager:
     if osmanager is None:
         from uds.osmanagers.Test import TestOSManager
@@ -116,7 +116,7 @@ def create_db_osmanager(
 
 
 def create_db_servicepool_group(
-    image: typing.Optional[models.Image] = None,
+    image: models.Image | None = None,
 ) -> models.ServicePoolGroup:
     service_pool_group: 'models.ServicePoolGroup' = models.ServicePoolGroup.objects.create(
         name='Service pool group %d' % (glob['service_pool_group_id']),
@@ -130,10 +130,10 @@ def create_db_servicepool_group(
 
 def create_db_servicepool(
     service: models.Service,
-    osmanager: typing.Optional[models.OSManager] = None,
-    groups: typing.Optional[collections.abc.Iterable[models.Group]] = None,
-    transports: typing.Optional[collections.abc.Iterable[models.Transport]] = None,
-    servicePoolGroup: typing.Optional[models.ServicePoolGroup] = None,
+    osmanager: models.OSManager | None = None,
+    groups: collections.abc.Iterable[models.Group] | None = None,
+    transports: collections.abc.Iterable[models.Transport] | None = None,
+    servicePoolGroup: models.ServicePoolGroup | None = None,
 ) -> models.ServicePool:
 
     service_pool: 'models.ServicePool' = service.deployedServices.create(
@@ -238,9 +238,9 @@ def create_db_one_assigned_userservice(
     provider: 'models.Provider',
     user: 'models.User',
     groups: collections.abc.Iterable['models.Group'],
-    type_: typing.Union[typing.Literal['managed'], typing.Literal['unmanaged']],
-    osmanager: typing.Optional[OSManager] = None,
-    transport_instance: typing.Optional['Transport'] = None,
+    type_: typing.Literal['managed'] | typing.Literal['unmanaged'],
+    osmanager: OSManager | None = None,
+    transport_instance: 'Transport | None' = None,
 ) -> 'models.UserService':
 
     service = create_db_service(provider)
@@ -249,7 +249,7 @@ def create_db_one_assigned_userservice(
     Creates several testing OS Managers
     """
 
-    osmanager_db: typing.Optional['models.OSManager'] = (
+    osmanager_db: 'models.OSManager | None' = (
         None if type_ == 'unmanaged' else create_db_osmanager(osmanager=osmanager)
     )
     transport: 'models.Transport' = create_db_transport(transport_instance=transport_instance)
@@ -262,9 +262,9 @@ def create_db_one_assigned_userservice(
 def create_db_assigned_userservices(
     count: int = 1,
     type_: typing.Literal['managed', 'unmanaged'] = 'managed',
-    user: typing.Optional['models.User'] = None,
-    groups: typing.Optional[collections.abc.Iterable['models.Group']] = None,
-    transport_instance: typing.Optional['Transport'] = None,
+    user: 'models.User | None' = None,
+    groups: collections.abc.Iterable['models.Group'] | None = None,
+    transport_instance: 'Transport | None' = None,
 ) -> list[models.UserService]:
     from . import authenticators
 

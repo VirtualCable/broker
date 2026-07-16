@@ -53,6 +53,7 @@ class TestGetServicesData(UDSTransactionTestCase):
     user: models.User
     transports: list[models.Transport]
 
+    @typing.override
     def setUp(self) -> None:
         # We need to create a user with some services
         self.auth = fixtures_authenticators.create_db_authenticator()
@@ -182,7 +183,7 @@ class TestGetServicesData(UDSTransactionTestCase):
             )
 
         data = services.get_services_info_dict(self.request)
-        now = timezone.localtime()
+        now = timezone.now()
 
         result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
         self.assertEqual(len(result_services), 10)
