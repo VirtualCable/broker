@@ -334,10 +334,11 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service_copy.in_use = False
         user_service_copy.state = State.REMOVED
         user_service_copy.os_state = State.USABLE
-        log.log(user_service_copy, types.log.LogLevel.INFO, 'Service moved to cache')
-
         # Save the new element.
         user_service_copy.save()
+        
+        log.log(user_service_copy, types.log.LogLevel.INFO, 'Service moved to cache')
+
 
         # Now, move the original to cache, but do it "hard" way, so we do not need to check for state
         userservice.state = State.PREPARING  # move_to_level will set real final state depending on the result of the operation
