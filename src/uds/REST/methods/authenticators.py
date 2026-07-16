@@ -48,7 +48,7 @@ from uds.core.util.model import process_uuid
 from uds.models import MFA, Authenticator, Network, Tag
 from uds.REST.model import ModelHandler
 
-from .all_users import groups_table, list_groups, list_users, users_table
+from .kpi_drilldowns import list_groups, list_users_with_services
 from .users_groups import Groups, Users
 
 # Not imported at runtime, just for type checking
@@ -110,7 +110,6 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         # Dashboard KPI drilldowns (cross-authenticator, read-only), exposed here
         # so they share the authenticators menu group instead of being separate
         # top-level endpoints.
-        types.rest.ModelCustomMethod('all_users', False),
         types.rest.ModelCustomMethod('users_with_services', False),
         types.rest.ModelCustomMethod('all_groups', False),
     ]
@@ -139,20 +138,20 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     )
 
     # --- Dashboard KPI drilldowns (read-only custom methods) ------------------
-    # admin_only: users/groups are not permission objects, so a non-admin staff
-    # member must not receive the flat cross-authenticator list.
-
-    def all_users(self) -> typing.Any:
-        '''"Users" KPI drilldown: every user across all authenticators.'''
-        return self.custom_listing(users_table(), list_users(with_services_only=False), admin_only=True)
+    # Admin only: users and groups are not permission objects, so a non-admin
+    # staff member must not receive the flat cross-authenticator list.
 
     def users_with_services(self) -> typing.Any:
         '''"Users with services" KPI drilldown: users owning a valid user service.'''
-        return self.custom_listing(users_table(), list_users(with_services_only=True), admin_only=True)
+        if not self.is_admin():
+            raise exceptions.rest.AccessDenied('Only administrators can access this listing')
+        return [i.as_dict() for i in list_users_with_services()]
 
     def all_groups(self) -> typing.Any:
         '''"Groups" KPI drilldown: every group/meta-group across authenticators.'''
-        return self.custom_listing(groups_table(), list_groups(), admin_only=True)
+        if not self.is_admin():
+            raise exceptions.rest.AccessDenied('Only administrators can access this listing')
+        return [i.as_dict() for i in list_groups()]
 
     @classmethod
     @typing.override

@@ -50,7 +50,7 @@ from uds.core.types.states import State
 from uds.models import Account, Image, OSManager, Service, ServicePool, ServicePoolGroup, User
 from uds.REST.model import ModelHandler
 
-from .all_user_services import list_user_services, user_services_table
+from .kpi_drilldowns import list_user_services
 from .op_calendars import AccessCalendars, ActionsCalendars
 from .services import Services, ServiceInfo
 from .user_services import AssignedUserService, CachedService, Changelog, Groups, Publications, Transports
@@ -249,10 +249,16 @@ class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
     ) -> collections.abc.Generator[ServicePoolItem, None, None]:
         # Optimized query, due that there is a lot of info needed for theee
         d = sql_now() - datetime.timedelta(seconds=GlobalConfig.RESTRAINT_TIME.as_int())
+        # A caller may narrow down the pools to serialize (the restrained
+        # drilldown does): keep its filtering and add the prefetch/annotations on
+        # top of it. Note the explicit None check: an empty queryset is falsy,
+        # and defaulting on falsy would silently widen it back to every pool.
+        query: 'QuerySet[ServicePool]|None' = kwargs.get('query', None)
+        base = ServicePool.objects.all() if query is None else query
         return super().get_items(
             sumarize=kwargs.get('sumarize', True),
             query=(
-                ServicePool.objects.prefetch_related(
+                base.prefetch_related(
                     'service',
                     'service__provider',
                     'servicesPoolGroup',
@@ -772,26 +778,39 @@ class _ServicesPoolsMaster(ModelHandler[ServicePoolItem]):
 
     def restrained(self) -> typing.Any:
         """
-        "Restrained pools" KPI drilldown: the full pools table, restricted to
-        pools currently restrained. `restraineds_queryset` is the same source the
-        dashboard KPI counts with, so card and table always agree.
+        "Restrained pools" KPI drilldown: the pools currently restrained.
+        `restraineds_queryset` is the same source the dashboard KPI counts with,
+        so card and table always agree.
+
+        Items are pools, so get_items() applies the per-item READ check: unlike
+        the listings below, this one needs no extra admin gate.
         """
         qs: QuerySet[ServicePool] = self.filter_model_queryset().filter(
             pk__in=ServicePool.restraineds_queryset().values_list('pk', flat=True)
         )
-        return self.custom_listing(self.TABLE, self.get_items(query=qs))
+        # There is no server-side TableInfo behind a custom method, so the raw
+        # state (which TABLE renders through a dict_column) is resolved here and
+        # the GUI declares a plain text column. Same as the other drilldowns.
+        literals = State.literals_dict()
+        rows = [i.as_dict() for i in self.get_items(query=qs)]
+        for row in rows:
+            row['state'] = literals.get(row['state'], row['state'])
+        return rows
+
+    # Admin only: user services are not permission objects, so a non-admin staff
+    # member must not receive the flat cross-pool list.
 
     def all_user_services(self) -> typing.Any:
         '''"User services" KPI drilldown: every non-removed user service, any pool.'''
-        return self.custom_listing(
-            user_services_table(), list_user_services(assigned_only=False), admin_only=True
-        )
+        if not self.is_admin():
+            raise exceptions.rest.AccessDenied('Only administrators can access this listing')
+        return [i.as_dict() for i in list_user_services(assigned_only=False)]
 
     def all_assigned_services(self) -> typing.Any:
         '''"Assigned services" KPI drilldown: user services assigned to a user.'''
-        return self.custom_listing(
-            user_services_table(), list_user_services(assigned_only=True), admin_only=True
-        )
+        if not self.is_admin():
+            raise exceptions.rest.AccessDenied('Only administrators can access this listing')
+        return [i.as_dict() for i in list_user_services(assigned_only=True)]
 
 
 class ServicesPools(_ServicesPoolsMaster):
