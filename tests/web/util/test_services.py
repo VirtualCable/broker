@@ -31,7 +31,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 import itertools
-import random
 import typing
 from unittest import mock
 
@@ -247,15 +246,23 @@ class TestGetServicesData(UDSTransactionTestCase):
         add_random_transports: bool,
     ) -> tuple[list[models.ServicePool], models.MetaPool]:
         service_pools: list[models.ServicePool] = []
+        # Round-robin over the non-common transports, so each one is assigned
+        # to at most ceil(count / len) pools. That guarantees no "extra"
+        # transport ends up in every pool — otherwise, with ``random.sample``
+        # over a small pool, the COMMON-grouping test would intermittently
+        # find an extra transport in the result.
+        extras = itertools.cycle(self.transports[3:]) if add_random_transports else iter(())
         for _i in range(count):
             pool = fixtures_services.create_db_assigned_userservices(
                 count=1, user=self.user, groups=self.groups
             )[0].deployed_service
 
-            pool.transports.add(*self.transports[:3])  # Add the first 3 transports to all pools
-            # add some random transports to each pool after the three common ones
+            pool.transports.add(*self.transports[:3])  # Common to all pools
             if add_random_transports:
-                pool.transports.add(*random.sample(self.transports[3:], 3))
+                # Two extras per pool, still round-robin so no transport
+                # is in every pool (count=10, extras=7, each appears ~3 times).
+                pool.transports.add(next(extras))
+                pool.transports.add(next(extras))
             service_pools.append(pool)
 
         return service_pools, fixtures_services.create_db_metapool(
