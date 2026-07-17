@@ -333,10 +333,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
         # all users from this authhenticator with userservices assigned, and not removed or canceled
         # userServices is a RelatedManager, so we can filter it directly
-        users = item.users.filter(
-            userServices__isnull=False,
-            userServices__state__in=[types.states.State.ACTIVE, types.states.State.PREPARING],
-        ).distinct()
+        users = item.users.filter(userServices__state__in=types.states.State.VALID_STATES).distinct()
 
         return [Users.as_user_item(i) for i in users]
 
