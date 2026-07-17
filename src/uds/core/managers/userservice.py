@@ -336,12 +336,13 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service_copy.os_state = State.USABLE
         # Save the new element.
         user_service_copy.save()
-        
+
         log.log(user_service_copy, types.log.LogLevel.INFO, 'Service moved to cache')
 
-
         # Now, move the original to cache, but do it "hard" way, so we do not need to check for state
-        userservice.state = State.PREPARING  # move_to_level will set real final state depending on the result of the operation
+        userservice.state = (
+            State.PREPARING
+        )  # move_to_level will set real final state depending on the result of the operation
         userservice.os_state = State.USABLE
         userservice.user = None
         userservice.cache_level = types.services.CacheLevel.L1
@@ -542,7 +543,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         # Some sanity checks, should never happen
         if userservice.cache_level != types.services.CacheLevel.NONE:
             logger.error('Cache level is not NONE for userservice %s on release_on_logout', userservice)
-            userservice.release()
+            # Already on a cache, simply return
             return
 
         if userservice.is_usable() is False:
