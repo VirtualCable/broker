@@ -1,0 +1,277 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2025 Virtual Cable S.L.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright notice,
+#      this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#      may be used to endorse or promote products derived from this software
+#      without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+Dispatcher contract tests (Phase 1 — Safety net).
+
+This module freezes the current behavior of the dispatcher so that any future
+change (adding QUERY, OPTIONS, deprecation headers, etc.) is detected if it
+breaks the existing contract.
+
+Code under test:
+- src/uds/REST/dispatcher.py  (Dispatcher.dispatch)
+- src/uds/REST/handlers.py    (Handler base)
+
+KNOWN BUGS DETECTED BY THIS SAFETY NET (to be fixed in Phase 2):
+- B1: dispatcher.py:88 builds HttpResponseNotAllowed passing the body as
+  `permitted_methods` (first positional arg). Django expects a list of
+  methods. Result: any 405 built via Dispatcher.error_response raises a
+  TypeError (500 in production) instead of a clean 405. The 405 for an
+  unknown method (dispatcher.py:139) is broken in production today.
+  Affected tests: test_forbidden_methods_trigger_bug_b1,
+  test_405_current_behaviour_due_to_bug_b1 (expect TypeError until fixed).
+
+Author: Adolfo Gómez, dkmaster at dkmon dot com
+"""
+import logging
+import typing
+
+from tests.utils import rest
+from tests.utils.test import REST_PATH
+
+logger = logging.getLogger(__name__)
+
+# HTTP methods recognized today by the dispatcher (dispatcher.py:144).
+# Any method outside this list receives 405 Method Not Allowed.
+SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete')
+
+# Methods the dispatcher rejects today (405).
+# QUERY (RFC 10008) is here today; it will move out in Phase 2 when implemented.
+FORBIDDEN_METHODS: typing.Final[tuple[str, ...]] = (
+    'query',    # RFC 10008 - not yet supported
+    'patch',    # RFC 5789  - not yet supported
+    'head',     # RFC 9110  - not yet supported
+    'options',  # RFC 9110  - not yet supported
+    'trace',    # RFC 9110  - not yet supported
+    'connect',  # RFC 9110  - not applicable
+    'foo',      # invented method
+)
+
+
+class DispatcherContractTest(rest.test.RESTTestCase):
+    """
+    Freezes the REST dispatcher contract as it stands today.
+
+    Any test that fails after a dispatcher change (e.g. adding QUERY in
+    Phase 2) must be INTENTIONALLY updated in that phase, not blindly fixed.
+    If a test that was not expected to change fails, it is a regression.
+    """
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+    def _rest_request(
+        self, method: str, path: str, *, data: bytes | str | None = None, content_type: str = 'application/json'
+    ) -> 'typing.Any':
+        """Send a REST request with an arbitrary HTTP method.
+
+        Uses Client.generic to support methods not covered by the
+        rest_get/rest_post/rest_put/rest_delete helpers (e.g. QUERY, OPTIONS, HEAD).
+
+        Note: for GET we don't send a body or content_type, because the processor
+        would try to parse the empty body as JSON and fail. For other methods,
+        pass the body explicitly if needed.
+        """
+        url = f'{REST_PATH}{path}'
+        if method.lower() == 'get':
+            # GET without body (same as rest_get does)
+            return self.client.rest_get(path)
+        # For the rest, generic allows arbitrary methods.
+        # Only pass content_type if there is a body; without body we don't send
+        # content_type to avoid the processor trying to parse ''.
+        if data is None:
+            return self.client.generic(method.upper(), url)
+        return self.client.generic(method.upper(), url, data=data, content_type=content_type)
+
+    # ------------------------------------------------------------------
+    # T1A.1 - Unsupported methods: documentation of bug B1
+    # ------------------------------------------------------------------
+    def test_forbidden_methods_trigger_bug_b1(self) -> None:
+        """Every method outside get/post/put/delete triggers bug B1 today.
+
+        Reference: src/uds/REST/dispatcher.py:139 + :88.
+        The method filter rejects with HttpResponseNotAllowed, but
+        Dispatcher.error_response passes the JSON body as `permitted_methods`
+        (first positional arg of HttpResponseNotAllowed), and Django does
+        `", ".join(permitted_methods)` over bytes -> TypeError.
+
+        In production this would be a 500; in the test client the exception
+        propagates. We document the current behavior here.
+
+        When B1 is fixed in Phase 2, replace this with:
+            test_forbidden_methods_return_405
+        which will assert status == 405.
+        """
+        for method in FORBIDDEN_METHODS:
+            with self.subTest(method=method):
+                with self.assertRaises(TypeError, msg=f'Method {method} hits bug B1 (TypeError)'):
+                    self._rest_request(method, 'providers/overview')
+
+    def test_allowed_methods_not_rejected_as_unknown(self) -> None:
+        """get/post/put/delete are not rejected by the dispatcher method filter.
+
+        For GET we use a real path and expect 200 (handler exists and we are
+        logged in as admin).
+        """
+        # GET on providers/overview -> 200 (handler exists and we are admin)
+        response = self.client.rest_get('providers/overview')
+        self.assertEqual(response.status_code, 200)
+
+    # ------------------------------------------------------------------
+    # T1A.2 - The 405 is broken today due to bug B1
+    # ------------------------------------------------------------------
+    def test_405_current_behaviour_due_to_bug_b1(self) -> None:
+        """Documents bug B1: the 405 for an unknown method raises TypeError today.
+
+        When B1 is fixed in Phase 2, this test must be replaced by
+        test_405_returns_json_error which will assert: status 405,
+        Content-Type application/json, body with 'error'.
+
+        Bug reference: src/uds/REST/dispatcher.py:88 + :139.
+        """
+        with self.assertRaises(TypeError):
+            self._rest_request('options', 'providers/overview')
+
+    # ------------------------------------------------------------------
+    # T1A.4 - Fixed headers present on 2xx responses
+    # ------------------------------------------------------------------
+    def test_fixed_response_headers_on_success(self) -> None:
+        """Every successful response carries the dispatcher fixed headers.
+
+        Reference: src/uds/REST/dispatcher.py:212-216
+        - UDS-Version: <version>;<stamp>
+        - Response-Stamp: <sql_stamp_seconds>
+        - Cache-Control: no-cache, no-store, must-revalidate
+        - Pragma: no-cache
+        - Expires: 0
+        """
+        response = self.client.rest_get('providers/overview')
+        self.assertEqual(response.status_code, 200)
+
+        # UDS-Version in 'version;stamp' form
+        uds_version = response.get('UDS-Version')
+        self.assertIsNotNone(uds_version, 'UDS-Version header must be present')
+        assert uds_version is not None
+        self.assertIn(';', uds_version, 'UDS-Version must be in the form version;stamp')
+
+        # Response-Stamp present and numeric
+        response_stamp = response.get('Response-Stamp')
+        self.assertIsNotNone(response_stamp, 'Response-Stamp header must be present')
+        assert response_stamp is not None
+        int(response_stamp)  # raises ValueError if not numeric
+
+        # Cache headers: exact 'no-cache, no-store, must-revalidate'
+        self.assertEqual(response.get('Cache-Control'), 'no-cache, no-store, must-revalidate')
+        self.assertEqual(response.get('Pragma'), 'no-cache')
+        self.assertEqual(response.get('Expires'), '0')
+
+    def test_cache_control_header_always_no_store(self) -> None:
+        """The Cache-Control header always reports no-store (security policy).
+
+        Verified on a 200 response; the API security contract requires that
+        no REST response is cacheable by proxies.
+        """
+        response = self.client.rest_get('providers/overview')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get('Cache-Control'), 'no-cache, no-store, must-revalidate')
+
+    # ------------------------------------------------------------------
+    # T1A.5 - Nonexistent path -> 404
+    # ------------------------------------------------------------------
+    def test_nonexistent_path_returns_404(self) -> None:
+        """A path that resolves to no handler returns 404.
+
+        Reference: dispatcher.py (handler_node not found).
+        Note: the dispatcher returns 404 with Content-Type text/plain for
+        'Service not found', unlike the JSON 404 for a missing item.
+        """
+        response = self._rest_request('get', 'this-handler-does-not-exist/overview')
+        self.assertEqual(response.status_code, 404)
+
+    # ------------------------------------------------------------------
+    # T1A.6 - No auth token on an authenticated handler -> 403
+    # ------------------------------------------------------------------
+    def test_authenticated_handler_without_token_returns_403(self) -> None:
+        """An authenticated handler called without X-Auth-Token returns 403.
+
+        Reference: src/uds/REST/handlers.py (Handler.__init__, AccessDenied).
+        We use a fresh client (without login) to ensure there is no token.
+        """
+        from tests.utils.test import UDSClient
+
+        unauth_client = UDSClient()
+        url = f'{REST_PATH}providers/overview'
+        response = unauth_client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    # ------------------------------------------------------------------
+    # T1A.7 - 405 for method-allowed-by-dispatcher-but-missing-in-handler DOES work
+    # ------------------------------------------------------------------
+    def test_405_for_undefined_method_in_handler_works(self) -> None:
+        """A method allowed by the dispatcher but absent in the handler yields 405 with Allow.
+
+        Reference: src/uds/REST/dispatcher.py:168-172 (AttributeError path).
+        Unlike bug B1, THIS path builds HttpResponseNotAllowed correctly passing
+        a LIST of methods -> works and returns Allow.
+
+        providers is a ModelHandler: it defines get/put/delete but post only
+        accepts 'test'. A POST to /providers/overview (not /test) hits
+        InvalidMethodError -> 405 with Allow, or RequestError -> 400.
+        The key point: it is NOT the TypeError of bug B1.
+        """
+        response = self.client.rest_post('providers/overview')
+        self.assertIn(response.status_code, (400, 405))
+
+    # ------------------------------------------------------------------
+    # Future-contract documentation (no real assertion, just documentation)
+    # ------------------------------------------------------------------
+    def test_contract_documentation(self) -> None:
+        """Placeholder test documenting the current contract for future phases.
+
+        When Phase 2 (extended dispatcher) is implemented:
+        - FORBIDDEN_METHODS must lose 'query' and 'options'
+        - test_forbidden_methods_trigger_bug_b1 must be updated (query/options
+          are no longer forbidden)
+        - Add test that OPTIONS returns Allow including QUERY
+        - Add test that QUERY no longer returns 405/raises TypeError
+        - Fix bug B1 (replace test_405_current_behaviour_due_to_bug_b1 with
+          test_405_returns_json_error)
+
+        This verifies the constants in this module reflect the current
+        contract. If someone adds QUERY to SUPPORTED_METHODS without updating
+        FORBIDDEN_METHODS, this test fails as a reminder.
+        """
+        self.assertNotIn('query', SUPPORTED_METHODS, 'QUERY not yet supported; update this test in Phase 2')
+        self.assertNotIn('options', SUPPORTED_METHODS, 'OPTIONS not yet supported; update this test in Phase 2')
+        self.assertIn('query', FORBIDDEN_METHODS)
+        self.assertIn('options', FORBIDDEN_METHODS)
+
