@@ -141,6 +141,19 @@ class Handler(abc.ABC):
 
         self._odata = types.rest.api.ODataParams.from_dict(self.query_params())
 
+    def query(self) -> typing.Any:
+        """RFC 10008 QUERY — safe GET with OData in the request body.
+
+        Reads ``$filter``, ``$orderby``, ``$top``, ``$skip``, ``$select``
+        from the JSON body (``self._params``) instead of the query string,
+        then delegates to :meth:`get`.
+        """
+        self._odata = types.rest.api.ODataParams.from_dict(
+            {k: v for k, v in self._params.items() if k.startswith('$')}
+        )
+        # Subclasses (ModelHandler, DetailHandler, etc.) define get().
+        return typing.cast('typing.Any', getattr(self, 'get'))()
+
     def api_compat(self) -> types.rest.ApiCompat:
         """Return the current API compatibility mode.
 

@@ -56,12 +56,10 @@ logger = logging.getLogger(__name__)
 
 # HTTP methods recognized today by the dispatcher (dispatcher.py:165).
 # Any method outside this list receives 405 Method Not Allowed.
-SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options')
+SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options', 'query')
 
 # Methods the dispatcher rejects today (405).
-# QUERY (RFC 10008) is here today; it will move out in Phase 2 when implemented.
 FORBIDDEN_METHODS: typing.Final[tuple[str, ...]] = (
-    'query',    # RFC 10008 - not yet supported
     'patch',    # RFC 5789  - not yet supported
     'head',     # RFC 9110  - not yet supported
     'trace',    # RFC 9110  - not yet supported
@@ -106,9 +104,13 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         # For the rest, generic allows arbitrary methods.
         # Only pass content_type if there is a body; without body we don't send
         # content_type to avoid the processor trying to parse ''.
+        # Note: generic() is not overridden in UDSClient, so we must pass
+        # the auth headers explicitly via the headers kwarg.
         if data is None:
-            return self.client.generic(method.upper(), url)
-        return self.client.generic(method.upper(), url, data=data, content_type=content_type)
+            return self.client.generic(method.upper(), url, headers=self.client.uds_headers)
+        return self.client.generic(
+            method.upper(), url, data=data, content_type=content_type, headers=self.client.uds_headers,
+        )
 
     # ------------------------------------------------------------------
     # T1A.1 - Unsupported methods return clean 405 (bug B1 fix in place)
@@ -275,9 +277,8 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         contract. If someone adds QUERY to SUPPORTED_METHODS without updating
         FORBIDDEN_METHODS, this test fails as a reminder.
         """
-        self.assertNotIn('query', SUPPORTED_METHODS, 'QUERY not yet supported; update this test in Phase 2')
+        self.assertIn('query', SUPPORTED_METHODS, 'QUERY is now supported (Change A)')
         self.assertIn('options', SUPPORTED_METHODS, 'OPTIONS is now supported (Change C)')
-        self.assertIn('query', FORBIDDEN_METHODS)
 
     # ------------------------------------------------------------------
     # Change C — OPTIONS for capabilities discovery (RFC 9110 §9.3.7)
@@ -334,4 +335,50 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         """OPTIONS on a path with no handler returns 404 (same as other methods)."""
         response = self._rest_request('options', 'this-does-not-exist')
         self.assertEqual(response.status_code, 404)
+
+    # ------------------------------------------------------------------
+    # Change A — QUERY method (RFC 10008)
+    # ------------------------------------------------------------------
+    def test_query_collection_returns_same_as_get(self) -> None:
+        """QUERY on a collection returns the same structure as GET.
+
+        Reference: src/uds/REST/handlers.py Handler.query().
+        QUERY reads OData params from the JSON body instead of the query
+        string, then delegates to get().
+        """
+        # GET baseline
+        response_get = self.client.rest_get('providers')
+        self.assertEqual(response_get.status_code, 200)
+        body_get = json.loads(response_get.content)
+
+        # QUERY with empty body (no OData filtering) — should match GET
+        response_query = self._rest_request(
+            'query', 'providers', data=json.dumps({}), content_type='application/json',
+        )
+        self.assertEqual(response_query.status_code, 200)
+        body_query = json.loads(response_query.content)
+
+        # Both should return a list with the same count
+        self.assertEqual(len(body_get), len(body_query))
+
+    def test_query_with_filter_in_body(self) -> None:
+        """QUERY with $filter in the JSON body filters results.
+
+        Uses a filter that should return fewer results than the full set.
+        """
+        response = self._rest_request(
+            'query', 'providers',
+            data=json.dumps({'$top': 1}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        body = json.loads(response.content)
+        self.assertLessEqual(len(body), 1)
+
+    def test_query_options_includes_query(self) -> None:
+        """OPTIONS Allow header includes QUERY since Handler.query() exists."""
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 204)
+        allow = response.get('Allow', '')
+        self.assertIn('QUERY', allow, 'Allow must advertise QUERY (Handler defines query())')
 

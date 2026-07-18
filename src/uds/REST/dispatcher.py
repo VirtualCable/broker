@@ -283,11 +283,11 @@ class Dispatcher(View):
         """Compute the ``Allow`` header value for a handler class.
 
         Returns a comma-separated, uppercase list of HTTP methods that the
-        handler implements (GET/POST/PUT/DELETE) plus OPTIONS which is always
-        supported by the dispatcher.
+        handler implements (GET/POST/PUT/DELETE/QUERY) plus OPTIONS which is
+        always supported by the dispatcher.
         """
         allowed = ['OPTIONS']
-        for m in ('get', 'post', 'put', 'delete'):
+        for m in ('get', 'post', 'put', 'delete', 'query'):
             if any(getattr(c, m, None) is not None for c in cls.__mro__):
                 allowed.append(m.upper())
         return ', '.join(allowed)
