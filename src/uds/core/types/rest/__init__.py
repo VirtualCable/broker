@@ -73,12 +73,55 @@ class NotRequired:
         return dataclasses.field(default_factory=NotRequired, repr=False, compare=False)
 
 
-# This is a named tuple for convenience, and must be
-# compatible with tuple[str, bool] (name, needs_parent)
+# HTTP verb a custom method can declare. Modeled as an enum (rather than
+# a typing.Literal) so editors can autocomplete, type-checkers can validate
+# exhaustively, and the value compares to plain strings via standard
+# comparison thanks to ``str`` mixin. Membership expansion (PATCH, HEAD, ...)
+# goes here as new enum members when needed.
+class CustomMethodMethod(str, enum.Enum):
+    """
+    HTTP verb to invoke a custom action with.
+
+    The default for unmodified call sites is ``GET``, preserving 100%
+    backward compatibility. Phase 4 of
+    doc/plan/rest-standards-compliance.md will start using
+    ``CustomMethodMethod.POST`` for state-mutating modifiers (publish,
+    cancel, reset, maintenance, ...) so they can be deprecated from GET
+    without breakage. ``CustomMethodMethod.QUERY`` is reserved for the
+    RFC 10008 safe-with-body verb (Phase 2/3 of the plan).
+    """
+
+    GET = 'GET'
+    POST = 'POST'
+    PUT = 'PUT'
+    QUERY = 'QUERY'
+
+
 @dataclasses.dataclass
 class ModelCustomMethod:
+    """
+    Declares a custom method exposed by a ``ModelHandler`` or
+    ``DetailHandler`` in addition to the standard CRUD verbs.
+
+    - ``name``: the URL segment that selects this method (last path component).
+    - ``needs_parent``: ``True`` when the method operates on a specific
+      parent instance and the URL therefore carries the parent's id
+      (``/collection/{uuid}/{name}``). ``False`` (default) when the
+      method is collection-scoped (``/collection/{name}``).
+      Note: only meaningful for ``ModelHandler``; ``DetailHandler``
+      custom methods always derive their parent from the URL
+      automatically.
+    - ``method``: HTTP verb the dispatcher should use to invoke this
+      action. See :class:`CustomMethodMethod`. The default ``GET``
+      preserves 100% backward compatibility today; Phase 4 of
+      doc/plan/rest-standards-compliance.md will migrate state-mutating
+      modifiers to ``POST`` and reserve ``QUERY`` for the RFC 10008
+      safe-with-body verb.
+    """
+
     name: str
-    needs_parent: bool = True
+    needs_parent: bool = False
+    method: CustomMethodMethod = CustomMethodMethod.GET
 
 
 # Note that for this item to work with documentation
