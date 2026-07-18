@@ -136,6 +136,7 @@ class Operation:
 
     summary: str | None = None
     description: str | None = None
+    deprecated: bool = False
     parameters: list[Parameter] = dataclasses.field(default_factory=list[Parameter])
     requestBody: RequestBody | None = None
     responses: dict[str, Response] = dataclasses.field(default_factory=dict[str, Response])
@@ -147,6 +148,7 @@ class Operation:
             {
                 'summary': self.summary,
                 'description': self.description,
+                'deprecated': self.deprecated or None,
                 'parameters': [param.as_dict() for param in self.parameters],
                 'requestBody': self.requestBody.as_dict() if self.requestBody else None,
                 'responses': {k: v.as_dict() for k, v in self.responses.items()},
@@ -165,6 +167,8 @@ class PathItem:
     post: Operation | None = None
     put: Operation | None = None
     delete: Operation | None = None
+    query: Operation | None = None
+    options: Operation | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
@@ -173,6 +177,8 @@ class PathItem:
                 'post': self.post.as_dict() if self.post else None,
                 'put': self.put.as_dict() if self.put else None,
                 'delete': self.delete.as_dict() if self.delete else None,
+                'query': self.query.as_dict() if self.query else None,
+                'options': self.options.as_dict() if self.options else None,
             }
         )
 

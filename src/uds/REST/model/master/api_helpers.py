@@ -61,7 +61,7 @@ def api_paths(
     name = cls.REST_API_INFO.name if cls.REST_API_INFO.name else cls.MODEL.__name__
     get_tags = tags
     put_tags = tags  # + ['Create', 'Modify']
-    # post_tags = tags + ['Create']
+    post_tags = tags
     delete_tags = tags  # + ['Delete']
 
     base_type = next(iter(api_utils.get_generic_types(cls)), None)
@@ -70,6 +70,46 @@ def api_paths(
         return {}  # Skip
     else:
         base_type_name = base_type.__name__
+
+    # POST create operation (preferred way to create items per Change G)
+    post_create_op = types.rest.api.Operation(
+        summary=f'Create a new {name} item',
+        description=f'Create a new {name} item',
+        parameters=[],
+        requestBody=api_utils.gen_request_body(base_type_name, create=True),
+        responses=api_utils.gen_response(base_type_name, single=True),
+        tags=post_tags,
+        security=security,
+    )
+
+    # PUT create operation (legacy — deprecated in favor of POST)
+    put_create_op = types.rest.api.Operation(
+        summary=f'Creates a new {name} item',
+        description=(
+            f'Creates a new {name} item. '
+            f'Deprecated: use POST /{path} instead.'
+        ),
+        deprecated=True,
+        parameters=[],
+        requestBody=api_utils.gen_request_body(base_type_name, create=True),
+        responses=api_utils.gen_response(base_type_name, single=True),
+        tags=put_tags,
+        security=security,
+    )
+
+    # QUERY operation (RFC 10008 — safe GET with OData in body)
+    query_op = types.rest.api.Operation(
+        summary=f'Query {name} items with OData in body',
+        description=(
+            f'Query {name} items using OData parameters '
+            f'($filter, $orderby, $top, $skip, $select) in the request body. '
+            f'Equivalent to GET but allows complex queries beyond URL length limits.'
+        ),
+        requestBody=api_utils.gen_request_body(base_type_name, create=True),
+        responses=api_utils.gen_response(base_type_name, single=False),
+        tags=get_tags,
+        security=security,
+    )
 
     api_desc = {
         path: types.rest.api.PathItem(
@@ -81,15 +121,9 @@ def api_paths(
                 tags=get_tags,
                 security=security,
             ),
-            put=types.rest.api.Operation(
-                summary=f'Creates a new {name} item',
-                description=f'Creates a new, nonexisting {name} item',
-                parameters=[],
-                requestBody=api_utils.gen_request_body(base_type_name, create=True),
-                responses=api_utils.gen_response(base_type_name, single=True),
-                tags=put_tags,
-                security=security,
-            ),
+            post=post_create_op,
+            put=put_create_op,
+            query=query_op,
         ),
         f'{path}/{{uuid}}': types.rest.api.PathItem(
             get=types.rest.api.Operation(

@@ -153,28 +153,34 @@ def api_paths(
         )
 
     for cm in cls.CUSTOM_METHODS:
+        # Emit the declared HTTP method in the OpenAPI spec.
+        # POST custom methods are documented as POST; GET methods as GET.
+        op = types.rest.api.Operation(
+            summary=f'Custom method {cm.name} for {name} collection',
+            description=f'Execute custom method {cm.name} for {name} collection',
+            parameters=[],
+            responses=api_utils.gen_response('object', single=True),
+            tags=get_tags,
+            security=security,
+        )
         # Collection custom method
-        api_desc[f'{path}/{cm}'] = types.rest.api.PathItem(
-            get=types.rest.api.Operation(
-                summary=f'Custom method {cm} for {name} collection',
-                description=f'Execute custom method {cm} for {name} collection',
-                parameters=[],
-                responses=api_utils.gen_response('object', single=True),
-                tags=get_tags,
-                security=security,
-            )
-        )
+        if cm.method == types.rest.CustomMethodMethod.POST:
+            api_desc[f'{path}/{cm.name}'] = types.rest.api.PathItem(post=op)
+        else:
+            api_desc[f'{path}/{cm.name}'] = types.rest.api.PathItem(get=op)
         # Item custom method
-        api_desc[f'{path}/{{uuid}}/{cm}'] = types.rest.api.PathItem(
-            get=types.rest.api.Operation(
-                summary=f'Custom method {cm} for {name} item',
-                description=f'Execute custom method {cm} for {name} item',
-                parameters=api_utils.gen_uuid_parameters(with_odata=False),
-                responses=api_utils.gen_response('object', single=True),
-                tags=get_tags,
-                security=security,
-            )
+        item_op = types.rest.api.Operation(
+            summary=f'Custom method {cm.name} for {name} item',
+            description=f'Execute custom method {cm.name} for {name} item',
+            parameters=api_utils.gen_uuid_parameters(with_odata=False),
+            responses=api_utils.gen_response('object', single=True),
+            tags=get_tags,
+            security=security,
         )
+        if cm.method == types.rest.CustomMethodMethod.POST:
+            api_desc[f'{path}/{{uuid}}/{cm.name}'] = types.rest.api.PathItem(post=item_op)
+        else:
+            api_desc[f'{path}/{{uuid}}/{cm.name}'] = types.rest.api.PathItem(get=item_op)
 
     if cls.REST_API_INFO.typed.is_single_type():
         api_desc[f'{path}/{consts.rest.GUI}'] = types.rest.api.PathItem(
