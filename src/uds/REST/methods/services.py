@@ -102,7 +102,9 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
     Detail handler for Services, whose parent is a Provider
     """
 
-    CUSTOM_METHODS = ['servicepools']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('servicepools'),
+    ]
 
     # Rest api related information to complete the auto-generated API
     REST_API_INFO = types.rest.api.RestApiInfo(

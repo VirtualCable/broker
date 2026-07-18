@@ -87,7 +87,9 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     Rest handler for Assigned Services, wich parent is Service
     """
 
-    CUSTOM_METHODS = ['reset']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('reset'),
+    ]
 
     @staticmethod
     def userservice_item(
@@ -577,7 +579,10 @@ class Publications(DetailHandler[PublicationItem]):
     Processes the publications detail requests of a Service Pool
     """
 
-    CUSTOM_METHODS = ['publish', 'cancel']  # We provided these custom methods
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('publish'),
+        types.rest.ModelCustomMethod('cancel'),
+    ]  # We provided these custom methods
 
     def publish(self, parent: 'Model') -> typing.Any:
         """

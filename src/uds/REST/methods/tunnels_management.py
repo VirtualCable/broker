@@ -58,7 +58,9 @@ class TunnelServerItem(types.rest.BaseRestItem):
 
 
 class TunnelServers(DetailHandler[TunnelServerItem]):
-    CUSTOM_METHODS = ['maintenance']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('maintenance'),
+    ]
 
     REST_API_INFO = types.rest.api.RestApiInfo(
         name='TunnelServers', description='Tunnel servers assigned to a tunnel'

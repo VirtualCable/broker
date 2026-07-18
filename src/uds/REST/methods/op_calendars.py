@@ -180,7 +180,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
     """
 
     CUSTOM_METHODS = [
-        'execute',
+        types.rest.ModelCustomMethod('execute'),
     ]
 
     @staticmethod

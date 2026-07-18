@@ -150,7 +150,10 @@ class ServerItem(types.rest.BaseRestItem):
 # REST API For servers (except tunnel servers nor actors)
 class ServersServers(DetailHandler[ServerItem]):
 
-    CUSTOM_METHODS = ['maintenance', 'importcsv']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('maintenance'),
+        types.rest.ModelCustomMethod('importcsv'),
+    ]
 
     # Rest api related information to complete the auto-generated API
     REST_API_INFO = types.rest.api.RestApiInfo(

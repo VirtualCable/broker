@@ -95,11 +95,11 @@ class UserItem(types.rest.BaseRestItem):
 
 class Users(DetailHandler[UserItem]):
     CUSTOM_METHODS = [
-        'services_pools',
-        'user_services',
-        'clean_related',
-        'add_to_group',
-        'enable_client_logging',
+        types.rest.ModelCustomMethod('services_pools'),
+        types.rest.ModelCustomMethod('user_services'),
+        types.rest.ModelCustomMethod('clean_related'),
+        types.rest.ModelCustomMethod('add_to_group'),
+        types.rest.ModelCustomMethod('enable_client_logging'),
     ]
 
     @staticmethod
@@ -366,7 +366,10 @@ class GroupItem(types.rest.BaseRestItem):
 
 
 class Groups(DetailHandler[GroupItem]):
-    CUSTOM_METHODS = ['services_pools', 'users']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod('services_pools'),
+        types.rest.ModelCustomMethod('users'),
+    ]
 
     @staticmethod
     def as_group_item(group: 'Group') -> GroupItem:
