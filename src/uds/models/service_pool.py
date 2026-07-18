@@ -253,9 +253,9 @@ class ServicePool(UUIDModel, TaggingMixin):
     @property
     def visual_name(self) -> str:
         logger.debug("SHORT: %s %s %s", self.short_name, self.short_name != '', self.name)
-        if self.short_name and str(self.short_name).strip():
-            return str(self.short_name.strip())
-        return str(self.name)
+        if self.short_name and self.short_name.strip():
+            return self.short_name.strip()
+        return self.name
 
     def can_create_userservices(self) -> bool:
         """
@@ -319,7 +319,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         )
 
     def is_in_maintenance(self) -> bool:
-        return self.service.is_in_maintenance() if self.service else True
+        return self.service.is_in_maintenance()
 
     def is_visible(self) -> bool:
         return self.visible
@@ -574,7 +574,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         services_not_needing_publication = [
             t.mod_type() for t in services.factory().services_not_needing_publication()
         ]
-        visible_kwargs = { 'visible': True } if visible_only else {}
+        visible_kwargs = {'visible': True} if visible_only else {}
         # Get services that HAS publications
         query = (
             ServicePool.objects.filter(

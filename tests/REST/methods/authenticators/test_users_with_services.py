@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 import datetime
 
 from django.utils import timezone
@@ -42,6 +43,7 @@ class AuthenticatorUsersWithServicesTest(rest.test.RESTTestCase):
     Test the "users_with_services" custom method of the authenticators handler
     """
 
+    @typing.override
     def setUp(self) -> None:
         timezone.activate(datetime.timezone.utc)
         super().setUp()
