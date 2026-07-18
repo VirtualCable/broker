@@ -35,8 +35,8 @@ import typing
 from uds.core import types, consts
 from uds.core.util.model import sql_stamp
 
-from ...fixtures import servers as servers_fixtures
-from ...utils import rest
+from ....fixtures import servers as servers_fixtures
+from ....utils import rest
 
 if typing.TYPE_CHECKING:
     from uds import models

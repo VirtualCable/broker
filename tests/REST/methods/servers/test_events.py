@@ -28,29 +28,27 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+# import typing
 import logging
 
+# from unittest import mock
 
-from ...utils import rest
-from ...fixtures import servers as servers_fixtures
+# from uds.core.util import log
+
+from ....utils import rest  # , random_ip_v4, random_ip_v6, random_mac
+
+# from ...fixtures import servers as servers_fixtures
+
+# if typing.TYPE_CHECKING:
+#     from ...utils.test import UDSHttpResponse
 
 logger = logging.getLogger(__name__)
 
 
-class ServerTestTest(rest.test.RESTTestCase):
+class ServerEventsTest(rest.test.RESTTestCase):
     """
     Test server functionality
     """
 
-    def test_server_test(self) -> None:
-        """
-        Test server rest api registration
-        """
-        server = servers_fixtures.create_server()
-        response = self.client.rest_post(
-            'servers/test',
-            data={
-                'token': server.token,
-            },
-        )
-        self.assertEqual(response.status_code, 200)
+    def test_event(self) -> None:
+        pass

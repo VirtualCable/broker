@@ -35,7 +35,7 @@ from uds.core import consts
 from uds.core.consts.actor import UNMANAGED
 from uds.core.consts.actor import MANAGED
 
-from ...utils import rest
+from ....utils import rest
 
 logger = logging.getLogger(__name__)
 

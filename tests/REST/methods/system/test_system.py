@@ -35,8 +35,8 @@ from django.utils import timezone
 
 from uds.core.util.stats import counters
 
-from ..utils import rest
-from ..fixtures import stats_counters
+from ....utils import rest
+from ....fixtures import stats_counters
 
 logger = logging.getLogger(__name__)
 

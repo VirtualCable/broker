@@ -34,8 +34,8 @@ import logging
 
 from uds import models
 
-from ...utils import rest
-from ...fixtures import rest as rest_fixtures
+from ....utils import rest
+from ....fixtures import rest as rest_fixtures
 
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Virtual Cable S.L.
+# Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -28,3 +28,29 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import logging
+
+
+from ....utils import rest
+from ....fixtures import servers as servers_fixtures
+
+logger = logging.getLogger(__name__)
+
+
+class ServerTestTest(rest.test.RESTTestCase):
+    """
+    Test server functionality
+    """
+
+    def test_server_test(self) -> None:
+        """
+        Test server rest api registration
+        """
+        server = servers_fixtures.create_server()
+        response = self.client.rest_post(
+            'servers/test',
+            data={
+                'token': server.token,
+            },
+        )
+        self.assertEqual(response.status_code, 200)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.U.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -11,7 +11,7 @@
 #    * Redistributions in binary form must reproduce the above copyright notice,
 #      this list of conditions and the following disclaimer in the documentation
 #      and/or other materials provided with the distribution.
-#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#    * Neither the name of Virtual Cable S.L.U. nor the names of its contributors
 #      may be used to endorse or promote products derived from this software
 #      without specific prior written permission.
 #
@@ -28,41 +28,46 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import logging
-import typing
+import datetime
 
-from uds import models
-from ...utils import rest
+from django.utils import timezone
 
-logger = logging.getLogger(__name__)
+from uds.core.types.states import State
+
+from ....utils import rest
 
 
-class ServicePoolTest(rest.test.RESTTestCase):
+class AuthenticatorUsersWithServicesTest(rest.test.RESTTestCase):
+    """
+    Test the "users_with_services" custom method of the authenticators handler
+    """
+
     def setUp(self) -> None:
-        # Override number of items to create
+        timezone.activate(datetime.timezone.utc)
         super().setUp()
         self.login()
 
-    def test_invalid_servicepool(self) -> None:
-        url = f'servicespools/INVALID/overview'
+    def url(self) -> str:
+        return f'authenticators/{self.auth.uuid}/users_with_services'
 
-        response = self.client.rest_get(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_service_pools(self) -> None:
-        url = f'servicespools/overview'
-
-        # Now, will work
-        response = self.client.rest_get(url)
+    def test_lists_the_users_owning_a_service(self) -> None:
+        response = self.client.rest_get(self.url())
         self.assertEqual(response.status_code, 200)
-        # Get the list of service pools from DB
-        db_pools_len = models.ServicePool.objects.all().count()
-        re_pools: list[dict[str, typing.Any]] = response.json()
 
-        self.assertIsInstance(re_pools, list)
-        self.assertEqual(db_pools_len, len(re_pools))
+        # The test case gives every user a couple of USABLE userservices
+        self.assertEqual({i['name'] for i in response.json()}, {i.name for i in self.users})
 
-        for service_pool in re_pools:
-            # Get from DB the service pool
-            db_pool = models.ServicePool.objects.get(uuid=service_pool['id'])
-            self.assertTrue(rest.assertions.assert_servicepool_is(db_pool, service_pool))
+    def test_a_user_owning_several_services_appears_once(self) -> None:
+        users = self.client.rest_get(self.url()).json()
+        names = [i['name'] for i in users]
+
+        self.assertEqual(len(names), len(set(names)))
+
+    def test_skips_users_without_a_valid_service(self) -> None:
+        orphan = self.plain_users[0]
+        orphan.userServices.update(state=State.REMOVED)
+
+        users = self.client.rest_get(self.url()).json()
+
+        self.assertNotIn(orphan.name, {i['name'] for i in users})
+        self.assertEqual(len(users), len(self.users) - 1)

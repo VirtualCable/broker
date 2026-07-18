@@ -33,7 +33,7 @@ import logging
 
 from uds import models
 
-from ...utils import rest, constants
+from ....utils import rest, constants
 
 
 logger = logging.getLogger(__name__)

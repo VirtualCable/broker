@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Virtual Cable S.L.
+# Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -28,3 +28,41 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import logging
+import typing
+
+from uds import models
+from ....utils import rest
+
+logger = logging.getLogger(__name__)
+
+
+class ServicePoolTest(rest.test.RESTTestCase):
+    def setUp(self) -> None:
+        # Override number of items to create
+        super().setUp()
+        self.login()
+
+    def test_invalid_servicepool(self) -> None:
+        url = f'servicespools/INVALID/overview'
+
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_service_pools(self) -> None:
+        url = f'servicespools/overview'
+
+        # Now, will work
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 200)
+        # Get the list of service pools from DB
+        db_pools_len = models.ServicePool.objects.all().count()
+        re_pools: list[dict[str, typing.Any]] = response.json()
+
+        self.assertIsInstance(re_pools, list)
+        self.assertEqual(db_pools_len, len(re_pools))
+
+        for service_pool in re_pools:
+            # Get from DB the service pool
+            db_pool = models.ServicePool.objects.get(uuid=service_pool['id'])
+            self.assertTrue(rest.assertions.assert_servicepool_is(db_pool, service_pool))

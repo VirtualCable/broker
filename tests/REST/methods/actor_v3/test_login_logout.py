@@ -33,8 +33,8 @@ import random
 
 from uds.core import consts
 
-from ...fixtures import authenticators as fixtures_authenticators
-from ...utils import rest, test
+from ....fixtures import authenticators as fixtures_authenticators
+from ....utils import rest, test
 
 
 class ActorLoginLogoutTest(test.UDSTestCase):

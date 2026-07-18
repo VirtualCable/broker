@@ -35,7 +35,7 @@ import logging
 from uds import models
 from uds.core import consts
 from uds.core.managers.crypto import CryptoManager
-from ...utils import rest
+from ....utils import rest
 
 
 logger = logging.getLogger(__name__)

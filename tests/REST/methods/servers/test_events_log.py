@@ -34,8 +34,8 @@ from unittest import mock
 
 from uds.core import types
 
-from ...utils import rest
-from ...fixtures import servers as servers_fixtures
+from ....utils import rest
+from ....fixtures import servers as servers_fixtures
 
 logger = logging.getLogger(__name__)
 

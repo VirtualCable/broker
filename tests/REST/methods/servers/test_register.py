@@ -37,7 +37,7 @@ from uds.core import types, consts
 from uds.core.managers import crypto
 
 
-from ...utils import rest, random_ip_v4, random_ip_v6, random_mac, random_hostname
+from ....utils import rest, random_ip_v4, random_ip_v6, random_mac, random_hostname
 
 if typing.TYPE_CHECKING:
     from ...utils.test import UDSHttpResponse
