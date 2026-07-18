@@ -28,25 +28,24 @@
 """
 Dispatcher contract tests (Phase 1 — Safety net).
 
-This module freezes the current behavior of the dispatcher so that any future
-change (adding QUERY, OPTIONS, deprecation headers, etc.) is detected if it
-breaks the existing contract.
+This module freezes the behavior of the dispatcher so that any future change
+(adding QUERY, OPTIONS, deprecation headers, etc.) is detected if it breaks
+the existing contract.
 
 Code under test:
-- src/uds/REST/dispatcher.py  (Dispatcher.dispatch)
+- src/uds/REST/dispatcher.py  (Dispatcher.dispatch, Dispatcher.error_response)
 - src/uds/REST/handlers.py    (Handler base)
 
-KNOWN BUGS DETECTED BY THIS SAFETY NET (to be fixed in Phase 2):
-- B1: dispatcher.py:88 builds HttpResponseNotAllowed passing the body as
-  `permitted_methods` (first positional arg). Django expects a list of
-  methods. Result: any 405 built via Dispatcher.error_response raises a
-  TypeError (500 in production) instead of a clean 405. The 405 for an
-  unknown method (dispatcher.py:139) is broken in production today.
-  Affected tests: test_forbidden_methods_trigger_bug_b1,
-  test_405_current_behaviour_due_to_bug_b1 (expect TypeError until fixed).
+Previously fixed bugs (kept here only as historical context):
+- B1 (fixed): Dispatcher.error_response used to pass the JSON body as
+  HttpResponseNotAllowed's first positional arg (i.e. `permitted_methods`),
+  causing TypeError on every 405 for an unknown method. Now error_response
+  detects HttpResponseNotAllowed and constructs it correctly, including an
+  Allow header advertising the methods the dispatcher understands.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import json
 import logging
 import typing
 
@@ -113,28 +112,35 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         return self.client.generic(method.upper(), url, data=data, content_type=content_type)
 
     # ------------------------------------------------------------------
-    # T1A.1 - Unsupported methods: documentation of bug B1
+    # T1A.1 - Unsupported methods return clean 405 (bug B1 fix in place)
     # ------------------------------------------------------------------
-    def test_forbidden_methods_trigger_bug_b1(self) -> None:
-        """Every method outside get/post/put/delete triggers bug B1 today.
+    def test_forbidden_methods_return_405_with_allow(self) -> None:
+        """Every method outside get/post/put/delete returns 405 + Allow header.
 
-        Reference: src/uds/REST/dispatcher.py:139 + :88.
-        The method filter rejects with HttpResponseNotAllowed, but
-        Dispatcher.error_response passes the JSON body as `permitted_methods`
-        (first positional arg of HttpResponseNotAllowed), and Django does
-        `", ".join(permitted_methods)` over bytes -> TypeError.
-
-        In production this would be a 500; in the test client the exception
-        propagates. We document the current behavior here.
-
-        When B1 is fixed in Phase 2, replace this with:
-            test_forbidden_methods_return_405
-        which will assert status == 405.
+        Bug B1 (fixed): dispatcher.error_response used to pass the JSON body as
+        the first positional arg of HttpResponseNotAllowed, which Django treats
+        as `permitted_methods`. Result was a TypeError (500 in production).
+        Now error_response detects 405 and forwards the permitted methods list
+        correctly, producing a clean 405 with an Allow header.
         """
         for method in FORBIDDEN_METHODS:
             with self.subTest(method=method):
-                with self.assertRaises(TypeError, msg=f'Method {method} hits bug B1 (TypeError)'):
-                    self._rest_request(method, 'providers/overview')
+                response = self._rest_request(method, 'providers/overview')
+                self.assertEqual(
+                    response.status_code,
+                    405,
+                    f'Method {method.upper()} must return 405 (not 500)',
+                )
+                # Allow header must be present and contain at least one of
+                # the recognized methods.
+                allow = response.get('Allow', '')
+                self.assertTrue(allow, f'405 response for {method} is missing Allow header')
+                for recognized in ('GET', 'POST', 'PUT', 'DELETE'):
+                    self.assertIn(
+                        recognized,
+                        allow,
+                        f'Allow header for {method} must include {recognized}; got: {allow!r}',
+                    )
 
     def test_allowed_methods_not_rejected_as_unknown(self) -> None:
         """get/post/put/delete are not rejected by the dispatcher method filter.
@@ -142,24 +148,24 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         For GET we use a real path and expect 200 (handler exists and we are
         logged in as admin).
         """
-        # GET on providers/overview -> 200 (handler exists and we are admin)
         response = self.client.rest_get('providers/overview')
         self.assertEqual(response.status_code, 200)
 
     # ------------------------------------------------------------------
-    # T1A.2 - The 405 is broken today due to bug B1
+    # T1A.2 - 405 body is JSON with "error" key (replaces bug-B1 docs)
     # ------------------------------------------------------------------
-    def test_405_current_behaviour_due_to_bug_b1(self) -> None:
-        """Documents bug B1: the 405 for an unknown method raises TypeError today.
+    def test_405_returns_json_error(self) -> None:
+        """The 405 response carries a JSON body with the 'error' key.
 
-        When B1 is fixed in Phase 2, this test must be replaced by
-        test_405_returns_json_error which will assert: status 405,
-        Content-Type application/json, body with 'error'.
-
-        Bug reference: src/uds/REST/dispatcher.py:88 + :139.
+        Replaces the old test_405_current_behaviour_due_to_bug_b1, which
+        documented the broken (TypeError-raising) behavior.
         """
-        with self.assertRaises(TypeError):
-            self._rest_request('options', 'providers/overview')
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 405)
+        self.assertIn('application/json', response.get('Content-Type', ''))
+        body = json.loads(response.content)
+        self.assertIn('error', body)
+        self.assertEqual(body['error'], 'Method OPTIONS not allowed')
 
     # ------------------------------------------------------------------
     # T1A.4 - Fixed headers present on 2xx responses

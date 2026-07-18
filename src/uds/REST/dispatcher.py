@@ -72,8 +72,28 @@ class Dispatcher(View):
     root_node: typing.ClassVar[types.rest.HandlerNode] = types.rest.HandlerNode('', None, None, {})
 
     @staticmethod
-    def error_response(err_cls: type[T], handler: Handler | None, msg: str, exc: Exception | None = None) -> T:
+    def error_response(
+        err_cls: type[T],
+        handler: Handler | None,
+        msg: str,
+        exc: Exception | None = None,
+        *,
+        allowed_methods: collections.abc.Iterable[str] | None = None,
+    ) -> T:
+        """
+        Build a JSON error response of the given class.
 
+        Note for HttpResponseNotAllowed (405):
+          Django's signature is HttpResponseNotAllowed(permitted_methods, *args, **kwargs)
+          — the first positional arg is the LIST of permitted methods, not the body.
+          When err_cls is HttpResponseNotAllowed, callers MUST pass ``allowed_methods``
+          so we can construct the response correctly and also emit an ``Allow`` header.
+
+        If a caller forgets ``allowed_methods`` we fall back to passing the body as
+        the first positional arg, which Django treats as the permitted methods list
+        and tries to ``", ".join(...)`` on it — historically that raised TypeError
+        (bug B1, fixed here).
+        """
         # If debug, log the error with traceback
         if getattr(settings, 'DEBUG', False):
             trace_back = traceback.format_exc()
@@ -83,9 +103,22 @@ class Dispatcher(View):
             # Append error exception to message response
             msg = f'{msg}: {str(exc)}' if exc else msg
 
+        body = json.dumps({"error": msg}).encode()
+
         if handler:
             log.log_operation(handler, err_cls.status_code, types.log.LogLevel.ERROR)
-        return err_cls(json.dumps({"error": msg}).encode(), content_type="application/json")
+
+        # Special case: HttpResponseNotAllowed expects a LIST of permitted methods
+        # as its first positional arg, not the body. Without it, Django tries
+        # ``", ".join(permitted_methods)`` on bytes/str and raises TypeError.
+        if err_cls is http.HttpResponseNotAllowed:
+            methods: list[str] = list(allowed_methods) if allowed_methods else ['GET', 'POST', 'PUT', 'DELETE']
+            return typing.cast(
+                T,
+                http.HttpResponseNotAllowed(methods, content=body, content_type="application/json"),
+            )
+
+        return err_cls(body, content_type="application/json")
 
     @method_decorator(csrf_exempt)
     @typing.override
@@ -139,6 +172,10 @@ class Dispatcher(View):
                 http.HttpResponseNotAllowed,
                 ErrorHandler(request, handler_node.full_path(), http_method, {}),
                 f'Method {http_method.upper()} not allowed',
+                # Advertise only the methods the dispatcher currently understands
+                # so the client knows what's allowed. QUERY/OPTIONS will be added
+                # in Phase 2 without changing the call site semantics.
+                allowed_methods=[m.upper() for m in ('get', 'post', 'put', 'delete')],
             )
 
         node_full_path: typing.Final[str] = handler_node.full_path()
