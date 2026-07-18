@@ -313,13 +313,23 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                             f'Error processing custom method: {self.__class__.__name__}/{self._args}'
                         ) from e
 
+                    # COMPAT fallback: GET hitting a POST method
+                    if is_compat and cm.method == types.rest.CustomMethodMethod.POST:
+                        self.add_deprecation_headers(
+                            f'use POST {self._path}/<id>/{camel_case_name}'
+                        )
                     return operation(item)
 
-            elif self._args[0] in (snake_case_name, snake_case_name):
-                operation = getattr(self, snake_case_name) or getattr(self, snake_case_name)
+            elif self._args[0] in (camel_case_name, snake_case_name):
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if not operation:
                     raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
 
+                # COMPAT fallback: GET hitting a POST method
+                if is_compat and cm.method == types.rest.CustomMethodMethod.POST:
+                    self.add_deprecation_headers(
+                        f'use POST {self._path}/{camel_case_name}'
+                    )
                 return operation()
 
         match self._args:

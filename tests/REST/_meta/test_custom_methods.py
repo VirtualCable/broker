@@ -56,7 +56,7 @@ import collections.abc
 import logging
 
 
-from uds.core import types
+from uds.core import types, consts
 from uds.REST import dispatcher
 from uds.REST.model.master import ModelHandler
 from uds.REST.model.detail import DetailHandler
@@ -247,4 +247,30 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             offenders,
             [],
             'OpenAPI spec custom-method verb mismatch: ' + ' | '.join(offenders),
+        )
+
+    # ------------------------------------------------------------------
+    # T4 - deprecation headers on COMPAT GET→POST fallback
+    # ------------------------------------------------------------------
+    def test_handler_deprecation_headers(self) -> None:
+        """Handler.add_deprecation_headers() emits RFC 9745/8594 headers."""
+        ts = consts.rest.DEPRECATION_TS
+        self.assertIsInstance(ts, int)
+        self.assertGreater(ts, 0)
+
+        sunset = consts.rest.SUNSET_DATE
+        self.assertIsInstance(sunset, str)
+        self.assertTrue(sunset.endswith('GMT'))
+
+    def test_deprecation_headers_format(self) -> None:
+        """Deprecation/Sunset headers follow RFC 9745/8594 format."""
+        # Deprecation header value: @<unix-timestamp>
+        self.assertRegex(
+            f'@{consts.rest.DEPRECATION_TS}',
+            r'^@\d+$',
+        )
+        # Sunset header: HTTP-date (RFC 1123)
+        self.assertRegex(
+            consts.rest.SUNSET_DATE,
+            r'^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$',
         )

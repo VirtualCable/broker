@@ -191,6 +191,26 @@ class Handler(abc.ABC):
         """
         self._headers[header] = str(value)
 
+    # -- Deprecation helpers (RFC 9745 / RFC 8594) --
+    def add_deprecation_headers(self, successor_hint: str = '') -> None:
+        """Append RFC 9745/8594 deprecation headers to the response.
+
+        Called when a legacy (COMPAT-mode) endpoint is invoked so
+        clients can discover the preferred successor.
+
+        Parameters
+        ----------
+        successor_hint:
+            Human-readable description of the successor, e.g.
+            ``"use POST /rest/services-pools/<id>/publications"``
+        """
+
+        self.add_header('Deprecation', f'@{consts.rest.DEPRECATION_TS}')
+        self.add_header('Sunset', consts.rest.SUNSET_DATE)
+        self.add_header('X-UDS-Deprecated', 'true')
+        if successor_hint:
+            self.add_header('X-UDS-Deprecated-Reason', successor_hint)
+
     def delete_header(self, header: str) -> None:
         """
         Removes an specific header from the headers list
