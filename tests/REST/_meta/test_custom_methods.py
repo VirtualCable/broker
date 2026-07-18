@@ -54,18 +54,20 @@ Reference:
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+# pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 import typing
+import collections.abc
+import logging
+
 
 from uds.core import types
 from uds.REST import dispatcher
-from uds.REST.model import master as master_module
 from uds.REST.model.master import ModelHandler
 from uds.REST.model.detail import DetailHandler
 
 from tests.utils import rest
-from tests.utils.test import REST_PATH
 
-logger = logging = __import__('logging').getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 # Handlers that, at the time of writing, have not been declared with a
@@ -122,11 +124,11 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         (the ``get()``-side custom-method match).
         """
         sources: list[tuple[str, type, list[types.rest.ModelCustomMethod]]] = []
-        for cls in ModelHandler.__subclasses__():
+        for cls in typing.cast(collections.abc.Iterable[typing.Any], ModelHandler.__subclasses__()):
             cms = getattr(cls, 'CUSTOM_METHODS', None)
             if cms:
                 sources.append((cls.__name__, cls, cms))
-        for cls in DetailHandler.__subclasses__():
+        for cls in typing.cast(collections.abc.Iterable[typing.Any], DetailHandler.__subclasses__()):
             cms = getattr(cls, 'CUSTOM_METHODS', None)
             if cms:
                 sources.append((cls.__name__, cls, cms))

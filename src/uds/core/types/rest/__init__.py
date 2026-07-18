@@ -97,6 +97,29 @@ class CustomMethodMethod(str, enum.Enum):
     QUERY = 'QUERY'
 
 
+class ApiCompat(str, enum.Enum):
+    """API compatibility mode for the REST layer.
+
+    Controls whether legacy (non-standard) endpoints and behaviours are
+    active.  The value is exposed by ``Handler.api_compat()``.
+
+    Members
+    -------
+    COMPAT:
+        Legacy endpoints active.  GET modifiers, PUT-create, and other
+        non-standard paths still work; deprecation headers are emitted.
+        This is the **default in v5 and v6**.
+    NO_COMPAT:
+        Standard API only.  Legacy paths return ``410 Gone`` with a
+        ``Sunset`` header pointing to the successor endpoint.
+        This becomes the only mode in **v7**, when the enum and all
+        COMPAT-guarded code are removed.
+    """
+
+    COMPAT = 'COMPAT'
+    NO_COMPAT = 'NO_COMPAT'
+
+
 @dataclasses.dataclass
 class ModelCustomMethod:
     """

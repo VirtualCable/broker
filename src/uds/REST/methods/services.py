@@ -221,7 +221,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                 service = parent.services.create(**fields)
             else:
                 service = parent.services.get(uuid=process_uuid(item))
-                typing.cast(dict[str, typing.Any], service.__dict__).update(fields)
+                typing.cast(dict[str, typing.Any], service.__dict__).update(fields)  # pyrefly: ignore[redundant-cast]
 
             service.tags.set([models.Tag.objects.get_or_create(tag=val)[0] for val in tags])
 

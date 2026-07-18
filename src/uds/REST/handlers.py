@@ -141,6 +141,18 @@ class Handler(abc.ABC):
 
         self._odata = types.rest.api.ODataParams.from_dict(self.query_params())
 
+    def api_compat(self) -> types.rest.ApiCompat:
+        """Return the current API compatibility mode.
+
+        v5/v6: always ``COMPAT`` (legacy endpoints work, deprecation
+        headers emitted).  In a future release this will be driven by a
+        configuration variable so administrators can opt out early.
+
+        v7: the enum, this method, and all COMPAT-guarded code are
+        removed entirely.
+        """
+        return types.rest.ApiCompat.COMPAT
+
     def headers(self) -> dict[str, str]:
         """
         Returns the headers of the REST request (all)

@@ -570,7 +570,7 @@ class ServersGroups(ModelHandler[GroupItem]):
         # Allow from admin gui (data_type) or from API (type and subtype)
         # Extract weights if they are on fields
         if 'data_type' in fields:
-            type, subtype = typing.cast(str, fields['data_type'].split('@'))
+            type, subtype = typing.cast(str, fields['data_type']).split('@')
             fields['type'] = types.servers.ServerType[type.upper()].value
             fields['subtype'] = subtype
             del fields['data_type']
