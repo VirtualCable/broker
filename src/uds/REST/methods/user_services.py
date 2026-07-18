@@ -88,7 +88,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('reset'),
+        types.rest.ModelCustomMethod('reset', method=types.rest.CustomMethodMethod.POST),
     ]
 
     @staticmethod
@@ -580,8 +580,8 @@ class Publications(DetailHandler[PublicationItem]):
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('publish'),
-        types.rest.ModelCustomMethod('cancel'),
+        types.rest.ModelCustomMethod('publish', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('cancel', method=types.rest.CustomMethodMethod.POST),
     ]  # We provided these custom methods
 
     def publish(self, parent: 'Model') -> typing.Any:

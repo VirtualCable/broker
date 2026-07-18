@@ -85,7 +85,7 @@ class Providers(ModelHandler[ProviderItem]):
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod('allservices', False),
         types.rest.ModelCustomMethod('service', False),
-        types.rest.ModelCustomMethod('maintenance', True),
+        types.rest.ModelCustomMethod('maintenance', True, method=types.rest.CustomMethodMethod.POST),
     ]
 
     FIELDS_TO_SAVE = ['name', 'comments', 'tags']

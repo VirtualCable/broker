@@ -97,9 +97,9 @@ class Users(DetailHandler[UserItem]):
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod('services_pools'),
         types.rest.ModelCustomMethod('user_services'),
-        types.rest.ModelCustomMethod('clean_related'),
-        types.rest.ModelCustomMethod('add_to_group'),
-        types.rest.ModelCustomMethod('enable_client_logging'),
+        types.rest.ModelCustomMethod('clean_related', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('add_to_group', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('enable_client_logging', method=types.rest.CustomMethodMethod.POST),
     ]
 
     @staticmethod

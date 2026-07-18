@@ -282,7 +282,12 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         number_of_args = len(self._args)
 
         # if has custom methods, look for if this request matches any of them
+        is_compat = self.api_compat() == types.rest.ApiCompat.COMPAT
         for cm in self.CUSTOM_METHODS:
+            # Skip POST-only custom methods on GET unless in COMPAT mode (legacy)
+            if cm.method == types.rest.CustomMethodMethod.POST and not is_compat:
+                continue
+
             # Convert to snake case
             camel_case_name, snake_case_name = camel_and_snake_case_from(cm.name)
             if number_of_args > 1 and cm.needs_parent:  # Method needs parent (existing item)
@@ -366,13 +371,53 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
     def post(self) -> typing.Any:
         """
-        Processes a POST request
+        Processes a POST request.
+
+        Dispatches to POST custom methods when the path matches.
+        The existing 'test' special case is preserved.
         """
         # right now
         logger.debug('method POST for %s, %s', self.__class__.__name__, self._args)
         if len(self._args) == 2:
             if self._args[0] == 'test':
                 return self.test(self._args[1])
+
+        # Dispatch POST custom methods
+        number_of_args = len(self._args)
+        for cm in self.CUSTOM_METHODS:
+            if cm.method != types.rest.CustomMethodMethod.POST:
+                continue
+
+            camel_case_name, snake_case_name = camel_and_snake_case_from(cm.name)
+            if number_of_args > 1 and cm.needs_parent:  # Method needs parent (existing item)
+                if self._args[1] in (camel_case_name, snake_case_name):
+                    operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                    try:
+                        if not operation:
+                            raise Exception()  # Operation not found
+                        item = self.MODEL.objects.get(uuid__iexact=self._args[0])
+                    except self.MODEL.DoesNotExist:
+                        raise exceptions.rest.NotFound('Item not found') from None
+                    except Exception as e:
+                        logger.error(
+                            'Invalid custom method exception %s/%s/%s: %s',
+                            self.__class__.__name__,
+                            self._args,
+                            sanitize_params(self._params),
+                            e,
+                        )
+                        raise exceptions.rest.ResponseError(
+                            f'Error processing custom method: {self.__class__.__name__}/{self._args}'
+                        ) from e
+
+                    return operation(item)
+
+            elif self._args[0] in (camel_case_name, snake_case_name):
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                if not operation:
+                    raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
+
+                return operation()
 
         raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
     

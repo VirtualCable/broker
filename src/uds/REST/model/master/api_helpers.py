@@ -152,16 +152,22 @@ def api_paths(
 
     for cm in cls.CUSTOM_METHODS:
         cm_path = f'{path}/{{uuid}}/{cm.name}' if cm.needs_parent else f'{path}/{cm.name}'
-        api_desc[cm_path] = types.rest.api.PathItem(
-            get=types.rest.api.Operation(
-                summary=f'Custom method {cm.name} for {name}',
-                description=f'Execute custom method {cm.name} for {name}',
-                parameters=api_utils.gen_uuid_parameters(with_odata=False) if cm.needs_parent else [],
-                responses=api_utils.gen_response('object', single=True),
-                tags=get_tags,
-                security=security,
-            )
+        # Emit the declared HTTP method in the OpenAPI spec.
+        # POST custom methods are documented as POST; GET methods as GET.
+        # Legacy COMPAT-mode GET access to POST methods is intentionally
+        # undocumented.
+        op = types.rest.api.Operation(
+            summary=f'Custom method {cm.name} for {name}',
+            description=f'Execute custom method {cm.name} for {name}',
+            parameters=api_utils.gen_uuid_parameters(with_odata=False) if cm.needs_parent else [],
+            responses=api_utils.gen_response('object', single=True),
+            tags=get_tags,
+            security=security,
         )
+        if cm.method == types.rest.CustomMethodMethod.POST:
+            api_desc[cm_path] = types.rest.api.PathItem(post=op)
+        else:
+            api_desc[cm_path] = types.rest.api.PathItem(get=op)
     if cls.REST_API_INFO.typed.is_single_type():
         api_desc[f'{path}/{consts.rest.GUI}'] = types.rest.api.PathItem(
             get=types.rest.api.Operation(

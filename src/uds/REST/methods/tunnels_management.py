@@ -59,7 +59,7 @@ class TunnelServerItem(types.rest.BaseRestItem):
 
 class TunnelServers(DetailHandler[TunnelServerItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('maintenance'),
+        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST),
     ]
 
     REST_API_INFO = types.rest.api.RestApiInfo(
@@ -164,7 +164,7 @@ class Tunnels(ModelHandler[TunnelItem]):
     FILTER = {'type': types.servers.ServerType.TUNNEL}
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod('tunnels', needs_parent=True),
-        types.rest.ModelCustomMethod('assign', needs_parent=True),
+        types.rest.ModelCustomMethod('assign', needs_parent=True, method=types.rest.CustomMethodMethod.POST),
     ]
 
     DETAIL = {'servers': TunnelServers}

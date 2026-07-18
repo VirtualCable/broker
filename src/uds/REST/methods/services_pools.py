@@ -167,12 +167,12 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     )
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('set_fallback_access', True),
+        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST),
         types.rest.ModelCustomMethod('get_fallback_access', True),
         types.rest.ModelCustomMethod('actions_list', True),
         types.rest.ModelCustomMethod('list_assignables', True),
-        types.rest.ModelCustomMethod('create_from_assignable', True),
-        types.rest.ModelCustomMethod('add_log', True),
+        types.rest.ModelCustomMethod('create_from_assignable', True, method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('add_log', True, method=types.rest.CustomMethodMethod.POST),
     ]
 
     # Rest api related information to complete the auto-generated API

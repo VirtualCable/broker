@@ -151,8 +151,8 @@ class ServerItem(types.rest.BaseRestItem):
 class ServersServers(DetailHandler[ServerItem]):
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('maintenance'),
-        types.rest.ModelCustomMethod('importcsv'),
+        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('importcsv', method=types.rest.CustomMethodMethod.POST),
     ]
 
     # Rest api related information to complete the auto-generated API

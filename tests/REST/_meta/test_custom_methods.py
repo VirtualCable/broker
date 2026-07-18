@@ -27,25 +27,21 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Contract tests for CustomMethodMethod + ModelCustomMethod handling
-(Phase 1 — Safety net extension).
+(Phase 1/2 — Safety net + dispatch correctness).
 
-Covers doc/plan/rest-test-needed.md Phase 1 step 6 (Pytest contract pin)
-and the prereqs for Phase 4 (GET-modifier → POST migration).
+Covers doc/plan/rest-test-needed.md Phase 1 step 6 and Phase 2 step 3.
 
-What we freeze today (Phase 1):
+What we verify after Phase 2 step 3:
 
-- Every ModelCustomMethod declared by a handler has ``method == 'GET'``
-  or was constructed with the default — no call site overrides it yet.
-- The dispatcher accepts a handler with an empty CUSTOM_METHODS list and
-  treats it the same as a ModelHandler.get() that does not match a
-  custom method (no AttributeError surprise).
-- genapi's ``api_paths()`` exposes every ModelHandler custom method as
-  a GET operation (this is the current behaviour, even for state-mutating
-  modifiers). Phase 4 will:
-    (a) teach the dispatcher to route by ``cm.method``,
-    (b) extend PathItem to carry non-GET verbs, and
-    (c) have genapi emit the correct Operation for each method.
-  Until then, all custom methods are GET-shaped in the spec.
+- Every ModelCustomMethod declared by a handler has a ``method`` field
+  matching its safety profile: GET for safe/read-only operations, POST for
+  unsafe/state-mutating operations.
+- The dispatcher honours ``cm.method``: POST custom methods are dispatched
+  via POST, GET custom methods via GET. COMPAT mode allows legacy GET
+  access to POST methods (backward compatible).
+- genapi's ``api_paths()`` emits POST custom methods as ``post=``, GET
+  methods as ``get=``. Legacy COMPAT-mode GET access to POST methods is
+  intentionally undocumented.
 
 Reference:
 - src/uds/core/types/rest/__init__.py:78   ModelCustomMethod + CustomMethodMethod
@@ -108,21 +104,33 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         self.assertEqual(actual, expected)
 
     # ------------------------------------------------------------------
-    # T2 - audit handlers currently exist with default methods
+    # T2 - audit: all unsafe custom methods use POST, safe ones use GET
     # ------------------------------------------------------------------
-    def test_no_modelhandler_uses_non_default_method_yet(self) -> None:
-        """Every ModelCustomMethod declared in the codebase still uses GET.
+    # Known POST custom methods (unsafe / state-mutating).
+    # If you add a new unsafe custom method, add it here.
+    _POST_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str]]] = frozenset({
+        ('Accounts', 'clear'),
+        ('Accounts', 'timemark'),
+        ('MetaPools', 'set_fallback_access'),
+        ('Providers', 'maintenance'),
+        ('ServicesPools', 'set_fallback_access'),
+        ('ServicesPools', 'create_from_assignable'),
+        ('ServicesPools', 'add_log'),
+        ('TunnelServers', 'maintenance'),
+        ('Tunnels', 'assign'),
+        ('ActionsCalendars', 'execute'),
+        ('AssignedUserService', 'reset'),
+        ('Publications', 'publish'),
+        ('Publications', 'cancel'),
+        ('ServersServers', 'maintenance'),
+        ('ServersServers', 'importcsv'),
+        ('Users', 'clean_related'),
+        ('Users', 'add_to_group'),
+        ('Users', 'enable_client_logging'),
+    })
 
-        This is a Phase 1 constraint: the dispatcher does not yet route
-        by ``cm.method`` (Phase 4 work). When we start wiring modifiers to
-        POST we will delete or update this test.
-
-        DetailHandlers are checked too: their CUSTOM_METHODS list has
-        the same shape but DetailHandlers do NOT generate OpenAPI entries
-        for their customs today (see Phase 1 docstring). They are listed
-        here anyway because they participate in the same routing path
-        (the ``get()``-side custom-method match).
-        """
+    def test_unsafe_custom_methods_use_post(self) -> None:
+        """Every unsafe (state-mutating) custom method is declared with method=POST."""
         sources: list[tuple[str, type, list[types.rest.ModelCustomMethod]]] = []
         for cls in typing.cast(collections.abc.Iterable[typing.Any], ModelHandler.__subclasses__()):
             cms = getattr(cls, 'CUSTOM_METHODS', None)
@@ -134,27 +142,62 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
                 sources.append((cls.__name__, cls, cms))
 
         offenders: list[str] = []
-        for cls_name, cls, cms in sources:
+        for cls_name, _cls, cms in sources:
             for cm in cms:
-                if cm.method != types.rest.CustomMethodMethod.GET:
-                    offenders.append(f'{cls_name}.{cm.name} -> {cm.method!r}')
+                key = (cls_name, cm.name)
+                if key in self._POST_CUSTOM_METHODS:
+                    if cm.method != types.rest.CustomMethodMethod.POST:
+                        offenders.append(
+                            f'{cls_name}.{cm.name}: expected POST, got {cm.method!r}'
+                        )
+                else:
+                    # Not in POST set → must be GET
+                    if cm.method != types.rest.CustomMethodMethod.GET:
+                        offenders.append(
+                            f'{cls_name}.{cm.name}: unexpected method {cm.method!r}; '
+                            'if unsafe, add to _POST_CUSTOM_METHODS'
+                        )
 
         self.assertEqual(
             offenders,
             [],
-            'No ModelHandler/DetailHandler should declare a non-default method yet; '
-            'Phase 4 will introduce POST/PUT/QUERY modifiers: ' + ', '.join(offenders),
+            'Custom method HTTP verb mismatch: ' + '; '.join(offenders),
         )
 
-    # ------------------------------------------------------------------
-    # T3 - genapi exposes every ModelHandler custom method as GET
-    # ------------------------------------------------------------------
-    def test_apigen_emits_custom_methods_as_get(self) -> None:
-        """api_paths() still emits each custom method under ``get=`` (Phase 1).
+    def test_post_custom_methods_set_exhaustive(self) -> None:
+        """_POST_CUSTOM_METHODS must list every POST custom method in the codebase."""
+        sources: list[tuple[str, type, list[types.rest.ModelCustomMethod]]] = []
+        for cls in typing.cast(collections.abc.Iterable[typing.Any], ModelHandler.__subclasses__()):
+            cms = getattr(cls, 'CUSTOM_METHODS', None)
+            if cms:
+                sources.append((cls.__name__, cls, cms))
+        for cls in typing.cast(collections.abc.Iterable[typing.Any], DetailHandler.__subclasses__()):
+            cms = getattr(cls, 'CUSTOM_METHODS', None)
+            if cms:
+                sources.append((cls.__name__, cls, cms))
 
-        Phase 4 will extend PathItem / Operation so a cm.method=POST
-        modifier is emitted under ``post=``. Until then, every custom
-        method appears under ``get=`` in the OpenAPI spec.
+        actual_post: set[tuple[str, str]] = set()
+        for cls_name, _cls, cms in sources:
+            for cm in cms:
+                if cm.method == types.rest.CustomMethodMethod.POST:
+                    actual_post.add((cls_name, cm.name))
+
+        missing = actual_post - self._POST_CUSTOM_METHODS
+        extra = self._POST_CUSTOM_METHODS - actual_post
+        msg = ''
+        if missing:
+            msg += f'Missing from _POST_CUSTOM_METHODS: {missing}. '
+        if extra:
+            msg += f'Extra in _POST_CUSTOM_METHODS (handler no longer POST): {extra}.'
+        self.assertFalse(msg, msg)
+
+    # ------------------------------------------------------------------
+    # T3 - genapi emits correct HTTP verb per cm.method
+    # ------------------------------------------------------------------
+    def test_apigen_emits_correct_verb_per_method(self) -> None:
+        """api_paths() emits GET for GET custom methods, POST for POST ones.
+
+        No custom method should appear under the wrong verb slot.
         """
         root = dispatcher.Dispatcher.root_node
 
@@ -176,13 +219,9 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
 
         offenders: 'list[str]' = []
         for path_label, cls in nodes:
-            # Build paths the same way api_helpers / genapi does: pass the
-            # base path WITH a leading slash to ``api_paths``; the method
-            # then prepends its own segments to derive the spec keys.
             base = '/' + path_label.lstrip('/')
             paths = cls.api_paths(base, tags=[], security='')
             for cm in cls.CUSTOM_METHODS:
-                # Reconstruct what api_helpers.py:154 builds under the hood.
                 expected_path = (
                     f'{base}/{{uuid}}/{cm.name}'
                     if cm.needs_parent
@@ -192,24 +231,20 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
                 if path_item is None:
                     offenders.append(f'{cls.__name__}: missing path {expected_path!r}')
                     continue
-                # Phase 1 invariant: every custom-method path has a GET operation.
-                if path_item.get is None:
-                    offenders.append(
-                        f'{cls.__name__}.{cm.name}: path {expected_path!r} has no GET operation '
-                        '(Phase 4 will change this when POST/PUT/QUERY is introduced).'
-                    )
-                # Defensive: future Phase 4 may add post/put/query/...; ensure we
-                # don't accidentally regress (no other verb sneaks in until Phase 4).
-                for verb in ('post', 'put', 'delete', 'query'):
-                    if getattr(path_item, verb, None) is not None:
+
+                if cm.method == types.rest.CustomMethodMethod.POST:
+                    if path_item.post is None:
                         offenders.append(
-                            f'{cls.__name__}.{cm.name}: unexpected {verb.upper()} '
-                            f'on path {expected_path!r}; Phase 4 should introduce it explicitly.'
+                            f'{cls.__name__}.{cm.name}: POST method but no post= in spec'
+                        )
+                else:
+                    if path_item.get is None:
+                        offenders.append(
+                            f'{cls.__name__}.{cm.name}: GET method but no get= in spec'
                         )
 
         self.assertEqual(
             offenders,
             [],
-            'OpenAPI spec custom-method operations diverged from the Phase 1 contract: '
-            + ' | '.join(offenders),
+            'OpenAPI spec custom-method verb mismatch: ' + ' | '.join(offenders),
         )
