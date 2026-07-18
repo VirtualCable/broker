@@ -54,9 +54,9 @@ from tests.utils.test import REST_PATH
 
 logger = logging.getLogger(__name__)
 
-# HTTP methods recognized today by the dispatcher (dispatcher.py:144).
+# HTTP methods recognized today by the dispatcher (dispatcher.py:165).
 # Any method outside this list receives 405 Method Not Allowed.
-SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete')
+SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options')
 
 # Methods the dispatcher rejects today (405).
 # QUERY (RFC 10008) is here today; it will move out in Phase 2 when implemented.
@@ -64,7 +64,6 @@ FORBIDDEN_METHODS: typing.Final[tuple[str, ...]] = (
     'query',    # RFC 10008 - not yet supported
     'patch',    # RFC 5789  - not yet supported
     'head',     # RFC 9110  - not yet supported
-    'options',  # RFC 9110  - not yet supported
     'trace',    # RFC 9110  - not yet supported
     'connect',  # RFC 9110  - not applicable
     'foo',      # invented method
@@ -160,12 +159,12 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         Replaces the old test_405_current_behaviour_due_to_bug_b1, which
         documented the broken (TypeError-raising) behavior.
         """
-        response = self._rest_request('options', 'providers/overview')
+        response = self._rest_request('patch', 'providers/overview')
         self.assertEqual(response.status_code, 405)
         self.assertIn('application/json', response.get('Content-Type', ''))
         body = json.loads(response.content)
         self.assertIn('error', body)
-        self.assertEqual(body['error'], 'Method OPTIONS not allowed')
+        self.assertEqual(body['error'], 'Method PATCH not allowed')
 
     # ------------------------------------------------------------------
     # T1A.4 - Fixed headers present on 2xx responses
@@ -277,7 +276,62 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         FORBIDDEN_METHODS, this test fails as a reminder.
         """
         self.assertNotIn('query', SUPPORTED_METHODS, 'QUERY not yet supported; update this test in Phase 2')
-        self.assertNotIn('options', SUPPORTED_METHODS, 'OPTIONS not yet supported; update this test in Phase 2')
+        self.assertIn('options', SUPPORTED_METHODS, 'OPTIONS is now supported (Change C)')
         self.assertIn('query', FORBIDDEN_METHODS)
-        self.assertIn('options', FORBIDDEN_METHODS)
+
+    # ------------------------------------------------------------------
+    # Change C — OPTIONS for capabilities discovery (RFC 9110 §9.3.7)
+    # ------------------------------------------------------------------
+    def test_options_returns_204_with_allow_header(self) -> None:
+        """OPTIONS returns 204 No Content with an Allow header.
+
+        Reference: src/uds/REST/dispatcher.py OPTIONS handler.
+        The Allow header lists the methods the handler actually implements
+        plus OPTIONS itself (always supported by the dispatcher).
+        """
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 204, 'OPTIONS must return 204')
+        allow = response.get('Allow', '')
+        self.assertTrue(allow, 'OPTIONS response must include Allow header')
+        self.assertIn('OPTIONS', allow)
+        self.assertIn('GET', allow, 'handlers without get() must still advertise GET if defined')
+
+    def test_options_includes_uds_version_header(self) -> None:
+        """OPTIONS includes UDS-Version header like any other response."""
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 204)
+        uds_version = response.get('UDS-Version')
+        self.assertIsNotNone(uds_version, 'OPTIONS must include UDS-Version')
+        assert uds_version is not None
+        self.assertIn(';', uds_version)
+
+    def test_options_no_auth_required(self) -> None:
+        """OPTIONS does not require authentication (RFC 9110 §9.3.7).
+
+        The dispatcher handles OPTIONS before instantiating the handler,
+        so no auth check is performed.
+        """
+        from tests.utils.test import UDSClient
+
+        unauth_client = UDSClient()
+        url = f'{REST_PATH}providers/overview'
+        response: typing.Any = unauth_client.generic('OPTIONS', url)
+        self.assertEqual(response.status_code, 204, 'OPTIONS must work without auth')
+        self.assertTrue(response.get('Allow', ''), 'OPTIONS must include Allow header')
+
+    def test_options_on_collection_path(self) -> None:
+        """OPTIONS on a collection path (e.g. /providers) returns Allow.
+
+        ModelHandler for providers defines get/put/delete/post.
+        """
+        response = self._rest_request('options', 'providers')
+        self.assertEqual(response.status_code, 204)
+        allow = response.get('Allow', '')
+        self.assertIn('OPTIONS', allow)
+        self.assertIn('GET', allow)
+
+    def test_options_on_nonexistent_path_returns_404(self) -> None:
+        """OPTIONS on a path with no handler returns 404 (same as other methods)."""
+        response = self._rest_request('options', 'this-does-not-exist')
+        self.assertEqual(response.status_code, 404)
 

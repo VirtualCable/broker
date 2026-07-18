@@ -167,21 +167,26 @@ class Dispatcher(View):
         # Obtain method to be invoked
         http_method: str = request.method.lower() if request.method else ''
         # ensure method is recognized
-        if http_method not in ('get', 'post', 'put', 'delete'):
+        if http_method not in consts.rest.KNOWN_METHODS:
             return Dispatcher.error_response(
                 http.HttpResponseNotAllowed,
                 ErrorHandler(request, handler_node.full_path(), http_method, {}),
                 f'Method {http_method.upper()} not allowed',
-                # Advertise only the methods the dispatcher currently understands
-                # so the client knows what's allowed. QUERY/OPTIONS will be added
-                # in Phase 2 without changing the call site semantics.
-                allowed_methods=[m.upper() for m in ('get', 'post', 'put', 'delete')],
+                allowed_methods=[m.upper() for m in consts.rest.KNOWN_METHODS],
             )
 
         node_full_path: typing.Final[str] = handler_node.full_path()
 
         # Path here has "remaining" path, that is, method part has been removed
         args = path[len(node_full_path) :].split('/')[1:]  # First element is always empty, so we skip it
+
+        # OPTIONS — return Allow header without instantiating a full handler.
+        if http_method == 'options':
+            allowed = Dispatcher._allowed_methods_for_cls(cls)
+            response = http.HttpResponse(status=204)
+            response['Allow'] = allowed
+            response['UDS-Version'] = f'{consts.system.VERSION};{consts.system.VERSION_STAMP}'
+            return response
 
         handler: Handler | None = None
 
@@ -202,8 +207,10 @@ class Dispatcher(View):
             return Dispatcher.error_response(http.HttpResponseBadRequest, handler, 'Invalid value', e)
 
         except AttributeError:
-            # Special case, allowed methods must be on response, so not using Dispatcher.error_response
-            allowed_methods: list[str] = [n for n in ['get', 'post', 'put', 'delete'] if hasattr(handler, n)]
+            # Handler class exists but doesn't define the requested method.
+            allowed_methods: list[str] = [
+                m.upper() for m in consts.rest.KNOWN_METHODS if m == 'options' or hasattr(handler, m)
+            ]
             log.log_operation(handler, 405, types.log.LogLevel.ERROR)
             return http.HttpResponseNotAllowed(
                 allowed_methods, content=b'{"error": "Invalid method"}', content_type="application/json"
@@ -270,6 +277,20 @@ class Dispatcher(View):
             return Dispatcher.error_response(http.HttpResponseBadRequest, handler, 'Invalid value', e)
         except Exception as e:
             return Dispatcher.error_response(http.HttpResponseServerError, handler, 'Unexpected error', e)
+
+    @staticmethod
+    def _allowed_methods_for_cls(cls: type[Handler]) -> str:
+        """Compute the ``Allow`` header value for a handler class.
+
+        Returns a comma-separated, uppercase list of HTTP methods that the
+        handler implements (GET/POST/PUT/DELETE) plus OPTIONS which is always
+        supported by the dispatcher.
+        """
+        allowed = ['OPTIONS']
+        for m in ('get', 'post', 'put', 'delete'):
+            if any(getattr(c, m, None) is not None for c in cls.__mro__):
+                allowed.append(m.upper())
+        return ', '.join(allowed)
 
     @staticmethod
     def register_handler(type_: type[Handler]) -> None:
