@@ -88,7 +88,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     Also accepts GET methods for "custom" methods
     """
 
-    CUSTOM_METHODS: typing.ClassVar[list[str]] = []
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = []
     _parent: 'ModelHandler[T_Item] | None'  # Parent handler, that is the ModelHandler that contains this detail
     _path: str
     _params: typing.Any  # _params is deserialized object from request
@@ -128,8 +128,14 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :param arg: argument to pass to custom method
         """
         for to_check in self.CUSTOM_METHODS:
-            camel_case_name, snake_case_name = camel_and_snake_case_from(to_check)
+            camel_case_name, snake_case_name = camel_and_snake_case_from(to_check.name)
             if check in (camel_case_name, snake_case_name):
+                # NOTE: method discrimination (GET vs POST/PUT/QUERY) per
+                # ModelCustomMethod.method is intentionally deferred to
+                # Phase 4 (GET-modifier → POST migration). For now all
+                # detail custom methods continue to be invoked via GET,
+                # mirroring today's behaviour. See
+                # doc/plan/rest-standards-compliance.md §7.
                 operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if operation:
                     if not arg:
