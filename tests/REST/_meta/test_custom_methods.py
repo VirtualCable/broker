@@ -470,7 +470,6 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
     def test_get_add_to_group_works_in_compat(self) -> None:
         """GET /authenticators/{id}/users/{uid}/add_to_group → dispatched (400, needs body params)."""
         user = self.admins[0]
-        group = self.simple_groups[0]
         url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/add_to_group'
         response = self.client.rest_get(url)
         # Dispatched correctly (GET→POST in COMPAT) but fails because 'group' param is missing

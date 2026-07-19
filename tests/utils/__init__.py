@@ -31,8 +31,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 import collections.abc
+from unittest import mock
 
 from django.db import models
+from uds.core import ui
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +211,19 @@ def filter_list_by_attr_list(
     if sorted_by:
         values.sort(key=lambda x: getattr(x, sorted_by))
     return values
+
+
+def check_userinterface_values(obj: ui.UserInterface, values: ui.gui.ValuesDictType) -> None:
+    """
+    Checks that a user interface object has the values specified
+    """
+    for k, v in values.items():
+        if isinstance(v, MustBeOfType):
+            assert isinstance(getattr(obj, k), v._kind)  # pyrefly: ignore[invalid-argument]
+        elif v == mock.ANY:
+            pass
+        else:
+            assert getattr(obj, k) == v
 
 
 
