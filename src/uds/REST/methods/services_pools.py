@@ -167,12 +167,12 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     )
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST),
-        types.rest.ModelCustomMethod('get_fallback_access', True),
-        types.rest.ModelCustomMethod('actions_list', True),
-        types.rest.ModelCustomMethod('list_assignables', True),
-        types.rest.ModelCustomMethod('create_from_assignable', True, method=types.rest.CustomMethodMethod.POST),
-        types.rest.ModelCustomMethod('add_log', True, method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST, description='Set fallback access for the service pool'),
+        types.rest.ModelCustomMethod('get_fallback_access', True, description='Get fallback access status of the service pool'),
+        types.rest.ModelCustomMethod('actions_list', True, description='List available actions for the service pool'),
+        types.rest.ModelCustomMethod('list_assignables', True, description='List assignable services for the service pool'),
+        types.rest.ModelCustomMethod('create_from_assignable', True, method=types.rest.CustomMethodMethod.POST, description='Create a service pool from an assignable service'),
+        types.rest.ModelCustomMethod('add_log', True, method=types.rest.CustomMethodMethod.POST, description='Add a log entry to the service pool'),
     ]
 
     # Rest api related information to complete the auto-generated API

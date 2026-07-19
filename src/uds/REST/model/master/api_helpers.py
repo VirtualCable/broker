@@ -190,14 +190,27 @@ def api_paths(
         # POST custom methods are documented as POST; GET methods as GET.
         # Legacy COMPAT-mode GET access to POST methods is intentionally
         # undocumented.
+        # Prefer cm.description when provided; fall back to generic text.
+        cm_summary = cm.description if cm.description else f'{cm.name}'
+        cm_desc = cm.description if cm.description else f'Execute custom method {cm.name} for {name}'
         op = types.rest.api.Operation(
-            summary=f'Custom method {cm.name} for {name}',
-            description=f'Execute custom method {cm.name} for {name}',
+            summary=f'{cm_summary} ({name})',
+            description=cm_desc,
             parameters=api_utils.gen_uuid_parameters(with_odata=False) if cm.needs_parent else [],
             responses=api_utils.gen_response('object', single=True),
             tags=get_tags,
             security=security,
         )
+        # Attach request body for POST methods with declared params
+        if cm.params and cm.method == types.rest.CustomMethodMethod.POST:
+            op.requestBody = types.rest.api.RequestBody(
+                description=f'Parameters for {cm.name}',
+                required=True,
+                content=types.rest.api.Content(
+                    media_type='application/json',
+                    schema=cm.params,
+                ),
+            )
         if cm.method == types.rest.CustomMethodMethod.POST:
             api_desc[cm_path] = types.rest.api.PathItem(post=op)
         else:

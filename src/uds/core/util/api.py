@@ -200,7 +200,7 @@ def python_type_to_openapi(
     # Union[...] → oneOf
     # Except if one of them is None, in which case, we must extract it from the list
     # and create {'type': xxx, 'nullable': true}
-    elif origin in {py_types.UnionType, typing.Union}:
+    elif origin in {py_types.UnionType, typing.Union}:  # pyright: ignore[reportDeprecated]
         # Optional[X] is Union[X, None]
         # Note: the casting is because we use "is not", and cannot ad inner types
         one_of: list[SchemaProperty] = [
@@ -257,7 +257,7 @@ def python_type_to_openapi(
 
 
 def api_components(
-    dataclass: typing.Type[typing.Any], *, removable_fields: list[str] | None = None
+    dataclass: type[typing.Any], *, removable_fields: list[str] | None = None
 ) -> 'types.rest.api.Components':
 
     # If not dataclass, raise a ValueError
@@ -269,11 +269,11 @@ def api_components(
     child_removables: dict[str, list[str]] = {}
     for rem_fld in removable_fields or []:
         if '.' in rem_fld:
-            child_name, field = rem_fld.split('.', 1)
+            child_name, child_field = rem_fld.split('.', 1)
             if child_name not in child_removables:
                 child_removables[child_name] = []
 
-            child_removables[child_name].append(field)
+            child_removables[child_name].append(child_field)
         else:
             our_removables.add(rem_fld)
 

@@ -151,8 +151,8 @@ class ServerItem(types.rest.BaseRestItem):
 class ServersServers(DetailHandler[ServerItem]):
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST),
-        types.rest.ModelCustomMethod('importcsv', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST, description='Set maintenance mode for a server'),
+        types.rest.ModelCustomMethod('importcsv', method=types.rest.CustomMethodMethod.POST, description='Import server configuration from CSV'),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -456,7 +456,7 @@ class GroupItem(types.rest.BaseRestItem):
 class ServersGroups(ModelHandler[GroupItem]):
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('stats', True),
+        types.rest.ModelCustomMethod('stats', True, description='Get server statistics'),
     ]
     MODEL = models.ServerGroup
     FILTER = {

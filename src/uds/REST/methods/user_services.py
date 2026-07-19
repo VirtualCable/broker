@@ -88,7 +88,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('reset', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod('reset', method=types.rest.CustomMethodMethod.POST, description='Reset user service state'),
     ]
 
     @staticmethod
@@ -580,8 +580,21 @@ class Publications(DetailHandler[PublicationItem]):
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('publish', method=types.rest.CustomMethodMethod.POST),
-        types.rest.ModelCustomMethod('cancel', method=types.rest.CustomMethodMethod.POST),
+        types.rest.ModelCustomMethod(
+            'publish',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Initiate publication of a deployed service',
+            params=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    'changelog': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Optional changelog message for the publication',
+                    ),
+                },
+            ),
+        ),
+        types.rest.ModelCustomMethod('cancel', method=types.rest.CustomMethodMethod.POST, description='Cancel a running publication'),
     ]  # We provided these custom methods
 
     def publish(self, parent: 'Model') -> typing.Any:
