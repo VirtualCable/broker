@@ -103,7 +103,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('servicepools', description='Get service pools using this service'),
+        types.rest.ModelCustomMethod('servicepools', description='List all service pools that reference this service provider'),
     ]
 
     # Rest api related information to complete the auto-generated API

@@ -95,11 +95,11 @@ class UserItem(types.rest.BaseRestItem):
 
 class Users(DetailHandler[UserItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('services_pools', description='Get service pools where the user has assignments'),
-        types.rest.ModelCustomMethod('user_services', description='Get user services assigned to the user'),
-        types.rest.ModelCustomMethod('clean_related', method=types.rest.CustomMethodMethod.POST, description='Clean user-related data'),
-        types.rest.ModelCustomMethod('add_to_group', method=types.rest.CustomMethodMethod.POST, description='Add user to a group'),
-        types.rest.ModelCustomMethod('enable_client_logging', method=types.rest.CustomMethodMethod.POST, description='Enable or disable client-side logging'),
+        types.rest.ModelCustomMethod('services_pools', description='Retrieve all service pools in which this user has active assignments'),
+        types.rest.ModelCustomMethod('user_services', description='List all user services currently assigned to this user'),
+        types.rest.ModelCustomMethod('clean_related', method=types.rest.CustomMethodMethod.POST, description='Remove all related data for this user (assigned services, cached entries, pending operations)'),
+        types.rest.ModelCustomMethod('add_to_group', method=types.rest.CustomMethodMethod.POST, description='Add this user to an existing group within the same authenticator', params=types.rest.api.SchemaProperty(type='object', properties={'group': types.rest.api.SchemaProperty(type='string', description='UUID of the group to add the user to')})),
+        types.rest.ModelCustomMethod('enable_client_logging', method=types.rest.CustomMethodMethod.POST, description='Enable or disable client-side logging for this user (toggles on each invocation)'),
     ]
 
     @staticmethod
@@ -367,8 +367,8 @@ class GroupItem(types.rest.BaseRestItem):
 
 class Groups(DetailHandler[GroupItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('services_pools', description='Get service pools accessible by this group'),
-        types.rest.ModelCustomMethod('users', description='Get users belonging to this group'),
+        types.rest.ModelCustomMethod('services_pools', description='Retrieve all service pools that this group has access to'),
+        types.rest.ModelCustomMethod('users', description='List all users belonging to this group'),
     ]
 
     @staticmethod

@@ -7076,8 +7076,50 @@ paths:
       summary: Get all Account items
       tags:
       - Accounts
+    post:
+      description: Create a new Account item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountItem'
+        description: New AccountItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountItem'
+          description: Successfully retrieved AccountItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: AccountItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Account item
+      tags:
+      - Accounts
     put:
-      description: Creates a new, nonexisting Account item
+      deprecated: true
+      description: 'Creates a new Account item. Deprecated: use POST //accounts instead.'
       parameters: []
       requestBody:
         content:
@@ -7115,6 +7157,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Account item
+      tags:
+      - Accounts
+    query:
+      description: Query Account items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AccountItem'
+                type: array
+          description: Successfully retrieved all AccountItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Account items with OData in body
       tags:
       - Accounts
   /accounts/gui:
@@ -7408,8 +7504,9 @@ paths:
       tags:
       - Accounts
   /accounts/{uuid}/clear:
-    get:
-      description: Execute custom method clear for Account
+    post:
+      description: Remove all usage records associated with an account, permanently
+        deleting them
       parameters:
       - description: The UUID of the item
         in: path
@@ -7446,7 +7543,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method clear for Account
+      summary: Remove all usage records associated with an account, permanently deleting
+        them (Account)
       tags:
       - Accounts
   /accounts/{uuid}/log:
@@ -7485,8 +7583,9 @@ paths:
       tags:
       - Accounts
   /accounts/{uuid}/timemark:
-    get:
-      description: Execute custom method timemark for Account
+    post:
+      description: Set a timestamp marker on an account to indicate the last processed
+        usage record, enabling incremental data processing
       parameters:
       - description: The UUID of the item
         in: path
@@ -7523,7 +7622,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method timemark for Account
+      summary: Set a timestamp marker on an account to indicate the last processed
+        usage record, enabling incremental data processing (Account)
       tags:
       - Accounts
   /accounts/{uuid}/usage:
@@ -7595,8 +7695,8 @@ paths:
       summary: Get all Usage items
       tags:
       - Accounts
-    put:
-      description: Update an existing Usage item
+    post:
+      description: Create a new Usage item
       parameters:
       - description: The UUID of the item
         in: path
@@ -7605,6 +7705,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountItem'
+        description: New AccountItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -7633,7 +7740,118 @@ paths:
           description: AccountItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Usage items
+      summary: Create a new Usage item
+      tags:
+      - Accounts
+    put:
+      deprecated: true
+      description: 'Creates a new Usage item. Deprecated: use POST //accounts/{uuid}/usage
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountItem'
+        description: New AccountItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountItem'
+          description: Successfully retrieved AccountItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: AccountItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Usage item
+      tags:
+      - Accounts
+    query:
+      description: Query Usage items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AccountItem'
+                type: array
+          description: Successfully retrieved all AccountItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Usage items with OData in body
       tags:
       - Accounts
   /accounts/{uuid}/usage/overview:
@@ -8035,8 +8253,51 @@ paths:
       summary: Get all Server items
       tags:
       - Actortokens
+    post:
+      description: Create a new Server item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActorTokenItem'
+        description: New ActorTokenItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorTokenItem'
+          description: Successfully retrieved ActorTokenItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ActorTokenItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Server item
+      tags:
+      - Actortokens
     put:
-      description: Creates a new, nonexisting Server item
+      deprecated: true
+      description: 'Creates a new Server item. Deprecated: use POST //actortokens
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -8074,6 +8335,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Server item
+      tags:
+      - Actortokens
+    query:
+      description: Query Server items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ActorTokenItem'
+                type: array
+          description: Successfully retrieved all ActorTokenItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Server items with OData in body
       tags:
       - Actortokens
   /actortokens/overview:
@@ -8544,8 +8859,51 @@ paths:
       summary: Get all Authenticator items
       tags:
       - Authenticators
+    post:
+      description: Create a new Authenticator item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticatorItem'
+        description: New AuthenticatorItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticatorItem'
+          description: Successfully retrieved AuthenticatorItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: AuthenticatorItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Authenticator item
+      tags:
+      - Authenticators
     put:
-      description: Creates a new, nonexisting Authenticator item
+      deprecated: true
+      description: 'Creates a new Authenticator item. Deprecated: use POST //authenticators
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -8583,6 +8941,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Authenticator item
+      tags:
+      - Authenticators
+    query:
+      description: Query Authenticator items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AuthenticatorItem'
+                type: array
+          description: Successfully retrieved all AuthenticatorItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Authenticator items with OData in body
       tags:
       - Authenticators
   /authenticators/gui/{type}:
@@ -9026,8 +9438,8 @@ paths:
       summary: Get all Groups items
       tags:
       - Authenticators
-    put:
-      description: Update an existing Groups item
+    post:
+      description: Create a new Groups item
       parameters:
       - description: The UUID of the item
         in: path
@@ -9036,6 +9448,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -9064,7 +9483,118 @@ paths:
           description: GroupItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Groups items
+      summary: Create a new Groups item
+      tags:
+      - Authenticators
+    put:
+      deprecated: true
+      description: 'Creates a new Groups item. Deprecated: use POST //authenticators/{uuid}/groups
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupItem'
+          description: Successfully retrieved GroupItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: GroupItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Groups item
+      tags:
+      - Authenticators
+    query:
+      description: Query Groups items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupItem'
+                type: array
+          description: Successfully retrieved all GroupItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Groups items with OData in body
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/overview:
@@ -9138,7 +9668,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/groups/services_pools:
     get:
-      description: Execute custom method services_pools for Groups collection
+      description: Retrieve all service pools that this group has access to
       parameters:
       - description: The UUID of the item
         in: path
@@ -9175,7 +9705,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method services_pools for Groups collection
+      summary: Retrieve all service pools that this group has access to (Groups collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/tableinfo:
@@ -9222,7 +9752,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/groups/users:
     get:
-      description: Execute custom method users for Groups collection
+      description: List all users belonging to this group
       parameters:
       - description: The UUID of the item
         in: path
@@ -9259,7 +9789,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method users for Groups collection
+      summary: List all users belonging to this group (Groups collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/{uuid}:
@@ -9490,7 +10020,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/groups/{uuid}/services_pools:
     get:
-      description: Execute custom method services_pools for Groups item
+      description: Retrieve all service pools that this group has access to
       parameters:
       - description: The UUID of the item
         in: path
@@ -9527,12 +10057,12 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method services_pools for Groups item
+      summary: Retrieve all service pools that this group has access to (Groups item)
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/{uuid}/users:
     get:
-      description: Execute custom method users for Groups item
+      description: List all users belonging to this group
       parameters:
       - description: The UUID of the item
         in: path
@@ -9569,7 +10099,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method users for Groups item
+      summary: List all users belonging to this group (Groups item)
       tags:
       - Authenticators
   /authenticators/{uuid}/log:
@@ -9609,7 +10139,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/search:
     get:
-      description: Execute custom method search for Authenticator
+      description: Search users or groups in the authenticator by name or identifier
       parameters:
       - description: The UUID of the item
         in: path
@@ -9646,7 +10176,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method search for Authenticator
+      summary: Search users or groups in the authenticator by name or identifier (Authenticator)
       tags:
       - Authenticators
   /authenticators/{uuid}/users:
@@ -9718,8 +10248,8 @@ paths:
       summary: Get all Users items
       tags:
       - Authenticators
-    put:
-      description: Update an existing Users item
+    post:
+      description: Create a new Users item
       parameters:
       - description: The UUID of the item
         in: path
@@ -9728,6 +10258,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserItem'
+        description: New UserItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -9756,12 +10293,123 @@ paths:
           description: UserItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Users items
+      summary: Create a new Users item
+      tags:
+      - Authenticators
+    put:
+      deprecated: true
+      description: 'Creates a new Users item. Deprecated: use POST //authenticators/{uuid}/users
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserItem'
+        description: New UserItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserItem'
+          description: Successfully retrieved UserItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: UserItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Users item
+      tags:
+      - Authenticators
+    query:
+      description: Query Users items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserItem'
+                type: array
+          description: Successfully retrieved all UserItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Users items with OData in body
       tags:
       - Authenticators
   /authenticators/{uuid}/users/add_to_group:
-    get:
-      description: Execute custom method add_to_group for Users collection
+    post:
+      description: Add this user to an existing group within the same authenticator
       parameters:
       - description: The UUID of the item
         in: path
@@ -9770,6 +10418,17 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                group:
+                  description: UUID of the group to add the user to
+                  type: string
+              type: object
+        description: Parameters for add_to_group
+        required: true
       responses:
         '200':
           content:
@@ -9798,12 +10457,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method add_to_group for Users collection
+      summary: Add this user to an existing group within the same authenticator (Users
+        collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/clean_related:
-    get:
-      description: Execute custom method clean_related for Users collection
+    post:
+      description: Remove all related data for this user (assigned services, cached
+        entries, pending operations)
       parameters:
       - description: The UUID of the item
         in: path
@@ -9840,12 +10501,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method clean_related for Users collection
+      summary: Remove all related data for this user (assigned services, cached entries,
+        pending operations) (Users collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/enable_client_logging:
-    get:
-      description: Execute custom method enable_client_logging for Users collection
+    post:
+      description: Enable or disable client-side logging for this user (toggles on
+        each invocation)
       parameters:
       - description: The UUID of the item
         in: path
@@ -9882,7 +10545,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method enable_client_logging for Users collection
+      summary: Enable or disable client-side logging for this user (toggles on each
+        invocation) (Users collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/overview:
@@ -9956,7 +10620,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/users/services_pools:
     get:
-      description: Execute custom method services_pools for Users collection
+      description: Retrieve all service pools in which this user has active assignments
       parameters:
       - description: The UUID of the item
         in: path
@@ -9993,7 +10657,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method services_pools for Users collection
+      summary: Retrieve all service pools in which this user has active assignments
+        (Users collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/tableinfo:
@@ -10040,7 +10705,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/users/user_services:
     get:
-      description: Execute custom method user_services for Users collection
+      description: List all user services currently assigned to this user
       parameters:
       - description: The UUID of the item
         in: path
@@ -10077,7 +10742,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method user_services for Users collection
+      summary: List all user services currently assigned to this user (Users collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}:
@@ -10307,8 +10972,8 @@ paths:
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/add_to_group:
-    get:
-      description: Execute custom method add_to_group for Users item
+    post:
+      description: Add this user to an existing group within the same authenticator
       parameters:
       - description: The UUID of the item
         in: path
@@ -10317,6 +10982,17 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                group:
+                  description: UUID of the group to add the user to
+                  type: string
+              type: object
+        description: Parameters for add_to_group
+        required: true
       responses:
         '200':
           content:
@@ -10345,12 +11021,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method add_to_group for Users item
+      summary: Add this user to an existing group within the same authenticator (Users
+        item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/clean_related:
-    get:
-      description: Execute custom method clean_related for Users item
+    post:
+      description: Remove all related data for this user (assigned services, cached
+        entries, pending operations)
       parameters:
       - description: The UUID of the item
         in: path
@@ -10387,12 +11065,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method clean_related for Users item
+      summary: Remove all related data for this user (assigned services, cached entries,
+        pending operations) (Users item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/enable_client_logging:
-    get:
-      description: Execute custom method enable_client_logging for Users item
+    post:
+      description: Enable or disable client-side logging for this user (toggles on
+        each invocation)
       parameters:
       - description: The UUID of the item
         in: path
@@ -10429,7 +11109,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method enable_client_logging for Users item
+      summary: Enable or disable client-side logging for this user (toggles on each
+        invocation) (Users item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/log:
@@ -10469,7 +11150,7 @@ paths:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/services_pools:
     get:
-      description: Execute custom method services_pools for Users item
+      description: Retrieve all service pools in which this user has active assignments
       parameters:
       - description: The UUID of the item
         in: path
@@ -10506,12 +11187,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method services_pools for Users item
+      summary: Retrieve all service pools in which this user has active assignments
+        (Users item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/user_services:
     get:
-      description: Execute custom method user_services for Users item
+      description: List all user services currently assigned to this user
       parameters:
       - description: The UUID of the item
         in: path
@@ -10548,12 +11230,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method user_services for Users item
+      summary: List all user services currently assigned to this user (Users item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users_with_services:
     get:
-      description: Execute custom method users_with_services for Authenticator
+      description: Retrieve all users in this authenticator that have active services
+        assigned
       parameters:
       - description: The UUID of the item
         in: path
@@ -10590,7 +11273,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method users_with_services for Authenticator
+      summary: Retrieve all users in this authenticator that have active services
+        assigned (Authenticator)
       tags:
       - Authenticators
   /cache:
@@ -10671,8 +11355,51 @@ paths:
       summary: Get all Calendar items
       tags:
       - Calendars
+    post:
+      description: Create a new Calendar item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarItem'
+        description: New CalendarItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarItem'
+          description: Successfully retrieved CalendarItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: CalendarItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Calendar item
+      tags:
+      - Calendars
     put:
-      description: Creates a new, nonexisting Calendar item
+      deprecated: true
+      description: 'Creates a new Calendar item. Deprecated: use POST //calendars
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -10710,6 +11437,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Calendar item
+      tags:
+      - Calendars
+    query:
+      description: Query Calendar items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CalendarItem'
+                type: array
+          description: Successfully retrieved all CalendarItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Calendar items with OData in body
       tags:
       - Calendars
   /calendars/gui:
@@ -11106,8 +11887,8 @@ paths:
       summary: Get all Rules items
       tags:
       - Calendars
-    put:
-      description: Update an existing Rules item
+    post:
+      description: Create a new Rules item
       parameters:
       - description: The UUID of the item
         in: path
@@ -11116,6 +11897,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarRuleItem'
+        description: New CalendarRuleItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -11144,7 +11932,118 @@ paths:
           description: CalendarRuleItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Rules items
+      summary: Create a new Rules item
+      tags:
+      - Calendars
+    put:
+      deprecated: true
+      description: 'Creates a new Rules item. Deprecated: use POST //calendars/{uuid}/rules
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarRuleItem'
+        description: New CalendarRuleItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarRuleItem'
+          description: Successfully retrieved CalendarRuleItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: CalendarRuleItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Rules item
+      tags:
+      - Calendars
+    query:
+      description: Query Rules items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CalendarRuleItem'
+                type: array
+          description: Successfully retrieved all CalendarRuleItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Rules items with OData in body
       tags:
       - Calendars
   /calendars/{uuid}/rules/overview:
@@ -11584,8 +12483,51 @@ paths:
       summary: Get all Image items
       tags:
       - Gallery
+    post:
+      description: Create a new Image item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageItem'
+        description: New ImageItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageItem'
+          description: Successfully retrieved ImageItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ImageItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Image item
+      tags:
+      - Gallery
     put:
-      description: Creates a new, nonexisting Image item
+      deprecated: true
+      description: 'Creates a new Image item. Deprecated: use POST //gallery/images
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -11623,6 +12565,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Image item
+      tags:
+      - Gallery
+    query:
+      description: Query Image items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ImageItem'
+                type: array
+          description: Successfully retrieved all ImageItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Image items with OData in body
       tags:
       - Gallery
   /gallery/images/overview:
@@ -11984,8 +12980,51 @@ paths:
       summary: Get all ServicePoolGroup items
       tags:
       - Gallery
+    post:
+      description: Create a new ServicePoolGroup item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePoolGroupItem'
+        description: New ServicePoolGroupItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePoolGroupItem'
+          description: Successfully retrieved ServicePoolGroupItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ServicePoolGroupItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new ServicePoolGroup item
+      tags:
+      - Gallery
     put:
-      description: Creates a new, nonexisting ServicePoolGroup item
+      deprecated: true
+      description: 'Creates a new ServicePoolGroup item. Deprecated: use POST //gallery/servicespoolgroups
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -12023,6 +13062,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new ServicePoolGroup item
+      tags:
+      - Gallery
+    query:
+      description: Query ServicePoolGroup items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServicePoolGroupItem'
+                type: array
+          description: Successfully retrieved all ServicePoolGroupItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query ServicePoolGroup items with OData in body
       tags:
       - Gallery
   /gallery/servicespoolgroups/gui:
@@ -12412,8 +13505,51 @@ paths:
       summary: Get all Notifier items
       tags:
       - Messaging
+    post:
+      description: Create a new Notifier item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifierItem'
+        description: New NotifierItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotifierItem'
+          description: Successfully retrieved NotifierItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: NotifierItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Notifier item
+      tags:
+      - Messaging
     put:
-      description: Creates a new, nonexisting Notifier item
+      deprecated: true
+      description: 'Creates a new Notifier item. Deprecated: use POST //messaging/notifiers
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -12451,6 +13587,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Notifier item
+      tags:
+      - Messaging
+    query:
+      description: Query Notifier items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NotifierItem'
+                type: array
+          description: Successfully retrieved all NotifierItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Notifier items with OData in body
       tags:
       - Messaging
   /messaging/notifiers/gui/{type}:
@@ -12922,8 +14112,51 @@ paths:
       summary: Get all MetaPool items
       tags:
       - Metapools
+    post:
+      description: Create a new MetaPool item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetaPoolItem'
+        description: New MetaPoolItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaPoolItem'
+          description: Successfully retrieved MetaPoolItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: MetaPoolItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new MetaPool item
+      tags:
+      - Metapools
     put:
-      description: Creates a new, nonexisting MetaPool item
+      deprecated: true
+      description: 'Creates a new MetaPool item. Deprecated: use POST //metapools
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -12961,6 +14194,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new MetaPool item
+      tags:
+      - Metapools
+    query:
+      description: Query MetaPool items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MetaPoolItem'
+                type: array
+          description: Successfully retrieved all MetaPoolItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query MetaPool items with OData in body
       tags:
       - Metapools
   /metapools/gui:
@@ -13322,8 +14609,8 @@ paths:
       summary: Get all Access items
       tags:
       - Metapools
-    put:
-      description: Update an existing Access item
+    post:
+      description: Create a new Access item
       parameters:
       - description: The UUID of the item
         in: path
@@ -13332,6 +14619,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessCalendarItem'
+        description: New AccessCalendarItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -13360,7 +14654,118 @@ paths:
           description: AccessCalendarItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Access items
+      summary: Create a new Access item
+      tags:
+      - Metapools
+    put:
+      deprecated: true
+      description: 'Creates a new Access item. Deprecated: use POST //metapools/{uuid}/access
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessCalendarItem'
+        description: New AccessCalendarItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessCalendarItem'
+          description: Successfully retrieved AccessCalendarItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: AccessCalendarItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Access item
+      tags:
+      - Metapools
+    query:
+      description: Query Access items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AccessCalendarItem'
+                type: array
+          description: Successfully retrieved all AccessCalendarItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Access items with OData in body
       tags:
       - Metapools
   /metapools/{uuid}/access/overview:
@@ -13702,7 +15107,7 @@ paths:
       - Metapools
   /metapools/{uuid}/get_fallback_access:
     get:
-      description: Execute custom method get_fallback_access for MetaPool
+      description: Retrieve the current fallback access policy for a meta pool member
       parameters:
       - description: The UUID of the item
         in: path
@@ -13739,7 +15144,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method get_fallback_access for MetaPool
+      summary: Retrieve the current fallback access policy for a meta pool member
+        (MetaPool)
       tags:
       - Metapools
   /metapools/{uuid}/groups:
@@ -13811,8 +15217,8 @@ paths:
       summary: Get all Groups items
       tags:
       - Metapools
-    put:
-      description: Update an existing Groups item
+    post:
+      description: Create a new Groups item
       parameters:
       - description: The UUID of the item
         in: path
@@ -13821,6 +15227,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -13849,7 +15262,118 @@ paths:
           description: GroupItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Groups items
+      summary: Create a new Groups item
+      tags:
+      - Metapools
+    put:
+      deprecated: true
+      description: 'Creates a new Groups item. Deprecated: use POST //metapools/{uuid}/groups
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupItem'
+          description: Successfully retrieved GroupItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: GroupItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Groups item
+      tags:
+      - Metapools
+    query:
+      description: Query Groups items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupItem'
+                type: array
+          description: Successfully retrieved all GroupItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Groups items with OData in body
       tags:
       - Metapools
   /metapools/{uuid}/groups/overview:
@@ -14293,8 +15817,8 @@ paths:
       summary: Get all Pools items
       tags:
       - Metapools
-    put:
-      description: Update an existing Pools item
+    post:
+      description: Create a new Pools item
       parameters:
       - description: The UUID of the item
         in: path
@@ -14303,6 +15827,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetaItem'
+        description: New MetaItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -14331,7 +15862,118 @@ paths:
           description: MetaItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Pools items
+      summary: Create a new Pools item
+      tags:
+      - Metapools
+    put:
+      deprecated: true
+      description: 'Creates a new Pools item. Deprecated: use POST //metapools/{uuid}/pools
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetaItem'
+        description: New MetaItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaItem'
+          description: Successfully retrieved MetaItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: MetaItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Pools item
+      tags:
+      - Metapools
+    query:
+      description: Query Pools items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MetaItem'
+                type: array
+          description: Successfully retrieved all MetaItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Pools items with OData in body
       tags:
       - Metapools
   /metapools/{uuid}/pools/overview:
@@ -14740,8 +16382,8 @@ paths:
       summary: Get all Services items
       tags:
       - Metapools
-    put:
-      description: Update an existing Services item
+    post:
+      description: Create a new Services item
       parameters:
       - description: The UUID of the item
         in: path
@@ -14750,6 +16392,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -14778,7 +16427,118 @@ paths:
           description: UserServiceItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Services items
+      summary: Create a new Services item
+      tags:
+      - Metapools
+    put:
+      deprecated: true
+      description: 'Creates a new Services item. Deprecated: use POST //metapools/{uuid}/services
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserServiceItem'
+          description: Successfully retrieved UserServiceItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: UserServiceItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Services item
+      tags:
+      - Metapools
+    query:
+      description: Query Services items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserServiceItem'
+                type: array
+          description: Successfully retrieved all UserServiceItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Services items with OData in body
       tags:
       - Metapools
   /metapools/{uuid}/services/overview:
@@ -15154,8 +16914,8 @@ paths:
       tags:
       - Metapools
   /metapools/{uuid}/set_fallback_access:
-    get:
-      description: Execute custom method set_fallback_access for MetaPool
+    post:
+      description: Update the fallback access policy for a meta pool member
       parameters:
       - description: The UUID of the item
         in: path
@@ -15164,6 +16924,17 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallbackAccess:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for set_fallback_access
+        required: true
       responses:
         '200':
           content:
@@ -15192,7 +16963,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method set_fallback_access for MetaPool
+      summary: Update the fallback access policy for a meta pool member (MetaPool)
       tags:
       - Metapools
   /mfa:
@@ -15257,8 +17028,50 @@ paths:
       summary: Get all MFA items
       tags:
       - Mfa
+    post:
+      description: Create a new MFA item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAItem'
+        description: New MFAItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFAItem'
+          description: Successfully retrieved MFAItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: MFAItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new MFA item
+      tags:
+      - Mfa
     put:
-      description: Creates a new, nonexisting MFA item
+      deprecated: true
+      description: 'Creates a new MFA item. Deprecated: use POST //mfa instead.'
       parameters: []
       requestBody:
         content:
@@ -15296,6 +17109,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new MFA item
+      tags:
+      - Mfa
+    query:
+      description: Query MFA items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MFAItem'
+                type: array
+          description: Successfully retrieved all MFAItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query MFA items with OData in body
       tags:
       - Mfa
   /mfa/gui/{type}:
@@ -15767,8 +17634,50 @@ paths:
       summary: Get all Network items
       tags:
       - Networks
+    post:
+      description: Create a new Network item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkItem'
+        description: New NetworkItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkItem'
+          description: Successfully retrieved NetworkItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: NetworkItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Network item
+      tags:
+      - Networks
     put:
-      description: Creates a new, nonexisting Network item
+      deprecated: true
+      description: 'Creates a new Network item. Deprecated: use POST //networks instead.'
       parameters: []
       requestBody:
         content:
@@ -15806,6 +17715,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Network item
+      tags:
+      - Networks
+    query:
+      description: Query Network items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NetworkItem'
+                type: array
+          description: Successfully retrieved all NetworkItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Network items with OData in body
       tags:
       - Networks
   /networks/gui:
@@ -16195,8 +18158,51 @@ paths:
       summary: Get all OSManager items
       tags:
       - Osmanagers
+    post:
+      description: Create a new OSManager item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsManagerItem'
+        description: New OsManagerItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsManagerItem'
+          description: Successfully retrieved OsManagerItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: OsManagerItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new OSManager item
+      tags:
+      - Osmanagers
     put:
-      description: Creates a new, nonexisting OSManager item
+      deprecated: true
+      description: 'Creates a new OSManager item. Deprecated: use POST //osmanagers
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -16234,6 +18240,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new OSManager item
+      tags:
+      - Osmanagers
+    query:
+      description: Query OSManager items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OsManagerItem'
+                type: array
+          description: Successfully retrieved all OsManagerItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query OSManager items with OData in body
       tags:
       - Osmanagers
   /osmanagers/gui/{type}:
@@ -16705,8 +18765,51 @@ paths:
       summary: Get all Provider items
       tags:
       - Providers
+    post:
+      description: Create a new Provider item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderItem'
+        description: New ProviderItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderItem'
+          description: Successfully retrieved ProviderItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ProviderItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Provider item
+      tags:
+      - Providers
     put:
-      description: Creates a new, nonexisting Provider item
+      deprecated: true
+      description: 'Creates a new Provider item. Deprecated: use POST //providers
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -16746,9 +18849,64 @@ paths:
       summary: Creates a new Provider item
       tags:
       - Providers
+    query:
+      description: Query Provider items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ProviderItem'
+                type: array
+          description: Successfully retrieved all ProviderItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Provider items with OData in body
+      tags:
+      - Providers
   /providers/allservices:
     get:
-      description: Execute custom method allservices for Provider
+      description: List all services provided by this provider regardless of their
+        parent service
       parameters: []
       responses:
         '200':
@@ -16778,7 +18936,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method allservices for Provider
+      summary: List all services provided by this provider regardless of their parent
+        service (Provider)
       tags:
       - Providers
   /providers/gui/{type}:
@@ -16886,7 +19045,8 @@ paths:
       - Providers
   /providers/service:
     get:
-      description: Execute custom method service for Provider
+      description: Retrieve a specific service by its UUID regardless of its parent
+        service
       parameters: []
       responses:
         '200':
@@ -16916,7 +19076,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method service for Provider
+      summary: Retrieve a specific service by its UUID regardless of its parent service
+        (Provider)
       tags:
       - Providers
   /providers/tableinfo:
@@ -17224,8 +19385,9 @@ paths:
       tags:
       - Providers
   /providers/{uuid}/maintenance:
-    get:
-      description: Execute custom method maintenance for Provider
+    post:
+      description: Toggle maintenance mode for a provider (enable if disabled, disable
+        if enabled)
       parameters:
       - description: The UUID of the item
         in: path
@@ -17262,7 +19424,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method maintenance for Provider
+      summary: Toggle maintenance mode for a provider (enable if disabled, disable
+        if enabled) (Provider)
       tags:
       - Providers
   /providers/{uuid}/services:
@@ -17334,8 +19497,8 @@ paths:
       summary: Get all Services items
       tags:
       - Providers
-    put:
-      description: Update an existing Services item
+    post:
+      description: Create a new Services item
       parameters:
       - description: The UUID of the item
         in: path
@@ -17344,6 +19507,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceItem'
+        description: New ServiceItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -17372,7 +19542,118 @@ paths:
           description: ServiceItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Services items
+      summary: Create a new Services item
+      tags:
+      - Providers
+    put:
+      deprecated: true
+      description: 'Creates a new Services item. Deprecated: use POST //providers/{uuid}/services
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceItem'
+        description: New ServiceItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+          description: Successfully retrieved ServiceItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ServiceItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Services item
+      tags:
+      - Providers
+    query:
+      description: Query Services items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServiceItem'
+                type: array
+          description: Successfully retrieved all ServiceItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Services items with OData in body
       tags:
       - Providers
   /providers/{uuid}/services/gui/{type}:
@@ -17494,7 +19775,7 @@ paths:
       - Providers
   /providers/{uuid}/services/servicepools:
     get:
-      description: Execute custom method servicepools for Services collection
+      description: List all service pools that reference this service provider
       parameters:
       - description: The UUID of the item
         in: path
@@ -17531,7 +19812,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method servicepools for Services collection
+      summary: List all service pools that reference this service provider (Services
+        collection)
       tags:
       - Providers
   /providers/{uuid}/services/tableinfo:
@@ -17922,7 +20204,7 @@ paths:
       - Providers
   /providers/{uuid}/services/{uuid}/servicepools:
     get:
-      description: Execute custom method servicepools for Services item
+      description: List all service pools that reference this service provider
       parameters:
       - description: The UUID of the item
         in: path
@@ -17959,7 +20241,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method servicepools for Services item
+      summary: List all service pools that reference this service provider (Services
+        item)
       tags:
       - Providers
   /providers/{uuid}/usage:
@@ -18031,8 +20314,8 @@ paths:
       summary: Get all Usage items
       tags:
       - Providers
-    put:
-      description: Update an existing Usage item
+    post:
+      description: Create a new Usage item
       parameters:
       - description: The UUID of the item
         in: path
@@ -18041,6 +20324,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicesUsageItem'
+        description: New ServicesUsageItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -18069,7 +20359,118 @@ paths:
           description: ServicesUsageItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Usage items
+      summary: Create a new Usage item
+      tags:
+      - Providers
+    put:
+      deprecated: true
+      description: 'Creates a new Usage item. Deprecated: use POST //providers/{uuid}/usage
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicesUsageItem'
+        description: New ServicesUsageItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicesUsageItem'
+          description: Successfully retrieved ServicesUsageItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ServicesUsageItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Usage item
+      tags:
+      - Providers
+    query:
+      description: Query Usage items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServicesUsageItem'
+                type: array
+          description: Successfully retrieved all ServicesUsageItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Usage items with OData in body
       tags:
       - Providers
   /providers/{uuid}/usage/overview:
@@ -18471,8 +20872,51 @@ paths:
       summary: Get all ServerGroup items
       tags:
       - Servers
+    post:
+      description: Create a new ServerGroup item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupItem'
+          description: Successfully retrieved GroupItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: GroupItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new ServerGroup item
+      tags:
+      - Servers
     put:
-      description: Creates a new, nonexisting ServerGroup item
+      deprecated: true
+      description: 'Creates a new ServerGroup item. Deprecated: use POST //servers/groups
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -18510,6 +20954,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new ServerGroup item
+      tags:
+      - Servers
+    query:
+      description: Query ServerGroup items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupItem'
+                type: array
+          description: Successfully retrieved all GroupItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query ServerGroup items with OData in body
       tags:
       - Servers
   /servers/groups/gui/{type}:
@@ -18988,8 +21486,8 @@ paths:
       summary: Get all Servers items
       tags:
       - Servers
-    put:
-      description: Update an existing Servers item
+    post:
+      description: Create a new Servers item
       parameters:
       - description: The UUID of the item
         in: path
@@ -18998,6 +21496,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerItem'
+        description: New ServerItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -19026,7 +21531,118 @@ paths:
           description: ServerItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Servers items
+      summary: Create a new Servers item
+      tags:
+      - Servers
+    put:
+      deprecated: true
+      description: 'Creates a new Servers item. Deprecated: use POST //servers/groups/{uuid}/servers
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerItem'
+        description: New ServerItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerItem'
+          description: Successfully retrieved ServerItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ServerItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Servers item
+      tags:
+      - Servers
+    query:
+      description: Query Servers items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServerItem'
+                type: array
+          description: Successfully retrieved all ServerItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Servers items with OData in body
       tags:
       - Servers
   /servers/groups/{uuid}/servers/gui:
@@ -19065,8 +21681,8 @@ paths:
       tags:
       - Servers
   /servers/groups/{uuid}/servers/importcsv:
-    get:
-      description: Execute custom method importcsv for Servers collection
+    post:
+      description: Import server configuration from CSV data
       parameters:
       - description: The UUID of the item
         in: path
@@ -19075,6 +21691,23 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  description: CSV content with server entries
+                  type: string
+                has_header:
+                  description: Whether the CSV has a header row
+                  type: boolean
+                separator:
+                  description: CSV field separator character (default comma)
+                  type: string
+              type: object
+        description: Parameters for importcsv
+        required: true
       responses:
         '200':
           content:
@@ -19103,12 +21736,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method importcsv for Servers collection
+      summary: Import server configuration from CSV data (Servers collection)
       tags:
       - Servers
   /servers/groups/{uuid}/servers/maintenance:
-    get:
-      description: Execute custom method maintenance for Servers collection
+    post:
+      description: Toggle maintenance mode for a server (enable if disabled, disable
+        if enabled)
       parameters:
       - description: The UUID of the item
         in: path
@@ -19145,7 +21779,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method maintenance for Servers collection
+      summary: Toggle maintenance mode for a server (enable if disabled, disable if
+        enabled) (Servers collection)
       tags:
       - Servers
   /servers/groups/{uuid}/servers/overview:
@@ -19486,8 +22121,8 @@ paths:
       tags:
       - Servers
   /servers/groups/{uuid}/servers/{uuid}/importcsv:
-    get:
-      description: Execute custom method importcsv for Servers item
+    post:
+      description: Import server configuration from CSV data
       parameters:
       - description: The UUID of the item
         in: path
@@ -19496,6 +22131,23 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  description: CSV content with server entries
+                  type: string
+                has_header:
+                  description: Whether the CSV has a header row
+                  type: boolean
+                separator:
+                  description: CSV field separator character (default comma)
+                  type: string
+              type: object
+        description: Parameters for importcsv
+        required: true
       responses:
         '200':
           content:
@@ -19524,12 +22176,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method importcsv for Servers item
+      summary: Import server configuration from CSV data (Servers item)
       tags:
       - Servers
   /servers/groups/{uuid}/servers/{uuid}/maintenance:
-    get:
-      description: Execute custom method maintenance for Servers item
+    post:
+      description: Toggle maintenance mode for a server (enable if disabled, disable
+        if enabled)
       parameters:
       - description: The UUID of the item
         in: path
@@ -19566,12 +22219,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method maintenance for Servers item
+      summary: Toggle maintenance mode for a server (enable if disabled, disable if
+        enabled) (Servers item)
       tags:
       - Servers
   /servers/groups/{uuid}/stats:
     get:
-      description: Execute custom method stats for ServerGroup
+      description: Retrieve aggregate server statistics including counts by state,
+        type, and resource usage
       parameters:
       - description: The UUID of the item
         in: path
@@ -19608,7 +22263,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method stats for ServerGroup
+      summary: Retrieve aggregate server statistics including counts by state, type,
+        and resource usage (ServerGroup)
       tags:
       - Servers
   /servers/tokens:
@@ -19673,8 +22329,51 @@ paths:
       summary: Get all Server items
       tags:
       - Servers
+    post:
+      description: Create a new Server item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenItem'
+        description: New TokenItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenItem'
+          description: Successfully retrieved TokenItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: TokenItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Server item
+      tags:
+      - Servers
     put:
-      description: Creates a new, nonexisting Server item
+      deprecated: true
+      description: 'Creates a new Server item. Deprecated: use POST //servers/tokens
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -19712,6 +22411,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Server item
+      tags:
+      - Servers
+    query:
+      description: Query Server items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TokenItem'
+                type: array
+          description: Successfully retrieved all TokenItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Server items with OData in body
       tags:
       - Servers
   /servers/tokens/overview:
@@ -20073,8 +22826,51 @@ paths:
       summary: Get all ServicePool items
       tags:
       - Servicespools
+    post:
+      description: Create a new ServicePool item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePoolItem'
+        description: New ServicePoolItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePoolItem'
+          description: Successfully retrieved ServicePoolItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ServicePoolItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new ServicePool item
+      tags:
+      - Servicespools
     put:
-      description: Creates a new, nonexisting ServicePool item
+      deprecated: true
+      description: 'Creates a new ServicePool item. Deprecated: use POST //servicespools
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -20112,6 +22908,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new ServicePool item
+      tags:
+      - Servicespools
+    query:
+      description: Query ServicePool items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServicePoolItem'
+                type: array
+          description: Successfully retrieved all ServicePoolItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query ServicePool items with OData in body
       tags:
       - Servicespools
   /servicespools/gui:
@@ -20473,8 +23323,8 @@ paths:
       summary: Get all Access items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Access item
+    post:
+      description: Create a new Access item
       parameters:
       - description: The UUID of the item
         in: path
@@ -20483,6 +23333,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessCalendarItem'
+        description: New AccessCalendarItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -20511,7 +23368,118 @@ paths:
           description: AccessCalendarItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Access items
+      summary: Create a new Access item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Access item. Deprecated: use POST //servicespools/{uuid}/access
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessCalendarItem'
+        description: New AccessCalendarItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessCalendarItem'
+          description: Successfully retrieved AccessCalendarItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: AccessCalendarItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Access item
+      tags:
+      - Servicespools
+    query:
+      description: Query Access items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AccessCalendarItem'
+                type: array
+          description: Successfully retrieved all AccessCalendarItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Access items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/access/overview:
@@ -20920,8 +23888,8 @@ paths:
       summary: Get all Actions items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Actions item
+    post:
+      description: Create a new Actions item
       parameters:
       - description: The UUID of the item
         in: path
@@ -20930,6 +23898,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionCalendarItem'
+        description: New ActionCalendarItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -20958,12 +23933,124 @@ paths:
           description: ActionCalendarItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Actions items
+      summary: Create a new Actions item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Actions item. Deprecated: use POST //servicespools/{uuid}/actions
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionCalendarItem'
+        description: New ActionCalendarItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionCalendarItem'
+          description: Successfully retrieved ActionCalendarItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ActionCalendarItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Actions item
+      tags:
+      - Servicespools
+    query:
+      description: Query Actions items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ActionCalendarItem'
+                type: array
+          description: Successfully retrieved all ActionCalendarItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Actions items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/actions/execute:
-    get:
-      description: Execute custom method execute for Actions collection
+    post:
+      description: Execute a scheduled calendar action immediately, bypassing the
+        calendar schedule
       parameters:
       - description: The UUID of the item
         in: path
@@ -21000,7 +24087,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method execute for Actions collection
+      summary: Execute a scheduled calendar action immediately, bypassing the calendar
+        schedule (Actions collection)
       tags:
       - Servicespools
   /servicespools/{uuid}/actions/overview:
@@ -21341,8 +24429,9 @@ paths:
       tags:
       - Servicespools
   /servicespools/{uuid}/actions/{uuid}/execute:
-    get:
-      description: Execute custom method execute for Actions item
+    post:
+      description: Execute a scheduled calendar action immediately, bypassing the
+        calendar schedule
       parameters:
       - description: The UUID of the item
         in: path
@@ -21379,12 +24468,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method execute for Actions item
+      summary: Execute a scheduled calendar action immediately, bypassing the calendar
+        schedule (Actions item)
       tags:
       - Servicespools
   /servicespools/{uuid}/actions_list:
     get:
-      description: Execute custom method actions_list for ServicePool
+      description: List all calendar actions available for this service pool based
+        on its service type and current state
       parameters:
       - description: The UUID of the item
         in: path
@@ -21421,12 +24512,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method actions_list for ServicePool
+      summary: List all calendar actions available for this service pool based on
+        its service type and current state (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/add_log:
-    get:
-      description: Execute custom method add_log for ServicePool
+    post:
+      description: Append a log entry to the service pool audit trail
       parameters:
       - description: The UUID of the item
         in: path
@@ -21435,6 +24527,23 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                level:
+                  description: Log severity level (INFO, WARN, ERROR)
+                  type: string
+                log_name:
+                  description: Optional log source name
+                  type: string
+                message:
+                  description: Log message text
+                  type: string
+              type: object
+        description: Parameters for add_log
+        required: true
       responses:
         '200':
           content:
@@ -21463,7 +24572,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method add_log for ServicePool
+      summary: Append a log entry to the service pool audit trail (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/cache:
@@ -21535,8 +24644,8 @@ paths:
       summary: Get all Cache items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Cache item
+    post:
+      description: Create a new Cache item
       parameters:
       - description: The UUID of the item
         in: path
@@ -21545,6 +24654,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -21573,7 +24689,118 @@ paths:
           description: UserServiceItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Cache items
+      summary: Create a new Cache item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Cache item. Deprecated: use POST //servicespools/{uuid}/cache
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserServiceItem'
+          description: Successfully retrieved UserServiceItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: UserServiceItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Cache item
+      tags:
+      - Servicespools
+    query:
+      description: Query Cache items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserServiceItem'
+                type: array
+          description: Successfully retrieved all UserServiceItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Cache items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/cache/overview:
@@ -22017,8 +25244,8 @@ paths:
       summary: Get all Changelog items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Changelog item
+    post:
+      description: Create a new Changelog item
       parameters:
       - description: The UUID of the item
         in: path
@@ -22027,6 +25254,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangelogItem'
+        description: New ChangelogItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -22055,7 +25289,118 @@ paths:
           description: ChangelogItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Changelog items
+      summary: Create a new Changelog item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Changelog item. Deprecated: use POST //servicespools/{uuid}/changelog
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangelogItem'
+        description: New ChangelogItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangelogItem'
+          description: Successfully retrieved ChangelogItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: ChangelogItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Changelog item
+      tags:
+      - Servicespools
+    query:
+      description: Query Changelog items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ChangelogItem'
+                type: array
+          description: Successfully retrieved all ChangelogItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Changelog items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/changelog/overview:
@@ -22396,8 +25741,8 @@ paths:
       tags:
       - Servicespools
   /servicespools/{uuid}/create_from_assignable:
-    get:
-      description: Execute custom method create_from_assignable for ServicePool
+    post:
+      description: Create a new service pool from an existing assignable service
       parameters:
       - description: The UUID of the item
         in: path
@@ -22406,6 +25751,20 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                assignable_id:
+                  description: Identifier of the assignable service to create from
+                  type: string
+                user_id:
+                  description: UUID of the user who will own the new service pool
+                  type: string
+              type: object
+        description: Parameters for create_from_assignable
+        required: true
       responses:
         '200':
           content:
@@ -22434,12 +25793,12 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method create_from_assignable for ServicePool
+      summary: Create a new service pool from an existing assignable service (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/get_fallback_access:
     get:
-      description: Execute custom method get_fallback_access for ServicePool
+      description: Retrieve the current fallback access policy for a service pool
       parameters:
       - description: The UUID of the item
         in: path
@@ -22476,7 +25835,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method get_fallback_access for ServicePool
+      summary: Retrieve the current fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/groups:
@@ -22548,8 +25907,8 @@ paths:
       summary: Get all Groups items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Groups item
+    post:
+      description: Create a new Groups item
       parameters:
       - description: The UUID of the item
         in: path
@@ -22558,6 +25917,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -22586,7 +25952,118 @@ paths:
           description: GroupItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Groups items
+      summary: Create a new Groups item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Groups item. Deprecated: use POST //servicespools/{uuid}/groups
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupItem'
+        description: New GroupItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupItem'
+          description: Successfully retrieved GroupItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: GroupItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Groups item
+      tags:
+      - Servicespools
+    query:
+      description: Query Groups items using OData parameters ($filter, $orderby, $top,
+        $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupItem'
+                type: array
+          description: Successfully retrieved all GroupItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Groups items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/groups/overview:
@@ -22928,7 +26405,8 @@ paths:
       - Servicespools
   /servicespools/{uuid}/list_assignables:
     get:
-      description: Execute custom method list_assignables for ServicePool
+      description: Enumerate all assignable services that can be used to create a
+        new service pool
       parameters:
       - description: The UUID of the item
         in: path
@@ -22965,7 +26443,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method list_assignables for ServicePool
+      summary: Enumerate all assignable services that can be used to create a new
+        service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/log:
@@ -23072,8 +26551,8 @@ paths:
       summary: Get all Publications items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Publications item
+    post:
+      description: Create a new Publications item
       parameters:
       - description: The UUID of the item
         in: path
@@ -23082,6 +26561,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationItem'
+        description: New PublicationItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -23110,12 +26596,124 @@ paths:
           description: PublicationItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Publications items
+      summary: Create a new Publications item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Publications item. Deprecated: use POST //servicespools/{uuid}/publications
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationItem'
+        description: New PublicationItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicationItem'
+          description: Successfully retrieved PublicationItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: PublicationItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Publications item
+      tags:
+      - Servicespools
+    query:
+      description: Query Publications items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PublicationItem'
+                type: array
+          description: Successfully retrieved all PublicationItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Publications items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/cancel:
-    get:
-      description: Execute custom method cancel for Publications collection
+    post:
+      description: Cancel a running publication; invoking twice forces an immediate
+        cancellation
       parameters:
       - description: The UUID of the item
         in: path
@@ -23152,7 +26750,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method cancel for Publications collection
+      summary: Cancel a running publication; invoking twice forces an immediate cancellation
+        (Publications collection)
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/overview:
@@ -23225,8 +26824,9 @@ paths:
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/publish:
-    get:
-      description: Execute custom method publish for Publications collection
+    post:
+      description: Start a new publication for a deployed service, optionally with
+        a changelog message
       parameters:
       - description: The UUID of the item
         in: path
@@ -23235,6 +26835,17 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                changelog:
+                  description: Optional changelog message for the publication
+                  type: string
+              type: object
+        description: Parameters for publish
+        required: true
       responses:
         '200':
           content:
@@ -23263,7 +26874,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method publish for Publications collection
+      summary: Start a new publication for a deployed service, optionally with a changelog
+        message (Publications collection)
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/tableinfo:
@@ -23535,8 +27147,9 @@ paths:
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/{uuid}/cancel:
-    get:
-      description: Execute custom method cancel for Publications item
+    post:
+      description: Cancel a running publication; invoking twice forces an immediate
+        cancellation
       parameters:
       - description: The UUID of the item
         in: path
@@ -23573,12 +27186,14 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method cancel for Publications item
+      summary: Cancel a running publication; invoking twice forces an immediate cancellation
+        (Publications item)
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/{uuid}/publish:
-    get:
-      description: Execute custom method publish for Publications item
+    post:
+      description: Start a new publication for a deployed service, optionally with
+        a changelog message
       parameters:
       - description: The UUID of the item
         in: path
@@ -23587,6 +27202,17 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                changelog:
+                  description: Optional changelog message for the publication
+                  type: string
+              type: object
+        description: Parameters for publish
+        required: true
       responses:
         '200':
           content:
@@ -23615,7 +27241,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method publish for Publications item
+      summary: Start a new publication for a deployed service, optionally with a changelog
+        message (Publications item)
       tags:
       - Servicespools
   /servicespools/{uuid}/servers:
@@ -23687,8 +27314,8 @@ paths:
       summary: Get all Servers items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Servers item
+    post:
+      description: Create a new Servers item
       parameters:
       - description: The UUID of the item
         in: path
@@ -23697,6 +27324,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -23725,7 +27359,118 @@ paths:
           description: UserServiceItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Servers items
+      summary: Create a new Servers item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Servers item. Deprecated: use POST //servicespools/{uuid}/servers
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserServiceItem'
+          description: Successfully retrieved UserServiceItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: UserServiceItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Servers item
+      tags:
+      - Servicespools
+    query:
+      description: Query Servers items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserServiceItem'
+                type: array
+          description: Successfully retrieved all UserServiceItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Servers items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/servers/overview:
@@ -24169,8 +27914,8 @@ paths:
       summary: Get all Services items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Services item
+    post:
+      description: Create a new Services item
       parameters:
       - description: The UUID of the item
         in: path
@@ -24179,6 +27924,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -24207,7 +27959,118 @@ paths:
           description: UserServiceItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Services items
+      summary: Create a new Services item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Services item. Deprecated: use POST //servicespools/{uuid}/services
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserServiceItem'
+        description: New UserServiceItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserServiceItem'
+          description: Successfully retrieved UserServiceItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: UserServiceItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Services item
+      tags:
+      - Servicespools
+    query:
+      description: Query Services items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserServiceItem'
+                type: array
+          description: Successfully retrieved all UserServiceItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Services items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/services/overview:
@@ -24280,8 +28143,9 @@ paths:
       tags:
       - Servicespools
   /servicespools/{uuid}/services/reset:
-    get:
-      description: Execute custom method reset for Services collection
+    post:
+      description: Reset a user service to its initial state, removing any cached
+        or intermediate data
       parameters:
       - description: The UUID of the item
         in: path
@@ -24318,7 +28182,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method reset for Services collection
+      summary: Reset a user service to its initial state, removing any cached or intermediate
+        data (Services collection)
       tags:
       - Servicespools
   /servicespools/{uuid}/services/tableinfo:
@@ -24625,8 +28490,9 @@ paths:
       tags:
       - Servicespools
   /servicespools/{uuid}/services/{uuid}/reset:
-    get:
-      description: Execute custom method reset for Services item
+    post:
+      description: Reset a user service to its initial state, removing any cached
+        or intermediate data
       parameters:
       - description: The UUID of the item
         in: path
@@ -24663,12 +28529,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method reset for Services item
+      summary: Reset a user service to its initial state, removing any cached or intermediate
+        data (Services item)
       tags:
       - Servicespools
   /servicespools/{uuid}/set_fallback_access:
-    get:
-      description: Execute custom method set_fallback_access for ServicePool
+    post:
+      description: Update the fallback access policy for a service pool
       parameters:
       - description: The UUID of the item
         in: path
@@ -24677,6 +28544,17 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallbackAccess:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for set_fallback_access
+        required: true
       responses:
         '200':
           content:
@@ -24705,7 +28583,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method set_fallback_access for ServicePool
+      summary: Update the fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/transports:
@@ -24777,8 +28655,8 @@ paths:
       summary: Get all Transports items
       tags:
       - Servicespools
-    put:
-      description: Update an existing Transports item
+    post:
+      description: Create a new Transports item
       parameters:
       - description: The UUID of the item
         in: path
@@ -24787,6 +28665,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransportItem'
+        description: New TransportItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -24815,7 +28700,118 @@ paths:
           description: TransportItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new Transports items
+      summary: Create a new Transports item
+      tags:
+      - Servicespools
+    put:
+      deprecated: true
+      description: 'Creates a new Transports item. Deprecated: use POST //servicespools/{uuid}/transports
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransportItem'
+        description: New TransportItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransportItem'
+          description: Successfully retrieved TransportItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: TransportItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new Transports item
+      tags:
+      - Servicespools
+    query:
+      description: Query Transports items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TransportItem'
+                type: array
+          description: Successfully retrieved all TransportItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Transports items with OData in body
       tags:
       - Servicespools
   /servicespools/{uuid}/transports/overview:
@@ -25288,8 +29284,51 @@ paths:
       summary: Get all Transport items
       tags:
       - Transports
+    post:
+      description: Create a new Transport item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransportItem'
+        description: New TransportItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransportItem'
+          description: Successfully retrieved TransportItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: TransportItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Transport item
+      tags:
+      - Transports
     put:
-      description: Creates a new, nonexisting Transport item
+      deprecated: true
+      description: 'Creates a new Transport item. Deprecated: use POST //transports
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -25327,6 +29366,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Transport item
+      tags:
+      - Transports
+    query:
+      description: Query Transport items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TransportItem'
+                type: array
+          description: Successfully retrieved all TransportItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Transport items with OData in body
       tags:
       - Transports
   /transports/gui/{type}:
@@ -25798,8 +29891,51 @@ paths:
       summary: Get all Tunnels items
       tags:
       - Tunnels
+    post:
+      description: Create a new Tunnels item
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TunnelItem'
+        description: New TunnelItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelItem'
+          description: Successfully retrieved TunnelItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: TunnelItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new Tunnels item
+      tags:
+      - Tunnels
     put:
-      description: Creates a new, nonexisting Tunnels item
+      deprecated: true
+      description: 'Creates a new Tunnels item. Deprecated: use POST //tunnels/tunnels
+        instead.'
       parameters: []
       requestBody:
         content:
@@ -25837,6 +29973,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Creates a new Tunnels item
+      tags:
+      - Tunnels
+    query:
+      description: Query Tunnels items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TunnelItem'
+                type: array
+          description: Successfully retrieved all TunnelItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query Tunnels items with OData in body
       tags:
       - Tunnels
   /tunnels/tunnels/gui:
@@ -26130,8 +30320,8 @@ paths:
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/assign:
-    get:
-      description: Execute custom method assign for Tunnels
+    post:
+      description: Assign an existing server to this tunnel group
       parameters:
       - description: The UUID of the item
         in: path
@@ -26168,7 +30358,7 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method assign for Tunnels
+      summary: Assign an existing server to this tunnel group (Tunnels)
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/log:
@@ -26275,8 +30465,8 @@ paths:
       summary: Get all TunnelServers items
       tags:
       - Tunnels
-    put:
-      description: Update an existing TunnelServers item
+    post:
+      description: Create a new TunnelServers item
       parameters:
       - description: The UUID of the item
         in: path
@@ -26285,6 +30475,13 @@ paths:
         schema:
           format: uuid
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TunnelServerItem'
+        description: New TunnelServerItem item to create
+        required: true
       responses:
         '200':
           content:
@@ -26313,12 +30510,124 @@ paths:
           description: TunnelServerItem item not found
       security:
       - udsApiAuth: []
-      summary: Creates a new TunnelServers items
+      summary: Create a new TunnelServers item
+      tags:
+      - Tunnels
+    put:
+      deprecated: true
+      description: 'Creates a new TunnelServers item. Deprecated: use POST //tunnels/tunnels/{uuid}/servers
+        instead.'
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TunnelServerItem'
+        description: New TunnelServerItem item to create
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelServerItem'
+          description: Successfully retrieved TunnelServerItem item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: TunnelServerItem item not found
+      security:
+      - udsApiAuth: []
+      summary: Creates a new TunnelServers item
+      tags:
+      - Tunnels
+    query:
+      description: Query TunnelServers items using OData parameters ($filter, $orderby,
+        $top, $skip, $select) in the request body. Equivalent to GET but allows complex
+        queries beyond URL length limits.
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                $filter:
+                  description: Filter items by property values (e.g., name eq "value")
+                  type: string
+                $orderby:
+                  description: Order items by property values (e.g., name desc)
+                  type: string
+                $select:
+                  description: Select properties to be returned
+                  type: string
+                $skip:
+                  description: Skip the first N items
+                  format: int32
+                  type: integer
+                $top:
+                  description: Show only the first N items
+                  format: int32
+                  type: integer
+              type: object
+        description: OData query parameters ($filter, $orderby, $top, $skip, $select)
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TunnelServerItem'
+                type: array
+          description: Successfully retrieved all TunnelServerItem items
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+      security:
+      - udsApiAuth: []
+      summary: Query TunnelServers items with OData in body
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers/maintenance:
-    get:
-      description: Execute custom method maintenance for TunnelServers collection
+    post:
+      description: Toggle maintenance mode for a tunnel server (enable if disabled,
+        disable if enabled)
       parameters:
       - description: The UUID of the item
         in: path
@@ -26355,7 +30664,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method maintenance for TunnelServers collection
+      summary: Toggle maintenance mode for a tunnel server (enable if disabled, disable
+        if enabled) (TunnelServers collection)
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers/overview:
@@ -26696,8 +31006,9 @@ paths:
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers/{uuid}/maintenance:
-    get:
-      description: Execute custom method maintenance for TunnelServers item
+    post:
+      description: Toggle maintenance mode for a tunnel server (enable if disabled,
+        disable if enabled)
       parameters:
       - description: The UUID of the item
         in: path
@@ -26734,12 +31045,13 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method maintenance for TunnelServers item
+      summary: Toggle maintenance mode for a tunnel server (enable if disabled, disable
+        if enabled) (TunnelServers item)
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/tunnels:
     get:
-      description: Execute custom method tunnels for Tunnels
+      description: List tunnel servers that are not yet assigned to this tunnel group
       parameters:
       - description: The UUID of the item
         in: path
@@ -26776,7 +31088,8 @@ paths:
           description: object item not found
       security:
       - udsApiAuth: []
-      summary: Custom method tunnels for Tunnels
+      summary: List tunnel servers that are not yet assigned to this tunnel group
+        (Tunnels)
       tags:
       - Tunnels
   /version:

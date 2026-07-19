@@ -128,8 +128,8 @@ class MetaPools(ModelHandler[MetaPoolItem]):
     )
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST, description='Set fallback access for a meta pool member'),
-        types.rest.ModelCustomMethod('get_fallback_access', True, description='Get fallback access status for a meta pool member'),
+        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST, description='Update the fallback access policy for a meta pool member', params=types.rest.api.SchemaProperty(type='object', properties={'fallbackAccess': types.rest.api.SchemaProperty(type='string', description='Fallback access policy: ALLOW (default) or DENY')})),
+        types.rest.ModelCustomMethod('get_fallback_access', True, description='Retrieve the current fallback access policy for a meta pool member'),
     ]
 
     # Rest api related information to complete the auto-generated API

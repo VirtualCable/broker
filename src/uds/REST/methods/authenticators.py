@@ -107,18 +107,18 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
             'search', True,
-            description='Search users or groups in the authenticator',
+            description='Search users or groups in the authenticator by name or identifier',
             params=types.rest.api.SchemaProperty(
                 type='object',
                 properties={
                     'text': types.rest.api.SchemaProperty(
                         type='string',
-                        description='Search text',
+                        description='Search text to match against user or group names',
                     ),
                 },
             ),
         ),
-        types.rest.ModelCustomMethod('users_with_services', True, description='Get users with assigned services'),
+        types.rest.ModelCustomMethod('users_with_services', True, description='Retrieve all users in this authenticator that have active services assigned'),
     ]
     DETAIL = {'users': Users, 'groups': Groups}
     FIELDS_TO_SAVE = [

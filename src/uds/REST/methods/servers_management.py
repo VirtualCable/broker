@@ -151,8 +151,8 @@ class ServerItem(types.rest.BaseRestItem):
 class ServersServers(DetailHandler[ServerItem]):
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST, description='Set maintenance mode for a server'),
-        types.rest.ModelCustomMethod('importcsv', method=types.rest.CustomMethodMethod.POST, description='Import server configuration from CSV'),
+        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST, description='Toggle maintenance mode for a server (enable if disabled, disable if enabled)'),
+        types.rest.ModelCustomMethod('importcsv', method=types.rest.CustomMethodMethod.POST, description='Import server configuration from CSV data', params=types.rest.api.SchemaProperty(type='object', properties={'data': types.rest.api.SchemaProperty(type='string', description='CSV content with server entries'), 'has_header': types.rest.api.SchemaProperty(type='boolean', description='Whether the CSV has a header row'), 'separator': types.rest.api.SchemaProperty(type='string', description='CSV field separator character (default comma)')})),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -456,7 +456,7 @@ class GroupItem(types.rest.BaseRestItem):
 class ServersGroups(ModelHandler[GroupItem]):
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('stats', True, description='Get server statistics'),
+        types.rest.ModelCustomMethod('stats', True, description='Retrieve aggregate server statistics including counts by state, type, and resource usage'),
     ]
     MODEL = models.ServerGroup
     FILTER = {

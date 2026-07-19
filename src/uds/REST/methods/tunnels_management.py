@@ -59,7 +59,7 @@ class TunnelServerItem(types.rest.BaseRestItem):
 
 class TunnelServers(DetailHandler[TunnelServerItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST, description='Set maintenance mode for a tunnel server'),
+        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST, description='Toggle maintenance mode for a tunnel server (enable if disabled, disable if enabled)'),
     ]
 
     REST_API_INFO = types.rest.api.RestApiInfo(
@@ -163,8 +163,8 @@ class Tunnels(ModelHandler[TunnelItem]):
     MODEL = models.ServerGroup
     FILTER = {'type': types.servers.ServerType.TUNNEL}
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('tunnels', needs_parent=True, description='List tunnels in the tunnel group'),
-        types.rest.ModelCustomMethod('assign', needs_parent=True, method=types.rest.CustomMethodMethod.POST, description='Assign a server to the tunnel group'),
+        types.rest.ModelCustomMethod('tunnels', needs_parent=True, description='List tunnel servers that are not yet assigned to this tunnel group'),
+        types.rest.ModelCustomMethod('assign', needs_parent=True, method=types.rest.CustomMethodMethod.POST, description='Assign an existing server to this tunnel group'),
     ]
 
     DETAIL = {'servers': TunnelServers}
