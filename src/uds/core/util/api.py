@@ -403,6 +403,44 @@ def gen_request_body(type: str, create: bool = True) -> types.rest.api.RequestBo
     )
 
 
+def gen_odata_request_body() -> types.rest.api.RequestBody:
+    """Generate a request body for QUERY operations (OData parameters in body)."""
+    return types.rest.api.RequestBody(
+        description='OData query parameters ($filter, $orderby, $top, $skip, $select)',
+        required=False,
+        content=types.rest.api.Content(
+            media_type='application/json',
+            schema=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    '$filter': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Filter items by property values (e.g., name eq "value")',
+                    ),
+                    '$orderby': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Order items by property values (e.g., name desc)',
+                    ),
+                    '$top': types.rest.api.SchemaProperty(
+                        type='integer',
+                        format='int32',
+                        description='Show only the first N items',
+                    ),
+                    '$skip': types.rest.api.SchemaProperty(
+                        type='integer',
+                        format='int32',
+                        description='Skip the first N items',
+                    ),
+                    '$select': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Select properties to be returned',
+                    ),
+                },
+            ),
+        ),
+    )
+
+
 def gen_odata_parameters() -> list[types.rest.api.Parameter]:
     return [
         types.rest.api.Parameter(

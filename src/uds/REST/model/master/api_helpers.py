@@ -105,7 +105,7 @@ def api_paths(
             f'($filter, $orderby, $top, $skip, $select) in the request body. '
             f'Equivalent to GET but allows complex queries beyond URL length limits.'
         ),
-        requestBody=api_utils.gen_request_body(base_type_name, create=True),
+        requestBody=api_utils.gen_odata_request_body(),
         responses=api_utils.gen_response(base_type_name, single=False),
         tags=get_tags,
         security=security,

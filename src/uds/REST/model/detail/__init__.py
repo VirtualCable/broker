@@ -244,6 +244,11 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         elif len(self._args) > 1:  # PUT expects 0 or 1 parameters. 0 == NEW, 1 = EDIT
             raise exceptions.rest.RequestError('Invalid PUT request') from None
 
+        # PUT create (0 args) → delegate to POST create with deprecation header
+        if item is None:
+            self.add_deprecation_headers(successor_hint=f'use POST /{self._path} to create items')
+            return self._perform_create(parent)
+
         logger.debug('Invoking proper saving detail item %s', item)
         return rest_result(self.save_item(parent, item))
 
@@ -251,8 +256,8 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         Process the POST operation.
 
+        POST on collection (no args) creates a new item (Change G — preferred over PUT).
         Dispatches to POST custom methods when a path > 1 arg is provided.
-        Otherwise raises RequestError (POST is not a standard detail verb).
         """
         logger.debug('Detail args for POST: %s, %s', self._args, sanitize_params(self._params))
 
@@ -266,7 +271,18 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             if r is not consts.rest.NOT_FOUND:
                 return r
 
-        raise exceptions.rest.RequestError('This method does not accepts POST') from None
+        # POST on collection (no args) → create new item (Change G)
+        if len(self._args) == 0:
+            return self._perform_create(parent)
+
+        raise exceptions.rest.RequestError('Invalid POST request') from None
+
+    def _perform_create(self, parent: models.Model) -> typing.Any:
+        """
+        Common create logic used by both POST (preferred) and PUT (legacy).
+        """
+        logger.debug('Creating detail item under parent %s', parent)
+        return rest_result(self.save_item(parent, None))
 
     def delete(self) -> typing.Any:
         """
