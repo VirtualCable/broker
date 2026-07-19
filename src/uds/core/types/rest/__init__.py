@@ -140,11 +140,22 @@ class ModelCustomMethod:
       doc/plan/rest-standards-compliance.md will migrate state-mutating
       modifiers to ``POST`` and reserve ``QUERY`` for the RFC 10008
       safe-with-body verb.
+    - ``description``: human-readable summary for the OpenAPI ``summary``
+      field.  When ``None`` (default) the generic text
+      ``"Custom method <name> for <resource>"`` is used instead.
+    - ``params``: an optional :class:`api.SchemaProperty` describing the
+      parameters this custom method accepts.  For ``POST`` methods the
+      schema is emitted as a JSON ``requestBody``; for ``GET`` methods
+      it is emitted as query ``parameters``.  ``None`` (default) means
+      the method takes no parameters (or they are intentionally
+      undocumented).
     """
 
     name: str
     needs_parent: bool = False
     method: CustomMethodMethod = CustomMethodMethod.GET
+    description: str | None = None
+    params: api.SchemaProperty | None = None
 
 
 # Note that for this item to work with documentation

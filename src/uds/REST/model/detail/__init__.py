@@ -120,27 +120,47 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         self._odata = parent_handler._odata  # Ref to parent OData
         self._headers = parent_handler._headers  # "link" headers
 
-    def _check_is_custom_method(self, check: str, parent: models.Model, arg: typing.Any = None) -> typing.Any:
+    def _check_is_custom_method(
+        self,
+        check: str,
+        parent: models.Model,
+        arg: typing.Any = None,
+        *,
+        http_method: types.rest.CustomMethodMethod = types.rest.CustomMethodMethod.GET,
+    ) -> typing.Any:
         """
-        checks curron methods
-        :param check: Method to check
-        :param parent: Parent Model Element
-        :param arg: argument to pass to custom method
+        Checks current custom methods for a matching name.
+
+        :param check: Method name to check (camel or snake case)
+        :param parent: Parent Model element
+        :param arg: Optional argument to pass to the custom method
+        :param http_method: The HTTP method of the incoming request (GET or POST).
+            In COMPAT mode, POST custom methods also match via GET (legacy).
+            In NO_COMPAT mode, only the declared method matches.
         """
+        is_compat = self.api_compat() == types.rest.ApiCompat.COMPAT
+
         for to_check in self.CUSTOM_METHODS:
             camel_case_name, snake_case_name = camel_and_snake_case_from(to_check.name)
-            if check in (camel_case_name, snake_case_name):
-                # NOTE: method discrimination (GET vs POST/PUT/QUERY) per
-                # ModelCustomMethod.method is intentionally deferred to
-                # Phase 4 (GET-modifier → POST migration). For now all
-                # detail custom methods continue to be invoked via GET,
-                # mirroring today's behaviour. See
-                # doc/plan/rest-standards-compliance.md §7.
-                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
-                if operation:
-                    if not arg:
-                        return operation(parent)
-                    return operation(parent, arg)
+            if check not in (camel_case_name, snake_case_name):
+                continue
+
+            # Method discrimination: skip if the HTTP method doesn't match,
+            # unless we are in COMPAT mode and the custom method is POST
+            # (legacy allows GET for POST methods).
+            if to_check.method != http_method:
+                if not (is_compat and to_check.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET):
+                    continue
+                # COMPAT fallback: GET hitting a POST method → deprecation headers
+                self.add_deprecation_headers(
+                    f'use POST {self._path}/{check}'
+                )
+
+            operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+            if operation:
+                if not arg:
+                    return operation(parent)
+                return operation(parent, arg)
 
         return consts.rest.NOT_FOUND
 
@@ -224,16 +244,45 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         elif len(self._args) > 1:  # PUT expects 0 or 1 parameters. 0 == NEW, 1 = EDIT
             raise exceptions.rest.RequestError('Invalid PUT request') from None
 
+        # PUT create (0 args) → delegate to POST create with deprecation header
+        if item is None:
+            self.add_deprecation_headers(successor_hint=f'use POST /{self._path} to create items')
+            return self._perform_create(parent)
+
         logger.debug('Invoking proper saving detail item %s', item)
         return rest_result(self.save_item(parent, item))
 
     def post(self) -> typing.Any:
         """
-        Process the "POST" operation
-        Post can be used for, for example, testing.
-        Right now is an invalid method for Detail elements
+        Process the POST operation.
+
+        POST on collection (no args) creates a new item (Change G — preferred over PUT).
+        Dispatches to POST custom methods when a path > 1 arg is provided.
         """
-        raise exceptions.rest.RequestError('This method does not accepts POST') from None
+        logger.debug('Detail args for POST: %s, %s', self._args, sanitize_params(self._params))
+
+        parent: models.Model = self._parent_item
+
+        # if has custom methods, look for if this request matches any of them
+        if len(self._args) > 1:
+            r = self._check_is_custom_method(
+                self._args[1], parent, http_method=types.rest.CustomMethodMethod.POST
+            )
+            if r is not consts.rest.NOT_FOUND:
+                return r
+
+        # POST on collection (no args) → create new item (Change G)
+        if len(self._args) == 0:
+            return self._perform_create(parent)
+
+        raise exceptions.rest.RequestError('Invalid POST request') from None
+
+    def _perform_create(self, parent: models.Model) -> typing.Any:
+        """
+        Common create logic used by both POST (preferred) and PUT (legacy).
+        """
+        logger.debug('Creating detail item under parent %s', parent)
+        return rest_result(self.save_item(parent, None))
 
     def delete(self) -> typing.Any:
         """

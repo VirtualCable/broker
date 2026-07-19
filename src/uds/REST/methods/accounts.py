@@ -71,8 +71,8 @@ class Accounts(ModelHandler[AccountItem]):
     DETAIL = {'usage': AccountsUsage}
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('clear', True),
-        types.rest.ModelCustomMethod('timemark', True),
+        types.rest.ModelCustomMethod('clear', True, method=types.rest.CustomMethodMethod.POST, description='Clear account usage records'),
+        types.rest.ModelCustomMethod('timemark', True, method=types.rest.CustomMethodMethod.POST, description='Set a time mark on account usage'),
     ]
 
     FIELDS_TO_SAVE = ['name', 'comments', 'tags']

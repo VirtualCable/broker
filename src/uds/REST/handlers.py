@@ -141,6 +141,19 @@ class Handler(abc.ABC):
 
         self._odata = types.rest.api.ODataParams.from_dict(self.query_params())
 
+    def query(self) -> typing.Any:
+        """RFC 10008 QUERY — safe GET with OData in the request body.
+
+        Reads ``$filter``, ``$orderby``, ``$top``, ``$skip``, ``$select``
+        from the JSON body (``self._params``) instead of the query string,
+        then delegates to :meth:`get`.
+        """
+        self._odata = types.rest.api.ODataParams.from_dict(
+            {k: v for k, v in self._params.items() if k.startswith('$')}
+        )
+        # Subclasses (ModelHandler, DetailHandler, etc.) define get().
+        return typing.cast('typing.Any', getattr(self, 'get'))()
+
     def api_compat(self) -> types.rest.ApiCompat:
         """Return the current API compatibility mode.
 
@@ -190,6 +203,26 @@ class Handler(abc.ABC):
         :param value: value of header
         """
         self._headers[header] = str(value)
+
+    # -- Deprecation helpers (RFC 9745 / RFC 8594) --
+    def add_deprecation_headers(self, successor_hint: str = '') -> None:
+        """Append RFC 9745/8594 deprecation headers to the response.
+
+        Called when a legacy (COMPAT-mode) endpoint is invoked so
+        clients can discover the preferred successor.
+
+        Parameters
+        ----------
+        successor_hint:
+            Human-readable description of the successor, e.g.
+            ``"use POST /rest/services-pools/<id>/publications"``
+        """
+
+        self.add_header('Deprecation', f'@{consts.rest.DEPRECATION_TS}')
+        self.add_header('Sunset', consts.rest.SUNSET_DATE)
+        self.add_header('X-UDS-Deprecated', 'true')
+        if successor_hint:
+            self.add_header('X-UDS-Deprecated-Reason', successor_hint)
 
     def delete_header(self, header: str) -> None:
         """

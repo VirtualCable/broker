@@ -61,7 +61,7 @@ def api_paths(
     name = cls.REST_API_INFO.name if cls.REST_API_INFO.name else cls.MODEL.__name__
     get_tags = tags
     put_tags = tags  # + ['Create', 'Modify']
-    # post_tags = tags + ['Create']
+    post_tags = tags
     delete_tags = tags  # + ['Delete']
 
     base_type = next(iter(api_utils.get_generic_types(cls)), None)
@@ -70,6 +70,46 @@ def api_paths(
         return {}  # Skip
     else:
         base_type_name = base_type.__name__
+
+    # POST create operation (preferred way to create items per Change G)
+    post_create_op = types.rest.api.Operation(
+        summary=f'Create a new {name} item',
+        description=f'Create a new {name} item',
+        parameters=[],
+        requestBody=api_utils.gen_request_body(base_type_name, create=True),
+        responses=api_utils.gen_response(base_type_name, single=True),
+        tags=post_tags,
+        security=security,
+    )
+
+    # PUT create operation (legacy — deprecated in favor of POST)
+    put_create_op = types.rest.api.Operation(
+        summary=f'Creates a new {name} item',
+        description=(
+            f'Creates a new {name} item. '
+            f'Deprecated: use POST /{path} instead.'
+        ),
+        deprecated=True,
+        parameters=[],
+        requestBody=api_utils.gen_request_body(base_type_name, create=True),
+        responses=api_utils.gen_response(base_type_name, single=True),
+        tags=put_tags,
+        security=security,
+    )
+
+    # QUERY operation (RFC 10008 — safe GET with OData in body)
+    query_op = types.rest.api.Operation(
+        summary=f'Query {name} items with OData in body',
+        description=(
+            f'Query {name} items using OData parameters '
+            f'($filter, $orderby, $top, $skip, $select) in the request body. '
+            f'Equivalent to GET but allows complex queries beyond URL length limits.'
+        ),
+        requestBody=api_utils.gen_odata_request_body(),
+        responses=api_utils.gen_response(base_type_name, single=False),
+        tags=get_tags,
+        security=security,
+    )
 
     api_desc = {
         path: types.rest.api.PathItem(
@@ -81,15 +121,9 @@ def api_paths(
                 tags=get_tags,
                 security=security,
             ),
-            put=types.rest.api.Operation(
-                summary=f'Creates a new {name} item',
-                description=f'Creates a new, nonexisting {name} item',
-                parameters=[],
-                requestBody=api_utils.gen_request_body(base_type_name, create=True),
-                responses=api_utils.gen_response(base_type_name, single=True),
-                tags=put_tags,
-                security=security,
-            ),
+            post=post_create_op,
+            put=put_create_op,
+            query=query_op,
         ),
         f'{path}/{{uuid}}': types.rest.api.PathItem(
             get=types.rest.api.Operation(
@@ -152,16 +186,35 @@ def api_paths(
 
     for cm in cls.CUSTOM_METHODS:
         cm_path = f'{path}/{{uuid}}/{cm.name}' if cm.needs_parent else f'{path}/{cm.name}'
-        api_desc[cm_path] = types.rest.api.PathItem(
-            get=types.rest.api.Operation(
-                summary=f'Custom method {cm.name} for {name}',
-                description=f'Execute custom method {cm.name} for {name}',
-                parameters=api_utils.gen_uuid_parameters(with_odata=False) if cm.needs_parent else [],
-                responses=api_utils.gen_response('object', single=True),
-                tags=get_tags,
-                security=security,
-            )
+        # Emit the declared HTTP method in the OpenAPI spec.
+        # POST custom methods are documented as POST; GET methods as GET.
+        # Legacy COMPAT-mode GET access to POST methods is intentionally
+        # undocumented.
+        # Prefer cm.description when provided; fall back to generic text.
+        cm_summary = cm.description if cm.description else f'{cm.name}'
+        cm_desc = cm.description if cm.description else f'Execute custom method {cm.name} for {name}'
+        op = types.rest.api.Operation(
+            summary=f'{cm_summary} ({name})',
+            description=cm_desc,
+            parameters=api_utils.gen_uuid_parameters(with_odata=False) if cm.needs_parent else [],
+            responses=api_utils.gen_response('object', single=True),
+            tags=get_tags,
+            security=security,
         )
+        # Attach request body for POST methods with declared params
+        if cm.params and cm.method == types.rest.CustomMethodMethod.POST:
+            op.requestBody = types.rest.api.RequestBody(
+                description=f'Parameters for {cm.name}',
+                required=True,
+                content=types.rest.api.Content(
+                    media_type='application/json',
+                    schema=cm.params,
+                ),
+            )
+        if cm.method == types.rest.CustomMethodMethod.POST:
+            api_desc[cm_path] = types.rest.api.PathItem(post=op)
+        else:
+            api_desc[cm_path] = types.rest.api.PathItem(get=op)
     if cls.REST_API_INFO.typed.is_single_type():
         api_desc[f'{path}/{consts.rest.GUI}'] = types.rest.api.PathItem(
             get=types.rest.api.Operation(

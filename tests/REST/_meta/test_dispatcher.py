@@ -54,17 +54,14 @@ from tests.utils.test import REST_PATH
 
 logger = logging.getLogger(__name__)
 
-# HTTP methods recognized today by the dispatcher (dispatcher.py:144).
+# HTTP methods recognized today by the dispatcher (dispatcher.py:165).
 # Any method outside this list receives 405 Method Not Allowed.
-SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete')
+SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options', 'query')
 
 # Methods the dispatcher rejects today (405).
-# QUERY (RFC 10008) is here today; it will move out in Phase 2 when implemented.
 FORBIDDEN_METHODS: typing.Final[tuple[str, ...]] = (
-    'query',    # RFC 10008 - not yet supported
     'patch',    # RFC 5789  - not yet supported
     'head',     # RFC 9110  - not yet supported
-    'options',  # RFC 9110  - not yet supported
     'trace',    # RFC 9110  - not yet supported
     'connect',  # RFC 9110  - not applicable
     'foo',      # invented method
@@ -107,9 +104,13 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         # For the rest, generic allows arbitrary methods.
         # Only pass content_type if there is a body; without body we don't send
         # content_type to avoid the processor trying to parse ''.
+        # Note: generic() is not overridden in UDSClient, so we must pass
+        # the auth headers explicitly via the headers kwarg.
         if data is None:
-            return self.client.generic(method.upper(), url)
-        return self.client.generic(method.upper(), url, data=data, content_type=content_type)
+            return self.client.generic(method.upper(), url, headers=self.client.uds_headers)
+        return self.client.generic(
+            method.upper(), url, data=data, content_type=content_type, headers=self.client.uds_headers,
+        )
 
     # ------------------------------------------------------------------
     # T1A.1 - Unsupported methods return clean 405 (bug B1 fix in place)
@@ -160,12 +161,12 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         Replaces the old test_405_current_behaviour_due_to_bug_b1, which
         documented the broken (TypeError-raising) behavior.
         """
-        response = self._rest_request('options', 'providers/overview')
+        response = self._rest_request('patch', 'providers/overview')
         self.assertEqual(response.status_code, 405)
         self.assertIn('application/json', response.get('Content-Type', ''))
         body = json.loads(response.content)
         self.assertIn('error', body)
-        self.assertEqual(body['error'], 'Method OPTIONS not allowed')
+        self.assertEqual(body['error'], 'Method PATCH not allowed')
 
     # ------------------------------------------------------------------
     # T1A.4 - Fixed headers present on 2xx responses
@@ -174,8 +175,8 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         """Every successful response carries the dispatcher fixed headers.
 
         Reference: src/uds/REST/dispatcher.py:212-216
-        - UDS-Version: <version>;<stamp>
-        - Response-Stamp: <sql_stamp_seconds>
+        - X-UDS-Version: <version>;<stamp>
+        - X-Response-Stamp: <sql_stamp_seconds>
         - Cache-Control: no-cache, no-store, must-revalidate
         - Pragma: no-cache
         - Expires: 0
@@ -183,15 +184,15 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         response = self.client.rest_get('providers/overview')
         self.assertEqual(response.status_code, 200)
 
-        # UDS-Version in 'version;stamp' form
-        uds_version = response.get('UDS-Version')
-        self.assertIsNotNone(uds_version, 'UDS-Version header must be present')
+        # X-UDS-Version in 'version;stamp' form
+        uds_version = response.get('X-UDS-Version')
+        self.assertIsNotNone(uds_version, 'X-UDS-Version header must be present')
         assert uds_version is not None
-        self.assertIn(';', uds_version, 'UDS-Version must be in the form version;stamp')
+        self.assertIn(';', uds_version, 'X-UDS-Version must be in the form version;stamp')
 
-        # Response-Stamp present and numeric
-        response_stamp = response.get('Response-Stamp')
-        self.assertIsNotNone(response_stamp, 'Response-Stamp header must be present')
+        # X-Response-Stamp present and numeric
+        response_stamp = response.get('X-Response-Stamp')
+        self.assertIsNotNone(response_stamp, 'X-Response-Stamp header must be present')
         assert response_stamp is not None
         int(response_stamp)  # raises ValueError if not numeric
 
@@ -276,8 +277,108 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         contract. If someone adds QUERY to SUPPORTED_METHODS without updating
         FORBIDDEN_METHODS, this test fails as a reminder.
         """
-        self.assertNotIn('query', SUPPORTED_METHODS, 'QUERY not yet supported; update this test in Phase 2')
-        self.assertNotIn('options', SUPPORTED_METHODS, 'OPTIONS not yet supported; update this test in Phase 2')
-        self.assertIn('query', FORBIDDEN_METHODS)
-        self.assertIn('options', FORBIDDEN_METHODS)
+        self.assertIn('query', SUPPORTED_METHODS, 'QUERY is now supported (Change A)')
+        self.assertIn('options', SUPPORTED_METHODS, 'OPTIONS is now supported (Change C)')
+
+    # ------------------------------------------------------------------
+    # Change C — OPTIONS for capabilities discovery (RFC 9110 §9.3.7)
+    # ------------------------------------------------------------------
+    def test_options_returns_204_with_allow_header(self) -> None:
+        """OPTIONS returns 204 No Content with an Allow header.
+
+        Reference: src/uds/REST/dispatcher.py OPTIONS handler.
+        The Allow header lists the methods the handler actually implements
+        plus OPTIONS itself (always supported by the dispatcher).
+        """
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 204, 'OPTIONS must return 204')
+        allow = response.get('Allow', '')
+        self.assertTrue(allow, 'OPTIONS response must include Allow header')
+        self.assertIn('OPTIONS', allow)
+        self.assertIn('GET', allow, 'handlers without get() must still advertise GET if defined')
+
+    def test_options_includes_uds_version_header(self) -> None:
+        """OPTIONS includes X-UDS-Version header like any other response."""
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 204)
+        uds_version = response.get('X-UDS-Version')
+        self.assertIsNotNone(uds_version, 'OPTIONS must include X-UDS-Version')
+        assert uds_version is not None
+        self.assertIn(';', uds_version)
+
+    def test_options_no_auth_required(self) -> None:
+        """OPTIONS does not require authentication (RFC 9110 §9.3.7).
+
+        The dispatcher handles OPTIONS before instantiating the handler,
+        so no auth check is performed.
+        """
+        from tests.utils.test import UDSClient
+
+        unauth_client = UDSClient()
+        url = f'{REST_PATH}providers/overview'
+        response: typing.Any = unauth_client.generic('OPTIONS', url)
+        self.assertEqual(response.status_code, 204, 'OPTIONS must work without auth')
+        self.assertTrue(response.get('Allow', ''), 'OPTIONS must include Allow header')
+
+    def test_options_on_collection_path(self) -> None:
+        """OPTIONS on a collection path (e.g. /providers) returns Allow.
+
+        ModelHandler for providers defines get/put/delete/post.
+        """
+        response = self._rest_request('options', 'providers')
+        self.assertEqual(response.status_code, 204)
+        allow = response.get('Allow', '')
+        self.assertIn('OPTIONS', allow)
+        self.assertIn('GET', allow)
+
+    def test_options_on_nonexistent_path_returns_404(self) -> None:
+        """OPTIONS on a path with no handler returns 404 (same as other methods)."""
+        response = self._rest_request('options', 'this-does-not-exist')
+        self.assertEqual(response.status_code, 404)
+
+    # ------------------------------------------------------------------
+    # Change A — QUERY method (RFC 10008)
+    # ------------------------------------------------------------------
+    def test_query_collection_returns_same_as_get(self) -> None:
+        """QUERY on a collection returns the same structure as GET.
+
+        Reference: src/uds/REST/handlers.py Handler.query().
+        QUERY reads OData params from the JSON body instead of the query
+        string, then delegates to get().
+        """
+        # GET baseline
+        response_get = self.client.rest_get('providers')
+        self.assertEqual(response_get.status_code, 200)
+        body_get = json.loads(response_get.content)
+
+        # QUERY with empty body (no OData filtering) — should match GET
+        response_query = self._rest_request(
+            'query', 'providers', data=json.dumps({}), content_type='application/json',
+        )
+        self.assertEqual(response_query.status_code, 200)
+        body_query = json.loads(response_query.content)
+
+        # Both should return a list with the same count
+        self.assertEqual(len(body_get), len(body_query))
+
+    def test_query_with_filter_in_body(self) -> None:
+        """QUERY with $filter in the JSON body filters results.
+
+        Uses a filter that should return fewer results than the full set.
+        """
+        response = self._rest_request(
+            'query', 'providers',
+            data=json.dumps({'$top': 1}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        body = json.loads(response.content)
+        self.assertLessEqual(len(body), 1)
+
+    def test_query_options_includes_query(self) -> None:
+        """OPTIONS Allow header includes QUERY since Handler.query() exists."""
+        response = self._rest_request('options', 'providers/overview')
+        self.assertEqual(response.status_code, 204)
+        allow = response.get('Allow', '')
+        self.assertIn('QUERY', allow, 'Allow must advertise QUERY (Handler defines query())')
 

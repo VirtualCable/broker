@@ -200,7 +200,7 @@ def python_type_to_openapi(
     # Union[...] → oneOf
     # Except if one of them is None, in which case, we must extract it from the list
     # and create {'type': xxx, 'nullable': true}
-    elif origin in {py_types.UnionType, typing.Union}:
+    elif origin in {py_types.UnionType, typing.Union}:  # pyright: ignore[reportDeprecated]
         # Optional[X] is Union[X, None]
         # Note: the casting is because we use "is not", and cannot ad inner types
         one_of: list[SchemaProperty] = [
@@ -257,7 +257,7 @@ def python_type_to_openapi(
 
 
 def api_components(
-    dataclass: typing.Type[typing.Any], *, removable_fields: list[str] | None = None
+    dataclass: type[typing.Any], *, removable_fields: list[str] | None = None
 ) -> 'types.rest.api.Components':
 
     # If not dataclass, raise a ValueError
@@ -269,11 +269,11 @@ def api_components(
     child_removables: dict[str, list[str]] = {}
     for rem_fld in removable_fields or []:
         if '.' in rem_fld:
-            child_name, field = rem_fld.split('.', 1)
+            child_name, child_field = rem_fld.split('.', 1)
             if child_name not in child_removables:
                 child_removables[child_name] = []
 
-            child_removables[child_name].append(field)
+            child_removables[child_name].append(child_field)
         else:
             our_removables.add(rem_fld)
 
@@ -398,6 +398,44 @@ def gen_request_body(type: str, create: bool = True) -> types.rest.api.RequestBo
             media_type='application/json',
             schema=types.rest.api.SchemaProperty(
                 type=f'#/components/schemas/{type}',
+            ),
+        ),
+    )
+
+
+def gen_odata_request_body() -> types.rest.api.RequestBody:
+    """Generate a request body for QUERY operations (OData parameters in body)."""
+    return types.rest.api.RequestBody(
+        description='OData query parameters ($filter, $orderby, $top, $skip, $select)',
+        required=False,
+        content=types.rest.api.Content(
+            media_type='application/json',
+            schema=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    '$filter': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Filter items by property values (e.g., name eq "value")',
+                    ),
+                    '$orderby': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Order items by property values (e.g., name desc)',
+                    ),
+                    '$top': types.rest.api.SchemaProperty(
+                        type='integer',
+                        format='int32',
+                        description='Show only the first N items',
+                    ),
+                    '$skip': types.rest.api.SchemaProperty(
+                        type='integer',
+                        format='int32',
+                        description='Skip the first N items',
+                    ),
+                    '$select': types.rest.api.SchemaProperty(
+                        type='string',
+                        description='Select properties to be returned',
+                    ),
+                },
             ),
         ),
     )

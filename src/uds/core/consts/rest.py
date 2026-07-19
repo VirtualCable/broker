@@ -42,11 +42,29 @@ POSITION: typing.Final[str] = 'position'
 
 SYSTEM: typing.Final[str] = 'system'  # Defined on system class, here for reference
 
+# -- Deprecation headers (RFC 9745 / RFC 8594) --
+
+# Unix timestamp of when legacy GET-modifier endpoints were first
+# marked deprecated.  Used in the ``Deprecation`` response header.
+DEPRECATION_TS: typing.Final[int] = 1752854400  # 2025-07-18T00:00:00Z
+
+# HTTP-date for ``Sunset`` header (RFC 8594).  Points to the
+# estimated v7 removal window.  The value is informational only.
+SUNSET_DATE: typing.Final[str] = 'Sat, 01 Jan 2030 00:00:00 GMT'
+
+# HTTP methods the REST dispatcher understands.
+# Used to gate incoming requests and compute the ``Allow`` header.
+KNOWN_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options', 'query')
+
+# Standard ``Allow`` header value returned by OPTIONS (uppercase).
+DEFAULT_ALLOW: typing.Final[str] = ', '.join(m.upper() for m in KNOWN_METHODS)
+
 
 class _NotFound:
     pass
 
 
+# Not found guard, unique
 NOT_FOUND: typing.Final[_NotFound] = _NotFound()
 
 ITEMS_LIMIT: typing.Final[int] = 4400

@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import argparse
 import json
 import logging
+import tempfile
 import typing
 
 import yaml
@@ -45,6 +46,7 @@ from uds.REST.model.master import ModelHandler
 logger = logging.getLogger(__name__)
 
 SECURITY_NAME: typing.Final[str] = 'udsApiAuth'
+DEFAULT_OUTPUT: typing.Final[str] = f'{tempfile.gettempdir()}/uds-api'
 
 
 def _generate_api() -> types.rest.api.OpenAPI:
@@ -90,7 +92,7 @@ def _generate_api() -> types.rest.api.OpenAPI:
     for path, path_item in paths.items():
         if '{uuid}' not in path:
             continue
-        for operation in (path_item.get, path_item.post, path_item.put, path_item.delete):
+        for operation in (path_item.get, path_item.post, path_item.put, path_item.delete, path_item.query):
             if operation and not any(p.name == 'uuid' for p in operation.parameters):
                 operation.parameters.append(UUID_PARAM)
 
@@ -115,8 +117,8 @@ class Command(BaseCommand):
             '--output',
             type=str,
             dest='output',
-            default='/tmp/uds_api',
-            help='Output file path (without extension). Defaults to /tmp/uds_api',
+            default=DEFAULT_OUTPUT,
+            help=f'Output file path (without extension). Defaults to {DEFAULT_OUTPUT}',
         )
         parser.add_argument(
             '-f',
@@ -131,7 +133,7 @@ class Command(BaseCommand):
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        output: str = options.get('output', '/tmp/uds_api')
+        output: str = options.get('output', DEFAULT_OUTPUT)
         formats: list[str] = options.get('formats', [])
 
         if not formats:

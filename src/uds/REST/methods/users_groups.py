@@ -95,11 +95,11 @@ class UserItem(types.rest.BaseRestItem):
 
 class Users(DetailHandler[UserItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('services_pools'),
-        types.rest.ModelCustomMethod('user_services'),
-        types.rest.ModelCustomMethod('clean_related'),
-        types.rest.ModelCustomMethod('add_to_group'),
-        types.rest.ModelCustomMethod('enable_client_logging'),
+        types.rest.ModelCustomMethod('services_pools', description='Get service pools where the user has assignments'),
+        types.rest.ModelCustomMethod('user_services', description='Get user services assigned to the user'),
+        types.rest.ModelCustomMethod('clean_related', method=types.rest.CustomMethodMethod.POST, description='Clean user-related data'),
+        types.rest.ModelCustomMethod('add_to_group', method=types.rest.CustomMethodMethod.POST, description='Add user to a group'),
+        types.rest.ModelCustomMethod('enable_client_logging', method=types.rest.CustomMethodMethod.POST, description='Enable or disable client-side logging'),
     ]
 
     @staticmethod
@@ -367,8 +367,8 @@ class GroupItem(types.rest.BaseRestItem):
 
 class Groups(DetailHandler[GroupItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('services_pools'),
-        types.rest.ModelCustomMethod('users'),
+        types.rest.ModelCustomMethod('services_pools', description='Get service pools accessible by this group'),
+        types.rest.ModelCustomMethod('users', description='Get users belonging to this group'),
     ]
 
     @staticmethod

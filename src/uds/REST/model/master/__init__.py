@@ -282,7 +282,12 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         number_of_args = len(self._args)
 
         # if has custom methods, look for if this request matches any of them
+        is_compat = self.api_compat() == types.rest.ApiCompat.COMPAT
         for cm in self.CUSTOM_METHODS:
+            # Skip POST-only custom methods on GET unless in COMPAT mode (legacy)
+            if cm.method == types.rest.CustomMethodMethod.POST and not is_compat:
+                continue
+
             # Convert to snake case
             camel_case_name, snake_case_name = camel_and_snake_case_from(cm.name)
             if number_of_args > 1 and cm.needs_parent:  # Method needs parent (existing item)
@@ -308,13 +313,23 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                             f'Error processing custom method: {self.__class__.__name__}/{self._args}'
                         ) from e
 
+                    # COMPAT fallback: GET hitting a POST method
+                    if is_compat and cm.method == types.rest.CustomMethodMethod.POST:
+                        self.add_deprecation_headers(
+                            f'use POST {self._path}/<id>/{camel_case_name}'
+                        )
                     return operation(item)
 
-            elif self._args[0] in (snake_case_name, snake_case_name):
-                operation = getattr(self, snake_case_name) or getattr(self, snake_case_name)
+            elif number_of_args >= 1 and self._args[0] in (camel_case_name, snake_case_name):
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if not operation:
                     raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
 
+                # COMPAT fallback: GET hitting a POST method
+                if is_compat and cm.method == types.rest.CustomMethodMethod.POST:
+                    self.add_deprecation_headers(
+                        f'use POST {self._path}/{camel_case_name}'
+                    )
                 return operation()
 
         match self._args:
@@ -366,13 +381,61 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
     def post(self) -> typing.Any:
         """
-        Processes a POST request
+        Processes a POST request.
+
+        When the path has no arguments (is_new), this creates a new item
+        (Change G — POST /collection is the preferred way to create items).
+
+        Dispatches to POST custom methods when the path matches.
+        The existing 'test' special case is preserved.
         """
-        # right now
         logger.debug('method POST for %s, %s', self.__class__.__name__, self._args)
+
+        # Special case: /test/type>
         if len(self._args) == 2:
             if self._args[0] == 'test':
                 return self.test(self._args[1])
+
+        # POST on collection (no args) → create new item (Change G)
+        if self.is_new():
+            return self._perform_create()
+
+        # Dispatch POST custom methods
+        number_of_args = len(self._args)
+        for cm in self.CUSTOM_METHODS:
+            if cm.method != types.rest.CustomMethodMethod.POST:
+                continue
+
+            camel_case_name, snake_case_name = camel_and_snake_case_from(cm.name)
+            if number_of_args > 1 and cm.needs_parent:  # Method needs parent (existing item)
+                if self._args[1] in (camel_case_name, snake_case_name):
+                    operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                    try:
+                        if not operation:
+                            raise Exception()  # Operation not found
+                        item = self.MODEL.objects.get(uuid__iexact=self._args[0])
+                    except self.MODEL.DoesNotExist:
+                        raise exceptions.rest.NotFound('Item not found') from None
+                    except Exception as e:
+                        logger.error(
+                            'Invalid custom method exception %s/%s/%s: %s',
+                            self.__class__.__name__,
+                            self._args,
+                            sanitize_params(self._params),
+                            e,
+                        )
+                        raise exceptions.rest.ResponseError(
+                            f'Error processing custom method: {self.__class__.__name__}/{self._args}'
+                        ) from e
+
+                    return operation(item)
+
+            elif number_of_args >= 1 and self._args[0] in (camel_case_name, snake_case_name):
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                if not operation:
+                    raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
+
+                return operation()
 
         raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
     
@@ -382,26 +445,106 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         return len(self._args) == 0
 
+    def _perform_create(self) -> dict[str, typing.Any]:
+        """
+        Common create logic used by both POST (Change G) and PUT (legacy).
+        Extracted so that POST /collection and PUT /collection share the same
+        field extraction, pre_save, tag handling, ManagedObjectModel, and
+        post_save pipeline.
+        """
+        # Append request to _params, may be needed by subclasses
+        # (e.g. to get the user IP, server name, etc.)
+        self._params['_request'] = self._request
+
+        self.check_access(
+            self.MODEL(), types.permissions.PermissionType.ALL, root=True
+        )
+
+        try:
+            args = self.fields_from_params(self.FIELDS_TO_SAVE)
+            logger.debug('Args: %s', sanitize_params(args))
+            self.pre_save(fields=args)
+
+            # If tags is in save fields, treat it "specially"
+            if 'tags' in self.FIELDS_TO_SAVE:
+                tags = args['tags']
+                del args['tags']
+            else:
+                tags = None
+
+            item: models.Model = self.MODEL.objects.create(**args)
+
+            # Handle tags
+            if isinstance(item, TaggingMixin):
+                if tags:
+                    logger.debug('Updating tags: %s', tags)
+                    item.tags.set(
+                        [
+                            Tag.objects.get_or_create(tag=val)[0]
+                            for val in tags
+                            if val != ''
+                        ]
+                    )
+                elif isinstance(tags, list):
+                    item.tags.clear()
+
+            # Store associated object if requested (ManagedObjectModel)
+            try:
+                if isinstance(item, ManagedObjectModel):
+                    data_type: str | None = self._params.get('data_type', self._params.get('type'))
+                    if data_type:
+                        item.data_type = data_type
+                        item.data = item.get_instance(
+                            self._params['instance'] if 'instance' in self._params else self._params
+                        ).serialize()
+
+                item.save()
+
+                res = self.get_item(item)
+            except Exception:
+                logger.exception('Exception on create')
+                item.delete()
+                raise
+
+            self.post_save(item)
+            return res.as_dict()
+
+        except IntegrityError:
+            raise exceptions.rest.RequestError('Element already exists (duplicate key error)') from None
+        except (exceptions.rest.SaveException, exceptions.ui.ValidationError) as e:
+            raise exceptions.rest.RequestError(str(e)) from e
+        except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
+            raise
+        except Exception as e:
+            logger.exception('Exception on create')
+            raise exceptions.rest.RequestError('incorrect invocation to create') from e
+
     def put(self) -> typing.Any:
         """
-        Processes a PUT request
+        Processes a PUT request.
+
+        * PUT /collection (no args) — create a new item (legacy; deprecated in
+          favour of POST /collection).
+        * PUT /collection/{uuid} (1 arg) — update an existing item.
+        * PUT /collection/{uuid}/detail... (>1 arg) — delegate to detail handler.
         """
         logger.debug('method PUT for %s, %s', self.__class__.__name__, self._args)
 
-        # Append request to _params, may be needed by some classes
-        # I.e. to get the user IP, server name, etc..
-        self._params['_request'] = self._request
-
-        delete_on_error = False
-
         # if /our_url/ID/DETAIL..., delegate to detail handler
-        if len(self._args) > 1:  # Detail (1 arg means ID, more means detail/ID)?
+        if len(self._args) > 1:
             return self.process_detail()
+
+        # PUT on collection → create (legacy path, Change G redirects POST here too)
+        if self.is_new():
+            self.add_deprecation_headers(
+                successor_hint=f'use POST /{self._path} to create items'
+            )
+            return self._perform_create()
 
         # Here, self.model() indicates an "django model object with default params"
         self.check_access(
             self.MODEL(), types.permissions.PermissionType.ALL, root=True
-        )  # Must have write permissions to create, modify, etc..
+        )
 
         try:
             # Extract fields
@@ -415,56 +558,38 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             else:
                 tags = None
 
-            delete_on_error = False
-            item: models.Model
-            if self.is_new():  # create new?
-                item = self.MODEL.objects.create(**args)
-                delete_on_error = True
-            else:  # Must have 1 arg
-                # We have to take care with this case, update will efectively update records on db
-                item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
-                for v in self.EXCLUDED_FIELDS:
-                    if v in args:
-                        del args[v]
-                # Update fields from args
-                for k, v in args.items():
-                    setattr(item, k, v)
+            # Must have 1 arg → update
+            item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
+            for v in self.EXCLUDED_FIELDS:
+                if v in args:
+                    del args[v]
+            # Update fields from args
+            for k, v in args.items():
+                setattr(item, k, v)
 
             # Now if tags, update them
             if isinstance(item, TaggingMixin):
                 if tags:
                     logger.debug('Updating tags: %s', tags)
                     item.tags.set([Tag.objects.get_or_create(tag=val)[0] for val in tags if val != ''])
-                elif isinstance(tags, list):  # Present, but list is empty (will be proccesed on "if" else)
+                elif isinstance(tags, list):  # Present, but list is empty
                     item.tags.clear()
 
-            if not delete_on_error:
-                self.validate_save(
-                    item
-                )  # Will raise an exception if item can't be saved (only for modify operations..)
+            self.validate_save(item)
 
             # Store associated object if requested (data_type)
-            try:
-                if isinstance(item, ManagedObjectModel):
-                    data_type: str | None = self._params.get('data_type', self._params.get('type'))
-                    if data_type:
-                        item.data_type = data_type
-                        # TODO: Currently support parameters outside "instance". Will be removed after tests
-                        item.data = item.get_instance(
-                            self._params['instance'] if 'instance' in self._params else self._params
-                        ).serialize()
+            if isinstance(item, ManagedObjectModel):
+                data_type: str | None = self._params.get('data_type', self._params.get('type'))
+                if data_type:
+                    item.data_type = data_type
+                    item.data = item.get_instance(
+                        self._params['instance'] if 'instance' in self._params else self._params
+                    ).serialize()
 
-                item.save()
-
-                res = self.get_item(item)
-            except Exception:
-                logger.exception('Exception on put')
-                if delete_on_error:
-                    item.delete()
-                raise
+            item.save()
+            res = self.get_item(item)
 
             self.post_save(item)
-
             return res.as_dict()
 
         except self.MODEL.DoesNotExist:

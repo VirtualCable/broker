@@ -128,8 +128,8 @@ class MetaPools(ModelHandler[MetaPoolItem]):
     )
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('set_fallback_access', True),
-        types.rest.ModelCustomMethod('get_fallback_access', True),
+        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST, description='Set fallback access for a meta pool member'),
+        types.rest.ModelCustomMethod('get_fallback_access', True, description='Get fallback access status for a meta pool member'),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -143,7 +143,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         # if item does not have an associated service, hide it (the case, for example, for a removed service)
         # Access from dict will raise an exception, and item will be skipped
         pool_group_id = None
-        pool_group_name = _('Default')
+        pool_group_name: str = _('Default')
         pool_group_thumb = DEFAULT_THUMB_BASE64
         if item.servicesPoolGroup is not None:
             pool_group_id = item.servicesPoolGroup.uuid
@@ -200,14 +200,18 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             .add_multichoice(
                 name='policy',
                 label=gettext('Load balancing policy'),
-                choices=[ui.gui.choice_item(k, str(v)) for k, v in types.pools.LoadBalancingPolicy.enumerate()],
+                choices=[
+                    ui.gui.choice_item(k, str(v))  # pyrefly: ignore[unnecessary-type-conversion]
+                    for k, v in types.pools.LoadBalancingPolicy.enumerate()
+                ],
                 tooltip=gettext('Service pool load balancing policy'),
             )
             .add_choice(
                 name='ha_policy',
                 label=gettext('HA Policy'),
                 choices=[
-                    ui.gui.choice_item(k, str(v)) for k, v in types.pools.HighAvailabilityPolicy.enumerate()
+                    ui.gui.choice_item(k, str(v))  # pyrefly: ignore[unnecessary-type-conversion]
+                    for k, v in types.pools.HighAvailabilityPolicy.enumerate()
                 ],
                 tooltip=gettext(
                     'Service pool High Availability policy. If enabled and a pool fails, it will be restarted in another pool. Enable with care!'
@@ -241,7 +245,8 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                 name='transport_grouping',  # Transport Selection
                 label=gettext('Transport Selection'),
                 choices=[
-                    ui.gui.choice_item(k, str(v)) for k, v in types.pools.TransportSelectionPolicy.enumerate()
+                    ui.gui.choice_item(k, str(v))  # pyrefly: ignore[unnecessary-type-conversion]
+                    for k, v in types.pools.TransportSelectionPolicy.enumerate()
                 ],
                 tooltip=gettext('Transport selection policy'),
             )
