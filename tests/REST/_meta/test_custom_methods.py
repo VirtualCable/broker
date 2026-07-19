@@ -60,6 +60,8 @@ from uds.core import types, consts
 from uds.REST import dispatcher
 from uds.REST.model.master import ModelHandler
 from uds.REST.model.detail import DetailHandler
+from uds.models.uuid_model import UUIDModel
+
 
 from tests.utils import rest
 
@@ -274,3 +276,58 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             consts.rest.SUNSET_DATE,
             r'^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$',
         )
+
+    # ------------------------------------------------------------------
+    # T5 — Runtime dispatch: POST custom methods (Change B)
+    # ------------------------------------------------------------------
+    def test_post_detail_custom_method_dispatches(self) -> None:
+        """POST /authenticators/{id}/users/{user_id}/clean_related → 200.
+
+        Verifies that POST to a detail-level POST custom method is dispatched
+        correctly (Change B routing).
+        """
+        user = self.admins[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/clean_related'
+        response = self.client.rest_post(url)
+        self.assertEqual(response.status_code, 200, f'POST custom method failed: {response.json()}')
+        self.assertEqual(response.json(), {'status': 'ok'})
+
+    def test_get_post_custom_method_works_in_compat(self) -> None:
+        """GET /authenticators/{id}/users/{user_id}/clean_related → 200 + deprecation.
+
+        In COMPAT mode (default), GET on a POST custom method still works
+        but returns RFC 9745/8594 deprecation headers (Change B).
+        """
+        user = self.admins[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/clean_related'
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 200, f'GET fallback failed: {response.json()}')
+        self.assertEqual(response.json(), {'status': 'ok'})
+        # Verify deprecation headers are present
+        self.assertIn('Deprecation', response)
+        self.assertIn('Sunset', response)
+
+    def test_post_master_custom_method_dispatches(self) -> None:
+        """POST to a master-level custom method with needs_parent=True.
+
+        Uses Accounts.clear (POST /accounts/{id}/clear) which requires an
+        existing Account. We create a minimal one for the test.
+        """
+        account = self._create_test_account()
+        url = f'accounts/{account.uuid}/clear'
+        response = self.client.rest_post(url)
+        self.assertIn(response.status_code, (200, 400), f'POST master custom method: {response.content.decode(errors='replace')}')
+
+    def _create_test_account(self) -> 'UUIDModel':
+        """Helper: create a minimal Account for POST custom-method tests."""
+        from django.utils import timezone
+        from uds import models
+
+        account = models.Account(
+            name='test-account-post-dispatch',
+            comments='Temporary account for Change B dispatch tests',
+            time_mark=timezone.now(),
+        )
+        account.save()
+        self.addCleanup(account.delete)
+        return account

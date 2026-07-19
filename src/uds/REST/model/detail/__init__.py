@@ -175,9 +175,10 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         parent: models.Model = self._parent_item
 
         # if has custom methods, look for if this request matches any of them
-        r = self._check_is_custom_method(self._args[0], parent)
-        if r is not consts.rest.NOT_FOUND:
-            return r
+        if len(self._args) >= 1:
+            r = self._check_is_custom_method(self._args[0], parent)
+            if r is not consts.rest.NOT_FOUND:
+                return r
 
         match self._args:
             case []:  # same as overview
@@ -257,16 +258,25 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Process the POST operation.
 
         POST on collection (no args) creates a new item (Change G — preferred over PUT).
-        Dispatches to POST custom methods when a path > 1 arg is provided.
+        Dispatches to POST custom methods when the path matches.
         """
         logger.debug('Detail args for POST: %s, %s', self._args, sanitize_params(self._params))
 
         parent: models.Model = self._parent_item
 
-        # if has custom methods, look for if this request matches any of them
+        # Check for custom methods at _args[0] (e.g. POST /collection/{id}/detail/method)
+        if len(self._args) >= 1:
+            r = self._check_is_custom_method(
+                self._args[0], parent, http_method=types.rest.CustomMethodMethod.POST
+            )
+            if r is not consts.rest.NOT_FOUND:
+                return r
+
+        # Check for custom methods at _args[1] with _args[0] as arg
+        # (e.g. POST /collection/{id}/detail/{item_id}/reset)
         if len(self._args) > 1:
             r = self._check_is_custom_method(
-                self._args[1], parent, http_method=types.rest.CustomMethodMethod.POST
+                self._args[1], parent, self._args[0], http_method=types.rest.CustomMethodMethod.POST
             )
             if r is not consts.rest.NOT_FOUND:
                 return r
