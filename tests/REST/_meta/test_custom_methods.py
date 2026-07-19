@@ -448,6 +448,44 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         self.assertEqual(response.json(), {'status': 'ok'})
 
     # ------------------------------------------------------------------
+    # T9 — Dual-path GET+COMPAT for POST methods (legacy compatibility)
+    # ------------------------------------------------------------------
+    def test_get_maintenance_works_in_compat(self) -> None:
+        """GET /providers/{id}/maintenance → 200 + deprecation in COMPAT mode."""
+        url = f'providers/{self.provider.uuid}/maintenance'
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 200, f'GET maintenance: {response.status_code}')
+        self.assertIn('Deprecation', response)
+        self.assertIn('Sunset', response)
+
+    def test_get_timemark_works_in_compat(self) -> None:
+        """GET /accounts/{id}/timemark → 200 + deprecation in COMPAT mode."""
+        account = self._create_test_account()
+        url = f'accounts/{account.uuid}/timemark'
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 200, f'GET timemark: {response.status_code}')
+        self.assertIn('Deprecation', response)
+        self.assertIn('Sunset', response)
+
+    def test_get_add_to_group_works_in_compat(self) -> None:
+        """GET /authenticators/{id}/users/{uid}/add_to_group → dispatched (400, needs body params)."""
+        user = self.admins[0]
+        group = self.simple_groups[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/add_to_group'
+        response = self.client.rest_get(url)
+        # Dispatched correctly (GET→POST in COMPAT) but fails because 'group' param is missing
+        self.assertEqual(response.status_code, 400, f'GET add_to_group: {response.status_code}')
+
+    def test_get_enable_client_logging_works_in_compat(self) -> None:
+        """GET /authenticators/{id}/users/{uid}/enable_client_logging → 200 + deprecation."""
+        user = self.admins[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/enable_client_logging'
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 200, f'GET enable_client_logging: {response.status_code}')
+        self.assertIn('Deprecation', response)
+        self.assertIn('Sunset', response)
+
+    # ------------------------------------------------------------------
     # Helper
     # ------------------------------------------------------------------
     def _create_test_account(self) -> 'UUIDModel':
