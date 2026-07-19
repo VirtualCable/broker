@@ -145,16 +145,19 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             if check not in (camel_case_name, snake_case_name):
                 continue
 
-            # Method discrimination: skip if the HTTP method doesn't match,
-            # unless we are in COMPAT mode and the custom method is POST
-            # (legacy allows GET for POST methods).
+            # HTTP-method check after name match
             if to_check.method != http_method:
-                if not (is_compat and to_check.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET):
+                if to_check.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET:
+                    if is_compat:
+                        # COMPAT: allow GET on POST method with deprecation headers
+                        self.add_deprecation_headers(f'use POST {self._path}/{check}')
+                    else:
+                        # NO_COMPAT: this endpoint is gone
+                        raise exceptions.rest.GoneError(
+                            f'This endpoint is deprecated. Use POST {self._path}/{check}'
+                        )
+                else:
                     continue
-                # COMPAT fallback: GET hitting a POST method → deprecation headers
-                self.add_deprecation_headers(
-                    f'use POST {self._path}/{check}'
-                )
 
             operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
             if operation:

@@ -61,6 +61,11 @@ T = typing.TypeVar('T', bound=models.Model)
 T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
 
 
+def _is_get_on_post(cm: types.rest.ModelCustomMethod, http_method: types.rest.CustomMethodMethod) -> bool:
+    """True when a GET request hits a POST-declared custom method."""
+    return cm.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET
+
+
 class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
     """
     Basic Handler for a model
@@ -295,23 +300,24 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         number_of_args = len(self._args)
 
         for cm in self.CUSTOM_METHODS:
-            # HTTP-method gate: skip if the declared verb doesn't match,
-            # unless we are in COMPAT mode and the request is GET targeting a
-            # POST method (legacy behaviour).
-            if cm.method != http_method:
-                if not (
-                    is_compat
-                    and cm.method == types.rest.CustomMethodMethod.POST
-                    and http_method == types.rest.CustomMethodMethod.GET
-                ):
-                    continue
-                # COMPAT GET→POST fallback: emit deprecation headers below
-
             camel_case_name, snake_case_name = camel_and_snake_case_from(cm.name)
 
-            if number_of_args > 1 and cm.needs_parent:  # needs_parent → item at _args[0], method at _args[1]
+            # ---- name matching ----
+            if number_of_args > 1 and cm.needs_parent:
                 if self._args[1] not in (camel_case_name, snake_case_name):
                     continue
+                # ---- HTTP-method check (needs_parent) ----
+                if cm.method != http_method:
+                    if _is_get_on_post(cm, http_method):
+                        if is_compat:
+                            self.add_deprecation_headers(f'use POST {self._path}/<id>/{camel_case_name}')
+                        else:
+                            raise exceptions.rest.GoneError(
+                                f'This endpoint is deprecated. Use POST {self._path}/<id>/{camel_case_name}'
+                            )
+                    else:
+                        continue
+
                 operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 try:
                     if not operation:
@@ -330,24 +336,24 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     raise exceptions.rest.ResponseError(
                         f'Error processing custom method: {self.__class__.__name__}/{self._args}'
                     ) from e
-
-                # COMPAT fallback: GET hitting a POST method
-                if is_compat and cm.method == types.rest.CustomMethodMethod.POST:
-                    self.add_deprecation_headers(
-                        f'use POST {self._path}/<id>/{camel_case_name}'
-                    )
                 return operation(item)
 
             if number_of_args >= 1 and self._args[0] in (camel_case_name, snake_case_name):
+                # ---- HTTP-method check (collection-scoped) ----
+                if cm.method != http_method:
+                    if _is_get_on_post(cm, http_method):
+                        if is_compat:
+                            self.add_deprecation_headers(f'use POST {self._path}/{camel_case_name}')
+                        else:
+                            raise exceptions.rest.GoneError(
+                                f'This endpoint is deprecated. Use POST {self._path}/{camel_case_name}'
+                            )
+                    else:
+                        continue
+
                 operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if not operation:
                     raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
-
-                # COMPAT fallback: GET hitting a POST method
-                if is_compat and cm.method == types.rest.CustomMethodMethod.POST:
-                    self.add_deprecation_headers(
-                        f'use POST {self._path}/{camel_case_name}'
-                    )
                 return operation()
 
         return consts.rest.NOT_FOUND

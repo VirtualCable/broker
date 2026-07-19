@@ -31,10 +31,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 import collections.abc
-from unittest import mock
 
 from django.db import models
-from uds.core import ui
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +44,10 @@ V = typing.TypeVar('V', bound=collections.abc.Mapping[str, typing.Any])
 def compare_dicts(
     expected: collections.abc.Mapping[str, typing.Any],
     actual: collections.abc.Mapping[str, typing.Any],
-    ignore_keys: typing.Optional[list[str]] = None,
-    ignore_values: typing.Optional[list[str]] = None,
-    ignore_keys_startswith: typing.Optional[list[str]] = None,
-    ignore_values_startswith: typing.Optional[list[str]] = None,
+    ignore_keys: list[str] | None = None,
+    ignore_values: list[str] | None = None,
+    ignore_keys_startswith: list[str] | None = None,
+    ignore_values_startswith: list[str] | None = None,
 ) -> list[tuple[str, str]]:
     """
     Compares two dictionaries, returning a list of differences
@@ -87,8 +85,8 @@ def compare_dicts(
 def ensure_data(
     item: models.Model,
     dct: collections.abc.Mapping[str, typing.Any],
-    ignore_keys: typing.Optional[list[str]] = None,
-    ignore_values: typing.Optional[list[str]] = None,
+    ignore_keys: list[str] | None = None,
+    ignore_values: list[str] | None = None,
 ) -> bool:
     """
     Reads model as dict, fix some fields if needed and compares to dct
@@ -213,14 +211,4 @@ def filter_list_by_attr_list(
     return values
 
 
-def check_userinterface_values(obj: ui.UserInterface, values: ui.gui.ValuesDictType) -> None:
-    """
-    Checks that a user interface object has the values specified
-    """
-    for k, v in values.items():
-        if isinstance(v, MustBeOfType):
-            assert isinstance(getattr(obj, k), v._kind)
-        elif v == mock.ANY:
-            pass
-        else:
-            assert getattr(obj, k) == v
+

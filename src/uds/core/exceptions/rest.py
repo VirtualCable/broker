@@ -97,6 +97,15 @@ class BlockAccess(UDSException):
     pass
 
 
+class GoneError(HandlerError):
+    """
+    Exception raised for resources that are no longer available (410 Gone).
+    Used when a legacy endpoint is accessed in NO_COMPAT mode.
+    """
+
+    pass
+
+
 class ValidationError(RequestError):
     """
     Exception raised for validation errors
