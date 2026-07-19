@@ -362,13 +362,14 @@ oN2YQ8QQX6X6vxJ/dFbHqGmKUVOMmqYYNcWoaYpRU4yaphi1r8T4Hy1wVSLGls9BAAAAAElFTkSu
 QmCC
 '''
 
+
 def createImage(use_big: bool = False) -> 'models.Image':
     image = models.Image(
         name='test',
         stamp=timezone.localtime(),
     )
 
-    image.storeImageFromBase64(big if use_big else small)   # type: ignore
+    image.image = big if use_big else small
     image.save()
-    
+
     return image

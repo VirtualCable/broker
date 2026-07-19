@@ -230,3 +230,87 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
 
         get_resp = self.client.rest_get(f'{self.BASE}/{cal_uuid}')
         self.assertEqual(get_resp.status_code, 404)
+
+
+class MfasCrudSmokeTest(rest.test.RESTTestCase):
+    """CRUD lifecycle for /mfa (using fixture to create, REST for read/update/delete)."""
+
+    BASE: typing.ClassVar[str] = 'mfa'
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+        from tests.fixtures import mfas as mfas_fixtures
+        self.mfa = mfas_fixtures.create_db_mfa()
+        self.addCleanup(self.mfa.delete)
+
+    def test_list(self) -> None:
+        """GET /mfa → list includes fixture-created MFA."""
+        resp = self.client.rest_get(self.BASE)
+        self.assertEqual(resp.status_code, 200)
+        items = resp.json()
+        names = [i.get('name') for i in items]
+        self.assertIn(self.mfa.name, names)
+
+    def test_read(self) -> None:
+        """GET /mfa/{uuid} → item matches fixture."""
+        resp = self.client.rest_get(f'{self.BASE}/{self.mfa.uuid}')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['name'], self.mfa.name)
+
+    def test_update(self) -> None:
+        """PUT /mfa/{uuid} → update comments."""
+        payload = {'name': self.mfa.name, 'comments': 'Updated by CRUD test', 'tags': [], 'remember_device': 0, 'validity': 0}
+        resp = self.client.rest_put(f'{self.BASE}/{self.mfa.uuid}', payload)
+        self.assertEqual(resp.status_code, 200)
+
+        get_resp = self.client.rest_get(f'{self.BASE}/{self.mfa.uuid}')
+        self.assertEqual(get_resp.json()['comments'], 'Updated by CRUD test')
+
+    def test_delete(self) -> None:
+        """DELETE /mfa/{uuid} → 200, then GET → 404."""
+        from tests.fixtures import mfas as mfas_fixtures
+        mfa = mfas_fixtures.create_db_mfa()
+        resp = self.client.rest_delete(f'{self.BASE}/{mfa.uuid}')
+        self.assertEqual(resp.status_code, 200)
+
+        get_resp = self.client.rest_get(f'{self.BASE}/{mfa.uuid}')
+        self.assertEqual(get_resp.status_code, 404)
+
+
+class NotifiersCrudSmokeTest(rest.test.RESTTestCase):
+    """CRUD lifecycle for /messaging/notifiers (REST read/update/delete on fixture-created instance)."""
+
+    BASE: typing.ClassVar[str] = 'messaging/notifiers'
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+        from tests.fixtures import notifiers as notifiers_fixtures
+        self.notifier = notifiers_fixtures.createEmailNotifier()
+        self.addCleanup(self.notifier.delete)
+
+    def test_list(self) -> None:
+        """GET /notifiers → list includes fixture-created notifier."""
+        resp = self.client.rest_get(self.BASE)
+        self.assertEqual(resp.status_code, 200)
+        items = resp.json()
+        names = [i.get('name') for i in items]
+        self.assertIn(self.notifier.name, names)
+
+    def test_read(self) -> None:
+        """GET /notifiers/{uuid} → item matches fixture."""
+        resp = self.client.rest_get(f'{self.BASE}/{self.notifier.uuid}')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['name'], self.notifier.name)
+
+    def test_update(self) -> None:
+        """PUT /notifiers/{uuid} → update name."""
+        payload = {'name': 'updated-notifier', 'comments': '', 'level': 30000, 'tags': [], 'enabled': True}
+        resp = self.client.rest_put(f'{self.BASE}/{self.notifier.uuid}', payload)
+        self.assertEqual(resp.status_code, 200)
+
+        get_resp = self.client.rest_get(f'{self.BASE}/{self.notifier.uuid}')
+        self.assertEqual(get_resp.json()['name'], 'updated-notifier')

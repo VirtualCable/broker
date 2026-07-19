@@ -50,11 +50,13 @@ class TestMFA(mfas.MFA):
     type_description = 'MFA for testing purposes'
     icon_file = 'mfa.png'
 
+    @typing.override
     def send_code(
         self, request: 'ExtendedHttpRequest', userid: str, username: str, identifier: str, code: str
     ) -> mfas.MFA.RESULT:
         return mfas.MFA.RESULT.OK
 
+    @typing.override
     def process(
         self,
         request: 'ExtendedHttpRequest',
@@ -67,6 +69,7 @@ class TestMFA(mfas.MFA):
         self._put_data(request, userid, '123456')
         return mfas.MFA.RESULT.OK
 
+    @typing.override
     def validate(
         self,
         request: 'ExtendedHttpRequest',
@@ -82,6 +85,7 @@ class TestMFA(mfas.MFA):
             return
         raise exceptions.auth.MFAError('Invalid code')
 
+    @typing.override
     def label(self) -> str:
         return 'Test Code'
 
