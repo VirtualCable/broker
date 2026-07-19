@@ -185,7 +185,7 @@ class Dispatcher(View):
             allowed = Dispatcher._allowed_methods_for_cls(cls)
             response = http.HttpResponse(status=204)
             response['Allow'] = allowed
-            response['UDS-Version'] = f'{consts.system.VERSION};{consts.system.VERSION_STAMP}'
+            response['X-UDS-Version'] = f'{consts.system.VERSION};{consts.system.VERSION_STAMP}'
             return response
 
         handler: Handler | None = None
@@ -238,8 +238,8 @@ class Dispatcher(View):
                 else:
                     response = processor.get_response(response)
             # Set response headers
-            response['UDS-Version'] = f'{consts.system.VERSION};{consts.system.VERSION_STAMP}'
-            response['Response-Stamp'] = sql_stamp_seconds()
+            response['X-UDS-Version'] = f'{consts.system.VERSION};{consts.system.VERSION_STAMP}'
+            response['X-Response-Stamp'] = sql_stamp_seconds()
 
             # Security headers for REST API
             response['Cache-Control'] = 'no-cache, no-store, must-revalidate'

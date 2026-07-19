@@ -175,8 +175,8 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         """Every successful response carries the dispatcher fixed headers.
 
         Reference: src/uds/REST/dispatcher.py:212-216
-        - UDS-Version: <version>;<stamp>
-        - Response-Stamp: <sql_stamp_seconds>
+        - X-UDS-Version: <version>;<stamp>
+        - X-Response-Stamp: <sql_stamp_seconds>
         - Cache-Control: no-cache, no-store, must-revalidate
         - Pragma: no-cache
         - Expires: 0
@@ -184,15 +184,15 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         response = self.client.rest_get('providers/overview')
         self.assertEqual(response.status_code, 200)
 
-        # UDS-Version in 'version;stamp' form
-        uds_version = response.get('UDS-Version')
-        self.assertIsNotNone(uds_version, 'UDS-Version header must be present')
+        # X-UDS-Version in 'version;stamp' form
+        uds_version = response.get('X-UDS-Version')
+        self.assertIsNotNone(uds_version, 'X-UDS-Version header must be present')
         assert uds_version is not None
-        self.assertIn(';', uds_version, 'UDS-Version must be in the form version;stamp')
+        self.assertIn(';', uds_version, 'X-UDS-Version must be in the form version;stamp')
 
-        # Response-Stamp present and numeric
-        response_stamp = response.get('Response-Stamp')
-        self.assertIsNotNone(response_stamp, 'Response-Stamp header must be present')
+        # X-Response-Stamp present and numeric
+        response_stamp = response.get('X-Response-Stamp')
+        self.assertIsNotNone(response_stamp, 'X-Response-Stamp header must be present')
         assert response_stamp is not None
         int(response_stamp)  # raises ValueError if not numeric
 
@@ -298,11 +298,11 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         self.assertIn('GET', allow, 'handlers without get() must still advertise GET if defined')
 
     def test_options_includes_uds_version_header(self) -> None:
-        """OPTIONS includes UDS-Version header like any other response."""
+        """OPTIONS includes X-UDS-Version header like any other response."""
         response = self._rest_request('options', 'providers/overview')
         self.assertEqual(response.status_code, 204)
-        uds_version = response.get('UDS-Version')
-        self.assertIsNotNone(uds_version, 'OPTIONS must include UDS-Version')
+        uds_version = response.get('X-UDS-Version')
+        self.assertIsNotNone(uds_version, 'OPTIONS must include X-UDS-Version')
         assert uds_version is not None
         self.assertIn(';', uds_version)
 
