@@ -33,6 +33,7 @@ import collections.abc
 import functools
 import datetime
 import logging
+from typing_extensions import override
 
 from django.utils import timezone
 
@@ -51,6 +52,7 @@ class UsersTest(rest.test.RESTActorTestCase):
     Test users group rest api
     """
 
+    @override
     def setUp(self) -> None:
         timezone.activate(datetime.timezone.utc)
         super().setUp()
@@ -72,6 +74,20 @@ class UsersTest(rest.test.RESTActorTestCase):
             # Locate the user in the auth
             self.assertTrue(rest.assertions.assert_user_is(self.auth.users.get(name=user['name']), user))
 
+    def test_users_overview_groups(self) -> None:
+        url = f'authenticators/{self.auth.uuid}/users'
+
+        response = self.client.rest_get(f'{url}/overview')
+        self.assertEqual(response.status_code, 200)
+        for user in response.json():
+            db_user = self.auth.users.get(name=user['name'])
+            # Bulk-computed overview groups must match per-user get_groups() semantics
+            self.assertEqual(
+                set(user['groups']),
+                {g.uuid for g in db_user.get_groups()},
+                f'Groups of user {user["name"]} do not match',
+            )
+
     def test_users_tableinfo(self) -> None:
         url = f'authenticators/{self.auth.uuid}/users/tableinfo'
 
@@ -91,7 +107,7 @@ class UsersTest(rest.test.RESTActorTestCase):
             functools.reduce(
                 lambda x, y: x and y,  # pyright: ignore
                 typing.cast(
-                    typing.Iterable[bool],
+                    collections.abc.Iterable[bool],
                     map(
                         lambda f: next(iter(f.keys())) in MUST_HAVE_FIELDS,
                         fields,

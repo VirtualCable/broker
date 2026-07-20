@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import datetime
 import logging
@@ -77,6 +78,41 @@ def get_service_pools_for_groups(
         yield servicepool
 
 
+def bulk_groups_of_users(users: list['User'], authenticator: 'Authenticator') -> dict[str, list[str]]:
+    """
+    Bulk equivalent of User.get_groups() for a list of users: direct non-meta groups
+    (resolved through the parent user, as get_groups does) plus the authenticator
+    metagroups each user belongs to.
+
+    Note: users must come from a queryset with prefetch_related('groups'), so the
+    whole computation costs a fixed number of queries (~6, regardless of the number
+    of users) instead of O(N) per-user ones.
+    """
+    direct: dict[str, list[str]] = {u.uuid: [g.uuid for g in u.groups.all() if not g.is_meta] for u in users}
+    parents: dict[str, list[str]] = {
+        u.uuid: [g.uuid for g in u.groups.all() if not g.is_meta]
+        for u in User.objects.filter(uuid__in={u.parent for u in users if u.parent}).prefetch_related('groups')
+    }
+    metagroups = [
+        (m.uuid, m.meta_if_any, {g.uuid for g in m.groups.all()})
+        for m in authenticator.groups.filter(is_meta=True).prefetch_related('groups')
+    ]
+
+    result: dict[str, list[str]] = {}
+    for u in users:
+        # If the parent is missing, get_groups falls back to the user's own groups
+        groups = parents.get(u.parent, direct[u.uuid]) if u.parent else direct[u.uuid]
+        direct_set = set(groups)
+        result[u.uuid] = groups + [
+            meta_uuid
+            for meta_uuid, meta_if_any, members in metagroups
+            if not members  # Empty metagroup: everyone belongs (0 == 0 on get_groups)
+            or (meta_if_any and not members.isdisjoint(direct_set))
+            or (not meta_if_any and members <= direct_set)
+        ]
+    return result
+
+
 @dataclasses.dataclass
 class UserItem(types.rest.BaseRestItem):
     id: str
@@ -115,10 +151,9 @@ class Users(DetailHandler[UserItem]):
             last_access=user.last_access,
             mfa_data=user.mfa_data,
             parent=user.parent,
-            groups=[i.uuid for i in user.get_groups()],
             role=user.get_role().as_str(),
         )
-        
+
     @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('role'):
@@ -137,8 +172,16 @@ class Users(DetailHandler[UserItem]):
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[UserItem]:
         parent = ensure.is_instance(parent, Authenticator)
 
-        # Extract authenticator
-        return [self.as_user_item(i) for i in self.odata_filter(parent.users.all())]
+        users = self.odata_filter(parent.users.prefetch_related('groups'))
+        # groups filled in bulk; per-user get_groups() would cost O(N) extra queries
+        groups_of = bulk_groups_of_users(users, parent)
+
+        items: list[UserItem] = []
+        for u in users:
+            item = self.as_user_item(u)
+            item.groups = groups_of[u.uuid]
+            items.append(item)
+        return items
 
     @typing.override
     def get_item(self, parent: 'Model', item: str) -> UserItem:
@@ -220,7 +263,9 @@ class Users(DetailHandler[UserItem]):
                 else:
                     auth.modify_user(fields)  # Notifies authenticator
                     user = parent.users.get(uuid=process_uuid(item))
-                    typing.cast(dict[str, typing.Any], user.__dict__).update(fields)  # pyrefly: ignore[redundant-cast]
+                    typing.cast(dict[str, typing.Any], user.__dict__).update(
+                        fields
+                    )  # pyrefly: ignore[redundant-cast]
                     user.save()
 
                 logger.debug('User parent: %s', user.parent)
@@ -488,7 +533,9 @@ class Groups(DetailHandler[GroupItem]):
                 to_save['skip_mfa'] = fields['skip_mfa']
 
                 group = parent.groups.get(uuid=process_uuid(item))
-                typing.cast(dict[str, typing.Any], group.__dict__).update(to_save)  # pyrefly: ignore[redundant-cast]
+                typing.cast(dict[str, typing.Any], group.__dict__).update(
+                    to_save
+                )  # pyrefly: ignore[redundant-cast]
 
             if is_meta:
                 # Do not allow to add meta groups to meta groups
