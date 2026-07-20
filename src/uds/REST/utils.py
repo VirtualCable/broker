@@ -64,6 +64,14 @@ def camel_and_snake_case_from(text: str) -> tuple[str, str]:
     return camel_case_name, snake_case_name
 
 
+def is_camel_case(text: str) -> bool:
+    '''
+    True if ``text`` contains at least one ASCII uppercase letter, i.e. it is
+    written in camelCase rather than snake_case.
+    '''
+    return any(c.isupper() for c in text)
+
+
 def to_incremental_json(
     source: collections.abc.Generator[typing.Any, None, None],
 ) -> collections.abc.Generator[str, None, None]:

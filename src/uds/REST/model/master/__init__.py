@@ -49,7 +49,7 @@ from uds.core.util import log, permissions, model as model_utils, api as api_uti
 from uds.models import ManagedObjectModel, Tag, TaggingMixin
 
 from uds.REST.model.base import BaseModelHandler
-from uds.REST.utils import camel_and_snake_case_from, sanitize_params
+from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -64,6 +64,34 @@ T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
 def _is_get_on_post(cm: types.rest.ModelCustomMethod, http_method: types.rest.CustomMethodMethod) -> bool:
     """True when a GET request hits a POST-declared custom method."""
     return cm.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET
+
+
+def _handle_camel_case_url(
+    handler: 'ModelHandler[typing.Any]',
+    path_segment: str,
+    snake_case_name: str,
+) -> None:
+    """Emit deprecation headers or raise GoneError for camelCase URL segments.
+
+    Called when the URL contains a camelCase form of a custom method name
+    that is now declared in snake_case. In COMPAT mode we add deprecation
+    headers pointing to the snake_case successor; in NO_COMPAT we raise
+    GoneError, which the dispatcher turns into HTTP 410.
+    """
+    if not is_camel_case(path_segment) or path_segment == snake_case_name:
+        return  # Already snake_case — nothing to deprecate
+
+    if handler.api_compat() == types.rest.ApiCompat.COMPAT:
+        # Note: camelCase is not actually wrong on the wire — the server
+        # accepts both forms today. We only warn about it so clients can
+        # migrate before v7 removes the legacy form.
+        handler.add_deprecation_headers(
+            successor_hint=f'use snake_case form: {snake_case_name} (instead of {path_segment})'
+        )
+    else:
+        raise exceptions.rest.GoneError(
+            f'camelCase form "{path_segment}" is removed; use snake_case "{snake_case_name}"'
+        )
 
 
 class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
@@ -305,6 +333,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             if number_of_args > 1 and cm.needs_parent:
                 if self._args[1] not in (camel_case_name, snake_case_name):
                     continue
+                _handle_camel_case_url(self, self._args[1], snake_case_name)
                 # ---- HTTP-method check (needs_parent) ----
                 if cm.method != http_method:
                     if _is_get_on_post(cm, http_method):
@@ -338,6 +367,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 return operation(item)
 
             if number_of_args >= 1 and self._args[0] in (camel_case_name, snake_case_name):
+                _handle_camel_case_url(self, self._args[0], snake_case_name)
                 # ---- HTTP-method check (collection-scoped) ----
                 if cm.method != http_method:
                     if _is_get_on_post(cm, http_method):

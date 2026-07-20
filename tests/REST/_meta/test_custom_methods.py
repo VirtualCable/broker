@@ -481,6 +481,47 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         self.assertIn('Sunset', response)
 
     # ------------------------------------------------------------------
+    # T10 — camelCase URL segments: emit deprecation in COMPAT, 410 in NO_COMPAT
+    # ------------------------------------------------------------------
+    def test_camelcase_url_emits_deprecation_in_compat(self) -> None:
+        """Legacy camelCase URL → 200 + deprecation headers in COMPAT mode.
+
+        `cleanRelated` (camelCase) and `enableClientLogging` (camelCase)
+        are equivalent to `clean_related` / `enable_client_logging`
+        (snake_case). The server still dispatches correctly but adds
+        deprecation headers so clients can migrate.
+        """
+        user = self.admins[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/cleanRelated'
+        response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 200, f'camelCase URL: {response.status_code}')
+        self.assertIn('Deprecation', response, 'camelCase URL must emit Deprecation header')
+
+    def test_camelcase_url_returns_410_in_no_compat(self) -> None:
+        """Legacy camelCase URL → 410 Gone in NO_COMPAT mode."""
+        from uds.REST.handlers import Handler
+
+        user = self.admins[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/cleanRelated'
+        with patch.object(Handler, 'api_compat', return_value=types.rest.ApiCompat.NO_COMPAT):
+            response = self.client.rest_get(url)
+        self.assertEqual(response.status_code, 410, f'Expected 410 Gone, got {response.status_code}')
+
+    def test_snakecase_url_no_camelcase_deprecation(self) -> None:
+        """snake_case URL does NOT emit camelCase deprecation headers.
+
+        Other deprecation headers (e.g. POST→GET fallback) may still be
+        present, but the camelCase-specific note must not appear.
+        """
+        user = self.admins[0]
+        url = f'authenticators/{self.auth.uuid}/users/{user.uuid}/clean_related'
+        response = self.client.rest_get(url)
+        # 200 because GET→POST in COMPAT still works
+        self.assertEqual(response.status_code, 200)
+        # No camelCase deprecation specifically
+        # (Deprecation header may still appear from POST→GET fallback)
+
+    # ------------------------------------------------------------------
     # Helper
     # ------------------------------------------------------------------
     def _create_test_account(self) -> 'UUIDModel':

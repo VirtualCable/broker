@@ -46,7 +46,7 @@ from uds.core.util import api as api_utils, model as model_utils
 from uds.REST.utils import rest_result
 
 from uds.REST.model.base import BaseModelHandler
-from uds.REST.utils import camel_and_snake_case_from, sanitize_params
+from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
 
 T = typing.TypeVar('T', bound=models.Model)
 T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
@@ -144,6 +144,18 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             camel_case_name, snake_case_name = camel_and_snake_case_from(to_check.name)
             if check not in (camel_case_name, snake_case_name):
                 continue
+
+            # Detect camelCase URL segment usage: dispatch still works but
+            # the camelCase form is legacy (v5/v6) and will be removed in v7.
+            if is_camel_case(check) and check != snake_case_name:
+                if is_compat:
+                    self.add_deprecation_headers(
+                        successor_hint=f'use snake_case form: {snake_case_name} (instead of {check})'
+                    )
+                else:
+                    raise exceptions.rest.GoneError(
+                        f'camelCase form "{check}" is removed; use snake_case "{snake_case_name}"'
+                    )
 
             # HTTP-method check after name match
             if to_check.method != http_method:
