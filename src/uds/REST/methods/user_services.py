@@ -88,7 +88,11 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('reset', method=types.rest.CustomMethodMethod.POST, description='Reset a user service to its initial state, removing any cached or intermediate data'),
+        types.rest.ModelCustomMethod(
+            'reset',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Reset a user service to its initial state, removing any cached or intermediate data',
+        ),
     ]
 
     @staticmethod
@@ -161,7 +165,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             return annotated_sort(*sort_info)
 
         return super().apply_sort(qs)
-    
+
     def get_qs(self, for_cached: bool, parent: 'models.ServicePool') -> QuerySet[models.UserService]:
         if for_cached:
             return parent.cached_users_services()
@@ -170,7 +174,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     def do_get_item_position(self, for_cached: bool, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
         return self.calc_item_position(item_uuid, self.get_qs(for_cached, parent).all())
-    
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         return self.do_get_item_position(for_cached=False, parent=parent, item_uuid=item_uuid)
@@ -353,7 +357,7 @@ class CachedService(AssignedUserService):
     """
 
     CUSTOM_METHODS = []  # Remove custom methods from assigned services
-    
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         return self.do_get_item_position(for_cached=True, parent=parent, item_uuid=item_uuid)
@@ -594,7 +598,11 @@ class Publications(DetailHandler[PublicationItem]):
                 },
             ),
         ),
-        types.rest.ModelCustomMethod('cancel', method=types.rest.CustomMethodMethod.POST, description='Cancel a running publication; invoking twice forces an immediate cancellation'),
+        types.rest.ModelCustomMethod(
+            'cancel',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Cancel a running publication; invoking twice forces an immediate cancellation',
+        ),
     ]  # We provided these custom methods
 
     def publish(self, parent: 'Model') -> typing.Any:

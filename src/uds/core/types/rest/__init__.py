@@ -195,7 +195,7 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
         Returns a dictionary representation of the managed object item.
         """
         # Note: This should not be necessary, but on some python versions, dataclasses.asdict
-        #       seems to recurse infinitely on generic types, or do weird things with them. 
+        #       seems to recurse infinitely on generic types, or do weird things with them.
         #       So we avoid it by temporarily removing the item.
         tmp_item = self.item
         self.item = typing.cast(T_Model, None)  # Avoid recursion on data
@@ -258,6 +258,7 @@ class LogEntry(BaseRestItem):
     level: int = dataclasses.field(metadata={'description': 'Level of the log entry'})
     source: str = dataclasses.field(metadata={'description': 'Source of the log entry'})
     message: str = dataclasses.field(metadata={'description': 'Message of the log entry'})
+
 
 @dataclasses.dataclass
 class TypeInfo:

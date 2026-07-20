@@ -224,31 +224,30 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         default behavior is return item_as_dict
         """
         return self.get_item(item)
-    
-    def filter_model_queryset(self, qs: QuerySet[T]|None = None) -> QuerySet[T]:
+
+    def filter_model_queryset(self, qs: QuerySet[T] | None = None) -> QuerySet[T]:
         qs = typing.cast('QuerySet[T]', self.MODEL.objects.all()) if qs is None else qs
-        
+
         if self.FILTER is not None:
             qs = qs.filter(**self.FILTER)
         if self.EXCLUDE is not None:
             qs = qs.exclude(**self.EXCLUDE)
-            
+
         return qs
 
     def get_item_position(self, item_uuid: str, query: QuerySet[T] | None = None) -> int:
         qs = self.filter_model_queryset(query)
-        
+
         # Ensure some order to have stable positions on reusing query
-        # At least on postgres, second query 
-        if not self.MODEL._meta.ordering:  
+        # At least on postgres, second query
+        if not self.MODEL._meta.ordering:
             qs = qs.order_by('pk')
-        
+
         # Find item in qs, may be none, then return -1
         obj = qs.filter(uuid__iexact=model_utils.process_uuid(item_uuid)).first()
         if obj:
             return model_utils.get_position_in_queryset(obj, qs)
         return -1
-        
 
     def get_items(
         self, *, sumarize: bool = False, query: QuerySet[T] | None = None
@@ -447,7 +446,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             return self.process_detail()
 
         raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
-    
+
     def is_new(self) -> bool:
         """
         Helper to check if the request is for a new item (no args) or for an existing one (has args)
@@ -465,9 +464,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         # (e.g. to get the user IP, server name, etc.)
         self._params['_request'] = self._request
 
-        self.check_access(
-            self.MODEL(), types.permissions.PermissionType.ALL, root=True
-        )
+        self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
 
         try:
             args = self.fields_from_params(self.FIELDS_TO_SAVE)
@@ -487,13 +484,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             if isinstance(item, TaggingMixin):
                 if tags:
                     logger.debug('Updating tags: %s', tags)
-                    item.tags.set(
-                        [
-                            Tag.objects.get_or_create(tag=val)[0]
-                            for val in tags
-                            if val != ''
-                        ]
-                    )
+                    item.tags.set([Tag.objects.get_or_create(tag=val)[0] for val in tags if val != ''])
                 elif isinstance(tags, list):
                     item.tags.clear()
 
@@ -545,15 +536,11 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
         # PUT on collection → create (legacy path, Change G redirects POST here too)
         if self.is_new():
-            self.add_deprecation_headers(
-                successor_hint=f'use POST /{self._path} to create items'
-            )
+            self.add_deprecation_headers(successor_hint=f'use POST /{self._path} to create items')
             return self._perform_create()
 
         # Here, self.model() indicates an "django model object with default params"
-        self.check_access(
-            self.MODEL(), types.permissions.PermissionType.ALL, root=True
-        )
+        self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
 
         try:
             # Extract fields

@@ -152,7 +152,7 @@ class Handler(abc.ABC):
             {k: v for k, v in self._params.items() if k.startswith('$')}
         )
         # Subclasses (ModelHandler, DetailHandler, etc.) define get().
-        return typing.cast('typing.Any', getattr(self, 'get'))()
+        return typing.cast('typing.Any', getattr(self, 'get'))()  # pyright: ignore[reportUnnecessaryCast]
 
     def api_compat(self) -> types.rest.ApiCompat:
         """Return the current API compatibility mode.

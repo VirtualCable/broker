@@ -71,8 +71,18 @@ class Accounts(ModelHandler[AccountItem]):
     DETAIL = {'usage': AccountsUsage}
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('clear', True, method=types.rest.CustomMethodMethod.POST, description='Remove all usage records associated with an account, permanently deleting them'),
-        types.rest.ModelCustomMethod('timemark', True, method=types.rest.CustomMethodMethod.POST, description='Set a timestamp marker on an account to indicate the last processed usage record, enabling incremental data processing'),
+        types.rest.ModelCustomMethod(
+            'clear',
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Remove all usage records associated with an account, permanently deleting them',
+        ),
+        types.rest.ModelCustomMethod(
+            'timemark',
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Set a timestamp marker on an account to indicate the last processed usage record, enabling incremental data processing',
+        ),
     ]
 
     FIELDS_TO_SAVE = ['name', 'comments', 'tags']

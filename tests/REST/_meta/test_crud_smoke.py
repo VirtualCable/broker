@@ -41,9 +41,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 import typing
 import logging
-from django.utils import timezone
-
-from uds import models
 
 from tests.utils import rest
 
@@ -64,14 +61,18 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
         """POST /accounts → create, then GET by uuid to verify."""
         payload = {'name': 'smoke-test-account', 'comments': 'Created by CRUD smoke test', 'tags': []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        self.assertEqual(create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}')
+        self.assertEqual(
+            create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}'
+        )
         data = create_resp.json()
         account_uuid = data.get('id')
         self.assertIsNotNone(account_uuid, f'No id in response: {data}')
 
         # GET the created item
         get_resp = self.client.rest_get(f'{self.BASE}/{account_uuid}')
-        self.assertEqual(get_resp.status_code, 200, f'GET item failed: {get_resp.content.decode(errors="replace")}')
+        self.assertEqual(
+            get_resp.status_code, 200, f'GET item failed: {get_resp.content.decode(errors="replace")}'
+        )
         item = get_resp.json()
         self.assertEqual(item['name'], 'smoke-test-account')
         self.assertEqual(item['comments'], 'Created by CRUD smoke test')
@@ -96,7 +97,9 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
 
         update_payload = {'name': 'update-test-account', 'comments': 'After update', 'tags': []}
         put_resp = self.client.rest_put(f'{self.BASE}/{account_uuid}', update_payload)
-        self.assertEqual(put_resp.status_code, 200, f'PUT update failed: {put_resp.content.decode(errors="replace")}')
+        self.assertEqual(
+            put_resp.status_code, 200, f'PUT update failed: {put_resp.content.decode(errors="replace")}'
+        )
 
         get_resp = self.client.rest_get(f'{self.BASE}/{account_uuid}')
         self.assertEqual(get_resp.json()['comments'], 'After update')
@@ -108,7 +111,9 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
         account_uuid = create_resp.json().get('id')
 
         del_resp = self.client.rest_delete(f'{self.BASE}/{account_uuid}')
-        self.assertEqual(del_resp.status_code, 200, f'DELETE failed: {del_resp.content.decode(errors="replace")}')
+        self.assertEqual(
+            del_resp.status_code, 200, f'DELETE failed: {del_resp.content.decode(errors="replace")}'
+        )
 
         get_resp = self.client.rest_get(f'{self.BASE}/{account_uuid}')
         self.assertEqual(get_resp.status_code, 404)
@@ -128,7 +133,9 @@ class NetworksCrudSmokeTest(rest.test.RESTTestCase):
         """POST /networks → create, then GET by uuid."""
         payload = {'name': 'smoke-test-network', 'net_string': '192.168.1.0/24', 'tags': []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        self.assertEqual(create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}')
+        self.assertEqual(
+            create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}'
+        )
         net_uuid = create_resp.json().get('id')
         self.assertIsNotNone(net_uuid)
 
@@ -187,7 +194,9 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
         """POST /calendars → create, then GET by uuid."""
         payload = {'name': 'smoke-test-calendar', 'comments': 'Test calendar', 'tags': []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        self.assertEqual(create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}')
+        self.assertEqual(
+            create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}'
+        )
         cal_uuid = create_resp.json().get('id')
         self.assertIsNotNone(cal_uuid)
 
@@ -242,6 +251,7 @@ class MfasCrudSmokeTest(rest.test.RESTTestCase):
         super().setUp()
         self.login()
         from tests.fixtures import mfas as mfas_fixtures
+
         self.mfa = mfas_fixtures.create_db_mfa()
         self.addCleanup(self.mfa.delete)
 
@@ -261,7 +271,13 @@ class MfasCrudSmokeTest(rest.test.RESTTestCase):
 
     def test_update(self) -> None:
         """PUT /mfa/{uuid} → update comments."""
-        payload = {'name': self.mfa.name, 'comments': 'Updated by CRUD test', 'tags': [], 'remember_device': 0, 'validity': 0}
+        payload = {
+            'name': self.mfa.name,
+            'comments': 'Updated by CRUD test',
+            'tags': [],
+            'remember_device': 0,
+            'validity': 0,
+        }
         resp = self.client.rest_put(f'{self.BASE}/{self.mfa.uuid}', payload)
         self.assertEqual(resp.status_code, 200)
 
@@ -271,6 +287,7 @@ class MfasCrudSmokeTest(rest.test.RESTTestCase):
     def test_delete(self) -> None:
         """DELETE /mfa/{uuid} → 200, then GET → 404."""
         from tests.fixtures import mfas as mfas_fixtures
+
         mfa = mfas_fixtures.create_db_mfa()
         resp = self.client.rest_delete(f'{self.BASE}/{mfa.uuid}')
         self.assertEqual(resp.status_code, 200)
@@ -289,6 +306,7 @@ class NotifiersCrudSmokeTest(rest.test.RESTTestCase):
         super().setUp()
         self.login()
         from tests.fixtures import notifiers as notifiers_fixtures
+
         self.notifier = notifiers_fixtures.createEmailNotifier()
         self.addCleanup(self.notifier.delete)
 

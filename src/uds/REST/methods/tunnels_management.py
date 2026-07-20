@@ -59,13 +59,17 @@ class TunnelServerItem(types.rest.BaseRestItem):
 
 class TunnelServers(DetailHandler[TunnelServerItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('maintenance', method=types.rest.CustomMethodMethod.POST, description='Toggle maintenance mode for a tunnel server (enable if disabled, disable if enabled)'),
+        types.rest.ModelCustomMethod(
+            'maintenance',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Toggle maintenance mode for a tunnel server (enable if disabled, disable if enabled)',
+        ),
     ]
 
     REST_API_INFO = types.rest.api.RestApiInfo(
         name='TunnelServers', description='Tunnel servers assigned to a tunnel'
     )
-    
+
     @staticmethod
     def as_tunnel_server_item(item: models.Server) -> TunnelServerItem:
         return TunnelServerItem(
@@ -75,26 +79,19 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
             mac=item.mac if item.mac != consts.NULL_MAC else '',
             maintenance=item.maintenance_mode,
         )
-        
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return self.calc_item_position(item_uuid, parent.servers.all())
 
     @typing.override
-    def get_items(
-        self, parent: 'Model'
-    ) -> types.rest.ItemsResult[TunnelServerItem]:
+    def get_items(self, parent: 'Model') -> types.rest.ItemsResult[TunnelServerItem]:
         parent = ensure.is_instance(parent, models.ServerGroup)
-        return [
-            TunnelServers.as_tunnel_server_item(i)
-                for i in self.odata_filter(parent.servers.all())
-            ]
+        return [TunnelServers.as_tunnel_server_item(i) for i in self.odata_filter(parent.servers.all())]
 
     @typing.override
-    def get_item(
-        self, parent: 'Model', item: str
-    ) -> TunnelServerItem:
+    def get_item(self, parent: 'Model', item: str) -> TunnelServerItem:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return TunnelServers.as_tunnel_server_item(parent.servers.get(uuid=process_uuid(item)))
 
@@ -163,8 +160,17 @@ class Tunnels(ModelHandler[TunnelItem]):
     MODEL = models.ServerGroup
     FILTER = {'type': types.servers.ServerType.TUNNEL}
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('tunnels', needs_parent=True, description='List tunnel servers that are not yet assigned to this tunnel group'),
-        types.rest.ModelCustomMethod('assign', needs_parent=True, method=types.rest.CustomMethodMethod.POST, description='Assign an existing server to this tunnel group'),
+        types.rest.ModelCustomMethod(
+            'tunnels',
+            needs_parent=True,
+            description='List tunnel servers that are not yet assigned to this tunnel group',
+        ),
+        types.rest.ModelCustomMethod(
+            'assign',
+            needs_parent=True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Assign an existing server to this tunnel group',
+        ),
     ]
 
     DETAIL = {'servers': TunnelServers}

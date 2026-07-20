@@ -103,7 +103,9 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('servicepools', description='List all service pools that reference this service provider'),
+        types.rest.ModelCustomMethod(
+            'servicepools', description='List all service pools that reference this service provider'
+        ),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -157,7 +159,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             ret_value.info = Services.service_info(item)
 
         return ret_value
-    
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.Provider)
@@ -221,7 +223,9 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                 service = parent.services.create(**fields)
             else:
                 service = parent.services.get(uuid=process_uuid(item))
-                typing.cast(dict[str, typing.Any], service.__dict__).update(fields)  # pyrefly: ignore[redundant-cast]
+                typing.cast(dict[str, typing.Any], service.__dict__).update(
+                    fields
+                )  # pyrefly: ignore[redundant-cast]
 
             service.tags.set([models.Tag.objects.get_or_create(tag=val)[0] for val in tags])
 

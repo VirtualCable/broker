@@ -110,26 +110,28 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
     # ------------------------------------------------------------------
     # Known POST custom methods (unsafe / state-mutating).
     # If you add a new unsafe custom method, add it here.
-    _POST_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str]]] = frozenset({
-        ('Accounts', 'clear'),
-        ('Accounts', 'timemark'),
-        ('MetaPools', 'set_fallback_access'),
-        ('Providers', 'maintenance'),
-        ('ServicesPools', 'set_fallback_access'),
-        ('ServicesPools', 'create_from_assignable'),
-        ('ServicesPools', 'add_log'),
-        ('TunnelServers', 'maintenance'),
-        ('Tunnels', 'assign'),
-        ('ActionsCalendars', 'execute'),
-        ('AssignedUserService', 'reset'),
-        ('Publications', 'publish'),
-        ('Publications', 'cancel'),
-        ('ServersServers', 'maintenance'),
-        ('ServersServers', 'importcsv'),
-        ('Users', 'clean_related'),
-        ('Users', 'add_to_group'),
-        ('Users', 'enable_client_logging'),
-    })
+    _POST_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str]]] = frozenset(
+        {
+            ('Accounts', 'clear'),
+            ('Accounts', 'timemark'),
+            ('MetaPools', 'set_fallback_access'),
+            ('Providers', 'maintenance'),
+            ('ServicesPools', 'set_fallback_access'),
+            ('ServicesPools', 'create_from_assignable'),
+            ('ServicesPools', 'add_log'),
+            ('TunnelServers', 'maintenance'),
+            ('Tunnels', 'assign'),
+            ('ActionsCalendars', 'execute'),
+            ('AssignedUserService', 'reset'),
+            ('Publications', 'publish'),
+            ('Publications', 'cancel'),
+            ('ServersServers', 'maintenance'),
+            ('ServersServers', 'importcsv'),
+            ('Users', 'clean_related'),
+            ('Users', 'add_to_group'),
+            ('Users', 'enable_client_logging'),
+        }
+    )
 
     def test_unsafe_custom_methods_use_post(self) -> None:
         """Every unsafe (state-mutating) custom method is declared with method=POST."""
@@ -149,9 +151,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
                 key = (cls_name, cm.name)
                 if key in self._POST_CUSTOM_METHODS:
                     if cm.method != types.rest.CustomMethodMethod.POST:
-                        offenders.append(
-                            f'{cls_name}.{cm.name}: expected POST, got {cm.method!r}'
-                        )
+                        offenders.append(f'{cls_name}.{cm.name}: expected POST, got {cm.method!r}')
                 else:
                     # Not in POST set → must be GET
                     if cm.method != types.rest.CustomMethodMethod.GET:
@@ -224,11 +224,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             base = '/' + path_label.lstrip('/')
             paths = cls.api_paths(base, tags=[], security='')
             for cm in cls.CUSTOM_METHODS:
-                expected_path = (
-                    f'{base}/{{uuid}}/{cm.name}'
-                    if cm.needs_parent
-                    else f'{base}/{cm.name}'
-                )
+                expected_path = f'{base}/{{uuid}}/{cm.name}' if cm.needs_parent else f'{base}/{cm.name}'
                 path_item = paths.get(expected_path)
                 if path_item is None:
                     offenders.append(f'{cls.__name__}: missing path {expected_path!r}')
@@ -236,14 +232,10 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
 
                 if cm.method == types.rest.CustomMethodMethod.POST:
                     if path_item.post is None:
-                        offenders.append(
-                            f'{cls.__name__}.{cm.name}: POST method but no post= in spec'
-                        )
+                        offenders.append(f'{cls.__name__}.{cm.name}: POST method but no post= in spec')
                 else:
                     if path_item.get is None:
-                        offenders.append(
-                            f'{cls.__name__}.{cm.name}: GET method but no get= in spec'
-                        )
+                        offenders.append(f'{cls.__name__}.{cm.name}: GET method but no get= in spec')
 
         self.assertEqual(
             offenders,
@@ -316,7 +308,11 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         account = self._create_test_account()
         url = f'accounts/{account.uuid}/clear'
         response = self.client.rest_post(url)
-        self.assertIn(response.status_code, (200, 400), f'POST master custom method: {response.content.decode(errors='replace')}')
+        self.assertIn(
+            response.status_code,
+            (200, 400),
+            f'POST master custom method: {response.content.decode(errors='replace')}',
+        )
 
     # ------------------------------------------------------------------
     # T6 — NO_COMPAT mode: GET to POST method returns 410 Gone

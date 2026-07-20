@@ -83,9 +83,22 @@ class Providers(ModelHandler[ProviderItem]):
     DETAIL = {'services': DetailServices, 'usage': ServicesUsage}
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('allservices', False, description='List all services provided by this provider regardless of their parent service'),
-        types.rest.ModelCustomMethod('service', False, description='Retrieve a specific service by its UUID regardless of its parent service'),
-        types.rest.ModelCustomMethod('maintenance', True, method=types.rest.CustomMethodMethod.POST, description='Toggle maintenance mode for a provider (enable if disabled, disable if enabled)'),
+        types.rest.ModelCustomMethod(
+            'allservices',
+            False,
+            description='List all services provided by this provider regardless of their parent service',
+        ),
+        types.rest.ModelCustomMethod(
+            'service',
+            False,
+            description='Retrieve a specific service by its UUID regardless of its parent service',
+        ),
+        types.rest.ModelCustomMethod(
+            'maintenance',
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Toggle maintenance mode for a provider (enable if disabled, disable if enabled)',
+        ),
     ]
 
     FIELDS_TO_SAVE = ['name', 'comments', 'tags']
@@ -114,14 +127,12 @@ class Providers(ModelHandler[ProviderItem]):
             field_name, is_descending = field_info
             order_by_field = f"-{field_name}" if is_descending else field_name
             return qs.annotate(services_count=Count('services')).order_by(order_by_field)
-        
+
         if field_info := self.get_sort_field_info('user_services_count'):
             field_name, is_descending = field_info
             order_by_field = f"-{field_name}" if is_descending else field_name
-            return qs.annotate(
-                user_services_count=Count('maintenance_mode')
-            ).order_by(order_by_field)
-        
+            return qs.annotate(user_services_count=Count('maintenance_mode')).order_by(order_by_field)
+
         return super().apply_sort(qs)
 
     @typing.override

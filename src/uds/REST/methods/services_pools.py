@@ -167,12 +167,70 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     )
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST, description='Update the fallback access policy for a service pool', params=types.rest.api.SchemaProperty(type='object', properties={'fallbackAccess': types.rest.api.SchemaProperty(type='string', description='Fallback access policy: ALLOW (default) or DENY')})),
-        types.rest.ModelCustomMethod('get_fallback_access', True, description='Retrieve the current fallback access policy for a service pool'),
-        types.rest.ModelCustomMethod('actions_list', True, description='List all calendar actions available for this service pool based on its service type and current state'),
-        types.rest.ModelCustomMethod('list_assignables', True, description='Enumerate all assignable services that can be used to create a new service pool'),
-        types.rest.ModelCustomMethod('create_from_assignable', True, method=types.rest.CustomMethodMethod.POST, description='Create a new service pool from an existing assignable service', params=types.rest.api.SchemaProperty(type='object', properties={'user_id': types.rest.api.SchemaProperty(type='string', description='UUID of the user who will own the new service pool'), 'assignable_id': types.rest.api.SchemaProperty(type='string', description='Identifier of the assignable service to create from')})),
-        types.rest.ModelCustomMethod('add_log', True, method=types.rest.CustomMethodMethod.POST, description='Append a log entry to the service pool audit trail', params=types.rest.api.SchemaProperty(type='object', properties={'message': types.rest.api.SchemaProperty(type='string', description='Log message text'), 'level': types.rest.api.SchemaProperty(type='string', description='Log severity level (INFO, WARN, ERROR)'), 'log_name': types.rest.api.SchemaProperty(type='string', description='Optional log source name')})),
+        types.rest.ModelCustomMethod(
+            'set_fallback_access',
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Update the fallback access policy for a service pool',
+            params=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    'fallbackAccess': types.rest.api.SchemaProperty(
+                        type='string', description='Fallback access policy: ALLOW (default) or DENY'
+                    )
+                },
+            ),
+        ),
+        types.rest.ModelCustomMethod(
+            'get_fallback_access',
+            True,
+            description='Retrieve the current fallback access policy for a service pool',
+        ),
+        types.rest.ModelCustomMethod(
+            'actions_list',
+            True,
+            description='List all calendar actions available for this service pool based on its service type and current state',
+        ),
+        types.rest.ModelCustomMethod(
+            'list_assignables',
+            True,
+            description='Enumerate all assignable services that can be used to create a new service pool',
+        ),
+        types.rest.ModelCustomMethod(
+            'create_from_assignable',
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Create a new service pool from an existing assignable service',
+            params=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    'user_id': types.rest.api.SchemaProperty(
+                        type='string', description='UUID of the user who will own the new service pool'
+                    ),
+                    'assignable_id': types.rest.api.SchemaProperty(
+                        type='string', description='Identifier of the assignable service to create from'
+                    ),
+                },
+            ),
+        ),
+        types.rest.ModelCustomMethod(
+            'add_log',
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description='Append a log entry to the service pool audit trail',
+            params=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    'message': types.rest.api.SchemaProperty(type='string', description='Log message text'),
+                    'level': types.rest.api.SchemaProperty(
+                        type='string', description='Log severity level (INFO, WARN, ERROR)'
+                    ),
+                    'log_name': types.rest.api.SchemaProperty(
+                        type='string', description='Optional log source name'
+                    ),
+                },
+            ),
+        ),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -206,7 +264,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             _, is_descending = field_info
             order_by_field = f"-service__name" if is_descending else "service__name"
             return qs.order_by(order_by_field)
-        
+
         if field_info := self.get_sort_field_info('usage'):
             # Not perfect, but almost.. some times max comes from elsewhere, and we
             # cannot control that.
@@ -226,7 +284,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 usage_ratio=ExpressionWrapper(
                     F('usage_count') / F('max_srvs_safe'),
                     output_field=FloatField(),
-                )
+                ),
             )
             _, is_descending = field_info
             order_by_field = f"-usage_ratio" if is_descending else "usage_ratio"
@@ -413,7 +471,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 default=True,
                 readonly=True,
                 label=gettext('Publish on save'),
-                tooltip=gettext('If active, the service will be published when saved (only for new service pools)'),
+                tooltip=gettext(
+                    'If active, the service will be published when saved (only for new service pools)'
+                ),
             )
             .new_tab(types.ui.Tab.DISPLAY)
             .add_checkbox(

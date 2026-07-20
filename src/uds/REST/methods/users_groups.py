@@ -95,11 +95,35 @@ class UserItem(types.rest.BaseRestItem):
 
 class Users(DetailHandler[UserItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('services_pools', description='Retrieve all service pools in which this user has active assignments'),
-        types.rest.ModelCustomMethod('user_services', description='List all user services currently assigned to this user'),
-        types.rest.ModelCustomMethod('clean_related', method=types.rest.CustomMethodMethod.POST, description='Remove all related data for this user (assigned services, cached entries, pending operations)'),
-        types.rest.ModelCustomMethod('add_to_group', method=types.rest.CustomMethodMethod.POST, description='Add this user to an existing group within the same authenticator', params=types.rest.api.SchemaProperty(type='object', properties={'group': types.rest.api.SchemaProperty(type='string', description='UUID of the group to add the user to')})),
-        types.rest.ModelCustomMethod('enable_client_logging', method=types.rest.CustomMethodMethod.POST, description='Enable or disable client-side logging for this user (toggles on each invocation)'),
+        types.rest.ModelCustomMethod(
+            'services_pools', description='Retrieve all service pools in which this user has active assignments'
+        ),
+        types.rest.ModelCustomMethod(
+            'user_services', description='List all user services currently assigned to this user'
+        ),
+        types.rest.ModelCustomMethod(
+            'clean_related',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Remove all related data for this user (assigned services, cached entries, pending operations)',
+        ),
+        types.rest.ModelCustomMethod(
+            'add_to_group',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Add this user to an existing group within the same authenticator',
+            params=types.rest.api.SchemaProperty(
+                type='object',
+                properties={
+                    'group': types.rest.api.SchemaProperty(
+                        type='string', description='UUID of the group to add the user to'
+                    )
+                },
+            ),
+        ),
+        types.rest.ModelCustomMethod(
+            'enable_client_logging',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Enable or disable client-side logging for this user (toggles on each invocation)',
+        ),
     ]
 
     @staticmethod
@@ -118,7 +142,7 @@ class Users(DetailHandler[UserItem]):
             groups=[i.uuid for i in user.get_groups()],
             role=user.get_role().as_str(),
         )
-        
+
     @typing.override
     def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
         if field_info := self.get_sort_field_info('role'):
@@ -220,7 +244,9 @@ class Users(DetailHandler[UserItem]):
                 else:
                     auth.modify_user(fields)  # Notifies authenticator
                     user = parent.users.get(uuid=process_uuid(item))
-                    typing.cast(dict[str, typing.Any], user.__dict__).update(fields)  # pyrefly: ignore[redundant-cast]
+                    typing.cast(dict[str, typing.Any], user.__dict__).update(
+                        fields
+                    )  # pyrefly: ignore[redundant-cast]
                     user.save()
 
                 logger.debug('User parent: %s', user.parent)
@@ -367,7 +393,9 @@ class GroupItem(types.rest.BaseRestItem):
 
 class Groups(DetailHandler[GroupItem]):
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('services_pools', description='Retrieve all service pools that this group has access to'),
+        types.rest.ModelCustomMethod(
+            'services_pools', description='Retrieve all service pools that this group has access to'
+        ),
         types.rest.ModelCustomMethod('users', description='List all users belonging to this group'),
     ]
 
@@ -488,7 +516,9 @@ class Groups(DetailHandler[GroupItem]):
                 to_save['skip_mfa'] = fields['skip_mfa']
 
                 group = parent.groups.get(uuid=process_uuid(item))
-                typing.cast(dict[str, typing.Any], group.__dict__).update(to_save)  # pyrefly: ignore[redundant-cast]
+                typing.cast(dict[str, typing.Any], group.__dict__).update(
+                    to_save
+                )  # pyrefly: ignore[redundant-cast]
 
             if is_meta:
                 # Do not allow to add meta groups to meta groups

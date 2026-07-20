@@ -147,7 +147,10 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
 
             # HTTP-method check after name match
             if to_check.method != http_method:
-                if to_check.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET:
+                if (
+                    to_check.method == types.rest.CustomMethodMethod.POST
+                    and http_method == types.rest.CustomMethodMethod.GET
+                ):
                     if is_compat:
                         # COMPAT: allow GET on POST method with deprecation headers
                         self.add_deprecation_headers(f'use POST {self._path}/{check}')

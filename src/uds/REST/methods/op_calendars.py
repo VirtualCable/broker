@@ -73,28 +73,28 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
             access=item.access,
             priority=item.priority,
         )
-        
+
     @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         # parent can be a ServicePool or a metaPool
         if isinstance(parent, models.ServicePool):
             parent = ensure.is_instance(parent, models.ServicePool)
             return self.calc_item_position(item_uuid, parent.calendarAccess.all())
-        
+
         parent = ensure.is_instance(parent, models.MetaPool)
         return self.calc_item_position(item_uuid, parent.calendarAccess.all())
 
     @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[AccessCalendarItem]:
         # parent can be a ServicePool or a metaPool
-        parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
+        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
 
         return [AccessCalendars.as_item(i) for i in self.filter_odata_queryset(parent.calendarAccess.all())]
 
     @typing.override
     def get_item(self, parent: 'Model', item: str) -> AccessCalendarItem:
         # parent can be a ServicePool or a metaPool
-        parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
+        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
 
         return AccessCalendars.as_item(parent.calendarAccess.get(uuid=process_uuid(item)))
 
@@ -109,8 +109,8 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
         )
 
     @typing.override
-    def save_item(self, parent: 'Model', item: typing.Optional[str]) -> typing.Any:
-        parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
+    def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
+        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
         # If already exists
         uuid = process_uuid(item) if item is not None else None
 
@@ -151,7 +151,7 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
 
     @typing.override
     def delete_item(self, parent: 'Model', item: str) -> None:
-        parent = typing.cast(typing.Union['models.ServicePool', 'models.MetaPool'], parent)
+        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
         calendar_access = parent.calendarAccess.get(uuid=process_uuid(self._args[0]))
         log_str = f'Removed access calendar {calendar_access.calendar.name} by {self._user.pretty_name}'
         calendar_access.delete()
@@ -170,8 +170,8 @@ class ActionCalendarItem(types.rest.BaseRestItem):
     events_offset: int
     params: dict[str, typing.Any]
     pretty_params: str
-    next_execution: typing.Optional[datetime.datetime]
-    last_execution: typing.Optional[datetime.datetime]
+    next_execution: datetime.datetime | None
+    last_execution: datetime.datetime | None
 
 
 class ActionsCalendars(DetailHandler[ActionCalendarItem]):
@@ -180,7 +180,11 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
     """
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('execute', method=types.rest.CustomMethodMethod.POST, description='Execute a scheduled calendar action immediately, bypassing the calendar schedule'),
+        types.rest.ModelCustomMethod(
+            'execute',
+            method=types.rest.CustomMethodMethod.POST,
+            description='Execute a scheduled calendar action immediately, bypassing the calendar schedule',
+        ),
     ]
 
     @staticmethod
@@ -201,7 +205,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
             next_execution=item.next_execution,
             last_execution=item.last_execution,
         )
-        
+
     @typing.override
     def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
@@ -234,7 +238,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
         )
 
     @typing.override
-    def save_item(self, parent: 'Model', item: typing.Optional[str]) -> typing.Any:
+    def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServicePool)
         # If already exists
         uuid = process_uuid(item) if item is not None else None
