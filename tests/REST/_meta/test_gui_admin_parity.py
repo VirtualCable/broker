@@ -135,11 +135,14 @@ class GuiAdminTunnelParityTest(rest.test.RESTTestCase):
     def test_tunnel_server_maintenance_post(self) -> None:
         """POST /tunnels/tunnels/{group_id}/servers/{server_id}/maintenance.
 
-        ``TunnelServers.maintenance`` is on the servers detail handler, not
-        the tunnel group. This is what the actual backend supports.
+        Validates the ``TunnelServers.maintenance`` endpoint directly,
+        even though no GUI component calls it today. This guards the
+        backend contract against accidental regression.
         """
         # Take the first server from the group
         server = self.group.servers.first()
+        if server is None:
+            raise RuntimeError('No server found!')
         url = f'tunnels/tunnels/{self.group.uuid}/servers/{server.uuid}/maintenance'
         response = self.client.rest_post(url)
         self.assertEqual(response.status_code, 200, f'tunnel server maintenance: {response.status_code}')
