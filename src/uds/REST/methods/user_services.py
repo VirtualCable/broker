@@ -49,6 +49,8 @@ from uds.core.util import ensure, log, permissions, ui as ui_utils
 from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
 
+from ._overview_cache import cached_overview
+
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +226,13 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
 
     @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['UserServiceItem']:
-        return self.do_get_items(parent, for_cached=False)
+        parent = ensure.is_instance(parent, models.ServicePool)
+        # Per-pool key; odata filter is part of the result so it must be part of the key.
+        return cached_overview(
+            self,
+            f'assigned_userservices:{parent.uuid}:{self._odata}',
+            lambda: list(self.do_get_items(parent, for_cached=False)),
+        )
 
     @typing.override
     def get_item(
@@ -360,7 +368,14 @@ class CachedService(AssignedUserService):
 
     @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['UserServiceItem']:
-        return self.do_get_items(parent, for_cached=True)
+        parent = ensure.is_instance(parent, models.ServicePool)
+        # Distinct prefix from assigned services: CachedService subclasses
+        # AssignedUserService and shares the same pool, so keys must not collide.
+        return cached_overview(
+            self,
+            f'cached_userservices:{parent.uuid}:{self._odata}',
+            lambda: list(self.do_get_items(parent, for_cached=True)),
+        )
 
     @typing.override
     def get_item(

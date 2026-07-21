@@ -62,31 +62,10 @@ logger = logging.getLogger(__name__)
 
 # Details of /auth
 
-# Authenticator overviews are hammered by the dashboard drill-down (it asks every
-# authenticator at once for users/groups) yet change seldom, so we memoize the
-# assembled list for a short while. flush=1 bypasses it.
-_overview_cache: typing.Final = Cache('UsersGroupsOverview')
-
-_T = typing.TypeVar('_T')
-
-
-class _SupportsQueryParams(typing.Protocol):
-    def query_params(self) -> collections.abc.Mapping[str, typing.Any]: ...
-
-
-def cached_overview(
-    handler: _SupportsQueryParams,
-    cache_key: str,
-    builder: collections.abc.Callable[[], list[_T]],
-) -> list[_T]:
-    flush = str(handler.query_params().get('flush', '')).lower() in ('1', 'true', 'yes')
-    if not flush:
-        cached = _overview_cache.get(cache_key, consts.cache.CACHE_NOT_FOUND)
-        if cached is not consts.cache.CACHE_NOT_FOUND:
-            return typing.cast('list[_T]', cached)
-    data = builder()
-    _overview_cache.put(cache_key, data, consts.cache.SHORT_CACHE_TIMEOUT)
-    return data
+# cached_overview lives in its own module so user_services can share it without an
+# import cycle (this module imports user_services). Re-exported here for callers
+# (e.g. authenticators) that already import it from users_groups.
+from ._overview_cache import cached_overview  # noqa: F401  (re-exported)
 
 
 def get_groups_from_metagroup(groups: collections.abc.Iterable[Group]) -> collections.abc.Iterable[Group]:
