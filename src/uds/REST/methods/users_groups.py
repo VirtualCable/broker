@@ -45,6 +45,7 @@ from uds.core.types.states import State
 
 from uds.core.auths.user import User as AUser
 from uds.core.util import log, ensure, ui as ui_utils
+from uds.core.util.cache import Cache
 from uds.core.util.model import process_uuid, sql_stamp_seconds
 from uds.models import Authenticator, User, Group, ServicePool, UserService
 from uds.core.managers.crypto import CryptoManager
@@ -60,6 +61,32 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Details of /auth
+
+# Authenticator overviews are hammered by the dashboard drill-down (it asks every
+# authenticator at once for users/groups) yet change seldom, so we memoize the
+# assembled list for a short while. flush=1 bypasses it.
+_overview_cache: typing.Final = Cache('UsersGroupsOverview')
+
+_T = typing.TypeVar('_T')
+
+
+class _SupportsQueryParams(typing.Protocol):
+    def query_params(self) -> collections.abc.Mapping[str, typing.Any]: ...
+
+
+def cached_overview(
+    handler: _SupportsQueryParams,
+    cache_key: str,
+    builder: collections.abc.Callable[[], list[_T]],
+) -> list[_T]:
+    flush = str(handler.query_params().get('flush', '')).lower() in ('1', 'true', 'yes')
+    if not flush:
+        cached = _overview_cache.get(cache_key, consts.cache.CACHE_NOT_FOUND)
+        if cached is not consts.cache.CACHE_NOT_FOUND:
+            return typing.cast('list[_T]', cached)
+    data = builder()
+    _overview_cache.put(cache_key, data, consts.cache.SHORT_CACHE_TIMEOUT)
+    return data
 
 
 def get_groups_from_metagroup(groups: collections.abc.Iterable[Group]) -> collections.abc.Iterable[Group]:
@@ -172,16 +199,18 @@ class Users(DetailHandler[UserItem]):
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult[UserItem]:
         parent = ensure.is_instance(parent, Authenticator)
 
-        users = self.odata_filter(parent.users.prefetch_related('groups'))
-        # groups filled in bulk; per-user get_groups() would cost O(N) extra queries
-        groups_of = bulk_groups_of_users(users, parent)
+        def build() -> list[UserItem]:
+            users = self.odata_filter(parent.users.prefetch_related('groups'))
+            # groups filled in bulk; per-user get_groups() would cost O(N) extra queries
+            groups_of = bulk_groups_of_users(users, parent)
+            items: list[UserItem] = []
+            for u in users:
+                item = self.as_user_item(u)
+                item.groups = groups_of[u.uuid]
+                items.append(item)
+            return items
 
-        items: list[UserItem] = []
-        for u in users:
-            item = self.as_user_item(u)
-            item.groups = groups_of[u.uuid]
-            items.append(item)
-        return items
+        return cached_overview(self, f'users:{parent.uuid}:{self._odata}', build)
 
     @typing.override
     def get_item(self, parent: 'Model', item: str) -> UserItem:
@@ -439,8 +468,11 @@ class Groups(DetailHandler[GroupItem]):
     @typing.override
     def get_items(self, parent: 'Model') -> types.rest.ItemsResult['GroupItem']:
         parent = ensure.is_instance(parent, Authenticator)
-        q = self.odata_filter(parent.groups.all())
-        return [self.as_group_item(i) for i in q]
+        return cached_overview(
+            self,
+            f'groups:{parent.uuid}:{self._odata}',
+            lambda: [self.as_group_item(i) for i in self.odata_filter(parent.groups.all())],
+        )
 
     @typing.override
     def get_item(self, parent: 'Model', item: str) -> 'GroupItem':
