@@ -600,6 +600,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             # Calculate etag
             etag = self._etag_from_item(item)
             self.check_if_match_header(etag)
+            
             for v in self.EXCLUDED_FIELDS:
                 if v in args:
                     del args[v]
@@ -639,6 +640,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         except (exceptions.rest.SaveException, exceptions.ui.ValidationError) as e:
             raise exceptions.rest.RequestError(str(e)) from e
         except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
+            raise
+        except exceptions.rest.HandlerError:
+            # Re-raise UDS REST exceptions (e.g. PreconditionFailed -> 412)
+            # without rewriting them as a generic 400 RequestError below.
             raise
         except Exception as e:
             logger.exception('Exception on put')
