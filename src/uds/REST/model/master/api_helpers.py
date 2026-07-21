@@ -41,6 +41,8 @@ from uds.core import consts
 from uds.core import types
 from uds.core.util import api as api_utils
 
+from uds.REST.utils import camel_and_snake_case_from
+
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.REST.model.master import ModelHandler
@@ -85,10 +87,7 @@ def api_paths(
     # PUT create operation (legacy — deprecated in favor of POST)
     put_create_op = types.rest.api.Operation(
         summary=f'Creates a new {name} item',
-        description=(
-            f'Creates a new {name} item. '
-            f'Deprecated: use POST /{path} instead.'
-        ),
+        description=(f'Creates a new {name} item. ' f'Deprecated: use POST /{path} instead.'),
         deprecated=True,
         parameters=[],
         requestBody=api_utils.gen_request_body(base_type_name, create=True),
@@ -184,15 +183,18 @@ def api_paths(
         ),
     }
 
-    for cm in cls.CUSTOM_METHODS:
-        cm_path = f'{path}/{{uuid}}/{cm.name}' if cm.needs_parent else f'{path}/{cm.name}'
+    def emit_custom_method(
+        cm: 'types.rest.ModelCustomMethod', method_name: str | None, deprecated: bool
+    ) -> None:
+        method_name = method_name or cm.name
+        cm_path = f'{path}/{{uuid}}/{method_name}' if cm.needs_parent else f'{path}/{method_name}'
         # Emit the declared HTTP method in the OpenAPI spec.
         # POST custom methods are documented as POST; GET methods as GET.
         # Legacy COMPAT-mode GET access to POST methods is intentionally
         # undocumented.
         # Prefer cm.description when provided; fall back to generic text.
-        cm_summary = cm.description if cm.description else f'{cm.name}'
-        cm_desc = cm.description if cm.description else f'Execute custom method {cm.name} for {name}'
+        cm_summary = cm.description if cm.description else f'{method_name}'
+        cm_desc = cm.description if cm.description else f'Execute custom method {method_name} for {name}'
         op = types.rest.api.Operation(
             summary=f'{cm_summary} ({name})',
             description=cm_desc,
@@ -200,21 +202,29 @@ def api_paths(
             responses=api_utils.gen_response('object', single=True),
             tags=get_tags,
             security=security,
+            deprecated=deprecated,
         )
         # Attach request body for POST methods with declared params
         if cm.params and cm.method == types.rest.CustomMethodMethod.POST:
             op.requestBody = types.rest.api.RequestBody(
-                description=f'Parameters for {cm.name}',
+                description=f'Parameters for {method_name}',
                 required=True,
                 content=types.rest.api.Content(
                     media_type='application/json',
                     schema=cm.params,
                 ),
             )
+
         if cm.method == types.rest.CustomMethodMethod.POST:
             api_desc[cm_path] = types.rest.api.PathItem(post=op)
         else:
             api_desc[cm_path] = types.rest.api.PathItem(get=op)
+
+    for cm in cls.CUSTOM_METHODS:
+        emit_custom_method(cm, None, False)
+        if '_' in cm.name:
+            emit_custom_method(cm, camel_and_snake_case_from(cm.name)[0], True)
+
     if cls.REST_API_INFO.typed.is_single_type():
         api_desc[f'{path}/{consts.rest.GUI}'] = types.rest.api.PathItem(
             get=types.rest.api.Operation(

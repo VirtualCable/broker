@@ -9666,6 +9666,49 @@ paths:
       summary: Get overview of Groups items
       tags:
       - Authenticators
+  /authenticators/{uuid}/groups/servicesPools:
+    get:
+      deprecated: true
+      description: Retrieve all service pools that this group has access to
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve all service pools that this group has access to (Groups collection)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/groups/services_pools:
     get:
       description: Retrieve all service pools that this group has access to
@@ -10016,6 +10059,49 @@ paths:
       security:
       - udsApiAuth: []
       summary: Update Groups item by UUID
+      tags:
+      - Authenticators
+  /authenticators/{uuid}/groups/{uuid}/servicesPools:
+    get:
+      deprecated: true
+      description: Retrieve all service pools that this group has access to
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve all service pools that this group has access to (Groups item)
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/{uuid}/services_pools:
@@ -10407,6 +10493,61 @@ paths:
       summary: Query Users items with OData in body
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/addToGroup:
+    post:
+      deprecated: true
+      description: Add this user to an existing group within the same authenticator
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                group:
+                  description: UUID of the group to add the user to
+                  type: string
+              type: object
+        description: Parameters for addToGroup
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Add this user to an existing group within the same authenticator (Users
+        collection)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/add_to_group:
     post:
       description: Add this user to an existing group within the same authenticator
@@ -10461,6 +10602,51 @@ paths:
         collection)
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/cleanRelated:
+    post:
+      deprecated: true
+      description: Remove all related data for this user (assigned services, cached
+        entries, pending operations)
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Remove all related data for this user (assigned services, cached entries,
+        pending operations) (Users collection)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/clean_related:
     post:
       description: Remove all related data for this user (assigned services, cached
@@ -10503,6 +10689,51 @@ paths:
       - udsApiAuth: []
       summary: Remove all related data for this user (assigned services, cached entries,
         pending operations) (Users collection)
+      tags:
+      - Authenticators
+  /authenticators/{uuid}/users/enableClientLogging:
+    post:
+      deprecated: true
+      description: Enable or disable client-side logging for this user (toggles on
+        each invocation)
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Enable or disable client-side logging for this user (toggles on each
+        invocation) (Users collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/enable_client_logging:
@@ -10618,6 +10849,50 @@ paths:
       summary: Get overview of Users items
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/servicesPools:
+    get:
+      deprecated: true
+      description: Retrieve all service pools in which this user has active assignments
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve all service pools in which this user has active assignments
+        (Users collection)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/services_pools:
     get:
       description: Retrieve all service pools in which this user has active assignments
@@ -10701,6 +10976,49 @@ paths:
       security:
       - udsApiAuth: []
       summary: Get table info of Users items
+      tags:
+      - Authenticators
+  /authenticators/{uuid}/users/userServices:
+    get:
+      deprecated: true
+      description: List all user services currently assigned to this user
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: List all user services currently assigned to this user (Users collection)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/user_services:
@@ -10971,6 +11289,61 @@ paths:
       summary: Update Users item by UUID
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/{uuid}/addToGroup:
+    post:
+      deprecated: true
+      description: Add this user to an existing group within the same authenticator
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                group:
+                  description: UUID of the group to add the user to
+                  type: string
+              type: object
+        description: Parameters for addToGroup
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Add this user to an existing group within the same authenticator (Users
+        item)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/{uuid}/add_to_group:
     post:
       description: Add this user to an existing group within the same authenticator
@@ -11025,6 +11398,51 @@ paths:
         item)
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/{uuid}/cleanRelated:
+    post:
+      deprecated: true
+      description: Remove all related data for this user (assigned services, cached
+        entries, pending operations)
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Remove all related data for this user (assigned services, cached entries,
+        pending operations) (Users item)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/{uuid}/clean_related:
     post:
       description: Remove all related data for this user (assigned services, cached
@@ -11067,6 +11485,51 @@ paths:
       - udsApiAuth: []
       summary: Remove all related data for this user (assigned services, cached entries,
         pending operations) (Users item)
+      tags:
+      - Authenticators
+  /authenticators/{uuid}/users/{uuid}/enableClientLogging:
+    post:
+      deprecated: true
+      description: Enable or disable client-side logging for this user (toggles on
+        each invocation)
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Enable or disable client-side logging for this user (toggles on each
+        invocation) (Users item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/enable_client_logging:
@@ -11148,6 +11611,50 @@ paths:
       summary: Get logs of Users item by UUID
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/{uuid}/servicesPools:
+    get:
+      deprecated: true
+      description: Retrieve all service pools in which this user has active assignments
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve all service pools in which this user has active assignments
+        (Users item)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/{uuid}/services_pools:
     get:
       description: Retrieve all service pools in which this user has active assignments
@@ -11191,6 +11698,49 @@ paths:
         (Users item)
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/{uuid}/userServices:
+    get:
+      deprecated: true
+      description: List all user services currently assigned to this user
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: List all user services currently assigned to this user (Users item)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/{uuid}/user_services:
     get:
       description: List all user services currently assigned to this user
@@ -11231,6 +11781,51 @@ paths:
       security:
       - udsApiAuth: []
       summary: List all user services currently assigned to this user (Users item)
+      tags:
+      - Authenticators
+  /authenticators/{uuid}/usersWithServices:
+    get:
+      deprecated: true
+      description: Retrieve all users in this authenticator that have active services
+        assigned
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve all users in this authenticator that have active services
+        assigned (Authenticator)
       tags:
       - Authenticators
   /authenticators/{uuid}/users_with_services:
@@ -15105,6 +15700,50 @@ paths:
       summary: Update Access item by UUID
       tags:
       - Metapools
+  /metapools/{uuid}/getFallbackAccess:
+    get:
+      deprecated: true
+      description: Retrieve the current fallback access policy for a meta pool member
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve the current fallback access policy for a meta pool member
+        (MetaPool)
+      tags:
+      - Metapools
   /metapools/{uuid}/get_fallback_access:
     get:
       description: Retrieve the current fallback access policy for a meta pool member
@@ -16911,6 +17550,60 @@ paths:
       security:
       - udsApiAuth: []
       summary: Get logs of Services item by UUID
+      tags:
+      - Metapools
+  /metapools/{uuid}/setFallbackAccess:
+    post:
+      deprecated: true
+      description: Update the fallback access policy for a meta pool member
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallbackAccess:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for setFallbackAccess
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Update the fallback access policy for a meta pool member (MetaPool)
       tags:
       - Metapools
   /metapools/{uuid}/set_fallback_access:
@@ -24472,6 +25165,51 @@ paths:
         schedule (Actions item)
       tags:
       - Servicespools
+  /servicespools/{uuid}/actionsList:
+    get:
+      deprecated: true
+      description: List all calendar actions available for this service pool based
+        on its service type and current state
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: List all calendar actions available for this service pool based on
+        its service type and current state (ServicePool)
+      tags:
+      - Servicespools
   /servicespools/{uuid}/actions_list:
     get:
       description: List all calendar actions available for this service pool based
@@ -24514,6 +25252,66 @@ paths:
       - udsApiAuth: []
       summary: List all calendar actions available for this service pool based on
         its service type and current state (ServicePool)
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/addLog:
+    post:
+      deprecated: true
+      description: Append a log entry to the service pool audit trail
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                level:
+                  description: Log severity level (INFO, WARN, ERROR)
+                  type: string
+                log_name:
+                  description: Optional log source name
+                  type: string
+                message:
+                  description: Log message text
+                  type: string
+              type: object
+        description: Parameters for addLog
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Append a log entry to the service pool audit trail (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/add_log:
@@ -25740,6 +26538,63 @@ paths:
       summary: Update Changelog item by UUID
       tags:
       - Servicespools
+  /servicespools/{uuid}/createFromAssignable:
+    post:
+      deprecated: true
+      description: Create a new service pool from an existing assignable service
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                assignable_id:
+                  description: Identifier of the assignable service to create from
+                  type: string
+                user_id:
+                  description: UUID of the user who will own the new service pool
+                  type: string
+              type: object
+        description: Parameters for createFromAssignable
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Create a new service pool from an existing assignable service (ServicePool)
+      tags:
+      - Servicespools
   /servicespools/{uuid}/create_from_assignable:
     post:
       description: Create a new service pool from an existing assignable service
@@ -25794,6 +26649,49 @@ paths:
       security:
       - udsApiAuth: []
       summary: Create a new service pool from an existing assignable service (ServicePool)
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/getFallbackAccess:
+    get:
+      deprecated: true
+      description: Retrieve the current fallback access policy for a service pool
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Retrieve the current fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/get_fallback_access:
@@ -26401,6 +27299,51 @@ paths:
       security:
       - udsApiAuth: []
       summary: Update Groups item by UUID
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/listAssignables:
+    get:
+      deprecated: true
+      description: Enumerate all assignable services that can be used to create a
+        new service pool
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Enumerate all assignable services that can be used to create a new
+        service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/list_assignables:
@@ -28531,6 +29474,60 @@ paths:
       - udsApiAuth: []
       summary: Reset a user service to its initial state, removing any cached or intermediate
         data (Services item)
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/setFallbackAccess:
+    post:
+      deprecated: true
+      description: Update the fallback access policy for a service pool
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallbackAccess:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for setFallbackAccess
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuth: []
+      summary: Update the fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/set_fallback_access:

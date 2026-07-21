@@ -50,9 +50,10 @@ import typing
 import logging
 import datetime
 
+from django.db import models as django_models
+
 from uds import models
 from uds.core.types.permissions import PermissionType
-from uds.core.util import permissions as permissions_util
 from uds.core.util import objtype
 
 from tests.fixtures import mfas as mfas_fixtures
@@ -74,13 +75,14 @@ class _BasePermissionTest(rest.test.RESTTestCase):
 
     BASE: typing.ClassVar[str]  # URL path, e.g. 'accounts' or 'gallery/servicespoolgroups'
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]]  # POST body used by admin
-    MODEL: typing.ClassVar[type[models.Model]]  # DB model created by the POST
+    MODEL: typing.ClassVar[type[django_models.Model]]  # DB model created by the POST
 
     # When False, ``_create_test_item`` is skipped in setUp; subclasses
     # without a POST endpoint (MFA, Notifier) set this to False and
     # populate ``item_uuid``/``item_pk`` themselves via ``_create_test_item``.
     CREATE_VIA_POST: typing.ClassVar[bool] = True
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self.login()  # create an item as admin for the rest of the suite
@@ -393,7 +395,7 @@ class MfaPermissionTest(_BasePermissionTest):
     @typing.override
     def _create_test_item(self) -> None:
         mfa_obj = mfas_fixtures.create_db_mfa()
-        self.item_uuid = str(mfa_obj.uuid)
+        self.item_uuid = mfa_obj.uuid
         self.item_pk = mfa_obj.pk
 
     def test_staff_with_all_can_delete(self) -> None:
@@ -437,7 +439,7 @@ class NotifiersPermissionTest(_BasePermissionTest):
     @typing.override
     def _create_test_item(self) -> None:
         notifier_obj = notifiers_fixtures.createEmailNotifier()
-        self.item_uuid = str(notifier_obj.uuid)
+        self.item_uuid = notifier_obj.uuid
         self.item_pk = notifier_obj.pk
 
     def test_admin_can_list(self) -> None:

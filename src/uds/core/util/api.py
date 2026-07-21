@@ -21,7 +21,7 @@ def _resolve_forwardref(
     ref: typing.Any, globalns: dict[str, typing.Any] | None = None, localns: dict[str, typing.Any] | None = None
 ) -> typing.Any:
     if isinstance(ref, typing.ForwardRef):
-        return None   # Currently, does not support resulving forward references
+        return None  # Currently, does not support resulving forward references
     return ref
 
 
@@ -177,10 +177,9 @@ def python_type_to_openapi(
     """
     Convert a Python type to an OpenAPI 3.1 schema property.
     """
-    
+
     # Partial to add description to schema property if provided
     schema_prop = functools.partial(types.rest.api.SchemaProperty, description=description)
-
 
     origin = typing.get_origin(py_type)
     args = typing.get_args(py_type)
@@ -193,9 +192,7 @@ def python_type_to_openapi(
     # dict[...] → object
     elif origin is dict:
         value_type = args[1] if len(args) == 2 else typing.Any
-        return schema_prop(
-            type='object', additionalProperties=python_type_to_openapi(value_type)
-        )
+        return schema_prop(type='object', additionalProperties=python_type_to_openapi(value_type))
 
     # Union[...] → oneOf
     # Except if one of them is None, in which case, we must extract it from the list
