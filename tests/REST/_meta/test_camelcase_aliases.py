@@ -39,12 +39,14 @@ produce, in the OpenAPI spec emitted by ``api_paths()``:
 (no uuid) and item-level (``{uuid}/``); both levels must follow the rule.
 ``ModelHandler`` emits a single item-level operation per custom method.
 """
+# pyright: reportUnknownArgumentType=false, reportUnknownVariableType=false
 
 import typing
 
 import pytest
 
 from uds.core import types
+from uds.REST.model.base import BaseModelHandler
 from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
 from uds.REST.utils import camel_and_snake_case_from
@@ -53,9 +55,9 @@ from uds.REST.utils import camel_and_snake_case_from
 SECURITY_NAME: typing.Final[str] = 'udsApiAuth'
 
 
-def _handlers_with_snake_case() -> list[type[types.rest.BaseHandler]]:
-    out: list[type[types.rest.BaseHandler]] = []
-    for cls in list(ModelHandler.__subclasses__()) + list(DetailHandler.__subclasses__()):
+def _handlers_with_snake_case() -> list[type[BaseModelHandler[typing.Any]]]:
+    out: list[type[BaseModelHandler[typing.Any]]] = []
+    for cls in list(ModelHandler.__subclasses__()) + list(DetailHandler.__subclasses__()):  
         cms = getattr(cls, 'CUSTOM_METHODS', None)
         if cms and any('_' in cm.name for cm in cms):
             out.append(cls)
@@ -77,18 +79,14 @@ def _check_pair(
     method: types.rest.CustomMethodMethod,
     handler_name: str,
 ) -> None:
-    assert canonical in paths, (
-        f'missing canonical path {canonical!r} in {handler_name}'
-    )
-    assert alias in paths, (
-        f'missing camelCase alias path {alias!r} in {handler_name}'
-    )
+    assert canonical in paths, f'missing canonical path {canonical!r} in {handler_name}'
+    assert alias in paths, f'missing camelCase alias path {alias!r} in {handler_name}'
 
     canonical_op = _op_for(paths[canonical], method)
     assert canonical_op is not None, f'canonical {canonical!r} has no operation'
-    assert getattr(canonical_op, 'deprecated', False) is False, (
-        f'canonical {canonical!r} should not be deprecated'
-    )
+    assert (
+        getattr(canonical_op, 'deprecated', False) is False
+    ), f'canonical {canonical!r} should not be deprecated'
 
     alias_op = _op_for(paths[alias], method)
     assert alias_op is not None, f'alias {alias!r} has no operation'
@@ -101,7 +99,7 @@ def _check_pair(
     ids=lambda c: c.__name__,
 )
 def test_snake_case_custom_methods_emit_deprecated_camelcase_aliases(
-    handler_cls: type[types.rest.BaseHandler],
+    handler_cls: type[ModelHandler[typing.Any]] | type[DetailHandler[typing.Any]],
 ) -> None:
     snake_methods = [cm for cm in handler_cls.CUSTOM_METHODS if '_' in cm.name]
     assert snake_methods, f'{handler_cls.__name__} has no snake_case methods to test'
@@ -138,7 +136,7 @@ def test_snake_case_custom_methods_emit_deprecated_camelcase_aliases(
     ids=lambda c: c.__name__,
 )
 def test_single_word_custom_methods_have_no_alias(
-    handler_cls: type[types.rest.BaseHandler],
+    handler_cls: type[ModelHandler[typing.Any]] | type[DetailHandler[typing.Any]],
 ) -> None:
     """Methods whose name has no '_' must not produce a duplicate alias entry."""
     single = [cm for cm in handler_cls.CUSTOM_METHODS if '_' not in cm.name]
