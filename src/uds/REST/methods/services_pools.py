@@ -246,7 +246,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 valid_count=Count('userServices', filter=~Q(userServices__state__in=State.INFO_STATES))
             )
             _, is_descending = field_info
-            order_by_field = f"-valid_count" if is_descending else "valid_count"
+            order_by_field = "-valid_count" if is_descending else "valid_count"
             return qs.order_by(order_by_field)
         if field_info := self.get_sort_field_info('user_services_in_preparation'):
             # Annotate the count
@@ -254,15 +254,15 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 preparing_count=Count('userServices', filter=Q(userServices__state=State.PREPARING))
             )
             _, is_descending = field_info
-            order_by_field = f"-preparing_count" if is_descending else "preparing_count"
+            order_by_field = "-preparing_count" if is_descending else "preparing_count"
             return qs.order_by(order_by_field)
         if field_info := self.get_sort_field_info('pool_group_name'):
             _, is_descending = field_info
-            order_by_field = f"-servicesPoolGroup__name" if is_descending else "servicesPoolGroup__name"
+            order_by_field = "-servicesPoolGroup__name" if is_descending else "servicesPoolGroup__name"
             return qs.order_by(order_by_field)
         if field_info := self.get_sort_field_info('parent'):
             _, is_descending = field_info
-            order_by_field = f"-service__name" if is_descending else "service__name"
+            order_by_field = "-service__name" if is_descending else "service__name"
             return qs.order_by(order_by_field)
 
         if field_info := self.get_sort_field_info('usage'):
@@ -287,7 +287,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 ),
             )
             _, is_descending = field_info
-            order_by_field = f"-usage_ratio" if is_descending else "usage_ratio"
+            order_by_field = "-usage_ratio" if is_descending else "usage_ratio"
             return qs.order_by(order_by_field)
 
         return super().apply_sort(qs)

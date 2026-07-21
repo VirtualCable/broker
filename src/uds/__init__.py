@@ -92,7 +92,7 @@ default_app_config = 'uds.UDSAppConfig'
 @receiver(connection_created)
 def extend_sqlite(connection: typing.Any = None, **kwargs: typing.Any) -> None:
     if connection and connection.vendor == "sqlite":
-        logger.debug(f'Connection vendor for %s is sqlite, extending methods', connection)
+        logger.debug('Connection vendor for %s is sqlite, extending methods', connection)
         cursor = connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")

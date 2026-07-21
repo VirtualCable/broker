@@ -174,7 +174,7 @@ class Command(BaseCommand):
         size_bytes = self._estimate_size()
 
         self.stdout.write('─' * 62)
-        self.stdout.write(f'  Immutable Log Summary')
+        self.stdout.write('  Immutable Log Summary')
         self.stdout.write('─' * 62)
         self.stdout.write(f'  Enabled (config):  {enabled}')
         self.stdout.write(f'  Total entries:     {total}')

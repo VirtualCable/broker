@@ -613,6 +613,7 @@ class Handler(abc.ABC):
             # Strip optional weak prefix and surrounding quotes/whitespace.
             return value.strip().removeprefix('W/').strip().strip('"')
 
+        self.header
         if_none_match = self._request.headers.get('If-None-Match')
         if if_none_match is not None:
             raw = if_none_match.strip()

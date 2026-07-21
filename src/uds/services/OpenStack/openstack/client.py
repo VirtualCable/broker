@@ -677,7 +677,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         r = self._request_from_endpoint(
             'post',
             endpoints_types=VOLUMES_ENDPOINT_TYPES,
-            path=f'/snapshots',
+            path='/snapshots',
             data=json.dumps(data),
             error_message='Create Volume Snapshot',
         )

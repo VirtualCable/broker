@@ -312,7 +312,7 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
                 elif len(args) == 3:
                     return lambda obj: str(args[0](obj))[int(args[1](obj)) : int(args[2](obj))]
                 else:
-                    raise ValueError(f"substring function requires 2 or 3 arguments")
+                    raise ValueError("substring function requires 2 or 3 arguments")
             case 'startswith':
                 return lambda obj: str(args[0](obj)).lower().startswith(str(args[1](obj)).lower())
             case 'endswith':

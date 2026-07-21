@@ -37,7 +37,6 @@ import collections.abc
 import abc
 
 from django.db import models
-from django.utils.translation import gettext as _
 
 from uds.core import consts, exceptions, types, module
 from uds.core.types.rest import T_Item
@@ -48,8 +47,7 @@ from uds.REST.utils import rest_result
 from uds.REST.model.base import BaseModelHandler
 from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
 
-T = typing.TypeVar('T', bound=models.Model)
-T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
+T = typing.TypeVar("T", bound=models.Model)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

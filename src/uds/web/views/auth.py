@@ -54,7 +54,7 @@ from uds.models import Authenticator, ServicePool, TicketStore
 from uds.web.forms.login_form import LoginForm
 from uds.web.util import errors
 from uds.web.util.authentication import check_login
-from uds.web.views.main import index, logger
+from uds.web.views.main import index
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser

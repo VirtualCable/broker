@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 import enum
 import time
@@ -38,59 +39,74 @@ import datetime
 
 from django.utils.translation import gettext as _
 
-from . import actor, auth, cache, calendar, images, net, os, system, ticket, rest, services, transports, ui
+from . import (
+    actor as actor,
+    auth as auth,
+    cache as cache,
+    calendar as calendar,
+    images as images,
+    net as net,
+    os as os,
+    system as system,
+    ticket as ticket,
+    rest as rest,
+    services as services,
+    transports as transports,
+    ui as ui,
+)
 
 # Date related constants
 NEVER: typing.Final[datetime.datetime] = datetime.datetime(1972, 7, 1, tzinfo=datetime.timezone.utc)
 NEVER_UNIX: typing.Final[int] = int(time.mktime(NEVER.timetuple()))
 
 # Null mac address "magic" value
-NULL_MAC: typing.Final[str] = '00:00:00:00:00:00'
+NULL_MAC: typing.Final[str] = "00:00:00:00:00:00"
 
 # REST Related constants
-OK: typing.Final[str] = 'ok'  # Constant to be returned when result is just "operation complete successfully"
+OK: typing.Final[str] = "ok"  # Constant to be returned when result is just "operation complete successfully"
 
 # For conversion to boolean
 BOOL_TRUE_VALUES: typing.Final[set[bool | str | bytes | int]] = {
     True,
-    'TRUE',
-    'True',
-    b'true',
-    b'True',
-    b'TRUE',
+    "TRUE",
+    "True",
+    b"true",
+    b"True",
+    b"TRUE",
     1,
-    '1',
-    b'1',
-    'true',
-    'YES',
-    'Yes',
-    'yes',
-    'ENABLED',
-    'Enabled',
-    'enabled',
+    "1",
+    b"1",
+    "true",
+    "YES",
+    "Yes",
+    "yes",
+    "ENABLED",
+    "Enabled",
+    "enabled",
 }
-TRUE_STR: typing.Final[str] = 'true'
-FALSE_STR: typing.Final[str] = 'false'
+TRUE_STR: typing.Final[str] = "true"
+FALSE_STR: typing.Final[str] = "false"
 
 # Constant to mark an "UNLIMITED" value
 UNLIMITED: typing.Final[int] = -1
 
 # Constant marking no more names available
-NO_MORE_NAMES: typing.Final[str] = 'NO-NAME-ERROR'
+NO_MORE_NAMES: typing.Final[str] = "NO-NAME-ERROR"
 # For convenience, same as NULL_MAC, but different meaning
 NO_MORE_MACS: typing.Final[str] = NULL_MAC
 
-UUID_ZERO: typing.Final[str] = '00000000-0000-0000-0000-000000000000'
+UUID_ZERO: typing.Final[str] = "00000000-0000-0000-0000-000000000000"
+
 
 class UserRole(enum.StrEnum):
     """
     Roles for users
     """
 
-    ADMIN = 'admin'
-    STAFF = 'staff'
-    USER = 'user'
-    ANONYMOUS = 'anonymous'
+    ADMIN = "admin"
+    STAFF = "staff"
+    USER = "user"
+    ANONYMOUS = "anonymous"
 
     @property
     def needs_authentication(self) -> bool:
@@ -102,7 +118,7 @@ class UserRole(enum.StrEnum):
         """
         return self != UserRole.ANONYMOUS
 
-    def can_access(self, role: 'UserRole') -> bool:
+    def can_access(self, role: "UserRole") -> bool:
         """
         Checks if this role can access to the requested role
 
@@ -132,10 +148,8 @@ class UserRole(enum.StrEnum):
         """
         # _('Admin') or _('Staff member')) or _('User')
         return {
-            UserRole.ADMIN: _('Admin'),
-            UserRole.STAFF: _('Staff member'),
-            UserRole.USER: _('User'),
-            UserRole.ANONYMOUS: _('Anonymous'),
-        }.get(
-            self, _('Unknown role')
-        )  # Default case, should not happen
+            UserRole.ADMIN: _("Admin"),
+            UserRole.STAFF: _("Staff member"),
+            UserRole.USER: _("User"),
+            UserRole.ANONYMOUS: _("Anonymous"),
+        }.get(self, _("Unknown role"))  # Default case, should not happen

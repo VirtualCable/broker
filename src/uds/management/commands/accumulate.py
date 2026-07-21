@@ -71,7 +71,7 @@ class Command(BaseCommand):
         self.verbose = options['verbose']
 
         if self.verbose:
-            self.stderr.write(f'Accumulating stats counters')
+            self.stderr.write('Accumulating stats counters')
             logging.getLogger('uds').setLevel(logging.DEBUG)
             # Output also to stderr
             logging.getLogger('uds').addHandler(logging.StreamHandler(self.stderr))

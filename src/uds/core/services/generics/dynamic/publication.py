@@ -108,7 +108,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         if (
             retries > self.max_retries
         ):  # Use self to access class variables, so we can override them on subclasses
-            return self._error(f'Max retries reached')
+            return self._error('Max retries reached')
 
         return None
 

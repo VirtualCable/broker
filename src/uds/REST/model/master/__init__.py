@@ -38,13 +38,11 @@ import collections.abc
 
 from django.db import IntegrityError, models
 from django.db.models import QuerySet
-from django.utils.translation import gettext as _
 
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
 from uds.core.module import Module
-from uds.core.types.rest import T_Item
 from uds.core.util import log, permissions, model as model_utils, api as api_utils
 from uds.models import ManagedObjectModel, Tag, TaggingMixin
 

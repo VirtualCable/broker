@@ -26,9 +26,7 @@ class _FakeRequest:
     so this exposes a ``headers`` mapping (no ``.get`` proxy is needed).
     """
 
-    def __init__(
-        self, headers: dict[str, str] | None = None
-    ) -> None:
+    def __init__(self, headers: dict[str, str] | None = None) -> None:
         self.headers: dict[str, str] = dict(headers or {})
 
 
@@ -52,14 +50,14 @@ class SetEtagTestCase(unittest.TestCase):
 
     def test_quotes_hex_digest(self) -> None:
         handler = _make_handler()
-        handler.set_etag('abc123')
-        assert handler._headers['ETag'] == '"abc123"'  # noqa: SLF001
+        handler.set_etag("abc123")
+        assert handler._headers["ETag"] == '"abc123"'  # noqa: SLF001
 
     def test_each_call_overwrites_previous(self) -> None:
         handler = _make_handler()
-        handler.set_etag('first')
-        handler.set_etag('second')
-        assert handler._headers['ETag'] == '"second"'  # noqa: SLF001
+        handler.set_etag("first")
+        handler.set_etag("second")
+        assert handler._headers["ETag"] == '"second"'  # noqa: SLF001
 
 
 # --------------------------------------------------------------------- #
@@ -76,7 +74,7 @@ class CheckIfMatchNoHeadersTestCase(unittest.TestCase):
 
     def test_update_path_accepts_when_no_headers(self) -> None:
         handler = _make_handler()
-        handler.check_if_match_header('abc123')  # must not raise
+        handler.check_if_match_header("abc123")  # must not raise
 
 
 class CheckIfMatchCreatePathTestCase(unittest.TestCase):
@@ -91,27 +89,28 @@ class CheckIfMatchCreatePathTestCase(unittest.TestCase):
     """
 
     def test_if_match_star_rejected(self) -> None:
-        handler = _make_handler({'If-Match': '*'})
+        handler = _make_handler({"If-Match": "*"})
         with self.assertRaises(PreconditionFailed):
             handler.check_if_match_header(None)
 
     def test_if_match_concrete_value_accepted(self) -> None:
-        handler = _make_handler({'If-Match': '"abc"'})
+        handler = _make_handler({"If-Match": '"abc"'})
         handler.check_if_match_header(None)  # must not raise
 
     def test_if_match_quoted_hex_with_w_prefix_accepted(self) -> None:
         """Weak concrete If-Match on a create path is also ignored."""
-        handler = _make_handler({'If-Match': 'W/"abc"'})
+        handler = _make_handler({"If-Match": 'W/"abc"'})
         handler.check_if_match_header(None)  # must not raise
 
     def test_if_none_match_star_accepted(self) -> None:
         """``If-None-Match: *`` is not enforced on the create branch."""
-        handler = _make_handler({'If-None-Match': '*'})
+        handler = _make_handler({"If-None-Match": "*"})
         handler.check_if_match_header(None)  # must not raise
 
     def test_if_none_match_concrete_value_accepted(self) -> None:
-        handler = _make_handler({'If-None-Match': '"abc"'})
+        handler = _make_handler({"If-None-Match": '"abc"'})
         handler.check_if_match_header(None)  # must not raise
+
 
 class CheckIfMatchIfNoneMatchUpdateTestCase(unittest.TestCase):
     """``If-None-Match`` on the *update* path.
@@ -121,19 +120,19 @@ class CheckIfMatchIfNoneMatchUpdateTestCase(unittest.TestCase):
     """
 
     def test_matching_value_rejected(self) -> None:
-        handler = _make_handler({'If-None-Match': '"abc"'})
+        handler = _make_handler({"If-None-Match": '"abc"'})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('abc')
+            handler.check_if_match_header("abc")
 
     def test_different_value_accepted(self) -> None:
-        handler = _make_handler({'If-None-Match': '"abc"'})
-        handler.check_if_match_header('def')  # must not raise
+        handler = _make_handler({"If-None-Match": '"abc"'})
+        handler.check_if_match_header("def")  # must not raise
 
     def test_star_means_resource_must_not_exist_rejects_update(self) -> None:
         """``If-None-Match: *`` on update = "fail because resource exists"."""
-        handler = _make_handler({'If-None-Match': '*'})
+        handler = _make_handler({"If-None-Match": "*"})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('abc')
+            handler.check_if_match_header("abc")
 
     def test_weak_etag_is_compared_by_value(self) -> None:
         """RFC 7232 §2.3.2 weak comparison.
@@ -141,40 +140,40 @@ class CheckIfMatchIfNoneMatchUpdateTestCase(unittest.TestCase):
         The validator strips the ``W/`` prefix and the surrounding quotes
         and compares raw values, so ``W/"abc"`` matches ``abc``.
         """
-        handler = _make_handler({'If-None-Match': 'W/"abc"'})
+        handler = _make_handler({"If-None-Match": 'W/"abc"'})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('abc')
+            handler.check_if_match_header("abc")
 
     def test_weak_etag_unrelated_value_accepted(self) -> None:
-        handler = _make_handler({'If-None-Match': 'W/"abc"'})
-        handler.check_if_match_header('def')  # must not raise
+        handler = _make_handler({"If-None-Match": 'W/"abc"'})
+        handler.check_if_match_header("def")  # must not raise
 
 
 class CheckIfMatchIfMatchUpdateTestCase(unittest.TestCase):
     """``If-Match`` on the *update* path."""
 
     def test_matching_value_accepted(self) -> None:
-        handler = _make_handler({'If-Match': '"abc"'})
-        handler.check_if_match_header('abc')  # must not raise
+        handler = _make_handler({"If-Match": '"abc"'})
+        handler.check_if_match_header("abc")  # must not raise
 
     def test_different_value_rejected(self) -> None:
-        handler = _make_handler({'If-Match': '"abc"'})
+        handler = _make_handler({"If-Match": '"abc"'})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('def')
+            handler.check_if_match_header("def")
 
     def test_star_accepted_on_update(self) -> None:
         """``If-Match: *`` on update = "any current state is fine"."""
-        handler = _make_handler({'If-Match': '*'})
-        handler.check_if_match_header('abc')  # must not raise
+        handler = _make_handler({"If-Match": "*"})
+        handler.check_if_match_header("abc")  # must not raise
 
     def test_weak_etag_compared_by_value(self) -> None:
-        handler = _make_handler({'If-Match': 'W/"abc"'})
-        handler.check_if_match_header('abc')  # must not raise
+        handler = _make_handler({"If-Match": 'W/"abc"'})
+        handler.check_if_match_header("abc")  # must not raise
 
     def test_weak_etag_mismatch_rejected(self) -> None:
-        handler = _make_handler({'If-Match': 'W/"abc"'})
+        handler = _make_handler({"If-Match": 'W/"abc"'})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('def')
+            handler.check_if_match_header("def")
 
 
 class CheckIfMatchBothHeadersTestCase(unittest.TestCase):
@@ -186,26 +185,20 @@ class CheckIfMatchBothHeadersTestCase(unittest.TestCase):
 
     def test_both_match_current_rejected(self) -> None:
         """Both match → ``If-None-Match`` rejects first."""
-        handler = _make_handler(
-            {'If-Match': '"abc"', 'If-None-Match': '"abc"'}
-        )
+        handler = _make_handler({"If-Match": '"abc"', "If-None-Match": '"abc"'})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('abc')
+            handler.check_if_match_header("abc")
 
     def test_if_match_passes_if_none_match_mismatches(self) -> None:
         """If-Match value differs but If-None-Match passes, mismatch wins."""
-        handler = _make_handler(
-            {'If-Match': '"xxx"', 'If-None-Match': '"abc"'}
-        )
+        handler = _make_handler({"If-Match": '"xxx"', "If-None-Match": '"abc"'})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('abc')
+            handler.check_if_match_header("abc")
 
     def test_star_if_match_with_if_none_match_star_rejected(self) -> None:
         """``If-Match: *`` accepts anything but ``If-None-Match: *`` rejects
         update because resource exists. The If-None-Match wins.
         """
-        handler = _make_handler(
-            {'If-Match': '*', 'If-None-Match': '*'}
-        )
+        handler = _make_handler({"If-Match": "*", "If-None-Match": "*"})
         with self.assertRaises(PreconditionFailed):
-            handler.check_if_match_header('abc')
+            handler.check_if_match_header("abc")

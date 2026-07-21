@@ -143,7 +143,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
             data['retries'] = retries
 
         if retries > self.max_retries:  # get "own class" max retries
-            return self.error(f'Max retries reached')
+            return self.error('Max retries reached')
 
         return None
 

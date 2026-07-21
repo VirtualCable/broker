@@ -50,7 +50,6 @@ from uds.core.exceptions.services import ServiceNotReadyError, MaxServicesReache
 
 from uds.web.util import services
 from uds.web.util.services import get_services_info_dict
-from uds.web.views.main import logger
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -88,7 +87,7 @@ def transport_own_link(
                 ),
             )
     except ServiceNotReadyError as e:
-        logger.debug('Service not ready')
+        logger.debug("Service not ready")
         # Not ready, show message and return to this page in a while
         # error += ' (code {0:04X})'.format(e.code)
         response = _response(percent=e.code)
@@ -98,9 +97,9 @@ def transport_own_link(
     except ServiceAccessDeniedByCalendar:
         logger.info('Access tried to a calendar limited access pool "%s"', service_id)
         response = _response(error=types.errors.Error.SERVICE_CALENDAR_DENIED.message)
-    except Exception as e:
-        logger.exception('Error')
-        response = _response(error=gettext('Internal error'))
+    except Exception:
+        logger.exception("Error")
+        response = _response(error=gettext("Internal error"))
         
     return HttpResponse(content=json.dumps(response), content_type='application/json')
 

@@ -132,7 +132,7 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
         elif isinstance(left, F):
             field_name = left.name
         else:
-            raise ValueError(f"Left side of binary expression must be a field name or annotated field")
+            raise ValueError("Left side of binary expression must be a field name or annotated field")
 
         logger.debug("Binary expr: field=%s, op=%s, value=%s", field_name, op, right)
 
@@ -182,7 +182,7 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
                 raise ValueError(f"{func_name} requires 2 arguments")
             field, value = func_args
             if not isinstance(field, str):
-                raise ValueError(f"Field name must be a string")
+                raise ValueError("Field name must be a string")
             if isinstance(value, F):
                 raise ValueError(f"Function '{func_name}' does not support field-to-field comparison")
             match func_name:

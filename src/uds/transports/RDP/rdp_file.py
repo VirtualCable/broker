@@ -328,7 +328,7 @@ class RDPFile:
             ('disable wallpaper', f'i:{disable_wallpaper}'),
             ('redirectprinters', f'i:{printers}'),
             ('disable full window drag', 'i:1'),
-            ('authentication level', f'i:0'),
+            ('authentication level', 'i:0'),
             # Not listed, but maybe usable?
             ('enablecredsspsupport', f'i:{credsspsupport}'),
         ]

@@ -258,17 +258,17 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
         if field_info := self.get_sort_field_info('type_name'):
             _, is_descending = field_info
-            order_by_field = f'-data_type' if is_descending else 'data_type'
+            order_by_field = '-data_type' if is_descending else 'data_type'
             return qs.order_by(order_by_field)
 
         if field_info := self.get_sort_field_info('numeric_id'):
             _, is_descending = field_info
-            order_by_field = f'-pk' if is_descending else 'pk'
+            order_by_field = '-pk' if is_descending else 'pk'
             return qs.order_by(order_by_field)
 
         if field_info := self.get_sort_field_info('mfa_name'):
             _, is_descending = field_info
-            order_by_field = f'-mfa__name' if is_descending else 'mfa__name'
+            order_by_field = '-mfa__name' if is_descending else 'mfa__name'
             return qs.order_by(order_by_field)
 
         return super().apply_sort(qs)
