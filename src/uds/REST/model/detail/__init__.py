@@ -182,6 +182,10 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
 
         return consts.rest.NOT_FOUND
 
+    def _get_fields_from_gui(self, parent: models.Model, for_type: str) -> list[str]:
+        gui = self.get_gui(parent, for_type)
+        return [i.name for i in gui]
+
     # pylint: disable=too-many-branches,too-many-return-statements
     def get(self) -> typing.Any:
         """
@@ -206,9 +210,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             case [consts.rest.OVERVIEW, *_fails]:
                 raise exceptions.rest.RequestError('Invalid overview request') from None
             case [consts.rest.TYPES]:
-                types = self.enum_types(parent, None)
-                logger.debug('Types: %s', types)
-                return [i.as_dict() for i in types]
+                known_types = self.enum_types(parent, None)
+                logger.debug('Types: %s', known_types)
+                return [i.as_dict() for i in known_types]
             case [consts.rest.TYPES, for_type]:
                 return [i.as_dict() for i in self.enum_types(parent, for_type)]
             case [consts.rest.TYPES, for_type, *_fails]:
@@ -230,9 +234,19 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             case [consts.rest.POSITION, item_uuid]:
                 return self.get_item_position(parent, item_uuid)
             case [one_arg]:
-                return self.get_item(parent, process_uuid(one_arg))
+                response = self.get_item(parent, process_uuid(one_arg))
+                if isinstance(response, types.rest.ManagedObjectItem):
+                    fields: list[str] = self._get_fields_from_gui(
+                        parent,
+                        response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                    )
+                    # Append etag header
+                    self.add_header('ETag', response.etag(*fields))
+
+                return response  # pyright: ignore[reportUnknownVariableType]
+
             case _:
-                # Maybe a custom method?
+                # Maybe a custom method of an specific item?
                 r = self._check_is_custom_method(self._args[1], parent, self._args[0])
                 if r is not None:
                     return r

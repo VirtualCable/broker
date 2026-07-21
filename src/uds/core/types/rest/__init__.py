@@ -34,6 +34,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import abc
 import enum
 import typing
+import hashlib
 import dataclasses
 import collections.abc
 
@@ -172,6 +173,13 @@ class BaseRestItem:
 
         # NOTE: the json processor should take care of converting "sub-items" to valid dictionaries
         #       (as it already does)
+
+    def inmutables(self, *fields: str) -> str:
+        return ''.join(str(getattr(self, f, '')) for f in fields)
+
+    @typing.final
+    def etag(self, *fields: str) -> str:
+        return hashlib.sha256(self.inmutables(*fields).encode('utf-8')).hexdigest()
 
     @classmethod
     def api_components(cls: type[typing.Self]) -> api.Components:

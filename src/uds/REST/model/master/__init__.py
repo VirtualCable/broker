@@ -426,7 +426,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     try:
                         item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
                         self.check_access(item, types.permissions.PermissionType.READ)
-                        return self.get_item(item).as_dict()
+                        response = self.get_item(item)
+                        # Append etag header
+                        self.add_header('ETag', response.etag(*self.FIELDS_TO_SAVE))
+                        return response
                     except Exception as e:
                         logger.exception('Got Exception looking for item')
                         raise exceptions.rest.NotFound('Item not found') from e

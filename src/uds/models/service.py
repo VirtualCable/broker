@@ -171,7 +171,7 @@ class Service(ManagedObjectModel, TaggingMixin):
 
     def is_in_maintenance(self) -> bool:
         # orphaned services?
-        return self.provider.is_in_maintenance() if self.provider else True
+        return self.provider.is_in_maintenance()
 
     def test_connectivity(self, host: str, port: str | int, timeout: float = 4) -> bool:
         return net.test_connectivity(host, int(port), timeout)

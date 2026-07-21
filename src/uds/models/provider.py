@@ -83,7 +83,7 @@ class Provider(ManagedObjectModel, TaggingMixin):
         return services.factory().lookup(self.data_type) or services.ServiceProvider
 
     @typing.override
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'ServiceProvider':
+    def get_instance(self, values: dict[str, str] | None = None) -> 'ServiceProvider':
         prov: 'ServiceProvider' = typing.cast('ServiceProvider', super().get_instance(values=values))
         return prov
 

@@ -117,7 +117,7 @@ class TestApiGenBasic(UDSTestCase):
         paths = base.BaseModelHandler.common_paths()
 
         # Node is a tree, recursively check all children
-        def check_node(node: types.rest.HandlerNode):
+        def check_node(node: types.rest.HandlerNode) -> None:
             nonlocal comps
             if handler := node.handler:
                 full_path = '/' + node.full_path().lstrip('/')
