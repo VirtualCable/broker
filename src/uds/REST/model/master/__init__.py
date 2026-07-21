@@ -386,6 +386,11 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 return operation()
 
         return consts.rest.NOT_FOUND
+    
+    def _etag_from_item(self, item: models.Model) -> str:
+        response = self.get_item(item)
+        # Append etag header
+        return response.etag(*self.FIELDS_TO_SAVE)
 
     def get(self) -> typing.Any:
         logger.debug('method GET for %s, %s', self.__class__.__name__, self._args)
@@ -428,7 +433,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                         self.check_access(item, types.permissions.PermissionType.READ)
                         response = self.get_item(item)
                         # Append etag header
-                        self.add_header('ETag', response.etag(*self.FIELDS_TO_SAVE))
+                        self.add_header('ETag', self._etag_from_item(item))
                         return response
                     except Exception as e:
                         logger.exception('Got Exception looking for item')
@@ -589,6 +594,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
             # Must have 1 arg → update
             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
+            # Calculate etag
+            etag = self._etag_from_item(item)
             for v in self.EXCLUDED_FIELDS:
                 if v in args:
                     del args[v]

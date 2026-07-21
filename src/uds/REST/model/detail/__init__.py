@@ -186,6 +186,18 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         gui = self.get_gui(parent, for_type)
         return [i.name for i in gui]
 
+    def _item_with_etag_from_uuuid(self, parent: models.Model, uuid: str) -> tuple[T_Item, str]:
+        response = self.get_item(parent, process_uuid(uuid))
+        etag = ''
+        if isinstance(response, types.rest.ManagedObjectItem):
+            fields: list[str] = self._get_fields_from_gui(
+                parent,
+                response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            )
+            # Append etag header
+            etag = response.etag(*fields)
+        return response, etag  # pyright: ignore[reportUnknownVariableType]
+
     # pylint: disable=too-many-branches,too-many-return-statements
     def get(self) -> typing.Any:
         """
@@ -234,14 +246,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             case [consts.rest.POSITION, item_uuid]:
                 return self.get_item_position(parent, item_uuid)
             case [one_arg]:
-                response = self.get_item(parent, process_uuid(one_arg))
-                if isinstance(response, types.rest.ManagedObjectItem):
-                    fields: list[str] = self._get_fields_from_gui(
-                        parent,
-                        response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-                    )
-                    # Append etag header
-                    self.add_header('ETag', response.etag(*fields))
+                response, etag = self._item_with_etag_from_uuuid(parent, one_arg)
+                if etag:
+                    self.add_header('ETag', etag)
 
                 return response  # pyright: ignore[reportUnknownVariableType]
 
@@ -283,6 +290,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             return self._perform_create(parent)
 
         logger.debug('Invoking proper saving detail item %s', item)
+        # Try to get the etag from item.
+        _not_used, etag = self._item_with_etag_from_uuuid(parent, item)
+
         return rest_result(self.save_item(parent, item))
 
     def post(self) -> typing.Any:
