@@ -2901,6 +2901,75 @@
                 ]
             }
         },
+        "/authenticators/{uuid}/usersWithServices": {
+            "get": {
+                "summary": "Retrieve all users in this authenticator that have active services assigned (Authenticator)",
+                "description": "Retrieve all users in this authenticator that have active services assigned",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/authenticators/gui/{type}": {
             "get": {
                 "summary": "Get GUI representation of Authenticator type",
@@ -3963,6 +4032,144 @@
                 ]
             }
         },
+        "/authenticators/{uuid}/users/servicesPools": {
+            "get": {
+                "summary": "Retrieve all service pools in which this user has active assignments (Users collection)",
+                "description": "Retrieve all service pools in which this user has active assignments",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/{uuid}/servicesPools": {
+            "get": {
+                "summary": "Retrieve all service pools in which this user has active assignments (Users item)",
+                "description": "Retrieve all service pools in which this user has active assignments",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/authenticators/{uuid}/users/user_services": {
             "get": {
                 "summary": "Custom method user_services for Users collection",
@@ -4035,6 +4242,144 @@
             "get": {
                 "summary": "Custom method user_services for Users item",
                 "description": "Execute custom method user_services for Users item",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/userServices": {
+            "get": {
+                "summary": "List all user services currently assigned to this user (Users collection)",
+                "description": "List all user services currently assigned to this user",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/{uuid}/userServices": {
+            "get": {
+                "summary": "List all user services currently assigned to this user (Users item)",
+                "description": "List all user services currently assigned to this user",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "uuid",
@@ -4235,6 +4580,144 @@
                 ]
             }
         },
+        "/authenticators/{uuid}/users/cleanRelated": {
+            "post": {
+                "summary": "Remove all related data for this user (assigned services, cached entries, pending operations) (Users collection)",
+                "description": "Remove all related data for this user (assigned services, cached entries, pending operations)",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/{uuid}/cleanRelated": {
+            "post": {
+                "summary": "Remove all related data for this user (assigned services, cached entries, pending operations) (Users item)",
+                "description": "Remove all related data for this user (assigned services, cached entries, pending operations)",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/authenticators/{uuid}/users/add_to_group": {
             "get": {
                 "summary": "Custom method add_to_group for Users collection",
@@ -4371,6 +4854,178 @@
                 ]
             }
         },
+        "/authenticators/{uuid}/users/addToGroup": {
+            "post": {
+                "summary": "Add this user to an existing group within the same authenticator (Users collection)",
+                "description": "Add this user to an existing group within the same authenticator",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "group": {
+                                        "description": "UUID of the group to add the user to",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Parameters for addToGroup"
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/{uuid}/addToGroup": {
+            "post": {
+                "summary": "Add this user to an existing group within the same authenticator (Users item)",
+                "description": "Add this user to an existing group within the same authenticator",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "group": {
+                                        "description": "UUID of the group to add the user to",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Parameters for addToGroup"
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/authenticators/{uuid}/users/enable_client_logging": {
             "get": {
                 "summary": "Custom method enable_client_logging for Users collection",
@@ -4443,6 +5098,144 @@
             "get": {
                 "summary": "Custom method enable_client_logging for Users item",
                 "description": "Execute custom method enable_client_logging for Users item",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/enableClientLogging": {
+            "post": {
+                "summary": "Enable or disable client-side logging for this user (toggles on each invocation) (Users collection)",
+                "description": "Enable or disable client-side logging for this user (toggles on each invocation)",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/users/{uuid}/enableClientLogging": {
+            "post": {
+                "summary": "Enable or disable client-side logging for this user (toggles on each invocation) (Users item)",
+                "description": "Enable or disable client-side logging for this user (toggles on each invocation)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "uuid",
@@ -5270,6 +6063,144 @@
             "get": {
                 "summary": "Custom method services_pools for Groups item",
                 "description": "Execute custom method services_pools for Groups item",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/groups/servicesPools": {
+            "get": {
+                "summary": "Retrieve all service pools that this group has access to (Groups collection)",
+                "description": "Retrieve all service pools that this group has access to",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Authenticators"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/authenticators/{uuid}/groups/{uuid}/servicesPools": {
+            "get": {
+                "summary": "Retrieve all service pools that this group has access to (Groups item)",
+                "description": "Retrieve all service pools that this group has access to",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "uuid",
@@ -8835,10 +9766,165 @@
                 ]
             }
         },
+        "/metapools/{uuid}/setFallbackAccess": {
+            "post": {
+                "summary": "Update the fallback access policy for a meta pool member (MetaPool)",
+                "description": "Update the fallback access policy for a meta pool member",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "fallbackAccess": {
+                                        "description": "Fallback access policy: ALLOW (default) or DENY",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Parameters for setFallbackAccess"
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Metapools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/metapools/{uuid}/get_fallback_access": {
             "get": {
                 "summary": "Custom method get_fallback_access for MetaPool",
                 "description": "Execute custom method get_fallback_access for MetaPool",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Metapools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/metapools/{uuid}/getFallbackAccess": {
+            "get": {
+                "summary": "Retrieve the current fallback access policy for a meta pool member (MetaPool)",
+                "description": "Retrieve the current fallback access policy for a meta pool member",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "uuid",
@@ -20861,10 +21947,165 @@
                 ]
             }
         },
+        "/servicespools/{uuid}/setFallbackAccess": {
+            "post": {
+                "summary": "Update the fallback access policy for a service pool (ServicePool)",
+                "description": "Update the fallback access policy for a service pool",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "fallbackAccess": {
+                                        "description": "Fallback access policy: ALLOW (default) or DENY",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Parameters for setFallbackAccess"
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/servicespools/{uuid}/get_fallback_access": {
             "get": {
                 "summary": "Custom method get_fallback_access for ServicePool",
                 "description": "Execute custom method get_fallback_access for ServicePool",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/servicespools/{uuid}/getFallbackAccess": {
+            "get": {
+                "summary": "Retrieve the current fallback access policy for a service pool (ServicePool)",
+                "description": "Retrieve the current fallback access policy for a service pool",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "uuid",
@@ -20997,10 +22238,148 @@
                 ]
             }
         },
+        "/servicespools/{uuid}/actionsList": {
+            "get": {
+                "summary": "List all calendar actions available for this service pool based on its service type and current state (ServicePool)",
+                "description": "List all calendar actions available for this service pool based on its service type and current state",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/servicespools/{uuid}/list_assignables": {
             "get": {
                 "summary": "Custom method list_assignables for ServicePool",
                 "description": "Execute custom method list_assignables for ServicePool",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/servicespools/{uuid}/listAssignables": {
+            "get": {
+                "summary": "Enumerate all assignable services that can be used to create a new service pool (ServicePool)",
+                "description": "Enumerate all assignable services that can be used to create a new service pool",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "uuid",
@@ -21133,6 +22512,96 @@
                 ]
             }
         },
+        "/servicespools/{uuid}/createFromAssignable": {
+            "post": {
+                "summary": "Create a new service pool from an existing assignable service (ServicePool)",
+                "description": "Create a new service pool from an existing assignable service",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "user_id": {
+                                        "description": "UUID of the user who will own the new service pool",
+                                        "type": "string"
+                                    },
+                                    "assignable_id": {
+                                        "description": "Identifier of the assignable service to create from",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Parameters for createFromAssignable"
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
         "/servicespools/{uuid}/add_log": {
             "get": {
                 "summary": "Custom method add_log for ServicePool",
@@ -21149,6 +22618,100 @@
                         "description": "The UUID of the item"
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuth": []
+                    }
+                ]
+            }
+        },
+        "/servicespools/{uuid}/addLog": {
+            "post": {
+                "summary": "Append a log entry to the service pool audit trail (ServicePool)",
+                "description": "Append a log entry to the service pool audit trail",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "message": {
+                                        "description": "Log message text",
+                                        "type": "string"
+                                    },
+                                    "level": {
+                                        "description": "Log severity level (INFO, WARN, ERROR)",
+                                        "type": "string"
+                                    },
+                                    "log_name": {
+                                        "description": "Optional log source name",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Parameters for addLog"
+                },
                 "responses": {
                     "200": {
                         "description": "Successfully retrieved object item",

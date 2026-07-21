@@ -271,9 +271,9 @@ class Users(DetailHandler[UserItem]):
                 else:
                     auth.modify_user(fields)  # Notifies authenticator
                     user = parent.users.get(uuid=process_uuid(item))
-                    typing.cast(dict[str, typing.Any], user.__dict__).update(
+                    typing.cast(dict[str, typing.Any], user.__dict__).update(  # pyrefly: ignore[redundant-cast]
                         fields
-                    )  # pyrefly: ignore[redundant-cast]
+                    )
                     user.save()
 
                 logger.debug('User parent: %s', user.parent)
@@ -544,9 +544,9 @@ class Groups(DetailHandler[GroupItem]):
                 to_save['skip_mfa'] = fields['skip_mfa']
 
                 group = parent.groups.get(uuid=process_uuid(item))
-                typing.cast(dict[str, typing.Any], group.__dict__).update(
+                typing.cast(dict[str, typing.Any], group.__dict__).update(  # pyrefly: ignore[redundant-cast]
                     to_save
-                )  # pyrefly: ignore[redundant-cast]
+                )
 
             if is_meta:
                 # Do not allow to add meta groups to meta groups

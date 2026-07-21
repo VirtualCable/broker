@@ -46,7 +46,7 @@ from uds.core.util import api as api_utils, model as model_utils
 from uds.REST.utils import rest_result
 
 from uds.REST.model.base import BaseModelHandler
-from uds.REST.utils import camel_and_snake_case_from, sanitize_params
+from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
 
 T = typing.TypeVar('T', bound=models.Model)
 T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
@@ -145,16 +145,34 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             if check not in (camel_case_name, snake_case_name):
                 continue
 
-            # Method discrimination: skip if the HTTP method doesn't match,
-            # unless we are in COMPAT mode and the custom method is POST
-            # (legacy allows GET for POST methods).
+            # Detect camelCase URL segment usage: dispatch still works but
+            # the camelCase form is legacy (v5/v6) and will be removed in v7.
+            if is_camel_case(check) and check != snake_case_name:
+                if is_compat:
+                    self.add_deprecation_headers(
+                        successor_hint=f'use snake_case form: {snake_case_name} (instead of {check})'
+                    )
+                else:
+                    raise exceptions.rest.GoneError(
+                        f'camelCase form "{check}" is removed; use snake_case "{snake_case_name}"'
+                    )
+
+            # HTTP-method check after name match
             if to_check.method != http_method:
-                if not (is_compat and to_check.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET):
+                if (
+                    to_check.method == types.rest.CustomMethodMethod.POST
+                    and http_method == types.rest.CustomMethodMethod.GET
+                ):
+                    if is_compat:
+                        # COMPAT: allow GET on POST method with deprecation headers
+                        self.add_deprecation_headers(f'use POST {self._path}/{check}')
+                    else:
+                        # NO_COMPAT: this endpoint is gone
+                        raise exceptions.rest.GoneError(
+                            f'This endpoint is deprecated. Use POST {self._path}/{check}'
+                        )
+                else:
                     continue
-                # COMPAT fallback: GET hitting a POST method → deprecation headers
-                self.add_deprecation_headers(
-                    f'use POST {self._path}/{check}'
-                )
 
             operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
             if operation:
@@ -175,9 +193,10 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         parent: models.Model = self._parent_item
 
         # if has custom methods, look for if this request matches any of them
-        r = self._check_is_custom_method(self._args[0], parent)
-        if r is not consts.rest.NOT_FOUND:
-            return r
+        if len(self._args) >= 1:
+            r = self._check_is_custom_method(self._args[0], parent)
+            if r is not consts.rest.NOT_FOUND:
+                return r
 
         match self._args:
             case []:  # same as overview
@@ -257,16 +276,25 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Process the POST operation.
 
         POST on collection (no args) creates a new item (Change G — preferred over PUT).
-        Dispatches to POST custom methods when a path > 1 arg is provided.
+        Dispatches to POST custom methods when the path matches.
         """
         logger.debug('Detail args for POST: %s, %s', self._args, sanitize_params(self._params))
 
         parent: models.Model = self._parent_item
 
-        # if has custom methods, look for if this request matches any of them
+        # Check for custom methods at _args[0] (e.g. POST /collection/{id}/detail/method)
+        if len(self._args) >= 1:
+            r = self._check_is_custom_method(
+                self._args[0], parent, http_method=types.rest.CustomMethodMethod.POST
+            )
+            if r is not consts.rest.NOT_FOUND:
+                return r
+
+        # Check for custom methods at _args[1] with _args[0] as arg
+        # (e.g. POST /collection/{id}/detail/{item_id}/reset)
         if len(self._args) > 1:
             r = self._check_is_custom_method(
-                self._args[1], parent, http_method=types.rest.CustomMethodMethod.POST
+                self._args[1], parent, self._args[0], http_method=types.rest.CustomMethodMethod.POST
             )
             if r is not consts.rest.NOT_FOUND:
                 return r
@@ -399,7 +427,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         return []  # Default is that details do not have types
 
-    def get_logs(self, parent: models.Model, item: str) -> list[typing.Any]:
+    def get_logs(self, parent: 'models.Model', item: str) -> list[typing.Any]:
         """
         If the detail has any log associated with it items, provide it overriding this method
 
