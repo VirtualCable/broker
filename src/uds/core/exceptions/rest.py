@@ -97,6 +97,13 @@ class BlockAccess(UDSException):
     pass
 
 
+class PreconditionFailed(HandlerError):
+    """Exception raised when an ``If-Match`` / ``If-None-Match`` precondition is
+    violated (RFC 7232, HTTP 412 Precondition Failed).
+    """
+    pass
+
+
 class GoneError(HandlerError):
     """
     Exception raised for resources that are no longer available (410 Gone).

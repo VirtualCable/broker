@@ -292,6 +292,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         logger.debug('Invoking proper saving detail item %s', item)
         # Try to get the etag from item.
         _not_used, etag = self._item_with_etag_from_uuuid(parent, item)
+        self.check_if_match_header(etag)
 
         return rest_result(self.save_item(parent, item))
 

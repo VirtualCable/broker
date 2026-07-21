@@ -41,6 +41,7 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.db.models import QuerySet
 
 from uds.core import consts, types, exceptions
+from uds.core.exceptions.rest import PreconditionFailed
 from uds.core.util.config import GlobalConfig
 from uds.core.auths.auth import root_user
 from uds.core.util import net, query_db_filter, query_filter
@@ -583,6 +584,53 @@ class Handler(abc.ABC):
             )
         }
 
+
+    # --- ETag / precondition helpers ---
+    @typing.final
+    def set_etag(self, etag: str) -> None:
+        """Sets ``ETag`` header from a hex digest value (will be quoted)."""
+        self.add_header('ETag', f'"{etag}"')
+
+    def check_if_match_header(self, current_etag: str | None) -> None:
+        """Validates ``If-Match`` / ``If-None-Match`` headers against current ETag.
+
+        When neither header is present this is a no-op (preconditions optional).
+        Accepted forms per RFC 7232: ``*``, quoted ``"<etag>"``, weak ``W/"<etag>"``.
+
+        :param current_etag: Current resource ETag (hex digest, unquoted) for update
+            paths, or ``None`` for create paths (where no previous ETag exists).
+        """
+        # Create paths have no previous ETag: ignore concrete If-Match / If-None-Match
+        # (legacy GUI POST/PUT-create ships spurious ones), only enforce ``If-Match: *``
+        # would imply "create only if not exists", which collides with the call site.
+        if current_etag is None:
+            if_match = self._request.headers.get('If-Match')
+            if if_match is not None and if_match.strip() == '*':
+                raise PreconditionFailed('If-Match: * on create path not allowed')
+            return
+
+        def _normalize(value: str) -> str:
+            # Strip optional weak prefix and surrounding quotes/whitespace.
+            return value.strip().removeprefix('W/').strip().strip('"')
+
+        if_none_match = self._request.headers.get('If-None-Match')
+        if if_none_match is not None:
+            raw = if_none_match.strip()
+            if raw == '*':
+                raise PreconditionFailed('If-None-Match: resource already exists')
+            if _normalize(raw) == current_etag:
+                raise PreconditionFailed('If-None-Match etag matches current resource')
+            # Concrete etag that does not match current -> accept.
+            return
+
+        if_match = self._request.headers.get('If-Match')
+        if if_match is not None:
+            raw = if_match.strip()
+            if raw == '*':
+                # Update path always has an item -> accept.
+                return
+            if _normalize(raw) != current_etag:
+                raise PreconditionFailed('If-Match etag does not match')
 
 class ErrorHandler(Handler):
     """

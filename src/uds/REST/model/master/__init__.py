@@ -503,6 +503,9 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         self._params['_request'] = self._request
 
         self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
+        # On create paths, only "If-Match: *" must trigger 412 (HTTP 428 was removed from
+        # requirements: per RFC 7232 preconditions stay optional).
+        self.check_if_match_header(None)
 
         try:
             args = self.fields_from_params(self.FIELDS_TO_SAVE)
@@ -596,6 +599,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
             # Calculate etag
             etag = self._etag_from_item(item)
+            self.check_if_match_header(etag)
             for v in self.EXCLUDED_FIELDS:
                 if v in args:
                     del args[v]

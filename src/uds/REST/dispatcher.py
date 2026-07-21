@@ -261,6 +261,13 @@ class Dispatcher(View):
             return Dispatcher.error_response(http.HttpResponseForbidden, handler, 'Access denied', e)
         except exceptions.rest.NotFound as e:
             return Dispatcher.error_response(http.HttpResponseNotFound, handler, 'Not found', e)
+        except exceptions.rest.PreconditionFailed as e:
+            return http.HttpResponse(
+                status=412,
+                content=json.dumps({"error": str(e), "tag": "PreconditionFailed"}),
+                content_type="application/json",
+            )
+
         except exceptions.rest.GoneError as e:
             return http.HttpResponse(status=410, content=json.dumps({'error': str(e) or 'Gone'}), content_type="application/json")
         except exceptions.rest.RequestError as e:
