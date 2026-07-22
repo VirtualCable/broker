@@ -38,13 +38,12 @@ import hashlib
 import dataclasses
 import collections.abc
 
-from . import stock
-from . import actor
+from . import stock as stock
+from . import actor as actor
 from . import api
 
 if typing.TYPE_CHECKING:
     from uds.REST.handlers import Handler
-    from uds.core.module import Module
     from uds.models.managed_object_model import ManagedObjectModel
 
 
@@ -174,7 +173,18 @@ class BaseRestItem:
         #       (as it already does)
 
     def inmutables(self, *fields: str) -> str:
-        return "".join(str(getattr(self, f, "")) for f in fields)
+        # Maybe the field has points in it. In that case, we need to recurse
+        # ie. instance.name, instance.cpu.low, etc..
+        def get_field(data: dict[str, typing.Any], field: str) -> str:
+            value: typing.Any = data
+            for section in field.split("."):
+                if isinstance(value, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+                    value = value.get(section) or ""  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+
+            return str(value)  # pyright: ignore[reportUnknownArgumentType]
+
+        dct = self.as_dict()
+        return "".join(get_field(dct, f) for f in set(fields))
 
     @typing.final
     def etag(self, *fields: str) -> str:

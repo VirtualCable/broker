@@ -385,10 +385,22 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
         return consts.rest.NOT_FOUND
 
-    def _etag_from_item(self, item: models.Model) -> str:
+    def _get_fields_from_gui(self, for_type: str) -> list[str]:
+        gui = self.get_gui(for_type)
+        return [i.name for i in gui]
+
+    def _item_with_etag(self, item: models.Model) -> tuple[T_Item, str]:
         response = self.get_item(item)
+        fields: list[str] = self.FIELDS_TO_SAVE.copy()
+
         # Append etag header
-        return response.etag(*self.FIELDS_TO_SAVE)
+        if isinstance(response, types.rest.ManagedObjectItem):
+            fields = fields + self._get_fields_from_gui(
+                response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            )
+            # Append etag header
+
+        return response, response.etag(*fields)  # pyright: ignore[reportUnknownVariableType]
 
     def get(self) -> typing.Any:
         logger.debug("method GET for %s, %s", self.__class__.__name__, self._args)
@@ -429,9 +441,9 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     try:
                         item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
                         self.check_access(item, types.permissions.PermissionType.READ)
-                        response = self.get_item(item)
+                        response, etag = self._item_with_etag(item)
                         # Append etag header
-                        self.add_header("ETag", self._etag_from_item(item))
+                        self.add_header("ETag", etag)
                         return response
                     except Exception as e:
                         logger.exception("Got Exception looking for item")
@@ -596,7 +608,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             # Must have 1 arg → update
             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
             # Calculate etag
-            etag = self._etag_from_item(item)
+            _, etag = self._item_with_etag(item)
             self.check_if_match_header(etag)
 
             for v in self.EXCLUDED_FIELDS:
