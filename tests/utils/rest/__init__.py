@@ -38,8 +38,8 @@ from django.test import SimpleTestCase
 from django.test.client import Client
 
 # Not used, allows "rest.test" or "rest.assertions"
-from . import test  # pyright: ignore
-from . import assertions  # pyright: ignore
+from . import test as test
+from . import assertions as assertions
 
 from .. import helpers
 
@@ -52,22 +52,22 @@ def login(
     username: str,
     password: str,
     expected_response_code: int = 200,
-    error_message: typing.Optional[str] = None,
+    error_message: str | None = None,
 ) -> collections.abc.Mapping[str, typing.Any]:
     response = client.post(
-        '/uds/rest/auth/login',
+        "/uds/rest/auth/login",
         {
-            'auth_id': auth_id,
-            'username': username,
-            'password': password,
+            "auth_id": auth_id,
+            "username": username,
+            "password": password,
         },
-        content_type='application/json',
+        content_type="application/json",
     )
 
     caller.assertEqual(
         response.status_code,
         expected_response_code,
-        f'Login from {error_message or caller.__class__.__name__}',
+        f"Login from {error_message or caller.__class__.__name__}",
     )
 
     if response.status_code == 200:
@@ -78,11 +78,11 @@ def login(
 
 def logout(caller: SimpleTestCase, client: Client) -> None:
     response = client.get(
-        '/uds/rest/auth/logout',
-        content_type='application/json',
+        "/uds/rest/auth/logout",
+        content_type="application/json",
     )
-    caller.assertEqual(response.status_code, 200, f'Logout Result: {response.content}')
-    caller.assertEqual(response.json(), {'result': 'ok'}, 'Logout Result: {response.content}')
+    caller.assertEqual(response.status_code, 200, f"Logout Result: {response.content.decode(errors='replace')}")
+    caller.assertEqual(response.json(), {"result": "ok"}, "Logout Result: {response.content}")
 
 
 # Rest related utils for fixtures
@@ -94,25 +94,25 @@ class uuid_type:
     pass
 
 
-RestFieldType = tuple[str, typing.Union[typing.Type[typing.Any], tuple[str, ...]]]
-RestFieldReference = typing.Final[list[RestFieldType]]
+RestFieldType = tuple[str, type[typing.Any] | tuple[str, ...]]
+RestFieldReference: typing.TypeAlias = list[RestFieldType]
 
 
 # pylint: disable=too-many-return-statements
 def random_value(
-    field_type: typing.Union[typing.Type[typing.Any], tuple[str, ...]],
+    field_type: type[typing.Any] | tuple[str, ...],
     value: typing.Any = None,
 ) -> typing.Any:
-    if value is not None and value != 'fixme':
+    if value is not None and value != "fixme":
         return value
 
-    if field_type in [str, typing.Optional[str]]:
+    if field_type in [str, str | None]:
         return helpers.random_utf8_string()
-    if field_type in [bool, typing.Optional[bool]]:
+    if field_type in [bool, bool | None]:
         return random.choice([True, False])  # nosec
-    if field_type in [int, typing.Optional[int]]:
+    if field_type in [int, int | None]:
         return helpers.random_int()
-    if field_type in [uuid_type, typing.Optional[uuid_type]]:
+    if field_type in [uuid_type, uuid_type | None]:
         return helpers.random_uuid()
     if isinstance(field_type, tuple):
         return random.choice(field_type)  # nosec
@@ -149,16 +149,11 @@ class RestStruct:
             for k, v in res.items()
             if v is not None
             or annotations[k]  # pylint: disable=no-member
-            not in (
-                typing.Optional[str],
-                typing.Optional[bool],
-                typing.Optional[int],
-                typing.Optional[uuid_type],
-            )
+            not in (str | None, bool | None, int | None, uuid_type | None)
         }
 
     @classmethod
-    def random_create(cls, **kwargs: typing.Any) -> 'RestStruct':
+    def random_create(cls, **kwargs: typing.Any) -> "RestStruct":
         # Use kwargs to override values
         # Extract type from annotations
         annotations = inspect.get_annotations(cls)

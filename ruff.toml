@@ -13,3 +13,6 @@ docstring-code-line-length = "dynamic"
 [lint]
 ignore = []
 fixable = ["F541", "F841"]
+
+[isort]
+force-single-line = true

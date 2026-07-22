@@ -30,8 +30,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-
 # Make sure that all services are "available" at service startup
 import logging
 import typing
@@ -64,6 +62,7 @@ class UDSAppConfig(AppConfig):
     name = 'uds'
     verbose_name = 'Universal Desktop Services'
 
+    @typing.override
     def ready(self) -> None:
         # We have to take care with this, because it's supposed to be executed
         # with ANY command from manage.
@@ -71,17 +70,18 @@ class UDSAppConfig(AppConfig):
 
         # Now, ensures that all dynamic elements are loaded and present
         # To make sure that the packages are already initialized at this point
+        # Note: the "as" is to avoid linter errors for unused imports
 
-        from . import services
-        from . import auths
-        from . import mfas
-        from . import osmanagers
-        from . import notifiers
-        from . import transports
-        from . import reports
-        from . import dispatchers
-        from . import plugins
-        from . import REST
+        from . import services as services
+        from . import auths as auths
+        from . import mfas as mfas
+        from . import osmanagers as osmanagers
+        from . import notifiers as notifiers
+        from . import transports as transports
+        from . import reports as reports
+        from . import dispatchers as dispatchers
+        from . import plugins as plugins
+        from . import REST as REST
 
 
 default_app_config = 'uds.UDSAppConfig'

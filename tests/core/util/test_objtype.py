@@ -41,6 +41,8 @@ from __future__ import annotations
 
 import typing
 
+from django.db import models
+
 from uds.core.util import objtype
 
 from tests.utils.test import UDSTestCase
@@ -52,7 +54,7 @@ def _bare_instance(cls: type) -> typing.Any:
     Useful for tests that only need an instance whose ``type(...)`` is the
     given model class — DB defaults / required fields are irrelevant.
     """
-    return cls.__new__(cls)
+    return cls()
 
 
 class ObjectTypeTest(UDSTestCase):
@@ -118,13 +120,13 @@ class ObjectTypeTest(UDSTestCase):
         """
         # ``type`` (the metaclass itself) is not a registered model class
         with self.assertRaises(ValueError):
-            objtype.ObjectType.from_model(type)
+            objtype.ObjectType.from_model(typing.cast(models.Model, type))
 
         class _NotARegisteredModel:
             """Plain class — not a Django Model and not registered."""
 
         with self.assertRaises(ValueError) as ctx:
-            objtype.ObjectType.from_model(_NotARegisteredModel())
+            objtype.ObjectType.from_model(typing.cast(models.Model, _NotARegisteredModel()))
         self.assertIn("Invalid model type", str(ctx.exception))
 
     def test_from_model_builtin_type_raises(self) -> None:
@@ -137,7 +139,7 @@ class ObjectTypeTest(UDSTestCase):
     def test_eq_object_type(self) -> None:
         """Same enum compares True, different enum compares False."""
         self.assertTrue(objtype.ObjectType.PROVIDER == objtype.ObjectType.PROVIDER)
-        self.assertFalse(objtype.ObjectType.PROVIDER == objtype.ObjectType.SERVICE)
+        self.assertFalse(objtype.ObjectType.PROVIDER == objtype.ObjectType.SERVICE)  # pyright: ignore[reportUnnecessaryComparison]
 
     def test_eq_int(self) -> None:
         """Comparison with the underlying int code is supported.
@@ -146,10 +148,10 @@ class ObjectTypeTest(UDSTestCase):
         When ``other`` is an ``int``, ``super().__eq__`` returns ``NotImplemented`` (truthy in ``or``),
         so the int comparison is always evaluated.
         """
-        self.assertTrue(objtype.ObjectType.PROVIDER == 1)
-        self.assertTrue(objtype.ObjectType.SERVICE == 2)
-        self.assertFalse(objtype.ObjectType.PROVIDER == 2)
-        self.assertFalse(objtype.ObjectType.SERVICE == 1)
+        self.assertTrue(objtype.ObjectType.PROVIDER == 1)  # pyright: ignore[reportUnnecessaryComparison]
+        self.assertTrue(objtype.ObjectType.SERVICE == 2)  # pyright: ignore[reportUnnecessaryComparison]
+        self.assertFalse(objtype.ObjectType.PROVIDER == 2)  # pyright: ignore[reportUnnecessaryComparison]
+        self.assertFalse(objtype.ObjectType.SERVICE == 1)  # pyright: ignore[reportUnnecessaryComparison]
 
     def test_eq_other_types(self) -> None:
         """Comparison against unrelated types never raises.
@@ -158,7 +160,7 @@ class ObjectTypeTest(UDSTestCase):
         non-int ``other`` that comparison returns ``False``. Document that
         ``1.0 == 1`` evaluates ``True`` (Python numeric equality).
         """
-        self.assertFalse(objtype.ObjectType.PROVIDER == "PROVIDER")
-        self.assertFalse(objtype.ObjectType.PROVIDER == "1")
+        self.assertFalse(objtype.ObjectType.PROVIDER == "PROVIDER")  # pyright: ignore[reportUnnecessaryComparison]
+        self.assertFalse(objtype.ObjectType.PROVIDER == "1")  # pyright: ignore[reportUnnecessaryComparison]
         self.assertFalse(objtype.ObjectType.PROVIDER == None)  # noqa: E711  (intentional)
         self.assertTrue(objtype.ObjectType.PROVIDER == 1.0)
