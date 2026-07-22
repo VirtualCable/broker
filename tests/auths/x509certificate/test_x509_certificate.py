@@ -34,7 +34,6 @@ from unittest import mock
 from django.http.request import QueryDict
 
 from tests.utils.test import UDSTestCase
-from uds.auths.X509Certificate.authenticator import X509CertificateAuthenticator
 from uds.auths.X509Certificate.authenticator import _subject_to_mapping
 from uds.auths.X509Certificate.authenticator import _verify_cert_signed_by_ca
 from uds.core import exceptions
@@ -130,7 +129,7 @@ class TestAuthCallback(UDSTestCase):
 
     def _make_params(self, cert_pem: str, ticket_id: str = "") -> types.auth.AuthCallbackParams:
         """Build AuthCallbackParams with an encrypted bridge payload."""
-        payload = fixtures._encrypt_payload(cert_pem, ticket_id=ticket_id)
+        payload = fixtures.encrypt_payload(cert_pem, ticket_id=ticket_id)
         post_params = QueryDict("", mutable=True)
         post_params["payload"] = payload
         return types.auth.AuthCallbackParams(

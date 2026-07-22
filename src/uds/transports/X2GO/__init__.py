@@ -30,7 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# import to make visble to loaders
 
-from .x2go import X2GOTransport
-from .x2gotunnel import TX2GOTransport
+from .x2go import X2GOTransport as X2GOTransport
+from .x2gotunnel import TX2GOTransport as TX2GOTransport

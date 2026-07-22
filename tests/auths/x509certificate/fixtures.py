@@ -32,7 +32,8 @@ import hashlib
 import hmac as hmac_module
 import json
 import os
-import typing
+import collections.abc
+
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -47,7 +48,6 @@ from cryptography.x509.oid import NameOID
 
 from uds.auths.X509Certificate.authenticator import X509CertificateAuthenticator
 from uds.core.environment import Environment
-from uds.core.types.auth import AuthTypeGroup
 
 # Test shared secret — must match DATA_TEMPLATE
 _TEST_SHARED_SECRET = "test-shared-secret"
@@ -61,7 +61,7 @@ def _derive_keys(shared_secret: str) -> tuple[bytes, bytes, bytes]:
     return enc_key, mac_key, sign_key
 
 
-def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = "") -> str:
+def encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = "") -> str:
     """Simulate the bridge service: encrypt + sign a cert payload. Returns base64 string."""
     import base64
 
@@ -215,7 +215,7 @@ def create_authenticator(
     trusted_issuer: str = "",
     username_attr: str = "CN=([^,]*)",
     common_groups: str = "x509_users",
-) -> typing.Iterator[X509CertificateAuthenticator]:
+) -> collections.abc.Generator[X509CertificateAuthenticator, None, None]:
     with Environment.temporary_environment() as env:
         data = DATA_TEMPLATE.copy()
         data["ca_certificate"] = fixture.ca_pem

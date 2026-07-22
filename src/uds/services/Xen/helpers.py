@@ -31,8 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from django.utils.translation import gettext as _
-
 from uds import models
 from uds.core import types
 from uds.core.ui.user_interface import gui

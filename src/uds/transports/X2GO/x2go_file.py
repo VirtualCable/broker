@@ -31,7 +31,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import collections.abc
 import typing
 
 template = """[General]
@@ -111,7 +110,8 @@ def get_template(
     height: typing.Any,
     user: typing.Any,
 ) -> str:
-    true_false: collections.abc.Callable[[bool], str] = lambda x: "true" if x else "false"
+    def true_false(x: bool) -> str:
+        return "true" if x else "false"
     export = 'export="{export}"' if exports else ""
     if width == -1 or height == -1:
         width = 800

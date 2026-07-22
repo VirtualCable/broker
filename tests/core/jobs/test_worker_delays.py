@@ -33,6 +33,7 @@ Tests for next_execution_delay() across Job subclasses.
 """
 
 import logging
+import typing
 
 from unittest import mock
 
@@ -46,6 +47,7 @@ logger = logging.getLogger(__name__)
 class WorkerDelayTest(UDSTestCase):
     """Verify next_execution_delay() returns expected values for active workers."""
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self._env = Environment.testing_environment()
@@ -116,10 +118,6 @@ class WorkerDelayTest(UDSTestCase):
 
     def test_publication_info_cleaner_reads_config(self) -> None:
         with mock.patch("uds.core.audit.immutable.config.GlobalConfig.CLEANUP_CHECK") as m:
-            # The publication_cleaner imports GlobalConfig as:
-            # from uds.core.util.config import GlobalConfig
-            from uds.core.util.config import GlobalConfig as GC
-
             m.as_int.return_value = 1234
             # Actually, let's just check the mock on the right object
             # Use the correct import path

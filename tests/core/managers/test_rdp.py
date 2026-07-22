@@ -105,8 +105,8 @@ class RdpTest(cf.CertTestCase):
         rdp_text = "full address:s:host.example.com\r\nserver port:i:3389\r\n"
         signed = rdp.sign_rdp(rdp_text, cert=cert, key=key, chain=[])
         out_lines = signed.splitlines()
-        signscope = next(l for l in out_lines if l.startswith("signscope:s:"))
-        signature = next(l for l in out_lines if l.startswith("signature:s:"))
+        signscope = next(line for line in out_lines if line.startswith("signscope:s:"))
+        signature = next(line for line in out_lines if line.startswith("signature:s:"))
         self.assertIn("Full Address", signscope)
         self.assertIn("Server Port", signscope)
         self.assertTrue(signature.startswith("signature:s:"))
@@ -125,7 +125,7 @@ class RdpTest(cf.CertTestCase):
         rdp_text = "full address:s:host.example.com\r\n"
         signed = rdp.sign_rdp(rdp_text, cert=cert, key=key, chain=[])
         self.assertIn("alternate full address:s:host.example.com", signed)
-        signscope = next(l for l in signed.splitlines() if l.startswith("signscope:s:"))
+        signscope = next(line for line in signed.splitlines() if line.startswith("signscope:s:"))
         self.assertIn("Alternate Full Address", signscope)
 
     def test_sign_rdp_keeps_existing_alternate(self) -> None:

@@ -35,7 +35,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import shlex
-import typing
 import urllib.parse
 
 from uds.core import types
@@ -66,24 +65,24 @@ class RDPFile:
     multimon: bool = False
     desktop_composition: bool = False
     smooth_fonts: bool = True
-    printer_params: typing.Optional[str] = None
-    smartcard_params: typing.Optional[str] = None
+    printer_params: str | None = None
+    smartcard_params: str | None = None
     enable_credssp_support: bool = False
     enable_clipboard: bool = False
-    custom_parameters: typing.Optional[str] = None
-    enforced_shares: typing.Optional[str] = None
+    custom_parameters: str | None = None
+    enforced_shares: str | None = None
 
     def __init__(
         self,
         fullscreen: bool,
-        width: typing.Union[str, int],
-        height: typing.Union[str, int],
+        width: str | int,
+        height: str | int,
         bpp: str,
         target: types.os.KnownOS = types.os.KnownOS.WINDOWS,
     ):
         self.width = str(width)
         self.height = str(height)
-        self.bpp = str(bpp)
+        self.bpp = bpp
         self.fullscreen = fullscreen
         self.target = target
 
@@ -102,7 +101,7 @@ class RDPFile:
         return self.get()
 
     @property
-    def freerdp_params(self) -> typing.List[str]:
+    def freerdp_params(self) -> list[str]:
         """
         Parameters for xfreerdp >= 1.1.0 with self rdp description
         Note that server is not added
@@ -185,7 +184,7 @@ class RDPFile:
         if self.domain != "":
             params.append("/d:{}".format(self.domain))
 
-        if (self.username == "" and self.password == "") and not "/sec" in params:
+        if (self.username == "" and self.password == "") and "/sec" not in params:
             params.append("/sec:tls")  # Use TLS security if no credentials are provided
 
         if self.connection_bar and "/floatbar" not in params:

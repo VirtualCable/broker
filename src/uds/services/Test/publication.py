@@ -36,8 +36,6 @@ import random
 import string
 import typing
 
-from django.utils.translation import gettext as _
-
 from uds.core import services
 from uds.core import types
 from uds.core.util import autoserializable

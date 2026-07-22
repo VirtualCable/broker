@@ -61,16 +61,19 @@ class ActorTestTest(rest.test.RESTActorTestCase):
         self.assertEqual(response.json()["error"], "invalid token")
 
         #
-        _success: typing.Callable[[], typing.Any] = lambda: self.client.post(
-            "/uds/rest/actor/v3/test",
-            data={"type": type_, "token": token},
-            content_type="application/json",
-        )
-        _invalid: typing.Callable[[], typing.Any] = lambda: self.client.post(
-            "/uds/rest/actor/v3/test",
-            data={"type": type_, "token": "invalid"},
-            content_type="application/json",
-        )
+        def _success() -> typing.Any:
+            return self.client.post(
+                "/uds/rest/actor/v3/test",
+                data={"type": type_, "token": token},
+                content_type="application/json",
+            )
+
+        def _invalid() -> typing.Any:
+            return self.client.post(
+                "/uds/rest/actor/v3/test",
+                data={"type": type_, "token": "invalid"},
+                content_type="application/json",
+            )
 
         # Invalid actor token also fails
         response = _invalid()

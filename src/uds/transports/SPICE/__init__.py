@@ -30,7 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
 
-from .spice import SPICETransport
-from .spicetunnel import TSPICETransport
+from .spice import SPICETransport as SPICETransport
+from .spicetunnel import TSPICETransport as TSPICETransport

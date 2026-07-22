@@ -33,8 +33,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from django.utils.translation import gettext_lazy as _
-
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 

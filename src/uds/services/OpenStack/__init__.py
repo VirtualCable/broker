@@ -29,7 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
 
-from .provider import OpenStackProvider
-from .provider_legacy import OpenStackProviderLegacy
+from .provider import OpenStackProvider as OpenStackProvider
+from .provider_legacy import OpenStackProviderLegacy as OpenStackProviderLegacy

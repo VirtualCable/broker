@@ -211,7 +211,7 @@ class ProxmoxProvider(services.ServiceProvider):
     def get_new_vmid(self) -> int:
         MAX_RETRIES: typing.Final[int] = 512  # So we don't loop forever, just in case...
         vmid = 0
-        for _ in range(MAX_RETRIES):
+        for _c in range(MAX_RETRIES):
             vmid = self._vmid_generator.get(self.start_vmid.as_int(), MAX_VMID)
             if self.api.is_vmid_available(vmid):
                 return vmid

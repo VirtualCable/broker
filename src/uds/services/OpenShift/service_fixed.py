@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012-2022 Virtual Cable S.L.
+# Copyright (c) 2025-2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -16,15 +16,14 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PAdecorators.FTICULAR PURPOSE ARE
 # DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
 # FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 # DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OR TOdecorators.FT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
@@ -111,7 +110,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
         self.machines.set_choices(
             [
-                gui.choice_item(str(machine.uid), f"{machine.name} ({machine.namespace})")
+                gui.choice_item(machine.uid, f"{machine.name} ({machine.namespace})")
                 for machine in self.provider().api.list_vms()
                 if machine.is_usable() and not machine.name.startswith("UDS-")
             ]
@@ -137,7 +136,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         Enumerates the assignable machines.
         """
         servers = {
-            str(server.name): server.name
+            server.name: server.name
             for server in self.api.list_vms()
             if not server.name.startswith("uds-") and server.is_usable()
         }

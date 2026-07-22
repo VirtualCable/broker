@@ -33,7 +33,9 @@ from uds.core import managers
 
 from .jobs import ProxmoxDeferredRemoval
 from .jobs import ProxmoxVmidReleaser
-from .provider import ProxmoxProvider
+
+# Make this visible to loaders
+from .provider import ProxmoxProvider as ProxmoxProvider
 
 # Scheduled task to do clean processes
 for cls in (ProxmoxDeferredRemoval, ProxmoxVmidReleaser):

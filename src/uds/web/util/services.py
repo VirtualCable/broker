@@ -205,7 +205,11 @@ def get_services_info_dict(
 
         # Get first member with custom message visible and enabled for metapools
         for member in sorted_members:
-            if member.pool.display_custom_message and member.pool.visible and member.pool.custom_message.strip():
+            if (
+                member.pool.display_custom_message
+                and member.pool.visible
+                and member.pool.custom_message.strip()
+            ):
                 custom_message = member.pool.custom_message
                 break
 
@@ -223,7 +227,11 @@ def get_services_info_dict(
             # Keep only transports that are in all pools
             # This will be done by getting all transports from all pools and then intersecting them
             # using reduce
-            reducer: collections.abc.Callable[[set[Transport], set[Transport]], set[Transport]] = lambda x, y: x & y
+            def reducer(
+                x: collections.abc.Iterable[Transport], y: collections.abc.Iterable[Transport]
+            ) -> collections.abc.Iterable[Transport]:
+                return set(x).intersection(y)
+
             transports_in_all_pools: collections.abc.Iterable[Transport] = (
                 reduce(
                     reducer,
@@ -486,4 +494,4 @@ def enable_service(
         logger.exception("Error")
         error = str(e)
 
-    return {"url": str(url), "error": str(error)}
+    return {"url": url, "error": error}

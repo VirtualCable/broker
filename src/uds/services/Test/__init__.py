@@ -33,5 +33,6 @@ Simple "testing" provider.
 This package provides a simple test provider, suitable for automated tests.
 """
 
-# pyright: reportUnusedImport=false
-from .provider import TestProvider
+# Make this visible to loaders
+
+from .provider import TestProvider as TestProvider
