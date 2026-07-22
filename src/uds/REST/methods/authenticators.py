@@ -49,7 +49,7 @@ from uds.core.util.model import process_uuid
 from uds.models import MFA, Authenticator, Network, Tag
 from uds.REST.model import ModelHandler
 
-from .users_groups import Groups, Users, UserItem, cached_overview
+from .users_groups import Groups, Users, UserItem
 
 # Not imported at runtime, just for type checking
 
@@ -345,17 +345,11 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         item = ensure.is_instance(item, Authenticator)
         self.check_access(item, types.permissions.PermissionType.READ)
 
-        # userServices is a RelatedManager: users with a valid (not removed/canceled) service assigned
-        return cached_overview(
-            self,
-            f'users_with_services:{item.uuid}',
-            lambda: [
-                Users.as_user_item(i)
-                for i in item.users.filter(
-                    userServices__state__in=types.states.State.VALID_STATES
-                ).distinct()
-            ],
-        )
+        # all users from this authhenticator with userservices assigned, and not removed or canceled
+        # userServices is a RelatedManager, so we can filter it directly
+        users = item.users.filter(userServices__state__in=types.states.State.VALID_STATES).distinct()
+
+        return [Users.as_user_item(i) for i in users]
 
     @typing.override
     def test(self, type_: str) -> typing.Any:
