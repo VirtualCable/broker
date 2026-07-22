@@ -180,7 +180,7 @@ class ListReportAuditCSV(ListReport):
             ]
         )
 
-        for l in self.gen_data():
-            writer.writerow(l)
+        for line in self.gen_data():
+            writer.writerow(line)
 
         return output.getvalue().encode()

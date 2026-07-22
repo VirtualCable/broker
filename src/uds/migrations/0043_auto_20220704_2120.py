@@ -2,7 +2,6 @@
 # pyright: reportUnknownArgumentType=false, reportUnusedImport=false
 
 from django.db import migrations, models
-from django.db import connection
 
 import django.db.models.deletion
 import uds.models.stats_counters_accum

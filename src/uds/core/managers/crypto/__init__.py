@@ -45,12 +45,6 @@ import struct
 import typing
 import uuid
 
-uuid7: None | collections.abc.Callable[[], "uuid.UUID"]
-
-try:
-    from edwh_uuid7 import uuid7  # type: ignore
-except ImportError:
-    uuid7 = None
 
 # For password secrets
 from argon2 import PasswordHasher
@@ -77,6 +71,14 @@ from . import certs
 from . import kem
 from . import rdp
 
+uuid7: None | collections.abc.Callable[[], "uuid.UUID"]
+
+try:
+    from edwh_uuid7 import uuid7  # type: ignore
+except ImportError:
+    uuid7 = None
+
+
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
@@ -86,7 +88,9 @@ if typing.TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 # Note the REAL BIG importance of the SECRET_KEY. if lost, all encripted stored data (almost all fields) will be lost...
-UDSK: typing.Final[bytes] = settings.SECRET_KEY[8:24].encode()  # UDS key, new, for AES256, so it's 16 bytes length
+UDSK: typing.Final[bytes] = settings.SECRET_KEY[
+    8:24
+].encode()  # UDS key, new, for AES256, so it's 16 bytes length
 
 
 class CryptoManager(metaclass=singleton.Singleton):
@@ -96,7 +100,9 @@ class CryptoManager(metaclass=singleton.Singleton):
     def __init__(self) -> None:
         self._rsa = typing.cast(
             "RSAPrivateKey",
-            serialization.load_pem_private_key(settings.RSA_KEY.encode(), password=None, backend=default_backend()),
+            serialization.load_pem_private_key(
+                settings.RSA_KEY.encode(), password=None, backend=default_backend()
+            ),
         )
         self._namespace = uuid.UUID("627a37a5-e8db-431a-b783-73f7d20b4934")
 
@@ -207,7 +213,9 @@ class CryptoManager(metaclass=singleton.Singleton):
         aesgcm = aead.AESGCM(key)
         return aesgcm.encrypt(nonce, plaintext, aad)
 
-    def aes256_gcm_decrypt(self, key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes | None = None) -> bytes:
+    def aes256_gcm_decrypt(
+        self, key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes | None = None
+    ) -> bytes:
         if len(key) != 32:
             raise ValueError("AES-256-GCM key must be 32 bytes")
         if len(nonce) != 12:
@@ -379,7 +387,11 @@ class CryptoManager(metaclass=singleton.Singleton):
         return base64.b64encode(aesgcm.encrypt(bytes(nonce), plaintext.encode("utf-8"), None)).decode()
 
     def random_string(self, length: int = 40, digits: bool = True, punctuation: bool = False) -> str:
-        base = string.ascii_letters + (string.digits if digits else "") + (string.punctuation if punctuation else "")
+        base = (
+            string.ascii_letters
+            + (string.digits if digits else "")
+            + (string.punctuation if punctuation else "")
+        )
         return "".join(secrets.choice(base) for _ in range(length))
 
     def random_bytes(self, length: int = 32) -> bytes:

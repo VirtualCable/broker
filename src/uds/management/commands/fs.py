@@ -29,6 +29,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-# Placeholder, import the command from udsfs
-from .udsfs import Command
+# Make this visible to loaders
+
+from .udsfs import Command as Command

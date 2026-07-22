@@ -30,6 +30,7 @@
 Auhor: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from . import counters
-from . import events
+# Make this visible to loaders
+
+from . import counters as counters
+from . import events as events

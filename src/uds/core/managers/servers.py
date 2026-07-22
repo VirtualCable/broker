@@ -549,7 +549,7 @@ class ServerManager(metaclass=singleton.Singleton):
         Args:
             server_group: Server group to realize maintenance on
         """
-        for k, _ in server_group.properties.items():
+        for k, _x in server_group.properties.items():
             if k.startswith(self.BASE_PROPERTY_NAME):
                 uuid = k[len(self.BASE_PROPERTY_NAME) :]
                 try:

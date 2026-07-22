@@ -36,8 +36,6 @@ import logging
 import sys
 import typing
 
-from django.utils.translation import gettext_noop as _
-
 from uds import models
 from uds.core import consts
 from uds.core import types

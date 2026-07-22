@@ -15,8 +15,6 @@ import logging
 import time
 import typing
 
-from django.utils.translation import gettext as _
-
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import services

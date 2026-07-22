@@ -112,14 +112,14 @@ class GroupsManager:
                     )
                 )
 
-    def _mached_groups(self, group_name: str) -> typing.Generator[_LocalGrp, None, None]:
+    def _mached_groups(self, group_name: str) -> collections.abc.Generator[_LocalGrp, None, None]:
         """
         Returns true if this groups manager contains the specified group name (string)
         """
         name = group_name.lower()
         yield from (grp for grp in self._groups if grp.matches(name))
 
-    def enumerate_groups_name(self) -> typing.Generator[str, None, None]:
+    def enumerate_groups_name(self) -> collections.abc.Generator[str, None, None]:
         """
         Return all groups names managed by this groups manager. The names are returned
         as where inserted inside Database (most probably using administration interface)
@@ -127,7 +127,7 @@ class GroupsManager:
         for g in self._groups:
             yield g.group.db_obj().name
 
-    def enumerate_valid_groups(self) -> typing.Generator["group.Group", None, None]:
+    def enumerate_valid_groups(self) -> collections.abc.Generator["group.Group", None, None]:
         """Returns the list of valid groups for this groups manager."""
         from uds.models import Group as DBGroup  # Avoid circular imports
 
@@ -158,18 +158,18 @@ class GroupsManager:
         """
         return any(g.is_valid for g in self._groups)
 
-    def get_group(self, group_name: str) -> typing.Optional["group.Group"]:
+    def get_group(self, group_name: str) -> "group.Group | None":
         """
         If this groups manager contains that group manager, it returns the
         :py:class:uds.core.auths.group.Group  representing that group name.
         """
-        for group in self._groups:
-            if group.matches(group_name):
-                return group.group
+        for grp in self._groups:
+            if grp.matches(group_name):
+                return grp.group
 
         return None
 
-    def validate(self, group_name: typing.Union[str, collections.abc.Iterable[str]]) -> None:
+    def validate(self, group_name: str | collections.abc.Iterable[str]) -> None:
         """Validates that the group (or groups) group_name passed in is valid for this group manager.
 
         It check that the group specified is known by this group manager.

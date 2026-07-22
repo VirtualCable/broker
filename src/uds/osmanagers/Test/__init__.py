@@ -30,5 +30,5 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .testing_osmanager import TestOSManager
+# Make this visible to loaders
+from .testing_osmanager import TestOSManager as TestOSManager

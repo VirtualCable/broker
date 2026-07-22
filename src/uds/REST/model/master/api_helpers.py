@@ -35,7 +35,6 @@ import logging
 import typing
 
 from django.db import models
-from django.utils.translation import gettext as _
 
 from uds.core import consts
 from uds.core import types

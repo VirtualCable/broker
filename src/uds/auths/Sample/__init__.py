@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -35,5 +33,6 @@ take care of registering it as provider
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .sample_auth import SampleAuth
+# Make this available to loaders
+
+from .sample_auth import SampleAuth as SampleAuth

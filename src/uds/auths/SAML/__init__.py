@@ -30,7 +30,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from uds.core import managers
+# Make this available to loaders
 
-from .saml import SAMLAuthenticator  # import for registration on space,
+from .saml import SAMLAuthenticator as SAMLAuthenticator
+

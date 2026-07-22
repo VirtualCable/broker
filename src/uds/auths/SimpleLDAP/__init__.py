@@ -30,5 +30,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .authenticator import SimpleLDAPAuthenticator
+# Make this available to loaders
+
+from .authenticator import SimpleLDAPAuthenticator as SimpleLDAPAuthenticator

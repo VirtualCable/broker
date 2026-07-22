@@ -33,11 +33,12 @@ UDS jobs related modules
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
+
 import typing
 
-from .delayed_task import DelayedTask
-from .job import Job
+from .delayed_task import DelayedTask as DelayedTask
+from .job import Job as Job
 
 # Imports for type checking
 if typing.TYPE_CHECKING:

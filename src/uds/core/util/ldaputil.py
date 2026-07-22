@@ -8,16 +8,14 @@ import collections.abc
 import logging
 import ssl
 import typing
-
 # For pyasn1 compatibility of ldap3
 # This is a workaround for the deprecation warning of pyasn1 when used by ldap3
 # It is not recommended to ignore warnings :)
 import warnings
 
-warnings.filterwarnings("ignore", module="pyasn1", category=DeprecationWarning)
-
 from django.conf import settings
 from django.utils.translation import gettext as _
+
 from ldap3 import ALL
 from ldap3 import ALL_ATTRIBUTES
 from ldap3 import BASE
@@ -37,6 +35,9 @@ from uds.core.util import utils
 from uds.core.util.backoff import Backoff
 from uds.core.util.cache import Cache
 from uds.core.util.cache import CacheLike
+
+warnings.filterwarnings("ignore", module="pyasn1", category=DeprecationWarning)
+
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,11 @@ def escape(value: str) -> str:
     """
     # ldap3 does not provide a direct escape, but this is a safe replacement
     return (
-        value.replace("\\", "\\5c").replace("*", "\\2a").replace("(", "\\28").replace(")", "\\29").replace("\0", "\\00")
+        value.replace("\\", "\\5c")
+        .replace("*", "\\2a")
+        .replace("(", "\\28")
+        .replace(")", "\\29")
+        .replace("\0", "\\00")
     )
 
 

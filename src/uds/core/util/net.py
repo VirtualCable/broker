@@ -219,7 +219,7 @@ def network_from_str(
     check_mode: bool = False,
 ) -> NetworkType:
     try:
-        if not ":" in network_str and version != 6:
+        if ":" not in network_str and version != 6:
             return network_from_str_ipv4(network_str)
         # ':' in strNets or version == 6:
         # If is in fact an IPv4 address, return None network, this will not be used

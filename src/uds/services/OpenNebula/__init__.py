@@ -29,6 +29,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
 
-from .provider import OpenNebulaProvider
+from .provider import OpenNebulaProvider as OpenNebulaProvider

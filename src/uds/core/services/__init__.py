@@ -32,13 +32,14 @@ UDS Service modules interfaces and classes.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
 
-from .provider import ServiceProvider
+# Make this visible to loaders
+
+from .provider import ServiceProvider as ServiceProvider
 from .provider_factory import ServiceProviderFactory
-from .publication import Publication
-from .service import Service
-from .user_service import UserService
+from .publication import Publication as Publication
+from .service import Service as Service
+from .user_service import UserService as UserService
 
 
 def factory() -> ServiceProviderFactory:

@@ -51,14 +51,17 @@ from django.db.models.functions import Lower
 from django.db.models.functions import Substr
 from django.db.models.functions import Upper
 
-logger = logging.getLogger(__name__)
 
 from .query_filter import _FUNCTIONS_PARAMS_NUM
 from .query_filter import _QUERY_GRAMMAR
 
-_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar("db_query_parser")
+_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar(
+    "db_query_parser"
+)
 
 _REMOVE_QUOTES_RE: typing.Final[re.Pattern[str]] = re.compile(r"^(['\"])(.*)\1$")
+
+logger = logging.getLogger(__name__)
 
 
 class FieldName(str):
@@ -88,7 +91,7 @@ _UNARY_FUNCTIONS: typing.Final[dict[str, collections.abc.Callable[[F], typing.An
 
 
 class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.annotations: dict[str, typing.Any] = {}
 

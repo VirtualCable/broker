@@ -30,11 +30,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from . import config
-from .msgfactory import NotifierFactory
-from .provider import LogLevel
-from .provider import Notifier
+# Make this visible to loaders
+
+from . import config as config
+from .msgfactory import NotifierFactory as NotifierFactory
+from .provider import LogLevel as LogLevel
+from .provider import Notifier as Notifier
 
 
 def factory() -> NotifierFactory:

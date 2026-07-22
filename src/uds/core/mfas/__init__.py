@@ -31,9 +31,10 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .mfa import MFA
-from .mfa import LoginAllowed
+# Make this visible to loaders
+
+from .mfa import MFA as MFA
+from .mfa import LoginAllowed as LoginAllowed
 from .mfafactory import MFAsFactory
 
 

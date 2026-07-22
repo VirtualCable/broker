@@ -52,7 +52,7 @@ def get_resources(parameters: typing.Any) -> types.ui.CallbackResultType:
     api = provider.api
 
     labs = [gui.choice_item("0", _("All Labs"))] + [
-        gui.choice_item(l["id"], l["name"]) for l in api.list_labs(ou=parameters["ou"])
+        gui.choice_item(lab["id"], lab["name"]) for lab in api.list_labs(ou=parameters["ou"])
     ]
     images = [gui.choice_item(z["id"], z["name"]) for z in api.list_images(ou=parameters["ou"])]
 

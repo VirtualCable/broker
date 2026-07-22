@@ -32,20 +32,21 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # pyright: reportUnusedImport=false
 
 # Make reports visible to autoloader
+
 # from . import usage
-from . import auth_stats
-from . import cache_efficiency
-from . import client_platforms
-from . import peak_concurrency
-from . import pool_saturation
-from . import pool_users_summary
-from . import pools_performance
-from . import pools_usage_day
-from . import pools_usage_summary
-from . import session_duration
-from . import top_users
-from . import tunnel_usage
-from . import usage_by_group
-from . import usage_by_pool
-from . import user_access
-from . import userservice_errors
+from . import auth_stats as auth_stats
+from . import cache_efficiency as cache_efficiency
+from . import client_platforms as client_platforms
+from . import peak_concurrency as peak_concurrency
+from . import pool_saturation as pool_saturation
+from . import pool_users_summary as pool_users_summary
+from . import pools_performance as pools_performance
+from . import pools_usage_day as pools_usage_day
+from . import pools_usage_summary as pools_usage_summary
+from . import session_duration as session_duration
+from . import top_users as top_users
+from . import tunnel_usage as tunnel_usage
+from . import usage_by_group as usage_by_group
+from . import usage_by_pool as usage_by_pool
+from . import user_access as user_access
+from . import userservice_errors as userservice_errors

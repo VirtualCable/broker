@@ -30,5 +30,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .authenticator import RegexLdap
+# Make this available to loaders
+
+from .authenticator import RegexLdap as RegexLdap

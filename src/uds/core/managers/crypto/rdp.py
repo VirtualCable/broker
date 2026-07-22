@@ -186,17 +186,17 @@ def sign_rdp(
     # strip any previous signature/signscope and blank lines
     lines = [
         s
-        for s in (l.strip() for l in rdp_text.splitlines())
+        for s in (line.strip() for line in rdp_text.splitlines())
         if s and not s.startswith(("signature:s:", "signscope:s:"))
     ]
 
     # mirror full address into alternate, otherwise it's a tampering hole
     full = alt = None
-    for l in lines:
-        if l.startswith("full address:s:"):
-            full = l[15:]
-        elif l.startswith("alternate full address:s:"):
-            alt = l[25:]
+    for line in lines:
+        if line.startswith("full address:s:"):
+            full = line[15:]
+        elif line.startswith("alternate full address:s:"):
+            alt = line[25:]
     if full and not alt:
         lines.append("alternate full address:s:" + full)
 

@@ -37,7 +37,7 @@ from uds.core.util import factory
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .authenticator import Authenticator
+    from .authenticator import Authenticator as Authenticator
 
 
 class AuthsFactory(factory.ModuleFactory["Authenticator"]):

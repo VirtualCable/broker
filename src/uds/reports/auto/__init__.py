@@ -37,7 +37,6 @@ import logging
 import typing
 
 from django.utils import timezone
-from django.utils.translation import gettext_noop as _
 
 from uds import models
 from uds.core.reports import Report
@@ -48,12 +47,7 @@ from . import fields
 
 logger = logging.getLogger(__name__)
 
-ReportAutoModel = typing.Union[
-    models.Authenticator,
-    models.ServicePool,
-    models.Service,
-    models.Provider,
-]
+ReportAutoModel: typing.TypeAlias = models.Authenticator | models.ServicePool | models.Service | models.Provider
 
 REPORT_AUTOMODEL: typing.Final[collections.abc.Mapping[str, type[ReportAutoModel]]] = {
     "ServicePool": models.ServicePool,
@@ -102,13 +96,13 @@ class ReportAutoType(UserInterfaceType):
 # pylint: disable=abstract-method
 class ReportAuto(Report, metaclass=ReportAutoType):
     # Variables that will be overwriten on new class creation
-    source: typing.ClassVar[typing.Union[gui.MultiChoiceField, gui.ChoiceField]]
+    source: typing.ClassVar[gui.MultiChoiceField | gui.ChoiceField]
     date_start: typing.ClassVar[gui.DateField]
     date_end: typing.ClassVar[gui.DateField]
     interval: typing.ClassVar[gui.ChoiceField]
 
     # Dates can be None, 'single' or 'range' to auto add date fields
-    dates: typing.ClassVar[typing.Optional[str]] = None
+    dates: typing.ClassVar[str | None] = None
     intervals: bool = False
     # Valid data_source:
     # * ServicePool.usage

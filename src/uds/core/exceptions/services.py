@@ -34,7 +34,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import typing
 
 # Import for reference as "services.generics"
-from . import services_generics as generics  # pyright: ignore[reportUnusedImport]
+from . import services_generics as generics  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from .common import UDSException
 
 if typing.TYPE_CHECKING:
@@ -115,15 +115,15 @@ class ServiceNotReadyError(ServiceException):
     """
 
     code: "ReadyStatus"
-    user_service: typing.Optional["UserService"]
-    transport: typing.Optional["Transport"]
+    user_service: "UserService | None"
+    transport: "Transport | None"
 
     def __init__(
         self,
         *,
-        code: typing.Optional["ReadyStatus"] = None,
-        user_service: typing.Optional["UserService"] = None,
-        transport: typing.Optional["Transport"] = None,
+        code: "ReadyStatus | None" = None,
+        user_service: "UserService | None" = None,
+        transport: "Transport | None" = None,
     ):
         from uds.core.types.services import ReadyStatus
 

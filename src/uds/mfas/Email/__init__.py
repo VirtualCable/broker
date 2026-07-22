@@ -26,5 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pyright: reportUnusedImport=false
-from . import mfa
+# Make this visible to loaders
+
+from . import mfa as mfa

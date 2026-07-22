@@ -39,7 +39,7 @@ from uds.core.util import factory
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from .job import Job
+    from .job import Job as Job
 
 
 class JobsFactory(factory.Factory["Job"]):

@@ -25,17 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-"""
 
-# pyright: reportUnusedImport=false
-"""
 User interface part of UDS modules.
 
 This module contains the definition of UserInterface, needed to describe the interaction
 between an UDS module and the administration interface
 """
-from .user_interface import UserInterface
-from .user_interface import gui
+
+from .user_interface import UserInterface as UserInterface
+from .user_interface import gui as gui

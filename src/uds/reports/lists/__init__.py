@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2015-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -25,15 +24,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
 # Make reports visible to autoloader
-from . import admin_activity
-from . import audit
-from . import failed_logins
-from . import inactive_users
-from . import users
+
+from . import admin_activity as admin_activity
+from . import audit as audit
+from . import failed_logins as failed_logins
+from . import inactive_users as inactive_users
+from . import users as users

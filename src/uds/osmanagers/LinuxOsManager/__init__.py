@@ -34,7 +34,6 @@
 
 # pyright: reportUnusedImport=false
 import os.path
-import sys
 import typing
 
 from django.utils.translation import gettext_noop as _
@@ -42,9 +41,10 @@ from django.utils.translation import gettext_noop as _
 from uds.core.consts.system import VERSION
 from uds.core.managers import downloads_manager
 
-from .linux_ad_osmanager import LinuxOsADManager
-from .linux_osmanager import LinuxOsManager
-from .linux_randompass_osmanager import LinuxRandomPassManager
+# Make this visible to loaders
+from .linux_ad_osmanager import LinuxOsADManager as LinuxOsADManager
+from .linux_osmanager import LinuxOsManager as LinuxOsManager
+from .linux_randompass_osmanager import LinuxRandomPassManager as LinuxRandomPassManager
 
 _mypath: typing.Final[str] = os.path.dirname(__spec__.origin)  # type: ignore[type-var, assignment]  # mypy has some problem with dirname??
 # Old version, using spec is better, but we can use __package__ as well

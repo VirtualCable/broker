@@ -44,7 +44,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 # This must be imported to allow 3d projections
-from mpl_toolkits.mplot3d.axes3d import Axes3D  # pyright: ignore[reportUnusedImport]
+from mpl_toolkits.mplot3d.axes3d import Axes3D as Axes3D
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def surface_chart(
     logger.debug("Y: %s", y)
     logger.debug("Z: %s", z)
 
-    x, y = np.meshgrid(x, y)
+    x, y = typing.cast(tuple[int, int], np.meshgrid(x, y))
     z = np.array(z)
 
     logger.debug("X': %s", x)

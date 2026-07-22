@@ -186,10 +186,18 @@ class gui:
         reverse: bool = False,
         key: collections.abc.Callable[[types.ui.ChoiceItem], typing.Any] | None = None,
     ) -> list[types.ui.ChoiceItem]:
+        def key_fnc_for_id(item: types.ui.ChoiceItem) -> typing.Any:
+            return item.id
+
+        def key_fnc_for_text(item: types.ui.ChoiceItem) -> typing.Any:
+            return item.text.casefold()
+
         if by_id:
-            key = lambda item: item.id
+            key = key_fnc_for_id
+            # lambda item: item.id
         elif key is None:
-            key = lambda item: item.text.casefold()
+            key = key_fnc_for_text
+            # lambda item: item.text.casefold()
         return sorted(choices, key=key, reverse=reverse)
 
     @staticmethod

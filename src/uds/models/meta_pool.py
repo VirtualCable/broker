@@ -38,7 +38,6 @@ import collections.abc
 
 from django.db import models
 from django.db.models import QuerySet, signals
-from django.utils.translation import gettext_noop as _
 
 from uds.core import consts, types
 from uds.core.util import log
@@ -212,7 +211,7 @@ class MetaPool(UUIDModel, TaggingMixin):
     @property
     def visual_name(self) -> str:
         logger.debug("SHORT: %s %s %s", self.short_name, bool(self.short_name), self.name)
-        sn = str(self.short_name).strip()
+        sn = self.short_name.strip()
         return sn if sn else self.name
 
     @staticmethod
