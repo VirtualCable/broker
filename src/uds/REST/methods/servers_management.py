@@ -43,13 +43,20 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from uds import models
-from uds.core import consts, exceptions, types
-from uds.core.exceptions.rest import NotFound, RequestError
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.exceptions.rest import NotFound
+from uds.core.exceptions.rest import RequestError
 from uds.core.types.rest import TableInfo
-from uds.core.util import ensure, net, permissions
+from uds.core.util import ensure
+from uds.core.util import net
+from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
-from uds.core.util.model import process_uuid, sql_now
-from uds.REST.model import DetailHandler, ModelHandler
+from uds.core.util.model import process_uuid
+from uds.core.util.model import sql_now
+from uds.REST.model import DetailHandler
+from uds.REST.model import ModelHandler
 
 logger = logging.getLogger(__name__)
 

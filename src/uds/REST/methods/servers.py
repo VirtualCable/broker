@@ -30,16 +30,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_lazy as _
 
 from uds import models
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
-from uds.core.util import decorators, validators, model
+from uds.core.util import decorators
+from uds.core.util import model
+from uds.core.util import validators
 from uds.REST import Handler
 from uds.REST.utils import rest_result
 

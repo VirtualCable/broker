@@ -31,30 +31,58 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import datetime
 import logging
 import typing
-import collections.abc
 
-from django.utils.translation import gettext, gettext_lazy as _
-from django.db.models import Model, Count, Q, Case, When, Value, F, IntegerField, ExpressionWrapper, FloatField
+from django.db.models import Case
+from django.db.models import Count
+from django.db.models import ExpressionWrapper
+from django.db.models import F
+from django.db.models import FloatField
+from django.db.models import IntegerField
+from django.db.models import Model
+from django.db.models import Q
+from django.db.models import Value
+from django.db.models import When
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
-from uds.core import types, exceptions, consts
-from uds.core.managers.userservice import UserServiceManager
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
 from uds.core import ui
 from uds.core.consts.images import DEFAULT_THUMB_BASE64
-from uds.core.util import log, permissions, ensure, ui as ui_utils
-from uds.core.util.config import GlobalConfig
-from uds.core.util.model import sql_now, process_uuid
+from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.states import State
-from uds.models import Account, Image, OSManager, Service, ServicePool, ServicePoolGroup, User
+from uds.core.util import ensure
+from uds.core.util import log
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.core.util.config import GlobalConfig
+from uds.core.util.model import process_uuid
+from uds.core.util.model import sql_now
+from uds.models import Account
+from uds.models import Image
+from uds.models import OSManager
+from uds.models import Service
+from uds.models import ServicePool
+from uds.models import ServicePoolGroup
+from uds.models import User
 from uds.REST.model import ModelHandler
 
-from .op_calendars import AccessCalendars, ActionsCalendars
-from .services import Services, ServiceInfo
-from .user_services import AssignedUserService, CachedService, Changelog, Groups, Publications, Transports
-
+from .op_calendars import AccessCalendars
+from .op_calendars import ActionsCalendars
+from .services import ServiceInfo
+from .services import Services
+from .user_services import AssignedUserService
+from .user_services import CachedService
+from .user_services import Changelog
+from .user_services import Groups
+from .user_services import Publications
+from .user_services import Transports
 
 logger = logging.getLogger(__name__)
 

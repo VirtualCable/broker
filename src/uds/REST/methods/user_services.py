@@ -37,19 +37,26 @@ import datetime
 import logging
 import typing
 
+from django.db.models import Model
+from django.db.models import OuterRef
+from django.db.models import QuerySet
+from django.db.models import Subquery
 from django.utils.translation import gettext as _
-from django.db.models import Model, QuerySet, OuterRef, Subquery
 
 import uds.core.types.permissions
+
 from uds import models
-from uds.core import exceptions, types
+from uds.core import exceptions
+from uds.core import types
 from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.rest import TableInfo
 from uds.core.types.states import State
-from uds.core.util import ensure, log, permissions, ui as ui_utils
+from uds.core.util import ensure
+from uds.core.util import log
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
 from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
-
 
 logger = logging.getLogger(__name__)
 

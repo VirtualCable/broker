@@ -31,30 +31,33 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import logging
 import typing
-import collections.abc
 
 from django.db import IntegrityError
-from django.utils.translation import gettext as _
 from django.db.models import Model
+from django.utils.translation import gettext as _
+
+import uds.core.types.permissions
 
 from uds import models
-
-from uds.core import exceptions, types, module, services
-import uds.core.types.permissions
-from uds.core.types.rest import TableInfo
-from uds.core.util import log, permissions, ensure, ui as ui_utils
-from uds.core.util.model import process_uuid
-from uds.core.environment import Environment
-from uds.core.consts.images import DEFAULT_THUMB_BASE64
+from uds.core import exceptions
+from uds.core import module
+from uds.core import services
+from uds.core import types
 from uds.core import ui
+from uds.core.consts.images import DEFAULT_THUMB_BASE64
+from uds.core.environment import Environment
+from uds.core.types.rest import TableInfo
 from uds.core.types.states import State
-
-
+from uds.core.util import ensure
+from uds.core.util import log
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
-
 
 logger = logging.getLogger(__name__)
 

@@ -43,17 +43,18 @@ queries are expensive.
 Author: Virtual Cable S.L.
 """
 
+import collections.abc
 import datetime
 import logging
 import typing
-import collections.abc
 
 from uds import models
-from uds.core import consts, exceptions, types
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
 from uds.core.types.states import State
 from uds.core.util.cache import Cache
 from uds.core.util.model import sql_now
-from uds.REST import Handler
 
 # Report classes reused for their (already optimized) get_data() queries
 from uds.reports.lists.failed_logins import FailedLoginsReport
@@ -66,6 +67,7 @@ from uds.reports.stats.session_duration import SessionDurationReport
 from uds.reports.stats.top_users import TopUsersReport
 from uds.reports.stats.tunnel_usage import TunnelUsageReport
 from uds.reports.stats.userservice_errors import UserServiceErrorsReport
+from uds.REST import Handler
 
 if typing.TYPE_CHECKING:
     from uds.core.reports.report import Report

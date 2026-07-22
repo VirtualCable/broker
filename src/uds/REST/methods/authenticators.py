@@ -38,22 +38,32 @@ import logging
 import re
 import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
 from django.db import models
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
-
-from uds.core import auths, consts, exceptions, types, ui
+from uds.core import auths
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core import ui
 from uds.core.environment import Environment
-from uds.core.util import ensure, permissions, ui as ui_utils
-from uds.core.util.model import process_uuid
-from uds.models import MFA, Authenticator, Network, Tag
-from uds.REST.model import ModelHandler
-
-from .users_groups import Groups, Users, UserItem
 
 # Not imported at runtime, just for type checking
-
 from uds.core.module import Module
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
+from uds.models import MFA
+from uds.models import Authenticator
+from uds.models import Network
+from uds.models import Tag
+from uds.REST.model import ModelHandler
+
+from .users_groups import Groups
+from .users_groups import UserItem
+from .users_groups import Users
 
 if typing.TYPE_CHECKING:
     from django.db.models.query import QuerySet

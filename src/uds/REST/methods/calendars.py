@@ -36,16 +36,17 @@ import datetime
 import logging
 import typing
 
-from django.utils.translation import gettext_lazy as _
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from uds.core import types
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
 from uds.models import Calendar
-from uds.core.util import permissions, ensure, ui as ui_utils
-
 from uds.REST.model import ModelHandler
-from .calendarrules import CalendarRules
 
+from .calendarrules import CalendarRules
 
 logger = logging.getLogger(__name__)
 

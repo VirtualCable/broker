@@ -31,19 +31,21 @@
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import dataclasses
 import logging
+import typing
 
-from django.utils.translation import gettext_lazy as _, gettext
 from django.db.models import Model
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
-from uds.models import Network
 from uds.core import types
-from uds.core.util import permissions, ensure, ui as ui_utils
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.models import Network
 
 from ..model import ModelHandler
-
 
 logger = logging.getLogger(__name__)
 

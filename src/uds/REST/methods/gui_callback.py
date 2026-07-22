@@ -33,7 +33,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
-from uds.core import exceptions, types, consts
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
 from uds.core.ui import gui
 from uds.REST import Handler
 

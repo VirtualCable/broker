@@ -31,12 +31,14 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.util.config import Config as CfgConfig
-from uds.REST import Handler, log
+from uds.REST import Handler
+from uds.REST import log
 
 logger = logging.getLogger(__name__)
 

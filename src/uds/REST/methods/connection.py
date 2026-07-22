@@ -36,10 +36,12 @@ import typing
 
 from django.utils import timezone
 
-from uds.core import exceptions, types, consts
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.exceptions.services import ServiceNotReadyError
 from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.userservice import UserServiceManager
-from uds.core.exceptions.services import ServiceNotReadyError
 from uds.core.util.rest.tools import match_args
 from uds.REST import Handler
 from uds.web.util import services
