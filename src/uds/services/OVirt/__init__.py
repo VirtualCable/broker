@@ -29,12 +29,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from uds.core import managers
 
 from .provider import OVirtProvider
-from .jobs import OVirtDeferredRemoval  # OVirtHouseKeeping, 
+from .jobs import OVirtDeferredRemoval  # OVirtHouseKeeping,
 
 # Scheduled task to do clean processes
-for cls in (OVirtDeferredRemoval, ):  # OVirtHouseKeeping,
+for cls in (OVirtDeferredRemoval,):  # OVirtHouseKeeping,
     managers.task_manager().register_job(cls)

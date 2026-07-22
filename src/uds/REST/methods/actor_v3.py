@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import functools
 import logging
 import time
@@ -60,11 +61,11 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Cache the "failed login attempts" for a given IP
-cache = Cache('actorv3')
+cache = Cache("actorv3")
 
 
 # Helpers
-def get_list_of_ids(handler: 'Handler') -> list[str]:
+def get_list_of_ids(handler: "Handler") -> list[str]:
     """
     Comment:
         Due to database case sensitiveness, we need to check for both upper and lower case
@@ -75,8 +76,7 @@ def get_list_of_ids(handler: 'Handler') -> list[str]:
         i.lower()
         for i in typing.cast(
             list[str],
-            ['1' + x['mac'] for x in handler._params['id']]
-            + ['0' + x['ip'] for x in handler._params['id']][:10],
+            ["1" + x["mac"] for x in handler._params["id"]] + ["0" + x["ip"] for x in handler._params["id"]][:10],
         )
     )
 
@@ -91,13 +91,13 @@ def get_list_of_ids(handler: 'Handler') -> list[str]:
     )
 
 
-def check_ip_is_blocked(request: 'ExtendedHttpRequest') -> None:
+def check_ip_is_blocked(request: "ExtendedHttpRequest") -> None:
     if GlobalConfig.BLOCK_ACTOR_FAILURES.as_bool() is False:
         return
     fails = cache.get(request.ip) or 0
     if fails >= consts.system.ALLOWED_FAILS:
         logger.info(
-            'Access to actor from %s is blocked for %s seconds since last fail',
+            "Access to actor from %s is blocked for %s seconds since last fail",
             request.ip,
             GlobalConfig.LOGIN_BLOCK.as_int(),
         )
@@ -106,37 +106,35 @@ def check_ip_is_blocked(request: 'ExtendedHttpRequest') -> None:
         raise exceptions.rest.BlockAccess()
 
 
-def increase_failed_ip_count(request: 'ExtendedHttpRequest') -> None:
+def increase_failed_ip_count(request: "ExtendedHttpRequest") -> None:
     fails = cache.get(request.ip, 0) + 1
     cache.put(request.ip, fails, GlobalConfig.LOGIN_BLOCK.as_int())
 
 
-P = typing.ParamSpec('P')
-T = typing.TypeVar('T')
+P = typing.ParamSpec("P")
+T = typing.TypeVar("T")
 
 
 # Decorator that clears failed counter for the IP if succeeds
 def clear_on_success(func: collections.abc.Callable[P, T]) -> collections.abc.Callable[P, T]:
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        _self = typing.cast('ActorV3Action', args[0])
-        result = func(
-            *args, **kwargs
-        )  # If raises any exception, it will be raised and we will not clear the counter
+        _self = typing.cast("ActorV3Action", args[0])
+        result = func(*args, **kwargs)  # If raises any exception, it will be raised and we will not clear the counter
         clear_failed_ip_counter(_self._request)  # pylint: disable=protected-access
         return result
 
     return wrapper
 
 
-def clear_failed_ip_counter(request: 'ExtendedHttpRequest') -> None:
+def clear_failed_ip_counter(request: "ExtendedHttpRequest") -> None:
     cache.remove(request.ip)
 
 
 class ActorV3Action(Handler):
     ROLE = consts.UserRole.ANONYMOUS
-    PATH = 'actor/v3'
-    NAME = 'actorv3'
+    PATH = "actor/v3"
+    NAME = "actorv3"
 
     @staticmethod
     def actor_result(result: typing.Any = None, **kwargs: typing.Any) -> dict[str, typing.Any]:
@@ -144,47 +142,47 @@ class ActorV3Action(Handler):
 
     @staticmethod
     def set_comms_endpoint(userservice: UserService, ip: str, port: int, secret: str) -> None:
-        userservice.set_comms_info(f'https://{ip}:{port}/actor/{secret}', secret)
+        userservice.set_comms_info(f"https://{ip}:{port}/actor/{secret}", secret)
 
     @staticmethod
     def actor_cert_result(key: str, certificate: str, password: str) -> dict[str, typing.Any]:
         return ActorV3Action.actor_result(
             {
-                'private_key': key,  # To be removed on 5.0
-                'key': key,
-                'server_certificate': certificate,  # To be removed on 5.0
-                'certificate': certificate,
-                'password': password,
-                'ciphers': getattr(settings, 'SECURE_CIPHERS', ''),
+                "private_key": key,  # To be removed on 5.0
+                "key": key,
+                "server_certificate": certificate,  # To be removed on 5.0
+                "certificate": certificate,
+                "password": password,
+                "ciphers": getattr(settings, "SECURE_CIPHERS", ""),
             }
         )
 
     def get_userservice(self) -> UserService:
-        '''
+        """
         Looks for an userservice and, if not found, raises a exceptions.rest.BlockAccess request
-        '''
+        """
         try:
-            return UserService.objects.get(uuid=self._params['token'])
+            return UserService.objects.get(uuid=self._params["token"])
         except UserService.DoesNotExist:
-            logger.error('User service not found (params: %s)', self._params)
+            logger.error("User service not found (params: %s)", self._params)
             raise exceptions.rest.BlockAccess() from None
 
     def action(self) -> dict[str, typing.Any]:
-        return ActorV3Action.actor_result(error='Base action invoked')
+        return ActorV3Action.actor_result(error="Base action invoked")
 
     def post(self) -> dict[str, typing.Any]:
         try:
             check_ip_is_blocked(self._request)
             result = self.action()
-            logger.debug('Action result: %s', result)
+            logger.debug("Action result: %s", result)
             return result
         except (exceptions.rest.BlockAccess, KeyError):
             # For blocking attacks
             increase_failed_ip_count(self._request)
         except Exception as e:
-            logger.exception('Posting %s: %s', self.__class__, e)
+            logger.exception("Posting %s: %s", self.__class__, e)
 
-        raise exceptions.rest.AccessDenied('Access denied')
+        raise exceptions.rest.AccessDenied("Access denied")
 
     # Some helpers
     def notify_service(self, action: types.rest.actor.NotifyActionType) -> None:
@@ -202,7 +200,7 @@ class ActorV3Action(Handler):
         """
         try:
             # If unmanaged, use Service locator
-            service: 'services.Service' = Service.objects.get(token=self._params['token']).get_instance()
+            service: "services.Service" = Service.objects.get(token=self._params["token"]).get_instance()
 
             # We have a valid service, now we can make notifications
 
@@ -214,7 +212,7 @@ class ActorV3Action(Handler):
 
             service_id: str | None = service.get_valid_id(ids_list)
 
-            is_remote = self._params.get('session_type', '')[:4] in ('xrdp', 'RDP-')
+            is_remote = self._params.get("session_type", "")[:4] in ("xrdp", "RDP-")
 
             # Must be valid
             if action in (types.rest.actor.NotifyActionType.LOGIN, types.rest.actor.NotifyActionType.LOGOUT):
@@ -228,14 +226,14 @@ class ActorV3Action(Handler):
                 elif action == types.rest.actor.NotifyActionType.LOGOUT:
                     service.process_logout(service_id, remote_login=is_remote)
             elif action == types.rest.actor.NotifyActionType.DATA:
-                service.notify_data(service_id, self._params['data'])
+                service.notify_data(service_id, self._params["data"])
             else:
-                raise Exception('Invalid action')
+                raise Exception("Invalid action")
 
             # All right, service notified..
         except Exception as e:
             # Log error and continue
-            logger.error('Error notifying service: %s (%s)', e, self._params)
+            logger.error("Error notifying service: %s (%s)", e, self._params)
             raise exceptions.rest.BlockAccess() from None
 
 
@@ -244,27 +242,27 @@ class Test(ActorV3Action):
     Tests UDS Broker actor connectivity & key
     """
 
-    NAME = 'test'
+    NAME = "test"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
         # First, try to locate an user service providing this token.
         try:
-            if self._params.get('type') == consts.actor.UNMANAGED:
-                Service.objects.get(token=self._params['token'])
+            if self._params.get("type") == consts.actor.UNMANAGED:
+                Service.objects.get(token=self._params["token"])
             else:
                 Server.objects.get(
-                    token=self._params['token'], type=types.servers.ServerType.ACTOR
+                    token=self._params["token"], type=types.servers.ServerType.ACTOR
                 )  # Not assigned, because only needs check
             clear_failed_ip_counter(self._request)
         except Exception as e:
-            logger.info('Test host request: %s, %s', self._params, e)
+            logger.info("Test host request: %s, %s", self._params, e)
             # Increase failed attempts
             increase_failed_ip_count(self._request)
             # And return test failed
-            return ActorV3Action.actor_result('invalid token', error='invalid token')
+            return ActorV3Action.actor_result("invalid token", error="invalid token")
 
-        return ActorV3Action.actor_result('ok')
+        return ActorV3Action.actor_result("ok")
 
 
 class Register(ActorV3Action):
@@ -285,7 +283,7 @@ class Register(ActorV3Action):
 
     ROLE = consts.UserRole.STAFF
 
-    NAME = 'register'
+    NAME = "register"
 
     @typing.override
     def post(self) -> dict[str, typing.Any]:
@@ -295,70 +293,68 @@ class Register(ActorV3Action):
         # and mac is the requested one
         found = False
         actor_token: Server | None = Server.objects.filter(
-            type=types.servers.ServerType.ACTOR, mac=self._params['mac']
+            type=types.servers.ServerType.ACTOR, mac=self._params["mac"]
         ).first()
 
         # Try to get version from headers (USer-Agent), should be something like (UDS Actor v(.+))
-        user_agent = self._request.headers.get('User-Agent', '')
-        match = re.search(r'UDS Actor v(.+)', user_agent)
+        user_agent = self._request.headers.get("User-Agent", "")
+        match = re.search(r"UDS Actor v(.+)", user_agent)
         if match:
-            self._params['version'] = self._params.get(
-                'version', match.group(1)
-            )  # override version if not provided
+            self._params["version"] = self._params.get("version", match.group(1))  # override version if not provided
 
         # Actors does not support any SERVER API version in fact, they has their own interfaces on UserServices
         # This means that we can invoke its API from user_service, but not from server (The actor token is transformed as soon as initialized to a user service token)
 
         # New model has "commands" field in data, old one not
-        if 'commands' in self._params:
-            commands = self._params['commands']
+        if "commands" in self._params:
+            commands = self._params["commands"]
             data = {
-                'pre_command': commands.get('pre_command') or '',
-                'post_command': commands.get('post_command') or '',
-                'run_once_command': commands.get('run_once_command') or '',
-                'custom': self._params.get('custom') or '',
+                "pre_command": commands.get("pre_command") or "",
+                "post_command": commands.get("post_command") or "",
+                "run_once_command": commands.get("run_once_command") or "",
+                "custom": self._params.get("custom") or "",
             }
         else:
             data = {
-                'pre_command': self._params['pre_command'],
-                'post_command': self._params['post_command'],
-                'run_once_command': self._params['run_once_command'],
-                'custom': self._params.get('custom', ''),
+                "pre_command": self._params["pre_command"],
+                "post_command": self._params["post_command"],
+                "run_once_command": self._params["run_once_command"],
+                "custom": self._params.get("custom", ""),
             }
 
         if actor_token:
             # Update parameters
             # type is already set
-            actor_token.subtype = self._params.get('subtype', '')
-            actor_token.version = self._params.get('version', '')
+            actor_token.subtype = self._params.get("subtype", "")
+            actor_token.version = self._params.get("version", "")
             actor_token.register_username = self._user.pretty_name
             actor_token.register_ip = self._request.ip
-            actor_token.ip = self._params['ip']
-            actor_token.hostname = self._params['hostname']
-            actor_token.log_level = self._params['log_level']
+            actor_token.ip = self._params["ip"]
+            actor_token.hostname = self._params["hostname"]
+            actor_token.log_level = self._params["log_level"]
             actor_token.data = data
             actor_token.stamp = sql_now()
-            actor_token.os_type = self._params.get('os', types.os.KnownOS.UNKNOWN.os_name())[:31]
+            actor_token.os_type = self._params.get("os", types.os.KnownOS.UNKNOWN.os_name())[:31]
             # Mac is already set, as type was used to locate it
             actor_token.save()
-            logger.info('Registered actor %s', self._params)
+            logger.info("Registered actor %s", self._params)
             found = True
 
         if not found:
             kwargs = {
-                'type': types.servers.ServerType.ACTOR,
-                'subtype': self._params.get('subtype', ''),
-                'version': self._params.get('version', ''),
-                'register_username': self._user.pretty_name,
-                'register_ip': self._request.ip,
-                'ip': self._params['ip'],
-                'hostname': self._params['hostname'],
-                'log_level': self._params['log_level'],
-                'data': data,
+                "type": types.servers.ServerType.ACTOR,
+                "subtype": self._params.get("subtype", ""),
+                "version": self._params.get("version", ""),
+                "register_username": self._user.pretty_name,
+                "register_ip": self._request.ip,
+                "ip": self._params["ip"],
+                "hostname": self._params["hostname"],
+                "log_level": self._params["log_level"],
+                "data": data,
                 # 'token': Server.create_token(),  # Not needed, defaults to create_token
-                'stamp': sql_now(),
-                'os_type': self._params.get('os', types.os.KnownOS.UNKNOWN.os_name()),
-                'mac': self._params['mac'],
+                "stamp": sql_now(),
+                "os_type": self._params.get("os", types.os.KnownOS.UNKNOWN.os_name()),
+                "mac": self._params["mac"],
             }
 
             actor_token = Server.objects.create(**kwargs)
@@ -372,7 +368,7 @@ class Initialize(ActorV3Action):
     Also returns the id used for the rest of the actions. (Only this one will use actor key)
     """
 
-    NAME = 'initialize'
+    NAME = "initialize"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
@@ -413,7 +409,7 @@ class Initialize(ActorV3Action):
           * Unmanaged actors invokes this method JUST ON LOGIN, so the user service has been created already for sure.
         """
         # First, validate token...
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
         service: Service | None = None
         # alias_token will contain a new master token (or same alias if not a token) to allow change on unmanaged machines.
         # Managed machines will not use this field (will return None)
@@ -427,16 +423,16 @@ class Initialize(ActorV3Action):
         ) -> dict[str, typing.Any]:
             return ActorV3Action.actor_result(
                 {
-                    'own_token': token,  # Compat with old actor versions, TBR on 5.0
-                    'token': token,  # New token, will be used from now onwards
-                    'master_token': master_token,  # Master token, to replace on unmanaged machines
-                    'unique_id': unique_id,
-                    'os': os,
+                    "own_token": token,  # Compat with old actor versions, TBR on 5.0
+                    "token": token,  # New token, will be used from now onwards
+                    "master_token": master_token,  # Master token, to replace on unmanaged machines
+                    "unique_id": unique_id,
+                    "os": os,
                 }
             )
 
         try:
-            token = self._params['token']
+            token = self._params["token"]
             list_of_ids = get_list_of_ids(self)
 
             if not list_of_ids:
@@ -445,7 +441,7 @@ class Initialize(ActorV3Action):
             master_id: typing.Final[str] = list_of_ids[0]
 
             # First, try to locate an user service providing this token.
-            if self._params['type'] == consts.actor.UNMANAGED:
+            if self._params["type"] == consts.actor.UNMANAGED:
                 # First, try to locate on alias table
 
                 if ServiceTokenAlias.objects.filter(alias=token, unique_id=master_id).exists():
@@ -485,12 +481,12 @@ class Initialize(ActorV3Action):
 
                 userservice: UserService = next(iter(dbfilter))
             except Exception as e:
-                logger.info('Not managed host request: %s, %s', self._params, e)
+                logger.info("Not managed host request: %s, %s", self._params, e)
                 return _initialization_result(None, None, None, alias_token)
 
             # Managed by UDS, get initialization data from osmanager and return it
             # Set last seen actor version
-            userservice.actor_version = self._params['version']
+            userservice.actor_version = self._params["version"]
 
             # Give the oportunity to change things to the userservice on initialization
             if userservice.get_instance().actor_initialization(self._params):
@@ -512,7 +508,7 @@ class BaseReadyChange(ActorV3Action):
     Records the IP change of actor
     """
 
-    NAME = 'notused'  # Not really important, this is not a "leaf" class and will not be directly available
+    NAME = "notused"  # Not really important, this is not a "leaf" class and will not be directly available
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
@@ -533,22 +529,22 @@ class BaseReadyChange(ActorV3Action):
             ciphers: str -> Ciphers that server supports (could be empty, so default of python requests will be used)
         }
         """
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
         userservice = self.get_userservice()
         # Stores known IP and notifies it to deployment
         userservice_instance = userservice.get_instance()
         # If instance has an IP, do not change it, otherwise, set the new one
-        ip = userservice_instance.get_ip() or self._params['ip']
+        ip = userservice_instance.get_ip() or self._params["ip"]
         userservice.log_ip(ip)  # Store IP in database
-        userservice_instance.set_ip(self._params['ip'])
+        userservice_instance.set_ip(self._params["ip"])
         userservice.update_data(userservice_instance)
 
         # Store communications url also
         ActorV3Action.set_comms_endpoint(
             userservice,
-            self._params['ip'],
-            int(self._params['port']),
-            self._params['secret'],
+            self._params["ip"],
+            int(self._params["port"]),
+            self._params["secret"],
         )
 
         if userservice.os_state != State.USABLE:
@@ -559,17 +555,17 @@ class BaseReadyChange(ActorV3Action):
             if osmanager:
                 osmanager.process_ready(userservice)
                 UserServiceManager.manager().notify_ready_from_os_manager(
-                    userservice, ''
+                    userservice, ""
                 )  # Currently, no data is received for os manager
 
         # Generates a certificate and send it to client.
         # Password will be removed on a release after 5.0 as it is useful
         # Currently we have to maintain it for compat with older actors
-        private_key, cert, password = security.create_self_signed_cert(self._params['ip'], with_password=True)
+        private_key, cert, password = security.create_self_signed_cert(self._params["ip"], with_password=True)
         # Store certificate with userService
-        userservice.properties['cert'] = cert
-        userservice.properties['priv'] = private_key
-        userservice.properties['priv_passwd'] = password
+        userservice.properties["cert"] = cert
+        userservice.properties["priv"] = private_key
+        userservice.properties["priv_passwd"] = password
 
         return ActorV3Action.actor_cert_result(private_key, cert, password)
 
@@ -579,7 +575,7 @@ class IpChange(BaseReadyChange):
     Processses IP Change.
     """
 
-    NAME = 'ipchange'
+    NAME = "ipchange"
 
 
 class Ready(BaseReadyChange):
@@ -587,7 +583,7 @@ class Ready(BaseReadyChange):
     Notifies the user service is ready
     """
 
-    NAME = 'ready'
+    NAME = "ready"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
@@ -623,14 +619,14 @@ class Version(ActorV3Action):
     Used on possible "customized" actors.
     """
 
-    NAME = 'version'
+    NAME = "version"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
-        logger.debug('Version Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Version Args: %s,  Params: %s", self._args, self._params)
         userservice = self.get_userservice()
-        userservice.actor_version = self._params['version']
-        ip = userservice.get_instance().get_ip() or self._params['ip']
+        userservice.actor_version = self._params["version"]
+        ip = userservice.get_instance().get_ip() or self._params["ip"]
         userservice.log_ip(ip)
 
         return ActorV3Action.actor_result()
@@ -641,7 +637,7 @@ class Login(ActorV3Action):
     Notifies user logged id
     """
 
-    NAME = 'login'
+    NAME = "login"
 
     # payload received
     #   {
@@ -660,20 +656,20 @@ class Login(ActorV3Action):
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
-        is_managed = self._params.get('type') != consts.actor.UNMANAGED
-        src = types.connections.ConnectionSource('', '')
+        is_managed = self._params.get("type") != consts.actor.UNMANAGED
+        src = types.connections.ConnectionSource("", "")
         deadline = max_idle = None
-        session_id = ''
+        session_id = ""
 
-        logger.debug('Login Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Login Args: %s,  Params: %s", self._args, self._params)
 
         try:
             userservice: UserService = self.get_userservice()
-            osmanager = Login.process_login(userservice, self._params.get('username') or '')
+            osmanager = Login.process_login(userservice, self._params.get("username") or "")
 
             max_idle = osmanager.max_idle() if osmanager else None
 
-            logger.debug('Max idle: %s', max_idle)
+            logger.debug("Max idle: %s", max_idle)
 
             src = userservice.get_connection_source()
             session_id = userservice.start_session()  # creates a session for every login requested
@@ -695,12 +691,12 @@ class Login(ActorV3Action):
 
         return ActorV3Action.actor_result(
             {
-                'ip': src.ip,
-                'hostname': src.hostname,
-                'dead_line': deadline,  # Kept for compat, will be removed on 5.x
-                'deadline': deadline,
-                'max_idle': max_idle,
-                'session_id': session_id,
+                "ip": src.ip,
+                "hostname": src.hostname,
+                "dead_line": deadline,  # Kept for compat, will be removed on 5.x
+                "deadline": deadline,
+                "max_idle": max_idle,
+                "session_id": session_id,
             }
         )
 
@@ -710,7 +706,7 @@ class Logout(ActorV3Action):
     Notifies user logged out
     """
 
-    NAME = 'logout'
+    NAME = "logout"
 
     @staticmethod
     def process_logout(userservice: UserService, username: str, session_id: str) -> None:
@@ -731,15 +727,15 @@ class Logout(ActorV3Action):
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
-        is_managed = self._params.get('type') != consts.actor.UNMANAGED
+        is_managed = self._params.get("type") != consts.actor.UNMANAGED
 
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
         try:
             userservice: UserService = self.get_userservice()  # if not exists, will raise an error
             Logout.process_logout(
                 userservice,
-                self._params.get('username') or '',
-                self._params.get('session_id') or '',
+                self._params.get("username") or "",
+                self._params.get("session_id") or "",
             )
         # If unamanaged host, lets do a bit more work looking for a service with the provided parameters...
         except Exception:
@@ -747,9 +743,9 @@ class Logout(ActorV3Action):
                 raise
             self.notify_service(types.rest.actor.NotifyActionType.LOGOUT)  # Logout notification
             # Result is that we have not processed the logout in fact, but notified the service
-            return ActorV3Action.actor_result('notified')
+            return ActorV3Action.actor_result("notified")
 
-        return ActorV3Action.actor_result('ok')
+        return ActorV3Action.actor_result("ok")
 
 
 class Log(ActorV3Action):
@@ -757,25 +753,25 @@ class Log(ActorV3Action):
     Sends a log from the service
     """
 
-    NAME = 'log'
+    NAME = "log"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
         userservice = self.get_userservice()
-        if userservice.actor_version < '4.0.0':
+        if userservice.actor_version < "4.0.0":
             # Adjust loglevel to own, we start on 10000 for OTHER, and received is 0 for OTHER
-            level = types.log.LogLevel.from_int(int(self._params['level']) + 10000)
+            level = types.log.LogLevel.from_int(int(self._params["level"]) + 10000)
         else:
-            level = types.log.LogLevel.from_int(int(self._params['level']))
+            level = types.log.LogLevel.from_int(int(self._params["level"]))
         log.log(
             userservice,
             level,
-            self._params['message'],
+            self._params["message"],
             types.log.LogSource.ACTOR,
         )
 
-        return ActorV3Action.actor_result('ok')
+        return ActorV3Action.actor_result("ok")
 
 
 class Ticket(ActorV3Action):
@@ -783,52 +779,50 @@ class Ticket(ActorV3Action):
     Gets an stored ticket
     """
 
-    NAME = 'ticket'
+    NAME = "ticket"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
 
         if len(self._args) > 1:
-            raise exceptions.rest.RequestError('Invalid request')
+            raise exceptions.rest.RequestError("Invalid request")
 
-        kind = self._args[0] if len(self._args) == 1 else 'server'
+        kind = self._args[0] if len(self._args) == 1 else "server"
 
         try:
             match kind:
-                case 'server':
+                case "server":
                     # Server tickets are simple applicaitons with parameters
                     # Enough secure this way (no onwer)
                     try:
                         # Simple check that token exists
                         Server.objects.get(
-                            token=self._params['token'], type=types.servers.ServerType.ACTOR
+                            token=self._params["token"], type=types.servers.ServerType.ACTOR
                         )  # Not assigned, because only needs check
                     except Server.DoesNotExist:
-                        logger.error('Actor token not found (params: %s)', self._params)
+                        logger.error("Actor token not found (params: %s)", self._params)
                         raise exceptions.rest.BlockAccess() from None  # If too many blocks...
 
-                    return ActorV3Action.actor_result(TicketStore.get(self._params['ticket'], invalidate=True))
+                    return ActorV3Action.actor_result(TicketStore.get(self._params["ticket"], invalidate=True))
 
-                case 'userservice':
+                case "userservice":
                     # Userservice also has owner, to increase security
                     self.get_userservice()  # We just want to check that is valid, do not need assignment
 
                     return ActorV3Action.actor_result(
-                        TicketStore.get(
-                            uuid=self._params['ticket'], owner=self._params['token'], invalidate=True
-                        )
+                        TicketStore.get(uuid=self._params["ticket"], owner=self._params["token"], invalidate=True)
                     )
 
                 case _:
-                    raise exceptions.rest.RequestError('Invalid request')
+                    raise exceptions.rest.RequestError("Invalid request")
         except TicketStore.DoesNotExist:
-            logger.error('Actor ticket not found (params: %s)', self._params)
-            return ActorV3Action.actor_result(error='Invalid ticket')
+            logger.error("Actor ticket not found (params: %s)", self._params)
+            return ActorV3Action.actor_result(error="Invalid ticket")
 
 
 class Unmanaged(ActorV3Action):
-    NAME = 'unmanaged'
+    NAME = "unmanaged"
 
     @typing.override
     def action(self) -> dict[str, typing.Any]:
@@ -846,19 +840,19 @@ class Unmanaged(ActorV3Action):
             server_certificate: str -> Generated public key, PEM
         }
         """
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
 
         try:
-            token = self._params['token']
+            token = self._params["token"]
             if dbservice_alias := ServiceTokenAlias.objects.filter(alias=token).first():
                 # Retrieve real service from token alias
                 dbservice = dbservice_alias.service
             else:
                 dbservice = Service.objects.get(token=token)
-            service: 'services.Service' = dbservice.get_instance()
+            service: "services.Service" = dbservice.get_instance()
         except Exception:
-            logger.warning('Unmanaged host request: %s', self._params)
-            return ActorV3Action.actor_result(error='Invalid token')
+            logger.warning("Unmanaged host request: %s", self._params)
+            return ActorV3Action.actor_result(error="Invalid token")
 
         # ensure idsLists has upper and lower versions for case sensitive databases
         list_of_ids = get_list_of_ids(self)
@@ -882,12 +876,12 @@ class Unmanaged(ActorV3Action):
         ip: str
         try:
             ip = next(
-                x['ip']
-                for x in self._params['id']
-                if valid_id and valid_id.lower() in (x['ip'].lower(), x['mac'].lower())
+                x["ip"]
+                for x in self._params["id"]
+                if valid_id and valid_id.lower() in (x["ip"].lower(), x["mac"].lower())
             )
         except StopIteration:
-            ip = self._params['id'][0]['ip']  # Get first IP if no valid ip found
+            ip = self._params["id"][0]["ip"]  # Get first IP if no valid ip found
 
         # Generates a certificate and send it to client (actor).
         # Password will be removed on a release after 5.0 as it is useful
@@ -897,7 +891,7 @@ class Unmanaged(ActorV3Action):
         if valid_id:
             # If id is assigned to an user service, notify "logout" to it
             if userservice:
-                Logout.process_logout(userservice, 'init', '')
+                Logout.process_logout(userservice, "init", "")
             else:
                 # If it is not assgined to an user service, notify service
                 service.notify_initialization(valid_id)
@@ -906,9 +900,9 @@ class Unmanaged(ActorV3Action):
             service.store_id_info(
                 valid_id,
                 {
-                    'cert': certificate,
-                    'secret': self._params['secret'],
-                    'port': int(self._params['port']),
+                    "cert": certificate,
+                    "secret": self._params["secret"],
+                    "port": int(self._params["port"]),
                 },
             )
 
@@ -916,21 +910,21 @@ class Unmanaged(ActorV3Action):
 
 
 class Notify(ActorV3Action):
-    NAME = 'notify'
+    NAME = "notify"
 
     @typing.override
     def post(self) -> dict[str, typing.Any]:
         # Raplaces original post (non existent here)
-        raise exceptions.rest.AccessDenied('Access denied')
+        raise exceptions.rest.AccessDenied("Access denied")
 
     def get(self) -> collections.abc.MutableMapping[str, typing.Any]:
-        logger.debug('Args: %s,  Params: %s', self._args, self._params)
+        logger.debug("Args: %s,  Params: %s", self._args, self._params)
         try:
-            action = types.rest.actor.NotifyActionType(self._params['action'])
-            _token = self._params['token']  # Just to check it exists
+            action = types.rest.actor.NotifyActionType(self._params["action"])
+            _token = self._params["token"]  # Just to check it exists
         except Exception as e:
             # Requested login, logout or whatever
-            raise exceptions.rest.RequestError('Invalid parameters') from e
+            raise exceptions.rest.RequestError("Invalid parameters") from e
 
         try:
             # Check block manually
@@ -942,9 +936,9 @@ class Notify(ActorV3Action):
             elif action == types.rest.actor.NotifyActionType.DATA:
                 self.notify_service(action)
 
-            return ActorV3Action.actor_result('ok')
+            return ActorV3Action.actor_result("ok")
         except UserService.DoesNotExist:
             # For blocking attacks
             increase_failed_ip_count(self._request)  # pylint: disable=protected-access
 
-        raise exceptions.rest.AccessDenied('Access denied')
+        raise exceptions.rest.AccessDenied("Access denied")

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import datetime
 
@@ -52,4 +53,3 @@ FATAL_ERROR_INTERVAL_MULTIPLIER: typing.Final[int] = 2  # Multiplier for fatal e
 # STOPPING_GROUP: typing.Final[str] = 'stopping'
 # TO_DELETE_GROUP: typing.Final[str] = 'to_delete'
 # DELETING_GROUP: typing.Final[str] = 'deleting'
-

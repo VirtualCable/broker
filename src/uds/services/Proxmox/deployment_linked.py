@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import pickle  # nosec: controled data
 import enum
 import logging
@@ -71,13 +72,13 @@ class OldOperation(enum.IntEnum):
     UNKNOWN = 99
 
     @staticmethod
-    def from_int(value: int) -> 'OldOperation':
+    def from_int(value: int) -> "OldOperation":
         try:
             return OldOperation(value)
         except ValueError:
             return OldOperation.UNKNOWN
 
-    def to_operation(self) -> 'types.services.Operation':
+    def to_operation(self) -> "types.services.Operation":
         return {
             OldOperation.CREATE: types.services.Operation.CREATE,
             OldOperation.START: types.services.Operation.START,
@@ -115,17 +116,17 @@ class ProxmoxUserserviceLinked(DynamicUserService):
 
     """
 
-    _task = autoserializable.StringField(default='')
+    _task = autoserializable.StringField(default="")
 
-    def _store_task(self, upid: 'prox_types.ExecResult') -> None:
-        self._task = ','.join([upid.node, upid.upid])
+    def _store_task(self, upid: "prox_types.ExecResult") -> None:
+        self._task = ",".join([upid.node, upid.upid])
 
     def _retrieve_task(self) -> tuple[str, str]:
-        vals = self._task.split(',')
+        vals = self._task.split(",")
         return (vals[0], vals[1])
 
     def _check_task_finished(self) -> types.states.TaskState:
-        if self._task == '':
+        if self._task == "":
             return types.states.TaskState.FINISHED
 
         node, upid = self._retrieve_task()
@@ -144,36 +145,34 @@ class ProxmoxUserserviceLinked(DynamicUserService):
         return types.states.TaskState.RUNNING
 
     @typing.override
-    def service(self) -> 'ProxmoxService':
-        return typing.cast('ProxmoxService', super().service())
+    def service(self) -> "ProxmoxService":
+        return typing.cast("ProxmoxService", super().service())
 
     @typing.override
-    def publication(self) -> 'ProxmoxPublication':
+    def publication(self) -> "ProxmoxPublication":
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('ProxmoxPublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("ProxmoxPublication", pub)
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         Does nothing here also, all data are keeped at environment storage
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._task = vals[4].decode('utf8')
-            self._vmid = vals[5].decode('utf8')
-            self._reason = vals[6].decode('utf8')
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._task = vals[4].decode("utf8")
+            self._vmid = vals[5].decode("utf8")
+            self._reason = vals[6].decode("utf8")
             # Load from old format and convert to new one directly
-            self._queue = [
-                OldOperation.from_int(i).to_operation() for i in pickle.loads(vals[7])
-            ]  # nosec: controled data
+            self._queue = [OldOperation.from_int(i).to_operation() for i in pickle.loads(vals[7])]  # nosec: controled data
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
@@ -189,7 +188,7 @@ class ProxmoxUserserviceLinked(DynamicUserService):
         template_id = int(self.publication().get_template_id())
         name = self.get_vmname()
 
-        comments = 'UDS Linked clone'
+        comments = "UDS Linked clone"
         task_result = self.service().clone_vm(name, comments, template_id)
         self._store_task(task_result.exec_result)
         self._vmid = str(task_result.vmid)

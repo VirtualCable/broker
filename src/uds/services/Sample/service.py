@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -75,15 +76,15 @@ class ServiceOne(services.Service):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('Sample Service One')
+    type_name = _("Sample Service One")
     # : Type used internally to identify this provider
-    type_type = 'SampleService1'
+    type_type = "SampleService1"
     # : Description shown at administration interface for this provider
-    type_description = _('Sample (and dummy) service ONE')
+    type_description = _("Sample (and dummy) service ONE")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'service.png'
+    icon_file = "service.png"
 
     # Functional related data
 
@@ -93,13 +94,13 @@ class ServiceOne(services.Service):
     uses_cache = False
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('None')
+    cache_tooltip = _("None")
     # : If we need to generate a "Level 2" cache for this service (i.e., L1
     # : could be running machines and L2 suspended machines)
     uses_cache_l2 = False
     # : Tooltip shown to user when this item is pointed at admin interface, None
     # : also because we don't use it
-    cache_tooltip_l2 = _('None')
+    cache_tooltip_l2 = _("None")
 
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
@@ -117,38 +118,38 @@ class ServiceOne(services.Service):
 
     colour = gui.ChoiceField(
         order=1,
-        label=_('Colour'),
-        tooltip=_('Colour of the field'),
+        label=_("Colour"),
+        tooltip=_("Colour of the field"),
         # In this case, the choice can have none value selected by default
         required=True,
         choices=[
-            gui.choice_item('red', 'Red'),
-            gui.choice_item('green', 'Green'),
-            gui.choice_item('blue', 'Blue'),
-            gui.choice_item('nonsense', 'Blagenta'),
+            gui.choice_item("red", "Red"),
+            gui.choice_item("green", "Green"),
+            gui.choice_item("blue", "Blue"),
+            gui.choice_item("nonsense", "Blagenta"),
         ],
-        default='1',  # Default value is the ID of the choicefield
+        default="1",  # Default value is the ID of the choicefield
     )
 
     passw = gui.PasswordField(
         order=2,
-        label=_('Password'),
-        tooltip=_('Password for testing purposes'),
+        label=_("Password"),
+        tooltip=_("Password for testing purposes"),
         required=True,
-        default='1234',  # : Default password are nonsense?? :-)
+        default="1234",  # : Default password are nonsense?? :-)
     )
 
     basename = gui.TextField(
         order=3,
-        label=_('Services names'),
-        tooltip=_('Base name for this user services'),
+        label=_("Services names"),
+        tooltip=_("Base name for this user services"),
         # In this case, the choice can have none value selected by default
         required=True,
-        default='',  # Default value is the ID of the choicefield
+        default="",  # Default value is the ID of the choicefield
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We check here form values to see if they are valid.
 
@@ -160,10 +161,8 @@ class ServiceOne(services.Service):
         # As in provider, we receive values only at new Service creation,
         # so we only need to validate params if values is not None
         if values:
-            if self.colour.value == 'nonsense':
-                raise exceptions.ui.ValidationError(
-                    'The selected colour is invalid!!!'
-                )
+            if self.colour.value == "nonsense":
+                raise exceptions.ui.ValidationError("The selected colour is invalid!!!")
 
     # Services itself are non testeable right now, so we don't even have
     # to provide one!!!
@@ -197,17 +196,17 @@ class ServiceTwo(services.Service):
     Just a second service, no comments here (almost same that ServiceOne
     """
 
-    type_name = _('Sample Service Two')
-    type_type = 'SampleService2'
-    type_description = _('Sample (and dummy) service ONE+ONE')
-    icon_file = 'provider.png'  # : We reuse provider icon here :-)
+    type_name = _("Sample Service Two")
+    type_type = "SampleService2"
+    type_description = _("Sample (and dummy) service ONE+ONE")
+    icon_file = "provider.png"  # : We reuse provider icon here :-)
 
     # Functional related data
     userservices_limit = 5  # : Max number of deployed services for user in this service
     uses_cache = True
-    cache_tooltip = _('L1 cache for dummy elements')
+    cache_tooltip = _("L1 cache for dummy elements")
     uses_cache_l2 = True
-    cache_tooltip_l2 = _('L2 cache for dummy elements')
+    cache_tooltip_l2 = _("L2 cache for dummy elements")
 
     needs_osmanager = False
 
@@ -219,7 +218,7 @@ class ServiceTwo(services.Service):
     user_service_type = SampleUserServiceTwo
 
     # Gui, we will use here the EditableList field
-    names = gui.EditableListField(label=_('List of names'))
+    names = gui.EditableListField(label=_("List of names"))
 
     def get_names(self) -> list[str]:
         """

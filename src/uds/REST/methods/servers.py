@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -51,41 +52,41 @@ class ServerRegisterBase(Handler):
     def post(self) -> dict[str, typing.Any]:
         server_token: models.Server
         now = model.sql_now()
-        ip = self._params.get('ip', self.request.ip)
-        if ':' in ip:
+        ip = self._params.get("ip", self.request.ip)
+        if ":" in ip:
             # If zone is present, remove it
-            ip = ip.split('%')[0]
-        port = self._params.get('port', consts.net.SERVER_DEFAULT_LISTEN_PORT)
+            ip = ip.split("%")[0]
+        port = self._params.get("port", consts.net.SERVER_DEFAULT_LISTEN_PORT)
 
-        mac = self._params.get('mac', consts.NULL_MAC)
-        data = self._params.get('data', None)
-        subtype = self._params.get('subtype', '')
-        os = self._params.get('os', types.os.KnownOS.UNKNOWN.os_name()).lower()
-        certificate = self._params.get('certificate', '')
-        version = self._params.get('version', '')
+        mac = self._params.get("mac", consts.NULL_MAC)
+        data = self._params.get("data", None)
+        subtype = self._params.get("subtype", "")
+        os = self._params.get("os", types.os.KnownOS.UNKNOWN.os_name()).lower()
+        certificate = self._params.get("certificate", "")
+        version = self._params.get("version", "")
 
-        type = self._params['type']  # MUST be present
-        hostname = self._params['hostname']  # MUST be present
+        type = self._params["type"]  # MUST be present
+        hostname = self._params["hostname"]  # MUST be present
         # Validate parameters
         try:
             try:
                 types.servers.ServerType(type)  # try to convert
             except ValueError:
-                raise ValueError(_('Invalid type. Type must be an integer.'))
+                raise ValueError(_("Invalid type. Type must be an integer."))
             if len(subtype) > 16:
-                raise ValueError(_('Invalid subtype. Max length is 16.'))
+                raise ValueError(_("Invalid subtype. Max length is 16."))
             if len(os) > 16:
-                raise ValueError(_('Invalid os. Max length is 16.'))
+                raise ValueError(_("Invalid os. Max length is 16."))
             if data and len(data) > 2048:
-                raise ValueError(_('Invalid data. Max length is 2048.'))
+                raise ValueError(_("Invalid data. Max length is 2048."))
             if port < 1 or port > 65535:
-                raise ValueError(_('Invalid port. Must be between 1 and 65535'))
+                raise ValueError(_("Invalid port. Must be between 1 and 65535"))
             validators.validate_ip(ip)  # Will raise "validation error"
             validators.validate_fqdn(hostname)
             validators.validate_mac(mac)
             validators.validate_json(data)
             if certificate:  # Emtpy certificate is allowed
-                validators.validate_certificate(certificate) 
+                validators.validate_certificate(certificate)
         except Exception as e:
             raise rest_exceptions.RequestError(str(e)) from e
 
@@ -96,16 +97,16 @@ class ServerRegisterBase(Handler):
             # MAC is just informative, and data is used to store any other information that may be needed
             server_tokens = models.Server.objects.filter(hostname=hostname, type=type)
             if server_tokens.count() > 1:
-                return rest_result('error', error='More than one server with same hostname and type')
+                return rest_result("error", error="More than one server with same hostname and type")
             if server_tokens.count() == 0:
                 raise models.Server.DoesNotExist()  # Force creation of a new one
             server_token = server_tokens[0]
             # Update parameters
-            # serverToken.hostname = self._params['hostname'] 
+            # serverToken.hostname = self._params['hostname']
             server_token.register_username = self._user.pretty_name
             server_token.certificate = certificate
             # Ensure we do not store zone if IPv6 and present
-            server_token.register_ip = self._request.ip.split('%')[0]
+            server_token.register_ip = self._request.ip.split("%")[0]
             server_token.listen_port = port
             server_token.ip = ip
             server_token.stamp = now
@@ -118,64 +119,65 @@ class ServerRegisterBase(Handler):
             try:
                 server_token = models.Server.objects.create(
                     register_username=self._user.pretty_name,
-                    register_ip=self._request.ip.split('%')[0],  # Ensure we do not store zone if IPv6 and present
+                    register_ip=self._request.ip.split("%")[0],  # Ensure we do not store zone if IPv6 and present
                     ip=ip,
                     listen_port=port,
-                    hostname=self._params['hostname'],
+                    hostname=self._params["hostname"],
                     certificate=certificate,
-                    log_level=self._params.get('log_level', types.log.LogLevel.INFO.value),
+                    log_level=self._params.get("log_level", types.log.LogLevel.INFO.value),
                     stamp=now,
-                    type=self._params['type'],
-                    subtype=self._params.get('subtype', ''),  # Optional
-                    os_type=typing.cast(str, (self._params.get('os') or types.os.KnownOS.UNKNOWN.os_name())).lower(),
+                    type=self._params["type"],
+                    subtype=self._params.get("subtype", ""),  # Optional
+                    os_type=typing.cast(str, (self._params.get("os") or types.os.KnownOS.UNKNOWN.os_name())).lower(),
                     mac=mac,
                     data=data,
-                    version = version
+                    version=version,
                 )
             except Exception as e:
-                return rest_result('error', error=str(e))
+                return rest_result("error", error=str(e))
         return rest_result(result=server_token.token)
 
 
 class ServerRegister(ServerRegisterBase):
-    ROLE = consts.UserRole.STAFF    
-    
-    PATH = 'servers'
-    NAME = 'register'
+    ROLE = consts.UserRole.STAFF
 
+    PATH = "servers"
+    NAME = "register"
 
     @classmethod
     @typing.override
     def api_components(cls: type[typing.Self]) -> types.rest.api.Components:
-        return types.rest.api.Components(schemas={
-            'ServerRegisterItem': types.rest.api.Schema(
-                type='object',
-                description='A server object',
-                properties={
-                    'id': types.rest.api.SchemaProperty(type='string'),
-                    'name': types.rest.api.SchemaProperty(type='string'),
-                    'ip': types.rest.api.SchemaProperty(type='string'),
-                    'port': types.rest.api.SchemaProperty(type='integer'),
-                }
-            )
-        })
+        return types.rest.api.Components(
+            schemas={
+                "ServerRegisterItem": types.rest.api.Schema(
+                    type="object",
+                    description="A server object",
+                    properties={
+                        "id": types.rest.api.SchemaProperty(type="string"),
+                        "name": types.rest.api.SchemaProperty(type="string"),
+                        "ip": types.rest.api.SchemaProperty(type="string"),
+                        "port": types.rest.api.SchemaProperty(type="integer"),
+                    },
+                )
+            }
+        )
 
 
 # REST handlers for server actions
 class ServerTest(Handler):
     ROLE = consts.UserRole.ANONYMOUS
 
-    PATH = 'servers'
-    NAME = 'test'
+    PATH = "servers"
+    NAME = "test"
 
     @decorators.blocker()
     def post(self) -> collections.abc.MutableMapping[str, typing.Any]:
         # Test if a token is valid
         try:
-            models.Server.objects.get(token=self._params['token'])
+            models.Server.objects.get(token=self._params["token"])
             return rest_result(True)
         except Exception as e:
-            return rest_result('error', error=str(e))
+            return rest_result("error", error=str(e))
 
 
 class ServerEvent(Handler):
@@ -191,17 +193,17 @@ class ServerEvent(Handler):
     """
 
     ROLE = consts.UserRole.ANONYMOUS
-    PATH = 'servers'
-    NAME = 'event'
+    PATH = "servers"
+    NAME = "event"
 
     def get_user_service(self) -> models.UserService:
-        '''
+        """
         Looks for an userservice and, if not found, reraises DoesNotExist exception
-        '''
+        """
         try:
-            return models.UserService.objects.get(uuid=self._params['uuid'])
+            return models.UserService.objects.get(uuid=self._params["uuid"])
         except models.UserService.DoesNotExist:
-            logger.error('User service not found (params: %s)', self._params)
+            logger.error("User service not found (params: %s)", self._params)
             raise
 
     @decorators.blocker()
@@ -210,12 +212,12 @@ class ServerEvent(Handler):
         from uds.core.managers.servers import ServerManager
 
         try:
-            server = models.Server.objects.get(token=self._params['token'])
+            server = models.Server.objects.get(token=self._params["token"])
         except models.Server.DoesNotExist:
-            logger.error('Token error from %s (%s is an invalid token)', self._request.ip, self._params['token'])
+            logger.error("Token error from %s (%s is an invalid token)", self._request.ip, self._params["token"])
             raise rest_exceptions.BlockAccess() from None  # Block access if token is not valid
         except KeyError:
-            raise rest_exceptions.RequestError('Token not present') from None  # Invalid request if token is not present
+            raise rest_exceptions.RequestError("Token not present") from None  # Invalid request if token is not present
         # Notify a server that a new service has been assigned to it
         # Get action from parameters
         # Parameters:
@@ -228,5 +230,5 @@ class ServerEvent(Handler):
         try:
             return ServerManager.manager().process_event(server, self._params)
         except Exception as e:
-            logger.error('Error processing event %s: %s', self._params, e)
-            return rest_result('error', error='Error processing event')
+            logger.error("Error processing event %s: %s", self._params, e)
+            return rest_result("error", error="Error processing event")

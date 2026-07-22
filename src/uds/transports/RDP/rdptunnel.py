@@ -26,9 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import logging
 import typing
 
@@ -60,10 +61,10 @@ class TRDPTransport(BaseRDPTransport):
 
     is_base = False
 
-    icon_file = 'rdp-tunnel.png'
-    type_name = _('RDP')
-    type_type = 'TSRDPTransport'
-    type_description = _('RDP Protocol. Tunneled connection.')
+    icon_file = "rdp-tunnel.png"
+    type_name = _("RDP")
+    type_type = "TSRDPTransport"
+    type_description = _("RDP Protocol. Tunneled connection.")
     group = types.transports.Grouping.TUNNELED
 
     tunnel = fields.tunnel_field()
@@ -71,12 +72,12 @@ class TRDPTransport(BaseRDPTransport):
     startup_time = fields.tunnel_startup_time_secs()
 
     verify_certificate = gui.CheckBoxField(
-        label=_('Force SSL certificate verification'),
+        label=_("Force SSL certificate verification"),
         order=23,
-        tooltip=_('If enabled, the certificate of tunnel server will be verified (recommended).'),
+        tooltip=_("If enabled, the certificate of tunnel server will be verified (recommended)."),
         default=False,
         tab=types.ui.Tab.TUNNEL,
-        old_field_name='tunnelVerifyCert',
+        old_field_name="tunnelVerifyCert",
     )
 
     force_empty_creds = BaseRDPTransport.force_empty_creds
@@ -122,21 +123,21 @@ class TRDPTransport(BaseRDPTransport):
     # optimizeTeams = BaseRDPTransport.optimizeTeams
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         self.check_rdp_can_be_signed()
         self.check_mac_msrdc()
 
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
-    ) -> 'types.transports.TransportScript':
+        request: "ExtendedHttpRequestWithUser",
+    ) -> "types.transports.TransportScript":
         # We use helper to keep this clean
 
         ci = self.get_connection_info(userservice, user, password)
@@ -146,7 +147,7 @@ class TRDPTransport(BaseRDPTransport):
 
         # width, height = CommonPrefs.getWidthHeight(prefs)
         # depth = CommonPrefs.getDepth(prefs)
-        width, height = self.screen_size.value.split('x')
+        width, height = self.screen_size.value.split("x")
         depth = self.color_depth.value
 
         ticket = TicketStore.create_for_tunnel(
@@ -159,9 +160,9 @@ class TRDPTransport(BaseRDPTransport):
         ticket_for_sign = (
             TicketStore.create(
                 {
-                    'user': userservice.user.uuid if userservice.user else None,
-                    'userservice': userservice.uuid,
-                    'type': 'rdp',
+                    "user": userservice.user.uuid if userservice.user else None,
+                    "userservice": userservice.uuid,
+                    "type": "rdp",
                 },
                 validity=30,
             )
@@ -172,10 +173,10 @@ class TRDPTransport(BaseRDPTransport):
         tunnel_fields = fields.get_tunnel_from_field(self.tunnel)
         tunnel_host, tunnel_port = tunnel_fields.host, tunnel_fields.port
 
-        r = RDPFile(width == '-1' or height == '-1', width, height, depth, target=os.os)
+        r = RDPFile(width == "-1" or height == "-1", width, height, depth, target=os.os)
         # r.enablecredsspsupport = ci.get('sso') == 'True' or self.credssp.as_bool()
         r.enable_credssp_support = self.credssp.as_bool()
-        r.address = '{address}'
+        r.address = "{address}"
         r.username = ci.username
         r.password = ci.password
         r.domain = ci.domain
@@ -201,24 +202,24 @@ class TRDPTransport(BaseRDPTransport):
         r.redir_usb = self.allow_usb_redirection.value
 
         sp: dict[str, typing.Any] = {
-            'tunnel': {
-                'host': tunnel_host,
-                'port': tunnel_port,
-                'ticket': ticket,
-                'startup_time': self.startup_time.as_int() * 1000,  # In milliseconds
-                'verify_ssl': self.verify_certificate.as_bool(),
+            "tunnel": {
+                "host": tunnel_host,
+                "port": tunnel_port,
+                "ticket": ticket,
+                "startup_time": self.startup_time.as_int() * 1000,  # In milliseconds
+                "verify_ssl": self.verify_certificate.as_bool(),
             },
-            'password': ci.password,
-            'ticket_sign': ticket_for_sign,
+            "password": ci.password,
+            "ticket_sign": ticket_for_sign,
         }
 
         if os.os == types.os.KnownOS.WINDOWS:
             r.custom_parameters = self.wnd_custom_parameters.value
             if ci.password:
-                r.password = '{password}'  # nosec: password is not hardcoded
+                r.password = "{password}"  # nosec: password is not hardcoded
             sp.update(
                 {
-                    'as_file': r.as_file,
+                    "as_file": r.as_file,
                 }
             )
         elif os.os == types.os.KnownOS.LINUX:
@@ -228,8 +229,8 @@ class TRDPTransport(BaseRDPTransport):
                 r.custom_parameters = self.lnx_custom_parameters.value
             sp.update(
                 {
-                    'freerdp_params': r.freerdp_params,
-                    'as_file': r.as_file if self.lnx_use_rdp_file.as_bool() else '',
+                    "freerdp_params": r.freerdp_params,
+                    "as_file": r.as_file if self.lnx_use_rdp_file.as_bool() else "",
                 }
             )
         elif os.os == types.os.KnownOS.MAC_OS:
@@ -239,16 +240,16 @@ class TRDPTransport(BaseRDPTransport):
                 r.custom_parameters = self.mac_custom_parameters.value
             sp.update(
                 {
-                    'freerdp_params': r.freerdp_params,
-                    'as_file': r.as_file if self.mac_use_rdp_file.as_bool() else '',
-                    'as_rdp_url': r.as_rdp_url if self.mac_allow_msrdc.as_bool() else '',
+                    "freerdp_params": r.freerdp_params,
+                    "as_file": r.as_file if self.mac_use_rdp_file.as_bool() else "",
+                    "as_rdp_url": r.as_rdp_url if self.mac_allow_msrdc.as_bool() else "",
                 }
             )
         else:
             logger.error(
-                'Os not valid for RDP Transport: %s',
-                request.META.get('HTTP_USER_AGENT', 'Unknown'),
+                "Os not valid for RDP Transport: %s",
+                request.META.get("HTTP_USER_AGENT", "Unknown"),
             )
             return super().get_transport_script(userservice, transport, ip, os, user, password, request)
 
-        return self.get_script(os.os.os_name(), 'tunnel', sp, associated_ticket=ticket)
+        return self.get_script(os.os.os_name(), "tunnel", sp, associated_ticket=ticket)

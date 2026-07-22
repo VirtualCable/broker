@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -53,85 +54,85 @@ class RadiusAuth(auths.Authenticator):
     UDS Radius authenticator
     """
 
-    type_name = _('Radius')
-    type_type = 'RadiusAuthenticator'
-    type_description = _('Radius Authenticator')
-    icon_file = 'radius.png'
+    type_name = _("Radius")
+    type_type = "RadiusAuthenticator"
+    type_description = _("Radius Authenticator")
+    icon_file = "radius.png"
 
-    label_username = _('User')
-    label_groupname = _('Group')
+    label_username = _("User")
+    label_groupname = _("Group")
 
     server = gui.TextField(
         length=64,
-        label=_('Host'),
+        label=_("Host"),
         order=1,
-        tooltip=_('Radius Server IP or Hostname'),
+        tooltip=_("Radius Server IP or Hostname"),
         required=True,
     )
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         default=1812,
         order=2,
-        tooltip=_('Radius authentication port (usually 1812)'),
+        tooltip=_("Radius authentication port (usually 1812)"),
         required=True,
     )
     secret = gui.PasswordField(
         length=64,
-        label=_('Secret'),
+        label=_("Secret"),
         order=3,
-        tooltip=_('Radius client secret'),
+        tooltip=_("Radius client secret"),
         required=True,
     )
 
     nas_identifier = gui.TextField(
         length=64,
-        label=_('NAS Identifier'),
-        default='uds-server',
+        label=_("NAS Identifier"),
+        default="uds-server",
         order=10,
-        tooltip=_('NAS Identifier for Radius Server'),
+        tooltip=_("NAS Identifier for Radius Server"),
         required=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='nasIdentifier',
+        old_field_name="nasIdentifier",
     )
 
     app_class_prefix = gui.TextField(
         length=64,
-        label=_('App Prefix for Class Attributes'),
-        default='',
+        label=_("App Prefix for Class Attributes"),
+        default="",
         order=11,
         tooltip=_('Application prefix for filtering groups from "Class" attribute'),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='appClassPrefix',
+        old_field_name="appClassPrefix",
     )
 
     global_group = gui.TextField(
         length=64,
-        label=_('Global group'),
-        default='',
+        label=_("Global group"),
+        default="",
         order=12,
-        tooltip=_('If set, this value will be added as group for all radius users'),
+        tooltip=_("If set, this value will be added as group for all radius users"),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='globalGroup',
+        old_field_name="globalGroup",
     )
 
     use_message_authenticator = gui.CheckBoxField(
-        label=_('Use Message Authenticator'),
+        label=_("Use Message Authenticator"),
         default=False,
         order=13,
-        tooltip=_('Use Message Authenticator for authentication'),
+        tooltip=_("Use Message Authenticator for authentication"),
         tab=types.ui.Tab.ADVANCED,
     )
 
     mfa_attr = gui.TextField(
         length=2048,
         lines=2,
-        label=_('MFA attribute'),
+        label=_("MFA attribute"),
         order=20,
-        tooltip=_('Attribute from where to extract the MFA code'),
+        tooltip=_("Attribute from where to extract the MFA code"),
         required=False,
         tab=types.ui.Tab.MFA,
-        old_field_name='mfaAttr',
+        old_field_name="mfaAttr",
     )
 
     @typing.override
@@ -150,19 +151,19 @@ class RadiusAuth(auths.Authenticator):
         )
 
     def mfa_storage_key(self, username: str) -> str:
-        return 'mfa_' + str(self.db_obj().uuid) + username
+        return "mfa_" + str(self.db_obj().uuid) + username
 
     @typing.override
     def mfa_identifier(self, username: str) -> str:
-        return self.storage.read_pickled(self.mfa_storage_key(username)) or ''
+        return self.storage.read_pickled(self.mfa_storage_key(username)) or ""
 
     @typing.override
     def authenticate(
         self,
         username: str,
         credentials: str,
-        groups_manager: 'auths.GroupsManager',
-        request: 'ExtendedHttpRequest',
+        groups_manager: "auths.GroupsManager",
+        request: "ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         try:
             connection = self.radius_client()
@@ -184,7 +185,7 @@ class RadiusAuth(auths.Authenticator):
                 request,
                 self.db_obj(),
                 username,
-                'Access denied by Raiuds',
+                "Access denied by Raiuds",
                 as_error=True,
             )
             return types.auth.FAILED_AUTH
@@ -202,7 +203,7 @@ class RadiusAuth(auths.Authenticator):
         return types.auth.SUCCESS_AUTH
 
     @typing.override
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
+    def get_groups(self, username: str, groups_manager: "auths.GroupsManager") -> None:
         with self.storage.as_dict() as storage:
             groups_manager.validate(storage.get(username, []))
 
@@ -219,24 +220,26 @@ class RadiusAuth(auths.Authenticator):
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """Test the connection to the server ."""
         try:
             auth = RadiusAuth(env, data)
             return auth.test_connection()
         except Exception as e:
             logger.error("Exception found testing Radius auth %s: %s", e.__class__, e)
-            return types.core.TestResult(False, _('Error testing connection'))
+            return types.core.TestResult(False, _("Error testing connection"))
 
     def test_connection(self) -> types.core.TestResult:
         """Test connection to Radius Server"""
         try:
             connection = self.radius_client()
             # Reply is not important...
-            connection.authenticate(CryptoManager.manager().random_string(10), CryptoManager.manager().random_string(10))
+            connection.authenticate(
+                CryptoManager.manager().random_string(10), CryptoManager.manager().random_string(10)
+            )
         except client.RadiusAuthenticationError:
             pass
         except Exception:
-            logger.exception('Connecting')
-            return types.core.TestResult(False, _('Connection to Radius server failed'))
+            logger.exception("Connecting")
+            return types.core.TestResult(False, _("Connection to Radius server failed"))
         return types.core.TestResult(True)

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from tests.utils.test import UDSTestCase
@@ -60,23 +61,23 @@ from uds.services.Proxmox.publication import ProxmoxPublication as Publication
 
 # self._destroy_after = destroy_after != ''
 EXPECTED_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_vmid',
-    '_task',
-    '_queue',
-    '_is_flagged_for_destroy',
-    '_reason',
+    "_name",
+    "_vmid",
+    "_task",
+    "_queue",
+    "_is_flagged_for_destroy",
+    "_reason",
 }
 
 
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b'v1\tname\tvm\ttask\tstate\td\ty\treason'
+SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\tvm\ttask\tstate\td\ty\treason"
 
 
 class ProxmoxPublicationSerializationTest(UDSTestCase):
     def check(self, instance: Publication) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._vmid, 'vm')
-        self.assertEqual(instance._task, 'task')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._vmid, "vm")
+        self.assertEqual(instance._task, "task")
         # State is not used anymore on current publication, (it's the current queue top operation)
         # self.assertEqual(instance._state, 'state')
         self.assertEqual(
@@ -89,7 +90,7 @@ class ProxmoxPublicationSerializationTest(UDSTestCase):
         )
 
         self.assertTrue(instance._is_flagged_for_destroy)
-        self.assertEqual(instance._reason, 'reason')
+        self.assertEqual(instance._reason, "reason")
 
     def test_marshaling(self) -> None:
         environment = Environment.testing_environment()
@@ -104,7 +105,7 @@ class ProxmoxPublicationSerializationTest(UDSTestCase):
         marshaled_data = instance.marshal()
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'\1'))
+        self.assertFalse(marshaled_data.startswith(b"\1"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = Publication(environment=environment, service=None)  # type: ignore
         instance.unmarshal(marshaled_data)

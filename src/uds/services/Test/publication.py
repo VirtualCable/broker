@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 import string
 import logging
@@ -59,7 +60,7 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
     reason = autoserializable.StringField()
     number = autoserializable.IntegerField(default=-1)
     other = autoserializable.StringField()
-    other2 = autoserializable.StringField(default='other2')
+    other2 = autoserializable.StringField(default="other2")
 
     @typing.override
     def initialize(self) -> None:
@@ -72,14 +73,14 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
 
         # We do not check anything at marshal method, so we ensure that
         # default values are correctly handled by marshal.
-        self.name = ''.join(random.choices(string.ascii_letters, k=8))
+        self.name = "".join(random.choices(string.ascii_letters, k=8))
         self.state = types.states.TaskState.RUNNING
-        self.reason = 'none'
+        self.reason = "none"
         self.number = 10
 
     @typing.override
     def publish(self) -> types.states.TaskState:
-        logger.info('Publishing publication %s: %s remaining', self.name, self.number)
+        logger.info("Publishing publication %s: %s remaining", self.name, self.number)
         self.number -= 1
 
         if self.number <= 0:
@@ -93,7 +94,7 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
     @typing.override
     def finish(self) -> None:
         # Make simply a random string
-        logger.info('Finishing publication %s', self.name)
+        logger.info("Finishing publication %s", self.name)
         self.number = 0
         self.state = types.states.TaskState.FINISHED
 
@@ -103,12 +104,12 @@ class TestPublication(services.Publication, autoserializable.AutoSerializable):
 
     @typing.override
     def destroy(self) -> types.states.TaskState:
-        logger.info('Destroying publication %s', self.name)
+        logger.info("Destroying publication %s", self.name)
         return types.states.TaskState.FINISHED
 
     @typing.override
     def cancel(self) -> types.states.TaskState:
-        logger.info('Canceling publication %s', self.name)
+        logger.info("Canceling publication %s", self.name)
         return self.destroy()
 
     # Here ends the publication needed methods.

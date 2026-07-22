@@ -97,23 +97,23 @@ class Service(Module):
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_name = _('Base Service')
+    type_name = _("Base Service")
 
     # : Name of type used by Managers to identify this type of service
     # : Must not be modified once assigned, because it's stored at database, and any saved
     # : data will not be able to be unmarshalled if this is changed.
-    type_type = 'BaseService'
+    type_type = "BaseService"
 
     # : Description shown at administration level for this service.
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_description = _('Base Service')
+    type_description = _("Base Service")
 
     # : Icon file, used to represent this service at administration interface
     # : This file should be at same folder as this class is, except if you provide
     # : your own :py:meth:uds.core.module.BaseModule.icon method.
-    icon_file = 'service.png'
+    icon_file = "service.png"
 
     # Functional related data
 
@@ -126,7 +126,6 @@ class Service(Module):
     # :      - If userservices_limit_field is a callable, it will be called and the result will be used as userservices_limit
     # :      - If userservices_limit_field is None, userservices_limit will be set to consts.UNLIMITED (as default)
     userservices_limit: int = consts.UNLIMITED
-
 
     # : Overrided fields for service edition
     # : This is a dictionary that will be used to override fields on service on its edition
@@ -157,7 +156,7 @@ class Service(Module):
     uses_cache = False
 
     # : Tooltip to be used if services uses cache at administration interface, indicated by :py:attr:.uses_cache
-    cache_tooltip = _('None')  # : Tooltip shown to user when this item is pointed at admin interface
+    cache_tooltip = _("None")  # : Tooltip shown to user when this item is pointed at admin interface
 
     # : If user deployments can be cached (see :py:attr:.uses_cache), may he also can provide a secondary cache,
     # : that is no more that user deployments that are "almost ready" to be used, but preperably consumes less
@@ -166,7 +165,7 @@ class Service(Module):
     uses_cache_l2 = False  # : If we need to generate a "Level 2" cache for this service (i.e., L1 could be running machines and L2 suspended machines)
 
     # : Tooltip to be used if services uses L2 cache at administration interface, indicated by :py:attr:.uses_cache_l2
-    cache_tooltip_l2 = _('None')  # : Tooltip shown to user when this item is pointed at admin interface
+    cache_tooltip_l2 = _("None")  # : Tooltip shown to user when this item is pointed at admin interface
 
     # : If the service needs a o.s. manager (see os managers section)
     needs_osmanager: bool = False
@@ -178,21 +177,19 @@ class Service(Module):
     # : provide a publication type
     # : This refers to class that provides the logic for publication, you can see
     # : :py:class:uds.core.services.Publication
-    publication_type: typing.ClassVar[type['Publication'] | None] = None
+    publication_type: typing.ClassVar[type["Publication"] | None] = None
 
     # : Types of deploys (services in cache and/or assigned to users)
     # : This is ALWAYS a MUST. You mast indicate the class responsible
     # : for managing the user deployments (user consumable services generated
     # : from this one). If this attribute is not set, the service will never work
     # : (core will not know how to handle the user deployments)
-    user_service_type: typing.ClassVar[type['UserService'] | None] = None
+    user_service_type: typing.ClassVar[type["UserService"] | None] = None
 
     # : Restricted transports
     # : If this list contains anything else but emtpy, the only allowed protocol for transports
     # : will be the ones listed here (on implementation, ofc)
-    allowed_protocols: collections.abc.Iterable[types.transports.Protocol] = (
-        types.transports.Protocol.generic_vdi()
-    )
+    allowed_protocols: collections.abc.Iterable[types.transports.Protocol] = types.transports.Protocol.generic_vdi()
 
     # : If this services "spawns" a new copy on every execution (that is, does not "reuse" the previous opened session)
     # : Default behavior is False (and most common), but some services may need to respawn a new "copy" on every launch
@@ -207,14 +204,14 @@ class Service(Module):
     # : For example, VDI, VAPP, ...
     services_type_provided: types.services.ServiceType = types.services.ServiceType.VDI
 
-    _provider: 'services.ServiceProvider'  # Parent instance (not database object)
+    _provider: "services.ServiceProvider"  # Parent instance (not database object)
 
-    _db_obj: 'models.Service | None' = None  # Database object cache
+    _db_obj: "models.Service | None" = None  # Database object cache
 
     def __init__(
         self,
-        environment: 'environment.Environment',
-        provider: 'services.ServiceProvider',
+        environment: "environment.Environment",
+        provider: "services.ServiceProvider",
         values: types.core.ValuesType = None,
         uuid: str | None = None,
     ):
@@ -244,7 +241,7 @@ class Service(Module):
         """
 
     @typing.override
-    def db_obj(self) -> 'models.Service':
+    def db_obj(self) -> "models.Service":
         """
         Returns the database object associated with this service
         """
@@ -256,7 +253,7 @@ class Service(Module):
             self._db_obj = Service.objects.get(uuid__iexact=self.get_uuid())
         return self._db_obj
 
-    def provider(self) -> 'services.ServiceProvider':
+    def provider(self) -> "services.ServiceProvider":
         """
         Utility method to access parent provider for this service
 
@@ -288,7 +285,7 @@ class Service(Module):
         when the user logouts instead of being removed. By default, this method returns False.
         """
         return False
-    
+
     def restore_snapshot_on_back_to_cache(self) -> bool:
         """
         Returns if this service must restore a snapshot when being put back to cache. This is used to check if a service
@@ -303,10 +300,10 @@ class Service(Module):
         # Invoke base unmarshal, so "gui fields" gets loaded from data
         super().unmarshal(data)
 
-        if hasattr(self, 'userservices_limit_field'):
+        if hasattr(self, "userservices_limit_field"):
             # Fix self "userservices_limit" value after loading fields
             try:
-                userservices_limit_field = getattr(self, 'userservices_limit_field', None)
+                userservices_limit_field = getattr(self, "userservices_limit_field", None)
                 if isinstance(userservices_limit_field, int):
                     self.userservices_limit = userservices_limit_field
                 elif isinstance(userservices_limit_field, gui.NumericField):
@@ -329,29 +326,29 @@ class Service(Module):
 
         # Keep untouched if userservices_limit_field is not present
 
-    def mac_generator(self) -> 'UniqueMacGenerator':
+    def mac_generator(self) -> "UniqueMacGenerator":
         """
         Utility method to access provided macs generator (inside environment)
 
         Returns the environment unique mac addresses generator
         """
-        return typing.cast('UniqueMacGenerator', self.id_generator('mac'))
+        return typing.cast("UniqueMacGenerator", self.id_generator("mac"))
 
-    def name_generator(self) -> 'UniqueNameGenerator':
+    def name_generator(self) -> "UniqueNameGenerator":
         """
         Utility method to access provided names generator (inside environment)
 
         Returns the environment unique name generator
         """
-        return typing.cast('UniqueNameGenerator', self.id_generator('name'))
+        return typing.cast("UniqueNameGenerator", self.id_generator("name"))
 
-    def gid_generator(self) -> 'UniqueGIDGenerator':
+    def gid_generator(self) -> "UniqueGIDGenerator":
         """
         Utility method to access provided global ids generator (inside environment)
 
         Returns the environment unique global id generator
         """
-        return typing.cast('UniqueGIDGenerator', self.id_generator('id'))
+        return typing.cast("UniqueGIDGenerator", self.id_generator("id"))
 
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
@@ -365,7 +362,7 @@ class Service(Module):
         return []
 
     def assign_from_assignables(
-        self, assignable_id: str, user: 'models.User', userservice_instance: 'UserService'
+        self, assignable_id: str, user: "models.User", userservice_instance: "UserService"
     ) -> types.states.TaskState:
         """
         Assigns from it internal assignable list to an user
@@ -397,7 +394,7 @@ class Service(Module):
         """
         return None
 
-    def get_vapp_launcher(self, userservice: 'models.UserService') -> tuple[str, str] | None:
+    def get_vapp_launcher(self, userservice: "models.UserService") -> tuple[str, str] | None:
         """Returns the vapp launcher for this service, if any
 
         Args:
@@ -468,18 +465,16 @@ class Service(Module):
         return
 
     def store_id_info(self, id: str, data: typing.Any) -> None:
-        self.storage.save_pickled('__nfo_' + id, data)
+        self.storage.save_pickled("__nfo_" + id, data)
 
     def recover_id_info(self, id: str, delete: bool = False) -> typing.Any:
         # recovers the information
-        value = self.storage.read_pickled('__nfo_' + id)
+        value = self.storage.read_pickled("__nfo_" + id)
         if value and delete:
-            self.storage.delete('__nfo_' + id)
+            self.storage.delete("__nfo_" + id)
         return value
 
-    def notify_preconnect(
-        self, userservice: 'models.UserService', info: 'types.connections.ConnectionData'
-    ) -> bool:
+    def notify_preconnect(self, userservice: "models.UserService", info: "types.connections.ConnectionData") -> bool:
         """
         Notifies preconnect to server, if this allows it
 
@@ -495,9 +490,9 @@ class Service(Module):
     @typing.override
     def do_log(
         self,
-        level: 'types.log.LogLevel',
+        level: "types.log.LogLevel",
         message: str,
-        source: 'types.log.LogSource' = types.log.LogSource.SERVICE,
+        source: "types.log.LogSource" = types.log.LogSource.SERVICE,
     ) -> None:
         return super().do_log(level, message, source)
 
@@ -516,4 +511,4 @@ class Service(Module):
         """
         String method, mainly used for debugging purposes
         """
-        return 'Base Service Provider'
+        return "Base Service Provider"

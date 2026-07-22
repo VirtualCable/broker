@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import random
 import string
@@ -39,7 +40,6 @@ from django.utils.translation import gettext as _
 from uds.core import services, types
 
 logger = logging.getLogger(__name__)
-
 
 
 class SamplePublication(services.Publication):
@@ -80,11 +80,9 @@ class SamplePublication(services.Publication):
     it's expressed in seconds, (i.e. "suggested_delay = 10")
     """
 
-    suggested_delay = (
-        5  # : Suggested recheck time if publication is unfinished in seconds
-    )
-    _name: str = ''
-    _reason: str = ''
+    suggested_delay = 5  # : Suggested recheck time if publication is unfinished in seconds
+    _name: str = ""
+    _reason: str = ""
     _number: int = -1
 
     @typing.override
@@ -98,8 +96,8 @@ class SamplePublication(services.Publication):
 
         # We do not check anything at marshal method, so we ensure that
         # default values are correctly handled by marshal.
-        self._name = 'test'
-        self._reason = ''  # No error, no reason for it
+        self._name = "test"
+        self._reason = ""  # No error, no reason for it
         self._number = 1
 
     @typing.override
@@ -107,16 +105,16 @@ class SamplePublication(services.Publication):
         """
         returns data from an instance of Sample Publication serialized
         """
-        return '\t'.join([self._name, self._reason, str(self._number)]).encode('utf8')
+        return "\t".join([self._name, self._reason, str(self._number)]).encode("utf8")
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
         """
-        logger.debug('Data: %s', data)
-        vals = data.decode('utf8').split('\t')
-        logger.debug('Values: %s', vals)
+        logger.debug("Data: %s", data)
+        vals = data.decode("utf8").split("\t")
+        logger.debug("Values: %s", vals)
         self._name = vals[0]
         self._reason = vals[1]
         self._number = int(vals[2])
@@ -176,7 +174,7 @@ class SamplePublication(services.Publication):
         using the suggested_delay attribute and the check_state method in most cases.
         """
         self._number = 5
-        self._reason = ''
+        self._reason = ""
         return types.states.TaskState.RUNNING
 
     @typing.override
@@ -203,7 +201,7 @@ class SamplePublication(services.Publication):
 
         # One of every 10 calls
         if random.randint(0, 9) == 9:
-            self._reason = _('Random integer was 9!!! :-)')
+            self._reason = _("Random integer was 9!!! :-)")
             return types.states.TaskState.ERROR
 
         if self._number <= 0:
@@ -221,9 +219,7 @@ class SamplePublication(services.Publication):
         Returned value, if any, is ignored
         """
         # Make simply a random string
-        self._name = ''.join(
-            random.SystemRandom().choices(string.ascii_uppercase + string.digits, k=10)
-        )
+        self._name = "".join(random.SystemRandom().choices(string.ascii_uppercase + string.digits, k=10))
 
     @typing.override
     def error_reason(self) -> str:
@@ -248,8 +244,8 @@ class SamplePublication(services.Publication):
         The retunred value is the same as when publishing, types.states.TaskState.RUNNING,
         types.states.TaskState.FINISHED or types.states.TaskState.ERROR.
         """
-        self._name = ''
-        self._reason = ''  # In fact, this is not needed, but cleaning up things... :-)
+        self._name = ""
+        self._reason = ""  # In fact, this is not needed, but cleaning up things... :-)
 
         # We do not do anything else to destroy this instance of publication
         return types.states.TaskState.FINISHED

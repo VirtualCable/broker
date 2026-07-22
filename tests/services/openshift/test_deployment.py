@@ -46,8 +46,9 @@ class TestOpenshiftDeployment(UDSTransactionTestCase):
             userservice: A userservice object with name 'test-vm'.
         """
         userservice = fixtures.create_userservice()
-        userservice._name = 'test-vm'
+        userservice._name = "test-vm"
         return userservice
+
     def setUp(self) -> None:
         super().setUp()
         fixtures.clear()
@@ -61,12 +62,16 @@ class TestOpenshiftDeployment(UDSTransactionTestCase):
         userservice = self._create_userservice()
         userservice._waiting_name = True
         api = userservice.service().api
-        with mock.patch.object(api, 'get_vm_pvc_or_dv_name', return_value=('test-pvc', 'pvc')), \
-             mock.patch.object(api, 'get_pvc_size', return_value='10Gi'), \
-             mock.patch.object(api, 'create_vm_from_pvc', return_value=True), \
-             mock.patch.object(api, 'get_datavolume_phase', return_value='Succeeded'), \
-             mock.patch.object(api, 'get_vm_info', return_value=mock.Mock(interfaces=[mock.Mock(mac_address='00:11:22:33:44:55')])), \
-             mock.patch.object(api, 'get_vm_interfaces', return_value=[mock.Mock(mac_address='00:11:22:33:44:55')]):
+        with (
+            mock.patch.object(api, "get_vm_pvc_or_dv_name", return_value=("test-pvc", "pvc")),
+            mock.patch.object(api, "get_pvc_size", return_value="10Gi"),
+            mock.patch.object(api, "create_vm_from_pvc", return_value=True),
+            mock.patch.object(api, "get_datavolume_phase", return_value="Succeeded"),
+            mock.patch.object(
+                api, "get_vm_info", return_value=mock.Mock(interfaces=[mock.Mock(mac_address="00:11:22:33:44:55")])
+            ),
+            mock.patch.object(api, "get_vm_interfaces", return_value=[mock.Mock(mac_address="00:11:22:33:44:55")]),
+        ):
             userservice.op_create()
             userservice.op_create_checker()
         self.assertFalse(userservice._waiting_name)
@@ -79,9 +84,11 @@ class TestOpenshiftDeployment(UDSTransactionTestCase):
         userservice = self._create_userservice()
         api = userservice.service().api
         userservice._waiting_name = False
-        with mock.patch.object(api, 'get_vm_pvc_or_dv_name', return_value=('test-pvc', 'pvc')), \
-             mock.patch.object(api, 'get_pvc_size', return_value='10Gi'), \
-             mock.patch.object(api, 'create_vm_from_pvc', return_value=False):
+        with (
+            mock.patch.object(api, "get_vm_pvc_or_dv_name", return_value=("test-pvc", "pvc")),
+            mock.patch.object(api, "get_pvc_size", return_value="10Gi"),
+            mock.patch.object(api, "create_vm_from_pvc", return_value=False),
+        ):
             userservice.op_create()
         self.assertTrue(userservice._waiting_name)
 
@@ -91,7 +98,7 @@ class TestOpenshiftDeployment(UDSTransactionTestCase):
         """
         userservice = self._create_userservice()
         api = userservice.service().api
-        with mock.patch.object(api, 'get_datavolume_phase', return_value='Pending'):
+        with mock.patch.object(api, "get_datavolume_phase", return_value="Pending"):
             state = userservice.op_create_checker()
         self.assertEqual(state, TaskState.RUNNING)
 
@@ -102,13 +109,17 @@ class TestOpenshiftDeployment(UDSTransactionTestCase):
         userservice = self._create_userservice()
         api = userservice.service().api
         # Patch get_token and connect to avoid real HTTP requests
-        with mock.patch.object(api, 'get_datavolume_phase', return_value='Succeeded'), \
-             mock.patch.object(api, 'get_vm_info', return_value=fixtures.VMS[0]), \
-             mock.patch.object(api, 'get_vm_interfaces', return_value=[mock.Mock(mac_address='00:11:22:33:44:55')]), \
-             mock.patch.object(type(api), 'get_token', return_value='dummy-token'), \
-             mock.patch.object(type(api), 'connect', return_value=mock.Mock(headers={})), \
-             mock.patch.object(type(api), 'session', new_callable=mock.PropertyMock, return_value=mock.Mock(headers={})), \
-             mock.patch.object(api, 'do_request', return_value={'status': {'interfaces': [{'mac_address': '00:11:22:33:44:55'}]}}):
+        with (
+            mock.patch.object(api, "get_datavolume_phase", return_value="Succeeded"),
+            mock.patch.object(api, "get_vm_info", return_value=fixtures.VMS[0]),
+            mock.patch.object(api, "get_vm_interfaces", return_value=[mock.Mock(mac_address="00:11:22:33:44:55")]),
+            mock.patch.object(type(api), "get_token", return_value="dummy-token"),
+            mock.patch.object(type(api), "connect", return_value=mock.Mock(headers={})),
+            mock.patch.object(type(api), "session", new_callable=mock.PropertyMock, return_value=mock.Mock(headers={})),
+            mock.patch.object(
+                api, "do_request", return_value={"status": {"interfaces": [{"mac_address": "00:11:22:33:44:55"}]}}
+            ),
+        ):
             state = userservice.op_create_checker()
         self.assertEqual(state, TaskState.FINISHED)
 
@@ -119,7 +130,7 @@ class TestOpenshiftDeployment(UDSTransactionTestCase):
         """
         userservice = self._create_userservice()
         api = userservice.service().api
-        with mock.patch.object(api, 'get_vm_info', return_value=None):
+        with mock.patch.object(api, "get_vm_info", return_value=None):
             state = userservice.op_delete_checker()
         self.assertEqual(state, TaskState.FINISHED)
 

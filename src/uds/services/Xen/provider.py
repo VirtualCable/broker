@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import logging
 import typing
@@ -80,15 +81,15 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('Xenserver/XCP-NG Platforms Provider')
+    type_name = _("Xenserver/XCP-NG Platforms Provider")
     # : Type used internally to identify this provider
-    type_type = 'XenPlatform'
+    type_type = "XenPlatform"
     # : Description shown at administration interface for this provider
-    type_description = _('XenServer and XCP-NG platforms service provider')
+    type_description = _("XenServer and XCP-NG platforms service provider")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
@@ -101,49 +102,49 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     # "random"
     host = gui.TextField(
         length=64,
-        label=_('Host'),
+        label=_("Host"),
         order=1,
-        tooltip=_('XenServer Server IP or Hostname'),
+        tooltip=_("XenServer Server IP or Hostname"),
         required=True,
     )
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         default=443,
         order=2,
-        tooltip=_('XenServer Server Port'),
+        tooltip=_("XenServer Server Port"),
         required=True,
     )
     username = gui.TextField(
         length=32,
-        label=_('Username'),
+        label=_("Username"),
         order=2,
-        tooltip=_('User with valid privileges on XenServer'),
+        tooltip=_("User with valid privileges on XenServer"),
         required=True,
-        default='root',
+        default="root",
     )
     password = gui.PasswordField(
         length=32,
-        label=_('Password'),
+        label=_("Password"),
         order=3,
-        tooltip=_('Password of the user of XenServer'),
+        tooltip=_("Password of the user of XenServer"),
         required=True,
     )
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
 
-    macs_range = fields.macs_range_field(default='02:46:00:00:00:00-02:46:00:FF:FF:FF')
-    verify_ssl = fields.verify_ssl_field(old_field_name='verifySSL')
+    macs_range = fields.macs_range_field(default="02:46:00:00:00:00-02:46:00:FF:FF:FF")
+    verify_ssl = fields.verify_ssl_field(old_field_name="verifySSL")
     timeout = fields.timeout_field()
 
     host_backup = gui.TextField(
         length=64,
-        label=_('Backup Host'),
+        label=_("Backup Host"),
         order=92,
-        tooltip=_('XenServer BACKUP IP or Hostname (used on connection failure to main server)'),
+        tooltip=_("XenServer BACKUP IP or Hostname (used on connection failure to main server)"),
         tab=types.ui.Tab.ADVANCED,
         required=False,
-        old_field_name='hostBackup',
+        old_field_name="hostBackup",
     )
 
     _cached_api: typing.Optional[client.XenClient]
@@ -188,7 +189,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
 
     # There is more fields type, but not here the best place to cover it
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -209,7 +210,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     def get_macs_range(self) -> str:
         return self.macs_range.value
 
-    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.host.as_str())
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.host.as_str())
     def is_available(self) -> bool:
         try:
             self.test_connection()
@@ -219,7 +220,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test XenServer Connectivity
 
@@ -250,6 +251,6 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
         xe = XenProvider(env, data)
         try:
             xe.test_connection()
-            return types.core.TestResult(True, _('Connection test successful'))
+            return types.core.TestResult(True, _("Connection test successful"))
         except Exception as e:
-            return types.core.TestResult(False, _('Connection failed: {}').format(str(e)))
+            return types.core.TestResult(False, _("Connection failed: {}").format(str(e)))

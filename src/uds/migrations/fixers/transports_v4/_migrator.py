@@ -22,9 +22,9 @@ def tunnel_transport(
     """
     try:
         db_alias = schema_editor.connection.alias
-        Transport: 'type[uds.models.Transport]' = apps.get_model('uds', 'Transport')
-        ServerGroup: 'type[uds.models.ServerGroup]' = apps.get_model('uds', 'ServerGroup')
-        Server: 'type[uds.models.Server]' = apps.get_model('uds', 'Server')
+        Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
+        ServerGroup: "type[uds.models.ServerGroup]" = apps.get_model("uds", "ServerGroup")
+        Server: "type[uds.models.Server]" = apps.get_model("uds", "Server")
         # For testing
         # from uds.models import Transport, ServerGroup, Server
 
@@ -36,52 +36,50 @@ def tunnel_transport(
             server = getattr(obj, serverAttr).value.strip()
             # Guacamole server is https://<host>:<port>
             if is_html_server:
-                if not server.startswith('https://'):
+                if not server.startswith("https://"):
                     # Skip if not https found
                     logger.error(
-                        'Skipping %s transport %s as it does not starts with https://',
+                        "Skipping %s transport %s as it does not starts with https://",
                         TransportType.__name__,
                         t.name,
                     )
                     continue
-                host, port = (server + ':443').split('https://')[1].split(':')[:2]
+                host, port = (server + ":443").split("https://")[1].split(":")[:2]
             else:  # Other servers are <host>:<port>
-                host, port = (server + ':443').split(':')[:2]
+                host, port = (server + ":443").split(":")[:2]
             # If no host or port, skip
             if not host or not port:
                 logger.error(
-                    'Skipping %s transport %s as it does not have host or port', TransportType.__name__, t.name
+                    "Skipping %s transport %s as it does not have host or port", TransportType.__name__, t.name
                 )
                 continue
             # Look for an existing tunnel server (ServerGroup)
             tunnel = (
-                ServerGroup.objects.using(db_alias)
-                .filter(host=host, port=port, type=servers.ServerType.TUNNEL)
-                .first()
+                ServerGroup.objects.using(db_alias).filter(host=host, port=port, type=servers.ServerType.TUNNEL).first()
             )
             if tunnel is None:
-                logger.info('Creating new tunnel server for %s: %s:%s', TransportType.__name__, host, port)
+                logger.info("Creating new tunnel server for %s: %s:%s", TransportType.__name__, host, port)
                 # Create a new one, adding all tunnel servers to it
                 tunnel = ServerGroup.objects.using(db_alias).create(
-                    name=f'Tunnel on {host}:{port}',
-                    comments=f'Migrated from {t.name}',
+                    name=f"Tunnel on {host}:{port}",
+                    comments=f"Migrated from {t.name}",
                     host=host,
                     port=port,
                     type=servers.ServerType.TUNNEL,
                 )
             else:
                 # Append transport name to comments
-                tunnel.comments = f'{tunnel.comments}, {t.name}'[:255]
-                tunnel.save(update_fields=['comments'])
+                tunnel.comments = f"{tunnel.comments}, {t.name}"[:255]
+                tunnel.save(update_fields=["comments"])
             tunnel.servers.set(Server.objects.using(db_alias).filter(type=servers.ServerType.TUNNEL))
             # Set tunnel server on transport
-            logger.info('Setting tunnel server %s on transport %s', tunnel.name, t.name)
+            logger.info("Setting tunnel server %s on transport %s", tunnel.name, t.name)
             obj.tunnel.value = tunnel.uuid
             # Save transport
             t.data = obj.serialize()
-            t.save(update_fields=['data'])
+            t.save(update_fields=["data"])
     except Exception:
-        logger.exception('Exception found while migrating %s transports', TransportType)
+        logger.exception("Exception found while migrating %s transports", TransportType)
 
 
 def tunnel_transport_back(
@@ -96,8 +94,8 @@ def tunnel_transport_back(
     """
     try:
         db_alias = schema_editor.connection.alias
-        Transport: 'type[uds.models.Transport]' = apps.get_model('uds', 'Transport')
-        ServerGroup: 'type[uds.models.ServerGroup]' = apps.get_model('uds', 'ServerGroup')
+        Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
+        ServerGroup: "type[uds.models.ServerGroup]" = apps.get_model("uds", "ServerGroup")
         # For testing
         # from uds.models import Transport, ServerGroup
 
@@ -110,11 +108,11 @@ def tunnel_transport_back(
             server = getattr(obj, serverAttr)
             tunnelServer = ServerGroup.objects.using(db_alias).get(uuid=obj.tunnel.value)
             if is_html_server:
-                server.value = f'https://{tunnelServer.host}:{tunnelServer.port}'
+                server.value = f"https://{tunnelServer.host}:{tunnelServer.port}"
             else:
-                server.value = f'{tunnelServer.host}:{tunnelServer.port}'
+                server.value = f"{tunnelServer.host}:{tunnelServer.port}"
             # Save transport
             t.data = obj.serialize()
-            t.save(update_fields=['data'])
+            t.save(update_fields=["data"])
     except Exception:
-        logger.exception('Exception found while migrating %s transports', TransportType)
+        logger.exception("Exception found while migrating %s transports", TransportType)

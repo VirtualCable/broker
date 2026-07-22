@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -41,7 +42,7 @@ if typing.TYPE_CHECKING:
     from .job import Job
 
 
-class JobsFactory(factory.Factory['Job']):
+class JobsFactory(factory.Factory["Job"]):
     def ensure_jobs_registered(self) -> None:
         """
         Ensures that uds core workers are correctly registered in database and in factory
@@ -52,7 +53,7 @@ class JobsFactory(factory.Factory['Job']):
         from uds import workers  # pylint: disable=import-outside-toplevel
 
         try:
-            logger.debug('Ensuring that jobs are registered inside database')
+            logger.debug("Ensuring that jobs are registered inside database")
             # Ensure workers are initialized
             # That is, dynamic load of packages and registration of jobs on manager
             workers.initialize()
@@ -66,14 +67,14 @@ class JobsFactory(factory.Factory['Job']):
                         state=State.FOR_EXECUTE,
                     )
                 except Exception:  # already exists
-                    logger.debug('Already added %s', name)
+                    logger.debug("Already added %s", name)
         except Exception as e:
             logger.debug(
-                'Exception at ensure_jobs_registered in JobsFactory: %s, %s',
+                "Exception at ensure_jobs_registered in JobsFactory: %s, %s",
                 e.__class__,
                 e,
             )
 
     @staticmethod
-    def factory() -> 'JobsFactory':
+    def factory() -> "JobsFactory":
         return JobsFactory()

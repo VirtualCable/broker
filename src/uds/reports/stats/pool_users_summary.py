@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections
 import csv
 import io
@@ -52,18 +53,18 @@ logger = logging.getLogger(__name__)
 
 
 class UsageSummaryByUsersPool(StatsReport):
-    filename = 'pool_user_usage.pdf'
-    name = _('Pool Usage by users')  # Report name
-    description = _('Generates a report with the summary of users usage for a pool')  # Report description
-    uuid = '202c6438-30a8-11e7-80e4-77c1e4cb9e09'
+    filename = "pool_user_usage.pdf"
+    name = _("Pool Usage by users")  # Report name
+    description = _("Generates a report with the summary of users usage for a pool")  # Report description
+    uuid = "202c6438-30a8-11e7-80e4-77c1e4cb9e09"
 
     # UserInterface will ignore all fields that are not from FINAL class
     # so we must redeclare them here
     # pyrefly: ignore[bad-override]
     pool = ui.gui.ChoiceField(
         order=1,
-        label=_('Pool'),
-        tooltip=_('Pool for report'),
+        label=_("Pool"),
+        tooltip=_("Pool for report"),
         required=True,
     )
 
@@ -72,11 +73,11 @@ class UsageSummaryByUsersPool(StatsReport):
 
     @typing.override
     def init_gui(self) -> None:
-        logger.debug('Initializing gui')
+        logger.debug("Initializing gui")
         vals = [gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all()]
         self.pool.set_choices(vals)
 
-    def get_pool_data(self, pool: 'ServicePool') -> tuple[list[dict[str, typing.Any]], str]:
+    def get_pool_data(self, pool: "ServicePool") -> tuple[list[dict[str, typing.Any]], str]:
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
         logger.debug(self.pool.value)
@@ -97,28 +98,26 @@ class UsageSummaryByUsersPool(StatsReport):
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=[F('fld4')], order_by=[F('stamp')]),
-                prev_stamp=Window(Lag('stamp'), partition_by=[F('fld4')], order_by=[F('stamp')]),
+                prev_type=Window(Lag("event_type"), partition_by=[F("fld4")], order_by=[F("stamp")]),
+                prev_stamp=Window(Lag("stamp"), partition_by=[F("fld4")], order_by=[F("stamp")]),
             )
-            .values('event_type', 'stamp', 'fld4', 'prev_type', 'prev_stamp')
+            .values("event_type", "stamp", "fld4", "prev_type", "prev_stamp")
         )
 
-        users: dict[str, dict[str, int]] = collections.defaultdict(
-            lambda: {'sessions': 0, 'time': 0}
-        )
+        users: dict[str, dict[str, int]] = collections.defaultdict(lambda: {"sessions": 0, "time": 0})
         for i in items:
-            if i['event_type'] != logout or i['prev_type'] != login:
+            if i["event_type"] != logout or i["prev_type"] != login:
                 continue
-            entry = users[i['fld4']]
-            entry['sessions'] += 1
-            entry['time'] += i['stamp'] - i['prev_stamp']
+            entry = users[i["fld4"]]
+            entry["sessions"] += 1
+            entry["time"] += i["stamp"] - i["prev_stamp"]
 
         data = [
             {
-                'user': k,
-                'sessions': v['sessions'],
-                'hours': '{:.2f}'.format(v['time'] / 3600),
-                'average': '{:.2f}'.format(v['time'] / 3600 / v['sessions']),
+                "user": k,
+                "sessions": v["sessions"],
+                "hours": "{:.2f}".format(v["time"] / 3600),
+                "average": "{:.2f}".format(v["time"] / 3600 / v["sessions"]),
             }
             for k, v in users.items()
         ]
@@ -133,22 +132,22 @@ class UsageSummaryByUsersPool(StatsReport):
         items, pool_name = self.get_data()
 
         return self.template_as_pdf(
-            'uds/reports/stats/pool-users-summary.html',
+            "uds/reports/stats/pool-users-summary.html",
             dct={
-                'data': items,
-                'pool': pool_name,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "data": items,
+                "pool": pool_name,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Users usage list for {}').format(pool_name),
-            water=gettext('UDS Report of users in {}').format(pool_name),
+            header=gettext("Users usage list for {}").format(pool_name),
+            water=gettext("UDS Report of users in {}").format(pool_name),
         )
 
 
 class UsageSummaryByUsersPoolCSV(UsageSummaryByUsersPool):
-    filename = 'usage.csv'
-    mime_type = 'text/csv'  # Report returns pdfs by default, but could be anything else
-    uuid = '302e1e76-30a8-11e7-9d1e-6762bbf028ca'
+    filename = "usage.csv"
+    mime_type = "text/csv"  # Report returns pdfs by default, but could be anything else
+    uuid = "302e1e76-30a8-11e7-9d1e-6762bbf028ca"
     encoded = False
 
     # Input fields
@@ -165,14 +164,14 @@ class UsageSummaryByUsersPoolCSV(UsageSummaryByUsersPool):
 
         writer.writerow(
             [
-                gettext('User'),
-                gettext('Sessions'),
-                gettext('Hours'),
-                gettext('Average'),
+                gettext("User"),
+                gettext("Sessions"),
+                gettext("Hours"),
+                gettext("Average"),
             ]
         )
 
         for v in report_data:
-            writer.writerow([v['user'], v['sessions'], v['hours'], v['average']])
+            writer.writerow([v["user"], v["sessions"], v["hours"], v["average"]])
 
         return output.getvalue().encode()

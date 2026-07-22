@@ -32,21 +32,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # from unittest import mock
 
-
 from . import fixtures
 from ... import utils
 from ...utils.test import UDSTestCase
 
 
 class TestProxmovLinkedService(UDSTestCase):
-
     def test_service_linked_data(self) -> None:
         """
         Test the linked service data is loaded correctly from fixture
         """
         service = fixtures.create_linked_service()
         utils.check_userinterface_values(service, fixtures.SERVICE_VALUES_DICT)
-        
+
         self.assertEqual(service.get_macs_range(), service.provider().get_macs_range())
         self.assertEqual(service.get_basename(), service.basename.value)
         self.assertEqual(service.get_lenname(), service.lenname.value)
@@ -76,7 +74,7 @@ class TestProxmovLinkedService(UDSTestCase):
         with fixtures.patch_provider_api() as _api:
             service = fixtures.create_linked_service()
 
-            storage = utils.search_item_by_attr(fixtures.STORAGES_INFO, 'id', service.datastore.value)
+            storage = utils.search_item_by_attr(fixtures.STORAGES_INFO, "id", service.datastore.value)
             # Ensure available is greater that configured on service
             old_available = storage.available  # For future tests to restore it
             try:
@@ -94,18 +92,18 @@ class TestProxmovLinkedService(UDSTestCase):
         service = fixtures.create_linked_service()
         # Ensure that any char not in [^a-zA-Z0-9_-] is translated to an underscore (_)
         # Create a with all ascii chars + a lot utf-8 chars outside ascii
-        name = 'This is a simple test 0123456789 ñoño'
-        name += 'áéíóúñüE¢¢←↑→↓'
-        self.assertEqual(service.sanitized_name(name), 'This_is_a_simple_test_0123456789__o_o_______E______')
+        name = "This is a simple test 0123456789 ñoño"
+        name += "áéíóúñüE¢¢←↑→↓"
+        self.assertEqual(service.sanitized_name(name), "This_is_a_simple_test_0123456789__o_o_______E______")
 
     def test_make_template(self) -> None:
         with fixtures.patch_provider_api() as api:
             service = fixtures.create_linked_service()
             # Ensure that the template is created
-            service.make_template(name='test', comments='test comments')
+            service.make_template(name="test", comments="test comments")
             api.create_template.assert_called_with(
-                'test',
-                'test comments',
+                "test",
+                "test comments",
                 service.machine.value,
                 service.cluster.value,
                 service.datastore.value,
@@ -116,10 +114,10 @@ class TestProxmovLinkedService(UDSTestCase):
         with fixtures.patch_provider_api() as api:
             service = fixtures.create_linked_service()
             # Ensure that the template is deployed
-            service.deploy_from_template('test', 'test comments', fixtures.TEMPLATES_INFO[0].id)
+            service.deploy_from_template("test", "test comments", fixtures.TEMPLATES_INFO[0].id)
             api.deploy_from_template.assert_called_with(
-                'test',
-                'test comments',
+                "test",
+                "test comments",
                 fixtures.TEMPLATES_INFO[0].id,
                 service.cluster.value,
                 service.display.value,
@@ -132,12 +130,12 @@ class TestProxmovLinkedService(UDSTestCase):
         with fixtures.patch_provider_api() as api:
             service = fixtures.create_linked_service()
             # first, with native, should call fix_usb
-            service.usb.value = 'native'
+            service.usb.value = "native"
             service.fix_usb(service.machine.value)
             api.fix_usb.assert_called_with(service.machine.value)
             # Now, with "disabled" should not call fix_usb
             api.fix_usb.reset_mock()
-            service.usb.value = 'disabled'
+            service.usb.value = "disabled"
             service.fix_usb(fixtures.VMS_INFO[0].id)
             api.fix_usb.assert_not_called()
 

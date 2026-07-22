@@ -27,9 +27,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import logging
 import typing
 
@@ -52,16 +53,16 @@ READY_CACHE_TIMEOUT = 30
 
 
 class RDPTransport(BaseRDPTransport):
-    '''
+    """
     Provides access via RDP to service.
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
-    '''
+    """
 
     is_base = False
 
-    type_name = _('RDP')
-    type_type = 'RDPTransport'
-    type_description = _('RDP Protocol. Direct connection.')
+    type_name = _("RDP")
+    type_type = "RDPTransport"
+    type_description = _("RDP Protocol. Direct connection.")
 
     force_empty_creds = BaseRDPTransport.force_empty_creds
     forced_username = BaseRDPTransport.forced_username
@@ -105,7 +106,7 @@ class RDPTransport(BaseRDPTransport):
     sign_rdp_file = BaseRDPTransport.sign_rdp_file
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         super().initialize(values)
         self.check_rdp_can_be_signed()
         self.check_mac_msrdc()
@@ -113,14 +114,14 @@ class RDPTransport(BaseRDPTransport):
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
-    ) -> 'types.transports.TransportScript':
+        request: "ExtendedHttpRequestWithUser",
+    ) -> "types.transports.TransportScript":
         # We use helper to keep this clean
 
         ci = self.get_connection_info(userservice, user, password)
@@ -130,13 +131,13 @@ class RDPTransport(BaseRDPTransport):
 
         # width, height = CommonPrefs.getWidthHeight(prefs)
         # depth = CommonPrefs.getDepth(prefs)
-        width, height = self.screen_size.value.split('x')
+        width, height = self.screen_size.value.split("x")
         depth = self.color_depth.value
 
-        r = RDPFile(width == '-1' or height == '-1', width, height, depth, target=os.os)
+        r = RDPFile(width == "-1" or height == "-1", width, height, depth, target=os.os)
         # r.enablecredsspsupport = ci.get('sso') == 'True' or self.credssp.as_bool()
         r.enable_credssp_support = self.credssp.as_bool()
-        r.address = f'{ip}:{self.rdp_port.as_int()}'
+        r.address = f"{ip}:{self.rdp_port.as_int()}"
         r.username = ci.username
         r.password = ci.password
         r.domain = ci.domain
@@ -162,20 +163,20 @@ class RDPTransport(BaseRDPTransport):
 
         # If sso, fix adding a domain UDS and force
         if self.use_sso.value:
-            r.password = '__NO_PASSWORD__'
-            r.domain = 'UDS'  # Fake in fact for SSO, but needed so xfreerdp3 do not ask for domain
+            r.password = "__NO_PASSWORD__"
+            r.domain = "UDS"  # Fake in fact for SSO, but needed so xfreerdp3 do not ask for domain
 
         sp: dict[str, typing.Any] = {
-            'password': ci.password,
-            'ip': ip,
-            'port': self.rdp_port.value,  # As string, because we need to use it in the template
-            'address': r.address,
+            "password": ci.password,
+            "ip": ip,
+            "port": self.rdp_port.value,  # As string, because we need to use it in the template
+            "address": r.address,
         }
 
         if os.os == types.os.KnownOS.WINDOWS:
             r.custom_parameters = self.wnd_custom_parameters.value
             if ci.password:
-                r.password = '{password}'  # nosec: password is not hardcoded
+                r.password = "{password}"  # nosec: password is not hardcoded
             as_file = r.as_file
             # password field is not in the signed scope, so signing before
             # the client's DPAPI substitution keeps the signature valid
@@ -183,7 +184,7 @@ class RDPTransport(BaseRDPTransport):
                 as_file = crypto.CryptoManager.manager().sign_rdp(as_file)
             sp.update(
                 {
-                    'as_file': as_file,
+                    "as_file": as_file,
                 }
             )
         elif os.os == types.os.KnownOS.LINUX:
@@ -193,9 +194,9 @@ class RDPTransport(BaseRDPTransport):
                 r.custom_parameters = self.lnx_custom_parameters.value
             sp.update(
                 {
-                    'address': r.address,
-                    'freerdp_params': r.freerdp_params,
-                    'as_file': r.as_file if self.lnx_use_rdp_file.as_bool() else '',
+                    "address": r.address,
+                    "freerdp_params": r.freerdp_params,
+                    "as_file": r.as_file if self.lnx_use_rdp_file.as_bool() else "",
                 }
             )
         elif os.os == types.os.KnownOS.MAC_OS:
@@ -205,17 +206,17 @@ class RDPTransport(BaseRDPTransport):
                 r.custom_parameters = self.mac_custom_parameters.value
             sp.update(
                 {
-                    'address': r.address,
-                    'freerdp_params': r.freerdp_params,
-                    'allow_msrdc': self.mac_allow_msrdc.as_bool(),
-                    'as_file': r.as_file if self.mac_use_rdp_file.as_bool() else '',
+                    "address": r.address,
+                    "freerdp_params": r.freerdp_params,
+                    "allow_msrdc": self.mac_allow_msrdc.as_bool(),
+                    "as_file": r.as_file if self.mac_use_rdp_file.as_bool() else "",
                 }
             )
         else:
             logger.error(
-                'Os not valid for RDP Transport: %s',
-                request.META.get('HTTP_USER_AGENT', 'Unknown'),
+                "Os not valid for RDP Transport: %s",
+                request.META.get("HTTP_USER_AGENT", "Unknown"),
             )
             return super().get_transport_script(userservice, transport, ip, os, user, password, request)
 
-        return self.get_script(os.os.os_name(), 'direct', sp)
+        return self.get_script(os.os.os_name(), "direct", sp)

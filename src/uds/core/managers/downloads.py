@@ -64,11 +64,19 @@ class DownloadsManager(metaclass=singleton.Singleton):
         self._downloadables = {}
 
     @staticmethod
-    def manager() -> 'DownloadsManager':
+    def manager() -> "DownloadsManager":
         # Singleton pattern will return always the same instance
         return DownloadsManager()
 
-    def register(self, name: str, description: str, path: str, *, mimetype: str = 'application/octet-stream', legacy: bool = False) -> None:
+    def register(
+        self,
+        name: str,
+        description: str,
+        path: str,
+        *,
+        mimetype: str = "application/octet-stream",
+        legacy: bool = False,
+    ) -> None:
         """
         Registers a downloadable file.
         @param name: name shown
@@ -83,13 +91,13 @@ class DownloadsManager(metaclass=singleton.Singleton):
             mimetype=mimetype,
             legacy=legacy,
         )
-        
+
     def downloadables(self) -> typing.Mapping[str, types.downloads.Downloadable]:
         return self._downloadables
 
-    def send(self, request: 'HttpRequest', _id: str) -> HttpResponse:
+    def send(self, request: "HttpRequest", _id: str) -> HttpResponse:
         if _id not in self._downloadables:
-            logger.error('Downloadable id %s not found in %s!!!', _id, self._downloadables)
+            logger.error("Downloadable id %s not found in %s!!!", _id, self._downloadables)
             raise Http404
         return self._send_file(
             request,
@@ -98,18 +106,18 @@ class DownloadsManager(metaclass=singleton.Singleton):
             self._downloadables[_id].mimetype,
         )
 
-    def _send_file(self, request: 'HttpRequest', name: str, filename: str, mime: str) -> HttpResponse:
+    def _send_file(self, request: "HttpRequest", name: str, filename: str, mime: str) -> HttpResponse:
         """
         Send a file through Django without loading the whole file into
         memory at once. The FileWrapper will turn the file object into an
         iterator for chunks of 8KB.
         """
         try:
-            wrapper = FileWrapper(open(filename, 'rb'))  # pylint: disable=consider-using-with
+            wrapper = FileWrapper(open(filename, "rb"))  # pylint: disable=consider-using-with
             response = HttpResponse(wrapper, content_type=mime)
-            response['Content-Length'] = os.path.getsize(filename)
-            response['Content-Disposition'] = 'attachment; filename=' + name
+            response["Content-Length"] = os.path.getsize(filename)
+            response["Content-Disposition"] = "attachment; filename=" + name
             return response
         except Exception as e:
-            logger.error('Error sending file %s: %s', filename, e)
+            logger.error("Error sending file %s: %s", filename, e)
             raise Http404

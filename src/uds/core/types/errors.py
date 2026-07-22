@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import enum
 import logging
@@ -71,14 +72,14 @@ class Error(enum.IntEnum):
             return str(ERROR_STRINGS[0])
 
     @staticmethod
-    def from_int(value: int) -> 'Error':
+    def from_int(value: int) -> "Error":
         try:
             return Error(value)
         except ValueError:
             return Error.UNKNOWN_ERROR
 
     @staticmethod
-    def from_exception(exception: Exception) -> 'Error':
+    def from_exception(exception: Exception) -> "Error":
         from uds.core.exceptions.auth import (
             InvalidUserException,
             InvalidAuthenticatorException,
@@ -107,30 +108,30 @@ class Error(enum.IntEnum):
         try:
             return trans_dct[type(exception)]
         except KeyError:
-            logger.error('Unexpected exception: %s, traceback: %s', exception, traceback.format_exc())
+            logger.error("Unexpected exception: %s, traceback: %s", exception, traceback.format_exc())
             return Error.UNKNOWN_ERROR
 
 
 ERROR_STRINGS: typing.Final[list[str]] = [
-    _('Unknown error'),
-    _('Transport not found'),
-    _('Service not found'),
-    _('Access denied'),
-    _('Invalid service. The service is not available at this moment. Please, try later'),
-    _('Maximum services limit reached. Please, contact administrator'),
-    _('You need to enable cookies to let this application work'),
-    _('User service not found'),
-    _('Authenticator not found'),
-    _('Invalid authenticator'),
-    _('Invalid request received'),
-    _('Your browser is not supported. Please, upgrade it to a modern HTML5 browser like Firefox or Chrome'),
-    _('The requested service is in maintenance mode'),
-    _('The service is not ready.\nPlease, try again in a few moments.'),
-    _('Preparing service'),
-    _('Service access denied by calendars'),
-    _('Page not found'),
-    _('Unexpected error'),
-    _('Reloading this page is not supported. Please, reopen service from origin.'),
-    _('Invalid Multi-Factor Authentication code'),
-    _('Password expired'),
+    _("Unknown error"),
+    _("Transport not found"),
+    _("Service not found"),
+    _("Access denied"),
+    _("Invalid service. The service is not available at this moment. Please, try later"),
+    _("Maximum services limit reached. Please, contact administrator"),
+    _("You need to enable cookies to let this application work"),
+    _("User service not found"),
+    _("Authenticator not found"),
+    _("Invalid authenticator"),
+    _("Invalid request received"),
+    _("Your browser is not supported. Please, upgrade it to a modern HTML5 browser like Firefox or Chrome"),
+    _("The requested service is in maintenance mode"),
+    _("The service is not ready.\nPlease, try again in a few moments."),
+    _("Preparing service"),
+    _("Service access denied by calendars"),
+    _("Page not found"),
+    _("Unexpected error"),
+    _("Reloading this page is not supported. Please, reopen service from origin."),
+    _("Invalid Multi-Factor Authentication code"),
+    _("Password expired"),
 ]

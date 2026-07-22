@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import random
 import string
@@ -62,15 +63,15 @@ class TestProvider(services.ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('Testing Provider')
+    type_name = _("Testing Provider")
     # : Type used internally to identify this provider
-    type_type = 'TestProvider'
+    type_type = "TestProvider"
     # : Description shown at administration interface for this provider
-    type_description = _('Test (and dummy) service provider')
+    type_description = _("Test (and dummy) service provider")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # Max preparing concurrent services
     concurrent_creation_limit = 1000  # a lot, this in fact will not make anything
@@ -85,23 +86,23 @@ class TestProvider(services.ServiceProvider):
         This is the data we will store in the storage
         """
 
-        name: str = ''
+        name: str = ""
         integer: int = 0
 
     data: Data
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         self.data = TestProvider.Data()
         if values:
-            self.data.name = ''.join(random.SystemRandom().choices(string.ascii_letters, k=10))
+            self.data.name = "".join(random.SystemRandom().choices(string.ascii_letters, k=10))
             self.data.integer = random.randint(0, 100)
             return super().initialize(values)
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> types.core.TestResult:
-        return types.core.TestResult(True, _('Nothing tested, but all went fine..'))
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> types.core.TestResult:
+        return types.core.TestResult(True, _("Nothing tested, but all went fine.."))
 
     def get_name(self) -> str:
         """

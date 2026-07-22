@@ -29,6 +29,7 @@
 """
 Authot: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import typing
 from unittest import mock
@@ -49,7 +50,7 @@ if typing.TYPE_CHECKING:
 
 # Testing Fixed Service and related
 class FixedTestingUserService(fixed_userservice.FixedUserService):
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     def op_start(self) -> None:
         self.mock.op_start()
@@ -68,14 +69,14 @@ class FixedTestingUserService(fixed_userservice.FixedUserService):
     # Exception raiser for tests
     def op_custom(self, operation: types.services.Operation) -> None:
         if operation == types.services.Operation.CUSTOM_1:
-            raise Exception('CUSTOM_1')
+            raise Exception("CUSTOM_1")
 
         if operation == types.services.Operation.CUSTOM_3:
             self.retry_later()  # In this case, will not return it, but should work fine
 
     def op_custom_checker(self, operation: types.services.Operation) -> types.states.TaskState:
         if operation == types.services.Operation.CUSTOM_1:
-            raise Exception('CUSTOM_1')
+            raise Exception("CUSTOM_1")
         # custom 2 will be for testing retry_later
         if operation == types.services.Operation.CUSTOM_2:
             return self.retry_later()
@@ -88,9 +89,9 @@ class FixedTestingUserService(fixed_userservice.FixedUserService):
 
 
 class FixedTestingService(fixed_service.FixedService):
-    type_name = 'Fixed Service'
-    type_type = 'FixedService'
-    type_description = 'Fixed Service description'
+    type_name = "Fixed Service"
+    type_type = "FixedService"
+    type_description = "Fixed Service description"
 
     token = fixed_service.FixedService.token
     snapshot_type = fixed_service.FixedService.snapshot_type
@@ -102,7 +103,7 @@ class FixedTestingService(fixed_service.FixedService):
     first_process_called = False
     available_machines_number = 1
 
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     def snapshot_creation(self, userservice_instance: fixed_userservice.FixedUserService) -> None:
         self.mock.snapshot_creation(userservice_instance)
@@ -120,19 +121,19 @@ class FixedTestingService(fixed_service.FixedService):
 
     def get_name(self, vmid: str) -> str:
         self.mock.get_machine_name(vmid)
-        return f'Machine {vmid}'
+        return f"Machine {vmid}"
 
     def get_and_assign(self) -> str:
         self.mock.get_and_assign_machine()
         if self.available_machines_number <= 0:
-            raise Exception('No machine available')
+            raise Exception("No machine available")
         self.available_machines_number -= 1
-        self.assigned_machine = 'assigned'
+        self.assigned_machine = "assigned"
         return self.assigned_machine
 
     def remove_and_free(self, vmid: str) -> types.states.TaskState:
         self.mock.remove_and_free_machine(vmid)
-        self.assigned_machine = ''
+        self.assigned_machine = ""
         return types.states.TaskState.FINISHED
 
     def is_ready(self, vmid: str) -> bool:
@@ -145,7 +146,7 @@ class FixedTestingService(fixed_service.FixedService):
 
     def get_ip(self, vmid: str) -> str:
         self.mock.get_guest_ip_address(vmid)
-        return '10.0.0.10'
+        return "10.0.0.10"
 
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
@@ -153,13 +154,13 @@ class FixedTestingService(fixed_service.FixedService):
         """
         self.mock.enumerate_assignables()
         return [
-            ui.gui.choice_item('1', 'Machine 1'),
-            ui.gui.choice_item('2', 'Machine 2'),
-            ui.gui.choice_item('3', 'Machine 3'),
+            ui.gui.choice_item("1", "Machine 1"),
+            ui.gui.choice_item("2", "Machine 2"),
+            ui.gui.choice_item("3", "Machine 3"),
         ]
 
     def assign_from_assignables(
-        self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
+        self, assignable_id: str, user: "models.User", userservice_instance: "services.UserService"
     ) -> types.states.TaskState:
         """
         Assigns a machine from the assignables
@@ -169,9 +170,9 @@ class FixedTestingService(fixed_service.FixedService):
 
 
 class FixedTestingProvider(services.provider.ServiceProvider):
-    type_name = 'Fixed Provider'
-    type_type = 'FixedProvider'
-    type_description = 'Fixed Provider description'
+    type_name = "Fixed Provider"
+    type_type = "FixedProvider"
+    type_description = "Fixed Provider description"
 
     offers = [FixedTestingService]
 
@@ -181,7 +182,7 @@ def create_fixed_provider() -> FixedTestingProvider:
     return FixedTestingProvider(environment=environment.Environment.private_environment(uuid), uuid=uuid_)
 
 
-def create_fixed_service(provider: 'FixedTestingProvider|None') -> FixedTestingService:
+def create_fixed_service(provider: "FixedTestingProvider|None") -> FixedTestingService:
     uuid_ = str(uuid.uuid4())
     return FixedTestingService(
         provider=provider or create_fixed_provider(),
@@ -190,7 +191,7 @@ def create_fixed_service(provider: 'FixedTestingProvider|None') -> FixedTestingS
     )
 
 
-def create_fixed_user_service(service: 'FixedTestingService|None') -> FixedTestingUserService:
+def create_fixed_user_service(service: "FixedTestingService|None") -> FixedTestingUserService:
     uuid_ = str(uuid.uuid4())
     return FixedTestingUserService(
         service=service or create_fixed_service(None),
@@ -260,7 +261,7 @@ PUB_TESTEABLE_OPERATIONS = [
 
 
 class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     # Override create queue with ALL operations
     _create_queue = ALL_TESTEABLE_OPERATIONS.copy()
@@ -278,7 +279,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
         """
         This method is called when the service is created
         """
-        self._vmid = 'vmid'  # Set a vmid for testing purposes
+        self._vmid = "vmid"  # Set a vmid for testing purposes
         self.mock.create()
 
     def op_create_completed(self) -> None:
@@ -430,27 +431,27 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
 
 
 class DynamicTestingUserService(dynamic_userservice.DynamicUserService):
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     def db_obj(self) -> typing.Any:
         self.mock.db_obj()
         return None
 
     def op_create(self) -> None:
-        self._vmid = 'vmid'  # Set a vmid for testing purposes
-        typing.cast('DynamicTestingService', self.service()).machine_running_flag = False
+        self._vmid = "vmid"  # Set a vmid for testing purposes
+        typing.cast("DynamicTestingService", self.service()).machine_running_flag = False
 
     # Exception raiser for tests
     def op_custom(self, operation: types.services.Operation) -> None:
         if operation == types.services.Operation.CUSTOM_1:
-            raise Exception('CUSTOM_1')
+            raise Exception("CUSTOM_1")
 
         if operation == types.services.Operation.CUSTOM_3:
             self.retry_later()  # In this case, will not return it, but should work fine
 
     def op_custom_checker(self, operation: types.services.Operation) -> types.states.TaskState:
         if operation == types.services.Operation.CUSTOM_1:
-            raise Exception('CUSTOM_1')
+            raise Exception("CUSTOM_1")
         # custom 2 will be for testing retry_later
         if operation == types.services.Operation.CUSTOM_2:
             return self.retry_later()
@@ -459,13 +460,13 @@ class DynamicTestingUserService(dynamic_userservice.DynamicUserService):
 
 
 class DynamicTestingService(dynamic_service.DynamicService):
-    type_name = 'Dynamic Service Testing'
-    type_type = 'DynamicServiceTesting'
-    type_description = 'Dynamic Service Testing description'
+    type_name = "Dynamic Service Testing"
+    type_type = "DynamicServiceTesting"
+    type_description = "Dynamic Service Testing description"
 
     user_service_type = DynamicTestingUserServiceQueue
 
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     # Clone flag
     maintain_on_error = dynamic_service.DynamicService.maintain_on_error
@@ -475,25 +476,31 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def get_ip(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> str:
         self.mock.get_ip(caller_instance, vmid)
-        return '1.2.3.4'
+        return "1.2.3.4"
 
     def get_mac(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
         *,
         for_unique_id: bool = False,
     ) -> str:
         self.mock.get_mac(caller_instance, vmid)
-        return '02:04:06:08:0A:0C'
+        return "02:04:06:08:0A:0C"
 
     def is_running(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> bool:
         self.mock.is_running(caller_instance, vmid)
@@ -501,7 +508,9 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def start(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.start(caller_instance, vmid)
@@ -509,7 +518,9 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def stop(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.stop(caller_instance, vmid)
@@ -517,7 +528,9 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def shutdown(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.shutdown(caller_instance, vmid)
@@ -525,7 +538,9 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def delete(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         super().set_deleting_state(vmid)  # Call parent set_delete_runnign
@@ -537,7 +552,9 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def reset(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.reset(caller_instance, vmid)
@@ -545,7 +562,9 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     def suspend(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.suspend(caller_instance, vmid)
@@ -553,7 +572,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
 
 class DynamicTestingPublication(dynamic_publication.DynamicPublication):
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     def op_create(self) -> None:
         self.mock.op_create()
@@ -574,7 +593,7 @@ class DynamicTestingPublication(dynamic_publication.DynamicPublication):
 
 
 class DynamicTestingPublicationQueue(dynamic_publication.DynamicPublication):
-    mock: 'mock.Mock' = mock.MagicMock()
+    mock: "mock.Mock" = mock.MagicMock()
 
     _publish_queue = PUB_TESTEABLE_OPERATIONS.copy()
     _destroy_queue = PUB_TESTEABLE_OPERATIONS.copy()
@@ -583,7 +602,7 @@ class DynamicTestingPublicationQueue(dynamic_publication.DynamicPublication):
         self.mock.initialize()
 
     def op_create(self) -> None:
-        self._vmid = 'vmid'  # Set a vmid for testing purposes
+        self._vmid = "vmid"  # Set a vmid for testing purposes
         self.mock.create()
 
     def op_create_completed(self) -> None:
@@ -597,7 +616,7 @@ class DynamicTestingPublicationQueue(dynamic_publication.DynamicPublication):
 
     def op_shutdown_completed(self) -> None:
         self.mock.shutdown_completed()
-        
+
     def op_delete_completed(self) -> None:
         self.mock.remove_completed()
 
@@ -656,13 +675,13 @@ class DynamicTestingPublicationQueue(dynamic_publication.DynamicPublication):
 
 
 class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
-    type_name = 'Dynamic Deferred Deletion Testing'
-    type_type = 'DynamicDeferredServiceTesting'
-    type_description = 'Dynamic Service Testing description'
-    
+    type_name = "Dynamic Deferred Deletion Testing"
+    type_type = "DynamicDeferredServiceTesting"
+    type_description = "Dynamic Service Testing description"
+
     must_stop_before_deletion = False
 
-    mock: 'mock.Mock' = mock.MagicMock()  # Remember, shared between instances
+    mock: "mock.Mock" = mock.MagicMock()  # Remember, shared between instances
 
     def execute_delete(self, vmid: str) -> None:
         self.mock.execute_delete(vmid)
@@ -670,7 +689,7 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
     def is_deleted(self, vmid: str) -> bool:
         self.mock.is_deleted(vmid)
         return True
-    
+
     def notify_deleted(self, vmid: str) -> None:
         super().notify_deleted(vmid)  # to update delete_running flag
         self.mock.notify_deleted(vmid)
@@ -679,47 +698,57 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
     # Not used, but needed to be implemented due to bein abstract
     def get_ip(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> str:
-        return ''
+        return ""
 
     def get_mac(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
         *,
         for_unique_id: bool = False,
     ) -> str:
-        return ''
+        return ""
 
     def is_running(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> bool:
         self.mock.is_running(vmid)
-        raise Exception('Intended exception')
+        raise Exception("Intended exception")
 
     def start(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.start(vmid)
 
     def stop(
         self,
-        caller_instance: typing.Optional[dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication],
+        caller_instance: typing.Optional[
+            dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication
+        ],
         vmid: str,
     ) -> None:
         self.mock.stop(vmid)
 
 
 class DynamicTestingProvider(services.provider.ServiceProvider):
-    type_name = 'Dynamic Provider'
-    type_type = 'DynamicProvider'
-    type_description = 'Dynamic Provider description'
+    type_name = "Dynamic Provider"
+    type_type = "DynamicProvider"
+    type_description = "Dynamic Provider description"
 
     offers = [DynamicTestingService, DynamicTestingServiceForDeferredDeletion]
 
@@ -730,10 +759,10 @@ def create_dynamic_provider() -> DynamicTestingProvider:
 
 
 def create_dynamic_service(
-    provider: 'DynamicTestingProvider|None' = None,
+    provider: "DynamicTestingProvider|None" = None,
     maintain_on_error: bool = False,
     try_soft_shutdown: bool = False,
-    override_mockables: bool = True
+    override_mockables: bool = True,
 ) -> DynamicTestingService:
     uuid_ = str(uuid.uuid4())
     srvc = DynamicTestingService(
@@ -752,7 +781,7 @@ def create_dynamic_service(
 
 
 def create_dynamic_service_for_deferred_deletion(
-    provider: 'DynamicTestingProvider|None' = None,
+    provider: "DynamicTestingProvider|None" = None,
     maintain_on_error: bool = False,
     try_soft_shutdown: bool = False,
 ) -> DynamicTestingServiceForDeferredDeletion:
@@ -769,7 +798,7 @@ def create_dynamic_service_for_deferred_deletion(
 
 
 def create_dynamic_publication_queue(
-    service: 'DynamicTestingService|None' = None,
+    service: "DynamicTestingService|None" = None,
 ) -> DynamicTestingPublicationQueue:
     uuid_ = str(uuid.uuid4())
 
@@ -777,21 +806,21 @@ def create_dynamic_publication_queue(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_dynamic_service(None),
         revision=1,
-        servicepool_name='servicepool_name',
+        servicepool_name="servicepool_name",
         uuid=uuid_,
     )
     publication.mock.reset_mock()  # Mock is shared between instances, so we need to reset it
     return publication
 
 
-def create_dynamic_publication(service: 'DynamicTestingService|None' = None) -> DynamicTestingPublication:
+def create_dynamic_publication(service: "DynamicTestingService|None" = None) -> DynamicTestingPublication:
     uuid_ = str(uuid.uuid4())
 
     publication = DynamicTestingPublication(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_dynamic_service(None),
         revision=1,
-        servicepool_name='servicepool_name',
+        servicepool_name="servicepool_name",
         uuid=uuid_,
     )
     publication.mock.reset_mock()  # Mock is shared between instances, so we need to reset it
@@ -799,7 +828,7 @@ def create_dynamic_publication(service: 'DynamicTestingService|None' = None) -> 
 
 
 def create_dynamic_userservice_queue(
-    service: 'DynamicTestingService|None' = None, publication: 'DynamicTestingPublication|None' = None
+    service: "DynamicTestingService|None" = None, publication: "DynamicTestingPublication|None" = None
 ) -> DynamicTestingUserServiceQueue:
     uuid_ = str(uuid.uuid4())
     userservice = DynamicTestingUserServiceQueue(
@@ -813,8 +842,9 @@ def create_dynamic_userservice_queue(
 
 
 def create_dynamic_userservice(
-    service: 'DynamicTestingService|None' = None, publication: 'DynamicTestingPublication|None' = None,
-    override_mockables: bool = True
+    service: "DynamicTestingService|None" = None,
+    publication: "DynamicTestingPublication|None" = None,
+    override_mockables: bool = True,
 ) -> DynamicTestingUserService:
     uuid_ = str(uuid.uuid4())
     userservice = DynamicTestingUserService(

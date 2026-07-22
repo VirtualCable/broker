@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -46,23 +47,23 @@ logger = logging.getLogger(__name__)
 
 # Valid parameters accepted by ticket creation method
 VALID_PARAMS = (
-    'authId',
-    'auth_id',
-    'authTag',
-    'auth_tag',
-    'authSmallName',
-    'auth',
-    'auth_name',
-    'username',
-    'realname',
-    'password',
-    'groups',
-    'servicePool',
-    'service_pool',
-    'transport',  # Admited to be backwards compatible, but not used. Will be removed on a future release.
-    'force',
-    'userIp',
-    'user_ip',
+    "authId",
+    "auth_id",
+    "authTag",
+    "auth_tag",
+    "authSmallName",
+    "auth",
+    "auth_name",
+    "username",
+    "realname",
+    "password",
+    "groups",
+    "servicePool",
+    "service_pool",
+    "transport",  # Admited to be backwards compatible, but not used. Will be removed on a future release.
+    "force",
+    "userIp",
+    "user_ip",
 )
 
 
@@ -92,49 +93,43 @@ class Tickets(Handler):
     ROLE = consts.UserRole.ADMIN
 
     API_OPERATIONS = {
-        'put': types.rest.api.Operation(
-            summary='Create a ticket',
-            description='Creates an access ticket for a user to a service pool',
+        "put": types.rest.api.Operation(
+            summary="Create a ticket",
+            description="Creates an access ticket for a user to a service pool",
             requestBody=types.rest.api.RequestBody(
                 required=True,
-                description='Ticket creation parameters',
+                description="Ticket creation parameters",
                 content=types.rest.api.Content(
-                    media_type='application/json',
+                    media_type="application/json",
                     schema=types.rest.api.SchemaProperty(
-                        type='object',
+                        type="object",
                         properties={
-                            'username': types.rest.api.SchemaProperty(type='string'),
-                            'password': types.rest.api.SchemaProperty(type='string'),
-                            'auth_id': types.rest.api.SchemaProperty(
-                                type='string', description='Authenticator UUID'
+                            "username": types.rest.api.SchemaProperty(type="string"),
+                            "password": types.rest.api.SchemaProperty(type="string"),
+                            "auth_id": types.rest.api.SchemaProperty(type="string", description="Authenticator UUID"),
+                            "auth": types.rest.api.SchemaProperty(type="string", description="Authenticator name"),
+                            "groups": types.rest.api.SchemaProperty(
+                                type="array", items=types.rest.api.SchemaProperty(type="string")
                             ),
-                            'auth': types.rest.api.SchemaProperty(
-                                type='string', description='Authenticator name'
+                            "servicePool": types.rest.api.SchemaProperty(
+                                type="string", description="Service pool UUID"
                             ),
-                            'groups': types.rest.api.SchemaProperty(
-                                type='array', items=types.rest.api.SchemaProperty(type='string')
-                            ),
-                            'servicePool': types.rest.api.SchemaProperty(
-                                type='string', description='Service pool UUID'
-                            ),
-                            'force': types.rest.api.SchemaProperty(
-                                type='string', description='Force group creation'
-                            ),
+                            "force": types.rest.api.SchemaProperty(type="string", description="Force group creation"),
                         },
                     ),
                 ),
             ),
             responses={
-                '200': types.rest.api.Response(
-                    description='Ticket creation result',
+                "200": types.rest.api.Response(
+                    description="Ticket creation result",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='object',
+                            type="object",
                             properties={
-                                'result': types.rest.api.SchemaProperty(type='string'),
-                                'date': types.rest.api.SchemaProperty(type='string'),
-                                'error': types.rest.api.SchemaProperty(type='string'),
+                                "result": types.rest.api.SchemaProperty(type="string"),
+                                "date": types.rest.api.SchemaProperty(type="string"),
+                                "error": types.rest.api.SchemaProperty(type="string"),
                             },
                         ),
                     ),
@@ -144,51 +139,51 @@ class Tickets(Handler):
     }
 
     @staticmethod
-    def result(result: str = '', error: str | None = None) -> dict[str, typing.Any]:
+    def result(result: str = "", error: str | None = None) -> dict[str, typing.Any]:
         """
         Returns a result for a Ticket request
         """
-        res = {'result': result, 'date': timezone.localtime()}
+        res = {"result": result, "date": timezone.localtime()}
         if error is not None:
-            res['error'] = error
+            res["error"] = error
         return res
 
     def get(self) -> typing.Any:
         """
         Processes get requests, currently none
         """
-        logger.debug('Ticket args for GET: %s', self._args)
+        logger.debug("Ticket args for GET: %s", self._args)
 
-        raise exceptions.rest.RequestError('Invalid request')
+        raise exceptions.rest.RequestError("Invalid request")
 
     def _check_parameters(self) -> None:
         # Parameters can only be theese
         for p in self._params:
             if p not in VALID_PARAMS:
-                logger.debug('Parameter %s not in valid ticket parameters list', p)
-                raise exceptions.rest.RequestError('Invalid parameters')
+                logger.debug("Parameter %s not in valid ticket parameters list", p)
+                raise exceptions.rest.RequestError("Invalid parameters")
 
-        if len(self._args) != 1 or self._args[0] not in ('create',):
-            raise exceptions.rest.RequestError('Invalid method')
+        if len(self._args) != 1 or self._args[0] not in ("create",):
+            raise exceptions.rest.RequestError("Invalid method")
 
         try:
             for i in (
-                'authId',
-                'auth_id',
-                'authTag',
-                'auth_tag',
-                'auth_label',
-                'auth',
-                'auth_name',
-                'authSmallName',
+                "authId",
+                "auth_id",
+                "authTag",
+                "auth_tag",
+                "auth_label",
+                "auth",
+                "auth_name",
+                "authSmallName",
             ):
                 if i in self._params:
                     raise StopIteration
 
-            if 'username' in self._params and 'groups' in self._params:
+            if "username" in self._params and "groups" in self._params:
                 raise StopIteration()
 
-            raise exceptions.rest.RequestError('Invalid parameters (no auth or username/groups)')
+            raise exceptions.rest.RequestError("Invalid parameters (no auth or username/groups)")
         except StopIteration:
             pass  # All ok
 
@@ -204,15 +199,15 @@ class Tickets(Handler):
         # Check that call is correct (pamateters, args, ...)
         self._check_parameters()
 
-        force: bool = self.get_param('force') in ('1', 'true', 'True', True)
+        force: bool = self.get_param("force") in ("1", "true", "True", True)
 
         try:
             service_pool_id: str | None = None
 
             # First param is recommended, last ones are compatible with old versions
-            auth_id = self.get_param('auth_id', 'authId')
-            auth_name = self.get_param('auth_name', 'auth')
-            auth_label = self.get_param('auth_label', 'auth_tag', 'authTag', 'authSmallName')
+            auth_id = self.get_param("auth_id", "authId")
+            auth_name = self.get_param("auth_name", "auth")
+            auth_label = self.get_param("auth_label", "auth_tag", "authTag", "authSmallName")
 
             # Will raise an exception if no auth found
             if auth_id:
@@ -222,17 +217,17 @@ class Tickets(Handler):
             else:
                 auth = models.Authenticator.objects.get(small_name=auth_label)
 
-            username: str = self.get_param('username')
-            password: str = self.get_param('password')
+            username: str = self.get_param("username")
+            password: str = self.get_param("password")
             # Some machines needs password, depending on configuration
 
             groups_ids: list[str] = []
-            for group_name in ensure.as_list(self.get_param('groups')):
+            for group_name in ensure.as_list(self.get_param("groups")):
                 try:
-                    groups_ids.append(auth.groups.get(name=group_name).uuid or '')
+                    groups_ids.append(auth.groups.get(name=group_name).uuid or "")
                 except Exception:
                     logger.info(
-                        'Group %s from ticket does not exists on auth %s, forced creation: %s',
+                        "Group %s from ticket does not exists on auth %s, forced creation: %s",
                         group_name,
                         auth,
                         force,
@@ -241,19 +236,19 @@ class Tickets(Handler):
                         groups_ids.append(
                             auth.groups.create(
                                 name=group_name,
-                                comments='Autocreated form ticket by using force paratemeter',
+                                comments="Autocreated form ticket by using force paratemeter",
                             ).uuid
-                            or ''
+                            or ""
                         )
 
             if not groups_ids:  # No valid group in groups names
                 raise exceptions.rest.RequestError(
-                    'Authenticator does not contain ANY of the requested groups and force is not used'
+                    "Authenticator does not contain ANY of the requested groups and force is not used"
                 )
 
-            realname: str = self.get_param('realname', 'username') or ''
+            realname: str = self.get_param("realname", "username") or ""
 
-            pool_uuid = self.get_param('servicepool', 'servicePool')
+            pool_uuid = self.get_param("servicepool", "servicePool")
             if pool_uuid:
                 # Check if is pool or metapool
                 pool_uuid = process_uuid(pool_uuid)
@@ -265,49 +260,45 @@ class Tickets(Handler):
                     )  # If not an metapool uuid, will process it as a servicePool
                     if force:
                         # First, add groups to metapool
-                        for group_to_add in set(groups_ids) - set(
-                            pool.assignedGroups.values_list('uuid', flat=True)
-                        ):
+                        for group_to_add in set(groups_ids) - set(pool.assignedGroups.values_list("uuid", flat=True)):
                             pool.assignedGroups.add(auth.groups.get(uuid=group_to_add))
                         # And now, to ALL metapool members, even those disabled
                         for meta_member in pool.members.all():
                             # Now add groups to pools
                             for group_to_add in set(groups_ids) - set(
-                                meta_member.pool.assignedGroups.values_list('uuid', flat=True)
+                                meta_member.pool.assignedGroups.values_list("uuid", flat=True)
                             ):
                                 meta_member.pool.assignedGroups.add(auth.groups.get(uuid=group_to_add))
 
                     # For metapool, transport is ignored..
 
-                    service_pool_id = 'M' + pool.uuid
+                    service_pool_id = "M" + pool.uuid
                 except models.MetaPool.DoesNotExist:
                     pool = models.ServicePool.objects.get(uuid=pool_uuid)
 
                     # If forced that servicePool must honor groups
                     if force:
-                        for group_to_add in set(groups_ids) - set(
-                            pool.assignedGroups.values_list('uuid', flat=True)
-                        ):
+                        for group_to_add in set(groups_ids) - set(pool.assignedGroups.values_list("uuid", flat=True)):
                             pool.assignedGroups.add(auth.groups.get(uuid=group_to_add))
 
-                    service_pool_id = 'F' + pool.uuid
+                    service_pool_id = "F" + pool.uuid
 
         except models.Authenticator.DoesNotExist:
-            return Tickets.result(error='Authenticator does not exists')
+            return Tickets.result(error="Authenticator does not exists")
         except models.ServicePool.DoesNotExist:
-            return Tickets.result(error='Service pool (or metapool) does not exists')
+            return Tickets.result(error="Service pool (or metapool) does not exists")
         except models.Transport.DoesNotExist:
-            return Tickets.result(error='Transport does not exists')
+            return Tickets.result(error="Transport does not exists")
         except Exception as e:
             return Tickets.result(error=str(e))
 
         data = {
-            'username': username,
-            'password': CryptoManager.manager().encrypt(password),
-            'realname': realname,
-            'groups': groups_ids,
-            'auth': auth.uuid,
-            'servicePool': service_pool_id,
+            "username": username,
+            "password": CryptoManager.manager().encrypt(password),
+            "realname": realname,
+            "groups": groups_ids,
+            "auth": auth.uuid,
+            "servicePool": service_pool_id,
         }
 
         ticket = models.TicketStore.create(data)

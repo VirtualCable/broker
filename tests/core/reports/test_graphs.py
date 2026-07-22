@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import io
 import typing
 import logging
@@ -58,26 +59,26 @@ class GraphsTest(UDSTestCase):
         #     - allTicks: If True, all x values will be shown as ticks
         #     - xtickFnc: Function to be used to format x ticks labels
         self.data1 = {
-            'x': [1, 2, 3],
-            'y': [
+            "x": [1, 2, 3],
+            "y": [
                 {
-                    'data': [1, 2, 3],
-                    'label': 'Test',
+                    "data": [1, 2, 3],
+                    "label": "Test",
                 },
                 {
-                    'data': [1, 2, 3],
-                    'label': 'Test2',
+                    "data": [1, 2, 3],
+                    "label": "Test2",
                 },
                 {
-                    'data': [1, 2, 3],
-                    'label': 'Test3',
-                }
+                    "data": [1, 2, 3],
+                    "label": "Test3",
+                },
             ],
-            'title': 'Test',
-            'xlabel': 'X',
-            'ylabel': 'Y',
-            'allTicks': True,
-            'xtickFnc': Mock()
+            "title": "Test",
+            "xlabel": "X",
+            "ylabel": "Y",
+            "allTicks": True,
+            "xtickFnc": Mock(),
         }
         # Data must be a dict with the following keys:
         #     - x: List of x values
@@ -91,65 +92,57 @@ class GraphsTest(UDSTestCase):
         #     - xtickFnc: Function to be used to format x ticks labels from x ticks
         #     - ytickFnc: Function to be used to format y ticks labels form y ticks
         self.data2 = {
-            'x': [1, 2, 3],
-            'y': [1, 2, 3],
-            'z': [
-                [1, 2, 3],
-                [1, 2, 3],
-                [1, 2, 3]
-            ],
-            'title': 'Test',
-            'xlabel': 'X',
-            'ylabel': 'Y',
-            'zlabel': 'Z',
-            'allTicks': True,
-            'xtickFnc': Mock(),
-            'ytickFnc': Mock()
+            "x": [1, 2, 3],
+            "y": [1, 2, 3],
+            "z": [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
+            "title": "Test",
+            "xlabel": "X",
+            "ylabel": "Y",
+            "zlabel": "Z",
+            "allTicks": True,
+            "xtickFnc": Mock(),
+            "ytickFnc": Mock(),
         }
-        
 
     def test_bar_chart(self) -> None:
         output = io.BytesIO()
         graphs.bar_chart((10, 8, 96), data=self.data1, output=output)
         value = output.getvalue()
         self.assertGreater(len(value), 0)
-        self.assertEqual(self.data1['xtickFnc'].call_count, 3)
+        self.assertEqual(self.data1["xtickFnc"].call_count, 3)
         # Save to /tmp so we can check it
-        with open('/tmp/bar.png', 'wb') as f:  # nosec: this is a test, we are not using a real file
+        with open("/tmp/bar.png", "wb") as f:  # nosec: this is a test, we are not using a real file
             f.write(value)
-
 
     def test_line_chart(self) -> None:
         output = io.BytesIO()
         graphs.line_chart((10, 8, 96), data=self.data1, output=output)
         value = output.getvalue()
         self.assertGreater(len(value), 0)
-        self.assertEqual(self.data1['xtickFnc'].call_count, 3)
+        self.assertEqual(self.data1["xtickFnc"].call_count, 3)
         # Save to /tmp so we can check it
-        with open('/tmp/line.png', 'wb') as f:  # nosec: this is a test, we are not using a real file
+        with open("/tmp/line.png", "wb") as f:  # nosec: this is a test, we are not using a real file
             f.write(value)
-
 
     def test_surface_chart(self) -> None:
         output = io.BytesIO()
         graphs.surface_chart((10, 8, 96), data=self.data2, output=output)
         value = output.getvalue()
         self.assertGreater(len(value), 0)
-        self.assertEqual(self.data2['xtickFnc'].call_count, 3)
-        self.assertEqual(self.data2['ytickFnc'].call_count, 3)
+        self.assertEqual(self.data2["xtickFnc"].call_count, 3)
+        self.assertEqual(self.data2["ytickFnc"].call_count, 3)
         # Save to /tmp so we can check it
-        with open('/tmp/surface.png', 'wb') as f:  # nosec: this is a test, we are not using a real file
+        with open("/tmp/surface.png", "wb") as f:  # nosec: this is a test, we are not using a real file
             f.write(value)
 
-
     def test_surface_chart_wireframe(self) -> None:
-        self.data2['wireframe'] = True
+        self.data2["wireframe"] = True
         output = io.BytesIO()
         graphs.surface_chart((10, 8, 96), data=self.data2, output=output)
         value = output.getvalue()
         self.assertGreater(len(value), 0)
-        self.assertEqual(self.data2['xtickFnc'].call_count, 3)
-        self.assertEqual(self.data2['ytickFnc'].call_count, 3)
+        self.assertEqual(self.data2["xtickFnc"].call_count, 3)
+        self.assertEqual(self.data2["ytickFnc"].call_count, 3)
         # Save to /tmp so we can check it
-        with open('/tmp/surface-wireframe.png', 'wb') as f:  # nosec: this is a test, we are not using a real file
+        with open("/tmp/surface-wireframe.png", "wb") as f:  # nosec: this is a test, we are not using a real file
             f.write(value)

@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import uds.core.types.permissions
 
@@ -64,17 +65,13 @@ class PermissionsTest(UDSTestCase):
         self.authenticator = authenticators_fixtures.create_db_authenticator()
         self.groups = authenticators_fixtures.create_db_groups(self.authenticator)
         self.users = authenticators_fixtures.create_db_users(self.authenticator, groups=self.groups)
-        self.admins = authenticators_fixtures.create_db_users(
-            self.authenticator, is_admin=True, groups=self.groups
-        )
-        self.staffs = authenticators_fixtures.create_db_users(
-            self.authenticator, is_staff=True, groups=self.groups
-        )
+        self.admins = authenticators_fixtures.create_db_users(self.authenticator, is_admin=True, groups=self.groups)
+        self.staffs = authenticators_fixtures.create_db_users(self.authenticator, is_staff=True, groups=self.groups)
         self.userService = services_fixtures.create_db_one_assigned_userservice(
             services_fixtures.create_db_provider(),
             self.users[0],
             list(self.users[0].groups.all()),
-            'managed',
+            "managed",
         )
         self.servicePool = self.userService.deployed_service
         self.service = self.servicePool.service
@@ -82,7 +79,7 @@ class PermissionsTest(UDSTestCase):
 
         self.network = network_fixtures.create_network()
 
-    def doTestUserPermissions(self, obj: 'Model', user: models.User) -> None:
+    def doTestUserPermissions(self, obj: "Model", user: models.User) -> None:
         permissions.add_user_permission(user, obj, uds.core.types.permissions.PermissionType.NONE)
         self.assertEqual(models.Permissions.objects.count(), 1)
         perm = models.Permissions.objects.all()[0]
@@ -137,7 +134,7 @@ class PermissionsTest(UDSTestCase):
         obj.delete()
         self.assertEqual(models.Permissions.objects.count(), 0)
 
-    def do_test_group_permissions(self, obj: 'Model', user: models.User) -> None:
+    def do_test_group_permissions(self, obj: "Model", user: models.User) -> None:
         group = user.groups.all()[0]
 
         permissions.add_group_permission(group, obj, uds.core.types.permissions.PermissionType.NONE)

@@ -29,6 +29,6 @@ import typing
 import string
 
 # Alphabet used for PKCE
-PKCE_ALPHABET: typing.Final[str] = string.ascii_letters + string.digits + '-._~'
+PKCE_ALPHABET: typing.Final[str] = string.ascii_letters + string.digits + "-._~"
 # Length of the State parameter
 STATE_LENGTH: typing.Final[int] = 24

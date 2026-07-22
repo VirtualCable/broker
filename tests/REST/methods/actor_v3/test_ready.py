@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from unittest import mock
@@ -61,33 +62,35 @@ class ActorReadyTest(rest.test.RESTActorTestCase):
             userservice.set_os_state(types.states.State.PREPARING)
             with mock.patch.object(TestOSManager, method) as to_ready:
                 response = self.client.post(
-                    '/uds/rest/actor/v3/ready',
+                    "/uds/rest/actor/v3/ready",
                     data={
-                        'token': actor_token,
-                        'ip': '1.2.3.4',
-                        'secret': 'test_secret',
-                        'port': 43910,
+                        "token": actor_token,
+                        "ip": "1.2.3.4",
+                        "secret": "test_secret",
+                        "port": 43910,
                     },
-                    content_type='application/json',
+                    content_type="application/json",
                 )
 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
-                self.assertIn('result', data)
-                self.assertIn('stamp', data)
-                self.assertIn('version', data)
-                self.assertIn('build', data)
+                self.assertIn("result", data)
+                self.assertIn("stamp", data)
+                self.assertIn("version", data)
+                self.assertIn("build", data)
 
-                self.assertEqual(data['version'], consts.system.VERSION)
-                self.assertEqual(data['build'], consts.system.VERSION_STAMP)
+                self.assertEqual(data["version"], consts.system.VERSION)
+                self.assertEqual(data["build"], consts.system.VERSION_STAMP)
 
-                self.assertLess(abs(data['stamp'] - sql_stamp_seconds()), 2)  # May differ in miliseconds, but 0.999 + 0.001 = 1 :)
+                self.assertLess(
+                    abs(data["stamp"] - sql_stamp_seconds()), 2
+                )  # May differ in miliseconds, but 0.999 + 0.001 = 1 :)
 
-                result = data['result']
-                for i in ('key', 'certificate', 'password', 'ciphers'):
+                result = data["result"]
+                for i in ("key", "certificate", "password", "ciphers"):
                     self.assertIn(i, result)
                     self.assertIsInstance(result[i], str)
-                    self.assertGreater(len(result[i]), 0 if i != 'ciphers' else -1)
+                    self.assertGreater(len(result[i]), 0 if i != "ciphers" else -1)
 
                 userservice.refresh_from_db()
                 # We are not in use anymore, because "ready" means just initialized, so we are not in use

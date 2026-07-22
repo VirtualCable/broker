@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import dataclasses
 import typing
@@ -58,7 +59,7 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 class Handler(abc.ABC):
@@ -76,7 +77,7 @@ class Handler(abc.ABC):
     REST_API_INFO: typing.ClassVar[types.rest.api.RestApiInfo] = types.rest.api.RestApiInfo()
     API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {}
 
-    _request: 'ExtendedHttpRequestWithUser'  # It's a modified HttpRequest
+    _request: "ExtendedHttpRequestWithUser"  # It's a modified HttpRequest
     _path: str
     _operation: str
     _params: dict[
@@ -89,8 +90,8 @@ class Handler(abc.ABC):
     ]  # Note: These are "output" headers, not input headers (input headers can be retrieved from request)
     _session: SessionStore | None
     _auth_token: str | None
-    _user: 'User'
-    _odata: 'types.rest.api.ODataParams'  # OData parameters, if any
+    _user: "User"
+    _odata: "types.rest.api.ODataParams"  # OData parameters, if any
 
     # The dispatcher proceses the request and calls the method with the same name as the operation
     # currently, only 'get', 'post, 'put' y 'delete' are supported
@@ -98,7 +99,7 @@ class Handler(abc.ABC):
     # possible future:'patch', 'head', 'options', 'trace'
     def __init__(
         self,
-        request: 'ExtendedHttpRequestWithUser',
+        request: "ExtendedHttpRequestWithUser",
         path: str,
         method: str,
         params: dict[str, typing.Any],
@@ -114,9 +115,9 @@ class Handler(abc.ABC):
 
         if self.ROLE.needs_authentication:
             try:
-                self._auth_token = self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, '')
+                self._auth_token = self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
                 self._session = SessionStore(session_key=self._auth_token)
-                if 'REST' not in self._session:
+                if "REST" not in self._session:
                     raise Exception()  # No valid session, so auth_token is also invalid
             except Exception:  # Couldn't authenticate
                 self._auth_token = None
@@ -149,11 +150,9 @@ class Handler(abc.ABC):
         from the JSON body (``self._params``) instead of the query string,
         then delegates to :meth:`get`.
         """
-        self._odata = types.rest.api.ODataParams.from_dict(
-            {k: v for k, v in self._params.items() if k.startswith('$')}
-        )
+        self._odata = types.rest.api.ODataParams.from_dict({k: v for k, v in self._params.items() if k.startswith("$")})
         # Subclasses (ModelHandler, DetailHandler, etc.) define get().
-        return typing.cast('typing.Any', getattr(self, 'get'))()  # pyright: ignore[reportUnnecessaryCast]
+        return typing.cast("typing.Any", getattr(self, "get"))()  # pyright: ignore[reportUnnecessaryCast]
 
     def api_compat(self) -> types.rest.ApiCompat:
         """Return the current API compatibility mode.
@@ -206,7 +205,7 @@ class Handler(abc.ABC):
         self._headers[header] = str(value)
 
     # -- Deprecation helpers (RFC 9745 / RFC 8594) --
-    def add_deprecation_headers(self, successor_hint: str = '') -> None:
+    def add_deprecation_headers(self, successor_hint: str = "") -> None:
         """Append RFC 9745/8594 deprecation headers to the response.
 
         Called when a legacy (COMPAT-mode) endpoint is invoked so
@@ -219,11 +218,11 @@ class Handler(abc.ABC):
             ``"use POST /rest/services-pools/<id>/publications"``
         """
 
-        self.add_header('Deprecation', f'@{consts.rest.DEPRECATION_TS}')
-        self.add_header('Sunset', consts.rest.SUNSET_DATE)
-        self.add_header('X-UDS-Deprecated', 'true')
+        self.add_header("Deprecation", f"@{consts.rest.DEPRECATION_TS}")
+        self.add_header("Sunset", consts.rest.SUNSET_DATE)
+        self.add_header("X-UDS-Deprecated", "true")
         if successor_hint:
-            self.add_header('X-UDS-Deprecated-Reason', successor_hint)
+            self.add_header("X-UDS-Deprecated-Reason", successor_hint)
 
     def delete_header(self, header: str) -> None:
         """
@@ -236,7 +235,7 @@ class Handler(abc.ABC):
             pass  # If not found, just ignore it
 
     @property
-    def request(self) -> 'ExtendedHttpRequestWithUser':
+    def request(self) -> "ExtendedHttpRequestWithUser":
         """
         Returns the request object
         """
@@ -257,15 +256,15 @@ class Handler(abc.ABC):
         return self._args
 
     @property
-    def odata(self) -> 'types.rest.api.ODataParams':
+    def odata(self) -> "types.rest.api.ODataParams":
         return self._odata
 
     @property
-    def session(self) -> 'SessionStore':
+    def session(self) -> "SessionStore":
         if self._session is None:
-            raise Exception('No session available')
+            raise Exception("No session available")
         return self._session
-    
+
     @property
     def full_path(self) -> str:
         return self._path
@@ -297,16 +296,14 @@ class Handler(abc.ABC):
         :param staff_member: If is considered as staff member
         """
         # crypt password and convert to base64
-        passwd = codecs.encode(
-            CryptoManager.manager().symmetric_encrypt(password, scrambler), 'base64'
-        ).decode()
+        passwd = codecs.encode(CryptoManager.manager().symmetric_encrypt(password, scrambler), "base64").decode()
 
-        session['REST'] = {
-            'auth': id_auth,
-            'username': username,
-            'password': passwd,
-            'locale': locale,
-            'platform': platform,
+        session["REST"] = {
+            "auth": id_auth,
+            "username": username,
+            "password": passwd,
+            "locale": locale,
+            "platform": platform,
         }
 
     def gen_auth_token(
@@ -360,9 +357,9 @@ class Handler(abc.ABC):
         try:
             if self._session:
                 # if key is password, its in base64, so decode it and return as bytes
-                if key == 'password':
-                    return codecs.decode(self._session['REST'][key], 'base64')
-                return self._session['REST'].get(key)
+                if key == "password":
+                    return codecs.decode(self._session["REST"][key], "base64")
+                return self._session["REST"].get(key)
             return None
         except Exception:
             return None
@@ -374,14 +371,14 @@ class Handler(abc.ABC):
         try:
             if self._session:
                 # if key is password, its in base64, so encode it and store as str
-                if key == 'password':
-                    self._session['REST'][key] = codecs.encode(value, 'base64').decode()
+                if key == "password":
+                    self._session["REST"][key] = codecs.encode(value, "base64").decode()
                 else:
-                    self._session['REST'][key] = value
+                    self._session["REST"][key] = value
                 self._session.accessed = True
                 self._session.save()
         except Exception:
-            logger.exception('Got an exception setting session value %s to %s', key, value)
+            logger.exception("Got an exception setting session value %s to %s", key, value)
 
     def is_ip_allowed(self) -> bool:
         try:
@@ -404,15 +401,15 @@ class Handler(abc.ABC):
         """
         True if user of this REST request is member of staff
         """
-        return bool(self.recover_value('staff_member')) and self.is_ip_allowed()
+        return bool(self.recover_value("staff_member")) and self.is_ip_allowed()
 
-    def get_user(self) -> 'User':
+    def get_user(self) -> "User":
         """
         If user is staff member, returns his Associated user on auth
         """
         # logger.debug('REST : %s', self._session)
-        auth_id = self.recover_value('auth')
-        username = self.recover_value('username')
+        auth_id = self.recover_value("auth")
+        username = self.recover_value("username")
         # Maybe it's root user??
         if (
             GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.as_bool(True)
@@ -440,7 +437,7 @@ class Handler(abc.ABC):
         for name in names:
             if name in self._params:
                 return self._params[name]
-        return ''
+        return ""
 
     def get_sort_field_info(self, *args: str) -> tuple[str, bool] | None:
         """
@@ -457,10 +454,10 @@ class Handler(abc.ABC):
         """
         if self.odata.orderby:
             order_field = self.odata.orderby[0]
-            clean_field = order_field.lstrip('-')
+            clean_field = order_field.lstrip("-")
             for field_name in args:
                 if clean_field == field_name:
-                    is_descending = order_field.startswith('-')
+                    is_descending = order_field.startswith("-")
                     return (clean_field, is_descending)
         return None
 
@@ -480,7 +477,7 @@ class Handler(abc.ABC):
             # Try to sort by primary if not alrady has another in ordering meta
             # to have stable order
             if not qs.model._meta.ordering:
-                return qs.order_by('pk')
+                return qs.order_by("pk")
         return qs.order_by(*self.odata.orderby)
 
     @typing.final
@@ -496,10 +493,10 @@ class Handler(abc.ABC):
             try:
                 qs = query_db_filter.exec_query(self.odata.filter, qs)
             except ValueError as e:
-                raise exceptions.rest.RequestError(f'Invalid odata filter: {e}') from e
+                raise exceptions.rest.RequestError(f"Invalid odata filter: {e}") from e
 
         # Store total count before slicing
-        self.add_header('X-Total-Count', str(qs.count()))
+        self.add_header("X-Total-Count", str(qs.count()))
 
         # order_by must be unique and all fields are summited by once
         # As after slicing we can have a list, we may use list result from sorting
@@ -530,15 +527,15 @@ class Handler(abc.ABC):
                 data = list(query_filter.exec_query(self.odata.filter, data))
 
             except ValueError as e:
-                raise exceptions.rest.RequestError(f'Invalid odata filter: {e}') from e
+                raise exceptions.rest.RequestError(f"Invalid odata filter: {e}") from e
         else:
             data = list(data)
 
         # Get total items and set it on X-Total-Count (before pagination)
         try:
-            self.add_header('X-Total-Count', len(data))
+            self.add_header("X-Total-Count", len(data))
         except Exception as e:
-            raise exceptions.rest.RequestError(f'Invalid odata: {e}')
+            raise exceptions.rest.RequestError(f"Invalid odata: {e}")
 
         # Apply pagination (consistent with filter_odata_queryset)
         if self.odata.start is not None:
@@ -570,26 +567,25 @@ class Handler(abc.ABC):
         ) -> types.rest.api.Operation | None:
             if op is None:
                 return None
-            kw: dict[str, typing.Any] = {'tags': tags}
+            kw: dict[str, typing.Any] = {"tags": tags}
             if security:
-                kw['security'] = security
+                kw["security"] = security
             return dataclasses.replace(op, **kw)
 
         return {
             path: types.rest.api.PathItem(
-                get=_update_op(cls.API_OPERATIONS.get('get')),
-                post=_update_op(cls.API_OPERATIONS.get('post')),
-                put=_update_op(cls.API_OPERATIONS.get('put')),
-                delete=_update_op(cls.API_OPERATIONS.get('delete')),
+                get=_update_op(cls.API_OPERATIONS.get("get")),
+                post=_update_op(cls.API_OPERATIONS.get("post")),
+                put=_update_op(cls.API_OPERATIONS.get("put")),
+                delete=_update_op(cls.API_OPERATIONS.get("delete")),
             )
         }
-
 
     # --- ETag / precondition helpers ---
     @typing.final
     def set_etag(self, etag: str) -> None:
         """Sets ``ETag`` header from a hex digest value (will be quoted)."""
-        self.add_header('ETag', f'"{etag}"')
+        self.add_header("ETag", f'"{etag}"')
 
     def check_if_match_header(self, current_etag: str | None) -> None:
         """Validates ``If-Match`` / ``If-None-Match`` headers against current ETag.
@@ -604,41 +600,43 @@ class Handler(abc.ABC):
         # (legacy GUI POST/PUT-create ships spurious ones), only enforce ``If-Match: *``
         # would imply "create only if not exists", which collides with the call site.
         if current_etag is None:
-            if_match = self._request.headers.get('If-Match')
-            if if_match is not None and if_match.strip() == '*':
-                raise PreconditionFailed('If-Match: * on create path not allowed')
+            if_match = self._request.headers.get("If-Match")
+            if if_match is not None and if_match.strip() == "*":
+                raise PreconditionFailed("If-Match: * on create path not allowed")
             return
 
         def _normalize(value: str) -> str:
             # Strip optional weak prefix and surrounding quotes/whitespace.
-            return value.strip().removeprefix('W/').strip().strip('"')
+            return value.strip().removeprefix("W/").strip().strip('"')
 
         self.header
-        if_none_match = self._request.headers.get('If-None-Match')
+        if_none_match = self._request.headers.get("If-None-Match")
         if if_none_match is not None:
             raw = if_none_match.strip()
-            if raw == '*':
-                raise PreconditionFailed('If-None-Match: resource already exists')
+            if raw == "*":
+                raise PreconditionFailed("If-None-Match: resource already exists")
             if _normalize(raw) == current_etag:
-                raise PreconditionFailed('If-None-Match etag matches current resource')
+                raise PreconditionFailed("If-None-Match etag matches current resource")
             # Concrete etag that does not match current -> accept.
             return
 
-        if_match = self._request.headers.get('If-Match')
+        if_match = self._request.headers.get("If-Match")
         if if_match is not None:
             raw = if_match.strip()
-            if raw == '*':
+            if raw == "*":
                 # Update path always has an item -> accept.
                 return
             if _normalize(raw) != current_etag:
-                raise PreconditionFailed('If-Match etag does not match')
+                raise PreconditionFailed("If-Match etag does not match")
+
 
 class ErrorHandler(Handler):
     """
     This handler is used to return errors in a consistent way, and to log them properly
-    
+
     Note: in fact, ROLE is not important here, we will not instantiate this handler,
     but use it as a "placeholder" for error logging. But we set this to ANONYMOUS anyway
     to allow any future upgrade.
     """
+
     ROLE = consts.UserRole.ANONYMOUS

@@ -47,10 +47,10 @@ logger = logging.getLogger(__name__)
 
 
 class PeakConcurrencyReport(StatsReport):
-    filename = 'peak_concurrency.pdf'
-    name = _('Peak concurrent sessions')
-    description = _('Peak number of concurrent user sessions per pool over a period')
-    uuid = 'ca1a7f6d-a4f6-43e4-abc6-43692ba40190'
+    filename = "peak_concurrency.pdf"
+    name = _("Peak concurrent sessions")
+    description = _("Peak number of concurrent user sessions per pool over a period")
+    uuid = "ca1a7f6d-a4f6-43e4-abc6-43692ba40190"
 
     pools = StatsReport.pools
     start_date = StatsReport.start_date
@@ -58,8 +58,8 @@ class PeakConcurrencyReport(StatsReport):
 
     @typing.override
     def init_gui(self) -> None:
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
-            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL POOLS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name") if v.uuid
         ]
         self.pools.set_choices(vals)
 
@@ -67,19 +67,19 @@ class PeakConcurrencyReport(StatsReport):
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
 
-        if '0-0-0-0' in self.pools.value:
+        if "0-0-0-0" in self.pools.value:
             qs = ServicePool.objects.all()
         else:
             qs = ServicePool.objects.filter(uuid__in=self.pools.value)
 
-        pool_map: dict[int, str] = dict(qs.values_list('id', 'name'))
+        pool_map: dict[int, str] = dict(qs.values_list("id", "name"))
         if not pool_map:
             return []
 
         login = stats.events.types.stats.EventType.LOGIN
         logout = stats.events.types.stats.EventType.LOGOUT
 
-        partition = [F('owner_id'), F('fld4')]
+        partition = [F("owner_id"), F("fld4")]
         items = (
             StatsManager.manager()
             .enumerate_events(
@@ -90,18 +90,18 @@ class PeakConcurrencyReport(StatsReport):
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=partition, order_by=[F('stamp')]),
-                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by=[F('stamp')]),
+                prev_type=Window(Lag("event_type"), partition_by=partition, order_by=[F("stamp")]),
+                prev_stamp=Window(Lag("stamp"), partition_by=partition, order_by=[F("stamp")]),
             )
-            .values('owner_id', 'event_type', 'stamp', 'prev_type', 'prev_stamp')
+            .values("owner_id", "event_type", "stamp", "prev_type", "prev_stamp")
         )
 
         deltas: dict[int, list[tuple[int, int]]] = {pid: [] for pid in pool_map}
         for i in items:
-            if i['event_type'] != logout or i['prev_type'] != login:
+            if i["event_type"] != logout or i["prev_type"] != login:
                 continue
-            deltas[i['owner_id']].append((i['prev_stamp'], 1))
-            deltas[i['owner_id']].append((i['stamp'], -1))
+            deltas[i["owner_id"]].append((i["prev_stamp"], 1))
+            deltas[i["owner_id"]].append((i["stamp"], -1))
 
         result: list[dict[str, typing.Any]] = []
         for pid, pool_name in pool_map.items():
@@ -109,10 +109,10 @@ class PeakConcurrencyReport(StatsReport):
             if not evs:
                 result.append(
                     {
-                        'pool': pool_name,
-                        'peak': 0,
-                        'peak_at': '',
-                        'sessions': 0,
+                        "pool": pool_name,
+                        "peak": 0,
+                        "peak_at": "",
+                        "sessions": 0,
                     }
                 )
                 continue
@@ -132,36 +132,36 @@ class PeakConcurrencyReport(StatsReport):
                     peak_at = stamp
             result.append(
                 {
-                    'pool': pool_name,
-                    'peak': peak,
-                    'peak_at': timezone.make_aware(datetime.datetime.fromtimestamp(peak_at)),
-                    'sessions': sessions,
+                    "pool": pool_name,
+                    "peak": peak,
+                    "peak_at": timezone.make_aware(datetime.datetime.fromtimestamp(peak_at)),
+                    "sessions": sessions,
                 }
             )
 
-        result.sort(key=lambda r: r['peak'], reverse=True)
+        result.sort(key=lambda r: r["peak"], reverse=True)
         return result
 
     @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/stats/peak-concurrency.html',
+            "uds/reports/stats/peak-concurrency.html",
             dct={
-                'data': items,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "data": items,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Peak concurrent sessions'),
-            water=gettext('UDS Report of peak concurrent sessions'),
+            header=gettext("Peak concurrent sessions"),
+            water=gettext("UDS Report of peak concurrent sessions"),
         )
 
 
 class PeakConcurrencyReportCSV(PeakConcurrencyReport):
-    filename = 'peak_concurrency.csv'
-    mime_type = 'text/csv'
+    filename = "peak_concurrency.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = '939c621e-6d9b-4177-8b62-982284e850a5'
+    uuid = "939c621e-6d9b-4177-8b62-982284e850a5"
 
     pools = PeakConcurrencyReport.pools
     start_date = PeakConcurrencyReport.start_date
@@ -171,7 +171,7 @@ class PeakConcurrencyReportCSV(PeakConcurrencyReport):
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([gettext('Pool'), gettext('Peak'), gettext('Peak at'), gettext('Sessions')])
+        writer.writerow([gettext("Pool"), gettext("Peak"), gettext("Peak at"), gettext("Sessions")])
         for v in self.get_data():
-            writer.writerow([v['pool'], v['peak'], v['peak_at'], v['sessions']])
+            writer.writerow([v["pool"], v["peak"], v["peak_at"], v["sessions"]])
         return output.getvalue().encode()

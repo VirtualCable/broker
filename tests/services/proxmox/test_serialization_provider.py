@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # We use commit/rollback
@@ -40,23 +41,23 @@ from uds.services.Proxmox.provider import ProxmoxProvider
 
 
 PROVIDER_SERIALIZE_DATA: typing.Final[str] = (
-    'R1VJWgF2Mf5E0Eb/AlXtUzvdsF+YFTi08PsxvNhRm+Hu3Waqa0Gw0WeReoM5XTnmvopa9+Ex99oRhzW7xr6THkQ7vMZvwKlcI77l'
-    '+Zz3FKXnbZnXZkqY0GIqvUzHjQra2Xx9koxkvtAXl64aldXSCjO4xMqCzsCsxgn2fPYnD76TgSccUftTLr5UpaKxXrOg5qr836Si'
-    'Y83F6Ko20viicmczi3NmMTR+ii+lmSCUrnRJc/IcxTrfmturJu0X0TipMX5C3xqMyIa1LtsPyHO3yTkYW9bGqP/B1DbDOHy27gu6'
-    'DlJwQpi2SRSYEO9pOCTosuVqOpP7hDwCFYn5D1jcEDKZcOmOMuN9qDD423eXUUoCRx2YHmSS0mt03nWxZScV7Ny4U9gmv/x2jsK3'
-    '4YL88CPDjh/eMGc7V+LhCSqpEOFmvEz6DVAf'
+    "R1VJWgF2Mf5E0Eb/AlXtUzvdsF+YFTi08PsxvNhRm+Hu3Waqa0Gw0WeReoM5XTnmvopa9+Ex99oRhzW7xr6THkQ7vMZvwKlcI77l"
+    "+Zz3FKXnbZnXZkqY0GIqvUzHjQra2Xx9koxkvtAXl64aldXSCjO4xMqCzsCsxgn2fPYnD76TgSccUftTLr5UpaKxXrOg5qr836Si"
+    "Y83F6Ko20viicmczi3NmMTR+ii+lmSCUrnRJc/IcxTrfmturJu0X0TipMX5C3xqMyIa1LtsPyHO3yTkYW9bGqP/B1DbDOHy27gu6"
+    "DlJwQpi2SRSYEO9pOCTosuVqOpP7hDwCFYn5D1jcEDKZcOmOMuN9qDD423eXUUoCRx2YHmSS0mt03nWxZScV7Ny4U9gmv/x2jsK3"
+    "4YL88CPDjh/eMGc7V+LhCSqpEOFmvEz6DVAf"
 )
 
 PROVIDER_FIELDS_DATA: typing.Final[dict[str, typing.Any]] = {
-    'host': 'proxmox_host',
-    'port': 8666,
-    'username': 'proxmox_username',
-    'password': 'proxmox_passwd',
-    'concurrent_creation_limit': 31,
-    'concurrent_removal_limit': 32,
-    'timeout': 9999,
-    'start_vmid': 99999,
-    'macs_range': '52:54:01:02:03:04-52:54:05:06:07:08',
+    "host": "proxmox_host",
+    "port": 8666,
+    "username": "proxmox_username",
+    "password": "proxmox_passwd",
+    "concurrent_creation_limit": 31,
+    "concurrent_removal_limit": 32,
+    "timeout": 9999,
+    "start_vmid": 99999,
+    "macs_range": "52:54:01:02:03:04-52:54:05:06:07:08",
 }
 
 
@@ -67,7 +68,7 @@ class ProxmoxProviderSerializationTest(UDSTestCase):
         # Override UDSK
         self._oldUDSK = crypto.UDSK
         # Set same key as used to encrypt serialized data
-        crypto.UDSK = b'f#s35!e38xv%e-+i'  # type: ignore  # UDSK is final, but this is a test
+        crypto.UDSK = b"f#s35!e38xv%e-+i"  # type: ignore  # UDSK is final, but this is a test
         return super().setUp()
 
     def tearDown(self) -> None:

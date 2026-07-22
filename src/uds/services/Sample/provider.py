@@ -32,12 +32,13 @@ Created on Jun 22, 2012
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 
 from django.utils.translation import gettext_noop as _
-from uds.core import services, exceptions,types
+from uds.core import services, exceptions, types
 from uds.core.ui import gui
 from .service import ServiceOne, ServiceTwo
 
@@ -71,15 +72,15 @@ class Provider(services.ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('Sample Provider')
+    type_name = _("Sample Provider")
     # : Type used internally to identify this provider
-    type_type = 'SampleProvider'
+    type_type = "SampleProvider"
     # : Description shown at administration interface for this provider
-    type_description = _('Sample (and dummy) service provider')
+    type_description = _("Sample (and dummy) service provider")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
@@ -96,8 +97,8 @@ class Provider(services.ServiceProvider):
     remote_host = gui.TextField(
         order=1,
         length=64,
-        label=_('Remote host'),
-        tooltip=_('This fields contains a remote host'),
+        label=_("Remote host"),
+        tooltip=_("This fields contains a remote host"),
         required=True,
     )
 
@@ -105,8 +106,8 @@ class Provider(services.ServiceProvider):
     passwd_field = gui.PasswordField(
         order=2,
         length=32,
-        label=_('Password'),
-        tooltip=_('This is a password field'),
+        label=_("Password"),
+        tooltip=_("This is a password field"),
         required=True,
     )
 
@@ -114,10 +115,10 @@ class Provider(services.ServiceProvider):
     pet_name = gui.TextField(
         order=3,
         length=32,
-        label=_('Your pet\'s name'),
-        tooltip=_('If you like, write the name of your pet'),
+        label=_("Your pet's name"),
+        tooltip=_("If you like, write the name of your pet"),
         required=False,
-        default='Tux',  # : This will not get translated
+        default="Tux",  # : This will not get translated
     )
     # : Age of Methuselah (matusalén in spanish)
     # : in Spain there is a well-known to say that something is very old,
@@ -125,8 +126,8 @@ class Provider(services.ServiceProvider):
     meth_age = gui.NumericField(
         order=4,
         length=4,  # That is, max allowed value is 9999
-        label=_('Age of Methuselah'),
-        tooltip=_('If you know it, please, tell me!!!'),
+        label=_("Age of Methuselah"),
+        tooltip=_("If you know it, please, tell me!!!"),
         required=True,  # : Numeric fields have always a value, so this not really needed
         default=4500,
     )
@@ -134,24 +135,24 @@ class Provider(services.ServiceProvider):
     # : Is Methuselah istill alive?
     meth_alive = gui.CheckBoxField(
         order=5,
-        label=_('Is Methuselah still alive?'),
-        tooltip=_('If you fail, this will not get saved :-)'),
+        label=_("Is Methuselah still alive?"),
+        tooltip=_("If you fail, this will not get saved :-)"),
         default=True,  # : By default, at new item, check this
     )
 
     # : Is Methuselah istill alive?
     meth_alive2 = gui.CheckBoxField(
         order=5,
-        label=_('Is Methuselah still alive BBBB?'),
-        tooltip=_('If you fail, this will not get saved BBBB'),
+        label=_("Is Methuselah still alive BBBB?"),
+        tooltip=_("If you fail, this will not get saved BBBB"),
         default=True,  # : By default, at new item, check this
     )
 
     # : Is Methuselah istill alive?
     meth_alive3 = gui.CheckBoxField(
         order=5,
-        label=_('Is Methuselah still alive CCCC?'),
-        tooltip=_('If you fail, this will not get saved CCCC'),
+        label=_("Is Methuselah still alive CCCC?"),
+        tooltip=_("If you fail, this will not get saved CCCC"),
         default=True,  # : By default, at new item, check this
     )
 
@@ -159,15 +160,15 @@ class Provider(services.ServiceProvider):
         order=6,
         length=512,
         lines=5,
-        label=_('Text area'),
-        tooltip=_('This is a text area'),
+        label=_("Text area"),
+        tooltip=_("This is a text area"),
         required=False,
-        default='Write\nsomething',  # : This will not get translated
+        default="Write\nsomething",  # : This will not get translated
     )
 
     # There is more fields type, but not here the best place to cover it
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields, that is more than
         enought for most providers. (We simply need to store data provided by user
@@ -181,7 +182,7 @@ class Provider(services.ServiceProvider):
         # values are only passed from administration client. Internals
         # instantiations are always empty.
         if values and self.meth_alive.as_bool():
-            raise exceptions.ui.ValidationError(_('Methuselah is not alive!!! :-)'))
+            raise exceptions.ui.ValidationError(_("Methuselah is not alive!!! :-)"))
 
     # Marshal and unmarshal are defaults ones, also enought
 
@@ -190,7 +191,7 @@ class Provider(services.ServiceProvider):
 
     @staticmethod
     @typing.override
-    def test(env: 'Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Create your test method here so the admin can push the "check" button
         and this gets executed.
@@ -215,7 +216,7 @@ class Provider(services.ServiceProvider):
             # We instantiate the provider, but this may fail...
             instance = Provider(env, data)
             logger.debug(
-                'Methuselah has %s years and is %s :-)',
+                "Methuselah has %s years and is %s :-)",
                 instance.meth_age.value,
                 instance.meth_alive.value,
             )
@@ -226,7 +227,7 @@ class Provider(services.ServiceProvider):
             logger.exception("Exception caugth!!!")
             return types.core.TestResult(False, str(e))
 
-        return types.core.TestResult(True, _('All seems to be fine'))
+        return types.core.TestResult(True, _("All seems to be fine"))
 
     # Congratulations!!!, the needed part of your first simple provider is done!
     # Now you can go to administration panel, and check it

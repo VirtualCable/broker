@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # We use commit/rollback
@@ -49,22 +50,22 @@ from uds.services.OpenNebula import publication
 
 # self.flag_for_upgrade()  # Flag so manager can save it again with new format
 EXPECTED_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_reason',
-    '_template_id',
-    '_state',
-    '_destroy_after',  # Newly added field
+    "_name",
+    "_reason",
+    "_template_id",
+    "_state",
+    "_destroy_after",  # Newly added field
 }
 
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b'v1\tname\treason\ttemplate_id\tstate'
+SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\treason\ttemplate_id\tstate"
 
 
 class OpenGnsysPublicationSerializationTest(UDSTestCase):
     def check(self, instance: publication.OpenNebulaLivePublication) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._reason, 'reason')
-        self.assertEqual(instance._template_id, 'template_id')
-        self.assertEqual(instance._state, 'state')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._reason, "reason")
+        self.assertEqual(instance._template_id, "template_id")
+        self.assertEqual(instance._state, "state")
         self.assertEqual(instance._destroy_after, False)
 
     def test_marshaling(self) -> None:
@@ -80,7 +81,7 @@ class OpenGnsysPublicationSerializationTest(UDSTestCase):
         marshaled_data = instance.marshal()
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'\1'))
+        self.assertFalse(marshaled_data.startswith(b"\1"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = publication.OpenNebulaLivePublication(environment=environment, service=None)  # type: ignore
         instance.unmarshal(marshaled_data)

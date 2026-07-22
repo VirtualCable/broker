@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 # Make notifiers available to the UDS system.
 from .notifier import TelegramNotifier

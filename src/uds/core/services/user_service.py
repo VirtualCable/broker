@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import typing
 
@@ -110,6 +111,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
         method error_reason can be called multiple times, including
         serializations in middle, so remember to include reason of error in serializations
     """
+
     # : Suggested time for deployment finishing, in seconds
     # : This allows the manager to, if deployment is no done in 1 step, re-check
     # : the deployment once this time has passed, i.e. KVM COW deployment takes
@@ -119,20 +121,20 @@ class UserService(Environmentable, Serializable, abc.ABC):
     # : so u can modify it at your own implementation.
     suggested_delay = 10
 
-    _service: 'services.Service'
-    _publication: 'services.Publication | None'
-    _osmanager: 'osmanagers.OSManager | None'
+    _service: "services.Service"
+    _publication: "services.Publication | None"
+    _osmanager: "osmanagers.OSManager | None"
     _uuid: str
 
-    _db_obj: 'models.UserService | None' = None
+    _db_obj: "models.UserService | None" = None
 
     def __init__(
         self,
-        environment: 'Environment',
-        service: 'services.Service',
-        publication: 'services.Publication | None' = None,
-        osmanager: 'osmanagers.OSManager | None' = None,
-        uuid: str = '',
+        environment: "Environment",
+        service: "services.Service",
+        publication: "services.Publication | None" = None,
+        osmanager: "osmanagers.OSManager | None" = None,
+        uuid: str = "",
     ):
         """
         Do not forget to invoke this in your derived class using "super(self.__class__, self).__init__(environment, **kwargs)"
@@ -169,7 +171,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
         you can here access publication, service, osmanager, ...
         """
 
-    def db_obj(self) -> 'models.UserService':
+    def db_obj(self) -> "models.UserService":
         """
         Returns the database object for this object
         """
@@ -189,7 +191,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
         """
         return self.get_unique_id()
 
-    def service(self) -> 'services.Service':
+    def service(self) -> "services.Service":
         """
         Utility method to access parent service. This doesn't need to be override.
 
@@ -202,7 +204,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
         """
         return self._service
 
-    def publication(self) -> 'services.Publication | None':
+    def publication(self) -> "services.Publication | None":
         """
         Utility method to access publication. This doesn't need to be overriden.
 
@@ -213,7 +215,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
         """
         return self._publication
 
-    def osmanager(self) -> 'osmanagers.OSManager | None':
+    def osmanager(self) -> "osmanagers.OSManager | None":
         """
         Utility method to access os manager. This doesn't need to be overriden.
 
@@ -234,29 +236,29 @@ class UserService(Environmentable, Serializable, abc.ABC):
         if self._db_obj:
             log.log(self._db_obj, level, message, types.log.LogSource.SERVICE)
 
-    def mac_generator(self) -> 'UniqueMacGenerator':
+    def mac_generator(self) -> "UniqueMacGenerator":
         """
         Utility method to access provided macs generator (inside environment)
 
         Returns the environment unique mac addresses generator
         """
-        return typing.cast('UniqueMacGenerator', self.id_generator('mac'))
+        return typing.cast("UniqueMacGenerator", self.id_generator("mac"))
 
-    def name_generator(self) -> 'UniqueNameGenerator':
+    def name_generator(self) -> "UniqueNameGenerator":
         """
         Utility method to access provided names generator (inside environment)
 
         Returns the environment unique name generator
         """
-        return typing.cast('UniqueNameGenerator', self.id_generator('name'))
+        return typing.cast("UniqueNameGenerator", self.id_generator("name"))
 
-    def gid_generator(self) -> 'UniqueGIDGenerator':
+    def gid_generator(self) -> "UniqueGIDGenerator":
         """
         Utility method to access provided names generator (inside environment)
 
         Returns the environment unique global id generator
         """
-        return typing.cast('UniqueGIDGenerator', self.id_generator('id'))
+        return typing.cast("UniqueGIDGenerator", self.id_generator("id"))
 
     @abc.abstractmethod
     def get_unique_id(self) -> str:
@@ -268,7 +270,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
             An unique identifier for this object, that is an string and must be
             unique.
         """
-        raise NotImplementedError(f'get_unique_id method for class {self.__class__.__name__} not provided!')
+        raise NotImplementedError(f"get_unique_id method for class {self.__class__.__name__} not provided!")
 
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         """
@@ -295,9 +297,9 @@ class UserService(Environmentable, Serializable, abc.ABC):
                all exceptions, and never raise an exception from these methods
                to the core. Take that into account and handle exceptions inside
                this method.
-               
+
         Note: Currently, on 4.0, data contains nothing at all (is an empty string)
-        
+
         """
         return types.states.TaskState.FINISHED
 
@@ -311,7 +313,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
             The needed ip to let the user connect to the his deployed service.
             This ip will be managed by transports, without IP there is no connection
         """
-        raise NotImplementedError(f'get_ip method for class {self.__class__.__name__} not provided!')
+        raise NotImplementedError(f"get_ip method for class {self.__class__.__name__} not provided!")
 
     def set_ip(self, ip: str) -> None:
         """
@@ -392,10 +394,10 @@ class UserService(Environmentable, Serializable, abc.ABC):
                to the core. Take that into account and handle exceptions inside
                this method.
         """
-        raise NotImplementedError(f'Base deploy for user invoked! for class {self.__class__.__name__}')
+        raise NotImplementedError(f"Base deploy for user invoked! for class {self.__class__.__name__}")
 
     @abc.abstractmethod
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
 
@@ -428,7 +430,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
                to the core. Take that into account and handle exceptions inside
                this method.
         """
-        raise NotImplementedError(f'Base deploy for user invoked! for class {self.__class__.__name__}')
+        raise NotImplementedError(f"Base deploy for user invoked! for class {self.__class__.__name__}")
 
     @abc.abstractmethod
     def check_state(self) -> types.states.TaskState:
@@ -454,7 +456,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
                to the core. Take that into account and handle exceptions inside
                this method.
         """
-        raise NotImplementedError(f'Base check state invoked! for class {self.__class__.__name__}')
+        raise NotImplementedError(f"Base check state invoked! for class {self.__class__.__name__}")
 
     def finish(self) -> None:
         """
@@ -531,12 +533,12 @@ class UserService(Environmentable, Serializable, abc.ABC):
         The user provided is just an string, that is provided by actor.
         """
         pass
-    
+
     def actor_initialization(self, request_params: dict[str, typing.Any]) -> bool:
         """
         This method is invoked by the actor REST API when the actor initialize
         is called. This is a good place to do things that needs to be once only...
-        
+
         Should return True if any internal instance data has changed, so it gets
         stored back to database.
         """
@@ -555,7 +557,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
                directly from admin interface and, as so, will have translation
                environment correctly set up.
         """
-        return 'unknown'
+        return "unknown"
 
     @abc.abstractmethod
     def destroy(self) -> types.states.TaskState:
@@ -574,7 +576,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
                to the core. Take that into account and handle exceptions inside
                this method.
         """
-        raise NotImplementedError(f'destroy method for class {self.__class__.__name__} not provided!')
+        raise NotImplementedError(f"destroy method for class {self.__class__.__name__} not provided!")
 
     def cancel(self) -> types.states.TaskState:
         """
@@ -592,7 +594,7 @@ class UserService(Environmentable, Serializable, abc.ABC):
                all exceptions, and never raise an exception from these methods
                to the core. Take that into account and handle exceptions inside
                this method.
-        
+
         Defaults to calling destroy, but can be overriden to provide a more
         controlled way of cancelling the operation.
         """
@@ -640,4 +642,4 @@ class UserService(Environmentable, Serializable, abc.ABC):
         """
         Mainly used for debugging purposses
         """
-        return f'{self.__class__.__name__}'
+        return f"{self.__class__.__name__}"

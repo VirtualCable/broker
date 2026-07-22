@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import pickle
 import typing
@@ -64,13 +65,13 @@ from . import fixtures
 
 # Note that new implementation can hold more fields than ours, so we need to check only the ones we need
 EXPECTED_OWN_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_ip',
-    '_mac',
-    '_task',
-    '_vmid',
-    '_reason',
-    '_queue',
+    "_name",
+    "_ip",
+    "_mac",
+    "_task",
+    "_vmid",
+    "_reason",
+    "_queue",
 }
 
 # Old queue content and format
@@ -83,7 +84,7 @@ TEST_QUEUE: typing.Final[list[OldOperation]] = [
 TEST_QUEUE_NEW: typing.Final[list[types.services.Operation]] = [i.to_operation() for i in TEST_QUEUE]
 
 SERIALIZED_DEPLOYMENT_DATA: typing.Final[collections.abc.Mapping[str, bytes]] = {
-    'v1': b'v1\x01name\x01ip\x01mac\x01task\x01vmid\x01reason\x01' + pickle.dumps(TEST_QUEUE, protocol=0),
+    "v1": b"v1\x01name\x01ip\x01mac\x01task\x01vmid\x01reason\x01" + pickle.dumps(TEST_QUEUE, protocol=0),
 }
 
 LAST_VERSION: typing.Final[str] = sorted(SERIALIZED_DEPLOYMENT_DATA.keys(), reverse=True)[0]
@@ -91,16 +92,16 @@ LAST_VERSION: typing.Final[str] = sorted(SERIALIZED_DEPLOYMENT_DATA.keys(), reve
 
 class ProxmoxDeploymentSerializationTest(UDSTransactionTestCase):
     def check(self, version: str, instance: Deployment) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._ip, 'ip')
-        self.assertEqual(instance._mac, 'mac')
-        self.assertEqual(instance._task, 'task')
-        self.assertEqual(instance._vmid, 'vmid')
-        self.assertEqual(instance._reason, 'reason')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._ip, "ip")
+        self.assertEqual(instance._mac, "mac")
+        self.assertEqual(instance._task, "task")
+        self.assertEqual(instance._vmid, "vmid")
+        self.assertEqual(instance._reason, "reason")
         self.assertEqual(instance._queue, TEST_QUEUE_NEW)
 
     def test_marshaling(self) -> None:
-        def _create_instance(unmarshal_data: 'bytes|None' = None) -> Deployment:
+        def _create_instance(unmarshal_data: "bytes|None" = None) -> Deployment:
             with fixtures.patched_provider() as provider:
                 service = fixtures.create_service_linked(provider=provider)
             instance = fixtures.create_userservice_linked(service=service)
@@ -109,7 +110,7 @@ class ProxmoxDeploymentSerializationTest(UDSTransactionTestCase):
             return instance
 
         for v in range(1, len(SERIALIZED_DEPLOYMENT_DATA) + 1):
-            version = f'v{v}'
+            version = f"v{v}"
             instance = _create_instance(SERIALIZED_DEPLOYMENT_DATA[version])
             self.check(version, instance)
             # Ensure remarshalled flag is set
@@ -117,22 +118,18 @@ class ProxmoxDeploymentSerializationTest(UDSTransactionTestCase):
             instance.mark_for_upgrade(False)  # reset flag
 
             marshaled_data = instance.marshal()
-            self.assertFalse(
-                marshaled_data.startswith(b'\v')
-            )  # Ensure fields has been marshalled using new format
+            self.assertFalse(marshaled_data.startswith(b"\v"))  # Ensure fields has been marshalled using new format
 
             instance = _create_instance(marshaled_data)
-            self.assertFalse(
-                instance.needs_upgrade()
-            )  # Reunmarshall again and check that remarshalled flag is not set
+            self.assertFalse(instance.needs_upgrade())  # Reunmarshall again and check that remarshalled flag is not set
             self.check(version, instance)
 
     def test_marshaling_queue(self) -> None:
-        def _create_instance(unmarshal_data: 'bytes|None' = None) -> Deployment:
+        def _create_instance(unmarshal_data: "bytes|None" = None) -> Deployment:
             with fixtures.patched_provider() as provider:
                 service = fixtures.create_service_linked(provider=provider)
             instance = fixtures.create_userservice_linked(service=service)
-            instance.env.storage.save_pickled('queue', TEST_QUEUE)
+            instance.env.storage.save_pickled("queue", TEST_QUEUE)
             if unmarshal_data:
                 instance.unmarshal(unmarshal_data)
             return instance
@@ -150,7 +147,7 @@ class ProxmoxDeploymentSerializationTest(UDSTransactionTestCase):
         marshaled_data = instance.marshal()
 
         # Now, format is new, so we can't check it with old format
-        self.assertEqual(marshaled_data.startswith(b'v'), False)
+        self.assertEqual(marshaled_data.startswith(b"v"), False)
 
         instance = _create_instance(marshaled_data)
         self.assertEqual(
@@ -175,6 +172,5 @@ class ProxmoxDeploymentSerializationTest(UDSTransactionTestCase):
 
             self.assertTrue(
                 EXPECTED_OWN_FIELDS <= set(f[0] for f in instance._autoserializable_fields()),
-                'Missing fields: '
-                + str(EXPECTED_OWN_FIELDS - set(f[0] for f in instance._autoserializable_fields())),
+                "Missing fields: " + str(EXPECTED_OWN_FIELDS - set(f[0] for f in instance._autoserializable_fields())),
             )

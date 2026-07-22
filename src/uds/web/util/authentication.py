@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -53,25 +54,25 @@ logger = logging.getLogger(__name__)
 # (None, NumericError) if errorview redirection
 # (User, password_string) if all is ok
 def check_login(  # pylint: disable=too-many-branches, too-many-statements
-    request: 'ExtendedHttpRequest', form: 'LoginForm'
+    request: "ExtendedHttpRequest", form: "LoginForm"
 ) -> types.auth.LoginResult:
 
-    if 'uds' not in request.COOKIES:
-        logger.debug('Request does not have uds cookie')
+    if "uds" not in request.COOKIES:
+        logger.debug("Request does not have uds cookie")
         return types.auth.LoginResult(errid=types.errors.Error.COOKIES_NEEDED)
     if form.is_valid():
         try:
             # Get authenticator, must not be disabled
             authenticator = Authenticator.objects.exclude(state=consts.auth.DISABLED).get(
-                uuid=process_uuid(form.cleaned_data['authenticator'])
+                uuid=process_uuid(form.cleaned_data["authenticator"])
             )
         except Exception:  # Don't exists an authenticator with that uuid and that is not disabled
             authenticator = Authenticator.null()
-        username = form.cleaned_data['user']
+        username = form.cleaned_data["user"]
         if GlobalConfig.LOWERCASE_USERNAME.as_bool(True) is True:
             username = username.lower()
 
-        cache = Cache('auth')
+        cache = Cache("auth")
         tries_cache_key = str(authenticator.id) + username
         tries = cache.get(tries_cache_key) or 0
         tries_in_this_ip = (cache.get(request.ip) or 0) if GlobalConfig.LOGIN_BLOCK_IP.as_bool() else 0
@@ -84,14 +85,14 @@ def check_login(  # pylint: disable=too-many-branches, too-many-statements
             and (tries >= max_tries_per_ip)
             or tries_in_this_ip >= max_tries_per_ip
         ):
-            log_login(request, authenticator, username, 'Temporarily blocked', as_error=True)
-            return types.auth.LoginResult(errstr=_('Too many authentication errors. User temporarily blocked'))
+            log_login(request, authenticator, username, "Temporarily blocked", as_error=True)
+            return types.auth.LoginResult(errstr=_("Too many authentication errors. User temporarily blocked"))
         # check if authenticator is visible for this requests
         password = (
-            form.cleaned_data['password'] or 'axd56adhg466jasd6q8sadñ€sáé--v'
+            form.cleaned_data["password"] or "axd56adhg466jasd6q8sadñ€sáé--v"
         )  # Random string, in fact, just a placeholder that will not be used :)
         auth_result = authenticate(username, password, authenticator, request=request)
-        logger.debug('User: %s', auth_result.user)
+        logger.debug("User: %s", auth_result.user)
 
         if auth_result.user is None:
             logger.debug("Invalid user %s (access denied)", username)
@@ -101,23 +102,23 @@ def check_login(  # pylint: disable=too-many-branches, too-many-statements
                 request,
                 authenticator,
                 username,
-                'Access denied (user not allowed by UDS)',
+                "Access denied (user not allowed by UDS)",
                 as_error=True,
             )
             if auth_result.url:  # Redirection
                 return types.auth.LoginResult(url=auth_result.url)
-            return types.auth.LoginResult(errstr=_('Access denied'))
+            return types.auth.LoginResult(errstr=_("Access denied"))
 
         request.session.cycle_key()
 
-        logger.debug('User %s has logged in', username)
+        logger.debug("User %s has logged in", username)
         cache.remove(tries_cache_key)  # Valid login, remove cached tries
 
-        if form.cleaned_data['logouturl'] != '':
-            logger.debug('The logoout url will be %s', form.cleaned_data['logouturl'])
-            request.session['logouturl'] = form.cleaned_data['logouturl']
+        if form.cleaned_data["logouturl"] != "":
+            logger.debug("The logoout url will be %s", form.cleaned_data["logouturl"])
+            request.session["logouturl"] = form.cleaned_data["logouturl"]
         log_login(request, authenticator, auth_result.user.name)
-        return types.auth.LoginResult(user=auth_result.user, password=form.cleaned_data['password'])
+        return types.auth.LoginResult(user=auth_result.user, password=form.cleaned_data["password"])
 
-    logger.info('Invalid form received')
-    return types.auth.LoginResult(errstr=_('Invalid data'))
+    logger.info("Invalid form received")
+    return types.auth.LoginResult(errstr=_("Invalid data"))

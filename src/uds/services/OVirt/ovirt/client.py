@@ -66,7 +66,7 @@ def _access_lock() -> collections.abc.Generator[None, None, None]:
             _lock.release()
 
 
-def _key_helper(obj: 'Client') -> str:
+def _key_helper(obj: "Client") -> str:
     return obj._host + obj._username
 
 
@@ -86,7 +86,7 @@ class Client:
     _username: str
     _password: str
     _timeout: int
-    _cache: 'Cache'
+    _cache: "Cache"
 
     _api: ovirtsdk4.Connection | None = None
 
@@ -106,10 +106,7 @@ class Client:
         if self._api is None:
             try:
                 self._api = ovirtsdk4.Connection(
-                    url='https://'
-                    + self._host
-                    + (f':{self._port}' if self._port != 443 else '')
-                    + '/ovirt-engine/api',
+                    url="https://" + self._host + (f":{self._port}" if self._port != 443 else "") + "/ovirt-engine/api",
                     username=self._username,
                     password=self._password,
                     timeout=self._timeout,
@@ -117,8 +114,8 @@ class Client:
                 )  # , debug=True, log=logger )
             except Exception as e:
                 self._api = None
-                logger.exception('Exception on ovirt connection at %s', self._host)
-                raise Exception('Error connecting to oVirt: {}'.format(e)) from e
+                logger.exception("Exception on ovirt connection at %s", self._host)
+                raise Exception("Error connecting to oVirt: {}".format(e)) from e
 
         return self._api
 
@@ -129,7 +126,7 @@ class Client:
         username: str,
         password: str,
         timeout: int,
-        cache: 'Cache',
+        cache: "Cache",
     ):
         self._host = host
         self._port = port
@@ -143,10 +140,10 @@ class Client:
             with _access_lock():
                 return self.api.test()
         except Exception as e:
-            logger.error('Testing Server failed for oVirt: %s', e)
+            logger.error("Testing Server failed for oVirt: %s", e)
             return False
 
-    @decorators.cached(prefix='o-vms', timeout=consts.cache.DEFAULT_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-vms", timeout=consts.cache.DEFAULT_CACHE_TIMEOUT, key_helper=_key_helper)
     def list_machines(self, **kwargs: typing.Any) -> list[ov_types.VMInfo]:
         """
         Obtains the list of machines inside ovirt that do aren't part of uds
@@ -168,7 +165,7 @@ class Client:
                 for vm in typing.cast(list[typing.Any], self.api.system_service().vms_service().list())
             ]
 
-    @decorators.cached(prefix='o-vm', timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-vm", timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=_key_helper)
     def get_machine_info(self, vmid: str, **kwargs: typing.Any) -> ov_types.VMInfo:
         with _access_lock():
             try:
@@ -182,7 +179,7 @@ class Client:
             except Exception:
                 return ov_types.VMInfo.missing()
 
-    @decorators.cached(prefix='o-clusters', timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-clusters", timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=_key_helper)
     def list_clusters(self, **kwargs: typing.Any) -> list[ov_types.ClusterInfo]:
         """
         Obtains the list of clusters inside ovirt
@@ -195,12 +192,10 @@ class Client:
         with _access_lock():
             return [
                 ov_types.ClusterInfo.from_data(cluster)
-                for cluster in typing.cast(
-                    list[typing.Any], self.api.system_service().clusters_service().list()
-                )
+                for cluster in typing.cast(list[typing.Any], self.api.system_service().clusters_service().list())
             ]
 
-    @decorators.cached(prefix='o-cluster', timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-cluster", timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=_key_helper)
     def get_cluster_info(self, cluster_id: str, **kwargs: typing.Any) -> ov_types.ClusterInfo:
         """
         Obtains the cluster info
@@ -217,7 +212,7 @@ class Client:
                 typing.cast(typing.Any, self.api.system_service().clusters_service().service(cluster_id).get())
             )
 
-    @decorators.cached(prefix='o-dc', timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-dc", timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=_key_helper)
     def get_datacenter_info(self, datacenter_id: str, **kwargs: typing.Any) -> ov_types.DatacenterInfo:
         """
         Obtains the datacenter info
@@ -233,21 +228,16 @@ class Client:
 
         """
         with _access_lock():
-            datacenter_service: typing.Any = (
-                self.api.system_service().data_centers_service().service(datacenter_id)
-            )
+            datacenter_service: typing.Any = self.api.system_service().data_centers_service().service(datacenter_id)
 
             data: typing.Any = datacenter_service.get()
 
             return ov_types.DatacenterInfo.from_data(
                 data,
-                [
-                    ov_types.StorageInfo.from_data(s)
-                    for s in datacenter_service.storage_domains_service().list()
-                ],
+                [ov_types.StorageInfo.from_data(s) for s in datacenter_service.storage_domains_service().list()],
             )
 
-    @decorators.cached(prefix='o-str', timeout=consts.cache.SHORT_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-str", timeout=consts.cache.SHORT_CACHE_TIMEOUT, key_helper=_key_helper)
     def get_storage_info(self, storage_id: str, **kwargs: typing.Any) -> ov_types.StorageInfo:
         """
         Obtains the datacenter info
@@ -314,13 +304,13 @@ class Client:
             vm: typing.Any = vms.get()  # pyright: ignore
 
             if vm is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             if cluster is None:
-                raise Exception('Cluster not found')
+                raise Exception("Cluster not found")
 
-            if vm.status.value != 'down':
-                raise Exception('Machine must be powered off to publish it')
+            if vm.status.value != "down":
+                raise Exception("Machine must be powered off to publish it")
 
             # sd = [ovirtsdk4.types.StorageDomain(id=storageId)]
             # dsks = []
@@ -342,7 +332,7 @@ class Client:
                 )
             )
 
-    @decorators.cached(prefix='o-templates', timeout=consts.cache.DEFAULT_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-templates", timeout=consts.cache.DEFAULT_CACHE_TIMEOUT, key_helper=_key_helper)
     def get_template_info(self, template_id: str) -> ov_types.TemplateInfo:
         """
         Returns the template info for the given template id
@@ -396,7 +386,7 @@ class Client:
             guaranteed_mb,
         )
         with _access_lock():
-            logger.debug('Deploying machine %s', name)
+            logger.debug("Deploying machine %s", name)
 
             cluster = ovirtsdk4.types.Cluster(id=cluster_id)
             template = ovirtsdk4.types.Template(id=template_id)
@@ -429,9 +419,7 @@ class Client:
             self.api.system_service().templates_service().service(template_id).remove()
             # This returns nothing, if it fails it raises an exception
 
-    @decorators.cached(
-        prefix='o-templates', timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=_key_helper
-    )
+    @decorators.cached(prefix="o-templates", timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=_key_helper)
     def list_snapshots(self, vmid: str) -> list[ov_types.SnapshotInfo]:
         """
         Lists the snapshots of the given machine
@@ -440,14 +428,14 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             return [
                 ov_types.SnapshotInfo.from_data(s)
                 for s in typing.cast(list[typing.Any], vm_service.snapshots_service().list())
             ]
 
-    @decorators.cached(prefix='o-snapshot', timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=_key_helper)
+    @decorators.cached(prefix="o-snapshot", timeout=consts.cache.SHORTEST_CACHE_TIMEOUT, key_helper=_key_helper)
     def get_snapshot_info(self, vmid: str, snapshot_id: str) -> ov_types.SnapshotInfo:
         """
         Returns the snapshot info for the given snapshot id
@@ -456,7 +444,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             return ov_types.SnapshotInfo.from_data(
                 typing.cast(
@@ -465,9 +453,7 @@ class Client:
                 )
             )
 
-    def create_snapshot(
-        self, vmid: str, snapshot_name: str, snapshot_description: str
-    ) -> ov_types.SnapshotInfo:
+    def create_snapshot(self, vmid: str, snapshot_name: str, snapshot_description: str) -> ov_types.SnapshotInfo:
         """
         Creates a snapshot of the machine with the given name and description
         """
@@ -475,7 +461,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             snapshot = ovirtsdk4.types.Snapshot(
                 name=snapshot_name, description=snapshot_description, persist_memorystate=True
@@ -490,7 +476,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             vm_service.snapshots_service().service(snapshot_id).remove()
 
@@ -509,7 +495,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             vm_service.start()
 
@@ -526,7 +512,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             vm_service.stop()
 
@@ -543,7 +529,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             vm_service.shutdown()
 
@@ -560,7 +546,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             vm_service.suspend()
 
@@ -577,7 +563,7 @@ class Client:
             vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
             if vm_service.get() is None:
-                raise Exception('Machine not found')
+                raise Exception("Machine not found")
 
             vm_service.remove()
 
@@ -590,14 +576,14 @@ class Client:
                 vm_service = typing.cast(typing.Any, self.api.system_service().vms_service().service(vmid))
 
                 if vm_service.get() is None:
-                    raise Exception('Machine not found')
+                    raise Exception("Machine not found")
 
                 nic = vm_service.nics_service().list()[0]  # If has no nic, will raise an exception (IndexError)
                 nic.mac.address = mac
                 nic_service = vm_service.nics_service().service(nic.id)
                 nic_service.update(nic)
             except IndexError:
-                raise Exception('Machine do not have network interfaces!!')
+                raise Exception("Machine do not have network interfaces!!")
 
     def fix_usb(self, vmid: str) -> None:
         # Fix for usb support
@@ -617,14 +603,14 @@ class Client:
                 vm = vm_service.get()
 
                 if vm is None:
-                    raise Exception('Machine not found')
+                    raise Exception("Machine not found")
 
                 display = vm.display
                 ticket = vm_service.ticket()
 
-                ca: str = ''  # Not known ca
+                ca: str = ""  # Not known ca
                 # Get host subject
-                cert_subject = ''
+                cert_subject = ""
                 if display.certificate is not None:
                     cert_subject = display.certificate.subject
                     ca = display.certificate.content
@@ -645,14 +631,14 @@ class Client:
                                 cert_subject = i.certificate.subject
                                 break
                         # If found
-                        if cert_subject != '':
+                        if cert_subject != "":
                             break
                     # Try to get certificate from host
                     # Note: This will only work if the certificate is self-signed
                     try:
                         ca = ssl.get_server_certificate((display.address, display.secure_port))
                     except Exception:
-                        ca = ''
+                        ca = ""
 
                 return types.services.ConsoleConnectionInfo(
                     type=display.type.value,

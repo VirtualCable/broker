@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
 import pickle  # nosec: not insecure, we are loading our own data
 import logging
@@ -60,7 +61,7 @@ class Operation(enum.IntEnum):
     UNKNOWN = 99
 
     @staticmethod
-    def from_int(value: int) -> 'Operation':
+    def from_int(value: int) -> "Operation":
         try:
             return Operation(value)
         except ValueError:
@@ -80,12 +81,12 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
 
     # : Recheck every N seconds by default (for task methods)
     suggested_delay = 20
-    _name = autoserializable.StringField(default='unknown')
-    _ip = autoserializable.StringField(default='')
-    _mac = autoserializable.StringField(default='')
-    _machine_id = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="unknown")
+    _ip = autoserializable.StringField(default="")
+    _mac = autoserializable.StringField(default="")
+    _machine_id = autoserializable.StringField(default="")
     _stamp = autoserializable.IntegerField(default=0)
-    _reason = autoserializable.StringField(default='')
+    _reason = autoserializable.StringField(default="")
     _queue = autoserializable.ListField[Operation]()
 
     # _name: str = 'unknown'
@@ -105,35 +106,33 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         self._queue = []
 
     @typing.override
-    def service(self) -> 'OGService':
-        return typing.cast('OGService', super().service())
+    def service(self) -> "OGService":
+        return typing.cast("OGService", super().service())
 
     @typing.override
-    def publication(self) -> 'OpenGnsysPublication':
+    def publication(self) -> "OpenGnsysPublication":
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('OpenGnsysPublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("OpenGnsysPublication", pub)
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         Does nothing here also, all data are kept at environment storage
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._machine_id = vals[4].decode('utf8')
-            self._reason = vals[5].decode('utf8')
-            self._stamp = int(vals[6].decode('utf8'))
-            self._queue = [
-                Operation.from_int(i) for i in pickle.loads(vals[7])
-            ]  # nosec: not insecure, we are loading our own data
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._machine_id = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
+            self._stamp = int(vals[6].decode("utf8"))
+            self._queue = [Operation.from_int(i) for i in pickle.loads(vals[7])]  # nosec: not insecure, we are loading our own data
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
@@ -173,23 +172,21 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
 
             # Machine powered off, check what to do...
             if not self.service().try_start_if_unavailable():
-                return self._error(
-                    'Machine is unavailable and "start if unavailable" is not active'
-                )
+                return self._error('Machine is unavailable and "start if unavailable" is not active')
 
             # Try to start it, and let's see
             self._queue = [Operation.START, Operation.FINISH]
             return self._execute_queue()
 
         except Exception as e:
-            return self._error(f'Error setting ready state: {e}')
+            return self._error(f"Error setting ready state: {e}")
 
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
         """
-        logger.debug('Deploying for user')
+        logger.debug("Deploying for user")
         self._init_queue_for_deploy()
         return self._execute_queue()
 
@@ -206,7 +203,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
 
     def _check_machine_is_ready(self) -> types.states.TaskState:
         logger.debug(
-            'Checking that state of machine %s (%s) is ready',
+            "Checking that state of machine %s (%s) is ready",
             self._machine_id,
             self._name,
         )
@@ -214,11 +211,11 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         try:
             status = self.service().status(self._machine_id)
         except Exception as e:
-            logger.exception('Exception at _check_machine_ready')
-            return self._error(f'Error checking machine: {e}')
+            logger.exception("Exception at _check_machine_ready")
+            return self._error(f"Error checking machine: {e}")
 
         # possible status are ("off", "oglive", "busy", "linux", "windows", "macos" o "unknown").
-        if status['status'] in ("linux", "windows", "macos"):
+        if status["status"] in ("linux", "windows", "macos"):
             return types.states.TaskState.FINISHED
 
         return types.states.TaskState.RUNNING
@@ -243,21 +240,21 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         Returns:
             types.states.DeployState.ERROR, so we can do "return self.__error(reason)"
         """
-        logger.debug('Setting error state, reason: %s', reason)
+        logger.debug("Setting error state, reason: %s", reason)
         self.do_log(types.log.LogLevel.ERROR, reason)
 
         if self._machine_id:
             try:
                 self.service().unreserve(self._machine_id)
             except Exception as e:
-                logger.warning('Error unreserving machine: %s', e)
+                logger.warning("Error unreserving machine: %s", e)
 
         self._queue = [Operation.ERROR]
         self._reason = str(reason)
         return types.states.TaskState.ERROR
 
     def _execute_queue(self) -> types.states.TaskState:
-        self._debug('executeQueue')
+        self._debug("executeQueue")
         op = self._get_current_op()
 
         if op == Operation.ERROR:
@@ -266,7 +263,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         if op == Operation.FINISH:
             return types.states.TaskState.FINISHED
 
-        fncs: dict[int, collections.abc.Callable[[], str]|None] = {
+        fncs: dict[int, collections.abc.Callable[[], str] | None] = {
             Operation.CREATE: self._create,
             Operation.RETRY: self._retry,
             Operation.REMOVE: self._remove,
@@ -274,10 +271,10 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         }
 
         try:
-            exec_fnc  = fncs.get(op)
+            exec_fnc = fncs.get(op)
 
             if exec_fnc is None:
-                return self._error(f'Unknown operation found at execution queue ({op})')
+                return self._error(f"Unknown operation found at execution queue ({op})")
 
             exec_fnc()
 
@@ -305,35 +302,35 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         token = CryptoManager.manager().random_string(32)
         try:
             r = self.service().reserve()
-            self.service().notify_endpoints(r['id'], token, self._uuid)
+            self.service().notify_endpoints(r["id"], token, self._uuid)
         except Exception as e:
             # logger.exception('Creating machine')
             if r:  # Reservation was done, unreserve it!!!
-                logger.error('Error on notify_endpoints (machine was reserved): %s', e)
+                logger.error("Error on notify_endpoints (machine was reserved): %s", e)
                 try:
                     self.service().unreserve(self._machine_id)
                 except Exception as ei:
                     # Error unreserving reserved machine on creation
-                    logger.error('Error unreserving errored machine: %s', ei)
+                    logger.error("Error unreserving errored machine: %s", ei)
 
-            raise Exception(f'Error creating reservation: {e}') from e
+            raise Exception(f"Error creating reservation: {e}") from e
 
-        self._machine_id = r['id']
-        self._name = r['name']
-        self._mac = r['mac']
-        self._ip = r['ip']
+        self._machine_id = r["id"]
+        self._name = r["name"]
+        self._mac = r["mac"]
+        self._ip = r["ip"]
         self._stamp = sql_stamp_seconds()
 
         self.do_log(
             types.log.LogLevel.INFO,
-            f'Reserved machine {self._name}: id: {self._machine_id}, mac: {self._mac}, ip: {self._ip}',
+            f"Reserved machine {self._name}: id: {self._machine_id}, mac: {self._mac}, ip: {self._ip}",
         )
 
         # Store actor version & Known ip
         dbs = self.db_obj()
         if dbs:
-            dbs.properties['actor_version'] = '1.1-OpenGnsys'
-            dbs.properties['token'] = token
+            dbs.properties["actor_version"] = "1.1-OpenGnsys"
+            dbs.properties["token"] = token
             dbs.log_ip(self._ip)
 
         return types.states.TaskState.RUNNING
@@ -352,7 +349,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         if dbs:
             # On release callback, we will set a property on DB called "from_release"
             # so we can avoid double unreserve
-            if dbs.properties.get('from_release') is None:
+            if dbs.properties.get("from_release") is None:
                 self.service().unreserve(self._machine_id)
         return types.states.TaskState.RUNNING
 
@@ -377,7 +374,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         """
         Check what operation is going on, and acts acordly to it
         """
-        self._debug('check_state')
+        self._debug("check_state")
         op = self._get_current_op()
 
         if op == Operation.ERROR:
@@ -397,7 +394,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
             check_fnc = fncs.get(op)
 
             if check_fnc is None:
-                return self._error(f'Unknown operation found at check queue ({op})')
+                return self._error(f"Unknown operation found at check queue ({op})")
 
             state = check_fnc()
             if state == types.states.TaskState.FINISHED:
@@ -424,7 +421,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         """
         Invoked for destroying a deployed service
         """
-        self._debug('destroy')
+        self._debug("destroy")
         # If executing something, wait until finished to remove it
         # We simply replace the execution queue
         self._queue = [Operation.REMOVE, Operation.FINISH]
@@ -446,16 +443,16 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
     @staticmethod
     def _op2str(op: Operation) -> str:
         return {
-            Operation.CREATE: 'create',
-            Operation.REMOVE: 'remove',
-            Operation.ERROR: 'error',
-            Operation.FINISH: 'finish',
-            Operation.RETRY: 'retry',
-        }.get(op, '????')
+            Operation.CREATE: "create",
+            Operation.REMOVE: "remove",
+            Operation.ERROR: "error",
+            Operation.FINISH: "finish",
+            Operation.RETRY: "retry",
+        }.get(op, "????")
 
     def _debug(self, txt: str) -> None:
         logger.debug(
-            'types.states.DeployState.at %s: name: %s, ip: %s, mac: %s, machine:%s, queue: %s',
+            "types.states.DeployState.at %s: name: %s, ip: %s, mac: %s, machine:%s, queue: %s",
             txt,
             self._name,
             self._ip,

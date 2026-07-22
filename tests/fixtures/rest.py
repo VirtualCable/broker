@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from ..utils import rest
@@ -92,14 +93,14 @@ class ServicePoolRestStruct(rest.RestStruct):
 # Provide a "random" dictionary based on a
 def createUser(**kwargs: typing.Any) -> dict[str, typing.Any]:
     data = UserRestStruct.random_create(**kwargs).as_dict()
-    data['state'] = 'A'  # Fix state to 1 char
+    data["state"] = "A"  # Fix state to 1 char
     return data
 
 
 def create_group(**kwargs: typing.Any) -> dict[str, typing.Any]:
     data = GroupRestStruct.random_create(**kwargs).as_dict()
-    data['state'] = 'A'  # Fix state to 1 char
-    data['skip_mfa'] = 'A'  # Fix state to 1 char
+    data["state"] = "A"  # Fix state to 1 char
+    data["skip_mfa"] = "A"  # Fix state to 1 char
     return data
 
 

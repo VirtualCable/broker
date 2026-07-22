@@ -167,9 +167,7 @@ class CalendarAction(UUIDModel):
 
         def _remove_userservices() -> None:
             # 1.- Remove usable assigned services (Ignore "creating ones", just for created)
-            for userservice in self.service_pool.assigned_user_services().filter(
-                state=types.states.State.USABLE
-            ):
+            for userservice in self.service_pool.assigned_user_services().filter(state=types.states.State.USABLE):
                 userservice.release()
 
         def _remove_stuck_userservice() -> None:
@@ -210,9 +208,7 @@ class CalendarAction(UUIDModel):
                 else:
                     self.service_pool.transports.remove(t)
             except Exception:
-                self.service_pool.log(
-                    "Scheduled action not executed because transport is not available anymore"
-                )
+                self.service_pool.log("Scheduled action not executed because transport is not available anymore")
 
         def _add_del_group() -> None:
             try:

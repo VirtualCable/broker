@@ -93,9 +93,7 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             with mock.patch("uds.services.Proxmox.service_fixed.ProxmoxUserServiceFixed") as userservice:
                 userservice_instance = userservice.return_value
                 userservice_instance.assign.return_value = "OK"
-                self.assertEqual(
-                    service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), "OK"
-                )
+                self.assertEqual(service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), "OK")
                 userservice_instance.assign.assert_called_with(vmid)
 
                 # vmid should be already assigned, so it will return an error (call error of userservice_instance)

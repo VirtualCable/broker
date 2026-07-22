@@ -29,6 +29,7 @@
 """
 Authot: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import datetime
 import itertools
@@ -46,6 +47,7 @@ from uds.core.types import deferred_deletion as deferred_types
 from ....utils.test import UDSTransactionTestCase
 from ....utils import helpers
 from . import fixtures
+
 
 class TestDict(dict[str, deferred_types.DeletionInfo]):
     def unlocked_items(self) -> typing.ItemsView[str, deferred_types.DeletionInfo]:
@@ -84,10 +86,10 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
 
         This is useful to test the worker without touching the real storage
         """
-            
+
         dct: dict[str, TestDict] = {}
         instance = mock.MagicMock()
-        instance_db_obj = mock.MagicMock(uuid='service1')
+        instance_db_obj = mock.MagicMock(uuid="service1")
         instance_db_obj.get_instance.return_value = instance
         instance.db_obj.return_value = instance_db_obj
         instance.execute_delete.side_effect = execute_delete_side_effect or helpers.returns_none
@@ -100,11 +102,9 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         instance.shutdown.return_value = None
 
         # Patchs uds.models.Service also for get_instance to work
-        with mock.patch('uds.models.Service.objects') as objs:
+        with mock.patch("uds.models.Service.objects") as objs:
             objs.get.return_value = instance.db_obj()
-            with mock.patch(
-                'uds.core.types.deferred_deletion.DeletionInfo.deferred_storage'
-            ) as storage:
+            with mock.patch("uds.core.types.deferred_deletion.DeletionInfo.deferred_storage") as storage:
 
                 @contextlib.contextmanager
                 def _as_dict(
@@ -123,15 +123,15 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         service = fixtures.create_dynamic_service_for_deferred_deletion()
 
         provider = models.Provider.objects.create(
-            name='provider1',
-            comments='c provider1',
+            name="provider1",
+            comments="c provider1",
             data_type=service.provider().type_type,
             data=service.provider().serialize(),
         )
 
         services: list[models.Service] = [
             models.Service.objects.create(
-                name=f'service_{i}',
+                name=f"service_{i}",
                 provider=provider,
                 data_type=service.type_type,
                 data=service.serialize(),
@@ -143,11 +143,11 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         for count, service in enumerate(services):
             instance = typing.cast(fixtures.DynamicTestingServiceForDeferredDeletion, service.get_instance())
             self.assertIsInstance(instance, fixtures.DynamicTestingServiceForDeferredDeletion)
-            instance.delete(mock.MagicMock(), f'vmid_{count}_1')
-            instance.mock.execute_delete.assert_called_with(f'vmid_{count}_1')
+            instance.delete(mock.MagicMock(), f"vmid_{count}_1")
+            instance.mock.execute_delete.assert_called_with(f"vmid_{count}_1")
             # Add a second delete, so can check service caching later
-            instance.delete(mock.MagicMock(), f'vmid_{count}_2')
-            instance.mock.execute_delete.assert_called_with(f'vmid_{count}_2')
+            instance.delete(mock.MagicMock(), f"vmid_{count}_2")
+            instance.mock.execute_delete.assert_called_with(f"vmid_{count}_2")
 
         self.assertEqual(fixtures.DynamicTestingServiceForDeferredDeletion.mock.execute_delete.call_count, 16)
         self.assertEqual(fixtures.DynamicTestingServiceForDeferredDeletion.mock.is_deleted.call_count, 0)
@@ -168,7 +168,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             for key, info in typing.cast(dict[str, deferred_types.DeletionInfo], deleting).items():
                 now = sql_now()
                 self.assertIsInstance(info, deferred_types.DeletionInfo)
-                self.assertEqual(key, f'{info.service_uuid}_{info.vmid}')
+                self.assertEqual(key, f"{info.service_uuid}_{info.vmid}")
                 self.assertLessEqual(info.created, now)
                 self.assertGreaterEqual(info.next_check, now)
                 self.assertEqual(info.fatal_retries, 0)
@@ -234,14 +234,14 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         service = fixtures.create_dynamic_service_for_deferred_deletion()
 
         provider = models.Provider.objects.create(
-            name='provider1',
-            comments='c provider1',
+            name="provider1",
+            comments="c provider1",
             data_type=service.provider().type_type,
             data=service.provider().serialize(),
         )
 
         service = models.Service.objects.create(
-            name='service_1',
+            name="service_1",
             provider=provider,
             data_type=service.type_type,
             data=service.serialize(),
@@ -251,7 +251,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         self.assertIsInstance(instance, fixtures.DynamicTestingServiceForDeferredDeletion)
 
         # Invoke add on worker with "execute_later" set to True, should not call execute_delete
-        deferred_deleter.DeferredDeletionWorker.add(instance, 'vmid_1', execute_later=True)
+        deferred_deleter.DeferredDeletionWorker.add(instance, "vmid_1", execute_later=True)
         instance.mock.execute_delete.assert_not_called()
 
         # No entries deleting
@@ -286,7 +286,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         job.run()  # process_to_delete and process_deleting
 
         # Should have called execute_delete once
-        instance.mock.execute_delete.assert_called_once_with('vmid_1')
+        instance.mock.execute_delete.assert_called_once_with("vmid_1")
         # And should have removed all entries from to_delete
         self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
         self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.DELETING), 1)
@@ -300,7 +300,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             for key, info in typing.cast(dict[str, deferred_types.DeletionInfo], deleting).items():
                 now = sql_now()
                 self.assertIsInstance(info, deferred_types.DeletionInfo)
-                self.assertEqual(key, f'{info.service_uuid}_{info.vmid}')
+                self.assertEqual(key, f"{info.service_uuid}_{info.vmid}")
                 self.assertLessEqual(info.created, now)
                 self.assertGreaterEqual(info.next_check, now)
                 self.assertEqual(info.fatal_retries, 0)
@@ -322,8 +322,8 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         job.run()
 
         # Now should have called is_deleted once, and no entries in deleting nor to_delete
-        instance.mock.is_deleted.assert_called_once_with('vmid_1')
-        instance.mock.notify_deleted.assert_called_once_with('vmid_1')
+        instance.mock.is_deleted.assert_called_once_with("vmid_1")
+        instance.mock.notify_deleted.assert_called_once_with("vmid_1")
         self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.DELETING), 0)
         self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
 
@@ -332,7 +332,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             with self.patch_for_worker(
                 is_deleted_side_effect=lambda *args: is_deleted,
             ) as (instance, dct):
-                deferred_deleter.DeferredDeletionWorker.add(instance, 'vmid1', execute_later=False)
+                deferred_deleter.DeferredDeletionWorker.add(instance, "vmid1", execute_later=False)
 
                 # No entries in TO_DELETE_GROUP
                 self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
@@ -348,10 +348,10 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
                 job.run()
 
                 # Should have called is_deleted once
-                instance.is_deleted.assert_called_once_with('vmid1')
+                instance.is_deleted.assert_called_once_with("vmid1")
                 # if is_deleted returns True, should have removed the entry
                 if is_deleted:
-                    instance.notify_deleted.assert_called_once_with('vmid1')
+                    instance.notify_deleted.assert_called_once_with("vmid1")
                     self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
                     self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.DELETING), 0)
                 else:
@@ -364,14 +364,14 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
 
     def test_deletion_fails_add(self) -> None:
         for error in (
-            exceptions.services.generics.RetryableError('error'),
-            exceptions.services.generics.NotFoundError('error'),
-            exceptions.services.generics.FatalError('error'),
+            exceptions.services.generics.RetryableError("error"),
+            exceptions.services.generics.NotFoundError("error"),
+            exceptions.services.generics.FatalError("error"),
         ):
             with self.patch_for_worker(
                 execute_delete_side_effect=error,
             ) as (instance, dct):
-                deferred_deleter.DeferredDeletionWorker.add(instance, 'vmid1', execute_later=False)
+                deferred_deleter.DeferredDeletionWorker.add(instance, "vmid1", execute_later=False)
 
                 # Not found should remove the entry and nothing more
                 if isinstance(error, exceptions.services.generics.NotFoundError):
@@ -383,7 +383,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
                 self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.DELETING), 0)
 
                 info = next(iter(dct[deferred_types.DeferredStorageGroup.TO_DELETE].values()))  # Get first element
-                self.assertEqual(info.vmid, 'vmid1')
+                self.assertEqual(info.vmid, "vmid1")
                 self.assertEqual(info.service_uuid, instance.db_obj().uuid)
                 self.assertEqual(info.fatal_retries, 0)
                 self.assertEqual(info.total_retries, 0)  # On adding & error, no count is increased
@@ -427,14 +427,14 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
 
     def test_deletion_fails_is_deleted(self) -> None:
         for error in (
-            exceptions.services.generics.RetryableError('error'),
-            exceptions.services.generics.NotFoundError('error'),
-            exceptions.services.generics.FatalError('error'),
+            exceptions.services.generics.RetryableError("error"),
+            exceptions.services.generics.NotFoundError("error"),
+            exceptions.services.generics.FatalError("error"),
         ):
             with self.patch_for_worker(
                 is_deleted_side_effect=error,
             ) as (instance, dct):
-                deferred_deleter.DeferredDeletionWorker.add(instance, 'vmid1', execute_later=False)
+                deferred_deleter.DeferredDeletionWorker.add(instance, "vmid1", execute_later=False)
 
                 # No entries in TO_DELETE_GROUP
                 self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
@@ -450,7 +450,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
                 job.run()
 
                 # Should have called is_deleted once and notify_deleted not called
-                instance.is_deleted.assert_called_once_with('vmid1')
+                instance.is_deleted.assert_called_once_with("vmid1")
                 instance.notify_deleted.assert_not_called()
 
                 if isinstance(error, exceptions.services.generics.RetryableError):
@@ -545,9 +545,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
                         must_stop_before_deletion=True,
                         should_try_soft_shutdown=should_try_soft_shutdown,
                     ) as (instance, _dct):
-                        deferred_deleter.DeferredDeletionWorker.add(
-                            instance, 'vmid1', execute_later=execute_later
-                        )
+                        deferred_deleter.DeferredDeletionWorker.add(instance, "vmid1", execute_later=execute_later)
 
                         self.assertEqual(
                             COUNTERS_ADD[(running, execute_later, should_try_soft_shutdown)],
@@ -560,7 +558,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
                                 instance.stop.call_count,
                                 instance.shutdown.call_count,
                             ),
-                            f'COUNTERS_ADD {running} {execute_later} {should_try_soft_shutdown} --> {COUNTERS_ADD[(running, execute_later, should_try_soft_shutdown)]}',
+                            f"COUNTERS_ADD {running} {execute_later} {should_try_soft_shutdown} --> {COUNTERS_ADD[(running, execute_later, should_try_soft_shutdown)]}",
                         )
 
                         # Fix last_check
@@ -581,7 +579,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
                                 instance.stop.call_count,
                                 instance.shutdown.call_count,
                             ),
-                            f'COUNTERS_JOB {running} {execute_later} {should_try_soft_shutdown} --> {COUNTERS_JOB[(running, execute_later, should_try_soft_shutdown)]}',
+                            f"COUNTERS_JOB {running} {execute_later} {should_try_soft_shutdown} --> {COUNTERS_JOB[(running, execute_later, should_try_soft_shutdown)]}",
                         )
 
     def test_stop_retry_stop(self) -> None:
@@ -593,7 +591,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             must_stop_before_deletion=True,
             should_try_soft_shutdown=True,
         ) as (instance, dct):
-            deferred_deleter.DeferredDeletionWorker.add(instance, 'vmid1', execute_later=False)
+            deferred_deleter.DeferredDeletionWorker.add(instance, "vmid1", execute_later=False)
 
             info = next(iter(dct[deferred_types.DeferredStorageGroup.STOPPING].values()))
 
@@ -661,12 +659,11 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             # due to MAX_TOTAL_RETRIES, this is checked for every queue on storage access,
             # and STOPPING_GROUP is after TO_STOP_GROUP. So, after STOPPING adds it to TO_DELETE_GROUP
             # the storage access method will remove it from TO_DELETE_GROUP due to MAX_TOTAL_RETRIES
-            
+
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_STOP), 0)
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.STOPPING), 0)
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.DELETING), 0)
-
 
     def test_delete_retry_delete(self) -> None:
         deferred_consts.RETRIES_TO_RETRY = 2
@@ -676,7 +673,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             is_running=helpers.returns_true,
             is_deleted_side_effect=helpers.returns_false,
         ) as (instance, dct):
-            deferred_deleter.DeferredDeletionWorker.add(instance, 'vmid1', execute_later=False)
+            deferred_deleter.DeferredDeletionWorker.add(instance, "vmid1", execute_later=False)
 
             info = next(iter(dct[deferred_types.DeferredStorageGroup.DELETING].values()))
 
@@ -743,7 +740,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
             # due to MAX_TOTAL_RETRIES, this is checked for every queue on storage access,
             # and STOPPING_GROUP is after TO_STOP_GROUP. So, after STOPPING adds it to TO_DELETE_GROUP
             # the storage access method will remove it from TO_DELETE_GROUP due to MAX_TOTAL_RETRIES
-            
+
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_STOP), 0)
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.STOPPING), 0)
             self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)

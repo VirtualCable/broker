@@ -27,6 +27,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 from unittest import mock
@@ -47,9 +48,9 @@ logger = logging.getLogger(__name__)
 
 
 class AuthCallbackTest(UDSTestCase):
-    auth: 'models.Authenticator'
-    groups: list['models.Group']
-    user: 'models.User'
+    auth: "models.Authenticator"
+    groups: list["models.Group"]
+    user: "models.User"
 
     def setUp(self) -> None:
         super().setUp()
@@ -59,42 +60,42 @@ class AuthCallbackTest(UDSTestCase):
         self.user = authenticators_fixtures.create_db_users(self.auth, number_of_users=1, groups=self.groups[:3])[0]
 
     def test_no_callback(self) -> None:
-        config.GlobalConfig.NOTIFY_CALLBACK_URL.set('')  # Clean callback url
+        config.GlobalConfig.NOTIFY_CALLBACK_URL.set("")  # Clean callback url
 
-        with mock.patch('uds.core.util.security.secure_requests_session') as session_mock:
+        with mock.patch("uds.core.util.security.secure_requests_session") as session_mock:
             callbacks.weblogin(self.user)
             session_mock.assert_not_called()
 
     def test_callback_failed_url(self) -> None:
-        config.GlobalConfig.NOTIFY_CALLBACK_URL.set('http://localhost:1234')  # Sample non existent url
-        callbacks.FAILURE_CACHE.put('notify_failure', 3)  # Already failed 3 times
+        config.GlobalConfig.NOTIFY_CALLBACK_URL.set("http://localhost:1234")  # Sample non existent url
+        callbacks.FAILURE_CACHE.put("notify_failure", 3)  # Already failed 3 times
 
-        with mock.patch('uds.core.util.security.secure_requests_session') as session_mock:
+        with mock.patch("uds.core.util.security.secure_requests_session") as session_mock:
             callbacks.weblogin(self.user)
             session_mock.assert_not_called()
 
     def test_callback_fails_repeteadly(self) -> None:
-        config.GlobalConfig.NOTIFY_CALLBACK_URL.set('https://localhost:1234')
+        config.GlobalConfig.NOTIFY_CALLBACK_URL.set("https://localhost:1234")
 
-        with mock.patch('uds.core.util.security.secure_requests_session') as session_mock:
-            session_mock.return_value.post.side_effect = Exception('Error')
+        with mock.patch("uds.core.util.security.secure_requests_session") as session_mock:
+            session_mock.return_value.post.side_effect = Exception("Error")
             for _i in range(16):
                 callbacks.weblogin(self.user)
-                
+
             self.assertEqual(session_mock.call_count, 3)
 
     def test_callback_change_groups(self) -> None:
-        config.GlobalConfig.NOTIFY_CALLBACK_URL.set('https://localhost:1234')
-        
+        config.GlobalConfig.NOTIFY_CALLBACK_URL.set("https://localhost:1234")
+
         all_groups = {group.name for group in self.groups}
         current_groups = {group.name for group in self.user.groups.all()}
-        
+
         diff_groups = all_groups - current_groups
 
-        with mock.patch('uds.core.util.security.secure_requests_session') as session_mock:
+        with mock.patch("uds.core.util.security.secure_requests_session") as session_mock:
             session_mock.return_value.post.return_value.json.return_value = {
-                'new_groups': list(diff_groups),
-                'removed_groups': list(current_groups),
+                "new_groups": list(diff_groups),
+                "removed_groups": list(current_groups),
             }
 
             callbacks.weblogin(self.user)

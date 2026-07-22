@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import os
 import logging
 import logging.handlers
@@ -49,14 +50,14 @@ except ImportError:
 if typing.TYPE_CHECKING:
     from django.db.models import Model
 
-use_logger = logging.getLogger('useLog')
+use_logger = logging.getLogger("useLog")
 
 
 # Pattern for look for date and time in this format: 2023-04-20 04:03:08,776 (and trailing spaces)
 # This is the format used by python logging module
-DATETIME_PATTERN: typing.Final[re.Pattern[str]] = re.compile(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) *')
+DATETIME_PATTERN: typing.Final[re.Pattern[str]] = re.compile(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) *")
 # Pattern for removing the LOGLEVEL from the log line beginning
-LOGLEVEL_PATTERN: typing.Final[re.Pattern[str]] = re.compile(r'^(DEBUG|INFO|WARNING|ERROR|CRITICAL) *')
+LOGLEVEL_PATTERN: typing.Final[re.Pattern[str]] = re.compile(r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL) *")
 
 
 def log_use(
@@ -83,13 +84,13 @@ def log_use(
         servicepool_name: Name of the servicepool (if any)
 
     """
-    src_ip = 'unknown' if src_ip is None else src_ip
-    src_user = 'unknown' if src_user is None else src_user
-    userservice_name = 'unknown' if userservice_name is None else userservice_name
-    servicepool_name = 'unknown' if servicepool_name is None else servicepool_name
+    src_ip = "unknown" if src_ip is None else src_ip
+    src_user = "unknown" if src_user is None else src_user
+    userservice_name = "unknown" if userservice_name is None else userservice_name
+    servicepool_name = "unknown" if servicepool_name is None else servicepool_name
 
     use_logger.info(
-        '|'.join(
+        "|".join(
             [
                 type_,
                 service_unique_id,
@@ -107,7 +108,7 @@ def log_use(
 
 
 def log(
-    db_object: 'Model|None',
+    db_object: "Model|None",
     level: LogLevel,
     message: str,
     source: LogSource = LogSource.UNKNOWN,
@@ -119,7 +120,7 @@ def log(
     LogManager.manager().log(db_object, level, message, source, log_name)
 
 
-def get_logs(wichObject: 'Model | None', limit: int = -1) -> list[dict[str, typing.Any]]:
+def get_logs(wichObject: "Model | None", limit: int = -1) -> list[dict[str, typing.Any]]:
     """
     Get the logs associated with "wichObject", limiting to "limit" (default is GlobalConfig.MAX_LOGS_PER_ELEMENT)
     """
@@ -129,7 +130,7 @@ def get_logs(wichObject: 'Model | None', limit: int = -1) -> list[dict[str, typi
     return LogManager.manager().get_logs(wichObject, limit)
 
 
-def clear_logs(obj: 'Model | None') -> None:
+def clear_logs(obj: "Model | None") -> None:
     """
     Clears the logs associated with the object using the log_manager
     """
@@ -156,14 +157,14 @@ class UDSLogHandler(logging.handlers.RotatingFileHandler):
         def _format_msg(*, clear_level: bool) -> str:
             msg = self.format(record)
             # Remove date and time from message, as it will be stored on database
-            msg = DATETIME_PATTERN.sub('', msg)
+            msg = DATETIME_PATTERN.sub("", msg)
             if clear_level:
                 # Remove log level from message, as it will be stored on database
-                msg = LOGLEVEL_PATTERN.sub('', msg)
+                msg = LOGLEVEL_PATTERN.sub("", msg)
             return msg
 
         def notify(msg: str, identificator: str, loglevel: LogLevel) -> None:
-            NotificationsManager.manager().notify('log', identificator, loglevel, msg)
+            NotificationsManager.manager().notify("log", identificator, loglevel, msg)
 
         if apps.ready and record.levelno >= logging.INFO and not UDSLogHandler.emiting:
             try:
@@ -185,7 +186,7 @@ class UDSLogHandler(logging.handlers.RotatingFileHandler):
         if record.levelno >= logging.WARNING:
             msg = _format_msg(clear_level=False)
             # Send to systemd journaling, transforming identificator and priority
-            identificator = 'UDS-' + os.path.basename(self.baseFilename).split('.')[0]
+            identificator = "UDS-" + os.path.basename(self.baseFilename).split(".")[0]
             # convert syslog level to systemd priority
             # Systemd priority levels are:
             #  "emerg" (0), "alert" (1), "crit" (2), "err" (3),

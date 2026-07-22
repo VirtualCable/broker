@@ -62,32 +62,32 @@ from uds.services.Proxmox import (
 from uds.services.Proxmox.proxmox import types as prox_types, exceptions as prox_exceptions
 
 DEF_NODES: list[prox_types.Node] = [
-    prox_types.Node(name='node0', online=True, local=True, nodeid=1, ip='0.0.0.1', level='level', id='id'),
-    prox_types.Node(name='node1', online=True, local=True, nodeid=2, ip='0.0.0.2', level='level', id='id'),
+    prox_types.Node(name="node0", online=True, local=True, nodeid=1, ip="0.0.0.1", level="level", id="id"),
+    prox_types.Node(name="node1", online=True, local=True, nodeid=2, ip="0.0.0.2", level="level", id="id"),
 ]
 
 DEF_NODE_STATS: list[prox_types.NodeStats] = [
     prox_types.NodeStats(
-        name='name',
-        status='status',
+        name="name",
+        status="status",
         uptime=1,
         disk=1,
         maxdisk=1,
-        level='level',
-        id='id',
+        level="level",
+        id="id",
         mem=1,
         maxmem=1,
         cpu=1.0,
         maxcpu=1,
     ),
     prox_types.NodeStats(
-        name='name',
-        status='status',
+        name="name",
+        status="status",
         uptime=1,
         disk=1,
         maxdisk=1,
-        level='level',
-        id='id',
+        level="level",
+        id="id",
         mem=1,
         maxmem=1,
         cpu=1.0,
@@ -97,16 +97,16 @@ DEF_NODE_STATS: list[prox_types.NodeStats] = [
 
 
 DEF_CLUSTER_INFO: prox_types.ClusterInfo = prox_types.ClusterInfo(
-    cluster=prox_types.Cluster(name='name', version='version', id='id', nodes=2, quorate=1),
+    cluster=prox_types.Cluster(name="name", version="version", id="id", nodes=2, quorate=1),
     nodes=DEF_NODES,
 )
 
 DEF_STORAGES: list[prox_types.StorageInfo] = [
     prox_types.StorageInfo(
         node=DEF_NODES[i % len(DEF_NODES)].name,
-        storage=f'storage_{i}',
-        content=(f'content{i}',) * (i % 3),
-        type='images',
+        storage=f"storage_{i}",
+        content=(f"content{i}",) * (i % 3),
+        type="images",
         shared=(i < 8),  # First 8 are shared
         active=(i % 5) != 0,  # Every 5th is not active
         used=1024 * 1024 * 1024 * i * 4,
@@ -119,33 +119,33 @@ DEF_STORAGES: list[prox_types.StorageInfo] = [
 
 DEF_VGPUS: list[prox_types.VGPUInfo] = [
     prox_types.VGPUInfo(
-        name='name_1',
-        description='description_1',
-        device='device_1',
+        name="name_1",
+        description="description_1",
+        device="device_1",
         available=True,
-        type='gpu_type_1',
+        type="gpu_type_1",
     ),
     prox_types.VGPUInfo(
-        name='name_2',
-        description='description_2',
-        device='device_2',
+        name="name_2",
+        description="description_2",
+        device="device_2",
         available=False,
-        type='gpu_type_2',
+        type="gpu_type_2",
     ),
     prox_types.VGPUInfo(
-        name='name_3',
-        description='description_3',
-        device='device_3',
+        name="name_3",
+        description="description_3",
+        device="device_3",
         available=True,
-        type='gpu_type_3',
+        type="gpu_type_3",
     ),
 ]
 
 DEF_HA_GROUPS: list[str] = [
-    'ha_group_1',
-    'ha_group_2',
-    'ha_group_3',
-    'ha_group_4',
+    "ha_group_1",
+    "ha_group_2",
+    "ha_group_3",
+    "ha_group_4",
 ]
 
 DEF_VMS_INFO: list[prox_types.VMInfo] = [
@@ -155,17 +155,17 @@ DEF_VMS_INFO: list[prox_types.VMInfo] = [
         node=DEF_NODES[i % len(DEF_NODES)].name,
         template=True,
         ha=prox_types.HAInfo.null(),
-        agent='agent',
+        agent="agent",
         cpus=1,
-        lock='lock',
+        lock="lock",
         disk=1,
         maxdisk=1,
         mem=1024 * 1024 * 1024 * i,
         maxmem=1024 * 1024 * 1024 * i * 2,
-        name=f'name{i}',
+        name=f"name{i}",
         pid=1000 + i,
-        qmpstatus='qmpstatus',
-        tags='tags',
+        qmpstatus="qmpstatus",
+        tags="tags",
         uptime=60 * 60 * 24 * i,
         netin=1,
         netout=1,
@@ -178,18 +178,21 @@ DEF_VMS_INFO: list[prox_types.VMInfo] = [
 
 DEF_VMS_CONFIGURATION: list[prox_types.VMConfiguration] = [
     prox_types.VMConfiguration(
-        name=f'vm_name_{i}',
-        vga='cirrus',
+        name=f"vm_name_{i}",
+        vga="cirrus",
         sockets=1,
         cores=1,
-        vmgenid='vmgenid',
-        digest='digest',
+        vmgenid="vmgenid",
+        digest="digest",
         networks=[
             prox_types.NetworkConfiguration(
-                net='net', type='type', macaddr=f'{i:02x}:{i+1:02x}:{i+2:02x}:{i+3:02x}:{i+4:02x}:{i+5:02x}', netdata='netdata',
+                net="net",
+                type="type",
+                macaddr=f"{i:02x}:{i + 1:02x}:{i + 2:02x}:{i + 3:02x}:{i + 4:02x}:{i + 5:02x}",
+                netdata="netdata",
             )
         ],
-        tpmstate0='tpmstate0',
+        tpmstate0="tpmstate0",
         template=bool(i > 8),  # Last two are templates,
         protection=bool(i % 2),  # Every two is protected
     )
@@ -202,10 +205,10 @@ DEF_UPID: prox_types.ExecResult = prox_types.ExecResult(
     pid=1,
     pstart=1,
     starttime=timezone.localtime(),
-    type='type',
+    type="type",
     vmid=DEF_VMS_INFO[0].id,
-    user='user',
-    upid='upid',
+    user="user",
+    upid="upid",
 )
 
 
@@ -217,9 +220,9 @@ DEF_VM_CREATION_RESULT: prox_types.VmCreationResult = prox_types.VmCreationResul
 
 DEF_SNAPSHOTS_INFO: list[prox_types.SnapshotInfo] = [
     prox_types.SnapshotInfo(
-        name=f'snap_name_{i}',
-        description=f'snap desription{i}',
-        parent=f'snap_parent_{i}',
+        name=f"snap_name_{i}",
+        description=f"snap desription{i}",
+        parent=f"snap_parent_{i}",
         snaptime=int(timezone.localtime().timestamp()),
         vmstate=bool(i % 2),
     )
@@ -231,46 +234,46 @@ DEF_TASK_STATUS = prox_types.TaskStatus(
     pid=1,
     pstart=1,
     starttime=timezone.localtime(),
-    type='type',
+    type="type",
     status=prox_types.VMStatus.STOPPED,
-    exitstatus='OK',
-    user='user',
-    upid='upid',
-    id='id',
+    exitstatus="OK",
+    user="user",
+    upid="upid",
+    id="id",
 )
 
 DEF_POOL_MEMBERS: list[prox_types.PoolMemberInfo] = [
     prox_types.PoolMemberInfo(
-        id=f'id_{i}',
+        id=f"id_{i}",
         node=DEF_NODES[i % len(DEF_NODES)].name,
         storage=DEF_STORAGES[i % len(DEF_STORAGES)].storage,
-        type='type',
+        type="type",
         vmid=DEF_VMS_INFO[i % len(DEF_VMS_INFO)].id,
-        vmname=DEF_VMS_INFO[i % len(DEF_VMS_INFO)].name or '',
+        vmname=DEF_VMS_INFO[i % len(DEF_VMS_INFO)].name or "",
     )
     for i in range(10)
 ]
 
 DEF_POOLS: list[prox_types.PoolInfo] = [
     prox_types.PoolInfo(
-        id=f'pool_{i}',
-        comments=f'comments_{i}',
+        id=f"pool_{i}",
+        comments=f"comments_{i}",
         members=DEF_POOL_MEMBERS,
     )
     for i in range(10)
 ]
 
-DEF_GUEST_IP_ADDRESS: str = '1.0.0.1'
+DEF_GUEST_IP_ADDRESS: str = "1.0.0.1"
 
 DEF_CONSOLE_CONNECTION_INFO: types.services.ConsoleConnectionInfo = types.services.ConsoleConnectionInfo(
-    type='spice',
+    type="spice",
     address=DEF_GUEST_IP_ADDRESS,
     port=5900,
     secure_port=5901,
-    cert_subject='',
-    ticket=types.services.ConsoleConnectionTicket(value='ticket'),
-    ca='',
-    proxy='',
+    cert_subject="",
+    ticket=types.services.ConsoleConnectionTicket(value="ticket"),
+    ca="",
+    proxy="",
     monitors=1,
 )
 
@@ -321,11 +324,11 @@ def replace_vm_info(vmid: int, **kwargs: typing.Any) -> prox_types.ExecResult:
     Set the values of VMS_INFO[vmid - 1]
     """
     try:
-        vm = search_item_by_attr(VMINFO_LIST, 'id', vmid)
+        vm = search_item_by_attr(VMINFO_LIST, "id", vmid)
         for k, v in kwargs.items():
             setattr(vm, k, v)
     except Exception:
-        raise prox_exceptions.ProxmoxNotFound(f'VM {vmid} not found')
+        raise prox_exceptions.ProxmoxNotFound(f"VM {vmid} not found")
 
     return UPID
 
@@ -334,7 +337,7 @@ def replacer_vm_info(**kwargs: typing.Any) -> collections.abc.Callable[..., prox
     return functools.partial(replace_vm_info, **kwargs)
 
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 def returner(value: T, *args: typing.Any, **kwargs: typing.Any) -> collections.abc.Callable[..., T]:
@@ -350,9 +353,7 @@ CLIENT_METHODS_INFO: list[AutoSpecMethodInfo] = [
     # Test method
     AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.test, returns=True),
     # get_cluster_info
-    AutoSpecMethodInfo(
-        uds.services.Proxmox.proxmox.client.ProxmoxClient.get_cluster_info, returns=CLUSTER_INFO
-    ),
+    AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.get_cluster_info, returns=CLUSTER_INFO),
     # get_next_vmid
     AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.get_next_vmid, returns=1),
     # is_vmid_available
@@ -361,18 +362,14 @@ CLIENT_METHODS_INFO: list[AutoSpecMethodInfo] = [
     # list_node_gpu_devices
     AutoSpecMethodInfo(
         uds.services.Proxmox.proxmox.client.ProxmoxClient.list_node_gpu_devices,
-        returns=['gpu_dev_1', 'gpu_dev_2'],
+        returns=["gpu_dev_1", "gpu_dev_2"],
     ),
     # list_node_vgpus
     AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.list_node_vgpus, returns=VGPUS),
     # node_has_vgpus_available
-    AutoSpecMethodInfo(
-        uds.services.Proxmox.proxmox.client.ProxmoxClient.node_has_vgpus_available, returns=True
-    ),
+    AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.node_has_vgpus_available, returns=True),
     # get_best_node_for_machine
-    AutoSpecMethodInfo(
-        uds.services.Proxmox.proxmox.client.ProxmoxClient.get_best_node_for_vm, returns=NODE_STATS[0]
-    ),
+    AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.get_best_node_for_vm, returns=NODE_STATS[0]),
     # clone_machine
     AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.clone_vm, returns=VM_CREATION_RESULT),
     # list_ha_groups
@@ -393,9 +390,7 @@ CLIENT_METHODS_INFO: list[AutoSpecMethodInfo] = [
     ),
     AutoSpecMethodInfo(
         uds.services.Proxmox.proxmox.client.ProxmoxClient.get_current_vm_snapshot,
-        returns=lambda *args, **kwargs: (SNAPSHOTS_INFO + [None])[
-            0
-        ], 
+        returns=lambda *args, **kwargs: (SNAPSHOTS_INFO + [None])[0],
     ),
     # supports_snapshot
     AutoSpecMethodInfo(uds.services.Proxmox.proxmox.client.ProxmoxClient.supports_snapshot, returns=True),
@@ -474,8 +469,8 @@ CLIENT_METHODS_INFO: list[AutoSpecMethodInfo] = [
     AutoSpecMethodInfo(
         uds.services.Proxmox.proxmox.client.ProxmoxClient.list_storages,
         returns=lambda **kwargs: (  # pyright: ignore[reportUnknownLambdaType]
-            (list(filter(lambda s: s.node == kwargs.get('node'), STORAGES)))  # pyright: ignore
-            if kwargs.get('node') is not None  # pyright: ignore
+            (list(filter(lambda s: s.node == kwargs.get("node"), STORAGES)))  # pyright: ignore
+            if kwargs.get("node") is not None  # pyright: ignore
             else STORAGES  # pyright: ignore
         ),
     ),
@@ -502,43 +497,43 @@ CLIENT_METHODS_INFO: list[AutoSpecMethodInfo] = [
     ),
     # journal
     AutoSpecMethodInfo(
-        uds.services.Proxmox.proxmox.client.ProxmoxClient.journal, returns=['journal line 1', 'journal line 2']
+        uds.services.Proxmox.proxmox.client.ProxmoxClient.journal, returns=["journal line 1", "journal line 2"]
     ),
 ]
 
 PROVIDER_VALUES_DICT: gui.ValuesDictType = {
-    'host': 'host',
-    'port': 8006,
-    'username': 'username',
-    'password': 'password',
-    'concurrent_creation_limit': 1,
-    'concurrent_removal_limit': 1,
-    'timeout': 10,
-    'start_vmid': 100,
-    'macs_range': '00:00:00:00:00:01-00:00:00:ff:ff:ff',
+    "host": "host",
+    "port": 8006,
+    "username": "username",
+    "password": "password",
+    "concurrent_creation_limit": 1,
+    "concurrent_removal_limit": 1,
+    "timeout": 10,
+    "start_vmid": 100,
+    "macs_range": "00:00:00:00:00:01-00:00:00:ff:ff:ff",
 }
 
 
 SERVICE_LINKED_VALUES_DICT: gui.ValuesDictType = {
-    'pool': POOLS[0].id,
-    'ha': HA_GROUPS[0],
-    'try_soft_shutdown': False,
-    'machine': VMINFO_LIST[0].id,
-    'use_full_clone': False,
-    'datastore': STORAGES[0].storage,
-    'gpu': VGPUS[0].type,
-    'basename': 'base',
-    'lenname': 4,
-    'prov_uuid': '',
+    "pool": POOLS[0].id,
+    "ha": HA_GROUPS[0],
+    "try_soft_shutdown": False,
+    "machine": VMINFO_LIST[0].id,
+    "use_full_clone": False,
+    "datastore": STORAGES[0].storage,
+    "gpu": VGPUS[0].type,
+    "basename": "base",
+    "lenname": 4,
+    "prov_uuid": "",
 }
 
 
 SERVICE_FIXED_VALUES_DICT: gui.ValuesDictType = {
-    'token': '',
-    'pool': POOLS[0].id,
-    'machines': [str(VMINFO_LIST[2].id), str(VMINFO_LIST[3].id), str(VMINFO_LIST[4].id)],
-    'use_snapshots': True,
-    'prov_uuid': '',
+    "token": "",
+    "pool": POOLS[0].id,
+    "machines": [str(VMINFO_LIST[2].id), str(VMINFO_LIST[3].id), str(VMINFO_LIST[4].id)],
+    "use_snapshots": True,
+    "prov_uuid": "",
 }
 
 
@@ -589,7 +584,7 @@ def create_service_linked(
     )
     service_db_mock = mock.MagicMock()
     service_db_mock.uuid = uuid_
-    service_db_mock.name = 'ServiceName'
+    service_db_mock.name = "ServiceName"
     srvc.db_obj = mock.MagicMock()
     srvc.db_obj.return_value = service_db_mock
     srvc.is_deletion_in_progress = mock.MagicMock()
@@ -617,7 +612,7 @@ def create_service_fixed(
 def create_publication(
     service: service.ProxmoxService | None = None,
     **kwargs: typing.Any,
-) -> 'publication.ProxmoxPublication':
+) -> "publication.ProxmoxPublication":
     """
     Create a publication
     """
@@ -626,12 +621,11 @@ def create_publication(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_service_linked(**kwargs),
         revision=1,
-        servicepool_name='servicepool_name',
+        servicepool_name="servicepool_name",
         uuid=uuid_,
     )
     pub._vmid = str(random.choice(VMINFO_LIST).id)
     return pub
-    
 
 
 def create_userservice_fixed(
@@ -651,7 +645,7 @@ def create_userservice_fixed(
 
 def create_userservice_linked(
     service: service.ProxmoxService | None = None,
-    publication: 'publication.ProxmoxPublication | None' = None,
+    publication: "publication.ProxmoxPublication | None" = None,
 ) -> deployment_linked.ProxmoxUserserviceLinked:
     """
     Create a linked user service

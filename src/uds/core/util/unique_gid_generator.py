@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -47,14 +48,14 @@ class UniqueGIDGenerator(UniqueGenerator):
 
     def _to_name(self, seq: int) -> str:
         if seq == -1:
-            raise KeyError('No more GIDS available.')
-        return f'{self._basename}{seq:08d}'
+            raise KeyError("No more GIDS available.")
+        return f"{self._basename}{seq:08d}"
         # return "%s%0*d" % (self._baseName, 8, seq)
 
     def get(self, range_start: int = 0, range_end: int = consts.system.MAX_SEQ) -> str:
         return self._to_name(super()._get(range_start=range_start or 0, range_end=range_end))
 
-    def transfer(self, seq: int, target_unique_gid_generator: 'UniqueGIDGenerator') -> bool:
+    def transfer(self, seq: int, target_unique_gid_generator: "UniqueGIDGenerator") -> bool:
         return super()._transfer(seq, target_unique_gid_generator)
 
     def free(self, seq: int) -> None:

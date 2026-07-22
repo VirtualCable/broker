@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -79,24 +80,24 @@ class SampleAuth(auths.Authenticator):
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_name = _('Sample')
+    type_name = _("Sample")
 
     # : Name of type used by Managers to identify this type of service
     # : We could have used here the Class name, but we decided that the
     # : module implementator will be the one that will provide a name that
     # : will relation the class (type) and that name.
-    type_type = 'SampleAuthenticator'
+    type_type = "SampleAuthenticator"
 
     # : Description shown at administration level for this authenticator.
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_description = _('Sample dummy authenticator')
+    type_description = _("Sample dummy authenticator")
 
     # : Icon file, used to represent this authenticator at administration interface
     # : This file should be at same folder as this class is, except if you provide
     # : your own :py:meth:uds.core.module.BaseModule.icon method.
-    icon_file = 'auth.png'
+    icon_file = "auth.png"
 
     # : Mark this authenticator as that the users comes from outside the UDS
     # : database, that are most authenticator (except Internal DB)
@@ -109,16 +110,16 @@ class SampleAuth(auths.Authenticator):
     # : needs_password = False
 
     # : Label for username field, shown at administration interface user form.
-    label_username = _('Fake User')
+    label_username = _("Fake User")
 
     # Label for group field, shown at administration interface user form.
-    label_groupname = _('Fake Group')
+    label_groupname = _("Fake Group")
 
     # : Definition of this type of authenticator form
     # : We will define a simple form where we will use a simple
     # : list editor to allow entering a few group names
 
-    groups = gui.EditableListField(label=_('Groups'), default=['Gods', 'Daemons', 'Mortals'])
+    groups = gui.EditableListField(label=_("Groups"), default=["Gods", "Daemons", "Mortals"])
 
     @typing.override
     def initialize(self, values: typing.Optional[dict[str, typing.Any]]) -> None:
@@ -132,7 +133,7 @@ class SampleAuth(auths.Authenticator):
         # unserialization, and at this point all will be default values
         # so self.groups.value will be []
         if values and len(self.groups.value) < 2:
-            raise exceptions.ui.ValidationError(_('We need more than two groups!'))
+            raise exceptions.ui.ValidationError(_("We need more than two groups!"))
 
     @typing.override
     def search_users(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
@@ -145,7 +146,7 @@ class SampleAuth(auths.Authenticator):
         facility for users. In our case, we will simply return a list of users
         (array of dictionaries with ids and names) with the pattern plus 1..10
         """
-        return [types.auth.SearchResultItem(id=f'{pattern}-{a}', name=f'{pattern} number {a}') for a in range(1, 10)]
+        return [types.auth.SearchResultItem(id=f"{pattern}-{a}", name=f"{pattern} number {a}") for a in range(1, 10)]
 
     @typing.override
     def search_groups(self, pattern: str) -> collections.abc.Iterable[types.auth.SearchResultItem]:
@@ -157,15 +158,15 @@ class SampleAuth(auths.Authenticator):
         contains the pattern indicated.
         """
         pattern = pattern.lower()
-        return [types.auth.SearchResultItem(id=g, name='') for g in self.groups.value if g.lower().find(pattern) != -1]
+        return [types.auth.SearchResultItem(id=g, name="") for g in self.groups.value if g.lower().find(pattern) != -1]
 
     @typing.override
     def authenticate(
         self,
         username: str,
         credentials: str,
-        groups_manager: 'GroupsManager',
-        request: 'ExtendedHttpRequest',  # pylint: disable=unused-argument
+        groups_manager: "GroupsManager",
+        request: "ExtendedHttpRequest",  # pylint: disable=unused-argument
     ) -> types.auth.AuthenticationResult:
         """
         This method is invoked by UDS whenever it needs an user to be authenticated.
@@ -222,7 +223,7 @@ class SampleAuth(auths.Authenticator):
         return types.auth.SUCCESS_AUTH
 
     @typing.override
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
+    def get_groups(self, username: str, groups_manager: "auths.GroupsManager") -> None:
         """
         As with authenticator part related to groupsManager, this
         method will fill the groups to which the specified username belongs to.
@@ -238,7 +239,7 @@ class SampleAuth(auths.Authenticator):
                 groups_manager.validate(g)
 
     @typing.override
-    def get_javascript(self, request: 'HttpRequest') -> typing.Optional[str]:  # pylint: disable=unused-argument
+    def get_javascript(self, request: "HttpRequest") -> typing.Optional[str]:  # pylint: disable=unused-argument
         """
         If we override this method from the base one, we are telling UDS
         that we want to draw our own authenticator.
@@ -261,16 +262,16 @@ class SampleAuth(auths.Authenticator):
         # I know, this is a bit ugly, but this is just a sample :-)
 
         res = '<p>Login name: <input id="logname" type="text"/></p>'
-        res += '<p><a href="" onclick="window.location.replace(\'' + self.callback_url() + '?user='
-        res += '\' + $(\'#logname\').val()); return false;">Login</a></p>'
+        res += '<p><a href="" onclick="window.location.replace(\'' + self.callback_url() + "?user="
+        res += "' + $('#logname').val()); return false;\">Login</a></p>"
         return res
 
     @typing.override
     def auth_callback(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        groups_manager: 'GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        groups_manager: "GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """
         We provide this as a sample of callback for an user.
@@ -308,8 +309,8 @@ class SampleAuth(auths.Authenticator):
         """
         from uds.core.types.states import State  # pylint: disable=import-outside-toplevel
 
-        user_data['real_name'] = user_data['name'] + ' ' + user_data['name']
-        user_data['state'] = State.INACTIVE
+        user_data["real_name"] = user_data["name"] + " " + user_data["name"]
+        user_data["state"] = State.INACTIVE
 
     @typing.override
     def modify_user(self, user_data: dict[str, str]) -> None:
@@ -329,5 +330,5 @@ class SampleAuth(auths.Authenticator):
         Here, we will simply update the realName of the user, and (we have to take care
         this this kind of things) modify the userName to a new one, the original plus '-1'
         """
-        user_data['real_name'] = user_data['name'] + ' ' + user_data['name']
-        user_data['name'] += '-1'
+        user_data["real_name"] = user_data["name"] + " " + user_data["name"]
+        user_data["name"] += "-1"

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core.environment import Environment
@@ -52,22 +53,22 @@ from tests.utils.test import UDSTestCase
 
 # self._destroy_after = destroy_after == 'y'
 EXPECTED_OWN_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_reason',
-    '_vmid',
-    '_queue',
-    '_is_flagged_for_destroy',
+    "_name",
+    "_reason",
+    "_vmid",
+    "_queue",
+    "_is_flagged_for_destroy",
 }
 
 
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b'v1\tname\treason\ttemplate_id\tstate\ty'
+SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\treason\ttemplate_id\tstate\ty"
 
 
 class OpenStackPublicationSerializationTest(UDSTestCase):
     def check(self, instance: publication.OpenStackLivePublication) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._reason, 'reason')
-        self.assertEqual(instance._vmid, 'template_id')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._reason, "reason")
+        self.assertEqual(instance._vmid, "template_id")
         self.assertEqual(instance._queue, [core_types.services.Operation.CREATE, core_types.services.Operation.FINISH])
         self.assertTrue(instance._is_flagged_for_destroy)
 
@@ -84,7 +85,7 @@ class OpenStackPublicationSerializationTest(UDSTestCase):
         marshaled_data = instance.marshal()
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'\1'))
+        self.assertFalse(marshaled_data.startswith(b"\1"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = publication.OpenStackLivePublication(environment=environment, service=None)  # type: ignore
         instance.unmarshal(marshaled_data)
@@ -101,6 +102,5 @@ class OpenStackPublicationSerializationTest(UDSTestCase):
 
             self.assertTrue(
                 EXPECTED_OWN_FIELDS <= set(f[0] for f in instance._autoserializable_fields()),
-                'Missing fields: '
-                + str(EXPECTED_OWN_FIELDS - set(f[0] for f in instance._autoserializable_fields())),
+                "Missing fields: " + str(EXPECTED_OWN_FIELDS - set(f[0] for f in instance._autoserializable_fields())),
             )

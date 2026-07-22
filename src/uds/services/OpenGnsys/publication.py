@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -48,13 +49,11 @@ class OpenGnsysPublication(Publication, autoserializable.AutoSerializable):
     This class provides the publication of a oVirtLinkedService
     """
 
-    suggested_delay = (
-        5  # : Suggested recheck time if publication is unfinished in seconds
-    )
+    suggested_delay = 5  # : Suggested recheck time if publication is unfinished in seconds
 
     @typing.override
-    def service(self) -> 'OGService':
-        return typing.cast('OGService', super().service())
+    def service(self) -> "OGService":
+        return typing.cast("OGService", super().service())
 
     @typing.override
     def publish(self) -> types.states.TaskState:
@@ -72,7 +71,7 @@ class OpenGnsysPublication(Publication, autoserializable.AutoSerializable):
 
     @typing.override
     def error_reason(self) -> str:
-        return 'No error possible :)'
+        return "No error possible :)"
 
     @typing.override
     def destroy(self) -> types.states.TaskState:

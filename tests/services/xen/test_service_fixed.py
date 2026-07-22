@@ -92,19 +92,14 @@ class TestXenFixedService(UDSTransactionTestCase):
 
             # Ensure machines are on same folder, so enumerate_assignables will return same machines
             # (it will filter by folder also...)
-            service.machines.value = [
-                x.opaque_ref for x in fixtures.VMS_INFO if x.folder == service.folder.value
-            ]
+            service.machines.value = [x.opaque_ref for x in fixtures.VMS_INFO if x.folder == service.folder.value]
 
             def locate_vm(vmid: str) -> typing.Any:
                 return next((x for x in fixtures.VMS_INFO if x.opaque_ref == vmid), fixtures.VMS_INFO[0])
 
             self.assertEqual(
                 list(service.enumerate_assignables()),
-                [
-                    ui.gui.choice_item(locate_vm(x).opaque_ref, locate_vm(x).name or "")
-                    for x in service.machines.value
-                ],
+                [ui.gui.choice_item(locate_vm(x).opaque_ref, locate_vm(x).name or "") for x in service.machines.value],
             )
 
     def test_assign_from_assignables(self) -> None:
@@ -116,9 +111,7 @@ class TestXenFixedService(UDSTransactionTestCase):
             with mock.patch("uds.services.Xen.deployment_fixed.XenFixedUserService") as userservice:
                 userservice_instance = userservice.return_value
                 userservice_instance.assign.return_value = "OK"
-                self.assertEqual(
-                    service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), "OK"
-                )
+                self.assertEqual(service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), "OK")
                 userservice_instance.assign.assert_called_with(vmid)
 
                 # vmid should be already assigned, so it will return an error (call error of userservice_instance)

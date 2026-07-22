@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 
 from ...fixtures.stats_counters import create_stats_counters
@@ -48,10 +49,10 @@ END_DATE_DAY = timezone.make_aware(datetime.datetime(2020, 1, 2, 0, 0, 0))
 END_DATE_MONTH = timezone.make_aware(datetime.datetime(2020, 2, 1, 0, 0, 0))
 END_DATE_YEAR = timezone.make_aware(datetime.datetime(2021, 1, 1, 0, 0, 0))
 
+
 class StatsCountersTest(UDSTestCase):
     def setUp(self) -> None:
         return super().setUp()
-
 
     def xtest_create_stats_counters_single(self) -> None:
         l = create_stats_counters(
@@ -60,7 +61,7 @@ class StatsCountersTest(UDSTestCase):
             counters.types.stats.CounterType.INUSE,
             START_DATE,
             END_DATE_DAY,
-            1
+            1,
         )
 
         self.assertEqual(len(l), 1)
@@ -73,20 +74,24 @@ class StatsCountersTest(UDSTestCase):
         )
 
         # Now test get_grouped
-        res = list(models.StatsCounters.get_grouped(
-            counters.types.stats.CounterOwnerType.AUTHENTICATOR,
-            counters.types.stats.CounterType.INUSE,
-        ))
+        res = list(
+            models.StatsCounters.get_grouped(
+                counters.types.stats.CounterOwnerType.AUTHENTICATOR,
+                counters.types.stats.CounterType.INUSE,
+            )
+        )
         self.assertEqual(len(res), 1)
-        res = list(models.StatsCounters.get_grouped(
-            counters.types.stats.CounterOwnerType.AUTHENTICATOR,
-            counters.types.stats.CounterType.INUSE,
-            owner_id=0,
-            since=START_DATE,
-            to=END_DATE_DAY,
-        ))
+        res = list(
+            models.StatsCounters.get_grouped(
+                counters.types.stats.CounterOwnerType.AUTHENTICATOR,
+                counters.types.stats.CounterType.INUSE,
+                owner_id=0,
+                since=START_DATE,
+                to=END_DATE_DAY,
+            )
+        )
         self.assertEqual(len(res), 1)
-        
+
     def test_create_stats_counters_multi(self) -> None:
         NUMBER = 100
         l = create_stats_counters(
@@ -95,7 +100,7 @@ class StatsCountersTest(UDSTestCase):
             counters.types.stats.CounterType.INUSE,
             START_DATE,
             END_DATE_DAY,
-            NUMBER
+            NUMBER,
         )
 
         self.assertEqual(len(l), NUMBER)
@@ -107,28 +112,33 @@ class StatsCountersTest(UDSTestCase):
             stamp=int(START_DATE.timestamp()),
         )
 
-
-        res = list(models.StatsCounters.get_grouped(
-            counters.types.stats.CounterOwnerType.AUTHENTICATOR,
-            counters.types.stats.CounterType.INUSE,
-            owner_id=0,
-            since=START_DATE,
-            to=END_DATE_DAY,
-            interval=3600,
-        ))
+        res = list(
+            models.StatsCounters.get_grouped(
+                counters.types.stats.CounterOwnerType.AUTHENTICATOR,
+                counters.types.stats.CounterType.INUSE,
+                owner_id=0,
+                since=START_DATE,
+                to=END_DATE_DAY,
+                interval=3600,
+            )
+        )
         self.assertEqual(len(res), 24)
 
         # Now test get_grouped
-        res = list(models.StatsCounters.get_grouped(
-            counters.types.stats.CounterOwnerType.AUTHENTICATOR,
-            counters.types.stats.CounterType.INUSE,
-        ))
+        res = list(
+            models.StatsCounters.get_grouped(
+                counters.types.stats.CounterOwnerType.AUTHENTICATOR,
+                counters.types.stats.CounterType.INUSE,
+            )
+        )
         self.assertEqual(len(res), NUMBER)
-        res = list(models.StatsCounters.get_grouped(
-            counters.types.stats.CounterOwnerType.AUTHENTICATOR,
-            counters.types.stats.CounterType.INUSE,
-            owner_id=0,
-            since=START_DATE,
-            to=END_DATE_DAY,
-        ))
+        res = list(
+            models.StatsCounters.get_grouped(
+                counters.types.stats.CounterOwnerType.AUTHENTICATOR,
+                counters.types.stats.CounterType.INUSE,
+                owner_id=0,
+                since=START_DATE,
+                to=END_DATE_DAY,
+            )
+        )
         self.assertEqual(len(res), NUMBER)

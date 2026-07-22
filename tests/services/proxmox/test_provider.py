@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -52,31 +53,31 @@ class TestProxmoxProvider(UDSTransactionTestCase):
         """
         provider = fixtures.create_provider()  # Will not use client api, so no need to patch it
 
-        self.assertEqual(provider.host.as_str(), fixtures.PROVIDER_VALUES_DICT['host'])
-        self.assertEqual(provider.port.as_int(), fixtures.PROVIDER_VALUES_DICT['port'])
-        self.assertEqual(provider.username.as_str(), fixtures.PROVIDER_VALUES_DICT['username'])
-        self.assertEqual(provider.password.as_str(), fixtures.PROVIDER_VALUES_DICT['password'])
+        self.assertEqual(provider.host.as_str(), fixtures.PROVIDER_VALUES_DICT["host"])
+        self.assertEqual(provider.port.as_int(), fixtures.PROVIDER_VALUES_DICT["port"])
+        self.assertEqual(provider.username.as_str(), fixtures.PROVIDER_VALUES_DICT["username"])
+        self.assertEqual(provider.password.as_str(), fixtures.PROVIDER_VALUES_DICT["password"])
 
         if not isinstance(provider.concurrent_creation_limit, ui.gui.NumericField):
-            self.fail('concurrent_creation_limit is not a NumericField')
+            self.fail("concurrent_creation_limit is not a NumericField")
 
         self.assertEqual(
             provider.concurrent_creation_limit.as_int(),
-            fixtures.PROVIDER_VALUES_DICT['concurrent_creation_limit'],
+            fixtures.PROVIDER_VALUES_DICT["concurrent_creation_limit"],
         )
         # concurrent_removal_limit
         if not isinstance(provider.concurrent_removal_limit, ui.gui.NumericField):
-            self.fail('concurrent_creation_limit is not a NumericField')
+            self.fail("concurrent_creation_limit is not a NumericField")
 
         self.assertEqual(
             provider.concurrent_removal_limit.as_int(),
-            fixtures.PROVIDER_VALUES_DICT['concurrent_removal_limit'],
+            fixtures.PROVIDER_VALUES_DICT["concurrent_removal_limit"],
         )
-        self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT['timeout'])
-        self.assertEqual(provider.start_vmid.as_int(), fixtures.PROVIDER_VALUES_DICT['start_vmid'])
-        self.assertEqual(provider.macs_range.as_str(), fixtures.PROVIDER_VALUES_DICT['macs_range'])
+        self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT["timeout"])
+        self.assertEqual(provider.start_vmid.as_int(), fixtures.PROVIDER_VALUES_DICT["start_vmid"])
+        self.assertEqual(provider.macs_range.as_str(), fixtures.PROVIDER_VALUES_DICT["macs_range"])
 
-        self.assertEqual(provider.get_macs_range(), fixtures.PROVIDER_VALUES_DICT['macs_range'])
+        self.assertEqual(provider.get_macs_range(), fixtures.PROVIDER_VALUES_DICT["macs_range"])
 
     def test_provider_test(self) -> None:
         """
@@ -89,9 +90,7 @@ class TestProxmoxProvider(UDSTransactionTestCase):
                 # Mock test_connection to return ret_val
                 # Note that we must patch the class method, not the instance method
                 # Because a new instance is created on test
-                with mock.patch(
-                    'uds.services.Proxmox.provider.ProxmoxProvider.test_connection', return_value=ret_val
-                ):
+                with mock.patch("uds.services.Proxmox.provider.ProxmoxProvider.test_connection", return_value=ret_val):
                     result = ProxmoxProvider.test(
                         environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT
                     )
@@ -145,9 +144,7 @@ class TestProxmoxProvider(UDSTransactionTestCase):
             self.assertEqual(provider.api.get_vm_config(1), fixtures.VMS_CONFIGURATION[0])
 
             self.assertEqual(
-                provider.api.get_storage_info(
-                    fixtures.STORAGES[2].storage, fixtures.STORAGES[2].node, force=True
-                ),
+                provider.api.get_storage_info(fixtures.STORAGES[2].storage, fixtures.STORAGES[2].node, force=True),
                 fixtures.STORAGES[2],
             )
 
@@ -156,7 +153,6 @@ class TestProxmoxProvider(UDSTransactionTestCase):
         Test the provider methods
         """
         with fixtures.patched_provider() as provider:
-
             self.assertEqual(
                 provider.api.get_storage_info(fixtures.STORAGES[2].storage, fixtures.STORAGES[2].node),
                 fixtures.STORAGES[2],
@@ -187,11 +183,11 @@ class TestProxmoxProvider(UDSTransactionTestCase):
             provider.api.convert_vm_to_template(1)
 
             self.assertEqual(
-                provider.clone_vm(1, 'name', 'description', True, 'node', 'storage', 'pool', True),
+                provider.clone_vm(1, "name", "description", True, "node", "storage", "pool", True),
                 fixtures.VM_CREATION_RESULT,
             )
             api.clone_vm.assert_called_once_with(
-                1, mock.ANY, 'name', 'description', True, 'node', 'storage', 'pool', True
+                1, mock.ANY, "name", "description", True, "node", "storage", "pool", True
             )
 
             self.assertEqual(provider.api.start_vm(1), fixtures.UPID)
@@ -211,15 +207,15 @@ class TestProxmoxProvider(UDSTransactionTestCase):
 
             self.assertEqual(provider.api.delete_vm(1), fixtures.UPID)
 
-            self.assertEqual(provider.api.get_task_info('node', 'upid'), fixtures.TASK_STATUS)
+            self.assertEqual(provider.api.get_task_info("node", "upid"), fixtures.TASK_STATUS)
 
-            provider.api.enable_vm_ha(1, True, 'group')
+            provider.api.enable_vm_ha(1, True, "group")
 
-            provider.api.set_vm_net_mac(1, 'mac')
+            provider.api.set_vm_net_mac(1, "mac")
 
             provider.api.disable_vm_ha(1)
 
-            provider.api.set_vm_protection(1, node='node', protection=True)
+            provider.api.set_vm_protection(1, node="node", protection=True)
 
             self.assertEqual(provider.api.list_ha_groups(), fixtures.HA_GROUPS)
 
@@ -245,4 +241,4 @@ class TestProxmoxProvider(UDSTransactionTestCase):
 
             self.assertEqual(provider.api.create_snapshot(1), fixtures.UPID)
 
-            provider.api.restore_snapshot(1, node='node', name='name')
+            provider.api.restore_snapshot(1, node="node", name="name")

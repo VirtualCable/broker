@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -78,8 +79,8 @@ class SampleUserServiceOne(services.UserService):
     suggested_delay = 5
 
     @typing.override
-    def service(self) -> 'sample_service.ServiceOne':
-        return typing.cast('sample_service.ServiceOne', super().service())
+    def service(self) -> "sample_service.ServiceOne":
+        return typing.cast("sample_service.ServiceOne", super().service())
 
     # Serializable needed methods
     @typing.override
@@ -87,7 +88,7 @@ class SampleUserServiceOne(services.UserService):
         """
         Does nothing right here, we will use environment storage in this sample
         """
-        return b''
+        return b""
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
@@ -117,13 +118,11 @@ class SampleUserServiceOne(services.UserService):
         a new unique name, so we keep the first generated name cached and don't
         generate more names. (Generator are simple utility classes)
         """
-        name: str = typing.cast(str, self.storage.read_from_db('name'))
+        name: str = typing.cast(str, self.storage.read_from_db("name"))
         if not name:
-            name = self.name_generator().get(
-                self.service().get_basename() + '-' + self.service().get_colour(), 3
-            )
+            name = self.name_generator().get(self.service().get_basename() + "-" + self.service().get_colour(), 3)
             # Store value for persistence
-            self.storage.save_to_db('name', name)
+            self.storage.save_to_db("name", name)
 
         return name
 
@@ -140,7 +139,7 @@ class SampleUserServiceOne(services.UserService):
         :note: This IP is the IP of the "consumed service", so the transport can
                access it.
         """
-        self.storage.save_to_db('ip', ip)
+        self.storage.save_to_db("ip", ip)
 
     @typing.override
     def get_unique_id(self) -> str:
@@ -153,10 +152,10 @@ class SampleUserServiceOne(services.UserService):
         The get method of a mac generator takes one param, that is the mac range
         to use to get an unused mac.
         """
-        mac = typing.cast(str, self.storage.read_from_db('mac'))
+        mac = typing.cast(str, self.storage.read_from_db("mac"))
         if not mac:
-            mac = self.mac_generator().get('00:00:00:00:00:00-00:FF:FF:FF:FF:FF')
-            self.storage.save_to_db('mac', mac)
+            mac = self.mac_generator().get("00:00:00:00:00:00-00:FF:FF:FF:FF:FF")
+            self.storage.save_to_db("mac", mac)
         return mac
 
     @typing.override
@@ -178,9 +177,9 @@ class SampleUserServiceOne(services.UserService):
                show the IP to the administrator, this method will get called
 
         """
-        ip = typing.cast(str, self.storage.read_from_db('ip'))
+        ip = typing.cast(str, self.storage.read_from_db("ip"))
         if not ip:
-            ip = '192.168.0.34'  # Sample IP for testing purposses only
+            ip = "192.168.0.34"  # Sample IP for testing purposses only
         return ip
 
     @typing.override
@@ -218,7 +217,7 @@ class SampleUserServiceOne(services.UserService):
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
 
@@ -246,11 +245,11 @@ class SampleUserServiceOne(services.UserService):
         """
         import random
 
-        self.storage.save_to_db('count', '0')
+        self.storage.save_to_db("count", "0")
 
         # random fail
         if random.randint(0, 9) == 9:  # nosec: just testing values
-            self.storage.save_to_db('error', 'Random error at deployForUser :-)')
+            self.storage.save_to_db("error", "Random error at deployForUser :-)")
             return types.states.TaskState.ERROR
 
         return types.states.TaskState.RUNNING
@@ -279,9 +278,7 @@ class SampleUserServiceOne(services.UserService):
         """
         import random
 
-        counter_str: typing.Optional[str] = typing.cast(
-            str, self.storage.read_from_db('count')
-        )
+        counter_str: typing.Optional[str] = typing.cast(str, self.storage.read_from_db("count"))
         count: int = 0
         if counter_str:
             count = int(counter_str) + 1
@@ -294,10 +291,10 @@ class SampleUserServiceOne(services.UserService):
 
         # random fail
         if random.randint(0, 9) == 9:  # nosec: just testing values
-            self.storage.save_to_db('error', 'Random error at check_state :-)')
+            self.storage.save_to_db("error", "Random error at check_state :-)")
             return types.states.TaskState.ERROR
 
-        self.storage.save_to_db('count', str(count))
+        self.storage.save_to_db("count", str(count))
         return types.states.TaskState.RUNNING
 
     @typing.override
@@ -312,7 +309,7 @@ class SampleUserServiceOne(services.UserService):
         nothing)
         """
         # Note that this is not really needed, is just a sample of storage use
-        self.storage.remove('count')
+        self.storage.remove("count")
 
     @typing.override
     def user_logged_in(self, username: str) -> None:
@@ -330,7 +327,7 @@ class SampleUserServiceOne(services.UserService):
         The user provided is just an string, that is provided by actor.
         """
         # We store the value at storage, but never get used, just an example
-        self.storage.save_to_db('user', username)
+        self.storage.save_to_db("user", username)
 
     @typing.override
     def user_logged_out(self, username: str) -> None:
@@ -348,7 +345,7 @@ class SampleUserServiceOne(services.UserService):
         The user provided is just an string, that is provided by actor.
         """
         # We do nothing more that remove the user
-        self.storage.remove('user')
+        self.storage.remove("user")
 
     @typing.override
     def error_reason(self) -> str:
@@ -359,7 +356,7 @@ class SampleUserServiceOne(services.UserService):
         for it, and it will be asked everytime it's needed to be shown to the
         user (when the administation asks for it).
         """
-        return typing.cast(str, self.storage.read_from_db('error')) or 'No error'
+        return typing.cast(str, self.storage.read_from_db("error")) or "No error"
 
     @typing.override
     def destroy(self) -> types.states.TaskState:

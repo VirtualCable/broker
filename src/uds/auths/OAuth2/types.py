@@ -49,50 +49,50 @@ class TokenInfo:
     id_token: str | None
 
     @staticmethod
-    def from_dict(dct: collections.abc.Mapping[str, typing.Any]) -> 'TokenInfo':
+    def from_dict(dct: collections.abc.Mapping[str, typing.Any]) -> "TokenInfo":
         # expires is -10 to avoid problems with clock sync
         return TokenInfo(
-            access_token=dct['access_token'],
-            token_type=dct['token_type'],
-            expires=model.sql_now() + datetime.timedelta(seconds=dct['expires_in'] - 10),
-            refresh_token=dct.get('refresh_token', ''),
-            scope=dct['scope'],
-            info=dct.get('info', {}),
-            id_token=dct.get('id_token', None),
+            access_token=dct["access_token"],
+            token_type=dct["token_type"],
+            expires=model.sql_now() + datetime.timedelta(seconds=dct["expires_in"] - 10),
+            refresh_token=dct.get("refresh_token", ""),
+            scope=dct["scope"],
+            info=dct.get("info", {}),
+            id_token=dct.get("id_token", None),
         )
 
 
 class ResponseType(enum.StrEnum):
-    CODE = 'code'
-    PKCE = 'pkce'
-    TOKEN = 'token'
-    OPENID_ID_TOKEN = 'openid+token_id'
-    OPENID_CODE = 'openid+code'
+    CODE = "code"
+    PKCE = "pkce"
+    TOKEN = "token"
+    OPENID_ID_TOKEN = "openid+token_id"
+    OPENID_CODE = "openid+code"
 
     @property
     def for_query(self) -> str:
         match self:
             case ResponseType.CODE:
-                return 'code'
+                return "code"
             case ResponseType.PKCE:
-                return 'code'
+                return "code"
             case ResponseType.TOKEN:
-                return 'token'
+                return "token"
             case ResponseType.OPENID_ID_TOKEN:
-                return 'id_token'
+                return "id_token"
             case ResponseType.OPENID_CODE:
-                return 'code'
+                return "code"
 
     @property
     def as_text(self) -> str:
         match self:
             case ResponseType.CODE:
-                return _('Code (authorization code flow)')
+                return _("Code (authorization code flow)")
             case ResponseType.PKCE:
-                return _('PKCE (authorization code flow with PKCE)')
+                return _("PKCE (authorization code flow with PKCE)")
             case ResponseType.TOKEN:
-                return _('Token (implicit flow)')
+                return _("Token (implicit flow)")
             case ResponseType.OPENID_ID_TOKEN:
-                return _('OpenID Connect Token (implicit flow with OpenID Connect)')
+                return _("OpenID Connect Token (implicit flow with OpenID Connect)")
             case ResponseType.OPENID_CODE:
-                return _('OpenID Connect Code (authorization code flow with OpenID Connect)')
+                return _("OpenID Connect Code (authorization code flow with OpenID Connect)")

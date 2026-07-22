@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class Job(Environmentable):
-    friendly_name: typing.ClassVar[str] = 'Unknown'
+    friendly_name: typing.ClassVar[str] = "Unknown"
 
     def next_execution_delay(self) -> int:
         """
@@ -54,7 +55,7 @@ class Job(Environmentable):
         try:
             self.run()
         except Exception:
-            logger.exception('Job %s raised an exception:', self.__class__)
+            logger.exception("Job %s raised an exception:", self.__class__)
 
     def run(self) -> None:
         """

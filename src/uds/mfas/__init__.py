@@ -39,6 +39,7 @@ The registration of modules is done locating subclases of :py:class:`uds.core.au
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds.core.util import modfinder
@@ -49,7 +50,7 @@ logger = logging.getLogger(__name__)
 def initialize() -> None:
     """
     This imports all packages that are descendant of this package, and, after that,
-    it register all subclases of mfas.MFA 
+    it register all subclases of mfas.MFA
     """
     from uds.core import mfas  # pylint: disable=import-outside-toplevel
 

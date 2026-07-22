@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.urls import reverse
@@ -44,22 +45,23 @@ class RedirectMiddlewareTest(test.UDSTransactionTestCase):
     """
     Test client functionality
     """
+
     def test_redirect(self) -> None:
-        RedirectMiddlewareTest.add_middleware('uds.middleware.redirect.RedirectMiddleware')
-        page = 'https://testserver' + reverse('page.index')
-        response = self.client.get('/', secure=False)
+        RedirectMiddlewareTest.add_middleware("uds.middleware.redirect.RedirectMiddleware")
+        page = "https://testserver" + reverse("page.index")
+        response = self.client.get("/", secure=False)
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response.url, page)
         # Try secure, will redirect to index, not absulute url
-        response = self.client.get('/', secure=True)
+        response = self.client.get("/", secure=True)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('page.index'))
+        self.assertEqual(response.url, reverse("page.index"))
 
         # Try several urls, random. Unsecure will redirect, secure will not
         for _ in range(32):
-            url = f'/{CryptoManager.manager().random_string(32)}'
+            url = f"/{CryptoManager.manager().random_string(32)}"
             response = self.client.get(url, secure=False)
             self.assertEqual(response.status_code, 301)
             self.assertEqual(response.url, page)
             response = self.client.get(url, secure=True)
-            self.assertEqual(response.status_code, 404) # Not found
+            self.assertEqual(response.status_code, 404)  # Not found

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import datetime
@@ -89,9 +90,9 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
 
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'reset',
+            "reset",
             method=types.rest.CustomMethodMethod.POST,
-            description='Reset a user service to its initial state, removing any cached or intermediate data',
+            description="Reset a user service to its initial state, removing any cached or intermediate data",
         ),
     ]
 
@@ -100,7 +101,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         item: models.UserService,
         props: dict[str, typing.Any] | None = None,
         is_cache: bool = False,
-    ) -> 'UserServiceItem':
+    ) -> "UserServiceItem":
         """
         Converts an assigned/cached service db item to a dictionary for REST response
         Args:
@@ -117,29 +118,27 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             unique_id=item.unique_id,
             friendly_name=item.friendly_name,
             state=(
-                item.state
-                if not (props.get('destroy_after') and item.state == State.PREPARING)
-                else State.CANCELING
+                item.state if not (props.get("destroy_after") and item.state == State.PREPARING) else State.CANCELING
             ),  # Destroy after means that we need to cancel AFTER finishing preparing, but not before...
             os_state=item.os_state,
             state_date=item.state_date,
             creation_date=item.creation_date,
-            revision=f'{item.publication.revision if item.publication else ""}',
-            ip=props.get('ip', _('unknown')),
-            actor_version=props.get('actor_version', _('unknown')),
+            revision=f"{item.publication.revision if item.publication else ''}",
+            ip=props.get("ip", _("unknown")),
+            actor_version=props.get("actor_version", _("unknown")),
         )
 
         if is_cache:
             val.cache_level = item.cache_level
         else:
             if item.user is None:
-                owner = ''
-                owner_info = {'auth_id': '', 'user_id': ''}
+                owner = ""
+                owner_info = {"auth_id": "", "user_id": ""}
             else:
                 owner = item.user.pretty_name
                 owner_info = {
-                    'auth_id': item.user.manager.uuid,
-                    'user_id': item.user.uuid,
+                    "auth_id": item.user.manager.uuid,
+                    "user_id": item.user.uuid,
                 }
 
             val.owner = owner
@@ -155,23 +154,23 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     def apply_sort(self, qs: QuerySet[typing.Any]) -> list[typing.Any] | QuerySet[typing.Any]:
         def annotated_sort(field: str, descending: bool) -> QuerySet[typing.Any]:
             prop_value_subquery = models.Properties.objects.filter(
-                owner_id=OuterRef('uuid'), owner_type='userservice', key=field
-            ).values('value')[:1]
+                owner_id=OuterRef("uuid"), owner_type="userservice", key=field
+            ).values("value")[:1]
             return qs.annotate(prop_value=Subquery(prop_value_subquery)).order_by(
-                f'{"-" if descending else ""}prop_value'
+                f"{'-' if descending else ''}prop_value"
             )
 
-        if sort_info := self.get_sort_field_info('ip', 'actor_version'):
+        if sort_info := self.get_sort_field_info("ip", "actor_version"):
             return annotated_sort(*sort_info)
 
         return super().apply_sort(qs)
 
-    def get_qs(self, for_cached: bool, parent: 'models.ServicePool') -> QuerySet[models.UserService]:
+    def get_qs(self, for_cached: bool, parent: "models.ServicePool") -> QuerySet[models.UserService]:
         if for_cached:
             return parent.cached_users_services()
         return parent.assigned_user_services()
 
-    def do_get_item_position(self, for_cached: bool, parent: 'Model', item_uuid: str) -> int:
+    def do_get_item_position(self, for_cached: bool, parent: "Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
         return self.calc_item_position(item_uuid, self.get_qs(for_cached, parent).all())
 
@@ -181,10 +180,10 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
 
     def do_get_item(
         self,
-        parent: 'Model',
+        parent: "Model",
         item: str,
         for_cached: bool,
-    ) -> 'UserServiceItem':
+    ) -> "UserServiceItem":
         parent = ensure.is_instance(parent, models.ServicePool)
 
         return AssignedUserService.userservice_item(
@@ -192,17 +191,17 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             props={
                 k: v
                 for k, v in models.Properties.objects.filter(
-                    owner_type='userservice', owner_id=process_uuid(item)
-                ).values_list('key', 'value')
+                    owner_type="userservice", owner_id=process_uuid(item)
+                ).values_list("key", "value")
             },
             is_cache=for_cached,
         )
 
     def do_get_items(
         self,
-        parent: 'Model',
+        parent: "Model",
         for_cached: bool,
-    ) -> types.rest.ItemsResult['UserServiceItem']:
+    ) -> types.rest.ItemsResult["UserServiceItem"]:
         parent = ensure.is_instance(parent, models.ServicePool)
 
         def get_qs() -> QuerySet[models.UserService]:
@@ -214,71 +213,69 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         # We can cache them, because they are going to be readed anyway...
         properties: dict[str, typing.Any] = collections.defaultdict(dict)
         for id, key, value in models.Properties.objects.filter(
-            owner_type='userservice',
-            owner_id__in=get_qs().values_list('uuid', flat=True),
-        ).values_list('owner_id', 'key', 'value'):
+            owner_type="userservice",
+            owner_id__in=get_qs().values_list("uuid", flat=True),
+        ).values_list("owner_id", "key", "value"):
             properties[id][key] = value
 
         return [
             AssignedUserService.userservice_item(k, properties.get(k.uuid, {}))
-            for k in self.odata_filter(
-                get_qs().all().prefetch_related('deployed_service', 'publication', 'user')
-            )
+            for k in self.odata_filter(get_qs().all().prefetch_related("deployed_service", "publication", "user"))
         ]
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult['UserServiceItem']:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult["UserServiceItem"]:
         return self.do_get_items(parent, for_cached=False)
 
     @typing.override
     def get_item(
         self,
-        parent: 'Model',
+        parent: "Model",
         item: str,
-    ) -> 'UserServiceItem':
+    ) -> "UserServiceItem":
         return self.do_get_item(parent, item, for_cached=False)
 
     @typing.override
-    def get_table(self, parent: 'Model') -> types.rest.TableInfo:
+    def get_table(self, parent: "Model") -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, models.ServicePool)
-        table_info = ui_utils.TableBuilder(_('Assigned Services')).datetime_column(
-            name='creation_date', title=_('Creation date')
+        table_info = ui_utils.TableBuilder(_("Assigned Services")).datetime_column(
+            name="creation_date", title=_("Creation date")
         )
         if parent.service.get_type().publication_type is not None:
-            table_info.text_column(name='revision', title=_('Revision'))
+            table_info.text_column(name="revision", title=_("Revision"))
 
         return (
-            table_info.text_column(name='unique_id', title='Unique ID')
-            .text_column(name='ip', title=_('IP'))
-            .text_column(name='friendly_name', title=_('Friendly name'))
-            .dict_column(name='state', title=_('status'), dct=State.literals_dict())
-            .datetime_column(name='state_date', title=_('Status date'))
-            .text_column(name='in_use', title=_('In Use'))
-            .text_column(name='source_host', title=_('Src Host'))
-            .text_column(name='source_ip', title=_('Src Ip'))
-            .text_column(name='owner', title=_('Owner'))
-            .text_column(name='actor_version', title=_('Actor version'))
-            .row_style(prefix='row-state-', field='state')
-            .with_field_mappings(revision='deployed_service.publications.revision')
-            .with_filter_fields('creation_date', 'unique_id', 'friendly_name', 'state', 'in_use')
+            table_info.text_column(name="unique_id", title="Unique ID")
+            .text_column(name="ip", title=_("IP"))
+            .text_column(name="friendly_name", title=_("Friendly name"))
+            .dict_column(name="state", title=_("status"), dct=State.literals_dict())
+            .datetime_column(name="state_date", title=_("Status date"))
+            .text_column(name="in_use", title=_("In Use"))
+            .text_column(name="source_host", title=_("Src Host"))
+            .text_column(name="source_ip", title=_("Src Ip"))
+            .text_column(name="owner", title=_("Owner"))
+            .text_column(name="actor_version", title=_("Actor version"))
+            .row_style(prefix="row-state-", field="state")
+            .with_field_mappings(revision="deployed_service.publications.revision")
+            .with_filter_fields("creation_date", "unique_id", "friendly_name", "state", "in_use")
         ).build()
 
     @typing.override
-    def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
+    def get_logs(self, parent: "Model", item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.ServicePool)
         try:
             user_service: models.UserService = parent.assigned_user_services().get(uuid=process_uuid(item))
-            logger.debug('Getting logs for %s', user_service)
+            logger.debug("Getting logs for %s", user_service)
             return log.get_logs(user_service)
         except models.UserService.DoesNotExist:
-            raise exceptions.rest.NotFound(_('User service not found')) from None
+            raise exceptions.rest.NotFound(_("User service not found")) from None
         except Exception as e:
-            logger.error('Error getting user service logs for %s: %s', item, e)
-            raise exceptions.rest.ResponseError(_('Error getting user service logs')) from e
+            logger.error("Error getting user service logs for %s: %s", item, e)
+            raise exceptions.rest.ResponseError(_("Error getting user service logs")) from e
 
     # This is also used by CachedService, so we use "userServices" directly and is valid for both
     @typing.override
-    def delete_item(self, parent: 'Model', item: str, cache: bool = False) -> None:
+    def delete_item(self, parent: "Model", item: str, cache: bool = False) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
         try:
             if cache:
@@ -286,39 +283,39 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             else:
                 userservice = parent.assigned_user_services().get(uuid=process_uuid(item))
         except Exception as e:
-            logger.error('Error deleting user service %s from %s: %s', item, parent, e)
-            raise exceptions.rest.ResponseError(_('Error deleting user service')) from None
+            logger.error("Error deleting user service %s from %s: %s", item, parent, e)
+            raise exceptions.rest.ResponseError(_("Error deleting user service")) from None
 
         if userservice.user:  # All assigned services have a user
-            log_string = f'Deleted assigned user service {userservice.friendly_name} to user {userservice.user.pretty_name} by {self._user.pretty_name}'
+            log_string = f"Deleted assigned user service {userservice.friendly_name} to user {userservice.user.pretty_name} by {self._user.pretty_name}"
         else:
-            log_string = f'Deleted cached user service {userservice.friendly_name} by {self._user.pretty_name}'
+            log_string = f"Deleted cached user service {userservice.friendly_name} by {self._user.pretty_name}"
 
         if userservice.state in (State.USABLE, State.REMOVING):
             userservice.release()
         elif userservice.state == State.PREPARING:
             userservice.cancel()
         elif userservice.state == State.REMOVABLE:
-            raise exceptions.rest.RequestError(_('Item already being removed')) from None
+            raise exceptions.rest.RequestError(_("Item already being removed")) from None
         else:
-            raise exceptions.rest.RequestError(_('Item is not removable')) from None
+            raise exceptions.rest.RequestError(_("Item is not removable")) from None
 
         log.log(parent, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
         log.log(userservice, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
 
     # Only owner is allowed to change right now
     @typing.override
-    def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
+    def save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServicePool)
         if not item:
-            raise exceptions.rest.RequestError('Only modify is allowed')
-        fields = self.fields_from_params(['auth_id:_', 'user_id:_', 'ip:_'])
+            raise exceptions.rest.RequestError("Only modify is allowed")
+        fields = self.fields_from_params(["auth_id:_", "user_id:_", "ip:_"])
 
         userservice = parent.userServices.get(uuid=process_uuid(item))
-        if 'user_id' in fields and 'auth_id' in fields:
-            user = models.User.objects.get(uuid=process_uuid(fields['user_id']))
+        if "user_id" in fields and "auth_id" in fields:
+            user = models.User.objects.get(uuid=process_uuid(fields["user_id"]))
 
-            log_string = f'Changed ownership of user service {userservice.friendly_name} from {userservice.user} to {user.pretty_name} by {self._user.pretty_name}'
+            log_string = f"Changed ownership of user service {userservice.friendly_name} from {userservice.user} to {user.pretty_name} by {self._user.pretty_name}"
 
             # If there is another service that has this same owner, raise an exception
             if (
@@ -329,24 +326,26 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
                 > 0
             ):
                 raise exceptions.rest.RequestError(
-                    f'There is already another user service assigned to {user.pretty_name}'
+                    f"There is already another user service assigned to {user.pretty_name}"
                 )
 
             userservice.user = user
             userservice.save()
-        elif 'ip' in fields:
-            log_string = f'Changed IP of user service {userservice.friendly_name} to {fields["ip"]} by {self._user.pretty_name}'
-            userservice.log_ip(fields['ip'])
+        elif "ip" in fields:
+            log_string = (
+                f"Changed IP of user service {userservice.friendly_name} to {fields['ip']} by {self._user.pretty_name}"
+            )
+            userservice.log_ip(fields["ip"])
         else:
-            raise exceptions.rest.RequestError('Invalid fields')
+            raise exceptions.rest.RequestError("Invalid fields")
 
         # Log change
         log.log(parent, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
         log.log(userservice, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
 
-        return {'id': userservice.uuid}
+        return {"id": userservice.uuid}
 
-    def reset(self, parent: 'models.ServicePool', item: str) -> typing.Any:
+    def reset(self, parent: "models.ServicePool", item: str) -> typing.Any:
         userservice = parent.userServices.get(uuid=process_uuid(item))
         UserServiceManager.manager().reset(userservice)
 
@@ -363,52 +362,52 @@ class CachedService(AssignedUserService):
         return self.do_get_item_position(for_cached=True, parent=parent, item_uuid=item_uuid)
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult['UserServiceItem']:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult["UserServiceItem"]:
         return self.do_get_items(parent, for_cached=True)
 
     @typing.override
     def get_item(
         self,
-        parent: 'Model',
+        parent: "Model",
         item: str,
-    ) -> 'UserServiceItem':
+    ) -> "UserServiceItem":
         return self.do_get_item(parent, item, for_cached=True)
 
     @typing.override
-    def get_table(self, parent: 'Model') -> types.rest.TableInfo:
+    def get_table(self, parent: "Model") -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, models.ServicePool)
         table_info = (
-            ui_utils.TableBuilder(_('Cached Services'))
-            .datetime_column(name='creation_date', title=_('Creation date'))
-            .text_column(name='revision', title=_('Revision'))
-            .text_column(name='unique_id', title='Unique ID')
-            .text_column(name='ip', title=_('IP'))
-            .text_column(name='friendly_name', title=_('Friendly name'))
-            .dict_column(name='state', title=_('State'), dct=State.literals_dict())
-            .with_field_mappings(revision='deployed_service.publications.revision')
-            .with_filter_fields('creation_date', 'unique_id', 'friendly_name', 'state')
+            ui_utils.TableBuilder(_("Cached Services"))
+            .datetime_column(name="creation_date", title=_("Creation date"))
+            .text_column(name="revision", title=_("Revision"))
+            .text_column(name="unique_id", title="Unique ID")
+            .text_column(name="ip", title=_("IP"))
+            .text_column(name="friendly_name", title=_("Friendly name"))
+            .dict_column(name="state", title=_("State"), dct=State.literals_dict())
+            .with_field_mappings(revision="deployed_service.publications.revision")
+            .with_filter_fields("creation_date", "unique_id", "friendly_name", "state")
         )
         if parent.state != State.LOCKED:
-            table_info = table_info.text_column(name='cache_level', title=_('Cache level')).text_column(
-                name='actor_version', title=_('Actor version')
+            table_info = table_info.text_column(name="cache_level", title=_("Cache level")).text_column(
+                name="actor_version", title=_("Actor version")
             )
 
         return table_info.build()
 
     @typing.override
-    def delete_item(self, parent: 'Model', item: str, cache: bool = False) -> None:
+    def delete_item(self, parent: "Model", item: str, cache: bool = False) -> None:
         return super().delete_item(parent, item, cache=True)
 
     @typing.override
-    def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
+    def get_logs(self, parent: "Model", item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.ServicePool)
         try:
             userservice = parent.cached_users_services().get(uuid=process_uuid(item))
-            logger.debug('Getting logs for %s', item)
+            logger.debug("Getting logs for %s", item)
             return log.get_logs(userservice)
         except Exception as e:
-            logger.error('Error getting user service logs for %s: %s', item, e)
-            raise exceptions.rest.ResponseError(_('Error getting user service logs')) from None
+            logger.error("Error getting user service logs for %s: %s", item, e)
+            raise exceptions.rest.ResponseError(_("Error getting user service logs")) from None
 
 
 @dataclasses.dataclass
@@ -429,8 +428,8 @@ class Groups(DetailHandler[GroupItem]):
     """
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult['GroupItem']:
-        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult["GroupItem"]:
+        parent = typing.cast("models.ServicePool | models.MetaPool", parent)
 
         return [
             GroupItem(
@@ -440,7 +439,7 @@ class Groups(DetailHandler[GroupItem]):
                 group_name=group.pretty_name,
                 comments=group.comments,
                 state=group.state,
-                type='meta' if group.is_meta else 'group',
+                type="meta" if group.is_meta else "group",
                 auth_name=group.manager.name,
             )
             for group in typing.cast(
@@ -450,44 +449,44 @@ class Groups(DetailHandler[GroupItem]):
 
     @typing.override
     def get_item(self, parent: Model, item: str) -> GroupItem:
-        raise exceptions.rest.NotSupportedError('Single group retrieval not implemented inside assigned groups')
+        raise exceptions.rest.NotSupportedError("Single group retrieval not implemented inside assigned groups")
 
     @typing.override
-    def get_table(self, parent: 'Model') -> TableInfo:
-        typing.cast('models.ServicePool | models.MetaPool', parent)  # Just ensures type
+    def get_table(self, parent: "Model") -> TableInfo:
+        typing.cast("models.ServicePool | models.MetaPool", parent)  # Just ensures type
         return (
-            ui_utils.TableBuilder(_('Assigned groups'))
-            .text_column(name='group_name', title=_('Name'))
-            .text_column(name='comments', title=_('comments'))
-            .dict_column(name='state', title=_('State'), dct=State.literals_dict())
-            .row_style(prefix='row-state-', field='state')
+            ui_utils.TableBuilder(_("Assigned groups"))
+            .text_column(name="group_name", title=_("Name"))
+            .text_column(name="comments", title=_("comments"))
+            .dict_column(name="state", title=_("State"), dct=State.literals_dict())
+            .row_style(prefix="row-state-", field="state")
             .build()
         )
 
     @typing.override
-    def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
-        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
+    def save_item(self, parent: "Model", item: str | None) -> typing.Any:
+        parent = typing.cast("models.ServicePool | models.MetaPool", parent)
 
-        group: models.Group = models.Group.objects.get(uuid=process_uuid(self._params['id']))
+        group: models.Group = models.Group.objects.get(uuid=process_uuid(self._params["id"]))
         parent.assignedGroups.add(group)
         log.log(
             parent,
             types.log.LogLevel.INFO,
-            f'Added group {group.pretty_name} by {self._user.pretty_name}',
+            f"Added group {group.pretty_name} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
-        return {'id': group.uuid}
+        return {"id": group.uuid}
 
     @typing.override
-    def delete_item(self, parent: 'Model', item: str) -> None:
-        parent = typing.cast('models.ServicePool | models.MetaPool', parent)
+    def delete_item(self, parent: "Model", item: str) -> None:
+        parent = typing.cast("models.ServicePool | models.MetaPool", parent)
         group: models.Group = models.Group.objects.get(uuid=process_uuid(self._args[0]))
         parent.assignedGroups.remove(group)
         log.log(
             parent,
             types.log.LogLevel.INFO,
-            f'Removed group {group.pretty_name} by {self._user.pretty_name}',
+            f"Removed group {group.pretty_name} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
@@ -508,7 +507,7 @@ class Transports(DetailHandler[TransportItem]):
     """
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult['TransportItem']:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult["TransportItem"]:
         parent = ensure.is_instance(parent, models.ServicePool)
 
         return [
@@ -524,46 +523,44 @@ class Transports(DetailHandler[TransportItem]):
         ]
 
     @typing.override
-    def get_item(self, parent: 'Model', item: str) -> TransportItem:
-        raise exceptions.rest.NotSupportedError(
-            'Single transport retrieval not implemented inside assigned transports'
-        )
+    def get_item(self, parent: "Model", item: str) -> TransportItem:
+        raise exceptions.rest.NotSupportedError("Single transport retrieval not implemented inside assigned transports")
 
     @typing.override
-    def get_table(self, parent: 'Model') -> TableInfo:
+    def get_table(self, parent: "Model") -> TableInfo:
         ensure.is_instance(parent, models.ServicePool)  # Just ensures type
         return (
-            ui_utils.TableBuilder(_('Assigned transports'))
-            .numeric_column(name='priority', title=_('Priority'), width='6em')
-            .text_column(name='name', title=_('Name'))
-            .text_column(name='trans_type', title=_('Type'))
-            .text_column(name='comments', title=_('Comments'))
+            ui_utils.TableBuilder(_("Assigned transports"))
+            .numeric_column(name="priority", title=_("Priority"), width="6em")
+            .text_column(name="name", title=_("Name"))
+            .text_column(name="trans_type", title=_("Type"))
+            .text_column(name="comments", title=_("Comments"))
             .build()
         )
 
     @typing.override
-    def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
+    def save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServicePool)
-        transport: models.Transport = models.Transport.objects.get(uuid=process_uuid(self._params['id']))
+        transport: models.Transport = models.Transport.objects.get(uuid=process_uuid(self._params["id"]))
         parent.transports.add(transport)
         log.log(
             parent,
             types.log.LogLevel.INFO,
-            f'Added transport {transport.name} by {self._user.pretty_name}',
+            f"Added transport {transport.name} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
-        return {'id': transport.uuid}
+        return {"id": transport.uuid}
 
     @typing.override
-    def delete_item(self, parent: 'Model', item: str) -> None:
+    def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
         transport: models.Transport = models.Transport.objects.get(uuid=process_uuid(self._args[0]))
         parent.transports.remove(transport)
         log.log(
             parent,
             types.log.LogLevel.INFO,
-            f'Removed transport {transport.name} by {self._user.pretty_name}',
+            f"Removed transport {transport.name} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
@@ -585,40 +582,37 @@ class Publications(DetailHandler[PublicationItem]):
 
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'publish',
+            "publish",
             method=types.rest.CustomMethodMethod.POST,
-            description='Start a new publication for a deployed service, optionally with a changelog message',
+            description="Start a new publication for a deployed service, optionally with a changelog message",
             params=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    'changelog': types.rest.api.SchemaProperty(
-                        type='string',
-                        description='Optional changelog message for the publication',
+                    "changelog": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Optional changelog message for the publication",
                     ),
                 },
             ),
         ),
         types.rest.ModelCustomMethod(
-            'cancel',
+            "cancel",
             method=types.rest.CustomMethodMethod.POST,
-            description='Cancel a running publication; invoking twice forces an immediate cancellation',
+            description="Cancel a running publication; invoking twice forces an immediate cancellation",
         ),
     ]  # We provided these custom methods
 
-    def publish(self, parent: 'Model') -> typing.Any:
+    def publish(self, parent: "Model") -> typing.Any:
         """
         Custom method "publish", provided to initiate a publication of a deployed service
         :param parent: Parent service pool
         """
         parent = ensure.is_instance(parent, models.ServicePool)
-        change_log = self._params['changelog'] if 'changelog' in self._params else None
+        change_log = self._params["changelog"] if "changelog" in self._params else None
 
-        if (
-            permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT)
-            is False
-        ):
-            logger.debug('Management Permission failed for user %s', self._user)
-            raise exceptions.rest.AccessDenied(_('Access denied to publish service pool')) from None
+        if permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT) is False:
+            logger.debug("Management Permission failed for user %s", self._user)
+            raise exceptions.rest.AccessDenied(_("Access denied to publish service pool")) from None
 
         logger.debug('Custom "publish" invoked for %s', parent)
         parent.publish(change_log)  # Can raise exceptions that will be processed on response
@@ -626,13 +620,13 @@ class Publications(DetailHandler[PublicationItem]):
         log.log(
             parent,
             types.log.LogLevel.INFO,
-            f'Initiated publication v{parent.current_pub_revision} by {self._user.pretty_name}',
+            f"Initiated publication v{parent.current_pub_revision} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
         return self.success()
 
-    def cancel(self, parent: 'Model', uuid: str) -> typing.Any:
+    def cancel(self, parent: "Model", uuid: str) -> typing.Any:
         """
         Invoked to cancel a running publication
         Double invocation (this means, invoking cancel twice) will mean that is a "forced cancelation"
@@ -640,12 +634,9 @@ class Publications(DetailHandler[PublicationItem]):
         :param uuid: uuid of the publication
         """
         parent = ensure.is_instance(parent, models.ServicePool)
-        if (
-            permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT)
-            is False
-        ):
-            logger.debug('Management Permission failed for user %s', self._user)
-            raise exceptions.rest.AccessDenied(_('Access denied to cancel service pool publication')) from None
+        if permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT) is False:
+            logger.debug("Management Permission failed for user %s", self._user)
+            raise exceptions.rest.AccessDenied(_("Access denied to cancel service pool publication")) from None
 
         try:
             ds = models.ServicePoolPublication.objects.get(uuid=process_uuid(uuid))
@@ -656,14 +647,14 @@ class Publications(DetailHandler[PublicationItem]):
         log.log(
             parent,
             types.log.LogLevel.INFO,
-            f'Canceled publication v{parent.current_pub_revision} by {self._user.pretty_name}',
+            f"Canceled publication v{parent.current_pub_revision} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
         return self.success()
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult['PublicationItem']:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult["PublicationItem"]:
         parent = ensure.is_instance(parent, models.ServicePool)
         return [
             PublicationItem(
@@ -671,28 +662,28 @@ class Publications(DetailHandler[PublicationItem]):
                 revision=i.revision,
                 publish_date=i.publish_date,
                 state=i.state,
-                reason=State.from_str(i.state).is_errored() and i.get_instance().error_reason() or '',
+                reason=State.from_str(i.state).is_errored() and i.get_instance().error_reason() or "",
                 state_date=i.state_date,
             )
             for i in self.filter_odata_queryset(parent.publications.all())
         ]
 
     @typing.override
-    def get_item(self, parent: 'Model', item: str) -> PublicationItem:
+    def get_item(self, parent: "Model", item: str) -> PublicationItem:
         raise exceptions.rest.NotSupportedError(
-            'Single publication retrieval not implemented inside assigned publications'
+            "Single publication retrieval not implemented inside assigned publications"
         )
 
     @typing.override
-    def get_table(self, parent: 'Model') -> TableInfo:
+    def get_table(self, parent: "Model") -> TableInfo:
         ensure.is_instance(parent, models.ServicePool)  # Just ensures type
         return (
-            ui_utils.TableBuilder(_('Publications'))
-            .numeric_column(name='revision', title=_('Revision'), width='6em')
-            .datetime_column(name='publish_date', title=_('Publish date'))
-            .dict_column(name='state', title=_('State'), dct=State.literals_dict())
-            .text_column(name='reason', title=_('Reason'))
-            .row_style(prefix='row-state-', field='state')
+            ui_utils.TableBuilder(_("Publications"))
+            .numeric_column(name="revision", title=_("Revision"), width="6em")
+            .datetime_column(name="publish_date", title=_("Publish date"))
+            .dict_column(name="state", title=_("State"), dct=State.literals_dict())
+            .text_column(name="reason", title=_("Reason"))
+            .row_style(prefix="row-state-", field="state")
         ).build()
 
 
@@ -709,7 +700,7 @@ class Changelog(DetailHandler[ChangelogItem]):
     """
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult['ChangelogItem']:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult["ChangelogItem"]:
         parent = ensure.is_instance(parent, models.ServicePool)
         return [
             ChangelogItem(
@@ -721,15 +712,15 @@ class Changelog(DetailHandler[ChangelogItem]):
         ]
 
     @typing.override
-    def get_item(self, parent: 'Model', item: str) -> ChangelogItem:
-        raise exceptions.rest.NotSupportedError('Single changelog retrieval not implemented inside changelog')
+    def get_item(self, parent: "Model", item: str) -> ChangelogItem:
+        raise exceptions.rest.NotSupportedError("Single changelog retrieval not implemented inside changelog")
 
     @typing.override
-    def get_table(self, parent: 'Model') -> types.rest.TableInfo:
+    def get_table(self, parent: "Model") -> types.rest.TableInfo:
         ensure.is_instance(parent, models.ServicePool)  # Just ensures type
         return (
-            ui_utils.TableBuilder(_('Changelog'))
-            .numeric_column(name='revision', title=_('Revision'), width='6em')
-            .datetime_column(name='stamp', title=_('Publish date'))
-            .text_column(name='log', title=_('Comment'))
+            ui_utils.TableBuilder(_("Changelog"))
+            .numeric_column(name="revision", title=_("Revision"), width="6em")
+            .datetime_column(name="stamp", title=_("Publish date"))
+            .text_column(name="log", title=_("Comment"))
         ).build()

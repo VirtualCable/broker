@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import os.path
 import random
 
@@ -40,7 +41,7 @@ from uds.core.managers.downloads import DownloadsManager
 
 
 class DownloadsManagerTest(WEBTestCase):
-    filePath: str = ''
+    filePath: str = ""
     manager: DownloadsManager
 
     @classmethod
@@ -49,22 +50,22 @@ class DownloadsManagerTest(WEBTestCase):
 
         super().setUpClass()
 
-        cls.filePath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloadable.txt')
+        cls.filePath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloadable.txt")
         cls.manager = downloads_manager()
 
     def test_downloads(self) -> None:
         for v in (
-            ('test.txt', 'text/plain', '1f47ec0a-1ad4-5d63-b41c-5d2befadab8d'),
+            ("test.txt", "text/plain", "1f47ec0a-1ad4-5d63-b41c-5d2befadab8d"),
             (
-                'test.bin',
-                'application/octet-stream',
-                '6454d619-cc62-5bd4-aa9a-c9e2458d44da',
+                "test.bin",
+                "application/octet-stream",
+                "6454d619-cc62-5bd4-aa9a-c9e2458d44da",
             ),
         ):
             filename, mimetype, known_uuid = v
             self.manager.register(
                 filename,
-                'This is the test file {}'.format(filename),
+                "This is the test file {}".format(filename),
                 self.filePath,
                 mimetype=mimetype,
                 legacy=random.choice([True, False]),
@@ -75,31 +76,31 @@ class DownloadsManagerTest(WEBTestCase):
             self.assertIn(
                 known_uuid,
                 downloadables,
-                'The File {} was not found in downloadables!'.format(filename),
+                "The File {} was not found in downloadables!".format(filename),
             )
 
             # Downloadables are allowed by admin or staff
             self.login(as_admin=True)
 
             # This will fail, no user has logged in
-            self.client.get(reverse('utility.downloader', kwargs={'download_id': known_uuid}))
+            self.client.get(reverse("utility.downloader", kwargs={"download_id": known_uuid}))
             # Remove last '/' for redirect check. URL redirection will not contain it
             # Commented because i don't know why when executed in batch returns the last '/', and alone don't
             # self.assertRedirects(response, reverse('uds.web.views.login'), fetch_redirect_response=False)
 
             # And try to download again
-            response = self.client.get(reverse('utility.downloader', kwargs={'download_id': known_uuid}))
+            response = self.client.get(reverse("utility.downloader", kwargs={"download_id": known_uuid}))
             self.assertEqual(
-                response.get('Content-Type'),
+                response.get("Content-Type"),
                 mimetype,
-                'Mime type of {} is not {} as expected (it is {})'.format(
-                    filename, mimetype, response.get('Content-Type')
+                "Mime type of {} is not {} as expected (it is {})".format(
+                    filename, mimetype, response.get("Content-Type")
                 ),
             )
             self.assertContains(
                 response,
-                'This file is the downloadable for download manager tests',
-                msg_prefix='File does not seems to be fine',
+                "This file is the downloadable for download manager tests",
+                msg_prefix="File does not seems to be fine",
             )
 
             # Now do logout

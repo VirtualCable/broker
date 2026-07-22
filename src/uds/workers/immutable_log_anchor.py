@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImmutableLogAnchorJob(Job):
-    friendly_name = 'Immutable Log Anchor'
+    friendly_name = "Immutable Log Anchor"
 
     @typing.override
     def next_execution_delay(self) -> int:

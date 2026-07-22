@@ -4,9 +4,10 @@
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
 #
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import logging
 import typing
 
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable):
-    '''
+    """
     This class generates the user consumable elements of the service tree.
 
     After creating at administration interface an Deployed Service, UDS will
@@ -34,7 +35,7 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
 
     The logic for managing vmware deployments (user machines in this case) is here.
 
-    '''
+    """
 
     # Due to Openshift not providing on early stage the id of the vm, we need to wait until the name is created
     # before destroying it, so we can find the vm by name.
@@ -70,21 +71,21 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
     ]
 
     @typing.override
-    def service(self) -> 'OpenshiftService':
+    def service(self) -> "OpenshiftService":
         """
         Get the Openshift service.
         """
-        return typing.cast('OpenshiftService', super().service())
+        return typing.cast("OpenshiftService", super().service())
 
     @typing.override
-    def publication(self) -> 'OpenshiftTemplatePublication':
+    def publication(self) -> "OpenshiftTemplatePublication":
         """
         Get the Openshift publication.
         """
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('OpenshiftTemplatePublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("OpenshiftTemplatePublication", pub)
 
     @typing.override
     def op_create(self) -> None:

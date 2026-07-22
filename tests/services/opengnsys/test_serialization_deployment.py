@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import pickle
 import typing
 
@@ -54,16 +55,16 @@ from uds.services.OpenGnsys import deployment as deployment
 #     self._queue = pickle.loads(
 #         vals[7]
 #     )  # nosec: not insecure, we are loading our own data
-    
+
 # self.flag_for_upgrade()  # Flag so manager can save it again with new format
 EXPECTED_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_ip',
-    '_mac',
-    '_machine_id',
-    '_reason',
-    '_stamp',
-    '_queue',
+    "_name",
+    "_ip",
+    "_mac",
+    "_machine_id",
+    "_reason",
+    "_stamp",
+    "_queue",
 }
 
 TEST_QUEUE: typing.Final[list[deployment.Operation]] = [
@@ -73,17 +74,18 @@ TEST_QUEUE: typing.Final[list[deployment.Operation]] = [
 ]
 
 SERIALIZED_DEPLOYMENT_DATA: typing.Final[typing.Mapping[str, bytes]] = {
-    'v1': b'v1\x01name\x01ip\x01mac\x01vmid\x01reason\x011234567\x01' + pickle.dumps(TEST_QUEUE, protocol=0),
+    "v1": b"v1\x01name\x01ip\x01mac\x01vmid\x01reason\x011234567\x01" + pickle.dumps(TEST_QUEUE, protocol=0),
 }
 LAST_VERSION: typing.Final[str] = sorted(SERIALIZED_DEPLOYMENT_DATA.keys(), reverse=True)[0]
 
+
 class OpenGnsysDeploymentSerializationTest(UDSTransactionTestCase):
     def check(self, instance: deployment.OpenGnsysUserService) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._ip, 'ip')
-        self.assertEqual(instance._mac, 'mac')
-        self.assertEqual(instance._machine_id, 'vmid')
-        self.assertEqual(instance._reason, 'reason')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._ip, "ip")
+        self.assertEqual(instance._mac, "mac")
+        self.assertEqual(instance._machine_id, "vmid")
+        self.assertEqual(instance._reason, "reason")
         self.assertEqual(instance._stamp, 1234567)
         self.assertEqual(instance._queue, TEST_QUEUE)
 
@@ -91,23 +93,23 @@ class OpenGnsysDeploymentSerializationTest(UDSTransactionTestCase):
         # queue is kept on "storage", so we need always same environment
         environment = Environment.testing_environment()
 
-        def _create_instance(unmarshal_data: 'bytes|None' = None) -> deployment.OpenGnsysUserService:
-            instance = deployment.OpenGnsysUserService(environment=environment, service=None)   # type: ignore
+        def _create_instance(unmarshal_data: "bytes|None" = None) -> deployment.OpenGnsysUserService:
+            instance = deployment.OpenGnsysUserService(environment=environment, service=None)  # type: ignore
             if unmarshal_data:
                 instance.unmarshal(unmarshal_data)
             return instance
-        
+
         for v in range(1, len(SERIALIZED_DEPLOYMENT_DATA) + 1):
-            version = f'v{v}'
+            version = f"v{v}"
             instance = _create_instance(SERIALIZED_DEPLOYMENT_DATA[version])
             self.check(instance)
             # Ensure remarshalled flag is set
             self.assertTrue(instance.needs_upgrade())
             instance.mark_for_upgrade(False)  # reset flag
-            
+
             marshaled_data = instance.marshal()
-            self.assertFalse(marshaled_data.startswith(b'\v'))  # Ensure fields has been marshalled using new format
-            
+            self.assertFalse(marshaled_data.startswith(b"\v"))  # Ensure fields has been marshalled using new format
+
             instance = _create_instance(marshaled_data)
             self.assertFalse(instance.needs_upgrade())  # Reunmarshall again and check that remarshalled flag is not set
             self.check(instance)
@@ -116,9 +118,9 @@ class OpenGnsysDeploymentSerializationTest(UDSTransactionTestCase):
         # queue is kept on "storage", so we need always same environment
         environment = Environment.testing_environment()
         # Store queue
-        environment.storage.save_pickled('queue', TEST_QUEUE)
+        environment.storage.save_pickled("queue", TEST_QUEUE)
 
-        def _create_instance(unmarshal_data: 'bytes|None' = None) -> deployment.OpenGnsysUserService:
+        def _create_instance(unmarshal_data: "bytes|None" = None) -> deployment.OpenGnsysUserService:
             instance = deployment.OpenGnsysUserService(environment=environment, service=None)  # type: ignore
             if unmarshal_data:
                 instance.unmarshal(unmarshal_data)

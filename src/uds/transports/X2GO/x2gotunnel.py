@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -59,22 +60,22 @@ class TX2GOTransport(BaseX2GOTransport):
 
     is_base = False
 
-    icon_file = 'x2go-tunnel.png'
-    type_name = _('X2Go')
-    type_type = 'TX2GOTransport'
-    type_description = _('X2Go access (Experimental). Tunneled connection.')
+    icon_file = "x2go-tunnel.png"
+    type_name = _("X2Go")
+    type_type = "TX2GOTransport"
+    type_description = _("X2Go access (Experimental). Tunneled connection.")
     group = types.transports.Grouping.TUNNELED
 
     tunnel = fields.tunnel_field()
     startup_time = fields.tunnel_startup_time_secs()
 
     verify_certificate = gui.CheckBoxField(
-        label=_('Force SSL certificate verification'),
+        label=_("Force SSL certificate verification"),
         order=23,
-        tooltip=_('If enabled, the certificate of tunnel server will be verified (recommended).'),
+        tooltip=_("If enabled, the certificate of tunnel server will be verified (recommended)."),
         default=False,
         tab=types.ui.Tab.TUNNEL,
-        old_field_name='verifyCertificate',
+        old_field_name="verifyCertificate",
     )
 
     fixed_name = BaseX2GOTransport.fixed_name
@@ -91,20 +92,20 @@ class TX2GOTransport(BaseX2GOTransport):
     quality = BaseX2GOTransport.quality
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         pass
 
     @typing.override
     def get_transport_script(
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
-    ) -> 'types.transports.TransportScript':
+        request: "ExtendedHttpRequestWithUser",
+    ) -> "types.transports.TransportScript":
         ci = self.get_connection_info(userservice, user, password)
 
         private_key, _public_key = self.get_and_push_key(ci.username, userservice)
@@ -141,18 +142,18 @@ class TX2GOTransport(BaseX2GOTransport):
         tunnel_host, tunnel_port = tunnel_field.host, tunnel_field.port
 
         sp = {
-            'tunnel': {
-                'host': tunnel_host,
-                'port': tunnel_port,
-                'ticket': ticket,
-                'startup_time': self.startup_time.as_int() * 1000,  # In milliseconds
-                'verify_ssl': self.verify_certificate.as_bool(),
+            "tunnel": {
+                "host": tunnel_host,
+                "port": tunnel_port,
+                "ticket": ticket,
+                "startup_time": self.startup_time.as_int() * 1000,  # In milliseconds
+                "verify_ssl": self.verify_certificate.as_bool(),
             },
-            'key': private_key,
-            'xf': xf,
+            "key": private_key,
+            "xf": xf,
         }
 
         try:
-            return self.get_script(os.os.os_name(), 'tunnel', sp, associated_ticket=ticket)
+            return self.get_script(os.os.os_name(), "tunnel", sp, associated_ticket=ticket)
         except Exception:
             return super().get_transport_script(userservice, transport, ip, os, user, password, request)

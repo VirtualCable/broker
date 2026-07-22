@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import logging
 import typing
@@ -73,11 +74,11 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
     # How many "retries" operation on same state will be allowed before giving up
     max_retries: typing.ClassVar[int] = consts.services.USRV_MAX_RETRIES
 
-    _name = autoserializable.StringField(default='')
-    _mac = autoserializable.StringField(default='')
-    _vmid = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
-    _task = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="")
+    _mac = autoserializable.StringField(default="")
+    _vmid = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
+    _task = autoserializable.StringField(default="")
     _queue = autoserializable.ListField[types.services.Operation](cast=types.services.Operation.from_int)
 
     # Note that even if SNAPHSHOT operations are in middel
@@ -120,30 +121,30 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
     @typing.final
     def _reset_checks_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['exec_count'] = 0
+            data["exec_count"] = 0
 
     @typing.final
     def _inc_checks_counter(self, info: str | None = None) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            count = data.get('exec_count', 0) + 1
-            data['exec_count'] = count
+            count = data.get("exec_count", 0) + 1
+            data["exec_count"] = count
         if count > self.max_state_checks:
-            return self.error(f'Max checks reached on {info or "unknown"}')
+            return self.error(f"Max checks reached on {info or 'unknown'}")
         return None
 
     @typing.final
     def _reset_retries_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['retries'] = 0
+            data["retries"] = 0
 
     @typing.final
     def _inc_retries_counter(self) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            retries = data.get('retries', 0) + 1
-            data['retries'] = retries
+            retries = data.get("retries", 0) + 1
+            data["retries"] = retries
 
         if retries > self.max_retries:  # get "own class" max retries
-            return self.error('Max retries reached')
+            return self.error("Max retries reached")
 
         return None
 
@@ -156,7 +157,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
             State.ERROR, so we can do "return self._error(reason)"
         """
         reason = str(reason)
-        logger.debug('Setting error state, reason: %s (%s)', reason, self._queue, stack_info=True, stacklevel=3)
+        logger.debug("Setting error state, reason: %s (%s)", reason, self._queue, stack_info=True, stacklevel=3)
         self.do_log(types.log.LogLevel.ERROR, reason)
 
         if self._vmid:
@@ -164,11 +165,11 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
                 try:
                     self.service().remove_and_free(self._vmid)
                     self.service().snapshot_recovery(userservice_instance=self)
-                    self._vmid = ''
+                    self._vmid = ""
                 except Exception as e:
-                    logger.exception('Exception removing machine: %s', e)
+                    logger.exception("Exception removing machine: %s", e)
             else:
-                logger.debug('Keep on error is enabled, not removing machine')
+                logger.debug("Keep on error is enabled, not removing machine")
                 self._queue = [types.services.Operation.FINISH]
                 return types.states.TaskState.FINISHED
 
@@ -178,7 +179,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
 
     @typing.final
     def _execute_queue(self) -> types.states.TaskState:
-        self._debug('executeQueue')
+        self._debug("executeQueue")
         op = self._current_op()
 
         if op == types.services.Operation.ERROR:
@@ -201,7 +202,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
             # This is a retryable error, so we will retry later
             return self.retry_later()
         except Exception as e:
-            logger.exception('Unexpected FixedUserService exception: %s', e)
+            logger.exception("Unexpected FixedUserService exception: %s", e)
             return self.error(str(e))
 
     @typing.final
@@ -214,15 +215,15 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         In any case, if we overpass the max retries, we will set the machine to error state
         """
         if self._inc_retries_counter() is not None:
-            return self.error('Max retries reached')
+            return self.error("Max retries reached")
         self._queue.insert(0, types.services.Operation.RETRY)
         return types.states.TaskState.FINISHED
 
     # Utility overrides for type checking...
     # Probably, overriden again on child classes
     @typing.override
-    def service(self) -> 'service.FixedService':
-        return typing.cast('service.FixedService', super().service())
+    def service(self) -> "service.FixedService":
+        return typing.cast("service.FixedService", super().service())
 
     @typing.final
     @typing.override
@@ -232,7 +233,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
     @typing.final
     @typing.override
     def set_ip(self, ip: str) -> None:
-        logger.debug('Setting IP to %s (ignored!!)', ip)
+        logger.debug("Setting IP to %s (ignored!!)", ip)
 
     @typing.final
     @typing.override
@@ -246,19 +247,19 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
             if self._vmid:
                 return self.service().get_ip(self._vmid)
         except exceptions.services.generics.NotFoundError:
-            self.do_log(types.log.LogLevel.ERROR, f'Machine not found: {self._vmid}::{self._name}')
+            self.do_log(types.log.LogLevel.ERROR, f"Machine not found: {self._vmid}::{self._name}")
 
         except Exception:  # No ip already assigned, wait...
             pass
-        return ''
+        return ""
 
     @typing.final
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
         """
-        logger.debug('Deploying for user')
+        logger.debug("Deploying for user")
         self._vmid = self.service().get_and_assign()
         # copy is needed to avoid modifying class var, and access using instance allowing to get, if provided, overriden queue
         self._queue = self._create_queue.copy()
@@ -270,7 +271,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         Fixed Userservice does not provided "cached" elements
         """
-        return self.error('Cache for fixed userservices not supported')
+        return self.error("Cache for fixed userservices not supported")
 
     @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
@@ -284,22 +285,22 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
     def set_ready(self) -> types.states.TaskState:
         # If already ready, return finished
         try:
-            if self.cache.get('ready', '0') == '1':
+            if self.cache.get("ready", "0") == "1":
                 self._queue = [types.services.Operation.FINISH]
             elif self.service().is_ready(self._vmid):
-                self.cache.put('ready', '1', consts.cache.SHORT_CACHE_TIMEOUT // 2)  # short cache timeout
+                self.cache.put("ready", "1", consts.cache.SHORT_CACHE_TIMEOUT // 2)  # short cache timeout
                 self._queue = [types.services.Operation.FINISH]
             else:
                 self._queue = [types.services.Operation.START, types.services.Operation.FINISH]
         except exceptions.services.generics.NotFoundError:
-            return self.error('Machine not found')
+            return self.error("Machine not found")
         except Exception as e:
-            return self.error(f'Error on set_ready: {e}')
+            return self.error(f"Error on set_ready: {e}")
         return self._execute_queue()
 
     @typing.final
     def assign(self, vmid: str) -> types.states.TaskState:
-        logger.debug('Assigning from VM {}'.format(vmid))
+        logger.debug("Assigning from VM {}".format(vmid))
         self._vmid = vmid
         self._queue = FixedUserService._assign_queue.copy()  # copy is needed to avoid modifying class var
         return self._execute_queue()
@@ -310,7 +311,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         Check what operation is going on, and acts acordly to it
         """
-        self._debug('check_state')
+        self._debug("check_state")
         op = self._current_op()
 
         if op == types.services.Operation.ERROR:
@@ -347,9 +348,9 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
             # And it has not been removed from the queue
             return types.states.TaskState.RUNNING
         except exceptions.services.generics.NotFoundError as e:
-            return self.error(f'Machine not found ({e})')
+            return self.error(f"Machine not found ({e})")
         except Exception as e:
-            logger.exception('Unexpected UserService check exception: %s', e)
+            logger.exception("Unexpected UserService check exception: %s", e)
             return self.error(e)
 
     @typing.final
@@ -364,8 +365,8 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         Deploys a machine from template for user/cache
         """
-        self._mac = self.service().get_mac(self._vmid) or ''
-        self._name = self.service().get_name(self._vmid) or f'VM-{self._vmid}'
+        self._mac = self.service().get_mac(self._vmid) or ""
+        self._name = self.service().get_name(self._vmid) or f"VM-{self._vmid}"
 
     @typing.final
     def op_snapshot_create(self) -> None:
@@ -482,7 +483,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         Invoked when the core notices that the deployment of a service has finished.
         (No matter wether it is for cache or for an user)
         """
-        logger.debug('Finished machine %s', self._name)
+        logger.debug("Finished machine %s", self._name)
 
     @typing.final
     @typing.override
@@ -517,7 +518,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         When administrator requests it, the cancel is "delayed" and not
         invoked directly.
         """
-        logger.debug('Canceling %s with taskid=%s, vmid=%s', self._name, self._task, self._vmid)
+        logger.debug("Canceling %s with taskid=%s, vmid=%s", self._name, self._task, self._vmid)
         return self.destroy()
 
     @staticmethod
@@ -530,7 +531,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         # logger.debug('_mac {0}: {1}'.format(txt, self._mac))
         # logger.debug('_vmId {0}: {1}'.format(txt, self._vmId))
         logger.debug(
-            'Queue at %s for %s: %s, mac:%s, vmid:%s, task:%s',
+            "Queue at %s for %s: %s, mac:%s, vmid:%s, task:%s",
             txt,
             self._name,
             [FixedUserService._op2str(op) for op in self._queue],

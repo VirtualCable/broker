@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -56,27 +57,27 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
 
     suggested_delay = 20  # : Suggested recheck time if publication is unfinished in seconds
 
-    _name = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
     _destroy_after = autoserializable.BoolField(default=False)
-    _template_id = autoserializable.StringField(default='')
-    _state = autoserializable.StringField(default='r')
+    _template_id = autoserializable.StringField(default="")
+    _state = autoserializable.StringField(default="r")
 
     @typing.override
-    def service(self) -> 'OVirtLinkedService':
-        return typing.cast('OVirtLinkedService', super().service())
+    def service(self) -> "OVirtLinkedService":
+        return typing.cast("OVirtLinkedService", super().service())
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        logger.debug('Data: %s', data)
-        vals = data.decode('utf8').split('\t')
-        if vals[0] == 'v1':
+        logger.debug("Data: %s", data)
+        vals = data.decode("utf8").split("\t")
+        if vals[0] == "v1":
             (
                 self._name,
                 self._reason,
@@ -85,9 +86,9 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
                 self._state,
             ) = vals[1:]
         else:
-            raise ValueError('Invalid data format')
+            raise ValueError("Invalid data format")
 
-        self._destroy_after = destroy_after == 't'
+        self._destroy_after = destroy_after == "t"
         self.mark_for_upgrade()  # Mark so manager knows it has to be saved again
 
     @typing.override
@@ -95,20 +96,16 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
         """
         Realizes the publication of the service
         """
-        self._name = self.service().sanitized_name(
-            'UDSP ' + self.servicepool_name() + "-" + str(self.revision())
-        )
-        comments = _('UDS pub for {0} at {1}').format(
-            self.servicepool_name(), str(timezone.localtime()).split('.')[0]
-        )
-        self._reason = ''  # No error, no reason for it
+        self._name = self.service().sanitized_name("UDSP " + self.servicepool_name() + "-" + str(self.revision()))
+        comments = _("UDS pub for {0} at {1}").format(self.servicepool_name(), str(timezone.localtime()).split(".")[0])
+        self._reason = ""  # No error, no reason for it
         self._destroy_after = False
-        self._state = 'locked'
+        self._state = "locked"
 
         try:
             self._template_id = self.service().make_template(self._name, comments).id
         except Exception as e:
-            self._state = 'error'
+            self._state = "error"
             self._reason = str(e)
             return types.states.TaskState.ERROR
 
@@ -119,27 +116,27 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
         """
         Checks state of publication creation
         """
-        if self._state == 'ok':
+        if self._state == "ok":
             return types.states.TaskState.FINISHED
 
-        if self._state == 'error':
+        if self._state == "error":
             return types.states.TaskState.ERROR
 
         try:
             status = self.service().provider().api.get_template_info(self._template_id).status
             if status == ov_types.TemplateStatus.UNKNOWN:
-                raise Exception('Template has been removed!')
+                raise Exception("Template has been removed!")
 
             # If publication os done (template is ready), and cancel was requested, do it just after template becomes ready
             if status == ov_types.TemplateStatus.OK:
-                self._state = 'ok'
+                self._state = "ok"
                 if self._destroy_after:
                     self._destroy_after = False
                     return self.destroy()
                 return types.states.TaskState.FINISHED
 
         except Exception as e:
-            self._state = 'error'
+            self._state = "error"
             self._reason = str(e)
             return types.states.TaskState.ERROR
 
@@ -169,14 +166,14 @@ class OVirtPublication(Publication, autoserializable.AutoSerializable):
         types.states.TaskState.FINISHED or types.states.TaskState.ERROR.
         """
         # We do not do anything else to destroy this instance of publication
-        if self._state == 'locked':
+        if self._state == "locked":
             self._destroy_after = True
             return types.states.TaskState.RUNNING
 
         try:
             self.service().provider().api.remove_template(self._template_id)
         except Exception as e:
-            self._state = 'error'
+            self._state = "error"
             self._reason = str(e)
             return types.states.TaskState.ERROR
 

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -58,24 +59,24 @@ class ProxmoxUserServiceFixed(FixedUserService, autoserializable.AutoSerializabl
 
     """
 
-    def _store_task(self, upid: 'prox_types.ExecResult') -> None:
-        self._task = '\t'.join([upid.node, upid.upid])
+    def _store_task(self, upid: "prox_types.ExecResult") -> None:
+        self._task = "\t".join([upid.node, upid.upid])
 
     def _retrieve_task(self) -> tuple[str, str]:
-        vals = self._task.split('\t')
+        vals = self._task.split("\t")
         return (vals[0], vals[1])
 
     # Utility overrides for type checking...
     @typing.override
-    def service(self) -> 'service_fixed.ProxmoxServiceFixed':
-        return typing.cast('service_fixed.ProxmoxServiceFixed', super().service())
+    def service(self) -> "service_fixed.ProxmoxServiceFixed":
+        return typing.cast("service_fixed.ProxmoxServiceFixed", super().service())
 
     @typing.override
     def reset(self) -> types.states.TaskState:
         """
         o Proxmox, reset operation just shutdowns it until v3 support is removed
         """
-        if self._vmid != '':
+        if self._vmid != "":
             try:
                 self.service().provider().api.reset_vm(int(self._vmid))
             except Exception:  # nosec: if cannot reset, ignore it
@@ -92,7 +93,7 @@ class ProxmoxUserServiceFixed(FixedUserService, autoserializable.AutoSerializabl
 
     # Check methods
     def _check_task_finished(self) -> types.states.TaskState:
-        if self._task == '':
+        if self._task == "":
             return types.states.TaskState.FINISHED
 
         node, upid = self._retrieve_task()

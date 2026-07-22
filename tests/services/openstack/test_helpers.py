@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -53,29 +54,29 @@ from tests.utils import search_dict_by_attr
 
 class TestOpenStackHelpers(UDSTransactionTestCase):
     _parameters: dict[str, typing.Any] = {
-        'prov_uuid': 'test',
-        'project': fixtures.PROJECTS_LIST[0].id,
-        'region': fixtures.REGIONS_LIST[0].id,
+        "prov_uuid": "test",
+        "project": fixtures.PROJECTS_LIST[0].id,
+        "region": fixtures.REGIONS_LIST[0].id,
     }
 
     def test_get_api(self) -> None:
         # with fixtures.patched_provider() as provider:
         #    pass
-        with mock.patch('uds.models.Provider.objects.get') as get_provider:
+        with mock.patch("uds.models.Provider.objects.get") as get_provider:
             helpers.get_api(self._parameters)
-            get_provider.assert_called_once_with(uuid=self._parameters['prov_uuid'])
+            get_provider.assert_called_once_with(uuid=self._parameters["prov_uuid"])
 
     def test_get_resources(self) -> None:
         with fixtures.patched_provider() as provider:
-            with mock.patch('uds.models.Provider.objects.get') as get_provider:
+            with mock.patch("uds.models.Provider.objects.get") as get_provider:
                 get_provider.return_value.get_instance.return_value = provider
                 result = helpers.list_resources(self._parameters)
                 self.assertEqual(len(result), 4)
                 # These are all lists
-                availability_zone_choices = search_dict_by_attr(result, 'name', 'availability_zone')['choices']
-                network_choices = search_dict_by_attr(result, 'name', 'network')['choices']
-                flavor_choices = search_dict_by_attr(result, 'name', 'flavor')['choices']
-                security_groups_choices = search_dict_by_attr(result, 'name', 'security_groups')['choices']
+                availability_zone_choices = search_dict_by_attr(result, "name", "availability_zone")["choices"]
+                network_choices = search_dict_by_attr(result, "name", "network")["choices"]
+                flavor_choices = search_dict_by_attr(result, "name", "flavor")["choices"]
+                security_groups_choices = search_dict_by_attr(result, "name", "security_groups")["choices"]
 
                 self.assertEqual(
                     {(i.id, i.name) for i in fixtures.AVAILABILITY_ZONES_LIST},
@@ -95,11 +96,11 @@ class TestOpenStackHelpers(UDSTransactionTestCase):
 
     def test_get_volumes(self) -> None:
         with fixtures.patched_provider() as provider:
-            with mock.patch('uds.models.Provider.objects.get') as get_provider:
+            with mock.patch("uds.models.Provider.objects.get") as get_provider:
                 get_provider.return_value.get_instance.return_value = provider
                 result = helpers.list_volumes(self._parameters)
                 self.assertEqual(len(result), 1)
-                volume_choices = search_dict_by_attr(result, 'name', 'volume')['choices']
+                volume_choices = search_dict_by_attr(result, "name", "volume")["choices"]
                 self.assertEqual(
                     {(i.id, i.name) for i in fixtures.VOLUMES_LIST},
                     {(i.id, i.text) for i in volume_choices},
@@ -107,12 +108,12 @@ class TestOpenStackHelpers(UDSTransactionTestCase):
 
     def test_list_servers(self) -> None:
         with fixtures.patched_provider() as provider:
-            with mock.patch('uds.models.Provider.objects.get') as get_provider:
+            with mock.patch("uds.models.Provider.objects.get") as get_provider:
                 # api = typing.cast(mock.Mock, provider.api)
                 get_provider.return_value.get_instance.return_value = provider
                 result = helpers.list_servers(self._parameters)
                 self.assertEqual(len(result), 1)
-                server_choices = search_dict_by_attr(result, 'name', 'machines')['choices']
+                server_choices = search_dict_by_attr(result, "name", "machines")["choices"]
                 self.assertEqual(
                     {(i.id, i.name) for i in fixtures.SERVERS_LIST},
                     {(i.id, i.text) for i in server_choices},

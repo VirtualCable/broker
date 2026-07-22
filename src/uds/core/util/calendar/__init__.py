@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnknownMemberType=false
 import datetime
 import hashlib
@@ -54,7 +55,7 @@ ONE_DAY = 3600 * 24
 
 
 class CalendarChecker:
-    __slots__ = ('calendar',)
+    __slots__ = ("calendar",)
 
     calendar: Calendar
 
@@ -63,13 +64,13 @@ class CalendarChecker:
     cache_hit: typing.ClassVar[int] = 0
     hits: typing.ClassVar[int] = 0
 
-    cache: typing.ClassVar[Cache] = Cache('calChecker')
+    cache: typing.ClassVar[Cache] = Cache("calChecker")
 
     def __init__(self, calendar: Calendar) -> None:
         self.calendar = calendar
 
     def _get_minutes_state_array(self, dtime: datetime.datetime) -> bitarray.bitarray:
-        logger.debug('Updating %s', dtime)
+        logger.debug("Updating %s", dtime)
         CalendarChecker.updates += 1
 
         data = bitarray.bitarray(60 * 24)  # Granurality is minute
@@ -85,7 +86,11 @@ class CalendarChecker:
         for rule in self.calendar.rules.all():
             rr = rule.as_rrule()
 
-            r_end = timezone.make_aware(datetime.datetime.combine(rule.end, datetime.datetime.max.time())) if rule.end else None
+            r_end = (
+                timezone.make_aware(datetime.datetime.combine(rule.end, datetime.datetime.max.time()))
+                if rule.end
+                else None
+            )
 
             duration_in_minutes = rule.duration_as_minutes
             frequency_in_minutes = rule.frequency_as_minutes
@@ -120,7 +125,7 @@ class CalendarChecker:
     def _update_events(
         self, check_from: datetime.datetime, start_event: bool = True
     ) -> typing.Optional[datetime.datetime]:
-        next_event: 'datetime.datetime|None' = None
+        next_event: "datetime.datetime|None" = None
         event: typing.Optional[datetime.datetime] = None
         for rule in self.calendar.rules.all():
             # logger.debug('RULE: start = {}, checkFrom = {}, end'.format(rule.start.date(), checkFrom.date()))
@@ -128,9 +133,9 @@ class CalendarChecker:
                 continue
             # logger.debug('Rule in check interval...')
             if start_event:
-                event = typing.cast(datetime.datetime|None, rule.as_rrule().after(check_from))  # At start
+                event = typing.cast(datetime.datetime | None, rule.as_rrule().after(check_from))  # At start
             else:
-                event = typing.cast(datetime.datetime|None, rule.as_rrule_end().after(check_from))  # At end
+                event = typing.cast(datetime.datetime | None, rule.as_rrule_end().after(check_from))  # At end
 
             if event and (next_event is None or next_event > event):
                 next_event = event
@@ -146,11 +151,11 @@ class CalendarChecker:
             dtime = sql_now()
 
         # memcached access
-        memcache_storage = caches['memory']
+        memcache_storage = caches["memory"]
 
         # First, try to get data from cache if it is valid
         cache_key = CalendarChecker._gen_cache_key(
-            str(self.calendar.modified) + str(dtime.date()) + (self.calendar.uuid or '') + 'checker'
+            str(self.calendar.modified) + str(dtime.date()) + (self.calendar.uuid or "") + "checker"
         )
         # First, check "local memory cache", and if not found, from DB cache
         cached = memcache_storage.get(cache_key)
@@ -191,15 +196,15 @@ class CalendarChecker:
 
         cache_key = CalendarChecker._gen_cache_key(
             str(self.calendar.modified)
-            + (self.calendar.uuid or '')
+            + (self.calendar.uuid or "")
             + str(offset.seconds)
             + str(check_from)
-            + 'event'
-            + ('x' if start_event else '_')
+            + "event"
+            + ("x" if start_event else "_")
         )
         next_event: typing.Optional[datetime.datetime] = CalendarChecker.cache.get(cache_key, None)
         if not next_event:
-            logger.debug('Regenerating cached next_event')
+            logger.debug("Regenerating cached next_event")
             next_event = self._update_events(
                 check_from + offset, start_event
             )  # We substract on checkin, so we can take into account for next execution the "offset" on start & end (just the inverse of current, so we substract it)
@@ -212,8 +217,8 @@ class CalendarChecker:
         return next_event
 
     def debug(self) -> str:
-        return f'Calendar checker for {self.calendar}'
+        return f"Calendar checker for {self.calendar}"
 
     @staticmethod
     def _gen_cache_key(key: str) -> str:
-        return hashlib.sha256(key.encode('utf-8'), usedforsecurity=False).hexdigest()
+        return hashlib.sha256(key.encode("utf-8"), usedforsecurity=False).hexdigest()

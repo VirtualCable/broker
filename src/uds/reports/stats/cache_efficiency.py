@@ -44,10 +44,10 @@ logger = logging.getLogger(__name__)
 
 
 class CacheEfficiencyReport(StatsReport):
-    filename = 'cache_efficiency.pdf'
-    name = _('Pool cache efficiency')
-    description = _('Cache hit/miss ratio per pool over a period')
-    uuid = '7305fcca-41ce-45ce-bb3a-3579251fb34a'
+    filename = "cache_efficiency.pdf"
+    name = _("Pool cache efficiency")
+    description = _("Cache hit/miss ratio per pool over a period")
+    uuid = "7305fcca-41ce-45ce-bb3a-3579251fb34a"
 
     pools = StatsReport.pools
     start_date = StatsReport.start_date
@@ -55,8 +55,8 @@ class CacheEfficiencyReport(StatsReport):
 
     @typing.override
     def init_gui(self) -> None:
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
-            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL POOLS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name") if v.uuid
         ]
         self.pools.set_choices(vals)
 
@@ -64,12 +64,12 @@ class CacheEfficiencyReport(StatsReport):
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
 
-        if '0-0-0-0' in self.pools.value:
+        if "0-0-0-0" in self.pools.value:
             qs = ServicePool.objects.all()
         else:
             qs = ServicePool.objects.filter(uuid__in=self.pools.value)
 
-        pool_map: dict[int, str] = dict(qs.values_list('id', 'name'))
+        pool_map: dict[int, str] = dict(qs.values_list("id", "name"))
         if not pool_map:
             return []
 
@@ -85,13 +85,13 @@ class CacheEfficiencyReport(StatsReport):
                 since=start,
                 to=end,
             )
-            .values('owner_id', 'event_type')
-            .annotate(c=Count('id'))
+            .values("owner_id", "event_type")
+            .annotate(c=Count("id"))
         )
 
         agg: dict[int, dict[int, int]] = {pid: {hit: 0, miss: 0} for pid in pool_map}
         for r in rows:
-            agg[r['owner_id']][r['event_type']] = r['c']
+            agg[r["owner_id"]][r["event_type"]] = r["c"]
 
         result: list[dict[str, typing.Any]] = []
         for pid, pool_name in pool_map.items():
@@ -101,38 +101,38 @@ class CacheEfficiencyReport(StatsReport):
             ratio = (hits * 100.0 / total) if total else 0.0
             result.append(
                 {
-                    'pool': pool_name,
-                    'hits': hits,
-                    'misses': misses,
-                    'total': total,
-                    'ratio': '{:.1f}'.format(ratio),
-                    'ratio_value': ratio,
+                    "pool": pool_name,
+                    "hits": hits,
+                    "misses": misses,
+                    "total": total,
+                    "ratio": "{:.1f}".format(ratio),
+                    "ratio_value": ratio,
                 }
             )
 
-        result.sort(key=lambda r: r['total'], reverse=True)
+        result.sort(key=lambda r: r["total"], reverse=True)
         return result
 
     @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/stats/cache-efficiency.html',
+            "uds/reports/stats/cache-efficiency.html",
             dct={
-                'data': items,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "data": items,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Pool cache efficiency'),
-            water=gettext('UDS Report of cache efficiency'),
+            header=gettext("Pool cache efficiency"),
+            water=gettext("UDS Report of cache efficiency"),
         )
 
 
 class CacheEfficiencyReportCSV(CacheEfficiencyReport):
-    filename = 'cache_efficiency.csv'
-    mime_type = 'text/csv'
+    filename = "cache_efficiency.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = '68cb4370-6ff2-4846-87a7-da59acbd89a2'
+    uuid = "68cb4370-6ff2-4846-87a7-da59acbd89a2"
 
     pools = CacheEfficiencyReport.pools
     start_date = CacheEfficiencyReport.start_date
@@ -144,13 +144,13 @@ class CacheEfficiencyReportCSV(CacheEfficiencyReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext('Pool'),
-                gettext('Hits'),
-                gettext('Misses'),
-                gettext('Total'),
-                gettext('Hit ratio %'),
+                gettext("Pool"),
+                gettext("Hits"),
+                gettext("Misses"),
+                gettext("Total"),
+                gettext("Hit ratio %"),
             ]
         )
         for v in self.get_data():
-            writer.writerow([v['pool'], v['hits'], v['misses'], v['total'], v['ratio']])
+            writer.writerow([v["pool"], v["hits"], v["misses"], v["total"], v["ratio"]])
         return output.getvalue().encode()

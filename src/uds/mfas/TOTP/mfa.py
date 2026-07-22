@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 import io
@@ -53,50 +54,50 @@ TOTP_INTERVAL = 30  # Seconds between codes
 
 
 class TOTP_MFA(mfas.MFA):
-    '''
+    """
     Validates OTP challenge against a proper configured Radius Server with OTP
     using 'Access-Challenge' response from Radius Server [RFC2865, RFC5080]
-    '''
+    """
 
-    type_name = _('TOTP Based MFA')
-    type_type = 'TOTP_MFA'
-    type_description = _('TOTP Based MFA (Google Authenticator, etc)')
-    icon_file = 'totp.png'
+    type_name = _("TOTP Based MFA")
+    type_type = "TOTP_MFA"
+    type_description = _("TOTP Based MFA (Google Authenticator, etc)")
+    icon_file = "totp.png"
 
     issuer = gui.TextField(
         length=64,
-        label=_('Issuer'),
-        default='UDS Authenticator',
+        label=_("Issuer"),
+        default="UDS Authenticator",
         order=1,
-        tooltip=_('Issuer for OTP. Once it\'s created it can\'t be changed'),
+        tooltip=_("Issuer for OTP. Once it's created it can't be changed"),
         required=True,
         readonly=True,  # This is not editable, as it is used to generate the QR code. Once generated, it can't be changed
     )
 
     valid_window = gui.NumericField(
         length=2,
-        label=_('Valid Window'),
+        label=_("Valid Window"),
         default=1,
         min_value=0,
         max_value=10,
         order=31,
-        tooltip=_('Number of valid codes before and after the current one'),
+        tooltip=_("Number of valid codes before and after the current one"),
         required=True,
         tab=types.ui.Tab.CONFIG,
-        old_field_name='validWindow',
+        old_field_name="validWindow",
     )
 
     allow_skip_mfa_from_networks = fields.allow_skip_mfa_from_networks_field()
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         return super().initialize(values)
 
     @typing.override
-    def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> bool | None:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> bool | None:
         return None
 
-    def ask_for_otp(self, request: 'ExtendedHttpRequest') -> bool:
+    def ask_for_otp(self, request: "ExtendedHttpRequest") -> bool:
         """
         Check if we need to ask for OTP for a given user
 
@@ -104,21 +105,20 @@ class TOTP_MFA(mfas.MFA):
             True if we need to ask for OTP
         """
         return not any(
-            request.ip in i
-            for i in models.Network.objects.filter(uuid__in=self.allow_skip_mfa_from_networks.value)
+            request.ip in i for i in models.Network.objects.filter(uuid__in=self.allow_skip_mfa_from_networks.value)
         )
 
     @typing.override
     def label(self) -> str:
-        return gettext('Authentication Code')
+        return gettext("Authentication Code")
 
     def _user_data(self, userid: str) -> tuple[str, bool]:
         """
         Retrieves the user data from storage for the given user
-        
+
         Args:
             userid (str): User identifier
-            
+
         Returns:
             tuple[str, bool]: Tuple with the secret and a boolean indicating if the QR code has been shown to the user
         """
@@ -146,20 +146,20 @@ class TOTP_MFA(mfas.MFA):
         )
 
     @typing.override
-    def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
+    def html(self, request: "ExtendedHttpRequest", userid: str, username: str) -> str:
         # Get data from storage related to this user
         qr_has_been_shown = self._user_data(userid)[1]
         if qr_has_been_shown:
-            return _('Enter your authentication code')
+            return _("Enter your authentication code")
         # Compose the QR code from provisioning URI
         totp = self.get_totp(userid, username)
         uri = totp.provisioning_uri()
         img = qrcode.make(uri)  # pyright: ignore
         img_bytestream = io.BytesIO()
-        img.save(img_bytestream, format='PNG')  # type: ignore  # pylance complains abot format, but it is ok
+        img.save(img_bytestream, format="PNG")  # type: ignore  # pylance complains abot format, but it is ok
         # Convert to base64 to be used in html img tag
         img_bytearray = img_bytestream.getvalue()
-        img_data = 'data:image/png;base64,' + base64.b64encode(img_bytearray).decode('utf-8')
+        img_data = "data:image/png;base64," + base64.b64encode(img_bytearray).decode("utf-8")
 
         # Return HTML code to be shown to user
         return f'''
@@ -167,19 +167,19 @@ class TOTP_MFA(mfas.MFA):
                 <img src="{img_data}" alt="QR Code" />
             </div>
             <div style="text-align: center;">
-                <p>{_('Please, use your Authenticator to add your account. (i.e. Google Authenticator, Authy, ...)')}</p>
+                <p>{_("Please, use your Authenticator to add your account. (i.e. Google Authenticator, Authy, ...)")}</p>
             </div>
         '''
 
     @typing.override
     def process(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         validity: int | None = None,
-    ) -> 'mfas.MFA.RESULT':
+    ) -> "mfas.MFA.RESULT":
         if self.ask_for_otp(request) is False:
             return mfas.MFA.RESULT.ALLOWED
 
@@ -189,7 +189,7 @@ class TOTP_MFA(mfas.MFA):
     @typing.override
     def validate(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
@@ -200,7 +200,7 @@ class TOTP_MFA(mfas.MFA):
             return
 
         if self.cache.get(userid + code) is not None:
-            raise exceptions.auth.MFAError(gettext('Code is already used. Wait a minute and try again.'))
+            raise exceptions.auth.MFAError(gettext("Code is already used. Wait a minute and try again."))
 
         # Get data from storage related to this user
         secret, qr_has_been_shown = self._user_data(userid)
@@ -209,7 +209,7 @@ class TOTP_MFA(mfas.MFA):
         if not self.get_totp(userid, username).verify(
             code, valid_window=self.valid_window.as_int(), for_time=sql_now()
         ):
-            raise exceptions.auth.MFAError(gettext('Invalid code'))
+            raise exceptions.auth.MFAError(gettext("Invalid code"))
 
         self.cache.put(userid + code, True, self.valid_window.as_int() * (TOTP_INTERVAL + 1))
 

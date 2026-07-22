@@ -72,7 +72,7 @@ from uds.core.util.model import sql_now
 
 logger = logging.getLogger(__name__)
 
-HASH_ALGO = 'sha256'
+HASH_ALGO = "sha256"
 HASH_SIZE = 32
 NONCE_SIZE = 32  # 256 bits — 2^256 possibilities, brute-force infeasible
 
@@ -89,14 +89,14 @@ def content_from_bytes(data: bytes) -> typing.Any:
 
 def _pack_genesis_data(nonce: bytes, token: bytes) -> bytes:
     """Pack nonce and RFC 3161 token into genesis data."""
-    return struct.pack('>H', len(nonce)) + nonce + token
+    return struct.pack(">H", len(nonce)) + nonce + token
 
 
 def _unpack_genesis_data(data: bytes | memoryview) -> tuple[bytes, bytes]:
     """Unpack genesis data into (nonce, rfc3161_token)."""
     data = bytes(data)
     pos = 0
-    nonce_len = struct.unpack_from('>H', data, pos)[0]
+    nonce_len = struct.unpack_from(">H", data, pos)[0]
     pos += 2
     nonce = data[pos : pos + nonce_len]
     pos += nonce_len
@@ -177,9 +177,9 @@ class ImmutableLogger:
     ) -> bytes:
         hasher = hashlib.new(HASH_ALGO)
         hasher.update(previous_hash)
-        hasher.update(struct.pack('>q', int(stamp.timestamp() * 1_000_000)))
-        hasher.update(struct.pack('>Q', sequence))
-        hasher.update(struct.pack('>I', len(data)))
+        hasher.update(struct.pack(">q", int(stamp.timestamp() * 1_000_000)))
+        hasher.update(struct.pack(">Q", sequence))
+        hasher.update(struct.pack(">I", len(data)))
         hasher.update(data)
         return hasher.digest()
 
@@ -189,7 +189,7 @@ class ImmutableLogger:
         if nonce is None:
             nonce = os.urandom(NONCE_SIZE)
 
-        secret = settings.SECRET_KEY.encode('utf-8')
+        secret = settings.SECRET_KEY.encode("utf-8")
         seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
         return seed, nonce
 
@@ -215,9 +215,7 @@ class ImmutableLogger:
         cls._last_sequence = None
 
     @classmethod
-    def _create_entry(
-        cls, previous_hash: bytes, sequence: int, data: bytes, *, anchor: bool = False
-    ) -> ImmutableLog:
+    def _create_entry(cls, previous_hash: bytes, sequence: int, data: bytes, *, anchor: bool = False) -> ImmutableLog:
         """Low-level: create an entry and update the cache."""
         now = sql_now()
         entry_hash = cls._compute_hash(previous_hash, now, sequence, data)
@@ -257,7 +255,7 @@ class ImmutableLogger:
             ValidationError: If the chain is already initialized.
         """
         if ImmutableLog.objects.exists():
-            raise ValidationError('ImmutableLog chain is already initialized.')
+            raise ValidationError("ImmutableLog chain is already initialized.")
 
         provider = stamp_provider or cls._get_stamp_provider()
 
@@ -268,7 +266,7 @@ class ImmutableLogger:
         entry = cls._create_entry(seed, 1, packed_data, anchor=True)
 
         logger.info(
-            'ImmutableLog initialized: seed=%s nonce=%s... provider=%s',
+            "ImmutableLog initialized: seed=%s nonce=%s... provider=%s",
             seed.hex()[:16],
             nonce.hex()[:16],
             type(provider).__name__,
@@ -292,7 +290,7 @@ class ImmutableLogger:
 
         entry = cls._create_entry(last_hash, last_seq + 1, data)
 
-        logger.debug('ImmutableLog append: #%d hash=%s', entry.sequence, entry.entry_hash.hex()[:16])
+        logger.debug("ImmutableLog append: #%d hash=%s", entry.sequence, entry.entry_hash.hex()[:16])
         return entry
 
     @classmethod
@@ -314,7 +312,7 @@ class ImmutableLogger:
         entry = cls._create_entry(last_hash, last_seq + 1, token, anchor=True)
 
         logger.debug(
-            'Re-anchor #%d: stamped=%s token_len=%d provider=%s',
+            "Re-anchor #%d: stamped=%s token_len=%d provider=%s",
             entry.sequence,
             stamped_hash.hex()[:16],
             len(token),
@@ -347,10 +345,10 @@ class ImmutableLogger:
         Returns:
             ``(ok, message)``.
         """
-        entries = list(ImmutableLog.objects.order_by('sequence'))
+        entries = list(ImmutableLog.objects.order_by("sequence"))
 
         if not entries:
-            return False, 'No entries in the log (chain not initialized).'
+            return False, "No entries in the log (chain not initialized)."
 
         if reanchor_provider is None and genesis_provider is None:
             reanchor_provider = cls._stamp_provider
@@ -361,24 +359,26 @@ class ImmutableLogger:
         try:
             nonce, token = _unpack_genesis_data(genesis.data)
         except (struct.error, IndexError):
-            return False, 'Genesis data is malformed (cannot unpack nonce/token).'
+            return False, "Genesis data is malformed (cannot unpack nonce/token)."
 
-        secret = settings.SECRET_KEY.encode('utf-8')
+        secret = settings.SECRET_KEY.encode("utf-8")
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
-        stored_seed = bytes(genesis.previous_hash.tobytes() if hasattr(genesis.previous_hash, 'tobytes') else genesis.previous_hash)  # type: ignore
+        stored_seed = bytes(
+            genesis.previous_hash.tobytes() if hasattr(genesis.previous_hash, "tobytes") else genesis.previous_hash
+        )  # type: ignore
 
         if stored_seed != expected_seed:
             return False, (
-                f'Genesis seed mismatch: '
-                f'stored={stored_seed.hex()} '
-                f'expected={expected_seed.hex()} '
-                f'(nonce={nonce.hex()[:16]}...)'
+                f"Genesis seed mismatch: "
+                f"stored={stored_seed.hex()} "
+                f"expected={expected_seed.hex()} "
+                f"(nonce={nonce.hex()[:16]}...)"
             )
 
         # Verify genesis TSA token
         if genesis_provider is not None:
             if not genesis_provider.verify(expected_seed, token):
-                return False, 'Genesis RFC 3161 token verification failed.'
+                return False, "Genesis RFC 3161 token verification failed."
 
         # Walk the chain
         expected_previous = bytes(genesis.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
@@ -394,33 +394,34 @@ class ImmutableLogger:
 
             if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
                 return False, (
-                    f'Hash mismatch at entry #{entry.sequence}: '
-                    f'stored={entry.entry_hash.hex()} computed={computed.hex()}'
+                    f"Hash mismatch at entry #{entry.sequence}: "
+                    f"stored={entry.entry_hash.hex()} computed={computed.hex()}"
                 )
 
             if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
                 return False, (
-                    f'Chain break at entry #{entry.sequence}: '
-                    f'expected prev={expected_previous.hex()} '
-                    f'got={entry.previous_hash.hex()}'
+                    f"Chain break at entry #{entry.sequence}: "
+                    f"expected prev={expected_previous.hex()} "
+                    f"got={entry.previous_hash.hex()}"
                 )
 
             # Re-anchor verification
             if entry.anchor:
                 if reanchor_provider is not None:
                     if not reanchor_provider.verify(
-                        expected_previous, bytes(entry.data)  # pyrefly: ignore[unnecessary-type-conversion]
+                        expected_previous,
+                        bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
                     ):
-                        return False, (f'Re-anchor TSA verification failed at entry #{entry.sequence}')
+                        return False, (f"Re-anchor TSA verification failed at entry #{entry.sequence}")
                 reanchor_count += 1
-                logger.debug('Re-anchor #%d verified OK', entry.sequence)
+                logger.debug("Re-anchor #%d verified OK", entry.sequence)
 
             expected_previous = bytes(entry.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
 
-        msg = f'Chain verified: {len(entries)} entries'
+        msg = f"Chain verified: {len(entries)} entries"
         if reanchor_count:
-            msg += f', {reanchor_count} re-anchor(s) OK'
-        msg += ', all hashes match.'
+            msg += f", {reanchor_count} re-anchor(s) OK"
+        msg += ", all hashes match."
         return True, msg
 
     @classmethod
@@ -436,10 +437,10 @@ class ImmutableLogger:
         seconds = config.GlobalConfig.IMMUTABLE_LOG_REANCHOR.as_int()
 
         return {
-            'total_entries': total,
-            'anchor_count': anchor_count,
-            'normal_count': total - anchor_count,
-            'reanchor_config': f'{seconds}s' if seconds > 0 else 'disabled',
+            "total_entries": total,
+            "anchor_count": anchor_count,
+            "normal_count": total - anchor_count,
+            "reanchor_config": f"{seconds}s" if seconds > 0 else "disabled",
         }
 
     @classmethod
@@ -453,7 +454,7 @@ class ImmutableLogger:
 
         Stops at the first integrity violation.
         """
-        entries = ImmutableLog.objects.order_by('sequence')
+        entries = ImmutableLog.objects.order_by("sequence")
         try:
             first = entries[0]
         except IndexError:
@@ -466,18 +467,18 @@ class ImmutableLogger:
         try:
             nonce, token = _unpack_genesis_data(first.data)
         except (struct.error, IndexError):
-            logger.error('Genesis data malformed')
+            logger.error("Genesis data malformed")
             return
 
-        secret = settings.SECRET_KEY.encode('utf-8')
+        secret = settings.SECRET_KEY.encode("utf-8")
         expected_seed = hashlib.new(HASH_ALGO, secret + nonce).digest()
 
         if bytes(first.previous_hash) != expected_seed:  # pyrefly: ignore[unnecessary-type-conversion]
-            logger.error('Genesis seed mismatch')
+            logger.error("Genesis seed mismatch")
             return
 
         if genesis_provider and not genesis_provider.verify(expected_seed, token):
-            logger.error('Genesis token verification failed')
+            logger.error("Genesis token verification failed")
             return
 
         yield first
@@ -485,7 +486,7 @@ class ImmutableLogger:
 
         for entry in entries[1:]:
             if bytes(entry.previous_hash) != expected_previous:  # pyrefly: ignore[unnecessary-type-conversion]
-                logger.error('Chain break at entry #%d', entry.sequence)
+                logger.error("Chain break at entry #%d", entry.sequence)
                 return
 
             computed = cls._compute_hash(
@@ -495,15 +496,16 @@ class ImmutableLogger:
                 bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
             )
             if computed != bytes(entry.entry_hash):  # pyrefly: ignore[unnecessary-type-conversion]
-                logger.error('Hash mismatch at entry #%d', entry.sequence)
+                logger.error("Hash mismatch at entry #%d", entry.sequence)
                 return
 
             # Verify re-anchor
             if entry.anchor:
                 if reanchor_provider and not reanchor_provider.verify(
-                    expected_previous, bytes(entry.data)  # pyrefly: ignore[unnecessary-type-conversion]
+                    expected_previous,
+                    bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
                 ):
-                    logger.error('Re-anchor TSA verification failed at entry #%d', entry.sequence)
+                    logger.error("Re-anchor TSA verification failed at entry #%d", entry.sequence)
                     return
 
             expected_previous = entry.entry_hash

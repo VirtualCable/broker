@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnknownMemberType=false, reportAttributeAccessIssue=false,reportUnknownArgumentType=false
 # mypy: disable-error-code="attr-defined, no-untyped-call"
 import io
@@ -76,17 +77,17 @@ class Image(UUIDModel):
     # "fake" declarations for type checking
     # objects: 'models.manager.RelatedManager["Image"]'
 
-    deployedServices: 'models.manager.RelatedManager[ServicePool]'
-    metaPools: 'models.manager.RelatedManager[MetaPool]'
-    servicesPoolsGroup: 'models.manager.RelatedManager[ServicePoolGroup]'
+    deployedServices: "models.manager.RelatedManager[ServicePool]"
+    metaPools: "models.manager.RelatedManager[MetaPool]"
+    servicesPoolsGroup: "models.manager.RelatedManager[ServicePoolGroup]"
 
     class Meta:  # pyright: ignore
         """
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds_images'
-        app_label = 'uds'
+        db_table = "uds_images"
+        app_label = "uds"
 
     @staticmethod
     def to_resized_png(image: PIL.Image.Image, size: tuple[int, int]) -> tuple[int, int, bytes]:
@@ -95,7 +96,7 @@ class Image(UUIDModel):
         """
         image.thumbnail(size=size, resample=PIL.Image.Resampling.LANCZOS, reducing_gap=3.0)
         output = io.BytesIO()
-        image.save(output, 'png')
+        image.save(output, "png")
         return (image.width, image.height, output.getvalue())
 
     @staticmethod
@@ -103,15 +104,15 @@ class Image(UUIDModel):
         image: PIL.Image.Image
         try:
             # If data is svg (simple check: if has "<svg")
-            if b'<svg' in data:
+            if b"<svg" in data:
                 try:
                     data = typing.cast(bytes, cairosvg.svg2png(data, output_width=Image.MAX_IMAGE_SIZE[0]))
-                except Exception: # Not a valid SVG, fallback to default
+                except Exception:  # Not a valid SVG, fallback to default
                     pass
             stream = io.BytesIO(data)
             image = PIL.Image.open(stream)
         except Exception:  # Image data is incorrect, replace as a simple transparent image
-            image = PIL.Image.new('RGBA', Image.MAX_IMAGE_SIZE)
+            image = PIL.Image.new("RGBA", Image.MAX_IMAGE_SIZE)
 
         # Max image size, keeping aspect and using antialias
         return Image.to_resized_png(image, Image.MAX_IMAGE_SIZE)
@@ -139,7 +140,7 @@ class Image(UUIDModel):
             data = io.BytesIO(self.data)
             return PIL.Image.open(data)
         except Exception:  # Image data is incorrect, fix as a simple transparent image
-            return PIL.Image.new('RGBA', Image.MAX_IMAGE_SIZE)
+            return PIL.Image.new("RGBA", Image.MAX_IMAGE_SIZE)
 
     @image.setter
     def image(self, value: bytes | str | PIL.Image.Image) -> None:
@@ -161,7 +162,7 @@ class Image(UUIDModel):
             This method also creates the thumbnail
             Not saved to database until save() is called
         """
-        data: bytes = b''
+        data: bytes = b""
         if value:
             if isinstance(value, bytes):
                 data = value
@@ -169,7 +170,7 @@ class Image(UUIDModel):
                 data = base64.b64decode(value)
             else:
                 with io.BytesIO() as output:
-                    value.save(output, format='PNG')
+                    value.save(output, format="PNG")
                     data = output.getvalue()
 
             self.width, self.height, self.data = Image.prepare_for_db(data)
@@ -179,7 +180,7 @@ class Image(UUIDModel):
                 with PIL.Image.open(input) as img:
                     img.thumbnail(Image.THUMBNAIL_SIZE, PIL.Image.LANCZOS)  # pyrefly: ignore[missing-attribute]  # LANCZOS is THERE :)
                     with io.BytesIO() as output:
-                        img.save(output, format='PNG')
+                        img.save(output, format="PNG")
                         self.thumb = output.getvalue()
         else:
             self.data = consts.images.DEFAULT_IMAGE
@@ -200,10 +201,10 @@ class Image(UUIDModel):
         return len(self.data)
 
     def image_as_response(self) -> HttpResponse:
-        return HttpResponse(self.data, content_type='image/png')
+        return HttpResponse(self.data, content_type="image/png")
 
     def thumbnail_as_response(self) -> HttpResponse:
-        return HttpResponse(self.thumb, content_type='image/png')
+        return HttpResponse(self.thumb, content_type="image/png")
 
     @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -211,4 +212,4 @@ class Image(UUIDModel):
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f'Image Id: {self.id}, Name: {self.name}, Size: {self.size}, Length: {len(self.data)} bytes, Thumb length: {len(self.thumb)} bytes'
+        return f"Image Id: {self.id}, Name: {self.name}, Size: {self.size}, Length: {len(self.data)} bytes, Thumb length: {len(self.thumb)} bytes"

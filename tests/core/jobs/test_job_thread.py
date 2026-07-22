@@ -47,7 +47,7 @@ if typing.TYPE_CHECKING:
 
 
 class _FakeJob(Job):
-    friendly_name = 'Fake'
+    friendly_name = "Fake"
 
     def __init__(self, environment: Environment, delay: int = 42) -> None:
         super().__init__(environment)
@@ -71,7 +71,7 @@ class JobThreadTest(UDSTestCase):
     def test_captures_delay_from_next_execution_delay(self) -> None:
         """JobThread should capture self._delay from job_instance.next_execution_delay()."""
         job = _FakeJob(self._env, delay=1234)
-        db_job = mock.MagicMock(spec=['id'])
+        db_job = mock.MagicMock(spec=["id"])
         db_job.id = 999
 
         thread = JobThread(job, db_job)
@@ -85,22 +85,22 @@ class JobThreadTest(UDSTestCase):
         from uds.core.util.model import sql_now
 
         job = _FakeJob(self._env, delay=600)
-        db_job = mock.MagicMock(spec=['id'])
+        db_job = mock.MagicMock(spec=["id"])
         db_job.id = 999
 
         thread = JobThread(job, db_job)
 
-        with mock.patch('uds.core.jobs.scheduler.DBScheduler') as mock_model:
+        with mock.patch("uds.core.jobs.scheduler.DBScheduler") as mock_model:
             thread._update_db_record()
             # Check the filter and update
             mock_model.objects.select_for_update.assert_called_once()
             update_kwargs = mock_model.objects.select_for_update.return_value.filter.return_value.update.call_args
             self.assertIsNotNone(update_kwargs)
             kwargs = update_kwargs[1] if update_kwargs else {}
-            self.assertEqual(kwargs.get('state'), 'X')  # FOR_EXECUTE
-            self.assertEqual(kwargs.get('owner_server'), '')
+            self.assertEqual(kwargs.get("state"), "X")  # FOR_EXECUTE
+            self.assertEqual(kwargs.get("owner_server"), "")
             # next_execution should be sql_now() + timedelta(seconds=600)
             expected_next = sql_now() + datetime.timedelta(seconds=600)
-            actual_next = kwargs.get('next_execution')
+            actual_next = kwargs.get("next_execution")
             self.assertIsNotNone(actual_next)
             self.assertEqual(actual_next, expected_next)

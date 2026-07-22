@@ -82,41 +82,41 @@ class TestOpenStackClient(UDSTransactionTestCase):
 
     def setUp(self) -> None:
         # v = vars.get_vars('openstack-application-credential')
-        v = vars.get_vars('openstack-password')
+        v = vars.get_vars("openstack-password")
         if not v:
-            self.skipTest('No openstack vars')
+            self.skipTest("No openstack vars")
 
-        self._identity_endpoint = v['identity_endpoint']
-        self._domain = v['domain']
-        self._username = v['username']
-        self._password = v['password']
-        self._auth_method = openstack_types.AuthMethod.from_str(v['auth_method'])
-        self._projectid = v['project_id']
+        self._identity_endpoint = v["identity_endpoint"]
+        self._domain = v["domain"]
+        self._username = v["username"]
+        self._password = v["password"]
+        self._auth_method = openstack_types.AuthMethod.from_str(v["auth_method"])
+        self._projectid = v["project_id"]
 
         self.get_client()
 
         # Get region id from region_name
-        self._regionid = search_item_by_attr(self.oclient.list_regions(), 'name', v['region_name']).id
-        self._flavorid = search_item_by_attr(self.oclient.list_flavors(), 'name', v['flavor_name']).id
-        self._networkid = search_item_by_attr(self.oclient.list_networks(), 'name', v['network_name']).id
-        self._subnetid = search_item_by_attr(self.oclient.list_subnets(), 'name', v['subnet_name']).id
-        self._security_group_name = v['security_group_name']
+        self._regionid = search_item_by_attr(self.oclient.list_regions(), "name", v["region_name"]).id
+        self._flavorid = search_item_by_attr(self.oclient.list_flavors(), "name", v["flavor_name"]).id
+        self._networkid = search_item_by_attr(self.oclient.list_networks(), "name", v["network_name"]).id
+        self._subnetid = search_item_by_attr(self.oclient.list_subnets(), "name", v["subnet_name"]).id
+        self._security_group_name = v["security_group_name"]
         self._availability_zone_id = search_item_by_attr(
-            self.oclient.list_availability_zones(), 'name', v['availability_zone_name']
+            self.oclient.list_availability_zones(), "name", v["availability_zone_name"]
         ).id
 
     def wait_for_volume(self, volume: openstack_types.VolumeInfo) -> None:
         helpers.waiter(
             lambda: self.oclient.get_volume_info(volume.id, force=True).status.is_available(),
             timeout=30,
-            msg='Timeout waiting for volume to be available',
+            msg="Timeout waiting for volume to be available",
         )
 
     def wait_for_snapshot(self, snapshot: openstack_types.SnapshotInfo) -> None:
         helpers.waiter(
             lambda: self.oclient.get_snapshot_info(snapshot.id).status.is_available(),
             timeout=30,
-            msg='Timeout waiting for snapshot to be available',
+            msg="Timeout waiting for snapshot to be available",
         )
 
     def wait_for_server(
@@ -127,13 +127,13 @@ class TestOpenStackClient(UDSTransactionTestCase):
         helpers.waiter(
             lambda: self.oclient.get_server_info(server.id, force=True).power_state == power_state,
             timeout=30,
-            msg='Timeout waiting for server to be running',
+            msg="Timeout waiting for server to be running",
         )
 
     @contextlib.contextmanager
     def create_test_volume(self) -> typing.Iterator[openstack_types.VolumeInfo]:
         volume = self.oclient.t_create_volume(
-            name='uds-test-volume' + helpers.random_string(5),
+            name="uds-test-volume" + helpers.random_string(5),
             size=1,
         )
         try:
@@ -143,16 +143,14 @@ class TestOpenStackClient(UDSTransactionTestCase):
             yield volume
         finally:
             self.wait_for_volume(volume)
-            logger.info('Volume; %s', self.oclient.get_volume_info(volume.id, force=True))
+            logger.info("Volume; %s", self.oclient.get_volume_info(volume.id, force=True))
             self.oclient.t_delete_volume(volume.id)
 
     @contextlib.contextmanager
-    def create_test_snapshot(
-        self, volume: openstack_types.VolumeInfo
-    ) -> typing.Iterator[openstack_types.SnapshotInfo]:
+    def create_test_snapshot(self, volume: openstack_types.VolumeInfo) -> typing.Iterator[openstack_types.SnapshotInfo]:
         snapshot = self.oclient.create_snapshot(
             volume_id=volume.id,
-            name='uds-test-snapshot' + helpers.random_string(5),
+            name="uds-test-snapshot" + helpers.random_string(5),
         )
         try:
             self.wait_for_snapshot(snapshot)
@@ -169,21 +167,17 @@ class TestOpenStackClient(UDSTransactionTestCase):
                 except Exception:
                     return True
 
-            helpers.waiter(
-                snapshot_removal_checker, timeout=30, msg='Timeout waiting for snapshot to be deleted'
-            )
+            helpers.waiter(snapshot_removal_checker, timeout=30, msg="Timeout waiting for snapshot to be deleted")
 
     @contextlib.contextmanager
     def create_test_server(
         self,
-    ) -> typing.Iterator[
-        tuple[openstack_types.ServerInfo, openstack_types.VolumeInfo, openstack_types.SnapshotInfo]
-    ]:
+    ) -> typing.Iterator[tuple[openstack_types.ServerInfo, openstack_types.VolumeInfo, openstack_types.SnapshotInfo]]:
         with self.create_test_volume() as volume:
             with self.create_test_snapshot(volume) as snapshot:
                 server = self.oclient.create_server_from_snapshot(
                     snapshot_id=snapshot.id,
-                    name='uds-test-server' + helpers.random_string(5),
+                    name="uds-test-server" + helpers.random_string(5),
                     flavor_id=self._flavorid,
                     network_id=self._networkid,
                     security_groups_names=[self._security_group_name],
@@ -280,7 +274,7 @@ class TestOpenStackClient(UDSTransactionTestCase):
 
         # Trying to get a non existing server should raise an exceptions.NotFoundException
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.get_server_info('non-existing-server')
+            self.oclient.get_server_info("non-existing-server")
 
     def test_get_volume_info(self) -> None:
         with self.create_test_volume() as volume:
@@ -291,7 +285,7 @@ class TestOpenStackClient(UDSTransactionTestCase):
 
         # Trying to get a non existing volume should raise an exceptions.NotFoundException
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.get_volume_info('non-existing-volume')
+            self.oclient.get_volume_info("non-existing-volume")
 
     def test_get_snapshot_info(self) -> None:
         with self.create_test_volume() as volume:
@@ -302,7 +296,7 @@ class TestOpenStackClient(UDSTransactionTestCase):
 
         # Trying to get a non existing snapshot should raise an exceptions.NotFoundException
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.get_snapshot_info('non-existing-snapshot')
+            self.oclient.get_snapshot_info("non-existing-snapshot")
 
     def test_create_snapshot(self) -> None:
         # Note: create snapshot is used on test_create_server_from_snapshot
@@ -310,7 +304,7 @@ class TestOpenStackClient(UDSTransactionTestCase):
 
         # Trying to create a snapshot from a non existing volume should raise an exceptions.NotFoundException
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.create_snapshot(volume_id='non-existing-volume', name='non-existing-snapshot')
+            self.oclient.create_snapshot(volume_id="non-existing-volume", name="non-existing-snapshot")
 
     def test_create_server_from_snapshot(self) -> None:
         with self.create_test_server() as (server, _, _):
@@ -319,8 +313,8 @@ class TestOpenStackClient(UDSTransactionTestCase):
         # Trying to create a server from a non existing snapshot should raise an exceptions.NotFoundException
         with self.assertRaises(exceptions.services.generics.NotFoundError):
             self.oclient.create_server_from_snapshot(
-                snapshot_id='non-existing-snapshot',
-                name='non-existing-server',
+                snapshot_id="non-existing-snapshot",
+                name="non-existing-server",
                 flavor_id=self._flavorid,
                 network_id=self._networkid,
                 security_groups_names=[],
@@ -331,13 +325,13 @@ class TestOpenStackClient(UDSTransactionTestCase):
         # delete_server is tested on test_create_server_from_snapshot and test_list_servers at least
         # so we just test the exceptions here
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.delete_server('non-existing-server')
+            self.oclient.delete_server("non-existing-server")
 
     def test_delete_snapshot(self) -> None:
         # delete_snapshot is tested on test_create_snapshot at least
         # so we just test the exceptions here
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.delete_snapshot('non-existing-snapshot')
+            self.oclient.delete_snapshot("non-existing-snapshot")
 
     def test_operations_server(self) -> None:
         with self.create_test_server() as (server, _, _):
@@ -353,7 +347,7 @@ class TestOpenStackClient(UDSTransactionTestCase):
             helpers.waiter(
                 lambda: self.oclient.get_server_info(server.id, force=True).status.is_active(),
                 timeout=30,
-                msg='Timeout waiting for server to be running',
+                msg="Timeout waiting for server to be running",
             )
 
             # Suspend
@@ -369,28 +363,28 @@ class TestOpenStackClient(UDSTransactionTestCase):
             helpers.waiter(
                 lambda: self.oclient.get_server_info(server.id, force=True).status.is_active(),
                 timeout=30,
-                msg='Timeout waiting for server to be running',
+                msg="Timeout waiting for server to be running",
             )
 
     def test_operations_fail_server(self) -> None:
         # Trying the operations on a non existing server should raise an exceptions.NotFoundException
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.start_server('non-existing-server')
+            self.oclient.start_server("non-existing-server")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.stop_server('non-existing-server')
+            self.oclient.stop_server("non-existing-server")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.reset_server('non-existing-server')
+            self.oclient.reset_server("non-existing-server")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.suspend_server('non-existing-server')
+            self.oclient.suspend_server("non-existing-server")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.resume_server('non-existing-server')
+            self.oclient.resume_server("non-existing-server")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            self.oclient.reboot_server('non-existing-server')
+            self.oclient.reboot_server("non-existing-server")
 
     def test_test_connection(self) -> None:
         self.assertTrue(self.oclient.test_connection())
@@ -419,13 +413,13 @@ class TestOpenStackClient(UDSTransactionTestCase):
 
     def test_auth_cached(self) -> None:
         # Get a new client, it should be cached
-        cached_value = self.oclient.cache.get('auth')
-        # Unauthorized        
+        cached_value = self.oclient.cache.get("auth")
+        # Unauthorized
         self.oclient._authenticated = False
 
-        with mock.patch.object(self.oclient.cache, 'get', return_value=cached_value) as mock_cache_get:
+        with mock.patch.object(self.oclient.cache, "get", return_value=cached_value) as mock_cache_get:
             # Session should not be used
-            with mock.patch.object(self.oclient, '_session') as mock_session:
+            with mock.patch.object(self.oclient, "_session") as mock_session:
                 self.assertTrue(self.oclient.is_available())
                 mock_cache_get.assert_called_once()
                 mock_session.assert_not_called()

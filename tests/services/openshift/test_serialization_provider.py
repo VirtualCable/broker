@@ -30,12 +30,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from tests.services.openshift import fixtures
 from tests.utils.test import UDSTransactionTestCase
 from uds.services.OpenShift.provider import OpenshiftProvider
 
 PROVIDER_SERIALIZE_DATA = (
-    '{'
+    "{"
     '"cluster_url": "https://oauth-openshift.apps-crc.testing", '
     '"api_url": "https://api.crc.testing:6443", '
     '"username": "kubeadmin", '
@@ -45,8 +46,9 @@ PROVIDER_SERIALIZE_DATA = (
     '"concurrent_creation_limit": 1, '
     '"concurrent_removal_limit": 1, '
     '"timeout": 10'
-    '}'
+    "}"
 )
+
 
 class TestOpenshiftProviderSerialization(UDSTransactionTestCase):
     # --- Serialization Tests ---
@@ -62,10 +64,10 @@ class TestOpenshiftProviderSerialization(UDSTransactionTestCase):
         provider2 = OpenshiftProvider(environment=environment.Environment.testing_environment())
         provider2.deserialize(data)
 
-        self.assertEqual(str(provider2.type_name), 'Openshift Provider')
-        self.assertEqual(str(provider2.type_description), 'Openshift based VMs provider')
-        self.assertEqual(provider2.cluster_url.value, fixtures.PROVIDER_VALUES_DICT['cluster_url'])
-        self.assertEqual(provider2.api_url.value, fixtures.PROVIDER_VALUES_DICT['api_url'])
+        self.assertEqual(str(provider2.type_name), "Openshift Provider")
+        self.assertEqual(str(provider2.type_description), "Openshift based VMs provider")
+        self.assertEqual(provider2.cluster_url.value, fixtures.PROVIDER_VALUES_DICT["cluster_url"])
+        self.assertEqual(provider2.api_url.value, fixtures.PROVIDER_VALUES_DICT["api_url"])
 
     def test_provider_serialization(self) -> None:
         """
@@ -74,7 +76,7 @@ class TestOpenshiftProviderSerialization(UDSTransactionTestCase):
         from uds.core import environment
 
         provider = fixtures.create_provider()
-        data = provider.serialize()  
+        data = provider.serialize()
 
         provider2 = OpenshiftProvider(environment=environment.Environment.testing_environment())
         provider2.deserialize(data)

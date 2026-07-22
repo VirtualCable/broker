@@ -125,10 +125,7 @@ def random_value(
     if field_type == list[bool]:
         return [random.choice([True, False]) for _ in range(helpers.random_int(1, 10))]  # nosec: test values
     if field_type == list[tuple[str, str]]:
-        return [
-            (helpers.random_utf8_string(), helpers.random_utf8_string())
-            for _ in range(helpers.random_int(1, 10))
-        ]
+        return [(helpers.random_utf8_string(), helpers.random_utf8_string()) for _ in range(helpers.random_int(1, 10))]
 
     return None
 

@@ -49,6 +49,7 @@ from ..core.util.model import sql_now
 
 logger = logging.getLogger(__name__)
 
+
 @dataclasses.dataclass(frozen=True)
 class _FrequencyData:
     title: str
@@ -57,14 +58,12 @@ class _FrequencyData:
 
 
 class FrequencyInfo(enum.Enum):
-    YEARLY = _FrequencyData(_('Yearly'), rules.YEARLY, 366 * 24 * 60)
-    MONTHLY = _FrequencyData(_('Monthly'), rules.MONTHLY, 31 * 24 * 60)
-    WEEKLY = _FrequencyData(_('Weekly'), rules.WEEKLY, 7 * 24 * 60)
-    DAILY = _FrequencyData(_('Daily'), rules.DAILY, 24 * 60)
-    WEEKDAYS = _FrequencyData(_('Weekdays'), -1, 7 * 24 * 60)
-    NEVER = _FrequencyData(
-        _('Never'), rules.YEARLY, 1000 * 1000 * 24 * 60
-    )  # Very high interval, so it never repeats
+    YEARLY = _FrequencyData(_("Yearly"), rules.YEARLY, 366 * 24 * 60)
+    MONTHLY = _FrequencyData(_("Monthly"), rules.MONTHLY, 31 * 24 * 60)
+    WEEKLY = _FrequencyData(_("Weekly"), rules.WEEKLY, 7 * 24 * 60)
+    DAILY = _FrequencyData(_("Daily"), rules.DAILY, 24 * 60)
+    WEEKDAYS = _FrequencyData(_("Weekdays"), -1, 7 * 24 * 60)
+    NEVER = _FrequencyData(_("Never"), rules.YEARLY, 1000 * 1000 * 24 * 60)  # Very high interval, so it never repeats
 
     def __str__(self) -> str:
         return self.name
@@ -74,17 +73,15 @@ class FrequencyInfo(enum.Enum):
         return tuple((str(f.name), str(f.value.title)) for f in FrequencyInfo)
 
     @staticmethod
-    def from_str(value: str) -> 'FrequencyInfo':
+    def from_str(value: str) -> "FrequencyInfo":
         try:
             return FrequencyInfo[value]
         except KeyError:
             return FrequencyInfo.YEARLY
-        
+
     @staticmethod
     def literals_dict() -> dict[str, str]:
         return {str(f.name): str(f.value.title) for f in FrequencyInfo}
-
-
 
 
 @dataclasses.dataclass
@@ -94,10 +91,10 @@ class _DurationData:
 
 
 class DurationInfo(enum.Enum):
-    MINUTES = _DurationData(_('Minutes'), 1)
-    HOURS = _DurationData(_('Hours'), 60)
-    DAYS = _DurationData(_('Days'), 60 * 24)
-    WEEKS = _DurationData(_('Weeks'), 60 * 24 * 7)
+    MINUTES = _DurationData(_("Minutes"), 1)
+    HOURS = _DurationData(_("Hours"), 60)
+    DAYS = _DurationData(_("Days"), 60 * 24)
+    WEEKS = _DurationData(_("Weeks"), 60 * 24 * 7)
 
     def __str__(self) -> str:
         return self.name
@@ -107,7 +104,7 @@ class DurationInfo(enum.Enum):
         return tuple((str(f.name), str(f.value.title)) for f in DurationInfo)
 
     @staticmethod
-    def from_str(value: str) -> 'DurationInfo':
+    def from_str(value: str) -> "DurationInfo":
         try:
             return DurationInfo[value]
         except KeyError:
@@ -137,17 +134,17 @@ class CalendarRule(UUIDModel):
         default=1
     )  # If interval is for WEEKDAYS, every bit means a day of week (bit 0 = SUN, 1 = MON, ...)
     duration = models.IntegerField(default=0)  # Duration in "duration_unit" units
-    duration_unit = models.CharField(choices=DurationInfo.as_choices(), default='MINUTES', max_length=32)
+    duration_unit = models.CharField(choices=DurationInfo.as_choices(), default="MINUTES", max_length=32)
 
-    calendar = models.ForeignKey(Calendar, related_name='rules', on_delete=models.CASCADE)
+    calendar = models.ForeignKey(Calendar, related_name="rules", on_delete=models.CASCADE)
 
     class Meta:  # pyright: ignore
         """
         Meta class to declare db table
         """
 
-        db_table = 'uds_calendar_rules'
-        app_label = 'uds'
+        db_table = "uds_calendar_rules"
+        app_label = "uds"
 
     def _rrule(self, at_end_of_interval: bool) -> rules.rrule:
         if self.interval == 0:  # Fix 0 duration intervals
@@ -161,18 +158,14 @@ class CalendarRule(UUIDModel):
 
         # If at end of interval is requested, displace dstart to match end of interval
         dstart = (
-            self.start
-            if not at_end_of_interval
-            else self.start + datetime.timedelta(minutes=self.duration_as_minutes)
+            self.start if not at_end_of_interval else self.start + datetime.timedelta(minutes=self.duration_as_minutes)
         )
 
         if self.frequency == str(FrequencyInfo.WEEKDAYS):
             dw = [WEEKDAYS_LIST[i] for i in range(7) if self.interval & (1 << i) != 0]
             return rules.rrule(rules.DAILY, byweekday=dw, dtstart=dstart, until=end)
         if self.frequency == str(FrequencyInfo.NEVER):  # do not repeat
-            return rules.rrule(
-                rules.YEARLY, interval=1000, dtstart=dstart, until=dstart + datetime.timedelta(days=1)
-            )
+            return rules.rrule(rules.YEARLY, interval=1000, dtstart=dstart, until=dstart + datetime.timedelta(days=1))
         return rules.rrule(
             typing.cast(typing.Literal[0, 1, 2, 3, 4, 5, 6], FrequencyInfo.from_str(self.frequency).value.rule),
             interval=self.interval,
@@ -196,7 +189,7 @@ class CalendarRule(UUIDModel):
 
     @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        logger.debug('Saving...')
+        logger.debug("Saving...")
         self.calendar.modified = sql_now()
 
         super().save(*args, **kwargs)
@@ -204,4 +197,4 @@ class CalendarRule(UUIDModel):
         self.calendar.save()
 
     def __str__(self) -> str:
-        return f'Rule {self.name}: {self.start}-{self.end}, {self.frequency}, Interval: {self.interval}, duration: {self.duration}'
+        return f"Rule {self.name}: {self.start}-{self.end}, {self.frequency}, Interval: {self.interval}, duration: {self.duration}"

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from contextlib import contextmanager
 import typing
 import collections.abc
@@ -54,9 +55,9 @@ NUM_USERSERVICES = NUM_REGISTEREDSERVERS + 1
 
 
 class ServerManagerUnmanagedServersTest(UDSTestCase):
-    user_services: list['models.UserService']
-    manager: 'servers.ServerManager'
-    registered_servers_group: 'models.ServerGroup'
+    user_services: list["models.UserService"]
+    manager: "servers.ServerManager"
+    registered_servers_group: "models.ServerGroup"
     assign: collections.abc.Callable[..., typing.Optional[types.servers.ServerCounter]]
     all_uuids: list[str]
 
@@ -72,7 +73,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
             self.user_services.extend(services_fixtures.create_db_assigned_userservices())
 
         self.registered_servers_group = servers_fixtures.create_server_group(
-            type=types.servers.ServerType.UNMANAGED, subtype='test', num_servers=NUM_REGISTEREDSERVERS
+            type=types.servers.ServerType.UNMANAGED, subtype="test", num_servers=NUM_REGISTEREDSERVERS
         )
         # commodity call to assign
         self.assign = functools.partial(
@@ -80,13 +81,11 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
             server_group=self.registered_servers_group,
             service_type=types.services.ServiceType.VDI,
         )
-        self.all_uuids: list[str] = list(
-            self.registered_servers_group.servers.all().values_list('uuid', flat=True)
-        )
+        self.all_uuids: list[str] = list(self.registered_servers_group.servers.all().values_list("uuid", flat=True))
 
     @contextmanager
     def createMockApiRequester(self) -> typing.Iterator[mock.Mock]:
-        with mock.patch('uds.core.managers.servers_api.requester.ServerApiRequester') as mockServerApiRequester:
+        with mock.patch("uds.core.managers.servers_api.requester.ServerApiRequester") as mockServerApiRequester:
             mockServerApiRequester.return_value.get_stats.return_value = None
             yield mockServerApiRequester
 
@@ -97,7 +96,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                 expected_notify_assign_calls = element_number * 33  # 32 in loop + 1 in first assign
                 assignation = self.assign(userservice)
                 if assignation is None:
-                    self.fail('Assignation returned None')
+                    self.fail("Assignation returned None")
                     return  # For mypy
                 uuid, counter = assignation
                 prop_name = self.manager.property_name(userservice.user)
@@ -110,7 +109,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                 self.assertEqual(
                     mockServerApiRequester.return_value.get_stats.call_count,
                     expected_get_stats_calls,
-                    f'Error on loop {element_number}',
+                    f"Error on loop {element_number}",
                 )
                 # notify_assign should has been called once for each user service
                 self.assertEqual(
@@ -125,9 +124,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                     mockServerApiRequester.return_value.notify_assign.call_args[0][1],
                     types.services.ServiceType.VDI,
                 )
-                self.assertEqual(
-                    mockServerApiRequester.return_value.notify_assign.call_args[0][2], counter
-                )  # counter
+                self.assertEqual(mockServerApiRequester.return_value.notify_assign.call_args[0][2], counter)  # counter
 
                 # Server storage should contain the assignation
                 self.assertEqual(len(self.registered_servers_group.properties), element_number + 1)
@@ -137,7 +134,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                 for i in range(32):
                     assignation = self.assign(userservice)
                     if assignation is None:
-                        self.fail('Assignation returned None')
+                        self.fail("Assignation returned None")
                         return  # For mypy
                     uuid2, counter = assignation
                     # uuid2 should be the same as uuid
@@ -147,9 +144,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                     self.assertIsNone(models.Server.objects.get(uuid=uuid).locked_until)  # uuid is uuid2
 
                     # mockServer.get_stats has been called NUM_REGISTEREDSERVERS times, because no new requests has been done
-                    self.assertEqual(
-                        mockServerApiRequester.return_value.get_stats.call_count, expected_get_stats_calls
-                    )
+                    self.assertEqual(mockServerApiRequester.return_value.get_stats.call_count, expected_get_stats_calls)
                     # notify_assign should has been called twice
                     self.assertEqual(
                         mockServerApiRequester.return_value.notify_assign.call_count,
@@ -161,7 +156,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
 
             # Now, remove all asignations..
             for element_number, userservice in enumerate(self.user_services[:NUM_REGISTEREDSERVERS]):
-               # # Remove it, should decrement counter
+                # # Remove it, should decrement counter
                 for i in range(32, -1, -1):  # Deletes 33 times
                     _res = self.manager.release(userservice, self.registered_servers_group)
 
@@ -173,10 +168,10 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
             for userservice in self.user_services[:NUM_REGISTEREDSERVERS]:
                 assignation = self.assign(userservice, lock_interval=datetime.timedelta(seconds=1.1))
                 if assignation is None:
-                    self.fail('Assignation returned None')
+                    self.fail("Assignation returned None")
                     return  # For mypy
                 uuid, counter = assignation
-                
+
                 # uuid should be one on registered servers
                 self.assertIn(uuid, self.all_uuids)
                 # And only one assignment, so counter is 1
@@ -207,7 +202,7 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                         assignation * NUM_REGISTEREDSERVERS + elementNumber + 1,
                     )
                     if assign is None:
-                        self.fail('Assignation returned None')
+                        self.fail("Assignation returned None")
                         return  # For mypy
                     uuid, counter = assign
                     # uuid should be one on registered servers
@@ -236,11 +231,11 @@ class ServerManagerUnmanagedServersTest(UDSTestCase):
                         self.assertEqual(
                             self.manager.get_unmanaged_usage(uuid),
                             3 - release - 1,
-                            f'Error on {elementNumber}/{release}',
+                            f"Error on {elementNumber}/{release}",
                         )
                     self.assertEqual(
                         serverApiRequester.notify_release.call_count,
                         release * NUM_REGISTEREDSERVERS + elementNumber + 1,
-                        f'Error on loop {release} - {elementNumber}',
-                    )                        
+                        f"Error on loop {release} - {elementNumber}",
+                    )
             self.assertEqual(len(self.registered_servers_group.properties), 0)

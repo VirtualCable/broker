@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import re
 import logging
 import typing
@@ -62,15 +63,15 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('oVirt/RHEV Linked Clone')
+    type_name = _("oVirt/RHEV Linked Clone")
     # : Type used internally to identify this provider
-    type_type = 'oVirtLinkedService'
+    type_type = "oVirtLinkedService"
     # : Description shown at administration interface for this provider
-    type_description = _('oVirt Services based on templates and COW (experimental)')
+    type_description = _("oVirt Services based on templates and COW (experimental)")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'service.png'
+    icon_file = "service.png"
 
     # Functional related data
 
@@ -80,13 +81,13 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
     uses_cache = True
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('Number of desired machines to keep running waiting for a user')
+    cache_tooltip = _("Number of desired machines to keep running waiting for a user")
     # : If we need to generate a "Level 2" cache for this service (i.e., L1
     # : could be running machines and L2 suspended machines)
     uses_cache_l2 = True
     # : Tooltip shown to user when this item is pointed at admin interface, None
     # : also because we don't use it
-    cache_tooltip_l2 = _('Number of desired machines to keep suspended waiting for use')
+    cache_tooltip_l2 = _("Number of desired machines to keep suspended waiting for use")
 
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
@@ -107,9 +108,9 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         label=_("Cluster"),
         order=100,
         fills={
-            'callback_name': 'ovFillResourcesFromCluster',
-            'function': helpers.get_resources,
-            'parameters': ['cluster', 'prov_uuid'],
+            "callback_name": "ovFillResourcesFromCluster",
+            "function": helpers.get_resources,
+            "parameters": ["cluster", "prov_uuid"],
         },
         tooltip=_("Cluster to contain services"),
         required=True,
@@ -119,27 +120,27 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         label=_("Datastore Domain"),
         readonly=False,
         order=101,
-        tooltip=_('Datastore domain where to publish and put incrementals'),
+        tooltip=_("Datastore domain where to publish and put incrementals"),
         required=True,
     )
 
     reserved_storage_gb = gui.NumericField(
         length=3,
-        label=_('Reserved Space'),
+        label=_("Reserved Space"),
         default=32,
         min_value=0,
         order=102,
-        tooltip=_('Minimal free space in GB'),
+        tooltip=_("Minimal free space in GB"),
         required=True,
-        old_field_name='minSpaceGB',
+        old_field_name="minSpaceGB",
     )
 
     try_soft_shutdown = fields.soft_shutdown_field()
-    
+
     machine = gui.ChoiceField(
         label=_("Base Machine"),
         order=110,
-        tooltip=_('Service base machine'),
+        tooltip=_("Service base machine"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -151,7 +152,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         min_value=0,
         readonly=False,
         order=111,
-        tooltip=_('Memory assigned to machines'),
+        tooltip=_("Memory assigned to machines"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -163,33 +164,33 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         min_value=0,
         readonly=False,
         order=112,
-        tooltip=_('Physical memory guaranteed to machines'),
+        tooltip=_("Physical memory guaranteed to machines"),
         tab=types.ui.Tab.MACHINE,
         required=True,
-        old_field_name='memoryGuaranteed',
+        old_field_name="memoryGuaranteed",
     )
 
     usb = gui.ChoiceField(
-        label=_('USB'),
+        label=_("USB"),
         readonly=False,
         order=113,
-        tooltip=_('Enable usb redirection for SPICE'),
+        tooltip=_("Enable usb redirection for SPICE"),
         choices=[
-            gui.choice_item('disabled', 'disabled'),
-            gui.choice_item('native', 'native'),
+            gui.choice_item("disabled", "disabled"),
+            gui.choice_item("native", "native"),
         ],
         tab=types.ui.Tab.MACHINE,
-        default='1',  # Default value is the ID of the choicefield
+        default="1",  # Default value is the ID of the choicefield
     )
 
     display = gui.ChoiceField(
-        label=_('Display'),
+        label=_("Display"),
         readonly=False,
         order=114,
-        tooltip=_('Display type (only for administration purposes)'),
-        choices=[gui.choice_item('spice', 'Spice'), gui.choice_item('vnc', 'Vnc')],
+        tooltip=_("Display type (only for administration purposes)"),
+        choices=[gui.choice_item("spice", "Spice"), gui.choice_item("vnc", "Vnc")],
         tab=types.ui.Tab.MACHINE,
-        default='1',  # Default value is the ID of the choicefield
+        default="1",  # Default value is the ID of the choicefield
     )
     basename = fields.basename_field(order=115, tab=types.ui.Tab.MACHINE)
     lenname = fields.lenname_field(order=116, tab=types.ui.Tab.MACHINE)
@@ -197,7 +198,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
     prov_uuid = gui.HiddenField()
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We check here form values to see if they are valid.
 
@@ -207,7 +208,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         if values:
             validators.validate_basename(self.basename.value, self.lenname.as_int())
             if int(self.memory.value) < 256 or int(self.guaranteed_memory.value) < 256:
-                raise exceptions.ui.ValidationError(_('The minimum allowed memory is 256 Mb'))
+                raise exceptions.ui.ValidationError(_("The minimum allowed memory is 256 Mb"))
             if int(self.guaranteed_memory.value) > int(self.memory.value):
                 self.guaranteed_memory.value = self.memory.value
 
@@ -229,8 +230,8 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         self.cluster.set_choices(gui.choice_item(c.id, c.name) for c in self.provider().api.list_clusters())
 
     @typing.override
-    def provider(self) -> 'OVirtProvider':
-        return typing.cast('OVirtProvider', super().provider())
+    def provider(self) -> "OVirtProvider":
+        return typing.cast("OVirtProvider", super().provider())
 
     def verify_free_storage(self) -> None:
         """Checks if datastore has enough space
@@ -242,13 +243,13 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
             None -- [description]
         """
         # Get storages for that datacenter
-        logger.debug('Checking datastore space for %s', self.datastore.value)
+        logger.debug("Checking datastore space for %s", self.datastore.value)
         info = self.provider().api.get_storage_info(self.datastore.value)
-        logger.debug('Datastore Info: %s', info)
+        logger.debug("Datastore Info: %s", info)
         free_storage_gb = info.available / (1024 * 1024 * 1024)
         if free_storage_gb < self.reserved_storage_gb.value:
             raise Exception(
-                f'Not enough free space available: Needs at least {self.reserved_storage_gb.value} GB but only {free_storage_gb} GB is available.'
+                f"Not enough free space available: Needs at least {self.reserved_storage_gb.value} GB but only {free_storage_gb} GB is available."
             )
 
     def sanitized_name(self, name: str) -> str:
@@ -296,7 +297,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         Returns:
             Info of the deployed machine
         """
-        logger.debug('Deploying from template %s machine %s', template_id, name)
+        logger.debug("Deploying from template %s machine %s", template_id, name)
         self.verify_free_storage()
         return self.provider().api.deploy_from_template(
             name,
@@ -311,7 +312,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
 
     def fix_usb(self, vmid: str) -> None:
         # If has usb, upgrade vm to add it now
-        if self.usb.value in ('native',):
+        if self.usb.value in ("native",):
             self.provider().api.fix_usb(vmid)
 
     def get_macs_range(self) -> str:

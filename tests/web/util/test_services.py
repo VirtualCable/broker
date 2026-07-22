@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import itertools
 import typing
 from unittest import mock
@@ -59,20 +60,17 @@ class TestGetServicesData(UDSTransactionTestCase):
         self.groups = fixtures_authenticators.create_db_groups(self.auth, 3)
         self.user = fixtures_authenticators.create_db_users(self.auth, 1, groups=self.groups)[0]
         self.transports = [
-            fixtures_services.create_db_transport(priority=counter, label=f'label{counter}')
-            for counter in range(10)
+            fixtures_services.create_db_transport(priority=counter, label=f"label{counter}") for counter in range(10)
         ]
 
         self.request = mock.Mock()
         self.request.user = self.user
         self.request.authorized = True
         self.request.session = {}
-        self.request.ip = '127.0.0.1'
+        self.request.ip = "127.0.0.1"
         self.request.ip_version = 4
-        self.request.ip_proxy = '127.0.0.1'
-        self.request.os = types.os.DetectedOsInfo(
-            types.os.KnownOS.LINUX, types.os.KnownBrowser.FIREFOX, 'Windows 10'
-        )
+        self.request.ip_proxy = "127.0.0.1"
+        self.request.os = types.os.DetectedOsInfo(types.os.KnownOS.LINUX, types.os.KnownBrowser.FIREFOX, "Windows 10")
 
         return super().setUp()
 
@@ -105,12 +103,12 @@ class TestGetServicesData(UDSTransactionTestCase):
         #     'transports': validTrans,
         #     'autorun': autorun,
         # }
-        result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
+        result_services: typing.Final[list[dict[str, typing.Any]]] = data["services"]
         self.assertEqual(len(result_services), 10)
-        self.assertEqual(data['ip'], '127.0.0.1')
-        self.assertEqual(len(data['nets']), 0)
-        self.assertEqual(len(data['transports']), 0)
-        self.assertEqual(data['autorun'], 0)
+        self.assertEqual(data["ip"], "127.0.0.1")
+        self.assertEqual(len(data["nets"]), 0)
+        self.assertEqual(len(data["transports"]), 0)
+        self.assertEqual(data["autorun"], 0)
 
         # Check services data
         # Every service is returned like this:
@@ -136,31 +134,31 @@ class TestGetServicesData(UDSTransactionTestCase):
         for user_service in result_services:
             # Locate user service in user_services
             found: models.ServicePool = next(
-                (x for x in service_pools if x.uuid == user_service['id'][1:]),
-                models.ServicePool(uuid='x'),
+                (x for x in service_pools if x.uuid == user_service["id"][1:]),
+                models.ServicePool(uuid="x"),
             )
-            if found.uuid == 'x':
-                self.fail('Pool not found in user_services list')
+            if found.uuid == "x":
+                self.fail("Pool not found in user_services list")
 
-            self.assertEqual(user_service['is_meta'], False)
-            self.assertEqual(user_service['name'], found.name)
-            self.assertEqual(user_service['visual_name'], found.visual_name)
-            self.assertEqual(user_service['description'], found.comments)
-            self.assertEqual(user_service['group'], models.ServicePoolGroup.default().as_dict)
+            self.assertEqual(user_service["is_meta"], False)
+            self.assertEqual(user_service["name"], found.name)
+            self.assertEqual(user_service["visual_name"], found.visual_name)
+            self.assertEqual(user_service["description"], found.comments)
+            self.assertEqual(user_service["group"], models.ServicePoolGroup.default().as_dict)
             self.assertEqual(
-                [(i['id'], i['name']) for i in user_service['transports']],
+                [(i["id"], i["name"]) for i in user_service["transports"]],
                 [(t.uuid, t.name) for t in found.transports.all()],
             )
-            self.assertEqual(user_service['imageId'], found.image.uuid if found.image else consts.UUID_ZERO)
-            self.assertEqual(user_service['show_transports'], found.show_transports)
-            self.assertEqual(user_service['allow_users_remove'], found.allow_users_remove)
-            self.assertEqual(user_service['allow_users_reset'], found.allow_users_reset)
-            self.assertEqual(user_service['maintenance'], found.service.provider.maintenance_mode)
-            self.assertEqual(user_service['not_accesible'], not found.is_access_allowed(now))
-            self.assertEqual(user_service['in_use'], found.userServices.filter(in_use=True).count())
-            self.assertEqual(user_service['to_be_replaced'], None)
-            self.assertEqual(user_service['to_be_replaced_text'], '')
-            self.assertEqual(user_service['custom_calendar_text'], '')
+            self.assertEqual(user_service["imageId"], found.image.uuid if found.image else consts.UUID_ZERO)
+            self.assertEqual(user_service["show_transports"], found.show_transports)
+            self.assertEqual(user_service["allow_users_remove"], found.allow_users_remove)
+            self.assertEqual(user_service["allow_users_reset"], found.allow_users_reset)
+            self.assertEqual(user_service["maintenance"], found.service.provider.maintenance_mode)
+            self.assertEqual(user_service["not_accesible"], not found.is_access_allowed(now))
+            self.assertEqual(user_service["in_use"], found.userServices.filter(in_use=True).count())
+            self.assertEqual(user_service["to_be_replaced"], None)
+            self.assertEqual(user_service["to_be_replaced_text"], "")
+            self.assertEqual(user_service["custom_calendar_text"], "")
 
     def test_get_meta_services_data(self) -> None:
         # Create 10 services, for this user
@@ -184,31 +182,31 @@ class TestGetServicesData(UDSTransactionTestCase):
         data = services.get_services_info_dict(self.request)
         now = timezone.now()
 
-        result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
+        result_services: typing.Final[list[dict[str, typing.Any]]] = data["services"]
         self.assertEqual(len(result_services), 10)
-        self.assertEqual(data['ip'], '127.0.0.1')
-        self.assertEqual(len(data['nets']), 0)
-        self.assertEqual(len(data['transports']), 0)
-        self.assertEqual(data['autorun'], 0)
+        self.assertEqual(data["ip"], "127.0.0.1")
+        self.assertEqual(len(data["nets"]), 0)
+        self.assertEqual(len(data["transports"]), 0)
+        self.assertEqual(data["autorun"], 0)
 
         for user_service in result_services:
             # Locate user service in user_services
             found: models.MetaPool = next(
-                (x for x in meta_services if x.uuid == user_service['id'][1:]),
-                models.MetaPool(uuid='x'),
+                (x for x in meta_services if x.uuid == user_service["id"][1:]),
+                models.MetaPool(uuid="x"),
             )
-            if found.uuid == 'x':
-                self.fail('Meta pool not found in user_services list')
+            if found.uuid == "x":
+                self.fail("Meta pool not found in user_services list")
 
-            self.assertEqual(user_service['is_meta'], True)
-            self.assertEqual(user_service['name'], found.name)
-            self.assertEqual(user_service['visual_name'], found.visual_name)
-            self.assertEqual(user_service['description'], found.comments)
-            self.assertEqual(user_service['group'], models.ServicePoolGroup.default().as_dict)
-            self.assertEqual(user_service['not_accesible'], not found.is_access_allowed(now))
-            self.assertEqual(user_service['to_be_replaced'], None)
-            self.assertEqual(user_service['to_be_replaced_text'], '')
-            self.assertEqual(user_service['custom_calendar_text'], '')
+            self.assertEqual(user_service["is_meta"], True)
+            self.assertEqual(user_service["name"], found.name)
+            self.assertEqual(user_service["visual_name"], found.visual_name)
+            self.assertEqual(user_service["description"], found.comments)
+            self.assertEqual(user_service["group"], models.ServicePoolGroup.default().as_dict)
+            self.assertEqual(user_service["not_accesible"], not found.is_access_allowed(now))
+            self.assertEqual(user_service["to_be_replaced"], None)
+            self.assertEqual(user_service["to_be_replaced_text"], "")
+            self.assertEqual(user_service["custom_calendar_text"], "")
 
     def test_get_meta_and_not_services_data(self) -> None:
         # Create 10 services, for this user
@@ -231,12 +229,12 @@ class TestGetServicesData(UDSTransactionTestCase):
 
         data = services.get_services_info_dict(self.request)
 
-        result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
+        result_services: typing.Final[list[dict[str, typing.Any]]] = data["services"]
         self.assertEqual(len(result_services), 20)  # 10 metas and 10 normal pools
         # Some checks are ommited, because are already tested in other tests
 
-        self.assertEqual(len(list(filter(lambda x: bool(x['is_meta']), result_services))), 10)
-        self.assertEqual(len(list(filter(lambda x: not x['is_meta'], result_services))), 10)
+        self.assertEqual(len(list(filter(lambda x: bool(x["is_meta"]), result_services))), 10)
+        self.assertEqual(len(list(filter(lambda x: not x["is_meta"], result_services))), 10)
 
     def _generate_metapool_with_transports(
         self,
@@ -253,9 +251,9 @@ class TestGetServicesData(UDSTransactionTestCase):
         # find an extra transport in the result.
         extras = itertools.cycle(self.transports[3:]) if add_random_transports else iter(())
         for _i in range(count):
-            pool = fixtures_services.create_db_assigned_userservices(
-                count=1, user=self.user, groups=self.groups
-            )[0].deployed_service
+            pool = fixtures_services.create_db_assigned_userservices(count=1, user=self.user, groups=self.groups)[
+                0
+            ].deployed_service
 
             pool.transports.add(*self.transports[:3])  # Common to all pools
             if add_random_transports:
@@ -283,15 +281,15 @@ class TestGetServicesData(UDSTransactionTestCase):
         data = services.get_services_info_dict(self.request)
 
         # Now, check that the meta pool has the same transports as the common ones
-        result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
+        result_services: typing.Final[list[dict[str, typing.Any]]] = data["services"]
         # We except 1 result only, a meta pool (is_meta = True)
         self.assertEqual(len(result_services), 1)
-        self.assertEqual(result_services[0]['is_meta'], True)
+        self.assertEqual(result_services[0]["is_meta"], True)
         # Transpors for this meta pool should be the common ones, ordered by priority
         # First compose a list of the common transports, ordered by priority
         common_transports_ids = [t.uuid for t in sorted(self.transports[:3], key=lambda x: x.priority)]
         # Now, check that the transports are the same, and ordered by priority
-        self.assertEqual([t['id'] for t in result_services[0]['transports']], common_transports_ids)
+        self.assertEqual([t["id"] for t in result_services[0]["transports"]], common_transports_ids)
 
     def test_meta_auto_grouping(self) -> None:
         self._generate_metapool_with_transports(
@@ -302,17 +300,17 @@ class TestGetServicesData(UDSTransactionTestCase):
 
         # Now, get the data
         data = services.get_services_info_dict(self.request)
-        result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
+        result_services: typing.Final[list[dict[str, typing.Any]]] = data["services"]
         # We except 1 result only, a meta pool (is_meta = True)
         self.assertEqual(len(result_services), 1)
-        self.assertEqual(result_services[0]['is_meta'], True)
+        self.assertEqual(result_services[0]["is_meta"], True)
         # Transport should be {'id': 'meta', 'name: 'meta', 'priority': 0, 'link': (an udsa://... link}, and only one
-        self.assertEqual(len(result_services[0]['transports']), 1)
-        transport = result_services[0]['transports'][0]
-        self.assertEqual(transport['id'], 'meta')
-        self.assertEqual(transport['name'], 'meta')
-        self.assertEqual(transport['priority'], 0)
-        self.assertTrue(transport['link'].startswith(consts.system.UDS_ACTION_SCHEME))
+        self.assertEqual(len(result_services[0]["transports"]), 1)
+        transport = result_services[0]["transports"][0]
+        self.assertEqual(transport["id"], "meta")
+        self.assertEqual(transport["name"], "meta")
+        self.assertEqual(transport["priority"], 0)
+        self.assertTrue(transport["link"].startswith(consts.system.UDS_ACTION_SCHEME))
 
     def test_meta_label_grouping(self) -> None:
         pools, _meta = self._generate_metapool_with_transports(
@@ -334,16 +332,16 @@ class TestGetServicesData(UDSTransactionTestCase):
 
         # Now, get the data
         data = services.get_services_info_dict(self.request)
-        result_services: typing.Final[list[dict[str, typing.Any]]] = data['services']
+        result_services: typing.Final[list[dict[str, typing.Any]]] = data["services"]
         # We except 1 result only, a meta pool (is_meta = True)
         self.assertEqual(len(result_services), 1)
-        self.assertEqual(result_services[0]['is_meta'], True)
+        self.assertEqual(result_services[0]["is_meta"], True)
         # should have 3 transports, the first 3 ones
-        self.assertEqual(len(result_services[0]['transports']), 3)
+        self.assertEqual(len(result_services[0]["transports"]), 3)
         # id should be "LABEL:[the label]" for each transport. We added trasnports label "label0", "label1" and "label2", same as priority
         self.assertEqual(
-            [t['id'] for t in result_services[0]['transports']],
-            ['LABEL:label0', 'LABEL:label1', 'LABEL:label2'],
+            [t["id"] for t in result_services[0]["transports"]],
+            ["LABEL:label0", "LABEL:label1", "LABEL:label2"],
         )
         # And priority should be 0, 1 and 2
-        self.assertEqual([t['priority'] for t in result_services[0]['transports']], [0, 1, 2])
+        self.assertEqual([t["priority"] for t in result_services[0]["transports"]], [0, 1, 2])

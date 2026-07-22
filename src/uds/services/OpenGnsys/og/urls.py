@@ -29,18 +29,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 
-LOGIN: typing.Final[str] = '/login'
-INFO: typing.Final[str] = '/info'
-OUS: typing.Final[str] = '/ous'
-LABS: typing.Final[str] = '/ous/{ou}/labs'
-IMAGES: typing.Final[str] = '/ous/{ou}/images'
-RESERVE: typing.Final[str] = '/ous/{ou}/images/{image}/reserve'
-UNRESERVE: typing.Final[str] = '/ous/{ou}/labs/{lab}/clients/{client}/unreserve'
-STATUS: typing.Final[str] = '/ous/{ou}/labs/{lab}/clients/{client}/status'
-EVENTS: typing.Final[str] = '/ous/{ou}/labs/{lab}/clients/{client}/events'
-SESSIONS: typing.Final[str] = '/ous/{ou}/labs/{lab}/clients/{client}/session'
+LOGIN: typing.Final[str] = "/login"
+INFO: typing.Final[str] = "/info"
+OUS: typing.Final[str] = "/ous"
+LABS: typing.Final[str] = "/ous/{ou}/labs"
+IMAGES: typing.Final[str] = "/ous/{ou}/images"
+RESERVE: typing.Final[str] = "/ous/{ou}/images/{image}/reserve"
+UNRESERVE: typing.Final[str] = "/ous/{ou}/labs/{lab}/clients/{client}/unreserve"
+STATUS: typing.Final[str] = "/ous/{ou}/labs/{lab}/clients/{client}/status"
+EVENTS: typing.Final[str] = "/ous/{ou}/labs/{lab}/clients/{client}/events"
+SESSIONS: typing.Final[str] = "/ous/{ou}/labs/{lab}/clients/{client}/session"
 # TODO: fix this
-START: typing.Final[str] = '/ous/{ou}/labs/{lab}/clients/{client}/init'
+START: typing.Final[str] = "/ous/{ou}/labs/{lab}/clients/{client}/init"

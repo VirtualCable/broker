@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class UsageAccounting(Job):
-    friendly_name = 'Usage Accounting update'
+    friendly_name = "Usage Accounting update"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -51,11 +52,7 @@ class UsageAccounting(Job):
     @typing.override
     def run(self) -> None:
         with transaction.atomic():
-            AccountUsage.objects.select_for_update().filter(
-                user_service__in_use=True
-            ).update(end=sql_now())
-            AccountUsage.objects.select_for_update().filter(
-                user_service__in_use=False
-            ).update(
+            AccountUsage.objects.select_for_update().filter(user_service__in_use=True).update(end=sql_now())
+            AccountUsage.objects.select_for_update().filter(user_service__in_use=False).update(
                 user_service=None
             )  # Cleanup

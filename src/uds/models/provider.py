@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -58,18 +59,18 @@ class Provider(ManagedObjectModel, TaggingMixin):
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[Provider]'
-    services: 'models.manager.RelatedManager[Service]'
+    services: "models.manager.RelatedManager[Service]"
 
     class Meta(ManagedObjectModel.Meta):  # pyright: ignore
         """
         Meta class to declare default order
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
+        ordering = ("name",)
+        app_label = "uds"
 
     @typing.override
-    def get_type(self) -> type['ServiceProvider']:
+    def get_type(self) -> type["ServiceProvider"]:
         """
         Get the type of the object this record represents.
 
@@ -83,20 +84,20 @@ class Provider(ManagedObjectModel, TaggingMixin):
         return services.factory().lookup(self.data_type) or services.ServiceProvider
 
     @typing.override
-    def get_instance(self, values: dict[str, str] | None = None) -> 'ServiceProvider':
-        prov: 'ServiceProvider' = typing.cast('ServiceProvider', super().get_instance(values=values))
+    def get_instance(self, values: dict[str, str] | None = None) -> "ServiceProvider":
+        prov: "ServiceProvider" = typing.cast("ServiceProvider", super().get_instance(values=values))
         return prov
 
     def is_in_maintenance(self) -> bool:
         return self.maintenance_mode
 
     @staticmethod
-    def type_filter(type_: str) -> collections.abc.Iterable['Provider']:
+    def type_filter(type_: str) -> collections.abc.Iterable["Provider"]:
         for i in Provider.objects.filter(data_type=type):
             yield i
 
     def __str__(self) -> str:
-        return f'Provider {self.name} of type {self.data_type} (id:{self.id})'
+        return f"Provider {self.name} of type {self.data_type} (id:{self.id})"
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
@@ -110,11 +111,11 @@ class Provider(ManagedObjectModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: 'Provider' = kwargs['instance']
-        logger.debug('Before delete service provider %s', to_delete)
+        to_delete: "Provider" = kwargs["instance"]
+        logger.debug("Before delete service provider %s", to_delete)
 
         # Only tries to get instance if data is not empty
-        if to_delete.data != '':
+        if to_delete.data != "":
             s = to_delete.get_instance()
             s.destroy()
             s.env.clean_related_data()

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -51,57 +52,57 @@ class ActorTestTest(rest.test.RESTActorTestCase):
         """
         # No actor token, will fail
         response = self.client.post(
-            '/uds/rest/actor/v3/test',
-            data={'type': type_},
-            content_type='application/json',
+            "/uds/rest/actor/v3/test",
+            data={"type": type_},
+            content_type="application/json",
         )
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['error'], 'invalid token')
 
-        # 
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["error"], "invalid token")
+
+        #
         _success: typing.Callable[[], typing.Any] = lambda: self.client.post(
-            '/uds/rest/actor/v3/test',
-            data={'type': type_, 'token': token},
-            content_type='application/json',
+            "/uds/rest/actor/v3/test",
+            data={"type": type_, "token": token},
+            content_type="application/json",
         )
         _invalid: typing.Callable[[], typing.Any] = lambda: self.client.post(
-            '/uds/rest/actor/v3/test',
-            data={'type': type_, 'token': 'invalid'},
-            content_type='application/json',
+            "/uds/rest/actor/v3/test",
+            data={"type": type_, "token": "invalid"},
+            content_type="application/json",
         )
-        
+
         # Invalid actor token also fails
         response = _invalid()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['error'], 'invalid token')
+        self.assertEqual(response.json()["error"], "invalid token")
 
         # This one works
         response = _success()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['result'], 'ok')
+        self.assertEqual(response.json()["result"], "ok")
 
         # And this one too, without authentication token
         # Without header, test will success because its not authenticated
-        self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, 'invalid')
+        self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, "invalid")
         response = _success()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['result'], 'ok')
+        self.assertEqual(response.json()["result"], "ok")
 
         # We have ALLOWED_FAILS until we get blocked for a while
         # Next one will give 403
         for _i in range(consts.system.ALLOWED_FAILS):
             response = _invalid()
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json()['error'], 'invalid token')
+            self.assertEqual(response.json()["error"], "invalid token")
 
         # And this one will give 403
         response = _invalid()
         self.assertEqual(response.status_code, 403)
-    
+
     def test_test_managed(self) -> None:
         actor_token = self.login_and_register()
         self.do_test(MANAGED, actor_token)
@@ -111,5 +112,4 @@ class ActorTestTest(rest.test.RESTActorTestCase):
         service = self.user_service_managed.deployed_service.service
         _actor_token = self.login_and_register()
         # Get service token
-        self.do_test(UNMANAGED, service.token or '')
-
+        self.do_test(UNMANAGED, service.token or "")

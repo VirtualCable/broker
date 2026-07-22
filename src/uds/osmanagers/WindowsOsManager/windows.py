@@ -8,6 +8,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -28,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 
 class WindowsOsManager(osmanagers.OSManager):
-    type_name = _('Windows Basic OS Manager')
-    type_type = 'WindowsManager'
-    type_description = _('Os Manager to control windows machines without domain.')
-    icon_file = 'wosmanager.png'
+    type_name = _("Windows Basic OS Manager")
+    type_type = "WindowsManager"
+    type_description = _("Os Manager to control windows machines without domain.")
+    icon_file = "wosmanager.png"
 
     services_types = types.services.ServiceType.VDI
 
@@ -44,15 +45,15 @@ class WindowsOsManager(osmanagers.OSManager):
         readonly=False,
         order=11,
         tooltip=_(
-            'Maximum idle time (in seconds) before session is automatically closed to the user (<= 0 means no max. idle time)'
+            "Maximum idle time (in seconds) before session is automatically closed to the user (<= 0 means no max. idle time)"
         ),
         required=True,
     )
 
     deadline = gui.CheckBoxField(
-        label=_('Calendar logout'),
+        label=_("Calendar logout"),
         order=90,
-        tooltip=_('If checked, UDS will try to logout user when the calendar for his current access expires'),
+        tooltip=_("If checked, UDS will try to logout user when the calendar for his current access expires"),
         tab=types.ui.Tab.ADVANCED,
         default=True,
     )
@@ -62,7 +63,7 @@ class WindowsOsManager(osmanagers.OSManager):
         return fields.onlogout_field_is_removable(self.on_logout)
 
     @typing.override
-    def is_removable_on_logout(self, userservice: 'UserService') -> bool:
+    def is_removable_on_logout(self, userservice: "UserService") -> bool:
         """
         Says if a machine is removable on logout
         """
@@ -75,38 +76,38 @@ class WindowsOsManager(osmanagers.OSManager):
         return False
 
     @typing.override
-    def release(self, userservice: 'UserService') -> None:
+    def release(self, userservice: "UserService") -> None:
         pass
 
     @typing.override
     def ignore_deadline(self) -> bool:
         return not self.deadline.as_bool()
 
-    def get_name(self, userservice: 'UserService') -> str:
+    def get_name(self, userservice: "UserService") -> str:
         return userservice.get_name()
 
     @typing.override
-    def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
-        return types.osmanagers.ActorData(action='rename', name=userservice.get_name())  # No custom data
+    def actor_data(self, userservice: "UserService") -> types.osmanagers.ActorData:
+        return types.osmanagers.ActorData(action="rename", name=userservice.get_name())  # No custom data
 
     @typing.override
-    def update_credentials(self, userservice: 'UserService', username: str, password: str) -> tuple[str, str]:
-        if userservice.properties.get('sso_available') == '1':
+    def update_credentials(self, userservice: "UserService", username: str, password: str) -> tuple[str, str]:
+        if userservice.properties.get("sso_available") == "1":
             # Generate a ticket, store it and return username with no password
-            domain = ''
-            if '@' in username:
-                username, domain = username.split('@')
-            elif '\\' in username:
-                username, domain = username.split('\\')
+            domain = ""
+            if "@" in username:
+                username, domain = username.split("@")
+            elif "\\" in username:
+                username, domain = username.split("\\")
 
-            creds = {'username': username, 'password': password, 'domain': domain}
+            creds = {"username": username, "password": password, "domain": domain}
             ticket = TicketStore.create(creds, validity=300)  # , owner=SECURE_OWNER, secure=True)
-            return ticket, ''
+            return ticket, ""
 
         return super().update_credentials(userservice, username, password)
 
     @typing.override
-    def handle_unused(self, userservice: 'UserService') -> None:
+    def handle_unused(self, userservice: "UserService") -> None:
         """
         This will be invoked for every assigned and unused user service that has been in this state at least 1/2 of Globalconfig.CHECK_UNUSED_TIME
         This function can update userservice values. Normal operation will be remove machines if this state is not valid
@@ -115,10 +116,10 @@ class WindowsOsManager(osmanagers.OSManager):
             log.log(
                 userservice,
                 types.log.LogLevel.INFO,
-                'Unused user service for too long. Releasing (logout) due to OS Manager parameters.',
+                "Unused user service for too long. Releasing (logout) due to OS Manager parameters.",
                 types.log.LogSource.OSMANAGER,
             )
-            osmanagers.OSManager.logged_out(userservice, username='unused')
+            osmanagers.OSManager.logged_out(userservice, username="unused")
             # release_from_logout handles cache return if pool allows it, else releases
             UserServiceManager.manager().release_from_logout(userservice)
 
@@ -127,9 +128,9 @@ class WindowsOsManager(osmanagers.OSManager):
         return fields.onlogout_field_is_persistent(self.on_logout)
 
     @typing.override
-    def check_state(self, userservice: 'UserService') -> types.states.State:
+    def check_state(self, userservice: "UserService") -> types.states.State:
         # will alway return true, because the check is done by an actor callback
-        logger.debug('Checking state for service %s', userservice)
+        logger.debug("Checking state for service %s", userservice)
         return State.RUNNING
 
     @typing.override
@@ -141,17 +142,17 @@ class WindowsOsManager(osmanagers.OSManager):
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        values = data.decode('utf8').split('\t')
+        values = data.decode("utf8").split("\t")
         self.idle.value = -1
         self.deadline.value = True
-        if values[0] == 'v1':
+        if values[0] == "v1":
             self.on_logout.value = values[1]
-        elif values[0] == 'v2':
+        elif values[0] == "v2":
             self.on_logout.value, self.idle.value = values[1], int(values[2])
-        elif values[0] == 'v3':
+        elif values[0] == "v3":
             self.on_logout.value, self.idle.value, self.deadline.value = (
                 values[1],
                 int(values[2]),

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 import logging
@@ -48,48 +49,48 @@ from uds.models import TicketStore, UserService, Server
 logger = logging.getLogger(__name__)
 
 ERROR = "ERROR"
-CONTENT_TYPE = 'text/plain'
+CONTENT_TYPE = "text/plain"
 
 # We will use the cache to "hold" the tickets valid for users
 
 
 def dict2resp(dct: collections.abc.Mapping[typing.Any, typing.Any]) -> str:
-    result = '\r'.join((str(k) + '\t' + str(v) for k, v in dct.items()))
-    logger.debug('Guacamole response: %s', result.replace('\r', ',').replace('\t', '='))
+    result = "\r".join((str(k) + "\t" + str(v) for k, v in dct.items()))
+    logger.debug("Guacamole response: %s", result.replace("\r", ",").replace("\t", "="))
     return result
 
 
 @auth.needs_trusted_source
 def guacamole(request: ExtendedHttpRequestWithUser, token: str, tunnelid: str) -> HttpResponse:
     if not Server.validate_token(token, server_type=types.servers.ServerType.TUNNEL):
-        logger.error('Invalid token %s from %s', token, request.ip)
+        logger.error("Invalid token %s from %s", token, request.ip)
         return HttpResponse(ERROR, content_type=CONTENT_TYPE)
-    logger.debug('Received credentials request for tunnel id %s', tunnelid)
+    logger.debug("Received credentials request for tunnel id %s", tunnelid)
 
     try:
-        tunnelid, scrambler = tunnelid.split('.')
+        tunnelid, scrambler = tunnelid.split(".")
 
         # All strings excetp "ticket-info", that is fixed if it exists later
         val = typing.cast(collections.abc.MutableMapping[str, str], TicketStore.get(tunnelid, invalidate=False))
 
         # Extra check that the ticket data belongs to original requested user service/user
-        if 'ticket-info' in val:
-            ti = typing.cast(collections.abc.Mapping[str, str], val['ticket-info'])  # recast to dict
-            del val['ticket-info']  # Do not send this data to guacamole!! :)
+        if "ticket-info" in val:
+            ti = typing.cast(collections.abc.Mapping[str, str], val["ticket-info"])  # recast to dict
+            del val["ticket-info"]  # Do not send this data to guacamole!! :)
 
             try:
-                userservice = UserService.objects.get(uuid=ti['userService'])
+                userservice = UserService.objects.get(uuid=ti["userService"])
                 if not userservice.is_usable():
                     raise Exception()  # Not usable, so we will not use it :)
                 user = userservice.user
                 # check service owner is the same as the one that requested the ticket
-                if not user or user.uuid != ti['user']:
-                    logger.error('The requested userservice has changed owner and is not accesible')
+                if not user or user.uuid != ti["user"]:
+                    logger.error("The requested userservice has changed owner and is not accesible")
                     raise Exception()
                 # Log message and event
-                protocol = 'RDS' if 'remote-app' in val else val['protocol'].upper()
-                host = val.get('hostname', '0.0.0.0')  # nosec: Not a bind, just a placeholder for "no host"
-                msg = f'User {user.name} started HTML5 {protocol} tunnel to {host}.'
+                protocol = "RDS" if "remote-app" in val else val["protocol"].upper()
+                host = val.get("hostname", "0.0.0.0")  # nosec: Not a bind, just a placeholder for "no host"
+                msg = f"User {user.name} started HTML5 {protocol} tunnel to {host}."
                 log.log(user.manager, types.log.LogLevel.INFO, msg)
                 log.log(userservice, types.log.LogLevel.INFO, msg)
 
@@ -97,22 +98,22 @@ def guacamole(request: ExtendedHttpRequestWithUser, token: str, tunnelid: str) -
                     userservice.deployed_service,
                     events.types.stats.EventType.TUNNEL_OPEN,
                     username=user.pretty_name,
-                    source='HTML5-' + protocol,  # On HTML5, currently src is not provided by Guacamole
+                    source="HTML5-" + protocol,  # On HTML5, currently src is not provided by Guacamole
                     dstip=host,
                     uniqueid=userservice.unique_id,
                 )
 
             except Exception:
-                logger.error('The requested guacamole userservice does not exists anymore')
+                logger.error("The requested guacamole userservice does not exists anymore")
                 raise  # Let it be handled by the upper layers
 
-        if 'password' in val:
-            val['password'] = CryptoManager.manager().symmetric_decrypt(val['password'], scrambler)
+        if "password" in val:
+            val["password"] = CryptoManager.manager().symmetric_decrypt(val["password"], scrambler)
 
         response = dict2resp(val)
     except Exception:
         # TODO: Remove this
-        logger.exception('Error processing guacamole ticket with id %s', tunnelid)
+        logger.exception("Error processing guacamole ticket with id %s", tunnelid)
         # logger.error('Invalid guacamole ticket (F5 on client?): %s', tunnelId)
         return HttpResponse(ERROR, content_type=CONTENT_TYPE)
 

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -50,26 +51,27 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
     """
     This class provides the publication of a oVirtLinkedService
     """
+
     suggested_delay = 20  # : Suggested recheck time if publication is unfinished in seconds
 
     @typing.override
-    def service(self) -> 'OpenStackLiveService':
-        return typing.cast('OpenStackLiveService', super().service())
+    def service(self) -> "OpenStackLiveService":
+        return typing.cast("OpenStackLiveService", super().service())
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.decode('utf8').split('\t')
-        if vals[0] == 'v1':
+        vals = data.decode("utf8").split("\t")
+        if vals[0] == "v1":
             (self._name, self._reason, self._vmid, status, destroy_after) = vals[1:]
         else:
-            raise Exception('Invalid data')
-        
+            raise Exception("Invalid data")
+
         if status == openstack_types.SnapshotStatus.ERROR:
             self._queue = [types.services.Operation.ERROR]
         elif status == openstack_types.SnapshotStatus.AVAILABLE:
@@ -77,7 +79,7 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
         else:
             self._queue = [types.services.Operation.CREATE, types.services.Operation.FINISH]
 
-        self._is_flagged_for_destroy = destroy_after == 'y'
+        self._is_flagged_for_destroy = destroy_after == "y"
 
         self.mark_for_upgrade()  # This will force remarshalling
 
@@ -88,10 +90,10 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
         """
         # Name is generated on op_initialize by DynamicPublication
         volume_snapshot_info = self.service().make_template(self._name)
-        logger.debug('Publication result: %s', volume_snapshot_info)
+        logger.debug("Publication result: %s", volume_snapshot_info)
         self._vmid = volume_snapshot_info.id  # In fact is not an vmid, but the volume snapshot id, but this way we can use the same method for all publications
         if volume_snapshot_info.status == openstack_types.SnapshotStatus.ERROR:
-            raise Exception('Error creating snapshot')
+            raise Exception("Error creating snapshot")
 
     @typing.override
     def op_create_checker(self) -> types.states.TaskState:
@@ -101,10 +103,10 @@ class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializ
         status = self.service().get_template(self._vmid).status  # For next check
         if status == openstack_types.SnapshotStatus.AVAILABLE:
             return types.states.TaskState.FINISHED
-        
+
         if status == openstack_types.SnapshotStatus.ERROR:
-            raise Exception('Error creating snapshot')
-        
+            raise Exception("Error creating snapshot")
+
         return types.states.TaskState.RUNNING
 
     @typing.override

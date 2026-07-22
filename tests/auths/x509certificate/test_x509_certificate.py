@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 from unittest import mock
 
 from django.http.request import QueryDict
@@ -55,7 +56,7 @@ class TestHelpers(UDSTestCase):
 
     def test_verify_rsa_wrong_ca(self) -> None:
         fix = fixtures.make_rsa_fixture()
-        wrong = fixtures.make_rsa_fixture(ca_cn='Wrong CA')
+        wrong = fixtures.make_rsa_fixture(ca_cn="Wrong CA")
         self.assertFalse(_verify_cert_signed_by_ca(fix.client_cert, wrong.ca_cert))
 
     def test_verify_ec_valid(self) -> None:
@@ -64,27 +65,29 @@ class TestHelpers(UDSTestCase):
 
     def test_verify_ec_wrong_ca(self) -> None:
         fix = fixtures.make_ec_fixture()
-        wrong = fixtures.make_ec_fixture(ca_cn='Wrong EC CA')
+        wrong = fixtures.make_ec_fixture(ca_cn="Wrong EC CA")
         self.assertFalse(_verify_cert_signed_by_ca(fix.client_cert, wrong.ca_cert))
 
     def test_subject_to_mapping(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='testuser_mapping')
+        fix = fixtures.make_rsa_fixture(client_cn="testuser_mapping")
         mapping = _subject_to_mapping(fix.client_cert.subject)
-        self.assertIn('CN', mapping)
-        self.assertEqual(mapping['CN'], ['testuser_mapping'])
+        self.assertIn("CN", mapping)
+        self.assertEqual(mapping["CN"], ["testuser_mapping"])
 
     def test_subject_to_mapping_multivalue(self) -> None:
         from cryptography.x509.oid import NameOID
         from cryptography.x509 import Name, NameAttribute
 
-        multi = Name([
-            NameAttribute(NameOID.COMMON_NAME, 'user'),
-            NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, 'eng'),
-            NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, 'dev'),
-        ])
+        multi = Name(
+            [
+                NameAttribute(NameOID.COMMON_NAME, "user"),
+                NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "eng"),
+                NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "dev"),
+            ]
+        )
         mapping = _subject_to_mapping(multi)
-        self.assertEqual(mapping['CN'], ['user'])
-        self.assertEqual(mapping['OU'], ['eng', 'dev'])
+        self.assertEqual(mapping["CN"], ["user"])
+        self.assertEqual(mapping["OU"], ["eng", "dev"])
 
 
 class TestAuthenticatorInitialization(UDSTestCase):
@@ -100,8 +103,8 @@ class TestAuthenticatorInitialization(UDSTestCase):
         fix = fixtures.make_rsa_fixture()
         with self.assertRaises(exceptions.ui.ValidationError):
             with fixtures.create_authenticator(fix) as instance:
-                instance.ca_certificate.value = 'not a valid pem'
-                instance.initialize({'name': 'test'})
+                instance.ca_certificate.value = "not a valid pem"
+                instance.initialize({"name": "test"})
 
     def test_non_ca_certificate(self) -> None:
         """A certificate without CA:TRUE in BasicConstraints should fail."""
@@ -110,48 +113,49 @@ class TestAuthenticatorInitialization(UDSTestCase):
             with fixtures.create_authenticator(fix) as instance:
                 # Use client cert instead of CA cert
                 instance.ca_certificate.value = fix.client_pem
-                instance.initialize({'name': 'test'})
+                instance.initialize({"name": "test"})
 
     def test_invalid_username_regex(self) -> None:
         fix = fixtures.make_rsa_fixture()
         with self.assertRaises(exceptions.ui.ValidationError):
             with fixtures.create_authenticator(fix) as instance:
-                instance.username_attr.value = 'CN=(INVALID[regex'
-                instance.initialize({'name': 'test'})
+                instance.username_attr.value = "CN=(INVALID[regex"
+                instance.initialize({"name": "test"})
 
 
-TEST_AUTH_UUID: str = 'test-auth-uuid-for-x509'
+TEST_AUTH_UUID: str = "test-auth-uuid-for-x509"
+
 
 class TestAuthCallback(UDSTestCase):
     """Tests for the authenticator's auth_callback() method."""
 
-    def _make_params(self, cert_pem: str, ticket_id: str = '') -> types.auth.AuthCallbackParams:
+    def _make_params(self, cert_pem: str, ticket_id: str = "") -> types.auth.AuthCallbackParams:
         """Build AuthCallbackParams with an encrypted bridge payload."""
         payload = fixtures._encrypt_payload(cert_pem, ticket_id=ticket_id)
-        post_params = QueryDict('', mutable=True)
-        post_params['payload'] = payload
+        post_params = QueryDict("", mutable=True)
+        post_params["payload"] = payload
         return types.auth.AuthCallbackParams(
             https=True,
-            host='test',
-            path='/',
-            port='443',
+            host="test",
+            path="/",
+            port="443",
             get_params=QueryDict(),
             post_params=post_params,
-            query_string='',
+            query_string="",
         )
 
     def _create_ticket(self) -> str:
         """Create a valid replay-protection ticket for testing."""
         return TicketStore.create(
-            {'nonce': True},
+            {"nonce": True},
             validity=300,
             owner=TEST_AUTH_UUID,
             secure=True,
         )
 
     def test_valid_cert_rsa(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='rsauser')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_rsa_fixture(client_cn="rsauser")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
@@ -160,20 +164,20 @@ class TestAuthCallback(UDSTestCase):
 
                 result = instance.auth_callback(params, gm, request)
                 self.assertEqual(result.success, types.auth.AuthenticationState.SUCCESS)
-                self.assertEqual(result.username, 'rsauser')
+                self.assertEqual(result.username, "rsauser")
 
                 # Verify get_real_name works
-                realname = instance.get_real_name('rsauser')
-                self.assertEqual(realname, 'rsauser')
+                realname = instance.get_real_name("rsauser")
+                self.assertEqual(realname, "rsauser")
 
                 # Verify groups
                 gm.validate.assert_called_once()
                 groups_arg = gm.validate.call_args[0][0]
-                self.assertIn('x509_users', groups_arg)
+                self.assertIn("x509_users", groups_arg)
 
     def test_valid_cert_ec(self) -> None:
-        fix = fixtures.make_ec_fixture(client_cn='ecuser')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_ec_fixture(client_cn="ecuser")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
@@ -182,19 +186,19 @@ class TestAuthCallback(UDSTestCase):
 
                 result = instance.auth_callback(params, gm, request)
                 self.assertEqual(result.success, types.auth.AuthenticationState.SUCCESS)
-                self.assertEqual(result.username, 'ecuser')
+                self.assertEqual(result.username, "ecuser")
 
     def test_no_cert_data(self) -> None:
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
             params = types.auth.AuthCallbackParams(
                 https=True,
-                host='test',
-                path='/',
-                port='443',
+                host="test",
+                path="/",
+                port="443",
                 get_params=QueryDict(),
                 post_params=QueryDict(),  # no 'payload'
-                query_string='',
+                query_string="",
             )
             gm = mock.MagicMock()
             request = mock.MagicMock()
@@ -203,8 +207,8 @@ class TestAuthCallback(UDSTestCase):
 
     def test_wrong_ca(self) -> None:
         fix = fixtures.make_rsa_fixture()
-        wrong = fixtures.make_rsa_fixture(ca_cn='Other CA')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        wrong = fixtures.make_rsa_fixture(ca_cn="Other CA")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(wrong.client_pem, ticket_id=ticket_id)
@@ -214,8 +218,8 @@ class TestAuthCallback(UDSTestCase):
                 self.assertEqual(result.success, types.auth.AuthenticationState.FAIL)
 
     def test_trusted_issuer_match(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='issuer_user')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_rsa_fixture(client_cn="issuer_user")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix, trusted_issuer=fix.client_issuer_dn) as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
@@ -223,12 +227,12 @@ class TestAuthCallback(UDSTestCase):
                 request = mock.MagicMock()
                 result = instance.auth_callback(params, gm, request)
                 self.assertEqual(result.success, types.auth.AuthenticationState.SUCCESS)
-                self.assertEqual(result.username, 'issuer_user')
+                self.assertEqual(result.username, "issuer_user")
 
     def test_trusted_issuer_mismatch(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='no_match')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
-            with fixtures.create_authenticator(fix, trusted_issuer='CN=Wrong Issuer') as instance:
+        fix = fixtures.make_rsa_fixture(client_cn="no_match")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
+            with fixtures.create_authenticator(fix, trusted_issuer="CN=Wrong Issuer") as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
                 gm = mock.MagicMock()
@@ -237,20 +241,20 @@ class TestAuthCallback(UDSTestCase):
                 self.assertEqual(result.success, types.auth.AuthenticationState.FAIL)
 
     def test_username_extraction_custom_regex(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='john.doe')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
-            with fixtures.create_authenticator(fix, username_attr='CN=([^,]*)') as instance:
+        fix = fixtures.make_rsa_fixture(client_cn="john.doe")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
+            with fixtures.create_authenticator(fix, username_attr="CN=([^,]*)") as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
                 gm = mock.MagicMock()
                 request = mock.MagicMock()
                 result = instance.auth_callback(params, gm, request)
                 self.assertEqual(result.success, types.auth.AuthenticationState.SUCCESS)
-                self.assertEqual(result.username, 'john.doe')
+                self.assertEqual(result.username, "john.doe")
 
     def test_no_username_match(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='someone')
-        with fixtures.create_authenticator(fix, username_attr='OU=([^,]*)') as instance:
+        fix = fixtures.make_rsa_fixture(client_cn="someone")
+        with fixtures.create_authenticator(fix, username_attr="OU=([^,]*)") as instance:
             params = self._make_params(fix.client_pem)
             gm = mock.MagicMock()
             request = mock.MagicMock()
@@ -258,8 +262,8 @@ class TestAuthCallback(UDSTestCase):
             self.assertEqual(result.success, types.auth.AuthenticationState.FAIL)
 
     def test_get_real_name_from_storage(self) -> None:
-        fix = fixtures.make_rsa_fixture(client_cn='realnameuser')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_rsa_fixture(client_cn="realnameuser")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
@@ -269,15 +273,15 @@ class TestAuthCallback(UDSTestCase):
                 self.assertEqual(result.success, types.auth.AuthenticationState.SUCCESS)
 
                 # After auth_callback, realname should be stored
-                realname = instance.get_real_name(result.username or '')
-                self.assertEqual(realname, 'realnameuser')
+                realname = instance.get_real_name(result.username or "")
+                self.assertEqual(realname, "realnameuser")
 
     # --- Replay protection tests ---
 
     def test_replay_no_ticket_in_payload(self) -> None:
         """Payload without a 'ticket' field must be rejected."""
-        fix = fixtures.make_rsa_fixture(client_cn='replay_no_ticket')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_rsa_fixture(client_cn="replay_no_ticket")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 params = self._make_params(fix.client_pem)  # no ticket_id
                 gm = mock.MagicMock()
@@ -287,8 +291,8 @@ class TestAuthCallback(UDSTestCase):
 
     def test_replay_ticket_reused(self) -> None:
         """Same ticket used twice — second call must be rejected."""
-        fix = fixtures.make_rsa_fixture(client_cn='replay_reuse')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_rsa_fixture(client_cn="replay_reuse")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 ticket_id = self._create_ticket()
                 params = self._make_params(fix.client_pem, ticket_id=ticket_id)
@@ -298,7 +302,7 @@ class TestAuthCallback(UDSTestCase):
                 # First call: should succeed
                 result1 = instance.auth_callback(params, gm, request)
                 self.assertEqual(result1.success, types.auth.AuthenticationState.SUCCESS)
-                self.assertEqual(result1.username, 'replay_reuse')
+                self.assertEqual(result1.username, "replay_reuse")
 
                 # Second call with same params: ticket already consumed → FAIL
                 result2 = instance.auth_callback(params, gm, request)
@@ -306,13 +310,13 @@ class TestAuthCallback(UDSTestCase):
 
     def test_replay_ticket_wrong_owner(self) -> None:
         """Ticket owned by a different authenticator must be rejected."""
-        fix = fixtures.make_rsa_fixture(client_cn='replay_owner')
-        with mock.patch.object(fixtures.X509CertificateAuthenticator, 'get_uuid', return_value=TEST_AUTH_UUID):
+        fix = fixtures.make_rsa_fixture(client_cn="replay_owner")
+        with mock.patch.object(fixtures.X509CertificateAuthenticator, "get_uuid", return_value=TEST_AUTH_UUID):
             with fixtures.create_authenticator(fix) as instance:
                 # Create ticket with a different (fake) owner
-                fake_owner = '00000000000000000000000000000000'
+                fake_owner = "00000000000000000000000000000000"
                 ticket_id = TicketStore.create(
-                    {'nonce': True},
+                    {"nonce": True},
                     validity=300,
                     owner=fake_owner,
                     secure=True,
@@ -326,17 +330,17 @@ class TestAuthCallback(UDSTestCase):
     def test_get_real_name_fallback(self) -> None:
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
-            realname = instance.get_real_name('unknown_user')
-            self.assertEqual(realname, 'unknown_user')
+            realname = instance.get_real_name("unknown_user")
+            self.assertEqual(realname, "unknown_user")
 
     def test_get_groups(self) -> None:
         fix = fixtures.make_rsa_fixture()
-        with fixtures.create_authenticator(fix, common_groups='group_a,group_b,group_c') as instance:
+        with fixtures.create_authenticator(fix, common_groups="group_a,group_b,group_c") as instance:
             gm = mock.MagicMock()
-            instance.get_groups('anyuser', gm)
+            instance.get_groups("anyuser", gm)
             gm.validate.assert_called_once()
             groups_arg = gm.validate.call_args[0][0]
-            self.assertEqual(set(groups_arg), {'group_a', 'group_b', 'group_c'})
+            self.assertEqual(set(groups_arg), {"group_a", "group_b", "group_c"})
 
 
 class TestGetJavascript(UDSTestCase):
@@ -345,21 +349,21 @@ class TestGetJavascript(UDSTestCase):
     def test_javascript_redirect_url(self) -> None:
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
-            valid_uuid = 'a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5'
+            valid_uuid = "a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5"
             request = mock.MagicMock()
-            request.build_absolute_uri.return_value = 'https://example.com/uds/cert_auth'
-            with mock.patch.object(instance, 'get_uuid', return_value=valid_uuid):
-                js = instance.get_javascript(request) or ''
-                self.assertIn('window.location', js)
-                self.assertIn('https://cert-auth.example.com/cert_auth/', js)
+            request.build_absolute_uri.return_value = "https://example.com/uds/cert_auth"
+            with mock.patch.object(instance, "get_uuid", return_value=valid_uuid):
+                js = instance.get_javascript(request) or ""
+                self.assertIn("window.location", js)
+                self.assertIn("https://cert-auth.example.com/cert_auth/", js)
 
     def test_javascript_not_none(self) -> None:
         fix = fixtures.make_rsa_fixture()
         with fixtures.create_authenticator(fix) as instance:
-            valid_uuid = '00000000000000000000000000000000'
+            valid_uuid = "00000000000000000000000000000000"
             request = mock.MagicMock()
-            request.build_absolute_uri.return_value = 'https://example.com/uds/cert_auth'
-            with mock.patch.object(instance, 'get_uuid', return_value=valid_uuid):
+            request.build_absolute_uri.return_value = "https://example.com/uds/cert_auth"
+            with mock.patch.object(instance, "get_uuid", return_value=valid_uuid):
                 js = instance.get_javascript(request)
                 self.assertIsNotNone(js)
                 self.assertIsInstance(js, str)

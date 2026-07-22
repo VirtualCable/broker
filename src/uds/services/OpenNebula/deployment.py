@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
 import pickle  # nosec: not insecure, we are loading our own data
 import logging
@@ -63,7 +64,7 @@ class Operation(enum.IntEnum):
     UNKNOWN = 99
 
     @staticmethod
-    def from_int(value: int) -> 'Operation':
+    def from_int(value: int) -> "Operation":
         try:
             return Operation(value)
         except ValueError:
@@ -74,11 +75,11 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
     # : Recheck every six seconds by default (for task methods)
     suggested_delay = 6
 
-    _name = autoserializable.StringField(default='')
-    _ip = autoserializable.StringField(default='')
-    _mac = autoserializable.StringField(default='')
-    _vmid = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="")
+    _ip = autoserializable.StringField(default="")
+    _mac = autoserializable.StringField(default="")
+    _vmid = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
     _queue = autoserializable.ListField[Operation]()
 
     #
@@ -90,46 +91,44 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
     # _queue: list[int]
 
     @typing.override
-    def service(self) -> 'OpenNebulaLiveService':
-        return typing.cast('OpenNebulaLiveService', super().service())
+    def service(self) -> "OpenNebulaLiveService":
+        return typing.cast("OpenNebulaLiveService", super().service())
 
     @typing.override
-    def publication(self) -> 'OpenNebulaLivePublication':
+    def publication(self) -> "OpenNebulaLivePublication":
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('OpenNebulaLivePublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("OpenNebulaLivePublication", pub)
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._vmid = vals[4].decode('utf8')
-            self._reason = vals[5].decode('utf8')
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._vmid = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
             self._queue = [Operation.from_int(i) for i in pickle.loads(vals[6])]  # nosec
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
     @typing.override
     def get_name(self) -> str:
-        if self._name == '':
+        if self._name == "":
             try:
-                self._name = self.name_generator().get(
-                    self.service().get_basename(), self.service().get_lenname()
-                )
+                self._name = self.name_generator().get(self.service().get_basename(), self.service().get_lenname())
             except KeyError:
                 return consts.NO_MORE_NAMES
         return self._name
 
     @typing.override
     def set_ip(self, ip: str) -> None:
-        logger.debug('Setting IP to %s', ip)
+        logger.debug("Setting IP to %s", ip)
         self._ip = ip
 
     @typing.override
@@ -142,27 +141,27 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
     @typing.override
     def set_ready(self) -> types.states.TaskState:
-        if self.cache.get('ready') == '1':
+        if self.cache.get("ready") == "1":
             return types.states.TaskState.FINISHED
 
         try:
             state = self.service().get_machine_state(self._vmid)
 
             if state == on.types.VmState.UNKNOWN:  # @UndefinedVariable
-                return self._error('Machine is not available anymore')
+                return self._error("Machine is not available anymore")
 
             self.service().start_machine(self._vmid)
 
-            self.cache.put('ready', '1')
+            self.cache.put("ready", "1")
         except Exception as e:
-            self.do_log(types.log.LogLevel.ERROR, 'Error on set_ready: {}'.format(e))
+            self.do_log(types.log.LogLevel.ERROR, "Error on set_ready: {}".format(e))
             # Treat as operation done, maybe the machine is ready and we can continue
 
         return types.states.TaskState.FINISHED
 
     @typing.override
     def reset(self) -> types.states.TaskState:
-        if self._vmid != '':
+        if self._vmid != "":
             self.service().reset_machine(self._vmid)
 
         return types.states.TaskState.FINISHED
@@ -172,27 +171,27 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         return self.service().get_console_connection(self._vmid)
 
     def desktop_login(
-        self, username: str, password: str, domain: str = ''
+        self, username: str, password: str, domain: str = ""
     ) -> typing.Optional[types.services.ConsoleConnectionInfo]:
         return self.service().desktop_login(self._vmid, username, password, domain)
 
     @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         # Here we will check for suspending the VM (when full ready)
-        logger.debug('Checking if cache 2 for %s', self._name)
+        logger.debug("Checking if cache 2 for %s", self._name)
         if self._get_current_op() == Operation.WAIT:
-            logger.debug('Machine is ready. Moving to level 2')
+            logger.debug("Machine is ready. Moving to level 2")
             self._get_and_pop_current_op()  # Remove current state
             return self._execute_queue()
         # Do not need to go to level 2 (opWait is in fact "waiting for moving machine to cache level 2)
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
         """
-        logger.debug('Deploying for user')
+        logger.debug("Deploying for user")
         self._init_queue_for_deploy(False)
         return self._execute_queue()
 
@@ -218,7 +217,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
     def _check_machine_state(self, check_state: on.types.VmState) -> types.states.TaskState:
         logger.debug(
-            'Checking that state of machine %s (%s) is %s',
+            "Checking that state of machine %s (%s) is %s",
             self._vmid,
             self._name,
             check_state,
@@ -230,7 +229,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
             on.types.VmState.UNKNOWN,
             on.types.VmState.DONE,
         ]:  # @UndefinedVariable
-            return self._error('Machine not found')
+            return self._error("Machine not found")
 
         ret = types.states.TaskState.RUNNING
 
@@ -262,21 +261,21 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
             types.states.DeployState.ERROR, so we can do "return self.__error(reason)"
         """
         reason = str(reason)
-        logger.debug('Setting error state, reason: %s', reason)
+        logger.debug("Setting error state, reason: %s", reason)
         self.do_log(types.log.LogLevel.ERROR, reason)
 
         if self._vmid:  # Powers off & delete it
             try:
                 self.service().remove_machine(self._vmid)
             except Exception:
-                logger.warning('Can\'t set remove errored machine: %s', self._vmid)
+                logger.warning("Can't set remove errored machine: %s", self._vmid)
 
         self._queue = [Operation.ERROR]
         self._reason = str(reason)
         return types.states.TaskState.ERROR
 
     def _execute_queue(self) -> types.states.TaskState:
-        self.__debug('executeQueue')
+        self.__debug("executeQueue")
         op = self._get_current_op()
 
         if op == Operation.ERROR:
@@ -298,13 +297,13 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
             operation_executor: typing.Optional[collections.abc.Callable[[], str]] = fncs.get(op, None)
 
             if operation_executor is None:
-                return self._error('Unknown operation found at execution queue ({0})'.format(op))
+                return self._error("Unknown operation found at execution queue ({0})".format(op))
 
             operation_executor()
 
             return types.states.TaskState.RUNNING
         except Exception as e:
-            logger.exception('Got Exception')
+            logger.exception("Got Exception")
             return self._error(e)
 
     # Queue execution methods
@@ -331,9 +330,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         template_id = self.publication().get_template_id()
         name = self.get_name()
         if name == consts.NO_MORE_NAMES:
-            raise Exception(
-                'No more names available for this service. (Increase digits for this service to fix)'
-            )
+            raise Exception("No more names available for this service. (Increase digits for this service to fix)")
 
         name = self.service().sanitized_name(
             name
@@ -341,7 +338,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
         self._vmid = self.service().deploy_from_template(name, template_id)
         if not self._vmid:
-            raise Exception('Can\'t create machine')
+            raise Exception("Can't create machine")
 
         # Get IP & MAC (early stage)
         # self._mac, self._ip = self.service().getNetInfo(self._vmid)
@@ -355,12 +352,12 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         state = self.service().get_machine_state(self._vmid)
 
         if state == on.types.VmState.UNKNOWN:  # @UndefinedVariable
-            raise Exception('Machine not found')
+            raise Exception("Machine not found")
 
         if state == on.types.VmState.ACTIVE:  # @UndefinedVariable
             sub_state = self.service().get_machine_substate(self._vmid)
             if sub_state < 3:  # Less than running
-                logger.info('Must wait before remove: %s', sub_state)
+                logger.info("Must wait before remove: %s", sub_state)
                 self._push_front_op(Operation.RETRY)
                 return types.states.TaskState.RUNNING
 
@@ -416,7 +413,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         """
         Check what operation is going on, and acts based on it
         """
-        self.__debug('check_state')
+        self.__debug("check_state")
         op = self._get_current_op()
 
         if op == Operation.ERROR:
@@ -435,12 +432,10 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         }
 
         try:
-            check_fnc: typing.Optional[collections.abc.Callable[[], types.states.TaskState]] = fncs.get(
-                op, None
-            )
+            check_fnc: typing.Optional[collections.abc.Callable[[], types.states.TaskState]] = fncs.get(op, None)
 
             if check_fnc is None:
-                return self._error('Unknown operation found at check queue ({0})'.format(op))
+                return self._error("Unknown operation found at check queue ({0})".format(op))
 
             state = check_fnc()
             if state == types.states.TaskState.FINISHED:
@@ -482,13 +477,13 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         """
         Invoked for destroying a deployed service
         """
-        self.__debug('destroy')
+        self.__debug("destroy")
         # If executing something, wait until finished to remove it
         # We simply replace the execution queue
         op = self._get_current_op()
 
         if op == Operation.ERROR:
-            return self._error('Machine is already in error state!')
+            return self._error("Machine is already in error state!")
 
         if op in [Operation.FINISH, Operation.WAIT, Operation.START, Operation.CREATE]:
             self._queue = [Operation.REMOVE, Operation.FINISH]
@@ -514,19 +509,19 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
     @staticmethod
     def __op2str(op: Operation) -> str:
         return {
-            Operation.CREATE: 'create',
-            Operation.START: 'start',
-            Operation.SHUTDOWN: 'shutdown',
-            Operation.REMOVE: 'remove',
-            Operation.WAIT: 'wait',
-            Operation.ERROR: 'error',
-            Operation.FINISH: 'finish',
-            Operation.RETRY: 'retry',
-        }.get(op, '????')
+            Operation.CREATE: "create",
+            Operation.START: "start",
+            Operation.SHUTDOWN: "shutdown",
+            Operation.REMOVE: "remove",
+            Operation.WAIT: "wait",
+            Operation.ERROR: "error",
+            Operation.FINISH: "finish",
+            Operation.RETRY: "retry",
+        }.get(op, "????")
 
     def __debug(self, txt: str) -> None:
         logger.debug(
-            'types.states.DeployState.at %s: name: %s, ip: %s, mac: %s, vmid:%s, queue: %s',
+            "types.states.DeployState.at %s: name: %s, ip: %s, mac: %s, vmid:%s, queue: %s",
             txt,
             self._name,
             self._ip,

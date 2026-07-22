@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -47,29 +48,27 @@ logger = logging.getLogger(__name__)
 
 
 class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
-    suggested_delay = (
-        20  # : Suggested recheck time if publication is unfinished in seconds
-    )
+    suggested_delay = 20  # : Suggested recheck time if publication is unfinished in seconds
 
-    _task = autoserializable.StringField(default='')
+    _task = autoserializable.StringField(default="")
 
     @typing.override
-    def service(self) -> 'XenLinkedService':
-        return typing.cast('XenLinkedService', super().service())
+    def service(self) -> "XenLinkedService":
+        return typing.cast("XenLinkedService", super().service())
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        logger.debug('Upgrading XenPublication from old format: %s', data)
+        logger.debug("Upgrading XenPublication from old format: %s", data)
 
         # logger.debug('Data: {0}'.format(data))
-        vals = data.decode('utf8').split('\t')
-        if vals[0] == 'v1':
+        vals = data.decode("utf8").split("\t")
+        if vals[0] == "v1":
             (
                 self._name,
                 self._reason,
@@ -79,44 +78,42 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
                 self._task,
             ) = vals[1:]
         else:
-            raise ValueError('Invalid data format')
-            
-        self._is_flagged_for_destroy = destroy_after == 't'
-        if state == 'finished':
+            raise ValueError("Invalid data format")
+
+        self._is_flagged_for_destroy = destroy_after == "t"
+        if state == "finished":
             self._set_queue([types.services.Operation.FINISH])
-        elif state == 'error':
+        elif state == "error":
             self._set_queue([types.services.Operation.ERROR])
         else:  # Running
             self._set_queue([types.services.Operation.CREATE, types.services.Operation.FINISH])
         self._queue
-        
-        self.mark_for_upgrade()   # Force upgrade asap
-        
+
+        self.mark_for_upgrade()  # Force upgrade asap
+
     @typing.override
     def op_create(self) -> None:
         # Name created by DynamicPublication
-        comments = _('UDS pub for {0} at {1}').format(
-            self.servicepool_name(), str(timezone.localtime()).split('.')[0]
-        )
+        comments = _("UDS pub for {0} at {1}").format(self.servicepool_name(), str(timezone.localtime()).split(".")[0])
 
         self._task = self.service().start_deploy_of_template(self._name, comments)
-        logger.debug('Task created: %s', self._task)
-        
+        logger.debug("Task created: %s", self._task)
+
     @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks state of publication creation
         """
-        with  self.service().provider().get_connection() as api:
+        with self.service().provider().get_connection() as api:
             task_info = api.get_task_info(self._task)
-            logger.debug('Task info: %s', task_info)
+            logger.debug("Task info: %s", task_info)
             if task_info.is_success():
-                logger.debug('Task finished successfully: %s', task_info.result)
+                logger.debug("Task finished successfully: %s", task_info.result)
                 self._vmid = task_info.result
                 self.service().convert_to_template(self._vmid)
                 return types.states.TaskState.FINISHED
             elif task_info.is_failure():
-                logger.warning('Task failed: %s', task_info.result)
+                logger.warning("Task failed: %s", task_info.result)
                 return self._error(task_info.result)
 
         return types.states.TaskState.RUNNING
@@ -130,5 +127,5 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
         """
         Returns the template id associated with the publication
         """
-        logger.debug('Getting template id for publication: %s', self._vmid)
+        logger.debug("Getting template id for publication: %s", self._vmid)
         return self._vmid

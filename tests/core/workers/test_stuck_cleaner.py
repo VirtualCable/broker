@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 import datetime
@@ -50,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 class StuckCleanerTest(UDSTestCase):
-    userServices: list['models.UserService']
+    userServices: list["models.UserService"]
 
     def setUp(self) -> None:
 
@@ -76,23 +77,19 @@ class StuckCleanerTest(UDSTestCase):
                 us.state = State.USABLE
                 us.os_state = State.USABLE
 
-            us.save(update_fields=['state_date', 'state', 'os_state'])
+            us.save(update_fields=["state_date", "state", "os_state"])
 
     def test_worker_outdated(self) -> None:
         count = UserService.objects.count()
         cleaner = StuckCleaner(Environment.testing_environment())
         cleaner.run()
-        self.assertEqual(
-            UserService.objects.count(), count // 4
-        )  # 3/4 of user services should be removed
+        self.assertEqual(UserService.objects.count(), count // 4)  # 3/4 of user services should be removed
 
     def test_worker_not_outdated(self) -> None:
         # Fix state_date to be less than 1 day for all user services
         for us in self.userServices:
-            us.state_date = timezone.localtime() - datetime.timedelta(
-                hours=23, minutes=59
-            )
-            us.save(update_fields=['state_date'])
+            us.state_date = timezone.localtime() - datetime.timedelta(hours=23, minutes=59)
+            us.save(update_fields=["state_date"])
         count = UserService.objects.count()
         cleaner = StuckCleaner(Environment.testing_environment())
         cleaner.run()

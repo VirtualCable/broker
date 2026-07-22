@@ -31,6 +31,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Author: Alexander Burmatov,  thatman at altlinux dot org
 """
+
 import typing
 
 from django.utils.translation import gettext_noop as _
@@ -42,7 +43,7 @@ from uds.core.util import log
 from uds.core.util.config import GlobalConfig
 from uds.core.module import Module
 
-STORAGE_KEY = 'osmk'
+STORAGE_KEY = "osmk"
 
 if typing.TYPE_CHECKING:
     from uds import models
@@ -59,18 +60,18 @@ class OSManager(Module):
     """
 
     # Service informational related data
-    type_name = _('Base OS Manager')
-    type_type = 'osmanager'
-    type_description = _('Base Manager')
-    icon_file = 'osmanager.png'
+    type_name = _("Base OS Manager")
+    type_type = "osmanager"
+    type_description = _("Base Manager")
+    icon_file = "osmanager.png"
 
     # : Type of services for which this OS Manager is designed
     # : Defaults to all. (list or tuple)
     services_types: typing.ClassVar[types.services.ServiceType] = types.services.ServiceType.VDI
 
-    _db_obj: typing.Optional['models.OSManager'] = None
+    _db_obj: typing.Optional["models.OSManager"] = None
 
-    def __init__(self, environment: 'Environment', values: types.core.ValuesType = None):
+    def __init__(self, environment: "Environment", values: types.core.ValuesType = None):
         super().__init__(environment, values)
         self.initialize(values)
 
@@ -91,7 +92,7 @@ class OSManager(Module):
         """
         pass
 
-    def release(self, userservice: 'models.UserService') -> None:
+    def release(self, userservice: "models.UserService") -> None:
         """
         Called by a service that is in Usable state before destroying it so osmanager can release data associated with it
         Only invoked for services that reach the state "removed"
@@ -100,7 +101,7 @@ class OSManager(Module):
         pass
 
     @typing.override
-    def db_obj(self) -> 'models.OSManager':
+    def db_obj(self) -> "models.OSManager":
         """
         Returns the database object for this provider
         """
@@ -115,7 +116,8 @@ class OSManager(Module):
 
     # These methods must be overriden
     def actor_data(
-        self, userservice: 'models.UserService'  # pylint: disable=unused-argument
+        self,
+        userservice: "models.UserService",  # pylint: disable=unused-argument
     ) -> types.osmanagers.ActorData:
         """
         This method provides information to actor, so actor can complete os configuration.
@@ -157,9 +159,7 @@ class OSManager(Module):
         """
         return types.osmanagers.ActorData.null()
 
-    def check_state(
-        self, userservice: 'models.UserService'
-    ) -> types.states.State:  # pylint: disable=unused-argument
+    def check_state(self, userservice: "models.UserService") -> types.states.State:  # pylint: disable=unused-argument
         """
         This method must be overriden so your os manager can respond to requests from system to the current state of the service
         This method will be invoked when:
@@ -176,14 +176,14 @@ class OSManager(Module):
     def manages_unused_userservices(self) -> bool:
         return False
 
-    def handle_unused(self, userservice: 'models.UserService') -> None:
+    def handle_unused(self, userservice: "models.UserService") -> None:
         """
         This will be invoked for every assigned and unused user service that has been in this state at least 1/2 of Globalconfig.CHECK_UNUSED_TIME
         This function can update userService values. Normal operation will be remove machines if this state is not valid
         """
         pass
 
-    def is_removable_on_logout(self, userservice: 'models.UserService') -> bool:
+    def is_removable_on_logout(self, userservice: "models.UserService") -> bool:
         """
         If returns true, when actor notifies "logout", UDS will mark service for removal
         can be overriden
@@ -201,7 +201,7 @@ class OSManager(Module):
         return False
 
     @classmethod
-    def is_credentials_modified_for_service(cls: type['OSManager']) -> bool:
+    def is_credentials_modified_for_service(cls: type["OSManager"]) -> bool:
         """
         Helper method that informs if the os manager transforms the username and/or the password.
         This is used from ServicePool
@@ -210,7 +210,7 @@ class OSManager(Module):
 
     def update_credentials(
         self,
-        userservice: 'models.UserService',  # pylint: disable=unused-argument
+        userservice: "models.UserService",  # pylint: disable=unused-argument
         username: str,
         password: str,
     ) -> tuple[str, str]:
@@ -236,21 +236,21 @@ class OSManager(Module):
         Invoked when OS Manager is deleted
         """
 
-    def log_known_ip(self, userservice: 'models.UserService', ip: str) -> None:
+    def log_known_ip(self, userservice: "models.UserService", ip: str) -> None:
         userservice.log_ip(ip)
 
     # Final method
     @typing.final
-    def process_ready(self, userservice: 'models.UserService') -> None:
-        '''
+    def process_ready(self, userservice: "models.UserService") -> None:
+        """
         Resets login counter to 0
-        '''
-        userservice.properties['logins_counter'] = 0
+        """
+        userservice.properties["logins_counter"] = 0
         # And execute ready notification method
         self.on_ready(userservice)
 
     @staticmethod
-    def logged_in(userservice: 'models.UserService', username: typing.Optional[str] = None) -> None:
+    def logged_in(userservice: "models.UserService", username: typing.Optional[str] = None) -> None:
         """
         This method:
           - Add log in event to stats
@@ -259,19 +259,19 @@ class OSManager(Module):
         """
         unique_id = userservice.unique_id
         userservice.set_in_use(True)
-        userservice.properties['last_username'] = username or 'unknown'  # Store it for convenience
+        userservice.properties["last_username"] = username or "unknown"  # Store it for convenience
         userservice_instance = userservice.get_instance()
-        userservice_instance.user_logged_in(username or 'unknown')
+        userservice_instance.user_logged_in(username or "unknown")
         userservice.update_data(userservice_instance)
 
         userservice_ip = userservice_instance.get_ip()
 
-        full_username = userservice.user.pretty_name if userservice.user else 'unknown'
+        full_username = userservice.user.pretty_name if userservice.user else "unknown"
 
-        know_user_ip = userservice.src_ip + ':' + userservice.src_hostname
-        know_user_ip = know_user_ip if know_user_ip != ':' else 'unknown'
+        know_user_ip = userservice.src_ip + ":" + userservice.src_hostname
+        know_user_ip = know_user_ip if know_user_ip != ":" else "unknown"
 
-        username = username or 'unknown'
+        username = username or "unknown"
 
         add_event(
             userservice.service_pool,
@@ -285,12 +285,12 @@ class OSManager(Module):
         log.log(
             userservice,
             types.log.LogLevel.INFO,
-            f'User {username} has logged in',
+            f"User {username} has logged in",
             types.log.LogSource.OSMANAGER,
         )
 
         log.log_use(
-            'login',
+            "login",
             unique_id,
             userservice_ip,
             username,
@@ -302,21 +302,21 @@ class OSManager(Module):
 
         # Context makes a transaction, so we can use it to update the counter
         with userservice.properties as p:
-            counter = int(typing.cast(str, p.get('logins_counter', 0))) + 1
-            p['logins_counter'] = counter
+            counter = int(typing.cast(str, p.get("logins_counter", 0))) + 1
+            p["logins_counter"] = counter
 
     @staticmethod
-    def logged_out(userservice: 'models.UserService', username: typing.Optional[str] = None) -> None:
+    def logged_out(userservice: "models.UserService", username: typing.Optional[str] = None) -> None:
         """
         This method:
           - Add log in event to stats
           - Sets service in use
         """
         with userservice.properties as p:
-            counter = int(typing.cast(str, p.get('logins_counter', 0))) - 1
+            counter = int(typing.cast(str, p.get("logins_counter", 0))) - 1
             if counter > 0:
                 counter -= 1
-            p['logins_counter'] = counter
+            p["logins_counter"] = counter
 
         if GlobalConfig.EXCLUSIVE_LOGOUT.as_bool(True) and counter > 0:
             return
@@ -324,17 +324,17 @@ class OSManager(Module):
         unique_id = userservice.unique_id
         userservice.set_in_use(False)
         user_service_instance = userservice.get_instance()
-        user_service_instance.user_logged_out(username or 'unknown')
+        user_service_instance.user_logged_out(username or "unknown")
         userservice.update_data(user_service_instance)
 
         service_ip = user_service_instance.get_ip()
 
-        full_username = userservice.user.pretty_name if userservice.user else 'unknown'
+        full_username = userservice.user.pretty_name if userservice.user else "unknown"
 
-        known_user_ip = userservice.src_ip + ':' + userservice.src_hostname
-        known_user_ip = known_user_ip if known_user_ip != ':' else 'unknown'
+        known_user_ip = userservice.src_ip + ":" + userservice.src_hostname
+        known_user_ip = known_user_ip if known_user_ip != ":" else "unknown"
 
-        username = username or 'unknown'
+        username = username or "unknown"
 
         add_event(
             userservice.deployed_service,
@@ -348,12 +348,12 @@ class OSManager(Module):
         log.log(
             userservice,
             types.log.LogLevel.INFO,
-            f'User {username} has logged out',
+            f"User {username} has logged out",
             types.log.LogSource.OSMANAGER,
         )
 
         log.log_use(
-            'logout',
+            "logout",
             unique_id,
             service_ip,
             username,
@@ -363,7 +363,7 @@ class OSManager(Module):
             userservice.deployed_service.name,
         )
 
-    def on_ready(self, userservice: 'models.UserService') -> None:
+    def on_ready(self, userservice: "models.UserService") -> None:
         """
         Invoked by actor when userService is ready
         """

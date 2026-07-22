@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -44,6 +45,7 @@ from ...utils.test import UDSTransactionTestCase
 from ...utils.helpers import limited_iterator
 
 from uds.services.Xen.xen import types as xen_types
+
 
 # We use transactions on some related methods (storage access, etc...)
 class TestXenLinkedUserService(UDSTransactionTestCase):
@@ -60,7 +62,7 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             service = fixtures.create_service_linked(provider=provider)
             userservice = fixtures.create_userservice_linked(service=service)
             publication = userservice.publication()
-            publication._vmid = '1'
+            publication._vmid = "1"
 
             state = userservice.deploy_for_cache(level=types.services.CacheLevel.L1)
 
@@ -78,7 +80,9 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             # api.deploy_from_template, api.provision_vm, api.start_vm and api.get_vm_info should have been called
             api.deploy_from_template.assert_called_with(publication._vmid, MustBeOfType(str))
             api.provision_vm.assert_called_with(userservice._vmid)
-            api.configure_vm.assert_called_with(userservice._vmid, mac_info=MustBeOfType(dict), memory=MustBeOfType(int))
+            api.configure_vm.assert_called_with(
+                userservice._vmid, mac_info=MustBeOfType(dict), memory=MustBeOfType(int)
+            )
             api.start_vm.assert_called_with(userservice._vmid)
 
     def test_userservice_linked_cache_l2(self) -> None:
@@ -91,7 +95,7 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             userservice = fixtures.create_userservice_linked(service=service)
 
             publication = userservice.publication()
-            publication._vmid = '1'
+            publication._vmid = "1"
 
             state = userservice.deploy_for_cache(level=types.services.CacheLevel.L2)
 
@@ -112,10 +116,12 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             # api.deploy_from_template, api.provision_vm, api.start_vm and api.get_vm_info should have been called
             api.deploy_from_template.assert_called_with(publication._vmid, MustBeOfType(str))
             api.provision_vm.assert_called_with(userservice._vmid)
-            api.configure_vm.assert_called_with(userservice._vmid, mac_info=MustBeOfType(dict), memory=MustBeOfType(int))
+            api.configure_vm.assert_called_with(
+                userservice._vmid, mac_info=MustBeOfType(dict), memory=MustBeOfType(int)
+            )
             api.start_vm.assert_called_with(userservice._vmid)
             api.shutdown_vm.assert_called_with(userservice._vmid)
-            
+
     def test_userservice_linked_user(self) -> None:
         """
         Test the user service
@@ -126,7 +132,7 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             userservice = fixtures.create_userservice_linked(service=service)
 
             publication = userservice.publication()
-            publication._vmid = '1'
+            publication._vmid = "1"
 
             state = userservice.deploy_for_user(models.User())
 
@@ -138,7 +144,7 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             self.assertEqual(
                 state,
                 types.states.TaskState.FINISHED,
-                f'Queue: {userservice._queue}, reason: {userservice._reason}, extra_info: {userservice._error_debug_info}',
+                f"Queue: {userservice._queue}, reason: {userservice._reason}, extra_info: {userservice._error_debug_info}",
             )
 
             self.assertEqual(userservice._name[: len(service.get_basename())], service.get_basename())
@@ -147,7 +153,9 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
             # api.deploy_from_template, api.provision_vm, api.start_vm and api.get_vm_info should have been called
             api.deploy_from_template.assert_called_with(publication._vmid, MustBeOfType(str))
             api.provision_vm.assert_called_with(userservice._vmid)
-            api.configure_vm.assert_called_with(userservice._vmid, mac_info=MustBeOfType(dict), memory=MustBeOfType(int))
+            api.configure_vm.assert_called_with(
+                userservice._vmid, mac_info=MustBeOfType(dict), memory=MustBeOfType(int)
+            )
             api.start_vm.assert_called_with(userservice._vmid)
 
             # Ensure vm is stopped, because deployment should have started it (as api.start_machine was called)
@@ -174,10 +182,10 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
                 userservice = fixtures.create_userservice_linked(service=service)
                 service.try_soft_shutdown.value = graceful
                 publication = userservice.publication()
-                publication._vmid = '1'
-                
+                publication._vmid = "1"
+
                 service.must_stop_before_deletion = False  # avoid stop before deletion, not needed for this test
-                
+
                 fixtures.set_all_vm_state(xen_types.PowerState.RUNNING)
 
                 state = userservice.deploy_for_user(models.User())
@@ -236,5 +244,5 @@ class TestXenLinkedUserService(UDSTransactionTestCase):
     def test_userservice_basics(self) -> None:
         with fixtures.patched_provider():
             userservice = fixtures.create_userservice_linked()
-            userservice.set_ip('1.2.3.4')
-            self.assertEqual(userservice.get_ip(), '1.2.3.4')
+            userservice.set_ip("1.2.3.4")
+            self.assertEqual(userservice.get_ip(), "1.2.3.4")

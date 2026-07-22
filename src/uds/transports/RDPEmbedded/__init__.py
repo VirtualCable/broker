@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from .direct import RDPEmbeddedTransport
 from .tunnel import TRDPEmbeddedTransport

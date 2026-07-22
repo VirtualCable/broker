@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -56,30 +57,28 @@ class AccountUsage(UUIDModel):
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["AccountUsage"]'
 
-    user_name = models.CharField(max_length=128, db_index=True, default='')
-    user_uuid = models.CharField(max_length=50, db_index=True, default='')
-    pool_name = models.CharField(max_length=128, db_index=True, default='')
-    pool_uuid = models.CharField(max_length=50, db_index=True, default='')
+    user_name = models.CharField(max_length=128, db_index=True, default="")
+    user_uuid = models.CharField(max_length=50, db_index=True, default="")
+    pool_name = models.CharField(max_length=128, db_index=True, default="")
+    pool_uuid = models.CharField(max_length=50, db_index=True, default="")
     start = models.DateTimeField(default=NEVER)
     end = models.DateTimeField(default=NEVER)
     user_service = models.OneToOneField(
         UserService,
         null=True,
         blank=True,
-        related_name='accounting',
+        related_name="accounting",
         on_delete=models.SET_NULL,
     )
-    account = models.ForeignKey(
-        Account, related_name='usages', on_delete=models.CASCADE
-    )
+    account = models.ForeignKey(Account, related_name="usages", on_delete=models.CASCADE)
 
     class Meta:  # pyright: ignore
         """
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds_acc_usage'
-        app_label = 'uds'
+        db_table = "uds_acc_usage"
+        app_label = "uds"
 
     @property
     def elapsed_seconds(self) -> int:
@@ -110,4 +109,4 @@ class AccountUsage(UUIDModel):
         return seconds_to_time_string(self.elapsed_seconds_timemark)
 
     def __str__(self) -> str:
-        return f'AccountUsage id {self.id}, pool {self.pool_name}, name {self.user_name}, start {self.start}, end {self.end}'
+        return f"AccountUsage id {self.id}, pool {self.pool_name}, name {self.user_name}, start {self.start}, end {self.end}"

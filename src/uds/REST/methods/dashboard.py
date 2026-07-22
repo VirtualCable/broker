@@ -72,7 +72,7 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-cache = Cache('DashboardData')
+cache = Cache("DashboardData")
 
 CACHE_TIME: typing.Final[int] = 60 * 10  # 10 minutes
 DEFAULT_DAYS: typing.Final[int] = 30
@@ -84,7 +84,7 @@ TOP_ROWS: typing.Final[int] = 25
 
 
 def _report_data(
-    report_cls: type['Report'],
+    report_cls: type["Report"],
     start_date: datetime.date,
     end_date: datetime.date,
 ) -> typing.Any:
@@ -105,7 +105,7 @@ def _report_data(
     # sentinel. List reports (e.g. FailedLoginsReport) have no pools field.
     # Check report_cls (the type), not the instance, so `report` stays Any.
     if issubclass(report_cls, StatsReport):
-        report.pools.value = ['0-0-0-0']
+        report.pools.value = ["0-0-0-0"]
     report.start_date.value = start_date
     report.end_date.value = end_date
     return report.get_data()
@@ -126,20 +126,18 @@ class Dashboard(Handler):
 
     def _kpis(self) -> dict[str, int]:
         """Fast, point-in-time counters shown on the dashboard header."""
-        users_with_valid_services = models.User.objects.filter(
-            userServices__state__in=State.VALID_STATES
-        ).order_by()
+        users_with_valid_services = models.User.objects.filter(userServices__state__in=State.VALID_STATES).order_by()
         return {
-            'users': models.User.objects.count(),
-            'groups': models.Group.objects.count(),
-            'users_with_services': users_with_valid_services.values('id').distinct().count(),
-            'assigned_user_services': users_with_valid_services.values('id').count(),
-            'service_pools': models.ServicePool.objects.count(),
-            'meta_pools': models.MetaPool.objects.count(),
-            'user_services': models.UserService.objects.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
-            'restrained_service_pools': models.ServicePool.restraineds_queryset().count(),
-            'authenticators': models.Authenticator.objects.count(),
-            'tunnels': models.Server.objects.filter(type=types.servers.ServerType.TUNNEL).count(),
+            "users": models.User.objects.count(),
+            "groups": models.Group.objects.count(),
+            "users_with_services": users_with_valid_services.values("id").distinct().count(),
+            "assigned_user_services": users_with_valid_services.values("id").count(),
+            "service_pools": models.ServicePool.objects.count(),
+            "meta_pools": models.MetaPool.objects.count(),
+            "user_services": models.UserService.objects.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+            "restrained_service_pools": models.ServicePool.restraineds_queryset().count(),
+            "authenticators": models.Authenticator.objects.count(),
+            "tunnels": models.Server.objects.filter(type=types.servers.ServerType.TUNNEL).count(),
         }
 
     def _widget(self, name: str, builder: collections.abc.Callable[[], typing.Any]) -> typing.Any:
@@ -151,7 +149,7 @@ class Dashboard(Handler):
             return builder()
         except Exception as e:
             logger.exception('Error building dashboard widget "%s"', name)
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _build(self, days: int) -> dict[str, typing.Any]:
         until = sql_now()
@@ -176,28 +174,28 @@ class Dashboard(Handler):
         def client_platforms() -> typing.Any:
             platforms, browsers, _combo, total = _report_data(ClientPlatformsReport, start_date, end_date)
             return {
-                'platforms': platforms[:TOP_ROWS],
-                'browsers': browsers[:TOP_ROWS],
-                'total': total,
+                "platforms": platforms[:TOP_ROWS],
+                "browsers": browsers[:TOP_ROWS],
+                "total": total,
             }
 
         def top_users() -> typing.Any:
             report: typing.Any = TopUsersReport()
-            report.pools.value = ['0-0-0-0']
+            report.pools.value = ["0-0-0-0"]
             report.start_date.value = start_date
             report.end_date.value = end_date
             report.top_n.value = TOP_ROWS
-            report.sort_by.value = 'time'
+            report.sort_by.value = "time"
             return report.get_data()
 
         def session_duration() -> typing.Any:
             rows, total_sessions, total_seconds = _report_data(SessionDurationReport, start_date, end_date)
             avg_seconds = (total_seconds // total_sessions) if total_sessions else 0
             return {
-                'buckets': rows,
-                'total_sessions': total_sessions,
-                'total_seconds': total_seconds,
-                'avg_seconds': avg_seconds,
+                "buckets": rows,
+                "total_sessions": total_sessions,
+                "total_seconds": total_seconds,
+                "avg_seconds": avg_seconds,
             }
 
         def userservice_errors() -> typing.Any:
@@ -208,42 +206,42 @@ class Dashboard(Handler):
             report: typing.Any = FailedLoginsReport()
             report.start_date.value = start_date
             report.end_date.value = end_date
-            report.authenticator.value = '0-0-0-0'
+            report.authenticator.value = "0-0-0-0"
             summary, _detail = report.get_data()
             return summary[:TOP_ROWS]
 
         return {
-            'days': days,
-            'since': since,
-            'until': until,
+            "days": days,
+            "since": since,
+            "until": until,
             # When this payload was built. Stays frozen in the cached copy, so
             # the GUI "Updated" label reflects the real data age, not the fetch time.
-            'generated': until,
-            'kpis': self._kpis(),
-            'peak_concurrency': self._widget('peak_concurrency', peak_concurrency),
-            'pool_saturation': self._widget('pool_saturation', pool_saturation),
-            'cache_efficiency': self._widget('cache_efficiency', cache_efficiency),
-            'tunnel_usage': self._widget('tunnel_usage', tunnel_usage),
-            'client_platforms': self._widget('client_platforms', client_platforms),
-            'top_users': self._widget('top_users', top_users),
-            'session_duration': self._widget('session_duration', session_duration),
-            'userservice_errors': self._widget('userservice_errors', userservice_errors),
-            'failed_logins': self._widget('failed_logins', failed_logins),
+            "generated": until,
+            "kpis": self._kpis(),
+            "peak_concurrency": self._widget("peak_concurrency", peak_concurrency),
+            "pool_saturation": self._widget("pool_saturation", pool_saturation),
+            "cache_efficiency": self._widget("cache_efficiency", cache_efficiency),
+            "tunnel_usage": self._widget("tunnel_usage", tunnel_usage),
+            "client_platforms": self._widget("client_platforms", client_platforms),
+            "top_users": self._widget("top_users", top_users),
+            "session_duration": self._widget("session_duration", session_duration),
+            "userservice_errors": self._widget("userservice_errors", userservice_errors),
+            "failed_logins": self._widget("failed_logins", failed_logins),
         }
 
     def _data(self) -> dict[str, typing.Any]:
         # Clamp the requested window to a sane range
         try:
-            days = int(typing.cast(str, self.query_params().get('days', DEFAULT_DAYS)))
+            days = int(typing.cast(str, self.query_params().get("days", DEFAULT_DAYS)))
         except (TypeError, ValueError):
             days = DEFAULT_DAYS
         days = max(MIN_DAYS, min(MAX_DAYS, days))
 
-        cache_key = f'dashboard-{days}'
+        cache_key = f"dashboard-{days}"
         # The GUI refresh button sends flush=1 to bypass the cached payload and
         # force a rebuild from fresh queries; otherwise the range/timestamps and
         # counters stay frozen for up to CACHE_TIME.
-        flush = str(self.query_params().get('flush', '')).lower() in ('1', 'true', 'yes')
+        flush = str(self.query_params().get("flush", "")).lower() in ("1", "true", "yes")
         if not flush:
             cached: dict[str, typing.Any] | None = cache.get(cache_key)
             if cached is not None:
@@ -254,7 +252,7 @@ class Dashboard(Handler):
         return data
 
     def get(self) -> typing.Any:
-        logger.debug('Dashboard GET args: %s', self._args)
-        if len(self._args) == 0 or (len(self._args) == 1 and self._args[0] == 'data'):
+        logger.debug("Dashboard GET args: %s", self._args)
+        if len(self._args) == 0 or (len(self._args) == 1 and self._args[0] == "data"):
             return self._data()
-        raise exceptions.rest.RequestError('invalid request')
+        raise exceptions.rest.RequestError("invalid request")

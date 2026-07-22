@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -40,14 +41,14 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'ovirtplatform',
-    'opengnsysplatform',
-    'opennebulaplatform',
-    'openstackplatform',
-    'openstackplatformnew',
-    'physicalmachinesserviceprovider',
-    'proxmoxplatform',
-    'xenplatform',
+    "ovirtplatform",
+    "opengnsysplatform",
+    "opennebulaplatform",
+    "openstackplatform",
+    "openstackplatformnew",
+    "physicalmachinesserviceprovider",
+    "proxmoxplatform",
+    "xenplatform",
 ]
 
 
@@ -61,4 +62,4 @@ class TestServices(UDSTestCase):
 
         factory = ServiceProviderFactory()
         for provider in MUST_HAVE:
-            self.assertTrue(factory.has(provider), f'Provider {provider} not found')
+            self.assertTrue(factory.has(provider), f"Provider {provider} not found")

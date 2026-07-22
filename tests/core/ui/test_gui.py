@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from django.conf import settings
 
 from uds.core.util import ensure
@@ -40,10 +41,11 @@ from uds.core import consts, types
 # We use commit/rollback
 from ...utils.test import UDSTestCase
 
+
 class GuiTest(UDSTestCase):
     def test_globals(self) -> None:
         self.assertEqual(UDSK, settings.SECRET_KEY[8:24].encode())
-        self.assertEqual(consts.ui.UDSB, b'udsprotect')
+        self.assertEqual(consts.ui.UDSB, b"udsprotect")
 
     def test_convert_to_choices(self) -> None:
         # Several cases
@@ -53,18 +55,18 @@ class GuiTest(UDSTestCase):
         # 4.- A list of dictinaries, must be {'id': 'xxxx', 'text': 'yyy'}
         # 5.- A Dictionary, Keys will be used in 'id' and values in 'text'
         self.assertEqual(gui.as_choices([]), [])
-        self.assertEqual(gui.as_choices('aaaa'), [gui.choice_item('aaaa', 'aaaa')])
+        self.assertEqual(gui.as_choices("aaaa"), [gui.choice_item("aaaa", "aaaa")])
         self.assertEqual(
-            gui.as_choices(['a', 'b']),
-            [gui.choice_item('a', 'a'), gui.choice_item('b', 'b')],
+            gui.as_choices(["a", "b"]),
+            [gui.choice_item("a", "a"), gui.choice_item("b", "b")],
         )
         self.assertEqual(
-            gui.as_choices({'a': 'b', 'c': 'd'}),
-            [gui.choice_item('a', 'b'), gui.choice_item('c', 'd')],
+            gui.as_choices({"a": "b", "c": "d"}),
+            [gui.choice_item("a", "b"), gui.choice_item("c", "d")],
         )
         self.assertEqual(
-            gui.as_choices({'a': 'b', 'c': 'd'}),
-            [gui.choice_item('a', 'b'), gui.choice_item('c', 'd')],
+            gui.as_choices({"a": "b", "c": "d"}),
+            [gui.choice_item("a", "b"), gui.choice_item("c", "d")],
         )
 
     def test_convert_to_list(self) -> None:
@@ -73,21 +75,19 @@ class GuiTest(UDSTestCase):
         # 2.- single string
         # 3.- A list of strings
         self.assertEqual(ensure.as_list([]), [])
-        self.assertEqual(ensure.as_list('aaaa'), ['aaaa'])
-        self.assertEqual(ensure.as_list(['a', 'b']), ['a', 'b'])
+        self.assertEqual(ensure.as_list("aaaa"), ["aaaa"])
+        self.assertEqual(ensure.as_list(["a", "b"]), ["a", "b"])
         self.assertEqual(ensure.as_list(1), [1])
 
     def test_choice_image(self) -> None:
         # id, text, and base64 image
         self.assertEqual(
-            gui.choice_image('id', 'text', 'image'),
-            types.ui.ChoiceItem(id='id', text='text', img='image'),
+            gui.choice_image("id", "text", "image"),
+            types.ui.ChoiceItem(id="id", text="text", img="image"),
         )
 
     def test_to_bool(self) -> None:
-        for val in ('true', 'True', 'TRUE', 'yes', 'Yes', 'YES', '1'):
+        for val in ("true", "True", "TRUE", "yes", "Yes", "YES", "1"):
             self.assertTrue(gui.as_bool(val), f'Failed to convert "{val}" to True')
-        for val in ('false', 'False', 'FALSE', 'no', 'No', 'NO', '0'):
-            self.assertFalse(
-                gui.as_bool(val), f'Failed to convert "{val}" to False'
-            )
+        for val in ("false", "False", "FALSE", "no", "No", "NO", "0"):
+            self.assertFalse(gui.as_bool(val), f'Failed to convert "{val}" to False')

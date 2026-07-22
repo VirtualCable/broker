@@ -71,25 +71,23 @@ class WEBTestCase(test.UDSTransactionTestCase):
 
         self.provider = service_fixtures.create_db_provider()
 
-    def do_login(
-        self, username: str, password: str, authid: str, check: bool = False
-    ) -> 'test.UDSHttpResponse':
+    def do_login(self, username: str, password: str, authid: str, check: bool = False) -> "test.UDSHttpResponse":
         response = self.client.post(
-            '/uds/page/login',
+            "/uds/page/login",
             {
-                'user': username,
-                'password': password,
-                'authenticator': authid,
+                "user": username,
+                "password": password,
+                "authenticator": authid,
             },
         )
         if check:
-            self.assertRedirects(response, '/uds/page/services', status_code=302, target_status_code=200)
+            self.assertRedirects(response, "/uds/page/services", status_code=302, target_status_code=200)
         return response
 
     def login(self, user: typing.Optional[models.User] = None, as_admin: bool = True) -> models.User:
-        '''
+        """
         Login as specified user or first admin
-        '''
+        """
         user = user or (self.admins[0] if as_admin else self.staffs[0])
         self.do_login(user.name, user.name, user.manager.uuid)
         return user

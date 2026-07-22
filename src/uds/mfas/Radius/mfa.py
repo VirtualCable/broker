@@ -56,55 +56,55 @@ logger = logging.getLogger(__name__)
 
 
 class RadiusOTP(mfas.MFA):
-    '''
+    """
     Validates OTP challenge against a proper configured Radius Server with OTP
     using 'Access-Challenge' response from Radius Server [RFC2865, RFC5080]
-    '''
+    """
 
-    type_name = _('Radius OTP Challenge')
-    type_type = 'RadiusOTP'
-    type_description = _('Radius OTP Challenge')
-    icon_file = 'radius.png'
+    type_name = _("Radius OTP Challenge")
+    type_type = "RadiusOTP"
+    type_description = _("Radius OTP Challenge")
+    icon_file = "radius.png"
 
     server = gui.TextField(
         length=64,
-        label=_('Host'),
+        label=_("Host"),
         order=1,
-        tooltip=_('Radius Server IP or Hostname'),
+        tooltip=_("Radius Server IP or Hostname"),
         required=True,
     )
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         default=1812,
         order=2,
-        tooltip=_('Radius authentication port (usually 1812)'),
+        tooltip=_("Radius authentication port (usually 1812)"),
         required=True,
     )
     secret = gui.PasswordField(
         length=64,
-        label=_('Secret'),
+        label=_("Secret"),
         order=3,
-        tooltip=_('Radius client secret'),
+        tooltip=_("Radius client secret"),
         required=True,
     )
     all_users_otp = gui.CheckBoxField(
-        label=_('All users must send OTP'),
+        label=_("All users must send OTP"),
         order=4,
         default=True,
         tooltip=_(
-            'If unchecked, an authentication step is needed in order to know if this user must enter OTP. '
-            'If checked, all users must enter OTP, so authentication step is skipped.'
+            "If unchecked, an authentication step is needed in order to know if this user must enter OTP. "
+            "If checked, all users must enter OTP, so authentication step is skipped."
         ),
     )
     nas_identifier = gui.TextField(
         length=64,
-        label=_('NAS Identifier'),
-        default='uds-server',
+        label=_("NAS Identifier"),
+        default="uds-server",
         order=5,
-        tooltip=_('NAS Identifier for Radius Server'),
+        tooltip=_("NAS Identifier for Radius Server"),
         required=True,
-        old_field_name='nasIdentifier',
+        old_field_name="nasIdentifier",
     )
 
     login_without_mfa_policy = fields.login_without_mfa_policy_field()
@@ -112,22 +112,22 @@ class RadiusOTP(mfas.MFA):
     allow_skip_mfa_from_networks = fields.allow_skip_mfa_from_networks_field()
 
     send_just_username = gui.CheckBoxField(
-        label=_('Send only username (without domain) to radius server'),
+        label=_("Send only username (without domain) to radius server"),
         order=55,
         default=False,
         tooltip=_(
-            'If unchecked, username will be sent as is to radius server. \n'
-            'If checked, domain part will be removed from username before sending it to radius server.'
+            "If unchecked, username will be sent as is to radius server. \n"
+            "If checked, domain part will be removed from username before sending it to radius server."
         ),
         required=False,
         tab=types.ui.Tab.CONFIG,
     )
 
     use_message_authenticator = gui.CheckBoxField(
-        label=_('Use Message Authenticator'),
+        label=_("Use Message Authenticator"),
         default=False,
         order=13,
-        tooltip=_('Use Message Authenticator for authentication'),
+        tooltip=_("Use Message Authenticator for authentication"),
         tab=types.ui.Tab.CONFIG,
     )
 
@@ -141,42 +141,42 @@ class RadiusOTP(mfas.MFA):
             use_message_authenticator=self.use_message_authenticator.as_bool(),
         )
 
-    def check_result(self, action: str, request: 'ExtendedHttpRequest') -> mfas.MFA.RESULT:
+    def check_result(self, action: str, request: "ExtendedHttpRequest") -> mfas.MFA.RESULT:
         if mfas.LoginAllowed.check_action(action, request, self.login_without_mfa_policy_networks.value):
             return mfas.MFA.RESULT.OK
-        raise Exception('User not allowed to login')
+        raise Exception("User not allowed to login")
 
     @typing.override
-    def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> typing.Optional[bool]:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> typing.Optional[bool]:
         return None
 
     @typing.override
     def label(self) -> str:
-        return gettext('OTP Code')
+        return gettext("OTP Code")
 
     @typing.override
-    def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
-        '''
+    def html(self, request: "ExtendedHttpRequest", userid: str, username: str) -> str:
+        """
         ToDo:
         - Maybe create a field in mfa definition to edit from admin panel ?
         - And/or add "Reply-Message" text from Radius Server response
-        '''
-        return gettext('Please enter OTP')
+        """
+        return gettext("Please enter OTP")
 
     @typing.override
     def process(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         validity: typing.Optional[int] = None,
-    ) -> 'mfas.MFA.RESULT':
-        '''
+    ) -> "mfas.MFA.RESULT":
+        """
         check if this user must send OTP
         in order to check this, it is neccesary to first validate password (again) with radius server
         and get also radius State value (otp session)
-        '''
+        """
         if mfas.LoginAllowed.check_ip_allowed(request, self.login_without_mfa_policy_networks.value):
             return mfas.MFA.RESULT.ALLOWED
 
@@ -191,7 +191,7 @@ class RadiusOTP(mfas.MFA):
 
         # Remove domain part from username if needed
         if self.send_just_username.value:
-            username = username.strip().split('@')[0].split('\\')[-1]
+            username = username.strip().split("@")[0].split("\\")[-1]
 
         web_pwd = get_webpassword(request)
         try:
@@ -202,7 +202,7 @@ class RadiusOTP(mfas.MFA):
             if not mfas.LoginAllowed.check_action(
                 self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
             ):
-                raise Exception(_('Radius OTP connection error')) from e
+                raise Exception(_("Radius OTP connection error")) from e
             logger.warning(
                 "Radius OTP connection error: Allowing access to user [%s] from IP [%s] without OTP",
                 username,
@@ -229,7 +229,7 @@ class RadiusOTP(mfas.MFA):
             return self.check_result(self.login_without_mfa_policy.value, request)
 
         # Store state for later use, related to this user
-        request.session[client.STATE_VAR_NAME] = auth_reply.state or b''
+        request.session[client.STATE_VAR_NAME] = auth_reply.state or b""
 
         # correct password and otp_needed
         return mfas.MFA.RESULT.OK
@@ -237,14 +237,14 @@ class RadiusOTP(mfas.MFA):
     @typing.override
     def validate(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         code: str,
         validity: typing.Optional[int] = None,
     ) -> None:
-        '''
+        """
         Validate the OTP code
 
         we could have saved state+replyMessage in ddbb at "process" step and reuse it here
@@ -252,22 +252,22 @@ class RadiusOTP(mfas.MFA):
         otherwise we need to redirect to username/password form in each otp try in order to
         regenerate a new State after a wrong sent OTP code
         slightly less efficient but a lot simpler
-        '''
+        """
         # The identifier has preference over username, but normally will be empty
         # This allows derived class to "alter" the username if needed
         username = identifier or username
 
         # Remove domain part from username if needed
         if self.send_just_username.value:
-            username = username.strip().split('@')[0].split('\\')[-1]
+            username = username.strip().split("@")[0].split("\\")[-1]
 
         try:
-            err = _('Invalid OTP code')
+            err = _("Invalid OTP code")
 
             web_pwd = get_webpassword(request)
             try:
                 connection = self.radius_client()
-                state = request.session.get(client.STATE_VAR_NAME, b'')
+                state = request.session.get(client.STATE_VAR_NAME, b"")
                 if state:
                     # Remove state from session
                     del request.session[client.STATE_VAR_NAME]
@@ -280,7 +280,7 @@ class RadiusOTP(mfas.MFA):
                 if mfas.LoginAllowed.check_action(
                     self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
                 ):
-                    raise Exception(_('Radius OTP connection error')) from e
+                    raise Exception(_("Radius OTP connection error")) from e
                 logger.warning(
                     "Radius OTP connection error: Allowing access to user [%s] from IP [%s] without OTP",
                     username,

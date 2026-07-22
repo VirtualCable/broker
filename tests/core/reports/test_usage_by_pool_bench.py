@@ -44,6 +44,7 @@ Each class also asserts a basic correctness invariant (e.g. paired
 sessions == inserted pairs, total accesses == inserted ACCESS rows)
 so the bench doubles as a regression guard for the optimisations.
 """
+
 import collections.abc
 import datetime
 import logging
@@ -69,23 +70,23 @@ logger = logging.getLogger(__name__)
 # Benchmarks are slow (5000-row bulk inserts × 4 reports × REPEATS+warmup).
 # Off by default; opt in with UDS_BENCH=1.
 pytestmark = pytest.mark.skipif(
-    os.environ.get('UDS_BENCH', '') in ('', '0'),
-    reason='Benchmarks disabled. Set UDS_BENCH=1 to enable.',
+    os.environ.get("UDS_BENCH", "") in ("", "0"),
+    reason="Benchmarks disabled. Set UDS_BENCH=1 to enable.",
 )
 
 # Event volumes to benchmark.
 DEFAULT_SIZES: tuple[int, ...] = (50, 100, 1000, 5000)
-SIZES_ENV: str = 'UDS_BENCH_SIZES'
+SIZES_ENV: str = "UDS_BENCH_SIZES"
 
 
 def _bench_sizes() -> tuple[int, ...]:
-    raw = os.environ.get(SIZES_ENV, '').strip()
+    raw = os.environ.get(SIZES_ENV, "").strip()
     if not raw:
         return DEFAULT_SIZES
 
-    sizes = tuple(int(part.strip()) for part in raw.split(',') if part.strip())
+    sizes = tuple(int(part.strip()) for part in raw.split(",") if part.strip())
     if not sizes or any(size <= 0 for size in sizes):
-        raise ValueError(f'{SIZES_ENV} must contain positive integer sizes')
+        raise ValueError(f"{SIZES_ENV} must contain positive integer sizes")
     return sizes
 
 
@@ -99,10 +100,9 @@ STAMP_STEP: int = 60
 # Date range covering all generated benchmark stamps. The report end date is
 # converted to midnight, so use the day after the last generated event.
 REPORT_START_DATE: datetime.date = datetime.datetime.fromtimestamp(BASE_STAMP).date()
-REPORT_END_DATE: datetime.date = (
-    datetime.datetime.fromtimestamp(BASE_STAMP + (max(SIZES) - 1) * STAMP_STEP).date()
-    + datetime.timedelta(days=1)
-)
+REPORT_END_DATE: datetime.date = datetime.datetime.fromtimestamp(
+    BASE_STAMP + (max(SIZES) - 1) * STAMP_STEP
+).date() + datetime.timedelta(days=1)
 
 
 # --------------------------------------------------------------------------- #
@@ -115,7 +115,7 @@ def _build_login_logout_pairs(pool_id: int, n_pairs: int) -> list[models.StatsEv
     logout = int(types.stats.EventType.LOGOUT)
     owner_type = int(types.stats.EventOwnerType.SERVICEPOOL)
     for i in range(n_pairs):
-        username = f'user{i}'
+        username = f"user{i}"
         login_stamp = BASE_STAMP + i * STAMP_STEP
         logout_stamp = login_stamp + 5
         rows.append(
@@ -124,7 +124,7 @@ def _build_login_logout_pairs(pool_id: int, n_pairs: int) -> list[models.StatsEv
                 owner_type=owner_type,
                 event_type=login,
                 stamp=login_stamp,
-                fld2='10.0.0.1:1234',
+                fld2="10.0.0.1:1234",
                 fld4=username,
             )
         )
@@ -134,7 +134,7 @@ def _build_login_logout_pairs(pool_id: int, n_pairs: int) -> list[models.StatsEv
                 owner_type=owner_type,
                 event_type=logout,
                 stamp=logout_stamp,
-                fld2='10.0.0.1:1234',
+                fld2="10.0.0.1:1234",
                 fld4=username,
             )
         )
@@ -154,7 +154,7 @@ def _build_access_events(pool_id: int, n_events: int) -> list[models.StatsEvents
                 owner_type=owner_type,
                 event_type=access,
                 stamp=BASE_STAMP + i * STAMP_STEP,
-                fld1=f'user{i % distinct_users}',
+                fld1=f"user{i % distinct_users}",
             )
         )
     return rows
@@ -193,13 +193,13 @@ def _time_callable(fn: collections.abc.Callable[[], typing.Any]) -> float:
 
 def _print_table(report_name: str, results: list[tuple[int, float]]) -> None:
     """Pretty-print bench results as a fixed-width table to stdout."""
-    header = f'{"size":>8} | {"avg ms":>10} | {"per evt us":>12}'
-    sep = '-' * len(header)
+    header = f"{'size':>8} | {'avg ms':>10} | {'per evt us':>12}"
+    sep = "-" * len(header)
     lines = [header, sep]
     for size, avg in results:
         per_evt_us = (avg / size) * 1_000_000.0 if size else 0.0
-        lines.append(f'{size:>8} | {avg * 1000.0:>10.3f} | {per_evt_us:>12.3f}')
-    print(f'\n{report_name} benchmark:\n' + '\n'.join(lines))
+        lines.append(f"{size:>8} | {avg * 1000.0:>10.3f} | {per_evt_us:>12.3f}")
+    print(f"\n{report_name} benchmark:\n" + "\n".join(lines))
 
 
 # --------------------------------------------------------------------------- #
@@ -231,11 +231,11 @@ class UsageByPoolBenchmark(UDSTransactionTestCase):
             )
             report = self._make_report()
             warmup_data, _ = report.get_data()
-            self.assertEqual(len(warmup_data), size, f'pairing wrong for size={size}')
+            self.assertEqual(len(warmup_data), size, f"pairing wrong for size={size}")
             avg = _time_callable(lambda r=report: r.get_data())
             results.append((size, avg))
-            logger.info('UsageByPool size=%d avg=%.4fs', size, avg)
-        _print_table('UsageByPool', results)
+            logger.info("UsageByPool size=%d avg=%.4fs", size, avg)
+        _print_table("UsageByPool", results)
 
     def test_pairing_semantics_stress(self) -> None:
         """LOGIN/LOGOUT pairing must be 1:1 across volumes."""
@@ -248,8 +248,8 @@ class UsageByPoolBenchmark(UDSTransactionTestCase):
             data, _ = self._make_report().get_data()
             self.assertEqual(len(data), size)
             for row in data:
-                self.assertEqual(row['time'], 5)
-                self.assertEqual(row['origin'], '10.0.0.1')
+                self.assertEqual(row["time"], 5)
+                self.assertEqual(row["origin"], "10.0.0.1")
 
 
 # --------------------------------------------------------------------------- #
@@ -283,11 +283,11 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
             report = self._make_report()
             warmup_data, _ = report.get_data()
             # One distinct user per pair -> #rows == #pairs.
-            self.assertEqual(len(warmup_data), size, f'aggregation wrong for size={size}')
+            self.assertEqual(len(warmup_data), size, f"aggregation wrong for size={size}")
             avg = _time_callable(lambda r=report: r.get_data())
             results.append((size, avg))
-            logger.info('UsageSummaryByUsersPool size=%d avg=%.4fs', size, avg)
-        _print_table('UsageSummaryByUsersPool', results)
+            logger.info("UsageSummaryByUsersPool size=%d avg=%.4fs", size, avg)
+        _print_table("UsageSummaryByUsersPool", results)
 
     def test_aggregation_semantics(self) -> None:
         """Per-user aggregation: 1 session, hours = 5/3600 by construction."""
@@ -301,8 +301,8 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
         self.assertEqual(name, self.pool.name)
         self.assertEqual(len(data), size)
         for row in data:
-            self.assertEqual(row['sessions'], 1)
-            self.assertEqual(row['hours'], '{:.2f}'.format(5 / 3600))
+            self.assertEqual(row["sessions"], 1)
+            self.assertEqual(row["hours"], "{:.2f}".format(5 / 3600))
 
 
 # --------------------------------------------------------------------------- #
@@ -341,13 +341,14 @@ class PoolPerformanceBenchmark(UDSTransactionTestCase):
             self.assertEqual(len(report_data), self.SAMPLING_POINTS)
             # Total accesses across buckets must equal events inserted.
             self.assertEqual(
-                sum(r['accesses'] for r in report_data), size,
-                f'accesses sum mismatch for size={size}',
+                sum(r["accesses"] for r in report_data),
+                size,
+                f"accesses sum mismatch for size={size}",
             )
             avg = _time_callable(lambda r=report: r.get_range_data())
             results.append((size, avg))
-            logger.info('PoolPerformanceReport size=%d avg=%.4fs', size, avg)
-        _print_table('PoolPerformanceReport', results)
+            logger.info("PoolPerformanceReport size=%d avg=%.4fs", size, avg)
+        _print_table("PoolPerformanceReport", results)
 
 
 # --------------------------------------------------------------------------- #
@@ -375,13 +376,14 @@ class StatsReportLoginBenchmark(UDSTransactionTestCase):
             _xfmt, _data, report_data = report.get_range_data()
             self.assertEqual(len(report_data), self.SAMPLING_POINTS)
             self.assertEqual(
-                sum(r['users'] for r in report_data), size,
-                f'logins sum mismatch for size={size}',
+                sum(r["users"] for r in report_data),
+                size,
+                f"logins sum mismatch for size={size}",
             )
             avg = _time_callable(lambda r=report: r.get_range_data())
             results.append((size, avg))
-            logger.info('StatsReportLogin.get_range_data size=%d avg=%.4fs', size, avg)
-        _print_table('StatsReportLogin.get_range_data', results)
+            logger.info("StatsReportLogin.get_range_data size=%d avg=%.4fs", size, avg)
+        _print_table("StatsReportLogin.get_range_data", results)
 
     def test_benchmark_get_week_hourly_data(self) -> None:
         results: list[tuple[int, float]] = []
@@ -398,5 +400,5 @@ class StatsReportLoginBenchmark(UDSTransactionTestCase):
             self.assertEqual(sum(sum(r) for r in data_week_hour), size)
             avg = _time_callable(lambda r=report: r.get_week_hourly_data())
             results.append((size, avg))
-            logger.info('StatsReportLogin.get_week_hourly_data size=%d avg=%.4fs', size, avg)
-        _print_table('StatsReportLogin.get_week_hourly_data', results)
+            logger.info("StatsReportLogin.get_week_hourly_data size=%d avg=%.4fs", size, avg)
+        _print_table("StatsReportLogin.get_week_hourly_data", results)

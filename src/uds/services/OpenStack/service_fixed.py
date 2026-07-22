@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import logging
 import typing
@@ -58,10 +59,10 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     OpenStack fixed machines service.
     """
 
-    type_name = _('OpenStack Fixed Machines')
-    type_type = 'OpenStackFixedService'
-    type_description = _('OpenStack Services based on fixed machines.')
-    icon_file = 'openstack.png'
+    type_name = _("OpenStack Fixed Machines")
+    type_type = "OpenStackFixedService"
+    type_description = _("OpenStack Services based on fixed machines.")
+    icon_file = "openstack.png"
 
     can_reset = True
 
@@ -79,36 +80,36 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
     # Now the form part
     region = gui.ChoiceField(
-        label=_('Region'),
+        label=_("Region"),
         order=1,
-        tooltip=_('Service region'),
+        tooltip=_("Service region"),
         required=True,
         readonly=True,
     )
     project = gui.ChoiceField(
-        label=_('Project'),
+        label=_("Project"),
         order=2,
         fills={
-            'callback_name': 'osGetMachines',
-            'function': helpers.list_servers,
-            'parameters': ['prov_uuid', 'project', 'region'],
+            "callback_name": "osGetMachines",
+            "function": helpers.list_servers,
+            "parameters": ["prov_uuid", "project", "region"],
         },
-        tooltip=_('Project for this service'),
+        tooltip=_("Project for this service"),
         required=True,
         readonly=True,
     )
 
     machines = FixedService.machines
     randomize = FixedService.randomize
-   
+
     maintain_on_error = FixedService.maintain_on_error
 
     prov_uuid = gui.HiddenField()
 
-    _api: 'client.OpenStackClient | None' = None
+    _api: "client.OpenStackClient | None" = None
 
     @property
-    def api(self) -> 'client.OpenStackClient':
+    def api(self) -> "client.OpenStackClient":
         if not self._api:
             self._api = self.provider().api(projectid=self.project.value, region=self.region.value)
 
@@ -121,7 +122,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         api = self.provider().api()
 
         # Checks if legacy or current openstack provider
-        parent = typing.cast('OpenStackProvider', self.provider()) if not self.provider().legacy else None
+        parent = typing.cast("OpenStackProvider", self.provider()) if not self.provider().legacy else None
 
         if parent and parent.region.value:
             regions = [gui.choice_item(parent.region.value, parent.region.value)]
@@ -145,8 +146,8 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         self.prov_uuid.value = self.provider().get_uuid()
 
     @typing.override
-    def provider(self) -> 'AnyOpenStackProvider':
-        return typing.cast('AnyOpenStackProvider', super().provider())
+    def provider(self) -> "AnyOpenStackProvider":
+        return typing.cast("AnyOpenStackProvider", super().provider())
 
     @typing.override
     def is_available(self) -> bool:
@@ -155,9 +156,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         # Obtain machines names and ids for asignables
-        servers = {
-            server.id: server.name for server in self.api.list_servers() if not server.name.startswith('UDS-')
-        }
+        servers = {server.id: server.name for server in self.api.list_servers() if not server.name.startswith("UDS-")}
 
         with self._assigned_access() as assigned_servers:
             return [
@@ -177,26 +176,26 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                         try:
                             # Invoke to check it exists, do not need to store the result
                             if self.api.get_server_info(checking_vmid).status.is_lost():
-                                raise Exception('Machine not found')  # Simply translate is_lost to an exception
+                                raise Exception("Machine not found")  # Simply translate is_lost to an exception
                             found_vmid = checking_vmid
                             break
                         except Exception:  # Notifies on log, but skipt it
                             self.provider().do_log(
-                                types.log.LogLevel.WARNING, 'Machine {} not accesible'.format(found_vmid)
+                                types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
                             )
                             logger.warning(
-                                'The service has machines that cannot be checked on openstack (connection error or machine has been deleted): %s',
+                                "The service has machines that cannot be checked on openstack (connection error or machine has been deleted): %s",
                                 found_vmid,
                             )
 
                 if found_vmid:
                     assigned.add(found_vmid)
         except Exception as e:  #
-            logger.debug('Error getting machine: %s', e)
-            raise Exception('No machine available')
+            logger.debug("Error getting machine: %s", e)
+            raise Exception("No machine available")
 
         if not found_vmid:
-            raise Exception('All machines from list already assigned.')
+            raise Exception("All machines from list already assigned.")
 
         return found_vmid
 
@@ -204,7 +203,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     def get_mac(self, vmid: str) -> str:
         # Returning '' lets the caller retry instead of crashing when the mac cannot be
         # resolved yet (machine missing, or external DHCP leaving 'addresses' empty).
-        return self.api.get_server_mac(vmid) or ''
+        return self.api.get_server_mac(vmid) or ""
 
     @typing.override
     def get_ip(self, vmid: str) -> str:
@@ -221,5 +220,5 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                 assigned.remove(vmid)
             return types.states.TaskState.FINISHED
         except Exception as e:
-            logger.warning('Cound not save assigned machines on fixed pool: %s', e)
+            logger.warning("Cound not save assigned machines on fixed pool: %s", e)
             raise

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import copy
 import random
 import logging
@@ -115,7 +116,7 @@ RESERVE: dict[str, typing.Any] = {
     "ou": {"id": 1},
 }
 
-UNRESERVE = ''
+UNRESERVE = ""
 
 STATUS_OFF = {"id": 4, "ip": "10.1.14.31", "status": "off", "loggedin": False}
 
@@ -131,31 +132,25 @@ STATUS_READY_WINDOWS = {
 
 
 # FAKE post
-def post(
-    path: str, data: typing.Any, error_message: typing.Optional[str] = None
-) -> typing.Any:
-    logger.info('FAKE POST request to %s with %s data. (%s)', path, data, error_message)
+def post(path: str, data: typing.Any, error_message: typing.Optional[str] = None) -> typing.Any:
+    logger.info("FAKE POST request to %s with %s data. (%s)", path, data, error_message)
     if path == urls.LOGIN:
         return AUTH
 
-    if path == urls.RESERVE.format(ou=1, image=1) or path == urls.RESERVE.format(
-        ou=1, image=2
-    ):
+    if path == urls.RESERVE.format(ou=1, image=1) or path == urls.RESERVE.format(ou=1, image=2):
         res = copy.deepcopy(RESERVE)
-        res['name'] += str(random.randint(5000, 100000))  # nosec: for testing pourposes
-        res['mac'] = ''.join(random.choices('0123456789ABCDEF', k=12))  # nosec: for testing pourposes
-        res['ip'] = '1.2.3.4'
+        res["name"] += str(random.randint(5000, 100000))  # nosec: for testing pourposes
+        res["mac"] = "".join(random.choices("0123456789ABCDEF", k=12))  # nosec: for testing pourposes
+        res["ip"] = "1.2.3.4"
         return res
 
     # Ignore rest of requests, simply return ok
-    return {'status': 'ok'}
+    return {"status": "ok"}
 
 
 # FAKE get
-def get(
-    path: str, error_message: typing.Optional[str]
-) -> typing.Any:  # pylint: disable=too-many-return-statements
-    logger.info('FAKE GET request to %s. (%s)', path, error_message)
+def get(path: str, error_message: typing.Optional[str]) -> typing.Any:  # pylint: disable=too-many-return-statements
+    logger.info("FAKE GET request to %s. (%s)", path, error_message)
     if path == urls.INFO:
         return INFO
     if path == urls.OUS:
@@ -168,19 +163,19 @@ def get(
         return IMAGES
     if path == urls.IMAGES.format(ou=2):
         return []
-    if path[-6:] == 'status':
+    if path[-6:] == "status":
         rnd = random.randint(0, 100)  # nosec: for testing pourposes
         if rnd < 25:
             return STATUS_READY_LINUX
         return STATUS_OFF
-    if path[-6:] == 'events':
-        return ''
+    if path[-6:] == "events":
+        return ""
 
-    raise Exception('Unknown FAKE URL on GET: {}'.format(path))
+    raise Exception("Unknown FAKE URL on GET: {}".format(path))
 
 
 def delete(path: str, error_message: typing.Optional[str]) -> typing.Any:
-    logger.info('FAKE DELETE request to %s. (%s)', path, error_message)
+    logger.info("FAKE DELETE request to %s. (%s)", path, error_message)
     # Right now, only "unreserve" uses delete, so simply return
     return UNRESERVE
     # raise Exception('Unknown FAKE URL on DELETE: {}'.format(path))

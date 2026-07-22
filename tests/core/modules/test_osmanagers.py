@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -41,12 +42,12 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'linrandompasswordmanager',
-    'linuxadmanager',
-    'linuxmanager',
-    'windomainmanager',
-    'winrandompasswordmanager',
-    'windowsmanager',
+    "linrandompasswordmanager",
+    "linuxadmanager",
+    "linuxmanager",
+    "windomainmanager",
+    "winrandompasswordmanager",
+    "windowsmanager",
 ]
 
 
@@ -60,4 +61,4 @@ class TestOsManagers(UDSTestCase):
 
         factory = OSManagersFactory()
         for osmanager in MUST_HAVE:
-            self.assertTrue(factory.has(osmanager), f'OsManager {osmanager} not found')
+            self.assertTrue(factory.has(osmanager), f"OsManager {osmanager} not found")

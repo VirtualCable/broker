@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import ipaddress
 import logging
 import random
@@ -76,7 +77,7 @@ def create_self_signed_cert(ip: str, with_password: bool) -> tuple[str, str, str
         backend=default_backend(),
     )
     # Create a random password for private key
-    password = secrets.token_hex(consts.system.SECURITY_SECRET_SIZE) if with_password else ''
+    password = secrets.token_hex(consts.system.SECURITY_SECRET_SIZE) if with_password else ""
 
     name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, ip)])
     san = x509.SubjectAlternativeName([x509.IPAddress(ipaddress.ip_address(ip))])
@@ -147,16 +148,16 @@ def create_client_sslcontext(
     # Disable TLS1.0 and TLS1.1, SSLv2 and SSLv3 are disabled by default
     # Next line is deprecated in Python 3.7
     # sslContext.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1 | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
-    if hasattr(settings, 'SECURE_MIN_TLS_VERSION') and settings.SECURE_MIN_TLS_VERSION:
+    if hasattr(settings, "SECURE_MIN_TLS_VERSION") and settings.SECURE_MIN_TLS_VERSION:
         # format is "1.0, 1.1, 1.2 or 1.3", convert to ssl.TLSVersion.TLSv1_0, ssl.TLSVersion.TLSv1_1, ssl.TLSVersion.TLSv1_2 or ssl.TLSVersion.TLSv1_3
         ssl_context.minimum_version = getattr(
-            ssl.TLSVersion, 'TLSv' + settings.SECURE_MIN_TLS_VERSION.replace('.', '_')
+            ssl.TLSVersion, "TLSv" + settings.SECURE_MIN_TLS_VERSION.replace(".", "_")
         )
     else:
         ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
 
     ssl_context.maximum_version = ssl.TLSVersion.MAXIMUM_SUPPORTED
-    if hasattr(settings, 'SECURE_CIPHERS') and settings.SECURE_CIPHERS:
+    if hasattr(settings, "SECURE_CIPHERS") and settings.SECURE_CIPHERS:
         ssl_context.set_ciphers(settings.SECURE_CIPHERS)
 
     return ssl_context
@@ -192,10 +193,8 @@ def check_certificate_matches_private_key(*, cert: str, key: str) -> bool:
         return False
 
 
-def secure_requests_session(
-    *, verify: 'str|bool' = True, proxies: 'dict[str, str]|None' = None
-) -> 'requests.Session':
-    '''
+def secure_requests_session(*, verify: "str|bool" = True, proxies: "dict[str, str]|None" = None) -> "requests.Session":
+    """
     Generates a requests.Session object with a custom adapter that uses a custom SSLContext.
     This is intended to be used for requests that need to be secure, but not necessarily verified.
     Removes the support for TLS1.0 and TLS1.1, and disables SSLv2 and SSLv3. (done in @createClientSslContext)
@@ -207,7 +206,7 @@ def secure_requests_session(
 
     Returns:
         A requests.Session object.
-    '''
+    """
 
     # Copy verify value
     lverify = verify
@@ -224,16 +223,14 @@ def secure_requests_session(
         @typing.override
         def init_poolmanager(self, *args: typing.Any, **kwargs: typing.Any) -> None:
             # See urllib3.poolmanager.SSL_KEYWORDS for all available keys.
-            self._ssl_context = kwargs['ssl_context'] = create_client_sslcontext(verify=verify is True)
+            self._ssl_context = kwargs["ssl_context"] = create_client_sslcontext(verify=verify is True)
 
-            return (
-                super().init_poolmanager(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                    *args, **kwargs
-                )
+            return super().init_poolmanager(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                *args, **kwargs
             )
 
         @typing.override
-        def cert_verify(self, conn: typing.Any, url: typing.Any, verify: 'str|bool', cert: typing.Any) -> None:
+        def cert_verify(self, conn: typing.Any, url: typing.Any, verify: "str|bool", cert: typing.Any) -> None:
             """Verify a SSL certificate. This method should not be called from user
             code, and is only exposed for use when subclassing the HTTPAdapter class
             """
@@ -336,8 +333,8 @@ def generate_ssh_keypair_for_ssh(key_size: int = consts.system.SECURITY_KEY_SIZE
 
 
 def convert_to_credential_token(
-    userservice: 'models.UserService', crendential: 'types.connections.ConnectionData'
-) -> 'types.connections.ConnectionData':
+    userservice: "models.UserService", crendential: "types.connections.ConnectionData"
+) -> "types.connections.ConnectionData":
     """
     Creates a credentials token for the given username, password, and domain.
     """
@@ -350,15 +347,15 @@ def convert_to_credential_token(
     encrypted_domain = CryptoManager.manager().encrypt_field_b64(crendential.domain, key, 3)
     ticket = models.TicketStore.create(
         data={
-            'username': encrypted_username,
-            'password': encrypted_password,
-            'domain': encrypted_domain,
+            "username": encrypted_username,
+            "password": encrypted_password,
+            "domain": encrypted_domain,
         },
         owner=userservice.uuid,
         validity=120,
     )
-    crendential.username = f'uds-{ticket}{key}'
-    crendential.password = ''
-    crendential.domain = ''
+    crendential.username = f"uds-{ticket}{key}"
+    crendential.password = ""
+    crendential.domain = ""
 
     return crendential

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core.util import factory
@@ -39,5 +40,5 @@ if typing.TYPE_CHECKING:
     from .authenticator import Authenticator
 
 
-class AuthsFactory(factory.ModuleFactory['Authenticator']):
+class AuthsFactory(factory.ModuleFactory["Authenticator"]):
     pass

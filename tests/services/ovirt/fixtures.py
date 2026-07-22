@@ -283,9 +283,7 @@ def patch_provider_api(
 ) -> collections.abc.Generator[mock.Mock, None, None]:
     client = create_client_mock()
     # api is a property, patch it correctly
-    with mock.patch(
-        "uds.services.OVirt.provider.OVirtProvider.api", new_callable=mock.PropertyMock, **kwargs
-    ) as api:
+    with mock.patch("uds.services.OVirt.provider.OVirtProvider.api", new_callable=mock.PropertyMock, **kwargs) as api:
         api.return_value = client
         yield client
 

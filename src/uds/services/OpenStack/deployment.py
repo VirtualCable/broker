@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
 import logging
 import pickle  # nosec: not insecure, we are loading our own data
@@ -40,7 +41,6 @@ from uds.core.services.generics.dynamic.userservice import DynamicUserService
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-
     from .publication import OpenStackLivePublication
     from .service import OpenStackLiveService
 
@@ -66,7 +66,7 @@ class OldOperation(enum.IntEnum):
     UNKNOWN = 99
 
     @staticmethod
-    def from_int(value: int) -> 'OldOperation':
+    def from_int(value: int) -> "OldOperation":
         try:
             return OldOperation(value)
         except ValueError:
@@ -105,7 +105,6 @@ class OpenStackLiveUserService(DynamicUserService):
     # _reason: str = ''
     # _queue: list[int] = []
 
-
     # Custom queue
     _create_queue = [
         types.services.Operation.CREATE,
@@ -125,30 +124,29 @@ class OpenStackLiveUserService(DynamicUserService):
 
     # For typing check only...
     @typing.override
-    def service(self) -> 'OpenStackLiveService':
-        return typing.cast('OpenStackLiveService', super().service())
+    def service(self) -> "OpenStackLiveService":
+        return typing.cast("OpenStackLiveService", super().service())
 
     # For typing check only...
     @typing.override
-    def publication(self) -> 'OpenStackLivePublication':
-        return typing.cast('OpenStackLivePublication', super().publication())
+    def publication(self) -> "OpenStackLivePublication":
+        return typing.cast("OpenStackLivePublication", super().publication())
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._vmid = vals[4].decode('utf8')
-            self._reason = vals[5].decode('utf8')
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._vmid = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
             self._queue = [OldOperation.from_int(i).to_operation() for i in pickle.loads(vals[6])]  # nosec
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
-
 
     @typing.override
     def op_create(self) -> None:
@@ -160,10 +158,9 @@ class OpenStackLiveUserService(DynamicUserService):
 
         self._vmid = self.service().deploy_from_template(name, template_id).id
         if not self._vmid:
-            raise Exception('Can\'t create machine')
+            raise Exception("Can't create machine")
 
         return None
-           
 
     # Check methods
     @typing.override
@@ -179,6 +176,5 @@ class OpenStackLiveUserService(DynamicUserService):
             # external DHCP leaves Nova 'addresses' empty; the guarded getters avoid indexing it
             self._ip = self.service().get_ip(self, self._vmid)
             return types.states.TaskState.FINISHED
-        
-        return types.states.TaskState.RUNNING
 
+        return types.states.TaskState.RUNNING

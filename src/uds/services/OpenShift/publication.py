@@ -6,6 +6,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -36,11 +37,11 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
     _waiting_name = autoserializable.BoolField(default=False)
 
     @typing.override
-    def service(self) -> 'OpenshiftService':
+    def service(self) -> "OpenshiftService":
         """
         Get the Openshift service.
         """
-        return typing.cast('OpenshiftService', super().service())
+        return typing.cast("OpenshiftService", super().service())
 
     @typing.override
     def op_create(self) -> None:

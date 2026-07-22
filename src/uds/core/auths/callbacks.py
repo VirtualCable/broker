@@ -30,6 +30,7 @@ Base module for all authenticators
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import re
 import typing
@@ -42,9 +43,9 @@ from uds.core.util import config, cache, log, security
 
 logger = logging.getLogger(__name__)
 
-FAILURE_CACHE: typing.Final[cache.Cache] = cache.Cache('callback_auth_failure', 5 * 60)  # 5 minutes
+FAILURE_CACHE: typing.Final[cache.Cache] = cache.Cache("callback_auth_failure", 5 * 60)  # 5 minutes
 # Groups only A-Z, a-z, 0-9 and _ or - are allowed
-RE_GROUPS: typing.Final[typing.Pattern[str]] = re.compile(r'^[A-Za-z0-9_-]+$')
+RE_GROUPS: typing.Final[typing.Pattern[str]] = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 def weblogin(user: models.User) -> None:
@@ -52,7 +53,7 @@ def weblogin(user: models.User) -> None:
     This method is called when a user logs in. It can be used to perform any action needed when a user logs in.
     """
     notify_url = config.GlobalConfig.NOTIFY_CALLBACK_URL.as_str()
-    if not notify_url.startswith('https') or (fail_count := FAILURE_CACHE.get('notify_failure', 0)) >= 3:
+    if not notify_url.startswith("https") or (fail_count := FAILURE_CACHE.get("notify_failure", 0)) >= 3:
         return
 
     # We are going to notify the login to the callback URL
@@ -61,18 +62,18 @@ def weblogin(user: models.User) -> None:
         response = security.secure_requests_session().post(
             notify_url,
             json={
-                'type': 'weblogin',
-                'info': {
-                    'authenticator_uuid': user.manager.uuid,
-                    'user_uuid': user.uuid,
-                    'username': user.name,
-                    'groups': [group.name for group in user.groups.all()],
+                "type": "weblogin",
+                "info": {
+                    "authenticator_uuid": user.manager.uuid,
+                    "user_uuid": user.uuid,
+                    "username": user.name,
+                    "groups": [group.name for group in user.groups.all()],
                 },
             },
             timeout=consts.net.SHORT_REQUEST_TIMEOUT,
         )
         response.raise_for_status()
-        FAILURE_CACHE.delete('notify_failure')
+        FAILURE_CACHE.delete("notify_failure")
 
         # Get response json, and check if there is any "new" information
         # new information can be:
@@ -83,23 +84,23 @@ def weblogin(user: models.User) -> None:
         def _clean_list_groups(groups: collections.abc.Iterable[str]) -> collections.abc.Iterable[str]:
             for grp_name in groups:
                 if not RE_GROUPS.match(grp_name):
-                    logger.error('Invalid group name received from callback URL: %s', group_name)
+                    logger.error("Invalid group name received from callback URL: %s", group_name)
                     continue
                 yield grp_name
 
         # Add groups to user if they are in the list
         changed_grps: list[str] = []
-        for group_name in _clean_list_groups(data.get('new_groups', [])):
+        for group_name in _clean_list_groups(data.get("new_groups", [])):
             group, _ = models.Group.objects.get_or_create(name=group_name)
-            changed_grps += [f'+{group_name}']
+            changed_grps += [f"+{group_name}"]
             user.groups.add(group)
         # Remove groups from user if they are in the list
-        for group_name in _clean_list_groups(data.get('removed_groups', [])):
+        for group_name in _clean_list_groups(data.get("removed_groups", [])):
             try:
                 group = models.Group.objects.get(name=group_name)
             except models.Group.DoesNotExist:
                 continue
-            changed_grps += [f'-{group_name}']
+            changed_grps += [f"-{group_name}"]
             user.groups.remove(group)
 
         # Log if groups were changed to keep track of changes
@@ -107,10 +108,10 @@ def weblogin(user: models.User) -> None:
             log.log(
                 user,
                 types.log.LogLevel.INFO,
-                f'Groups changed by callback URL: {",".join(changed_grps)}',
+                f"Groups changed by callback URL: {','.join(changed_grps)}",
                 types.log.LogSource.INTERNAL,
             )
 
     except Exception as e:
-        logger.error('Error notifying login to callback URL: %s', e)
-        FAILURE_CACHE.put('notify_failure', fail_count + 1)
+        logger.error("Error notifying login to callback URL: %s", e)
+        FAILURE_CACHE.put("notify_failure", fail_count + 1)

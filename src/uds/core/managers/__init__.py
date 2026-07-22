@@ -32,6 +32,7 @@ UDS managers (downloads, users publications, ...)
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # Imports for type checking only (not on runtime), we have later to get rid of false "redefined outer names" for pylint
@@ -43,31 +44,31 @@ if typing.TYPE_CHECKING:
     from .notifications import NotificationsManager
 
 
-def task_manager() -> 'TaskManager':
+def task_manager() -> "TaskManager":
     from .task import TaskManager
 
     return TaskManager()
 
 
-def downloads_manager() -> 'DownloadsManager':
+def downloads_manager() -> "DownloadsManager":
     from .downloads import DownloadsManager
 
     return DownloadsManager()
 
 
-def log_manager() -> 'LogManager':
+def log_manager() -> "LogManager":
     from .log import LogManager
 
     return LogManager()
 
 
-def publication_manager() -> 'PublicationManager':
+def publication_manager() -> "PublicationManager":
     from .publication import PublicationManager
 
     return PublicationManager()
 
 
-def notifications_manager() -> 'NotificationsManager':
+def notifications_manager() -> "NotificationsManager":
     from .notifications import NotificationsManager
 
     return NotificationsManager()

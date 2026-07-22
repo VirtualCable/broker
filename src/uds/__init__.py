@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # Make sure that all services are "available" at service startup
 import logging
 import typing
@@ -59,14 +60,14 @@ except AttributeError:
 
 
 class UDSAppConfig(AppConfig):
-    name = 'uds'
-    verbose_name = 'Universal Desktop Services'
+    name = "uds"
+    verbose_name = "Universal Desktop Services"
 
     @typing.override
     def ready(self) -> None:
         # We have to take care with this, because it's supposed to be executed
         # with ANY command from manage.
-        logger.debug('Initializing app (ready) ***************')
+        logger.debug("Initializing app (ready) ***************")
 
         # Now, ensures that all dynamic elements are loaded and present
         # To make sure that the packages are already initialized at this point
@@ -84,7 +85,7 @@ class UDSAppConfig(AppConfig):
         from . import REST as REST
 
 
-default_app_config = 'uds.UDSAppConfig'
+default_app_config = "uds.UDSAppConfig"
 
 
 # Sets up several sqlite non existing methodsm and some optimizations on sqlite
@@ -92,15 +93,15 @@ default_app_config = 'uds.UDSAppConfig'
 @receiver(connection_created)
 def extend_sqlite(connection: typing.Any = None, **kwargs: typing.Any) -> None:
     if connection and connection.vendor == "sqlite":
-        logger.debug('Connection vendor for %s is sqlite, extending methods', connection)
+        logger.debug("Connection vendor for %s is sqlite, extending methods", connection)
         cursor = connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.execute('PRAGMA cache_size=-16384')
+        cursor.execute("PRAGMA cache_size=-16384")
         cursor.execute("PRAGMA temp_store=MEMORY")
-        cursor.execute('PRAGMA mmap_size=67108864')
+        cursor.execute("PRAGMA mmap_size=67108864")
         cursor.execute("PRAGMA journal_size_limit=6144000")
-        cursor.execute("PRAGMA busy_timeout=5000")    
+        cursor.execute("PRAGMA busy_timeout=5000")
         # Sqlite 3.x has already these functions, kept for reference
         # connection.connection.create_function("MIN", 2, min)
         # connection.connection.create_function("MAX", 2, max)

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 import logging
@@ -53,56 +54,55 @@ class GroupsTest(rest.test.RESTActorTestCase):
         self.login()
 
     def test_groups(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/groups'
+        url = f"authenticators/{self.auth.uuid}/groups"
 
         # Now, will work
-        response = self.client.rest_get(f'{url}/overview')
+        response = self.client.rest_get(f"{url}/overview")
         self.assertEqual(response.status_code, 200)
         groups = response.json()
         self.assertEqual(
-            len(groups), rest.test.NUMBER_OF_ITEMS_TO_CREATE * 2  # simple + meta
+            len(groups),
+            rest.test.NUMBER_OF_ITEMS_TO_CREATE * 2,  # simple + meta
         )
         group: collections.abc.Mapping[str, typing.Any]
         for group in groups:
             # Locate the group in the auth
-            dbgrp = self.auth.groups.get(name=group['name'])
-            self.assertTrue(
-                rest.assertions.assert_group_is(dbgrp, group, compare_uuid=True)
-            )
+            dbgrp = self.auth.groups.get(name=group["name"])
+            self.assertTrue(rest.assertions.assert_group_is(dbgrp, group, compare_uuid=True))
 
     def test_groups_tableinfo(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/groups/tableinfo'
+        url = f"authenticators/{self.auth.uuid}/groups/tableinfo"
 
         # Now, will work
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 200)
         tableinfo = response.json()
-        self.assertIn('title', tableinfo)
-        self.assertIn('subtitle', tableinfo)
-        self.assertIn('fields', tableinfo)
-        self.assertIn('row_style', tableinfo)
+        self.assertIn("title", tableinfo)
+        self.assertIn("subtitle", tableinfo)
+        self.assertIn("fields", tableinfo)
+        self.assertIn("row_style", tableinfo)
 
         # Ensure at least name, comments, state and skip_mfa are present on tableinfo['fields']
         # fields: list[collections.abc.Mapping[str, typing.Any]] = tableinfo['fields']
-        fields: list[str] = [list(k.keys())[0] for k in tableinfo['fields']]
-        for i in ('name', 'comments', 'state', 'skip_mfa'):
+        fields: list[str] = [list(k.keys())[0] for k in tableinfo["fields"]]
+        for i in ("name", "comments", "state", "skip_mfa"):
             self.assertIn(i, fields)
 
     def test_group(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/groups'
+        url = f"authenticators/{self.auth.uuid}/groups"
         # Now, will work
         for i in self.groups:
-            response = self.client.rest_get(f'{url}/{i.uuid}')
+            response = self.client.rest_get(f"{url}/{i.uuid}")
             self.assertEqual(response.status_code, 200)
             group = response.json()
             self.assertTrue(rest.assertions.assert_group_is(i, group, compare_uuid=True))
 
         # invalid group
-        response = self.client.rest_get(f'{url}/invalid')
+        response = self.client.rest_get(f"{url}/invalid")
         self.assertEqual(response.status_code, 400)
 
     def test_group_create_edit(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/groups'
+        url = f"authenticators/{self.auth.uuid}/groups"
         # Normal group
         group_dct = rest_fixtures.create_group()
         response = self.client.rest_put(
@@ -111,14 +111,14 @@ class GroupsTest(rest.test.RESTActorTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        group = models.Group.objects.get(name=group_dct['name'])
+        group = models.Group.objects.get(name=group_dct["name"])
         self.assertTrue(rest.assertions.assert_group_is(group, group_dct))
 
         # Now, will fail because name is already in use
         response = self.client.rest_put(
             url,
             group_dct,
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
 

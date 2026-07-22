@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -55,11 +56,9 @@ class ActorRegisterTest(rest.test.RESTActorTestCase):
             # Try to register. Plain users will fail
             will_fail = usr in self.plain_users
             response = self.client.post(
-                '/uds/rest/actor/v3/register',
-                data=self.register_data(
-                    constants.STRING_CHARS if i % 2 == 0 else constants.STRING_CHARS_INVALID
-                ),
-                content_type='application/json',
+                "/uds/rest/actor/v3/register",
+                data=self.register_data(constants.STRING_CHARS if i % 2 == 0 else constants.STRING_CHARS_INVALID),
+                content_type="application/json",
             )
             if will_fail:
                 self.assertEqual(response.status_code, 403)
@@ -67,7 +66,7 @@ class ActorRegisterTest(rest.test.RESTActorTestCase):
 
             self.assertEqual(response.status_code, 200)
             # This is the actor token
-            token = response.json()['result']
+            token = response.json()["result"]
 
             # Ensure database contains the registered token
             self.assertEqual(models.Server.objects.filter(token=token).count(), 1)

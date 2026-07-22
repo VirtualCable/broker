@@ -40,6 +40,7 @@ The registration of modules is done locating subclases of :py:class:`uds.core.au
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from uds.core.util import modfinder
 
 
@@ -51,9 +52,7 @@ def initialize() -> None:
     from uds.core import osmanagers
 
     # OSManagers registers everything
-    modfinder.dynamically_load_and_register_modules(
-        osmanagers.factory(), osmanagers.OSManager, __name__
-    )
+    modfinder.dynamically_load_and_register_modules(osmanagers.factory(), osmanagers.OSManager, __name__)
 
 
 initialize()

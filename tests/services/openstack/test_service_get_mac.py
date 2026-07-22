@@ -36,6 +36,7 @@ Covers the two address sources:
 
 and the resilience to a not-yet-created server (NotFoundError -> '').
 """
+
 import copy
 import typing
 from unittest import mock
@@ -52,7 +53,7 @@ from uds.services.OpenStack.openstack import types as openstack_types
 # Undecorated mac-resolution logic (the @cached wrapper would need a real cache backend).
 # Running it against the mocked api keeps these tests exercising the real behaviour while
 # the service simply delegates to api.get_server_mac().
-_real_get_server_mac = getattr(client.OpenStackClient.get_server_mac, '__wrapped__')
+_real_get_server_mac = getattr(client.OpenStackClient.get_server_mac, "__wrapped__")
 
 
 def _bind_real_get_server_mac(api: mock.MagicMock) -> None:
@@ -68,13 +69,13 @@ def _server_with_addresses(
     return server
 
 
-def _port(mac: str, *, device_id: str = 'sid1', ip: str = '') -> openstack_types.PortInfo:
+def _port(mac: str, *, device_id: str = "sid1", ip: str = "") -> openstack_types.PortInfo:
     return openstack_types.PortInfo(
-        id='pid1',
-        name='port1',
+        id="pid1",
+        name="port1",
         status=openstack_types.PortStatus.ACTIVE,
         device_id=device_id,
-        network_id='net1',
+        network_id="net1",
         mac_address=mac,
         fixed_ips=[ip] if ip else [],
     )
@@ -93,37 +94,33 @@ class TestOpenStackGetMac(UDSTransactionTestCase):
         # Internal DHCP: server addresses carry the mac
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses(
-            [
-                openstack_types.ServerInfo.AddresInfo(
-                    version=4, ip='10.0.0.5', mac='FA:16:3E:00:00:01', type='fixed'
-                )
-            ]
+            [openstack_types.ServerInfo.AddresInfo(version=4, ip="10.0.0.5", mac="FA:16:3E:00:00:01", type="fixed")]
         )
 
-        mac = service.get_mac(None, 'sid1', for_unique_id=True)
+        mac = service.get_mac(None, "sid1", for_unique_id=True)
 
-        self.assertEqual(mac, 'FA:16:3E:00:00:01')
+        self.assertEqual(mac, "FA:16:3E:00:00:01")
         api.list_ports.assert_not_called()  # no fallback needed
 
     def test_get_mac_falls_back_to_neutron_port(self) -> None:
         # External DHCP: server addresses empty -> use the Neutron port mac
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses([])
-        api.list_ports.return_value = [_port('FA:16:3E:AB:CD:EF', device_id='sid1')]
+        api.list_ports.return_value = [_port("FA:16:3E:AB:CD:EF", device_id="sid1")]
 
-        mac = service.get_mac(None, 'sid1', for_unique_id=True)
+        mac = service.get_mac(None, "sid1", for_unique_id=True)
 
-        self.assertEqual(mac, 'FA:16:3E:AB:CD:EF')
-        api.list_ports.assert_called_once_with(device_id='sid1')
+        self.assertEqual(mac, "FA:16:3E:AB:CD:EF")
+        api.list_ports.assert_called_once_with(device_id="sid1")
 
     def test_get_mac_raises_when_server_not_found(self) -> None:
         # Server not queryable yet: get_server_mac does not swallow it; the caller/state
         # checker handles the NotFoundError.
         service, api = self._service_with_api()
-        api.get_server_info.side_effect = exceptions.services.generics.NotFoundError('Not found')
+        api.get_server_info.side_effect = exceptions.services.generics.NotFoundError("Not found")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            service.get_mac(None, 'sid1', for_unique_id=True)
+            service.get_mac(None, "sid1", for_unique_id=True)
 
         api.list_ports.assert_not_called()
 
@@ -133,53 +130,53 @@ class TestOpenStackGetMac(UDSTransactionTestCase):
         api.get_server_info.return_value = _server_with_addresses([])
         api.list_ports.return_value = []
 
-        mac = service.get_mac(None, 'sid1', for_unique_id=True)
+        mac = service.get_mac(None, "sid1", for_unique_id=True)
 
-        self.assertEqual(mac, '')
+        self.assertEqual(mac, "")
 
     def test_get_mac_empty_when_port_lookup_not_found(self) -> None:
         # addresses empty and Neutron returns 404 -> '' (no exception leaks to caller)
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses([])
-        api.list_ports.side_effect = exceptions.services.generics.NotFoundError('Not found')
+        api.list_ports.side_effect = exceptions.services.generics.NotFoundError("Not found")
 
-        mac = service.get_mac(None, 'sid1', for_unique_id=True)
+        mac = service.get_mac(None, "sid1", for_unique_id=True)
 
-        self.assertEqual(mac, '')
+        self.assertEqual(mac, "")
 
     def test_get_mac_empty_when_port_lookup_permission_denied(self) -> None:
         # Neutron policy forbids listing ports (403) -> '' instead of forcing ERROR.
         # A bare Error (the base class) covers 403/RBAC/availability/transient errors.
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses([])
-        api.list_ports.side_effect = exceptions.services.generics.Error('Forbidden')
+        api.list_ports.side_effect = exceptions.services.generics.Error("Forbidden")
 
-        mac = service.get_mac(None, 'sid1', for_unique_id=True)
+        mac = service.get_mac(None, "sid1", for_unique_id=True)
 
-        self.assertEqual(mac, '')
+        self.assertEqual(mac, "")
 
 
 class TestPortInfo(UDSTransactionTestCase):
     def test_from_dict_uppercases_mac_and_extracts_ips(self) -> None:
         port = openstack_types.PortInfo.from_dict(
             {
-                'id': 'pid1',
-                'name': 'p1',
-                'status': 'ACTIVE',
-                'device_id': 'sid1',
-                'network_id': 'net1',
-                'mac_address': 'fa:16:3e:11:22:33',
-                'fixed_ips': [{'ip_address': '10.0.0.9', 'subnet_id': 'sub1'}, {'subnet_id': 'sub2'}],
+                "id": "pid1",
+                "name": "p1",
+                "status": "ACTIVE",
+                "device_id": "sid1",
+                "network_id": "net1",
+                "mac_address": "fa:16:3e:11:22:33",
+                "fixed_ips": [{"ip_address": "10.0.0.9", "subnet_id": "sub1"}, {"subnet_id": "sub2"}],
             }
         )
-        self.assertEqual(port.mac_address, 'FA:16:3E:11:22:33')
-        self.assertEqual(port.fixed_ips, ['10.0.0.9'])
+        self.assertEqual(port.mac_address, "FA:16:3E:11:22:33")
+        self.assertEqual(port.fixed_ips, ["10.0.0.9"])
         self.assertEqual(port.status, openstack_types.PortStatus.ACTIVE)
 
     def test_from_dict_tolerates_missing_fields(self) -> None:
-        port = openstack_types.PortInfo.from_dict({'id': 'pid9'})
-        self.assertEqual(port.id, 'pid9')
-        self.assertEqual(port.name, 'pid9')  # falls back to id
-        self.assertEqual(port.mac_address, '')
+        port = openstack_types.PortInfo.from_dict({"id": "pid9"})
+        self.assertEqual(port.id, "pid9")
+        self.assertEqual(port.name, "pid9")  # falls back to id
+        self.assertEqual(port.mac_address, "")
         self.assertEqual(port.fixed_ips, [])
-        self.assertEqual(port.device_id, '')
+        self.assertEqual(port.device_id, "")

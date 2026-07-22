@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 import logging
@@ -50,6 +51,7 @@ class ServiceProviderFactory(factory.ModuleFactory[ServiceProvider]):
 
     It provides a way to register and recover providers providers.
     """
+
     @typing.override
     def insert(self, type_: type[ServiceProvider]) -> None:
         """
@@ -64,17 +66,17 @@ class ServiceProviderFactory(factory.ModuleFactory[ServiceProvider]):
         type_name = type_.mod_type().lower()
 
         if type_name in self.providers():
-            logger.debug('%s already registered as Service Provider', type_)
+            logger.debug("%s already registered as Service Provider", type_)
             return
 
         # Fix offers by checking if they are valid
-        offers: list[type['Service']] = []
+        offers: list[type["Service"]] = []
         for s in type_.offers:
             if s.uses_cache_l2:
-                s.uses_cache = True   # Ensures uses cache is true
+                s.uses_cache = True  # Ensures uses cache is true
                 if s.publication_type is None:
                     logger.error(
-                        'Provider %s offers %s, but %s needs cache and do not have publication_type defined',
+                        "Provider %s offers %s, but %s needs cache and do not have publication_type defined",
                         type_,
                         s,
                         s,
@@ -87,15 +89,9 @@ class ServiceProviderFactory(factory.ModuleFactory[ServiceProvider]):
 
         super().insert(type_)
 
-
     def services_not_needing_publication(self) -> collections.abc.Iterable[type[Service]]:
         """
         Returns a list of all service providers registered that do not need
         to be published
         """
-        return [
-            s
-            for p in self.providers().values()
-            for s in p.offers
-            if s.publication_type is None
-        ]
+        return [s for p in self.providers().values() for s in p.offers if s.publication_type is None]

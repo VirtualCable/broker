@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import codecs
 import pickle  # nosec: This is fine, we are not loading untrusted data
 import logging
@@ -82,12 +83,12 @@ class AutoAttributes(Serializable):
         self.declare(**kwargs)
 
     def __getattribute__(self, name: str) -> typing.Any:
-        if name.startswith('_') and name[1:] in self.attrs:
+        if name.startswith("_") and name[1:] in self.attrs:
             return self.attrs[name[1:]].get_value()
         return super().__getattribute__(name)
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
-        if name.startswith('_') and name[1:] in self.attrs:
+        if name.startswith("_") and name[1:] in self.attrs:
             self.attrs[name[1:]].set_value(value)
         else:
             super().__setattr__(name, value)
@@ -97,52 +98,39 @@ class AutoAttributes(Serializable):
         for key, typ in kwargs.items():
             d[key] = Attribute(typ)
         self.attrs = d
-        
+
     @typing.override
     def marshal(self) -> bytes:
-        return b'v1' + pickle.dumps(self.attrs)
+        return b"v1" + pickle.dumps(self.attrs)
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         if not data:  # Can be empty
             return
         # We keep original data (maybe incomplete)
-        if data[:2] == b'v1':
-            self.attrs = pickle.loads(
-                data[2:]
-            )  # nosec: pickle is used to load data from trusted source
+        if data[:2] == b"v1":
+            self.attrs = pickle.loads(data[2:])  # nosec: pickle is used to load data from trusted source
             return
         # We try to load as v0
         try:
-            data = codecs.decode(data, 'bz2')
+            data = codecs.decode(data, "bz2")
         except Exception:  # With old zip encoding
-            data = codecs.decode(data, 'zip')
+            data = codecs.decode(data, "zip")
         # logger.debug('DATA: %s', data)
-        for pair in data.split(b'\2'):
-            k, v = pair.split(b'\1')
+        for pair in data.split(b"\2"):
+            k, v = pair.split(b"\1")
             # logger.debug('k: %s  ---   v: %s', k, v)
             try:
-                self.attrs[k.decode()] = pickle.loads(
-                    v
-                )  # nosec: pickle is used to load data from trusted source
+                self.attrs[k.decode()] = pickle.loads(v)  # nosec: pickle is used to load data from trusted source
             except Exception:  # Old encoding on python2, set encoding for loading
-                self.attrs[k.decode()] = pickle.loads(
-                    v, encoding='utf8'
-                )  # nosec: pickle is used to load data from trusted source
+                self.attrs[k.decode()] = pickle.loads(v, encoding="utf8")  # nosec: pickle is used to load data from trusted source
 
     def __repr__(self) -> str:
-        return (
-            'AutoAttributes('
-            + ', '.join(f'{k}={v.get_type().__name__}' for k, v in self.attrs.items())
-            + ')'
-        )
+        return "AutoAttributes(" + ", ".join(f"{k}={v.get_type().__name__}" for k, v in self.attrs.items()) + ")"
 
     def __str__(self) -> str:
         return (
-            '<AutoAttribute '
-            + ','.join(
-                f'{k} ({v.get_type()}) = {v.get_str_value()}'
-                for k, v in self.attrs.items()
-            )
-            + '>'
+            "<AutoAttribute "
+            + ",".join(f"{k} ({v.get_type()}) = {v.get_str_value()}" for k, v in self.attrs.items())
+            + ">"
         )

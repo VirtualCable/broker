@@ -29,6 +29,7 @@
 """
 Author: dkmaster@dkmon.com
 """
+
 # pyright: reportUnknownMemberType=false,reportUnknownVariableType=false,reportUnknownArgumentType=false
 import typing
 import collections.abc
@@ -40,7 +41,7 @@ if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec: Only type checking
 
 
-def etree_to_dict(tree: 'Element') -> collections.abc.Mapping[str, typing.Any]:
+def etree_to_dict(tree: "Element") -> collections.abc.Mapping[str, typing.Any]:
     dct: collections.abc.MutableMapping[str, typing.Any] = {}
     if tree.attrib:
         dct.update({tree.tag: {}})
@@ -53,12 +54,12 @@ def etree_to_dict(tree: 'Element') -> collections.abc.Mapping[str, typing.Any]:
                 dd[k].append(v)
         dct = {tree.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
     if tree.attrib:
-        dct[tree.tag].update(('@' + k, v) for k, v in tree.attrib.items())
+        dct[tree.tag].update(("@" + k, v) for k, v in tree.attrib.items())
     if tree.text:
         text = tree.text.strip()
         if children or tree.attrib:
             if text:
-                dct[tree.tag]['#text'] = text
+                dct[tree.tag]["#text"] = text
         else:
             dct[tree.tag] = text
     return dct

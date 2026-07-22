@@ -27,9 +27,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import collections.abc
 import dataclasses
 import logging
@@ -69,27 +70,26 @@ class NotifierItem(types.rest.BaseRestItem):
 
 
 class Notifiers(ModelHandler[NotifierItem]):
-
-    PATH = 'messaging'
+    PATH = "messaging"
     MODEL = Notifier
     FIELDS_TO_SAVE = [
-        'name',
-        'comments',
-        'level',
-        'tags',
-        'enabled',
+        "name",
+        "comments",
+        "level",
+        "tags",
+        "enabled",
     ]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Notifiers'))
-        .icon(name='name', title=_('Name'))
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='level', title=_('Level'))
-        .boolean(name='enabled', title=_('Enabled'))
-        .text_column(name='comments', title=_('Comments'))
-        .text_column(name='tags', title=_('Tags'), visible=False)
-        .with_field_mappings(type_name='data_type')
-        .with_filter_fields('name', 'data_type', 'comments')
+        ui_utils.TableBuilder(_("Notifiers"))
+        .icon(name="name", title=_("Name"))
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="level", title=_("Level"))
+        .boolean(name="enabled", title=_("Enabled"))
+        .text_column(name="comments", title=_("Comments"))
+        .text_column(name="tags", title=_("Tags"), visible=False)
+        .with_field_mappings(type_name="data_type")
+        .with_filter_fields("name", "data_type", "comments")
     ).build()
 
     # Rest api related information to complete the auto-generated API
@@ -107,7 +107,7 @@ class Notifiers(ModelHandler[NotifierItem]):
         notifier_type = messaging.factory().lookup(for_type)
 
         if not notifier_type:
-            raise exceptions.rest.NotFound(_('Notifier type not found: {}').format(for_type))
+            raise exceptions.rest.NotFound(_("Notifier type not found: {}").format(for_type))
 
         with Environment.temporary_environment() as env:
             notifier = notifier_type(env, None)
@@ -121,31 +121,31 @@ class Notifiers(ModelHandler[NotifierItem]):
                 )
                 .add_fields(notifier.gui_description())
                 .add_choice(
-                    name='level',
+                    name="level",
                     choices=[gui.choice_item(i[0], i[1]) for i in LogLevel.interesting()],
-                    label=gettext('Level'),
-                    tooltip=gettext('Level of notifications'),
+                    label=gettext("Level"),
+                    tooltip=gettext("Level of notifications"),
                     default=str(LogLevel.ERROR.value),
                 )
                 .add_checkbox(
-                    name='enabled',
-                    label=gettext('Enabled'),
-                    tooltip=gettext('If checked, this notifier will be used'),
+                    name="enabled",
+                    label=gettext("Enabled"),
+                    tooltip=gettext("If checked, this notifier will be used"),
                     default=True,
                 )
                 .build()
             )
 
     @typing.override
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('type_name'):
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("type_name"):
             _, is_descending = field_info
-            order_by_field = '-data_type' if is_descending else 'data_type'
+            order_by_field = "-data_type" if is_descending else "data_type"
             return qs.order_by(order_by_field)
         return super().apply_sort(qs)
 
     @typing.override
-    def get_item(self, item: 'Model') -> NotifierItem:
+    def get_item(self, item: "Model") -> NotifierItem:
         item = ensure.is_instance(item, Notifier)
         type_ = item.get_type()
         return NotifierItem(

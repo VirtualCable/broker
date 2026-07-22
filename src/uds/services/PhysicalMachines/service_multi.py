@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import random
 import logging
@@ -58,12 +59,12 @@ class IPMachinesService(services.Service):
     # Gui
     token = gui.TextField(
         order=1,
-        label=_('Service Token'),
+        label=_("Service Token"),
         length=64,
         tooltip=_(
-            'Service token that will be used by actors to communicate with service. Leave empty for persistent assignation.'
+            "Service token that will be used by actors to communicate with service. Leave empty for persistent assignation."
         ),
-        default='',
+        default="",
         required=False,
         readonly=False,
     )
@@ -74,64 +75,62 @@ class IPMachinesService(services.Service):
 
     port = gui.NumericField(
         length=5,
-        label=_('Check Port'),
+        label=_("Check Port"),
         default=0,
         order=2,
-        tooltip=_('If non zero, only hosts responding to connection on that port will be served.'),
+        tooltip=_("If non zero, only hosts responding to connection on that port will be served."),
         required=True,
         tab=types.ui.Tab.ADVANCED,
     )
     ignore_minutes_on_failure = gui.NumericField(
         length=6,
-        label=_('Ignore minutes on failure'),
+        label=_("Ignore minutes on failure"),
         default=0,
         order=2,
-        tooltip=_('If a host fails to check, skip it for this time (in minutes).'),
+        tooltip=_("If a host fails to check, skip it for this time (in minutes)."),
         min_value=0,
         required=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='skipTimeOnFailure',
+        old_field_name="skipTimeOnFailure",
     )
 
     max_session_hours = gui.NumericField(
         length=3,
-        label=_('Max session duration'),
+        label=_("Max session duration"),
         default=0,
         order=3,
-        tooltip=_(
-            'Max session duration before UDS releases a presumed locked machine (hours). 0 signifies "never".'
-        ),
+        tooltip=_('Max session duration before UDS releases a presumed locked machine (hours). 0 signifies "never".'),
         min_value=0,
         required=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='maxSessionForMachine',
+        old_field_name="maxSessionForMachine",
     )
     lock_on_external_access = gui.CheckBoxField(
-        label=_('Lock machine by external access'),
-        tooltip=_('If checked, UDS will lock the machine if it is accessed from outside UDS.'),
+        label=_("Lock machine by external access"),
+        tooltip=_("If checked, UDS will lock the machine if it is accessed from outside UDS."),
         default=False,
         order=4,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='lockByExternalAccess',
+        old_field_name="lockByExternalAccess",
     )
     randomize_host = gui.CheckBoxField(
-        label=_('Use random host'),
-        tooltip=_('When enabled, UDS selects a random, rather than sequential, host from the list.'),
+        label=_("Use random host"),
+        tooltip=_("When enabled, UDS selects a random, rather than sequential, host from the list."),
         default=False,
         order=5,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='useRandomIp',
+        old_field_name="useRandomIp",
     )
 
     # Description of service
-    type_name = _('Static Multiple IP')
-    type_type = 'IPMachinesService'
-    type_description = _('This service provides access to POWERED-ON Machines by IP')
-    icon_file = 'machines.png'
+    type_name = _("Static Multiple IP")
+    type_type = "IPMachinesService"
+    type_description = _("This service provides access to POWERED-ON Machines by IP")
+    icon_file = "machines.png"
 
     # Override the counting type to conservative on Fixed Services by default, that
     # is the desired behaviour for fixed services
-    overrided_fields = {'max_services_count_type': types.services.ServicesCountingType.CONSERVATIVE}
+    overrided_fields = {"max_services_count_type": types.services.ServicesCountingType.CONSERVATIVE}
 
     uses_cache = False  # Cache are running machine awaiting to be assigned
     uses_cache_l2 = False  # L2 Cache are running machines in suspended state
@@ -141,7 +140,7 @@ class IPMachinesService(services.Service):
 
     services_type_provided = types.services.ServiceType.VDI
 
-    def enumerate_servers(self) -> collections.abc.Iterable['models.Server']:
+    def enumerate_servers(self) -> collections.abc.Iterable["models.Server"]:
         return fields.get_server_group_from_field(self.server_group).servers.filter(maintenance_mode=False)
 
     @typing.override
@@ -157,7 +156,7 @@ class IPMachinesService(services.Service):
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         now = sql_now()
         return [
-            gui.choice_item(server.uuid, f'{server.host}|{server.mac}|{server.hostname}')
+            gui.choice_item(server.uuid, f"{server.host}|{server.mac}|{server.hostname}")
             for server in self.enumerate_servers()
             if server.locked_until is None or server.locked_until < now
         ]
@@ -166,21 +165,21 @@ class IPMachinesService(services.Service):
     def assign_from_assignables(
         self,
         assignable_id: str,
-        user: 'models.User',
-        userservice_instance: 'services.UserService',
+        user: "models.User",
+        userservice_instance: "services.UserService",
     ) -> types.states.TaskState:
-        server: 'models.Server' = models.Server.objects.get(uuid=assignable_id)
+        server: "models.Server" = models.Server.objects.get(uuid=assignable_id)
         ipmachine_instance: IPMachinesUserService = typing.cast(IPMachinesUserService, userservice_instance)
         if server.locked_until is None or server.locked_until < sql_now():
             self.lock_server(server.uuid)
             return ipmachine_instance.assign(server.uuid)
 
-        return ipmachine_instance._error('Host already assigned')
+        return ipmachine_instance._error("Host already assigned")
 
     def get_unassigned(self) -> str:
-        '''
+        """
         Returns an unassigned machine
-        '''
+        """
         # Get all servers in the group, not in maintenance mode
         list_of_servers = list(self.enumerate_servers())
         if self.randomize_host.as_bool() is True:
@@ -195,10 +194,10 @@ class IPMachinesService(services.Service):
                         server.lock(datetime.timedelta(minutes=self.ignore_minutes_on_failure.value))
                         self.provider().do_log(
                             types.log.LogLevel.WARNING,
-                            f'Host {server.host} does not respond to port {self.port.value}, skipping',
+                            f"Host {server.host} does not respond to port {self.port.value}, skipping",
                         )
                         logger.warning(
-                            'Static Machine check on %s:%s failed. Will be ignored for %s minutes.',
+                            "Static Machine check on %s:%s failed. Will be ignored for %s minutes.",
                             server.host,
                             self.port.value,
                             self.ignore_minutes_on_failure.value,
@@ -228,33 +227,33 @@ class IPMachinesService(services.Service):
 
     @typing.override
     def process_login(self, id: str, remote_login: bool) -> None:
-        '''
+        """
         Process login for a machine not assigned to any user.
-        '''
-        logger.debug('Processing login for %s: %s', self, id)
+        """
+        logger.debug("Processing login for %s: %s", self, id)
         # Maybe, an user has logged in on an unassigned machine
         # if lockForExternalAccess is enabled, we must lock it
         if self.lock_on_external_access.as_bool() is True:
             self.do_log(
                 types.log.LogLevel.DEBUG,
-                f'External login detected for {id}, locking machine for {self.get_max_lock_time()} or until logout',
+                f"External login detected for {id}, locking machine for {self.get_max_lock_time()} or until logout",
             )
             self.lock_server(id)
 
     @typing.override
     def process_logout(self, id: str, remote_login: bool) -> None:
-        '''
+        """
         Process logout for a machine and release it.
-        '''
+        """
         self.unlock_server(id)
 
     @typing.override
     def notify_initialization(self, id: str) -> None:
-        '''
+        """
         Notify that a machine has been initialized.
         Normally, this means that it's free
-        '''
-        logger.debug('Notify initialization for %s: %s', self, id)
+        """
+        logger.debug("Notify initialization for %s: %s", self, id)
         self.unlock_server(id)
 
     # Used by actor API. look parent documentation
@@ -271,19 +270,19 @@ class IPMachinesService(services.Service):
         return None
 
     @typing.override
-    def provider(self) -> 'provider.PhysicalMachinesProvider':
-        return typing.cast('provider.PhysicalMachinesProvider', super().provider())
+    def provider(self) -> "provider.PhysicalMachinesProvider":
+        return typing.cast("provider.PhysicalMachinesProvider", super().provider())
 
     def wakeup(self, host: str, mac: str, verify_ssl: bool = False) -> None:
         if mac:
             wake_on_land_endpoint = self.provider().wake_on_lan_endpoint(host, mac)
             if wake_on_land_endpoint:
-                logger.info('Launching WOL: %s', wake_on_land_endpoint)
+                logger.info("Launching WOL: %s", wake_on_land_endpoint)
                 try:
                     security.secure_requests_session(verify=verify_ssl).get(wake_on_land_endpoint)
                     # logger.debug('Result: %s', result)
                 except Exception as e:
-                    logger.error('Error on WOL: %s', e)
+                    logger.error("Error on WOL: %s", e)
 
     # Phisical machines does not have "real" providers, so
     # always is available

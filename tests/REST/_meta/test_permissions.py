@@ -45,6 +45,7 @@ Currently covers the same handlers as the P1 CRUD smoke suite:
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 import typing
 import logging
@@ -99,13 +100,11 @@ class _BasePermissionTest(rest.test.RESTTestCase):
             return
         resp = self.client.rest_post(self.BASE, self.CREATE_PAYLOAD)
         assert resp.status_code == HTTP_OK, (
-            f'Admin setup POST failed: {resp.status_code} {self.CREATE_PAYLOAD!r} -> {resp.content!r}'
+            f"Admin setup POST failed: {resp.status_code} {self.CREATE_PAYLOAD!r} -> {resp.content!r}"
         )
         payload = resp.json()
-        self.item_uuid: str = payload['id']
-        self.item_pk: int = (
-            self.MODEL.objects.get(uuid__iexact=self.item_uuid.lower()).pk
-        )
+        self.item_uuid: str = payload["id"]
+        self.item_pk: int = self.MODEL.objects.get(uuid__iexact=self.item_uuid.lower()).pk
 
     def _relogin(self, user: models.User) -> None:
         # RESTTestCase.login() reads user from a kwarg and reauthenticates
@@ -120,13 +119,11 @@ class _BasePermissionTest(rest.test.RESTTestCase):
         self.assertIn(
             resp.status_code,
             (HTTP_FORBIDDEN, HTTP_NOT_FOUND),
-            f'Expected 403/404, got {resp.status_code}: {resp.content!r}',
+            f"Expected 403/404, got {resp.status_code}: {resp.content!r}",
         )
 
     def _assert_ok(self, resp: typing.Any) -> None:
-        self.assertEqual(
-            resp.status_code, HTTP_OK, f'Expected 200, got {resp.status_code}: {resp.content!r}'
-        )
+        self.assertEqual(resp.status_code, HTTP_OK, f"Expected 200, got {resp.status_code}: {resp.content!r}")
 
 
 # -----------------------------------------------------------------------------
@@ -135,11 +132,11 @@ class _BasePermissionTest(rest.test.RESTTestCase):
 
 
 class AccountsPermissionTest(_BasePermissionTest):
-    BASE: typing.ClassVar[str] = 'accounts'
+    BASE: typing.ClassVar[str] = "accounts"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {
-        'name': 'perm-test-account',
-        'comments': 'permission suite setup',
-        'tags': [],
+        "name": "perm-test-account",
+        "comments": "permission suite setup",
+        "tags": [],
     }
     MODEL = models.Account
 
@@ -148,21 +145,21 @@ class AccountsPermissionTest(_BasePermissionTest):
         self._assert_ok(self.client.rest_get(self.BASE))
 
     def test_admin_can_get_item(self) -> None:
-        self._assert_ok(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_ok(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_admin_can_update(self) -> None:
         self._assert_ok(
             self.client.rest_put(
-                f'{self.BASE}/{self.item_uuid}',
-                {**self.CREATE_PAYLOAD, 'comments': 'updated by admin'},
+                f"{self.BASE}/{self.item_uuid}",
+                {**self.CREATE_PAYLOAD, "comments": "updated by admin"},
             )
         )
 
     def test_admin_can_delete(self) -> None:
         # Use a fresh item to avoid breaking subsequent tests
         resp = self.client.rest_post(self.BASE, self.CREATE_PAYLOAD)
-        uuid = resp.json()['id']
-        self._assert_ok(self.client.rest_delete(f'{self.BASE}/{uuid}'))
+        uuid = resp.json()["id"]
+        self._assert_ok(self.client.rest_delete(f"{self.BASE}/{uuid}"))
 
     def test_plain_user_list_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
@@ -171,21 +168,19 @@ class AccountsPermissionTest(_BasePermissionTest):
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
         # detail GET maps AccessDenied -> NotFound (info-hiding)
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_create_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(
-            self.client.rest_post(self.BASE, self.CREATE_PAYLOAD)
-        )
+        self._assert_forbidden(self.client.rest_post(self.BASE, self.CREATE_PAYLOAD))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
     def test_staff_without_permission_get_forbidden(self) -> None:
         self._relogin(self.staffs[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_staff_with_read_permission_can_get(self) -> None:
         # Grant READ permission explicitly to one staff on this item
@@ -197,7 +192,7 @@ class AccountsPermissionTest(_BasePermissionTest):
             created=datetime.datetime.now(datetime.timezone.utc),
         )
         self._relogin(self.staffs[0])
-        self._assert_ok(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_ok(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_staff_with_all_permission_can_update_and_delete(self) -> None:
         # POST/PUT/DELETE handlers check ``check_access(MODEL(), ALL, root=True)``
@@ -213,16 +208,16 @@ class AccountsPermissionTest(_BasePermissionTest):
         self._relogin(self.staffs[0])
         self._assert_ok(
             self.client.rest_put(
-                f'{self.BASE}/{self.item_uuid}',
-                {**self.CREATE_PAYLOAD, 'comments': 'updated by staff'},
+                f"{self.BASE}/{self.item_uuid}",
+                {**self.CREATE_PAYLOAD, "comments": "updated by staff"},
             )
         )
 
         # Create a fresh item, grant type-level ALL, then delete as staff
         admin_resp = self.client.rest_post(self.BASE, self.CREATE_PAYLOAD)
-        new_uuid = admin_resp.json()['id']
+        new_uuid = admin_resp.json()["id"]
         self._relogin(self.staffs[0])
-        self._assert_ok(self.client.rest_delete(f'{self.BASE}/{new_uuid}'))
+        self._assert_ok(self.client.rest_delete(f"{self.BASE}/{new_uuid}"))
 
     def test_staff_with_read_cannot_update(self) -> None:
         # READ at item level is insufficient for write (handlers demand ALL)
@@ -236,18 +231,18 @@ class AccountsPermissionTest(_BasePermissionTest):
         self._relogin(self.staffs[0])
         self._assert_forbidden(
             self.client.rest_put(
-                f'{self.BASE}/{self.item_uuid}',
-                {**self.CREATE_PAYLOAD, 'comments': 'should fail'},
+                f"{self.BASE}/{self.item_uuid}",
+                {**self.CREATE_PAYLOAD, "comments": "should fail"},
             )
         )
 
 
 class NetworksPermissionTest(_BasePermissionTest):
-    BASE: typing.ClassVar[str] = 'networks'
+    BASE: typing.ClassVar[str] = "networks"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {
-        'name': 'perm-test-network',
-        'net_string': '192.168.255.0/24',
-        'tags': [],
+        "name": "perm-test-network",
+        "net_string": "192.168.255.0/24",
+        "tags": [],
     }
     MODEL = models.Network
 
@@ -264,19 +259,19 @@ class NetworksPermissionTest(_BasePermissionTest):
 
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
 
 class CalendarsPermissionTest(_BasePermissionTest):
-    BASE: typing.ClassVar[str] = 'calendars'
+    BASE: typing.ClassVar[str] = "calendars"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {
-        'name': 'perm-test-calendar',
-        'comments': 'permission suite',
-        'tags': [],
+        "name": "perm-test-calendar",
+        "comments": "permission suite",
+        "tags": [],
     }
     MODEL = models.Calendar
 
@@ -293,27 +288,27 @@ class CalendarsPermissionTest(_BasePermissionTest):
 
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
 
 class MetaPoolsPermissionTest(_BasePermissionTest):
-    BASE: typing.ClassVar[str] = 'metapools'
+    BASE: typing.ClassVar[str] = "metapools"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {
-        'name': 'perm-test-metapool',
-        'short_name': 'PTM',
-        'comments': 'permission suite',
-        'tags': [],
-        'image_id': '-1',
-        'servicesPoolGroup_id': '-1',
-        'visible': True,
-        'policy': 0,
-        'ha_policy': 0,
-        'calendar_message': '',
-        'transport_grouping': 0,
+        "name": "perm-test-metapool",
+        "short_name": "PTM",
+        "comments": "permission suite",
+        "tags": [],
+        "image_id": "-1",
+        "servicesPoolGroup_id": "-1",
+        "visible": True,
+        "policy": 0,
+        "ha_policy": 0,
+        "calendar_message": "",
+        "transport_grouping": 0,
     }
     MODEL = models.MetaPool
 
@@ -330,11 +325,11 @@ class MetaPoolsPermissionTest(_BasePermissionTest):
 
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
     def test_staff_with_all_can_update(self) -> None:
         # PUT requires type-level ALL (see master.put: check_access(MODEL(), ALL, root=True))
@@ -348,19 +343,19 @@ class MetaPoolsPermissionTest(_BasePermissionTest):
         self._relogin(self.staffs[0])
         self._assert_ok(
             self.client.rest_put(
-                f'{self.BASE}/{self.item_uuid}',
-                {**self.CREATE_PAYLOAD, 'comments': 'updated by staff'},
+                f"{self.BASE}/{self.item_uuid}",
+                {**self.CREATE_PAYLOAD, "comments": "updated by staff"},
             )
         )
 
 
 class GalleryServicesPoolGroupsPermissionTest(_BasePermissionTest):
-    BASE: typing.ClassVar[str] = 'gallery/servicespoolgroups'
+    BASE: typing.ClassVar[str] = "gallery/servicespoolgroups"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {
-        'name': 'perm-test-spg',
-        'comments': 'permission suite',
-        'image_id': -1,
-        'priority': 0,
+        "name": "perm-test-spg",
+        "comments": "permission suite",
+        "image_id": -1,
+        "priority": 0,
     }
     MODEL = models.ServicePoolGroup
 
@@ -377,17 +372,17 @@ class GalleryServicesPoolGroupsPermissionTest(_BasePermissionTest):
 
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
 
 class MfaPermissionTest(_BasePermissionTest):
     """Mfa is read/delete only in the CRUD smoke; it has no POST."""
 
-    BASE: typing.ClassVar[str] = 'mfa'
+    BASE: typing.ClassVar[str] = "mfa"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {}
     CREATE_VIA_POST: typing.ClassVar[bool] = False
     MODEL = models.MFA
@@ -410,7 +405,7 @@ class MfaPermissionTest(_BasePermissionTest):
             created=datetime.datetime.now(datetime.timezone.utc),
         )
         self._relogin(self.staffs[0])
-        self._assert_ok(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_ok(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
     def test_admin_can_list(self) -> None:
         self._assert_ok(self.client.rest_get(self.BASE))
@@ -421,17 +416,17 @@ class MfaPermissionTest(_BasePermissionTest):
 
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))
 
 
 class NotifiersPermissionTest(_BasePermissionTest):
     """Notifiers is read/delete only in the CRUD smoke; no POST."""
 
-    BASE: typing.ClassVar[str] = 'messaging/notifiers'
+    BASE: typing.ClassVar[str] = "messaging/notifiers"
     CREATE_PAYLOAD: typing.ClassVar[dict[str, typing.Any]] = {}
     CREATE_VIA_POST: typing.ClassVar[bool] = False
     MODEL = models.Notifier
@@ -451,8 +446,8 @@ class NotifiersPermissionTest(_BasePermissionTest):
 
     def test_plain_user_get_item_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_get(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_get(f"{self.BASE}/{self.item_uuid}"))
 
     def test_plain_user_delete_forbidden(self) -> None:
         self._relogin(self.plain_users[0])
-        self._assert_forbidden(self.client.rest_delete(f'{self.BASE}/{self.item_uuid}'))
+        self._assert_forbidden(self.client.rest_delete(f"{self.BASE}/{self.item_uuid}"))

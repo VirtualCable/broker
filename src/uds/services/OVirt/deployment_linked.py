@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import enum
 import logging
@@ -78,7 +79,7 @@ class Operation(enum.IntEnum):
     opUnknown = 99
 
     @staticmethod
-    def from_int(value: int) -> 'Operation':
+    def from_int(value: int) -> "Operation":
         try:
             return Operation(value)
         except ValueError:
@@ -115,70 +116,66 @@ class OVirtLinkedUserService(services.UserService, autoserializable.AutoSerializ
     # : Recheck every six seconds by default (for task methods)
     suggested_delay = 6
 
-    _name = autoserializable.StringField(default='')
-    _ip = autoserializable.StringField(default='')
-    _mac = autoserializable.StringField(default='')
-    _vmid = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="")
+    _ip = autoserializable.StringField(default="")
+    _mac = autoserializable.StringField(default="")
+    _vmid = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
     _queue = autoserializable.ListField[Operation]()
 
     # helpers
     def _get_checks_counter(self) -> int:
         with self.storage.as_dict() as data:
-            return data.get('exec_count', 0)
+            return data.get("exec_count", 0)
 
     def _reset_checks_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['exec_count'] = 0
+            data["exec_count"] = 0
 
     def _inc_checks_counter(self, info: str | None = None) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            count = data.get('exec_count', 0)
-            data['exec_count'] = count + 1
+            count = data.get("exec_count", 0)
+            data["exec_count"] = count + 1
         if count > MAX_CHECK_COUNT:
-            return self._error(f'Max checks reached on {info or "unknown"}')
+            return self._error(f"Max checks reached on {info or 'unknown'}")
         return None
 
     # Utility overrides for type checking...
     @typing.override
-    def service(self) -> 'OVirtLinkedService':
-        return typing.cast('OVirtLinkedService', super().service())
+    def service(self) -> "OVirtLinkedService":
+        return typing.cast("OVirtLinkedService", super().service())
 
     @typing.override
-    def publication(self) -> 'OVirtPublication':
+    def publication(self) -> "OVirtPublication":
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('OVirtPublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("OVirtPublication", pub)
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         Does nothing here also, all data are keeped at environment storage
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._vmid = vals[4].decode('utf8')
-            self._reason = vals[5].decode('utf8')
-            self._queue = [
-                Operation.from_int(i) for i in pickle.loads(vals[6])
-            ]  # nosec: not insecure, we are loading our own data
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._vmid = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
+            self._queue = [Operation.from_int(i) for i in pickle.loads(vals[6])]  # nosec: not insecure, we are loading our own data
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
     @typing.override
     def get_name(self) -> str:
-        if self._name == '':
+        if self._name == "":
             try:
-                self._name = self.name_generator().get(
-                    self.service().get_basename(), self.service().get_lenname()
-                )
+                self._name = self.name_generator().get(self.service().get_basename(), self.service().get_lenname())
             except KeyError:
                 return consts.NO_MORE_NAMES
         return self._name
@@ -196,7 +193,7 @@ class OVirtLinkedUserService(services.UserService, autoserializable.AutoSerializ
         :note: This IP is the IP of the "consumed service", so the transport can
                access it.
         """
-        logger.debug('Setting IP to %s', ip)
+        logger.debug("Setting IP to %s", ip)
         self._ip = ip
 
     @typing.override
@@ -210,7 +207,7 @@ class OVirtLinkedUserService(services.UserService, autoserializable.AutoSerializ
         The get method of a mac generator takes one param, that is the mac range
         to use to get an unused mac.
         """
-        if self._mac == '':
+        if self._mac == "":
             self._mac = self.mac_generator().get(self.service().get_macs_range())
         return self._mac
 
@@ -241,22 +238,22 @@ class OVirtLinkedUserService(services.UserService, autoserializable.AutoSerializ
         The method is invoked whenever a machine is provided to an user, right
         before presenting it (via transport rendering) to the user.
         """
-        if self.cache.get('ready') == '1':
+        if self.cache.get("ready") == "1":
             return types.states.TaskState.FINISHED
 
         try:
             vminfo = self.service().provider().api.get_machine_info(self._vmid)
 
             if vminfo.status == ov_types.VMStatus.UNKNOWN:
-                return self._error('Machine not found')
+                return self._error("Machine not found")
 
             if vminfo.status not in UP_STATES:
                 self._queue = [Operation.START, Operation.FINISH]
                 return self._execute_queue()
 
-            self.cache.put('ready', '1')
+            self.cache.put("ready", "1")
         except Exception as e:
-            self.do_log(types.log.LogLevel.ERROR, f'Error on setReady: {e}')
+            self.do_log(types.log.LogLevel.ERROR, f"Error on setReady: {e}")
             # Treat as operation done, maybe the machine is ready and we can continue
 
         return types.states.TaskState.FINISHED
@@ -266,9 +263,9 @@ class OVirtLinkedUserService(services.UserService, autoserializable.AutoSerializ
         """
         o oVirt, reset operation just shutdowns it until v3 support is removed
         """
-        if self._vmid != '':
+        if self._vmid != "":
             self.service().provider().api.stop_machine(self._vmid)
-            
+
         return types.states.TaskState.FINISHED
 
     @typing.override
@@ -281,13 +278,13 @@ class OVirtLinkedUserService(services.UserService, autoserializable.AutoSerializ
         self,
         username: str,
         password: str,
-        domain: str = '',  # pylint: disable=unused-argument
+        domain: str = "",  # pylint: disable=unused-argument
     ) -> None:
-        script = f'''import sys
+        script = f"""import sys
 if sys.platform == 'win32':
     from uds import operations
     operations.writeToPipe("\\\\.\\pipe\\VDSMDPipe", struct.pack('!IsIs', 1, '{username}'.encode('utf8'), 2, '{password}'.encode('utf8')), True)
-'''
+"""
         # Post script to service
         #         operations.writeToPipe("\\\\.\\pipe\\VDSMDPipe", packet, True)
         dbUserService = self.db_obj()
@@ -297,20 +294,20 @@ if sys.platform == 'win32':
     @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         # Here we will check for suspending the VM (when full ready)
-        logger.debug('Checking if cache 2 for %s', self._name)
+        logger.debug("Checking if cache 2 for %s", self._name)
         if self._get_current_op() == Operation.WAIT:
-            logger.debug('Machine is ready. Moving to level 2')
+            logger.debug("Machine is ready. Moving to level 2")
             self._pop_current_op()  # Remove current state
             return self._execute_queue()
         # Do not need to go to level 2 (opWait is in fact "waiting for moving machine to cache level 2)
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
         """
-        logger.debug('Deploying for user')
+        logger.debug("Deploying for user")
         self._init_queue_for_deploy(False)
         return self._execute_queue()
 
@@ -335,20 +332,18 @@ if sys.platform == 'win32':
                 Operation.FINISH,
             ]
 
-    def _check_machine_state(
-        self, check_states: collections.abc.Iterable[ov_types.VMStatus]
-    ) -> types.states.TaskState:
+    def _check_machine_state(self, check_states: collections.abc.Iterable[ov_types.VMStatus]) -> types.states.TaskState:
         logger.debug(
-            'Checking that state of machine %s (%s) is %s',
+            "Checking that state of machine %s (%s) is %s",
             self._vmid,
             self._name,
             check_states,
         )
 
         vm_info = self.service().provider().api.get_machine_info(self._vmid)
-        
+
         if vm_info.status == ov_types.VMStatus.UNKNOWN and ov_types.VMStatus.UNKNOWN not in check_states:
-            return self._error('Machine not found')
+            return self._error("Machine not found")
 
         ret = types.states.TaskState.RUNNING
         if vm_info.status in check_states:
@@ -379,10 +374,10 @@ if sys.platform == 'win32':
             types.states.DeployState.ERROR, so we can do "return self.__error(reason)"
         """
         reason = str(reason)
-        logger.debug('Setting error state, reason: %s', reason)
+        logger.debug("Setting error state, reason: %s", reason)
         self.do_log(types.log.LogLevel.ERROR, reason)
 
-        if self._vmid != '':  # Powers off
+        if self._vmid != "":  # Powers off
             OVirtDeferredRemoval.remove(self.service().provider(), self._vmid)
 
         self._queue = [Operation.ERROR]
@@ -390,7 +385,7 @@ if sys.platform == 'win32':
         return types.states.TaskState.ERROR
 
     def _execute_queue(self) -> types.states.TaskState:
-        self._debug('executeQueue')
+        self._debug("executeQueue")
         op = self._get_current_op()
 
         if op == Operation.ERROR:
@@ -435,14 +430,10 @@ if sys.platform == 'win32':
         template_id = self.publication().get_template_id()
         name = self.get_name()
         if name == consts.NO_MORE_NAMES:
-            raise Exception(
-                'No more names available for this service. (Increase digits for this service to fix)'
-            )
+            raise Exception("No more names available for this service. (Increase digits for this service to fix)")
 
-        name = self.service().sanitized_name(
-            name
-        )  # oVirt don't let us to create machines with more than 15 chars!!!
-        comments = 'UDS Linked clone'
+        name = self.service().sanitized_name(name)  # oVirt don't let us to create machines with more than 15 chars!!!
+        comments = "UDS Linked clone"
 
         self._vmid = self.service().deploy_from_template(name, comments, template_id).id
 
@@ -453,7 +444,7 @@ if sys.platform == 'win32':
         vminfo = self.service().provider().api.get_machine_info(self._vmid)
 
         if vminfo.status == ov_types.VMStatus.UNKNOWN:
-            raise Exception('Machine not found')
+            raise Exception("Machine not found")
 
         if vminfo.status != ov_types.VMStatus.DOWN:
             self._push_front_op(Operation.RETRY)
@@ -467,7 +458,7 @@ if sys.platform == 'win32':
         vminfo = self.service().provider().api.get_machine_info(self._vmid)
 
         if vminfo.status == ov_types.VMStatus.UNKNOWN:
-            raise Exception('Machine not found')
+            raise Exception("Machine not found")
 
         if vminfo.status in UP_STATES:
             # Already started, return
@@ -482,7 +473,7 @@ if sys.platform == 'win32':
         vminfo = self.service().provider().api.get_machine_info(self._vmid)
 
         if vminfo.status == ov_types.VMStatus.UNKNOWN:
-            raise Exception('Machine not found')
+            raise Exception("Machine not found")
 
         if vminfo.status in DOWN_STATES:
             return
@@ -499,18 +490,18 @@ if sys.platform == 'win32':
         try:
             vm_info = self.service().provider().api.get_machine_info(self._vmid)
             if vm_info.status == ov_types.VMStatus.UNKNOWN:
-                raise Exception('Not found')
+                raise Exception("Not found")
         except Exception as e:
-            raise Exception('Machine not found on stop machine') from e
+            raise Exception("Machine not found on stop machine") from e
 
         # If machine is already stopped, shutdown will be -1 so checker will end soon
         if vm_info.status in UP_STATES:
             self.service().provider().api.shutdown_machine(self._vmid)
             shutdown = sql_stamp_seconds()  # Setup shutdown time
 
-        logger.debug('Stoped vm using guest tools')
+        logger.debug("Stoped vm using guest tools")
         with self.storage.as_dict() as data:
-            data['shutdown'] = shutdown
+            data["shutdown"] = shutdown
 
     def _suspend_machine(self) -> None:
         """
@@ -519,7 +510,7 @@ if sys.platform == 'win32':
         vminfo = self.service().provider().api.get_machine_info(self._vmid)
 
         if vminfo.status == ov_types.VMStatus.UNKNOWN:
-            raise Exception('Machine not found')
+            raise Exception("Machine not found")
 
         if vminfo.status in DOWN_STATES:  # Already in an state that is not up,
             return
@@ -599,31 +590,31 @@ if sys.platform == 'win32':
         Check if the machine has gracely stopped (timed shutdown)
         """
         with self.storage.as_dict() as data:
-            shutdown_start = data.get('shutdown', -1)
-        logger.debug('Shutdown start: %s', shutdown_start)
+            shutdown_start = data.get("shutdown", -1)
+        logger.debug("Shutdown start: %s", shutdown_start)
         if shutdown_start < 0:  # Was already stopped
             # Machine is already stop
-            logger.debug('Machine WAS stopped')
+            logger.debug("Machine WAS stopped")
             return types.states.TaskState.FINISHED
 
         if shutdown_start == 0:  # Was shut down a las bravas
-            logger.debug('Macine DO NOT HAVE guest tools')
+            logger.debug("Macine DO NOT HAVE guest tools")
             return self._stop_checker()
 
-        logger.debug('Checking State')
+        logger.debug("Checking State")
         # Check if machine is already stopped
         if self.service().provider().api.get_machine_info(self._vmid).status in DOWN_STATES:
             return types.states.TaskState.FINISHED  # It's stopped
 
-        logger.debug('State is running')
+        logger.debug("State is running")
         if sql_stamp_seconds() - shutdown_start > consts.os.MAX_GUEST_SHUTDOWN_WAIT:
-            logger.debug('Time is consumed, falling back to stop')
+            logger.debug("Time is consumed, falling back to stop")
             self.do_log(
                 types.log.LogLevel.ERROR,
-                f'Could not shutdown machine using soft power off in time ({consts.os.MAX_GUEST_SHUTDOWN_WAIT} seconds). Powering off.',
+                f"Could not shutdown machine using soft power off in time ({consts.os.MAX_GUEST_SHUTDOWN_WAIT} seconds). Powering off.",
             )
             # Not stopped by guest in time, but must be stopped normally
-            self.storage.save_pickled('shutdown', 0)
+            self.storage.save_pickled("shutdown", 0)
             self._stop_machine()  # Launch "hard" stop
 
         return types.states.TaskState.RUNNING
@@ -633,7 +624,7 @@ if sys.platform == 'win32':
         """
         Check what operation is going on, and acts acordly to it
         """
-        self._debug('check_state')
+        self._debug("check_state")
         op = self._get_current_op()
 
         if op == Operation.ERROR:
@@ -641,7 +632,7 @@ if sys.platform == 'win32':
 
         if op == Operation.FINISH:
             return types.states.TaskState.FINISHED
-        
+
         if op != Operation.WAIT:
             # If not waiting, check if we are in a loop
             ret = self._inc_checks_counter(str(op))
@@ -691,8 +682,8 @@ if sys.platform == 'win32':
         """
         Invoked for destroying a deployed service
         """
-        self._debug('destroy')
-        if self._vmid == '':
+        self._debug("destroy")
+        if self._vmid == "":
             self._queue = []
             self._reason = "canceled"
             return types.states.TaskState.FINISHED
@@ -702,12 +693,10 @@ if sys.platform == 'win32':
         op = self._get_current_op()
 
         if op == Operation.ERROR:
-            return self._error('Machine is already in error state!')
+            return self._error("Machine is already in error state!")
 
         # Take into account the try to stop gracefully
-        graceful_stop: list[Operation] = (
-            [] if not self.service().try_graceful_shutdown() else [Operation.GRACEFUL_STOP]
-        )
+        graceful_stop: list[Operation] = [] if not self.service().try_graceful_shutdown() else [Operation.GRACEFUL_STOP]
 
         if op in (Operation.FINISH, Operation.WAIT):
             self._queue = graceful_stop + [Operation.STOP, Operation.REMOVE, Operation.FINISH]
@@ -733,21 +722,21 @@ if sys.platform == 'win32':
     @staticmethod
     def _op2str(op: Operation) -> str:
         return {
-            Operation.CREATE: 'create',
-            Operation.START: 'start',
-            Operation.STOP: 'stop',
-            Operation.SUSPEND: 'suspend',
-            Operation.REMOVE: 'remove',
-            Operation.WAIT: 'wait',
-            Operation.ERROR: 'error',
-            Operation.FINISH: 'finish',
-            Operation.RETRY: 'retry',
-            Operation.CHANGEMAC: 'changing mac',
-        }.get(op, '????')
+            Operation.CREATE: "create",
+            Operation.START: "start",
+            Operation.STOP: "stop",
+            Operation.SUSPEND: "suspend",
+            Operation.REMOVE: "remove",
+            Operation.WAIT: "wait",
+            Operation.ERROR: "error",
+            Operation.FINISH: "finish",
+            Operation.RETRY: "retry",
+            Operation.CHANGEMAC: "changing mac",
+        }.get(op, "????")
 
     def _debug(self, txt: str) -> None:
         logger.debug(
-            'types.states.DeployState.at %s: name: %s, ip: %s, mac: %s, vmid:%s, queue: %s',
+            "types.states.DeployState.at %s: name: %s, ip: %s, mac: %s, vmid:%s, queue: %s",
             txt,
             self._name,
             self._ip,

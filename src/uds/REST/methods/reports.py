@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import logging
@@ -49,15 +50,15 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 VALID_PARAMS = (
-    'authId',
-    'authSmallName',
-    'auth',
-    'username',
-    'realname',
-    'password',
-    'groups',
-    'servicePool',
-    'transport',
+    "authId",
+    "authSmallName",
+    "auth",
+    "username",
+    "realname",
+    "password",
+    "groups",
+    "servicePool",
+    "transport",
 )
 
 
@@ -80,13 +81,13 @@ class Reports(model.BaseModelHandler[ReportItem]):
     ROLE = consts.UserRole.ADMIN
 
     TABLE = (
-        ui_utils.TableBuilder(_('Available reports'))
-        .text_column(name='group', title=_('Group'), visible=True)
-        .text_column(name='name', title=_('Name'), visible=True)
-        .text_column(name='description', title=_('Description'), visible=True)
-        .text_column(name='mime_type', title=_('Generates'), visible=True)
-        .row_style(prefix='row-state-', field='state')
-        .with_filter_fields('group', 'name', 'description', 'mime_type')
+        ui_utils.TableBuilder(_("Available reports"))
+        .text_column(name="group", title=_("Group"), visible=True)
+        .text_column(name="name", title=_("Name"), visible=True)
+        .text_column(name="description", title=_("Description"), visible=True)
+        .text_column(name="mime_type", title=_("Generates"), visible=True)
+        .row_style(prefix="row-state-", field="state")
+        .with_filter_fields("group", "name", "description", "mime_type")
         .build()
     )
 
@@ -95,26 +96,24 @@ class Reports(model.BaseModelHandler[ReportItem]):
         typed=types.rest.api.RestApiInfoGuiType.MULTIPLE_TYPES,
     )
 
-    def _locate_report(
-        self, uuid: str, values: dict[str, typing.Any] | None = None
-    ) -> 'Report':
+    def _locate_report(self, uuid: str, values: dict[str, typing.Any] | None = None) -> "Report":
         found = None
-        logger.debug('Looking for report %s', uuid)
+        logger.debug("Looking for report %s", uuid)
         for i in reports.available_reports:
             if i.get_uuid() == uuid:
                 found = i(values)
                 break
 
         if not found:
-            raise exceptions.rest.NotFound(f'Report not found: {uuid}') from None
+            raise exceptions.rest.NotFound(f"Report not found: {uuid}") from None
 
         return found
 
     def get(self) -> typing.Any:
-        logger.debug('method GET for %s, %s', self.__class__.__name__, self._args)
+        logger.debug("method GET for %s, %s", self.__class__.__name__, self._args)
 
         def error() -> typing.NoReturn:
-            raise exceptions.rest.RequestError('Invalid report uuid!')
+            raise exceptions.rest.RequestError("Invalid report uuid!")
 
         def report_gui(report_id: str) -> typing.Any:
             return self.get_gui(report_id)
@@ -128,7 +127,7 @@ class Reports(model.BaseModelHandler[ReportItem]):
                 (consts.rest.TABLEINFO,),
                 lambda: self.TABLE.as_dict(),
             ),
-            ((consts.rest.GUI, '<report>'), report_gui),
+            ((consts.rest.GUI, "<report>"), report_gui),
         )
 
     def put(self) -> typing.Any:
@@ -136,31 +135,31 @@ class Reports(model.BaseModelHandler[ReportItem]):
         Processes a PUT request
         """
         logger.debug(
-            'method PUT for %s, %s, %s',
+            "method PUT for %s, %s, %s",
             self.__class__.__name__,
             self._args,
             self._params,
         )
 
         if len(self._args) != 1:
-            raise exceptions.rest.RequestError('Invalid report uuid!')
+            raise exceptions.rest.RequestError("Invalid report uuid!")
 
         report = self._locate_report(self._args[0], self._params)
 
         try:
-            logger.debug('Report: %s', report)
+            logger.debug("Report: %s", report)
             result = report.generate_encoded()
 
             data = {
-                'mime_type': report.mime_type,
-                'encoded': report.encoded,
-                'filename': report.filename,
-                'data': result,
+                "mime_type": report.mime_type,
+                "encoded": report.encoded,
+                "filename": report.filename,
+                "data": result,
             }
 
             return data
         except Exception as e:
-            logger.exception('Generating report')
+            logger.exception("Generating report")
             raise exceptions.rest.RequestError(str(e)) from e
 
     # Gui related

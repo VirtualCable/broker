@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import datetime
 import json
@@ -66,8 +67,8 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
 
     # Client IP addresses, populated by _fill_ips() during connect.
     # Same semantics as ExtendedHttpRequest.ip / ip_proxy.
-    ip: str = ''
-    ip_proxy: str = ''
+    ip: str = ""
+    ip_proxy: str = ""
 
     # --- IP detection ---
 
@@ -81,19 +82,19 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
         """
         from uds.core.util import net
 
-        client = self.scope.get('client') or ['']
-        remote_addr = client[0] if client else ''
+        client = self.scope.get("client") or [""]
+        remote_addr = client[0] if client else ""
 
-        xff = ''
-        for name, value in self.scope.get('headers', []):
-            if name == b'x-forwarded-for':
-                xff = value.decode('latin-1')
+        xff = ""
+        for name, value in self.scope.get("headers", []):
+            if name == b"x-forwarded-for":
+                xff = value.decode("latin-1")
                 break
 
         info = net.recover_ips(remote_addr, xff)
         self.ip = info.ip
         self.ip_proxy = info.ip_proxy
-        logger.debug('WebSocket ip: %s, ip_proxy: %s', self.ip, self.ip_proxy)
+        logger.debug("WebSocket ip: %s, ip_proxy: %s", self.ip, self.ip_proxy)
 
     # --- Authentication ---
 
@@ -108,18 +109,18 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
           3. self.verify() returns True.
         """
         self._fill_ips()
-        session = self.scope.get('session')
+        session = self.scope.get("session")
         if session is None:
-            logger.warning('WebSocket: no session in scope')
+            logger.warning("WebSocket: no session in scope")
             return False
 
         user_id = session.get(consts.auth.SESSION_USER_KEY)
         if user_id is None:
-            logger.warning('WebSocket: no user key in session')
+            logger.warning("WebSocket: no user key in session")
             return False
 
         # Resolve user — same logic as _get_user()
-        user: User | None= None
+        user: User | None = None
         try:
             if user_id == consts.auth.ROOT_ID:
                 user = root_user()
@@ -129,19 +130,19 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
             pass
 
         if user is None or user.state != types.states.State.ACTIVE:
-            logger.warning('WebSocket: user %s not found or not active', user_id)
+            logger.warning("WebSocket: user %s not found or not active", user_id)
             return False
 
         # Check session expiry — same logic as _process_request()
         now = timezone.now()
         try:
-            expiry = datetime.datetime.fromisoformat(session.get(consts.auth.SESSION_EXPIRY_KEY, ''))
+            expiry = datetime.datetime.fromisoformat(session.get(consts.auth.SESSION_EXPIRY_KEY, ""))
             expiry = timezone.make_aware(expiry)
         except ValueError:
             expiry = now  # treat missing/invalid expiry as already expired
 
         if expiry < now:
-            logger.warning('WebSocket: session expired for user %s', user_id)
+            logger.warning("WebSocket: session expired for user %s", user_id)
             return False
 
         self.user = user
@@ -161,16 +162,16 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
     @typing.override
     async def connect(self) -> None:
         if not await self.authenticate():
-            logger.warning('WebSocket rejected: path=%s', self.scope.get('path'))
+            logger.warning("WebSocket rejected: path=%s", self.scope.get("path"))
             await self.close()
             return
 
         await self.accept()
-        logger.debug('WebSocket connected: %s (user=%s)', self.scope.get('path'), self.user)
+        logger.debug("WebSocket connected: %s (user=%s)", self.scope.get("path"), self.user)
 
     @typing.override
     async def disconnect(self, code: int) -> None:
-        logger.debug('WebSocket disconnected: %s (code=%s)', self.scope.get('path'), code)
+        logger.debug("WebSocket disconnected: %s (code=%s)", self.scope.get("path"), code)
 
     # --- Message handling ---
 
@@ -183,11 +184,11 @@ class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError:
-            await self.send(text_data=json.dumps({'error': 'Invalid JSON'}))
+            await self.send(text_data=json.dumps({"error": "Invalid JSON"}))
             return
 
         await self.handle_message(data)
 
     async def handle_message(self, data: dict[str, typing.Any]) -> None:
         """Override this to process messages from the client."""
-        await self.send(text_data=json.dumps({'echo': data}))
+        await self.send(text_data=json.dumps({"echo": data}))

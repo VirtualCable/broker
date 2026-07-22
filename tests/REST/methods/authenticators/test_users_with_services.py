@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import datetime
 
@@ -50,18 +51,18 @@ class AuthenticatorUsersWithServicesTest(rest.test.RESTTestCase):
         self.login()
 
     def url(self) -> str:
-        return f'authenticators/{self.auth.uuid}/users_with_services'
+        return f"authenticators/{self.auth.uuid}/users_with_services"
 
     def test_lists_the_users_owning_a_service(self) -> None:
         response = self.client.rest_get(self.url())
         self.assertEqual(response.status_code, 200)
 
         # The test case gives every user a couple of USABLE userservices
-        self.assertEqual({i['name'] for i in response.json()}, {i.name for i in self.users})
+        self.assertEqual({i["name"] for i in response.json()}, {i.name for i in self.users})
 
     def test_a_user_owning_several_services_appears_once(self) -> None:
         users = self.client.rest_get(self.url()).json()
-        names = [i['name'] for i in users]
+        names = [i["name"] for i in users]
 
         self.assertEqual(len(names), len(set(names)))
 
@@ -71,5 +72,5 @@ class AuthenticatorUsersWithServicesTest(rest.test.RESTTestCase):
 
         users = self.client.rest_get(self.url()).json()
 
-        self.assertNotIn(orphan.name, {i['name'] for i in users})
+        self.assertNotIn(orphan.name, {i["name"] for i in users})
         self.assertEqual(len(users), len(self.users) - 1)

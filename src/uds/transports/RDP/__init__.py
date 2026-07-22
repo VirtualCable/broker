@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from .rdp import RDPTransport
 from .rdptunnel import TRDPTransport

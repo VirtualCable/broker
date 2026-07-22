@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class SystemInformation(Job):
-    friendly_name = 'System Information update'
+    friendly_name = "System Information update"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -47,10 +48,10 @@ class SystemInformation(Job):
 
     @typing.override
     def run(self) -> None:
-        logger.debug('System information started')
+        logger.debug("System information started")
         try:
             cluster.store_cluster_info()
         except Exception as e:
-            logger.error('Error storing cluster hostname: %s', e)
-            
-        logger.debug('System information done')
+            logger.error("Error storing cluster hostname: %s", e)
+
+        logger.debug("System information done")

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import hashlib
 import secrets
@@ -57,74 +58,74 @@ class OAuth2Authenticator(auths.Authenticator):
     This class represents an OAuth2 Authenticator.
     """
 
-    type_name = _('OAuth2')
-    type_type = 'OAuth2Authenticator'
-    type_description = _('OAuth2 Authenticator')
-    icon_file = 'oauth2.png'
+    type_name = _("OAuth2")
+    type_type = "OAuth2Authenticator"
+    type_description = _("OAuth2 Authenticator")
+    icon_file = "oauth2.png"
 
     authorization_endpoint = gui.TextField(
         length=256,
-        label=_('Authorization endpoint'),
+        label=_("Authorization endpoint"),
         order=10,
-        tooltip=_('Authorization endpoint for OAuth2.'),
+        tooltip=_("Authorization endpoint for OAuth2."),
         required=True,
-        tab=_('Server'),
+        tab=_("Server"),
     )
     client_id = gui.TextField(
         length=128,
-        label=_('Client ID'),
+        label=_("Client ID"),
         order=2,
-        tooltip=_('Client ID for OAuth2.'),
+        tooltip=_("Client ID for OAuth2."),
         required=True,
-        tab=_('Server'),
+        tab=_("Server"),
     )
     client_secret = gui.PasswordField(
         length=128,
-        label=_('Client Secret'),
+        label=_("Client Secret"),
         order=3,
-        tooltip=_('Client secret for OAuth2.'),
+        tooltip=_("Client secret for OAuth2."),
         required=True,
-        tab=_('Server'),
+        tab=_("Server"),
     )
     scope = gui.TextField(
         length=128,
-        label=_('Scope'),
+        label=_("Scope"),
         order=4,
-        tooltip=_('Scope for OAuth2.'),
+        tooltip=_("Scope for OAuth2."),
         required=True,
-        tab=_('Server'),
+        tab=_("Server"),
     )
     common_groups = gui.TextField(
         length=128,
-        label=_('Common Groups'),
+        label=_("Common Groups"),
         order=5,
-        tooltip=_('User will be assigned to this groups once authenticated. Comma separated list of groups'),
+        tooltip=_("User will be assigned to this groups once authenticated. Comma separated list of groups"),
         required=False,
-        tab=_('Server'),
+        tab=_("Server"),
     )
 
     # Advanced options
     redirection_endpoint = gui.TextField(
         length=128,
-        label=_('Redirection endpoint'),
+        label=_("Redirection endpoint"),
         order=90,
-        tooltip=_('Redirection endpoint for OAuth2.  (Filled by UDS)'),
+        tooltip=_("Redirection endpoint for OAuth2.  (Filled by UDS)"),
         required=False,
         tab=types.ui.Tab.ADVANCED,
     )
     response_type = gui.ChoiceField(
-        label=_('Response type'),
+        label=_("Response type"),
         order=91,
-        tooltip=_('Response type for OAuth2.'),
+        tooltip=_("Response type for OAuth2."),
         required=True,
-        default='code',
+        default="code",
         choices=[gui.choice_item(v, v.as_text) for v in oauth2_types.ResponseType],
         tab=types.ui.Tab.ADVANCED,
     )
     # In case of code, we need to get the token from the token endpoint
     token_endpoint = gui.TextField(
         length=128,
-        label=_('Token endpoint'),
+        label=_("Token endpoint"),
         order=92,
         tooltip=_('Token endpoint for OAuth2. Only required for "code" response type.'),
         required=False,
@@ -132,7 +133,7 @@ class OAuth2Authenticator(auths.Authenticator):
     )
     info_endpoint = gui.TextField(
         length=128,
-        label=_('User information endpoint'),
+        label=_("User information endpoint"),
         order=93,
         tooltip=_('User information endpoint for OAuth2. Only required for "code" response type.'),
         required=False,
@@ -141,17 +142,17 @@ class OAuth2Authenticator(auths.Authenticator):
     public_key = gui.TextField(
         length=16384,
         lines=3,
-        label=_('Public Key'),
+        label=_("Public Key"),
         order=94,
-        tooltip=_('Provided by Oauth2 provider'),
+        tooltip=_("Provided by Oauth2 provider"),
         required=False,
         tab=types.ui.Tab.ADVANCED,
     )
     logout_url = gui.TextField(
         length=256,
-        label=_('Logout URL'),
+        label=_("Logout URL"),
         order=95,
-        tooltip=_('URL to logout from OAuth2 provider. Allows {token} placeholder.'),
+        tooltip=_("URL to logout from OAuth2 provider. Allows {token} placeholder."),
         required=False,
         tab=types.ui.Tab.ADVANCED,
     )
@@ -161,16 +162,16 @@ class OAuth2Authenticator(auths.Authenticator):
     realname_attr = fields.realname_attr_field(order=102)
 
     # Non serializable variables
-    session: typing.ClassVar['requests.Session'] = security.secure_requests_session()
+    session: typing.ClassVar["requests.Session"] = security.secure_requests_session()
 
     @typing.override
     def initialize(self, values: dict[str, typing.Any] | None) -> None:
         if not values:
             return
 
-        if ' ' in values['name']:
+        if " " in values["name"]:
             raise exceptions.ui.ValidationError(
-                gettext('This kind of Authenticator does not support white spaces on field NAME')
+                gettext("This kind of Authenticator does not support white spaces on field NAME")
             )
 
         auth_utils.validate_regex_field(self.username_attr)
@@ -181,33 +182,29 @@ class OAuth2Authenticator(auths.Authenticator):
             oauth2_types.ResponseType.PKCE,
             oauth2_types.ResponseType.OPENID_CODE,
         ):
-            if self.common_groups.value.strip() == '':
-                raise exceptions.ui.ValidationError(
-                    gettext('Common groups is required for "code" response types')
-                )
-            if self.token_endpoint.value.strip() == '':
-                raise exceptions.ui.ValidationError(
-                    gettext('Token endpoint is required for "code" response types')
-                )
+            if self.common_groups.value.strip() == "":
+                raise exceptions.ui.ValidationError(gettext('Common groups is required for "code" response types'))
+            if self.token_endpoint.value.strip() == "":
+                raise exceptions.ui.ValidationError(gettext('Token endpoint is required for "code" response types'))
             # infoEndpoint will not be necesary if the response of tokenEndpoint contains the user info
 
-        if self.response_type.value == 'openid+token_id':
+        if self.response_type.value == "openid+token_id":
             # Ensure we have a public key
-            if self.public_key.value.strip() == '':
+            if self.public_key.value.strip() == "":
                 raise exceptions.ui.ValidationError(
                     gettext('Public key is required for "openid+token_id" response type')
                 )
 
-        if self.redirection_endpoint.value.strip() == '' and self.db_obj() and '_request' in values:
-            request: 'HttpRequest' = values['_request']
+        if self.redirection_endpoint.value.strip() == "" and self.db_obj() and "_request" in values:
+            request: "HttpRequest" = values["_request"]
             self.redirection_endpoint.value = request.build_absolute_uri(self.callback_url())
 
     @typing.override
     def auth_callback(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        groups_manager: 'auths.GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        groups_manager: "auths.GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         match oauth2_types.ResponseType(self.response_type.value):
             case oauth2_types.ResponseType.CODE | oauth2_types.ResponseType.PKCE:
@@ -222,32 +219,32 @@ class OAuth2Authenticator(auths.Authenticator):
             case oauth2_types.ResponseType.OPENID_ID_TOKEN:
                 return self.auth_callback_openid_id_token(parameters, groups_manager, request)
             case _:
-                logger.error('Invalid response type: %s', self.response_type.value)
+                logger.error("Invalid response type: %s", self.response_type.value)
                 return types.auth.FAILED_AUTH
 
     @typing.override
     def logout(
         self,
-        request: 'types.requests.ExtendedHttpRequest',
+        request: "types.requests.ExtendedHttpRequest",
         username: str,
     ) -> types.auth.AuthenticationResult:
-        if self.logout_url.value.strip() == '' or (token := self.retrieve_token(request)) == '':
+        if self.logout_url.value.strip() == "" or (token := self.retrieve_token(request)) == "":
             return types.auth.SUCCESS_AUTH
 
         return types.auth.AuthenticationResult(
             types.auth.AuthenticationState.SUCCESS,
-            url=self.logout_url.value.replace('{token}', urllib.parse.quote(token)),
+            url=self.logout_url.value.replace("{token}", urllib.parse.quote(token)),
         )
 
     @typing.override
-    def get_javascript(self, request: 'HttpRequest') -> str | None:
+    def get_javascript(self, request: "HttpRequest") -> str | None:
         """
         We will here compose the azure request and send it via http-redirect
         """
         return f'window.location="{self.get_login_url()}";'
 
     @typing.override
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
+    def get_groups(self, username: str, groups_manager: "auths.GroupsManager") -> None:
         data = self.storage.read_pickled(username)
         if not data:
             return
@@ -272,11 +269,11 @@ class OAuth2Authenticator(auths.Authenticator):
         Returns:
             tuple[str, str]: Code verifier and code challenge
         """
-        code_verifier = ''.join(secrets.choice(oauth2_consts.PKCE_ALPHABET) for _ in range(128))
+        code_verifier = "".join(secrets.choice(oauth2_consts.PKCE_ALPHABET) for _ in range(128))
         code_challenge = (
-            b64encode(hashlib.sha256(code_verifier.encode()).digest(), altchars=b'-_')
+            b64encode(hashlib.sha256(code_verifier.encode()).digest(), altchars=b"-_")
             .decode()
-            .rstrip('=')  # remove padding
+            .rstrip("=")  # remove padding
         )
 
         return code_verifier, code_challenge
@@ -289,48 +286,48 @@ class OAuth2Authenticator(auths.Authenticator):
         response_type = oauth2_types.ResponseType(self.response_type.value)
 
         param_dict: dict[str, str] = {
-            'response_type': response_type.for_query,
-            'client_id': self.client_id.value,
-            'redirect_uri': self.redirection_endpoint.value,
-            'scope': self.scope.value.replace(',', ' '),
-            'state': state,
+            "response_type": response_type.for_query,
+            "client_id": self.client_id.value,
+            "redirect_uri": self.redirection_endpoint.value,
+            "scope": self.scope.value.replace(",", " "),
+            "state": state,
         }
 
         match response_type:
             case oauth2_types.ResponseType.CODE | oauth2_types.ResponseType.TOKEN:
                 # Code or token flow
                 # Simply store state, no code_verifier, store "none" as code_verifier to later restore it
-                self.cache.put(state, 'none', 3600)
+                self.cache.put(state, "none", 3600)
             case oauth2_types.ResponseType.OPENID_CODE | oauth2_types.ResponseType.OPENID_ID_TOKEN:
                 # OpenID flow
                 nonce = secrets.token_urlsafe(oauth2_consts.STATE_LENGTH)
                 self.cache.put(state, nonce, 3600)  # Store nonce
                 # Fix scope to ensure openid is present
-                if 'openid' not in param_dict['scope']:
-                    param_dict['scope'] = 'openid ' + param_dict['scope']
+                if "openid" not in param_dict["scope"]:
+                    param_dict["scope"] = "openid " + param_dict["scope"]
                 # Append nonce
-                param_dict['nonce'] = nonce
+                param_dict["nonce"] = nonce
                 # Add response_mode
-                param_dict['response_mode'] = 'form_post'  # ['query', 'fragment', 'form_post']
+                param_dict["response_mode"] = "form_post"  # ['query', 'fragment', 'form_post']
             case oauth2_types.ResponseType.PKCE:
                 # PKCE flow
                 code_verifier, code_challenge = self.code_verifier_and_challenge()
-                param_dict['code_challenge'] = code_challenge
-                param_dict['code_challenge_method'] = 'S256'
+                param_dict["code_challenge"] = code_challenge
+                param_dict["code_challenge_method"] = "S256"
                 self.cache.put(state, code_verifier, 3600)
 
         # Nonce only is used
         if False:
-            param_dict['nonce'] = nonce
+            param_dict["nonce"] = nonce
 
         if False:
-            param_dict['response_mode'] = 'form_post'  # ['query', 'fragment', 'form_post']
+            param_dict["response_mode"] = "form_post"  # ['query', 'fragment', 'form_post']
 
         params = urllib.parse.urlencode(param_dict)
 
-        return self.authorization_endpoint.value + '?' + params
+        return self.authorization_endpoint.value + "?" + params
 
-    def request_token(self, code: str, code_verifier: str | None = None) -> 'oauth2_types.TokenInfo':
+    def request_token(self, code: str, code_verifier: str | None = None) -> "oauth2_types.TokenInfo":
         """Request a token from the token endpoint using the code received from the authorization endpoint
 
         Args:
@@ -340,26 +337,26 @@ class OAuth2Authenticator(auths.Authenticator):
             TokenInfo: Token received from the token endpoint
         """
         param_dict = {
-            'grant_type': 'authorization_code',
-            'client_id': self.client_id.value,
-            'client_secret': self.client_secret.value,
-            'redirect_uri': self.redirection_endpoint.value,
-            'code': code,
+            "grant_type": "authorization_code",
+            "client_id": self.client_id.value,
+            "client_secret": self.client_secret.value,
+            "redirect_uri": self.redirection_endpoint.value,
+            "code": code,
         }
         if code_verifier:
-            param_dict['code_verifier'] = code_verifier
+            param_dict["code_verifier"] = code_verifier
 
         response = OAuth2Authenticator.session.post(
             self.token_endpoint.value, data=param_dict, timeout=consts.system.COMMS_TIMEOUT
         )
-        logger.debug('Token request: %s %s', response.status_code, response.text)
+        logger.debug("Token request: %s %s", response.status_code, response.text)
 
         if not response.ok:
-            raise Exception('Error requesting token: {}'.format(response.text))
+            raise Exception("Error requesting token: {}".format(response.text))
 
         return oauth2_types.TokenInfo.from_dict(response.json())
 
-    def request_userinfo(self, token: 'oauth2_types.TokenInfo') -> dict[str, typing.Any]:
+    def request_userinfo(self, token: "oauth2_types.TokenInfo") -> dict[str, typing.Any]:
         """Request user info from the info endpoint using the token received from the token endpoint
 
         If the token endpoint returns the user info, this method will not be used
@@ -372,47 +369,47 @@ class OAuth2Authenticator(auths.Authenticator):
         """
         userinfo: dict[str, typing.Any]
 
-        if self.info_endpoint.value.strip() == '':
+        if self.info_endpoint.value.strip() == "":
             if not token.info:
-                raise Exception('No user info endpoint and token does not contain user info')
+                raise Exception("No user info endpoint and token does not contain user info")
             userinfo = token.info
         else:
             # Get user info
             req = OAuth2Authenticator.session.get(
                 self.info_endpoint.value,
-                headers={'Authorization': 'Bearer ' + token.access_token},
+                headers={"Authorization": "Bearer " + token.access_token},
                 timeout=consts.system.COMMS_TIMEOUT,
             )
-            logger.debug('User info request: %s %s', req.status_code, req.text)
+            logger.debug("User info request: %s %s", req.status_code, req.text)
 
             if not req.ok:
-                raise Exception('Error requesting user info: {}'.format(req.text))
+                raise Exception("Error requesting user info: {}".format(req.text))
 
             userinfo = req.json()
         return userinfo
 
-    def save_token(self, request: 'HttpRequest', token: str) -> None:
-        request.session['oauth2_token'] = token
+    def save_token(self, request: "HttpRequest", token: str) -> None:
+        request.session["oauth2_token"] = token
 
-    def retrieve_token(self, request: 'HttpRequest') -> str:
-        return request.session.get('oauth2_token', '')
+    def retrieve_token(self, request: "HttpRequest") -> str:
+        return request.session.get("oauth2_token", "")
 
     def process_userinfo(
-        self, userinfo: collections.abc.Mapping[str, typing.Any], gm: 'auths.GroupsManager'
+        self, userinfo: collections.abc.Mapping[str, typing.Any], gm: "auths.GroupsManager"
     ) -> types.auth.AuthenticationResult:
         # After this point, we don't mind about the token, we only need to authenticate user
         # and get some basic info from it
 
-        username = ''.join(auth_utils.process_regex_field(self.username_attr.value, userinfo)).replace(' ', '_')
+        username = "".join(auth_utils.process_regex_field(self.username_attr.value, userinfo)).replace(" ", "_")
         if len(username) == 0:
-            raise Exception('No username received')
+            raise Exception("No username received")
 
-        realname = ''.join(auth_utils.process_regex_field(self.realname_attr.value, userinfo))
+        realname = "".join(auth_utils.process_regex_field(self.realname_attr.value, userinfo))
 
         # Get groups
         groups = auth_utils.process_regex_field(self.groupname_attr.value, userinfo)
         # Append common groups
-        groups.extend(self.common_groups.value.split(','))
+        groups.extend(self.common_groups.value.split(","))
 
         # store groups for this username at storage, so we can check it at a later stage
         self.storage.save_pickled(username, [realname, groups])
@@ -425,24 +422,26 @@ class OAuth2Authenticator(auths.Authenticator):
         return types.auth.AuthenticationResult(types.auth.AuthenticationState.SUCCESS, username=username)
 
     def process_token_open_id(
-        self, token_id: str, nonce: str, gm: 'auths.GroupsManager'
+        self, token_id: str, nonce: str, gm: "auths.GroupsManager"
     ) -> types.auth.AuthenticationResult:
         # Get token headers, to extract algorithm
         info = jwt.get_unverified_header(token_id)
-        logger.debug('Token headers: %s', info)
+        logger.debug("Token headers: %s", info)
 
         # We may have multiple public keys, try them all
         # (We should only have one, but just in case)
         for key in self.get_public_keys():
-            logger.debug('Key = %s', key)
+            logger.debug("Key = %s", key)
             try:
-                payload = jwt.decode(token_id, key=key, audience=self.client_id.value, algorithms=[info.get('alg', 'RSA256')])
+                payload = jwt.decode(
+                    token_id, key=key, audience=self.client_id.value, algorithms=[info.get("alg", "RSA256")]
+                )
                 # If reaches here, token is valid, raises jwt.InvalidTokenError otherwise
-                logger.debug('Payload: %s', payload)
-                if payload.get('nonce') != nonce:
-                    logger.error('Nonce does not match: %s != %s', payload.get('nonce'), nonce)
+                logger.debug("Payload: %s", payload)
+                if payload.get("nonce") != nonce:
+                    logger.error("Nonce does not match: %s != %s", payload.get("nonce"), nonce)
                 else:
-                    logger.debug('Payload: %s', payload)
+                    logger.debug("Payload: %s", payload)
                     # All is fine, get user & look for groups
 
                 # Process attributes from payload
@@ -451,37 +450,37 @@ class OAuth2Authenticator(auths.Authenticator):
                 # logger.debug('Data was invalid: %s', e)
                 pass
             except Exception as e:
-                logger.error('Error decoding token: %s', e)
+                logger.error("Error decoding token: %s", e)
                 return types.auth.FAILED_AUTH
 
         # All keys tested, none worked
-        logger.error('Invalid token received on OAuth2 callback')
+        logger.error("Invalid token received on OAuth2 callback")
 
         return types.auth.FAILED_AUTH
 
     def auth_callback_code(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        gm: 'auths.GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        gm: "auths.GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """Process the callback for code authorization flow"""
-        state = parameters.get_params.get('state', '')
+        state = parameters.get_params.get("state", "")
         # Get and remove state from cache
         code_verifier = self.cache.pop(state)
 
         if not state or not code_verifier:
-            logger.error('Invalid state received on OAuth2 callback')
+            logger.error("Invalid state received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Get the code
-        code = parameters.get_params.get('code', '')
-        if code == '':
-            logger.error('Invalid code received on OAuth2 callback')
+        code = parameters.get_params.get("code", "")
+        if code == "":
+            logger.error("Invalid code received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Restore code_verifier "none" to None
-        if code_verifier == 'none':
+        if code_verifier == "none":
             code_verifier = None
 
         token_info = self.request_token(code, code_verifier)
@@ -491,16 +490,16 @@ class OAuth2Authenticator(auths.Authenticator):
 
     def auth_callback_token(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        gm: 'auths.GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        gm: "auths.GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """Process the callback for PKCE authorization flow"""
-        state = parameters.get_params.get('state', '')
+        state = parameters.get_params.get("state", "")
         state_value = self.cache.pop(state)
 
         if not state or not state_value:
-            logger.error('Invalid state received on OAuth2 callback')
+            logger.error("Invalid state received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Get the token, token_type, expires
@@ -511,29 +510,29 @@ class OAuth2Authenticator(auths.Authenticator):
 
     def auth_callback_openid_code(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        gm: 'auths.GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        gm: "auths.GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """Process the callback for OpenID authorization flow"""
-        state = parameters.post_params.get('state', '')
+        state = parameters.post_params.get("state", "")
         nonce = self.cache.pop(state)
 
         if not state or not nonce:
-            logger.error('Invalid state received on OAuth2 callback')
+            logger.error("Invalid state received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Get the code
-        code = parameters.post_params.get('code', '')
-        if code == '':
-            logger.error('Invalid code received on OAuth2 callback')
+        code = parameters.post_params.get("code", "")
+        if code == "":
+            logger.error("Invalid code received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Get the token, token_type, expires
         token = self.request_token(code)
 
         if not token.id_token:
-            logger.error('No id_token received on OAuth2 callback')
+            logger.error("No id_token received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Store for later use
@@ -542,22 +541,22 @@ class OAuth2Authenticator(auths.Authenticator):
 
     def auth_callback_openid_id_token(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        gm: 'auths.GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        gm: "auths.GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """Process the callback for OpenID authorization flow"""
-        state = parameters.post_params.get('state', '')
+        state = parameters.post_params.get("state", "")
         nonce = self.cache.pop(state)
 
         if not state or not nonce:
-            logger.error('Invalid state received on OAuth2 callback')
+            logger.error("Invalid state received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Get the id_token
-        id_token = parameters.post_params.get('id_token', '')
-        if id_token == '':
-            logger.error('Invalid id_token received on OAuth2 callback')
+        id_token = parameters.post_params.get("id_token", "")
+        if id_token == "":
+            logger.error("Invalid id_token received on OAuth2 callback")
             return types.auth.FAILED_AUTH
 
         # Store for later use

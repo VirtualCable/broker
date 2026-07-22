@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 
@@ -52,7 +53,7 @@ class EmailNotifierTest(UDSTestCase):
 
         self.smtp_server = Controller(
             handler=Debugging(),
-            hostname='localhost',
+            hostname="localhost",
             port=1025,
         )
         self.smtp_server.start()  # type: ignore
@@ -66,12 +67,12 @@ class EmailNotifierTest(UDSTestCase):
         Test email notifier
         """
         notifier = notifiers_fixtures.createEmailNotifier(
-            host='localhost', port=self.smtp_server.port, enableHtml=False
+            host="localhost", port=self.smtp_server.port, enableHtml=False
         )
 
         notifier.get_instance().notify(
-            'Group',
-            'Identificator',
+            "Group",
+            "Identificator",
             messaging.LogLevel.CRITICAL,
-            'Test message cañón',
+            "Test message cañón",
         )

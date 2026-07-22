@@ -27,6 +27,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -42,15 +43,13 @@ logger = logging.getLogger(__name__)
 def get_machines(parameters: typing.Any) -> types.ui.CallbackResultType:
     from .provider import XenProvider  # pylint: disable=import-outside-toplevel
 
-    logger.debug('Parameters received by getResources Helper: %s', parameters)
-    provider = typing.cast(
-        XenProvider, models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance()
-    )
+    logger.debug("Parameters received by getResources Helper: %s", parameters)
+    provider = typing.cast(XenProvider, models.Provider.objects.get(uuid=parameters["prov_uuid"]).get_instance())
 
     with provider.get_connection() as api:
         try:
             vms = sorted(
-                [m for m in api.list_vms_in_folder(parameters['folder']) if not m.name.startswith('UDS')],
+                [m for m in api.list_vms_in_folder(parameters["folder"]) if not m.name.startswith("UDS")],
                 key=lambda x: x.name,
             )
         except Exception:
@@ -58,7 +57,7 @@ def get_machines(parameters: typing.Any) -> types.ui.CallbackResultType:
 
     return [
         {
-            'name': 'machines',
-            'choices': [gui.choice_item(vm.opaque_ref, vm.name) for vm in vms],
+            "name": "machines",
+            "choices": [gui.choice_item(vm.opaque_ref, vm.name) for vm in vms],
         }
     ]

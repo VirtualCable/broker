@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # Cert/key helpers for crypto manager tests. Underscore prefix keeps pytest from collecting it.
 import datetime
 import pathlib
@@ -73,7 +74,7 @@ class CertTestCase(UDSTestCase):
         return p
 
     def install_trust(self, *roots: x509.Certificate) -> None:
-        bundle = self.write('trust.pem', chain_to_pem(*roots))
+        bundle = self.write("trust.pem", chain_to_pem(*roots))
         ov = override_settings(RDP_SIGN_CA_BUNDLE=str(bundle))
         ov.enable()
         self.addCleanup(ov.disable)
@@ -176,4 +177,4 @@ def key_to_der(key: _PrivateKey) -> bytes:
 
 
 def chain_to_pem(*certs: x509.Certificate) -> bytes:
-    return b''.join(to_pem(c) for c in certs)
+    return b"".join(to_pem(c) for c in certs)
