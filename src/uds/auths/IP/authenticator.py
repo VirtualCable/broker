@@ -37,7 +37,8 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import auths, types
+from uds.core import auths
+from uds.core import types
 from uds.core.types.states import State
 from uds.core.ui import gui
 from uds.core.util import net

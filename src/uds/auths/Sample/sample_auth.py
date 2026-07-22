@@ -31,19 +31,21 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop as _
+
+from uds.core import auths
+from uds.core import exceptions
+from uds.core import types
 from uds.core.types.requests import ExtendedHttpRequest
 from uds.core.ui import gui
-from uds.core import auths, exceptions, types
 
 if typing.TYPE_CHECKING:
-    from django.http import (
-        HttpRequest,
-    )  # pylint: disable=ungrouped-imports
+    from django.http import HttpRequest  # pylint: disable=ungrouped-imports
+
     from uds.core.auths.groups_manager import GroupsManager
 
 

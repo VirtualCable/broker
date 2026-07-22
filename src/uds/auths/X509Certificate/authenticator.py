@@ -30,7 +30,6 @@ Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
 
 from __future__ import annotations
-
 import base64
 import hashlib
 import hmac as hmac_module
@@ -39,21 +38,28 @@ import logging
 import re
 import typing
 
+import cryptography.exceptions
+
+from cryptography import x509
+from cryptography.hazmat.primitives import padding as sym_padding
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import modes
+from cryptography.x509 import oid
 from django.urls import reverse
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
-from uds.core import auths, exceptions, types
+from uds.core import auths
+from uds.core import exceptions
+from uds.core import types
 from uds.core.ui import gui
-from uds.core.util import auth as auth_utils, fields
+from uds.core.util import auth as auth_utils
+from uds.core.util import fields
 from uds.models import TicketStore
-
-from cryptography import x509
-from cryptography.x509 import oid
-from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding as sym_padding
-import cryptography.exceptions
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest

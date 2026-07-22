@@ -38,9 +38,11 @@ import typing
 
 import dns.resolver
 import dns.reversename
+
 from django.utils.translation import gettext_noop as _
 
-from uds.core import auths, types
+from uds.core import auths
+from uds.core import types
 from uds.core.auths.auth import log_login
 from uds.core.managers.crypto import CryptoManager
 from uds.core.types.states import State

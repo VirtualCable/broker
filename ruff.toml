@@ -10,7 +10,10 @@ docstring-code-line-length = "dynamic"
 
 [lint]
 ignore = []
-fixable = ["F541", "F841", "I001"]
+# "I001" for sort order fix
+# Use with a LOT OF CARE, some dependencies can break if reordered
+# Should not , but does :)
+fixable = ["F541", "F841"]
 
 [lint.isort]
 force-single-line = true

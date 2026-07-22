@@ -36,7 +36,9 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import auths, environment, types
+from uds.core import auths
+from uds.core import environment
+from uds.core import types
 from uds.core.auths.auth import log_login
 from uds.core.managers.crypto import CryptoManager
 from uds.core.ui import gui

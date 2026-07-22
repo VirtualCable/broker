@@ -32,17 +32,18 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false
+import collections.abc
 import dataclasses
+import enum
 import io
 import logging
-import enum
-import typing
-import collections.abc
 import string
+import typing
+
+import pyrad.packet
 
 from pyrad.client import Client
 from pyrad.dictionary import Dictionary
-import pyrad.packet
 
 logger = logging.getLogger(__name__)
 

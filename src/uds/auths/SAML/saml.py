@@ -31,24 +31,31 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import datetime
 import logging
 import typing
-import collections.abc
 import xml.sax  # nosec: used to parse trusted xml provided only by administrators
+
 from urllib.parse import urlparse
 
 import requests
+
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
-from uds.core import auths, exceptions, types
+from uds.core import auths
+from uds.core import exceptions
+from uds.core import types
 from uds.core.types.requests import ExtendedHttpRequest
 from uds.core.ui import gui
-from uds.core.util import security, decorators, auth as auth_utils, validators
+from uds.core.util import auth as auth_utils
+from uds.core.util import decorators
+from uds.core.util import security
+from uds.core.util import validators
 from uds.core.util.model import sql_now
 
 # Not imported at runtime, just for type checking

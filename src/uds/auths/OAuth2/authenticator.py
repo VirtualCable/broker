@@ -29,26 +29,36 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import logging
+import collections.abc
 import hashlib
+import logging
 import secrets
 import typing
-import collections.abc
 import urllib.parse
+
 from base64 import b64encode
 
 import jwt
+
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
-from . import types as oauth2_types, consts as oauth2_consts
-from uds.core import auths, consts, exceptions, types
+from uds.core import auths
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
 from uds.core.ui import gui
-from uds.core.util import fields, auth as auth_utils, security
+from uds.core.util import auth as auth_utils
+from uds.core.util import fields
+from uds.core.util import security
+
+from . import consts as oauth2_consts
+from . import types as oauth2_types
 
 if typing.TYPE_CHECKING:
-    from django.http import HttpRequest
     import requests
+
+    from django.http import HttpRequest
 
 logger = logging.getLogger(__name__)
 

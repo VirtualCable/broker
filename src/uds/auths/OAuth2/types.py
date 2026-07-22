@@ -32,7 +32,6 @@ import datetime
 import enum
 import typing
 
-
 from django.utils.translation import gettext_noop as _
 
 from uds.core.util import model
