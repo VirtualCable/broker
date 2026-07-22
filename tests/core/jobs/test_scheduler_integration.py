@@ -33,6 +33,7 @@ Integration tests for the Scheduler runtime (execute_job, release_own_schedules,
 JobThread with real database).
 """
 
+import os
 import platform
 import time
 import typing
@@ -88,6 +89,12 @@ class _BlockingJob(Job):
 class SchedulerIntegrationTest(TransactionTestCase):
     """Integration tests using real database."""
 
+    # Unique per-worker hostname. Under pytest-xdist each worker is a separate
+    # process, so os.getpid() is unique per worker, which prevents
+    # cross-worker contention on owner_server = platform.node() (otherwise all
+    # workers would race for the same rows on the shared in-memory SQLite DB).
+    _WORKER_HOSTNAME = f"uds-test-worker-{os.getpid()}"
+
     @typing.override
     def setUp(self) -> None:
         super().setUp()
@@ -96,11 +103,16 @@ class SchedulerIntegrationTest(TransactionTestCase):
         # Register test jobs
         for cls in (_CountingJob, _FailingJob, _BlockingJob):
             JobsFactory.factory().register(cls.friendly_name, cls)
+        # Patch platform.node globally so every Scheduler/release_own_schedules
+        # call in this worker sees a unique hostname.
+        self._node_patcher = mock.patch("platform.node", return_value=self._WORKER_HOSTNAME)
+        self._node_patcher.start()
 
     @typing.override
     def tearDown(self) -> None:
-        # Release any locked rows from this test
+        # Release any locked rows by this test
         scheduler.Scheduler.release_own_schedules()
+        self._node_patcher.stop()
         super().tearDown()
 
     # == Scheduler singleton =============================================
@@ -189,7 +201,11 @@ class SchedulerIntegrationTest(TransactionTestCase):
             state=State.FOR_EXECUTE,
         )
         sch = scheduler.Scheduler()
-        sch.execute_job()
+        # Don't actually start the JobThread: the claim UPDATE is already
+        # committed before start() is called, but the background thread would
+        # re-acquire a write lock and contend with other workers' flushes.
+        with mock.patch("uds.core.jobs.scheduler.JobThread.start"):
+            sch.execute_job()
         row = DBScheduler.objects.get(name=unique_name)
         self.assertEqual(row.state, State.RUNNING)
         self.assertEqual(row.owner_server, platform.node())
