@@ -31,17 +31,17 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import datetime
 import logging
 import typing
-import collections.abc
 
-from django.utils.translation import gettext_noop as _
 from django.utils import timezone
+from django.utils.translation import gettext_noop as _
 
-from uds.core.ui import gui
-from uds.core.reports import Report
 from uds import models
+from uds.core.reports import Report
+from uds.core.ui import gui
 from uds.core.ui.user_interface import UserInterfaceType
 
 from . import fields

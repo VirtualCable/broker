@@ -34,10 +34,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # pyright: reportUnusedImport=false
 from . import actor
 from . import auth
-from . import transport
-from . import services
-from . import ui
 from . import rest
+from . import services
+from . import transport
+from . import ui
 
 # Common exceptions inserted here
 from .common import UDSException

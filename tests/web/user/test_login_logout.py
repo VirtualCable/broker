@@ -37,8 +37,8 @@ from django.urls import reverse
 from uds import models
 from uds.core.util.config import GlobalConfig
 
-from ...utils.web import test
 from ...fixtures import authenticators as fixtures_authenticators
+from ...utils.web import test
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse

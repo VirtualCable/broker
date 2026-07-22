@@ -1,6 +1,6 @@
+import dataclasses
 import enum
 import typing
-import dataclasses
 
 from uds.core import exceptions
 

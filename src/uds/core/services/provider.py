@@ -34,14 +34,17 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from uds.core import consts
+from uds.core import environment
+from uds.core import module
 from uds.core import types
-from uds.core import module, environment, consts
 from uds.core.ui import gui
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .service import Service
     from uds import models
+
+    from .service import Service
 
 logger = logging.getLogger(__name__)
 

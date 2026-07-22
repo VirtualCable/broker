@@ -31,25 +31,27 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
 import logging
+import typing
 
 from django.utils.translation import gettext_noop as _
+
+from uds.core import consts
+from uds.core import types
 from uds.core.module import Module
 from uds.core.ui.user_interface import gui
 
-from uds.core import types, consts
-
-
 if typing.TYPE_CHECKING:
-    from .user_service import UserService
-    from .publication import Publication
-    from uds.core import services, environment
-    from uds.core.util.unique_name_generator import UniqueNameGenerator
-    from uds.core.util.unique_mac_generator import UniqueMacGenerator
-    from uds.core.util.unique_gid_generator import UniqueGIDGenerator
     from uds import models
+    from uds.core import environment
+    from uds.core import services
+    from uds.core.util.unique_gid_generator import UniqueGIDGenerator
+    from uds.core.util.unique_mac_generator import UniqueMacGenerator
+    from uds.core.util.unique_name_generator import UniqueNameGenerator
+
+    from .publication import Publication
+    from .user_service import UserService
 
 logger = logging.getLogger(__name__)
 

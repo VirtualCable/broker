@@ -31,12 +31,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from uds.core import types, ui, environment
+from uds.core import environment
+from uds.core import types
+from uds.core import ui
 from uds.services.OVirt.provider import OVirtProvider
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestOVirtProvider(UDSTransactionTestCase):

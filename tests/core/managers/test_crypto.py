@@ -39,6 +39,7 @@ from django.conf import settings
 from uds.core import types
 from uds.core.managers import crypto
 from uds.core.types.crypto import TunnelMaterial
+
 from ...utils.test import UDSTestCase
 
 TEST_STRING = "abcdefghijklπερισσότεροήλιγότερομεγάλοκείμενογιαχαρακτήρεςmnopqrstuvwxyz或多或少的字符长文本ABCD"

@@ -30,10 +30,10 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import enum
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop
 

@@ -30,17 +30,18 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false
-import typing
 import logging
+import typing
 
-from django.test import TestCase, TransactionTestCase
-from django.test.client import Client, AsyncClient  # type: ignore   # Pylance does not know about AsyncClient, but it is there
-from django.http.response import HttpResponse
 from django.conf import settings
+from django.http.response import HttpResponse
+from django.test import TestCase
+from django.test import TransactionTestCase
+from django.test.client import AsyncClient  # type: ignore   # Pylance does not know about AsyncClient, but it is there
+from django.test.client import Client  # type: ignore   # Pylance does not know about AsyncClient, but it is there
+
 from uds.core.environment import Environment
-
 from uds.core.managers.crypto import CryptoManager
-
 
 logger = logging.getLogger(__name__)
 

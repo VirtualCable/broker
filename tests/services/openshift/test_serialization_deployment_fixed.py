@@ -1,4 +1,5 @@
 import pickle
+
 from tests.services.openshift import fixtures
 from tests.utils.test import UDSTransactionTestCase
 

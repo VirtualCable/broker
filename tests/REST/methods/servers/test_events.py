@@ -33,9 +33,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 
 # from unittest import mock
-
 # from uds.core.util import log
-
 from ....utils import rest  # , random_ip_v4, random_ip_v6, random_mac
 
 # from ...fixtures import servers as servers_fixtures

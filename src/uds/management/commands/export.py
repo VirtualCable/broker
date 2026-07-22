@@ -31,11 +31,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from functools import reduce
+import collections.abc
 import logging
 import operator
 import typing
-import collections.abc
+
+from functools import reduce
+
 import yaml
 
 from django.core.management.base import BaseCommand
@@ -46,6 +48,7 @@ from uds.core import consts
 
 if typing.TYPE_CHECKING:
     import argparse
+
     from uds.models.uuid_model import UUIDModel
 
 logger = logging.getLogger(__name__)

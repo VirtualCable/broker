@@ -36,7 +36,6 @@ import typing
 
 from uds.core.util import utils
 
-
 logger = logging.getLogger(__name__)
 
 # Default values

@@ -31,8 +31,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import io
-import typing
 import logging
+import typing
 
 from unittest.mock import Mock
 

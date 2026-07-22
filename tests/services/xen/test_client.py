@@ -31,8 +31,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import contextlib
 import collections.abc
+import contextlib
 
 # import random
 import logging
@@ -41,15 +41,12 @@ import typing
 
 from django.utils import timezone
 
-from uds.services.Xen.xen import (
-    types as xen_types,
-    exceptions as xen_exceptions,
-    client as xen_client,
-)
-
-from tests.utils import vars, helpers
-
+from tests.utils import helpers
+from tests.utils import vars
 from tests.utils.test import UDSTransactionTestCase
+from uds.services.Xen.xen import client as xen_client
+from uds.services.Xen.xen import exceptions as xen_exceptions
+from uds.services.Xen.xen import types as xen_types
 
 logger = logging.getLogger(__name__)
 

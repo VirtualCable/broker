@@ -31,15 +31,14 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import re
-import logging
-import typing
 import json
-
-from django.utils.translation import gettext as _
-from django.core import validators as dj_validators
+import logging
+import re
+import typing
 
 from cryptography.x509 import load_pem_x509_certificate
+from django.core import validators as dj_validators
+from django.utils.translation import gettext as _
 
 from uds.core import exceptions
 from uds.core.util import security

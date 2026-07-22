@@ -31,21 +31,26 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pylint: disable=too-many-public-methods
 
+import abc
+import collections.abc
 import logging
 import typing
-import collections.abc
-import abc
 
 from django.db import models
 
-from uds.core import consts, exceptions, types, module
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import module
+from uds.core import types
 from uds.core.types.rest import T_Item
+from uds.core.util import api as api_utils
+from uds.core.util import model as model_utils
 from uds.core.util.model import process_uuid
-from uds.core.util import api as api_utils, model as model_utils
-from uds.REST.utils import rest_result
-
 from uds.REST.model.base import BaseModelHandler
-from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
+from uds.REST.utils import camel_and_snake_case_from
+from uds.REST.utils import is_camel_case
+from uds.REST.utils import rest_result
+from uds.REST.utils import sanitize_params
 
 T = typing.TypeVar("T", bound=models.Model)
 

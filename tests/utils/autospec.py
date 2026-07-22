@@ -30,9 +30,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import collections.abc
-import typing
-import functools
 import dataclasses
+import functools
+import typing
 
 from unittest import mock
 

@@ -56,7 +56,8 @@ outlives the flag is harmless: it is consumed by the next ``mark_bad``.
 import logging
 import typing
 
-from uds.core.util.cache import Cache, CacheLike
+from uds.core.util.cache import Cache
+from uds.core.util.cache import CacheLike
 
 logger = logging.getLogger(__name__)
 

@@ -30,12 +30,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import datetime
+
 from unittest import mock
 
 from uds import models
 from uds.core.environment import Environment
 from uds.core.types.states import State
-from uds.core.util import config, model
+from uds.core.util import config
+from uds.core.util import model
 from uds.workers import assigned_unused as assigned_unused_module
 from uds.workers.assigned_unused import AssignedAndUnused
 

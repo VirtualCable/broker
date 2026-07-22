@@ -37,8 +37,9 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
+from uds.core import transports
+from uds.core import types
 from uds.core.ui import gui
-from uds.core import transports, types
 from uds.core.util.security import convert_to_credential_token
 from uds.models import UserService
 

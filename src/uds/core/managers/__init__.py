@@ -37,11 +37,11 @@ import typing
 
 # Imports for type checking only (not on runtime), we have later to get rid of false "redefined outer names" for pylint
 if typing.TYPE_CHECKING:
-    from .task import TaskManager
     from .downloads import DownloadsManager
     from .log import LogManager
-    from .publication import PublicationManager
     from .notifications import NotificationsManager
+    from .publication import PublicationManager
+    from .task import TaskManager
 
 
 def task_manager() -> "TaskManager":

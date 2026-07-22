@@ -32,14 +32,16 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from unittest import mock
 
-from uds.core import types, ui, environment
+from uds.core import environment
+from uds.core import types
+from uds.core import ui
 from uds.services.Proxmox.provider import ProxmoxProvider
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestProxmoxProvider(UDSTransactionTestCase):

@@ -29,16 +29,20 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import logging
 import collections.abc
+import logging
+import typing
 
 from uds import models
-from uds.core import types, consts
+from uds.core import consts
+from uds.core import types
 from uds.core.managers import crypto
 
-
-from ....utils import rest, random_ip_v4, random_ip_v6, random_mac, random_hostname
+from ....utils import random_hostname
+from ....utils import random_ip_v4
+from ....utils import random_ip_v6
+from ....utils import random_mac
+from ....utils import rest
 
 if typing.TYPE_CHECKING:
     from ...utils.test import UDSHttpResponse

@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import re
+
 from unittest import mock
 
 from django.test import TransactionTestCase

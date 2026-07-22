@@ -31,13 +31,16 @@ import io
 import logging
 import typing
 
-from django.db.models import Count, Q
-from django.utils.translation import gettext, gettext_lazy as _
+from django.db.models import Count
+from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from uds.core.types.states import State
 from uds.core.ui import gui
-from uds.models import ServicePool, UserService
+from uds.models import ServicePool
+from uds.models import UserService
 
 from .base import StatsReport
 

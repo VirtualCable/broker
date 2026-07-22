@@ -36,9 +36,7 @@ import typing
 from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.core.environment import Environment
-
 from uds.services.Xen.publication import XenPublication as XenPublication
-
 
 SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\treason\tt\ttemplate_id\tok\ttask"
 

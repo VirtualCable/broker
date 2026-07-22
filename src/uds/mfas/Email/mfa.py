@@ -33,16 +33,21 @@ import logging
 import smtplib
 import ssl
 import typing
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, mfas, types
+from uds.core import exceptions
+from uds.core import mfas
+from uds.core import types
 from uds.core.types.requests import ExtendedHttpRequest
 from uds.core.ui import gui
-from uds.core.util import decorators, fields, validators
+from uds.core.util import decorators
+from uds.core.util import fields
+from uds.core.util import validators
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest

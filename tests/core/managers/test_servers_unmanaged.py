@@ -31,14 +31,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from contextlib import contextmanager
-import typing
 import collections.abc
 import datetime
-import time
-from unittest import mock
 import functools
 import logging
+import time
+import typing
+
+from contextlib import contextmanager
+from unittest import mock
 
 from uds import models
 from uds.core import types

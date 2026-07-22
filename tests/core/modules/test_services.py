@@ -32,10 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.services.provider_factory import ServiceProviderFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.services.provider_factory import ServiceProviderFactory
 
 logger = logging.getLogger(__name__)
 

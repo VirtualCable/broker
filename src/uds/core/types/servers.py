@@ -30,16 +30,17 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import enum
-import typing
-import collections.abc
 import logging
+import typing
 
 from django.utils.translation import gettext as _
 
 from uds.core import consts
-from uds.core.util import ensure, singleton
+from uds.core.util import ensure
+from uds.core.util import singleton
 
 IP_SUBTYPE: typing.Final[str] = "ip"
 

@@ -34,20 +34,17 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # pyright: reportUnknownMemberType=false
 import datetime
 import hashlib
-import typing
 import logging
+import typing
 
 import bitarray
 
 from django.core.cache import caches
 from django.utils import timezone
 
-from uds.core.util.model import sql_now
-
-from uds.models.calendar import Calendar
-
 from uds.core.util.cache import Cache
-
+from uds.core.util.model import sql_now
+from uds.models.calendar import Calendar
 
 logger = logging.getLogger(__name__)
 

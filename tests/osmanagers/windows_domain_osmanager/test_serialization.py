@@ -36,8 +36,6 @@ import typing
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
 from uds.core.managers.crypto import CryptoManager
-
-
 from uds.osmanagers.WindowsOsManager import windows_domain as osmanager
 
 PASSWD: typing.Final[str] = "PASSWD"

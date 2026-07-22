@@ -32,25 +32,28 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import argparse
+import collections.abc
+import datetime
 import logging
 import typing
-import datetime
-import collections.abc
 
 import yaml
 
 from django.core.management.base import BaseCommand
 
-from uds.core.util import cluster, log, model, config
 from uds import models
 from uds.core import types
-
+from uds.core.util import cluster
+from uds.core.util import config
+from uds.core.util import log
+from uds.core.util import model
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from uds.core.module import Module
     from django.db import models as dbmodels
+
+    from uds.core.module import Module
 
 CONSIDERED_OLD: typing.Final[datetime.timedelta] = datetime.timedelta(days=365)
 

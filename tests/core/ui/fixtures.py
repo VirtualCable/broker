@@ -29,11 +29,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import random
 import datetime
+import random
+import typing
 
-from uds.core.ui.user_interface import UserInterface, gui
+from uds.core.ui.user_interface import UserInterface
+from uds.core.ui.user_interface import gui
 
 DEFAULTS: dict[str, typing.Any] = {
     "str_field": "Default value text",

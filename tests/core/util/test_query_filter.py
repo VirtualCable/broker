@@ -30,7 +30,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import copy
 import dataclasses
 import typing
-
 import unittest
 
 from uds.core.util.query_filter import exec_query  # Ajusta esto al nombre real del archivo si lo separas

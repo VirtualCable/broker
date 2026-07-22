@@ -30,20 +30,20 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import hashlib
 import array
-import json
-import uuid
-import codecs
-import struct
-import re
-import string
-import logging
-import typing
-import secrets
 import base64
-import pathlib
+import codecs
 import collections.abc
+import hashlib
+import json
+import logging
+import pathlib
+import re
+import secrets
+import string
+import struct
+import typing
+import uuid
 
 uuid7: None | collections.abc.Callable[[], "uuid.UUID"]
 
@@ -53,35 +53,37 @@ except ImportError:
     uuid7 = None
 
 # For password secrets
-from argon2 import PasswordHasher, Type as ArgonType
+from argon2 import PasswordHasher
+from argon2 import Type as ArgonType
 
 # Standard cryptography library
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes, aead
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import aead
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-
-
 from django.conf import settings
 from django.utils import timezone
 
-from uds.core.util import singleton
 from uds.core import types
+from uds.core.util import singleton
 
+from . import certs
 from . import kem
 from . import rdp
-from . import certs
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+    from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
     from cryptography.hazmat.primitives.asymmetric.dsa import DSAPrivateKey
     from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
-    from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
+    from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 # Note the REAL BIG importance of the SECRET_KEY. if lost, all encripted stored data (almost all fields) will be lost...
 UDSK: typing.Final[bytes] = settings.SECRET_KEY[8:24].encode()  # UDS key, new, for AES256, so it's 16 bytes length

@@ -30,17 +30,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-from datetime import timedelta
 import logging
+import typing
 
-from uds.core.managers import publication_manager
-from uds.core.util.config import GlobalConfig
-from uds.models import ServicePoolPublication
-from uds.core.util.model import sql_now
+from datetime import timedelta
+
 from uds.core.exceptions.services import PublishException
-from uds.core.types.states import State
 from uds.core.jobs import Job
+from uds.core.managers import publication_manager
+from uds.core.types.states import State
+from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
+from uds.models import ServicePoolPublication
 
 logger = logging.getLogger(__name__)
 

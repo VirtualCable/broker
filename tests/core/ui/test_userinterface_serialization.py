@@ -35,21 +35,20 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-# We use commit/rollback
-from ...utils.test import UDSTestCase
-
-from uds.core import types, consts
-from uds.core.ui.user_interface import UserInterface
 from unittest import mock
 
-from .fixtures import (
-    TestingUserInterface,
-    TestingOldUserInterface,
-    DEFAULTS,
-    TestingUserInterfaceFieldName,
-    TestingUserInterfaceFieldNameSeveral,
-    TestingUserInterfaceFieldNameOrig,
-)
+from uds.core import consts
+from uds.core import types
+from uds.core.ui.user_interface import UserInterface
+
+# We use commit/rollback
+from ...utils.test import UDSTestCase
+from .fixtures import DEFAULTS
+from .fixtures import TestingOldUserInterface
+from .fixtures import TestingUserInterface
+from .fixtures import TestingUserInterfaceFieldName
+from .fixtures import TestingUserInterfaceFieldNameOrig
+from .fixtures import TestingUserInterfaceFieldNameSeveral
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +68,9 @@ def old_serialize_form(ui: "UserInterface") -> bytes:
 
 
     """
-    import pickle  # nosec: Testing
     import codecs
     import datetime
+    import pickle  # nosec: Testing
 
     from uds.core.managers.crypto import CryptoManager
     from uds.core.ui.user_interface import UDSK

@@ -35,14 +35,18 @@ import os
 import typing
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
-from cryptography.hazmat.primitives import hashes, padding as sym_padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import padding as sym_padding
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import modes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
-from uds.core.environment import Environment
 from uds.auths.X509Certificate.authenticator import X509CertificateAuthenticator
+from uds.core.environment import Environment
 from uds.core.types.auth import AuthTypeGroup
 
 # Test shared secret — must match DATA_TEMPLATE
@@ -106,7 +110,8 @@ def _build_cert(
     ca: bool = False,
 ) -> x509.Certificate:
     """Build a certificate signed by issuer_key."""
-    from cryptography.x509 import BasicConstraints, CertificateBuilder
+    from cryptography.x509 import BasicConstraints
+    from cryptography.x509 import CertificateBuilder
 
     builder = (
         CertificateBuilder()

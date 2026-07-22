@@ -33,19 +33,16 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import datetime
 import random
 
-from uds import models
-from uds.core.util.stats import counters
-
-
-from uds.workers import stats_collector
-from uds.core.environment import Environment
-from uds.core.util import config
-
-from ...utils.test import UDSTestCase
-from ...fixtures import stats_counters as fixtures_stats_counters
-
 from django.utils import timezone
 
+from uds import models
+from uds.core.environment import Environment
+from uds.core.util import config
+from uds.core.util.stats import counters
+from uds.workers import stats_collector
+
+from ...fixtures import stats_counters as fixtures_stats_counters
+from ...utils.test import UDSTestCase
 
 START_DATE = datetime.datetime(2009, 12, 4, 0, 0, 0, tzinfo=datetime.timezone.utc)
 # Some random values,

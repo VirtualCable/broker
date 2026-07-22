@@ -31,13 +31,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from importlib import import_module
 import logging
 import typing
 
+from importlib import import_module
+
 from django.conf import settings
-from uds.core.util.cache import Cache
+
 from uds.core.jobs import Job
+from uds.core.util.cache import Cache
 from uds.models import TicketStore
 
 logger = logging.getLogger(__name__)

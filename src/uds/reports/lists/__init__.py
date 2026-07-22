@@ -32,8 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 # pyright: reportUnusedImport=false
 # Make reports visible to autoloader
-from . import users
-from . import audit
-from . import inactive_users
 from . import admin_activity
+from . import audit
 from . import failed_logins
+from . import inactive_users
+from . import users

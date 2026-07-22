@@ -30,14 +30,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import io
+import collections.abc
 import csv
 import datetime
-import typing
-import collections.abc
+import io
 import logging
+import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from .usage_by_pool import UsageByPool
 

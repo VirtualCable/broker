@@ -30,14 +30,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from uds.core import types
-
-from uds.models import CalendarAction
-from uds.core.util.model import sql_now
 from uds.core.jobs import Job
+from uds.core.util.model import sql_now
+from uds.models import CalendarAction
 
 logger = logging.getLogger(__name__)
 

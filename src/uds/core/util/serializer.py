@@ -31,11 +31,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
-import pickle  # nosec:  Used with care :)
-import lzma
 import logging
+import lzma
+import pickle  # nosec:  Used with care :)
+import typing
 
 from django.conf import settings
 

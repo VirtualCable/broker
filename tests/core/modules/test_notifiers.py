@@ -32,10 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.messaging.msgfactory import NotifierFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.messaging.msgfactory import NotifierFactory
 
 logger = logging.getLogger(__name__)
 

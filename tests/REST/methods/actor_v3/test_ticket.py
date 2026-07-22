@@ -34,8 +34,9 @@ import typing
 
 from uds import models
 
+from ....fixtures import servers as servers_fixtures
+from ....fixtures import services as services_fixtures
 from ....utils import rest
-from ....fixtures import servers as servers_fixtures, services as services_fixtures
 
 if typing.TYPE_CHECKING:
     from uds import models

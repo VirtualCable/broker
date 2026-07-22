@@ -34,8 +34,8 @@ import datetime
 import logging
 import typing
 
-from django.utils.translation import get_language
 from django.utils import formats
+from django.utils.translation import get_language
 
 from uds.core import consts
 

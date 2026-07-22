@@ -30,18 +30,20 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import datetime
-import time
 import logging
+import time
 import typing
 
+from uds.core import consts
+from uds.core import types
 from uds.core.managers.notifications import NotificationsManager
 from uds.core.managers.task import BaseThread
-
-from uds.models import Notifier, Notification
-from uds.core import consts, types
 from uds.core.util.model import sql_now
-from .provider import Notifier as NotificationProviderModule
+from uds.models import Notification
+from uds.models import Notifier
+
 from .config import DO_NOT_REPEAT
+from .provider import Notifier as NotificationProviderModule
 
 logger = logging.getLogger(__name__)
 

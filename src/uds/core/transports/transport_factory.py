@@ -34,8 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 
 from uds.core.util import factory
-from .transport import Transport
 
+from .transport import Transport
 
 logger = logging.getLogger(__name__)
 

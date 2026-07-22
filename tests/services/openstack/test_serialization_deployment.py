@@ -34,13 +34,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import pickle
 import typing
 
-from uds.core.environment import Environment
-from uds.core import types as core_types
-
 # We use storage, so we need transactional tests
 from tests.utils.test import UDSTransactionTestCase
-
-
+from uds.core import types as core_types
+from uds.core.environment import Environment
 from uds.services.OpenStack import deployment as deployment
 
 # if data.startswith(b'v'):

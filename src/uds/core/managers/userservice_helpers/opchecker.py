@@ -35,7 +35,8 @@ import abc
 import logging
 import typing
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 from uds.core.jobs.delayed_task import DelayedTask
 from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
 from uds.core.util import log

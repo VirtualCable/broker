@@ -32,4 +32,6 @@ Immutable audit log backed by a hash chain (blockchain-like).
 """
 # pyright: reportUnusedImport=false
 
-from .immutable import ImmutableLogger, content_to_bytes, content_from_bytes  # noqa: F401
+from .immutable import ImmutableLogger  # noqa: F401
+from .immutable import content_from_bytes  # noqa: F401
+from .immutable import content_to_bytes  # noqa: F401

@@ -32,10 +32,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from unittest import mock
 
 from tests.services.openshift import fixtures
-
 from tests.utils.test import UDSTransactionTestCase
 
 

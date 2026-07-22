@@ -33,11 +33,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-from uds.core.environment import Environment
-from uds.core import types as core_types
-from uds.services.OpenStack import publication
-
 from tests.utils.test import UDSTestCase
+from uds.core import types as core_types
+from uds.core.environment import Environment
+from uds.services.OpenStack import publication
 
 # We use commit/rollback
 

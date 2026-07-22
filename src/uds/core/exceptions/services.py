@@ -33,14 +33,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-from .common import UDSException
-
 # Import for reference as "services.generics"
 from . import services_generics as generics  # pyright: ignore[reportUnusedImport]
+from .common import UDSException
 
 if typing.TYPE_CHECKING:
-    from uds.models import UserService, Transport
     from uds.core.types.services import ReadyStatus
+    from uds.models import Transport
+    from uds.models import UserService
 
 
 class ServiceException(UDSException):

@@ -35,6 +35,7 @@ import logging
 import typing
 
 from django.core.management.base import BaseCommand
+
 from uds import models
 from uds.core.util import unique_mac_generator
 

@@ -32,7 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnusedImport=false
-from .mfa import MFA, LoginAllowed
+from .mfa import MFA
+from .mfa import LoginAllowed
 from .mfafactory import MFAsFactory
 
 

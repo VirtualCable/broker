@@ -32,8 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import dataclasses
 import datetime
-import typing
 import json
+import typing
 
 from uds.core.util.model import sql_now
 

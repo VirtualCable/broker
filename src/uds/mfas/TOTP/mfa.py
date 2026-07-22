@@ -29,21 +29,24 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import logging
-import io
 import base64
+import io
+import logging
+import typing
 
 import pyotp
 import qrcode
 
-from django.utils.translation import gettext_noop as _, gettext
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
 
 from uds import models
+from uds.core import exceptions
+from uds.core import mfas
+from uds.core import types
+from uds.core.ui import gui
 from uds.core.util import fields
 from uds.core.util.model import sql_now
-from uds.core import mfas, exceptions, types
-from uds.core.ui import gui
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest

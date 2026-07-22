@@ -40,15 +40,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
-import typing
 import logging
+import typing
 
 from django.utils import timezone
 
-from uds import models
-
-from tests.utils import rest
 from tests.fixtures import servers as servers_fixtures
+from tests.utils import rest
+from uds import models
 
 logger = logging.getLogger(__name__)
 

@@ -34,14 +34,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import collections.abc
 import dataclasses
 import datetime
-import logging
 import enum
+import logging
+import typing
 
 from uds.core.consts import deferred_deletion as consts
 from uds.core.util import storage
 from uds.core.util.model import sql_now
 from uds.models import Service
-import typing
 
 if typing.TYPE_CHECKING:
     from uds.core.services.generics.dynamic.service import DynamicService

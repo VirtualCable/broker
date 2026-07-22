@@ -29,15 +29,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
-
 
 from django.conf import settings
 
 from uds import models
-from uds.core import consts, osmanagers, types
+from uds.core import consts
+from uds.core import osmanagers
+from uds.core import types
 from uds.core.util import log
 from uds.core.util.model import sql_now
 from uds.REST.utils import rest_result

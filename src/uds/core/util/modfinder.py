@@ -31,19 +31,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
+import importlib
+import logging
 import os.path
 import pkgutil
 import sys
-import importlib
-import logging
 import typing
-import collections.abc
 
 from django.conf import settings
 
 if typing.TYPE_CHECKING:
-    from uds.core.util.factory import ModuleFactory
     from uds.core import module
+    from uds.core.util.factory import ModuleFactory
 
 from uds.core import module
 

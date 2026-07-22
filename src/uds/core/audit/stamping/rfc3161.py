@@ -36,13 +36,13 @@ Compatible with any RFC 3161-compliant TSA such as:
 - .. (you can use your own TSA like OpenTimestamps)
 """
 
-import typing
 import hashlib
 import logging
 import os
-import urllib.request
-import urllib.error
 import ssl
+import typing
+import urllib.error
+import urllib.request
 
 from .base import StampProvider
 

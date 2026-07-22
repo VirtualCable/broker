@@ -36,7 +36,9 @@ import logging
 import typing
 
 from django.core.management.base import BaseCommand
-from uds.core.util.config import Config, GlobalConfig
+
+from uds.core.util.config import Config
+from uds.core.util.config import GlobalConfig
 
 logger = logging.getLogger(__name__)
 

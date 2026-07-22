@@ -47,19 +47,18 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
-import typing
-import logging
 import datetime
+import logging
+import typing
 
 from django.db import models as django_models
-
-from uds import models
-from uds.core.types.permissions import PermissionType
-from uds.core.util import objtype
 
 from tests.fixtures import mfas as mfas_fixtures
 from tests.fixtures import notifiers as notifiers_fixtures
 from tests.utils import rest
+from uds import models
+from uds.core.types.permissions import PermissionType
+from uds.core.util import objtype
 
 logger = logging.getLogger(__name__)
 

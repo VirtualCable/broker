@@ -32,7 +32,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from django.utils.translation import gettext_noop as _
+
 from uds.core import reports
 
 

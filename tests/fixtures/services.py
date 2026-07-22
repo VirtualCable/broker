@@ -29,14 +29,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import datetime
 import collections.abc
+import datetime
 import typing
 
 from django.utils import timezone
 
 from uds import models
-from uds.core import environment, types
+from uds.core import environment
+from uds.core import types
 from uds.core.osmanagers.osmanager import OSManager
 from uds.core.transports import Transport
 
@@ -70,7 +71,8 @@ def create_db_provider() -> models.Provider:
 
 
 def create_db_service(provider: models.Provider, use_caching_version: bool = True) -> models.Service:
-    from uds.services.Test.service import TestServiceCache, TestServiceNoCache
+    from uds.services.Test.service import TestServiceCache
+    from uds.services.Test.service import TestServiceNoCache
 
     service = provider.services.create(
         name="Service {}".format(glob["service_id"]),

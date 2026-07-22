@@ -37,8 +37,8 @@ import time
 
 # We use commit/rollback
 from ...utils.test import UDSTestCase
-
-from .fixtures import TestingUserInterface, DEFAULTS
+from .fixtures import DEFAULTS
+from .fixtures import TestingUserInterface
 
 logger = logging.getLogger(__name__)
 

@@ -31,35 +31,34 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pyright: reportUnknownLambdaType=false
 
+import collections.abc
 import contextlib
 import copy
 import functools
 import random
 import typing
-import collections.abc
+import uuid
 
 from unittest import mock
-import uuid
 
 from django.utils import timezone
 
-from uds.core import types, environment
-from uds.core.ui.user_interface import gui
 import uds.services.Proxmox.proxmox.client
 
-from tests.utils.autospec import autospec, AutoSpecMethodInfo
 from tests.utils import search_item_by_attr
-
-from uds.services.Proxmox import (
-    deployment_linked,
-    provider,
-    service,
-    service_fixed,
-    publication,
-    deployment_fixed,
-)
-
-from uds.services.Proxmox.proxmox import types as prox_types, exceptions as prox_exceptions
+from tests.utils.autospec import AutoSpecMethodInfo
+from tests.utils.autospec import autospec
+from uds.core import environment
+from uds.core import types
+from uds.core.ui.user_interface import gui
+from uds.services.Proxmox import deployment_fixed
+from uds.services.Proxmox import deployment_linked
+from uds.services.Proxmox import provider
+from uds.services.Proxmox import publication
+from uds.services.Proxmox import service
+from uds.services.Proxmox import service_fixed
+from uds.services.Proxmox.proxmox import exceptions as prox_exceptions
+from uds.services.Proxmox.proxmox import types as prox_types
 
 DEF_NODES: list[prox_types.Node] = [
     prox_types.Node(name="node0", online=True, local=True, nodeid=1, ip="0.0.0.1", level="level", id="id"),

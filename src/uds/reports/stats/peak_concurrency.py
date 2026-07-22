@@ -31,10 +31,12 @@ import io
 import logging
 import typing
 
-from django.db.models import F, Window
+from django.db.models import F
+from django.db.models import Window
 from django.db.models.functions import Lag
-from django.utils.translation import gettext, gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from uds.core.managers.stats import StatsManager
 from uds.core.ui import gui

@@ -3,13 +3,15 @@ import logging
 import socket
 import typing
 
-from django.db import transaction, OperationalError
+from django.db import OperationalError
+from django.db import transaction
 from django.utils import timezone
 
 from uds import models
 from uds.core import consts
 from uds.core.util.iface import get_first_iface
-from uds.core.util.model import sql_now, get_my_ip_from_db
+from uds.core.util.model import get_my_ip_from_db
+from uds.core.util.model import sql_now
 
 logger = logging.getLogger(__name__)
 

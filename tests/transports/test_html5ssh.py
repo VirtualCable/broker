@@ -31,10 +31,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 from unittest import mock
 
+from tests.utils.test import UDSTestCase
 from uds.core import consts
 from uds.transports.HTML5SSH.html5ssh import HTML5SSHTransport
-
-from tests.utils.test import UDSTestCase
 
 
 class HTML5SSHTest(UDSTestCase):
@@ -139,7 +138,8 @@ class HTML5SSHTest(UDSTestCase):
                 self.assertEqual(extra["allow_download"], expect_down, f"allow_download wrong for '{sharing_value}'")
 
     def test_tickets_serialization(self) -> None:
-        from uds.core.types.tickets import TunnelTicket, TunnelTicketRemote
+        from uds.core.types.tickets import TunnelTicket
+        from uds.core.types.tickets import TunnelTicketRemote
 
         remote = TunnelTicketRemote(host="1.1.1.1", port=22, extra={"test": "data"})
         ticket = TunnelTicket(userservice=None, remotes=[remote])
@@ -181,7 +181,8 @@ class HTML5SSHTest(UDSTestCase):
 
     def test_ticket_response_includes_extra(self) -> None:
         """Verify TunnelTicketResponse.as_dict() preserves extra in remotes"""
-        from uds.core.types.tickets import TunnelTicketRemote, TunnelTicketResponse
+        from uds.core.types.tickets import TunnelTicketRemote
+        from uds.core.types.tickets import TunnelTicketResponse
 
         extra = {
             "username": "root",

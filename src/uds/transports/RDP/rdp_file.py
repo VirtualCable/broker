@@ -34,9 +34,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 """
 
-import urllib.parse
 import shlex
 import typing
+import urllib.parse
 
 from uds.core import types
 

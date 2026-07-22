@@ -33,14 +33,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 # from uds.core import types, environment
 import typing
+
 from unittest import mock
-
-from . import fixtures
-
-from ...utils.test import UDSTransactionTestCase
 
 # from uds.services.OpenStack.service import OpenStackLiveService
 from uds.services.OpenStack.openstack import types as openstack_types
+
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestOpenstackService(UDSTransactionTestCase):

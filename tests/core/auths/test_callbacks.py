@@ -28,18 +28,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
+
 from unittest import mock
 
-from uds import models
-
-from uds.core.util import config
-from uds.core.auths import callbacks
-
-from tests.utils.test import UDSTestCase
-
 from tests.fixtures import authenticators as authenticators_fixtures
+from tests.utils.test import UDSTestCase
+from uds import models
+from uds.core.auths import callbacks
+from uds.core.util import config
 
 if typing.TYPE_CHECKING:
     pass

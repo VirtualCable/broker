@@ -30,22 +30,24 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import base64
-import time
+import logging
 import pickle  # nosec: pickle is safe here
 import threading
-from socket import gethostname
-from datetime import timedelta
-import logging
+import time
 import typing
 
+from datetime import timedelta
+from socket import gethostname
+
+from django.db import OperationalError
 from django.db import connections
-from django.db import transaction, OperationalError
+from django.db import transaction
 from django.db.models import Q
 
-from uds.models import DelayedTask as DBDelayedTask
-from uds.core.util.model import sql_now
 from uds.core.environment import Environment
 from uds.core.util import singleton
+from uds.core.util.model import sql_now
+from uds.models import DelayedTask as DBDelayedTask
 
 from .delayed_task import DelayedTask
 

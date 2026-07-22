@@ -29,16 +29,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import functools
 import logging
+import typing
 
 from uds import models
 from uds.core import consts
 
-from ....utils import rest
 from ....fixtures import services as services_fixtures
-
+from ....utils import rest
 
 logger = logging.getLogger(__name__)
 

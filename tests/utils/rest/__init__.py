@@ -29,19 +29,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
+import inspect
 import random
 import typing
-import inspect
-import collections.abc
 
 from django.test import SimpleTestCase
 from django.test.client import Client
 
-# Not used, allows "rest.test" or "rest.assertions"
-from . import test as test
+from .. import helpers
 from . import assertions as assertions
 
-from .. import helpers
+# Not used, allows "rest.test" or "rest.assertions"
+from . import test as test
 
 
 # Calls REST login

@@ -29,18 +29,17 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
-
-# from unittest import mock
-
-from uds.core import types
-from uds import models
-from uds.core.managers.crypto import CryptoManager, kem
-from uds.core.util.model import sql_now
+import typing
 
 from tests.utils import rest
+from uds import models
 
+# from unittest import mock
+from uds.core import types
+from uds.core.managers.crypto import CryptoManager
+from uds.core.managers.crypto import kem
+from uds.core.util.model import sql_now
 
 logger = logging.getLogger(__name__)
 

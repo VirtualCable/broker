@@ -29,13 +29,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from unittest import mock
 import typing
 
-from uds.core import consts
-from uds.transports.HTML5RDP.html5rdp import HTML5RDPTransport
+from unittest import mock
 
 from tests.utils.test import UDSTestCase
+from uds.core import consts
+from uds.transports.HTML5RDP.html5rdp import HTML5RDPTransport
 
 
 def _make_mocks() -> tuple[mock.MagicMock, mock.MagicMock, mock.MagicMock]:

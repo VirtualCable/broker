@@ -52,19 +52,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
-import typing
 import collections.abc
 import logging
+import typing
+
 from unittest.mock import patch
 
-from uds.core import types, consts
-from uds.REST import dispatcher
-from uds.REST.model.master import ModelHandler
-from uds.REST.model.detail import DetailHandler
-from uds.models.uuid_model import UUIDModel
-
-
 from tests.utils import rest
+from uds.core import consts
+from uds.core import types
+from uds.models.uuid_model import UUIDModel
+from uds.REST import dispatcher
+from uds.REST.model.detail import DetailHandler
+from uds.REST.model.master import ModelHandler
 
 logger = logging.getLogger(__name__)
 
@@ -528,6 +528,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
     def _create_test_account(self) -> "UUIDModel":
         """Helper: create a minimal Account for POST custom-method tests."""
         from django.utils import timezone
+
         from uds import models
 
         account = models.Account(

@@ -31,19 +31,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import random
+import typing
+
 from unittest import mock
 
 from uds import models
-from uds.core import types, environment
-
-from . import fixtures
-
-from ...utils.test import UDSTransactionTestCase
-
+from uds.core import environment
+from uds.core import types
 from uds.services.OpenStack.provider import OpenStackProvider
 from uds.services.OpenStack.provider_legacy import OpenStackProviderLegacy
+
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestOpenstackProvider(UDSTransactionTestCase):
@@ -91,7 +91,9 @@ class TestOpenstackProvider(UDSTransactionTestCase):
         """
         Test the Helpers. In fact, not used on provider, but on services (fixed, live, ...)
         """
-        from uds.services.OpenStack.helpers import list_servers, list_resources, list_volumes
+        from uds.services.OpenStack.helpers import list_resources
+        from uds.services.OpenStack.helpers import list_servers
+        from uds.services.OpenStack.helpers import list_volumes
 
         for patcher in (fixtures.patched_provider, fixtures.patched_provider_legacy):
             with patcher() as prov:

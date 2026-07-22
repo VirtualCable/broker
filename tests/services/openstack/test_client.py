@@ -37,18 +37,13 @@ import typing
 
 from unittest import mock
 
-from uds.core import exceptions
-
-from tests.utils import vars, helpers
+from tests.utils import helpers
 from tests.utils import search_item_by_attr
-
+from tests.utils import vars
 from tests.utils.test import UDSTransactionTestCase
-
-from uds.services.OpenStack.openstack import (
-    types as openstack_types,
-    client as openstack_client,
-)
-
+from uds.core import exceptions
+from uds.services.OpenStack.openstack import client as openstack_client
+from uds.services.OpenStack.openstack import types as openstack_types
 
 logger = logging.getLogger(__name__)
 

@@ -34,9 +34,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 from django.conf import settings
 
+from uds.core import consts
+from uds.core import types
+from uds.core.ui.user_interface import UDSK
+from uds.core.ui.user_interface import gui
 from uds.core.util import ensure
-from uds.core.ui.user_interface import gui, UDSK
-from uds.core import consts, types
 
 # We use commit/rollback
 from ...utils.test import UDSTestCase

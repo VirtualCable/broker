@@ -30,12 +30,16 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 from uds import models
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.util import log
 
 from ...fixtures import authenticators as authenticators_fixtures
 from ...fixtures import services as services_fixtures
-from .. import constants, helpers, rest, test
+from .. import constants
+from .. import helpers
+from .. import rest
+from .. import test
 
 NUMBER_OF_ITEMS_TO_CREATE = 4
 

@@ -36,11 +36,11 @@ import typing
 
 from django.db.models import Count
 
-from uds.core.jobs import Job
 from uds import models
+from uds.core.jobs import Job
 from uds.core.types import log
-from uds.core.util.model import sql_now
 from uds.core.util import config
+from uds.core.util.model import sql_now
 
 # from uds.core.util.config import GlobalConfig
 MAX_BATCH_SIZE: typing.Final[int] = 32768

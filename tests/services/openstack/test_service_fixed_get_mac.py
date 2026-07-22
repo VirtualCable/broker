@@ -36,16 +36,15 @@ fallback (external DHCP), and resilience to not-found / permission errors -> ''.
 
 import copy
 import typing
+
 from unittest import mock
 
 from uds.core import exceptions
-
-from . import fixtures
-
-from ...utils.test import UDSTransactionTestCase
-
 from uds.services.OpenStack.openstack import client
 from uds.services.OpenStack.openstack import types as openstack_types
+
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 # Undecorated mac-resolution logic (the @cached wrapper would need a real cache backend).
 # Running it against the mocked api keeps these tests exercising the real behaviour while

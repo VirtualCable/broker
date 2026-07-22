@@ -12,12 +12,13 @@ Tests for the "DC orchestration" helpers in ``uds.core.util.ldaputil``:
 ``uds.core.util.net.test_connectivity`` (covered by its own tests).
 """
 
-import typing
 import collections.abc
+import typing
 import unittest
 
-from ...utils.test import UDSTestCase
 from uds.core.util import ldaputil
+
+from ...utils.test import UDSTestCase
 
 
 class _DummyCache:

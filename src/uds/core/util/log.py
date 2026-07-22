@@ -31,15 +31,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import os
 import logging
 import logging.handlers
-import typing
+import os
 import re
+import typing
 
 from django.apps import apps
 
-from uds.core.types.log import LogLevel, LogSource
+from uds.core.types.log import LogLevel
+from uds.core.types.log import LogSource
 
 try:
     from systemd import journal

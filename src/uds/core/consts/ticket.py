@@ -33,7 +33,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-
 # Tickets related
 DEFAULT_TICKET_VALIDITY_TIME: typing.Final[int] = 60  # 1 minute
 MAX_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week

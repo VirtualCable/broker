@@ -42,11 +42,12 @@ import typing
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, types
-from uds.core.ui import gui
-from uds.core.module import Module
-from uds.core.util.model import sql_now
 from uds import models
+from uds.core import exceptions
+from uds.core import types
+from uds.core.module import Module
+from uds.core.ui import gui
+from uds.core.util.model import sql_now
 
 if typing.TYPE_CHECKING:
     from uds.core.environment import Environment

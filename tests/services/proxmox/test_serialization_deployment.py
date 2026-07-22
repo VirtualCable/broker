@@ -35,18 +35,16 @@ import collections.abc
 import pickle
 import typing
 
-from uds.core import environment, types
-from uds.services.Proxmox.deployment_linked import (
-    OldOperation as OldOperation,
-    ProxmoxUserserviceLinked as Deployment,
-)
+from uds.core import environment
+from uds.core import types
+from uds.services.Proxmox.deployment_linked import OldOperation as OldOperation
+from uds.services.Proxmox.deployment_linked import ProxmoxUserserviceLinked as Deployment
 
+from ...utils import fake
 
 # We use storage, so we need transactional tests
 from ...utils.test import UDSTransactionTestCase
-from ...utils import fake
 from . import fixtures
-
 
 # if not data.startswith(b'v'):
 #     return super().unmarshal(data)

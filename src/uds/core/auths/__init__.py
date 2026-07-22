@@ -32,13 +32,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnusedImport=false
-from .authenticator import (
-    Authenticator,
-)
+from .authenticator import Authenticator
 from .authfactory import AuthsFactory
-from .user import User
 from .group import Group
 from .groups_manager import GroupsManager
+from .user import User
 
 
 def factory() -> AuthsFactory:

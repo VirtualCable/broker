@@ -29,13 +29,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from uds import models
 
-from ....utils import rest, constants
-
+from ....utils import constants
+from ....utils import rest
 
 logger = logging.getLogger(__name__)
 

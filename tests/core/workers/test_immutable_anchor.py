@@ -34,10 +34,10 @@ Tests for the ImmutableLogAnchorJob worker.
 
 import unittest.mock
 
-from ...utils.test import UDSTestCase
-
 from uds.core.environment import Environment
 from uds.workers.immutable_log_anchor import ImmutableLogAnchorJob
+
+from ...utils.test import UDSTestCase
 
 
 class ImmutableLogAnchorJobTest(UDSTestCase):
@@ -105,8 +105,9 @@ class ImmutableLogAnchorJobTest(UDSTestCase):
             job.run()
 
     def test_appends_anchors_even_when_last_is_anchor(self) -> None:
-        from uds.models.immutable_log import ImmutableLog
         import hashlib
+
+        from uds.models.immutable_log import ImmutableLog
 
         ImmutableLog.objects.create(
             sequence=1,

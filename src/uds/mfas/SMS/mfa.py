@@ -29,18 +29,21 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import re
 import logging
-
-from django.utils.translation import gettext_noop as _, gettext
+import re
+import typing
 
 import requests.auth
 
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
+
 from uds import models
-from uds.core import mfas, types
+from uds.core import mfas
+from uds.core import types
 from uds.core.ui import gui
-from uds.core.util import fields, security
+from uds.core.util import fields
+from uds.core.util import security
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest

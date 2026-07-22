@@ -31,15 +31,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # import traceback
-import typing
 import logging
+import typing
 
+# from uds.workers.log
+from uds.core.types.log import LogObjectType
 from uds.core.util import singleton
 from uds.core.util.model import sql_now
 from uds.models.log import Log
-# from uds.workers.log
-
-from uds.core.types.log import LogObjectType
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

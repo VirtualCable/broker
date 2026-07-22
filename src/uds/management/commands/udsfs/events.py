@@ -29,18 +29,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import stat
 import calendar
 import datetime
-import typing
 import logging
+import stat
+import typing
 
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from uds.models import StatsEvents
-from uds.core.util.stats.events import get_owner
 from uds.core.types import stats as events_types
+from uds.core.util.stats.events import get_owner
+from uds.models import StatsEvents
 
 from . import types
 

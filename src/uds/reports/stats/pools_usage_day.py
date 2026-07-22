@@ -31,22 +31,21 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import csv
-import io
 import datetime
+import io
 import logging
 import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
+from uds.core.reports import graphs
 from uds.core.ui import gui
 from uds.core.util.stats import counters
-from uds.core.reports import graphs
 from uds.models import ServicePool
 
-
 from .base import StatsReport
-
 
 logger = logging.getLogger(__name__)
 

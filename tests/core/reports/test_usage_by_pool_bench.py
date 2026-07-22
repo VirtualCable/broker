@@ -64,7 +64,6 @@ from uds.reports.stats.user_access import StatsReportLogin
 from ...fixtures import services as fixtures_services
 from ...utils.test import UDSTransactionTestCase
 
-
 logger = logging.getLogger(__name__)
 
 # Benchmarks are slow (5000-row bulk inserts × 4 reports × REPEATS+warmup).

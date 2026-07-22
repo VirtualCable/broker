@@ -35,8 +35,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 # pyright: reportUnusedImport=false
 import typing
-from .job import Job
+
 from .delayed_task import DelayedTask
+from .job import Job
 
 # Imports for type checking
 if typing.TYPE_CHECKING:

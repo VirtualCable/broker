@@ -31,10 +31,10 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import logging
-import typing
 import dataclasses
 import enum
+import logging
+import typing
 
 from uds import models
 

@@ -36,7 +36,8 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, types
+from uds.core import exceptions
+from uds.core import types
 
 from .remote_viewer_file import RemoteViewerFile
 from .spice_base import BaseSpiceTransport

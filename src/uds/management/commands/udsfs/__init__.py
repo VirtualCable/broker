@@ -31,19 +31,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import argparse
 import errno
-import stat
 import logging
+import stat
 import typing
-
 
 from django.core.management.base import BaseCommand
 
-from uds.core.util.fuse import FUSE, FuseOSError, Operations
-
-from . import types
+from uds.core.util.fuse import FUSE
+from uds.core.util.fuse import FuseOSError
+from uds.core.util.fuse import Operations
 
 from . import events
 from . import stats
+from . import types
 
 logger = logging.getLogger(__name__)
 

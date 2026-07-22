@@ -37,14 +37,16 @@ import logging
 import typing
 
 import django.template.defaultfilters as filters
+
+from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core.managers.stats import StatsManager
 from uds.core.reports import graphs
 from uds.core.ui import gui
-from uds.core.util import stats, utils
+from uds.core.util import stats
+from uds.core.util import utils
 
 from .base import StatsReport
 

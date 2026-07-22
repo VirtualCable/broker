@@ -30,18 +30,20 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import dataclasses
-import typing
-import logging
 import enum
+import logging
+import typing
 
 from tests.utils.test import UDSTestCase
-
+from uds.core import consts
+from uds.core import transports
+from uds.core import types
+from uds.core import ui
+from uds.core.util import api as util_api
+from uds.models import Transport
 from uds.REST import dispatcher
 from uds.REST.model import base
 from uds.REST.model.master import ModelHandler
-from uds.core import types, transports, consts, ui
-from uds.core.util import api as util_api
-from uds.models import Transport
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +180,7 @@ class TestApiGenBasic(UDSTestCase):
         }
 
         import json
+
         import yaml
 
         api = types.rest.api.OpenAPI(paths=paths, components=comps)

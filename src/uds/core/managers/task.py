@@ -30,18 +30,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import abc
+import logging
+import signal
 import threading
 import time
-import signal
-import logging
 import typing
 
 from django.db import connection
-from uds.core.jobs.scheduler import Scheduler
-from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
+
 from uds.core import jobs
-from uds.core.util.config import GlobalConfig
+from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
+from uds.core.jobs.scheduler import Scheduler
 from uds.core.util import singleton
+from uds.core.util.config import GlobalConfig
 
 logger = logging.getLogger(__name__)
 
@@ -111,9 +112,7 @@ class TaskManager(metaclass=singleton.Singleton):
     def add_other_tasks(self) -> None:
         logger.info("Registering other tasks")
 
-        from uds.core.messaging.processor import (
-            MessageProcessorThread,
-        )  # pylint: disable=import-outside-toplevel
+        from uds.core.messaging.processor import MessageProcessorThread  # pylint: disable=import-outside-toplevel
 
         thread = MessageProcessorThread()
         thread.start()

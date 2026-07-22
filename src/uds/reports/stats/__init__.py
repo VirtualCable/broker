@@ -33,21 +33,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 # Make reports visible to autoloader
 # from . import usage
-from . import user_access
-from . import pools_performance
-from . import pools_usage_day
-from . import usage_by_pool
-from . import pool_users_summary
-from . import pools_usage_summary
-
 from . import auth_stats
-
+from . import cache_efficiency
+from . import client_platforms
 from . import peak_concurrency
 from . import pool_saturation
-from . import cache_efficiency
-from . import tunnel_usage
-from . import client_platforms
-from . import top_users
+from . import pool_users_summary
+from . import pools_performance
+from . import pools_usage_day
+from . import pools_usage_summary
 from . import session_duration
-from . import userservice_errors
+from . import top_users
+from . import tunnel_usage
 from . import usage_by_group
+from . import usage_by_pool
+from . import user_access
+from . import userservice_errors

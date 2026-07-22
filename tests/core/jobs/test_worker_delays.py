@@ -33,11 +33,12 @@ Tests for next_execution_delay() across Job subclasses.
 """
 
 import logging
+
 from unittest import mock
 
-from ...utils.test import UDSTestCase
-
 from uds.core.environment import Environment
+
+from ...utils.test import UDSTestCase
 
 logger = logging.getLogger(__name__)
 

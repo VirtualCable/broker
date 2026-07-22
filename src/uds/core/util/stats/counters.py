@@ -29,26 +29,24 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import datetime
 import logging
 import typing
-import collections.abc
 
-from django.utils.translation import gettext_lazy as _
 from django.db.models import Model
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
+from uds.core import consts
+from uds.core import types
 from uds.core.managers.stats import StatsManager
 from uds.core.types.stats import AccumStat
-from uds.models import (
-    Provider,
-    Service,
-    ServicePool,
-    Authenticator,
-    StatsCountersAccum,
-)
-from uds.core import consts, types
-
+from uds.models import Authenticator
+from uds.models import Provider
+from uds.models import Service
+from uds.models import ServicePool
+from uds.models import StatsCountersAccum
 
 logger = logging.getLogger(__name__)
 

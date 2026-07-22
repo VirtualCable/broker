@@ -32,19 +32,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pyright: reportUnknownMemberType=false
 
-import logging
-import io
-import typing
 import collections.abc
+import io
+import logging
+import typing
 
+import numpy as np
+
+from matplotlib import colormaps
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib import colormaps
 
 # This must be imported to allow 3d projections
 from mpl_toolkits.mplot3d.axes3d import Axes3D  # pyright: ignore[reportUnusedImport]
-
-import numpy as np
 
 logger = logging.getLogger(__name__)
 

@@ -34,9 +34,10 @@ import base64
 import struct
 
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519
+from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.serialization import pkcs12
-
 from django.test import override_settings
 
 from uds.core.managers.crypto import rdp
@@ -198,10 +199,11 @@ class RdpTest(cf.CertTestCase):
 
     def test_sign_rdp_with_ec_key(self) -> None:
         ec_key = ec.generate_private_key(ec.SECP256R1())
+        import datetime as _dt
+
         from cryptography import x509
         from cryptography.hazmat.primitives import hashes
         from cryptography.x509.oid import NameOID
-        import datetime as _dt
 
         now = _dt.datetime.now(_dt.timezone.utc)
         name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "EC-SIGNER")])

@@ -31,11 +31,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import random
 
-
 from uds.core import consts
 
 from ....fixtures import authenticators as fixtures_authenticators
-from ....utils import rest, test
+from ....utils import rest
+from ....utils import test
 
 
 class ActorLoginLogoutTest(test.UDSTestCase):

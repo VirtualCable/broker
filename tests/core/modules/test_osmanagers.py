@@ -32,11 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-
-from uds.core.osmanagers.osmfactory import OSManagersFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.osmanagers.osmfactory import OSManagersFactory
 
 logger = logging.getLogger(__name__)
 

@@ -34,8 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnusedImport=false
-from .transport_factory import TransportsFactory
 from .transport import Transport
+from .transport_factory import TransportsFactory
 
 
 def factory() -> TransportsFactory:

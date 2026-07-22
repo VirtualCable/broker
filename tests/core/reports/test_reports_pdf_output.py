@@ -49,20 +49,17 @@ import pytest
 
 from uds import models
 from uds.core import types
-from uds.reports.stats.pool_users_summary import (
-    UsageSummaryByUsersPool,
-    UsageSummaryByUsersPoolCSV,
-)
-from uds.reports.stats.pools_performance import (
-    PoolPerformanceReport,
-    PoolPerformanceReportCSV,
-)
-from uds.reports.stats.usage_by_pool import UsageByPool, UsageByPoolCSV
-from uds.reports.stats.user_access import StatsReportLogin, StatsReportLoginCSV
+from uds.reports.stats.pool_users_summary import UsageSummaryByUsersPool
+from uds.reports.stats.pool_users_summary import UsageSummaryByUsersPoolCSV
+from uds.reports.stats.pools_performance import PoolPerformanceReport
+from uds.reports.stats.pools_performance import PoolPerformanceReportCSV
+from uds.reports.stats.usage_by_pool import UsageByPool
+from uds.reports.stats.usage_by_pool import UsageByPoolCSV
+from uds.reports.stats.user_access import StatsReportLogin
+from uds.reports.stats.user_access import StatsReportLoginCSV
 
 from ...fixtures import services as fixtures_services
 from ...utils.test import UDSTransactionTestCase
-
 
 logger = logging.getLogger(__name__)
 

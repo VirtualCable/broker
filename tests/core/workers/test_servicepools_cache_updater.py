@@ -30,20 +30,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
-
+import typing
 
 from uds.core import types
-from uds.core.types.states import State
-from uds.workers.servicepools_cache_updater import ServiceCacheUpdater
 from uds.core.environment import Environment
-
+from uds.core.types.states import State
 from uds.services.Test.provider import TestProvider
-from uds.services.Test.service import TestServiceCache, TestServiceNoCache
+from uds.services.Test.service import TestServiceCache
+from uds.services.Test.service import TestServiceNoCache
+from uds.workers.servicepools_cache_updater import ServiceCacheUpdater
 
-from ...utils.test import UDSTestCase
 from ...fixtures import services as services_fixtures
+from ...utils.test import UDSTestCase
 
 if typing.TYPE_CHECKING:
     from uds import models

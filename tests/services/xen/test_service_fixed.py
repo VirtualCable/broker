@@ -33,14 +33,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import random
 import typing
+
 from unittest import mock
 
 from uds.core import ui
-from . import fixtures
+from uds.services.Xen.xen import types as xen_types
 
 from ...utils.test import UDSTransactionTestCase
-
-from uds.services.Xen.xen import types as xen_types
+from . import fixtures
 
 
 class TestXenFixedService(UDSTransactionTestCase):

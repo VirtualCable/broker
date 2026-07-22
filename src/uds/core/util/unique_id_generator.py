@@ -35,12 +35,14 @@ import logging
 import time
 import typing
 
-from django.db import transaction, OperationalError, connection
+from django.db import OperationalError
+from django.db import connection
+from django.db import transaction
 from django.db.utils import IntegrityError
-from uds.core import consts
 
-from uds.models.unique_id import UniqueId
+from uds.core import consts
 from uds.core.util.model import sql_stamp_seconds
+from uds.models.unique_id import UniqueId
 
 if typing.TYPE_CHECKING:
     from django.db import models

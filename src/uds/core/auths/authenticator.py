@@ -33,26 +33,27 @@ Base module for all authenticators
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop as _
 
+from uds.core import consts
+from uds.core import types
 from uds.core.module import Module
-from uds.core import consts, types
 from uds.core.util import auth as util_auth
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from django.http import (
-        HttpRequest,
-        HttpResponse,
-    )
+    from django.http import HttpRequest
+    from django.http import HttpResponse
+
     from uds import models
-    from uds.core.types.requests import ExtendedHttpRequest
-    from uds.core.environment import Environment
     from uds.core import types
+    from uds.core.environment import Environment
+    from uds.core.types.requests import ExtendedHttpRequest
+
     from .groups_manager import GroupsManager
 
 
@@ -160,8 +161,8 @@ class Authenticator(Module):
     # : If this authenticators casues a temporal block of an user on repeated login failures
     block_user_on_failures: typing.ClassVar[bool] = True
 
-    from .user import User  # pylint: disable=import-outside-toplevel
     from .group import Group  # pylint: disable=import-outside-toplevel
+    from .user import User  # pylint: disable=import-outside-toplevel
 
     # : The type of user provided, normally standard user will be enough.
     # : This is here so if we need it in some case, we can write our own
@@ -240,9 +241,7 @@ class Authenticator(Module):
 
         user param is a database user object
         """
-        from uds.core.auths.groups_manager import (  # pylint: disable=import-outside-toplevel
-            GroupsManager,
-        )
+        from uds.core.auths.groups_manager import GroupsManager  # pylint: disable=import-outside-toplevel
 
         if self.external_source:
             groups_manager = GroupsManager(self.db_obj())

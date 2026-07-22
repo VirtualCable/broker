@@ -36,7 +36,6 @@ import typing
 
 from uds.core import types
 
-
 KNOWN_OS_LIST: typing.Final[tuple[types.os.KnownOS, ...]] = tuple(
     os for os in types.os.KnownOS if os != types.os.KnownOS.UNKNOWN
 )

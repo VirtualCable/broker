@@ -31,11 +31,10 @@ Author: Janier Rodríguez
 
 import typing
 
+from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.transports.RDPEmbedded.common import RDPTunnelParams
 from uds.transports.RDPEmbedded.direct import RDPEmbeddedTransport
-
-from tests.utils.test import UDSTestCase
 
 
 def _connection_data(

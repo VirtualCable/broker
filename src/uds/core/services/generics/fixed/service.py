@@ -29,21 +29,26 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import random  # Not for cryptographic purposes, just to randomize the assignation of machines
 import abc
+import collections.abc
 import contextlib
 import logging
+import random  # Not for cryptographic purposes, just to randomize the assignation of machines
 import typing
-import collections.abc
 
-from django.utils.translation import gettext_noop as _, gettext
-from uds.core import services, types, exceptions
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
+
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import fields
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from .userservice import FixedUserService
 
 logger = logging.getLogger(__name__)

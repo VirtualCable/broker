@@ -31,9 +31,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-from uds.core.types.rest import ApiCompat
-
 from tests.utils import rest
+from uds.core.types.rest import ApiCompat
 
 
 class ApiCompatContractTest(rest.test.RESTTestCase):

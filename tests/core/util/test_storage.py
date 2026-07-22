@@ -31,9 +31,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import base64
-from ...utils.test import UDSTestCase
-from uds.core.util import storage
+
 from uds import models
+from uds.core.util import storage
+
+from ...utils.test import UDSTestCase
 
 UNICODE_CHARS = "ñöçóá^(pípè)"
 UNICODE_CHARS_2 = "ñöçóá^(€íöè)"

@@ -32,17 +32,21 @@ Authot: Adolfo Gómez, dkmaster at dkmon dot com
 
 import collections.abc
 import typing
-from unittest import mock
 import uuid
 
-from uds.core import consts, services, types, ui, environment
-from uds.core.services.generics.fixed import service as fixed_service
-from uds.core.services.generics.fixed import userservice as fixed_userservice
+from unittest import mock
+
+from uds.core import consts
+from uds.core import environment
+from uds.core import services
+from uds.core import types
+from uds.core import ui
+from uds.core.services.generics.dynamic import publication as dynamic_publication
 from uds.core.services.generics.dynamic import service as dynamic_service
 from uds.core.services.generics.dynamic import userservice as dynamic_userservice
-from uds.core.services.generics.dynamic import publication as dynamic_publication
+from uds.core.services.generics.fixed import service as fixed_service
+from uds.core.services.generics.fixed import userservice as fixed_userservice
 from uds.core.types.states import TaskState
-
 
 if typing.TYPE_CHECKING:
     from uds import models

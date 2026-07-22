@@ -31,10 +31,10 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import enum
 import logging
 import traceback
+import typing
 
 from django.utils.translation import gettext_lazy as _
 
@@ -80,17 +80,16 @@ class Error(enum.IntEnum):
 
     @staticmethod
     def from_exception(exception: Exception) -> "Error":
-        from uds.core.exceptions.auth import (
-            InvalidUserException,
-            InvalidAuthenticatorException,
-        )
-        from uds.core.exceptions.services import (
-            InvalidServiceException,
-            MaxServicesReachedError,
-            ServiceInMaintenanceMode,
-            ServiceNotReadyError,
-        )
-        from uds.models import UserService, Transport, ServicePool, Authenticator
+        from uds.core.exceptions.auth import InvalidAuthenticatorException
+        from uds.core.exceptions.auth import InvalidUserException
+        from uds.core.exceptions.services import InvalidServiceException
+        from uds.core.exceptions.services import MaxServicesReachedError
+        from uds.core.exceptions.services import ServiceInMaintenanceMode
+        from uds.core.exceptions.services import ServiceNotReadyError
+        from uds.models import Authenticator
+        from uds.models import ServicePool
+        from uds.models import Transport
+        from uds.models import UserService
 
         trans_dct: dict[type, Error] = {
             InvalidUserException: Error.ACCESS_DENIED,

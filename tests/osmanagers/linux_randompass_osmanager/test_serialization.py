@@ -30,13 +30,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import codecs
+import typing
 
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
-
-
 from uds.osmanagers.LinuxOsManager import linux_randompass_osmanager as osmanager
 
 PASSWD: typing.Final[str] = "PASSWD"

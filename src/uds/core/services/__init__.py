@@ -34,11 +34,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pyright: reportUnusedImport=false
 
-from .user_service import UserService
-from .publication import Publication
-from .service import Service
 from .provider import ServiceProvider
 from .provider_factory import ServiceProviderFactory
+from .publication import Publication
+from .service import Service
+from .user_service import UserService
 
 
 def factory() -> ServiceProviderFactory:

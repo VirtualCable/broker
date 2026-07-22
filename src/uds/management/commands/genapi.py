@@ -39,7 +39,8 @@ import yaml
 
 from django.core.management.base import BaseCommand
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.REST import dispatcher
 from uds.REST.model import base as model_base
 from uds.REST.model.master import ModelHandler

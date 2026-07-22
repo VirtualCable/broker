@@ -31,21 +31,23 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import datetime
 import ipaddress
 import logging
 import random
 import secrets
 import ssl
 import typing
-import datetime
 
 import requests
 import requests.adapters
 import urllib3
 import urllib3.exceptions
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from django.conf import settings
@@ -338,8 +340,8 @@ def convert_to_credential_token(
     """
     Creates a credentials token for the given username, password, and domain.
     """
-    from uds.core.managers.crypto import CryptoManager
     from uds import models
+    from uds.core.managers.crypto import CryptoManager
 
     key = CryptoManager.manager().random_string(32, punctuation=False)
     encrypted_username = CryptoManager.manager().encrypt_field_b64(crendential.username, key, 1)

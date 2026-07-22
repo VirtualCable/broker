@@ -33,8 +33,8 @@ import logging
 import typing
 
 from uds.core import consts
-from uds.core.consts.actor import UNMANAGED
 from uds.core.consts.actor import MANAGED
+from uds.core.consts.actor import UNMANAGED
 
 from ....utils import rest
 

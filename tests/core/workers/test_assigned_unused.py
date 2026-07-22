@@ -33,14 +33,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import datetime
 
 from uds import models
-from uds.core.util import model
 from uds.core.environment import Environment
-from uds.core.util import config
 from uds.core.types.states import State
+from uds.core.util import config
+from uds.core.util import model
 from uds.workers.assigned_unused import AssignedAndUnused
 
-from ...utils.test import UDSTestCase
 from ...fixtures import services as fixtures_services
+from ...utils.test import UDSTestCase
 
 
 class AssignedAndUnusedTest(UDSTestCase):

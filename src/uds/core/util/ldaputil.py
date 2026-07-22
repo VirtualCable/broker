@@ -4,10 +4,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 Converted to ldap3 by GitHub Copilot
 """
 
-import logging
-import typing
 import collections.abc
+import logging
 import ssl
+import typing
 
 # For pyasn1 compatibility of ldap3
 # This is a workaround for the deprecation warning of pyasn1 when used by ldap3
@@ -16,28 +16,27 @@ import warnings
 
 warnings.filterwarnings("ignore", module="pyasn1", category=DeprecationWarning)
 
-from ldap3 import (
-    Server,
-    Connection,
-    Tls,
-    ALL,
-    SUBTREE,
-    BASE,
-    LEVEL,
-    ALL_ATTRIBUTES,
-    SIMPLE,
-    MODIFY_ADD as LDAP_MODIFY_ADD,
-    MODIFY_DELETE as LDAP_MODIFY_DELETE,
-    MODIFY_REPLACE as LDAP_MODIFY_REPLACE,
-    MODIFY_INCREMENT as LDAP_MODIFY_INCREMENT,
-)
-
-from django.utils.translation import gettext as _
 from django.conf import settings
+from django.utils.translation import gettext as _
+from ldap3 import ALL
+from ldap3 import ALL_ATTRIBUTES
+from ldap3 import BASE
+from ldap3 import LEVEL
+from ldap3 import MODIFY_ADD as LDAP_MODIFY_ADD
+from ldap3 import MODIFY_DELETE as LDAP_MODIFY_DELETE
+from ldap3 import MODIFY_INCREMENT as LDAP_MODIFY_INCREMENT
+from ldap3 import MODIFY_REPLACE as LDAP_MODIFY_REPLACE
+from ldap3 import SIMPLE
+from ldap3 import SUBTREE
+from ldap3 import Connection
+from ldap3 import Server
+from ldap3 import Tls
 
-from uds.core.util import utils, net as util_net
-from uds.core.util.cache import Cache, CacheLike
+from uds.core.util import net as util_net
+from uds.core.util import utils
 from uds.core.util.backoff import Backoff
+from uds.core.util.cache import Cache
+from uds.core.util.cache import CacheLike
 
 logger = logging.getLogger(__name__)
 

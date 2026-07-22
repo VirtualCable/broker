@@ -30,19 +30,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import logging
 import datetime
-
-from ...utils.test import UDSTestCase
-from ...fixtures import services as services_fixtures
+import logging
+import typing
 
 from django.utils import timezone
 
-from uds.models import UserService
-from uds.core.types.states import State
-from uds.workers.stuck_cleaner import StuckCleaner
 from uds.core.environment import Environment
+from uds.core.types.states import State
+from uds.models import UserService
+from uds.workers.stuck_cleaner import StuckCleaner
+
+from ...fixtures import services as services_fixtures
+from ...utils.test import UDSTestCase
 
 if typing.TYPE_CHECKING:
     from uds import models

@@ -30,11 +30,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import contextlib
+import logging
 import random
 import time
 import typing
 import uuid
-import logging
 
 from . import constants
 

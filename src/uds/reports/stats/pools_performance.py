@@ -38,9 +38,10 @@ import logging
 import typing
 
 import django.template.defaultfilters as filters
+
+from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core.managers.stats import StatsManager
 from uds.core.reports import graphs

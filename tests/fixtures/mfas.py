@@ -32,8 +32,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core import mfas, exceptions
 from uds import models
+from uds.core import exceptions
+from uds.core import mfas
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest

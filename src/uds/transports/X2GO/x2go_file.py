@@ -31,8 +31,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
+import typing
 
 template = """[General]
 UDS=@ByteArray()

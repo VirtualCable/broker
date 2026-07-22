@@ -32,14 +32,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from unittest import mock
 
 from uds.core import types
 from uds.services.Proxmox import helpers
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestProxmoxHelpers(UDSTransactionTestCase):

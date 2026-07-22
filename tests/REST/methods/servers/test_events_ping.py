@@ -33,7 +33,8 @@ import logging
 import random
 import typing
 
-from uds.core import types, consts
+from uds.core import consts
+from uds.core import types
 from uds.core.util.model import sql_stamp
 
 from ....fixtures import servers as servers_fixtures

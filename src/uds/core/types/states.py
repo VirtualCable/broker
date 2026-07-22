@@ -31,8 +31,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import enum
+import typing
 
 from django.utils.translation import gettext_lazy as _
 

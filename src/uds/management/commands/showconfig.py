@@ -32,12 +32,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import argparse
+import csv
 import logging
 import typing
-import csv
+
 import yaml
 
 from django.core.management.base import BaseCommand
+
 from uds.core.util import config
 
 logger = logging.getLogger(__name__)

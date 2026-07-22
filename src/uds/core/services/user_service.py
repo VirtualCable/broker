@@ -41,7 +41,8 @@ from uds.core.util import log
 
 if typing.TYPE_CHECKING:
     from uds import models
-    from uds.core import osmanagers, services
+    from uds.core import osmanagers
+    from uds.core import services
     from uds.core.environment import Environment
     from uds.core.util.unique_gid_generator import UniqueGIDGenerator
     from uds.core.util.unique_mac_generator import UniqueMacGenerator

@@ -33,19 +33,23 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import codecs
+import collections.abc
 import logging
 import re
 import typing
-import collections.abc
 
 import dns.resolver
 
-
 from django.utils.translation import gettext_noop as _
-from uds.core.ui import gui
+
+from uds.core import environment
+from uds.core import exceptions
+from uds.core import types
 from uds.core.managers.crypto import CryptoManager
-from uds.core import environment, exceptions, types
-from uds.core.util import fields, log, ldaputil
+from uds.core.ui import gui
+from uds.core.util import fields
+from uds.core.util import ldaputil
+from uds.core.util import log
 
 from .windows import WindowsOsManager
 

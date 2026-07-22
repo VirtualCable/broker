@@ -30,13 +30,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from uds.core.environment import Environment
-from uds.core import consts
-
-from uds.osmanagers.LinuxOsManager import linux_ad_osmanager as osmanager
-
-from tests.utils import rest
 from tests.fixtures import services as services_fixtures
+from tests.utils import rest
+from uds.core import consts
+from uds.core.environment import Environment
+from uds.osmanagers.LinuxOsManager import linux_ad_osmanager as osmanager
 
 from .. import fixtures
 

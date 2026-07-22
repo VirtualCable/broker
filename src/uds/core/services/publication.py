@@ -41,7 +41,8 @@ from uds.core.serializable import Serializable
 
 if typing.TYPE_CHECKING:
     from uds import models
-    from uds.core import osmanagers, services
+    from uds.core import osmanagers
+    from uds.core import services
     from uds.core.environment import Environment
 
 

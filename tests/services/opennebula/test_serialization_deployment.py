@@ -37,8 +37,6 @@ import typing
 # We use storage, so we need transactional tests
 from tests.utils.test import UDSTransactionTestCase
 from uds.core.environment import Environment
-
-
 from uds.services.OpenNebula import deployment as deployment
 
 # if not data.startswith(b'v'):

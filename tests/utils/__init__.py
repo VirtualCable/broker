@@ -29,12 +29,14 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
+
 from unittest import mock
 
 from django.db import models
+
 from uds.core import ui
 
 logger = logging.getLogger(__name__)

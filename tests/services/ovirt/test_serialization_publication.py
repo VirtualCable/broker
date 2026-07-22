@@ -35,9 +35,7 @@ import typing
 
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
-
 from uds.services.OVirt.publication import OVirtPublication as Publication
-
 
 # if not data.startswith(b'v'):
 #     return super().unmarshal(data)

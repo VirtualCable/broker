@@ -39,16 +39,14 @@ from unittest import mock
 from django.utils import timezone
 
 from uds import models
-from uds.core import environment, types
+from uds.core import environment
+from uds.core import types
 from uds.core.ui.user_interface import gui
-
-from uds.services.PhysicalMachines import (
-    provider,
-    service_single,
-    service_multi,
-    deployment as deployment_single,
-    deployment_multi,
-)
+from uds.services.PhysicalMachines import deployment as deployment_single
+from uds.services.PhysicalMachines import deployment_multi
+from uds.services.PhysicalMachines import provider
+from uds.services.PhysicalMachines import service_multi
+from uds.services.PhysicalMachines import service_single
 
 SERVER_GROUP_IPS_MACS: typing.Final[list[tuple[str, str]]] = [
     (f"127.0.1.{x}", f"{x:02x}:22:{x * 2:02x}:44:{x * 4:02x}:66") for x in range(1, 32)

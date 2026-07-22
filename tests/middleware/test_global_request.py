@@ -29,8 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
+
 from unittest import mock
 
 from django.urls import reverse
@@ -40,7 +41,6 @@ from uds.core.util import config
 from uds.middleware import request
 
 from ..utils.web import test
-
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser

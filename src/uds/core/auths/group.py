@@ -37,8 +37,9 @@ import typing
 
 # Imports for type checking
 if typing.TYPE_CHECKING:
-    from .authenticator import Authenticator as AuthenticatorInstance
     from uds import models
+
+    from .authenticator import Authenticator as AuthenticatorInstance
 
 
 logger = logging.getLogger(__name__)

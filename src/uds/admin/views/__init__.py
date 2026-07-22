@@ -29,8 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from django.http import HttpResponse
 from django.middleware import csrf

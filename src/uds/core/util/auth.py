@@ -31,11 +31,12 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import collections.abc
+import logging
 import re
 import unicodedata
-import logging
 
-from uds.core import ui, exceptions
+from uds.core import exceptions
+from uds.core import ui
 from uds.core.util import ensure
 
 logger = logging.getLogger(__name__)

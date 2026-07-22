@@ -32,14 +32,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from unittest import mock
 
+from tests.utils import search_dict_by_attr
+from tests.utils.test import UDSTransactionTestCase
 from uds.services.OpenStack import helpers
 
 from . import fixtures
-
-from tests.utils.test import UDSTransactionTestCase
-from tests.utils import search_dict_by_attr
 
 #     models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance(),
 # )

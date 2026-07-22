@@ -33,7 +33,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
-from uds.core.environment import Environmentable, Environment
+from uds.core.environment import Environment
+from uds.core.environment import Environmentable
 
 logger = logging.getLogger(__name__)
 

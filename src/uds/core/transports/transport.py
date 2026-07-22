@@ -39,7 +39,8 @@ import typing
 from django.utils.translation import gettext_noop as _
 
 from uds import models
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.managers.crypto import CryptoManager
 from uds.core.module import Module
 from uds.core.util import net
@@ -48,9 +49,9 @@ from .default_script import get_default_script
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
+    from uds import models
     from uds.core.environment import Environment
     from uds.core.types.requests import ExtendedHttpRequestWithUser
-    from uds import models
 
 logger = logging.getLogger(__name__)
 

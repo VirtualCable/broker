@@ -31,9 +31,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
 import logging
+import typing
 
 logger = logging.getLogger(__name__)
 

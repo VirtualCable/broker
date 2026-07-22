@@ -36,11 +36,13 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import osmanagers, types
+from uds.core import osmanagers
+from uds.core import types
 from uds.core.managers.userservice import UserServiceManager
-from uds.core.ui import gui
-from uds.core.util import fields, log
 from uds.core.types.states import State
+from uds.core.ui import gui
+from uds.core.util import fields
+from uds.core.util import log
 
 if typing.TYPE_CHECKING:
     from uds.models.user_service import UserService

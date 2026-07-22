@@ -32,11 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-
-from uds.core.auths.authfactory import AuthsFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.auths.authfactory import AuthsFactory
 
 logger = logging.getLogger(__name__)
 

@@ -34,10 +34,9 @@ import logging
 
 from unittest import mock
 
+from uds.core.util import factory
 
 from ...utils.test import UDSTestCase
-
-from uds.core.util import factory
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from ...utils.test import UDSTestCase
-
 from uds.core.util import ldaputil
+
+from ...utils.test import UDSTestCase
 
 
 class FakeLDAPConnection:

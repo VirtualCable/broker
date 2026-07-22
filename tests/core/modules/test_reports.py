@@ -32,10 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds import reports
-
 from tests.utils.test import UDSTestCase
-
+from uds import reports
 
 logger = logging.getLogger(__name__)
 

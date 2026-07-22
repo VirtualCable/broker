@@ -28,30 +28,33 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false
-import typing
-import re
-import contextvars
-import logging
-import hashlib
 import collections.abc
+import contextvars
+import hashlib
+import logging
+import re
+import typing
 
 import lark
 
-from django.db.models import Q, F, QuerySet, Value, Func
-from django.db.models.functions import (
-    Lower,
-    Upper,
-    Length,
-    ExtractYear,
-    ExtractMonth,
-    ExtractDay,
-    Concat,
-    Substr,
-)
+from django.db.models import F
+from django.db.models import Func
+from django.db.models import Q
+from django.db.models import QuerySet
+from django.db.models import Value
+from django.db.models.functions import Concat
+from django.db.models.functions import ExtractDay
+from django.db.models.functions import ExtractMonth
+from django.db.models.functions import ExtractYear
+from django.db.models.functions import Length
+from django.db.models.functions import Lower
+from django.db.models.functions import Substr
+from django.db.models.functions import Upper
 
 logger = logging.getLogger(__name__)
 
-from .query_filter import _QUERY_GRAMMAR, _FUNCTIONS_PARAMS_NUM
+from .query_filter import _FUNCTIONS_PARAMS_NUM
+from .query_filter import _QUERY_GRAMMAR
 
 _DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar("db_query_parser")
 

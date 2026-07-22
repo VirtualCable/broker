@@ -33,10 +33,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import ipaddress
 import logging
 
+from uds.core.util import net
 
 from ...utils.test import UDSTestCase
-
-from uds.core.util import net
 
 logger = logging.getLogger(__name__)
 

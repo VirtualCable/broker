@@ -34,8 +34,6 @@ import typing
 
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
-
-
 from uds.osmanagers.LinuxOsManager import linux_osmanager as osmanager
 
 PASSWD: typing.Final[str] = "PASSWD"
