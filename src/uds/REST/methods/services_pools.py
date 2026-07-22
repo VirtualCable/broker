@@ -307,7 +307,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         # Optimized query, due that there is a lot of info needed for theee
         d = sql_now() - datetime.timedelta(seconds=GlobalConfig.RESTRAINT_TIME.as_int())
         return super().get_items(
-            sumarize=kwargs.get("sumarize", True),
+            sumarize=sumarize,
             query=(
                 ServicePool.objects.prefetch_related(
                     "service",
