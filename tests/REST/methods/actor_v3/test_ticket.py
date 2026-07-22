@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -48,8 +49,8 @@ class ActorTestTicket(rest.test.RESTActorTestCase):
     Test actor functionality for ticket generation
     """
 
-    server: 'models.Server'
-    userservice: 'models.UserService'
+    server: "models.Server"
+    userservice: "models.UserService"
 
     def setUp(self) -> None:
         super().setUp()
@@ -67,33 +68,33 @@ class ActorTestTicket(rest.test.RESTActorTestCase):
         Test actorv3 ticket generation from a server request
         """
         token = self.login_and_register()
-        data = {'field1': 'fld1', 'field2': 'fld2'}
+        data = {"field1": "fld1", "field2": "fld2"}
         ticket = models.TicketStore.create(data=data)
 
         response = self.client.post(
-            '/uds/rest/actor/v3/ticket',
-            data={'token': token, 'ticket': ticket},
-            content_type='application/json',
+            "/uds/rest/actor/v3/ticket",
+            data={"token": token, "ticket": ticket},
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['result'], data)
+        self.assertEqual(response.json()["result"], data)
 
     def test_invalid_token_from_server(self) -> None:
         """
         Test actorv3 ticket generation from a server request
         """
-        data = {'field1': 'fld1', 'field2': 'fld2'}
+        data = {"field1": "fld1", "field2": "fld2"}
         ticket = models.TicketStore.create(data=data)
 
         response = self.client.post(
-            '/uds/rest/actor/v3/ticket',
-            data={'token': 'invalid', 'ticket': ticket},
-            content_type='application/json',
+            "/uds/rest/actor/v3/ticket",
+            data={"token": "invalid", "ticket": ticket},
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 403)  # Forbidden
-        self.assertIsInstance(response.json()['error'], str)
+        self.assertIsInstance(response.json()["error"], str)
 
     def test_invalid_ticket_from_server(self) -> None:
         """
@@ -101,58 +102,58 @@ class ActorTestTicket(rest.test.RESTActorTestCase):
         """
         token = self.login_and_register()
         response = self.client.post(
-            '/uds/rest/actor/v3/ticket',
-            data={'token': token, 'ticket': 'invalid'},
-            content_type='application/json',
+            "/uds/rest/actor/v3/ticket",
+            data={"token": token, "ticket": "invalid"},
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)  # Forbidden
-        self.assertIsInstance(response.json()['error'], str)
+        self.assertIsInstance(response.json()["error"], str)
 
     def test_valid_ticket_from_userservice(self) -> None:
         """
         Test actorv3 ticket generation from a server request
         """
         token = self.userservice.uuid
-        data = {'field1': 'fld1', 'field2': 'fld2'}
+        data = {"field1": "fld1", "field2": "fld2"}
         ticket = models.TicketStore.create(owner=token, data=data)
 
         response = self.client.post(
-            '/uds/rest/actor/v3/ticket/userservice',
-            data={'token': token, 'ticket': ticket},
-            content_type='application/json',
+            "/uds/rest/actor/v3/ticket/userservice",
+            data={"token": token, "ticket": ticket},
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['result'], data)
+        self.assertEqual(response.json()["result"], data)
 
     def test_invalid_token_from_userservice(self) -> None:
         """
         Test actorv3 ticket generation from a server request
         """
         token = self.userservice.uuid
-        data = {'field1': 'fld1', 'field2': 'fld2'}
+        data = {"field1": "fld1", "field2": "fld2"}
         ticket = models.TicketStore.create(owner=token, data=data)
 
         response = self.client.post(
-            '/uds/rest/actor/v3/ticket/userservice',
-            data={'token': 'invalid', 'ticket': ticket},
-            content_type='application/json',
+            "/uds/rest/actor/v3/ticket/userservice",
+            data={"token": "invalid", "ticket": ticket},
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 403)  # Forbidden
-        self.assertIsInstance(response.json()['error'], str)
-        
+        self.assertIsInstance(response.json()["error"], str)
+
     def test_invalid_ticket_from_userservice(self) -> None:
         """
         Test actorv3 ticket generation from a server request
         """
         token = self.userservice.uuid
         response = self.client.post(
-            '/uds/rest/actor/v3/ticket/userservice',
-            data={'token': token, 'ticket': 'invalid'},
-            content_type='application/json',
+            "/uds/rest/actor/v3/ticket/userservice",
+            data={"token": token, "ticket": "invalid"},
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)  # Forbidden
-        self.assertIsInstance(response.json()['error'], str)
+        self.assertIsInstance(response.json()["error"], str)

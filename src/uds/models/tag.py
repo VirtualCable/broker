@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -69,36 +70,36 @@ class Tag(UUIDModel):
 
     # Every single related class has a relation with this
     # Its inverse is "xxx_set" class
-    account_set: 'models.manager.RelatedManager[Account]'
-    authenticator_set: 'models.manager.RelatedManager[Authenticator]'
-    calendar_set: 'models.manager.RelatedManager[Calendar]'
-    metapool_set: 'models.manager.RelatedManager[MetaPool]'
-    network_set: 'models.manager.RelatedManager[Network]'
-    notifier_set: 'models.manager.RelatedManager[Notifier]'
-    osmanager_set: 'models.manager.RelatedManager[OSManager]'
-    provider_set: 'models.manager.RelatedManager[Provider]'
-    service_set: 'models.manager.RelatedManager[Service]'
-    servicepool_set: 'models.manager.RelatedManager[ServicePool]'
-    transport_set: 'models.manager.RelatedManager[Transport]'
+    account_set: "models.manager.RelatedManager[Account]"
+    authenticator_set: "models.manager.RelatedManager[Authenticator]"
+    calendar_set: "models.manager.RelatedManager[Calendar]"
+    metapool_set: "models.manager.RelatedManager[MetaPool]"
+    network_set: "models.manager.RelatedManager[Network]"
+    notifier_set: "models.manager.RelatedManager[Notifier]"
+    osmanager_set: "models.manager.RelatedManager[OSManager]"
+    provider_set: "models.manager.RelatedManager[Provider]"
+    service_set: "models.manager.RelatedManager[Service]"
+    servicepool_set: "models.manager.RelatedManager[ServicePool]"
+    transport_set: "models.manager.RelatedManager[Transport]"
 
     class Meta:  # pyright: ignore
         """
         Meta class to declare db table
         """
 
-        db_table = 'uds_tag'
-        app_label = 'uds'
+        db_table = "uds_tag"
+        app_label = "uds"
 
     @property
     def vtag(self) -> str:
         return str(self.tag).capitalize()
 
     def __str__(self) -> str:
-        return f'Tag: {self.uuid} {self.tag}'
+        return f"Tag: {self.uuid} {self.tag}"
 
 
 class TaggingMixin(models.Model):
-    tags: 'models.ManyToManyField[Tag, TaggingMixin]' = models.ManyToManyField(Tag)
+    tags: "models.ManyToManyField[Tag, TaggingMixin]" = models.ManyToManyField(Tag)
 
     class Meta:  # pyright: ignore
         abstract = True

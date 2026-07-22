@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -63,7 +64,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
 
     # The reference to deployed service is used to accelerate the queries for different methods, in fact its redundant cause we can access to the deployed service
     # through publication, but queries are much more simple
-    deployed_service = models.ForeignKey(ServicePool, on_delete=models.CASCADE, related_name='userServices')
+    deployed_service = models.ForeignKey(ServicePool, on_delete=models.CASCADE, related_name="userServices")
     # Althoug deployed_services has its publication, the user service is bound to a specific publication
     # so we need to store the publication id here (or the revision, but we need to store something)
     # storing the id simplifies the queries
@@ -72,11 +73,11 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='userServices',
+        related_name="userServices",
     )
 
-    unique_id = models.CharField(max_length=128, default='', db_index=True)  # User by agents to locate machine
-    friendly_name = models.CharField(max_length=128, default='')
+    unique_id = models.CharField(max_length=128, default="", db_index=True)  # User by agents to locate machine
+    friendly_name = models.CharField(max_length=128, default="")
     # We need to keep separated two differents os states so service operations (move beween caches, recover service) do not affects os manager state
     state = models.CharField(
         max_length=1, default=State.PREPARING, db_index=True
@@ -86,11 +87,11 @@ class UserService(UUIDModel, properties.PropertiesMixin):
     )  # The valid values for this field are PREPARE and USABLE
     state_date = models.DateTimeField(db_index=True)
     creation_date = models.DateTimeField(db_index=True)
-    data = models.TextField(default='')
+    data = models.TextField(default="")
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='userServices',
+        related_name="userServices",
         null=True,
         blank=True,
         default=None,
@@ -101,54 +102,54 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         db_index=True, default=0
     )  # Cache level must be 1 for L1 or 2 for L2, 0 if it is not cached service
 
-    src_hostname = models.CharField(max_length=consts.system.MAX_DNS_NAME_LENGTH, default='')
+    src_hostname = models.CharField(max_length=consts.system.MAX_DNS_NAME_LENGTH, default="")
     src_ip = models.CharField(
-        max_length=consts.system.MAX_IPV6_LENGTH, default=''
+        max_length=consts.system.MAX_IPV6_LENGTH, default=""
     )  # Source IP of the user connecting to the service. Max length is 45 chars (ipv6)
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["UserService"]'
-    sessions: 'models.manager.RelatedManager[UserServiceSession]'
-    accounting: 'AccountUsage'
+    sessions: "models.manager.RelatedManager[UserServiceSession]"
+    accounting: "AccountUsage"
 
-    _cached_instance: 'services.UserService | None' = None
+    _cached_instance: "services.UserService | None" = None
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """
         Meta class to declare default order and unique multiple field index
         """
 
-        db_table = 'uds__user_service'
-        ordering = ('creation_date',)
-        app_label = 'uds'
+        db_table = "uds__user_service"
+        ordering = ("creation_date",)
+        app_label = "uds"
         indexes = [
-            models.Index(fields=['deployed_service', 'cache_level', 'state']),
+            models.Index(fields=["deployed_service", "cache_level", "state"]),
         ]
 
     # Helper to allow new names
     @property
-    def service_pool(self) -> 'ServicePool':
+    def service_pool(self) -> "ServicePool":
         return self.deployed_service
 
     # For properties
     @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
-        return self.uuid, 'userservice'
+        return self.uuid, "userservice"
 
     @property
     def name(self) -> str:
         """
         Simple accessor to deployed service name plus unique name
         """
-        return f'{self.deployed_service.name}\\{self.friendly_name}'
+        return f"{self.deployed_service.name}\\{self.friendly_name}"
 
     @property
     def destroy_after(self) -> bool:
         """
         Returns True if this service is to be removed
         """
-        return self.properties.get('destroy_after', False) in (
-            'y',
+        return self.properties.get("destroy_after", False) in (
+            "y",
             True,
         )  # Compare to str to keep compatibility with old values
 
@@ -157,14 +158,14 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         """
         Sets the to_be_removed property
         """
-        self.properties['destroy_after'] = value
+        self.properties["destroy_after"] = value
 
     @destroy_after.deleter
     def destroy_after(self) -> None:
         """
         Removes the to_be_removed property
         """
-        del self.properties['destroy_after']
+        del self.properties["destroy_after"]
 
     def get_environment(self) -> Environment:
         """
@@ -179,11 +180,11 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         (see related classes uds.core.util.unique_name_generator and uds.core.util.unique_mac_generator)
         """
         return Environment.environment_for_table_record(
-            self._meta.verbose_name or self._meta.model_name or '',
+            self._meta.verbose_name or self._meta.model_name or "",
             self.id,
         )
 
-    def get_instance(self) -> 'services.UserService':
+    def get_instance(self) -> "services.UserService":
         """
         Instantiates the object this record contains. In this case, the instantiated object needs also
         the os manager and the publication, so we also instantiate those here.
@@ -205,7 +206,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         # We get the service instance, publication instance and osmanager instance
         servicepool = self.deployed_service
         if not servicepool.service:
-            raise Exception('Service not found')
+            raise Exception("Service not found")
         service_instance = servicepool.service.get_instance()
         if service_instance.needs_osmanager is False or not servicepool.osmanager:
             osmanager_instance = None
@@ -220,12 +221,12 @@ class UserService(UUIDModel, properties.PropertiesMixin):
             # The publication to which this item points to, does not exists
             self.publication = None
             logger.exception(
-                'Got exception at get_instance of an userservice %s (seems that publication does not exists!)',
+                "Got exception at get_instance of an userservice %s (seems that publication does not exists!)",
                 self,
             )
         if service_instance.user_service_type is None:
             raise Exception(
-                f'Class {service_instance.__class__.__name__} needs user_service_type but it is not defined!!!'
+                f"Class {service_instance.__class__.__name__} needs user_service_type but it is not defined!!!"
             )
         instance = service_instance.user_service_type(
             self.get_environment(),
@@ -243,12 +244,12 @@ class UserService(UUIDModel, properties.PropertiesMixin):
                 # This way, if we instantiate it, it will be upgraded
                 if instance.needs_upgrade():
                     self.data = instance.serialize()
-                    self.save(update_fields=['data'])
+                    self.save(update_fields=["data"])
                     instance.mark_for_upgrade(False)
 
             except Exception:
                 logger.exception(
-                    'Error unserializing %s//%s : %s',
+                    "Error unserializing %s//%s : %s",
                     self.deployed_service.name,
                     self.uuid,
                     self.data,
@@ -257,7 +258,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         self._cached_instance = instance
         return instance
 
-    def update_data(self, userservice_instance: 'services.UserService') -> None:
+    def update_data(self, userservice_instance: "services.UserService") -> None:
         """
         Updates the data field with the serialized :py:class:uds.core.services.UserDeployment
 
@@ -267,16 +268,16 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         :note: This method SAVES the updated record, just updates the field
         """
         if not userservice_instance.is_dirty():
-            logger.debug('Skipping update of user service %s, no changes', self)
+            logger.debug("Skipping update of user service %s, no changes", self)
             return  # Nothing to do
         self.data = userservice_instance.serialize()
-        self.save(update_fields=['data'])
+        self.save(update_fields=["data"])
 
     def get_name(self) -> str:
         """
         Returns the name of the user deployed service
         """
-        if self.friendly_name == '':
+        if self.friendly_name == "":
             si = self.get_instance()
             self.friendly_name = si.get_name()
             self.update_data(si)
@@ -287,7 +288,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         """
         Returns the unique id of the user deployed service
         """
-        if self.unique_id == '':
+        if self.unique_id == "":
             si = self.get_instance()
             self.unique_id = si.get_unique_id()
             self.update_data(si)
@@ -320,7 +321,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         # If value is found on property, use it, else, try to recover it from storage
         if val is None:
             val = typing.cast(str, self.get_environment().storage.read(name))
-        return val or ''
+        return val or ""
 
     def set_connection_source(self, src: types.connections.ConnectionSource) -> None:
         """
@@ -338,12 +339,12 @@ class UserService(UUIDModel, properties.PropertiesMixin):
 
         if len(src.ip) > consts.system.MAX_IPV6_LENGTH or len(src.hostname) > consts.system.MAX_DNS_NAME_LENGTH:
             logger.info(
-                'Truncated connection source data to %s/%s',
+                "Truncated connection source data to %s/%s",
                 self.src_ip,
                 self.src_hostname,
             )
 
-        self.save(update_fields=['src_ip', 'src_hostname'])
+        self.save(update_fields=["src_ip", "src_hostname"])
 
     def get_connection_source(self) -> types.connections.ConnectionSource:
         """
@@ -355,14 +356,14 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         :note: If the transport did not notified this data, this may be "empty"
         """
         return types.connections.ConnectionSource(
-            self.src_ip or '0.0.0.0',  # nosec: not a binding address
-            self.src_hostname or 'unknown',
+            self.src_ip or "0.0.0.0",  # nosec: not a binding address
+            self.src_hostname or "unknown",
         )
 
-    def get_osmanager(self) -> 'OSManager | None':  # Db os manager
+    def get_osmanager(self) -> "OSManager | None":  # Db os manager
         return self.deployed_service.osmanager
 
-    def get_osmanager_instance(self) -> 'osmanagers.OSManager | None':  # Instance of os manager
+    def get_osmanager_instance(self) -> "osmanagers.OSManager | None":  # Instance of os manager
         osmanager = self.get_osmanager()
         if osmanager:
             return osmanager.get_instance()
@@ -408,7 +409,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         """
         servicepool = self.deployed_service
         if not servicepool.service:
-            raise Exception('Service not found')
+            raise Exception("Service not found")
         service_instance = servicepool.service.get_instance()
         if service_instance.needs_osmanager is False or not servicepool.osmanager:
             return (username, password)
@@ -428,11 +429,11 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         if state != self.state:
             self.state_date = sql_now()
             self.state = state
-            self.save(update_fields=['state', 'state_date'])
+            self.save(update_fields=["state", "state_date"])
 
     def update_state_date(self) -> None:
         self.state_date = sql_now()
-        self.save(update_fields=['state_date'])
+        self.save(update_fields=["state_date"])
 
     def set_os_state(self, state: str) -> None:
         """
@@ -447,7 +448,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         if state != self.os_state:
             self.state_date = sql_now()
             self.os_state = state
-            self.save(update_fields=['os_state', 'state_date'])
+            self.save(update_fields=["os_state", "state_date"])
 
     def assign_to(self, user: User | None) -> None:
         """
@@ -459,7 +460,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         self.cache_level = 0
         self.state_date = sql_now()
         self.user = user
-        self.save(update_fields=['cache_level', 'state_date', 'user'])
+        self.save(update_fields=["cache_level", "state_date", "user"])
 
     def set_in_use(self, in_use: bool) -> None:
         """
@@ -475,7 +476,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
 
         self.in_use = in_use
         self.in_use_date = sql_now()
-        self.save(update_fields=['in_use', 'in_use_date'])
+        self.save(update_fields=["in_use", "in_use_date"])
 
         if in_use:
             # Start accounting if needed
@@ -492,7 +493,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         # 2.- If called but already accounting, do nothing
         # 3.- If called and not accounting, start accounting
         # accounting comes from AccountUsage, and is a OneToOneRelation with UserService
-        if self.deployed_service.account is None or hasattr(self, 'accounting'):
+        if self.deployed_service.account is None or hasattr(self, "accounting"):
             return
 
         self.deployed_service.account.start_accounting(self)
@@ -501,7 +502,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         # 1.- If do not have any accounter associated, do nothing
         # 2.- If called but not accounting, do nothing
         # 3.- If called and accounting, stop accounting
-        if self.deployed_service.account is None or hasattr(self, 'accounting') is False:
+        if self.deployed_service.account is None or hasattr(self, "accounting") is False:
             return
 
         self.deployed_service.account.stop_accounting(self)
@@ -515,7 +516,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         return session.session_id
 
     def end_session(self, session_id: str) -> None:
-        if session_id == '':
+        if session_id == "":
             # Close all sessions
             for session in self.sessions.all():
                 session.close()
@@ -525,7 +526,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
                 session = self.sessions.get(session_id=session_id)
                 session.close()
             except Exception:  # Does not exists, log it and ignore it
-                logger.warning('Session %s does not exists for user deployed service', self.id)
+                logger.warning("Session %s does not exists for user deployed service", self.id)
 
     def is_usable(self) -> bool:
         """
@@ -604,19 +605,18 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         UserServiceManager.manager().move_to_level(self, cache_level)
 
     def set_comms_info(self, comms_url: str | None = None, secret: str | None = None) -> None:
-        self.properties['comms_url'] = comms_url
-        self.properties['comms_secret'] = secret
+        self.properties["comms_url"] = comms_url
+        self.properties["comms_secret"] = secret
 
     def get_comms_secret(self) -> str | None:
         # Try to get the secret. If not found, it's the last part of the comms_url (after the last /)
         return (
-            self.properties.get('comms_secret', None)
-            or (self.properties.get('comms_url', None) or '').split('/')[-1]
+            self.properties.get("comms_secret", None) or (self.properties.get("comms_url", None) or "").split("/")[-1]
         )
 
     def get_comms_endpoint(self, path: str | None = None) -> str | None:  # pylint: disable=unused-argument
         # path is not used, but to keep compat with Server "getCommUrl" method
-        return self.properties.get('comms_url', None)
+        return self.properties.get("comms_url", None)
 
     def notify_preconnect(self) -> None:
         """
@@ -626,18 +626,18 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         pass
 
     def log_ip(self, ip: str | None = None) -> None:
-        self.properties['ip'] = ip
+        self.properties["ip"] = ip
 
     def get_log_ip(self) -> str:
-        return self.properties.get('ip') or '0.0.0.0'  # nosec: no binding address
+        return self.properties.get("ip") or "0.0.0.0"  # nosec: no binding address
 
     @property
     def actor_version(self) -> str:
-        return self.properties.get('actor_version') or '0.0.0'
+        return self.properties.get("actor_version") or "0.0.0"
 
     @actor_version.setter
     def actor_version(self, version: str) -> None:
-        self.properties['actor_version'] = version
+        self.properties["actor_version"] = version
 
     def is_publication_valid(self) -> bool:
         """
@@ -657,14 +657,14 @@ class UserService(UUIDModel, properties.PropertiesMixin):
     ) -> None:
         log.log(self, level, message, source)
 
-    def test_connectivity(self, host: str, port: 'str|int', timeout: int = 4) -> bool:
+    def test_connectivity(self, host: str, port: "str|int", timeout: int = 4) -> bool:
         return self.deployed_service.test_connectivity(host, port, timeout)
 
     def __str__(self) -> str:
         return (
-            f'User service {self.name}, unique_id {self.unique_id},'
-            f' cache_level {self.cache_level}, user {self.user},'
-            f' name {self.friendly_name}, state {State.from_str(self.state).localized}:{State.from_str(self.os_state).localized}'
+            f"User service {self.name}, unique_id {self.unique_id},"
+            f" cache_level {self.cache_level}, user {self.user},"
+            f" name {self.friendly_name}, state {State.from_str(self.state).localized}:{State.from_str(self.os_state).localized}"
         )
 
     @staticmethod
@@ -677,18 +677,18 @@ class UserService(UUIDModel, properties.PropertiesMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: 'UserService' = kwargs['instance']
+        to_delete: "UserService" = kwargs["instance"]
         # Clear environment
         to_delete.get_environment().clean_related_data()
         # Ensure all sessions are closed (invoke with '' to close all sessions)
         # In fact, sessions are going to be deleted also, but we give then
         # the oportunity to execute some code before deleting them
-        to_delete.end_session('')
+        to_delete.end_session("")
 
         # Clear related logs to this user service
         log.clear_logs(to_delete)
 
-        logger.debug('Deleted user service %s', to_delete)
+        logger.debug("Deleted user service %s", to_delete)
 
 
 # Connects a pre deletion signal to Authenticator

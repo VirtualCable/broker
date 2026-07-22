@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -47,7 +48,7 @@ logger = logging.getLogger(__name__)
 if typing.TYPE_CHECKING:
     from .transport import Transport
     from .authenticator import Authenticator
-    
+
 
 class Network(UUIDModel, TaggingMixin):
     """
@@ -56,20 +57,16 @@ class Network(UUIDModel, TaggingMixin):
 
     name = models.CharField(max_length=64, unique=True)
 
-    start = models.CharField(
-        max_length=32, default='0', db_index=True
-    )  # 128 bits, for IPv6, network byte order, hex
-    end = models.CharField(
-        max_length=32, default='0', db_index=True
-    )  # 128 bits, for IPv6, network byte order, hex
+    start = models.CharField(max_length=32, default="0", db_index=True)  # 128 bits, for IPv6, network byte order, hex
+    end = models.CharField(max_length=32, default="0", db_index=True)  # 128 bits, for IPv6, network byte order, hex
 
     version = models.IntegerField(default=4)  # network type, ipv4 or ipv6
-    net_string = models.CharField(max_length=240, default='')
-    transports: 'models.ManyToManyField[Transport, Network]' = models.ManyToManyField(
-        'Transport', related_name='networks', db_table='uds_net_trans'
+    net_string = models.CharField(max_length=240, default="")
+    transports: "models.ManyToManyField[Transport, Network]" = models.ManyToManyField(
+        "Transport", related_name="networks", db_table="uds_net_trans"
     )
-    authenticators: 'models.ManyToManyField[Authenticator, Network]' = models.ManyToManyField(
-        'Authenticator', related_name='networks', db_table='uds_net_auths'
+    authenticators: "models.ManyToManyField[Authenticator, Network]" = models.ManyToManyField(
+        "Authenticator", related_name="networks", db_table="uds_net_auths"
     )
 
     # "fake" declarations for type checking
@@ -80,8 +77,8 @@ class Network(UUIDModel, TaggingMixin):
         Meta class to declare default order
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
+        ordering = ("name",)
+        app_label = "uds"
 
     @staticmethod
     def hexlify(number: int) -> str:
@@ -99,7 +96,7 @@ class Network(UUIDModel, TaggingMixin):
         return int(number, 16)
 
     @staticmethod
-    def get_networks_for_ip(ip: str) -> collections.abc.Iterable['Network']:
+    def get_networks_for_ip(ip: str) -> collections.abc.Iterable["Network"]:
         """
         Returns the networks that are valid for specified ip in dotted quad (xxx.xxx.xxx.xxx)
         """
@@ -113,7 +110,7 @@ class Network(UUIDModel, TaggingMixin):
         )
 
     @staticmethod
-    def create(name: str, net_range: str) -> 'Network':
+    def create(name: str, net_range: str) -> "Network":
         """
         Creates an network record, with the specified network range. Supports IPv4 and IPv6
         IPV4 has a versatile format, that can be:
@@ -190,7 +187,7 @@ class Network(UUIDModel, TaggingMixin):
         Returns True if the specified ip is in this network
         """
         # if net_string is '*', then we are in all networks, return true
-        if self.net_string == '*':
+        if self.net_string == "*":
             return True
         ip_int, version = net.ip_to_long(ip)
         return self.version == version and self.net_start <= ip_int <= self.net_end
@@ -210,15 +207,17 @@ class Network(UUIDModel, TaggingMixin):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f'Network {self.name} ({self.net_string}) from {self.str_net_start} to {self.str_net_end} ({self.version})'
+        return (
+            f"Network {self.name} ({self.net_string}) from {self.str_net_start} to {self.str_net_end} ({self.version})"
+        )
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: 'Network' = kwargs['instance']
+        to_delete: "Network" = kwargs["instance"]
 
-        logger.debug('Before delete auth %s', to_delete)
+        logger.debug("Before delete auth %s", to_delete)
 
         # Clears related permissions
         clean(to_delete)

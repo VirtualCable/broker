@@ -26,9 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
 
 from uds.core.environment import Environment
 from uds.core import consts
@@ -54,41 +54,41 @@ class LinuxAdOsManagerActorTest(rest.test.RESTActorTestCase):
             self.provider,
             self.plain_users[0],
             self.simple_groups[:3],
-            'managed',
+            "managed",
             osm_instance,
         )
         unique_id = userservice.get_unique_id()
 
         response = self.client.post(
-            '/uds/rest/actor/v3/initialize',
+            "/uds/rest/actor/v3/initialize",
             data={
-                'type': osm_instance.type_type,
-                'version': consts.system.VERSION,
-                'token': actor_token,
-                'id': [{'mac': unique_id, 'ip': '1.2.3.4'}],
+                "type": osm_instance.type_type,
+                "version": consts.system.VERSION,
+                "token": actor_token,
+                "id": [{"mac": unique_id, "ip": "1.2.3.4"}],
             },
-            content_type='application/json',
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn('error', response.json())
-        result = response.json()['result']
+        self.assertNotIn("error", response.json())
+        result = response.json()["result"]
 
         # Should have a token / own token, but not checked here because it's generic
-        self.assertEqual(result['unique_id'], unique_id)
-        self.assertIn('os', result)
-        os = result['os']
-        self.assertEqual(os['action'], 'rename_ad')
-        self.assertEqual(os['name'], userservice.friendly_name)
-        self.assertIn('custom', os)
-        custom = os['custom']
-        self.assertEqual(custom['domain'], osm_instance.domain.value)
-        self.assertEqual(custom['account'], osm_instance.account.value)
-        self.assertEqual(custom['password'], osm_instance.password.value)
-        self.assertEqual(custom['ou'], osm_instance.ou.value)
-        self.assertEqual(custom['is_persistent'], osm_instance.remove_on_exit.value)
-        self.assertEqual(custom['client_software'], osm_instance.client_software.value)
-        self.assertEqual(custom['server_software'], osm_instance.server_software.value)
-        self.assertEqual(custom['membership_software'], osm_instance.membership_software.value)
-        self.assertEqual(custom['ssl'], osm_instance.use_ssl.value)
-        self.assertEqual(custom['automatic_id_mapping'], osm_instance.automatic_id_mapping.value)
+        self.assertEqual(result["unique_id"], unique_id)
+        self.assertIn("os", result)
+        os = result["os"]
+        self.assertEqual(os["action"], "rename_ad")
+        self.assertEqual(os["name"], userservice.friendly_name)
+        self.assertIn("custom", os)
+        custom = os["custom"]
+        self.assertEqual(custom["domain"], osm_instance.domain.value)
+        self.assertEqual(custom["account"], osm_instance.account.value)
+        self.assertEqual(custom["password"], osm_instance.password.value)
+        self.assertEqual(custom["ou"], osm_instance.ou.value)
+        self.assertEqual(custom["is_persistent"], osm_instance.remove_on_exit.value)
+        self.assertEqual(custom["client_software"], osm_instance.client_software.value)
+        self.assertEqual(custom["server_software"], osm_instance.server_software.value)
+        self.assertEqual(custom["membership_software"], osm_instance.membership_software.value)
+        self.assertEqual(custom["ssl"], osm_instance.use_ssl.value)
+        self.assertEqual(custom["automatic_id_mapping"], osm_instance.automatic_id_mapping.value)

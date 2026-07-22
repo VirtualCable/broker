@@ -28,14 +28,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext as _
 
+from uds import models
 from uds.core import types
 from uds.core.ui import gui
-from uds import models
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -45,22 +46,20 @@ logger = logging.getLogger(__name__)
 
 
 def get_resources(parameters: typing.Any) -> types.ui.CallbackResultType:
-    logger.debug('Parameters received by getResources Helper: %s', parameters)
-    provider = typing.cast(
-        'OGProvider', models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance()
-    )
+    logger.debug("Parameters received by getResources Helper: %s", parameters)
+    provider = typing.cast("OGProvider", models.Provider.objects.get(uuid=parameters["prov_uuid"]).get_instance())
 
     api = provider.api
 
-    labs = [gui.choice_item('0', _('All Labs'))] + [
-        gui.choice_item(l['id'], l['name']) for l in api.list_labs(ou=parameters['ou'])
+    labs = [gui.choice_item("0", _("All Labs"))] + [
+        gui.choice_item(l["id"], l["name"]) for l in api.list_labs(ou=parameters["ou"])
     ]
-    images = [gui.choice_item(z['id'], z['name']) for z in api.list_images(ou=parameters['ou'])]
+    images = [gui.choice_item(z["id"], z["name"]) for z in api.list_images(ou=parameters["ou"])]
 
     data: types.ui.CallbackResultType = [
-        {'name': 'lab', 'choices': labs},
-        {'name': 'image', 'choices': images},
+        {"name": "lab", "choices": labs},
+        {"name": "image", "choices": images},
     ]
-    logger.debug('Return data from helper: %s', data)
+    logger.debug("Return data from helper: %s", data)
 
     return data

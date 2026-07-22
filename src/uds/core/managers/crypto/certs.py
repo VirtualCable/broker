@@ -59,11 +59,11 @@ _system_trust_cache: list[x509.Certificate] | None = None
 
 
 def get_server_cert() -> str:
-    return getattr(settings, 'RDP_SIGN_CERT', '/etc/certs/server.pem')
+    return getattr(settings, "RDP_SIGN_CERT", "/etc/certs/server.pem")
 
 
 def get_server_key() -> str:
-    return getattr(settings, 'RDP_SIGN_KEY', '/etc/certs/key.pem')
+    return getattr(settings, "RDP_SIGN_KEY", "/etc/certs/key.pem")
 
 
 def load_certificates_any_format(data: bytes) -> list[x509.Certificate]:
@@ -72,7 +72,7 @@ def load_certificates_any_format(data: bytes) -> list[x509.Certificate]:
             return loader(data)
         except Exception:
             continue
-    raise ValueError('Unable to parse certificates (tried PEM, DER, PKCS7)')
+    raise ValueError("Unable to parse certificates (tried PEM, DER, PKCS7)")
 
 
 def load_private_key_any_format(data: bytes) -> typing.Any:
@@ -81,7 +81,7 @@ def load_private_key_any_format(data: bytes) -> typing.Any:
             return loader(data, password=None, backend=default_backend())
         except Exception:
             continue
-    raise ValueError('Unable to parse private key (tried PEM, DER)')
+    raise ValueError("Unable to parse private key (tried PEM, DER)")
 
 
 def load_pem_certificates(cert_chain: pathlib.Path | str) -> list[x509.Certificate]:
@@ -93,7 +93,7 @@ def load_system_roots() -> list[x509.Certificate]:
     if _system_trust_cache is not None:
         return _system_trust_cache
 
-    override = getattr(settings, 'RDP_SIGN_CA_BUNDLE', None)
+    override = getattr(settings, "RDP_SIGN_CA_BUNDLE", None)
     if override:
         paths: list[str] = [override]
     else:
@@ -109,7 +109,7 @@ def load_system_roots() -> list[x509.Certificate]:
                     seen.add(fp)
                     certs.append(c)
         except Exception as e:
-            logger.warning('CA bundle unavailable at %s: %s', p, e)
+            logger.warning("CA bundle unavailable at %s: %s", p, e)
 
     _system_trust_cache = certs
     return _system_trust_cache
@@ -120,8 +120,7 @@ def _verify_issued_by(cert: x509.Certificate, issuer: x509.Certificate, label: s
         cert.verify_directly_issued_by(issuer)
     except Exception as e:
         raise ValueError(
-            f'{label}: {cert.subject.rfc4514_string()} not issued by '
-            f'{issuer.subject.rfc4514_string()}: {e}'
+            f"{label}: {cert.subject.rfc4514_string()} not issued by {issuer.subject.rfc4514_string()}: {e}"
         ) from e
 
 
@@ -130,13 +129,13 @@ def check_chain(leaf: x509.Certificate, chain: list[x509.Certificate]) -> None:
     now = datetime.datetime.now(datetime.timezone.utc)
     for c in (leaf, *chain):
         if not (c.not_valid_before_utc <= now <= c.not_valid_after_utc):
-            raise ValueError(f'Certificate expired or not yet valid: {c.subject.rfc4514_string()}')
+            raise ValueError(f"Certificate expired or not yet valid: {c.subject.rfc4514_string()}")
 
     # self-signed leaf with no chain: let it pass but shout about it
     if not chain and leaf.issuer == leaf.subject:
-        _verify_issued_by(leaf, leaf, 'Self-signed leaf signature invalid')
+        _verify_issued_by(leaf, leaf, "Self-signed leaf signature invalid")
         logger.warning(
-            'RDP signing certificate is self-signed (subject=%s). mstsc will show '
+            "RDP signing certificate is self-signed (subject=%s). mstsc will show "
             '"unknown publisher" unless installed in Windows Trusted Root store.',
             leaf.subject.rfc4514_string(),
         )
@@ -144,9 +143,7 @@ def check_chain(leaf: x509.Certificate, chain: list[x509.Certificate]) -> None:
 
     # system CAs + any self-signed root bundled with the leaf both count as anchors
     intermediates: dict[str, x509.Certificate] = {}
-    anchors: dict[str, x509.Certificate] = {
-        c.subject.rfc4514_string(): c for c in load_system_roots()
-    }
+    anchors: dict[str, x509.Certificate] = {c.subject.rfc4514_string(): c for c in load_system_roots()}
     for c in chain:
         (anchors if c.issuer == c.subject else intermediates)[c.subject.rfc4514_string()] = c
 
@@ -154,21 +151,19 @@ def check_chain(leaf: x509.Certificate, chain: list[x509.Certificate]) -> None:
     for _ in range(_MAX_CHAIN_DEPTH):
         issuer_key = current.issuer.rfc4514_string()
         if (anchor := anchors.get(issuer_key)) is not None:
-            _verify_issued_by(current, anchor, 'Chain anchor signature invalid')
+            _verify_issued_by(current, anchor, "Chain anchor signature invalid")
             return
         if (nxt := intermediates.get(issuer_key)) is None:
-            raise ValueError(
-                f'Incomplete chain: issuer {issuer_key} not found in intermediates nor system trust store'
-            )
-        _verify_issued_by(current, nxt, 'Chain link invalid')
+            raise ValueError(f"Incomplete chain: issuer {issuer_key} not found in intermediates nor system trust store")
+        _verify_issued_by(current, nxt, "Chain link invalid")
         current = nxt
 
-    raise ValueError(f'Chain depth exceeded {_MAX_CHAIN_DEPTH} (possible loop)')
+    raise ValueError(f"Chain depth exceeded {_MAX_CHAIN_DEPTH} (possible loop)")
 
 
 def check_cert_chain(cert_chain: pathlib.Path | str) -> None:
     # preflight hit before signing; raises if anything's off
     certs = load_pem_certificates(cert_chain)
     if not certs:
-        raise ValueError('No certificates found in certificate chain')
+        raise ValueError("No certificates found in certificate chain")
     check_chain(certs[0], certs[1:])

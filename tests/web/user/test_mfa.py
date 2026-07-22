@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from django.urls import reverse
@@ -58,22 +59,22 @@ class WebMFATest(test.WEBTestCase):
 
         # InternalDB authenticator reads mfa_data from user model
         self.user = self.plain_users[0]
-        self.user.mfa_data = 'test@example.com'
+        self.user.mfa_data = "test@example.com"
         self.user.save()
 
     def test_redirect_when_not_authenticated(self) -> None:
-        response: 'HttpResponse' = self.client.get(reverse('page.mfa'))
-        self.assertRedirects(response, reverse('page.index'), status_code=302, fetch_redirect_response=False)
+        response: "HttpResponse" = self.client.get(reverse("page.mfa"))
+        self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
 
     def test_redirect_when_already_authorized(self) -> None:
         # First login normally (will redirect to MFA)
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
         # GET MFA and submit valid code to authorize
-        self.client.get(reverse('page.mfa'))
-        self.client.post(reverse('page.mfa'), {'code': '123456', 'remember': False})
+        self.client.get(reverse("page.mfa"))
+        self.client.post(reverse("page.mfa"), {"code": "123456", "remember": False})
         # Now authorized, accessing MFA should redirect to index
-        response: 'HttpResponse' = self.client.get(reverse('page.mfa'))
-        self.assertRedirects(response, reverse('page.index'), status_code=302, fetch_redirect_response=False)
+        response: "HttpResponse" = self.client.get(reverse("page.mfa"))
+        self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
 
     def test_redirect_when_no_mfa_provider(self) -> None:
         self.auth.mfa = None
@@ -83,68 +84,68 @@ class WebMFATest(test.WEBTestCase):
     def test_mfa_flow_get_shows_form(self) -> None:
         # Login triggers redirect to MFA
         response = self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.assertRedirects(response, reverse('page.mfa'), status_code=302, fetch_redirect_response=False)
+        self.assertRedirects(response, reverse("page.mfa"), status_code=302, fetch_redirect_response=False)
         # GET MFA page
-        response = self.client.get(reverse('page.mfa'))
+        response = self.client.get(reverse("page.mfa"))
         self.assertEqual(response.status_code, 200)
         # Session must contain MFA data
-        self.assertIn('mfa', self.client.session)
-        self.assertEqual(self.client.session['mfa']['label'], 'Test Code')
+        self.assertIn("mfa", self.client.session)
+        self.assertEqual(self.client.session["mfa"]["label"], "Test Code")
 
     def test_mfa_valid_code(self) -> None:
         # Login and get MFA page to trigger process()
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.client.get(reverse('page.mfa'))
+        self.client.get(reverse("page.mfa"))
         # POST valid code
-        response = self.client.post(reverse('page.mfa'), {'code': '123456', 'remember': False})
-        self.assertRedirects(response, reverse('page.index'), status_code=302, fetch_redirect_response=False)
+        response = self.client.post(reverse("page.mfa"), {"code": "123456", "remember": False})
+        self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
         # Verify authorization
-        response = self.client.get(reverse('page.index'))
+        response = self.client.get(reverse("page.index"))
         self.assertEqual(response.status_code, 200)
 
     def test_mfa_invalid_code(self) -> None:
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.client.get(reverse('page.mfa'))
+        self.client.get(reverse("page.mfa"))
         # POST invalid code
-        response = self.client.post(reverse('page.mfa'), {'code': 'wrong'})
+        response = self.client.post(reverse("page.mfa"), {"code": "wrong"})
         self.assertRedirects(
             response,
-            reverse('page.error', kwargs={'err': types.errors.Error.INVALID_MFA_CODE}),
+            reverse("page.error", kwargs={"err": types.errors.Error.INVALID_MFA_CODE}),
             status_code=302,
             fetch_redirect_response=False,
         )
-        self.assertIn('mfa_tries', self.client.session)
-        self.assertEqual(self.client.session['mfa_tries'], 1)
+        self.assertIn("mfa_tries", self.client.session)
+        self.assertEqual(self.client.session["mfa_tries"], 1)
 
     def test_mfa_too_many_tries(self) -> None:
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.client.get(reverse('page.mfa'))
+        self.client.get(reverse("page.mfa"))
         max_tries = GlobalConfig.MAX_LOGIN_TRIES.as_int()
-        response: 'UDSHttpResponse' = None  # type: ignore[assignment]
+        response: "UDSHttpResponse" = None  # type: ignore[assignment]
         for _ in range(max_tries):
-            response = self.client.post(reverse('page.mfa'), {'code': 'wrong'})
+            response = self.client.post(reverse("page.mfa"), {"code": "wrong"})
 
         # Last attempt redirects to access denied
         self.assertRedirects(
             response,
-            reverse('page.error', kwargs={'err': types.errors.Error.ACCESS_DENIED}),
+            reverse("page.error", kwargs={"err": types.errors.Error.ACCESS_DENIED}),
             status_code=302,
             fetch_redirect_response=False,
         )
         # Session should be flushed
-        self.assertNotIn('mfa_tries', self.client.session)
+        self.assertNotIn("mfa_tries", self.client.session)
 
     def test_mfa_timeout(self) -> None:
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
         # Set MFA start time far in the past
         session = self.client.session
-        session['mfa_start_time'] = 0
+        session["mfa_start_time"] = 0
         session.save()
         # GET MFA page should detect timeout and redirect to login
-        response = self.client.get(reverse('page.mfa'))
-        self.assertRedirects(response, reverse('page.login'), status_code=302, fetch_redirect_response=False)
+        response = self.client.get(reverse("page.mfa"))
+        self.assertRedirects(response, reverse("page.login"), status_code=302, fetch_redirect_response=False)
         # Session should be flushed
-        self.assertNotIn('mfa_start_time', self.client.session)
+        self.assertNotIn("mfa_start_time", self.client.session)
 
     def test_mfa_remember_device(self) -> None:
         # Create an MFA with remember_device > 0
@@ -152,12 +153,12 @@ class WebMFATest(test.WEBTestCase):
         self.auth.mfa = mfa_with_remember
         self.auth.save()
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.client.get(reverse('page.mfa'))
+        self.client.get(reverse("page.mfa"))
         # POST with remember=True
-        response = self.client.post(reverse('page.mfa'), {'code': '123456', 'remember': True})
-        self.assertRedirects(response, reverse('page.index'), status_code=302, fetch_redirect_response=False)
+        response = self.client.post(reverse("page.mfa"), {"code": "123456", "remember": True})
+        self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
         # Cookie should be set
-        self.assertIn('mfa_status', response.cookies)
+        self.assertIn("mfa_status", response.cookies)
 
     def test_mfa_remember_device_skips_mfa_on_relogin(self) -> None:
         mfa_with_remember = mfa_fixtures.create_db_mfa(remember_device=24)
@@ -165,16 +166,16 @@ class WebMFATest(test.WEBTestCase):
         self.auth.save()
         # First login: complete MFA with remember=True
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.client.get(reverse('page.mfa'))
-        self.client.post(reverse('page.mfa'), {'code': '123456', 'remember': True})
+        self.client.get(reverse("page.mfa"))
+        self.client.post(reverse("page.mfa"), {"code": "123456", "remember": True})
         # Logout
-        self.client.get(reverse('page.logout'))
+        self.client.get(reverse("page.logout"))
         # Login again
         response = self.do_login(self.user.name, self.user.name, self.auth.uuid)
-        self.assertRedirects(response, reverse('page.mfa'), status_code=302, fetch_redirect_response=False)
+        self.assertRedirects(response, reverse("page.mfa"), status_code=302, fetch_redirect_response=False)
         # GET MFA -> should skip due to cookie and redirect to index
-        response = self.client.get(reverse('page.mfa'))
-        self.assertRedirects(response, reverse('page.index'), status_code=302, fetch_redirect_response=False)
+        response = self.client.get(reverse("page.mfa"))
+        self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
 
     def test_mfa_skip_mfa_group_skips_mfa(self) -> None:
         group_with_skip = fixtures_authenticators.create_db_groups(self.auth, number_of_groups=1)[0]
@@ -187,11 +188,11 @@ class WebMFATest(test.WEBTestCase):
     def test_mfa_no_identifier_allowed(self) -> None:
         # User without mfa_data: MFA will allow login because allow_login_without_identifier returns True
         user_no_id = self.plain_users[1]
-        user_no_id.mfa_data = ''
+        user_no_id.mfa_data = ""
         user_no_id.save()
         # Login redirects to MFA
         response = self.do_login(user_no_id.name, user_no_id.name, self.auth.uuid)
-        self.assertRedirects(response, reverse('page.mfa'), status_code=302, fetch_redirect_response=False)
+        self.assertRedirects(response, reverse("page.mfa"), status_code=302, fetch_redirect_response=False)
         # GET MFA page -> should authorize directly due to empty identifier
-        response = self.client.get(reverse('page.mfa'))
-        self.assertRedirects(response, reverse('page.index'), status_code=302, fetch_redirect_response=False)
+        response = self.client.get(reverse("page.mfa"))
+        self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)

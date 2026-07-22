@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -59,15 +60,15 @@ class User(UUIDModel, properties.PropertiesMixin):
     This class represents a single user, associated with one authenticator
     """
 
-    manager = models.ForeignKey(Authenticator, on_delete=models.CASCADE, related_name='users')
+    manager = models.ForeignKey(Authenticator, on_delete=models.CASCADE, related_name="users")
     name = models.CharField(max_length=128, db_index=True)
     real_name = models.CharField(max_length=128)
     comments = models.CharField(max_length=256)
     state = models.CharField(max_length=1, db_index=True)
     password = models.CharField(
-        max_length=128, default=''
+        max_length=128, default=""
     )  # Only used on "internal" sources or sources that "needs password"
-    mfa_data = models.CharField(max_length=128, default='')  # Only used on "internal" sources
+    mfa_data = models.CharField(max_length=128, default="")  # Only used on "internal" sources
     staff_member = models.BooleanField(default=False)  # Staff members can login to admin
     is_admin = models.BooleanField(default=False)  # is true, this is a super-admin
     last_access = models.DateTimeField(default=NEVER)
@@ -76,23 +77,23 @@ class User(UUIDModel, properties.PropertiesMixin):
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["User"]'
-    groups: 'RelatedManager[Group]'
-    userServices: 'RelatedManager[UserService]'
-    permissions: 'RelatedManager[Permissions]'
+    groups: "RelatedManager[Group]"
+    userServices: "RelatedManager[UserService]"
+    permissions: "RelatedManager[Permissions]"
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """
         Meta class to declare default order and unique multiple field index
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
-        constraints = [models.UniqueConstraint(fields=['manager', 'name'], name='u_usr_manager_name')]
+        ordering = ("name",)
+        app_label = "uds"
+        constraints = [models.UniqueConstraint(fields=["manager", "name"], name="u_usr_manager_name")]
 
     # For properties
     @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
-        return self.uuid, 'user'
+        return self.uuid, "user"
 
     def get_username_for_auth(self) -> str:
         """
@@ -108,10 +109,10 @@ class User(UUIDModel, properties.PropertiesMixin):
     @property
     def pretty_name(self) -> str:
         if self.manager.name:
-            return self.name + '@' + self.manager.name
+            return self.name + "@" + self.manager.name
         return self.name
 
-    def get_manager(self) -> 'auths.Authenticator':
+    def get_manager(self) -> "auths.Authenticator":
         """
         Returns the authenticator object that owns this user.
 
@@ -133,7 +134,7 @@ class User(UUIDModel, properties.PropertiesMixin):
         Returns a set of favorite user services for this user
         """
         with self.properties as props:
-            favs = props.get('favorites', [])
+            favs = props.get("favorites", [])
             return set(favs)
 
     def add_favorite(self, favorite: str) -> None:
@@ -141,19 +142,19 @@ class User(UUIDModel, properties.PropertiesMixin):
         Adds a favorite user service for this user
         """
         with self.properties as props:
-            favs = set(props.get('favorites', []))
+            favs = set(props.get("favorites", []))
             favs.add(favorite)
-            props['favorites'] = list(favs)
+            props["favorites"] = list(favs)
 
     def remove_favorite(self, favorite: str) -> None:
         """
         Removes a favorite user service for this user
         """
         with self.properties as props:
-            favs = set(props.get('favorites', []))
+            favs = set(props.get("favorites", []))
             if favorite in favs:
                 favs.discard(favorite)
-                props['favorites'] = list(favs)
+                props["favorites"] = list(favs)
 
     def is_staff(self) -> bool:
         """
@@ -186,22 +187,22 @@ class User(UUIDModel, properties.PropertiesMixin):
         Updates the last access for this user with the current time of the sql server
         """
         self.last_access = sql_now()
-        self.save(update_fields=['last_access'])
+        self.save(update_fields=["last_access"])
 
-    def logout(self, request: 'types.requests.ExtendedHttpRequest') -> types.auth.AuthenticationResult:
+    def logout(self, request: "types.requests.ExtendedHttpRequest") -> types.auth.AuthenticationResult:
         """
         Invoked to log out this user
         Returns the url where to redirect user, or None if default url will be used
         """
         return self.get_manager().logout(request, self.name)
 
-    def get_groups(self) -> collections.abc.Generator['Group', None, None]:
+    def get_groups(self) -> collections.abc.Generator["Group", None, None]:
         """
         returns the groups (and metagroups) this user belongs to
         """
         if self.parent:
             try:
-                usr = User.objects.prefetch_related('authenticator', 'groups').get(uuid=self.parent)
+                usr = User.objects.prefetch_related("authenticator", "groups").get(uuid=self.parent)
             except Exception:  # If parent do not exists
                 usr = self
         else:
@@ -216,22 +217,20 @@ class User(UUIDModel, properties.PropertiesMixin):
         # Locate metagroups
         for g in (
             self.manager.groups.filter(is_meta=True)
-            .annotate(number_groups=Count('groups'))  # g.groups.count()
+            .annotate(number_groups=Count("groups"))  # g.groups.count()
             .annotate(
-                number_belongs_meta=Count('groups', filter=Q(groups__id__in=grps))
+                number_belongs_meta=Count("groups", filter=Q(groups__id__in=grps))
             )  # g.groups.filter(id__in=grps).count()
         ):
-            number_of_groups_belonging_in_meta: int = typing.cast(
-                typing.Any, g
-            ).number_belongs_meta  # Anotated field
+            number_of_groups_belonging_in_meta: int = typing.cast(typing.Any, g).number_belongs_meta  # Anotated field
 
-            logger.debug('gn = %s', number_of_groups_belonging_in_meta)
-            logger.debug('groups count: %s', typing.cast(typing.Any, g).number_groups)  # Anotated field
+            logger.debug("gn = %s", number_of_groups_belonging_in_meta)
+            logger.debug("groups count: %s", typing.cast(typing.Any, g).number_groups)  # Anotated field
 
             if g.meta_if_any is True and number_of_groups_belonging_in_meta > 0:
                 number_of_groups_belonging_in_meta = typing.cast(typing.Any, g).number_groups  # Anotated field
 
-            logger.debug('gn after = %s', number_of_groups_belonging_in_meta)
+            logger.debug("gn after = %s", number_of_groups_belonging_in_meta)
 
             # If a meta group is empty, all users belongs to it. we can use gn != 0 to check that if it is empty, is not valid
             if number_of_groups_belonging_in_meta == typing.cast(typing.Any, g).number_groups:
@@ -239,7 +238,7 @@ class User(UUIDModel, properties.PropertiesMixin):
                 yield g
 
     def __str__(self) -> str:
-        return f'{self.pretty_name} (id:{self.id})'
+        return f"{self.pretty_name} (id:{self.id})"
 
     def clean_related_data(self) -> None:
         """
@@ -259,7 +258,7 @@ class User(UUIDModel, properties.PropertiesMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: User = kwargs['instance']
+        to_delete: User = kwargs["instance"]
 
         # first, we invoke removeUser. If this raises an exception, user will not
         # be removed
@@ -270,11 +269,9 @@ class User(UUIDModel, properties.PropertiesMixin):
 
         # Remove related stored values
         try:
-            storage.StorageAsDict(
-                owner='manager' + to_delete.manager.uuid, group=None, atomic=False
-            ).clear()
+            storage.StorageAsDict(owner="manager" + to_delete.manager.uuid, group=None, atomic=False).clear()
         except Exception:
-            logger.exception('Removing stored data')
+            logger.exception("Removing stored data")
         # now removes all "child" of this user, if it has children
         User.objects.filter(parent=to_delete.id).delete()
 
@@ -286,7 +283,7 @@ class User(UUIDModel, properties.PropertiesMixin):
             us.assign_to(None)
             us.release()
 
-        logger.debug('Deleted user %s', to_delete)
+        logger.debug("Deleted user %s", to_delete)
 
 
 # Connect to pre delete signal

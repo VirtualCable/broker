@@ -29,6 +29,7 @@
 """
 Authot: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import typing
 from unittest import mock
@@ -51,15 +52,15 @@ class DynamicPublicationIterationInfo:
     publication_calls: list[mock._Call] = dataclasses.field(default_factory=list)
     state: str = types.states.TaskState.RUNNING
 
-    def __mul__(self, other: int) -> list['DynamicPublicationIterationInfo']:
+    def __mul__(self, other: int) -> list["DynamicPublicationIterationInfo"]:
         return [self] * other
 
 
 class DynamicPublicationTest(UDSTestCase):
     def check_iterations(
         self,
-        service: 'fixtures.DynamicTestingService',
-        publication: 'fixtures.DynamicTestingPublicationQueue',
+        service: "fixtures.DynamicTestingService",
+        publication: "fixtures.DynamicTestingPublicationQueue",
         iterations_info: list[DynamicPublicationIterationInfo],
     ) -> None:
         self.maxDiff = None
@@ -76,26 +77,24 @@ class DynamicPublicationTest(UDSTestCase):
                 first = False
             else:
                 state = publication.check_state()
-            self.assertEqual(
-                state, info.state, f' ************ State: {iteration} {state}: {publication._reason}'
-            )
+            self.assertEqual(state, info.state, f" ************ State: {iteration} {state}: {publication._reason}")
 
             # Assert queues are the same, and if not, show the difference ONLY
             diff = set(info.queue) ^ set(publication._queue)
             self.assertEqual(
                 publication._queue,
                 info.queue,
-                f' ************ Queue: {iteration} {diff}',
+                f" ************ Queue: {iteration} {diff}",
             )
             self.assertEqual(
                 service.mock.mock_calls,
                 info.service_calls,
-                f' ************ Service calls: {iteration} {service.mock.mock_calls}',
+                f" ************ Service calls: {iteration} {service.mock.mock_calls}",
             )
             self.assertEqual(
                 publication.mock.mock_calls,
                 info.publication_calls,
-                f'************ Publication calls: {iteration} {publication.mock.mock_calls}',
+                f"************ Publication calls: {iteration} {publication.mock.mock_calls}",
             )
 
     def test_publication_queue_works_fine(self) -> None:
@@ -107,11 +106,11 @@ class DynamicPublicationTest(UDSTestCase):
         service = fixtures.create_dynamic_service()
         publication = fixtures.create_dynamic_publication(service)
         # Mock op_initialize and make it fail with an exception
-        with mock.patch.object(publication, 'op_initialize', side_effect=Exception('Test')):
+        with mock.patch.object(publication, "op_initialize", side_effect=Exception("Test")):
             state = publication.publish()
             self.assertEqual(state, types.states.TaskState.ERROR)
             # Check that the reason is the exception
-            self.assertEqual(publication._reason, 'Test')
+            self.assertEqual(publication._reason, "Test")
             # Check that the queue is empty (only ERROR operation)
             self.assertEqual(publication._queue, [types.services.Operation.ERROR])
 
@@ -119,14 +118,14 @@ class DynamicPublicationTest(UDSTestCase):
         service = fixtures.create_dynamic_service()
         publication = fixtures.create_dynamic_publication(service)
         # Mock op_create and make it fail with an exception
-        with mock.patch.object(publication, 'op_create', side_effect=Exception('Test')):
+        with mock.patch.object(publication, "op_create", side_effect=Exception("Test")):
             state = publication.publish()  # Firt iteration is INITIALIZE
             self.assertEqual(state, types.states.TaskState.RUNNING)  # Should work
             publication.unmarshal(publication.marshal())  # As it will be done by the worker
             state = publication.check_state()  # Second iteration is CREATE
             self.assertEqual(state, types.states.TaskState.ERROR)
             # Check that the reason is the exception
-            self.assertEqual(publication._reason, 'Test')
+            self.assertEqual(publication._reason, "Test")
             # Check that the queue is empty (only ERROR operation)
             self.assertEqual(publication._queue, [types.services.Operation.ERROR])
 
@@ -134,7 +133,7 @@ class DynamicPublicationTest(UDSTestCase):
         service = fixtures.create_dynamic_service()
         publication = fixtures.create_dynamic_publication(service)
         # Mock op_create_completed and make it fail with an exception
-        with mock.patch.object(publication, 'op_create_completed', side_effect=Exception('Test')):
+        with mock.patch.object(publication, "op_create_completed", side_effect=Exception("Test")):
             state = publication.publish()
             self.assertEqual(state, types.states.TaskState.RUNNING)  # Should work
             publication.unmarshal(publication.marshal())  # As it will be done by the worker
@@ -144,7 +143,7 @@ class DynamicPublicationTest(UDSTestCase):
             state = publication.check_state()
             self.assertEqual(state, types.states.TaskState.ERROR)
             # Check that the reason is the exception
-            self.assertEqual(publication._reason, 'Test')
+            self.assertEqual(publication._reason, "Test")
             # Check that the queue is empty (only ERROR operation)
             self.assertEqual(publication._queue, [types.services.Operation.ERROR])
 
@@ -170,7 +169,7 @@ class DynamicPublicationTest(UDSTestCase):
             state = publication.check_state()
 
         self.assertEqual(publication.check_state(), types.states.TaskState.ERROR)
-        self.assertEqual(publication.error_reason(), 'Max retries reached')
+        self.assertEqual(publication.error_reason(), "Max retries reached")
         self.assertEqual(counter, 11)  # 4 retries + 5 retries after reset + 1 of the reset itself + 1 of initial NOP
 
     def test_publication_max_retries_checker(self) -> None:
@@ -194,7 +193,7 @@ class DynamicPublicationTest(UDSTestCase):
             state = publication.check_state()
 
         self.assertEqual(publication.check_state(), types.states.TaskState.ERROR)
-        self.assertEqual(publication.error_reason(), 'Max retries reached')
+        self.assertEqual(publication.error_reason(), "Max retries reached")
         self.assertEqual(counter, 10)  # 4 retries + 5 retries after reset + 1 of the reset itself
 
     def test_publication_delete(self) -> None:
@@ -213,12 +212,12 @@ class DynamicPublicationTest(UDSTestCase):
             state = publication.check_state()
             if counter == 16:  # After 16 iterations, we will call notify_deleted
                 publication.service().notify_deleted(publication._vmid)
-                
+
         # Counter should be greater than 16
         self.assertGreater(counter, 16)
         # And state shoudl be finished
         self.assertEqual(state, types.states.TaskState.FINISHED)
-    
+
 
 EXPECTED_DEPLOY_ITERATIONS_INFO: typing.Final[list[DynamicPublicationIterationInfo]] = [
     # Initial state for queue
@@ -239,30 +238,22 @@ EXPECTED_DEPLOY_ITERATIONS_INFO: typing.Final[list[DynamicPublicationIterationIn
     DynamicPublicationIterationInfo(  # 4, START
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[3:],
         publication_calls=[call.create_completed_checker()],
-        service_calls=[
-            call.start(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.start(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))],
     ),
     DynamicPublicationIterationInfo(  # 5, START_COMPLETED
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[4:],
         publication_calls=[call.start_completed()],
-        service_calls=[
-            call.is_running(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.is_running(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))],
     ),
     DynamicPublicationIterationInfo(  # 6, STOP
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[5:],
         publication_calls=[call.start_completed_checker()],
-        service_calls=[
-            call.stop(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.stop(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))],
     ),
     DynamicPublicationIterationInfo(  # 7, STOP_COMPLETED
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[6:],
         publication_calls=[call.stop_completed()],
-        service_calls=[
-            call.is_running(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.is_running(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))],
     ),
     DynamicPublicationIterationInfo(  # 8, SHUTDOWN
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[7:],
@@ -278,9 +269,7 @@ EXPECTED_DEPLOY_ITERATIONS_INFO: typing.Final[list[DynamicPublicationIterationIn
     DynamicPublicationIterationInfo(  # 10, REMOVE
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[9:],
         publication_calls=[call.shutdown_completed_checker()],
-        service_calls=[
-            call.remove(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.remove(MustBeOfType(fixtures.DynamicTestingPublicationQueue), MustBeOfType(str))],
     ),
     DynamicPublicationIterationInfo(  # 11, REMOVE_COMPLETED
         queue=fixtures.PUB_TESTEABLE_OPERATIONS[10:],

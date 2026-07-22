@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import datetime
 import logging
@@ -111,123 +112,121 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
 
     MODEL = ServicePool
     DETAIL = {
-        'services': AssignedUserService,
-        'cache': CachedService,
-        'servers': CachedService,  # Alias for cache, but will change in a future release
-        'groups': Groups,
-        'transports': Transports,
-        'publications': Publications,
-        'changelog': Changelog,
-        'access': AccessCalendars,
-        'actions': ActionsCalendars,
+        "services": AssignedUserService,
+        "cache": CachedService,
+        "servers": CachedService,  # Alias for cache, but will change in a future release
+        "groups": Groups,
+        "transports": Transports,
+        "publications": Publications,
+        "changelog": Changelog,
+        "access": AccessCalendars,
+        "actions": ActionsCalendars,
     }
 
     FIELDS_TO_SAVE = [
-        'name',
-        'short_name',
-        'comments',
-        'tags',
-        'service_id',
-        'osmanager_id',
-        'image_id',
-        'pool_group_id',
-        'initial_srvs',
-        'cache_l1_srvs',
-        'cache_l2_srvs',
-        'max_srvs',
-        'show_transports',
-        'visible',
-        'allow_users_remove',
-        'allow_users_reset',
-        'ignores_unused',
-        'account_id',
-        'calendar_message',
-        'custom_message',
-        'display_custom_message',
-        'state:_',  # Optional field, defaults to Nothing (to apply default or existing value)
+        "name",
+        "short_name",
+        "comments",
+        "tags",
+        "service_id",
+        "osmanager_id",
+        "image_id",
+        "pool_group_id",
+        "initial_srvs",
+        "cache_l1_srvs",
+        "cache_l2_srvs",
+        "max_srvs",
+        "show_transports",
+        "visible",
+        "allow_users_remove",
+        "allow_users_reset",
+        "ignores_unused",
+        "account_id",
+        "calendar_message",
+        "custom_message",
+        "display_custom_message",
+        "state:_",  # Optional field, defaults to Nothing (to apply default or existing value)
     ]
 
-    EXCLUDED_FIELDS = ['osmanager_id', 'service_id']
+    EXCLUDED_FIELDS = ["osmanager_id", "service_id"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Service Pools'))
-        .text_column(name='name', title=_('Name'))
-        .dict_column(name='state', title=_('Status'), dct=State.literals_dict())
-        .numeric_column(name='user_services_count', title=_('User services'))
-        .numeric_column(name='user_services_in_preparation', title=_('In Preparation'))
-        .text_column(name='usage', title=_('Usage'))
-        .boolean(name='visible', title=_('Visible'))
-        .boolean(name='show_transports', title=_('Shows transports'))
-        .text_column(name='pool_group_name', title=_('Pool group'))
-        .text_column(name='parent', title=_('Parent service'))
-        .text_column(name='tags', title=_('tags'), visible=False)
-        .row_style(prefix='row-state-', field='state')
-        .with_filter_fields('name', 'state')
+        ui_utils.TableBuilder(_("Service Pools"))
+        .text_column(name="name", title=_("Name"))
+        .dict_column(name="state", title=_("Status"), dct=State.literals_dict())
+        .numeric_column(name="user_services_count", title=_("User services"))
+        .numeric_column(name="user_services_in_preparation", title=_("In Preparation"))
+        .text_column(name="usage", title=_("Usage"))
+        .boolean(name="visible", title=_("Visible"))
+        .boolean(name="show_transports", title=_("Shows transports"))
+        .text_column(name="pool_group_name", title=_("Pool group"))
+        .text_column(name="parent", title=_("Parent service"))
+        .text_column(name="tags", title=_("tags"), visible=False)
+        .row_style(prefix="row-state-", field="state")
+        .with_filter_fields("name", "state")
         .build()
     )
 
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'set_fallback_access',
+            "set_fallback_access",
             True,
             method=types.rest.CustomMethodMethod.POST,
-            description='Update the fallback access policy for a service pool',
+            description="Update the fallback access policy for a service pool",
             params=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    'fallbackAccess': types.rest.api.SchemaProperty(
-                        type='string', description='Fallback access policy: ALLOW (default) or DENY'
+                    "fallbackAccess": types.rest.api.SchemaProperty(
+                        type="string", description="Fallback access policy: ALLOW (default) or DENY"
                     )
                 },
             ),
         ),
         types.rest.ModelCustomMethod(
-            'get_fallback_access',
+            "get_fallback_access",
             True,
-            description='Retrieve the current fallback access policy for a service pool',
+            description="Retrieve the current fallback access policy for a service pool",
         ),
         types.rest.ModelCustomMethod(
-            'actions_list',
+            "actions_list",
             True,
-            description='List all calendar actions available for this service pool based on its service type and current state',
+            description="List all calendar actions available for this service pool based on its service type and current state",
         ),
         types.rest.ModelCustomMethod(
-            'list_assignables',
+            "list_assignables",
             True,
-            description='Enumerate all assignable services that can be used to create a new service pool',
+            description="Enumerate all assignable services that can be used to create a new service pool",
         ),
         types.rest.ModelCustomMethod(
-            'create_from_assignable',
+            "create_from_assignable",
             True,
             method=types.rest.CustomMethodMethod.POST,
-            description='Create a new service pool from an existing assignable service',
+            description="Create a new service pool from an existing assignable service",
             params=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    'user_id': types.rest.api.SchemaProperty(
-                        type='string', description='UUID of the user who will own the new service pool'
+                    "user_id": types.rest.api.SchemaProperty(
+                        type="string", description="UUID of the user who will own the new service pool"
                     ),
-                    'assignable_id': types.rest.api.SchemaProperty(
-                        type='string', description='Identifier of the assignable service to create from'
+                    "assignable_id": types.rest.api.SchemaProperty(
+                        type="string", description="Identifier of the assignable service to create from"
                     ),
                 },
             ),
         ),
         types.rest.ModelCustomMethod(
-            'add_log',
+            "add_log",
             True,
             method=types.rest.CustomMethodMethod.POST,
-            description='Append a log entry to the service pool audit trail',
+            description="Append a log entry to the service pool audit trail",
             params=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    'message': types.rest.api.SchemaProperty(type='string', description='Log message text'),
-                    'level': types.rest.api.SchemaProperty(
-                        type='string', description='Log severity level (INFO, WARN, ERROR)'
+                    "message": types.rest.api.SchemaProperty(type="string", description="Log message text"),
+                    "level": types.rest.api.SchemaProperty(
+                        type="string", description="Log severity level (INFO, WARN, ERROR)"
                     ),
-                    'log_name': types.rest.api.SchemaProperty(
-                        type='string', description='Optional log source name'
-                    ),
+                    "log_name": types.rest.api.SchemaProperty(type="string", description="Optional log source name"),
                 },
             ),
         ),
@@ -239,38 +238,34 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     )
 
     @typing.override
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('user_services_count'):
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("user_services_count"):
             # Annotate the count
-            qs = qs.annotate(
-                valid_count=Count('userServices', filter=~Q(userServices__state__in=State.INFO_STATES))
-            )
+            qs = qs.annotate(valid_count=Count("userServices", filter=~Q(userServices__state__in=State.INFO_STATES)))
             _, is_descending = field_info
-            order_by_field = f"-valid_count" if is_descending else "valid_count"
+            order_by_field = "-valid_count" if is_descending else "valid_count"
             return qs.order_by(order_by_field)
-        if field_info := self.get_sort_field_info('user_services_in_preparation'):
+        if field_info := self.get_sort_field_info("user_services_in_preparation"):
             # Annotate the count
-            qs = qs.annotate(
-                preparing_count=Count('userServices', filter=Q(userServices__state=State.PREPARING))
-            )
+            qs = qs.annotate(preparing_count=Count("userServices", filter=Q(userServices__state=State.PREPARING)))
             _, is_descending = field_info
-            order_by_field = f"-preparing_count" if is_descending else "preparing_count"
+            order_by_field = "-preparing_count" if is_descending else "preparing_count"
             return qs.order_by(order_by_field)
-        if field_info := self.get_sort_field_info('pool_group_name'):
+        if field_info := self.get_sort_field_info("pool_group_name"):
             _, is_descending = field_info
-            order_by_field = f"-servicesPoolGroup__name" if is_descending else "servicesPoolGroup__name"
+            order_by_field = "-servicesPoolGroup__name" if is_descending else "servicesPoolGroup__name"
             return qs.order_by(order_by_field)
-        if field_info := self.get_sort_field_info('parent'):
+        if field_info := self.get_sort_field_info("parent"):
             _, is_descending = field_info
-            order_by_field = f"-service__name" if is_descending else "service__name"
+            order_by_field = "-service__name" if is_descending else "service__name"
             return qs.order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('usage'):
+        if field_info := self.get_sort_field_info("usage"):
             # Not perfect, but almost.. some times max comes from elsewhere, and we
             # cannot control that.
             qs = qs.annotate(
                 usage_count=Count(
-                    'userServices',
+                    "userServices",
                     filter=Q(
                         userServices__state__in=State.VALID_STATES,
                         userServices__cache_level=0,
@@ -278,16 +273,16 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 ),
                 max_srvs_safe=Case(
                     When(max_srvs__lt=1, then=Value(999999999)),  # o cualquier valor enorme
-                    default=F('max_srvs'),
+                    default=F("max_srvs"),
                     output_field=IntegerField(),
                 ),
                 usage_ratio=ExpressionWrapper(
-                    F('usage_count') / F('max_srvs_safe'),
+                    F("usage_count") / F("max_srvs_safe"),
                     output_field=FloatField(),
                 ),
             )
             _, is_descending = field_info
-            order_by_field = f"-usage_ratio" if is_descending else "usage_ratio"
+            order_by_field = "-usage_ratio" if is_descending else "usage_ratio"
             return qs.order_by(order_by_field)
 
         return super().apply_sort(qs)
@@ -299,29 +294,29 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         # Optimized query, due that there is a lot of info needed for theee
         d = sql_now() - datetime.timedelta(seconds=GlobalConfig.RESTRAINT_TIME.as_int())
         return super().get_items(
-            sumarize=kwargs.get('sumarize', True),
+            sumarize=kwargs.get("sumarize", True),
             query=(
                 ServicePool.objects.prefetch_related(
-                    'service',
-                    'service__provider',
-                    'servicesPoolGroup',
-                    'servicesPoolGroup__image',
-                    'osmanager',
-                    'image',
-                    'tags',
-                    'memberOfMeta__meta_pool',
-                    'account',
+                    "service",
+                    "service__provider",
+                    "servicesPoolGroup",
+                    "servicesPoolGroup__image",
+                    "osmanager",
+                    "image",
+                    "tags",
+                    "memberOfMeta__meta_pool",
+                    "account",
                 )
                 .annotate(
                     valid_count=Count(
-                        'userServices',
+                        "userServices",
                         filter=~Q(userServices__state__in=State.INFO_STATES),
                     )
                 )
-                .annotate(preparing_count=Count('userServices', filter=Q(userServices__state=State.PREPARING)))
+                .annotate(preparing_count=Count("userServices", filter=Q(userServices__state=State.PREPARING)))
                 .annotate(
                     error_count=Count(
-                        'userServices',
+                        "userServices",
                         filter=Q(
                             userServices__state=State.ERROR,
                             userServices__state_date__gt=d,
@@ -330,7 +325,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 )
                 .annotate(
                     usage_count=Count(
-                        'userServices',
+                        "userServices",
                         filter=Q(
                             userServices__state__in=State.VALID_STATES,
                             userServices__cache_level=0,
@@ -343,9 +338,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         # return super(ServicesPools, self).get_items(*args, **kwargs)
 
     @typing.override
-    def get_item(self, item: 'Model') -> ServicePoolItem:
+    def get_item(self, item: "Model") -> ServicePoolItem:
         item = ensure.is_instance(item, ServicePool)
-        summary = 'summarize' in self._params
+        summary = "summarize" in self._params
         # if item does not have an associated service, hide it (the case, for example, for a removed service)
         # Access from dict will raise an exception, and item will be skipped
 
@@ -365,7 +360,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             comments=item.comments,
             state=state,
             thumb=item.image.thumb64 if item.image is not None else DEFAULT_THUMB_BASE64,
-            account=item.account.name if item.account is not None else '',
+            account=item.account.name if item.account is not None else "",
             account_id=item.account.uuid if item.account is not None else None,
             service_id=item.service.uuid,
             provider_id=item.service.provider.uuid,
@@ -380,7 +375,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             allow_users_reset=item.allow_users_reset,
             ignores_unused=item.ignores_unused,
             fallbackAccess=item.fallbackAccess,
-            meta_member=[{'id': i.meta_pool.uuid, 'name': i.meta_pool.name} for i in item.memberOfMeta.all()],
+            meta_member=[{"id": i.meta_pool.uuid, "name": i.meta_pool.name} for i in item.memberOfMeta.all()],
             calendar_message=item.calendar_message,
             custom_message=item.custom_message,
             display_custom_message=item.display_custom_message,
@@ -389,11 +384,11 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         if summary:
             return val
 
-        if hasattr(item, 'valid_count'):
-            valid_count = getattr(item, 'valid_count')
-            preparing_count = getattr(item, 'preparing_count')
-            restrained = getattr(item, 'error_count') >= GlobalConfig.RESTRAINT_COUNT.as_int()
-            usage_count = getattr(item, 'usage_count')
+        if hasattr(item, "valid_count"):
+            valid_count = getattr(item, "valid_count")
+            preparing_count = getattr(item, "preparing_count")
+            restrained = getattr(item, "error_count") >= GlobalConfig.RESTRAINT_COUNT.as_int()
+            usage_count = getattr(item, "usage_count")
         else:
             valid_count = item.userServices.exclude(state__in=State.INFO_STATES).count()
             preparing_count = item.userServices.filter(state=State.PREPARING).count()
@@ -401,7 +396,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             usage_count = -1
 
         poolgroup_id: str | None = None
-        poolgroup_name: str = _('Default')
+        poolgroup_name: str = _("Default")
         poolgroup_thumb: str = DEFAULT_THUMB_BASE64
         if item.servicesPoolGroup is not None:
             poolgroup_id = item.servicesPoolGroup.uuid
@@ -419,7 +414,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         val.pool_group_id = poolgroup_id
         val.pool_group_name = poolgroup_name
         val.pool_group_thumb = poolgroup_thumb
-        val.usage = str(item.usage(usage_count).percent) + '%'
+        val.usage = str(item.usage(usage_count).percent) + "%"
 
         return val
 
@@ -429,9 +424,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         # if OSManager.objects.count() < 1:  # No os managers, can't create db
         #    raise exceptions.rest.ResponseError(gettext('Create at least one OS Manager before creating a new service pool'))
         if Service.objects.count() < 1:
-            raise exceptions.rest.ResponseError(
-                gettext('Create at least a service before creating a new service pool')
-            )
+            raise exceptions.rest.ResponseError(gettext("Create at least a service before creating a new service pool"))
 
         gui = (
             (
@@ -442,137 +435,133 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             )
             .set_order(-95)
             .add_text(
-                name='short_name',
-                label=gettext('Short name'),
-                tooltip=gettext('Short name for user service visualization'),
+                name="short_name",
+                label=gettext("Short name"),
+                tooltip=gettext("Short name for user service visualization"),
                 length=32,
             )
             .set_order(100)
             .add_choice(
-                name='service_id',
-                choices=[ui.gui.choice_item('', '')]
+                name="service_id",
+                choices=[ui.gui.choice_item("", "")]
                 + ui.gui.sorted_choices(
-                    [ui.gui.choice_item(v.uuid, v.provider.name + '\\' + v.name) for v in Service.objects.all()]
+                    [ui.gui.choice_item(v.uuid, v.provider.name + "\\" + v.name) for v in Service.objects.all()]
                 ),
-                label=gettext('Base service'),
-                tooltip=gettext('Service used as base of this service pool'),
+                label=gettext("Base service"),
+                tooltip=gettext("Service used as base of this service pool"),
                 readonly=True,
             )
             .add_choice(
-                name='osmanager_id',
-                choices=[ui.gui.choice_item(-1, '')]
+                name="osmanager_id",
+                choices=[ui.gui.choice_item(-1, "")]
                 + ui.gui.sorted_choices([ui.gui.choice_item(v.uuid, v.name) for v in OSManager.objects.all()]),
-                label=gettext('OS Manager'),
-                tooltip=gettext('OS Manager used as base of this service pool'),
+                label=gettext("OS Manager"),
+                tooltip=gettext("OS Manager used as base of this service pool"),
                 readonly=True,
             )
             .add_checkbox(
-                name='publish_on_save',
+                name="publish_on_save",
                 default=True,
                 readonly=True,
-                label=gettext('Publish on save'),
-                tooltip=gettext(
-                    'If active, the service will be published when saved (only for new service pools)'
-                ),
+                label=gettext("Publish on save"),
+                tooltip=gettext("If active, the service will be published when saved (only for new service pools)"),
             )
             .new_tab(types.ui.Tab.DISPLAY)
             .add_checkbox(
-                name='visible',
+                name="visible",
                 default=True,
-                label=gettext('Visible'),
-                tooltip=gettext('If active, transport will be visible for users'),
+                label=gettext("Visible"),
+                tooltip=gettext("If active, transport will be visible for users"),
             )
             .add_image_choice()
             .add_image_choice(
-                name='pool_group_id',
-                choices=[
-                    ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()
-                ],
-                label=gettext('Pool group'),
-                tooltip=gettext('Pool group for this pool (for pool classify on display)'),
+                name="pool_group_id",
+                choices=[ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()],
+                label=gettext("Pool group"),
+                tooltip=gettext("Pool group for this pool (for pool classify on display)"),
             )
             .add_text(
-                name='calendar_message',
-                label=gettext('Calendar access denied text'),
-                tooltip=gettext('Custom message to be shown to users if access is limited by calendar rules.'),
+                name="calendar_message",
+                label=gettext("Calendar access denied text"),
+                tooltip=gettext("Custom message to be shown to users if access is limited by calendar rules."),
             )
             .add_text(
-                name='custom_message',
-                label=gettext('Custom launch message text'),
+                name="custom_message",
+                label=gettext("Custom launch message text"),
                 tooltip=gettext(
-                    'Custom message to be shown to users, if active, when trying to start a service from this pool.'
+                    "Custom message to be shown to users, if active, when trying to start a service from this pool."
                 ),
             )
             .add_checkbox(
-                name='display_custom_message',
+                name="display_custom_message",
                 default=False,
-                label=gettext('Enable custom launch message'),
-                tooltip=gettext('If active, the custom launch message will be shown to users'),
+                label=gettext("Enable custom launch message"),
+                tooltip=gettext("If active, the custom launch message will be shown to users"),
             )
-            .new_tab(gettext('Availability'))
+            .new_tab(gettext("Availability"))
             .add_numeric(
-                name='initial_srvs',
+                name="initial_srvs",
                 default=0,
                 min_value=0,
-                label=gettext('Initial available services'),
-                tooltip=gettext('Services created initially for this service pool'),
+                label=gettext("Initial available services"),
+                tooltip=gettext("Services created initially for this service pool"),
             )
             .add_numeric(
-                name='cache_l1_srvs',
+                name="cache_l1_srvs",
                 default=0,
                 min_value=0,
-                label=gettext('Services to keep in cache'),
-                tooltip=gettext('Services kept in cache for improved user service assignation'),
+                label=gettext("Services to keep in cache"),
+                tooltip=gettext("Services kept in cache for improved user service assignation"),
             )
             .add_numeric(
-                name='cache_l2_srvs',
+                name="cache_l2_srvs",
                 default=0,
                 min_value=0,
-                label=gettext('Services to keep in L2 cache'),
-                tooltip=gettext('Services kept in cache of level2 for improved service assignation'),
+                label=gettext("Services to keep in L2 cache"),
+                tooltip=gettext("Services kept in cache of level2 for improved service assignation"),
             )
             .add_numeric(
-                name='max_srvs',
+                name="max_srvs",
                 default=0,
                 min_value=0,
-                label=gettext('Max services per user'),
-                tooltip=gettext('Maximum number of services that can be assigned to a user from this pool'),
+                label=gettext("Max services per user"),
+                tooltip=gettext("Maximum number of services that can be assigned to a user from this pool"),
             )
             .add_checkbox(
-                name='show_transports',
+                name="show_transports",
                 default=True,
-                label=gettext('Show transports'),
-                tooltip=gettext('If active, transports will be shown to users'),
+                label=gettext("Show transports"),
+                tooltip=gettext("If active, transports will be shown to users"),
             )
             .new_tab(types.ui.Tab.ADVANCED)
             .add_checkbox(
-                name='allow_users_remove',
+                name="allow_users_remove",
                 default=False,
-                label=gettext('Allow removal by users'),
+                label=gettext("Allow removal by users"),
                 tooltip=gettext(
                     'If active, the user will be allowed to remove the service "manually". Be careful with this, because the user will have the "power" to delete its own service'
                 ),
             )
             .add_checkbox(
-                name='allow_users_reset',
+                name="allow_users_reset",
                 default=False,
-                label=gettext('Allow reset by users'),
-                tooltip=gettext('If active, the user will be allowed to reset the service'),
+                label=gettext("Allow reset by users"),
+                tooltip=gettext("If active, the user will be allowed to reset the service"),
             )
             .add_checkbox(
-                name='ignores_unused',
+                name="ignores_unused",
                 default=False,
-                label=gettext('Ignores unused'),
+                label=gettext("Ignores unused"),
                 tooltip=gettext(
-                    'If the option is enabled, UDS will not attempt to detect and remove the user services assigned but not in use.'
+                    "If the option is enabled, UDS will not attempt to detect and remove the user services assigned but not in use."
                 ),
             )
             .add_choice(
-                name='account_id',
-                choices=[ui.gui.choice_item('', '')]
+                name="account_id",
+                choices=[ui.gui.choice_item("", "")]
                 + ui.gui.sorted_choices([ui.gui.choice_item(v.uuid, v.name) for v in Account.objects.all()]),
-                label=gettext('Account'),
-                tooltip=gettext('Account used for this service pool'),
+                label=gettext("Account"),
+                tooltip=gettext("Account used for this service pool"),
                 readonly=True,
             )
         )
@@ -582,40 +571,38 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         # logger.debug(self._params)
 
-        if types.pools.UsageInfoVars.processed_macros_len(fields['name']) > 128:
-            raise exceptions.rest.RequestError(gettext('Name too long'))
+        if types.pools.UsageInfoVars.processed_macros_len(fields["name"]) > 128:
+            raise exceptions.rest.RequestError(gettext("Name too long"))
 
-        if types.pools.UsageInfoVars.processed_macros_len(fields['short_name']) > 32:
-            raise exceptions.rest.RequestError(gettext('Short name too long'))
+        if types.pools.UsageInfoVars.processed_macros_len(fields["short_name"]) > 32:
+            raise exceptions.rest.RequestError(gettext("Short name too long"))
 
         try:
             try:
-                service = Service.objects.get(uuid=process_uuid(fields['service_id']))
-                fields['service_id'] = service.id
+                service = Service.objects.get(uuid=process_uuid(fields["service_id"]))
+                fields["service_id"] = service.id
             except Exception:
-                raise exceptions.rest.RequestError(gettext('Base service does not exist anymore')) from None
+                raise exceptions.rest.RequestError(gettext("Base service does not exist anymore")) from None
 
             try:
                 service_type = service.get_type()
 
                 if service_type.publication_type is None:
-                    self._params['publish_on_save'] = False
+                    self._params["publish_on_save"] = False
 
                 if service_type.can_reset is False:
-                    self._params['allow_users_reset'] = False
+                    self._params["allow_users_reset"] = False
 
                 if service_type.needs_osmanager is True:
                     try:
-                        osmanager = OSManager.objects.get(uuid=process_uuid(fields['osmanager_id']))
-                        fields['osmanager_id'] = osmanager.id
+                        osmanager = OSManager.objects.get(uuid=process_uuid(fields["osmanager_id"]))
+                        fields["osmanager_id"] = osmanager.id
                     except Exception:
-                        if fields.get('state') != State.LOCKED:
-                            raise exceptions.rest.RequestError(
-                                gettext('This service requires an OS Manager')
-                            ) from None
-                        del fields['osmanager_id']
+                        if fields.get("state") != State.LOCKED:
+                            raise exceptions.rest.RequestError(gettext("This service requires an OS Manager")) from None
+                        del fields["osmanager_id"]
                 else:
-                    del fields['osmanager_id']
+                    del fields["osmanager_id"]
 
                 # If service has "overrided fields", overwrite received ones now
                 if service_type.overrided_pools_fields:
@@ -623,70 +610,70 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                         fields[k] = v
 
                 if service_type.uses_cache_l2 is False:
-                    fields['cache_l2_srvs'] = 0
+                    fields["cache_l2_srvs"] = 0
 
                 if service_type.uses_cache is False:
                     for k in (
-                        'initial_srvs',
-                        'cache_l1_srvs',
-                        'cache_l2_srvs',
-                        'max_srvs',
+                        "initial_srvs",
+                        "cache_l1_srvs",
+                        "cache_l2_srvs",
+                        "max_srvs",
                     ):
                         fields[k] = 0
                 else:  # uses cache, adjust values
-                    fields['max_srvs'] = int(fields['max_srvs']) or 1  # ensure max_srvs is at least 1
-                    fields['initial_srvs'] = int(fields['initial_srvs'])
-                    fields['cache_l1_srvs'] = int(fields['cache_l1_srvs'])
+                    fields["max_srvs"] = int(fields["max_srvs"]) or 1  # ensure max_srvs is at least 1
+                    fields["initial_srvs"] = int(fields["initial_srvs"])
+                    fields["cache_l1_srvs"] = int(fields["cache_l1_srvs"])
 
                     # if service_type.userservices_limit != consts.UNLIMITED:
                     #    fields['max_srvs'] = min((fields['max_srvs'], service_type.userservices_limit))
                     #    fields['initial_srvs'] = min(fields['initial_srvs'], service_type.userservices_limit)
                     #    fields['cache_l1_srvs'] = min(fields['cache_l1_srvs'], service_type.userservices_limit)
             except Exception as e:
-                raise exceptions.rest.RequestError(gettext('This service requires an OS Manager')) from e
+                raise exceptions.rest.RequestError(gettext("This service requires an OS Manager")) from e
 
             # If max < initial or cache_1 or cache_l2
-            fields['max_srvs'] = max(
+            fields["max_srvs"] = max(
                 (
-                    int(fields['initial_srvs']),
-                    int(fields['cache_l1_srvs']),
-                    int(fields['max_srvs']),
+                    int(fields["initial_srvs"]),
+                    int(fields["cache_l1_srvs"]),
+                    int(fields["max_srvs"]),
                 )
             )
 
             # *** ACCOUNT ***
-            account_id = fields['account_id']
-            fields['account_id'] = None
-            logger.debug('Account id: %s', account_id)
+            account_id = fields["account_id"]
+            fields["account_id"] = None
+            logger.debug("Account id: %s", account_id)
 
             if account_id:
                 try:
-                    fields['account_id'] = Account.objects.get(uuid=process_uuid(account_id)).id
+                    fields["account_id"] = Account.objects.get(uuid=process_uuid(account_id)).id
                 except Exception:
                     logger.error('Getting account ID: "%s" (%s)', account_id, account_id.__class__)
 
             # **** IMAGE ***
-            image_id = fields['image_id']
-            fields['image_id'] = None
-            logger.debug('Image id: %s', image_id)
+            image_id = fields["image_id"]
+            fields["image_id"] = None
+            logger.debug("Image id: %s", image_id)
             try:
-                if image_id != '-1':
+                if image_id != "-1":
                     image = Image.objects.get(uuid=process_uuid(image_id))
-                    fields['image_id'] = image.id
+                    fields["image_id"] = image.id
             except Exception:
-                logger.exception('At image recovering')
+                logger.exception("At image recovering")
 
             # Servicepool Group
-            pool_group_id = fields['pool_group_id']
-            del fields['pool_group_id']
-            fields['servicesPoolGroup_id'] = None
-            logger.debug('pool_group_id: %s', pool_group_id)
+            pool_group_id = fields["pool_group_id"]
+            del fields["pool_group_id"]
+            fields["servicesPoolGroup_id"] = None
+            logger.debug("pool_group_id: %s", pool_group_id)
             try:
-                if pool_group_id != '-1':
+                if pool_group_id != "-1":
                     spgrp = ServicePoolGroup.objects.get(uuid=process_uuid(pool_group_id))
-                    fields['servicesPoolGroup_id'] = spgrp.id
+                    fields["servicesPoolGroup_id"] = spgrp.id
             except Exception:
-                logger.exception('At service pool group recovering')
+                logger.exception("At service pool group recovering")
 
         except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
             raise
@@ -694,27 +681,27 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             raise exceptions.rest.RequestError(str(e)) from e
 
     @typing.override
-    def post_save(self, item: 'Model') -> None:
+    def post_save(self, item: "Model") -> None:
         item = ensure.is_instance(item, ServicePool)
-        if self.is_new() and self._params.get('publish_on_save', False) is True:
+        if self.is_new() and self._params.get("publish_on_save", False) is True:
             try:
                 item.publish()
             except Exception as e:
-                logger.error('Could not publish service pool %s: %s', item.name, e)
+                logger.error("Could not publish service pool %s: %s", item.name, e)
 
     @typing.override
-    def delete_item(self, item: 'Model') -> None:
+    def delete_item(self, item: "Model") -> None:
         item = ensure.is_instance(item, ServicePool)
         try:
-            logger.debug('Deleting %s', item)
+            logger.debug("Deleting %s", item)
             item.remove()  # This will mark it for deletion, but in fact will not delete it directly
         except Exception:
             # Eat it and logit
-            logger.exception('deleting service pool')
+            logger.exception("deleting service pool")
 
     # Logs
     @typing.override
-    def get_logs(self, item: 'Model') -> typing.Any:
+    def get_logs(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
         try:
             return log.get_logs(item)
@@ -722,23 +709,23 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             return []
 
     # Set fallback status
-    def set_fallback_access(self, item: 'Model') -> typing.Any:
+    def set_fallback_access(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
         self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
 
-        fallback = self._params.get('fallbackAccess', self.params.get('fallback', None))
+        fallback = self._params.get("fallbackAccess", self.params.get("fallback", None))
         if fallback:
-            logger.debug('Setting fallback of %s to %s', item.name, fallback)
+            logger.debug("Setting fallback of %s to %s", item.name, fallback)
             item.fallbackAccess = fallback
             item.save()
         return item.fallbackAccess
 
-    def get_fallback_access(self, item: 'Model') -> typing.Any:
+    def get_fallback_access(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
         return item.fallbackAccess
 
     #  Returns the action list based on current element, for calendar
-    def actions_list(self, item: 'Model') -> list[types.calendar.CalendarAction]:
+    def actions_list(self, item: "Model") -> list[types.calendar.CalendarAction]:
         item = ensure.is_instance(item, ServicePool)
 
         # If item is locked, only allow publish
@@ -785,36 +772,36 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         ]
         return valid_actions
 
-    def list_assignables(self, item: 'Model') -> typing.Any:
+    def list_assignables(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
         service = item.service.get_instance()
         return list(service.enumerate_assignables())
 
-    def create_from_assignable(self, item: 'Model') -> typing.Any:
+    def create_from_assignable(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
-        if 'user_id' not in self._params or 'assignable_id' not in self._params:
-            raise exceptions.rest.RequestError('Invalid parameters')
+        if "user_id" not in self._params or "assignable_id" not in self._params:
+            raise exceptions.rest.RequestError("Invalid parameters")
 
-        logger.debug('Creating from assignable: %s', self._params)
+        logger.debug("Creating from assignable: %s", self._params)
         UserServiceManager.manager().create_from_assignable(
             item,
-            User.objects.get(uuid__iexact=process_uuid(self._params['user_id'])),
-            self._params['assignable_id'],
+            User.objects.get(uuid__iexact=process_uuid(self._params["user_id"])),
+            self._params["assignable_id"],
         )
 
         return True
 
-    def add_log(self, item: 'Model') -> typing.Any:
+    def add_log(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
-        if 'message' not in self._params:
-            raise exceptions.rest.RequestError('Invalid parameters')
-        if 'level' not in self._params:
-            raise exceptions.rest.RequestError('Invalid parameters')
+        if "message" not in self._params:
+            raise exceptions.rest.RequestError("Invalid parameters")
+        if "level" not in self._params:
+            raise exceptions.rest.RequestError("Invalid parameters")
 
         log.log(
             item,
-            level=types.log.LogLevel.from_str(self._params['level']),
-            message=self._params['message'],
+            level=types.log.LogLevel.from_str(self._params["level"]),
+            message=self._params["message"],
             source=types.log.LogSource.REST,
-            log_name=self._params.get('log_name', None),
+            log_name=self._params.get("log_name", None),
         )

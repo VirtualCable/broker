@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from collections import defaultdict
 import typing
 import collections.abc
@@ -61,8 +62,8 @@ class StatsCounters(models.Model):
         Meta class to declare db table
         """
 
-        db_table = 'uds_stats_c'
-        app_label = 'uds'
+        db_table = "uds_stats_c"
+        app_label = "uds"
 
     @staticmethod
     def get_grouped(
@@ -84,7 +85,7 @@ class StatsCounters(models.Model):
             since = int(since.timestamp())
         if not since:
             # Get first timestamp from table, we knwo table has at least one record
-            first = StatsCounters.objects.order_by('stamp').first()
+            first = StatsCounters.objects.order_by("stamp").first()
             if first is None:
                 return  # No data
             since = first.stamp
@@ -93,7 +94,7 @@ class StatsCounters(models.Model):
             to = int(to.timestamp())
         if not to:
             # Get last timestamp from table, we know table has at least one record
-            last = StatsCounters.objects.order_by('-stamp').first()
+            last = StatsCounters.objects.order_by("-stamp").first()
             if last is None:
                 return
             to = last.stamp
@@ -119,7 +120,7 @@ class StatsCounters(models.Model):
 
         # Max intervals, if present, will adjust interval (that are seconds)
         max_intervals = max_intervals or 0
-        values = q.values_list('stamp', 'value')
+        values = q.values_list("stamp", "value")
         if max_intervals > 0:
             count = len(values)
             max_intervals = max(min(max_intervals, count), 2)
@@ -165,4 +166,4 @@ class StatsCounters(models.Model):
         #     yield (int(i['group_by_stamp']), i['value'])
 
     def __str__(self) -> str:
-        return f'{timezone.make_aware(datetime.datetime.fromtimestamp(self.stamp))} - {self.owner_id}:{self.owner_type}:{self.counter_type} {self.value}'
+        return f"{timezone.make_aware(datetime.datetime.fromtimestamp(self.stamp))} - {self.owner_id}:{self.owner_type}:{self.counter_type} {self.value}"

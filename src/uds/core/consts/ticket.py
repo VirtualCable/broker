@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 
@@ -38,8 +39,12 @@ DEFAULT_TICKET_VALIDITY_TIME: typing.Final[int] = 60  # 1 minute
 MAX_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week
 TUNNEL_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week
 
-TICKET_SECURED_OWNER: typing.Final[str] = '#SECURE#'  # Just a "different" owner. If used anywhere, it's not important (will not fail), but weird enough
+TICKET_SECURED_OWNER: typing.Final[str] = (
+    "#SECURE#"  # Just a "different" owner. If used anywhere, it's not important (will not fail), but weird enough
+)
 # The old comment about length of ticket, does not apply anymore, because the Owner has been moved to an own field
-TICKET_LENGTH: typing.Final[int] = 48  # Ticket length must much the length of the ticket length on tunnel server!!! (take care with previous note) - 
+TICKET_LENGTH: typing.Final[int] = (
+    48  # Ticket length must much the length of the ticket length on tunnel server!!! (take care with previous note) -
+)
 
-SCRAMBLER_LENGTH: typing.Final[int] = 32  # Scrambler length 
+SCRAMBLER_LENGTH: typing.Final[int] = 32  # Scrambler length

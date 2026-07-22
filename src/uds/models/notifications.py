@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -65,27 +66,27 @@ class Notification(models.Model):
         Meta class to declare db table
         """
 
-        db_table = 'uds_notification'
-        app_label = 'uds'
+        db_table = "uds_notification"
+        app_label = "uds"
 
     @staticmethod
-    def get_persistent_queryset() -> 'models.QuerySet[Notification]':
-        return Notification.objects.using('persistent')
+    def get_persistent_queryset() -> "models.QuerySet[Notification]":
+        return Notification.objects.using("persistent")
 
     def save_persistent(self) -> None:
-        self.save(using='persistent')
+        self.save(using="persistent")
 
     def delete_persistent(self) -> None:
-        self.delete(using='persistent')
+        self.delete(using="persistent")
 
     @staticmethod
-    def atomic_persistent() -> 'transaction.Atomic':
-        return transaction.atomic(using='persistent')
+    def atomic_persistent() -> "transaction.Atomic":
+        return transaction.atomic(using="persistent")
 
 
 class Notifier(ManagedObjectModel, TaggingMixin):
-    name = models.CharField(max_length=128, default='')
-    comments = models.CharField(max_length=256, default='')
+    name = models.CharField(max_length=128, default="")
+    comments = models.CharField(max_length=256, default="")
     enabled = models.BooleanField(default=True)
     level = models.PositiveIntegerField(default=LogLevel.ERROR)
 
@@ -97,11 +98,11 @@ class Notifier(ManagedObjectModel, TaggingMixin):
         Meta class to declare db table
         """
 
-        db_table = 'uds_notify_prov'
-        app_label = 'uds'
+        db_table = "uds_notify_prov"
+        app_label = "uds"
 
     @typing.override
-    def get_type(self) -> type['NotificationProviderModule']:
+    def get_type(self) -> type["NotificationProviderModule"]:
         """
         Get the type of the object this record represents.
 
@@ -114,16 +115,12 @@ class Notifier(ManagedObjectModel, TaggingMixin):
 
         kind = messaging.factory().lookup(self.data_type)
         if kind is None:
-            raise Exception(f'Notifier type not found: {self.data_type}')
+            raise Exception(f"Notifier type not found: {self.data_type}")
         return kind
 
     @typing.override
-    def get_instance(
-        self, values: typing.Optional[dict[str, str]] = None
-    ) -> 'NotificationProviderModule':
-        return typing.cast(
-            'NotificationProviderModule', super().get_instance(values=values)
-        )
+    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> "NotificationProviderModule":
+        return typing.cast("NotificationProviderModule", super().get_instance(values=values))
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
@@ -135,7 +132,7 @@ class Notifier(ManagedObjectModel, TaggingMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: 'Notifier' = kwargs['instance']
+        to_delete: "Notifier" = kwargs["instance"]
         # Only tries to get instance if data is not empty
         if to_delete.data:
             try:
@@ -144,12 +141,12 @@ class Notifier(ManagedObjectModel, TaggingMixin):
                 s.env.clean_related_data()  # Clears related data, such as storage, cache, etc...
             except Exception as e:
                 logger.error(
-                    'Error processing deletion of notifier %s: %s (forced deletion)',
+                    "Error processing deletion of notifier %s: %s (forced deletion)",
                     to_delete.name,
                     e,
                 )
 
-        logger.debug('Before delete notification provider %s', to_delete)
+        logger.debug("Before delete notification provider %s", to_delete)
 
 
 # : Connects a pre deletion signal to OS Manager

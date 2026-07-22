@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import random
 import time
@@ -54,7 +55,7 @@ from uds.models import Authenticator, ServicePool, TicketStore
 from uds.web.forms.login_form import LoginForm
 from uds.web.util import errors
 from uds.web.util.authentication import check_login
-from uds.web.views.main import index, logger
+from uds.web.views.main import index
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
@@ -83,28 +84,28 @@ def auth_callback(request: HttpRequest, authenticator_name: str) -> HttpResponse
     try:
         authenticator = (
             Authenticator.objects.filter(Q(name=authenticator_name) | Q(small_name=authenticator_name))
-            .order_by('priority')
+            .order_by("priority")
             .first()
         )
         if not authenticator:
-            raise Exception('Authenticator not found')
+            raise Exception("Authenticator not found")
 
         params = types.auth.AuthCallbackParams.from_request(request)
 
-        logger.debug('Auth callback for %s with params %s', authenticator, params)
+        logger.debug("Auth callback for %s with params %s", authenticator, params)
 
-        ticket = TicketStore.create({'params': params, 'auth': authenticator.uuid})
-        return HttpResponseRedirect(reverse('page.auth.callback_stage2', args=[ticket]))
+        ticket = TicketStore.create({"params": params, "auth": authenticator.uuid})
+        return HttpResponseRedirect(reverse("page.auth.callback_stage2", args=[ticket]))
     except Exception as e:
         # No authenticator found...
         return errors.exception_view(request, e)
 
 
-def auth_callback_stage2(request: 'ExtendedHttpRequestWithUser', ticket_id: str) -> HttpResponse:
+def auth_callback_stage2(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpResponse:
     try:
         ticket = TicketStore.get(ticket_id, invalidate=True)
-        params: types.auth.AuthCallbackParams = ticket['params']
-        auth_uuid: str = ticket['auth']
+        params: types.auth.AuthCallbackParams = ticket["params"]
+        auth_uuid: str = ticket["auth"]
         authenticator = Authenticator.objects.get(uuid=auth_uuid)
 
         result = authenticate_via_callback(authenticator, params, request)
@@ -113,15 +114,15 @@ def auth_callback_stage2(request: 'ExtendedHttpRequestWithUser', ticket_id: str)
             raise exceptions.auth.Redirect(result.url)
 
         if result.user is None:
-            log_login(request, authenticator, f'{params}', 'Invalid at auth callback', as_error=True)
+            log_login(request, authenticator, f"{params}", "Invalid at auth callback", as_error=True)
             raise exceptions.auth.InvalidUserException()
 
-        response = HttpResponseRedirect(reverse('page.index'))
+        response = HttpResponseRedirect(reverse("page.index"))
 
-        weblogin(request, response, result.user, '')  # Password is unavailable in this case
+        weblogin(request, response, result.user, "")  # Password is unavailable in this case
 
         log_login(
-            request, authenticator, result.user.name, 'Federated login'
+            request, authenticator, result.user.name, "Federated login"
         )  # Nice login, just indicating it's federated
 
         # If MFA is provided, we need to redirect to MFA page
@@ -130,23 +131,23 @@ def auth_callback_stage2(request: 'ExtendedHttpRequestWithUser', ticket_id: str)
             auth_instance = authenticator.get_instance()
             if auth_instance.mfa_identifier(result.user.name):
                 request.authorized = False  # We can ask for MFA so first disauthorize user
-                response = HttpResponseRedirect(reverse('page.mfa'))
+                response = HttpResponseRedirect(reverse("page.mfa"))
 
         return response
     except exceptions.auth.Redirect as e:
-        return HttpResponseRedirect(request.build_absolute_uri(str(e)) if e.args and e.args[0] else '/')
+        return HttpResponseRedirect(request.build_absolute_uri(str(e)) if e.args and e.args[0] else "/")
     except exceptions.auth.Logout as e:
         return weblogout(
             request,
             request.build_absolute_uri(str(e)) if e.args and e.args[0] else None,
         )
     except Exception as e:
-        logger.error('Error authenticating user: %s', e)
+        logger.error("Error authenticating user: %s", e)
         return errors.exception_view(request, e)
 
 
 @csrf_exempt
-def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
+def cert_auth(request: "HttpRequest", auth_uuid: str) -> HttpResponse:
     """
     Endpoint for X509 Certificate authentication, managed by client-cert-web-auth
 
@@ -166,8 +167,8 @@ def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
             raise exceptions.auth.InvalidAuthenticatorException()
 
         params = types.auth.AuthCallbackParams.from_request(request)
-        ticket = TicketStore.create({'params': params, 'auth': authenticator.uuid})
-        return HttpResponseRedirect(reverse('page.auth.callback_stage2', args=[ticket]))
+        ticket = TicketStore.create({"params": params, "auth": authenticator.uuid})
+        return HttpResponseRedirect(reverse("page.auth.callback_stage2", args=[ticket]))
     except exceptions.auth.InvalidUserException:
         return errors.error_view(request, types.errors.Error.ACCESS_DENIED)
     except exceptions.auth.InvalidAuthenticatorException:
@@ -177,7 +178,7 @@ def cert_auth(request: 'HttpRequest', auth_uuid: str) -> HttpResponse:
 
 
 @csrf_exempt
-def auth_info(request: 'HttpRequest', authenticator_name: str) -> HttpResponse:
+def auth_info(request: "HttpRequest", authenticator_name: str) -> HttpResponse:
     """
     This url is provided so authenticators can provide info (such as SAML metadata)
 
@@ -185,14 +186,14 @@ def auth_info(request: 'HttpRequest', authenticator_name: str) -> HttpResponse:
     by name, so it's easier to access from external sources
     """
     try:
-        logger.debug('Getting info for %s', authenticator_name)
+        logger.debug("Getting info for %s", authenticator_name)
         authenticator = (
             Authenticator.objects.filter(Q(name=authenticator_name) | Q(small_name=authenticator_name))
-            .order_by('priority')
+            .order_by("priority")
             .first()
         )
         if not authenticator:
-            raise Exception('Authenticator not found')
+            raise Exception("Authenticator not found")
         auth_instance = authenticator.get_instance()
         if typing.cast(typing.Any, auth_instance.get_info) == auths.Authenticator.get_info:
             raise Exception()  # This authenticator do not provides info
@@ -203,18 +204,18 @@ def auth_info(request: 'HttpRequest', authenticator_name: str) -> HttpResponse:
             raise Exception()  # This auth do not provides info
 
         info_content = info[0]
-        info_type = info[1] or 'text/html'
+        info_type = info[1] or "text/html"
 
         return HttpResponse(info_content, content_type=info_type)
     except Exception:
-        logger.exception('got')
-        return HttpResponse(_('Authenticator does not provide information'))
+        logger.exception("got")
+        return HttpResponse(_("Authenticator does not provide information"))
 
 
 # Gets the javascript from the custom authtenticator
 @never_cache
-def custom_auth(request: 'ExtendedHttpRequest', auth_id: str) -> HttpResponse:
-    res: str | None = ''
+def custom_auth(request: "ExtendedHttpRequest", auth_id: str) -> HttpResponse:
+    res: str | None = ""
     try:
         try:
             auth = Authenticator.objects.get(uuid=process_uuid(auth_id))
@@ -222,17 +223,15 @@ def custom_auth(request: 'ExtendedHttpRequest', auth_id: str) -> HttpResponse:
             auth = Authenticator.objects.get(pk=auth_id)
         res = auth.get_instance().get_javascript(request)
         if not res:
-            res = ''
+            res = ""
     except Exception:
-        logger.exception('customAuth')
-        res = 'error'
-    return HttpResponse(res, content_type='text/javascript')
+        logger.exception("customAuth")
+        res = "error"
+    return HttpResponse(res, content_type="text/javascript")
 
 
 @never_cache
-def ticket_auth(
-    request: 'ExtendedHttpRequestWithUser', ticket_id: str
-) -> HttpResponse:  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+def ticket_auth(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpResponse:  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
     Used to authenticate an user via a ticket
     """
@@ -241,29 +240,29 @@ def ticket_auth(
 
         try:
             # Extract ticket.data from ticket.data storage, and remove it if success
-            username = data['username']
-            groups = data['groups']
-            auth = data['auth']
-            realname = data['realname']
-            pool_uuid = data['servicePool']
-            password = CryptoManager.manager().decrypt(data['password'])
+            username = data["username"]
+            groups = data["groups"]
+            auth = data["auth"]
+            realname = data["realname"]
+            pool_uuid = data["servicePool"]
+            password = CryptoManager.manager().decrypt(data["password"])
         except Exception:
-            logger.error('Ticket stored is not valid')
+            logger.error("Ticket stored is not valid")
             raise exceptions.auth.InvalidUserException() from None
 
         auth = Authenticator.objects.get(uuid=auth)
         # If user does not exists in DB, create it right now
         # Add user to groups, if they exists...
-        grps: list['models.Group'] = []
+        grps: list["models.Group"] = []
         for g in groups:
             try:
                 grps.append(auth.groups.get(uuid=g))
             except Exception:
-                logger.debug('Group list has changed since ticket assignment')
+                logger.debug("Group list has changed since ticket assignment")
 
         if not grps:
-            logger.error('Ticket has no valid groups')
-            raise Exception('Invalid ticket authentication')
+            logger.error("Ticket has no valid groups")
+            raise Exception("Invalid ticket authentication")
 
         usr = auth.get_or_create_user(username, realname)
         if not usr or State.from_str(usr.state).is_active() is False:  # If user is inactive, raise an exception
@@ -276,9 +275,7 @@ def ticket_auth(
         weblogin(request, None, usr, password)
 
         # Log the login
-        log_login(
-            request, auth, username, 'Ticket authentication'
-        )  # Nice login, just indicating it's using a ticket
+        log_login(request, auth, username, "Ticket authentication")  # Nice login, just indicating it's using a ticket
 
         request.user = (
             usr  # Temporarily store this user as "authenticated" user, next requests will be done using session
@@ -286,7 +283,7 @@ def ticket_auth(
         request.authorized = True  # User is authorized
 
         # Set restricted access (no allow to see other services, logout automatically if user tries to access other service, ...)
-        request.session['restricted'] = True  # Access is from ticket
+        request.session["restricted"] = True  # Access is from ticket
 
         # Transport must always be automatic for ticket authentication
 
@@ -302,16 +299,14 @@ def ticket_auth(
 
             transport_instance = info.transport.get_instance()
             if transport_instance.own_link is True:
-                link = reverse(
-                    'webapi.transport_own_link', args=('A' + info.userservice.uuid, info.transport.uuid)
-                )
+                link = reverse("webapi.transport_own_link", args=("A" + info.userservice.uuid, info.transport.uuid))
             else:
-                link = html.uds_access_link(request, 'A' + info.userservice.uuid, info.transport.uuid)
+                link = html.uds_access_link(request, "A" + info.userservice.uuid, info.transport.uuid)
 
-            request.session['launch'] = link
-            response = HttpResponseRedirect(reverse('page.ticket.launcher'))
+            request.session["launch"] = link
+            response = HttpResponseRedirect(reverse("page.ticket.launcher"))
         else:
-            response = HttpResponseRedirect(reverse('page.index'))
+            response = HttpResponseRedirect(reverse("page.index"))
 
         # Now ensure uds cookie is at response
         uds_cookie(request, response, True)
@@ -321,39 +316,37 @@ def ticket_auth(
     except TicketStore.DoesNotExist:
         return errors.error_view(request, types.errors.Error.RELOAD_NOT_SUPPORTED)
     except Authenticator.DoesNotExist:
-        logger.error('Ticket has an non existing authenticator')
+        logger.error("Ticket has an non existing authenticator")
         return errors.error_view(request, types.errors.Error.ACCESS_DENIED)
     except (
         ServicePool.DoesNotExist
     ):  # This is a very rare case, but can happen if service is deleted after ticket is created
-        logger.error('Ticket has an invalid Service Pool')
+        logger.error("Ticket has an invalid Service Pool")
         return errors.error_view(request, types.errors.Error.SERVICE_NOT_FOUND)
     except Exception as e:
-        logger.exception('Exception')
+        logger.exception("Exception")
         return errors.exception_view(request, e)
 
 
 @never_cache
 def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -> HttpResponse:
     # Default empty form
-    tag = tag or request.session.get('tag', None)
+    tag = tag or request.session.get("tag", None)
 
-    logger.debug('Tag: %s', tag)
+    logger.debug("Tag: %s", tag)
     response: HttpResponse | None = None
-    if request.method == 'POST':
-        request.session['restricted'] = False  # Access is from login
+    if request.method == "POST":
+        request.session["restricted"] = False  # Access is from login
         request.authorized = False  # Ensure that on login page, user is unauthorized first
 
         form = LoginForm(request.POST, tag=tag)
         login_result = check_login(request, form)
         if login_result.user:
-            response = HttpResponseRedirect(reverse('page.index'))
+            response = HttpResponseRedirect(reverse("page.index"))
             # Tag is not removed from session, so next login will have it even if not provided
             # This means than once an url is used, unless manually goes to "/uds/page/login/xxx"
             # The tag will be used again
-            auth.weblogin(
-                request, response, login_result.user, login_result.password
-            )  # data is user password here
+            auth.weblogin(request, response, login_result.user, login_result.password)  # data is user password here
 
             # If MFA is provided, we need to redirect to MFA page
             request.authorized = True
@@ -363,14 +356,14 @@ def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -
                 and login_result.user.groups.filter(skip_mfa=types.states.State.ACTIVE).count() == 0
             ):
                 request.authorized = False
-                response = HttpResponseRedirect(reverse('page.mfa'))
+                response = HttpResponseRedirect(reverse("page.mfa"))
 
         else:
             # If redirection on login failure is found, honor it
             if login_result.url:  # Redirection
                 return HttpResponseRedirect(login_result.url)
 
-            if request.ip not in ('127.0.0.1', '::1'):  # If not localhost, wait a bit
+            if request.ip not in ("127.0.0.1", "::1"):  # If not localhost, wait a bit
                 time.sleep(
                     random.SystemRandom().randint(1600, 2400) / 1000
                 )  # On failure, wait a bit if not localhost (random wait)
@@ -379,9 +372,9 @@ def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -
                 return errors.error_view(request, login_result.errid)
 
             # Error, set error on session for process for js
-            request.session['errors'] = [login_result.errstr]
+            request.session["errors"] = [login_result.errstr]
     else:
-        request.session['tag'] = tag
+        request.session["tag"] = tag
 
     return response or index(request)
 
@@ -390,9 +383,9 @@ def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -
 @auth.weblogin_required()
 def logout(request: types.requests.ExtendedHttpRequestWithUser) -> HttpResponse:
     auth.log_logout(request)
-    request.session['restricted'] = False  # Remove restricted
+    request.session["restricted"] = False  # Remove restricted
     request.authorized = False
     logout_response = request.user.logout(request)
     url = logout_response.url if logout_response.success == types.auth.AuthenticationState.REDIRECT else None
 
-    return auth.weblogout(request, url or request.session.get('logouturl', None))
+    return auth.weblogout(request, url or request.session.get("logouturl", None))

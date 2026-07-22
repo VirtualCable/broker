@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -66,18 +67,18 @@ class TicketTest(rest.test.RESTTestCase):
         super().setUp()
 
         sg = models.ServerGroup.objects.create(
-            name='Test Tunnel Group', type=types.servers.ServerType.TUNNEL.value, subtype=''
+            name="Test Tunnel Group", type=types.servers.ServerType.TUNNEL.value, subtype=""
         )
 
         # Create a ticket server
         server = models.Server.objects.create(
-            register_username='tester',
-            register_ip='127.0.0.1',
-            ip='127.0.0.1',
-            hostname='localhost',
+            register_username="tester",
+            register_ip="127.0.0.1",
+            ip="127.0.0.1",
+            hostname="localhost",
             type=types.servers.ServerType.TUNNEL.value,
             stamp=sql_now(),
-            subtype='',
+            subtype="",
         )
         server.groups.add(sg)
         self.server_token = server.token
@@ -95,27 +96,27 @@ class TicketTest(rest.test.RESTTestCase):
             userservice,
             remotes=[
                 types.tickets.TunnelTicketRemote(
-                    '',
+                    "",
                     1234,
                 )
             ],
         )
         # Store a shared secret (32 bytes)
-        models.TicketStore.set_shared_secret(self.valid_ticket, b'\x01' * 32)
+        models.TicketStore.set_shared_secret(self.valid_ticket, b"\x01" * 32)
 
     @staticmethod
     def get_url_legacy(ticket: str, token: str, msg: str) -> str:
         """
         Returns the URL for ticket requests
         """
-        return f'/uds/rest/tunnel/ticket/{ticket}/{msg}/{token}'
+        return f"/uds/rest/tunnel/ticket/{ticket}/{msg}/{token}"
 
     @staticmethod
     def get_url() -> str:
         """
         Returns the URL for ticket requests
         """
-        return f'/uds/rest/tunnelpq/ticket'
+        return "/uds/rest/tunnelpq/ticket"
 
     def test_legacy_request_invalid_token(self) -> None:
         """
@@ -124,8 +125,8 @@ class TicketTest(rest.test.RESTTestCase):
         response = self.client.get(
             self.get_url_legacy(
                 self.valid_ticket,
-                'invalid_token',
-                '127.0.0.1',
+                "invalid_token",
+                "127.0.0.1",
             ),
         )
         self.assertEqual(response.status_code, 403)
@@ -136,9 +137,9 @@ class TicketTest(rest.test.RESTTestCase):
         """
         response = self.client.get(
             self.get_url_legacy(
-                'invalid_ticket',
+                "invalid_ticket",
                 self.server_token,
-                '127.0.0.1',
+                "127.0.0.1",
             ),
         )
         self.assertEqual(response.status_code, 403)
@@ -151,19 +152,17 @@ class TicketTest(rest.test.RESTTestCase):
             self.get_url_legacy(
                 self.valid_ticket,
                 self.server_token,
-                '127.0.0.1',  # Start message is the source IP, compat with 4.x
+                "127.0.0.1",  # Start message is the source IP, compat with 4.x
             ),
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        r = types.tickets.TunnelTicketLegacyResponse.from_dict(
-            data
-        )  # Just to check it can be created without errors
+        r = types.tickets.TunnelTicketLegacyResponse.from_dict(data)  # Just to check it can be created without errors
 
         self.assertEqual(r.host, self.ip)  #
         self.assertEqual(r.port, 1234)
         self.assertIsInstance(r.notify, str)
-        self.assertEqual(r.shared_secret, '01' * 32)  # Hex representation
+        self.assertEqual(r.shared_secret, "01" * 32)  # Hex representation
 
     def test_legacy_request_valid_ticket_stop(self) -> None:
         """
@@ -173,11 +172,11 @@ class TicketTest(rest.test.RESTTestCase):
             self.get_url_legacy(
                 self.valid_ticket,
                 self.server_token,
-                'stop',  # Stop message
+                "stop",  # Stop message
             ),
             query_params={
-                'sent': '1024',
-                'recv': '2048',
+                "sent": "1024",
+                "recv": "2048",
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -189,13 +188,13 @@ class TicketTest(rest.test.RESTTestCase):
         response = self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
-                token='invalid_token',
+                token="invalid_token",
                 ticket=self.valid_ticket,
-                command='start',
-                ip='127.0.0.1',
+                command="start",
+                ip="127.0.0.1",
                 kem_kyber_key=self.kyber_public_key,
             ).as_dict(),
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
 
@@ -209,11 +208,11 @@ class TicketTest(rest.test.RESTTestCase):
             data=types.tickets.TunnelTicketRequest(
                 token=self.server_token,
                 ticket=self.valid_ticket,
-                command='start',
-                ip='127.0.0.1',
-                kem_kyber_key='invalid_kem_key',
+                command="start",
+                ip="127.0.0.1",
+                kem_kyber_key="invalid_kem_key",
             ).as_dict(),
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
 
@@ -223,11 +222,11 @@ class TicketTest(rest.test.RESTTestCase):
             data=types.tickets.TunnelTicketRequest(
                 token=self.server_token,
                 ticket=self.valid_ticket,
-                command='start',
-                ip='127.0.0.1',
-                kem_kyber_key='AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==',
+                command="start",
+                ip="127.0.0.1",
+                kem_kyber_key="AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
             ).as_dict(),
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
 
@@ -239,12 +238,12 @@ class TicketTest(rest.test.RESTTestCase):
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
                 token=self.server_token,
-                ticket='invalid_ticket',
-                command='start',
-                ip='127.0.0.1',
+                ticket="invalid_ticket",
+                command="start",
+                ip="127.0.0.1",
                 kem_kyber_key=self.kyber_public_key,
             ).as_dict(),
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
 
@@ -258,11 +257,11 @@ class TicketTest(rest.test.RESTTestCase):
             data=types.tickets.TunnelTicketRequest(
                 token=self.server_token,
                 ticket=self.valid_ticket,
-                command='start',
-                ip='127.0.0.1',
+                command="start",
+                ip="127.0.0.1",
                 kem_kyber_key=self.kyber_public_key,
             ).as_dict(),
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         encrypted_data = response.json()
@@ -278,7 +277,7 @@ class TicketTest(rest.test.RESTTestCase):
         self.assertEqual(r.remotes[0].host, self.ip)  #
         self.assertEqual(r.remotes[0].port, 1234)
         self.assertIsInstance(r.notify, str)
-        self.assertEqual(r.shared_secret, '01' * 32)  # Hex representation
+        self.assertEqual(r.shared_secret, "01" * 32)  # Hex representation
 
     def test_request_valid_ticket_stop(self) -> None:
         """
@@ -290,12 +289,12 @@ class TicketTest(rest.test.RESTTestCase):
             data=types.tickets.TunnelTicketRequest(
                 token=self.server_token,
                 ticket=self.valid_ticket,
-                command='stop',
-                ip='127.0.0.1',
+                command="stop",
+                ip="127.0.0.1",
                 sent=1024,
                 recv=2048,
             ).as_dict(),
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()

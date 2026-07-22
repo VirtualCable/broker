@@ -27,14 +27,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext as _
 
+from uds import models
 from uds.core import types
 from uds.core.ui.user_interface import gui
-from uds import models
 
 if typing.TYPE_CHECKING:
     from .provider import ProxmoxProvider
@@ -42,19 +43,17 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def get_provider(parameters: typing.Any) -> 'ProxmoxProvider':
-    return typing.cast(
-        'ProxmoxProvider', models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance()
-    )
+def get_provider(parameters: typing.Any) -> "ProxmoxProvider":
+    return typing.cast("ProxmoxProvider", models.Provider.objects.get(uuid=parameters["prov_uuid"]).get_instance())
 
 
 def get_storage(parameters: typing.Any) -> types.ui.CallbackResultType:
-    logger.debug('Parameters received by getResources Helper: %s', parameters)
+    logger.debug("Parameters received by getResources Helper: %s", parameters)
     provider = get_provider(parameters)
 
     # Obtains machine info, to obtain the node and get the storages
     try:
-        vm_info = provider.api.get_vm_info(int(parameters['machine']))
+        vm_info = provider.api.get_vm_info(int(parameters["machine"]))
     except Exception:
         return []
 
@@ -65,30 +64,28 @@ def get_storage(parameters: typing.Any) -> types.ui.CallbackResultType:
             storage.avail / 1024 / 1024 / 1024,
             (storage.avail - storage.used) / 1024 / 1024 / 1024,
         )
-        extra = _(' shared') if storage.shared else _(' (bound to {})').format(vm_info.node)
-        res.append(
-            gui.choice_item(storage.storage, f'{storage.storage} ({space:4.2f} GB/{free:4.2f} GB){extra}')
-        )
+        extra = _(" shared") if storage.shared else _(" (bound to {})").format(vm_info.node)
+        res.append(gui.choice_item(storage.storage, f"{storage.storage} ({space:4.2f} GB/{free:4.2f} GB){extra}"))
 
-    data: types.ui.CallbackResultType = [{'name': 'datastore', 'choices': res}]
+    data: types.ui.CallbackResultType = [{"name": "datastore", "choices": res}]
 
-    logger.debug('return data: %s', data)
+    logger.debug("return data: %s", data)
     return data
 
 
 def get_machines(parameters: typing.Any) -> types.ui.CallbackResultType:
-    logger.debug('Parameters received by getResources Helper: %s', parameters)
+    logger.debug("Parameters received by getResources Helper: %s", parameters)
     provider = get_provider(parameters)
 
     # Obtains datacenter from cluster
     try:
-        pool_info = provider.api.get_pool_info(parameters['pool'], retrieve_vm_names=True)
+        pool_info = provider.api.get_pool_info(parameters["pool"], retrieve_vm_names=True)
     except Exception:
         return []
 
     return [
         {
-            'name': 'machines',
-            'choices': [gui.choice_item(str(member.vmid), member.vmname) for member in pool_info.members],
+            "name": "machines",
+            "choices": [gui.choice_item(str(member.vmid), member.vmname) for member in pool_info.members],
         }
     ]

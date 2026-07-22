@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -62,21 +63,21 @@ class NotificationsManager(metaclass=singleton.Singleton):
         from uds.models.notifications import Notification  # pylint: disable=import-outside-toplevel
 
         try:
-            with connections['persistent'].schema_editor() as schema_editor:
+            with connections["persistent"].schema_editor() as schema_editor:
                 schema_editor.create_model(Notification)
         except Exception:  # nosec: intentionally catching all exceptions
             # if fails, check if exists or mayby we cannot create it already...
             try:
                 Notification.get_persistent_queryset().count()
             except Exception:
-                logger.info('Cannot create local notifications table right now. Will try later.')
+                logger.info("Cannot create local notifications table right now. Will try later.")
                 return False
 
         self._initialized = True
         return True
 
     @staticmethod
-    def manager() -> 'NotificationsManager':
+    def manager() -> "NotificationsManager":
         return NotificationsManager()  # Singleton pattern will return always the same instance
 
     def notify(
@@ -95,7 +96,7 @@ class NotificationsManager(metaclass=singleton.Singleton):
         try:
             message = message % args
         except Exception:
-            message = message + ' ' + str(args) + ' (format error)'
+            message = message + " " + str(args) + " (format error)"
         message = message[:4000]  # Max length of message, fixed to ensure it also supports sqlserver
         # Store the notification on local persistent storage
         # Will be processed by UDS backend
@@ -104,4 +105,4 @@ class NotificationsManager(metaclass=singleton.Singleton):
                 notify = Notification(group=group, identificator=identificator, level=level, message=message)
                 notify.save_persistent()
         except Exception:
-            logger.info('Error saving notification %s, %s, %s, %s', group, identificator, level, message)
+            logger.info("Error saving notification %s, %s, %s, %s", group, identificator, level, message)

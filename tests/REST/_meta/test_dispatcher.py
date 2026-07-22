@@ -45,6 +45,7 @@ Previously fixed bugs (kept here only as historical context):
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import json
 import logging
 import typing
@@ -56,15 +57,15 @@ logger = logging.getLogger(__name__)
 
 # HTTP methods recognized today by the dispatcher (dispatcher.py:165).
 # Any method outside this list receives 405 Method Not Allowed.
-SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options', 'query')
+SUPPORTED_METHODS: typing.Final[tuple[str, ...]] = ("get", "post", "put", "delete", "options", "query")
 
 # Methods the dispatcher rejects today (405).
 FORBIDDEN_METHODS: typing.Final[tuple[str, ...]] = (
-    'patch',    # RFC 5789  - not yet supported
-    'head',     # RFC 9110  - not yet supported
-    'trace',    # RFC 9110  - not yet supported
-    'connect',  # RFC 9110  - not applicable
-    'foo',      # invented method
+    "patch",  # RFC 5789  - not yet supported
+    "head",  # RFC 9110  - not yet supported
+    "trace",  # RFC 9110  - not yet supported
+    "connect",  # RFC 9110  - not applicable
+    "foo",  # invented method
 )
 
 
@@ -86,8 +87,8 @@ class DispatcherContractTest(rest.test.RESTTestCase):
     # Helpers
     # ------------------------------------------------------------------
     def _rest_request(
-        self, method: str, path: str, *, data: bytes | str | None = None, content_type: str = 'application/json'
-    ) -> 'typing.Any':
+        self, method: str, path: str, *, data: bytes | str | None = None, content_type: str = "application/json"
+    ) -> "typing.Any":
         """Send a REST request with an arbitrary HTTP method.
 
         Uses Client.generic to support methods not covered by the
@@ -97,8 +98,8 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         would try to parse the empty body as JSON and fail. For other methods,
         pass the body explicitly if needed.
         """
-        url = f'{REST_PATH}{path}'
-        if method.lower() == 'get':
+        url = f"{REST_PATH}{path}"
+        if method.lower() == "get":
             # GET without body (same as rest_get does)
             return self.client.rest_get(path)
         # For the rest, generic allows arbitrary methods.
@@ -109,7 +110,11 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         if data is None:
             return self.client.generic(method.upper(), url, headers=self.client.uds_headers)
         return self.client.generic(
-            method.upper(), url, data=data, content_type=content_type, headers=self.client.uds_headers,
+            method.upper(),
+            url,
+            data=data,
+            content_type=content_type,
+            headers=self.client.uds_headers,
         )
 
     # ------------------------------------------------------------------
@@ -126,21 +131,21 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         """
         for method in FORBIDDEN_METHODS:
             with self.subTest(method=method):
-                response = self._rest_request(method, 'providers/overview')
+                response = self._rest_request(method, "providers/overview")
                 self.assertEqual(
                     response.status_code,
                     405,
-                    f'Method {method.upper()} must return 405 (not 500)',
+                    f"Method {method.upper()} must return 405 (not 500)",
                 )
                 # Allow header must be present and contain at least one of
                 # the recognized methods.
-                allow = response.get('Allow', '')
-                self.assertTrue(allow, f'405 response for {method} is missing Allow header')
-                for recognized in ('GET', 'POST', 'PUT', 'DELETE'):
+                allow = response.get("Allow", "")
+                self.assertTrue(allow, f"405 response for {method} is missing Allow header")
+                for recognized in ("GET", "POST", "PUT", "DELETE"):
                     self.assertIn(
                         recognized,
                         allow,
-                        f'Allow header for {method} must include {recognized}; got: {allow!r}',
+                        f"Allow header for {method} must include {recognized}; got: {allow!r}",
                     )
 
     def test_allowed_methods_not_rejected_as_unknown(self) -> None:
@@ -149,7 +154,7 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         For GET we use a real path and expect 200 (handler exists and we are
         logged in as admin).
         """
-        response = self.client.rest_get('providers/overview')
+        response = self.client.rest_get("providers/overview")
         self.assertEqual(response.status_code, 200)
 
     # ------------------------------------------------------------------
@@ -161,12 +166,12 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         Replaces the old test_405_current_behaviour_due_to_bug_b1, which
         documented the broken (TypeError-raising) behavior.
         """
-        response = self._rest_request('patch', 'providers/overview')
+        response = self._rest_request("patch", "providers/overview")
         self.assertEqual(response.status_code, 405)
-        self.assertIn('application/json', response.get('Content-Type', ''))
+        self.assertIn("application/json", response.get("Content-Type", ""))
         body = json.loads(response.content)
-        self.assertIn('error', body)
-        self.assertEqual(body['error'], 'Method PATCH not allowed')
+        self.assertIn("error", body)
+        self.assertEqual(body["error"], "Method PATCH not allowed")
 
     # ------------------------------------------------------------------
     # T1A.4 - Fixed headers present on 2xx responses
@@ -181,25 +186,25 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         - Pragma: no-cache
         - Expires: 0
         """
-        response = self.client.rest_get('providers/overview')
+        response = self.client.rest_get("providers/overview")
         self.assertEqual(response.status_code, 200)
 
         # X-UDS-Version in 'version;stamp' form
-        uds_version = response.get('X-UDS-Version')
-        self.assertIsNotNone(uds_version, 'X-UDS-Version header must be present')
+        uds_version = response.get("X-UDS-Version")
+        self.assertIsNotNone(uds_version, "X-UDS-Version header must be present")
         assert uds_version is not None
-        self.assertIn(';', uds_version, 'X-UDS-Version must be in the form version;stamp')
+        self.assertIn(";", uds_version, "X-UDS-Version must be in the form version;stamp")
 
         # X-Response-Stamp present and numeric
-        response_stamp = response.get('X-Response-Stamp')
-        self.assertIsNotNone(response_stamp, 'X-Response-Stamp header must be present')
+        response_stamp = response.get("X-Response-Stamp")
+        self.assertIsNotNone(response_stamp, "X-Response-Stamp header must be present")
         assert response_stamp is not None
         int(response_stamp)  # raises ValueError if not numeric
 
         # Cache headers: exact 'no-cache, no-store, must-revalidate'
-        self.assertEqual(response.get('Cache-Control'), 'no-cache, no-store, must-revalidate')
-        self.assertEqual(response.get('Pragma'), 'no-cache')
-        self.assertEqual(response.get('Expires'), '0')
+        self.assertEqual(response.get("Cache-Control"), "no-cache, no-store, must-revalidate")
+        self.assertEqual(response.get("Pragma"), "no-cache")
+        self.assertEqual(response.get("Expires"), "0")
 
     def test_cache_control_header_always_no_store(self) -> None:
         """The Cache-Control header always reports no-store (security policy).
@@ -207,9 +212,9 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         Verified on a 200 response; the API security contract requires that
         no REST response is cacheable by proxies.
         """
-        response = self.client.rest_get('providers/overview')
+        response = self.client.rest_get("providers/overview")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get('Cache-Control'), 'no-cache, no-store, must-revalidate')
+        self.assertEqual(response.get("Cache-Control"), "no-cache, no-store, must-revalidate")
 
     # ------------------------------------------------------------------
     # T1A.5 - Nonexistent path -> 404
@@ -221,7 +226,7 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         Note: the dispatcher returns 404 with Content-Type text/plain for
         'Service not found', unlike the JSON 404 for a missing item.
         """
-        response = self._rest_request('get', 'this-handler-does-not-exist/overview')
+        response = self._rest_request("get", "this-handler-does-not-exist/overview")
         self.assertEqual(response.status_code, 404)
 
     # ------------------------------------------------------------------
@@ -236,7 +241,7 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         from tests.utils.test import UDSClient
 
         unauth_client = UDSClient()
-        url = f'{REST_PATH}providers/overview'
+        url = f"{REST_PATH}providers/overview"
         response = unauth_client.get(url)
         self.assertEqual(response.status_code, 403)
 
@@ -255,7 +260,7 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         InvalidMethodError -> 405 with Allow, or RequestError -> 400.
         The key point: it is NOT the TypeError of bug B1.
         """
-        response = self.client.rest_post('providers/overview')
+        response = self.client.rest_post("providers/overview")
         self.assertIn(response.status_code, (400, 405))
 
     # ------------------------------------------------------------------
@@ -277,8 +282,8 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         contract. If someone adds QUERY to SUPPORTED_METHODS without updating
         FORBIDDEN_METHODS, this test fails as a reminder.
         """
-        self.assertIn('query', SUPPORTED_METHODS, 'QUERY is now supported (Change A)')
-        self.assertIn('options', SUPPORTED_METHODS, 'OPTIONS is now supported (Change C)')
+        self.assertIn("query", SUPPORTED_METHODS, "QUERY is now supported (Change A)")
+        self.assertIn("options", SUPPORTED_METHODS, "OPTIONS is now supported (Change C)")
 
     # ------------------------------------------------------------------
     # Change C — OPTIONS for capabilities discovery (RFC 9110 §9.3.7)
@@ -290,21 +295,21 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         The Allow header lists the methods the handler actually implements
         plus OPTIONS itself (always supported by the dispatcher).
         """
-        response = self._rest_request('options', 'providers/overview')
-        self.assertEqual(response.status_code, 204, 'OPTIONS must return 204')
-        allow = response.get('Allow', '')
-        self.assertTrue(allow, 'OPTIONS response must include Allow header')
-        self.assertIn('OPTIONS', allow)
-        self.assertIn('GET', allow, 'handlers without get() must still advertise GET if defined')
+        response = self._rest_request("options", "providers/overview")
+        self.assertEqual(response.status_code, 204, "OPTIONS must return 204")
+        allow = response.get("Allow", "")
+        self.assertTrue(allow, "OPTIONS response must include Allow header")
+        self.assertIn("OPTIONS", allow)
+        self.assertIn("GET", allow, "handlers without get() must still advertise GET if defined")
 
     def test_options_includes_uds_version_header(self) -> None:
         """OPTIONS includes X-UDS-Version header like any other response."""
-        response = self._rest_request('options', 'providers/overview')
+        response = self._rest_request("options", "providers/overview")
         self.assertEqual(response.status_code, 204)
-        uds_version = response.get('X-UDS-Version')
-        self.assertIsNotNone(uds_version, 'OPTIONS must include X-UDS-Version')
+        uds_version = response.get("X-UDS-Version")
+        self.assertIsNotNone(uds_version, "OPTIONS must include X-UDS-Version")
         assert uds_version is not None
-        self.assertIn(';', uds_version)
+        self.assertIn(";", uds_version)
 
     def test_options_no_auth_required(self) -> None:
         """OPTIONS does not require authentication (RFC 9110 §9.3.7).
@@ -315,25 +320,25 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         from tests.utils.test import UDSClient
 
         unauth_client = UDSClient()
-        url = f'{REST_PATH}providers/overview'
-        response: typing.Any = unauth_client.generic('OPTIONS', url)
-        self.assertEqual(response.status_code, 204, 'OPTIONS must work without auth')
-        self.assertTrue(response.get('Allow', ''), 'OPTIONS must include Allow header')
+        url = f"{REST_PATH}providers/overview"
+        response: typing.Any = unauth_client.generic("OPTIONS", url)
+        self.assertEqual(response.status_code, 204, "OPTIONS must work without auth")
+        self.assertTrue(response.get("Allow", ""), "OPTIONS must include Allow header")
 
     def test_options_on_collection_path(self) -> None:
         """OPTIONS on a collection path (e.g. /providers) returns Allow.
 
         ModelHandler for providers defines get/put/delete/post.
         """
-        response = self._rest_request('options', 'providers')
+        response = self._rest_request("options", "providers")
         self.assertEqual(response.status_code, 204)
-        allow = response.get('Allow', '')
-        self.assertIn('OPTIONS', allow)
-        self.assertIn('GET', allow)
+        allow = response.get("Allow", "")
+        self.assertIn("OPTIONS", allow)
+        self.assertIn("GET", allow)
 
     def test_options_on_nonexistent_path_returns_404(self) -> None:
         """OPTIONS on a path with no handler returns 404 (same as other methods)."""
-        response = self._rest_request('options', 'this-does-not-exist')
+        response = self._rest_request("options", "this-does-not-exist")
         self.assertEqual(response.status_code, 404)
 
     # ------------------------------------------------------------------
@@ -347,13 +352,16 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         string, then delegates to get().
         """
         # GET baseline
-        response_get = self.client.rest_get('providers')
+        response_get = self.client.rest_get("providers")
         self.assertEqual(response_get.status_code, 200)
         body_get = json.loads(response_get.content)
 
         # QUERY with empty body (no OData filtering) — should match GET
         response_query = self._rest_request(
-            'query', 'providers', data=json.dumps({}), content_type='application/json',
+            "query",
+            "providers",
+            data=json.dumps({}),
+            content_type="application/json",
         )
         self.assertEqual(response_query.status_code, 200)
         body_query = json.loads(response_query.content)
@@ -367,9 +375,10 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         Uses a filter that should return fewer results than the full set.
         """
         response = self._rest_request(
-            'query', 'providers',
-            data=json.dumps({'$top': 1}),
-            content_type='application/json',
+            "query",
+            "providers",
+            data=json.dumps({"$top": 1}),
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         body = json.loads(response.content)
@@ -377,8 +386,7 @@ class DispatcherContractTest(rest.test.RESTTestCase):
 
     def test_query_options_includes_query(self) -> None:
         """OPTIONS Allow header includes QUERY since Handler.query() exists."""
-        response = self._rest_request('options', 'providers/overview')
+        response = self._rest_request("options", "providers/overview")
         self.assertEqual(response.status_code, 204)
-        allow = response.get('Allow', '')
-        self.assertIn('QUERY', allow, 'Allow must advertise QUERY (Handler defines query())')
-
+        allow = response.get("Allow", "")
+        self.assertIn("QUERY", allow, "Allow must advertise QUERY (Handler defines query())")

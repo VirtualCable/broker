@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import pickle
 import typing
 
@@ -57,12 +58,12 @@ from uds.services.OVirt.deployment_linked import Operation as Operation, OVirtLi
 # self.flag_for_upgrade()  # Flag so manager can save it again with new format
 
 EXPECTED_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_ip',
-    '_mac',
-    '_vmid',
-    '_reason',
-    '_queue',
+    "_name",
+    "_ip",
+    "_mac",
+    "_vmid",
+    "_reason",
+    "_queue",
 }
 
 TEST_QUEUE: typing.Final[list[Operation]] = [
@@ -72,7 +73,7 @@ TEST_QUEUE: typing.Final[list[Operation]] = [
 ]
 
 SERIALIZED_DEPLOYMENT_DATA: typing.Final[typing.Mapping[str, bytes]] = {
-    'v1': b'v1\x01name\x01ip\x01mac\x01vmid\x01reason\x01' + pickle.dumps(TEST_QUEUE, protocol=0),
+    "v1": b"v1\x01name\x01ip\x01mac\x01vmid\x01reason\x01" + pickle.dumps(TEST_QUEUE, protocol=0),
 }
 
 LAST_VERSION: typing.Final[str] = sorted(SERIALIZED_DEPLOYMENT_DATA.keys(), reverse=True)[0]
@@ -80,25 +81,25 @@ LAST_VERSION: typing.Final[str] = sorted(SERIALIZED_DEPLOYMENT_DATA.keys(), reve
 
 class OvirtOVirtLinkedUserServiceSerializationTest(UDSTransactionTestCase):
     def check(self, version: str, instance: OVirtLinkedUserService) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._ip, 'ip')
-        self.assertEqual(instance._mac, 'mac')
-        self.assertEqual(instance._vmid, 'vmid')
-        self.assertEqual(instance._reason, 'reason')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._ip, "ip")
+        self.assertEqual(instance._mac, "mac")
+        self.assertEqual(instance._vmid, "vmid")
+        self.assertEqual(instance._reason, "reason")
         self.assertEqual(instance._queue, TEST_QUEUE)
 
     def test_marshaling(self) -> None:
         # queue is kept on "storage", so we need always same environment
         environment = Environment.testing_environment()
 
-        def _create_instance(unmarshal_data: 'bytes|None' = None) -> OVirtLinkedUserService:
+        def _create_instance(unmarshal_data: "bytes|None" = None) -> OVirtLinkedUserService:
             instance = OVirtLinkedUserService(environment=environment, service=None)  # type: ignore
             if unmarshal_data:
                 instance.unmarshal(unmarshal_data)
             return instance
 
         for v in range(1, len(SERIALIZED_DEPLOYMENT_DATA) + 1):
-            version = f'v{v}'
+            version = f"v{v}"
             instance = _create_instance(SERIALIZED_DEPLOYMENT_DATA[version])
             self.check(version, instance)
             # Ensure remarshalled flag is set
@@ -106,23 +107,19 @@ class OvirtOVirtLinkedUserServiceSerializationTest(UDSTransactionTestCase):
             instance.mark_for_upgrade(False)  # reset flag
 
             marshaled_data = instance.marshal()
-            self.assertFalse(
-                marshaled_data.startswith(b'\v')
-            )  # Ensure fields has been marshalled using new format
+            self.assertFalse(marshaled_data.startswith(b"\v"))  # Ensure fields has been marshalled using new format
 
             instance = _create_instance(marshaled_data)
-            self.assertFalse(
-                instance.needs_upgrade()
-            )  # Reunmarshall again and check that remarshalled flag is not set
+            self.assertFalse(instance.needs_upgrade())  # Reunmarshall again and check that remarshalled flag is not set
             self.check(version, instance)
 
     def test_marshaling_queue(self) -> None:
         # queue is kept on "storage", so we need always same environment
         environment = Environment.testing_environment()
         # Store queue
-        environment.storage.save_pickled('queue', TEST_QUEUE)
+        environment.storage.save_pickled("queue", TEST_QUEUE)
 
-        def _create_instance(unmarshal_data: 'bytes|None' = None) -> OVirtLinkedUserService:
+        def _create_instance(unmarshal_data: "bytes|None" = None) -> OVirtLinkedUserService:
             instance = OVirtLinkedUserService(environment=environment, service=None)  # type: ignore
             if unmarshal_data:
                 instance.unmarshal(unmarshal_data)

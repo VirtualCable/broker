@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -57,28 +58,26 @@ class Group(UUIDModel):
     This class represents a group, associated with one authenticator
     """
 
-    manager = models.ForeignKey(
-        Authenticator, on_delete=models.CASCADE, related_name='groups'
-    )
+    manager = models.ForeignKey(Authenticator, on_delete=models.CASCADE, related_name="groups")
     name = models.CharField(max_length=128, db_index=True)
     state = models.CharField(max_length=1, default=State.ACTIVE, db_index=True)
-    comments = models.CharField(max_length=256, default='')
-    users: 'models.ManyToManyField[User, Group]' = models.ManyToManyField(User, related_name='groups')
+    comments = models.CharField(max_length=256, default="")
+    users: "models.ManyToManyField[User, Group]" = models.ManyToManyField(User, related_name="groups")
     is_meta = models.BooleanField(default=False, db_index=True)
     # meta_if_any means that if an user belongs to ANY of the groups, it will be considered as belonging to this group
     # if it is false, the user must belong to ALL of the groups to be considered as belonging to this group
     meta_if_any = models.BooleanField(default=False)
-    groups: 'models.ManyToManyField[Group, Group]' = models.ManyToManyField('self', symmetrical=False)
+    groups: "models.ManyToManyField[Group, Group]" = models.ManyToManyField("self", symmetrical=False)
     created = models.DateTimeField(default=sql_now, blank=True)
     skip_mfa = models.CharField(max_length=1, default=State.INACTIVE, db_index=True)
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["Group"]'
-    deployedServices: 'models.manager.RelatedManager[ServicePool]'  # Legacy name, will keep this forever :)
-    permissions: 'models.manager.RelatedManager[Permissions]'
-    
+    deployedServices: "models.manager.RelatedManager[ServicePool]"  # Legacy name, will keep this forever :)
+    permissions: "models.manager.RelatedManager[Permissions]"
+
     @property
-    def service_pools(self) -> 'models.manager.RelatedManager[ServicePool]':
+    def service_pools(self) -> "models.manager.RelatedManager[ServicePool]":
         """
         Returns the service pools that this group has access to
         """
@@ -89,19 +88,15 @@ class Group(UUIDModel):
         Meta class to declare default order and unique multiple field index
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['manager', 'name'], name='u_grp_manager_name'
-            )
-        ]
+        ordering = ("name",)
+        app_label = "uds"
+        constraints = [models.UniqueConstraint(fields=["manager", "name"], name="u_grp_manager_name")]
 
     @property
     def pretty_name(self) -> str:
-        return self.name + '@' + self.manager.name
+        return self.name + "@" + self.manager.name
 
-    def get_manager(self) -> 'auths.Authenticator':
+    def get_manager(self) -> "auths.Authenticator":
         """
         Returns the authenticator object that owns this user.
 
@@ -111,9 +106,9 @@ class Group(UUIDModel):
 
     def __str__(self) -> str:
         if self.is_meta:
-            return f'Meta group {self.name}(id:{self.id}) with groups {list(self.groups.all())}'
+            return f"Meta group {self.name}(id:{self.id}) with groups {list(self.groups.all())}"
 
-        return f'Group {self.name}(id:{self.id}) from auth {self.manager.name}'
+        return f"Group {self.name}(id:{self.id}) from auth {self.manager.name}"
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
@@ -124,7 +119,7 @@ class Group(UUIDModel):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: 'Group' = kwargs['instance']
+        to_delete: "Group" = kwargs["instance"]
         # Todelete is a group
 
         # We invoke removeGroup. If this raises an exception, group will not
@@ -134,7 +129,7 @@ class Group(UUIDModel):
         # Clears related logs
         log.clear_logs(to_delete)
 
-        logger.debug('Deleted group %s', to_delete)
+        logger.debug("Deleted group %s", to_delete)
 
 
 models.signals.pre_delete.connect(Group.pre_delete, sender=Group)

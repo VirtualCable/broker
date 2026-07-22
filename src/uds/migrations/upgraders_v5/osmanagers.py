@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 import base64
 import dataclasses
 import logging
@@ -48,15 +49,15 @@ _NEW_FORMAT_PREFIXES: typing.Final[tuple[str, ...]] = tuple(
 
 @dataclasses.dataclass(frozen=True)
 class OSManagerTypeInfo:
-    name: str = ''
+    name: str = ""
 
 
 OSMANAGER_TYPES: typing.Final[dict[str, OSManagerTypeInfo]] = {
-    'LinuxManager': OSManagerTypeInfo(name='Linux OS Manager'),
-    'LinRandomPasswordManager': OSManagerTypeInfo(name='Linux Random Password'),
-    'WinDomainManager': OSManagerTypeInfo(name='Windows Domain'),
-    'WindowsManager': OSManagerTypeInfo(name='Windows OS Manager'),
-    'WinRandomPasswordManager': OSManagerTypeInfo(name='Windows Random Password'),
+    "LinuxManager": OSManagerTypeInfo(name="Linux OS Manager"),
+    "LinRandomPasswordManager": OSManagerTypeInfo(name="Linux Random Password"),
+    "WinDomainManager": OSManagerTypeInfo(name="Windows Domain"),
+    "WindowsManager": OSManagerTypeInfo(name="Windows OS Manager"),
+    "WinRandomPasswordManager": OSManagerTypeInfo(name="Windows Random Password"),
 }
 
 
@@ -76,8 +77,8 @@ def upgrade_osmanagers() -> dict[str, int]:
                 osm.get_instance()
                 upgraded += 1
             except Exception:
-                logger.exception('Error upgrading OSManager %s', osm.uuid)
+                logger.exception("Error upgrading OSManager %s", osm.uuid)
 
-        logger.info('Upgraded %d OSManagers for %s', upgraded, type_type)
+        logger.info("Upgraded %d OSManagers for %s", upgraded, type_type)
         results[type_type] = upgraded
     return results

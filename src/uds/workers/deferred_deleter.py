@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -45,26 +46,24 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def execution_timer() -> 'utils.ExecutionTimer':
+def execution_timer() -> "utils.ExecutionTimer":
     """
     Generates an execution timer for deletion operations
     This allows to delay the next check based on how long the operation took
     """
-    return utils.ExecutionTimer(
-        delay_threshold=consts.OPERATION_DELAY_THRESHOLD, max_delay_rate=consts.MAX_DELAY_RATE
-    )
+    return utils.ExecutionTimer(delay_threshold=consts.OPERATION_DELAY_THRESHOLD, max_delay_rate=consts.MAX_DELAY_RATE)
 
 
 class DeferredDeletionWorker(Job):
-    friendly_name = 'Deferred deletion runner'
+    friendly_name = "Deferred deletion runner"
 
     @typing.override
     def next_execution_delay(self) -> int:
         return 7
 
     @staticmethod
-    def add(service: 'DynamicService', vmid: str, execute_later: bool = False) -> None:
-        logger.debug('Adding %s from service %s to deferred deletion', vmid, service.type_name)
+    def add(service: "DynamicService", vmid: str, execute_later: bool = False) -> None:
+        logger.debug("Adding %s from service %s to deferred deletion", vmid, service.type_name)
         # If sync, execute now
         if not execute_later:
             exec_time = execution_timer()
@@ -93,7 +92,7 @@ class DeferredDeletionWorker(Job):
                 return  # Already removed
             except Exception as e:
                 logger.warning(
-                    'Could not delete %s from service %s: %s. Retrying later.', vmid, service.db_obj().name, e
+                    "Could not delete %s from service %s: %s. Retrying later.", vmid, service.db_obj().name, e
                 )
                 types.DeletionInfo.create_on_storage(
                     types.DeferredStorageGroup.TO_DELETE,
@@ -106,16 +105,14 @@ class DeferredDeletionWorker(Job):
             if service.must_stop_before_deletion:
                 types.DeletionInfo.create_on_storage(types.DeferredStorageGroup.TO_STOP, vmid, service.db_obj().uuid)
             else:
-                types.DeletionInfo.create_on_storage(
-                    types.DeferredStorageGroup.TO_DELETE, vmid, service.db_obj().uuid
-                )
+                types.DeletionInfo.create_on_storage(types.DeferredStorageGroup.TO_DELETE, vmid, service.db_obj().uuid)
             return
 
     def _process_exception(
         self,
         info: types.DeletionInfo,
         to_group: types.DeferredStorageGroup,
-        services: dict[str, 'DynamicService'],
+        services: dict[str, "DynamicService"],
         e: Exception,
         *,
         delay_rate: float = 1.0,
@@ -125,11 +122,11 @@ class DeferredDeletionWorker(Job):
 
         is_retryable = isinstance(e, gen_exceptions.RetryableError)
         logger.error(
-            'Error deleting %s from service %s: %s%s',
+            "Error deleting %s from service %s: %s%s",
             info.vmid,
             services[info.service_uuid].db_obj().name,
             e,
-            ' (will retry)' if is_retryable else '',
+            " (will retry)" if is_retryable else "",
         )
 
         if not is_retryable:
@@ -137,7 +134,7 @@ class DeferredDeletionWorker(Job):
             info.fatal_retries += 1
             if info.fatal_retries >= consts.MAX_FATAL_ERROR_RETRIES:
                 logger.error(
-                    'Fatal error deleting %s from service %s, removing from deferred deletion',
+                    "Fatal error deleting %s from service %s, removing from deferred deletion",
                     info.vmid,
                     services[info.service_uuid].db_obj().name,
                 )
@@ -146,7 +143,7 @@ class DeferredDeletionWorker(Job):
         info.total_retries += 1
         if info.total_retries >= consts.MAX_RETRAYABLE_ERROR_RETRIES:
             logger.error(
-                'Too many retries deleting %s from service %s, removing from deferred deletion',
+                "Too many retries deleting %s from service %s, removing from deferred deletion",
                 info.vmid,
                 services[info.service_uuid].db_obj().name,
             )
@@ -155,7 +152,7 @@ class DeferredDeletionWorker(Job):
 
     def process_to_stop(self) -> None:
         services, to_stop = types.DeletionInfo.get_from_storage(types.DeferredStorageGroup.TO_STOP)
-        logger.debug('Processing %s to stop', to_stop)
+        logger.debug("Processing %s to stop", to_stop)
 
         # Now process waiting stops
         for info in to_stop:  # Key not used
@@ -191,7 +188,7 @@ class DeferredDeletionWorker(Job):
 
     def process_stopping(self) -> None:
         services, stopping = types.DeletionInfo.get_from_storage(types.DeferredStorageGroup.STOPPING)
-        logger.debug('Processing %s stopping', stopping)
+        logger.debug("Processing %s stopping", stopping)
 
         # Now process waiting for finishing stops
         for info in stopping:
@@ -220,7 +217,7 @@ class DeferredDeletionWorker(Job):
 
     def process_to_delete(self) -> None:
         services, to_delete = types.DeletionInfo.get_from_storage(types.DeferredStorageGroup.TO_DELETE)
-        logger.debug('Processing %s to delete', to_delete)
+        logger.debug("Processing %s to delete", to_delete)
 
         # Now process waiting deletions
         for info in to_delete:
@@ -255,7 +252,7 @@ class DeferredDeletionWorker(Job):
         Note: Very similar to process_to_delete, but this one is for objects that are already being deleted
         """
         services, deleting = types.DeletionInfo.get_from_storage(types.DeferredStorageGroup.DELETING)
-        logger.debug('Processing %s deleting', deleting)
+        logger.debug("Processing %s deleting", deleting)
 
         # Now process waiting for finishing deletions
         for info in deleting:  # Key not used
@@ -292,9 +289,9 @@ class DeferredDeletionWorker(Job):
     # To allow reporting what is on the queues
     @staticmethod
     def report(out: typing.TextIO) -> None:
-        out.write(types.DeletionInfo.csv_header() + '\n')
+        out.write(types.DeletionInfo.csv_header() + "\n")
         for group in types.DeferredStorageGroup:
             with types.DeletionInfo.deferred_storage.as_dict(group) as storage:
                 for _key, info in typing.cast(dict[str, types.DeletionInfo], storage).items():
-                    out.write(info.as_csv() + '\n')
-        out.write('\n')
+                    out.write(info.as_csv() + "\n")
+        out.write("\n")

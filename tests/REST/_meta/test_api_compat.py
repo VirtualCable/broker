@@ -53,18 +53,18 @@ class ApiCompatContractTest(rest.test.RESTTestCase):
 
     def test_compat_value(self) -> None:
         """COMPAT member has the expected string value."""
-        self.assertEqual(ApiCompat.COMPAT.value, 'COMPAT')
+        self.assertEqual(ApiCompat.COMPAT.value, "COMPAT")
         self.assertIsInstance(ApiCompat.COMPAT, str)
 
     def test_no_compat_value(self) -> None:
         """NO_COMPAT member has the expected string value."""
-        self.assertEqual(ApiCompat.NO_COMPAT.value, 'NO_COMPAT')
+        self.assertEqual(ApiCompat.NO_COMPAT.value, "NO_COMPAT")
         self.assertIsInstance(ApiCompat.NO_COMPAT, str)
 
     def test_is_string_enum(self) -> None:
         """Members compare equal to their plain string values."""
-        self.assertEqual(ApiCompat.COMPAT, 'COMPAT')
-        self.assertEqual(ApiCompat.NO_COMPAT, 'NO_COMPAT')
+        self.assertEqual(ApiCompat.COMPAT, "COMPAT")
+        self.assertEqual(ApiCompat.NO_COMPAT, "NO_COMPAT")
 
     def test_members_are_distinct(self) -> None:
         """COMPAT and NO_COMPAT are different values."""
@@ -78,7 +78,7 @@ class ApiCompatContractTest(rest.test.RESTTestCase):
         from uds.REST.handlers import Handler
         from uds.REST.methods.providers import Providers
 
-        self.assertTrue(hasattr(Providers, 'api_compat'))
+        self.assertTrue(hasattr(Providers, "api_compat"))
         self.assertTrue(issubclass(Providers, Handler))  # pyright: ignore[reportUnnecessaryIsInstance]
 
     def test_api_compat_default_is_compat(self) -> None:
@@ -88,4 +88,4 @@ class ApiCompatContractTest(rest.test.RESTTestCase):
         from uds.REST.handlers import Handler
 
         source = inspect.getsource(Handler.api_compat)
-        self.assertIn('COMPAT', source)
+        self.assertIn("COMPAT", source)

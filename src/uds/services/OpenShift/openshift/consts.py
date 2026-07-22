@@ -30,9 +30,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 # DEFAULT_PORT = 8006
 
-from uds.core import consts
-
 import typing
+
+from uds.core import consts
 
 CACHE_DURATION: typing.Final[int] = consts.cache.DEFAULT_CACHE_TIMEOUT
 CACHE_INFO_DURATION: typing.Final[int] = consts.cache.SHORT_CACHE_TIMEOUT

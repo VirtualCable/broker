@@ -6,7 +6,6 @@ from .upgraders_v5 import perform_upgrade, noop_reverse
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("uds", "0050_transports"),
     ]

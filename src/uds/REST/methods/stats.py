@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import datetime
 import typing
@@ -49,19 +50,19 @@ class Stats(Handler):
     ROLE = consts.UserRole.ADMIN
 
     API_OPERATIONS = {
-        'get': types.rest.api.Operation(
-            summary='Get usage statistics',
-            description='Returns usage statistics for the last 24 hours',
+        "get": types.rest.api.Operation(
+            summary="Get usage statistics",
+            description="Returns usage statistics for the last 24 hours",
             responses={
-                '200': types.rest.api.Response(
-                    description='Usage statistics',
+                "200": types.rest.api.Response(
+                    description="Usage statistics",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='object',
+                            type="object",
                             additionalProperties=types.rest.api.SchemaProperty(
-                                type='array',
-                                items=types.rest.api.SchemaProperty(type='object'),
+                                type="array",
+                                items=types.rest.api.SchemaProperty(type="object"),
                             ),
                         ),
                     ),
@@ -128,19 +129,17 @@ class Stats(Handler):
                 # Update last seen date
                 stats.append(
                     {
-                        'stamp': user_counter.stamp,
-                        'users': (
-                            {'min': user_counter.min, 'max': user_counter.max, 'sum': user_counter.sum}
+                        "stamp": user_counter.stamp,
+                        "users": (
+                            {"min": user_counter.min, "max": user_counter.max, "sum": user_counter.sum}
                             if user_counter
                             else None
                         ),
-                        'services': (
-                            {'min': services.min, 'max': services.max, 'sum': services.sum}
-                            if services
-                            else None
+                        "services": (
+                            {"min": services.min, "max": services.max, "sum": services.sum} if services else None
                         ),
-                        'user_services': (
-                            {'min': userservices.min, 'max': userservices.max, 'sum': userservices.sum}
+                        "user_services": (
+                            {"min": userservices.min, "max": userservices.max, "sum": userservices.sum}
                             if userservices
                             else None
                         ),

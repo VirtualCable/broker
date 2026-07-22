@@ -23,7 +23,7 @@ class LogLevel(enum.IntEnum):
         return self.name
 
     @staticmethod
-    def from_str(level: str) -> 'LogLevel':
+    def from_str(level: str) -> "LogLevel":
         try:
             return LogLevel[level.upper()]
         except Exception:
@@ -31,21 +31,21 @@ class LogLevel(enum.IntEnum):
             return LogLevel.OTHER
 
     @staticmethod
-    def from_int(level: int) -> 'LogLevel':
+    def from_int(level: int) -> "LogLevel":
         try:
             return LogLevel(level)
         except ValueError:
             return LogLevel.OTHER
 
     @staticmethod
-    def from_actor_level(level: int) -> 'LogLevel':
+    def from_actor_level(level: int) -> "LogLevel":
         """
         Returns the log level for actor log level
         """
         return [LogLevel.DEBUG, LogLevel.INFO, LogLevel.ERROR, LogLevel.CRITICAL][level % 4]
 
     @staticmethod
-    def from_logging_level(level: int) -> 'LogLevel':
+    def from_logging_level(level: int) -> "LogLevel":
         """
         Returns the log level for logging log level
         """
@@ -74,19 +74,19 @@ class LogLevel(enum.IntEnum):
 
 
 class LogSource(enum.StrEnum):
-    INTERNAL = 'internal'
-    ACTOR = 'actor'
-    TRANSPORT = 'transport'
-    OSMANAGER = 'osmanager'
-    UNKNOWN = 'unknown'
-    WEB = 'web'
-    ADMIN = 'admin'
-    SERVICE = 'service'
-    SERVER = 'server'
-    REST = 'rest'
-    LOGS = 'logs'
-    MODULE = 'module'
-    CLIENT = 'client'
+    INTERNAL = "internal"
+    ACTOR = "actor"
+    TRANSPORT = "transport"
+    OSMANAGER = "osmanager"
+    UNKNOWN = "unknown"
+    WEB = "web"
+    ADMIN = "admin"
+    SERVICE = "service"
+    SERVER = "server"
+    REST = "rest"
+    LOGS = "logs"
+    MODULE = "module"
+    CLIENT = "client"
 
 
 # Note: Once assigned a value, do not change it, as it will break the log
@@ -115,14 +115,14 @@ class LogObjectType(enum.IntEnum):
         return GlobalConfig.INDIVIDIAL_LOG_MAX_ELEMENTS.as_int()
 
     @staticmethod
-    def get_type_from_model(model: 'Model') -> 'LogObjectType|None':
+    def get_type_from_model(model: "Model") -> "LogObjectType|None":
         """
         Returns the type of log object from the model
         """
         from uds import models
 
         # Dict for translations
-        _MODEL_TO_TYPE: typing.Final[collections.abc.Mapping[type['Model'], 'LogObjectType']] = {
+        _MODEL_TO_TYPE: typing.Final[collections.abc.Mapping[type["Model"], "LogObjectType"]] = {
             models.UserService: LogObjectType.USERSERVICE,
             models.ServicePoolPublication: LogObjectType.PUBLICATION,
             models.ServicePool: LogObjectType.SERVICEPOOL,

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import logging
@@ -69,7 +70,7 @@ class GroupsManager:
     @dataclasses.dataclass
     class _LocalGrp:
         name: str
-        group: 'group.Group'
+        group: "group.Group"
         is_valid: bool = False
         is_pattern: bool = False
 
@@ -81,15 +82,15 @@ class GroupsManager:
                 try:
                     return re.search(self.name, name, re.IGNORECASE) is not None
                 except Exception:
-                    logger.exception('Exception in RE')
+                    logger.exception("Exception in RE")
                     return False
             # If not a pattern, just compare
             return name.casefold() == self.name.casefold()
 
     _groups: list[_LocalGrp]
-    _db_auth: 'DBAuthenticator'
+    _db_auth: "DBAuthenticator"
 
-    def __init__(self, db_auth: 'DBAuthenticator'):
+    def __init__(self, db_auth: "DBAuthenticator"):
         """
         Initializes the groups manager.
 
@@ -102,7 +103,7 @@ class GroupsManager:
         if db_auth.id:  # If "fake" authenticator (that is, root user with no authenticator in fact)
             for g in db_auth.groups.filter(state=State.ACTIVE, is_meta=False):
                 name = g.name.lower()
-                is_pattern_group = name.startswith('pat:')  # Is a pattern?
+                is_pattern_group = name.startswith("pat:")  # Is a pattern?
                 self._groups.append(
                     GroupsManager._LocalGrp(
                         name=name[4:] if is_pattern_group else name,
@@ -126,7 +127,7 @@ class GroupsManager:
         for g in self._groups:
             yield g.group.db_obj().name
 
-    def enumerate_valid_groups(self) -> typing.Generator['group.Group', None, None]:
+    def enumerate_valid_groups(self) -> typing.Generator["group.Group", None, None]:
         """Returns the list of valid groups for this groups manager."""
         from uds.models import Group as DBGroup  # Avoid circular imports
 
@@ -135,7 +136,7 @@ class GroupsManager:
             if grp.is_valid:
                 yield grp.group
                 valid_id_list.append(grp.group.db_obj().id)
-            
+
         # Now, get metagroups and also return them
         for db_group in DBGroup.objects.filter(manager__id=self._db_auth.id, is_meta=True):
             number_of_groups = db_group.groups.filter(id__in=valid_id_list, state=State.ACTIVE).count()
@@ -157,7 +158,7 @@ class GroupsManager:
         """
         return any(g.is_valid for g in self._groups)
 
-    def get_group(self, group_name: str) -> typing.Optional['group.Group']:
+    def get_group(self, group_name: str) -> typing.Optional["group.Group"]:
         """
         If this groups manager contains that group manager, it returns the
         :py:class:uds.core.auths.group.Group  representing that group name.
@@ -194,4 +195,4 @@ class GroupsManager:
         return any(grp.is_valid for grp in self._mached_groups(group_name))
 
     def __str__(self) -> str:
-        return f'Groupsmanager: {self._groups}'
+        return f"Groupsmanager: {self._groups}"

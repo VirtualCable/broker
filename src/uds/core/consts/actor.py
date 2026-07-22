@@ -30,8 +30,8 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
-MANAGED: typing.Final[str] = 'managed'
-UNMANAGED: typing.Final[str] = 'unmanaged'  # matches the definition of UDS Actors OFC
-
+MANAGED: typing.Final[str] = "managed"
+UNMANAGED: typing.Final[str] = "unmanaged"  # matches the definition of UDS Actors OFC

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 
@@ -48,9 +49,9 @@ class ServerTestTest(rest.test.RESTTestCase):
         """
         server = servers_fixtures.create_server()
         response = self.client.rest_post(
-            'servers/test',
+            "servers/test",
             data={
-                'token': server.token,
+                "token": server.token,
             },
         )
         self.assertEqual(response.status_code, 200)

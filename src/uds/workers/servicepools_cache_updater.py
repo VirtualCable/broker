@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -64,23 +65,23 @@ class ServiceCacheUpdater(Job):
     This is included as a scheduled task that will run every X seconds, and scheduler will keep it so it will be only executed by one backend at a time
     """
 
-    friendly_name = 'Service Cache Updater'
+    friendly_name = "Service Cache Updater"
 
     @typing.override
     def next_execution_delay(self) -> int:
         return GlobalConfig.CACHE_CHECK_DELAY.as_int()
 
     @staticmethod
-    def _notify_restrain(servicepool: 'ServicePool') -> None:
+    def _notify_restrain(servicepool: "ServicePool") -> None:
         remaining_restraing_time = servicepool.remaining_restraint_time()
         log.log(
             servicepool,
             types.log.LogLevel.WARNING,
-            f'Service Pool is restrained due to excesive errors (will be available in {remaining_restraing_time} seconds)',
+            f"Service Pool is restrained due to excesive errors (will be available in {remaining_restraing_time} seconds)",
             types.log.LogSource.INTERNAL,
         )
         logger.info(
-            '%s will be restrained during %s seconds. Will check this later',
+            "%s will be restrained during %s seconds. Will check this later",
             servicepool.name,
             remaining_restraing_time,
         )
@@ -124,7 +125,7 @@ class ServiceCacheUpdater(Job):
         """
         if servicepool_stats.servicepool is None:
             return
-        logger.debug('Growing L1 cache creating a new service for %s', servicepool_stats.servicepool.name)
+        logger.debug("Growing L1 cache creating a new service for %s", servicepool_stats.servicepool.name)
         # First, we try to assign from L2 cache
         if servicepool_stats.l2_cache_count > 0:
             valid = None
@@ -137,13 +138,10 @@ class ServiceCacheUpdater(Job):
                             servicepool_stats.servicepool, types.services.CacheLevel.L2
                         )
                     )
-                    .order_by('creation_date')
+                    .order_by("creation_date")
                 ):
                     if n.needs_osmanager():
-                        if (
-                            State.from_str(n.state).is_usable() is False
-                            or State.from_str(n.os_state).is_usable()
-                        ):
+                        if State.from_str(n.state).is_usable() is False or State.from_str(n.os_state).is_usable():
                             valid = n
                             break
                     else:
@@ -163,16 +161,16 @@ class ServiceCacheUpdater(Job):
             log.log(
                 servicepool_stats.servicepool,
                 types.log.LogLevel.ERROR,
-                'Max number of services reached for this service',
+                "Max number of services reached for this service",
                 types.log.LogSource.INTERNAL,
             )
             logger.warning(
-                'Max user services reached for %s: %s. Cache not created',
+                "Max user services reached for %s: %s. Cache not created",
                 servicepool_stats.servicepool.name,
                 servicepool_stats.servicepool.max_srvs,
             )
         except Exception:
-            logger.exception('Exception')
+            logger.exception("Exception")
 
     def grow_l2_cache(
         self,
@@ -196,7 +194,7 @@ class ServiceCacheUpdater(Job):
             )
         except MaxServicesReachedError:
             logger.warning(
-                'Max user services reached for %s: %s. Cache not created',
+                "Max user services reached for %s: %s. Cache not created",
                 servicepool_stats.servicepool.name,
                 servicepool_stats.servicepool.max_srvs,
             )
@@ -220,14 +218,14 @@ class ServiceCacheUpdater(Job):
                     servicepool_stats.servicepool, types.services.CacheLevel.L1
                 )
             )
-            .order_by('-creation_date')
+            .order_by("-creation_date")
             .iterator()
             if not i.destroy_after
         ]
 
         if not cache_items:
             logger.debug(
-                'There is more services than max configured, but could not reduce cache L1 cause its already empty'
+                "There is more services than max configured, but could not reduce cache L1 cause its already empty"
             )
             return
 
@@ -264,7 +262,7 @@ class ServiceCacheUpdater(Job):
                         servicepool_stats.servicepool, types.services.CacheLevel.L2
                     )
                 )
-                .order_by('creation_date')
+                .order_by("creation_date")
             )
             # TODO: Look first for non finished cache items and cancel them?
             cache: UserService = cache_items[0]
@@ -272,7 +270,7 @@ class ServiceCacheUpdater(Job):
 
     @typing.override
     def run(self) -> None:
-        logger.debug('Starting cache checking')
+        logger.debug("Starting cache checking")
         # We need to get
         for servicepool_stat in self.service_pools_needing_cache_update():
             # We have cache to update??
@@ -289,4 +287,4 @@ class ServiceCacheUpdater(Job):
                 self.reduce_l2_cache(servicepool_stat)
             elif servicepool_stat.is_l2_cache_growth_required():  # We need more L2 items
                 self.grow_l2_cache(servicepool_stat)
-        logger.debug('Cache checking done')
+        logger.debug("Cache checking done")

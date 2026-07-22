@@ -10,7 +10,7 @@ if typing.TYPE_CHECKING:
 
 # Helper to clean None values from dicts
 def _as_dict_without_none(v: typing.Any) -> typing.Any:
-    if hasattr(v, 'as_dict'):
+    if hasattr(v, "as_dict"):
         return _as_dict_without_none(v.as_dict())
     elif dataclasses.is_dataclass(v):
         return _as_dict_without_none(dataclasses.asdict(typing.cast(typing.Any, v)))
@@ -22,11 +22,9 @@ def _as_dict_without_none(v: typing.Any) -> typing.Any:
         ]
     elif isinstance(v, dict):
         return {
-            k: _as_dict_without_none(val)
-            for k, val in typing.cast(dict[str, typing.Any], v).items()
-            if val is not None
+            k: _as_dict_without_none(val) for k, val in typing.cast(dict[str, typing.Any], v).items() if val is not None
         }
-    elif hasattr(v, 'as_dict'):
+    elif hasattr(v, "as_dict"):
         return v.as_dict()
     return v
 
@@ -51,7 +49,6 @@ class RestApiInfoGuiType(enum.Enum):
 
 @dataclasses.dataclass
 class RestApiInfo:
-
     name: str | None = None
     description: str | None = None
 
@@ -59,7 +56,7 @@ class RestApiInfo:
     #  - SINGLE_TYPE: the gui returns with no type specified (for example, /gui)
     #  - MULTI_TYPED: the gui returns with a type specified (for example, /gui/whatever_type)
     #  - UNTYPED: no gui is provided
-    typed: 'RestApiInfoGuiType' = RestApiInfoGuiType.UNTYPED
+    typed: "RestApiInfoGuiType" = RestApiInfoGuiType.UNTYPED
 
 
 # Parameter
@@ -68,7 +65,7 @@ class Parameter:
     name: str
     in_: str  # 'query', 'path', 'header', etc.
     required: bool
-    schema: 'Schema'
+    schema: "Schema"
     description: str | None = None
     style: str | None = None
     explode: bool | None = None
@@ -76,13 +73,13 @@ class Parameter:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'name': self.name,
-                'in': self.in_,
-                'required': self.required,
-                'schema': self.schema.as_dict(),
-                'description': self.description,
-                'style': self.style,
-                'explode': self.explode,
+                "name": self.name,
+                "in": self.in_,
+                "required": self.required,
+                "schema": self.schema.as_dict(),
+                "description": self.description,
+                "style": self.style,
+                "explode": self.explode,
             }
         )
 
@@ -90,13 +87,13 @@ class Parameter:
 @dataclasses.dataclass
 class Content:
     media_type: str
-    schema: 'SchemaProperty'
+    schema: "SchemaProperty"
 
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
                 self.media_type: {
-                    'schema': self.schema.as_dict(),
+                    "schema": self.schema.as_dict(),
                 },
             }
         )
@@ -112,9 +109,9 @@ class RequestBody:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'required': self.required,
-                'content': self.content.as_dict(),
-                'description': self.description,
+                "required": self.required,
+                "content": self.content.as_dict(),
+                "description": self.description,
             }
         )
 
@@ -128,8 +125,8 @@ class Response:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'description': self.description,
-                'content': self.content.as_dict() if self.content else None,
+                "description": self.description,
+                "content": self.content.as_dict() if self.content else None,
             }
         )
 
@@ -137,7 +134,6 @@ class Response:
 # Operación (GET, POST, etc.)
 @dataclasses.dataclass
 class Operation:
-
     summary: str | None = None
     description: str | None = None
     deprecated: bool = False
@@ -150,17 +146,17 @@ class Operation:
     def as_dict(self) -> dict[str, typing.Any]:
         data = _as_dict_without_none(
             {
-                'summary': self.summary,
-                'description': self.description,
-                'deprecated': self.deprecated or None,
-                'parameters': [param.as_dict() for param in self.parameters],
-                'requestBody': self.requestBody.as_dict() if self.requestBody else None,
-                'responses': {k: v.as_dict() for k, v in self.responses.items()},
-                'tags': self.tags,
+                "summary": self.summary,
+                "description": self.description,
+                "deprecated": self.deprecated or None,
+                "parameters": [param.as_dict() for param in self.parameters],
+                "requestBody": self.requestBody.as_dict() if self.requestBody else None,
+                "responses": {k: v.as_dict() for k, v in self.responses.items()},
+                "tags": self.tags,
             }
         )
         if self.security:
-            data['security'] = [{self.security: []}]
+            data["security"] = [{self.security: []}]
         return data
 
 
@@ -177,12 +173,12 @@ class PathItem:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'get': self.get.as_dict() if self.get else None,
-                'post': self.post.as_dict() if self.post else None,
-                'put': self.put.as_dict() if self.put else None,
-                'delete': self.delete.as_dict() if self.delete else None,
-                'query': self.query.as_dict() if self.query else None,
-                'options': self.options.as_dict() if self.options else None,
+                "get": self.get.as_dict() if self.get else None,
+                "post": self.post.as_dict() if self.post else None,
+                "put": self.put.as_dict() if self.put else None,
+                "delete": self.delete.as_dict() if self.delete else None,
+                "query": self.query.as_dict() if self.query else None,
+                "options": self.options.as_dict() if self.options else None,
             }
         )
 
@@ -194,12 +190,12 @@ class SchemaProperty:
     format: str | None = None  # e.g. 'date-time', 'int32', etc.
     description: str | None = None
     example: typing.Any | None = None
-    items: 'SchemaProperty | None' = None  # For arrays
-    additionalProperties: 'SchemaProperty | None' = None  # For objects
+    items: "SchemaProperty | None" = None  # For arrays
+    additionalProperties: "SchemaProperty | None" = None  # For objects
     discriminator: str | None = None  # For polymorphic types
     enum: list[str | int] | None = None  # For enum types
-    properties: dict[str, 'SchemaProperty'] | None = None
-    one_of: list['SchemaProperty'] | None = None
+    properties: dict[str, "SchemaProperty"] | None = None
+    one_of: list["SchemaProperty"] | None = None
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, SchemaProperty):
@@ -214,78 +210,77 @@ class SchemaProperty:
             and self.discriminator == value.discriminator
             and self.enum == value.enum
             and self.properties == value.properties
-            and sorted(self.one_of or [], key=lambda x: x.type)
-            == sorted(value.one_of or [], key=lambda x: x.type)
+            and sorted(self.one_of or [], key=lambda x: x.type) == sorted(value.one_of or [], key=lambda x: x.type)
         )
 
     @staticmethod
-    def from_field_desc(desc: 'ui.GuiElement') -> 'SchemaProperty|None':
+    def from_field_desc(desc: "ui.GuiElement") -> "SchemaProperty|None":
         from uds.core.types import ui  # avoid circular import
 
-        def base_schema() -> 'SchemaProperty|None':
-            '''Returns the API type for this field type'''
+        def base_schema() -> "SchemaProperty|None":
+            """Returns the API type for this field type"""
             match desc.gui.type:
                 case ui.FieldType.TEXT:
-                    return SchemaProperty(type='string')
+                    return SchemaProperty(type="string")
                 case ui.FieldType.TEXT_AUTOCOMPLETE:
-                    return SchemaProperty(type='string')
+                    return SchemaProperty(type="string")
                 case ui.FieldType.NUMERIC:
-                    return SchemaProperty(type='number')
+                    return SchemaProperty(type="number")
                 case ui.FieldType.PASSWORD:
-                    return SchemaProperty(type='string')
+                    return SchemaProperty(type="string")
                 case ui.FieldType.HIDDEN:
                     return None
                 case ui.FieldType.CHOICE:
-                    return SchemaProperty(type='string')
+                    return SchemaProperty(type="string")
                 case ui.FieldType.MULTICHOICE:
-                    return SchemaProperty(type='array', items=SchemaProperty(type='string'))
+                    return SchemaProperty(type="array", items=SchemaProperty(type="string"))
                 case ui.FieldType.EDITABLELIST:
-                    return SchemaProperty(type='array', items=SchemaProperty(type='string'))
+                    return SchemaProperty(type="array", items=SchemaProperty(type="string"))
                 case ui.FieldType.CHECKBOX:
-                    return SchemaProperty(type='boolean')
+                    return SchemaProperty(type="boolean")
                 case ui.FieldType.IMAGECHOICE:
-                    return SchemaProperty(type='string')
+                    return SchemaProperty(type="string")
                 case ui.FieldType.DATE:
-                    return SchemaProperty(type='string')
+                    return SchemaProperty(type="string")
                 case ui.FieldType.INFO:
                     return None
                 case ui.FieldType.TAGLIST:
-                    return SchemaProperty(type='array', items=SchemaProperty(type='string'))
+                    return SchemaProperty(type="array", items=SchemaProperty(type="string"))
 
         schema = base_schema()
         if schema is None:
             return None
-        schema.description = f'{desc.gui.label}.{desc.gui.tooltip}'
+        schema.description = f"{desc.gui.label}.{desc.gui.tooltip}"
         return schema
 
     def as_dict(self) -> dict[str, typing.Any]:
         val = {
-            'type': self.type,
-            'format': self.format,
-            'description': self.description,
-            'example': self.example,
-            'items': self.items.as_dict() if self.items else None,
-            'additionalProperties': self.additionalProperties.as_dict() if self.additionalProperties else None,
-            'discriminator': self.discriminator,
-            'enum': self.enum,
-            'properties': {k: v.as_dict() for k, v in self.properties.items()} if self.properties else None,
+            "type": self.type,
+            "format": self.format,
+            "description": self.description,
+            "example": self.example,
+            "items": self.items.as_dict() if self.items else None,
+            "additionalProperties": self.additionalProperties.as_dict() if self.additionalProperties else None,
+            "discriminator": self.discriminator,
+            "enum": self.enum,
+            "properties": {k: v.as_dict() for k, v in self.properties.items()} if self.properties else None,
         }
 
         # Convert type to oneOf if necesary, and add refs if needed
         def one_of_ref(type_: str) -> dict[str, typing.Any]:
-            if type_.startswith('#'):
-                return {'$ref': type_}
-            return {'type': type_}
+            if type_.startswith("#"):
+                return {"$ref": type_}
+            return {"type": type_}
 
         if self.one_of:  # Ignore type, ose one_of values
-            val['oneOf'] = [i.as_dict() for i in self.one_of]
-            del val['type']
+            val["oneOf"] = [i.as_dict() for i in self.one_of]
+            del val["type"]
         elif isinstance(self.type, list):
             # If one_of is defined, we should not use type, but one_of
-            val['oneOf'] = [one_of_ref(ref) for ref in self.type]
-            del val['type']
+            val["oneOf"] = [one_of_ref(ref) for ref in self.type]
+            del val["type"]
         elif self.type:
-            del val['type']  # Remove existing type
+            del val["type"]  # Remove existing type
             val.update(one_of_ref(self.type))
         return _as_dict_without_none(val)
 
@@ -305,13 +300,13 @@ class Schema:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'type': self.type,
-                'format': self.format,
-                'properties': {k: v.as_dict() for k, v in self.properties.items()} if self.properties else None,
-                'required': self.required if self.required else None,
-                'description': self.description,
-                'minimum': self.minimum,
-                'maximum': self.maximum,
+                "type": self.type,
+                "format": self.format,
+                "properties": {k: v.as_dict() for k, v in self.properties.items()} if self.properties else None,
+                "required": self.required if self.required else None,
+                "description": self.description,
+                "minimum": self.minimum,
+                "maximum": self.maximum,
             }
         )
 
@@ -324,10 +319,10 @@ class RelatedSchema:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'oneOf': [{'$ref': i[1]} for i in self.mappings],
-                'discriminator': {
-                    'propertyName': self.property,
-                    'mapping': {i[0]: i[1] for i in self.mappings},
+                "oneOf": [{"$ref": i[1]} for i in self.mappings],
+                "discriminator": {
+                    "propertyName": self.property,
+                    "mapping": {i[0]: i[1] for i in self.mappings},
                 },
             }
         )
@@ -336,21 +331,19 @@ class RelatedSchema:
 # Componentes
 @dataclasses.dataclass
 class Components:
-    schemas: dict[str, Schema | RelatedSchema] = dataclasses.field(
-        default_factory=dict[str, Schema | RelatedSchema]
-    )
+    schemas: dict[str, Schema | RelatedSchema] = dataclasses.field(default_factory=dict[str, Schema | RelatedSchema])
     securitySchemes: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
 
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'schemas': {k: v.as_dict() for k, v in self.schemas.items()},
-                'securitySchemes': self.securitySchemes if self.securitySchemes else None,
+                "schemas": {k: v.as_dict() for k, v in self.schemas.items()},
+                "securitySchemes": self.securitySchemes if self.securitySchemes else None,
             }
         )
 
-    def union(self, other: 'Components') -> 'Components':
-        '''Returns a new Components instance that is the union of this and another Components.'''
+    def union(self, other: "Components") -> "Components":
+        """Returns a new Components instance that is the union of this and another Components."""
         new_components = Components()
         new_components.schemas = {**self.schemas, **other.schemas}
         if other.securitySchemes:
@@ -358,7 +351,7 @@ class Components:
         return new_components
 
     # Operator | will union two Components
-    def __or__(self, other: 'Components') -> 'Components':
+    def __or__(self, other: "Components") -> "Components":
         return self.union(other)
 
     def is_empty(self) -> bool:
@@ -374,9 +367,9 @@ class Info:
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'title': self.title,
-            'version': self.version,
-            'description': self.description,
+            "title": self.title,
+            "version": self.version,
+            "description": self.description,
         }
 
 
@@ -387,9 +380,9 @@ class OpenAPI:
     def _get_system_version() -> Info:
         from uds.core.consts import system
 
-        return Info(title='UDS API', version=system.VERSION, description='UDS REST API Documentation')
+        return Info(title="UDS API", version=system.VERSION, description="UDS REST API Documentation")
 
-    openapi: str = '3.1.0'
+    openapi: str = "3.1.0"
     info: Info = dataclasses.field(default_factory=lambda: OpenAPI._get_system_version())
     paths: dict[str, PathItem] = dataclasses.field(default_factory=dict[str, PathItem])
     components: Components = dataclasses.field(default_factory=Components)
@@ -397,10 +390,10 @@ class OpenAPI:
     def as_dict(self) -> dict[str, typing.Any]:
         return _as_dict_without_none(
             {
-                'openapi': self.openapi,
-                'info': self.info.as_dict(),
-                'paths': {k: v.as_dict() for k, v in self.paths.items()},
-                'components': self.components.as_dict(),
+                "openapi": self.openapi,
+                "info": self.info.as_dict(),
+                "paths": {k: v.as_dict() for k, v in self.paths.items()},
+                "components": self.components.as_dict(),
             }
         )
 
@@ -418,36 +411,30 @@ class ODataParams:
     select: set[str] = dataclasses.field(default_factory=set[str])  # $select=...
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any]) -> 'ODataParams':
+    def from_dict(data: dict[str, typing.Any]) -> "ODataParams":
         try:
             # extract order by, split by ',' and replace asc by '' and desc by a '-' stripping text.
             # After this, move the - to the beginning when needed
-            order_fld = typing.cast(str, data.get('$orderby', ''))
+            order_fld = typing.cast(str, data.get("$orderby", ""))
             order_by = list(
                 map(
-                    lambda x: f'-{x.rstrip("-")}' if x.endswith('-') else x,
-                    [
-                        item.strip().replace(' asc', '').replace(' desc', '-')
-                        for item in order_fld.split(',')
-                        if item
-                    ],
+                    lambda x: f"-{x.rstrip('-')}" if x.endswith("-") else x,
+                    [item.strip().replace(" asc", "").replace(" desc", "-") for item in order_fld.split(",") if item],
                 )
             )
-            select_fld = typing.cast(str, data.get('$select', ''))
-            select = {item.strip() for item in select_fld.split(',') if item}
-            start = int(data.get('$skip', 0)) if data.get('$skip') is not None else None
-            limit = int(data.get('$top', 0)) if data.get('$top') is not None else None
+            select_fld = typing.cast(str, data.get("$select", ""))
+            select = {item.strip() for item in select_fld.split(",") if item}
+            start = int(data.get("$skip", 0)) if data.get("$skip") is not None else None
+            limit = int(data.get("$top", 0)) if data.get("$top") is not None else None
             return ODataParams(
-                filter=data.get('$filter'),
+                filter=data.get("$filter"),
                 start=start,
                 limit=limit,
-                orderby=[
-                    o.replace('.', '__') for o in order_by
-                ],  # Allow order by related fields with dot or __
+                orderby=[o.replace(".", "__") for o in order_by],  # Allow order by related fields with dot or __
                 select=select,
             )
         except (ValueError, TypeError):
-            raise exceptions.rest.RequestError('Invalid OData query parameters')
+            raise exceptions.rest.RequestError("Invalid OData query parameters")
 
     def select_filter(self, d: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """

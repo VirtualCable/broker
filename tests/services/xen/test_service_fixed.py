@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 import typing
 from unittest import mock
@@ -43,6 +44,7 @@ from uds.services.Xen.xen import types as xen_types
 
 
 class TestXenFixedService(UDSTransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         fixtures.clean()
@@ -58,12 +60,12 @@ class TestXenFixedService(UDSTransactionTestCase):
             self.assertTrue(service.is_available())
             api.test.assert_called_with()
             # With data cached, even if test fails, it will return True
-            api.test.side_effect = Exception('Testing exception')
+            api.test.side_effect = Exception("Testing exception")
             self.assertTrue(service.is_available())
 
             # Data is cached, so we need to reset it
             api.test.reset_mock()
-            service.provider().is_available.cache_clear()  # type: ignore
+            service.provider().is_available.cache_clear()  # pyright: ignore  # pyrefly: ignore
             # Now should return False as we have reset the cache
             self.assertFalse(service.is_available())
             api.test.assert_called_with()
@@ -90,34 +92,26 @@ class TestXenFixedService(UDSTransactionTestCase):
 
             # Ensure machines are on same folder, so enumerate_assignables will return same machines
             # (it will filter by folder also...)
-            service.machines.value = [
-                x.opaque_ref for x in fixtures.VMS_INFO if x.folder == service.folder.value
-            ]
+            service.machines.value = [x.opaque_ref for x in fixtures.VMS_INFO if x.folder == service.folder.value]
 
-            locate_vm: typing.Callable[[str], typing.Any] = lambda vmid: next(
-                (x for x in fixtures.VMS_INFO if x.opaque_ref == vmid), fixtures.VMS_INFO[0]
-            )
+            def locate_vm(vmid: str) -> typing.Any:
+                return next((x for x in fixtures.VMS_INFO if x.opaque_ref == vmid), fixtures.VMS_INFO[0])
 
             self.assertEqual(
                 list(service.enumerate_assignables()),
-                [
-                    ui.gui.choice_item(locate_vm(x).opaque_ref, locate_vm(x).name or '')
-                    for x in service.machines.value
-                ],
+                [ui.gui.choice_item(locate_vm(x).opaque_ref, locate_vm(x).name or "") for x in service.machines.value],
             )
 
     def test_assign_from_assignables(self) -> None:
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_fixed(provider=provider)
 
-            vmid: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT['machines'])[0]
+            vmid: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])[0]
             # Assign from assignables
-            with mock.patch('uds.services.Xen.deployment_fixed.XenFixedUserService') as userservice:
+            with mock.patch("uds.services.Xen.deployment_fixed.XenFixedUserService") as userservice:
                 userservice_instance = userservice.return_value
-                userservice_instance.assign.return_value = 'OK'
-                self.assertEqual(
-                    service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), 'OK'
-                )
+                userservice_instance.assign.return_value = "OK"
+                self.assertEqual(service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), "OK")
                 userservice_instance.assign.assert_called_with(vmid)
 
                 # vmid should be already assigned, so it will return an error (call error of userservice_instance)
@@ -130,23 +124,23 @@ class TestXenFixedService(UDSTransactionTestCase):
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_fixed(provider=provider)
 
-            with mock.patch.object(service, '_assigned_access') as assigned_access:
+            with mock.patch.object(service, "_assigned_access") as assigned_access:
                 assigned_mock = mock.MagicMock()
                 assigned_access.return_value.__enter__.return_value = assigned_mock
-                service.remove_and_free('123')
-                assigned_mock.__contains__.assert_called_with('123')
+                service.remove_and_free("123")
+                assigned_mock.__contains__.assert_called_with("123")
                 assigned_mock.reset_mock()
                 assigned_mock.__contains__.return_value = True
-                service.remove_and_free('123')
-                assigned_mock.remove.assert_called_with('123')
-                assigned_mock.remove.assert_called_with('123')
+                service.remove_and_free("123")
+                assigned_mock.remove.assert_called_with("123")
+                assigned_mock.remove.assert_called_with("123")
 
     def test_process_snapshot(self) -> None:
         with fixtures.patched_provider() as provider:
             api = typing.cast(mock.MagicMock, provider.api)
             service = fixtures.create_service_fixed(provider=provider)
 
-            vmid = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT['machines'])[0]
+            vmid = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])[0]
             userservice_instance = mock.MagicMock()
             userservice_instance._vmid = vmid
 
@@ -154,7 +148,7 @@ class TestXenFixedService(UDSTransactionTestCase):
             api.list_snapshots.return_value = []
             service.snapshot_creation(userservice_instance)
             api.list_snapshots.assert_called_with(vmid, full_info=False)
-            api.create_snapshot.assert_called_with(vmid, 'UDS Snapshot')
+            api.create_snapshot.assert_called_with(vmid, "UDS Snapshot")
 
             # Skip snapshot creation
             api.reset_mock()

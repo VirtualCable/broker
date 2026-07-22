@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -54,15 +55,15 @@ class TunnelTicket(Handler):
     """
 
     ROLE = consts.UserRole.ANONYMOUS
-    PATH = 'tunnel'
-    NAME = 'ticket'
+    PATH = "tunnel"
+    NAME = "ticket"
 
     def get(self) -> typing.Any:
         """
         Processes get requests
         """
         logger.debug(
-            'Tunnel parameters for GET: %s (%s) from %s',
+            "Tunnel parameters for GET: %s (%s) from %s",
             self._args,
             self._params,
             self._request.ip,
@@ -82,17 +83,17 @@ class TunnelTicket(Handler):
         try:
             ticket = models.TicketStore.get_for_tunnel(self._args[0])
             if ticket.userservice is None or ticket.userservice.user is None or not ticket.remotes:
-                raise Exception('Ticket has no associated userservice or the userservice has no user (or no remotes)')
+                raise Exception("Ticket has no associated userservice or the userservice has no user (or no remotes)")
 
             # response = types.tickets.TunnelTicketResponse.from_ticket(ticket)
-            if self._args[1][:4] == 'stop':
-                sent, recv = self._params['sent'], self._params['recv']
+            if self._args[1][:4] == "stop":
+                sent, recv = self._params["sent"], self._params["recv"]
                 try:
                     total_time = sql_now() - ticket.started
                 except Exception:  # DB may contain old not tz aware dates
                     total_time = sql_now().replace(tzinfo=None) - ticket.started.replace(tzinfo=None)
 
-                msg = f'User {ticket.userservice.user.name} stopped tunnel {token[:8]}... to {ticket.remotes_as_str()}: u:{sent}/d:{recv}/t:{total_time}.'
+                msg = f"User {ticket.userservice.user.name} stopped tunnel {token[:8]}... to {ticket.remotes_as_str()}: u:{sent}/d:{recv}/t:{total_time}."
                 log.log(ticket.userservice.user.manager, types.log.LogLevel.INFO, msg)
                 log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
 
@@ -110,7 +111,7 @@ class TunnelTicket(Handler):
 
             else:  # New tunnel request
                 if net.ip_to_long(self._args[1][:32]).version == 0:
-                    raise Exception('Invalid from IP')
+                    raise Exception("Invalid from IP")
                 events.add_event(
                     ticket.userservice.deployed_service,
                     events.types.stats.EventType.TUNNEL_OPEN,
@@ -119,7 +120,7 @@ class TunnelTicket(Handler):
                     dstip=ticket.remotes_as_str(),
                     tunnel=self._args[0],
                 )
-                msg = f'User {ticket.userservice.user.name} started tunnel {self._args[0][:8]}... to {ticket.remotes_as_str()} from {self._args[1]}.'
+                msg = f"User {ticket.userservice.user.name} started tunnel {self._args[0][:8]}... to {ticket.remotes_as_str()} from {self._args[1]}."
                 log.log(ticket.userservice.user.manager, types.log.LogLevel.INFO, msg)
                 log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
                 # Generate new, notify only, ticket, for the userservice to notify when done
@@ -138,25 +139,21 @@ class TunnelTicket(Handler):
 
             return {}
         except Exception as e:
-            logger.info('Ticket ignored: %s', e)
+            logger.info("Ticket ignored: %s", e)
             raise exceptions.rest.AccessDenied() from e
 
 
 class TunnelRegister(ServerRegisterBase):
     ROLE = consts.UserRole.ADMIN
 
-    PATH = 'tunnel'
-    NAME = 'register'
+    PATH = "tunnel"
+    NAME = "register"
 
     # Just a compatibility method for old tunnel servers
     @typing.override
     def post(self) -> dict[str, typing.Any]:
-        self._params['type'] = types.servers.ServerType.TUNNEL
-        self._params['os'] = self._params.get(
-            'os', types.os.KnownOS.LINUX.os_name()
-        )  # Legacy tunnels are always linux
-        self._params['version'] = ''  # No version for legacy tunnels, does not respond to API requests from UDS
-        self._params['certificate'] = (
-            ''  # No certificate for legacy tunnels, does not respond to API requests from UDS
-        )
+        self._params["type"] = types.servers.ServerType.TUNNEL
+        self._params["os"] = self._params.get("os", types.os.KnownOS.LINUX.os_name())  # Legacy tunnels are always linux
+        self._params["version"] = ""  # No version for legacy tunnels, does not respond to API requests from UDS
+        self._params["certificate"] = ""  # No certificate for legacy tunnels, does not respond to API requests from UDS
         return super().post()

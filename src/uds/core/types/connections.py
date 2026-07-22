@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 
 from .services import ServiceType
@@ -65,7 +66,7 @@ class AssignRequest:
 
     assignations: int  # Number of times this service has been assigned
 
-    def as_dict(self) -> dict[str, 'str|int']:
+    def as_dict(self) -> dict[str, "str|int"]:
         return dataclasses.asdict(self)
 
 
@@ -89,16 +90,15 @@ class ConnectionData:
     protocol: str  # protocol to use, (there are a few standard defined in 'uds.core.types.transports.py', if yours does not fit those, use your own name
     username: str  # username (transformed if needed to) used to login to service
     service_type: ServiceType  # If VDI or APP, Defaults to VDI
-    password: str = ''  # password (transformed if needed to) used to login to service
-    domain: str = (
-        ''  # domain (extracted from username or wherever) that will be used. (Not necesarily an AD domain)
-    )
-    host: str = ''  # Used only for some transports that needs the host to connect to (like SPICE, RDS, etc..)
+    password: str = ""  # password (transformed if needed to) used to login to service
+    domain: str = ""  # domain (extracted from username or wherever) that will be used. (Not necesarily an AD domain)
+    host: str = ""  # Used only for some transports that needs the host to connect to (like SPICE, RDS, etc..)
 
     # sso: bool = False  # For future sso implementation
 
     def as_dict(self) -> dict[str, str]:
         return dataclasses.asdict(self)
+
 
 @dataclasses.dataclass
 class ConnectionSource:

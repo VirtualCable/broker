@@ -29,12 +29,14 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types, services
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import fields
 
@@ -57,15 +59,15 @@ class OGService(services.Service):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenGnsys Machines Service')
+    type_name = _("OpenGnsys Machines Service")
     # : Type used internally to identify this provider
-    type_type = 'openGnsysMachine'
+    type_type = "openGnsysMachine"
     # : Description shown at administration interface for this provider
-    type_description = _('OpenGnsys physical machines')
+    type_description = _("OpenGnsys physical machines")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # Functional related data
 
@@ -75,7 +77,7 @@ class OGService(services.Service):
     uses_cache = True
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('Number of desired machines to keep running waiting for an user')
+    cache_tooltip = _("Number of desired machines to keep running waiting for an user")
 
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
@@ -95,11 +97,11 @@ class OGService(services.Service):
         label=_("OU"),
         order=100,
         fills={
-            'callback_name': 'OgFillOuData',
-            'function': helpers.get_resources,
-            'parameters': ['prov_uuid', 'ou'],
+            "callback_name": "OgFillOuData",
+            "function": helpers.get_resources,
+            "parameters": ["prov_uuid", "ou"],
         },
-        tooltip=_('Organizational Unit'),
+        tooltip=_("Organizational Unit"),
         required=True,
     )
 
@@ -107,7 +109,7 @@ class OGService(services.Service):
     lab = gui.ChoiceField(
         label=_("lab"),
         order=101,
-        tooltip=_('Laboratory'),
+        tooltip=_("Laboratory"),
         required=False,
     )
 
@@ -115,7 +117,7 @@ class OGService(services.Service):
     image = gui.ChoiceField(
         label=_("OS Image"),
         order=102,
-        tooltip=_('OpenGnsys Operating System Image'),
+        tooltip=_("OpenGnsys Operating System Image"),
         required=True,
     )
 
@@ -123,24 +125,22 @@ class OGService(services.Service):
         length=3,
         label=_("Max. reservation time"),
         order=110,
-        tooltip=_(
-            'Security parameter for OpenGnsys to keep reservations at most this hours. Handle with care!'
-        ),
+        tooltip=_("Security parameter for OpenGnsys to keep reservations at most this hours. Handle with care!"),
         default=2400,  # 1 hundred days
         min_value=24,
-        tab=_('Advanced'),
+        tab=_("Advanced"),
         required=False,
-        old_field_name='maxReservationTime',
+        old_field_name="maxReservationTime",
     )
 
     start_if_unavailable = gui.CheckBoxField(
-        label=_('Start if unavailable'),
+        label=_("Start if unavailable"),
         default=True,
         order=111,
         tooltip=_(
-            'If active, machines that are not available on user connect (on some OS) will try to power on through OpenGnsys.'
+            "If active, machines that are not available on user connect (on some OS) will try to power on through OpenGnsys."
         ),
-        old_field_name='startIfUnavailable',
+        old_field_name="startIfUnavailable",
     )
 
     userservices_limit_field = fields.services_limit_field()
@@ -152,14 +152,14 @@ class OGService(services.Service):
         """
         Loads required values inside
         """
-        ous = [gui.choice_item(r['id'], r['name']) for r in self.provider().api.list_of_ous()]
+        ous = [gui.choice_item(r["id"], r["name"]) for r in self.provider().api.list_of_ous()]
         self.ou.set_choices(ous)
 
         self.prov_uuid.value = self.provider().db_obj().uuid
 
     @typing.override
-    def provider(self) -> 'OGProvider':
-        return typing.cast('OGProvider', super().provider())
+    def provider(self) -> "OGProvider":
+        return typing.cast("OGProvider", super().provider())
 
     def status(self, vmid: str) -> typing.Any:
         return self.provider().status(vmid)
@@ -191,16 +191,16 @@ class OGService(services.Service):
 
     def _notify_url(self, uuid: str, token: str, message: str) -> str:
         # The URL is "GET messages URL".
-        return f'{self.provider().get_uds_endpoint()}uds/ognotify/{message}/{token}/{uuid}'
+        return f"{self.provider().get_uds_endpoint()}uds/ognotify/{message}/{token}/{uuid}"
 
     def get_login_notify_url(self, uuid: str, token: str) -> str:
-        return self._notify_url(uuid, token, 'login')
+        return self._notify_url(uuid, token, "login")
 
     def get_logout_notify_url(self, uuid: str, token: str) -> str:
-        return self._notify_url(uuid, token, 'logout')
+        return self._notify_url(uuid, token, "logout")
 
     def get_relase_url(self, uuid: str, token: str) -> str:
-        return self._notify_url(uuid, token, 'release')
+        return self._notify_url(uuid, token, "release")
 
     def try_start_if_unavailable(self) -> bool:
         return self.start_if_unavailable.as_bool()

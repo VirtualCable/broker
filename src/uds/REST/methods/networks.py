@@ -30,6 +30,7 @@
 """
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import dataclasses
 import logging
@@ -67,15 +68,15 @@ class Networks(ModelHandler[NetworkItem]):
     """
 
     MODEL = Network
-    FIELDS_TO_SAVE = ['name', 'net_string', 'tags']
+    FIELDS_TO_SAVE = ["name", "net_string", "tags"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Networks'))
-        .text_column('name', _('Name'))
-        .text_column('net_string', _('Range'))
-        .numeric_column('transports_count', _('Transports'), width='8em')
-        .numeric_column('authenticators_count', _('Authenticators'), width='8em')
-        .text_column('tags', _('Tags'), visible=False)
+        ui_utils.TableBuilder(_("Networks"))
+        .text_column("name", _("Name"))
+        .text_column("net_string", _("Range"))
+        .numeric_column("transports_count", _("Transports"), width="8em")
+        .numeric_column("authenticators_count", _("Authenticators"), width="8em")
+        .text_column("tags", _("Tags"), visible=False)
         .build()
     )
 
@@ -92,17 +93,17 @@ class Networks(ModelHandler[NetworkItem]):
             .add_stock_field(types.rest.stock.StockField.COMMENTS)
             .add_stock_field(types.rest.stock.StockField.TAGS)
             .add_text(
-                name='net_string',
-                label=gettext('Network range'),
+                name="net_string",
+                label=gettext("Network range"),
                 tooltip=gettext(
-                    'Network range. Accepts most network definitions formats (range, subnet, host, etc...)'
+                    "Network range. Accepts most network definitions formats (range, subnet, host, etc...)"
                 ),
             )
             .build()
         )
 
     @typing.override
-    def get_item(self, item: 'Model') -> NetworkItem:
+    def get_item(self, item: "Model") -> NetworkItem:
         item = ensure.is_instance(item, Network)
         return NetworkItem(
             id=item.uuid,

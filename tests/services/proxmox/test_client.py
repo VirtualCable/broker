@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 import time
 import typing
@@ -64,50 +65,50 @@ class TestProxmoxClient(UDSTransactionTestCase):
     test_vm: prox_types.VMInfo = prox_types.VMInfo.null()
     pool: prox_types.PoolInfo = prox_types.PoolInfo.null()
     storage: prox_types.StorageInfo = prox_types.StorageInfo.null()
-    hagroup: str = ''
+    hagroup: str = ""
 
     def setUp(self) -> None:
-        v = vars.get_vars('proxmox9_alone')
+        v = vars.get_vars("proxmox9_alone")
         if not v:
-            self.skipTest('No proxmox vars')
+            self.skipTest("No proxmox vars")
 
         self.pclient = prox_client.ProxmoxClient(
-            host=v['host'],
-            port=int(v['port']),
-            username=v['username'],
-            password=v['password'],
-            use_api_token=v['use_api_token'] == 'true',
+            host=v["host"],
+            port=int(v["port"]),
+            username=v["username"],
+            password=v["password"],
+            use_api_token=v["use_api_token"] == "true",
             verify_ssl=False,
         )
 
         for vm in self.pclient.list_vms():
-            if vm.name == v['test_vm']:
+            if vm.name == v["test_vm"]:
                 self.test_vm = self.pclient.get_vm_info(vm.id)  # To ensure we have all the info
 
         if self.test_vm.is_null():
-            self.skipTest('No test vm found')
+            self.skipTest("No test vm found")
 
         for pool in self.pclient.list_pools():
-            if pool.id == v['test_pool']:  # id is the pool name in proxmox
+            if pool.id == v["test_pool"]:  # id is the pool name in proxmox
                 self.pool = pool
 
         if self.pool.is_null():
-            self.skipTest('No valid pool found')
+            self.skipTest("No valid pool found")
 
         for storage in self.pclient.list_storages():
-            if storage.storage == v['test_storage']:
+            if storage.storage == v["test_storage"]:
                 self.storage = storage
 
         if self.storage.is_null():
-            self.skipTest('No valid storage found')
+            self.skipTest("No valid storage found")
 
-        if int(v.get('version', '8').split('.', 1)[0]) < 9:
-            self.hagroup = v['test_ha_group']
+        if int(v.get("version", "8").split(".", 1)[0]) < 9:
+            self.hagroup = v["test_ha_group"]
             # Ensure we have a valid pool, storage and ha group
             if self.hagroup not in self.pclient.list_ha_groups():
-                self.skipTest('No valid ha group found')
+                self.skipTest("No valid ha group found")
         else:
-            self.hagroup = ''
+            self.hagroup = ""
 
     def _get_new_vmid(self) -> int:
         MAX_RETRIES: typing.Final[int] = 512  # So we don't loop forever, just in case...
@@ -119,7 +120,7 @@ class TestProxmoxClient(UDSTransactionTestCase):
             # All assigned vmid will be left as unusable on UDS until released by time (3 years)
             # This is not a problem at all, in the rare case that a machine id is released from uds db
             # if it exists when we try to create a new one, we will simply try to get another one
-        self.fail(f'Could not get a new vmid!!: last tried {vmid}')
+        self.fail(f"Could not get a new vmid!!: last tried {vmid}")
 
     def _wait_for_task(self, exec_result: prox_types.ExecResult, timeout: int = 16) -> None:
         while timeout > 0:
@@ -129,7 +130,7 @@ class TestProxmoxClient(UDSTransactionTestCase):
                 time.sleep(1)
             else:
                 return
-        raise Exception('Timeout waiting for task to finish')
+        raise Exception("Timeout waiting for task to finish")
 
     @contextlib.contextmanager
     def _create_test_vm(
@@ -147,8 +148,8 @@ class TestProxmoxClient(UDSTransactionTestCase):
             res = self.pclient.clone_vm(
                 vmid=vmid or self.test_vm.id,
                 new_vmid=new_vmid,
-                name=f'uds-test-{new_vmid}',
-                description=f'UDS Test VM {new_vmid} (cloned from {self.test_vm.id})',
+                name=f"uds-test-{new_vmid}",
+                description=f"UDS Test VM {new_vmid} (cloned from {self.test_vm.id})",
                 as_linked_clone=as_linked_clone,  # Test VM is not a template, so cannot be linked cloned
                 target_node=target_node,
                 target_storage=target_storage or self.storage.storage,
@@ -180,10 +181,10 @@ class TestProxmoxClient(UDSTransactionTestCase):
         self.assertIsNotNone(cluster_info.nodes)
 
     def test_get_cluster_resources(self) -> None:
-        res1 = self.pclient.get_cluster_resources('vm')
-        res2 = self.pclient.get_cluster_resources('storage')
-        res3 = self.pclient.get_cluster_resources('node')
-        res4 = self.pclient.get_cluster_resources('sdn')
+        res1 = self.pclient.get_cluster_resources("vm")
+        res2 = self.pclient.get_cluster_resources("storage")
+        res3 = self.pclient.get_cluster_resources("node")
+        res4 = self.pclient.get_cluster_resources("sdn")
 
         self.assertIsInstance(res1, list)
         # ensure can convert to vm info
@@ -225,9 +226,9 @@ class TestProxmoxClient(UDSTransactionTestCase):
         node = self.pclient.get_best_node_for_vm()
         # Node should be a NodeStats, and must be part of the nodes got from get_cluster_resources
         if node is None:
-            self.fail('No node found')
+            self.fail("No node found")
         self.assertIsInstance(node, prox_types.NodeStats)
-        self.assertIn(node.name, [n['node'] for n in self.pclient.get_cluster_resources('node')])
+        self.assertIn(node.name, [n["node"] for n in self.pclient.get_cluster_resources("node")])
 
     def test_clone_vm_ok(self) -> None:
         # In fact, use the context manager to test this
@@ -242,17 +243,17 @@ class TestProxmoxClient(UDSTransactionTestCase):
 
     def test_clone_vm_fail_invalid_node(self) -> None:
         with self.assertRaises(prox_exceptions.ProxmoxDoesNotExists):
-            with self._create_test_vm(target_node='invalid-node'):
+            with self._create_test_vm(target_node="invalid-node"):
                 pass
 
     def test_clone_vm_fail_invalid_pool(self) -> None:
         with self.assertRaises(prox_exceptions.ProxmoxDoesNotExists):
-            with self._create_test_vm(target_pool='invalid-pool'):
+            with self._create_test_vm(target_pool="invalid-pool"):
                 pass
 
     def test_clone_vm_fail_invalid_storage(self) -> None:
         with self.assertRaises(prox_exceptions.ProxmoxDoesNotExists):
-            with self._create_test_vm(target_storage='invalid-storage'):
+            with self._create_test_vm(target_storage="invalid-storage"):
                 pass
 
     def test_clone_vm_fail_no_vgpus(self) -> None:
@@ -261,8 +262,8 @@ class TestProxmoxClient(UDSTransactionTestCase):
                 pass
 
     def test_list_ha_groups(self) -> None:
-        if self.hagroup == '':
-            self.skipTest('No ha groups in this version of proxmox')
+        if self.hagroup == "":
+            self.skipTest("No ha groups in this version of proxmox")
 
         groups = self.pclient.list_ha_groups()
         self.assertIsInstance(groups, list)
@@ -277,7 +278,7 @@ class TestProxmoxClient(UDSTransactionTestCase):
             self.pclient.enable_vm_ha(vm.id, started=False, group=self.hagroup)
             # Ensure it's enabled. Only works for version 9
             ha_resources = self.pclient.list_ha_resources(force=True)
-            self.assertIn(f'vm:{vm.id}', ha_resources)
+            self.assertIn(f"vm:{vm.id}", ha_resources)
             # On < 9, groups can be enabled. On 9 >, no ha groups exists
             if self.hagroup:
                 vminfo = self.pclient.get_vm_info(vm.id, force=True)
@@ -286,11 +287,11 @@ class TestProxmoxClient(UDSTransactionTestCase):
             self.pclient.disable_vm_ha(vm.id)
 
             ha_resources = self.pclient.list_ha_resources(force=True)
-            self.assertNotIn(f'vm:{vm.id}', ha_resources)
+            self.assertNotIn(f"vm:{vm.id}", ha_resources)
 
             if self.hagroup:
                 vminfo = self.pclient.get_vm_info(vm.id, force=True)
-                self.assertEqual(vminfo.ha.group, '')
+                self.assertEqual(vminfo.ha.group, "")
 
     def test_set_vm_protection(self) -> None:
         with self._create_test_vm() as vm:
@@ -311,7 +312,7 @@ class TestProxmoxClient(UDSTransactionTestCase):
     def test_snapshots(self) -> None:
         with self._create_test_vm() as vm:
             # Create snapshot for the vm
-            task = self.pclient.create_snapshot(vm.id, name='test-snapshot')
+            task = self.pclient.create_snapshot(vm.id, name="test-snapshot")
             self._wait_for_task(task)
             snapshots = self.pclient.list_snapshots(vm.id)
             self.assertIsInstance(snapshots, list)
@@ -321,14 +322,14 @@ class TestProxmoxClient(UDSTransactionTestCase):
                 self.assertIsInstance(snapshot, prox_types.SnapshotInfo)
 
             # test-snapshot should be there
-            self.assertIn('test-snapshot', [s.name for s in snapshots])
+            self.assertIn("test-snapshot", [s.name for s in snapshots])
 
             # Restore the snapshot
-            task = self.pclient.restore_snapshot(vm.id, name='test-snapshot')
+            task = self.pclient.restore_snapshot(vm.id, name="test-snapshot")
             self._wait_for_task(task)
 
             # Delete the snapshot
-            task = self.pclient.delete_snapshot(vm.id, name='test-snapshot')
+            task = self.pclient.delete_snapshot(vm.id, name="test-snapshot")
             self._wait_for_task(task)
 
             snapshots = self.pclient.list_snapshots(vm.id)
@@ -381,7 +382,7 @@ class TestProxmoxClient(UDSTransactionTestCase):
 
     def test_set_vm_net_mac(self) -> None:
         with self._create_test_vm() as vm:
-            mac = '00:11:22:33:44:55'
+            mac = "00:11:22:33:44:55"
             self.pclient.set_vm_net_mac(vm.id, mac)
             vmconfig = self.pclient.get_vm_config(vm.id)
             self.assertEqual(vmconfig.networks[0].macaddr, mac)

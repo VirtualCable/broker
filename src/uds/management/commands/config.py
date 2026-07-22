@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import argparse
 import logging
 import typing
@@ -46,28 +47,28 @@ class Command(BaseCommand):
 
     @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument('name_value', nargs='+', type=str)
+        parser.add_argument("name_value", nargs="+", type=str)
         # If set as "password field"
-        parser.add_argument('--password', action='store_true', default=False, help='Set as password field')
+        parser.add_argument("--password", action="store_true", default=False, help="Set as password field")
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug("Handling settings")
         GlobalConfig.initialize()
         try:
-            for config in options['name_value']:
-                logger.debug('Config: %s', config)
-                first, value = config.split('=', 1)  # Only first = is separator :)
-                first = first.split('.')
+            for config in options["name_value"]:
+                logger.debug("Config: %s", config)
+                first, value = config.split("=", 1)  # Only first = is separator :)
+                first = first.split(".")
                 if len(first) == 2:
                     mod, name = Config.SectionType.from_str(first[0]), first[1]
                 else:
                     mod, name = Config.SectionType.GLOBAL, first[0]
                 if Config.update(mod, name, value) is None:
                     kwargs = {}
-                    if options['password']:
-                        kwargs['type'] = Config.FieldType.PASSWORD
+                    if options["password"]:
+                        kwargs["type"] = Config.FieldType.PASSWORD
                     Config.section(mod).value(name, value).get()
         except Exception as e:
-            self.stderr.write(f'The command could not be processed: {e}')
-            logger.exception('Exception processing %s', args)
+            self.stderr.write(f"The command could not be processed: {e}")
+            logger.exception("Exception processing %s", args)

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 
 from uds import models
@@ -52,16 +53,12 @@ class HangedCleanerTest(UDSTestCase):
         config.GlobalConfig.MAX_INITIALIZING_TIME.set(MAX_INIT)
         config.GlobalConfig.MAX_REMOVAL_TIME.set(MAX_INIT)
         # All created user services has "in_use" to False, os_state and state to USABLE
-        self.userServices = fixtures_services.create_db_assigned_userservices(
-            count=TEST_SERVICES
-        )
+        self.userServices = fixtures_services.create_db_assigned_userservices(count=TEST_SERVICES)
 
         # Setup a few user services as hanged
         for i, us in enumerate(self.userServices):
             if i % 5 == 0:
-                us.state = (
-                    State.PREPARING
-                )  # These will convert in "CANCELED" (first CANCELING but TestDeployment Cancels inmediately, so it will be CANCELED)
+                us.state = State.PREPARING  # These will convert in "CANCELED" (first CANCELING but TestDeployment Cancels inmediately, so it will be CANCELED)
             elif i % 5 == 1:
                 us.state = State.USABLE
                 us.os_state = State.PREPARING  # THese in "REMOVABLE"
@@ -74,22 +71,14 @@ class HangedCleanerTest(UDSTestCase):
                 us.state = State.USABLE
                 us.os_state = State.USABLE
 
-            us.state_date = model.sql_now() - datetime.timedelta(
-                seconds=MAX_INIT + 1
-            )
-            us.save(update_fields=['state', 'os_state', 'state_date'])
+            us.state_date = model.sql_now() - datetime.timedelta(seconds=MAX_INIT + 1)
+            us.save(update_fields=["state", "os_state", "state_date"])
 
     def test_hanged_cleaner(self) -> None:
         # At start, there is no "removable" user services
         cleaner = HangedCleaner(Environment.testing_environment())
         cleaner.run()
         one_fith = TEST_SERVICES // 5
-        self.assertEqual(
-            models.UserService.objects.filter(state=State.CANCELED).count(), one_fith
-        )
-        self.assertEqual(
-            models.UserService.objects.filter(state=State.REMOVABLE).count(), 3*one_fith
-        )
-        self.assertEqual(
-            models.UserService.objects.filter(state=State.USABLE).count(), one_fith
-        )
+        self.assertEqual(models.UserService.objects.filter(state=State.CANCELED).count(), one_fith)
+        self.assertEqual(models.UserService.objects.filter(state=State.REMOVABLE).count(), 3 * one_fith)
+        self.assertEqual(models.UserService.objects.filter(state=State.USABLE).count(), one_fith)

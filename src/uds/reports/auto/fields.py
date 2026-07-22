@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -44,8 +45,8 @@ logger = logging.getLogger(__name__)
 def start_date_field(order: int) -> gui.DateField:
     return gui.DateField(
         order=order,
-        label=_('Starting date'),
-        tooltip=_('Starting date for report'),
+        label=_("Starting date"),
+        tooltip=_("Starting date for report"),
         default=dateutils.start_of_month,
         required=True,
     )
@@ -54,8 +55,8 @@ def start_date_field(order: int) -> gui.DateField:
 def single_date_field(order: int) -> gui.DateField:
     return gui.DateField(
         order=order,
-        label=_('Date'),
-        tooltip=_('Date for report'),
+        label=_("Date"),
+        tooltip=_("Date for report"),
         default=dateutils.today,
         required=True,
     )
@@ -64,8 +65,8 @@ def single_date_field(order: int) -> gui.DateField:
 def end_date_field(order: int) -> gui.DateField:
     return gui.DateField(
         order=order,
-        label=_('Ending date'),
-        tooltip=_('ending date for report'),
+        label=_("Ending date"),
+        tooltip=_("ending date for report"),
         default=dateutils.tomorrow,
         required=True,
     )
@@ -73,17 +74,17 @@ def end_date_field(order: int) -> gui.DateField:
 
 def intervals_field(order: int) -> gui.ChoiceField:
     return gui.ChoiceField(
-        label=_('Report data interval'),
+        label=_("Report data interval"),
         order=order,
         choices=[
-            gui.choice_item('hour', _('Hourly')),
-            gui.choice_item('day', _('Daily')),
-            gui.choice_item('week', _('Weekly')),
-            gui.choice_item('month', _('Monthly')),
+            gui.choice_item("hour", _("Hourly")),
+            gui.choice_item("day", _("Daily")),
+            gui.choice_item("week", _("Weekly")),
+            gui.choice_item("month", _("Monthly")),
         ],
-        tooltip=_('Interval for report data'),
+        tooltip=_("Interval for report data"),
         required=True,
-        default='day',
+        default="day",
     )
 
 
@@ -93,19 +94,21 @@ def source_field(
     if not data_source:
         return None
 
-    data_source = data_source.split('.')[0]
+    data_source = data_source.split(".")[0]
     # logger.debug('SOURCE: %s', data_source)
 
-    field_type: typing.Type[gui.ChoiceField|gui.MultiChoiceField] = gui.ChoiceField if not multiple else gui.MultiChoiceField
+    field_type: typing.Type[gui.ChoiceField | gui.MultiChoiceField] = (
+        gui.ChoiceField if not multiple else gui.MultiChoiceField
+    )
 
     labels: typing.Any = {
-        'ServicePool': (_('Service pool'), _('Service pool for report')),
-        'Authenticator': (_('Authenticator'), _('Authenticator for report')),
-        'Service': (_('Service'), _('Service for report')),
-        'Provider': (_('Service provider'), _('Service provider for report')),
+        "ServicePool": (_("Service pool"), _("Service pool for report")),
+        "Authenticator": (_("Authenticator"), _("Authenticator for report")),
+        "Service": (_("Service"), _("Service for report")),
+        "Provider": (_("Service provider"), _("Service provider for report")),
     }.get(data_source)
 
-    logger.debug('Labels: %s, %s', labels, field_type)
+    logger.debug("Labels: %s, %s", labels, field_type)
 
     return field_type(label=labels[0], order=order, tooltip=labels[1], required=True)
 
@@ -115,10 +118,10 @@ def source_field_data(
     field: typing.Union[gui.ChoiceField, gui.MultiChoiceField],
 ) -> None:
     data_list: list[types.ui.ChoiceItem] = [
-        gui.choice_item(str(x.uuid), x.name) for x in model.objects.all().order_by('name')
+        gui.choice_item(str(x.uuid), x.name) for x in model.objects.all().order_by("name")
     ]
 
     if isinstance(field, gui.MultiChoiceField):
-        data_list.insert(0, types.ui.ChoiceItem(id='0-0-0-0', text=_('All')))
+        data_list.insert(0, types.ui.ChoiceItem(id="0-0-0-0", text=_("All")))
 
     field.set_choices(data_list)

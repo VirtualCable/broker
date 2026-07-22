@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -40,11 +41,11 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'emailmfa',
-    'radiusotp',
-    'smshttpmfa',
-    'samplemfa',
-    'totp_mfa',
+    "emailmfa",
+    "radiusotp",
+    "smshttpmfa",
+    "samplemfa",
+    "totp_mfa",
 ]
 
 
@@ -54,8 +55,8 @@ class TestMFAs(UDSTestCase):
     """
 
     def test_mfas_loads_correctly(self) -> None:
-        from uds import mfas  # type: ignore  # ensure transports are registered
+        from uds import mfas as mfas  # ensure transports are registered
 
         factory = MFAsFactory()
         for mfa in MUST_HAVE:
-            self.assertTrue(factory.has(mfa), f'MFA {mfa} not found')
+            self.assertTrue(factory.has(mfa), f"MFA {mfa} not found")

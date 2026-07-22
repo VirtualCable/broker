@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 import base64
 import dataclasses
 import logging
@@ -48,13 +49,13 @@ _NEW_FORMAT_PREFIXES: typing.Final[tuple[str, ...]] = tuple(
 
 @dataclasses.dataclass(frozen=True)
 class AuthTypeInfo:
-    name: str = ''
+    name: str = ""
 
 
 AUTH_TYPES: typing.Final[dict[str, AuthTypeInfo]] = {
-    'ActiveDirectoryAuthenticator': AuthTypeInfo(name='Active Directory'),
-    'RegexLdapAuthenticator': AuthTypeInfo(name='Regex LDAP'),
-    'SimpleLdapAuthenticator': AuthTypeInfo(name='Simple LDAP'),
+    "ActiveDirectoryAuthenticator": AuthTypeInfo(name="Active Directory"),
+    "RegexLdapAuthenticator": AuthTypeInfo(name="Regex LDAP"),
+    "SimpleLdapAuthenticator": AuthTypeInfo(name="Simple LDAP"),
 }
 
 
@@ -74,8 +75,8 @@ def upgrade_authenticators() -> dict[str, int]:
                 auth.get_instance()
                 upgraded += 1
             except Exception:
-                logger.exception('Error upgrading Authenticator %s', auth.uuid)
+                logger.exception("Error upgrading Authenticator %s", auth.uuid)
 
-        logger.info('Upgraded %d Authenticators for %s', upgraded, type_type)
+        logger.info("Upgraded %d Authenticators for %s", upgraded, type_type)
         results[type_type] = upgraded
     return results

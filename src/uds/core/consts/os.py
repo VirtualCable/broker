@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import re
 import typing
 
@@ -55,20 +56,20 @@ DEFAULT_OS: typing.Final[types.os.KnownOS] = types.os.KnownOS.WINDOWS
 KNOW_BROWSERS: typing.Final[tuple[types.os.KnownBrowser, ...]] = tuple(types.os.KnownBrowser)
 
 BROWSERS_RE: dict[types.os.KnownBrowser, tuple[re.Pattern[str], ...]] = {
-    types.os.KnownBrowser.FIREFOX: (re.compile(r'Firefox/([0-9.]+)'),),
-    types.os.KnownBrowser.SEAMONKEY: (re.compile(r'Seamonkey/([0-9.]+)'),),
-    types.os.KnownBrowser.CHROME: (re.compile(r'Chrome/([0-9.]+)'),),
-    types.os.KnownBrowser.CHROMIUM: (re.compile(r'Chromium/([0-9.]+)'),),
-    types.os.KnownBrowser.SAFARI: (re.compile(r'Safari/([0-9.]+)'),),
+    types.os.KnownBrowser.FIREFOX: (re.compile(r"Firefox/([0-9.]+)"),),
+    types.os.KnownBrowser.SEAMONKEY: (re.compile(r"Seamonkey/([0-9.]+)"),),
+    types.os.KnownBrowser.CHROME: (re.compile(r"Chrome/([0-9.]+)"),),
+    types.os.KnownBrowser.CHROMIUM: (re.compile(r"Chromium/([0-9.]+)"),),
+    types.os.KnownBrowser.SAFARI: (re.compile(r"Safari/([0-9.]+)"),),
     types.os.KnownBrowser.OPERA: (
-        re.compile(r'OPR/([0-9.]+)'),
-        re.compile(r'Opera/([0-9.]+)'),
+        re.compile(r"OPR/([0-9.]+)"),
+        re.compile(r"Opera/([0-9.]+)"),
     ),
     types.os.KnownBrowser.IEXPLORER: (
-        re.compile(r';MSIE ([0-9.]+);'),
-        re.compile(r'Trident/.*rv:([0-9.]+)'),
+        re.compile(r";MSIE ([0-9.]+);"),
+        re.compile(r"Trident/.*rv:([0-9.]+)"),
     ),
-    types.os.KnownBrowser.EDGE: (re.compile(r'Edg/([0-9.]+)'),),
+    types.os.KnownBrowser.EDGE: (re.compile(r"Edg/([0-9.]+)"),),
 }
 
 BROWSER_RULES: dict[types.os.KnownBrowser, tuple[types.os.KnownBrowser, tuple[types.os.KnownBrowser, ...]]] = {

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import logging
 import time
@@ -55,51 +56,43 @@ class Login(Handler):
     Responsible of user authentication
     """
 
-    PATH = 'auth'
+    PATH = "auth"
     ROLE = consts.UserRole.ANONYMOUS
 
     API_OPERATIONS = {
-        'post': types.rest.api.Operation(
-            summary='Authenticate a user',
-            description='Authenticates a user against the specified authenticator and returns an auth token',
+        "post": types.rest.api.Operation(
+            summary="Authenticate a user",
+            description="Authenticates a user against the specified authenticator and returns an auth token",
             requestBody=types.rest.api.RequestBody(
                 required=True,
-                description='Authentication credentials',
+                description="Authentication credentials",
                 content=types.rest.api.Content(
-                    media_type='application/json',
+                    media_type="application/json",
                     schema=types.rest.api.SchemaProperty(
-                        type='object',
+                        type="object",
                         properties={
-                            'username': types.rest.api.SchemaProperty(type='string'),
-                            'password': types.rest.api.SchemaProperty(type='string'),
-                            'auth_id': types.rest.api.SchemaProperty(
-                                type='string', description='Authenticator UUID'
-                            ),
-                            'auth': types.rest.api.SchemaProperty(
-                                type='string', description='Authenticator name'
-                            ),
-                            'label': types.rest.api.SchemaProperty(
-                                type='string', description='Authenticator label'
-                            ),
-                            'platform': types.rest.api.SchemaProperty(
-                                type='string', description='Platform identifier'
-                            ),
-                            'locale': types.rest.api.SchemaProperty(type='string', description='Locale code'),
+                            "username": types.rest.api.SchemaProperty(type="string"),
+                            "password": types.rest.api.SchemaProperty(type="string"),
+                            "auth_id": types.rest.api.SchemaProperty(type="string", description="Authenticator UUID"),
+                            "auth": types.rest.api.SchemaProperty(type="string", description="Authenticator name"),
+                            "label": types.rest.api.SchemaProperty(type="string", description="Authenticator label"),
+                            "platform": types.rest.api.SchemaProperty(type="string", description="Platform identifier"),
+                            "locale": types.rest.api.SchemaProperty(type="string", description="Locale code"),
                         },
                     ),
                 ),
             ),
             responses={
-                '200': types.rest.api.Response(
-                    description='Authentication result',
+                "200": types.rest.api.Response(
+                    description="Authentication result",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='object',
+                            type="object",
                             properties={
-                                'result': types.rest.api.SchemaProperty(type='string'),
-                                'token': types.rest.api.SchemaProperty(type='string'),
-                                'scrambler': types.rest.api.SchemaProperty(type='string'),
+                                "result": types.rest.api.SchemaProperty(type="string"),
+                                "token": types.rest.api.SchemaProperty(type="string"),
+                                "scrambler": types.rest.api.SchemaProperty(type="string"),
                             },
                         ),
                     ),
@@ -110,7 +103,7 @@ class Login(Handler):
 
     @staticmethod
     def result(
-        result: str = 'error',
+        result: str = "error",
         token: str | None = None,
         **kwargs: typing.Any,
     ) -> collections.abc.MutableMapping[str, typing.Any]:
@@ -148,59 +141,59 @@ class Login(Handler):
         Calls to any method of REST that must be authenticated needs to be called with "X-Auth-Token" Header added
         """
         # Checks if client is "blocked"
-        fail_cache = Cache('RESTapi')
+        fail_cache = Cache("RESTapi")
         fails = fail_cache.get(self._request.ip) or 0
         if fails > consts.system.ALLOWED_FAILS:
             logger.info(
-                'Access to REST API %s is blocked for %s seconds since last fail',
+                "Access to REST API %s is blocked for %s seconds since last fail",
                 self._request.ip,
                 GlobalConfig.LOGIN_BLOCK.as_int(),
             )
-            raise exceptions.rest.AccessDenied('Too many fails')
+            raise exceptions.rest.AccessDenied("Too many fails")
 
         try:
             # Check if we have a valid auth
             if not any(
                 i in self._params
-                for i in ('auth_id', 'authId', 'authSmallName', 'authLabel', 'auth_label', 'auth', 'label')
+                for i in ("auth_id", "authId", "authSmallName", "authLabel", "auth_label", "auth", "label")
             ):
-                raise exceptions.rest.RequestError('Invalid parameters (no auth)')
+                raise exceptions.rest.RequestError("Invalid parameters (no auth)")
 
             auth_id: str | None = self._params.get(
-                'auth_id',
-                self._params.get('authId', None),  # Old compat, alias
+                "auth_id",
+                self._params.get("authId", None),  # Old compat, alias
             )
             auth_label: str | None = self._params.get(
-                'label',
+                "label",
                 self._params.get(
-                    'auth_label',
+                    "auth_label",
                     self._params.get(
-                        'authSmallName',  # Old compat name
-                        self._params.get('authLabel', None),  # Old compat name
+                        "authSmallName",  # Old compat name
+                        self._params.get("authLabel", None),  # Old compat name
                     ),
                 ),
             )
-            auth_name: str | None = self._params.get('auth', None)
-            platform: str = self._params.get('platform', self._request.os.os.value[0])
+            auth_name: str | None = self._params.get("auth", None)
+            platform: str = self._params.get("platform", self._request.os.os.value[0])
 
-            username: str = self._params['username']
-            password: str = self._params['password']
-            locale: str = self._params.get('locale', 'en')
+            username: str = self._params["username"]
+            password: str = self._params["password"]
+            locale: str = self._params.get("locale", "en")
 
             # Generate a random scrambler
             scrambler: str = CryptoManager.manager().random_string(32)
             if (
-                auth_name == 'admin'
-                or auth_label == 'admin'
-                or auth_id == '00000000-0000-0000-0000-000000000000'
+                auth_name == "admin"
+                or auth_label == "admin"
+                or auth_id == "00000000-0000-0000-0000-000000000000"
                 or (not auth_id and not auth_name and not auth_label)
             ):
                 if GlobalConfig.SUPER_USER_LOGIN.get(True) == username and CryptoManager.manager().check_hash(
                     password, GlobalConfig.SUPER_USER_PASS.get(True)
                 ):
                     self.gen_auth_token(-1, username, password, locale, platform, scrambler)
-                    return Login.result(result='ok', token=self.get_auth_token())
-                return Login.result(error='Invalid credentials')
+                    return Login.result(result="ok", token=self.get_auth_token())
+                return Login.result(error="Invalid credentials")
 
             # Will raise an exception if no auth found
             if auth_id:
@@ -213,7 +206,7 @@ class Login(Handler):
             # No matter in fact the password, just not empty (so it can be encrypted, but will be invalid anyway)
             password = password or CryptoManager.manager().random_string(32)
 
-            logger.debug('Auth obj: %s', auth)
+            logger.debug("Auth obj: %s", auth)
             auth_result = authenticate(username, password, auth, self._request)
             if auth_result.user is None:  # invalid credentials
                 # Sleep a while here to "prottect"
@@ -221,9 +214,9 @@ class Login(Handler):
                 # And store in cache for blocking for a while if fails
                 fail_cache.put(self._request.ip, fails + 1, GlobalConfig.LOGIN_BLOCK.as_int())
 
-                return Login.result(error=auth_result.errstr or 'Invalid credentials')
+                return Login.result(error=auth_result.errstr or "Invalid credentials")
             return Login.result(
-                result='ok',
+                result="ok",
                 token=self.gen_auth_token(
                     auth.id,
                     auth_result.user.name,
@@ -236,9 +229,9 @@ class Login(Handler):
             )
 
         except Exception as e:
-            logger.error('Invalid credentials: %s: %s', self._params, e)
+            logger.error("Invalid credentials: %s: %s", self._params, e)
 
-        return Login.result(error='Invalid credentials')
+        return Login.result(error="Invalid credentials")
 
 
 class Logout(Handler):
@@ -246,40 +239,40 @@ class Logout(Handler):
     Responsible of user de-authentication
     """
 
-    PATH = 'auth'
+    PATH = "auth"
     ROLE = consts.UserRole.USER  # Must be logged in to logout :)
 
     API_OPERATIONS = {
-        'get': types.rest.api.Operation(
-            summary='Logout current user',
-            description='Invalidates the current authentication token ending the session',
+        "get": types.rest.api.Operation(
+            summary="Logout current user",
+            description="Invalidates the current authentication token ending the session",
             responses={
-                '200': types.rest.api.Response(
-                    description='Logout result',
+                "200": types.rest.api.Response(
+                    description="Logout result",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='object',
+                            type="object",
                             properties={
-                                'result': types.rest.api.SchemaProperty(type='string'),
+                                "result": types.rest.api.SchemaProperty(type="string"),
                             },
                         ),
                     ),
                 ),
             },
         ),
-        'post': types.rest.api.Operation(
-            summary='Logout current user',
-            description='Invalidates the current authentication token ending the session (POST version)',
+        "post": types.rest.api.Operation(
+            summary="Logout current user",
+            description="Invalidates the current authentication token ending the session (POST version)",
             responses={
-                '200': types.rest.api.Response(
-                    description='Logout result',
+                "200": types.rest.api.Response(
+                    description="Logout result",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='object',
+                            type="object",
                             properties={
-                                'result': types.rest.api.SchemaProperty(type='string'),
+                                "result": types.rest.api.SchemaProperty(type="string"),
                             },
                         ),
                     ),
@@ -291,37 +284,37 @@ class Logout(Handler):
     def get(self) -> typing.Any:
         # Remove auth token
         self.clear_auth_token()
-        return {'result': 'ok'}
+        return {"result": "ok"}
 
     def post(self) -> typing.Any:
         return self.get()
 
 
 class Auths(Handler):
-    PATH = 'auth'
+    PATH = "auth"
     ROLE = consts.UserRole.ANONYMOUS
 
     API_OPERATIONS = {
-        'get': types.rest.api.Operation(
-            summary='List authenticators',
-            description='Returns a list of available authenticators',
+        "get": types.rest.api.Operation(
+            summary="List authenticators",
+            description="Returns a list of available authenticators",
             parameters=[
                 types.rest.api.Parameter(
-                    name='all',
-                    in_='query',
+                    name="all",
+                    in_="query",
                     required=False,
-                    description='Include custom and IP authenticators',
-                    schema=types.rest.api.Schema(type='string'),
+                    description="Include custom and IP authenticators",
+                    schema=types.rest.api.Schema(type="string"),
                 ),
             ],
             responses={
-                '200': types.rest.api.Response(
-                    description='List of authenticators',
+                "200": types.rest.api.Response(
+                    description="List of authenticators",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='array',
-                            items=types.rest.api.SchemaProperty(type='object'),
+                            type="array",
+                            items=types.rest.api.SchemaProperty(type="object"),
                         ),
                     ),
                 ),
@@ -330,25 +323,25 @@ class Auths(Handler):
     }
 
     def auths(self) -> collections.abc.Iterable[dict[str, typing.Any]]:
-        all_param: bool = self._params.get('all', 'false').lower() == 'true'
+        all_param: bool = self._params.get("all", "false").lower() == "true"
         auth: Authenticator
         for auth in Authenticator.objects.all():
             auth_type = auth.get_type()
-            if all_param or (auth_type.is_custom() is False and auth_type.type_type not in ('IP',)):
+            if all_param or (auth_type.is_custom() is False and auth_type.type_type not in ("IP",)):
                 yield {
-                    'authId': auth.uuid,  # Deprecated, use 'auth_id'
-                    'auth_id': auth.uuid,  # Deprecated, use 'id'
-                    'id': auth.uuid,
-                    'authSmallName': auth.small_name,  # Deprecated
-                    'authLabel': auth.small_name,  # Deprecated, use 'auth_label'
-                    'auth_label': auth.small_name,  # Deprecated, use 'label'
-                    'label': auth.small_name,
-                    'auth': auth.name,  # Deprecated, use 'name'
-                    'name': auth.name,
-                    'type': auth_type.type_type,
-                    'priority': auth.priority,
-                    'isCustom': auth_type.is_custom(),  # Deprecated, use 'custom'
-                    'custom': auth_type.is_custom(),
+                    "authId": auth.uuid,  # Deprecated, use 'auth_id'
+                    "auth_id": auth.uuid,  # Deprecated, use 'id'
+                    "id": auth.uuid,
+                    "authSmallName": auth.small_name,  # Deprecated
+                    "authLabel": auth.small_name,  # Deprecated, use 'auth_label'
+                    "auth_label": auth.small_name,  # Deprecated, use 'label'
+                    "label": auth.small_name,
+                    "auth": auth.name,  # Deprecated, use 'name'
+                    "name": auth.name,
+                    "type": auth_type.type_type,
+                    "priority": auth.priority,
+                    "isCustom": auth_type.is_custom(),  # Deprecated, use 'custom'
+                    "custom": auth_type.is_custom(),
                 }
 
     def get(self) -> list[dict[str, typing.Any]]:

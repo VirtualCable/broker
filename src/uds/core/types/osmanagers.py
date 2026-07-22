@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import typing
 
@@ -40,14 +41,13 @@ class ActorData:
     name: str
     custom: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
 
-
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'action': self.action,
-            'name': self.name,
-            'custom': self.custom,
+            "action": self.action,
+            "name": self.name,
+            "custom": self.custom,
         }
 
     @staticmethod
-    def null() -> 'ActorData':
-        return ActorData('', '')
+    def null() -> "ActorData":
+        return ActorData("", "")

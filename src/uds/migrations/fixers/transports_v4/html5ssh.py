@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -44,27 +45,27 @@ class HTML5SSHTransport(transports.Transport):
     Provides access via SSH to service.
     """
 
-    type_type = 'HTML5SSHTransport'
+    type_type = "HTML5SSHTransport"
 
-    guacamoleServer = gui.TextField(label='',default='https://')
-    username = gui.TextField(label='')
-    sshCommand = gui.TextField(label='')
-    enableFileSharing = gui.ChoiceField(label='',default='false')
-    fileSharingRoot = gui.TextField(label='')
-    sshPort = gui.NumericField(label='',default=22)
-    sshHostKey = gui.TextField(label='')
-    serverKeepAlive = gui.NumericField(label='',default=30)
-    ticketValidity = gui.NumericField(label='',default=60)
-    forceNewWindow = gui.ChoiceField(label='',default='false')
+    guacamoleServer = gui.TextField(label="", default="https://")
+    username = gui.TextField(label="")
+    sshCommand = gui.TextField(label="")
+    enableFileSharing = gui.ChoiceField(label="", default="false")
+    fileSharingRoot = gui.TextField(label="")
+    sshPort = gui.NumericField(label="", default=22)
+    sshHostKey = gui.TextField(label="")
+    serverKeepAlive = gui.NumericField(label="", default=30)
+    ticketValidity = gui.NumericField(label="", default=60)
+    forceNewWindow = gui.ChoiceField(label="", default="false")
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, HTML5SSHTransport, 'guacamoleServer', is_html_server=True)
+    _migrator.tunnel_transport(apps, schema_editor, HTML5SSHTransport, "guacamoleServer", is_html_server=True)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, HTML5SSHTransport, 'guacamoleServer', is_html_server=True)
+    _migrator.tunnel_transport_back(apps, schema_editor, HTML5SSHTransport, "guacamoleServer", is_html_server=True)

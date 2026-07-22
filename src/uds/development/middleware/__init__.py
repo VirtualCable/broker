@@ -38,12 +38,12 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
-    logger.info('Request: %s', request)
+def _process_request(request: "ExtendedHttpRequest") -> "HttpResponse | None":
+    logger.info("Request: %s", request)
     return None
 
 
-def _process_response(request: 'ExtendedHttpRequest', response: 'HttpResponse') -> 'HttpResponse':
+def _process_response(request: "ExtendedHttpRequest", response: "HttpResponse") -> "HttpResponse":
     return response
 
 

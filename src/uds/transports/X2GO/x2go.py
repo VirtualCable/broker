@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -54,9 +55,9 @@ class X2GOTransport(BaseX2GOTransport):
 
     is_base = False
 
-    type_name = _('X2Go')
-    type_type = 'X2GOTransport'
-    type_description = _('X2Go access (Experimental). Direct connection.')
+    type_name = _("X2Go")
+    type_type = "X2GOTransport"
+    type_description = _("X2Go access (Experimental). Direct connection.")
 
     fixed_name = BaseX2GOTransport.fixed_name
     screen_size = BaseX2GOTransport.screen_size
@@ -74,14 +75,14 @@ class X2GOTransport(BaseX2GOTransport):
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
-    ) -> 'types.transports.TransportScript':
+        request: "ExtendedHttpRequestWithUser",
+    ) -> "types.transports.TransportScript":
         ci = self.get_connection_info(userservice, user, password)
 
         priv, _pub = self.get_and_push_key(ci.username, userservice)
@@ -107,11 +108,9 @@ class X2GOTransport(BaseX2GOTransport):
             user=ci.username,
         )
 
-        sp = {'ip': ip, 'port': '22', 'key': priv, 'xf': xf}
+        sp = {"ip": ip, "port": "22", "key": priv, "xf": xf}
 
         try:
-            return self.get_script(os.os.os_name(), 'direct', sp)
+            return self.get_script(os.os.os_name(), "direct", sp)
         except Exception:
-            return super().get_transport_script(
-                userservice, transport, ip, os, user, password, request
-            )
+            return super().get_transport_script(userservice, transport, ip, os, user, password, request)

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -41,5 +42,5 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class NotifierFactory(factory.ModuleFactory['Notifier']):
+class NotifierFactory(factory.ModuleFactory["Notifier"]):
     pass

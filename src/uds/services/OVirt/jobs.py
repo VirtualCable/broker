@@ -29,12 +29,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from uds.core import jobs
-
 from uds.models import Provider
+
 from .ovirt import types as ov_types
 
 # Not imported at runtime, just for type checking
@@ -53,18 +54,16 @@ logger = logging.getLogger(__name__)
 
 
 class OVirtDeferredRemoval(jobs.Job):
-    friendly_name = 'Ovirt removal'
+    friendly_name = "Ovirt removal"
     counter = 0
 
     @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 5
 
-
-
     @staticmethod
-    def remove(instance: 'OVirtProvider', vmid: str) -> None:
-        logger.debug('Adding %s from %s to defeffed removal process', vmid, instance)
+    def remove(instance: "OVirtProvider", vmid: str) -> None:
+        logger.debug("Adding %s from %s to defeffed removal process", vmid, instance)
         OVirtDeferredRemoval.counter += 1
         try:
             # Tries to stop machine sync when found, if any error is done, defer removal for a scheduled task
@@ -74,36 +73,36 @@ class OVirtDeferredRemoval(jobs.Job):
                 if status in (ov_types.VMStatus.UP, ov_types.VMStatus.POWERING_UP, ov_types.VMStatus.SUSPENDED):
                     instance.api.stop_machine(vmid)
                 elif status != ov_types.VMStatus.UNKNOWN:  # Machine exists, remove it later
-                    instance.storage.save_to_db('tr' + vmid, vmid, attr1='tRm')
+                    instance.storage.save_to_db("tr" + vmid, vmid, attr1="tRm")
 
             except Exception as e:
-                instance.storage.save_to_db('tr' + vmid, vmid, attr1='tRm')
+                instance.storage.save_to_db("tr" + vmid, vmid, attr1="tRm")
                 logger.info(
-                    'Machine %s could not be removed right now, queued for later: %s',
+                    "Machine %s could not be removed right now, queued for later: %s",
                     vmid,
                     e,
                 )
 
         except Exception as e:
-            logger.warning('Exception got queuing for Removal: %s', e)
+            logger.warning("Exception got queuing for Removal: %s", e)
 
     @typing.override
     def run(self) -> None:
         from .provider import OVirtProvider
 
-        logger.debug('Looking for deferred vm removals')
+        logger.debug("Looking for deferred vm removals")
 
         # Look for Providers of type Ovirt
         for provider in Provider.objects.filter(maintenance_mode=False, data_type=OVirtProvider.type_type):
-            logger.debug('Provider %s if os type ovirt', provider)
+            logger.debug("Provider %s if os type ovirt", provider)
 
             storage = provider.get_environment().storage
             instance: OVirtProvider = typing.cast(OVirtProvider, provider.get_instance())
 
-            for i in storage.filter('tRm'):
+            for i in storage.filter("tRm"):
                 vmid = i[1].decode()
                 try:
-                    logger.debug('Found %s for removal %s', vmid, i)
+                    logger.debug("Found %s for removal %s", vmid, i)
                     # If machine is powered on, tries to stop it
                     # tries to remove in sync mode
                     status = instance.api.get_machine_info(vmid).status
@@ -119,9 +118,9 @@ class OVirtDeferredRemoval(jobs.Job):
                         instance.api.remove_machine(vmid)
 
                     # It this is reached, remove check
-                    storage.remove('tr' + vmid)
+                    storage.remove("tr" + vmid)
                 except Exception as e:  # Any other exception wil be threated again
                     # instance.log('Delayed removal of %s has failed: %s. Will retry later', vmId, e)
-                    logger.error('Delayed removal of %s failed: %s', i, e)
+                    logger.error("Delayed removal of %s failed: %s", i, e)
 
-        logger.debug('Deferred removal finished')
+        logger.debug("Deferred removal finished")

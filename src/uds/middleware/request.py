@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
@@ -58,23 +59,23 @@ logger = logging.getLogger(__name__)
 CHECK_SECONDS = 3600 * 24  # Once a day is more than enough
 
 
-def _fill_ips(request: 'ExtendedHttpRequest') -> None:
+def _fill_ips(request: "ExtendedHttpRequest") -> None:
     """
     Obtains the IP of a Django Request, even behind a proxy.
     """
     from uds.core.util import net
 
     info = net.recover_ips(
-        request.META.get('REMOTE_ADDR', ''),
-        request.headers.get(consts.auth.X_FORWARDED_FOR_HEADER, ''),
+        request.META.get("REMOTE_ADDR", ""),
+        request.headers.get(consts.auth.X_FORWARDED_FOR_HEADER, ""),
     )
     request.ip = info.ip
     request.ip_proxy = info.ip_proxy
     request.ip_version = info.ip_version
-    logger.debug('ip: %s, ip_proxy: %s', request.ip, request.ip_proxy)
+    logger.debug("ip: %s, ip_proxy: %s", request.ip, request.ip_proxy)
 
 
-def _get_user(request: 'ExtendedHttpRequest') -> None:
+def _get_user(request: "ExtendedHttpRequest") -> None:
     """
     Ensures request user is the correct user
     """
@@ -91,12 +92,12 @@ def _get_user(request: 'ExtendedHttpRequest') -> None:
     if user and user.state != types.states.State.ACTIVE:
         user = None
 
-    logger.debug('User at Middleware: %s %s', user_id, user)
+    logger.debug("User at Middleware: %s %s", user_id, user)
 
     request.user = user
 
 
-def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
+def _process_request(request: "ExtendedHttpRequest") -> "HttpResponse | None":
     # Add IP to request, user, ...
     # Add IP to request
     _fill_ips(request)
@@ -113,7 +114,7 @@ def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
         # return HttpResponse(content='Session Expired', status=403, content_type='text/plain')
         now = timezone.now()
         try:
-            expiry = datetime.datetime.fromisoformat(request.session.get(consts.auth.SESSION_EXPIRY_KEY, ''))
+            expiry = datetime.datetime.fromisoformat(request.session.get(consts.auth.SESSION_EXPIRY_KEY, ""))
             expiry = timezone.make_aware(expiry)
         except ValueError:
             expiry = now
@@ -122,7 +123,7 @@ def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
                 return weblogout(request=request)
             except Exception:  # nosec: intentionaly catching all exceptions and ignoring them
                 pass  # If fails, we don't care, we just want to logout
-            return HttpResponseForbidden(content='Session Expired', content_type='text/plain')
+            return HttpResponseForbidden(content="Session Expired", content_type="text/plain")
         # Update session timeout..self.
         request.session[consts.auth.SESSION_EXPIRY_KEY] = (
             now
@@ -138,9 +139,9 @@ def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
     return None
 
 
-def _process_response(request: 'ExtendedHttpRequest', response: 'HttpResponse') -> 'HttpResponse':
+def _process_response(request: "ExtendedHttpRequest", response: "HttpResponse") -> "HttpResponse":
     # Update authorized on session
-    if hasattr(request, 'session'):
+    if hasattr(request, "session"):
         request.session[consts.auth.SESSION_AUTHORIZED_KEY] = request.authorized
     return response
 

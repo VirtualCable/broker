@@ -28,14 +28,16 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import logging
 import re
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types, exceptions
+from uds.core import exceptions
+from uds.core import types
 from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
@@ -48,11 +50,12 @@ from .publication import ProxmoxPublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .proxmox import types as prox_types
-    from .provider import ProxmoxProvider
     from uds.core.services.generics.dynamic.publication import DynamicPublication
     from uds.core.services.generics.dynamic.service import DynamicService
     from uds.core.services.generics.dynamic.userservice import DynamicUserService
+
+    from .provider import ProxmoxProvider
+    from .proxmox import types as prox_types
 
 logger = logging.getLogger(__name__)
 
@@ -68,15 +71,15 @@ class ProxmoxService(DynamicService):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('Proxmox Clone')
+    type_name = _("Proxmox Clone")
     # : Type used internally to identify this provider, must not be modified once created
-    type_type = 'ProxmoxLinkedService'
+    type_type = "ProxmoxLinkedService"
     # : Description shown at administration interface for this provider
-    type_description = _('Proxmox Services based on templates')
+    type_description = _("Proxmox Services based on templates")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'service.png'
+    icon_file = "service.png"
 
     # Functional related data
 
@@ -86,13 +89,13 @@ class ProxmoxService(DynamicService):
     uses_cache = True
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('Number of desired machines to keep running waiting for a user')
+    cache_tooltip = _("Number of desired machines to keep running waiting for a user")
     # : If we need to generate a "Level 2" cache for this service (i.e., L1
     # : could be running machines and L2 suspended machines)
     uses_cache_l2 = True
     # : Tooltip shown to user when this item is pointed at admin interface, None
     # : also because we don't use it
-    cache_tooltip_l2 = _('Number of desired VMs to keep stopped waiting for use')
+    cache_tooltip_l2 = _("Number of desired VMs to keep stopped waiting for use")
 
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
@@ -111,16 +114,16 @@ class ProxmoxService(DynamicService):
     pool = gui.ChoiceField(
         label=_("Pool"),
         order=1,
-        tooltip=_('Pool that will contain UDS created vms'),
+        tooltip=_("Pool that will contain UDS created vms"),
         # tab=types.ui.Tab.MACHINE,
         # required=True,
-        default='',
+        default="",
     )
 
     ha = gui.ChoiceField(
-        label=_('HA'),
+        label=_("HA"),
         order=2,
-        tooltip=_('Select if HA is enabled and HA group for machines of this service'),
+        tooltip=_("Select if HA is enabled and HA group for machines of this service"),
         readonly=True,
     )
 
@@ -133,17 +136,17 @@ class ProxmoxService(DynamicService):
         label=_("Base Machine"),
         order=110,
         fills={
-            'callback_name': 'pmFillResourcesFromMachine',
-            'function': helpers.get_storage,
-            'parameters': ['machine', 'prov_uuid'],
+            "callback_name": "pmFillResourcesFromMachine",
+            "function": helpers.get_storage,
+            "parameters": ["machine", "prov_uuid"],
         },
-        tooltip=_('Service base machine'),
+        tooltip=_("Service base machine"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
 
     use_full_clone = gui.CheckBoxField(
-        label=_('Use full clone'),
+        label=_("Use full clone"),
         default=False,
         order=111,
         tab=types.ui.Tab.MACHINE,
@@ -154,7 +157,7 @@ class ProxmoxService(DynamicService):
         label=_("Storage"),
         readonly=False,
         order=112,
-        tooltip=_('Storage for publications & machines.'),
+        tooltip=_("Storage for publications & machines."),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -164,11 +167,11 @@ class ProxmoxService(DynamicService):
         readonly=False,
         order=113,
         choices=[
-            gui.choice_item('0', _('Do not check')),
-            gui.choice_item('1', _('Only if available')),
-            gui.choice_item('2', _('Only if NOT available')),
+            gui.choice_item("0", _("Do not check")),
+            gui.choice_item("1", _("Only if available")),
+            gui.choice_item("2", _("Only if NOT available")),
         ],
-        tooltip=_('Checking method for GPU availability'),
+        tooltip=_("Checking method for GPU availability"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -179,21 +182,17 @@ class ProxmoxService(DynamicService):
     prov_uuid = gui.HiddenField(value=None)
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if values:
-            self.basename.value = validators.validate_basename(
-                self.basename.value, length=self.lenname.as_int()
-            )
+            self.basename.value = validators.validate_basename(self.basename.value, length=self.lenname.as_int())
             # Do not allow linked clones on lvm-thin
             try:
-                storage = next(
-                    filter(lambda x: x.storage == self.datastore.value, self.provider().api.list_storages())
-                )
+                storage = next(filter(lambda x: x.storage == self.datastore.value, self.provider().api.list_storages()))
             except StopIteration:
-                raise exceptions.ui.ValidationError(_('Selected storage not found on Proxmox'))
+                raise exceptions.ui.ValidationError(_("Selected storage not found on Proxmox"))
             if not storage.supports_linked_clone() and not self.use_full_clone.value:
                 # if storage does not support linked clones and user wants to use linked clones, raise an error
-                raise exceptions.ui.ValidationError(_('Linked clones are not allowed on the storage'))
+                raise exceptions.ui.ValidationError(_("Linked clones are not allowed on the storage"))
 
             # if int(self.memory.value) < 128:
             #     raise exceptions.ValidationException(_('The minimum allowed memory is 128 Mb'))
@@ -209,30 +208,29 @@ class ProxmoxService(DynamicService):
         # the list of values shown because this is a "ChoiceField"
         self.machine.set_choices(
             [
-                gui.choice_item(str(m.id), f'{m.node}\\{m.name or m.id} ({m.id})')
+                gui.choice_item(str(m.id), f"{m.node}\\{m.name or m.id} ({m.id})")
                 for m in self.provider().api.list_vms()
-                if m.name and m.name[:3] != 'UDS'
+                if m.name and m.name[:3] != "UDS"
             ]
         )
         self.pool.set_choices(
-            [gui.choice_item('', _('None'))]
-            + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
+            [gui.choice_item("", _("None"))] + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
         )
         self.ha.set_choices(
-            [gui.choice_item('', _('Enabled')), gui.choice_item('__', _('Disabled'))]
+            [gui.choice_item("", _("Enabled")), gui.choice_item("__", _("Disabled"))]
             + [gui.choice_item(group, group) for group in self.provider().api.list_ha_groups()]
         )
 
     @typing.override
-    def provider(self) -> 'ProxmoxProvider':
-        return typing.cast('ProxmoxProvider', super().provider())
+    def provider(self) -> "ProxmoxProvider":
+        return typing.cast("ProxmoxProvider", super().provider())
 
     @typing.override
     def sanitized_name(self, name: str) -> str:
         """
         Proxmox only allows machine names with [a-zA-Z0-9_-]
         """
-        return re.sub(r'[^a-zA-Z0-9-]', '-', name)
+        return re.sub(r"[^a-zA-Z0-9-]", "-", name)
 
     @typing.override
     def find_duplicates(self, name: str, mac: str) -> collections.abc.Iterable[str]:
@@ -240,12 +238,10 @@ class ProxmoxService(DynamicService):
             if i.name and i.name.casefold() == name.casefold():
                 yield str(i.id)
 
-    def clone_vm(self, name: str, description: str, vmid: int = -1) -> 'prox_types.VmCreationResult':
+    def clone_vm(self, name: str, description: str, vmid: int = -1) -> "prox_types.VmCreationResult":
         name = self.sanitized_name(name)
         pool = self.pool.value or None
-        clone_vm_args: dict[str, typing.Any] = {
-            'must_have_vgpus': {'1': True, '2': False}.get(self.gpu.value, None)
-        }
+        clone_vm_args: dict[str, typing.Any] = {"must_have_vgpus": {"1": True, "2": False}.get(self.gpu.value, None)}
         use_linked_clones = not self.use_full_clone.value and vmid > 0
 
         return self.provider().clone_vm(
@@ -258,16 +254,16 @@ class ProxmoxService(DynamicService):
             **clone_vm_args if use_linked_clones else {},
         )
 
-    def get_vm_info(self, vmid: int) -> 'prox_types.VMInfo':
+    def get_vm_info(self, vmid: int) -> "prox_types.VMInfo":
         return self.provider().api.get_vm_pool_info(vmid, self.pool.value.strip())
 
     def enable_vm_ha(self, vmid: int, started: bool = False) -> None:
-        if self.ha.value == '__':
+        if self.ha.value == "__":
             return
         self.provider().api.enable_vm_ha(vmid, started, self.ha.value or None)
 
     def disable_vm_ha(self, vmid: int) -> None:
-        if self.ha.value == '__':
+        if self.ha.value == "__":
             return
         self.provider().api.disable_vm_ha(vmid)
 
@@ -278,7 +274,7 @@ class ProxmoxService(DynamicService):
         return self.provider().get_macs_range()
 
     def is_ha_enabled(self) -> bool:
-        return self.ha.value != '__'
+        return self.ha.value != "__"
 
     def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().api.get_console_connection(int(vmid))
@@ -288,13 +284,13 @@ class ProxmoxService(DynamicService):
         return self.provider().is_available()
 
     @typing.override
-    def get_ip(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> str:
+    def get_ip(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> str:
         return self.provider().api.get_guest_ip_address(int(vmid))
 
     @typing.override
     def get_mac(
         self,
-        caller_instance: 'DynamicUserService | DynamicPublication | None',
+        caller_instance: "DynamicUserService | DynamicPublication | None",
         vmid: str,
         *,
         for_unique_id: bool = False,
@@ -307,37 +303,37 @@ class ProxmoxService(DynamicService):
         return self.provider().api.get_vm_config(int(vmid)).networks[0].macaddr.lower()
 
     @typing.override
-    def start(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
+    def start(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         if isinstance(caller_instance, ProxmoxUserserviceLinked):
             if self.is_running(caller_instance, vmid):  # If running, skip
-                caller_instance._task = ''
+                caller_instance._task = ""
             else:
                 caller_instance._store_task(self.provider().api.start_vm(int(vmid)))
         else:
             self.provider().api.start_vm(int(vmid))
 
     @typing.override
-    def stop(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
+    def stop(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         if isinstance(caller_instance, ProxmoxUserserviceLinked):
             if self.is_running(caller_instance, vmid):
                 caller_instance._store_task(self.provider().api.stop_vm(int(vmid)))
             else:
-                caller_instance._task = ''
+                caller_instance._task = ""
         else:
             self.provider().api.stop_vm(int(vmid))
 
     @typing.override
-    def shutdown(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> None:
+    def shutdown(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         if isinstance(caller_instance, ProxmoxUserserviceLinked):
             if self.is_running(caller_instance, vmid):
                 caller_instance._store_task(self.provider().api.shutdown_vm(int(vmid)))
             else:
-                caller_instance._task = ''
+                caller_instance._task = ""
         else:
             self.provider().api.shutdown_vm(int(vmid))  # Just shutdown it, do not stores anything
 
     @typing.override
-    def is_running(self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str) -> bool:
+    def is_running(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> bool:
         # Raise an exception if fails to get machine info
         return self.get_vm_info(int(vmid)).validate().status.is_running()
 
@@ -359,18 +355,18 @@ class ProxmoxService(DynamicService):
     def snapshot_creation(self, userservice_instance: DynamicUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserserviceLinked, userservice_instance)
         vmid = int(userservice_instance._vmid)
-        logger.debug('Using snapshots')
+        logger.debug("Using snapshots")
         # If no snapshot exists for this vm, try to create one for it on background
         # Lauch an snapshot. We will not wait for it to finish, but instead let it run "as is"
         try:
             if not self.provider().api.get_current_vm_snapshot(vmid):
-                logger.debug('No current snapshot')
+                logger.debug("No current snapshot")
                 self.provider().api.create_snapshot(
                     vmid,
-                    name='UDS_Snapshot',
+                    name="UDS_Snapshot",
                 )
         except Exception as e:
-            self.do_log(types.log.LogLevel.WARNING, 'Could not create SNAPSHOT for this VM. ({})'.format(e))
+            self.do_log(types.log.LogLevel.WARNING, "Could not create SNAPSHOT for this VM. ({})".format(e))
 
     @typing.override
     def snapshot_recovery(self, userservice_instance: DynamicUserService) -> None:
@@ -382,4 +378,4 @@ class ProxmoxService(DynamicService):
             if snapshot:
                 userservice_instance._store_task(self.provider().api.restore_snapshot(vmid, name=snapshot.name))
         except Exception as e:
-            self.do_log(types.log.LogLevel.WARNING, 'Could not restore SNAPSHOT for this VM. ({})'.format(e))
+            self.do_log(types.log.LogLevel.WARNING, "Could not restore SNAPSHOT for this VM. ({})".format(e))

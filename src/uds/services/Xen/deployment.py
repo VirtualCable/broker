@@ -29,19 +29,21 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
-import pickle  # nosec: not insecure, we are loading our own data
 import logging
+import pickle  # nosec: not insecure, we are loading our own data
 import typing
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .service import XenLinkedService
     from .publication import XenPublication
+    from .service import XenLinkedService
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,7 @@ class OldOperation(enum.IntEnum):
     UNKNOWN = 99
 
     @staticmethod
-    def from_int(value: int) -> 'OldOperation':
+    def from_int(value: int) -> "OldOperation":
         try:
             return OldOperation(value)
         except ValueError:
@@ -91,40 +93,40 @@ class OldOperation(enum.IntEnum):
 
 
 class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable):
-    _task = autoserializable.StringField(default='')
+    _task = autoserializable.StringField(default="")
 
     @typing.override
     def initialize(self) -> None:
         self._queue = []
 
     @typing.override
-    def service(self) -> 'XenLinkedService':
-        return typing.cast('XenLinkedService', super().service())
+    def service(self) -> "XenLinkedService":
+        return typing.cast("XenLinkedService", super().service())
 
     @typing.override
-    def publication(self) -> 'XenPublication':
+    def publication(self) -> "XenPublication":
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('XenPublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("XenPublication", pub)
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        logger.debug('Values: %s', vals)
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._vmid = vals[4].decode('utf8')
-            self._reason = vals[5].decode('utf8')
+        vals = data.split(b"\1")
+        logger.debug("Values: %s", vals)
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._vmid = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
             self._queue = [  # pyrefly: ignore
                 OldOperation(i).as_operation() for i in typing.cast(list[OldOperation], pickle.loads(vals[6]))
             ]  # nosec: not insecure, we are loading our own data
-            self._task = vals[7].decode('utf8')
+            self._task = vals[7].decode("utf8")
 
         self.mark_for_upgrade()  # Force upgrade
 
@@ -136,18 +138,16 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
         template_id = self.publication().get_template_id()
         name = self.get_name()
         if name == consts.NO_MORE_NAMES:
-            raise Exception(
-                'No more names available for this service. (Increase digits for this service to fix)'
-            )
+            raise Exception("No more names available for this service. (Increase digits for this service to fix)")
 
-        name = 'UDS service ' + self.service().sanitized_name(
+        name = "UDS service " + self.service().sanitized_name(
             name
         )  # oVirt don't let us to create machines with more than 15 chars!!!
-        comments = 'UDS Linked clone'
+        comments = "UDS Linked clone"
 
         self._task = self.service().deploy_from_template(template_id, name=name, comments=comments)
         if not self._task:
-            raise Exception('Can\'t create machine')
+            raise Exception("Can't create machine")
 
     @typing.override
     def op_create_completed(self) -> None:
@@ -169,6 +169,6 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
                 self._vmid = task_info.result
                 return types.states.TaskState.FINISHED
             elif task_info.is_failure():
-                raise Exception('Error deploying machine: {}'.format(task_info.result))
+                raise Exception("Error deploying machine: {}".format(task_info.result))
 
         return types.states.TaskState.RUNNING

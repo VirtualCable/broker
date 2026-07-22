@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from ...utils.test import UDSTestCase
@@ -38,17 +39,18 @@ from uds import models
 if typing.TYPE_CHECKING:
     pass
 
+
 class ModelUUIDTest(UDSTestCase):
-    auth: 'models.Authenticator'
-    user: 'models.User'
-    group: 'models.Group'
+    auth: "models.Authenticator"
+    user: "models.User"
+    group: "models.Group"
 
     def setUp(self) -> None:
         super().setUp()
         self.auth = authenticators_fixtures.create_db_authenticator()
         self.group = authenticators_fixtures.create_db_groups(self.auth, 1)[0]
         self.user = authenticators_fixtures.create_db_users(self.auth, 1, groups=[self.group])[0]
-    
+
     def test_uuid_lowercase(self) -> None:
         """
         Tests that uuids are always lowercase
@@ -62,7 +64,7 @@ class ModelUUIDTest(UDSTestCase):
         """
         Tests that uuids are regenerated when user is saved
         """
-        self.user.uuid = ''
+        self.user.uuid = ""
         self.user.save()
         self.assertNotEqual(None, self.user.uuid)
 

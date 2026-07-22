@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -59,16 +60,16 @@ class ServiceTokenAlias(models.Model):
     This model stores the alias for a service token.
     """
 
-    service: 'models.ForeignKey[Service]' = models.ForeignKey(
-        'Service', on_delete=models.CASCADE, related_name='aliases'
+    service: "models.ForeignKey[Service]" = models.ForeignKey(
+        "Service", on_delete=models.CASCADE, related_name="aliases"
     )
     alias = models.CharField(max_length=64, unique=True)
     unique_id = models.CharField(
-        max_length=128, default='', db_index=True
+        max_length=128, default="", db_index=True
     )  # Used to locate an already created alias for a userService and service
 
     def __str__(self) -> str:
-        return f'{self.alias}/{self.unique_id} for {self.service}'
+        return f"{self.alias}/{self.unique_id} for {self.service}"
 
 
 # pylint: disable=no-member
@@ -79,7 +80,7 @@ class Service(ManagedObjectModel, TaggingMixin):
     Server configuration).
     """
 
-    provider = models.ForeignKey(Provider, related_name='services', on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, related_name="services", on_delete=models.CASCADE)
 
     token = models.CharField(max_length=64, default=None, null=True, blank=True, unique=True)
 
@@ -87,13 +88,12 @@ class Service(ManagedObjectModel, TaggingMixin):
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["Service"]'
-    deployedServices: 'models.manager.RelatedManager[ServicePool]'
-    aliases: 'models.manager.RelatedManager[ServiceTokenAlias]'
-    
-    
+    deployedServices: "models.manager.RelatedManager[ServicePool]"
+    aliases: "models.manager.RelatedManager[ServiceTokenAlias]"
+
     # Comodity, better name
     @property
-    def servicepools(self) -> 'models.manager.RelatedManager[ServicePool]':
+    def servicepools(self) -> "models.manager.RelatedManager[ServicePool]":
         return self.deployedServices
 
     class Meta(ManagedObjectModel.Meta):  # pyright: ignore
@@ -101,9 +101,9 @@ class Service(ManagedObjectModel, TaggingMixin):
         Meta class to declare default order and unique multiple field index
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
-        constraints = [models.UniqueConstraint(fields=['provider', 'name'], name='u_srv_provider_name')]
+        ordering = ("name",)
+        app_label = "uds"
+        constraints = [models.UniqueConstraint(fields=["provider", "name"], name="u_srv_provider_name")]
 
     @typing.override
     def get_environment(self) -> Environment:
@@ -116,7 +116,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         )
 
     @typing.override
-    def get_instance(self, values: dict[str, str] | None = None) -> 'services.Service':
+    def get_instance(self, values: dict[str, str] | None = None) -> "services.Service":
         """
         Instantiates the object this record contains.
 
@@ -133,23 +133,23 @@ class Service(ManagedObjectModel, TaggingMixin):
         """
         if self._cached_instance and values is None:
             # logger.debug('Got cached instance instead of deserializing a new one for {}'.format(self.name))
-            return typing.cast('services.Service', self._cached_instance)
+            return typing.cast("services.Service", self._cached_instance)
 
-        prov: 'services.ServiceProvider' = self.provider.get_instance()
+        prov: "services.ServiceProvider" = self.provider.get_instance()
         service_type = prov.get_service_by_type(self.data_type)
 
         if service_type:
             obj = service_type(self.get_environment(), prov, values, uuid=self.uuid)
             self.deserialize(obj, values)
         else:
-            raise Exception(f'Service type of {self.data_type} is not recognized by provider {prov.mod_name}')
+            raise Exception(f"Service type of {self.data_type} is not recognized by provider {prov.mod_name}")
 
         self._cached_instance = obj
 
         return obj
 
     @typing.override
-    def get_type(self) -> type['services.Service']:
+    def get_type(self) -> type["services.Service"]:
         """
         Get the type of the object this record represents.
 
@@ -162,7 +162,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         """
         from uds.core import services  # pylint: disable=import-outside-toplevel,redefined-outer-name
 
-        prov: type['services.ServiceProvider'] = self.provider.get_type()
+        prov: type["services.ServiceProvider"] = self.provider.get_type()
         return prov.get_service_by_type(self.data_type) or services.Service
 
     @property
@@ -171,12 +171,12 @@ class Service(ManagedObjectModel, TaggingMixin):
 
     def is_in_maintenance(self) -> bool:
         # orphaned services?
-        return self.provider.is_in_maintenance() if self.provider else True
+        return self.provider.is_in_maintenance()
 
     def test_connectivity(self, host: str, port: str | int, timeout: float = 4) -> bool:
         return net.test_connectivity(host, int(port), timeout)
 
-    def notify_preconnect(self, userservice: 'UserService', info: 'types.connections.ConnectionData') -> None:
+    def notify_preconnect(self, userservice: "UserService", info: "types.connections.ConnectionData") -> None:
         """
         Notify preconnect event to service, so it can do whatever it needs to do before connecting
 
@@ -188,7 +188,7 @@ class Service(ManagedObjectModel, TaggingMixin):
             Override this method if you need to do something before connecting to a service
             (i.e. invoke notify_preconnect using a Server, or whatever you need to do)
         """
-        logger.warning('No actor notification available for user service %s', userservice.friendly_name)
+        logger.warning("No actor notification available for user service %s", userservice.friendly_name)
 
     @property
     def old_max_accounting_method(self) -> bool:
@@ -203,7 +203,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         return self.services_counting_type == ServicesCountingType.CONSERVATIVE
 
     def __str__(self) -> str:
-        return f'{self.name} of type {self.data_type} (id:{self.id})'
+        return f"{self.name} of type {self.data_type} (id:{self.id})"
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
@@ -217,11 +217,11 @@ class Service(ManagedObjectModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: 'Service' = kwargs['instance']
+        to_delete: "Service" = kwargs["instance"]
 
-        logger.debug('Before delete service %s', to_delete)
+        logger.debug("Before delete service %s", to_delete)
         # Only tries to get instance if data is not empty
-        if to_delete.data != '':
+        if to_delete.data != "":
             s = to_delete.get_instance()
             s.destroy()
             s.env.clean_related_data()

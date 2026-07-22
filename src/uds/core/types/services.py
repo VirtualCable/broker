@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import dataclasses
 import enum
@@ -38,10 +39,10 @@ if typing.TYPE_CHECKING:
 
 
 class ServiceType(enum.StrEnum):
-    VDI = 'VDI'
-    VAPP = 'VAPP'
+    VDI = "VDI"
+    VAPP = "VAPP"
 
-    def from_str(self, value: str) -> 'ServiceType':
+    def from_str(self, value: str) -> "ServiceType":
         """Returns the service type from a string"""
         return ServiceType(value.upper())
 
@@ -53,7 +54,7 @@ class ServicesCountingType(enum.IntEnum):
     CONSERVATIVE = 1
 
     @staticmethod
-    def from_int(value: int) -> 'ServicesCountingType':
+    def from_int(value: int) -> "ServicesCountingType":
         """Returns the MaxServiceCountingMethodType from an int
         If the int is not a valid value, returns STANDARD
         """
@@ -63,7 +64,7 @@ class ServicesCountingType(enum.IntEnum):
             return ServicesCountingType.STANDARD
 
     @staticmethod
-    def from_str(value: str) -> 'ServicesCountingType':
+    def from_str(value: str) -> "ServicesCountingType":
         """Returns the MaxServiceCountingMethodType from an str
         If the str is not a valid value, returns STANDARD
         """
@@ -75,8 +76,8 @@ class ServicesCountingType(enum.IntEnum):
 
 @dataclasses.dataclass
 class ConsoleConnectionTicket:
-    value: str = ''
-    expires: str = ''
+    value: str = ""
+    expires: str = ""
 
 
 @dataclasses.dataclass
@@ -85,23 +86,23 @@ class ConsoleConnectionInfo:
     address: str
     port: int = -1
     secure_port: int = -1
-    cert_subject: str = ''
+    cert_subject: str = ""
     ticket: ConsoleConnectionTicket = dataclasses.field(default_factory=ConsoleConnectionTicket)
 
-    ca: str = ''
-    proxy: str = ''
+    ca: str = ""
+    proxy: str = ""
     monitors: int = 0
 
     @staticmethod
-    def null() -> 'ConsoleConnectionInfo':
-        return ConsoleConnectionInfo(type='', address='')  # All other values are default
+    def null() -> "ConsoleConnectionInfo":
+        return ConsoleConnectionInfo(type="", address="")  # All other values are default
 
 
 @dataclasses.dataclass
 class ConnectionData:
-    host: str = ''
-    username: str = ''
-    password: str = ''
+    host: str = ""
+    username: str = ""
+    password: str = ""
 
 
 class ReadyStatus(enum.IntEnum):
@@ -118,7 +119,7 @@ class ReadyStatus(enum.IntEnum):
         return 25 * self.value
 
     @staticmethod
-    def from_int(value: int) -> 'ReadyStatus':
+    def from_int(value: int) -> "ReadyStatus":
         try:
             return ReadyStatus(value)
         except ValueError:
@@ -206,7 +207,7 @@ class Operation(enum.IntEnum):
         return self.value >= Operation.CUSTOM_1.value
 
     @staticmethod
-    def from_int(value: int) -> 'Operation':
+    def from_int(value: int) -> "Operation":
         try:
             return Operation(value)
         except ValueError:
@@ -218,7 +219,7 @@ class Operation(enum.IntEnum):
 
 @dataclasses.dataclass
 class ServicePoolStats:
-    servicepool: 'models.ServicePool | None'
+    servicepool: "models.ServicePool | None"
     l1_cache_count: int
     l2_cache_count: int
     assigned_count: int
@@ -237,8 +238,7 @@ class ServicePoolStats:
 
         l1_assigned_count = self.l1_cache_count + self.assigned_count
         return l1_assigned_count > self.servicepool.max_srvs or (
-            l1_assigned_count > self.servicepool.initial_srvs
-            and self.l1_cache_count > self.servicepool.cache_l1_srvs
+            l1_assigned_count > self.servicepool.initial_srvs and self.l1_cache_count > self.servicepool.cache_l1_srvs
         )
 
     def is_l1_cache_growth_required(self) -> bool:
@@ -254,8 +254,7 @@ class ServicePoolStats:
 
         l1_assigned_count = self.l1_cache_count + self.assigned_count
         return l1_assigned_count < self.servicepool.max_srvs and (
-            l1_assigned_count < self.servicepool.initial_srvs
-            or self.l1_cache_count < self.servicepool.cache_l1_srvs
+            l1_assigned_count < self.servicepool.initial_srvs or self.l1_cache_count < self.servicepool.cache_l1_srvs
         )
 
     def has_l2_cache_overflow(self) -> bool:
@@ -274,19 +273,19 @@ class ServicePoolStats:
         return self.servicepool is None
 
     @staticmethod
-    def null() -> 'ServicePoolStats':
+    def null() -> "ServicePoolStats":
         return ServicePoolStats(None, 0, 0, 0)
 
     def __str__(self) -> str:
         if self.is_null():
-            return 'ServicePoolStats[Null]'
+            return "ServicePoolStats[Null]"
 
-        return f'ServicePoolStats[{self.servicepool}: L1 {self.l1_cache_count}, L2 {self.l2_cache_count}, Assigned {self.assigned_count}]'
+        return f"ServicePoolStats[{self.servicepool}: L1 {self.l1_cache_count}, L2 {self.l2_cache_count}, Assigned {self.assigned_count}]"
 
 
 @dataclasses.dataclass
 class UserServiceInfo:
     # Ip is unknown if not requested test
     ip: str | None
-    userservice: 'models.UserService'
-    transport: 'models.Transport'
+    userservice: "models.UserService"
+    transport: "models.Transport"

@@ -29,6 +29,7 @@
 """
 Auhor: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from . import counters
 from . import events

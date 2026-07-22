@@ -30,22 +30,23 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import logging
+
 import collections.abc
+import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
 from uds.core import types
 from uds.core.services.generics.dynamic.service import DynamicService
-from uds.core.util import validators
 from uds.core.ui import gui
+from uds.core.util import validators
 
-from .publication import OpenStackLivePublication
-from .deployment import OpenStackLiveUserService
-from .openstack import client, types as openstack_types
 from . import helpers
-
+from .deployment import OpenStackLiveUserService
+from .openstack import client
+from .openstack import types as openstack_types
+from .publication import OpenStackLivePublication
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +57,8 @@ if typing.TYPE_CHECKING:
 
     AnyOpenStackProvider: typing.TypeAlias = OpenStackProvider | OpenStackProviderLegacy
 
-    from uds.core.services.generics.dynamic.userservice import DynamicUserService
     from uds.core.services.generics.dynamic.publication import DynamicPublication
+    from uds.core.services.generics.dynamic.userservice import DynamicUserService
 
 
 class OpenStackLiveService(DynamicService):
@@ -68,15 +69,15 @@ class OpenStackLiveService(DynamicService):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenStack Live Volume')
+    type_name = _("OpenStack Live Volume")
     # : Type used internally to identify this provider
-    type_type = 'openStackLiveService'
+    type_type = "openStackLiveService"
     # : Description shown at administration interface for this provider
-    type_description = _('OpenStack live images based service')
+    type_description = _("OpenStack live images based service")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'openstack.png'
+    icon_file = "openstack.png"
 
     # Functional related data
 
@@ -86,15 +87,15 @@ class OpenStackLiveService(DynamicService):
     uses_cache = True
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('Number of desired machines to keep running waiting for an user')
+    cache_tooltip = _("Number of desired machines to keep running waiting for an user")
 
     uses_cache_l2 = False  # L2 Cache are running machines in suspended state
-    cache_tooltip_l2 = _('Number of desired machines to keep suspended waiting for use')
+    cache_tooltip_l2 = _("Number of desired machines to keep suspended waiting for use")
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
     needs_osmanager = True
     can_reset = True
-    
+
     must_stop_before_deletion = False
 
     # : Types of publications (preparated data for deploys)
@@ -108,72 +109,72 @@ class OpenStackLiveService(DynamicService):
 
     # Now the form part
     region = gui.ChoiceField(
-        label=_('Region'),
+        label=_("Region"),
         order=1,
-        tooltip=_('Service region'),
+        tooltip=_("Service region"),
         required=True,
         readonly=True,
     )
     project = gui.ChoiceField(
-        label=_('Project'),
+        label=_("Project"),
         order=2,
         fills={
-            'callback_name': 'osFillResources',
-            'function': helpers.list_resources,
-            'parameters': ['prov_uuid', 'project', 'region'],
+            "callback_name": "osFillResources",
+            "function": helpers.list_resources,
+            "parameters": ["prov_uuid", "project", "region"],
         },
-        tooltip=_('Project for this service'),
+        tooltip=_("Project for this service"),
         required=True,
         readonly=True,
     )
     availability_zone = gui.ChoiceField(
-        label=_('Availability Zones'),
+        label=_("Availability Zones"),
         order=3,
         fills={
-            'callback_name': 'osFillVolumees',
-            'function': helpers.list_volumes,
-            'parameters': [
-                'prov_uuid',
-                'project',
-                'region',
-                'availability_zone',
+            "callback_name": "osFillVolumees",
+            "function": helpers.list_volumes,
+            "parameters": [
+                "prov_uuid",
+                "project",
+                "region",
+                "availability_zone",
             ],
         },
-        tooltip=_('Service availability zones'),
+        tooltip=_("Service availability zones"),
         required=True,
         readonly=True,
-        old_field_name='availabilityZone',
+        old_field_name="availabilityZone",
     )
     volume = gui.ChoiceField(
-        label=_('Volume'),
+        label=_("Volume"),
         order=4,
-        tooltip=_('Base volume for service (restricted by availability zone)'),
+        tooltip=_("Base volume for service (restricted by availability zone)"),
         required=True,
         tab=types.ui.Tab.MACHINE,
     )
     # volumeType = gui.ChoiceField(label=_('Volume Type'), order=5, tooltip=_('Volume type for service'), required=True)
     network = gui.ChoiceField(
-        label=_('Network'),
+        label=_("Network"),
         order=6,
-        tooltip=_('Network to attach to this service'),
+        tooltip=_("Network to attach to this service"),
         required=True,
         tab=types.ui.Tab.MACHINE,
     )
     flavor = gui.ChoiceField(
-        label=_('Flavor'),
+        label=_("Flavor"),
         order=7,
-        tooltip=_('Flavor for service'),
+        tooltip=_("Flavor for service"),
         required=True,
         tab=types.ui.Tab.MACHINE,
     )
 
     security_groups = gui.MultiChoiceField(
-        label=_('Security Groups'),
+        label=_("Security Groups"),
         order=8,
-        tooltip=_('Service security groups'),
+        tooltip=_("Service security groups"),
         required=True,
         tab=types.ui.Tab.MACHINE,
-        old_field_name='securityGroups',
+        old_field_name="securityGroups",
     )
 
     basename = DynamicService.basename
@@ -186,7 +187,7 @@ class OpenStackLiveService(DynamicService):
 
     prov_uuid = gui.HiddenField()
 
-    cached_api: 'client.OpenStackClient | None' = None
+    cached_api: "client.OpenStackClient | None" = None
 
     # Note: currently, Openstack does not provides a way of specifying how to stop the server
     # At least, i have not found it on the documentation
@@ -203,8 +204,8 @@ class OpenStackLiveService(DynamicService):
             validators.validate_basename(self.basename.value, self.lenname.as_int())
 
     @typing.override
-    def provider(self) -> 'AnyOpenStackProvider':
-        return typing.cast('AnyOpenStackProvider', super().provider())
+    def provider(self) -> "AnyOpenStackProvider":
+        return typing.cast("AnyOpenStackProvider", super().provider())
 
     @typing.override
     def init_gui(self) -> None:
@@ -214,7 +215,7 @@ class OpenStackLiveService(DynamicService):
         api = self.provider().api()
 
         # Checks if legacy or current openstack provider
-        parent = typing.cast('OpenStackProvider', self.provider()) if not self.provider().legacy else None
+        parent = typing.cast("OpenStackProvider", self.provider()) if not self.provider().legacy else None
 
         if parent and parent.region.value:
             regions = [gui.choice_item(parent.region.value, parent.region.value)]
@@ -238,7 +239,7 @@ class OpenStackLiveService(DynamicService):
         self.prov_uuid.value = self.provider().get_uuid()
 
     @property
-    def api(self) -> 'client.OpenStackClient':
+    def api(self) -> "client.OpenStackClient":
         if not self.cached_api:
             self.cached_api = self.provider().api(projectid=self.project.value, region=self.region.value)
 
@@ -256,16 +257,14 @@ class OpenStackLiveService(DynamicService):
                 yield i.id
 
     @typing.override
-    def get_ip(
-        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
-    ) -> str:
+    def get_ip(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> str:
         net_info = self.api.get_server_info(vmid).validated().addresses
-        return '' if not net_info else net_info[0].ip
+        return "" if not net_info else net_info[0].ip
 
     @typing.override
     def get_mac(
         self,
-        caller_instance: 'DynamicUserService | DynamicPublication | None',
+        caller_instance: "DynamicUserService | DynamicPublication | None",
         vmid: str,
         *,
         for_unique_id: bool = False,
@@ -273,23 +272,17 @@ class OpenStackLiveService(DynamicService):
         return self.api.get_server_mac(vmid)
 
     @typing.override
-    def is_running(
-        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
-    ) -> bool:
+    def is_running(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> bool:
         return self.api.get_server_info(vmid).validated().power_state.is_running()
 
     @typing.override
-    def start(
-        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
-    ) -> None:
+    def start(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         if self.api.get_server_info(vmid).validated().power_state.is_running():
             return
         self.api.start_server(vmid)
 
     @typing.override
-    def stop(
-        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
-    ) -> None:
+    def stop(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         if self.api.get_server_info(vmid).validated().power_state.is_stopped():
             return
         self.api.stop_server(vmid)
@@ -299,44 +292,38 @@ class OpenStackLiveService(DynamicService):
     # We can anyway delete de machine even if it is not stopped
 
     @typing.override
-    def reset(
-        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
-    ) -> None:
+    def reset(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         # Default is to stop "hard"
         return self.stop(caller_instance, vmid)
 
     @typing.override
-    def delete(
-        self, caller_instance: 'DynamicUserService | DynamicPublication | None', vmid: str
-    ) -> None:
+    def delete(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
         """
         Removes the machine, or queues it for removal, or whatever :)
         """
         if isinstance(caller_instance, OpenStackLiveUserService):
-            vmid = f'VM:{vmid}'
+            vmid = f"VM:{vmid}"
             super().delete(caller_instance, vmid)
         else:
-            vmid = f'SS:{vmid}'
+            vmid = f"SS:{vmid}"
             super().delete(caller_instance, vmid)
 
     @typing.override
     def execute_delete(self, vmid: str) -> None:
-        kind, vmid = vmid.split(':')
-        if kind == 'VM':
+        kind, vmid = vmid.split(":")
+        if kind == "VM":
             self.api.delete_server(vmid)
         else:
             self.api.delete_snapshot(vmid)
 
     # default is_deleted is fine, returns True always
 
-    def make_template(
-        self, template_name: str, description: str | None = None
-    ) -> openstack_types.SnapshotInfo:
+    def make_template(self, template_name: str, description: str | None = None) -> openstack_types.SnapshotInfo:
         # First, ensures that volume has not any running instances
         # if self.api.getVolume(self.volume.value)['status'] != 'available':
         #    raise Exception('The Volume is in use right now. Ensure that there is no machine running before publishing')
 
-        description = description or 'UDS Template snapshot'
+        description = description or "UDS Template snapshot"
         return self.api.create_snapshot(self.volume.value, template_name, description)
 
     def get_template(self, snapshot_id: str) -> openstack_types.SnapshotInfo:
@@ -357,7 +344,7 @@ class OpenStackLiveService(DynamicService):
         Returns:
             Id of the machine being created form template
         """
-        logger.debug('Deploying from template %s machine %s', snapshot_id, name)
+        logger.debug("Deploying from template %s machine %s", snapshot_id, name)
         # self.datastoreHasSpace()
         return self.api.create_server_from_snapshot(
             snapshot_id=snapshot_id,

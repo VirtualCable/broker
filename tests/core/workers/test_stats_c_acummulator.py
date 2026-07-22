@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import random
 
@@ -64,9 +65,7 @@ class StatsFunction:
 
     def __call__(self, i: int, number_per_hour: int) -> int:
         self.counter += 1
-        return self.counter * self.multiplier * 100 + random.randint(
-            0, 100
-        )  # nosec: just testing values, lower 2 digits are random
+        return self.counter * self.multiplier * 100 + random.randint(0, 100)  # nosec: just testing values, lower 2 digits are random
 
 
 class StatsAcummulatorTest(UDSTestCase):
@@ -98,16 +97,12 @@ class StatsAcummulatorTest(UDSTestCase):
         optimizer = stats_collector.StatsAccumulator(Environment.testing_environment())
         optimizer.run()
         # Shoul have DAYS // 2 + 1 stats
-        hour_stats = models.StatsCountersAccum.objects.filter(
-            interval_type=models.StatsCountersAccum.IntervalType.HOUR
-        )
+        hour_stats = models.StatsCountersAccum.objects.filter(interval_type=models.StatsCountersAccum.IntervalType.HOUR)
         total_hour_stats = (DAYS // 2 + 1) * 24 * NUMBER_OF_POOLS * len(COUNTERS_TYPES)
         # Ensure that we have correct number of stats
         self.assertEqual(hour_stats.count(), total_hour_stats)
         # Days stats
-        day_stats = models.StatsCountersAccum.objects.filter(
-            interval_type=models.StatsCountersAccum.IntervalType.DAY
-        )
+        day_stats = models.StatsCountersAccum.objects.filter(interval_type=models.StatsCountersAccum.IntervalType.DAY)
         total_day_stats = (DAYS // 2 + 1) * NUMBER_OF_POOLS * len(COUNTERS_TYPES)
         self.assertEqual(day_stats.count(), total_day_stats)
 
@@ -117,25 +112,23 @@ class StatsAcummulatorTest(UDSTestCase):
         total_hour_stats = DAYS * 24 * NUMBER_OF_POOLS * len(COUNTERS_TYPES)
         self.assertEqual(hour_stats.count(), total_hour_stats)
         # Days stats
-        day_stats = models.StatsCountersAccum.objects.filter(
-            interval_type=models.StatsCountersAccum.IntervalType.DAY
-        )
+        day_stats = models.StatsCountersAccum.objects.filter(interval_type=models.StatsCountersAccum.IntervalType.DAY)
         total_day_stats = (DAYS + 1) * NUMBER_OF_POOLS * len(COUNTERS_TYPES)
         self.assertEqual(day_stats.count(), total_day_stats)
 
         # Calculate sum of stats, by hour
         data: dict[str, dict[int, list[int]]] = {}
-        for i in base_stats.order_by('owner_id', 'counter_type', 'stamp'):
+        for i in base_stats.order_by("owner_id", "counter_type", "stamp"):
             stamp = i.stamp - (i.stamp % 3600) + 3600  # Round to hour and to next hour
-            d = data.setdefault(f'{i.owner_id:03d}{i.counter_type}', {})
+            d = data.setdefault(f"{i.owner_id:03d}{i.counter_type}", {})
             d.setdefault(stamp, []).append(i.value)
 
         # Last hour NEVER is completed (until next hour appears), so it's not included in hour stats
         # Check that hourly stats are correctly generated
-        stat: 'models.StatsCountersAccum'
-        for stat in hour_stats.order_by('owner_id', 'stamp'):
+        stat: "models.StatsCountersAccum"
+        for stat in hour_stats.order_by("owner_id", "stamp"):
             stamp = stat.stamp  # Already rounded to hour
-            d = data[f'{stat.owner_id:03d}{stat.counter_type}']
+            d = data[f"{stat.owner_id:03d}{stat.counter_type}"]
             self.assertEqual(stat.v_sum, sum(d[stamp]))
             self.assertEqual(stat.v_max, max(d[stamp]))
             self.assertEqual(stat.v_min, min(d[stamp]))
@@ -143,17 +136,15 @@ class StatsAcummulatorTest(UDSTestCase):
 
         # Recalculate sum of stats, now from StatsCountersAccum (dayly)
         data_d: dict[str, dict[int, list[dict[str, int]]]] = {}
-        for i in hour_stats.order_by('owner_id', 'counter_type', 'stamp'):
+        for i in hour_stats.order_by("owner_id", "counter_type", "stamp"):
             stamp = i.stamp - (i.stamp % (3600 * 24)) + 3600 * 24  # Round to day and to next day
-            dd = data_d.setdefault(f'{i.owner_id:03d}{i.counter_type}', {})
-            dd.setdefault(stamp, []).append(
-                {'sum': i.v_sum, 'count': i.v_count, 'max': i.v_max, 'min': i.v_min}
-            )
+            dd = data_d.setdefault(f"{i.owner_id:03d}{i.counter_type}", {})
+            dd.setdefault(stamp, []).append({"sum": i.v_sum, "count": i.v_count, "max": i.v_max, "min": i.v_min})
 
-        for i in day_stats.order_by('owner_id', 'stamp'):
+        for i in day_stats.order_by("owner_id", "stamp"):
             stamp = i.stamp  # already rounded to day
-            dd = data_d[f'{i.owner_id:03d}{i.counter_type}']
-            self.assertEqual(i.v_sum, sum(x['sum'] for x in dd[stamp]))
-            self.assertEqual(i.v_max, max(x['max'] for x in dd[stamp]))
-            self.assertEqual(i.v_min, min(x['min'] for x in dd[stamp]))
-            self.assertEqual(i.v_count, sum(x['count'] for x in dd[stamp]))
+            dd = data_d[f"{i.owner_id:03d}{i.counter_type}"]
+            self.assertEqual(i.v_sum, sum(x["sum"] for x in dd[stamp]))
+            self.assertEqual(i.v_max, max(x["max"] for x in dd[stamp]))
+            self.assertEqual(i.v_min, min(x["min"] for x in dd[stamp]))
+            self.assertEqual(i.v_count, sum(x["count"] for x in dd[stamp]))

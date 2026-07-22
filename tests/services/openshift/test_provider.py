@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -55,19 +56,23 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         Test provider data fields and types for correct initialization.
         """
         provider = fixtures.create_provider()
-        self.assertEqual(provider.cluster_url.value, fixtures.PROVIDER_VALUES_DICT['cluster_url'])
-        self.assertEqual(provider.api_url.value, fixtures.PROVIDER_VALUES_DICT['api_url'])
-        self.assertEqual(provider.username.value, fixtures.PROVIDER_VALUES_DICT['username'])
-        self.assertEqual(provider.password.value, fixtures.PROVIDER_VALUES_DICT['password'])
-        self.assertEqual(provider.namespace.value, fixtures.PROVIDER_VALUES_DICT['namespace'])
-        self.assertEqual(provider.verify_ssl.value, fixtures.PROVIDER_VALUES_DICT['verify_ssl'])
+        self.assertEqual(provider.cluster_url.value, fixtures.PROVIDER_VALUES_DICT["cluster_url"])
+        self.assertEqual(provider.api_url.value, fixtures.PROVIDER_VALUES_DICT["api_url"])
+        self.assertEqual(provider.username.value, fixtures.PROVIDER_VALUES_DICT["username"])
+        self.assertEqual(provider.password.value, fixtures.PROVIDER_VALUES_DICT["password"])
+        self.assertEqual(provider.namespace.value, fixtures.PROVIDER_VALUES_DICT["namespace"])
+        self.assertEqual(provider.verify_ssl.value, fixtures.PROVIDER_VALUES_DICT["verify_ssl"])
         if not isinstance(provider.concurrent_creation_limit, ui.gui.NumericField):
-            self.fail('concurrent_creation_limit is not a NumericField')
-        self.assertEqual(provider.concurrent_creation_limit.as_int(), fixtures.PROVIDER_VALUES_DICT['concurrent_creation_limit'])
+            self.fail("concurrent_creation_limit is not a NumericField")
+        self.assertEqual(
+            provider.concurrent_creation_limit.as_int(), fixtures.PROVIDER_VALUES_DICT["concurrent_creation_limit"]
+        )
         if not isinstance(provider.concurrent_removal_limit, ui.gui.NumericField):
-            self.fail('concurrent_removal_limit is not a NumericField')
-        self.assertEqual(provider.concurrent_removal_limit.as_int(), fixtures.PROVIDER_VALUES_DICT['concurrent_removal_limit'])
-        self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT['timeout'])
+            self.fail("concurrent_removal_limit is not a NumericField")
+        self.assertEqual(
+            provider.concurrent_removal_limit.as_int(), fixtures.PROVIDER_VALUES_DICT["concurrent_removal_limit"]
+        )
+        self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT["timeout"])
 
     # --- Provider Test Method ---
     def test_provider_test(self) -> None:
@@ -80,8 +85,12 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
                 api.test.reset_mock()
                 api.test.return_value = ret_val
                 # Patch test_connection to return ret_val for static test
-                with mock.patch('uds.services.OpenShift.provider.OpenshiftProvider.test_connection', return_value=ret_val):
-                    result = OpenshiftProvider.test(environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT)
+                with mock.patch(
+                    "uds.services.OpenShift.provider.OpenshiftProvider.test_connection", return_value=ret_val
+                ):
+                    result = OpenshiftProvider.test(
+                        environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT
+                    )
                 self.assertIsInstance(result, types.core.TestResult)
                 self.assertEqual(result.success, ret_val)
                 self.assertIsInstance(result.error, str)
@@ -117,16 +126,18 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         with fixtures.patched_provider() as provider:
             api = typing.cast(mock.MagicMock, provider.api)
             # Patch get_vm_info to return correct values for test
-            api.get_vm_info.side_effect = lambda vm_id: fixtures.VMS[0] if vm_id == 'vm-1' else (fixtures.VM_INSTANCES[0] if vm_id == 'vm-instance-1' else None)  # type: ignore
+            api.get_vm_info.side_effect = lambda vm_id: (
+                fixtures.VMS[0] if vm_id == "vm-1" else (fixtures.VM_INSTANCES[0] if vm_id == "vm-instance-1" else None)
+            )  # type: ignore
             self.assertEqual(provider.test_connection(), True)
             api.test.assert_called_once_with()
             self.assertEqual(provider.api.list_vms(), fixtures.VMS)
             # Check get_vm_info for both a VM and a VM instance
-            self.assertEqual(provider.api.get_vm_info('vm-1'), fixtures.VMS[0])
-            self.assertEqual(provider.api.get_vm_info('vm-instance-1'), fixtures.VM_INSTANCES[0])
-            self.assertTrue(provider.api.start_vm('vm-1'))
-            self.assertTrue(provider.api.stop_vm('vm-1'))
-            self.assertTrue(provider.api.delete_vm('vm-1'))
+            self.assertEqual(provider.api.get_vm_info("vm-1"), fixtures.VMS[0])
+            self.assertEqual(provider.api.get_vm_info("vm-instance-1"), fixtures.VM_INSTANCES[0])
+            self.assertTrue(provider.api.start_vm("vm-1"))
+            self.assertTrue(provider.api.stop_vm("vm-1"))
+            self.assertTrue(provider.api.delete_vm("vm-1"))
 
     # --- Name Sanitization ---
     def test_sanitized_name(self) -> None:
@@ -135,12 +146,12 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         """
         provider = fixtures.create_provider()
         test_cases = [
-            ('Test-VM-1', 'test-vm-1'),
-            ('Test_VM@2', 'test-vm-2'),
-            ('My Test VM!!!', 'my-test-vm'),
-            ('Test !!! this is', 'test-this-is'),
-            ('UDS-Pub-Hello World!!--2025065122-v1', 'uds-pub-hello-world-2025065122-v1'),
-            ('a' * 100, 'a' * 63),  # Test truncation
+            ("Test-VM-1", "test-vm-1"),
+            ("Test_VM@2", "test-vm-2"),
+            ("My Test VM!!!", "my-test-vm"),
+            ("Test !!! this is", "test-this-is"),
+            ("UDS-Pub-Hello World!!--2025065122-v1", "uds-pub-hello-world-2025065122-v1"),
+            ("a" * 100, "a" * 63),  # Test truncation
         ]
         for input_name, expected in test_cases:
             self.assertEqual(provider.sanitized_name(input_name), expected)

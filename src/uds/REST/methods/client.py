@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -82,20 +83,20 @@ class Client(Handler):
         """
         res: dict[str, typing.Any] = {}
         if result:
-            res['result'] = result
+            res["result"] = result
         if error:
             if isinstance(error, int):
                 error = types.errors.Error.from_int(error).message
 
             # Error code is percentage of creation of user service (0..4)
 
-            res['error'] = {
-                'message': error,
-                'is_retryable': is_retrayable,
-                'percent': percent,
+            res["error"] = {
+                "message": error,
+                "is_retryable": is_retrayable,
+                "percent": percent,
             }
 
-        logger.debug('Client Result: %s', res)
+        logger.debug("Client Result: %s", res)
 
         return res
 
@@ -103,14 +104,14 @@ class Client(Handler):
         """
         Executes and returns the test
         """
-        return Client.result(_('Correct'))
+        return Client.result(_("Correct"))
 
     def sign_rdp(self, rdp: str) -> dict[str, typing.Any]:
         try:
             signed = CryptoManager.manager().sign_rdp(rdp)
             return Client.result(signed)
         except Exception as e:
-            logger.exception('Error signing RDP')
+            logger.exception("Error signing RDP")
             return Client.result(error=str(e))
 
     def process(self, ticket: str, scrambler: str, kem_key: str | None = None) -> dict[str, typing.Any]:
@@ -123,19 +124,19 @@ class Client(Handler):
 
         """
         info: types.services.UserServiceInfo | None = None
-        hostname = self._params.get('hostname', '')  # Or if hostname is not included...
-        version = self._params.get('version', '0.0.0')
+        hostname = self._params.get("hostname", "")  # Or if hostname is not included...
+        version = self._params.get("version", "0.0.0")
         src_ip = self._request.ip
 
         if version < consts.system.VERSION_REQUIRED_CLIENT:
-            return Client.result(error='Client version not supported.\n Please, upgrade it.')
+            return Client.result(error="Client version not supported.\n Please, upgrade it.")
 
         # Ip is optional,
         if GlobalConfig.HONOR_CLIENT_IP_NOTIFY.as_bool() is True:
-            src_ip = self._params.get('ip', src_ip)
+            src_ip = self._params.get("ip", src_ip)
 
         logger.debug(
-            'Got Ticket: %s, scrambled: %s, Hostname: %s, Ip: %s',
+            "Got Ticket: %s, scrambled: %s, Hostname: %s, Ip: %s",
             ticket,
             scrambler,
             hostname,
@@ -148,7 +149,7 @@ class Client(Handler):
         except TicketStore.DoesNotExist:
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
-        self._request.user = User.objects.get(uuid=data['user'])
+        self._request.user = User.objects.get(uuid=data["user"])
 
         try:
             logger.debug(data)
@@ -156,12 +157,12 @@ class Client(Handler):
                 self._request.user,
                 self._request.os,
                 self._request.ip,
-                data['service'],
-                data['transport'],
+                data["service"],
+                data["transport"],
                 client_hostname=hostname,
             )
-            logger.debug('Res: %s', info)
-            password = CryptoManager.manager().symmetric_decrypt(data['password'], scrambler)
+            logger.debug("Res: %s", info)
+            password = CryptoManager.manager().symmetric_decrypt(data["password"], scrambler)
 
             # userService.setConnectionSource(srcIp, hostname)  # Store where we are accessing from so we can notify Service
             if not info.ip:
@@ -177,12 +178,12 @@ class Client(Handler):
                 self._request,
             )
 
-            logger.debug('Script: %s', transport_script)
+            logger.debug("Script: %s", transport_script)
 
             # Log is enabled if user has log_enabled property set to
             try:
                 log_enabled_since_limit = sql_stamp_seconds() - LOG_ENABLED_DURATION
-                log_enabled_since = self._request.user.properties.get('client_logging', log_enabled_since_limit)
+                log_enabled_since = self._request.user.properties.get("client_logging", log_enabled_since_limit)
                 is_logging_enabled = False if log_enabled_since <= log_enabled_since_limit else True
             except Exception:
                 is_logging_enabled = False
@@ -190,9 +191,9 @@ class Client(Handler):
             transport_script.log.ticket = (
                 TicketStore.create(
                     {
-                        'user': self._request.user.uuid,
-                        'userservice': info.userservice.uuid,
-                        'type': 'log',
+                        "user": self._request.user.uuid,
+                        "userservice": info.userservice.uuid,
+                        "type": "log",
                     },
                     # Long enough for a looong time, will be cleaned on first access
                     # Or 24 hours after creation, whatever happens first
@@ -205,9 +206,7 @@ class Client(Handler):
             if not kem_key:
                 return Client.result(result=transport_script.as_dict())
             else:
-                return Client.result(
-                    result=transport_script.as_encrypted_dict(kem_key, ticket_id=ticket)
-                )
+                return Client.result(result=transport_script.as_encrypted_dict(kem_key, ticket_id=ticket))
         except ServiceNotReadyError as e:
             # Refresh ticket and make this retrayable
             # TODO: This is test case, so ticket does not get refreshed never, beause refresh
@@ -216,7 +215,7 @@ class Client(Handler):
             return Client.result(
                 error=types.errors.Error.SERVICE_IN_PREPARATION, percent=e.code * 25, is_retrayable=True
             )
-        except Exception as e:
+        except Exception:
             logger.exception("Exception")
             return Client.result(error="Invalid request")
 
@@ -224,7 +223,7 @@ class Client(Handler):
             # ensures that we mark the service as accessed by client
             # so web interface can show can react to this
             if info and info.userservice:
-                info.userservice.properties['accessed_by_client'] = True
+                info.userservice.properties["accessed_by_client"] = True
 
     def post(self) -> dict[str, typing.Any]:
         """
@@ -232,16 +231,16 @@ class Client(Handler):
 
         post /client/<ticket>/<command>
         """
-        logger.debug('Client args for POST: %s', self._args)
+        logger.debug("Client args for POST: %s", self._args)
         try:
             ticket, command = self._args[:2]
             # if command is 'ticket' redirect to process
             # This command is processed BEFORE the ticket extraction
-            if command == 'ticket':
+            if command == "ticket":
                 return self.process(
                     ticket,
-                    self._params.get('scrambler', ''),
-                    self._params.get('kem_kyber_key', ''),
+                    self._params.get("scrambler", ""),
+                    self._params.get("kem_kyber_key", ""),
                 )
 
             try:
@@ -249,37 +248,37 @@ class Client(Handler):
             except TicketStore.DoesNotExist:
                 return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
-            self._request.user = User.objects.get(uuid=data['user'])
+            self._request.user = User.objects.get(uuid=data["user"])
 
             try:
-                userservice = models.UserService.objects.get(uuid=data['userservice'])
+                userservice = models.UserService.objects.get(uuid=data["userservice"])
             except models.UserService.DoesNotExist:
-                return Client.result(error='Service not found')
+                return Client.result(error="Service not found")
 
             match command:
-                case 'log':
-                    if data.get('type') != 'log':
-                        return Client.result(error='Invalid command')
+                case "log":
+                    if data.get("type") != "log":
+                        return Client.result(error="Invalid command")
 
-                    log: str = self._params.get('log', '')
+                    log: str = self._params.get("log", "")
                     # Right now, log to logger, but will be stored with user logs
-                    logger.info('Client %s: %s', self._request.user.pretty_name, userservice.service_pool.name)
-                    for line in log.split('\n'):
+                    logger.info("Client %s: %s", self._request.user.pretty_name, userservice.service_pool.name)
+                    for line in log.split("\n"):
                         # Firt word is level
                         try:
-                            level, message = line.split(' ', 1)
+                            level, message = line.split(" ", 1)
                             userservice.log(message, LogLevel.from_str(level), LogSource.CLIENT)
-                            logger.info('Client %s: %s', self._request.user.pretty_name, message)
+                            logger.info("Client %s: %s", self._request.user.pretty_name, message)
                         except Exception:
                             # If something goes wrong, log it as debug
                             pass
                 case _:
-                    return Client.result(error='Invalid command')
+                    return Client.result(error="Invalid command")
 
         except Exception as e:
             return Client.result(error=str(e))
 
-        return Client.result(result='Ok')
+        return Client.result(result="Ok")
 
     def put(self) -> dict[str, typing.Any]:
         """
@@ -287,45 +286,45 @@ class Client(Handler):
 
         put /client/<ticket>/rdp_sign  (body: {"rdp": "..."})
         """
-        logger.debug('Client args for PUT: %s', self._args)
+        logger.debug("Client args for PUT: %s", self._args)
         try:
             ticket, command = self._args[:2]
         except ValueError:
-            return Client.result(error='Invalid request')
+            return Client.result(error="Invalid request")
 
-        if command != 'rdp_sign':
-            return Client.result(error='Invalid command')
+        if command != "rdp_sign":
+            return Client.result(error="Invalid command")
 
         try:
             data: dict[str, typing.Any] = TicketStore.get(ticket)
         except TicketStore.DoesNotExist:
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
-        if data.get('type') != 'rdp':
+        if data.get("type") != "rdp":
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
-        return self.sign_rdp(self._params.get('rdp') or '')
+        return self.sign_rdp(self._params.get("rdp") or "")
 
     def get(self) -> dict[str, typing.Any]:
         """
         Processes get requests
         """
-        logger.debug('Client args for GET: %s', self._args)
+        logger.debug("Client args for GET: %s", self._args)
 
         def _error() -> None:
-            raise exceptions.rest.RequestError('Invalid request')
+            raise exceptions.rest.RequestError("Invalid request")
 
         def _noargs() -> dict[str, typing.Any]:
             return Client.result(
                 {
-                    'availableVersion': CLIENT_VERSION,  # Compat with old clients, TB removed soon...
-                    'available_version': CLIENT_VERSION,
-                    'requiredVersion': consts.system.VERSION_REQUIRED_CLIENT,  # Compat with old clients, TB removed soon...
-                    'required_version': consts.system.VERSION_REQUIRED_CLIENT,
-                    'downloadUrl': self._request.build_absolute_uri(
-                        reverse('page.client-download')
+                    "availableVersion": CLIENT_VERSION,  # Compat with old clients, TB removed soon...
+                    "available_version": CLIENT_VERSION,
+                    "requiredVersion": consts.system.VERSION_REQUIRED_CLIENT,  # Compat with old clients, TB removed soon...
+                    "required_version": consts.system.VERSION_REQUIRED_CLIENT,
+                    "downloadUrl": self._request.build_absolute_uri(
+                        reverse("page.client-download")
                     ),  # Compat with old clients, TB removed soon...
-                    'client_link': self._request.build_absolute_uri(reverse('page.client-download')),
+                    "client_link": self._request.build_absolute_uri(reverse("page.client-download")),
                 }
             )
 
@@ -333,11 +332,11 @@ class Client(Handler):
             self._args,
             _error,  # In case of error, raises RequestError
             ((), _noargs),  # No args, return version
-            (('test',), self.test),  # Test request, returns "Correct"
+            (("test",), self.test),  # Test request, returns "Correct"
             (
                 (
-                    '<ticket>',
-                    '<crambler>',
+                    "<ticket>",
+                    "<crambler>",
                 ),
                 self.process,
             ),  # Process request, needs ticket and scrambler

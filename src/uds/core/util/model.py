@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 import threading
@@ -47,7 +48,7 @@ from uds.core.managers.crypto import CryptoManager
 logger = logging.getLogger(__name__)
 
 _UUID_RE: typing.Final[re.Pattern[str]] = re.compile(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.IGNORECASE,
 )
 
@@ -79,19 +80,17 @@ class TimeTrack:
         Returns:
             datetime: Current datetime of the database server
         """
-        if connection.vendor in ('mysql', 'microsoft', 'postgresql'):
+        if connection.vendor in ("mysql", "microsoft", "postgresql"):
             cursor = connection.cursor()
             sentence = (
-                'SELECT CURRENT_TIMESTAMP(4)'
-                if connection.vendor in ('mysql', 'postgresql')
-                else 'SELECT CURRENT_TIMESTAMP'
+                "SELECT CURRENT_TIMESTAMP(4)"
+                if connection.vendor in ("mysql", "postgresql")
+                else "SELECT CURRENT_TIMESTAMP"
             )
             cursor.execute(sentence)
             dt = (cursor.fetchone() or [timezone.localtime()])[0]
         else:
-            dt = (
-                timezone.localtime()
-            )  # If not know how to get database datetime, returns local datetime (this is fine for sqlite, which is local)
+            dt = timezone.localtime()  # If not know how to get database datetime, returns local datetime (this is fine for sqlite, which is local)
 
         if timezone.is_naive(dt):
             dt = timezone.make_aware(dt)
@@ -152,10 +151,10 @@ def generate_uuid() -> str:
 
 def process_uuid(uuid: str) -> str:
     if isinstance(uuid, bytes):
-        uuid = uuid.decode('utf8')
+        uuid = uuid.decode("utf8")
     uuid = uuid.lower()
     if not _UUID_RE.match(uuid):
-        raise ValueError(f'Invalid UUID format: {uuid}')
+        raise ValueError(f"Invalid UUID format: {uuid}")
     return uuid
 
 
@@ -170,26 +169,26 @@ def get_my_ip_from_db() -> str:
 
     try:
         match connection.vendor:
-            case 'mysql':
-                query = 'SELECT host FROM information_schema.processlist WHERE ID = CONNECTION_ID();'
-            case 'postgresql':
-                query = 'SELECT client_addr FROM pg_stat_activity WHERE pid = pg_backend_pid();'
-            case 'microsoft':
-                query = 'SELECT client_net_address FROM sys.dm_exec_connections WHERE session_id = @@SPID;'
+            case "mysql":
+                query = "SELECT host FROM information_schema.processlist WHERE ID = CONNECTION_ID();"
+            case "postgresql":
+                query = "SELECT client_addr FROM pg_stat_activity WHERE pid = pg_backend_pid();"
+            case "microsoft":
+                query = "SELECT client_net_address FROM sys.dm_exec_connections WHERE session_id = @@SPID;"
             case _:
-                return '0.0.0.0'  # If not known, return a default IP
+                return "0.0.0.0"  # If not known, return a default IP
 
         with connection.cursor() as cursor:
             cursor.execute(query)
             result_row = cursor.fetchone()
             if result_row:
-                result = result_row[0] if isinstance(result_row[0], str) else result_row[0].decode('utf8')
-                return result.split(':')[0]
+                result = result_row[0] if isinstance(result_row[0], str) else result_row[0].decode("utf8")
+                return result.split(":")[0]
 
     except Exception as e:
-        logger.error('Error getting my IP: %s', e)
+        logger.error("Error getting my IP: %s", e)
 
-    return '0.0.0.0'
+    return "0.0.0.0"
 
 
 # Tries to get the position of an object in the default queryset ordering
@@ -201,7 +200,7 @@ def get_position_in_queryset(obj: typing.Any, queryset: typing.Any) -> int:
     :return: Position in the queryset (0 based). -1 if not found
     """
     try:
-        lst = list(queryset.values_list('pk', flat=True))
+        lst = list(queryset.values_list("pk", flat=True))
         return lst.index(obj.pk)
     except ValueError:
         return -1

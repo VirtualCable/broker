@@ -35,9 +35,16 @@ Currently covers:
   - /accounts   (Account model — name, comments, tags)
   - /networks   (Network model — name, net_string, tags)
   - /calendars  (Calendar model — name, comments, tags)
+  - /mfa        (Mfa model — fixture-created, no POST due to data_type)
+  - /messaging/notifiers (Notifier model — fixture-created, no POST)
+  - /gallery    (ServicePoolGroup model — name, comments, image_id, priority)
+  - /metapools  (MetaPool model — name, short_name, comments, tags,
+                 image_id, servicesPoolGroup_id, visible, policy,
+                 ha_policy, calendar_message, transport_grouping)
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 import typing
 import logging
@@ -50,7 +57,7 @@ logger = logging.getLogger(__name__)
 class AccountsCrudSmokeTest(rest.test.RESTTestCase):
     """CRUD lifecycle for /accounts."""
 
-    BASE: typing.ClassVar[str] = 'accounts'
+    BASE: typing.ClassVar[str] = "accounts"
 
     @typing.override
     def setUp(self) -> None:
@@ -59,70 +66,64 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
 
     def test_create_and_read(self) -> None:
         """POST /accounts → create, then GET by uuid to verify."""
-        payload = {'name': 'smoke-test-account', 'comments': 'Created by CRUD smoke test', 'tags': []}
+        payload = {"name": "smoke-test-account", "comments": "Created by CRUD smoke test", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
         self.assertEqual(
-            create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}'
+            create_resp.status_code, 200, f"POST create failed: {create_resp.content.decode(errors='replace')}"
         )
         data = create_resp.json()
-        account_uuid = data.get('id')
-        self.assertIsNotNone(account_uuid, f'No id in response: {data}')
+        account_uuid = data.get("id")
+        self.assertIsNotNone(account_uuid, f"No id in response: {data}")
 
         # GET the created item
-        get_resp = self.client.rest_get(f'{self.BASE}/{account_uuid}')
-        self.assertEqual(
-            get_resp.status_code, 200, f'GET item failed: {get_resp.content.decode(errors="replace")}'
-        )
+        get_resp = self.client.rest_get(f"{self.BASE}/{account_uuid}")
+        self.assertEqual(get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}")
         item = get_resp.json()
-        self.assertEqual(item['name'], 'smoke-test-account')
-        self.assertEqual(item['comments'], 'Created by CRUD smoke test')
+        self.assertEqual(item["name"], "smoke-test-account")
+        self.assertEqual(item["comments"], "Created by CRUD smoke test")
 
     def test_list(self) -> None:
         """GET /accounts → list returns at least the created item."""
-        payload = {'name': 'list-test-account', 'comments': '', 'tags': []}
+        payload = {"name": "list-test-account", "comments": "", "tags": []}
         self.client.rest_post(self.BASE, payload)
 
         list_resp = self.client.rest_get(self.BASE)
         self.assertEqual(list_resp.status_code, 200)
         items = list_resp.json()
         self.assertIsInstance(items, list)
-        names = [i.get('name') for i in items]
-        self.assertIn('list-test-account', names)
+        names = [i.get("name") for i in items]
+        self.assertIn("list-test-account", names)
 
     def test_update(self) -> None:
         """PUT /accounts/{uuid} → update, then GET to verify."""
-        payload = {'name': 'update-test-account', 'comments': 'Before update', 'tags': []}
+        payload = {"name": "update-test-account", "comments": "Before update", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        account_uuid = create_resp.json().get('id')
+        account_uuid = create_resp.json().get("id")
 
-        update_payload = {'name': 'update-test-account', 'comments': 'After update', 'tags': []}
-        put_resp = self.client.rest_put(f'{self.BASE}/{account_uuid}', update_payload)
-        self.assertEqual(
-            put_resp.status_code, 200, f'PUT update failed: {put_resp.content.decode(errors="replace")}'
-        )
+        update_payload = {"name": "update-test-account", "comments": "After update", "tags": []}
+        put_resp = self.client.rest_put(f"{self.BASE}/{account_uuid}", update_payload)
+        self.assertEqual(put_resp.status_code, 200, f"PUT update failed: {put_resp.content.decode(errors='replace')}")
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{account_uuid}')
-        self.assertEqual(get_resp.json()['comments'], 'After update')
+        get_resp = self.client.rest_get(f"{self.BASE}/{account_uuid}")
+        self.assertEqual(get_resp.json()["comments"], "After update")
 
     def test_delete(self) -> None:
         """DELETE /accounts/{uuid} → 200, then GET → 404."""
-        payload = {'name': 'delete-test-account', 'comments': '', 'tags': []}
+        payload = {"name": "delete-test-account", "comments": "", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        account_uuid = create_resp.json().get('id')
+        account_uuid = create_resp.json().get("id")
 
-        del_resp = self.client.rest_delete(f'{self.BASE}/{account_uuid}')
-        self.assertEqual(
-            del_resp.status_code, 200, f'DELETE failed: {del_resp.content.decode(errors="replace")}'
-        )
+        del_resp = self.client.rest_delete(f"{self.BASE}/{account_uuid}")
+        self.assertEqual(del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}")
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{account_uuid}')
+        get_resp = self.client.rest_get(f"{self.BASE}/{account_uuid}")
         self.assertEqual(get_resp.status_code, 404)
 
 
 class NetworksCrudSmokeTest(rest.test.RESTTestCase):
     """CRUD lifecycle for /networks."""
 
-    BASE: typing.ClassVar[str] = 'networks'
+    BASE: typing.ClassVar[str] = "networks"
 
     @typing.override
     def setUp(self) -> None:
@@ -131,59 +132,59 @@ class NetworksCrudSmokeTest(rest.test.RESTTestCase):
 
     def test_create_and_read(self) -> None:
         """POST /networks → create, then GET by uuid."""
-        payload = {'name': 'smoke-test-network', 'net_string': '192.168.1.0/24', 'tags': []}
+        payload = {"name": "smoke-test-network", "net_string": "192.168.1.0/24", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
         self.assertEqual(
-            create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}'
+            create_resp.status_code, 200, f"POST create failed: {create_resp.content.decode(errors='replace')}"
         )
-        net_uuid = create_resp.json().get('id')
+        net_uuid = create_resp.json().get("id")
         self.assertIsNotNone(net_uuid)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{net_uuid}')
+        get_resp = self.client.rest_get(f"{self.BASE}/{net_uuid}")
         self.assertEqual(get_resp.status_code, 200)
-        self.assertEqual(get_resp.json()['name'], 'smoke-test-network')
+        self.assertEqual(get_resp.json()["name"], "smoke-test-network")
 
     def test_list(self) -> None:
         """GET /networks → list."""
-        payload = {'name': 'list-test-network', 'net_string': '10.0.0.0/8', 'tags': []}
+        payload = {"name": "list-test-network", "net_string": "10.0.0.0/8", "tags": []}
         self.client.rest_post(self.BASE, payload)
 
         list_resp = self.client.rest_get(self.BASE)
         self.assertEqual(list_resp.status_code, 200)
         items = list_resp.json()
         self.assertIsInstance(items, list)
-        names = [i.get('name') for i in items]
-        self.assertIn('list-test-network', names)
+        names = [i.get("name") for i in items]
+        self.assertIn("list-test-network", names)
 
     def test_update(self) -> None:
         """PUT /networks/{uuid} → update."""
-        payload = {'name': 'update-test-network', 'net_string': '172.16.0.0/12', 'tags': []}
+        payload = {"name": "update-test-network", "net_string": "172.16.0.0/12", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        net_uuid = create_resp.json().get('id')
+        net_uuid = create_resp.json().get("id")
 
-        update_payload = {'name': 'update-test-network', 'net_string': '192.168.0.0/16', 'tags': []}
-        put_resp = self.client.rest_put(f'{self.BASE}/{net_uuid}', update_payload)
+        update_payload = {"name": "update-test-network", "net_string": "192.168.0.0/16", "tags": []}
+        put_resp = self.client.rest_put(f"{self.BASE}/{net_uuid}", update_payload)
         self.assertEqual(put_resp.status_code, 200)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{net_uuid}')
-        self.assertEqual(get_resp.json()['net_string'], '192.168.0.0/16')
+        get_resp = self.client.rest_get(f"{self.BASE}/{net_uuid}")
+        self.assertEqual(get_resp.json()["net_string"], "192.168.0.0/16")
 
     def test_delete(self) -> None:
         """DELETE /networks/{uuid} → 200, then GET → 404."""
-        payload = {'name': 'delete-test-network', 'net_string': '0.0.0.0/0', 'tags': []}
+        payload = {"name": "delete-test-network", "net_string": "0.0.0.0/0", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        net_uuid = create_resp.json().get('id')
+        net_uuid = create_resp.json().get("id")
 
-        self.client.rest_delete(f'{self.BASE}/{net_uuid}')
+        self.client.rest_delete(f"{self.BASE}/{net_uuid}")
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{net_uuid}')
+        get_resp = self.client.rest_get(f"{self.BASE}/{net_uuid}")
         self.assertEqual(get_resp.status_code, 404)
 
 
 class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
     """CRUD lifecycle for /calendars."""
 
-    BASE: typing.ClassVar[str] = 'calendars'
+    BASE: typing.ClassVar[str] = "calendars"
 
     @typing.override
     def setUp(self) -> None:
@@ -192,59 +193,59 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
 
     def test_create_and_read(self) -> None:
         """POST /calendars → create, then GET by uuid."""
-        payload = {'name': 'smoke-test-calendar', 'comments': 'Test calendar', 'tags': []}
+        payload = {"name": "smoke-test-calendar", "comments": "Test calendar", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
         self.assertEqual(
-            create_resp.status_code, 200, f'POST create failed: {create_resp.content.decode(errors="replace")}'
+            create_resp.status_code, 200, f"POST create failed: {create_resp.content.decode(errors='replace')}"
         )
-        cal_uuid = create_resp.json().get('id')
+        cal_uuid = create_resp.json().get("id")
         self.assertIsNotNone(cal_uuid)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{cal_uuid}')
+        get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}")
         self.assertEqual(get_resp.status_code, 200)
-        self.assertEqual(get_resp.json()['name'], 'smoke-test-calendar')
+        self.assertEqual(get_resp.json()["name"], "smoke-test-calendar")
 
     def test_list(self) -> None:
         """GET /calendars → list."""
-        payload = {'name': 'list-test-calendar', 'comments': '', 'tags': []}
+        payload = {"name": "list-test-calendar", "comments": "", "tags": []}
         self.client.rest_post(self.BASE, payload)
 
         list_resp = self.client.rest_get(self.BASE)
         self.assertEqual(list_resp.status_code, 200)
         items = list_resp.json()
         self.assertIsInstance(items, list)
-        names = [i.get('name') for i in items]
-        self.assertIn('list-test-calendar', names)
+        names = [i.get("name") for i in items]
+        self.assertIn("list-test-calendar", names)
 
     def test_update(self) -> None:
         """PUT /calendars/{uuid} → update."""
-        payload = {'name': 'update-test-calendar', 'comments': 'Before', 'tags': []}
+        payload = {"name": "update-test-calendar", "comments": "Before", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        cal_uuid = create_resp.json().get('id')
+        cal_uuid = create_resp.json().get("id")
 
-        update_payload = {'name': 'update-test-calendar', 'comments': 'After', 'tags': []}
-        put_resp = self.client.rest_put(f'{self.BASE}/{cal_uuid}', update_payload)
+        update_payload = {"name": "update-test-calendar", "comments": "After", "tags": []}
+        put_resp = self.client.rest_put(f"{self.BASE}/{cal_uuid}", update_payload)
         self.assertEqual(put_resp.status_code, 200)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{cal_uuid}')
-        self.assertEqual(get_resp.json()['comments'], 'After')
+        get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}")
+        self.assertEqual(get_resp.json()["comments"], "After")
 
     def test_delete(self) -> None:
         """DELETE /calendars/{uuid} → 200, then GET → 404."""
-        payload = {'name': 'delete-test-calendar', 'comments': '', 'tags': []}
+        payload = {"name": "delete-test-calendar", "comments": "", "tags": []}
         create_resp = self.client.rest_post(self.BASE, payload)
-        cal_uuid = create_resp.json().get('id')
+        cal_uuid = create_resp.json().get("id")
 
-        self.client.rest_delete(f'{self.BASE}/{cal_uuid}')
+        self.client.rest_delete(f"{self.BASE}/{cal_uuid}")
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{cal_uuid}')
+        get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}")
         self.assertEqual(get_resp.status_code, 404)
 
 
 class MfasCrudSmokeTest(rest.test.RESTTestCase):
     """CRUD lifecycle for /mfa (using fixture to create, REST for read/update/delete)."""
 
-    BASE: typing.ClassVar[str] = 'mfa'
+    BASE: typing.ClassVar[str] = "mfa"
 
     @typing.override
     def setUp(self) -> None:
@@ -260,46 +261,46 @@ class MfasCrudSmokeTest(rest.test.RESTTestCase):
         resp = self.client.rest_get(self.BASE)
         self.assertEqual(resp.status_code, 200)
         items = resp.json()
-        names = [i.get('name') for i in items]
+        names = [i.get("name") for i in items]
         self.assertIn(self.mfa.name, names)
 
     def test_read(self) -> None:
         """GET /mfa/{uuid} → item matches fixture."""
-        resp = self.client.rest_get(f'{self.BASE}/{self.mfa.uuid}')
+        resp = self.client.rest_get(f"{self.BASE}/{self.mfa.uuid}")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()['name'], self.mfa.name)
+        self.assertEqual(resp.json()["name"], self.mfa.name)
 
     def test_update(self) -> None:
         """PUT /mfa/{uuid} → update comments."""
         payload = {
-            'name': self.mfa.name,
-            'comments': 'Updated by CRUD test',
-            'tags': [],
-            'remember_device': 0,
-            'validity': 0,
+            "name": self.mfa.name,
+            "comments": "Updated by CRUD test",
+            "tags": [],
+            "remember_device": 0,
+            "validity": 0,
         }
-        resp = self.client.rest_put(f'{self.BASE}/{self.mfa.uuid}', payload)
+        resp = self.client.rest_put(f"{self.BASE}/{self.mfa.uuid}", payload)
         self.assertEqual(resp.status_code, 200)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{self.mfa.uuid}')
-        self.assertEqual(get_resp.json()['comments'], 'Updated by CRUD test')
+        get_resp = self.client.rest_get(f"{self.BASE}/{self.mfa.uuid}")
+        self.assertEqual(get_resp.json()["comments"], "Updated by CRUD test")
 
     def test_delete(self) -> None:
         """DELETE /mfa/{uuid} → 200, then GET → 404."""
         from tests.fixtures import mfas as mfas_fixtures
 
         mfa = mfas_fixtures.create_db_mfa()
-        resp = self.client.rest_delete(f'{self.BASE}/{mfa.uuid}')
+        resp = self.client.rest_delete(f"{self.BASE}/{mfa.uuid}")
         self.assertEqual(resp.status_code, 200)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{mfa.uuid}')
+        get_resp = self.client.rest_get(f"{self.BASE}/{mfa.uuid}")
         self.assertEqual(get_resp.status_code, 404)
 
 
 class NotifiersCrudSmokeTest(rest.test.RESTTestCase):
     """CRUD lifecycle for /messaging/notifiers (REST read/update/delete on fixture-created instance)."""
 
-    BASE: typing.ClassVar[str] = 'messaging/notifiers'
+    BASE: typing.ClassVar[str] = "messaging/notifiers"
 
     @typing.override
     def setUp(self) -> None:
@@ -315,20 +316,215 @@ class NotifiersCrudSmokeTest(rest.test.RESTTestCase):
         resp = self.client.rest_get(self.BASE)
         self.assertEqual(resp.status_code, 200)
         items = resp.json()
-        names = [i.get('name') for i in items]
+        names = [i.get("name") for i in items]
         self.assertIn(self.notifier.name, names)
 
     def test_read(self) -> None:
         """GET /notifiers/{uuid} → item matches fixture."""
-        resp = self.client.rest_get(f'{self.BASE}/{self.notifier.uuid}')
+        resp = self.client.rest_get(f"{self.BASE}/{self.notifier.uuid}")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()['name'], self.notifier.name)
+        self.assertEqual(resp.json()["name"], self.notifier.name)
 
     def test_update(self) -> None:
         """PUT /notifiers/{uuid} → update name."""
-        payload = {'name': 'updated-notifier', 'comments': '', 'level': 30000, 'tags': [], 'enabled': True}
-        resp = self.client.rest_put(f'{self.BASE}/{self.notifier.uuid}', payload)
+        payload = {"name": "updated-notifier", "comments": "", "level": 30000, "tags": [], "enabled": True}
+        resp = self.client.rest_put(f"{self.BASE}/{self.notifier.uuid}", payload)
         self.assertEqual(resp.status_code, 200)
 
-        get_resp = self.client.rest_get(f'{self.BASE}/{self.notifier.uuid}')
-        self.assertEqual(get_resp.json()['name'], 'updated-notifier')
+        get_resp = self.client.rest_get(f"{self.BASE}/{self.notifier.uuid}")
+        self.assertEqual(get_resp.json()["name"], "updated-notifier")
+
+
+class ServicePoolGroupsCrudSmokeTest(rest.test.RESTTestCase):
+    """CRUD lifecycle for /gallery/servicespoolgroups (ServicePoolGroup).
+
+    Exercises ``POST`` create, ``GET`` list/item, ``PUT`` update and
+    ``DELETE``.  ``ServicesPoolGroups.PATH == 'gallery'`` (legacy path),
+    and the dispatcher mounts the handler as a child of the ``gallery``
+    path node, so the URL is ``/gallery/servicespoolgroups``.
+    """
+
+    BASE: typing.ClassVar[str] = "gallery/servicespoolgroups"
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+
+    def test_create_and_read(self) -> None:
+        """POST /gallery → create, then GET by uuid to verify."""
+        payload: dict[str, typing.Any] = {
+            "name": "smoke-test-group",
+            "comments": "Created by CRUD smoke test",
+            "image_id": "-1",
+            "priority": 0,
+        }
+        create_resp = self.client.rest_post(self.BASE, payload)
+        self.assertEqual(create_resp.status_code, 200, f"POST failed: {create_resp.content.decode(errors='replace')}")
+        data = create_resp.json()
+        group_uuid = data.get("id")
+        self.assertIsNotNone(group_uuid, f"No id in response: {data}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{group_uuid}")
+        self.assertEqual(get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}")
+        self.assertEqual(get_resp.json()["name"], "smoke-test-group")
+
+    def test_list(self) -> None:
+        """GET /gallery → list contains the just-created group."""
+        payload: dict[str, typing.Any] = {
+            "name": "list-test-group",
+            "comments": "",
+            "image_id": "-1",
+            "priority": 1,
+        }
+        self.client.rest_post(self.BASE, payload)
+
+        list_resp = self.client.rest_get(self.BASE)
+        self.assertEqual(list_resp.status_code, 200)
+        items = list_resp.json()
+        self.assertIsInstance(items, list)
+        names = [i.get("name") for i in items]
+        self.assertIn("list-test-group", names)
+
+    def test_update(self) -> None:
+        """PUT /gallery/{uuid} → update comments + priority."""
+        payload: dict[str, typing.Any] = {
+            "name": "update-test-group",
+            "comments": "Before",
+            "image_id": "-1",
+            "priority": 0,
+        }
+        create_resp = self.client.rest_post(self.BASE, payload)
+        group_uuid = create_resp.json().get("id")
+
+        update_payload: dict[str, typing.Any] = {
+            "name": "update-test-group",
+            "comments": "After",
+            "image_id": "-1",
+            "priority": 5,
+        }
+        put_resp = self.client.rest_put(f"{self.BASE}/{group_uuid}", update_payload)
+        self.assertEqual(put_resp.status_code, 200, f"PUT failed: {put_resp.content.decode(errors='replace')}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{group_uuid}")
+        self.assertEqual(get_resp.json()["comments"], "After")
+        self.assertEqual(get_resp.json()["priority"], 5)
+
+    def test_delete(self) -> None:
+        """DELETE /gallery/{uuid} → 200, then GET → 404."""
+        payload: dict[str, typing.Any] = {
+            "name": "delete-test-group",
+            "comments": "",
+            "image_id": "-1",
+            "priority": 0,
+        }
+        create_resp = self.client.rest_post(self.BASE, payload)
+        group_uuid = create_resp.json().get("id")
+
+        del_resp = self.client.rest_delete(f"{self.BASE}/{group_uuid}")
+        self.assertEqual(del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{group_uuid}")
+        self.assertEqual(get_resp.status_code, 404)
+
+
+class MetaPoolsCrudSmokeTest(rest.test.RESTTestCase):
+    """CRUD lifecycle for /metapools (MetaPool).
+
+    ``MetaPools`` has no ``PATH`` constant, so the dispatcher derives the
+    URL from the class name → ``metapools`` (``sys.intern(cls.__name__.lower())``
+    in ``Dispatcher.register_handler``).
+
+    Required payload mirrors ``FIELDS_TO_SAVE`` in
+    ``src/uds/REST/methods/meta_pools.py``.
+    """
+
+    BASE: typing.ClassVar[str] = "metapools"
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+
+    @staticmethod
+    def _payload(name: str, comments: str, *, calendar_message: str = "") -> dict[str, typing.Any]:
+        """Build a valid MetaPool POST/PUT payload (no image, no group)."""
+        return {
+            "name": name,
+            "short_name": name[:8],
+            "comments": comments,
+            "tags": [],
+            "image_id": "-1",
+            "servicesPoolGroup_id": "-1",  # No group
+            "visible": True,
+            "policy": 0,  # ROUND_ROBIN
+            "ha_policy": 0,  # DISABLED
+            "calendar_message": calendar_message,
+            "transport_grouping": 0,
+        }
+
+    def test_create_and_read(self) -> None:
+        """POST /metapools → create, then GET by uuid."""
+        payload = self._payload("smoke-meta", "Created by CRUD smoke test")
+        create_resp = self.client.rest_post(self.BASE, payload)
+        self.assertEqual(create_resp.status_code, 200, f"POST failed: {create_resp.content.decode(errors='replace')}")
+        data = create_resp.json()
+        meta_uuid = data.get("id")
+        self.assertIsNotNone(meta_uuid, f"No id in response: {data}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{meta_uuid}")
+        self.assertEqual(get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}")
+        item = get_resp.json()
+        self.assertEqual(item["name"], "smoke-meta")
+        self.assertEqual(item["short_name"], "smoke-me")
+        self.assertTrue(item["visible"])
+        # IntEnum fields are serialized to their string representation by the
+        # handler's JSON serializer (``str(IntEnum) -> 'LoadBalancingPolicy.ROUND_ROBIN'``),
+        # so we compare against the names.  Compare via ``as_str`` so that we
+        # tolerate either int or str at the JSON layer.
+        self.assertEqual(int(item["policy"]), 0)
+        self.assertEqual(int(item["ha_policy"]), 0)
+
+    def test_list(self) -> None:
+        """GET /metapools → list contains the just-created meta pool."""
+        payload = self._payload("list-meta", "")
+        self.client.rest_post(self.BASE, payload)
+
+        list_resp = self.client.rest_get(self.BASE)
+        self.assertEqual(list_resp.status_code, 200)
+        items = list_resp.json()
+        self.assertIsInstance(items, list)
+        names = [i.get("name") for i in items]
+        self.assertIn("list-meta", names)
+
+    def test_update(self) -> None:
+        """PUT /metapools/{uuid} → update comments, visible and calendar_message."""
+        payload = self._payload("update-meta", "Before", calendar_message="no access")
+        create_resp = self.client.rest_post(self.BASE, payload)
+        meta_uuid = create_resp.json().get("id")
+
+        update_payload = self._payload("update-meta", "After", calendar_message="access granted")
+        update_payload["visible"] = False
+        update_payload["policy"] = 1  # PRIORITY
+
+        put_resp = self.client.rest_put(f"{self.BASE}/{meta_uuid}", update_payload)
+        self.assertEqual(put_resp.status_code, 200, f"PUT failed: {put_resp.content.decode(errors='replace')}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{meta_uuid}")
+        item = get_resp.json()
+        self.assertEqual(item["comments"], "After")
+        self.assertEqual(item["calendar_message"], "access granted")
+        self.assertFalse(item["visible"])
+        self.assertEqual(int(item["policy"]), 1)
+
+    def test_delete(self) -> None:
+        """DELETE /metapools/{uuid} → 200, then GET → 404."""
+        payload = self._payload("delete-meta", "")
+        create_resp = self.client.rest_post(self.BASE, payload)
+        meta_uuid = create_resp.json().get("id")
+
+        del_resp = self.client.rest_delete(f"{self.BASE}/{meta_uuid}")
+        self.assertEqual(del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{meta_uuid}")
+        self.assertEqual(get_resp.status_code, 404)

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import time
 import logging
@@ -54,7 +55,7 @@ class MessageProcessorThread(BaseThread):
 
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'MessageProcessorThread'
+        self.name = "MessageProcessorThread"
         self._cached_providers = None
         self._cached_stamp = 0.0
 
@@ -62,20 +63,15 @@ class MessageProcessorThread(BaseThread):
     def providers(self) -> list[tuple[int, NotificationProviderModule]]:
         # If _cached_providers is invalid or _cached_time is older than CACHE_TIMEOUT,
         # we need to refresh it
-        if (
-            self._cached_providers is None
-            or time.time() - self._cached_stamp > consts.cache.SHORT_CACHE_TIMEOUT
-        ):
-            self._cached_providers = [
-                (p.level, p.get_instance()) for p in Notifier.objects.filter(enabled=True)
-            ]
+        if self._cached_providers is None or time.time() - self._cached_stamp > consts.cache.SHORT_CACHE_TIMEOUT:
+            self._cached_providers = [(p.level, p.get_instance()) for p in Notifier.objects.filter(enabled=True)]
             self._cached_stamp = time.time()
         return self._cached_providers
 
     @typing.override
     def run(self) -> None:
         while NotificationsManager.manager().ensure_local_db_exists() is False:
-            logger.info('Waiting for local notifications database to be ready...')
+            logger.info("Waiting for local notifications database to be ready...")
             time.sleep(1)
 
         # Get a "look" at the DB, and log the notifications number awaiting
@@ -88,7 +84,7 @@ class MessageProcessorThread(BaseThread):
                 fnc = logger.warning
             else:
                 fnc = logger.info
-            fnc('Notifications awaiting processing: %d', waiting_notifications)
+            fnc("Notifications awaiting processing: %d", waiting_notifications)
 
         notify_awaiting()
 
@@ -111,19 +107,17 @@ class MessageProcessorThread(BaseThread):
                     n.delete_persistent()
                     continue
                 # Try to insert into Main DB
-                notify = (
-                    not n.processed
-                )  # If it was already processed, the only thing left to do is to add to main DB and remove it from persistent
+                notify = not n.processed  # If it was already processed, the only thing left to do is to add to main DB and remove it from persistent
                 pk = n.pk
                 n.processed = True
                 try:
                     # Trick to save it to main DB
                     n.pk = None
-                    n.save(using='default')
+                    n.save(using="default")
                     # Delete from Persistent DB, first restore PK
                     n.pk = pk
                     n.delete_persistent()
-                    logger.debug('Saved notification %s to main DB', n)
+                    logger.debug("Saved notification %s to main DB", n)
                 except Exception:
                     # try notificators, but keep on db with error
                     # Restore pk, and save locally so we can try again
@@ -131,7 +125,7 @@ class MessageProcessorThread(BaseThread):
                     try:
                         Notification.save_persistent(n)
                     except Exception:
-                        logger.error('Error saving notification %s to persistent DB', n)
+                        logger.error("Error saving notification %s to persistent DB", n)
                         continue
                     # Process notificators, but this is kept on db with processed flat as True
                     # logger.warning(
@@ -153,7 +147,7 @@ class MessageProcessorThread(BaseThread):
                             )
                         except Exception:
                             logger.error(
-                                'Error sending notification %s to %s',
+                                "Error sending notification %s to %s",
                                 n,
                                 p.type_name,
                                 exc_info=True,

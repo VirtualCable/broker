@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import datetime
 import logging
@@ -82,32 +83,28 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             name=item.name,
             comments=item.comments,
             start=item.start,
-            end=(
-                timezone.make_aware(datetime.datetime.combine(item.end, datetime.time.max))
-                if item.end
-                else None
-            ),
+            end=(timezone.make_aware(datetime.datetime.combine(item.end, datetime.time.max)) if item.end else None),
             frequency=item.frequency,
             interval=item.interval,
             duration=item.duration,
             duration_unit=item.duration_unit,
             permission=perm,
         )
-        
+
     @typing.override
-    def get_item_position(self, parent: 'models.Model', item_uuid: str) -> int:
+    def get_item_position(self, parent: "models.Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Calendar)
         return self.calc_item_position(item_uuid, parent.rules.all())
 
     @typing.override
-    def get_items(self, parent: 'models.Model') -> types.rest.ItemsResult[CalendarRuleItem]:
+    def get_items(self, parent: "models.Model") -> types.rest.ItemsResult[CalendarRuleItem]:
         parent = ensure.is_instance(parent, Calendar)
         # Check what kind of access do we have to parent provider
         perm = permissions.effective_permissions(self._user, parent)
         return [CalendarRules.rule_as_dict(k, perm) for k in self.filter_odata_queryset(parent.rules.all())]
 
     @typing.override
-    def get_item(self, parent: 'models.Model', item: str) -> CalendarRuleItem:
+    def get_item(self, parent: "models.Model", item: str) -> CalendarRuleItem:
         parent = ensure.is_instance(parent, Calendar)
         # Check what kind of access do we have to parent provider
         return CalendarRules.rule_as_dict(
@@ -115,47 +112,47 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
         )
 
     @typing.override
-    def get_table(self, parent: 'models.Model') -> types.rest.TableInfo:
+    def get_table(self, parent: "models.Model") -> types.rest.TableInfo:
         parent = ensure.is_instance(parent, Calendar)
         return (
-            ui_utils.TableBuilder(_('Rules of {0}').format(parent.name))
-            .text_column(name='name', title=_('Name'))
-            .datetime_column(name='start', title=_('Start'))
-            .date(name='end', title=_('End'))
-            .dict_column(name='frequency', title=_('Frequency'), dct=FrequencyInfo.literals_dict())
-            .numeric_column(name='interval', title=_('Interval'))
-            .numeric_column(name='duration', title=_('Duration'))
-            .text_column(name='comments', title=_('Comments'))
+            ui_utils.TableBuilder(_("Rules of {0}").format(parent.name))
+            .text_column(name="name", title=_("Name"))
+            .datetime_column(name="start", title=_("Start"))
+            .date(name="end", title=_("End"))
+            .dict_column(name="frequency", title=_("Frequency"), dct=FrequencyInfo.literals_dict())
+            .numeric_column(name="interval", title=_("Interval"))
+            .numeric_column(name="duration", title=_("Duration"))
+            .text_column(name="comments", title=_("Comments"))
             .build()
         )
 
     @typing.override
-    def save_item(self, parent: 'models.Model', item: typing.Optional[str]) -> typing.Any:
+    def save_item(self, parent: "models.Model", item: typing.Optional[str]) -> typing.Any:
         parent = ensure.is_instance(parent, Calendar)
 
         # Extract item db fields
         # We need this fields for all
-        logger.debug('Saving rule %s / %s', parent, item)
+        logger.debug("Saving rule %s / %s", parent, item)
         fields = self.fields_from_params(
             [
-                'name',
-                'comments',
-                'frequency',
-                'start',
-                'end',
-                'interval',
-                'duration',
-                'duration_unit',
+                "name",
+                "comments",
+                "frequency",
+                "start",
+                "end",
+                "interval",
+                "duration",
+                "duration_unit",
             ]
         )
 
-        if int(fields['interval']) < 1:
-            raise exceptions.rest.RequestError('Repeat must be greater than zero')
+        if int(fields["interval"]) < 1:
+            raise exceptions.rest.RequestError("Repeat must be greater than zero")
 
         # Convert timestamps to datetimes
-        fields['start'] = timezone.make_aware(datetime.datetime.fromtimestamp(fields['start']))
-        if fields['end'] is not None:
-            fields['end'] = timezone.make_aware(datetime.datetime.fromtimestamp(fields['end']))
+        fields["start"] = timezone.make_aware(datetime.datetime.fromtimestamp(fields["start"]))
+        if fields["end"] is not None:
+            fields["end"] = timezone.make_aware(datetime.datetime.fromtimestamp(fields["end"]))
 
         calendar_rule: CalendarRule
         try:
@@ -165,26 +162,26 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
                 calendar_rule = parent.rules.get(uuid=process_uuid(item))
                 calendar_rule.__dict__.update(fields)
                 calendar_rule.save()
-                return {'id': calendar_rule.uuid}
+                return {"id": calendar_rule.uuid}
         except CalendarRule.DoesNotExist:
-            raise exceptions.rest.NotFound(_('Calendar rule not found: {}').format(item)) from None
+            raise exceptions.rest.NotFound(_("Calendar rule not found: {}").format(item)) from None
         except IntegrityError as e:  # Duplicate key probably
-            raise exceptions.rest.RequestError(_('Element already exists (duplicate key error)')) from e
+            raise exceptions.rest.RequestError(_("Element already exists (duplicate key error)")) from e
         except Exception as e:
-            logger.exception('Saving calendar')
-            raise exceptions.rest.RequestError(f'incorrect invocation to PUT: {e}') from e
+            logger.exception("Saving calendar")
+            raise exceptions.rest.RequestError(f"incorrect invocation to PUT: {e}") from e
 
     @typing.override
-    def delete_item(self, parent: 'models.Model', item: str) -> None:
+    def delete_item(self, parent: "models.Model", item: str) -> None:
         parent = ensure.is_instance(parent, Calendar)
-        logger.debug('Deleting rule %s from %s', item, parent)
+        logger.debug("Deleting rule %s from %s", item, parent)
         try:
             calendar_rule = parent.rules.get(uuid=process_uuid(item))
             calendar_rule.calendar.modified = sql_now()
             calendar_rule.calendar.save()
             calendar_rule.delete()
         except CalendarRule.DoesNotExist:
-            raise exceptions.rest.NotFound(_('Calendar rule not found: {}').format(item)) from None
+            raise exceptions.rest.NotFound(_("Calendar rule not found: {}").format(item)) from None
         except Exception as e:
-            logger.error('Error deleting calendar rule %s from %s', item, parent)
-            raise exceptions.rest.RequestError(f'Error deleting calendar rule: {e}') from e
+            logger.error("Error deleting calendar rule %s from %s", item, parent)
+            raise exceptions.rest.RequestError(f"Error deleting calendar rule: {e}") from e

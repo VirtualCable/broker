@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import datetime
@@ -61,17 +62,17 @@ class ContentProcessor:
     Process contents (request/response) so Handlers can manage them
     """
 
-    mime_type: typing.ClassVar[str] = ''
+    mime_type: typing.ClassVar[str] = ""
     extensions: typing.ClassVar[collections.abc.Iterable[str]] = []
 
-    _request: 'HttpRequest'
-    _odata: 'types.rest.api.ODataParams|None' = None
+    _request: "HttpRequest"
+    _odata: "types.rest.api.ODataParams|None" = None
 
-    def __init__(self, request: 'HttpRequest'):
+    def __init__(self, request: "HttpRequest"):
         self._request = request
         self._odata = None
 
-    def set_odata(self, odata: 'types.rest.api.ODataParams') -> None:
+    def set_odata(self, odata: "types.rest.api.ODataParams") -> None:
         self._odata = odata
 
     def process_get_parameters(self) -> dict[str, typing.Any]:
@@ -79,7 +80,7 @@ class ContentProcessor:
         returns parameters based on request method
         GET parameters are understood
         """
-        if self._request.method != 'GET':
+        if self._request.method != "GET":
             return {}
 
         return {k: v[0] if len(v) == 1 else v for k, v in self._request.GET.lists()}
@@ -107,7 +108,7 @@ class ContentProcessor:
         """
         Renders an obj to the specific type, but in an incremental way (if possible)
         """
-        yield self.render(obj).encode('utf8')
+        yield self.render(obj).encode("utf8")
 
     @staticmethod
     def process_for_render(
@@ -136,29 +137,29 @@ class ContentProcessor:
                 return str(obj)  # This is for translations
 
             case bytes():
-                return obj.decode('utf-8')
+                return obj.decode("utf-8")
 
             case collections.abc.Iterable():
                 return [
                     ContentProcessor.process_for_render(v, data_transformer)
-                    for v in typing.cast(collections.abc.Iterable[typing.Any], obj)   # pyrefly: ignore  # other type checkers cannot infer obj type
+                    for v in typing.cast(collections.abc.Iterable[typing.Any], obj)  # pyrefly: ignore  # other type checkers cannot infer obj type
                 ]
 
             case datetime.datetime():
                 return int(obj.timestamp())
 
             case datetime.date():
-                return '{}-{:02d}-{:02d}'.format(obj.year, obj.month, obj.day)
+                return "{}-{:02d}-{:02d}".format(obj.year, obj.month, obj.day)
 
             case _:
                 # Any class with as_dict method shoud be processed
-                if as_dict := getattr(obj, 'as_dict', None):
+                if as_dict := getattr(obj, "as_dict", None):
                     try:
                         obj = as_dict()
                         return ContentProcessor.process_for_render(obj, data_transformer)
                     except Exception as e:
                         # Maybe the as_dict method is not implemented as we expect.. should not happen
-                        logger.warning('Obj has as_dict method but failed to call it: %s', e)
+                        logger.warning("Obj has as_dict method but failed to call it: %s", e)
                         # Will return obj as str in this case, or if it is a dataclass, can return as dict
 
                 if dataclasses.is_dataclass(obj):
@@ -180,23 +181,23 @@ class MarshallerProcessor(ContentProcessor):
     @typing.override
     def process_parameters(self) -> dict[str, typing.Any]:
         try:
-            length = int(self._request.META.get('CONTENT_LENGTH') or '0')
+            length = int(self._request.META.get("CONTENT_LENGTH") or "0")
             if length == 0 or not self._request.body:
                 return self.process_get_parameters()
 
             # logger.debug('Body: >>{}<< {}'.format(self._request.body, len(self._request.body)))
             if length > consts.system.MAX_REQUEST_SIZE or length > len(self._request.body):
-                raise ParametersException('Request size too big')
+                raise ParametersException("Request size too big")
 
-            res = self.marshaller.loads(self._request.body.decode('utf8'))
-            logger.debug('Unmarshalled content: %s', res)
+            res = self.marshaller.loads(self._request.body.decode("utf8"))
+            logger.debug("Unmarshalled content: %s", res)
 
             if not isinstance(res, dict):
-                raise ParametersException('Invalid content')
+                raise ParametersException("Invalid content")
 
             return typing.cast(dict[str, typing.Any], res)
         except Exception as e:
-            logger.exception('parsing %s: %s', self.mime_type, self._request.body.decode('utf8'))
+            logger.exception("parsing %s: %s", self.mime_type, self._request.body.decode("utf8"))
             raise ParametersException(str(e))
 
     @typing.override
@@ -216,14 +217,14 @@ class JsonProcessor(MarshallerProcessor):
     Provides JSON content processor
     """
 
-    mime_type: typing.ClassVar[str] = 'application/json'
-    extensions: typing.ClassVar[collections.abc.Iterable[str]] = ['json']
+    mime_type: typing.ClassVar[str] = "application/json"
+    extensions: typing.ClassVar[collections.abc.Iterable[str]] = ["json"]
     marshaller: typing.ClassVar[typing.Any] = json
 
     @typing.override
     def as_incremental(self, obj: typing.Any) -> collections.abc.Iterable[bytes]:
         for i in to_incremental_json(obj):
-            yield i.encode('utf8')
+            yield i.encode("utf8")
 
 
 # ---------------
@@ -242,9 +243,7 @@ class JsonProcessor(MarshallerProcessor):
 
 processors_list = (JsonProcessor,)
 default_processor: type[ContentProcessor] = JsonProcessor
-available_processors_mime_dict: dict[str, type[ContentProcessor]] = {
-    cls.mime_type: cls for cls in processors_list
-}
+available_processors_mime_dict: dict[str, type[ContentProcessor]] = {cls.mime_type: cls for cls in processors_list}
 available_processors_ext_dict: dict[str, type[ContentProcessor]] = {}
 for cls in processors_list:
     for ext in cls.extensions:

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -45,8 +46,7 @@ from ...utils.test import UDSTransactionTestCase
 
 # We use transactions on some related methods (storage access, etc...)
 class TestUserServiceMulti(UDSTransactionTestCase):
-    
-    @mock.patch('uds.core.util.net.test_connectivity', return_value=True)
+    @mock.patch("uds.core.util.net.test_connectivity", return_value=True)
     def test_userservice(self, test_conn: mock.MagicMock) -> None:
         """
         Test the user service
@@ -54,9 +54,7 @@ class TestUserServiceMulti(UDSTransactionTestCase):
         userservice = fixtures.create_userservice_multi()
 
         # Does not supports cache
-        self.assertEqual(
-            userservice.deploy_for_cache(level=types.services.CacheLevel.L1), types.states.TaskState.ERROR
-        )
+        self.assertEqual(userservice.deploy_for_cache(level=types.services.CacheLevel.L1), types.states.TaskState.ERROR)
         # Ensure check also returns error state
         self.assertEqual(userservice.check_state(), types.states.TaskState.ERROR)
 
@@ -73,7 +71,7 @@ class TestUserServiceMulti(UDSTransactionTestCase):
         server.refresh_from_db()
         self.assertIsNone(server.locked_until)
 
-    @mock.patch('uds.core.util.net.test_connectivity', return_value=True)
+    @mock.patch("uds.core.util.net.test_connectivity", return_value=True)
     def test_userservice_set_ready(self, test_conn: mock.MagicMock) -> None:
         """
         Test the user service
@@ -89,7 +87,7 @@ class TestUserServiceMulti(UDSTransactionTestCase):
 
         # Set ready
         # patch service wakeup
-        with mock.patch.object(userservice.service(), 'wakeup') as wakeup:
+        with mock.patch.object(userservice.service(), "wakeup") as wakeup:
             self.assertEqual(userservice.set_ready(), types.states.TaskState.FINISHED)
             wakeup.assert_called_once_with(userservice._ip, userservice._mac)
 
@@ -100,7 +98,7 @@ class TestUserServiceMulti(UDSTransactionTestCase):
         userservice = fixtures.create_userservice_multi()
         server = models.Server.objects.first()
         if not server:
-            self.fail('No server found')
+            self.fail("No server found")
 
         # Assign
         userservice.assign(server.uuid)
@@ -110,7 +108,7 @@ class TestUserServiceMulti(UDSTransactionTestCase):
         self.assertEqual(userservice._ip, server.ip)
         self.assertEqual(userservice._mac, server.mac)
 
-    @mock.patch('uds.core.util.net.test_connectivity', return_value=True)
+    @mock.patch("uds.core.util.net.test_connectivity", return_value=True)
     def test_userservice_without_token(self, test_conn: mock.MagicMock) -> None:
         """
         Test the user service
@@ -119,11 +117,11 @@ class TestUserServiceMulti(UDSTransactionTestCase):
         db_obj_mock = typing.cast(mock.MagicMock, userservice.db_obj)
 
         # Ensure has no token for this test
-        userservice.service().token.value = ''
+        userservice.service().token.value = ""
         self.assertEqual(userservice.deploy_for_user(mock.MagicMock()), types.states.TaskState.FINISHED)
         self.assertIn(mock.call().set_in_use(True), db_obj_mock.mock_calls)
 
-    @mock.patch('uds.core.util.net.test_connectivity', return_value=True)
+    @mock.patch("uds.core.util.net.test_connectivity", return_value=True)
     def test_userservice_with_token(self, test_conn: mock.MagicMock) -> None:
         """
         Test the user service
@@ -132,6 +130,6 @@ class TestUserServiceMulti(UDSTransactionTestCase):
         db_obj_mock = typing.cast(mock.MagicMock, userservice.db_obj)
 
         # Ensure has no token for this test
-        userservice.service().token.value = 'token_value'
+        userservice.service().token.value = "token_value"
         self.assertEqual(userservice.deploy_for_user(mock.MagicMock()), types.states.TaskState.FINISHED)
         self.assertNotIn(mock.call().set_in_use(True), db_obj_mock.mock_calls)

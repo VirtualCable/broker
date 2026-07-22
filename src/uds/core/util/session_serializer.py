@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import json
 
@@ -38,12 +39,12 @@ class SessionSerializer:
     """
     Serializer for django sessions.
     """
+
     def dumps(self, data: typing.Any) -> bytes:
         """
         Serialize data for storage in a session.
         """
-        return json.dumps(data, separators=(',', ':')).encode()
-
+        return json.dumps(data, separators=(",", ":")).encode()
 
     def loads(self, data: bytes) -> dict[str, typing.Any]:
         """

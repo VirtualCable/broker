@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 
 from uds import models
@@ -46,15 +47,15 @@ class AssignedAndUnusedTest(UDSTestCase):
     userServices: list[models.UserService]
 
     def setUp(self) -> None:
-        config.GlobalConfig.CHECK_UNUSED_TIME.set('600')
+        config.GlobalConfig.CHECK_UNUSED_TIME.set("600")
         # All created user services has "in_use" to False, os_state and state to USABLE
         self.userServices = fixtures_services.create_db_assigned_userservices(count=32)
 
-    def test_assigned_unused(self) -> None:     
+    def test_assigned_unused(self) -> None:
         for us in self.userServices:  # Update state date to now
             us.set_state(State.USABLE)
         # Set now, should not be removed
-        
+
         count = models.UserService.objects.filter(state=State.REMOVABLE).count()
         cleaner = AssignedAndUnused(Environment.testing_environment())
         # since_state = util.sql_now() - datetime.timedelta(seconds=cleaner.frecuency)
@@ -62,8 +63,10 @@ class AssignedAndUnusedTest(UDSTestCase):
         self.assertEqual(models.UserService.objects.filter(state=State.REMOVABLE).count(), count)
         # Set half the userServices to a long-ago state, should be removed
         for i, us in enumerate(self.userServices):
-            if i%2 == 0:
+            if i % 2 == 0:
                 us.state_date = model.sql_now() - datetime.timedelta(seconds=602)
-                us.save(update_fields=['state_date'])
+                us.save(update_fields=["state_date"])
         cleaner.run()
-        self.assertEqual(models.UserService.objects.filter(state=State.REMOVABLE).count(), count + len(self.userServices)//2)
+        self.assertEqual(
+            models.UserService.objects.filter(state=State.REMOVABLE).count(), count + len(self.userServices) // 2
+        )

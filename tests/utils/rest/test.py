@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from uds import models
 from uds.core import consts, types
 from uds.core.util import log
@@ -57,7 +58,7 @@ class RESTTestCase(test.UDSTransactionTestCase):
 
     user_services: list[models.UserService]
 
-    auth_token: str = ''
+    auth_token: str = ""
 
     def setUp(self) -> None:
         # Set up data for REST Test cases
@@ -83,10 +84,10 @@ class RESTTestCase(test.UDSTransactionTestCase):
         )
 
         for user in self.users:
-            log.log(user, types.log.LogLevel.DEBUG, f'Debug Log for {user.name}')
-            log.log(user, types.log.LogLevel.INFO, f'Info Log for {user.name}')
-            log.log(user, types.log.LogLevel.WARNING, f'Warning Log for {user.name}')
-            log.log(user, types.log.LogLevel.ERROR, f'Error Log for {user.name}')
+            log.log(user, types.log.LogLevel.DEBUG, f"Debug Log for {user.name}")
+            log.log(user, types.log.LogLevel.INFO, f"Info Log for {user.name}")
+            log.log(user, types.log.LogLevel.WARNING, f"Warning Log for {user.name}")
+            log.log(user, types.log.LogLevel.ERROR, f"Error Log for {user.name}")
 
         self.provider = services_fixtures.create_db_provider()
 
@@ -94,32 +95,30 @@ class RESTTestCase(test.UDSTransactionTestCase):
             self.provider,
             self.admins[0],
             self.groups,
-            'managed',
+            "managed",
         )
         self.userservice_unmanaged = services_fixtures.create_db_one_assigned_userservice(
             self.provider,
             self.admins[0],
             self.groups,
-            'unmanaged',
+            "unmanaged",
         )
 
         self.user_services = []
         for user in self.users:
             self.user_services.append(
-                services_fixtures.create_db_one_assigned_userservice(self.provider, user, self.groups, 'managed')
+                services_fixtures.create_db_one_assigned_userservice(self.provider, user, self.groups, "managed")
             )
             self.user_services.append(
-                services_fixtures.create_db_one_assigned_userservice(
-                    self.provider, user, self.groups, 'unmanaged'
-                )
+                services_fixtures.create_db_one_assigned_userservice(self.provider, user, self.groups, "unmanaged")
             )
 
-    def login(self, user: models.User|None = None, as_admin: bool = True) -> None:
-        '''
+    def login(self, user: models.User | None = None, as_admin: bool = True) -> None:
+        """
         Login as specified and returns the auth token
         The token is inserted on the header of the client, so it can be used in the rest of the tests
         Also, it is stored on self.auth_token
-        '''
+        """
         user = user or (self.admins[0] if as_admin else self.staffs[0])
         response = rest.login(
             self,
@@ -128,10 +127,10 @@ class RESTTestCase(test.UDSTransactionTestCase):
             username=user.name,
             password=user.name,
         )
-        self.assertEqual(response['result'], 'ok', f'Login failed: {response}')
+        self.assertEqual(response["result"], "ok", f"Login failed: {response}")
         # Insert token into headers
-        self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, response['token'])
-        self.auth_token = response['token']
+        self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, response["token"])
+        self.auth_token = response["token"]
 
 
 class RESTActorTestCase(RESTTestCase):
@@ -142,24 +141,24 @@ class RESTActorTestCase(RESTTestCase):
     def login_and_register(self, as_admin: bool = True) -> str:
         self.login(as_admin=as_admin)  # Token not used, alreade inserted on login
         response = self.client.post(
-            '/uds/rest/actor/v3/register',
+            "/uds/rest/actor/v3/register",
             data=self.register_data(constants.STRING_CHARS),
-            content_type='application/json',
+            content_type="application/json",
         )
-        self.assertEqual(response.status_code, 200, 'Actor registration failed')
-        return response.json()['result']
+        self.assertEqual(response.status_code, 200, "Actor registration failed")
+        return response.json()["result"]
 
-    def register_data(self, chars: str|None = None) -> dict[str, str]:
+    def register_data(self, chars: str | None = None) -> dict[str, str]:
         # Data for registration
         return {
-            'username': helpers.random_string(size=12, chars=chars)
-            + '@AUTH'
+            "username": helpers.random_string(size=12, chars=chars)
+            + "@AUTH"
             + helpers.random_string(size=12, chars=chars),
-            'hostname': helpers.random_string(size=48, chars=chars),
-            'ip': helpers.random_ip(),
-            'mac': helpers.random_mac(),
-            'pre_command': helpers.random_string(size=64, chars=chars),
-            'run_once_command': helpers.random_string(size=64, chars=chars),
-            'post_command': helpers.random_string(size=64, chars=chars),
-            'log_level': '0',
+            "hostname": helpers.random_string(size=48, chars=chars),
+            "ip": helpers.random_ip(),
+            "mac": helpers.random_mac(),
+            "pre_command": helpers.random_string(size=64, chars=chars),
+            "run_once_command": helpers.random_string(size=64, chars=chars),
+            "post_command": helpers.random_string(size=64, chars=chars),
+            "log_level": "0",
         }

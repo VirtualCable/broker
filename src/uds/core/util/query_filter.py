@@ -26,6 +26,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnknownMemberType=false
 import math
 import typing
@@ -39,9 +40,7 @@ import lark
 
 logger = logging.getLogger(__name__)
 
-_QUERY_GRAMMAR: typing.Final[
-    str
-] = r"""?start: expr
+_QUERY_GRAMMAR: typing.Final[str] = r"""?start: expr
 
 ?expr: or_expr
 
@@ -84,7 +83,7 @@ NAME: CNAME ("." CNAME)*
 # Note that value can receive function or final values, as it is composed of
 # terminals and
 _T_Result: typing.TypeAlias = collections.abc.Callable[[typing.Any], typing.Any]
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 _QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar("query_parser")
 
@@ -92,25 +91,25 @@ _REMOVE_QUOTES_RE: typing.Final[re.Pattern[str]] = re.compile(r"^(['\"])(.*)\1$"
 
 _FUNCTIONS_PARAMS_NUM: dict[str, int] = {
     # Variable parameters
-    'substring': -1,
-    'concat': -1,
+    "substring": -1,
+    "concat": -1,
     # 2 parametes
-    'substringof': 2,
-    'contains': 2,
-    'startswith': 2,
-    'endswith': 2,
-    'indexof': 2,
+    "substringof": 2,
+    "contains": 2,
+    "startswith": 2,
+    "endswith": 2,
+    "indexof": 2,
     # 1 parameter
-    'tolower': 1,
-    'toupper': 1,
-    'length': 1,
-    'year': 1,
-    'month': 1,
-    'day': 1,
-    'floor': 1,
-    'ceiling': 1,
-    'round': 1,
-    'trim': 1,
+    "tolower": 1,
+    "toupper": 1,
+    "length": 1,
+    "year": 1,
+    "month": 1,
+    "day": 1,
+    "floor": 1,
+    "ceiling": 1,
+    "round": 1,
+    "trim": 1,
 }
 
 
@@ -131,15 +130,15 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
         value: typing.Any = arg
         if isinstance(arg, lark.Token):
             match arg.type:
-                case 'ESCAPED_STRING':
+                case "ESCAPED_STRING":
                     match = _REMOVE_QUOTES_RE.match(arg.value)
                     if not match:
                         return arg.value
                     value = match.group(2)
-                case 'NUMBER':
-                    value = float(arg.value) if '.' in arg.value else int(arg.value)
-                case 'BOOLEAN':
-                    value = typing.cast(str, arg.value).lower() == 'true'
+                case "NUMBER":
+                    value = float(arg.value) if "." in arg.value else int(arg.value)
+                case "BOOLEAN":
+                    value = typing.cast(str, arg.value).lower() == "true"
                 case _:
                     raise ValueError(f"Unexpected token type: {arg.type}")
         elif isinstance(arg, collections.abc.Callable):
@@ -175,14 +174,14 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
 
         def getter(obj: typing.Any) -> typing.Any:
             if isinstance(obj, dict):
-                for part in arg.value.split('.'):
+                for part in arg.value.split("."):
                     obj = typing.cast(dict[str, typing.Any], obj).get(part, {})
             else:
                 try:
-                    for part in arg.value.split('.'):
+                    for part in arg.value.split("."):
                         obj = getattr(obj, part)
                 except AttributeError:  # Nonexisting fields simple maps to empty value
-                    return ''
+                    return ""
             return typing.cast(typing.Any, obj)
 
         return getter
@@ -202,7 +201,7 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
         """
 
         def _compare(val_left: str | int | float, val_right: str | int | float) -> int:
-            if type(val_left) != type(val_right):
+            if type(val_left) is not type(val_right):
                 val_left = str(val_left)
                 val_right = str(val_right)
             if typing.cast(typing.Any, val_left) < typing.cast(typing.Any, val_right):
@@ -298,48 +297,46 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
             raise ValueError(f"Unknown function: {func.value}")
 
         if len(args) != _FUNCTIONS_PARAMS_NUM[func_name] and _FUNCTIONS_PARAMS_NUM[func_name] != -1:
-            raise ValueError(
-                f"{func_name} function requires exactly {_FUNCTIONS_PARAMS_NUM[func_name]} arguments"
-            )
+            raise ValueError(f"{func_name} function requires exactly {_FUNCTIONS_PARAMS_NUM[func_name]} arguments")
         match func_name:
-            case 'substringof':
+            case "substringof":
                 return lambda obj: str(args[1](obj)).lower().find(str(args[0](obj)).lower()) != -1
-            case 'contains':
+            case "contains":
                 return lambda obj: str(args[0](obj)).lower().find(str(args[1](obj)).lower()) != -1
-            case 'substring':
+            case "substring":
                 if len(args) == 2:
                     return lambda obj: str(args[0](obj))[int(args[1](obj)) :]
                 elif len(args) == 3:
                     return lambda obj: str(args[0](obj))[int(args[1](obj)) : int(args[2](obj))]
                 else:
-                    raise ValueError(f"substring function requires 2 or 3 arguments")
-            case 'startswith':
+                    raise ValueError("substring function requires 2 or 3 arguments")
+            case "startswith":
                 return lambda obj: str(args[0](obj)).lower().startswith(str(args[1](obj)).lower())
-            case 'endswith':
+            case "endswith":
                 return lambda obj: str(args[0](obj)).lower().endswith(str(args[1](obj)).lower())
-            case 'indexof':
+            case "indexof":
                 return lambda obj: str(args[0](obj)).find(str(args[1](obj)))
-            case 'concat':
-                return lambda obj: ''.join(str(arg(obj)) for arg in args) if args else ''
-            case 'length':
+            case "concat":
+                return lambda obj: "".join(str(arg(obj)) for arg in args) if args else ""
+            case "length":
                 return lambda obj: len(str(args[0](obj)))
-            case 'tolower':
+            case "tolower":
                 return lambda obj: str(args[0](obj)).lower()
-            case 'toupper':
+            case "toupper":
                 return lambda obj: str(args[0](obj)).upper()
-            case 'year':
-                return lambda obj: str(args[0](obj)).split('-')[0] if isinstance(args[0](obj), str) else ''
-            case 'month':
-                return lambda obj: str(args[0](obj)).split('-')[1] if isinstance(args[0](obj), str) else ''
-            case 'day':
-                return lambda obj: str(args[0](obj)).split('-')[2] if isinstance(args[0](obj), str) else ''
-            case 'trim':
+            case "year":
+                return lambda obj: str(args[0](obj)).split("-")[0] if isinstance(args[0](obj), str) else ""
+            case "month":
+                return lambda obj: str(args[0](obj)).split("-")[1] if isinstance(args[0](obj), str) else ""
+            case "day":
+                return lambda obj: str(args[0](obj)).split("-")[2] if isinstance(args[0](obj), str) else ""
+            case "trim":
                 return lambda obj: str(args[0](obj)).strip()
-            case 'floor':
+            case "floor":
                 return lambda obj: math.floor(args[0](obj))
-            case 'round':
+            case "round":
                 return lambda obj: round(args[0](obj))
-            case 'ceiling':
+            case "ceiling":
                 return lambda obj: math.ceil(args[0](obj))
             case _:
                 # Will never reach this, as it has been already

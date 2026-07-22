@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import time
 
 from uds.core import consts
@@ -46,12 +47,12 @@ from ...utils.test import UDSTestCase
 NUM_THREADS = 8
 TESTS_PER_TRHEAD = 30
 
-TEST_MAC_RANGE = '00:50:56:10:00:00-00:50:56:3F:FF:FF'  # Testing mac range
-TEST_MAC_RANGE_FULL = '00:50:56:10:00:00-00:50:56:10:00:10'  # Testing mac range for NO MORE MACS
+TEST_MAC_RANGE = "00:50:56:10:00:00-00:50:56:3F:FF:FF"  # Testing mac range
+TEST_MAC_RANGE_FULL = "00:50:56:10:00:00-00:50:56:10:00:10"  # Testing mac range for NO MORE MACS
 
 
 def mac_to_integer(mac: str) -> int:
-    return int(mac.replace(':', ''), 16)
+    return int(mac.replace(":", ""), 16)
 
 
 class UniqueIdTest(UDSTestCase):
@@ -61,10 +62,10 @@ class UniqueIdTest(UDSTestCase):
     name_generator: UniqueNameGenerator
 
     def setUp(self) -> None:
-        self.uniqueid_generator = UniqueIDGenerator('test', 'test')
-        self.ugidGen = UniqueGIDGenerator('test')
-        self.macs_generator = UniqueMacGenerator('test')
-        self.name_generator = UniqueNameGenerator('test')
+        self.uniqueid_generator = UniqueIDGenerator("test", "test")
+        self.ugidGen = UniqueGIDGenerator("test")
+        self.macs_generator = UniqueMacGenerator("test")
+        self.name_generator = UniqueNameGenerator("test")
 
     def test_seq_uid(self) -> None:
         for x in range(100):
@@ -106,15 +107,15 @@ class UniqueIdTest(UDSTestCase):
 
     def test_gid(self) -> None:
         for x in range(100):
-            self.assertEqual(self.ugidGen.get(), f'uds{x:08d}')
+            self.assertEqual(self.ugidGen.get(), f"uds{x:08d}")
 
     def test_gid_basename(self) -> None:
-        self.ugidGen.set_basename('mar')
+        self.ugidGen.set_basename("mar")
         for x in range(100):
-            self.assertEqual(self.ugidGen.get(), f'mar{x:08d}')
+            self.assertEqual(self.ugidGen.get(), f"mar{x:08d}")
 
     def test_mac(self) -> None:
-        start, _end = TEST_MAC_RANGE.split('-')  # pylint: disable=unused-variable
+        start, _end = TEST_MAC_RANGE.split("-")  # pylint: disable=unused-variable
 
         self.assertEqual(self.macs_generator.get(TEST_MAC_RANGE), start)
 
@@ -133,7 +134,7 @@ class UniqueIdTest(UDSTestCase):
         self.assertEqual(self.macs_generator.get(TEST_MAC_RANGE), start)
 
     def test_mac_full(self) -> None:
-        start, end = TEST_MAC_RANGE_FULL.split('-')
+        start, end = TEST_MAC_RANGE_FULL.split("-")
 
         length = mac_to_integer(end) - mac_to_integer(start) + 1
 
@@ -150,19 +151,19 @@ class UniqueIdTest(UDSTestCase):
         num = 0
         for length in range(2, 10):
             for x in range(20):
-                name = self.name_generator.get('test', length=length)
+                name = self.name_generator.get("test", length=length)
                 lst.append(name)
-                self.assertEqual(name, f'test{num:0{length}d}'.format(num, width=length))
+                self.assertEqual(name, f"test{num:0{length}d}".format(num, width=length))
                 num += 1
 
         for x in lst:
-            self.name_generator.free('test', x)
+            self.name_generator.free("test", x)
 
-        self.assertEqual(self.name_generator.get('test', length=1), 'test0')
+        self.assertEqual(self.name_generator.get("test", length=1), "test0")
 
     def test_name_full(self) -> None:
         for _ in range(10):
-            self.name_generator.get('test', length=1)
+            self.name_generator.get("test", length=1)
 
         with self.assertRaises(KeyError):
-            self.name_generator.get('test', length=1)
+            self.name_generator.get("test", length=1)

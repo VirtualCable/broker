@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import datetime
 import logging
@@ -53,44 +54,44 @@ if typing.TYPE_CHECKING:
     from django.db.models.query import QuerySet
 
 logger = logging.getLogger(__name__)
-logger_trace = logging.getLogger('traceLog')
-logger_operations = logging.getLogger('operationsLog')
+logger_trace = logging.getLogger("traceLog")
+logger_operations = logging.getLogger("operationsLog")
 
 
 class ServerManager(metaclass=singleton.Singleton):
-    STORAGE_NAME: typing.Final[str] = 'uds.servers'
+    STORAGE_NAME: typing.Final[str] = "uds.servers"
     MAX_COUNTERS_AGE: typing.Final[datetime.timedelta] = datetime.timedelta(days=3)
-    BASE_PROPERTY_NAME: typing.Final[str] = 'sm_usr_'
+    BASE_PROPERTY_NAME: typing.Final[str] = "sm_usr_"
 
     # Singleton, can initialize here
     last_counters_clean: datetime.datetime = timezone.localtime()  # This is local to server, so it's ok
 
     @staticmethod
-    def manager() -> 'ServerManager':
+    def manager() -> "ServerManager":
         return ServerManager()  # Singleton pattern will return always the same instance
 
     @contextlib.contextmanager
     def counter_storage(self) -> collections.abc.Generator[StorageAsDict, None, None]:
-        with Storage(self.STORAGE_NAME).as_dict(atomic=True, group='counters') as storage:
+        with Storage(self.STORAGE_NAME).as_dict(atomic=True, group="counters") as storage:
             # If counters are too old, restart them
             if timezone.localtime() - self.last_counters_clean > self.MAX_COUNTERS_AGE:
                 self.last_counters_clean = timezone.localtime()
                 storage.clear()
             yield storage
 
-    def property_name(self, user: 'str | models.User | None') -> str:
+    def property_name(self, user: "str | models.User | None") -> str:
         """Returns the property name for a user"""
         if isinstance(user, str):
             return ServerManager.BASE_PROPERTY_NAME + user
-        return ServerManager.BASE_PROPERTY_NAME + (user.uuid if user else '_')
+        return ServerManager.BASE_PROPERTY_NAME + (user.uuid if user else "_")
 
     def get_unmanaged_usage(self, uuid: str) -> int:
-        uuid = 'c' + uuid
+        uuid = "c" + uuid
         with self.counter_storage() as counters:
             return counters.get(uuid, 0)
 
     def decrement_unmanaged_usage(self, uuid: str, force_reset: bool = False) -> None:
-        uuid = 'c' + uuid
+        uuid = "c" + uuid
         with self.counter_storage() as counters:
             if uuid in counters:
                 counters[uuid] -= 1
@@ -98,17 +99,17 @@ class ServerManager(metaclass=singleton.Singleton):
                     del counters[uuid]
 
     def increment_unmanaged_usage(self, uuid: str, only_if_exists: bool = False) -> None:
-        uuid = 'c' + uuid
+        uuid = "c" + uuid
         with self.counter_storage() as counters:
             if not only_if_exists or uuid in counters:
                 counters[uuid] = counters.get(uuid, 0) + 1
 
     def enum_servers_by_activity(
         self,
-        server_group: 'models.ServerGroup',
+        server_group: "models.ServerGroup",
         with_activity: bool,
         last_activity_delta: datetime.timedelta = datetime.timedelta(minutes=3),
-    ) -> collections.abc.Iterator['models.Server']:
+    ) -> collections.abc.Iterator["models.Server"]:
         """
         Returns an iterator of servers with or without activity in the past last_activity_delta time
         This is used to check if a server is still active and not in maintenance mode.
@@ -132,15 +133,15 @@ class ServerManager(metaclass=singleton.Singleton):
                 yield server
 
     def get_server_stats(
-        self, servers_filter: 'QuerySet[models.Server]'
-    ) -> list[tuple['types.servers.ServerStats | None', 'models.Server']]:
+        self, servers_filter: "QuerySet[models.Server]"
+    ) -> list[tuple["types.servers.ServerStats | None", "models.Server"]]:
         """
         Returns a list of stats for a list of servers
         """
         # Paralelize stats retrieval
-        retrieved_stats: list[tuple['types.servers.ServerStats | None', 'models.Server']] = []
+        retrieved_stats: list[tuple["types.servers.ServerStats | None", "models.Server"]] = []
 
-        def _retrieve_stats(server: 'models.Server') -> None:
+        def _retrieve_stats(server: "models.Server") -> None:
             try:
                 retrieved_stats.append(
                     (requester.ServerApiRequester(server).get_stats(), server)
@@ -160,19 +161,19 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def _find_best_server(
         self,
-        userservice: 'models.UserService',
-        server_group: 'models.ServerGroup',
+        userservice: "models.UserService",
+        server_group: "models.ServerGroup",
         now: datetime.datetime,
         min_memory_mb: int = 0,
         excluded_servers_uuids: set[str] | None = None,
         *,
         weight_threshold: int = 0,  # If not 0, server with weight below and nearer to this value will be selected
-    ) -> tuple['models.Server', 'types.servers.ServerStats']:
+    ) -> tuple["models.Server", "types.servers.ServerStats"]:
         """
         Finds the best server for a service
         """
-        best: tuple['models.Server', 'types.servers.ServerStats'] | None = None
-        unmanaged_list: list['models.Server'] = []
+        best: tuple["models.Server", "types.servers.ServerStats"] | None = None
+        unmanaged_list: list["models.Server"] = []
         fltrs = server_group.servers.filter(maintenance_mode=False)
         fltrs = fltrs.filter(Q(locked_until=None) | Q(locked_until__lte=now))  # Only unlocked servers
         if excluded_servers_uuids:
@@ -182,7 +183,7 @@ class ServerManager(metaclass=singleton.Singleton):
 
         weight_threshold_f = weight_threshold / 100
 
-        def _real_weight(stats: 'types.servers.ServerStats') -> float:
+        def _real_weight(stats: "types.servers.ServerStats") -> float:
             stats_weight = stats.load(weights=server_group.weights)
 
             if weight_threshold == 0:
@@ -192,9 +193,7 @@ class ServerManager(metaclass=singleton.Singleton):
             # To values over threshold, we will add 1, so they are always worse than any value under threshold
             # No matter if over threshold is overcalculed, it will be always worse than any value under threshold
             # and all values over threshold will be affected in the same way
-            weight = (
-                weight_threshold_f - stats_weight if stats_weight < weight_threshold_f else 1 + stats_weight
-            )
+            weight = weight_threshold_f - stats_weight if stats_weight < weight_threshold_f else 1 + stats_weight
 
             # logger.info('Stats: %s', stats)
             # logger.info(
@@ -223,7 +222,7 @@ class ServerManager(metaclass=singleton.Singleton):
         # If no best, select one from unmanaged
         if best is None:
             if len(unmanaged_list) == 0:
-                raise exceptions.UDSException(_('No server available for user'))
+                raise exceptions.UDSException(_("No server available for user"))
 
             # Unmanaged servers are a bit messy. We have to keep track of connected users,
             # But users may disconnect (i.e. on machines without actor) and UDS will not notice it.
@@ -247,12 +246,12 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def assign(
         self,
-        userservice: 'models.UserService',
-        server_group: 'models.ServerGroup',
+        userservice: "models.UserService",
+        server_group: "models.ServerGroup",
         service_type: types.services.ServiceType = types.services.ServiceType.VDI,
         min_memory_mb: int = 0,  # Does not apply to unmanged servers
         lock_interval: datetime.timedelta | None = None,
-        server: 'models.Server | None' = None,  # If not note
+        server: "models.Server | None" = None,  # If not note
         excluded_servers_uuids: set[str] | None = None,
         *,
         weight_threshold: int = 0,
@@ -288,7 +287,7 @@ class ServerManager(metaclass=singleton.Singleton):
             uuid of server assigned
         """
         if not userservice.user:
-            raise exceptions.UDSException(_('No user assigned to service'))
+            raise exceptions.UDSException(_("No user assigned to service"))
 
         # Look for existing user asignation through properties
         prop_name = self.property_name(userservice.user)
@@ -297,22 +296,15 @@ class ServerManager(metaclass=singleton.Singleton):
         excluded_servers_uuids = excluded_servers_uuids or set()
 
         with server_group.properties as props:
-            info: types.servers.ServerCounter | None = types.servers.ServerCounter.from_iterable(
-                props.get(prop_name)
-            )
+            info: types.servers.ServerCounter | None = types.servers.ServerCounter.from_iterable(props.get(prop_name))
             # If server is forced, and server is part of the group, use it
             if server:
-                if (
-                    server.groups.filter(uuid=server_group.uuid)
-                    .exclude(uuid__in=excluded_servers_uuids)
-                    .count()
-                    == 0
-                ):
-                    raise exceptions.UDSException(_('Server is not part of the group'))
+                if server.groups.filter(uuid=server_group.uuid).exclude(uuid__in=excluded_servers_uuids).count() == 0:
+                    raise exceptions.UDSException(_("Server is not part of the group"))
                 elif server.maintenance_mode:
-                    raise exceptions.UDSException(_('Server is in maintenance mode'))
+                    raise exceptions.UDSException(_("Server is in maintenance mode"))
                 elif server.is_restrained():
-                    raise exceptions.UDSException(_('Server is restrained'))
+                    raise exceptions.UDSException(_("Server is restrained"))
 
                 # if server.uuid is stored uuid, increase counter (and counters if exits), else store it
                 if info and info.server_uuid == server.uuid:
@@ -327,9 +319,7 @@ class ServerManager(metaclass=singleton.Singleton):
                     # If server does not exists, or it is in maintenance, or it is in exclude list or it is restrained,
                     # remove it from saved and use look for another one
                     svr = models.Server.objects.filter(uuid=info.server_uuid).first()
-                    if not svr or (
-                        svr.maintenance_mode or svr.uuid in excluded_servers_uuids or svr.is_restrained()
-                    ):
+                    if not svr or (svr.maintenance_mode or svr.uuid in excluded_servers_uuids or svr.is_restrained()):
                         info = None
                         del props[prop_name]
                     else:
@@ -350,7 +340,7 @@ class ServerManager(metaclass=singleton.Singleton):
 
                             info = types.servers.ServerCounter(best[0].uuid, 0)
                             best[0].locked_until = now + lock_interval if lock_interval else None
-                            best[0].save(update_fields=['locked_until'])
+                            best[0].save(update_fields=["locked_until"])
                     except exceptions.UDSException:  # No more servers
                         return None
                 elif lock_interval:  # If lockTime is set, update it
@@ -374,8 +364,8 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def release(
         self,
-        userservice: 'models.UserService',
-        server_group: 'models.ServerGroup',
+        userservice: "models.UserService",
+        server_group: "models.ServerGroup",
         unlock: bool = False,
     ) -> types.servers.ServerCounter:
         """
@@ -398,16 +388,14 @@ class ServerManager(metaclass=singleton.Singleton):
                 reset_counter = False
                 # ServerCounterType
 
-                server_counter: types.servers.ServerCounter | None = (
-                    types.servers.ServerCounter.from_iterable(props.get(prop_name))
+                server_counter: types.servers.ServerCounter | None = types.servers.ServerCounter.from_iterable(
+                    props.get(prop_name)
                 )
                 # If no cached value, get server assignation
                 if server_counter is None:
                     return types.servers.ServerCounter.null()
                 # Ensure counter is at least 1
-                server_counter = types.servers.ServerCounter(
-                    server_counter.server_uuid, max(1, server_counter.counter)
-                )
+                server_counter = types.servers.ServerCounter(server_counter.server_uuid, max(1, server_counter.counter))
                 if server_counter.counter == 1 or unlock:
                     # Last one, remove it
                     del props[prop_name]
@@ -421,7 +409,7 @@ class ServerManager(metaclass=singleton.Singleton):
 
             if unlock or server_counter.counter == 1:
                 server.locked_until = None  # Ensure server is unlocked if no more users are assigned to it
-                server.save(update_fields=['locked_until'])
+                server.save(update_fields=["locked_until"])
 
                 # Enure server counter is cleaned also, because server is considered "fully released"
                 reset_counter = True
@@ -441,10 +429,10 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def notify_preconnect(
         self,
-        server_group: 'models.ServerGroup',
-        userservice: 'models.UserService',
+        server_group: "models.ServerGroup",
+        userservice: "models.UserService",
         info: types.connections.ConnectionData,
-        server: 'models.Server | None' = None,  # Forced server instead of selecting one from server_group
+        server: "models.Server | None" = None,  # Forced server instead of selecting one from server_group
     ) -> None:
         """
         Notifies preconnect to server
@@ -457,8 +445,8 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def notify_assign(
         self,
-        server: 'models.Server',
-        userservice: 'models.UserService',
+        server: "models.Server",
+        userservice: "models.UserService",
         service_type: types.services.ServiceType,
         counter: int,
     ) -> None:
@@ -469,15 +457,15 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def notify_release(
         self,
-        server: 'models.Server',
-        userservice: 'models.UserService',
+        server: "models.Server",
+        userservice: "models.UserService",
     ) -> None:
         """
         Notifies release to server
         """
         requester.ServerApiRequester(server).notify_release(userservice)
 
-    def assignation_info(self, server_group: 'models.ServerGroup') -> dict[str, int]:
+    def assignation_info(self, server_group: "models.ServerGroup") -> dict[str, int]:
         """
         Get usage information for a server group
 
@@ -497,9 +485,9 @@ class ServerManager(metaclass=singleton.Singleton):
 
     def server_assignation_for(
         self,
-        userservice: 'models.UserService',
-        server_group: 'models.ServerGroup',
-    ) -> 'models.Server | None':
+        userservice: "models.UserService",
+        server_group: "models.ServerGroup",
+    ) -> "models.Server | None":
         """
         Returns the server assigned to an user service
 
@@ -511,22 +499,20 @@ class ServerManager(metaclass=singleton.Singleton):
             Server assigned to user service, or None if no server is assigned
         """
         if not userservice.user:
-            raise exceptions.UDSException(_('No user assigned to service'))
+            raise exceptions.UDSException(_("No user assigned to service"))
 
         prop_name = self.property_name(userservice.user)
         with server_group.properties as props:
-            info: types.servers.ServerCounter | None = types.servers.ServerCounter.from_iterable(
-                props.get(prop_name)
-            )
+            info: types.servers.ServerCounter | None = types.servers.ServerCounter.from_iterable(props.get(prop_name))
             if info is None:
                 return None
             return models.Server.objects.get(uuid=info.server_uuid)
 
     def sorted_server_list(
         self,
-        server_group: 'models.ServerGroup',
+        server_group: "models.ServerGroup",
         excluded_servers_uuids: set[str] | None = None,
-    ) -> list['models.Server']:
+    ) -> list["models.Server"]:
         """
         Returns a list of servers sorted by usage
 
@@ -547,12 +533,10 @@ class ServerManager(metaclass=singleton.Singleton):
         # Sort by load, lower first (lower is better)
         return [
             s[1]
-            for s in sorted(
-                server_stats, key=lambda x: x[0].load(weights=server_group.weights) if x[0] else 999999999
-            )
+            for s in sorted(server_stats, key=lambda x: x[0].load(weights=server_group.weights) if x[0] else 999999999)
         ]
 
-    def perform_maintenance(self, server_group: 'models.ServerGroup') -> None:
+    def perform_maintenance(self, server_group: "models.ServerGroup") -> None:
         """Realizes maintenance on server group
 
         Maintenace operations include:
@@ -570,7 +554,7 @@ class ServerManager(metaclass=singleton.Singleton):
                     # User does not exists, remove it from counters
                     del server_group.properties[k]
 
-    def process_event(self, server: 'models.Server', data: dict[str, typing.Any]) -> typing.Any:
+    def process_event(self, server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:
         """
         Processes a notification FROM server
         That is, this is not invoked directly unless a REST request is received from

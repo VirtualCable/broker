@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import datetime
@@ -47,14 +48,15 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class DeferredStorageGroup(enum.StrEnum):
-    TO_STOP = 'to_stop'
-    STOPPING = 'stopping'
-    TO_DELETE = 'to_delete'
-    DELETING = 'deleting'
+    TO_STOP = "to_stop"
+    STOPPING = "stopping"
+    TO_DELETE = "to_delete"
+    DELETING = "deleting"
 
     @staticmethod
-    def from_str(value: str) -> 'DeferredStorageGroup':
+    def from_str(value: str) -> "DeferredStorageGroup":
         return DeferredStorageGroup(value)
 
 
@@ -68,7 +70,7 @@ class DeletionInfo:
     total_retries: int = 0  # Total retries
     retries: int = 0  # Retries to stop again or to delete again in STOPPING_GROUP or DELETING_GROUP
 
-    deferred_storage: typing.ClassVar[storage.Storage] = storage.Storage('deferdel_worker')
+    deferred_storage: typing.ClassVar[storage.Storage] = storage.Storage("deferdel_worker")
 
     @property
     def key(self) -> str:
@@ -84,7 +86,7 @@ class DeletionInfo:
 
     # For reporting
     def as_csv(self) -> str:
-        return f'{self.vmid},{self.created},{self.next_check},{self.service_uuid},{self.fatal_retries},{self.total_retries},{self.retries}'
+        return f"{self.vmid},{self.created},{self.next_check},{self.service_uuid},{self.fatal_retries},{self.total_retries},{self.retries}"
 
     @staticmethod
     def next_execution_calculator(*, fatal: bool = False, delay_rate: float = 1.0) -> datetime.datetime:
@@ -97,7 +99,7 @@ class DeletionInfo:
 
     @staticmethod
     def generate_key(service_uuid: str, vmid: str) -> str:
-        return f'{service_uuid}_{vmid}'
+        return f"{service_uuid}_{vmid}"
 
     @staticmethod
     def create_on_storage(group: str, vmid: str, service_uuid: str, delay_rate: float = 1.0) -> None:
@@ -113,7 +115,7 @@ class DeletionInfo:
     @staticmethod
     def get_from_storage(
         group: DeferredStorageGroup,
-    ) -> tuple[dict[str, 'DynamicService'], list['DeletionInfo']]:
+    ) -> tuple[dict[str, "DynamicService"], list["DeletionInfo"]]:
         """
         Get a list of objects to be processed from storage
 
@@ -124,7 +126,7 @@ class DeletionInfo:
         count = 0
         infos: list[DeletionInfo] = []
 
-        services: dict[str, 'DynamicService'] = {}
+        services: dict[str, "DynamicService"] = {}
 
         # First, get ownership of to_delete objects to be processed
         # We do this way to release db locks as soon as possible
@@ -137,7 +139,7 @@ class DeletionInfo:
                 # if max retries reached, remove it
                 if info.total_retries >= consts.MAX_RETRAYABLE_ERROR_RETRIES:
                     logger.error(
-                        'Too many retries deleting %s from service %s, removing from deferred deletion',
+                        "Too many retries deleting %s from service %s, removing from deferred deletion",
                         info.vmid,
                         info.service_uuid,
                     )
@@ -149,10 +151,10 @@ class DeletionInfo:
                 try:
                     if info.service_uuid not in services:
                         services[info.service_uuid] = typing.cast(
-                            'DynamicService', Service.objects.get(uuid=info.service_uuid).get_instance()
+                            "DynamicService", Service.objects.get(uuid=info.service_uuid).get_instance()
                         )
                 except Exception as e:
-                    logger.error('Could not get service instance for %s: %s', info.service_uuid, e)
+                    logger.error("Could not get service instance for %s: %s", info.service_uuid, e)
                     del storage_dict[key]
                     continue
 
@@ -170,20 +172,19 @@ class DeletionInfo:
         # Counts the total number of objects in storage
         with DeletionInfo.deferred_storage.as_dict(group) as storage_dict:
             return len(storage_dict)
-        
 
     @staticmethod
     def csv_header() -> str:
-        return 'vmid,created,next_check,service_uuid,fatal_retries,total_retries,retries'
+        return "vmid,created,next_check,service_uuid,fatal_retries,total_retries,retries"
 
     @staticmethod
     def report(out: typing.TextIO) -> None:
         """
         Generates a report of the current state of the deferred deletion
         """
-        out.write(DeletionInfo.csv_header() + '\n')
+        out.write(DeletionInfo.csv_header() + "\n")
         for group in DeferredStorageGroup:
             with DeletionInfo.deferred_storage.as_dict(group) as storage_dict:
                 info: tuple[str, DeletionInfo]
                 for info in storage_dict.unlocked_items():
-                    out.write(info[0] + ',' + info[1].as_csv() + '\n')
+                    out.write(info[0] + "," + info[1].as_csv() + "\n")

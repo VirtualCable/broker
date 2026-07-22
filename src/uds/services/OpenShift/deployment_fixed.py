@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -49,11 +50,11 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
     suggested_delay = 4
 
     @typing.override
-    def service(self) -> 'service_fixed.OpenshiftServiceFixed':
+    def service(self) -> "service_fixed.OpenshiftServiceFixed":
         """
         Get the Openshift service.
         """
-        return typing.cast('service_fixed.OpenshiftServiceFixed', super().service())
+        return typing.cast("service_fixed.OpenshiftServiceFixed", super().service())
 
     @typing.override
     def op_start(self) -> None:
@@ -74,11 +75,11 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
 
         # If vm is not running, do nothing
         if vm and vm.status.is_off():
-            logger.debug('Machine %s is already stopped', self._name)
+            logger.debug("Machine %s is already stopped", self._name)
             return
 
         # If vm is running, stop it
-        logger.debug('Machine %s is running, stopping it', self._name)
+        logger.debug("Machine %s is running, stopping it", self._name)
         self.service().api.stop_vm(self._name)
 
     # Check methods
@@ -91,7 +92,7 @@ class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializa
         if vm and vm.status in status:
             return types.states.TaskState.FINISHED
         elif vm and vm.status.is_error():
-            return self.error(f'VM {self._name} is in error state: {vm.status}')
+            return self.error(f"VM {self._name} is in error state: {vm.status}")
 
         return types.states.TaskState.RUNNING
 

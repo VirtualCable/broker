@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -45,40 +46,39 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Executes the stats collector acummulator, that updates the stats counters accum table with the current stats counters'
+    help = "Executes the stats collector acummulator, that updates the stats counters accum table with the current stats counters"
 
     verbose: bool = True
     filter_args: list[tuple[str, str]] = []
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-        
+
     @typing.override
-    def add_arguments(self, parser: 'argparse.ArgumentParser') -> None:
+    def add_arguments(self, parser: "argparse.ArgumentParser") -> None:
 
         # quiet mode
         parser.add_argument(
-            '--quiet',
-            action='store_false',
-            dest='verbose',
+            "--quiet",
+            action="store_false",
+            dest="verbose",
             default=True,
-            help='Quiet mode',
+            help="Quiet mode",
         )
-        
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        self.verbose = options['verbose']
+        self.verbose = options["verbose"]
 
         if self.verbose:
-            self.stderr.write(f'Accumulating stats counters')
-            logging.getLogger('uds').setLevel(logging.DEBUG)
+            self.stderr.write("Accumulating stats counters")
+            logging.getLogger("uds").setLevel(logging.DEBUG)
             # Output also to stderr
-            logging.getLogger('uds').addHandler(logging.StreamHandler(self.stderr))
+            logging.getLogger("uds").addHandler(logging.StreamHandler(self.stderr))
 
         # Create the accumulator
         accumulator = StatsAccumulator(environment=environment.Environment.temporary_environment())
         accumulator.run()
 
         if self.verbose:
-            self.stderr.write('Stats counters accumulated successfully')
+            self.stderr.write("Stats counters accumulated successfully")

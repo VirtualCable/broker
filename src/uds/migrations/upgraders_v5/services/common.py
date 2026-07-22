@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 import base64
 import logging
 import typing
@@ -52,9 +53,7 @@ def upgrade_user_services(service_data_type: str) -> int:
 
     Records already in AutoSerializable format (base64 prefix match) are skipped.
     """
-    qs = UserService.objects.filter(
-        deployed_service__service__in=Service.objects.filter(data_type=service_data_type)
-    )
+    qs = UserService.objects.filter(deployed_service__service__in=Service.objects.filter(data_type=service_data_type))
 
     exclude_q = models.Q()
     for prefix in _NEW_FORMAT_PREFIXES:
@@ -67,9 +66,9 @@ def upgrade_user_services(service_data_type: str) -> int:
             us.get_instance()
             upgraded += 1
         except Exception:
-            logger.exception('Error upgrading UserService %s', us.uuid)
+            logger.exception("Error upgrading UserService %s", us.uuid)
 
-    logger.info('Upgraded %d UserServices for %s', upgraded, service_data_type)
+    logger.info("Upgraded %d UserServices for %s", upgraded, service_data_type)
     return upgraded
 
 
@@ -89,9 +88,9 @@ def upgrade_publications(service_data_type: str) -> int:
             pub.get_instance()
             upgraded += 1
         except Exception:
-            logger.exception('Error upgrading Publication %s', pub.uuid)
+            logger.exception("Error upgrading Publication %s", pub.uuid)
 
-    logger.info('Upgraded %d Publications for %s', upgraded, service_data_type)
+    logger.info("Upgraded %d Publications for %s", upgraded, service_data_type)
     return upgraded
 
 
@@ -109,9 +108,9 @@ def upgrade_providers(provider_data_type: str) -> int:
             prov.get_instance()
             upgraded += 1
         except Exception:
-            logger.exception('Error upgrading Provider %s', prov.uuid)
+            logger.exception("Error upgrading Provider %s", prov.uuid)
 
-    logger.info('Upgraded %d Providers for %s', upgraded, provider_data_type)
+    logger.info("Upgraded %d Providers for %s", upgraded, provider_data_type)
     return upgraded
 
 
@@ -129,7 +128,7 @@ def upgrade_services(service_data_type: str) -> int:
             svc.get_instance()
             upgraded += 1
         except Exception:
-            logger.exception('Error upgrading Service %s', svc.uuid)
+            logger.exception("Error upgrading Service %s", svc.uuid)
 
-    logger.info('Upgraded %d Services for %s', upgraded, service_data_type)
+    logger.info("Upgraded %d Services for %s", upgraded, service_data_type)
     return upgraded

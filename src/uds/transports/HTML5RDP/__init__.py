@@ -30,5 +30,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from .html5rdp import HTML5RDPTransport

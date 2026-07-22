@@ -25,9 +25,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import typing
 
 from tests.utils.test import UDSTestCase
@@ -36,7 +37,7 @@ from uds.core.environment import Environment
 
 from uds.auths.RegexLdap import authenticator
 
-PASSWD: typing.Final[str] = 'PASSWD'
+PASSWD: typing.Final[str] = "PASSWD"
 
 # v1:
 #   self.host.value,
@@ -59,43 +60,51 @@ PASSWD: typing.Final[str] = 'PASSWD'
 #   self.verify_ssl.value = vals[14]
 #   self.certificate.value = vals[15]
 SERIALIZED_AUTH_DATA: typing.Final[dict[str, bytes]] = {
-    'v1': b'v1\thost\t166\t1\tuame\t' + PASSWD.encode('utf8') + b'\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\t\tusernattr',
-    'v2': b'v2\thost\t166\t1\tuame\t' + PASSWD.encode('utf8') + b'\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr',
-    'v3': b'v3\thost\t166\t1\tuame\t' + PASSWD.encode('utf8') + b'\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr\taltClass',
-    'v4': b'v4\thost\t166\t1\tuame\t' + PASSWD.encode('utf8') + b'\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr\taltClass\tmfa',
-    'v5': b'v5\thost\t166\t1\tuame\t' + PASSWD.encode('utf8') + b'\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr\taltClass\tmfa\tTRUE\tcert',    
+    "v1": b"v1\thost\t166\t1\tuame\t"
+    + PASSWD.encode("utf8")
+    + b"\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\t\tusernattr",
+    "v2": b"v2\thost\t166\t1\tuame\t"
+    + PASSWD.encode("utf8")
+    + b"\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr",
+    "v3": b"v3\thost\t166\t1\tuame\t"
+    + PASSWD.encode("utf8")
+    + b"\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr\taltClass",
+    "v4": b"v4\thost\t166\t1\tuame\t"
+    + PASSWD.encode("utf8")
+    + b"\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr\taltClass\tmfa",
+    "v5": b"v5\thost\t166\t1\tuame\t"
+    + PASSWD.encode("utf8")
+    + b"\t99\tdc=dom,dc=m\tuclass\tuseridAttr\tgroup_attr\tusernattr\taltClass\tmfa\tTRUE\tcert",
 }
 
 
 class RegexSerializationTest(UDSTestCase):
-    def check_provider(self, version: str, instance: 'authenticator.RegexLdap') -> None:
-        self.assertEqual(instance.host.as_str(), 'host')
+    def check_provider(self, version: str, instance: "authenticator.RegexLdap") -> None:
+        self.assertEqual(instance.host.as_str(), "host")
         self.assertEqual(instance.port.as_int(), 166)
         self.assertEqual(instance.use_ssl.as_bool(), True)
-        self.assertEqual(instance.username.as_str(), 'uame')
+        self.assertEqual(instance.username.as_str(), "uame")
         self.assertEqual(instance.password.as_str(), PASSWD)
         self.assertEqual(instance.timeout.as_int(), 99)
-        self.assertEqual(instance.ldap_base.as_str(), 'dc=dom,dc=m')
-        self.assertEqual(instance.user_class.as_str(), 'uclass')
-        self.assertEqual(instance.userid_attr.as_str(), 'useridAttr')
-        self.assertEqual(instance.groupname_attr.as_str(), 'group_attr')
-        if version >= 'v2':
-            self.assertEqual(instance.username_attr.as_str(), 'usernattr')
+        self.assertEqual(instance.ldap_base.as_str(), "dc=dom,dc=m")
+        self.assertEqual(instance.user_class.as_str(), "uclass")
+        self.assertEqual(instance.userid_attr.as_str(), "useridAttr")
+        self.assertEqual(instance.groupname_attr.as_str(), "group_attr")
+        if version >= "v2":
+            self.assertEqual(instance.username_attr.as_str(), "usernattr")
 
     def test_unmarshall_all_versions(self) -> None:
         for v in range(1, len(SERIALIZED_AUTH_DATA) + 1):
             with Environment.temporary_environment() as env:
                 instance = authenticator.RegexLdap(environment=env)
-                instance.unmarshal(SERIALIZED_AUTH_DATA['v{}'.format(v)])
-                self.check_provider(f'v{v}', instance)
+                instance.unmarshal(SERIALIZED_AUTH_DATA["v{}".format(v)])
+                self.check_provider(f"v{v}", instance)
 
     def test_marshaling(self) -> None:
         # Unmarshall last version, remarshall and check that is marshalled using new marshalling format
-        LAST_VERSION = 'v{}'.format(len(SERIALIZED_AUTH_DATA))
+        LAST_VERSION = "v{}".format(len(SERIALIZED_AUTH_DATA))
         with Environment.temporary_environment() as env:
-            instance = authenticator.RegexLdap(
-                environment=env
-            )
+            instance = authenticator.RegexLdap(environment=env)
             instance.unmarshal(SERIALIZED_AUTH_DATA[LAST_VERSION])
             marshaled_data = instance.marshal()
 
@@ -104,12 +113,10 @@ class RegexSerializationTest(UDSTestCase):
             instance.mark_for_upgrade(False)  # reset flag
 
             # Ensure fields has been marshalled using new format
-            self.assertFalse(marshaled_data.startswith(b'v'))
+            self.assertFalse(marshaled_data.startswith(b"v"))
             # Reunmarshall again and check that remarshalled flag is not set
-        with Environment.temporary_environment() as env:           
-            instance = authenticator.RegexLdap(
-                environment=env
-            )
+        with Environment.temporary_environment() as env:
+            instance = authenticator.RegexLdap(environment=env)
             instance.unmarshal(marshaled_data)
             self.assertFalse(instance.needs_upgrade())
 

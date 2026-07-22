@@ -30,17 +30,20 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import codecs
 import logging
 import typing
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
-    from .service import ServiceOne
+
     from .publication import SamplePublication
+    from .service import ServiceOne
 
 logger = logging.getLogger(__name__)
 
@@ -84,15 +87,15 @@ class SampleUserServiceTwo(services.UserService):
 
     # Utility overrides for type checking...
     @typing.override
-    def service(self) -> 'ServiceOne':
-        return typing.cast('ServiceOne', super().service())
+    def service(self) -> "ServiceOne":
+        return typing.cast("ServiceOne", super().service())
 
     @typing.override
-    def publication(self) -> 'SamplePublication':
+    def publication(self) -> "SamplePublication":
         pub = super().publication()
         if pub is None:
-            raise Exception('No publication for this element!')
-        return typing.cast('SamplePublication', pub)
+            raise Exception("No publication for this element!")
+        return typing.cast("SamplePublication", pub)
 
     @typing.override
     def initialize(self) -> None:
@@ -100,10 +103,10 @@ class SampleUserServiceTwo(services.UserService):
         Initialize default attributes values here. We can do whatever we like,
         but for this sample this is just right...
         """
-        self._name = ''
-        self._ip = ''
-        self._mac = ''
-        self._error = ''
+        self._name = ""
+        self._ip = ""
+        self._mac = ""
+        self._error = ""
         self._count = 0
 
     # Serializable needed methods
@@ -122,21 +125,19 @@ class SampleUserServiceTwo(services.UserService):
                beside the values, so we can, at a later stage, treat with old
                data for current modules.
         """
-        data = '\t'.join(
-            ['v1', self._name, self._ip, self._mac, self._error, str(self._count)]
-        )
-        return codecs.encode(data.encode(), encoding='zip')
+        data = "\t".join(["v1", self._name, self._ip, self._mac, self._error, str(self._count)])
+        return codecs.encode(data.encode(), encoding="zip")
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         We unmarshal the content.
         """
-        values: list[str] = codecs.decode(data, 'zip').decode().split('\t')
+        values: list[str] = codecs.decode(data, "zip").decode().split("\t")
         # Data Version check
         # If we include some new data at some point in a future, we can
         # add "default" values at v1 check, and load new values at 'v2' check.
-        if values[0] == 'v1':
+        if values[0] == "v1":
             self._name, self._ip, self._mac, self._error, count = values[1:]
             self._count = int(count)
 
@@ -162,7 +163,7 @@ class SampleUserServiceTwo(services.UserService):
         a new unique name, so we keep the first generated name cached and don't
         generate more names. (Generator are simple utility classes)
         """
-        if self._name == '':
+        if self._name == "":
             self._name = self.name_generator().get(self.publication().get_basename(), 3)
         # self._name will be stored when object is marshaled
         return self._name
@@ -207,8 +208,8 @@ class SampleUserServiceTwo(services.UserService):
 
         :note: Normally, getting out of macs in the mac pool is a bad thing... :-)
         """
-        if self._mac == '':
-            self._mac = self.mac_generator().get('00:00:00:00:00:00-00:FF:FF:FF:FF:FF')
+        if self._mac == "":
+            self._mac = self.mac_generator().get("00:00:00:00:00:00-00:FF:FF:FF:FF:FF")
         return self._mac
 
     @typing.override
@@ -230,8 +231,8 @@ class SampleUserServiceTwo(services.UserService):
                show the IP to the administrator, this method will get called
 
         """
-        if self._ip == '':
-            return '192.168.0.34'  # Sample IP for testing purposes only
+        if self._ip == "":
+            return "192.168.0.34"  # Sample IP for testing purposes only
         return self._ip
 
     @typing.override
@@ -269,7 +270,7 @@ class SampleUserServiceTwo(services.UserService):
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
 
@@ -303,7 +304,7 @@ class SampleUserServiceTwo(services.UserService):
         if random.randint(0, 9) == 9:  # nosec: just testing values
             # Note that we can mark this string as translatable, and return
             # it translated at error_reason method
-            self._error = 'Random error at deployForUser :-)'
+            self._error = "Random error at deployForUser :-)"
             return types.states.TaskState.ERROR
 
         return types.states.TaskState.RUNNING
@@ -365,7 +366,7 @@ class SampleUserServiceTwo(services.UserService):
 
         # random fail
         if random.randint(0, 9) == 9:  # nosec: just testing values
-            self._error = 'Random error at check_state :-)'
+            self._error = "Random error at check_state :-)"
             return types.states.TaskState.ERROR
 
         return types.states.TaskState.RUNNING
@@ -401,7 +402,7 @@ class SampleUserServiceTwo(services.UserService):
         The user provided is just an string, that is provided by actors.
         """
         # We store the value at storage, but never get used, just an example
-        self.storage.save_to_db('user', username)
+        self.storage.save_to_db("user", username)
 
     @typing.override
     def user_logged_out(self, username: str) -> None:
@@ -419,7 +420,7 @@ class SampleUserServiceTwo(services.UserService):
         The user provided is just an string, that is provided by actor.
         """
         # We do nothing more that remove the user
-        self.storage.remove('user')
+        self.storage.remove("user")
 
     @typing.override
     def error_reason(self) -> str:

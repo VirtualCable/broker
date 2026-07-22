@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -57,10 +58,10 @@ class TSPICETransport(BaseSpiceTransport):
 
     is_base = False
 
-    icon_file = 'spice-tunnel.png'
-    type_name = _('SPICE')
-    type_type = 'TSSPICETransport'
-    type_description = _('SPICE Protocol. Tunneled connection.')
+    icon_file = "spice-tunnel.png"
+    type_name = _("SPICE")
+    type_type = "TSSPICETransport"
+    type_description = _("SPICE Protocol. Tunneled connection.")
     protocol = types.transports.Protocol.SPICE
     group = types.transports.Grouping.TUNNELED
 
@@ -68,12 +69,12 @@ class TSPICETransport(BaseSpiceTransport):
     startup_time = fields.tunnel_startup_time_secs()
 
     verify_certificate = gui.CheckBoxField(
-        label=_('Force SSL certificate verification'),
+        label=_("Force SSL certificate verification"),
         order=23,
-        tooltip=_('If enabled, the certificate of tunnel server will be verified (recommended).'),
+        tooltip=_("If enabled, the certificate of tunnel server will be verified (recommended)."),
         default=False,
         tab=types.ui.Tab.TUNNEL,
-        old_field_name='verifyCertificate',
+        old_field_name="verifyCertificate",
     )
 
     server_certificate = BaseSpiceTransport.server_certificate
@@ -84,41 +85,41 @@ class TSPICETransport(BaseSpiceTransport):
     ssl_connection = BaseSpiceTransport.ssl_connection
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         pass
 
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
+        request: "ExtendedHttpRequestWithUser",
     ) -> types.transports.TransportScript:
         try:
             userservice_instance = userservice.get_instance()
             con = userservice_instance.get_console_connection()
         except Exception:
-            logger.exception('Error getting console connection data')
+            logger.exception("Error getting console connection data")
             raise
 
         if not con:
             raise exceptions.transport.TransportError(
-                _('No console connection data received'),
+                _("No console connection data received"),
             )
 
         tunnel_field = fields.get_tunnel_from_field(self.tunnel)
         tunnel_host, tunnel_port = tunnel_field.host, tunnel_field.port
 
         # We MAY need two tickets, one for 'insecure' port an one for secure
-        ticket = ''
-        ticket_secure = ''
+        ticket = ""
+        ticket_secure = ""
 
         if con.proxy:
-            logger.exception('Proxied SPICE tunnels are not suppoorted')
+            logger.exception("Proxied SPICE tunnels are not suppoorted")
             return super().get_transport_script(userservice, transport, ip, os, user, password, request)
 
         if con.port:
@@ -137,9 +138,9 @@ class TSPICETransport(BaseSpiceTransport):
             )
 
         r = RemoteViewerFile(
-            '127.0.0.1',
-            '{port}',
-            '{secure_port}',
+            "127.0.0.1",
+            "{port}",
+            "{secure_port}",
             con.ticket.value,  # This is secure ticket from kvm, not UDS ticket
             con.ca or self.server_certificate.value.strip(),
             con.cert_subject,
@@ -155,17 +156,17 @@ class TSPICETransport(BaseSpiceTransport):
         #     userServiceInstance.desktop_login(user, password, '')
 
         sp = {
-            'as_file': r.as_file,
-            'as_file_ns': r.as_file_ns,
-            'tunHost': tunnel_host,
-            'tunPort': tunnel_port,
-            'tunWait': self.startup_time.as_int() * 1000,  # In milliseconds
-            'tunChk': self.verify_certificate.as_bool(),
-            'ticket': ticket,
-            'ticket_secure': ticket_secure,
+            "as_file": r.as_file,
+            "as_file_ns": r.as_file_ns,
+            "tunHost": tunnel_host,
+            "tunPort": tunnel_port,
+            "tunWait": self.startup_time.as_int() * 1000,  # In milliseconds
+            "tunChk": self.verify_certificate.as_bool(),
+            "ticket": ticket,
+            "ticket_secure": ticket_secure,
         }
 
         try:
-            return self.get_script(os.os.os_name(), 'tunnel', sp, associated_ticket=ticket)
+            return self.get_script(os.os.os_name(), "tunnel", sp, associated_ticket=ticket)
         except Exception:
             return super().get_transport_script(userservice, transport, ip, os, user, password, request)

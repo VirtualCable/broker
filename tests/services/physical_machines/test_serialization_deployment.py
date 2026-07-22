@@ -8,6 +8,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # We use commit/rollback
 from unittest import mock
 
@@ -22,13 +23,13 @@ from uds.services.PhysicalMachines import deployment
 class IPMachineUserServiceSerializationTest(UDSTestCase):
     def test_marshalling(self) -> None:
         obj = deployment.OldIPSerialData()
-        obj._ip = '1.1.1.1'
-        obj._state = 'state'
-        obj._reason = 'reason'
+        obj._ip = "1.1.1.1"
+        obj._state = "state"
+        obj._reason = "reason"
 
         def _check_fields(instance: deployment.IPMachineUserService) -> None:
-            self.assertEqual(instance._ip, '1.1.1.1')
-            self.assertEqual(instance._reason, 'reason')
+            self.assertEqual(instance._ip, "1.1.1.1")
+            self.assertEqual(instance._reason, "reason")
 
         data = obj.marshal()
 

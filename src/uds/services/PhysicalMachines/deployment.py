@@ -30,15 +30,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
-from uds.core import services, types
-from uds.core.util import autoserializable, auto_attributes
+from uds.core import services
+from uds.core import types
+from uds.core.util import auto_attributes
+from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from .service_single import IPSingleMachineService
 
 logger = logging.getLogger(__name__)
@@ -52,26 +56,26 @@ class OldIPSerialData(auto_attributes.AutoAttributes):
 
     def __init__(self) -> None:
         auto_attributes.AutoAttributes.__init__(self, ip=str, reason=str, state=str)
-        self._ip = ''
-        self._reason = ''
+        self._ip = ""
+        self._reason = ""
         self._state = types.states.TaskState.FINISHED
 
 
 class IPMachineUserService(services.UserService, autoserializable.AutoSerializable):
     suggested_delay = 10
 
-    _ip = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
-    _name = autoserializable.StringField(default='')
+    _ip = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
+    _name = autoserializable.StringField(default="")
 
     # Utility overrides for type checking...
     @typing.override
-    def service(self) -> 'IPSingleMachineService':
-        return typing.cast('IPSingleMachineService', super().service())
+    def service(self) -> "IPSingleMachineService":
+        return typing.cast("IPSingleMachineService", super().service())
 
     @typing.override
     def set_ip(self, ip: str) -> None:
-        logger.debug('Setting IP to %s (ignored)', ip)
+        logger.debug("Setting IP to %s (ignored)", ip)
 
     @typing.override
     def get_ip(self) -> str:
@@ -83,7 +87,7 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
     def get_name(self) -> str:
         if not self._name:
             # Generate a name with the IP + simple counter
-            self._name = f'{self.get_ip()}:{self.service().get_counter_and_inc()}'
+            self._name = f"{self.get_ip()}:{self.service().get_counter_and_inc()}"
         return self._name
 
     @typing.override
@@ -106,17 +110,17 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         logger.debug("Starting deploy of %s for user %s", self._ip, user)
         return self._deploy()
 
     @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
-        return self._error('Cache deploy not supported')
+        return self._error("Cache deploy not supported")
 
     def _error(self, reason: str) -> types.states.TaskState:
-        self._ip = ''
-        self._reason = reason or 'Unknown error'
+        self._ip = ""
+        self._reason = reason or "Unknown error"
         return types.states.TaskState.ERROR
 
     @typing.override
@@ -135,8 +139,8 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
 
     @typing.override
     def destroy(self) -> types.states.TaskState:
-        self._ip = ''
-        self._reason = ''
+        self._ip = ""
+        self._reason = ""
         return types.states.TaskState.FINISHED
 
     @typing.override
@@ -153,10 +157,10 @@ class IPMachineUserService(services.UserService, autoserializable.AutoSerializab
 
         # Fill own data from restored data
         self._ip = _auto_data._ip
-        self._name = self.db_obj().name or ''  # If has a name, use it, else, use the generated one
+        self._name = self.db_obj().name or ""  # If has a name, use it, else, use the generated one
         self._reason = _auto_data._reason
         if _auto_data._state == types.states.TaskState.ERROR:
-            self._reason = self._reason or 'Unknown error'
+            self._reason = self._reason or "Unknown error"
 
         # Flag for upgrade
         self.mark_for_upgrade(True)

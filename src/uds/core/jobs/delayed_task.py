@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -43,6 +44,7 @@ class DelayedTask(Environmentable):
     This class represents a single delayed task object.
     This is an object that represents an execution to be done "later"
     """
+
     __slots__ = ()
 
     def __init__(self, environment: typing.Optional[Environment] = None) -> None:
@@ -58,7 +60,7 @@ class DelayedTask(Environmentable):
         try:
             self.run()
         except Exception as e:
-            logger.error('Job %s raised an exception: %s', self.__class__, e)
+            logger.error("Job %s raised an exception: %s", self.__class__, e)
 
     def run(self) -> None:
         """
@@ -67,7 +69,7 @@ class DelayedTask(Environmentable):
         logging.error("Base run of job called for class")
         raise NotImplementedError
 
-    def register(self, suggested_delay: int, tag: str = '', check: bool = True) -> None:
+    def register(self, suggested_delay: int, tag: str = "", check: bool = True) -> None:
         """
         Utility method that allows to register a Delayedtask
         """

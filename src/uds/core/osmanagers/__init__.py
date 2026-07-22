@@ -29,9 +29,11 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from .osmanager import OSManager
 from .osmfactory import OSManagersFactory
+
 
 def factory() -> OSManagersFactory:
     """

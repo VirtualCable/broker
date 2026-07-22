@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -58,14 +59,14 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
 
     # "fake" declarations for type checking
     # objects: 'models.BaseManager[MFA]'
-    authenticators: 'models.manager.RelatedManager[Authenticator]'
+    authenticators: "models.manager.RelatedManager[Authenticator]"
 
     @typing.override
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'mfas.MFA':
-        return typing.cast('mfas.MFA', super().get_instance(values=values))
+    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> "mfas.MFA":
+        return typing.cast("mfas.MFA", super().get_instance(values=values))
 
     @typing.override
-    def get_type(self) -> type['mfas.MFA']:
+    def get_type(self) -> type["mfas.MFA"]:
         """Get the type of the object this record represents.
 
         The type is a Python type, it obtains this MFA and associated record field.
@@ -82,7 +83,7 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
         return mfas.factory().lookup(self.data_type) or mfas.MFA
 
     def __str__(self) -> str:
-        return f'MFA {self.name} of type {self.data_type} (id:{self.id})'
+        return f"MFA {self.name} of type {self.data_type} (id:{self.id})"
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
@@ -94,7 +95,7 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: 'MFA' = kwargs['instance']
+        to_delete: "MFA" = kwargs["instance"]
         # Only tries to get instance if data is not empty
         if to_delete.data:
             try:
@@ -103,12 +104,12 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
                 s.env.clean_related_data()
             except Exception as e:
                 logger.error(
-                    'Error processing deletion of notifier %s: %s (forced deletion)',
+                    "Error processing deletion of notifier %s: %s (forced deletion)",
                     to_delete.name,
                     e,
                 )
 
-        logger.debug('Before delete mfa provider %s', to_delete)
+        logger.debug("Before delete mfa provider %s", to_delete)
 
 
 # : Connects a pre deletion signal to OS Manager

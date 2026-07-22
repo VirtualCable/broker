@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import dataclasses
 import enum
@@ -57,9 +58,9 @@ class AuthenticationInternalUrl(enum.StrEnum):
     Enumeration for authentication success
     """
 
-    LOGIN = 'page.login'
-    LOGIN_LABEL = 'page.login.tag'
-    LOGOUT = 'page.logout'
+    LOGIN = "page.login"
+    LOGIN_LABEL = "page.login.tag"
+    LOGOUT = "page.logout"
 
     def get_url(self) -> str:
         """
@@ -91,38 +92,38 @@ SUCCESS_AUTH = AuthenticationResult(success=AuthenticationState.SUCCESS)
 
 @dataclasses.dataclass
 class AuthCallbackParams:
-    '''Parameters passed to auth callback stage2
+    """Parameters passed to auth callback stage2
 
     This are the parameters that will be passes to the authenticator callback
-    '''
+    """
 
     https: bool
     host: str
     path: str
     port: str
-    get_params: 'QueryDict'
-    post_params: 'QueryDict'
+    get_params: "QueryDict"
+    post_params: "QueryDict"
     query_string: str
     binary_params: bytes | None = None
 
     @staticmethod
-    def from_request(request: 'HttpRequest', binary_data: bytes | None = None) -> 'AuthCallbackParams':
+    def from_request(request: "HttpRequest", binary_data: bytes | None = None) -> "AuthCallbackParams":
         return AuthCallbackParams(
             https=request.is_secure(),
-            host=request.META['HTTP_HOST'],
-            path=request.META['PATH_INFO'],
-            port=request.META['SERVER_PORT'],
+            host=request.META["HTTP_HOST"],
+            path=request.META["PATH_INFO"],
+            port=request.META["SERVER_PORT"],
             get_params=request.GET.copy(),
             post_params=request.POST.copy(),
-            query_string=request.META['QUERY_STRING'],
+            query_string=request.META["QUERY_STRING"],
             binary_params=binary_data,
         )
 
 
 @dataclasses.dataclass
 class LoginResult:
-    user: 'User | None' = None
-    password: str = ''
+    user: "User | None" = None
+    password: str = ""
     errstr: str | None = None
     errid: int = 0
     url: str | None = None
@@ -133,9 +134,9 @@ class SearchResultItem:
     class ItemDict(typing.TypedDict):
         id: str
         name: str
-    
+
     id: str
     name: str
 
-    def as_dict(self) -> 'SearchResultItem.ItemDict':
+    def as_dict(self) -> "SearchResultItem.ItemDict":
         return typing.cast(SearchResultItem.ItemDict, dataclasses.asdict(self))

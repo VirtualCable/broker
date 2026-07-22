@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from tests.utils.test import UDSTestCase
@@ -39,17 +40,16 @@ from uds.core.environment import Environment
 from uds.services.Xen.publication import XenPublication as XenPublication
 
 
-
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b'v1\tname\treason\tt\ttemplate_id\tok\ttask'
+SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\treason\tt\ttemplate_id\tok\ttask"
 
 
 class XenPublicationSerializationTest(UDSTestCase):
     def check(self, instance: XenPublication) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._reason, 'reason')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._reason, "reason")
         self.assertTrue(instance._is_flagged_for_destroy)
-        self.assertEqual(instance._vmid, 'template_id')
-        self.assertEqual(instance._task, 'task')
+        self.assertEqual(instance._vmid, "template_id")
+        self.assertEqual(instance._task, "task")
         self.assertEqual(instance._queue, [types.services.Operation.CREATE, types.services.Operation.FINISH])
 
     def test_marshaling(self) -> None:
@@ -65,7 +65,7 @@ class XenPublicationSerializationTest(UDSTestCase):
         marshaled_data = instance.marshal()
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'\1'))
+        self.assertFalse(marshaled_data.startswith(b"\1"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = XenPublication(environment=environment, service=None)  # type: ignore
         instance.unmarshal(marshaled_data)

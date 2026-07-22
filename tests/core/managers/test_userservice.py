@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds import models
@@ -76,8 +77,8 @@ class TestUserserviceManager(UDSTransactionTestCase):
         # Should not be in use
         self.assertFalse(userservice.in_use)
         # Source ip and hostname should be empty
-        self.assertEqual(userservice.src_ip, '')
-        self.assertEqual(userservice.src_hostname, '')
+        self.assertEqual(userservice.src_ip, "")
+        self.assertEqual(userservice.src_hostname, "")
 
         # Look for the created one (that is the assigned, deleted)
         assigned = models.UserService.objects.exclude(uuid=orig_uuid).get()
@@ -116,17 +117,15 @@ class TestUserserviceManager(UDSTransactionTestCase):
 
         assigned_info = self.manager.get_user_service_info(
             user,
-            core_types.os.DetectedOsInfo(
-                core_types.os.KnownOS.LINUX, core_types.os.KnownBrowser.CHROME, '1.0.0'
-            ),
-            '1.2.3.4',
-            f'P{service_pool.uuid}',
+            core_types.os.DetectedOsInfo(core_types.os.KnownOS.LINUX, core_types.os.KnownBrowser.CHROME, "1.0.0"),
+            "1.2.3.4",
+            f"P{service_pool.uuid}",
             service_pool.transports.all()[0].uuid,
         )
 
         self.assertEqual(assigned_info.userservice.uuid, userservice.uuid)
         self.assertEqual(assigned_info.userservice.cache_level, core_types.services.CacheLevel.NONE)
         self.assertEqual(assigned_info.userservice.user, user)
-        self.assertEqual(assigned_info.userservice.src_ip, '1.2.3.4')
-        self.assertEqual(assigned_info.userservice.src_hostname, '1.2.3.4')
+        self.assertEqual(assigned_info.userservice.src_ip, "1.2.3.4")
+        self.assertEqual(assigned_info.userservice.src_hostname, "1.2.3.4")
         self.assertEqual(assigned_info.transport.uuid, service_pool.transports.all()[0].uuid)

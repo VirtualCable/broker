@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import logging
@@ -78,42 +79,41 @@ class ProviderItem(types.rest.ManagedObjectItem[Provider]):
 
 
 class Providers(ModelHandler[ProviderItem]):
-
     MODEL = Provider
-    DETAIL = {'services': DetailServices, 'usage': ServicesUsage}
+    DETAIL = {"services": DetailServices, "usage": ServicesUsage}
 
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'allservices',
+            "allservices",
             False,
-            description='List all services provided by this provider regardless of their parent service',
+            description="List all services provided by this provider regardless of their parent service",
         ),
         types.rest.ModelCustomMethod(
-            'service',
+            "service",
             False,
-            description='Retrieve a specific service by its UUID regardless of its parent service',
+            description="Retrieve a specific service by its UUID regardless of its parent service",
         ),
         types.rest.ModelCustomMethod(
-            'maintenance',
+            "maintenance",
             True,
             method=types.rest.CustomMethodMethod.POST,
-            description='Toggle maintenance mode for a provider (enable if disabled, disable if enabled)',
+            description="Toggle maintenance mode for a provider (enable if disabled, disable if enabled)",
         ),
     ]
 
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags']
+    FIELDS_TO_SAVE = ["name", "comments", "tags"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Service providers'))
-        .icon(name='name', title=_('Name'))
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='comments', title=_('Comments'))
-        .numeric_column(name='services_count', title=_('Services'))
-        .numeric_column(name='user_services_count', title=_('User Services'))
-        .text_column(name='tags', title=_('Tags'), visible=False)
-        .row_style(prefix='row-maintenance-', field='maintenance_mode')
-        .with_field_mappings(type_name='data_type')
-        .with_filter_fields('name', 'data_type', 'comments', 'maintenance_mode')
+        ui_utils.TableBuilder(_("Service providers"))
+        .icon(name="name", title=_("Name"))
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="comments", title=_("Comments"))
+        .numeric_column(name="services_count", title=_("Services"))
+        .numeric_column(name="user_services_count", title=_("User Services"))
+        .text_column(name="tags", title=_("Tags"), visible=False)
+        .row_style(prefix="row-maintenance-", field="maintenance_mode")
+        .with_field_mappings(type_name="data_type")
+        .with_filter_fields("name", "data_type", "comments", "maintenance_mode")
     ).build()
 
     # Rest api related information to complete the auto-generated API
@@ -122,21 +122,21 @@ class Providers(ModelHandler[ProviderItem]):
     )
 
     @typing.override
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('services_count'):
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("services_count"):
             field_name, is_descending = field_info
             order_by_field = f"-{field_name}" if is_descending else field_name
-            return qs.annotate(services_count=Count('services')).order_by(order_by_field)
+            return qs.annotate(services_count=Count("services")).order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('user_services_count'):
+        if field_info := self.get_sort_field_info("user_services_count"):
             field_name, is_descending = field_info
             order_by_field = f"-{field_name}" if is_descending else field_name
-            return qs.annotate(user_services_count=Count('maintenance_mode')).order_by(order_by_field)
+            return qs.annotate(user_services_count=Count("maintenance_mode")).order_by(order_by_field)
 
         return super().apply_sort(qs)
 
     @typing.override
-    def get_item(self, item: 'Model') -> ProviderItem:
+    def get_item(self, item: "Model") -> ProviderItem:
         item = ensure.is_instance(item, Provider)
         type_ = item.get_type()
 
@@ -146,7 +146,7 @@ class Providers(ModelHandler[ProviderItem]):
                 name=gettext(t.mod_name()),
                 type=t.mod_type(),
                 description=gettext(t.description()),
-                icon=t.icon64().replace('\n', ''),
+                icon=t.icon64().replace("\n", ""),
             )
             for t in type_.get_provided_services()
         ]
@@ -167,10 +167,10 @@ class Providers(ModelHandler[ProviderItem]):
         )
 
     @typing.override
-    def validate_delete(self, item: 'Model') -> None:
+    def validate_delete(self, item: "Model") -> None:
         item = ensure.is_instance(item, Provider)
         if item.services.count() > 0:
-            raise exceptions.rest.RequestError(gettext('Can\'t delete providers with services'))
+            raise exceptions.rest.RequestError(gettext("Can't delete providers with services"))
 
     # Types related
     @classmethod
@@ -190,10 +190,10 @@ class Providers(ModelHandler[ProviderItem]):
                     .add_stock_field(types.rest.stock.StockField.NAME)
                     .add_stock_field(types.rest.stock.StockField.TAGS)
                     .add_stock_field(types.rest.stock.StockField.COMMENTS)
-                    .add_fields(provider.gui_description(), parent='instance')
+                    .add_fields(provider.gui_description(), parent="instance")
                 ).build()
 
-        raise exceptions.rest.NotFound('Type not found!')
+        raise exceptions.rest.NotFound("Type not found!")
 
     def allservices(self) -> collections.abc.Generator[types.rest.BaseRestItem, None, None]:
         """
@@ -205,7 +205,7 @@ class Providers(ModelHandler[ProviderItem]):
                 if perm >= uds.core.types.permissions.PermissionType.READ:
                     yield DetailServices.service_item(s, perm, True)
             except Exception:
-                logger.exception('Passed service cause type is unknown')
+                logger.exception("Passed service cause type is unknown")
 
     def service(self) -> types.rest.BaseRestItem:
         """
@@ -220,7 +220,7 @@ class Providers(ModelHandler[ProviderItem]):
             # logger.exception('Exception')
             return types.rest.BaseRestItem()
 
-    def maintenance(self, item: 'Model') -> types.rest.BaseRestItem:
+    def maintenance(self, item: "Model") -> types.rest.BaseRestItem:
         """
         Custom method that swaps maintenance mode state for a provider
         :param item:
@@ -235,17 +235,17 @@ class Providers(ModelHandler[ProviderItem]):
     def test(self, type_: str) -> str:
         from uds.core.environment import Environment
 
-        logger.debug('Type: %s', type_)
+        logger.debug("Type: %s", type_)
         provider_type = services.factory().lookup(type_)
 
         if not provider_type:
-            raise exceptions.rest.NotFound('Type not found!')
+            raise exceptions.rest.NotFound("Type not found!")
 
         with Environment.temporary_environment() as temp_environment:
-            logger.debug('spType: %s', provider_type)
+            logger.debug("spType: %s", provider_type)
 
             # On 5.0 onwards, instance comes inside "instance" key
-            dct = self._params.copy()['instance']
-            dct['_request'] = self._request
+            dct = self._params.copy()["instance"]
+            dct["_request"] = self._request
             test_result = provider_type.test(temp_environment, dct)
-            return 'ok' if test_result.success else test_result.error
+            return "ok" if test_result.success else test_result.error

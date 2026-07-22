@@ -26,9 +26,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import logging
 import typing
 
@@ -44,12 +45,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_api(parameters: dict[str, str]) -> tuple[client.OpenStackClient, bool]:
-    from .provider_legacy import OpenStackProviderLegacy
     from .provider import OpenStackProvider
+    from .provider_legacy import OpenStackProviderLegacy
 
     provider = typing.cast(
         OpenStackProviderLegacy | OpenStackProvider,
-        models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance(),
+        models.Provider.objects.get(uuid=parameters["prov_uuid"]).get_instance(),
     )
 
     if isinstance(provider, OpenStackProvider):
@@ -57,60 +58,61 @@ def get_api(parameters: dict[str, str]) -> tuple[client.OpenStackClient, bool]:
     else:
         use_subnets_names = False
 
-    return (provider.api(parameters['project'], parameters['region']), use_subnets_names)
+    return (provider.api(parameters["project"], parameters["region"]), use_subnets_names)
 
 
 def list_resources(parameters: dict[str, str]) -> types.ui.CallbackResultType:
-    '''
+    """
     This helper is designed as a callback for Project Selector
-    '''
+    """
     api, name_from_subnets = get_api(parameters)
 
     zones = [gui.choice_item(z.id, z.name) for z in api.list_availability_zones()]
-    networks = [
-        gui.choice_item(z.id, z.name) for z in api.list_networks(name_from_subnets=name_from_subnets)
+    networks = [gui.choice_item(z.id, z.name) for z in api.list_networks(name_from_subnets=name_from_subnets)]
+    flavors = [
+        gui.choice_item(z.id, f"{z.name} ({z.vcpus} vCPUs, {z.ram} MiB)") for z in api.list_flavors() if not z.disabled
     ]
-    flavors = [gui.choice_item(z.id, f'{z.name} ({z.vcpus} vCPUs, {z.ram} MiB)') for z in api.list_flavors() if not z.disabled]
     # Security groups are used on creation, and used by name...
     security_groups = [gui.choice_item(z.name, z.name) for z in api.list_security_groups()]
 
     data: types.ui.CallbackResultType = [
-        {'name': 'availability_zone', 'choices': zones},
-        {'name': 'network', 'choices': networks},
-        {'name': 'flavor', 'choices': flavors},
-        {'name': 'security_groups', 'choices': security_groups},
+        {"name": "availability_zone", "choices": zones},
+        {"name": "network", "choices": networks},
+        {"name": "flavor", "choices": flavors},
+        {"name": "security_groups", "choices": security_groups},
     ]
-    logger.debug('Return data: %s', data)
+    logger.debug("Return data: %s", data)
     return data
 
 
 def list_volumes(parameters: dict[str, str]) -> types.ui.CallbackResultType:
-    '''
+    """
     This helper is designed as a callback for Zone Selector
-    '''
-    api, _ = get_api(parameters)
+    """
+    api, _unused = get_api(parameters)
     # Source volumes are all available for us
     # volumes = [gui.choice_item(v['id'], v['name']) for v in api.listVolumes() if v['name'] != '' and v['availability_zone'] == parameters['availabilityZone']]
     volumes = [gui.choice_item(v.id, v.name) for v in api.list_volumes() if v.name]
 
     data: types.ui.CallbackResultType = [
-        {'name': 'volume', 'choices': volumes},
+        {"name": "volume", "choices": volumes},
     ]
-    logger.debug('Return data: %s', data)
+    logger.debug("Return data: %s", data)
     return data
+
 
 def list_servers(parameters: dict[str, str]) -> types.ui.CallbackResultType:
     # Needs prov_uuid, project and region in order to work
     api = get_api(parameters)[0]
 
-    try:    
-        servers = [gui.choice_item(s.id, s.name) for s in api.list_servers() if not s.name.lower().startswith('uds')]
+    try:
+        servers = [gui.choice_item(s.id, s.name) for s in api.list_servers() if not s.name.lower().startswith("uds")]
     except Exception:
         return []
-    
+
     return [
         {
-            'name': 'machines',
-            'choices': servers,
+            "name": "machines",
+            "choices": servers,
         }
     ]

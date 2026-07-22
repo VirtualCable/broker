@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import csv
 import io
 import datetime
@@ -55,18 +56,18 @@ SIZE = (WIDTH, HEIGHT, DPI)
 
 
 class CountersPoolAssigned(StatsReport):
-    filename = 'pools_counters.pdf'
-    name = _('Pools usage on a day')  # Report name
-    description = _('Pools usage counters for an specific day')  # Report description
-    uuid = '0b429f70-2fc6-11e7-9a2a-8fc37101e66a'
+    filename = "pools_counters.pdf"
+    name = _("Pools usage on a day")  # Report name
+    description = _("Pools usage counters for an specific day")  # Report description
+    uuid = "0b429f70-2fc6-11e7-9a2a-8fc37101e66a"
 
     pools = StatsReport.pools
     start_date = StatsReport.start_date
 
     @typing.override
     def init_gui(self) -> None:
-        logger.debug('Initializing gui')
-        vals = [gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name')]
+        logger.debug("Initializing gui")
+        vals = [gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name")]
         self.pools.set_choices(vals)
 
     def get_data(self) -> list[dict[str, typing.Any]]:
@@ -83,7 +84,7 @@ class CountersPoolAssigned(StatsReport):
                 continue
 
             hours = [0] * 24
-            
+
             # Convert start to datetime
             start_datetime = datetime.datetime.combine(start, datetime.time.min)
             start_datetime = timezone.make_aware(start_datetime)
@@ -101,9 +102,9 @@ class CountersPoolAssigned(StatsReport):
                 val = int(x[1])
                 hours[hour] = max(hours[hour], val)
 
-            data.append({'uuid': pool.uuid, 'name': pool.name, 'hours': hours})
+            data.append({"uuid": pool.uuid, "name": pool.name, "hours": hours})
 
-        logger.debug('data: %s', data)
+        logger.debug("data: %s", data)
 
         return data
 
@@ -115,33 +116,33 @@ class CountersPoolAssigned(StatsReport):
 
         X = list(range(24))
         d = {
-            'title': _('Services by hour'),
-            'x': X,
-            'xtickFnc': '{:02d}'.format,  # Two digits
-            'xlabel': _('Hour'),
-            'y': [{'label': i['name'], 'data': [i['hours'][v] for v in X]} for i in items],
-            'ylabel': 'Services',
+            "title": _("Services by hour"),
+            "x": X,
+            "xtickFnc": "{:02d}".format,  # Two digits
+            "xlabel": _("Hour"),
+            "y": [{"label": i["name"], "data": [i["hours"][v] for v in X]} for i in items],
+            "ylabel": "Services",
         }
 
         graphs.bar_chart(SIZE, d, graph1)
 
         return self.template_as_pdf(
-            'uds/reports/stats/pools-usage-day.html',
+            "uds/reports/stats/pools-usage-day.html",
             dct={
-                'data': items,
-                'pools': [v.name for v in ServicePool.objects.filter(uuid__in=self.pools.value)],
-                'beginning': self.start_date.as_date(),
+                "data": items,
+                "pools": [v.name for v in ServicePool.objects.filter(uuid__in=self.pools.value)],
+                "beginning": self.start_date.as_date(),
             },
-            header=gettext('Services usage report for a day'),
-            water=gettext('Service usage report'),
-            images={'graph1': graph1.getvalue()},
+            header=gettext("Services usage report for a day"),
+            water=gettext("Service usage report"),
+            images={"graph1": graph1.getvalue()},
         )
 
 
 class CountersPoolAssignedCSV(CountersPoolAssigned):
-    filename = 'pools_counters.csv'
-    mime_type = 'text/csv'  # Report returns pdfs by default, but could be anything else
-    uuid = '1491148a-2fc6-11e7-a5ad-03d9a417561c'
+    filename = "pools_counters.csv"
+    mime_type = "text/csv"  # Report returns pdfs by default, but could be anything else
+    uuid = "1491148a-2fc6-11e7-a5ad-03d9a417561c"
     encoded = False
 
     # Input fields
@@ -152,12 +153,12 @@ class CountersPoolAssignedCSV(CountersPoolAssigned):
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([gettext('Pool'), gettext('Hour'), gettext('Services')])
+        writer.writerow([gettext("Pool"), gettext("Hour"), gettext("Services")])
 
         items = self.get_data()
 
         for i in items:
             for j in range(24):
-                writer.writerow([i['name'], f'{j:02d}', i['hours'][j]])
+                writer.writerow([i["name"], f"{j:02d}", i["hours"][j]])
 
         return output.getvalue().encode()

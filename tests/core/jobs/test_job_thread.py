@@ -42,21 +42,20 @@ from uds.core.jobs.scheduler import JobThread
 from uds.core.jobs.job import Job
 from uds.core.environment import Environment
 
-if typing.TYPE_CHECKING:
-    from uds.models.scheduler import Scheduler
-
 
 class _FakeJob(Job):
-    friendly_name = 'Fake'
+    friendly_name = "Fake"
 
     def __init__(self, environment: Environment, delay: int = 42) -> None:
         super().__init__(environment)
         self._delay = delay
         self.executed = False
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return self._delay
 
+    @typing.override
     def run(self) -> None:
         self.executed = True
 
@@ -64,6 +63,7 @@ class _FakeJob(Job):
 class JobThreadTest(UDSTestCase):
     """Tests for JobThread."""
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self._env = Environment.testing_environment()
@@ -71,7 +71,7 @@ class JobThreadTest(UDSTestCase):
     def test_captures_delay_from_next_execution_delay(self) -> None:
         """JobThread should capture self._delay from job_instance.next_execution_delay()."""
         job = _FakeJob(self._env, delay=1234)
-        db_job = mock.MagicMock(spec=['id'])
+        db_job = mock.MagicMock(spec=["id"])
         db_job.id = 999
 
         thread = JobThread(job, db_job)
@@ -79,28 +79,49 @@ class JobThreadTest(UDSTestCase):
 
     def test_update_db_record_uses_correct_delay(self) -> None:
         """
-        _update_db_record should set next_execution = sql_now() + timedelta(seconds=self._delay).
+        ``_update_db_record`` must set ``next_execution`` to
+        ``sql_now() + timedelta(seconds=self._delay)``.
+
+        We mock ``sql_now`` in the scheduler module to return a fixed
+        datetime so the test is deterministic and does not depend on the
+        wall clock nor on the centisecond-truncation behaviour of the real
+        ``sql_now()``. This also avoids a real DB round-trip per process
+        (TimeTrack cache).
         """
         import datetime
-        from uds.core.util.model import sql_now
+        import zoneinfo
+
+        fixed_now = datetime.datetime(
+            2026, 1, 1, 12, 0, 0, tzinfo=zoneinfo.ZoneInfo("UTC")
+        )
 
         job = _FakeJob(self._env, delay=600)
-        db_job = mock.MagicMock(spec=['id'])
+        db_job = mock.MagicMock(spec=["id"])
         db_job.id = 999
 
         thread = JobThread(job, db_job)
 
-        with mock.patch('uds.core.jobs.scheduler.DBScheduler') as mock_model:
+        with (
+            mock.patch("uds.core.jobs.scheduler.DBScheduler") as mock_model,
+            mock.patch(
+                "uds.core.jobs.scheduler.sql_now", return_value=fixed_now
+            ),
+        ):
             thread._update_db_record()
-            # Check the filter and update
-            mock_model.objects.select_for_update.assert_called_once()
-            update_kwargs = mock_model.objects.select_for_update.return_value.filter.return_value.update.call_args
-            self.assertIsNotNone(update_kwargs)
-            kwargs = update_kwargs[1] if update_kwargs else {}
-            self.assertEqual(kwargs.get('state'), 'X')  # FOR_EXECUTE
-            self.assertEqual(kwargs.get('owner_server'), '')
-            # next_execution should be sql_now() + timedelta(seconds=600)
-            expected_next = sql_now() + datetime.timedelta(seconds=600)
-            actual_next = kwargs.get('next_execution')
-            self.assertIsNotNone(actual_next)
-            self.assertEqual(actual_next, expected_next)
+
+        # Check the filter and update
+        mock_model.objects.select_for_update.assert_called_once()
+        update_call = (
+            mock_model.objects.select_for_update.return_value.filter.return_value.update.call_args
+        )
+        self.assertIsNotNone(update_call)
+        # update() is invoked with keyword arguments only
+        kwargs: dict[str, typing.Any] = update_call.kwargs or {}
+        self.assertEqual(kwargs.get("state"), "X")  # FOR_EXECUTE
+        self.assertEqual(kwargs.get("owner_server"), "")
+
+        # next_execution must equal the mocked sql_now() + 600s, exactly.
+        expected_next = fixed_now + datetime.timedelta(seconds=600)
+        actual_next = kwargs.get("next_execution")
+        self.assertIsNotNone(actual_next)
+        self.assertEqual(actual_next, expected_next)

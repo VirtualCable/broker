@@ -27,9 +27,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import logging
 import typing
 
@@ -50,17 +51,17 @@ READY_CACHE_TIMEOUT = 30
 
 
 class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
-    '''
+    """
     Provides access via RDP to service.
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
-    '''
+    """
 
     is_base = False
 
-    type_name = _('Embedded RDP Client')
-    type_type = 'RDPEmbeddedTransport'
-    type_description = _('RDP Embedded Client. Direct connection.')
-    icon_file = 'rdp.png'
+    type_name = _("Embedded RDP Client")
+    type_type = "RDPEmbeddedTransport"
+    type_description = _("RDP Embedded Client. Direct connection.")
+    icon_file = "rdp.png"
 
     force_empty_creds = BaseRDPEmbeddedTransport.force_empty_creds
     forced_username = BaseRDPEmbeddedTransport.forced_username
@@ -88,14 +89,14 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
-    ) -> 'types.transports.TransportScript':
+        request: "ExtendedHttpRequestWithUser",
+    ) -> "types.transports.TransportScript":
         # We use helper to keep this clean
 
         ci = self.get_connection_info(userservice, user, password)
@@ -103,8 +104,8 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
         data = self.build_connection_params(ip, ci)
         if os.os not in (types.os.KnownOS.WINDOWS, types.os.KnownOS.LINUX, types.os.KnownOS.MAC_OS):
             logger.error(
-                'Os not valid for RDP Transport: %s',
-                request.META.get('HTTP_USER_AGENT', 'Unknown'),
+                "Os not valid for RDP Transport: %s",
+                request.META.get("HTTP_USER_AGENT", "Unknown"),
             )
             return super().get_transport_script(
                 userservice,
@@ -116,4 +117,4 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
                 request,
             )
 
-        return self.get_script(os.os.os_name(), 'direct', data.as_dict())
+        return self.get_script(os.os.os_name(), "direct", data.as_dict())

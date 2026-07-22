@@ -51,83 +51,83 @@ logger = logging.getLogger(__name__)
 
 
 class EmailMFA(mfas.MFA):
-    type_name = _('Email Multi Factor')
-    type_type = 'emailMFA'
-    type_description = _('Email Multi Factor Authenticator')
-    icon_file = 'mail.png'
+    type_name = _("Email Multi Factor")
+    type_type = "emailMFA"
+    type_description = _("Email Multi Factor Authenticator")
+    icon_file = "mail.png"
 
     hostname = gui.TextField(
         length=128,
-        label=_('SMTP Host'),
+        label=_("SMTP Host"),
         order=1,
         tooltip=_(
-            'SMTP Server hostname or IP address. If you are using a  '
-            'non-standard port, add it after a colon, for example: '
-            'smtp.gmail.com:587'
+            "SMTP Server hostname or IP address. If you are using a  "
+            "non-standard port, add it after a colon, for example: "
+            "smtp.gmail.com:587"
         ),
         required=True,
-        tab=_('SMTP Server'),
+        tab=_("SMTP Server"),
     )
 
     security = gui.ChoiceField(
-        label=_('Security'),
-        tooltip=_('Security protocol to use'),
+        label=_("Security"),
+        tooltip=_("Security protocol to use"),
         choices=[
-            gui.choice_item('tls', _('TLS')),
-            gui.choice_item('ssl', _('SSL')),
-            gui.choice_item('none', _('None')),
+            gui.choice_item("tls", _("TLS")),
+            gui.choice_item("ssl", _("SSL")),
+            gui.choice_item("none", _("None")),
         ],
         order=2,
         required=True,
-        tab=_('SMTP Server'),
+        tab=_("SMTP Server"),
     )
     username = gui.TextField(
         length=128,
-        label=_('Username'),
+        label=_("Username"),
         order=9,
-        tooltip=_('User with access to SMTP server'),
+        tooltip=_("User with access to SMTP server"),
         required=False,
-        default='',
-        tab=_('SMTP Server'),
+        default="",
+        tab=_("SMTP Server"),
     )
     password = gui.PasswordField(
         length=128,
-        label=_('Password'),
+        label=_("Password"),
         order=10,
-        tooltip=_('Password of the user with access to SMTP server'),
+        tooltip=_("Password of the user with access to SMTP server"),
         required=False,
-        default='',
-        tab=_('SMTP Server'),
+        default="",
+        tab=_("SMTP Server"),
     )
 
     email_subject = gui.TextField(
         length=128,
-        default='Verification Code',
-        label=_('Subject'),
+        default="Verification Code",
+        label=_("Subject"),
         order=20,
-        tooltip=_('Subject of the email'),
+        tooltip=_("Subject of the email"),
         required=True,
         tab=types.ui.Tab.CONFIG,
-        old_field_name='emailSubject',
+        old_field_name="emailSubject",
     )
 
     from_email = gui.TextField(
         length=128,
-        label=_('From Email'),
+        label=_("From Email"),
         order=21,
-        tooltip=_('Email address that will be used as sender'),
+        tooltip=_("Email address that will be used as sender"),
         required=True,
         tab=types.ui.Tab.CONFIG,
-        old_field_name='fromEmail',
+        old_field_name="fromEmail",
     )
 
     enable_html = gui.CheckBoxField(
-        label=_('Enable HTML'),
+        label=_("Enable HTML"),
         order=22,
-        tooltip=_('Enable HTML in emails'),
+        tooltip=_("Enable HTML in emails"),
         default=True,
         tab=types.ui.Tab.CONFIG,
-        old_field_name='enableHTML',
+        old_field_name="enableHTML",
     )
 
     login_without_mfa_policy = fields.login_without_mfa_policy_field()
@@ -136,37 +136,37 @@ class EmailMFA(mfas.MFA):
 
     mail_txt = gui.TextField(
         length=1024,
-        label=_('Mail text'),
+        label=_("Mail text"),
         order=40,
         lines=4,
-        tooltip=_('Text of the email. If empty, a default text will be used')
-        + '\n'
-        + _('Allowed variables are: ')
-        + '{code}, {username}, {justUsername}. {ip}',
+        tooltip=_("Text of the email. If empty, a default text will be used")
+        + "\n"
+        + _("Allowed variables are: ")
+        + "{code}, {username}, {justUsername}. {ip}",
         required=True,
-        default='',
+        default="",
         tab=types.ui.Tab.CONFIG,
-        old_field_name='mailTxt',
+        old_field_name="mailTxt",
     )
 
     mail_html = gui.TextField(
         length=1024,
-        label=_('Mail HTML'),
+        label=_("Mail HTML"),
         order=41,
         lines=4,
-        tooltip=_('HTML of the email. If empty, a default HTML will be used')
-        + '\n'
-        + _('Allowed variables are: ')
-        + '\n'
-        + '{code}, {username}, {justUsername}, {ip}',
+        tooltip=_("HTML of the email. If empty, a default HTML will be used")
+        + "\n"
+        + _("Allowed variables are: ")
+        + "\n"
+        + "{code}, {username}, {justUsername}, {ip}",
         required=False,
-        default='',
+        default="",
         tab=types.ui.Tab.CONFIG,
-        old_field_name='mailHtml',
+        old_field_name="mailHtml",
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -178,12 +178,12 @@ class EmailMFA(mfas.MFA):
         # if hostname is not valid, we will raise an exception
         hostname = self.hostname.value.strip()
         if not hostname:
-            raise exceptions.ui.ValidationError(_('Invalid SMTP hostname'))
+            raise exceptions.ui.ValidationError(_("Invalid SMTP hostname"))
 
         # Now check is valid format
-        if ':' in hostname:
+        if ":" in hostname:
             host, port = validators.validate_host_port(hostname)
-            self.hostname.value = f'{host}:{port}'
+            self.hostname.value = f"{host}:{port}"
         else:
             host = self.hostname.value.strip()
             self.hostname.value = validators.validate_fqdn(host)
@@ -192,43 +192,41 @@ class EmailMFA(mfas.MFA):
         self.from_email.value = validators.validate_email(self.from_email.value)
 
     @typing.override
-    def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
-        return gettext('Check your mail. You will receive an email with the verification code')
+    def html(self, request: "ExtendedHttpRequest", userid: str, username: str) -> str:
+        return gettext("Check your mail. You will receive an email with the verification code")
 
     @typing.override
-    def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> typing.Optional[bool]:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> typing.Optional[bool]:
         return mfas.LoginAllowed.check_action(
             self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
         )
 
     @typing.override
     def label(self) -> str:
-        return 'OTP received via email'
+        return "OTP received via email"
 
     @decorators.threaded
-    def send_verification_code_thread(self, request: 'ExtendedHttpRequest', identifier: str, code: str) -> None:
+    def send_verification_code_thread(self, request: "ExtendedHttpRequest", identifier: str, code: str) -> None:
         # Send and email with the notification
         with self.login() as smtp:
             try:
                 # Create message container
-                msg = MIMEMultipart('alternative')
-                msg['Subject'] = self.email_subject.value.strip()
-                msg['From'] = self.from_email.value.strip()
-                msg['To'] = identifier
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = self.email_subject.value.strip()
+                msg["From"] = self.from_email.value.strip()
+                msg["To"] = identifier
 
                 text = self.mail_txt.as_clean_str() or gettext(
-                    'A login attemt has been made from {ip} to.\nTo continue, provide the verification code {code}'
+                    "A login attemt has been made from {ip} to.\nTo continue, provide the verification code {code}"
                 )
                 html = self.mail_html.as_clean_str() or gettext(
-                    '<p>A login attemt has been made from <b>{ip}</b>.</p><p>To continue, provide the verification code <b>{code}</b></p>'
+                    "<p>A login attemt has been made from <b>{ip}</b>.</p><p>To continue, provide the verification code <b>{code}</b></p>"
                 )
-                username = request.user.name if request.user else ''
+                username = request.user.name if request.user else ""
                 msg.attach(
                     MIMEText(
-                        text.format(
-                            ip=request.ip, code=code, username=username, justUsername=username.split('@')[0]
-                        ),
-                        'plain',
+                        text.format(ip=request.ip, code=code, username=username, justUsername=username.split("@")[0]),
+                        "plain",
                     )
                 )
 
@@ -236,21 +234,21 @@ class EmailMFA(mfas.MFA):
                     msg.attach(
                         MIMEText(
                             html.format(
-                                ip=request.ip, code=code, username=username, justUsername=username.split('@')[0]
+                                ip=request.ip, code=code, username=username, justUsername=username.split("@")[0]
                             ),
-                            'html',
+                            "html",
                         )
                     )
 
                 smtp.sendmail(self.from_email.value, identifier, msg.as_string())
             except smtplib.SMTPException as e:
-                logger.error('Error sending email: %s', e)
+                logger.error("Error sending email: %s", e)
                 raise
 
     @typing.override
     def send_code(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
@@ -268,17 +266,17 @@ class EmailMFA(mfas.MFA):
         Login to SMTP server
         """
         host = self.hostname.value.strip()
-        if ':' in host:
-            host, ports = host.split(':')
+        if ":" in host:
+            host, ports = host.split(":")
             port = int(ports)
         else:
             port = None
 
-        if self.security.value in ('tls', 'ssl'):
+        if self.security.value in ("tls", "ssl"):
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
-            if self.security.value == 'tls':
+            if self.security.value == "tls":
                 if port:
                     smtp = smtplib.SMTP(
                         host,
@@ -306,12 +304,12 @@ class EmailMFA(mfas.MFA):
     @typing.override
     def process(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         validity: int | None = None,
-    ) -> 'mfas.MFA.RESULT':
+    ) -> "mfas.MFA.RESULT":
         # if ip allowed to skip mfa, return allowed
         if mfas.LoginAllowed.check_ip_allowed(request, self.allow_skip_mfa_from_networks.value):
             return mfas.MFA.RESULT.ALLOWED

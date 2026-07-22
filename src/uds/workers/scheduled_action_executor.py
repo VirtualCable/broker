@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduledAction(Job):
-    friendly_name = 'Scheduled action runner'
+    friendly_name = "Scheduled action runner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -55,9 +56,9 @@ class ScheduledAction(Job):
             service_pool__service__provider__maintenance_mode=False,  # Avoid maintenance
             service_pool__state=types.states.State.ACTIVE,  # Avoid Non active pools
             next_execution__lt=sql_now(),
-        ).order_by('next_execution'):
+        ).order_by("next_execution"):
             logger.info(
-                'Executing calendar action %s.%s (%s)',
+                "Executing calendar action %s.%s (%s)",
                 configured_action.service_pool.name,
                 configured_action.calendar.name,
                 configured_action.action,
@@ -66,6 +67,6 @@ class ScheduledAction(Job):
                 configured_action.execute()
             except Exception:
                 logger.exception(
-                    'Got an exception executing calendar access action: %s',
+                    "Got an exception executing calendar access action: %s",
                     configured_action,
                 )
