@@ -88,7 +88,7 @@ def list_volumes(parameters: dict[str, str]) -> types.ui.CallbackResultType:
     '''
     This helper is designed as a callback for Zone Selector
     '''
-    api, _ = get_api(parameters)
+    api, _unused = get_api(parameters)
     # Source volumes are all available for us
     # volumes = [gui.choice_item(v['id'], v['name']) for v in api.listVolumes() if v['name'] != '' and v['availability_zone'] == parameters['availabilityZone']]
     volumes = [gui.choice_item(v.id, v.name) for v in api.list_volumes() if v.name]

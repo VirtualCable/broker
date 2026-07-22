@@ -49,10 +49,6 @@ from uds.services.OpenStack.openstack import (
     client as openstack_client,
 )
 
-from tests.utils import vars, helpers
-from tests.utils import search_item_by_attr
-
-from tests.utils.test import UDSTransactionTestCase
 
 logger = logging.getLogger(__name__)
 

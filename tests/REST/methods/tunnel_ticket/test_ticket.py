@@ -115,7 +115,7 @@ class TicketTest(rest.test.RESTTestCase):
         """
         Returns the URL for ticket requests
         """
-        return f'/uds/rest/tunnelpq/ticket'
+        return '/uds/rest/tunnelpq/ticket'
 
     def test_legacy_request_invalid_token(self) -> None:
         """

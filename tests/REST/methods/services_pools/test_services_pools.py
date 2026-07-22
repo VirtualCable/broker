@@ -97,13 +97,13 @@ class ServicePoolTest(rest.test.RESTTestCase):
     # Existing tests (preserved from before the CRUD extension)
     # ------------------------------------------------------------------
     def test_invalid_servicepool(self) -> None:
-        url = f'servicespools/INVALID/overview'
+        url = 'servicespools/INVALID/overview'
 
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 404)
 
     def test_service_pools(self) -> None:
-        url = f'servicespools/overview'
+        url = 'servicespools/overview'
 
         # Now, will work
         response = self.client.rest_get(url)

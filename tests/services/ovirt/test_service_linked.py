@@ -95,7 +95,7 @@ class TestProxmovLinkedService(UDSTestCase):
         # Ensure that any char not in [^a-zA-Z0-9_-] is translated to an underscore (_)
         # Create a with all ascii chars + a lot utf-8 chars outside ascii
         name = 'This is a simple test 0123456789 ñoño'
-        name += f'áéíóúñüE¢¢←↑→↓'
+        name += 'áéíóúñüE¢¢←↑→↓'
         self.assertEqual(service.sanitized_name(name), 'This_is_a_simple_test_0123456789__o_o_______E______')
 
     def test_make_template(self) -> None:

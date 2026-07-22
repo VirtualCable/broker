@@ -39,7 +39,7 @@ from django.utils.translation import gettext_noop as _
 from uds.core import auths, environment, types, exceptions
 from uds.core.auths.auth import log_login
 from uds.core.ui import gui
-from uds.core.util import fields, ldaputil, validators, auth as auth_utils
+from uds.core.util import fields, validators, auth as auth_utils
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

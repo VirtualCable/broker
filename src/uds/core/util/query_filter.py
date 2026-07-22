@@ -202,7 +202,7 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
         """
 
         def _compare(val_left: str | int | float, val_right: str | int | float) -> int:
-            if type(val_left) != type(val_right):
+            if type(val_left) is not type(val_right):
                 val_left = str(val_left)
                 val_right = str(val_right)
             if typing.cast(typing.Any, val_left) < typing.cast(typing.Any, val_right):

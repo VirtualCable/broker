@@ -150,5 +150,5 @@ class OsManagers(ModelHandler[OsManagerItem]):
                     .add_fields(osmanager.gui_description())
                     .build()
                 )
-        except:
+        except Exception:
             raise exceptions.rest.NotFound(_('OS Manager type not found: {}').format(for_type))

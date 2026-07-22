@@ -14,7 +14,6 @@ from uds.core.util import autoserializable
 from uds.core import types
 
 from uds.core.services.generics.dynamic.publication import DynamicPublication
-from uds.core.util import autoserializable
 
 from .openshift import exceptions as openshift_exceptions
 

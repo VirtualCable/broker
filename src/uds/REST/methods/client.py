@@ -216,7 +216,7 @@ class Client(Handler):
             return Client.result(
                 error=types.errors.Error.SERVICE_IN_PREPARATION, percent=e.code * 25, is_retrayable=True
             )
-        except Exception as e:
+        except Exception:
             logger.exception("Exception")
             return Client.result(error="Invalid request")
 

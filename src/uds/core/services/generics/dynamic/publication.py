@@ -174,7 +174,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
                 getattr(self, operation_runner.__name__)()
 
             return types.states.TaskState.RUNNING
-        except exceptions.services.generics.RetryableError as e:
+        except exceptions.services.generics.RetryableError:
             # This is a retryable error, so we will retry later
             return self.retry_later()
         except Exception as e:
@@ -272,7 +272,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
                 return self._execute_queue()
 
             return state
-        except exceptions.services.generics.RetryableError as e:
+        except exceptions.services.generics.RetryableError:
             # This is a retryable error, so we will retry later
             # We don not need to push a NOP here, as we will retry the same operation checking again
             # And it has not been removed from the queue

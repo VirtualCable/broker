@@ -241,7 +241,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         )
 
         service = models.Service.objects.create(
-            name=f'service_1',
+            name='service_1',
             provider=provider,
             data_type=service.type_type,
             data=service.serialize(),
