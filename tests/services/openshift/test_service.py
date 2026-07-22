@@ -1,17 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Unit tests for OpenshiftService logic.
-All tests use fixtures for setup and mock dependencies.
-Tests are grouped by functionality: configuration, utility methods, availability, VM operations, exception handling, and deletion.
-"""
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Reorganizado y corregido por GitHub Copilot
@@ -19,18 +11,25 @@ Reorganizado y corregido por GitHub Copilot
 
 import typing
 from unittest import mock
+import contextlib
+
 from uds.services.OpenShift.openshift import exceptions as oshift_exceptions
+from uds.services.OpenShift.provider import OpenshiftProvider
+from uds.services.OpenShift.service import OpenshiftService
 
 from tests.services.openshift import fixtures
 from tests.utils.test import UDSTransactionTestCase
 
 
 class TestOpenshiftService(UDSTransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         fixtures.clear()
 
-    def _create_service_with_provider(self):
+    def _create_service_with_provider(
+        self,
+    ) -> tuple[OpenshiftService, OpenshiftProvider, contextlib.AbstractContextManager[OpenshiftProvider]]:
         """
         Helper to create a service with a patched provider.
         """
@@ -45,19 +44,19 @@ class TestOpenshiftService(UDSTransactionTestCase):
         Check initial service data values.
         """
         service = fixtures.create_service()
-        self.assertEqual(service.template.value, fixtures.SERVICE_VALUES_DICT['template'])
-        self.assertEqual(service.basename.value, fixtures.SERVICE_VALUES_DICT['basename'])
-        self.assertEqual(service.lenname.value, fixtures.SERVICE_VALUES_DICT['lenname'])
+        self.assertEqual(service.template.value, fixtures.SERVICE_VALUES_DICT["template"])
+        self.assertEqual(service.basename.value, fixtures.SERVICE_VALUES_DICT["basename"])
+        self.assertEqual(service.lenname.value, fixtures.SERVICE_VALUES_DICT["lenname"])
 
     def test_initialize_sets_basename(self) -> None:
         """
         Check that initialize sets basename and lenname correctly.
         """
         service = fixtures.create_service()
-        service.basename.value = 'testname'
+        service.basename.value = "testname"
         service.lenname.value = 6
-        service.initialize({'basename': 'testname', 'lenname': 6})
-        self.assertEqual(service.basename.value, 'testname')
+        service.initialize({"basename": "testname", "lenname": 6})
+        self.assertEqual(service.basename.value, "testname")
         self.assertEqual(service.lenname.value, 6)
 
     def test_init_gui_sets_choices(self) -> None:
@@ -65,7 +64,7 @@ class TestOpenshiftService(UDSTransactionTestCase):
         Check that init_gui sets template choices.
         """
         service, _, provider_ctx = self._create_service_with_provider()
-        with mock.patch.object(service.template, 'set_choices') as set_choices_mock:
+        with mock.patch.object(service.template, "set_choices") as set_choices_mock:
             service.init_gui()
             set_choices_mock.assert_called()
         provider_ctx.__exit__(None, None, None)
@@ -96,8 +95,8 @@ class TestOpenshiftService(UDSTransactionTestCase):
         service, _, provider_ctx = self._create_service_with_provider()
         self.assertEqual(service.get_basename(), service.basename.value)
         self.assertEqual(service.get_lenname(), service.lenname.value)
-        self.assertEqual(service.sanitized_name('Test VM 1'), 'test-vm-1')
-        duplicates = list(service.find_duplicates('vm-1', '00:11:22:33:44:55'))
+        self.assertEqual(service.sanitized_name("Test VM 1"), "test-vm-1")
+        duplicates = list(service.find_duplicates("vm-1", "00:11:22:33:44:55"))
         self.assertEqual(len(duplicates), 1)
         provider_ctx.__exit__(None, None, None)
 
@@ -112,7 +111,7 @@ class TestOpenshiftService(UDSTransactionTestCase):
         api.test.assert_called_with()
         api.test.return_value = False
         self.assertTrue(service.is_available())
-        service.provider().is_available.cache_clear()  # type: ignore
+        service.provider().is_available.cache_clear()  # pyright: ignore  # pyrefly: ignore
         self.assertFalse(service.is_available())
         api.test.assert_called_with()
         provider_ctx.__exit__(None, None, None)
@@ -126,22 +125,22 @@ class TestOpenshiftService(UDSTransactionTestCase):
         api = typing.cast(mock.MagicMock, service.api)
         # Patch get_vm_interfaces to return a list with a mock interface
         mock_interface = mock.Mock()
-        mock_interface.ip_address = '192.168.1.1'
-        mock_interface.mac_address = '00:11:22:33:44:01'
+        mock_interface.ip_address = "192.168.1.1"
+        mock_interface.mac_address = "00:11:22:33:44:01"
         api.get_vm_interfaces.return_value = [mock_interface]
-        ip = service.get_ip(None, 'vm-1')
-        self.assertEqual(ip, '192.168.1.1')
-        mac = service.get_mac(None, 'vm-1')
-        self.assertEqual(mac, '00:11:22:33:44:01')
+        ip = service.get_ip(None, "vm-1")
+        self.assertEqual(ip, "192.168.1.1")
+        mac = service.get_mac(None, "vm-1")
+        self.assertEqual(mac, "00:11:22:33:44:01")
         # Patch is_running to return True
-        service.is_running = mock.Mock(return_value=True)
-        self.assertTrue(service.is_running(None, 'vm-1'))
-        service.start(None, 'vm-1')
-        api.start_vm.assert_called_with('vm-1')
-        service.stop(None, 'vm-1')
-        api.stop_vm.assert_called_with('vm-1')
-        service.shutdown(None, 'vm-1')
-        api.stop_vm.assert_called_with('vm-1')
+        service.is_running = mock.Mock(return_value=True)  # type: ignore[method-assign]
+        self.assertTrue(service.is_running(None, "vm-1"))
+        service.start(None, "vm-1")
+        api.start_vm.assert_called_with("vm-1")
+        service.stop(None, "vm-1")
+        api.stop_vm.assert_called_with("vm-1")
+        service.shutdown(None, "vm-1")
+        api.stop_vm.assert_called_with("vm-1")
         provider_ctx.__exit__(None, None, None)
 
     # --- Exception handling ---
@@ -151,20 +150,19 @@ class TestOpenshiftService(UDSTransactionTestCase):
         Check that get_ip returns empty string if there are no interfaces.
         """
         service, _, provider_ctx = self._create_service_with_provider()
-        with mock.patch.object(service.api, 'get_vm_interfaces', return_value=[]):
-            ip = service.get_ip(None, 'vm-1')
-            self.assertEqual(ip, '')
+        with mock.patch.object(service.api, "get_vm_interfaces", return_value=[]):
+            ip = service.get_ip(None, "vm-1")
+            self.assertEqual(ip, "")
         provider_ctx.__exit__(None, None, None)
-
 
     def test_get_mac_returns_empty_if_no_interfaces(self) -> None:
         """
         Check that get_mac returns empty string if there are no interfaces.
         """
         service, _, provider_ctx = self._create_service_with_provider()
-        with mock.patch.object(service.api, 'get_vm_interfaces', return_value=[]):
-            mac = service.get_mac(None, 'vm-1')
-            self.assertEqual(mac, '')
+        with mock.patch.object(service.api, "get_vm_interfaces", return_value=[]):
+            mac = service.get_mac(None, "vm-1")
+            self.assertEqual(mac, "")
         provider_ctx.__exit__(None, None, None)
 
     # --- VM deletion ---
@@ -176,16 +174,16 @@ class TestOpenshiftService(UDSTransactionTestCase):
         api = typing.cast(mock.MagicMock, provider.api)
 
         # Execute deletion
-        service.execute_delete('vm-1')
-        api.delete_vm.assert_called_with('vm-1')
+        service.execute_delete("vm-1")
+        api.delete_vm.assert_called_with("vm-1")
 
         # Check if deleted
-        api.get_vm_info.side_effect = oshift_exceptions.OpenshiftNotFoundError('not found')
-        api.get_vm_pvc_or_dv_name.side_effect = oshift_exceptions.OpenshiftNotFoundError('not found')
-        self.assertTrue(service.is_deleted('vm-1'))
+        api.get_vm_info.side_effect = oshift_exceptions.OpenshiftNotFoundError("not found")
+        api.get_vm_pvc_or_dv_name.side_effect = oshift_exceptions.OpenshiftNotFoundError("not found")
+        self.assertTrue(service.is_deleted("vm-1"))
 
         # Simulate VM exists
         api.get_vm_info.side_effect = None
         api.get_vm_info.return_value = fixtures.VMS[0]
-        self.assertFalse(service.is_deleted('vm-1'))
+        self.assertFalse(service.is_deleted("vm-1"))
         provider_ctx.__exit__(None, None, None)

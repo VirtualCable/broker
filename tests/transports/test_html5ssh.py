@@ -29,11 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 from unittest import mock
-import json
 
-from uds.core import types, consts
+from uds.core import consts
 from uds.transports.HTML5SSH.html5ssh import HTML5SSHTransport
-from uds.core.util import fields
 
 from tests.utils.test import UDSTestCase
 
@@ -82,7 +80,7 @@ class HTML5SSHTest(UDSTestCase):
                 
                 # Check create_for_tunnel call
                 create_for_tunnel.assert_called_once()
-                args, kwargs = create_for_tunnel.call_args
+                _args, kwargs = create_for_tunnel.call_args
                 self.assertEqual(kwargs['port'], 2222)
                 
                 extra = kwargs['extra']

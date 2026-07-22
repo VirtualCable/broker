@@ -1,8 +1,6 @@
 line-length = 120
-extend-exclude = [
-    "samples",
-    "src/uds/transports/*/scripts",
-]
+extend-exclude = ["samples", "src/uds/transports/*/scripts"]
+
 [format]
 quote-style = "double"
 indent-style = "space"
@@ -14,5 +12,8 @@ docstring-code-line-length = "dynamic"
 ignore = []
 fixable = ["F541", "F841"]
 
-[isort]
+[lint.isort]
 force-single-line = true
+known-first-party = ["src"]
+lines-between-types = 1
+no-lines-before = ["future", "standard-library"]

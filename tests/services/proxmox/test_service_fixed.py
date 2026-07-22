@@ -30,9 +30,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import copy
 import typing
-import collections.abc
 from unittest import mock
 
 from uds.core import types, ui
@@ -42,6 +42,7 @@ from ...utils.test import UDSTransactionTestCase
 
 
 class TestProxmoxFixedService(UDSTransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         fixtures.clear()
@@ -62,7 +63,7 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
 
             # Data is cached, so we need to reset it
             api.test.reset_mock()
-            service.provider().is_available.cache_clear()  # type: ignore
+            service.provider().is_available.cache_clear()  # pyright: ignore  # pyrefly: ignore [missing-attribute]
             # Now should return False as we have reset the cache
             self.assertFalse(service.is_available())
             api.test.assert_called_with()
@@ -76,25 +77,24 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             # is_available is already tested, so we will skip it
 
             # Enumerate assignables
-            locate_vm: collections.abc.Callable[[str], typing.Any] = lambda vmid: next(
-                (x for x in fixtures.VMINFO_LIST if x.id == int(vmid)), fixtures.VMINFO_LIST[0]
-            )
+            def locate_vm(vmid: str) -> typing.Any:
+                return next((x for x in fixtures.VMINFO_LIST if x.id == int(vmid)), fixtures.VMINFO_LIST[0])
 
             self.assertEqual(
                 list(service.enumerate_assignables()),
                 [
-                    ui.gui.choice_item(str(locate_vm(x).id), locate_vm(x).name or '')
-                    for x in typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT['machines'])
+                    ui.gui.choice_item(str(locate_vm(x).id), locate_vm(x).name or "")
+                    for x in typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])
                 ],
             )
 
-            vmid: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT['machines'])[0]
+            vmid: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])[0]
             # Assign from assignables
-            with mock.patch('uds.services.Proxmox.service_fixed.ProxmoxUserServiceFixed') as userservice:
+            with mock.patch("uds.services.Proxmox.service_fixed.ProxmoxUserServiceFixed") as userservice:
                 userservice_instance = userservice.return_value
-                userservice_instance.assign.return_value = 'OK'
+                userservice_instance.assign.return_value = "OK"
                 self.assertEqual(
-                    service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), 'OK'
+                    service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance), "OK"
                 )
                 userservice_instance.assign.assert_called_with(vmid)
 
@@ -106,7 +106,7 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
 
             # Get and assign machine
             # will try to assign FIRST FREE machine, that is the second one
-            vmid2: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT['machines'])[1]
+            vmid2: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])[1]
             self.assertEqual(service.get_and_assign(), vmid2)
 
             # Now two machies should be assigned
@@ -118,23 +118,21 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             service = fixtures.create_service_fixed(provider=provider)
 
             # Get machine name
-            self.assertEqual(service.get_name('1'), fixtures.VMINFO_LIST[0].name)
+            self.assertEqual(service.get_name("1"), fixtures.VMINFO_LIST[0].name)
 
             # Get first network mac
-            self.assertEqual(
-                service.get_mac('1'), fixtures.VMS_CONFIGURATION[0].networks[0].macaddr.lower()
-            )
+            self.assertEqual(service.get_mac("1"), fixtures.VMS_CONFIGURATION[0].networks[0].macaddr.lower())
 
             # Get guest ip address
-            self.assertEqual(service.get_ip('1'), fixtures.GUEST_IP_ADDRESS)
+            self.assertEqual(service.get_ip("1"), fixtures.GUEST_IP_ADDRESS)
 
             # Remove and free machine
             # Fist, assign a machine
             vmid = service.get_and_assign()
-            with service._assigned_access() as assigned_machines:               
+            with service._assigned_access() as assigned_machines:
                 self.assertEqual(assigned_machines, set([vmid]))
 
-            # And now free it                
+            # And now free it
             self.assertEqual(service.remove_and_free(vmid), types.states.State.FINISHED)
             with service._assigned_access() as assigned_machines:
                 self.assertEqual(assigned_machines, set())
@@ -144,7 +142,7 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             api = typing.cast(mock.MagicMock, provider.api)
             service = fixtures.create_service_fixed(provider=provider)
 
-            vmid = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT['machines'])[0]
+            vmid = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])[0]
             userservice_instance = mock.MagicMock()
             userservice_instance._vmid = vmid
 
@@ -153,12 +151,14 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             fixtures.SNAPSHOTS_INFO.clear()
             service.snapshot_creation(userservice_instance)
             api.get_current_vm_snapshot.assert_called_with(int(vmid))
-            api.create_snapshot.assert_called_with(int(vmid), name='UDS_Snapshot')
+            api.create_snapshot.assert_called_with(int(vmid), name="UDS_Snapshot")
 
             # Skip snapshot creation
             api.reset_mock()
             service.snapshot_recovery(userservice_instance)
-            api.get_current_vm_snapshot.assert_called_with(int(vmid),)
+            api.get_current_vm_snapshot.assert_called_with(
+                int(vmid),
+            )
             api.create_snapshot.assert_not_called()
 
             # Restore snapshot on exit
@@ -181,13 +181,13 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_fixed(provider=provider)
 
-            with mock.patch.object(service, '_assigned_access') as assigned_access:
+            with mock.patch.object(service, "_assigned_access") as assigned_access:
                 assigned_mock = mock.MagicMock()
                 assigned_access.return_value.__enter__.return_value = assigned_mock
-                service.remove_and_free('123')
-                assigned_mock.__contains__.assert_called_with('123')
+                service.remove_and_free("123")
+                assigned_mock.__contains__.assert_called_with("123")
                 assigned_mock.reset_mock()
                 assigned_mock.__contains__.return_value = True
-                service.remove_and_free('123')
-                assigned_mock.remove.assert_called_with('123')
-                assigned_mock.remove.assert_called_with('123')
+                service.remove_and_free("123")
+                assigned_mock.remove.assert_called_with("123")
+                assigned_mock.remove.assert_called_with("123")

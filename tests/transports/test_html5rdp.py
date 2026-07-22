@@ -31,7 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 from unittest import mock
 import typing
 
-from uds.core import types, consts
+from uds.core import consts
 from uds.transports.HTML5RDP.html5rdp import HTML5RDPTransport
 
 from tests.utils.test import UDSTestCase
@@ -42,7 +42,11 @@ def _make_mocks() -> tuple[mock.MagicMock, mock.MagicMock, mock.MagicMock]:
     userservice = mock.MagicMock()
     userservice.uuid = 'userservice-uuid'
     userservice.deployed_service.uuid = 'ds-uuid'
-    userservice.process_user_password = mock.MagicMock(side_effect=lambda u, p: (u, p))
+
+    def side_effect(u: str, p: str) -> tuple[str, str]:
+        return u, p
+
+    userservice.process_user_password = mock.MagicMock(side_effect=side_effect)
 
     user = mock.MagicMock()
     user.uuid = 'user-uuid'
