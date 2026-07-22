@@ -60,9 +60,11 @@ class _CountingJob(Job):
         super().__init__(*args, **kwargs)
         self._delay = 42
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return self._delay
 
+    @typing.override
     def run(self) -> None:
         _CountingJob.run_count += 1
 
@@ -70,6 +72,7 @@ class _CountingJob(Job):
 class _FailingJob(Job):
     friendly_name = "_TestFailingJob"
 
+    @typing.override
     def run(self) -> None:
         raise RuntimeError("Simulated job failure")
 
@@ -77,6 +80,7 @@ class _FailingJob(Job):
 class _BlockingJob(Job):
     friendly_name = "_TestBlockingJob"
 
+    @typing.override
     def run(self) -> None:
         time.sleep(60)  # Simulated long-running job
 
@@ -84,6 +88,7 @@ class _BlockingJob(Job):
 class SchedulerIntegrationTest(TransactionTestCase):
     """Integration tests using real database."""
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         scheduler.Scheduler.granularity = 0.1  # type: ignore
@@ -92,6 +97,7 @@ class SchedulerIntegrationTest(TransactionTestCase):
         for cls in (_CountingJob, _FailingJob, _BlockingJob):
             JobsFactory.factory().register(cls.friendly_name, cls)
 
+    @typing.override
     def tearDown(self) -> None:
         # Release any locked rows from this test
         scheduler.Scheduler.release_own_schedules()

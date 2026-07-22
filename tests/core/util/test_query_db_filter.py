@@ -18,6 +18,7 @@ _FLTR = f"data eq '{_TEST_MARKER}' and "
 
 
 class DBQueryTests(UDSTestCase):
+    @typing.override
     def setUp(self) -> None:
         Log.objects.create(
             name="daily_job",

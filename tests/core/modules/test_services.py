@@ -58,7 +58,7 @@ class TestServices(UDSTestCase):
     """
 
     def test_providers_loads_correctly(self) -> None:
-        from uds import services  # pyright: ignore  # ensure transports are registered
+        from uds import services as services  # pyright: ignore  # ensure transports are registered
 
         factory = ServiceProviderFactory()
         for provider in MUST_HAVE:

@@ -62,7 +62,7 @@ class TestTransports(UDSTestCase):
     """
 
     def test_transports_loads_correctly(self) -> None:
-        from uds import transports as _  # Not used, juet to load all transports
+        from uds import transports as transports  # Not used, juet to load all transports
 
         factory = TransportsFactory()
 

@@ -52,7 +52,7 @@ class TestNotifiers(UDSTestCase):
     """
 
     def test_notifiers_loads_correctly(self) -> None:
-        from uds import notifiers  # type: ignore  # ensure transports are registered
+        from uds import notifiers as notifiers
 
         factory = NotifierFactory()
         for notifier in MUST_HAVE:

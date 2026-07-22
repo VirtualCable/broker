@@ -57,7 +57,7 @@ class TestOsManagers(UDSTestCase):
     """
 
     def test_osmanagers_loads_correctly(self) -> None:
-        from uds import osmanagers  # type: ignore  # ensure transports are registered
+        from uds import osmanagers as osmanagers  # ensure transports are registered
 
         factory = OSManagersFactory()
         for osmanager in MUST_HAVE:

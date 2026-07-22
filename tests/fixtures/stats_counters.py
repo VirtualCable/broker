@@ -31,7 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import collections.abc
 import datetime
-import typing
 
 from uds import models
 from uds.core import types
@@ -44,8 +43,8 @@ def create_stats_counters(
     counter_type: types.stats.CounterType,
     since: datetime.datetime,
     to: datetime.datetime,
-    number: typing.Optional[int] = None,
-    interval: typing.Optional[int] = None,
+    number: int | None = None,
+    interval: int | None = None,
 ) -> list[models.StatsCounters]:
     """
     Create a list of counters with the given type, counter_type, since and to, save it in the database
@@ -83,7 +82,7 @@ def create_stats_interval_total(
     since: datetime.datetime,
     days: int,
     number_per_hour: int,
-    value: typing.Union[int, collections.abc.Callable[[int, int], int]],
+    value: int | collections.abc.Callable[[int, int], int],
     owner_type: int = counters.types.stats.CounterOwnerType.SERVICEPOOL,
 ) -> list[models.StatsCounters]:
     """
@@ -101,7 +100,11 @@ def create_stats_interval_total(
 
     if isinstance(value, int):
         xv = value
-        value = lambda x, y: xv
+
+        def x_value(x: int, y: int) -> int:
+            return xv
+
+        value = x_value
 
     cntrs = [
         models.StatsCounters(

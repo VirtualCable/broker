@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Test fixtures for OpenShift service tests.
-Provides reusable functions and mock objects for unit testing OpenShift provider, service, deployment, publication, and user service logic.
-All functions are designed to be used across multiple test modules for consistency and maintainability.
-"""
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -34,6 +27,7 @@ All functions are designed to be used across multiple test modules for consisten
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import copy
 import functools
@@ -303,7 +297,7 @@ def create_userservice_fixed(
     Create an OpenshiftUserServiceFixed instance (fixed user service).
     Used for tests of fixed user service logic and lifecycle.
     """
-    uuid_ = str(uuid.uuid4().hex)
+    uuid_ = uuid.uuid4().hex
     return deployment_fixed.OpenshiftUserServiceFixed(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_service_fixed(),

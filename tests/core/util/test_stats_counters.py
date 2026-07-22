@@ -26,23 +26,22 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import typing
 import datetime
-
-from ...fixtures.stats_counters import create_stats_counters
-
-# We use commit/rollback
-from ...utils.test import UDSTestCase
 
 from django.utils import timezone
 
+
 from uds.core.util.stats import counters
 from uds import models
+
+# We use commit/rollback
+from ...utils.test import UDSTestCase
+from ...fixtures.stats_counters import create_stats_counters
 
 START_DATE = timezone.make_aware(datetime.datetime(2020, 1, 1, 0, 0, 0))
 END_DATE_DAY = timezone.make_aware(datetime.datetime(2020, 1, 2, 0, 0, 0))
@@ -51,11 +50,12 @@ END_DATE_YEAR = timezone.make_aware(datetime.datetime(2021, 1, 1, 0, 0, 0))
 
 
 class StatsCountersTest(UDSTestCase):
+    @typing.override
     def setUp(self) -> None:
         return super().setUp()
 
     def xtest_create_stats_counters_single(self) -> None:
-        l = create_stats_counters(
+        lst_counters = create_stats_counters(
             counters.types.stats.CounterOwnerType.AUTHENTICATOR,
             0,
             counters.types.stats.CounterType.INUSE,
@@ -64,7 +64,7 @@ class StatsCountersTest(UDSTestCase):
             1,
         )
 
-        self.assertEqual(len(l), 1)
+        self.assertEqual(len(lst_counters), 1)
         # Now, test it is on DB. If not found, it will raise exception
         models.StatsCounters.objects.get(
             owner_type=counters.types.stats.CounterOwnerType.AUTHENTICATOR,
@@ -94,7 +94,7 @@ class StatsCountersTest(UDSTestCase):
 
     def test_create_stats_counters_multi(self) -> None:
         NUMBER = 100
-        l = create_stats_counters(
+        lst_counter = create_stats_counters(
             counters.types.stats.CounterOwnerType.AUTHENTICATOR,
             0,
             counters.types.stats.CounterType.INUSE,
@@ -103,7 +103,7 @@ class StatsCountersTest(UDSTestCase):
             NUMBER,
         )
 
-        self.assertEqual(len(l), NUMBER)
+        self.assertEqual(len(lst_counter), NUMBER)
         # Now, test it is on DB. If not found, it will raise exception
         models.StatsCounters.objects.get(
             owner_type=counters.types.stats.CounterOwnerType.AUTHENTICATOR,

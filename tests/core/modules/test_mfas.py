@@ -55,7 +55,7 @@ class TestMFAs(UDSTestCase):
     """
 
     def test_mfas_loads_correctly(self) -> None:
-        from uds import mfas  # type: ignore  # ensure transports are registered
+        from uds import mfas as mfas  # ensure transports are registered
 
         factory = MFAsFactory()
         for mfa in MUST_HAVE:

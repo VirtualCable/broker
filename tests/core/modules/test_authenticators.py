@@ -59,7 +59,7 @@ class TestAuthenticators(UDSTestCase):
     """
 
     def test_authenticators_loads_correctly(self) -> None:
-        from uds import auths  # type: ignore  # ensure transports are registered
+        from uds import auths as auths  # ensure transports are registered
 
         factory = AuthsFactory()
         for auth in MUST_HAVE:
