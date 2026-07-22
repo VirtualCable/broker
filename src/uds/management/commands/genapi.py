@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import argparse
 import json
 import logging
@@ -45,8 +46,8 @@ from uds.REST.model.master import ModelHandler
 
 logger = logging.getLogger(__name__)
 
-SECURITY_NAME: typing.Final[str] = 'udsApiAuth'
-DEFAULT_OUTPUT: typing.Final[str] = f'{tempfile.gettempdir()}/uds-api'
+SECURITY_NAME: typing.Final[str] = "udsApiAuth"
+DEFAULT_OUTPUT: typing.Final[str] = f"{tempfile.gettempdir()}/uds-api"
 
 
 def _generate_api() -> types.rest.api.OpenAPI:
@@ -59,9 +60,9 @@ def _generate_api() -> types.rest.api.OpenAPI:
         nonlocal comps
 
         if handler := node.handler:
-            full_path = path or ('/' + node.full_path().lstrip('/'))
-            tags = [full_path.split('/')[1].capitalize()] if len(full_path.split('/')) > 1 else []
-            security = SECURITY_NAME if handler.ROLE != consts.UserRole.ANONYMOUS else ''
+            full_path = path or ("/" + node.full_path().lstrip("/"))
+            tags = [full_path.split("/")[1].capitalize()] if len(full_path.split("/")) > 1 else []
+            security = SECURITY_NAME if handler.ROLE != consts.UserRole.ANONYMOUS else ""
 
             components = handler.api_components()
             comps = comps.union(components)
@@ -70,7 +71,7 @@ def _generate_api() -> types.rest.api.OpenAPI:
             if issubclass(handler, ModelHandler) and handler.DETAIL:
                 for name, detail_cls in handler.DETAIL.items():
                     # Details are always under /{path}/{uuid}/{detail_name}
-                    detail_path = f'{full_path}/{{uuid}}/{name}'
+                    detail_path = f"{full_path}/{{uuid}}/{name}"
                     # We process detail_cls as a "node" but it's not in the tree as a node
                     # So we simulate it
                     process_node(types.rest.HandlerNode(name, detail_cls, node, {}), path=detail_path)
@@ -82,25 +83,25 @@ def _generate_api() -> types.rest.api.OpenAPI:
 
     # Ensure all paths with {uuid} declare the uuid parameter in every operation
     UUID_PARAM = types.rest.api.Parameter(
-        name='uuid',
-        in_='path',
+        name="uuid",
+        in_="path",
         required=True,
-        description='The UUID of the item',
-        schema=types.rest.api.Schema(type='string', format='uuid'),
+        description="The UUID of the item",
+        schema=types.rest.api.Schema(type="string", format="uuid"),
     )
 
     for path, path_item in paths.items():
-        if '{uuid}' not in path:
+        if "{uuid}" not in path:
             continue
         for operation in (path_item.get, path_item.post, path_item.put, path_item.delete, path_item.query):
-            if operation and not any(p.name == 'uuid' for p in operation.parameters):
+            if operation and not any(p.name == "uuid" for p in operation.parameters):
                 operation.parameters.append(UUID_PARAM)
 
     comps.securitySchemes = {
         SECURITY_NAME: {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': consts.auth.AUTH_TOKEN_HEADER,
+            "type": "apiKey",
+            "in": "header",
+            "name": consts.auth.AUTH_TOKEN_HEADER,
         }
     }
 
@@ -108,47 +109,47 @@ def _generate_api() -> types.rest.api.OpenAPI:
 
 
 class Command(BaseCommand):
-    help = 'Generates the OpenAPI specification file(s) for the UDS REST API'
+    help = "Generates the OpenAPI specification file(s) for the UDS REST API"
 
     @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '-o',
-            '--output',
+            "-o",
+            "--output",
             type=str,
-            dest='output',
+            dest="output",
             default=DEFAULT_OUTPUT,
-            help=f'Output file path (without extension). Defaults to {DEFAULT_OUTPUT}',
+            help=f"Output file path (without extension). Defaults to {DEFAULT_OUTPUT}",
         )
         parser.add_argument(
-            '-f',
-            '--format',
+            "-f",
+            "--format",
             type=str,
-            dest='formats',
+            dest="formats",
             default=[],
-            action='append',
-            choices=['json', 'yaml'],
-            help='Output format. Can be specified multiple times. Defaults to both json and yaml',
+            action="append",
+            choices=["json", "yaml"],
+            help="Output format. Can be specified multiple times. Defaults to both json and yaml",
         )
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        output: str = options.get('output', DEFAULT_OUTPUT)
-        formats: list[str] = options.get('formats', [])
+        output: str = options.get("output", DEFAULT_OUTPUT)
+        formats: list[str] = options.get("formats", [])
 
         if not formats:
-            formats = ['json', 'yaml']
+            formats = ["json", "yaml"]
 
         api = _generate_api()
         api_dict = api.as_dict()
 
         for fmt in formats:
-            file_path = f'{output}.{fmt}'
-            if fmt == 'json':
-                with open(file_path, 'w', encoding='utf8') as f:
+            file_path = f"{output}.{fmt}"
+            if fmt == "json":
+                with open(file_path, "w", encoding="utf8") as f:
                     json.dump(api_dict, f, indent=4)
-            elif fmt == 'yaml':
-                with open(file_path, 'w', encoding='utf8') as f:
+            elif fmt == "yaml":
+                with open(file_path, "w", encoding="utf8") as f:
                     yaml.dump(api_dict, f)
 
-            self.stdout.write(f'API specification generated: {file_path}')
+            self.stdout.write(f"API specification generated: {file_path}")

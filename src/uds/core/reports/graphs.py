@@ -77,35 +77,35 @@ def bar_chart(
     Returns:
         None, writes the chart on output as png
     """
-    d = data['x']
+    d = data["x"]
     ind = np.arange(len(d))
-    ys = data['y']
+    ys = data["y"]
 
     width = 0.60
     fig: Figure = Figure(figsize=(size[0], size[1]), dpi=size[2])
     FigureCanvas(fig)  # Stores canvas on fig.canvas
 
     axis = fig.add_subplot(1, 1, 1)
-    axis.grid(color='r', linestyle='dotted', linewidth=0.1, alpha=0.5)
+    axis.grid(color="r", linestyle="dotted", linewidth=0.1, alpha=0.5)
 
-    bottom = np.zeros(len(ys[0]['data']))
+    bottom = np.zeros(len(ys[0]["data"]))
     for y in ys:
-        axis.bar(ind, y['data'], width, bottom=bottom, label=y.get('label'))
-        bottom += np.array(y['data'])
+        axis.bar(ind, y["data"], width, bottom=bottom, label=y.get("label"))
+        bottom += np.array(y["data"])
 
-    axis.set_title(data.get('title', ''))
-    axis.set_xlabel(data['xlabel'])
-    axis.set_ylabel(data['ylabel'])
+    axis.set_title(data.get("title", ""))
+    axis.set_xlabel(data["xlabel"])
+    axis.set_ylabel(data["ylabel"])
 
-    if data.get('allTicks', True):
+    if data.get("allTicks", True):
         axis.set_xticks(ind)
 
-    if 'xtickFnc' in data and data['xtickFnc']:
-        axis.set_xticklabels([data['xtickFnc'](v) for v in axis.get_xticks()])
+    if "xtickFnc" in data and data["xtickFnc"]:
+        axis.set_xticklabels([data["xtickFnc"](v) for v in axis.get_xticks()])
 
     axis.legend()
 
-    fig.savefig(output, format='png', transparent=True)
+    fig.savefig(output, format="png", transparent=True)
 
 
 def line_chart(
@@ -136,33 +136,33 @@ def line_chart(
     Returns:
         None, writes the chart on output as png
     """
-    x = data['x']
-    y = data['y']
+    x = data["x"]
+    y = data["y"]
 
     fig: Figure = Figure(figsize=(size[0], size[1]), dpi=size[2])
     FigureCanvas(fig)  # Stores canvas on fig.canvas
 
     axis = fig.add_subplot(111)
-    axis.grid(color='r', linestyle='dotted', linewidth=0.1, alpha=0.5)
+    axis.grid(color="r", linestyle="dotted", linewidth=0.1, alpha=0.5)
 
     for i in y:
-        yy = i['data']
-        axis.plot(x, yy, label=i.get('label'), marker='.', color='orange')
+        yy = i["data"]
+        axis.plot(x, yy, label=i.get("label"), marker=".", color="orange")
         axis.fill_between(x, yy, 0)
 
-    axis.set_title(data.get('title', ''))
-    axis.set_xlabel(data['xlabel'])
-    axis.set_ylabel(data['ylabel'])
+    axis.set_title(data.get("title", ""))
+    axis.set_xlabel(data["xlabel"])
+    axis.set_ylabel(data["ylabel"])
 
-    if data.get('allTicks', True):
+    if data.get("allTicks", True):
         axis.set_xticks(x)
 
-    if 'xtickFnc' in data and data['xtickFnc']:
-        axis.set_xticklabels([data['xtickFnc'](v) for v in axis.get_xticks()])
+    if "xtickFnc" in data and data["xtickFnc"]:
+        axis.set_xticklabels([data["xtickFnc"](v) for v in axis.get_xticks()])
 
     axis.legend()
 
-    fig.savefig(output, format='png', transparent=True)
+    fig.savefig(output, format="png", transparent=True)
 
 
 def surface_chart(
@@ -195,46 +195,46 @@ def surface_chart(
     Returns:
         None, writes the chart on output as png
     """
-    x = data['x']
-    y = data['y']
-    z = data['z']
+    x = data["x"]
+    y = data["y"]
+    z = data["z"]
 
-    logger.debug('X: %s', x)
-    logger.debug('Y: %s', y)
-    logger.debug('Z: %s', z)
+    logger.debug("X: %s", x)
+    logger.debug("Y: %s", y)
+    logger.debug("Z: %s", z)
 
     x, y = np.meshgrid(x, y)
     z = np.array(z)
 
-    logger.debug('X\': %s', x)
-    logger.debug('Y\': %s', y)
-    logger.debug('Z\': %s', z)
+    logger.debug("X': %s", x)
+    logger.debug("Y': %s", y)
+    logger.debug("Z': %s", z)
 
     fig: Figure = Figure(figsize=(size[0], size[1]), dpi=size[2])
     FigureCanvas(fig)  # Stores canvas on fig.canvas
 
-    axis: typing.Any = fig.add_subplot(1, 1, 1, projection='3d')
+    axis: typing.Any = fig.add_subplot(1, 1, 1, projection="3d")
     # axis.grid(color='r', linestyle='dotted', linewidth=0.1, alpha=0.5)
 
-    cmap = colormaps['coolwarm']
+    cmap = colormaps["coolwarm"]
 
-    if data.get('wireframe', False):
+    if data.get("wireframe", False):
         axis.plot_wireframe(x, y, z, rstride=1, cstride=1, cmap=cmap)
     else:
         axis.plot_surface(x, y, z, rstride=1, cstride=1, cmap=cmap)
 
-    axis.set_title(data.get('title', ''))
-    axis.set_xlabel(data['xlabel'])
-    axis.set_ylabel(data['ylabel'])
-    axis.set_zlabel(data['zlabel'])
+    axis.set_title(data.get("title", ""))
+    axis.set_xlabel(data["xlabel"])
+    axis.set_ylabel(data["ylabel"])
+    axis.set_zlabel(data["zlabel"])
 
-    if data.get('allTicks', True):
-        axis.set_xticks(data['x'])
-        axis.set_yticks(data['y'])
+    if data.get("allTicks", True):
+        axis.set_xticks(data["x"])
+        axis.set_yticks(data["y"])
 
-    if 'xtickFnc' in data and data['xtickFnc']:
-        axis.set_xticklabels([data['xtickFnc'](v) for v in axis.get_xticks()])
-    if 'xtickFnc' in data and data['ytickFnc']:
-        axis.set_yticklabels([data['ytickFnc'](v) for v in axis.get_yticks()])
+    if "xtickFnc" in data and data["xtickFnc"]:
+        axis.set_xticklabels([data["xtickFnc"](v) for v in axis.get_xticks()])
+    if "xtickFnc" in data and data["ytickFnc"]:
+        axis.set_yticklabels([data["ytickFnc"](v) for v in axis.get_yticks()])
 
-    fig.savefig(output, format='png', transparent=True)
+    fig.savefig(output, format="png", transparent=True)

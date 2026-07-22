@@ -27,22 +27,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Created on Jun 22, 2012
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import environment, types
+from uds.core import environment
+from uds.core import types
 from uds.core.services import ServiceProvider
 from uds.core.ui import gui
-from uds.core.util import validators, fields
+from uds.core.util import fields
+from uds.core.util import validators
 
-from .openstack import client, sanitized_name, types as openstack_types
+from .openstack import client
+from .openstack import sanitized_name
+from .openstack import types as openstack_types
 from .service import OpenStackLiveService
 from .service_fixed import OpenStackServiceFixed
 
@@ -54,9 +59,9 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 INTERFACE_VALUES = [
-    gui.choice_item('public', 'public'),
-    gui.choice_item('private', 'private'),
-    gui.choice_item('admin', 'admin'),
+    gui.choice_item("public", "public"),
+    gui.choice_item("private", "private"),
+    gui.choice_item("admin", "admin"),
 ]
 
 
@@ -83,17 +88,15 @@ class OpenStackProviderLegacy(ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenStack LEGACY')
+    type_name = _("OpenStack LEGACY")
     # : Type used internally to identify this provider
-    type_type = 'openStackPlatform'
+    type_type = "openStackPlatform"
     # : Description shown at administration interface for this provider
-    type_description = _(
-        'OpenStack LEGACY platform service provider (for older Openstack Releases, previous to OCATA)'
-    )
+    type_description = _("OpenStack LEGACY platform service provider (for older Openstack Releases, previous to OCATA)")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
@@ -104,52 +107,50 @@ class OpenStackProviderLegacy(ServiceProvider):
     # but used for sample purposes
     # If we don't indicate an order, the output order of fields will be
     # "random"
-    host = gui.TextField(length=64, label=_('Host'), order=1, tooltip=_('OpenStack Host'), required=True)
+    host = gui.TextField(length=64, label=_("Host"), order=1, tooltip=_("OpenStack Host"), required=True)
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         default=5000,
         order=2,
-        tooltip=_('5000 for older releases, 80/443 (ssl) for releases newer than OCATA'),
+        tooltip=_("5000 for older releases, 80/443 (ssl) for releases newer than OCATA"),
         required=True,
     )
     ssl = gui.CheckBoxField(
-        label=_('Use SSL'),
+        label=_("Use SSL"),
         order=4,
-        tooltip=_(
-            'If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)'
-        ),
+        tooltip=_("If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"),
     )
 
     access = gui.ChoiceField(
-        label=_('Access interface'),
+        label=_("Access interface"),
         order=5,
-        tooltip=_('Access interface to be used'),
+        tooltip=_("Access interface to be used"),
         choices=INTERFACE_VALUES,
-        default='public',
+        default="public",
     )
 
     domain = gui.TextField(
         length=64,
-        label=_('Domain'),
+        label=_("Domain"),
         order=8,
-        tooltip=_('Domain name (default is Default)'),
+        tooltip=_("Domain name (default is Default)"),
         required=True,
-        default='Default',
+        default="Default",
     )
     username = gui.TextField(
         length=64,
-        label=_('Username'),
+        label=_("Username"),
         order=9,
-        tooltip=_('User with valid privileges on OpenStack'),
+        tooltip=_("User with valid privileges on OpenStack"),
         required=True,
-        default='admin',
+        default="admin",
     )
     password = gui.PasswordField(
         length=32,
-        label=_('Password'),
+        label=_("Password"),
         order=10,
-        tooltip=_('Password of the user of OpenStack'),
+        tooltip=_("Password of the user of OpenStack"),
         required=True,
     )
 
@@ -159,14 +160,14 @@ class OpenStackProviderLegacy(ServiceProvider):
 
     https_proxy = gui.TextField(
         length=96,
-        label=_('Proxy'),
+        label=_("Proxy"),
         order=91,
         tooltip=_(
-            'Proxy used for connection to azure for HTTPS connections (use PROTOCOL://host:port, i.e. http://10.10.0.1:8080)'
+            "Proxy used for connection to azure for HTTPS connections (use PROTOCOL://host:port, i.e. http://10.10.0.1:8080)"
         ),
         required=False,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='httpsProxy',
+        old_field_name="httpsProxy",
     )
 
     # tenant = gui.TextField(length=64, label=_('Project'), order=6, tooltip=_('Project (tenant) for this provider'), required=True, default='')
@@ -178,7 +179,7 @@ class OpenStackProviderLegacy(ServiceProvider):
     _api: client.OpenStackClient | None = None
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -187,12 +188,10 @@ class OpenStackProviderLegacy(ServiceProvider):
         if values is not None:
             self.timeout.value = validators.validate_timeout(self.timeout.value)
 
-    def api(
-        self, projectid: str | None = None, region: str | None = None
-    ) -> client.OpenStackClient:
+    def api(self, projectid: str | None = None, region: str | None = None) -> client.OpenStackClient:
         proxies: dict[str, str] | None = None
         if self.https_proxy.value.strip():
-            proxies = {'https': self.https_proxy.value}
+            proxies = {"https": self.https_proxy.value}
         return client.OpenStackClient(
             self.host.value,
             self.domain.value,
@@ -222,15 +221,15 @@ class OpenStackProviderLegacy(ServiceProvider):
 
         try:
             if self.api().test_connection() is False:
-                raise Exception('Check connection credentials, server, etc.')
+                raise Exception("Check connection credentials, server, etc.")
         except Exception as e:
-            return types.core.TestResult(False, '{}'.format(e))
+            return types.core.TestResult(False, "{}".format(e))
 
         return types.core.TestResult(True)
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test ovirt Connectivity
 

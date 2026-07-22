@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import csv
 import datetime
 import io
@@ -55,10 +56,10 @@ SIZE = (WIDTH, HEIGHT, DPI)
 
 
 class StatsReportLogin(StatsReport):
-    filename = 'access.pdf'
-    name = _('Users access report by date')  # Report name
-    description = _('Report of user access to platform by date')  # Report description
-    uuid = '0f62f19a-f166-11e4-8f59-10feed05884b'
+    filename = "access.pdf"
+    name = _("Users access report by date")  # Report name
+    description = _("Report of user access to platform by date")  # Report description
+    uuid = "0f62f19a-f166-11e4-8f59-10feed05884b"
 
     # Input fields
     start_date = StatsReport.start_date
@@ -67,11 +68,11 @@ class StatsReportLogin(StatsReport):
 
     sampling_points = gui.NumericField(
         order=4,
-        label=_('Number of intervals'),
+        label=_("Number of intervals"),
         length=3,
         min_value=2,
         max_value=128,
-        tooltip=_('Number of sampling points used in charts'),
+        tooltip=_("Number of sampling points used in charts"),
         default=64,
     )
 
@@ -82,9 +83,9 @@ class StatsReportLogin(StatsReport):
 
         # x axis label format
         if end - start > 3600 * 24 * 2:
-            x_label_format = 'SHORT_DATE_FORMAT'
+            x_label_format = "SHORT_DATE_FORMAT"
         else:
-            x_label_format = 'SHORT_DATETIME_FORMAT'
+            x_label_format = "SHORT_DATETIME_FORMAT"
 
         sampling_interval_seconds = (end - start) / sampling_points
         bucket_bounds: list[tuple[int, int, int]] = []
@@ -105,9 +106,9 @@ class StatsReportLogin(StatsReport):
                 since=start,
                 to=end,
             )
-            .values('stamp')
+            .values("stamp")
         ):
-            idx = int((row['stamp'] - start) // sampling_interval_seconds)
+            idx = int((row["stamp"] - start) // sampling_interval_seconds)
             if idx < 0:
                 continue
             if idx > last_idx:
@@ -121,10 +122,10 @@ class StatsReportLogin(StatsReport):
             data.append((key, val))
             report_data.append(
                 {
-                    'date': utils.timestamp_as_str(b_start, 'SHORT_DATETIME_FORMAT')
-                    + ' - '
-                    + utils.timestamp_as_str(b_end, 'SHORT_DATETIME_FORMAT'),
-                    'users': val,
+                    "date": utils.timestamp_as_str(b_start, "SHORT_DATETIME_FORMAT")
+                    + " - "
+                    + utils.timestamp_as_str(b_end, "SHORT_DATETIME_FORMAT"),
+                    "users": val,
                 }
             )
 
@@ -149,9 +150,9 @@ class StatsReportLogin(StatsReport):
                 since=start,
                 to=end,
             )
-            .values('stamp')
+            .values("stamp")
         ):
-            s = from_ts(row['stamp'], tz)
+            s = from_ts(row["stamp"], tz)
             wd = s.weekday()
             hr = s.hour
             data_week[wd] += 1
@@ -168,19 +169,19 @@ class StatsReportLogin(StatsReport):
         # User access by date graph
         #
         graph1 = io.BytesIO()
-        
+
         def _tick_fnc1(l: int) -> str:
             return filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(l)), x_label_format)
 
         x = [v[0] for v in data]
         d: dict[str, typing.Any] = {
-            'title': _('Users Access (global)'),
-            'x': x,
-            'xtickFnc': _tick_fnc1,
-            'xlabel': _('Date'),
-            'y': [{'label': 'Users', 'data': [v[1] for v in data]}],
-            'ylabel': 'Users',
-            'allTicks': False,
+            "title": _("Users Access (global)"),
+            "x": x,
+            "xtickFnc": _tick_fnc1,
+            "xlabel": _("Date"),
+            "y": [{"label": "Users", "data": [v[1] for v in data]}],
+            "ylabel": "Users",
+            "allTicks": False,
         }
 
         graphs.line_chart(SIZE, d, graph1)
@@ -189,85 +190,85 @@ class StatsReportLogin(StatsReport):
         graph3 = io.BytesIO()
         graph4 = io.BytesIO()
         data_week, data_hour, data_week_hour = self.get_week_hourly_data()
-        
+
         def _tick_fnc2(l: int) -> str:
             return [
-                _('Monday'),
-                _('Tuesday'),
-                _('Wednesday'),
-                _('Thursday'),
-                _('Friday'),
-                _('Saturday'),
-                _('Sunday'),
+                _("Monday"),
+                _("Tuesday"),
+                _("Wednesday"),
+                _("Thursday"),
+                _("Friday"),
+                _("Saturday"),
+                _("Sunday"),
             ][l]
 
         x = list(range(7))
         d = {
-            'title': _('Users Access (by week)'),
-            'x': x,
-            'xtickFnc': _tick_fnc2,
-            'xlabel': _('Day of week'),
-            'y': [{'label': 'Users', 'data': list(data_week)}],
-            'ylabel': 'Users',
+            "title": _("Users Access (by week)"),
+            "x": x,
+            "xtickFnc": _tick_fnc2,
+            "xlabel": _("Day of week"),
+            "y": [{"label": "Users", "data": list(data_week)}],
+            "ylabel": "Users",
         }
 
         graphs.bar_chart(SIZE, d, graph2)
 
         x = list(range(24))
         d = {
-            'title': _('Users Access (by hour)'),
-            'x': x,
-            'xlabel': _('Hour'),
-            'y': [{'label': 'Users', 'data': list(data_hour)}],
-            'ylabel': 'Users',
+            "title": _("Users Access (by hour)"),
+            "x": x,
+            "xlabel": _("Hour"),
+            "y": [{"label": "Users", "data": list(data_hour)}],
+            "ylabel": "Users",
         }
 
         graphs.bar_chart(SIZE, d, graph3)
-        
+
         def _tick_fnc3(l: int) -> str:
             return str(l)
 
         x = list(range(24))
         Y = list(range(7))
         d = {
-            'title': _('Users Access (by hour)'),
-            'x': x,
-            'xlabel': _('Hour'),
-            'xtickFnc': _tick_fnc3,
-            'y': Y,
-            'ylabel': _('Day of week'),
-            'ytickFnc': _tick_fnc2,
-            'z': data_week_hour,
-            'zlabel': _('Users'),
+            "title": _("Users Access (by hour)"),
+            "x": x,
+            "xlabel": _("Hour"),
+            "xtickFnc": _tick_fnc3,
+            "y": Y,
+            "ylabel": _("Day of week"),
+            "ytickFnc": _tick_fnc2,
+            "z": data_week_hour,
+            "zlabel": _("Users"),
         }
 
         graphs.surface_chart(SIZE, d, graph4)
 
         return self.template_as_pdf(
-            'uds/reports/stats/user-access.html',
+            "uds/reports/stats/user-access.html",
             dct={
-                'data': report_data,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
-                'intervals': max(2, min(128, self.sampling_points.as_int())),
+                "data": report_data,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
+                "intervals": max(2, min(128, self.sampling_points.as_int())),
             },
-            header=gettext('Users access to UDS'),
-            water=gettext('UDS Report for users access'),
+            header=gettext("Users access to UDS"),
+            water=gettext("UDS Report for users access"),
             images={
-                'graph1': graph1.getvalue(),
-                'graph2': graph2.getvalue(),
-                'graph3': graph3.getvalue(),
-                'graph4': graph4.getvalue(),
+                "graph1": graph1.getvalue(),
+                "graph2": graph2.getvalue(),
+                "graph3": graph3.getvalue(),
+                "graph4": graph4.getvalue(),
             },
         )
 
 
 class StatsReportLoginCSV(StatsReportLogin):
-    filename = 'access.csv'
-    mime_type = 'text/csv'  # Report returns pdfs by default, but could be anything else
-    name = _('Users access report by date')  # Report name
-    description = _('Report of user access to platform by date')  # Report description
-    uuid = '765b5580-1840-11e5-8137-10feed05884b'
+    filename = "access.csv"
+    mime_type = "text/csv"  # Report returns pdfs by default, but could be anything else
+    name = _("Users access report by date")  # Report name
+    description = _("Report of user access to platform by date")  # Report description
+    uuid = "765b5580-1840-11e5-8137-10feed05884b"
     encoded = False
 
     # Input fields
@@ -282,9 +283,9 @@ class StatsReportLoginCSV(StatsReportLogin):
 
         report_data = self.get_range_data()[2]
 
-        writer.writerow([gettext('Date range'), gettext('Users')])
+        writer.writerow([gettext("Date range"), gettext("Users")])
 
         for v in report_data:
-            writer.writerow([v['date'], v['users']])
+            writer.writerow([v["date"], v["users"]])
 
         return output.getvalue().encode()

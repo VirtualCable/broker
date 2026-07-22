@@ -38,6 +38,7 @@ Reference: src/uds/REST/methods/transports.py
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -48,7 +49,7 @@ from ....utils import rest
 logger = logging.getLogger(__name__)
 
 # Test transport type available in src/uds/transports/Test/transport.py
-TEST_TRANSPORT_TYPE: typing.Final[str] = 'TestTransport'
+TEST_TRANSPORT_TYPE: typing.Final[str] = "TestTransport"
 
 
 class TransportsCrudTest(rest.test.RESTTestCase):
@@ -64,7 +65,7 @@ class TransportsCrudTest(rest.test.RESTTestCase):
 
     def test_get_overview_returns_list(self) -> None:
         """GET /transports/overview returns 200 and a list with the DB transports."""
-        response = self.client.rest_get('transports/overview')
+        response = self.client.rest_get("transports/overview")
         self.assertEqual(response.status_code, 200)
         items: list[dict[str, typing.Any]] = response.json()
         self.assertIsInstance(items, list)
@@ -75,106 +76,106 @@ class TransportsCrudTest(rest.test.RESTTestCase):
 
     def test_get_nonexistent_transport_returns_404(self) -> None:
         """GET /transports/<nonexistent-uuid> returns 404."""
-        response = self.client.rest_get('transports/00000000-0000-0000-0000-000000000000')
+        response = self.client.rest_get("transports/00000000-0000-0000-0000-000000000000")
         self.assertEqual(response.status_code, 404)
 
     def test_put_creates_new_transport(self) -> None:
         """PUT /transports (no ID) creates a new transport with uuid."""
         before = self._transport_count_in_db()
         payload = {
-            'name': 'smoke-test-transport',
-            'comments': 'created by CRUD smoke test',
-            'data_type': TEST_TRANSPORT_TYPE,
-            'tags': [],
-            'priority': 1,
-            'net_filtering': 'D',
-            'allowed_oss': '',
-            'label': '',
+            "name": "smoke-test-transport",
+            "comments": "created by CRUD smoke test",
+            "data_type": TEST_TRANSPORT_TYPE,
+            "tags": [],
+            "priority": 1,
+            "net_filtering": "D",
+            "allowed_oss": "",
+            "label": "",
         }
-        response = self.client.rest_put('transports', data=payload)
+        response = self.client.rest_put("transports", data=payload)
         self.assertEqual(response.status_code, 200, response.content)
         item: dict[str, typing.Any] = response.json()
-        self.assertIn('id', item)
-        self.assertEqual(item['name'], 'smoke-test-transport')
+        self.assertIn("id", item)
+        self.assertEqual(item["name"], "smoke-test-transport")
 
         after = self._transport_count_in_db()
-        self.assertEqual(after, before + 1, 'PUT create must add exactly one transport')
-        self.assertTrue(models.Transport.objects.filter(uuid=item['id']).exists())
+        self.assertEqual(after, before + 1, "PUT create must add exactly one transport")
+        self.assertTrue(models.Transport.objects.filter(uuid=item["id"]).exists())
 
     def test_put_updates_existing_transport(self) -> None:
         """PUT /transports/<uuid> updates an existing transport."""
         create_payload = {
-            'name': 'before-update-transport',
-            'comments': 'original',
-            'data_type': TEST_TRANSPORT_TYPE,
-            'tags': [],
-            'priority': 1,
-            'net_filtering': 'D',
-            'allowed_oss': '',
-            'label': '',
+            "name": "before-update-transport",
+            "comments": "original",
+            "data_type": TEST_TRANSPORT_TYPE,
+            "tags": [],
+            "priority": 1,
+            "net_filtering": "D",
+            "allowed_oss": "",
+            "label": "",
         }
-        create_resp = self.client.rest_put('transports', data=create_payload)
+        create_resp = self.client.rest_put("transports", data=create_payload)
         self.assertEqual(create_resp.status_code, 200, create_resp.content)
-        new_uuid: str = create_resp.json()['id']
+        new_uuid: str = create_resp.json()["id"]
 
         update_payload = dict(create_payload)
-        update_payload['name'] = 'after-update-transport'
-        update_payload['comments'] = 'cambiado'
-        update_payload['priority'] = 9
-        update_resp = self.client.rest_put(f'transports/{new_uuid}', data=update_payload)
+        update_payload["name"] = "after-update-transport"
+        update_payload["comments"] = "cambiado"
+        update_payload["priority"] = 9
+        update_resp = self.client.rest_put(f"transports/{new_uuid}", data=update_payload)
         self.assertEqual(update_resp.status_code, 200, update_resp.content)
         updated: dict[str, typing.Any] = update_resp.json()
-        self.assertEqual(updated['id'], new_uuid)
-        self.assertEqual(updated['name'], 'after-update-transport')
-        self.assertEqual(updated['priority'], 9)
+        self.assertEqual(updated["id"], new_uuid)
+        self.assertEqual(updated["name"], "after-update-transport")
+        self.assertEqual(updated["priority"], 9)
 
         db_transport = models.Transport.objects.get(uuid=new_uuid)
-        self.assertEqual(db_transport.name, 'after-update-transport')
+        self.assertEqual(db_transport.name, "after-update-transport")
         self.assertEqual(db_transport.priority, 9)
 
     def test_delete_transport(self) -> None:
         """DELETE /transports/<uuid> returns OK and removes the transport."""
         create_resp = self.client.rest_put(
-            'transports',
+            "transports",
             data={
-                'name': 'to-delete-transport',
-                'comments': '',
-                'data_type': TEST_TRANSPORT_TYPE,
-                'tags': [],
-                'priority': 1,
-                'net_filtering': 'D',
-                'allowed_oss': '',
-                'label': '',
+                "name": "to-delete-transport",
+                "comments": "",
+                "data_type": TEST_TRANSPORT_TYPE,
+                "tags": [],
+                "priority": 1,
+                "net_filtering": "D",
+                "allowed_oss": "",
+                "label": "",
             },
         )
-        new_uuid: str = create_resp.json()['id']
+        new_uuid: str = create_resp.json()["id"]
 
         before = self._transport_count_in_db()
-        delete_resp = self.client.rest_delete(f'transports/{new_uuid}')
+        delete_resp = self.client.rest_delete(f"transports/{new_uuid}")
         self.assertEqual(delete_resp.status_code, 200, delete_resp.content)
-        self.assertEqual(delete_resp.json(), 'ok')
+        self.assertEqual(delete_resp.json(), "ok")
 
         after = self._transport_count_in_db()
-        self.assertEqual(after, before - 1, 'DELETE must remove exactly one transport')
+        self.assertEqual(after, before - 1, "DELETE must remove exactly one transport")
         self.assertFalse(models.Transport.objects.filter(uuid=new_uuid).exists())
 
     def test_get_after_delete_returns_404(self) -> None:
         """After DELETE, GET of the same uuid returns 404."""
         create_resp = self.client.rest_put(
-            'transports',
+            "transports",
             data={
-                'name': 'to-delete-transport-2',
-                'comments': '',
-                'data_type': TEST_TRANSPORT_TYPE,
-                'tags': [],
-                'priority': 1,
-                'net_filtering': 'D',
-                'allowed_oss': '',
-                'label': '',
+                "name": "to-delete-transport-2",
+                "comments": "",
+                "data_type": TEST_TRANSPORT_TYPE,
+                "tags": [],
+                "priority": 1,
+                "net_filtering": "D",
+                "allowed_oss": "",
+                "label": "",
             },
         )
-        new_uuid: str = create_resp.json()['id']
+        new_uuid: str = create_resp.json()["id"]
 
-        self.client.rest_delete(f'transports/{new_uuid}')
-        response = self.client.rest_get(f'transports/{new_uuid}')
+        self.client.rest_delete(f"transports/{new_uuid}")
+        response = self.client.rest_get(f"transports/{new_uuid}")
         self.assertEqual(response.status_code, 404)

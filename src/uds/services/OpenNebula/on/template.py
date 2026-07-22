@@ -31,9 +31,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 from defusedxml import minidom
 
@@ -48,16 +48,14 @@ logger = logging.getLogger(__name__)
 
 
 def enumerate_templates(
-    api: 'client.OpenNebulaClient', force: bool = False
+    api: "client.OpenNebulaClient", force: bool = False
 ) -> collections.abc.Iterable[types.TemplateType]:
     for t in api.enum_templates():
-        if t.name[:4] != 'UDSP':
+        if t.name[:4] != "UDSP":
             yield t
 
 
-def create(
-    api: 'client.OpenNebulaClient', from_template_id: str, name: str, dst_dataestor: str
-) -> str:
+def create(api: "client.OpenNebulaClient", from_template_id: str, name: str, dst_dataestor: str) -> str:
     """
     Publish the machine (makes a template from it so we can create COWs) and returns the template id of
     the creating machine
@@ -82,15 +80,15 @@ def create(
         imgs = {i.name: i.id for i in api.enum_images()}
 
         info = api.template_info(template_id).xml
-        template: typing.Any = minidom.parseString(info).getElementsByTagName('TEMPLATE')[0]  # pyright: ignore
-        logger.debug('XML: %s', template.toxml())    # pyright: ignore
+        template: typing.Any = minidom.parseString(info).getElementsByTagName("TEMPLATE")[0]  # pyright: ignore
+        logger.debug("XML: %s", template.toxml())  # pyright: ignore
 
-        for counter, dsk in enumerate(template.getElementsByTagName('DISK')):    # pyright: ignore
-            images_ids = dsk.getElementsByTagName('IMAGE_ID')
+        for counter, dsk in enumerate(template.getElementsByTagName("DISK")):  # pyright: ignore
+            images_ids = dsk.getElementsByTagName("IMAGE_ID")
             if not images_ids:
                 from_id = False
                 try:
-                    node = dsk.getElementsByTagName('IMAGE')[0].childNodes[0]
+                    node = dsk.getElementsByTagName("IMAGE")[0].childNodes[0]
                 except IndexError:
                     continue  # Skip this unknown node
                 image_name = node.data
@@ -99,22 +97,20 @@ def create(
                     image_id = imgs[image_name.strip()]
                 except KeyError:
                     raise Exception(
-                        'Image "{}" could not be found!. Check the opennebula template'.format(
-                            image_name.strip()
-                        )
+                        'Image "{}" could not be found!. Check the opennebula template'.format(image_name.strip())
                     )
             else:
                 from_id = True
                 node = images_ids[0].childNodes[0]
                 image_id = node.data
 
-            logger.debug('Found %s for cloning', image_id)
+            logger.debug("Found %s for cloning", image_id)
 
             # if api.imageInfo(imgId)[0]['IMAGE']['STATE'] != '1':
             #    raise Exception('The base machines images are not in READY state')
 
             # Now clone the image
-            image_name = sanitized_name(name + ' DSK ' + str(counter))
+            image_name = sanitized_name(name + " DSK " + str(counter))
             new_id = api.clone_image(
                 image_id, image_name, dst_dataestor
             )  # api.call('image.clone', int(imgId), imgName, int(toDataStore))
@@ -130,17 +126,15 @@ def create(
 
         return template_id
     except Exception as e:
-        logger.exception('Creating template on OpenNebula')
+        logger.exception("Creating template on OpenNebula")
         try:
-            api.delete_template(
-                template_id
-            )  # Try to remove created template in case of fail
+            api.delete_template(template_id)  # Try to remove created template in case of fail
         except Exception:
             pass
         raise e
 
 
-def remove(api: 'client.OpenNebulaClient', template_id: str) -> None:
+def remove(api: "client.OpenNebulaClient", template_id: str) -> None:
     """
     Removes a template from ovirt server
 
@@ -153,14 +147,14 @@ def remove(api: 'client.OpenNebulaClient', template_id: str) -> None:
             imgs = {i.name: i.id for i in api.enum_images()}
 
             info = api.template_info(template_id).xml
-            template: typing.Any = minidom.parseString(info).getElementsByTagName('TEMPLATE')[0]  # pyright: ignore
-            logger.debug('XML: %s', template.toxml())
+            template: typing.Any = minidom.parseString(info).getElementsByTagName("TEMPLATE")[0]  # pyright: ignore
+            logger.debug("XML: %s", template.toxml())
 
-            for dsk in template.getElementsByTagName('DISK'):
-                images_ids = dsk.getElementsByTagName('IMAGE_ID')
+            for dsk in template.getElementsByTagName("DISK"):
+                images_ids = dsk.getElementsByTagName("IMAGE_ID")
                 if not images_ids:
                     try:
-                        node = dsk.getElementsByTagName('IMAGE')[0].childNodes[0]
+                        node = dsk.getElementsByTagName("IMAGE")[0].childNodes[0]
                     except IndexError:
                         continue
                     image_id = imgs[node.data]
@@ -168,19 +162,19 @@ def remove(api: 'client.OpenNebulaClient', template_id: str) -> None:
                     node = images_ids[0].childNodes[0]
                     image_id = node.data
 
-                logger.debug('Found %s for cloning', image_id)
+                logger.debug("Found %s for cloning", image_id)
 
                 # Now delete the image
                 api.delete_image(image_id)  # api.call('image.delete', int(imgId))
         except Exception:
-            logger.exception('Removing image')
+            logger.exception("Removing image")
 
         api.delete_template(template_id)  # api.call('template.delete', int(templateId))
     except Exception:
-        logger.error('Removing template on OpenNebula')
+        logger.error("Removing template on OpenNebula")
 
 
-def deploy_from(api: 'client.OpenNebulaClient', template_id: str, name: str) -> str:
+def deploy_from(api: "client.OpenNebulaClient", template_id: str, name: str) -> str:
     """
     Deploys a virtual machine on selected cluster from selected template
 
@@ -193,12 +187,12 @@ def deploy_from(api: 'client.OpenNebulaClient', template_id: str, name: str) -> 
         Id of the machine being created form template
     """
     vmid = api.instantiate_template(
-        template_id, name, False, '', False
+        template_id, name, False, "", False
     )  # api.call('template.instantiate', int(templateId), name, False, '')
     return vmid
 
 
-def check_published(api: 'client.OpenNebulaClient', template_id: str) -> bool:
+def check_published(api: "client.OpenNebulaClient", template_id: str) -> bool:
     """
     checks if the template is fully published (images are ready...)
     """
@@ -206,14 +200,14 @@ def check_published(api: 'client.OpenNebulaClient', template_id: str) -> bool:
         images = {i.name: i.id for i in api.enum_images()}
 
         info = api.template_info(template_id).xml
-        template: typing.Any = minidom.parseString(info).getElementsByTagName('TEMPLATE')[0]  # pyright: ignore
-        logger.debug('XML: %s', template.toxml())
+        template: typing.Any = minidom.parseString(info).getElementsByTagName("TEMPLATE")[0]  # pyright: ignore
+        logger.debug("XML: %s", template.toxml())
 
-        for dsk in template.getElementsByTagName('DISK'):
-            images_ids = dsk.getElementsByTagName('IMAGE_ID')
+        for dsk in template.getElementsByTagName("DISK"):
+            images_ids = dsk.getElementsByTagName("IMAGE_ID")
             if not images_ids:
                 try:
-                    node = dsk.getElementsByTagName('IMAGE')[0].childNodes[0]
+                    node = dsk.getElementsByTagName("IMAGE")[0].childNodes[0]
                 except IndexError:
                     continue
                 image_id = images[node.data]
@@ -221,21 +215,21 @@ def check_published(api: 'client.OpenNebulaClient', template_id: str) -> bool:
                 node = images_ids[0].childNodes[0]
                 image_id = node.data
 
-            logger.debug('Found %s for checking', image_id)
+            logger.debug("Found %s for checking", image_id)
 
             state = api.image_info(image_id).state
             if state in (types.ImageState.INIT, types.ImageState.LOCKED):
                 return False
             if state != types.ImageState.READY:  # If error is not READY
                 raise Exception(
-                    'Error publishing. Image is in an invalid state. (Check it and delete it if not needed anymore)'
+                    "Error publishing. Image is in an invalid state. (Check it and delete it if not needed anymore)"
                 )
 
             # Ensure image is non persistent. This may be invoked more than once, but it does not matters
             api.make_persistent_image(image_id, False)
 
     except Exception:
-        logger.exception('Exception checking published')
+        logger.exception("Exception checking published")
         raise
 
     return True

@@ -34,5 +34,6 @@ take care of registering it as provider
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from .sample_auth import SampleAuth

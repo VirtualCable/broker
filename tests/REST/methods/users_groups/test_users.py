@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 import functools
@@ -44,7 +45,7 @@ from ....fixtures import rest as rest_fixtures
 
 logger = logging.getLogger(__name__)
 
-MUST_HAVE_FIELDS: typing.Final = {'name', 'role', 'real_name', 'comments', 'state', 'last_access'}
+MUST_HAVE_FIELDS: typing.Final = {"name", "role", "real_name", "comments", "state", "last_access"}
 
 
 class UsersTest(rest.test.RESTActorTestCase):
@@ -59,10 +60,10 @@ class UsersTest(rest.test.RESTActorTestCase):
         self.login()
 
     def test_users(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users'
+        url = f"authenticators/{self.auth.uuid}/users"
 
         # Now, will work
-        response = self.client.rest_get(f'{url}/overview')
+        response = self.client.rest_get(f"{url}/overview")
         self.assertEqual(response.status_code, 200)
         users = response.json()
         self.assertEqual(
@@ -72,7 +73,7 @@ class UsersTest(rest.test.RESTActorTestCase):
         user: dict[str, typing.Any]
         for user in users:
             # Locate the user in the auth
-            self.assertTrue(rest.assertions.assert_user_is(self.auth.users.get(name=user['name']), user))
+            self.assertTrue(rest.assertions.assert_user_is(self.auth.users.get(name=user["name"]), user))
 
     def test_users_overview_groups(self) -> None:
         url = f'authenticators/{self.auth.uuid}/users'
@@ -89,19 +90,19 @@ class UsersTest(rest.test.RESTActorTestCase):
             )
 
     def test_users_tableinfo(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users/tableinfo'
+        url = f"authenticators/{self.auth.uuid}/users/tableinfo"
 
         # Now, will work
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 200)
         tableinfo = response.json()
-        self.assertIn('title', tableinfo)
-        self.assertIn('subtitle', tableinfo)
-        self.assertIn('fields', tableinfo)
-        self.assertIn('row_style', tableinfo)
+        self.assertIn("title", tableinfo)
+        self.assertIn("subtitle", tableinfo)
+        self.assertIn("fields", tableinfo)
+        self.assertIn("row_style", tableinfo)
 
         # Ensure at least name, role, real_name comments, state and last_access are present on tableinfo['fields']
-        fields: list[collections.abc.Mapping[str, typing.Any]] = tableinfo['fields']
+        fields: list[collections.abc.Mapping[str, typing.Any]] = tableinfo["fields"]
 
         self.assertTrue(
             functools.reduce(
@@ -117,35 +118,35 @@ class UsersTest(rest.test.RESTActorTestCase):
         )
 
     def test_user(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users'
+        url = f"authenticators/{self.auth.uuid}/users"
         # Now, will work
         for i in self.users:
-            response = self.client.rest_get(f'{url}/{i.uuid}')
+            response = self.client.rest_get(f"{url}/{i.uuid}")
             self.assertEqual(response.status_code, 200)
             user = response.json()
             self.assertTrue(
                 rest.assertions.assert_user_is(i, user),
-                'User {} {} is not correct'.format(i, models.User.objects.filter(uuid=i.uuid).values()[0]),
+                "User {} {} is not correct".format(i, models.User.objects.filter(uuid=i.uuid).values()[0]),
             )
 
         # invalid user
-        response = self.client.rest_get(f'{url}/invalid')
+        response = self.client.rest_get(f"{url}/invalid")
         self.assertEqual(response.status_code, 400)
 
     def test_users_log(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users/'
+        url = f"authenticators/{self.auth.uuid}/users/"
         # Now, will work
         for user in self.users:
-            response = self.client.rest_get(url + f'{user.uuid}/log')
+            response = self.client.rest_get(url + f"{user.uuid}/log")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.json()), 4)  # INFO, WARN, ERROR, DEBUG
 
         # invalid user
-        response = self.client.rest_get(url + 'invalid/log')
+        response = self.client.rest_get(url + "invalid/log")
         self.assertEqual(response.status_code, 400)
 
     def test_user_create_edit(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users'
+        url = f"authenticators/{self.auth.uuid}/users"
         user_dct = rest_fixtures.createUser(
             groups=[self.simple_groups[0].uuid, self.simple_groups[1].uuid, self.meta_groups[0].uuid]
         )
@@ -156,10 +157,10 @@ class UsersTest(rest.test.RESTActorTestCase):
         )
         self.assertEqual(response.status_code, 200)
         # Get user from database and ensure values are correct
-        dbusr = self.auth.users.get(name=user_dct['name'])
+        dbusr = self.auth.users.get(name=user_dct["name"])
 
         # Fix user_dct to remove it for comparison. Meta groups cannot be directly "assigned" to users
-        user_dct['groups'] = user_dct['groups'][:-1]
+        user_dct["groups"] = user_dct["groups"][:-1]
         self.assertTrue(rest.assertions.assert_user_is(dbusr, user_dct))
 
         self.assertEqual(response.status_code, 200)
@@ -169,48 +170,48 @@ class UsersTest(rest.test.RESTActorTestCase):
         response = self.client.rest_put(
             url,
             user_dct,
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
 
         user_dct = rest_fixtures.createUser(  # nosec: test password, also, "fixme" means "create a random password" in this case
             id=dbusr.uuid,
             groups=[self.simple_groups[2].uuid],
-            password='fixme',
-            mfa_data='mfadata',
+            password="fixme",
+            mfa_data="mfadata",
         )
 
         response = self.client.rest_put(
             url,
             user_dct,
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
 
         # Get user from database and ensure values are correct
-        dbusr = self.auth.users.get(name=user_dct['name'])
+        dbusr = self.auth.users.get(name=user_dct["name"])
         self.assertTrue(rest.assertions.assert_user_is(dbusr, user_dct, compare_password=True))
 
     def test_user_delete(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users'
+        url = f"authenticators/{self.auth.uuid}/users"
         # Now, will work
-        response = self.client.rest_delete(url + f'/{self.plain_users[0].uuid}')
+        response = self.client.rest_delete(url + f"/{self.plain_users[0].uuid}")
         self.assertEqual(response.status_code, 200)
         # Returns nothing
 
         # Now, will fail because user does not exist
-        response = self.client.rest_delete(url + f'/{self.plain_users[0].uuid}')
+        response = self.client.rest_delete(url + f"/{self.plain_users[0].uuid}")
         self.assertEqual(response.status_code, 404)
 
     def test_user_userservices_and_servicepools(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users/{self.plain_users[0].uuid}/userServices'
+        url = f"authenticators/{self.auth.uuid}/users/{self.plain_users[0].uuid}/userServices"
         # Now, will work
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
         # Same with service pools
-        url = f'authenticators/{self.auth.uuid}/users/{self.plain_users[0].uuid}/servicesPools'
+        url = f"authenticators/{self.auth.uuid}/users/{self.plain_users[0].uuid}/servicesPools"
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 200)
         groups = self.plain_users[0].groups.all()

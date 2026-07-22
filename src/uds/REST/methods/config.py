@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -50,36 +51,36 @@ class Config(Handler):
     ROLE = consts.UserRole.ADMIN
 
     API_OPERATIONS = {
-        'get': types.rest.api.Operation(
-            summary='Get configuration',
-            description='Returns the current UDS configuration values',
+        "get": types.rest.api.Operation(
+            summary="Get configuration",
+            description="Returns the current UDS configuration values",
             responses={
-                '200': types.rest.api.Response(
-                    description='Configuration values',
+                "200": types.rest.api.Response(
+                    description="Configuration values",
                     content=types.rest.api.Content(
-                        media_type='application/json',
-                        schema=types.rest.api.SchemaProperty(type='object'),
+                        media_type="application/json",
+                        schema=types.rest.api.SchemaProperty(type="object"),
                     ),
                 ),
             },
         ),
-        'put': types.rest.api.Operation(
-            summary='Update configuration',
-            description='Updates UDS configuration values',
+        "put": types.rest.api.Operation(
+            summary="Update configuration",
+            description="Updates UDS configuration values",
             requestBody=types.rest.api.RequestBody(
                 required=True,
-                description='Configuration values to update',
+                description="Configuration values to update",
                 content=types.rest.api.Content(
-                    media_type='application/json',
-                    schema=types.rest.api.SchemaProperty(type='object'),
+                    media_type="application/json",
+                    schema=types.rest.api.SchemaProperty(type="object"),
                 ),
             ),
             responses={
-                '200': types.rest.api.Response(
-                    description='Configuration updated',
+                "200": types.rest.api.Response(
+                    description="Configuration updated",
                     content=types.rest.api.Content(
-                        media_type='application/json',
-                        schema=types.rest.api.SchemaProperty(type='string'),
+                        media_type="application/json",
+                        schema=types.rest.api.SchemaProperty(type="string"),
                     ),
                 ),
             },
@@ -87,38 +88,38 @@ class Config(Handler):
     }
 
     def get(self) -> typing.Any:
-        logger.debug('Getting config values for user %s', self.is_admin())
+        logger.debug("Getting config values for user %s", self.is_admin())
 
-        return CfgConfig.get_config_values(self.is_admin(), include_hidden=self._params.get('include_hidden', False))
+        return CfgConfig.get_config_values(self.is_admin(), include_hidden=self._params.get("include_hidden", False))
 
     def put(self) -> typing.Any:
         for section, section_dict in typing.cast(dict[str, dict[str, dict[str, str]]], self._params).items():
             for key, vals in section_dict.items():
-                config = CfgConfig.update(CfgConfig.SectionType.from_str(section), key, vals['value'])
+                config = CfgConfig.update(CfgConfig.SectionType.from_str(section), key, vals["value"])
                 if config is not None:
                     log.log_audit(
                         self,
-                        f'Updated config value {section}.{key} to {vals["value"] if not config.is_password else "********"}',
+                        f"Updated config value {section}.{key} to {vals['value'] if not config.is_password else '********'}",
                         level=log.LogLevel.INFO,
                     )
                     logger.info(
-                        'Updated config value %s.%s to %s by %s',
+                        "Updated config value %s.%s to %s by %s",
                         section,
                         key,
-                        vals['value'] if not config.is_password else '********',
+                        vals["value"] if not config.is_password else "********",
                         self._user.name,
                     )
                 else:
                     log.log_audit(
                         self,
-                        f'Non existing config value {section}.{key} to {vals["value"]}',
+                        f"Non existing config value {section}.{key} to {vals['value']}",
                         level=log.LogLevel.ERROR,
                     )
                     logger.error(
-                        'Non existing config value %s.%s to %s by %s',
+                        "Non existing config value %s.%s to %s by %s",
                         section,
                         key,
-                        vals['value'],
+                        vals["value"],
                         self._user.name,
                     )
-        return 'done'
+        return "done"

@@ -26,9 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import codecs
 import typing
 
@@ -39,7 +40,7 @@ from uds.core.managers.crypto import CryptoManager
 
 from uds.osmanagers.WindowsOsManager import windows_domain as osmanager
 
-PASSWD: typing.Final[str] = 'PASSWD'
+PASSWD: typing.Final[str] = "PASSWD"
 CRYPTED_PASSWD: typing.Final[str] = CryptoManager.manager().encrypt(PASSWD)
 
 # values = data.decode('utf8').split('\t')
@@ -70,58 +71,55 @@ CRYPTED_PASSWD: typing.Final[str] = CryptoManager.manager().encrypt(PASSWD)
 # self.flag_for_upgrade()  # Force upgrade to new format
 
 SERIALIZED_OSMANAGER_DATA: typing.Final[typing.Mapping[str, bytes]] = {
-    'v1': b'v1\tDOMAIN\tOU\tACCOUNT\t'
+    "v1": b"v1\tDOMAIN\tOU\tACCOUNT\t" + CRYPTED_PASSWD.encode() + b"\t" + codecs.encode(b"v3\tkeep\t30\ttrue", "hex"),
+    "v2": b"v2\tDOMAIN\tOU\tACCOUNT\t"
     + CRYPTED_PASSWD.encode()
-    + b'\t'
-    + codecs.encode(b'v3\tkeep\t30\ttrue', 'hex'),
-    'v2': b'v2\tDOMAIN\tOU\tACCOUNT\t'
+    + b"\t"
+    + codecs.encode(b"v3\tkeep\t30\ttrue", "hex")
+    + b"\tGRP",
+    "v3": b"v3\tDOMAIN\tOU\tACCOUNT\t"
     + CRYPTED_PASSWD.encode()
-    + b'\t'
-    + codecs.encode(b'v3\tkeep\t30\ttrue', 'hex')
-    + b'\tGRP',
-    'v3': b'v3\tDOMAIN\tOU\tACCOUNT\t'
+    + b"\t"
+    + codecs.encode(b"v3\tkeep\t30\ttrue", "hex")
+    + b"\tGRP\tSERVER_HINT",
+    "v4": b"v4\tDOMAIN\tOU\tACCOUNT\t"
     + CRYPTED_PASSWD.encode()
-    + b'\t'
-    + codecs.encode(b'v3\tkeep\t30\ttrue', 'hex')
-    + b'\tGRP\tSERVER_HINT',
-    'v4': b'v4\tDOMAIN\tOU\tACCOUNT\t'
-    + CRYPTED_PASSWD.encode()
-    + b'\t'
-    + codecs.encode(b'v3\tkeep\t30\ttrue', 'hex')
-    + b'\tGRP\tSERVER_HINT\ty\ty',
+    + b"\t"
+    + codecs.encode(b"v3\tkeep\t30\ttrue", "hex")
+    + b"\tGRP\tSERVER_HINT\ty\ty",
 }
 
 
 class WindowsOsManagerSerialTest(UDSTestCase):
-    def check(self, version: str, instance: 'osmanager.WinDomainOsManager') -> None:
-        self.assertEqual(instance.on_logout.value, 'keep')
+    def check(self, version: str, instance: "osmanager.WinDomainOsManager") -> None:
+        self.assertEqual(instance.on_logout.value, "keep")
         self.assertEqual(instance.idle.value, 30)
         self.assertEqual(instance.deadline.value, True)
 
-        self.assertEqual(instance.domain.value, 'DOMAIN')
-        self.assertEqual(instance.ou.value, 'OU')
-        self.assertEqual(instance.account.value, 'ACCOUNT')
+        self.assertEqual(instance.domain.value, "DOMAIN")
+        self.assertEqual(instance.ou.value, "OU")
+        self.assertEqual(instance.account.value, "ACCOUNT")
         self.assertEqual(instance.password.value, PASSWD)
 
-        if version in ('v2', 'v3', 'v4'):
-            self.assertEqual(instance.grp.value, 'GRP')
+        if version in ("v2", "v3", "v4"):
+            self.assertEqual(instance.grp.value, "GRP")
 
-        if version in ('v3', 'v4'):
-            self.assertEqual(instance.server_hint.value, 'SERVER_HINT')
+        if version in ("v3", "v4"):
+            self.assertEqual(instance.server_hint.value, "SERVER_HINT")
 
-        if version == 'v4':
+        if version == "v4":
             self.assertEqual(instance.use_ssl.value, True)
             self.assertEqual(instance.remove_on_exit.value, True)
 
     def test_unmarshall_all_versions(self) -> None:
         for v in range(1, len(SERIALIZED_OSMANAGER_DATA) + 1):
             instance = osmanager.WinDomainOsManager(environment=Environment.testing_environment())
-            instance.unmarshal(SERIALIZED_OSMANAGER_DATA['v{}'.format(v)])
-            self.check(f'v{v}', instance)
+            instance.unmarshal(SERIALIZED_OSMANAGER_DATA["v{}".format(v)])
+            self.check(f"v{v}", instance)
 
     def test_marshaling(self) -> None:
         # Unmarshall last version, remarshall and check that is marshalled using new marshalling format
-        LAST_VERSION = 'v{}'.format(len(SERIALIZED_OSMANAGER_DATA))
+        LAST_VERSION = "v{}".format(len(SERIALIZED_OSMANAGER_DATA))
         instance = osmanager.WinDomainOsManager(environment=Environment.testing_environment())
         instance.unmarshal(SERIALIZED_OSMANAGER_DATA[LAST_VERSION])
         marshaled_data = instance.marshal()
@@ -131,7 +129,7 @@ class WindowsOsManagerSerialTest(UDSTestCase):
         instance.mark_for_upgrade(False)  # reset flag
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'v'))
+        self.assertFalse(marshaled_data.startswith(b"v"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = osmanager.WinDomainOsManager(environment=Environment.testing_environment())
         instance.unmarshal(marshaled_data)

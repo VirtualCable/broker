@@ -29,9 +29,10 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -42,8 +43,8 @@ logger = logging.getLogger(__name__)
 
 
 def enumerate_datastores(
-    api: 'client.OpenNebulaClient', datastoreType: int = 0
-) -> collections.abc.Iterable['types.StorageType']:
+    api: "client.OpenNebulaClient", datastoreType: int = 0
+) -> collections.abc.Iterable["types.StorageType"]:
     """
     0 seems to be images datastore
     """

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import typing
 
@@ -46,29 +47,29 @@ class ProviderTypeInfo:
 
 
 SERVICE_TYPES: typing.Final[dict[str, ServiceTypeInfo]] = {
-    'XenLinkedService': ServiceTypeInfo(us=True, pub=True),
-    'ProxmoxLinkedService': ServiceTypeInfo(us=True, pub=True),
-    'oVirtLinkedService': ServiceTypeInfo(us=True, pub=True),
-    'openStackLiveService': ServiceTypeInfo(us=True, pub=True),
-    'openNebulaLiveService': ServiceTypeInfo(us=True, pub=True),
-    'openGnsysMachine': ServiceTypeInfo(us=True, pub=False),
-    'NutanixService': ServiceTypeInfo(us=True, pub=True),
-    'PrismCentralService': ServiceTypeInfo(us=True, pub=True),
-    'HyperVLinkedServiceNew': ServiceTypeInfo(us=True, pub=True),
-    'HyperVLinkedServiceNewGen2': ServiceTypeInfo(us=True, pub=True),
-    'RemoteAppService': ServiceTypeInfo(us=True, pub=False),
-    'RemoteSessionService': ServiceTypeInfo(us=True, pub=False),
-    'VCloudVapp': ServiceTypeInfo(us=True, pub=True),
-    'AWSEAMI': ServiceTypeInfo(us=True, pub=True),
-    'AzureVm': ServiceTypeInfo(us=True, pub=True),
-    'IPSingleMachineService': ServiceTypeInfo(us=True, pub=False),
-    'VCLinkedCloneService': ServiceTypeInfo(us=True, pub=True),
-    'VCFullCloneService': ServiceTypeInfo(us=True, pub=True),
-    'VCFixedMachinesService': ServiceTypeInfo(us=True, pub=False),
+    "XenLinkedService": ServiceTypeInfo(us=True, pub=True),
+    "ProxmoxLinkedService": ServiceTypeInfo(us=True, pub=True),
+    "oVirtLinkedService": ServiceTypeInfo(us=True, pub=True),
+    "openStackLiveService": ServiceTypeInfo(us=True, pub=True),
+    "openNebulaLiveService": ServiceTypeInfo(us=True, pub=True),
+    "openGnsysMachine": ServiceTypeInfo(us=True, pub=False),
+    "NutanixService": ServiceTypeInfo(us=True, pub=True),
+    "PrismCentralService": ServiceTypeInfo(us=True, pub=True),
+    "HyperVLinkedServiceNew": ServiceTypeInfo(us=True, pub=True),
+    "HyperVLinkedServiceNewGen2": ServiceTypeInfo(us=True, pub=True),
+    "RemoteAppService": ServiceTypeInfo(us=True, pub=False),
+    "RemoteSessionService": ServiceTypeInfo(us=True, pub=False),
+    "VCloudVapp": ServiceTypeInfo(us=True, pub=True),
+    "AWSEAMI": ServiceTypeInfo(us=True, pub=True),
+    "AzureVm": ServiceTypeInfo(us=True, pub=True),
+    "IPSingleMachineService": ServiceTypeInfo(us=True, pub=False),
+    "VCLinkedCloneService": ServiceTypeInfo(us=True, pub=True),
+    "VCFullCloneService": ServiceTypeInfo(us=True, pub=True),
+    "VCFixedMachinesService": ServiceTypeInfo(us=True, pub=False),
 }
 
 # Only provider/service types with unmarshal + mark_for_upgrade in their source
 PROVIDER_TYPES: typing.Final[dict[str, ProviderTypeInfo]] = {
-    'VmwareVCServiceProvider': ProviderTypeInfo(prov=True, svc=False),
-    'VCLinkedCloneService': ProviderTypeInfo(prov=False, svc=True),
+    "VmwareVCServiceProvider": ProviderTypeInfo(prov=True, svc=False),
+    "VCLinkedCloneService": ProviderTypeInfo(prov=False, svc=True),
 }

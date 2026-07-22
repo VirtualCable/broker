@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import logging
 import typing
@@ -84,52 +85,69 @@ class MetaPools(ModelHandler[MetaPoolItem]):
 
     MODEL = MetaPool
     DETAIL = {
-        'pools': MetaServicesPool,
-        'services': MetaAssignedService,
-        'groups': Groups,
-        'access': AccessCalendars,
+        "pools": MetaServicesPool,
+        "services": MetaAssignedService,
+        "groups": Groups,
+        "access": AccessCalendars,
     }
 
     FIELDS_TO_SAVE = [
-        'name',
-        'short_name',
-        'comments',
-        'tags',
-        'image_id',
-        'servicesPoolGroup_id',
-        'visible',
-        'policy',
-        'ha_policy',
-        'calendar_message',
-        'transport_grouping',
+        "name",
+        "short_name",
+        "comments",
+        "tags",
+        "image_id",
+        "servicesPoolGroup_id",
+        "visible",
+        "policy",
+        "ha_policy",
+        "calendar_message",
+        "transport_grouping",
     ]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Meta Pools'))
-        .text_column(name='name', title=_('Name'))
-        .text_column(name='comments', title=_('Comments'))
+        ui_utils.TableBuilder(_("Meta Pools"))
+        .text_column(name="name", title=_("Name"))
+        .text_column(name="comments", title=_("Comments"))
         .dict_column(
-            name='policy',
-            title=_('Policy'),
+            name="policy",
+            title=_("Policy"),
             dct=dict(types.pools.LoadBalancingPolicy.enumerate()),
         )
         .dict_column(
-            name='ha_policy',
-            title=_('HA Policy'),
+            name="ha_policy",
+            title=_("HA Policy"),
             dct=dict(types.pools.HighAvailabilityPolicy.enumerate()),
         )
-        .numeric_column(name='user_services_count', title=_('User services'))
-        .numeric_column(name='user_services_in_preparation', title=_('In Preparation'))
-        .boolean(name='visible', title=_('Visible'))
-        .text_column(name='pool_group_name', title=_('Pool Group'), width='16em')
-        .text_column(name='short_name', title=_('Label'))
-        .text_column(name='tags', title=_('tags'), visible=False)
+        .numeric_column(name="user_services_count", title=_("User services"))
+        .numeric_column(name="user_services_in_preparation", title=_("In Preparation"))
+        .boolean(name="visible", title=_("Visible"))
+        .text_column(name="pool_group_name", title=_("Pool Group"), width="16em")
+        .text_column(name="short_name", title=_("Label"))
+        .text_column(name="tags", title=_("tags"), visible=False)
         .build()
     )
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('set_fallback_access', True, method=types.rest.CustomMethodMethod.POST, description='Set fallback access for a meta pool member'),
-        types.rest.ModelCustomMethod('get_fallback_access', True, description='Get fallback access status for a meta pool member'),
+        types.rest.ModelCustomMethod(
+            "set_fallback_access",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description="Update the fallback access policy for a meta pool member",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "fallbackAccess": types.rest.api.SchemaProperty(
+                        type="string", description="Fallback access policy: ALLOW (default) or DENY"
+                    )
+                },
+            ),
+        ),
+        types.rest.ModelCustomMethod(
+            "get_fallback_access",
+            True,
+            description="Retrieve the current fallback access policy for a meta pool member",
+        ),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -138,12 +156,12 @@ class MetaPools(ModelHandler[MetaPoolItem]):
     )
 
     @typing.override
-    def get_item(self, item: 'models.Model') -> MetaPoolItem:
+    def get_item(self, item: "models.Model") -> MetaPoolItem:
         item = ensure.is_instance(item, MetaPool)
         # if item does not have an associated service, hide it (the case, for example, for a removed service)
         # Access from dict will raise an exception, and item will be skipped
         pool_group_id = None
-        pool_group_name: str = _('Default')
+        pool_group_name: str = _("Default")
         pool_group_thumb = DEFAULT_THUMB_BASE64
         if item.servicesPoolGroup is not None:
             pool_group_id = item.servicesPoolGroup.uuid
@@ -152,9 +170,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                 pool_group_thumb = item.servicesPoolGroup.image.thumb64
 
         all_pools = item.members.all()
-        userservices_total = sum(
-            (i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools)
-        )
+        userservices_total = sum((i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools))
         userservices_in_preparation = sum(
             (i.pool.userServices.filter(state=State.PREPARING).count()) for i in all_pools
         )
@@ -189,66 +205,66 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             ui_utils.GuiBuilder()
             .add_stock_field(types.rest.stock.StockField.TAGS)
             .add_text(
-                name='short_name',
-                label=gettext('Short name'),
-                tooltip=gettext('Short name for user service visualization'),
+                name="short_name",
+                label=gettext("Short name"),
+                tooltip=gettext("Short name for user service visualization"),
                 length=32,
             )
             .add_stock_field(types.rest.stock.StockField.NAME)
             .add_stock_field(types.rest.stock.StockField.COMMENTS)
             .set_order(100)
             .add_multichoice(
-                name='policy',
-                label=gettext('Load balancing policy'),
+                name="policy",
+                label=gettext("Load balancing policy"),
                 choices=[
                     ui.gui.choice_item(k, str(v))  # pyrefly: ignore[unnecessary-type-conversion]
                     for k, v in types.pools.LoadBalancingPolicy.enumerate()
                 ],
-                tooltip=gettext('Service pool load balancing policy'),
+                tooltip=gettext("Service pool load balancing policy"),
             )
             .add_choice(
-                name='ha_policy',
-                label=gettext('HA Policy'),
+                name="ha_policy",
+                label=gettext("HA Policy"),
                 choices=[
                     ui.gui.choice_item(k, str(v))  # pyrefly: ignore[unnecessary-type-conversion]
                     for k, v in types.pools.HighAvailabilityPolicy.enumerate()
                 ],
                 tooltip=gettext(
-                    'Service pool High Availability policy. If enabled and a pool fails, it will be restarted in another pool. Enable with care!'
+                    "Service pool High Availability policy. If enabled and a pool fails, it will be restarted in another pool. Enable with care!"
                 ),
             )
             .new_tab(types.ui.Tab.DISPLAY)
             .add_image_choice()
             .add_image_choice(
-                name='servicesPoolGroup_id',
-                label=gettext('Pool group'),
+                name="servicesPoolGroup_id",
+                label=gettext("Pool group"),
                 choices=[
                     ui.gui.choice_image(
                         x.uuid, x.name, x.image.thumb64 if x.image is not None else DEFAULT_THUMB_BASE64
                     )
                     for x in ServicePoolGroup.objects.all()
                 ],
-                tooltip=gettext('Pool group for this pool (for pool classify on display)'),
+                tooltip=gettext("Pool group for this pool (for pool classify on display)"),
             )
             .add_checkbox(
-                name='visible',
-                label=gettext('Visible'),
-                tooltip=gettext('If active, metapool will be visible for users'),
+                name="visible",
+                label=gettext("Visible"),
+                tooltip=gettext("If active, metapool will be visible for users"),
                 default=True,
             )
             .add_text(
-                name='calendar_message',
-                label=gettext('Calendar access denied text'),
-                tooltip=gettext('Custom message to be shown to users if access is limited by calendar rules.'),
+                name="calendar_message",
+                label=gettext("Calendar access denied text"),
+                tooltip=gettext("Custom message to be shown to users if access is limited by calendar rules."),
             )
             .add_choice(
-                name='transport_grouping',  # Transport Selection
-                label=gettext('Transport Selection'),
+                name="transport_grouping",  # Transport Selection
+                label=gettext("Transport Selection"),
                 choices=[
                     ui.gui.choice_item(k, str(v))  # pyrefly: ignore[unnecessary-type-conversion]
                     for k, v in types.pools.TransportSelectionPolicy.enumerate()
                 ],
-                tooltip=gettext('Transport selection policy'),
+                tooltip=gettext("Transport selection policy"),
             )
             .build()
         )
@@ -258,36 +274,36 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         # logger.debug(self._params)
         try:
             # **** IMAGE ***
-            imgid = fields['image_id']
-            fields['image_id'] = None
-            logger.debug('Image id: %s', imgid)
+            imgid = fields["image_id"]
+            fields["image_id"] = None
+            logger.debug("Image id: %s", imgid)
             try:
-                if imgid != '-1':
+                if imgid != "-1":
                     image = Image.objects.get(uuid=process_uuid(imgid))
-                    fields['image_id'] = image.id
+                    fields["image_id"] = image.id
             except Exception:
-                logger.exception('At image recovering')
+                logger.exception("At image recovering")
 
             # Servicepool Group
-            servicespool_group_id = fields['servicesPoolGroup_id']
-            fields['servicesPoolGroup_id'] = None
-            logger.debug('servicesPoolGroup_id: %s', servicespool_group_id)
+            servicespool_group_id = fields["servicesPoolGroup_id"]
+            fields["servicesPoolGroup_id"] = None
+            logger.debug("servicesPoolGroup_id: %s", servicespool_group_id)
             try:
-                if servicespool_group_id != '-1':
+                if servicespool_group_id != "-1":
                     spgrp = ServicePoolGroup.objects.get(uuid=process_uuid(servicespool_group_id))
-                    fields['servicesPoolGroup_id'] = spgrp.id
+                    fields["servicesPoolGroup_id"] = spgrp.id
             except Exception:
-                logger.exception('At service pool group recovering')
+                logger.exception("At service pool group recovering")
 
         except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
             raise
         except Exception as e:
             raise exceptions.rest.RequestError(str(e))
 
-        logger.debug('Fields: %s', fields)
+        logger.debug("Fields: %s", fields)
 
     @typing.override
-    def delete_item(self, item: 'models.Model') -> None:
+    def delete_item(self, item: "models.Model") -> None:
         item = ensure.is_instance(item, MetaPool)
         item.delete()
 
@@ -299,11 +315,11 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         """
         self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
 
-        fallback = self._params.get('fallbackAccess', 'ALLOW')
-        logger.debug('Setting fallback of %s to %s', item.name, fallback)
+        fallback = self._params.get("fallbackAccess", "ALLOW")
+        logger.debug("Setting fallback of %s to %s", item.name, fallback)
         item.fallbackAccess = fallback
         item.save()
-        return ''
+        return ""
 
     def get_fallback_access(self, item: MetaPool) -> typing.Any:
         return item.fallbackAccess

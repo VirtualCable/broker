@@ -36,6 +36,7 @@ from uds.core.types.states import TaskState
 from tests.services.openshift import fixtures
 from tests.utils.test import UDSTransactionTestCase
 
+
 class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
     def _create_userservice_fixed(self):
         """
@@ -44,12 +45,13 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
             userservice: A fixed userservice object with name 'fixed-vm'.
         """
         userservice = fixtures.create_userservice_fixed()
-        userservice._name = 'fixed-vm'
+        userservice._name = "fixed-vm"
         return userservice
+
     def setUp(self) -> None:
         super().setUp()
         fixtures.clear()
-        
+
     # --- Start operation tests ---
     def test_op_start_vm_running(self) -> None:
         """
@@ -59,8 +61,8 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         api = userservice.service().provider().api
         vm_mock = mock.Mock()
         vm_mock.status.is_off.return_value = False
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
-            with mock.patch.object(api, 'start_vm') as start_mock:
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
+            with mock.patch.object(api, "start_vm") as start_mock:
                 userservice.op_start()
                 start_mock.assert_not_called()
 
@@ -72,10 +74,10 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         api = userservice.service().provider().api
         vm_mock = mock.Mock()
         vm_mock.status.is_off.return_value = True
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
-            with mock.patch.object(api, 'start_vm') as start_mock:
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
+            with mock.patch.object(api, "start_vm") as start_mock:
                 userservice.op_start()
-                start_mock.assert_called_once_with('fixed-vm')
+                start_mock.assert_called_once_with("fixed-vm")
 
     # --- Stop operation tests ---
     def test_op_stop_vm_off(self) -> None:
@@ -86,8 +88,8 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         api = userservice.service().provider().api
         vm_mock = mock.Mock()
         vm_mock.status.is_off.return_value = True
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
-            with mock.patch.object(api, 'stop_vm') as stop_mock:
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
+            with mock.patch.object(api, "stop_vm") as stop_mock:
                 userservice.op_stop()
                 stop_mock.assert_not_called()
 
@@ -99,10 +101,10 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         api = userservice.service().provider().api
         vm_mock = mock.Mock()
         vm_mock.status.is_off.return_value = False
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
-            with mock.patch.object(api, 'stop_vm') as stop_mock:
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
+            with mock.patch.object(api, "stop_vm") as stop_mock:
                 userservice.op_stop()
-                stop_mock.assert_called_once_with('fixed-vm')
+                stop_mock.assert_called_once_with("fixed-vm")
 
     # --- Start checker tests ---
     def test_op_start_checker_running(self) -> None:
@@ -115,7 +117,7 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         status_mock.is_error.return_value = False
         vm_mock = mock.Mock()
         vm_mock.status = status_mock
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
             state = userservice.op_start_checker()
         self.assertEqual(state, TaskState.RUNNING)
 
@@ -127,8 +129,9 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         api = userservice.service().provider().api
         vm_mock = mock.Mock()
         from uds.services.OpenShift.openshift import types as opensh_types
+
         vm_mock.status = opensh_types.State.RUNNING
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
             state = userservice.op_start_checker()
             self.assertEqual(state, TaskState.FINISHED)
 
@@ -143,7 +146,7 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         status_mock = mock.Mock()
         status_mock.is_error.return_value = False
         vm_mock.status = status_mock
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
             state = userservice.op_stop_checker()
         self.assertEqual(state, TaskState.RUNNING)
 
@@ -155,9 +158,8 @@ class TestOpenshiftUserServiceFixed(UDSTransactionTestCase):
         api = userservice.service().provider().api
         vm_mock = mock.Mock()
         from uds.services.OpenShift.openshift import types as opensh_types
+
         vm_mock.status = opensh_types.State.STOPPED
-        with mock.patch.object(api, 'get_vm_info', return_value=vm_mock):
+        with mock.patch.object(api, "get_vm_info", return_value=vm_mock):
             state = userservice.op_stop_checker()
             self.assertEqual(state, TaskState.FINISHED)
-
-

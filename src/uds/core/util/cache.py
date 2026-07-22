@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import codecs
 import typing
@@ -47,6 +48,7 @@ from .hash import hash_key
 logger = logging.getLogger(__name__)
 
 KeyType: typing.TypeAlias = str | bytes
+
 
 class CacheLike(typing.Protocol):
     """Minimal cache surface used by ``AD``. Allows tests to provide
@@ -78,29 +80,25 @@ class Cache:
 
     @staticmethod
     def _basic_serialize(value: typing.Any) -> str:
-        return codecs.encode(serializer.serialize(value), 'base64').decode()
+        return codecs.encode(serializer.serialize(value), "base64").decode()
 
     @staticmethod
     def _basic_deserialize(value: str) -> typing.Any:
-        return serializer.deserialize(codecs.decode(value.encode(), 'base64'))
+        return serializer.deserialize(codecs.decode(value.encode(), "base64"))
 
     _serializer: typing.ClassVar[collections.abc.Callable[[typing.Any], str]] = _basic_serialize
     _deserializer: typing.ClassVar[collections.abc.Callable[[str], typing.Any]] = _basic_deserialize
 
-    def __init__(
-        self, owner: str | bytes, default_timeout: int = consts.cache.DEFAULT_CACHE_TIMEOUT
-    ) -> None:
-        self._owner = owner.decode('utf-8') if isinstance(owner, bytes) else owner
+    def __init__(self, owner: str | bytes, default_timeout: int = consts.cache.DEFAULT_CACHE_TIMEOUT) -> None:
+        self._owner = owner.decode("utf-8") if isinstance(owner, bytes) else owner
         self._timeout = default_timeout
 
     def _get_key(self, key: str | bytes) -> str:
         if isinstance(key, str):
-            key = key.encode('utf8')
+            key = key.encode("utf8")
         return hash_key(self._owner.encode() + key)
 
-    def get(
-        self, skey: KeyType, default: typing.Any = None, *, remove: bool = False
-    ) -> typing.Any:
+    def get(self, skey: KeyType, default: typing.Any = None, *, remove: bool = False) -> typing.Any:
         now = sql_now()
         # logger.debug('Requesting key "%s" for cache "%s"', skey, self._owner)
         try:
@@ -139,9 +137,9 @@ class Cache:
             import inspect
 
             # Get caller
-            error = 'Error Getting cache key from: '
+            error = "Error Getting cache key from: "
             for caller in inspect.stack():
-                error += f'{caller.filename}:{caller.lineno} -> '
+                error += f"{caller.filename}:{caller.lineno} -> "
             logger.error(error)
 
             # logger.exception('Error getting cache key: %s', skey)
@@ -172,7 +170,7 @@ class Cache:
             DBCache.objects.get(pk=key).delete()  # @UndefinedVariable
             return True
         except DBCache.DoesNotExist:  # @UndefinedVariable
-            logger.debug('key not found')
+            logger.debug("key not found")
             return False
 
     def __delitem__(self, key: KeyType) -> None:
@@ -203,11 +201,11 @@ class Cache:
                     pk=key,
                     owner=self._owner,
                     defaults={
-                        'owner': self._owner,
-                        'key': key,
-                        'value': value_str,
-                        'created': now,
-                        'validity': validity,
+                        "owner": self._owner,
+                        "key": key,
+                        "value": value_str,
+                        "created": now,
+                        "validity": validity,
                     },
                 )
 
@@ -223,7 +221,7 @@ class Cache:
                 # )  # @UndefinedVariable
                 return  # And return
             except Exception as e:
-                logger.debug('Transaction in course, cannot store value: %s', e)
+                logger.debug("Transaction in course, cannot store value: %s", e)
 
     def __setitem__(self, key: KeyType, value: typing.Any) -> None:
         """
@@ -239,7 +237,7 @@ class Cache:
             c.created = sql_now()
             c.save()
         except DBCache.DoesNotExist:
-            logger.debug('Can\'t refresh cache key %s because it doesn\'t exists', skey)
+            logger.debug("Can't refresh cache key %s because it doesn't exists", skey)
             return
 
     @staticmethod

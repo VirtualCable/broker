@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -41,14 +42,14 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'ipauth',
-    'internaldbauth',
-    'oauth2authenticator',
-    'radiusauthenticator',
-    'regexldapauthenticator',
-    'saml20authenticator',
-    'sampleauthenticator',
-    'simpleldapauthenticator',
+    "ipauth",
+    "internaldbauth",
+    "oauth2authenticator",
+    "radiusauthenticator",
+    "regexldapauthenticator",
+    "saml20authenticator",
+    "sampleauthenticator",
+    "simpleldapauthenticator",
 ]
 
 
@@ -58,8 +59,8 @@ class TestAuthenticators(UDSTestCase):
     """
 
     def test_authenticators_loads_correctly(self) -> None:
-        from uds import auths  # type: ignore  # ensure transports are registered
+        from uds import auths as auths  # ensure transports are registered
 
         factory = AuthsFactory()
         for auth in MUST_HAVE:
-            self.assertTrue(factory.has(auth), f'Authenticator {auth} not found')
+            self.assertTrue(factory.has(auth), f"Authenticator {auth} not found")

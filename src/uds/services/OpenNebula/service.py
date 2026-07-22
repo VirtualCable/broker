@@ -30,16 +30,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
-from uds.core import services, types
-from uds.core.util import validators
-from uds.core.ui import gui
 
-from .publication import OpenNebulaLivePublication
+from uds.core import services
+from uds.core import types
+from uds.core.ui import gui
+from uds.core.util import validators
+
 from .deployment import OpenNebulaLiveDeployment
+from .publication import OpenNebulaLivePublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -57,15 +60,15 @@ class OpenNebulaLiveService(services.Service):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenNebula Live Images')
+    type_name = _("OpenNebula Live Images")
     # : Type used internally to identify this provider
-    type_type = 'openNebulaLiveService'
+    type_type = "openNebulaLiveService"
     # : Description shown at administration interface for this provider
-    type_description = _('OpenNebula live images based service')
+    type_description = _("OpenNebula live images based service")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # Functional related data
 
@@ -75,13 +78,13 @@ class OpenNebulaLiveService(services.Service):
     uses_cache = True
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('Number of desired machines to keep running waiting for an user')
+    cache_tooltip = _("Number of desired machines to keep running waiting for an user")
     # : If we need to generate a "Level 2" cache for this service (i.e., L1
     # : could be running machines and L2 suspended machines)
     uses_cache_l2 = True
     # : Tooltip shown to user when this item is pointed at admin interface, None
     # : also because we don't use it
-    cache_tooltip_l2 = _('Number of desired VMs to keep stopped waiting for use')
+    cache_tooltip_l2 = _("Number of desired VMs to keep stopped waiting for use")
 
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
@@ -97,45 +100,43 @@ class OpenNebulaLiveService(services.Service):
     allowed_protocols = types.transports.Protocol.generic_vdi(types.transports.Protocol.SPICE)
     services_type_provided = types.services.ServiceType.VDI
 
-
-
     # Now the form part
     datastore = gui.ChoiceField(
         label=_("Datastore"),
         order=100,
-        tooltip=_('Service clones datastore'),
+        tooltip=_("Service clones datastore"),
         required=True,
     )
 
     template = gui.ChoiceField(
         label=_("Base Template"),
         order=110,
-        tooltip=_('Service base template'),
+        tooltip=_("Service base template"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
 
     baseName = gui.TextField(
-        label=_('Machine Names'),
+        label=_("Machine Names"),
         readonly=False,
         order=111,
-        tooltip=_('Base name for clones from this machine'),
+        tooltip=_("Base name for clones from this machine"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
 
     lenName = gui.NumericField(
         length=1,
-        label=_('Name Length'),
+        label=_("Name Length"),
         default=5,
         order=112,
-        tooltip=_('Size of numeric part for the names of these machines'),
+        tooltip=_("Size of numeric part for the names of these machines"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We check here form values to see if they are valid.
 
@@ -145,13 +146,11 @@ class OpenNebulaLiveService(services.Service):
         if not values:
             return
 
-        self.baseName.value = validators.validate_basename(
-            self.baseName.value, length=self.lenName.as_int()
-        )
+        self.baseName.value = validators.validate_basename(self.baseName.value, length=self.lenName.as_int())
 
     @typing.override
-    def provider(self) -> 'OpenNebulaProvider':
-        return typing.cast('OpenNebulaProvider', super().provider())
+    def provider(self) -> "OpenNebulaProvider":
+        return typing.cast("OpenNebulaProvider", super().provider())
 
     @typing.override
     def init_gui(self) -> None:
@@ -159,21 +158,15 @@ class OpenNebulaLiveService(services.Service):
         Loads required values inside
         """
 
-        self.template.set_choices(
-            [gui.choice_item(t.id, t.name) for t in self.provider().get_templates()]
-        )
+        self.template.set_choices([gui.choice_item(t.id, t.name) for t in self.provider().get_templates()])
 
-        self.datastore.set_choices(
-            [gui.choice_item(d.id, d.name) for d in self.provider().get_datastores()]
-        )
+        self.datastore.set_choices([gui.choice_item(d.id, d.name) for d in self.provider().get_datastores()])
 
     def sanitized_name(self, name: str) -> str:
         return self.provider().sanitized_name(name)
 
     def make_template(self, name: str) -> str:
-        return self.provider().make_template(
-            self.template.value, name, self.datastore.value
-        )
+        return self.provider().make_template(self.template.value, name, self.datastore.value)
 
     def check_template_published(self, template_id: str) -> bool:
         return self.provider().check_template_published(template_id)
@@ -190,7 +183,7 @@ class OpenNebulaLiveService(services.Service):
         Returns:
             Id of the machine being created form template
         """
-        logger.debug('Deploying from template %s machine %s', template_id, name)
+        logger.debug("Deploying from template %s machine %s", template_id, name)
         # self.datastoreHasSpace()
         return self.provider().deply_from_template(name, template_id)
 
@@ -200,7 +193,7 @@ class OpenNebulaLiveService(services.Service):
         """
         self.provider().remove_template(template_id)
 
-    def get_machine_state(self, machine_id: str) -> 'on.types.VmState':
+    def get_machine_state(self, machine_id: str) -> "on.types.VmState":
         """
         Invokes getMachineState from parent provider
         (returns if machine is "active" or "inactive"
@@ -285,9 +278,7 @@ class OpenNebulaLiveService(services.Service):
         """
         self.provider().remove_machine(machine_id)
 
-    def get_network_info(
-        self, machine_id: str, network_id: typing.Optional[str] = None
-    ) -> tuple[str, str]:
+    def get_network_info(self, machine_id: str, network_id: typing.Optional[str] = None) -> tuple[str, str]:
         """
         Gets the network info for a machine
         """

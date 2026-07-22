@@ -37,7 +37,6 @@ import collections.abc
 import abc
 
 from django.db import models
-from django.utils.translation import gettext as _
 
 from uds.core import consts, exceptions, types, module
 from uds.core.types.rest import T_Item
@@ -48,8 +47,7 @@ from uds.REST.utils import rest_result
 from uds.REST.model.base import BaseModelHandler
 from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
 
-T = typing.TypeVar('T', bound=models.Model)
-T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
+T = typing.TypeVar("T", bound=models.Model)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -89,20 +87,20 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     """
 
     CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = []
-    _parent: 'ModelHandler[T_Item] | None'  # Parent handler, that is the ModelHandler that contains this detail
+    _parent: "ModelHandler[T_Item] | None"  # Parent handler, that is the ModelHandler that contains this detail
     _path: str
     _params: typing.Any  # _params is deserialized object from request
     _args: list[str]
     _parent_item: models.Model  # Parent item, that is the parent model element
-    _user: 'User'
+    _user: "User"
 
     def __init__(
         self,
-        parent_handler: 'ModelHandler[T_Item]',
+        parent_handler: "ModelHandler[T_Item]",
         path: str,
         params: typing.Any,
         *args: str,
-        user: 'User',
+        user: "User",
         parent_item: models.Model,
     ) -> None:
         """
@@ -150,7 +148,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             if is_camel_case(check) and check != snake_case_name:
                 if is_compat:
                     self.add_deprecation_headers(
-                        successor_hint=f'use snake_case form: {snake_case_name} (instead of {check})'
+                        successor_hint=f"use snake_case form: {snake_case_name} (instead of {check})"
                     )
                 else:
                     raise exceptions.rest.GoneError(
@@ -165,12 +163,10 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
                 ):
                     if is_compat:
                         # COMPAT: allow GET on POST method with deprecation headers
-                        self.add_deprecation_headers(f'use POST {self._path}/{check}')
+                        self.add_deprecation_headers(f"use POST {self._path}/{check}")
                     else:
                         # NO_COMPAT: this endpoint is gone
-                        raise exceptions.rest.GoneError(
-                            f'This endpoint is deprecated. Use POST {self._path}/{check}'
-                        )
+                        raise exceptions.rest.GoneError(f"This endpoint is deprecated. Use POST {self._path}/{check}")
                 else:
                     continue
 
@@ -182,13 +178,29 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
 
         return consts.rest.NOT_FOUND
 
+    def _get_fields_from_gui(self, parent: models.Model, for_type: str) -> list[str]:
+        gui = self.get_gui(parent, for_type)
+        return [i.name for i in gui]
+
+    def _item_with_etag_from_uuuid(self, parent: models.Model, uuid: str) -> tuple[T_Item, str]:
+        response = self.get_item(parent, process_uuid(uuid))
+        etag = ""
+        if isinstance(response, types.rest.ManagedObjectItem):
+            fields: list[str] = self._get_fields_from_gui(
+                parent,
+                response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            )
+            # Append etag header
+            etag = response.etag(*fields)
+        return response, etag  # pyright: ignore[reportUnknownVariableType]
+
     # pylint: disable=too-many-branches,too-many-return-statements
     def get(self) -> typing.Any:
         """
         Processes GET method for a detail Handler
         """
         # Process args
-        logger.debug('Detail args for GET: %s', self._args)
+        logger.debug("Detail args for GET: %s", self._args)
 
         parent: models.Model = self._parent_item
 
@@ -204,35 +216,40 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             case [consts.rest.OVERVIEW]:
                 return self.get_items(parent)
             case [consts.rest.OVERVIEW, *_fails]:
-                raise exceptions.rest.RequestError('Invalid overview request') from None
+                raise exceptions.rest.RequestError("Invalid overview request") from None
             case [consts.rest.TYPES]:
-                types = self.enum_types(parent, None)
-                logger.debug('Types: %s', types)
-                return [i.as_dict() for i in types]
+                known_types = self.enum_types(parent, None)
+                logger.debug("Types: %s", known_types)
+                return [i.as_dict() for i in known_types]
             case [consts.rest.TYPES, for_type]:
                 return [i.as_dict() for i in self.enum_types(parent, for_type)]
             case [consts.rest.TYPES, for_type, *_fails]:
-                raise exceptions.rest.RequestError('Invalid types request') from None
+                raise exceptions.rest.RequestError("Invalid types request") from None
             case [consts.rest.TABLEINFO]:
                 return self.get_table(parent).as_dict()
             case [consts.rest.TABLEINFO, *_fails]:
-                raise exceptions.rest.RequestError('Invalid table info request') from None
+                raise exceptions.rest.RequestError("Invalid table info request") from None
             case [consts.rest.GUI]:
-                return sorted(self.get_processed_gui(parent, ''), key=lambda f: f.gui.order)
+                return sorted(self.get_processed_gui(parent, ""), key=lambda f: f.gui.order)
             case [consts.rest.GUI, for_type]:
                 return sorted(self.get_processed_gui(parent, for_type), key=lambda f: f.gui.order)
             case [consts.rest.GUI, for_type, *_fails]:
-                raise exceptions.rest.RequestError('Invalid GUI request') from None
+                raise exceptions.rest.RequestError("Invalid GUI request") from None
             case [item_id, consts.rest.LOG]:
                 return self.get_logs(parent, process_uuid(item_id))
             case [consts.rest.LOG, *_fails]:
-                raise exceptions.rest.RequestError('Invalid log request') from None
+                raise exceptions.rest.RequestError("Invalid log request") from None
             case [consts.rest.POSITION, item_uuid]:
                 return self.get_item_position(parent, item_uuid)
             case [one_arg]:
-                return self.get_item(parent, process_uuid(one_arg))
+                response, etag = self._item_with_etag_from_uuuid(parent, one_arg)
+                if etag:
+                    self.add_header("ETag", etag)
+
+                return response  # pyright: ignore[reportUnknownVariableType]
+
             case _:
-                # Maybe a custom method?
+                # Maybe a custom method of an specific item?
                 r = self._check_is_custom_method(self._args[1], parent, self._args[0])
                 if r is not None:
                     return r
@@ -246,7 +263,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Evaluates if it is a new element or a "modify" operation (based on if it has parameter),
         and invokes "save_item" with parent & item (that can be None for a new Item)
         """
-        logger.debug('Detail args for PUT: %s, %s', self._args, sanitize_params(self._params))
+        logger.debug("Detail args for PUT: %s, %s", self._args, sanitize_params(self._params))
 
         parent: models.Model = self._parent_item
 
@@ -261,14 +278,18 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         if len(self._args) == 1:
             item = self._args[0]
         elif len(self._args) > 1:  # PUT expects 0 or 1 parameters. 0 == NEW, 1 = EDIT
-            raise exceptions.rest.RequestError('Invalid PUT request') from None
+            raise exceptions.rest.RequestError("Invalid PUT request") from None
 
         # PUT create (0 args) → delegate to POST create with deprecation header
         if item is None:
-            self.add_deprecation_headers(successor_hint=f'use POST /{self._path} to create items')
+            self.add_deprecation_headers(successor_hint=f"use POST /{self._path} to create items")
             return self._perform_create(parent)
 
-        logger.debug('Invoking proper saving detail item %s', item)
+        logger.debug("Invoking proper saving detail item %s", item)
+        # Try to get the etag from item.
+        _not_used, etag = self._item_with_etag_from_uuuid(parent, item)
+        self.check_if_match_header(etag)
+
         return rest_result(self.save_item(parent, item))
 
     def post(self) -> typing.Any:
@@ -278,15 +299,13 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         POST on collection (no args) creates a new item (Change G — preferred over PUT).
         Dispatches to POST custom methods when the path matches.
         """
-        logger.debug('Detail args for POST: %s, %s', self._args, sanitize_params(self._params))
+        logger.debug("Detail args for POST: %s, %s", self._args, sanitize_params(self._params))
 
         parent: models.Model = self._parent_item
 
         # Check for custom methods at _args[0] (e.g. POST /collection/{id}/detail/method)
         if len(self._args) >= 1:
-            r = self._check_is_custom_method(
-                self._args[0], parent, http_method=types.rest.CustomMethodMethod.POST
-            )
+            r = self._check_is_custom_method(self._args[0], parent, http_method=types.rest.CustomMethodMethod.POST)
             if r is not consts.rest.NOT_FOUND:
                 return r
 
@@ -303,13 +322,13 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         if len(self._args) == 0:
             return self._perform_create(parent)
 
-        raise exceptions.rest.RequestError('Invalid POST request') from None
+        raise exceptions.rest.RequestError("Invalid POST request") from None
 
     def _perform_create(self, parent: models.Model) -> typing.Any:
         """
         Common create logic used by both POST (preferred) and PUT (legacy).
         """
-        logger.debug('Creating detail item under parent %s', parent)
+        logger.debug("Creating detail item under parent %s", parent)
         return rest_result(self.save_item(parent, None))
 
     def delete(self) -> typing.Any:
@@ -317,12 +336,12 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Process the "DELETE" operation, making the correspondent checks.
         Extracts the item id and invokes delete_item with parent item and item id (uuid)
         """
-        logger.debug('Detail args for DELETE: %s', self._args)
+        logger.debug("Detail args for DELETE: %s", self._args)
 
         parent = self._parent_item
 
         if len(self._args) != 1:
-            raise exceptions.rest.RequestError('Invalid DELETE request') from None
+            raise exceptions.rest.RequestError("Invalid DELETE request") from None
 
         self.delete_item(parent, process_uuid(self._args[0]))
 
@@ -333,7 +352,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Invoked if default get can't process request.
         Here derived classes can process "non default" (and so, not understood) GET constructions
         """
-        raise exceptions.rest.RequestError('Invalid GET request') from None
+        raise exceptions.rest.RequestError("Invalid GET request") from None
 
     # Override this to provide functionality
     # Default (as sample) get_items
@@ -348,7 +367,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         # if item is None:  # Returns ALL detail items
         #     return []
         # return {}  # Returns one item
-        raise NotImplementedError(f'Must provide an get_items method for {self.__class__} class')
+        raise NotImplementedError(f"Must provide an get_items method for {self.__class__} class")
 
     @abc.abstractmethod
     def get_item(self, parent: models.Model, item: str) -> T_Item:
@@ -358,7 +377,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :param item: Item uuid
         :return: Item as dictionary
         """
-        raise NotImplementedError(f'Must provide an get_item method for {self.__class__} class')
+        raise NotImplementedError(f"Must provide an get_item method for {self.__class__} class")
 
     # Default save
     def save_item(self, parent: models.Model, item: str | None) -> T_Item:
@@ -370,8 +389,8 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :param item: Item id (uuid)
         :return: Normally "success" is expected, but can throw any "exception"
         """
-        logger.debug('Default save_item handler caller for %s', self._path)
-        raise exceptions.rest.RequestError('Invalid PUT request') from None
+        logger.debug("Default save_item handler caller for %s", self._path)
+        raise exceptions.rest.RequestError("Invalid PUT request") from None
 
     # Default delete
     def delete_item(self, parent: models.Model, item: str) -> None:
@@ -382,7 +401,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :param item: Item id (uuid)
         :return: Normally "success" is expected, but can throw any "exception"
         """
-        raise exceptions.rest.InvalidMethodError('Object does not support delete')
+        raise exceptions.rest.InvalidMethodError("Object does not support delete")
 
     def get_table(self, parent: models.Model) -> types.rest.TableInfo:
         """
@@ -410,9 +429,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     def get_processed_gui(self, parent: models.Model, for_type: str) -> list[types.ui.GuiElement]:
         return sorted(self.get_gui(parent, for_type), key=lambda f: f.gui.order)
 
-    def enum_types(
-        self, parent: models.Model, for_type: str | None
-    ) -> collections.abc.Iterable[types.rest.TypeInfo]:
+    def enum_types(self, parent: models.Model, for_type: str | None) -> collections.abc.Iterable[types.rest.TypeInfo]:
         """
         The default is that detail element will not have any types (they are "homogeneous")
         but we provided this method, that can be overridden, in case one detail needs it
@@ -427,7 +444,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         return []  # Default is that details do not have types
 
-    def get_logs(self, parent: 'models.Model', item: str) -> list[typing.Any]:
+    def get_logs(self, parent: "models.Model", item: str) -> list[typing.Any]:
         """
         If the detail has any log associated with it items, provide it overriding this method
 
@@ -438,9 +455,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Returns:
             A list of log elements (normally got using "uds.core.util.log.get_logs" method)
         """
-        raise exceptions.rest.InvalidMethodError('Object does not support logs')
+        raise exceptions.rest.InvalidMethodError("Object does not support logs")
 
-    def calc_item_position(self, item_uuid: str, qs: 'QuerySet[T]') -> int:
+    def calc_item_position(self, item_uuid: str, qs: "QuerySet[T]") -> int:
         """
         Helper method to get the position of an item in a queryset
 

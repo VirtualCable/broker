@@ -42,6 +42,7 @@ the basic CRUD lifecycle only, not the modifier.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -65,7 +66,7 @@ class ProviderServicesCrudTest(rest.test.RESTTestCase):
 
     def test_get_overview_returns_list_under_provider(self) -> None:
         """GET /providers/<uuid>/services/overview returns 200 + the provider's services."""
-        url = f'providers/{self.provider.uuid}/services/overview'
+        url = f"providers/{self.provider.uuid}/services/overview"
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 200)
         items: list[dict[str, typing.Any]] = response.json()
@@ -75,7 +76,7 @@ class ProviderServicesCrudTest(rest.test.RESTTestCase):
 
     def test_get_nonexistent_service_under_provider_returns_404(self) -> None:
         """GET /providers/<uuid>/services/<bogus> returns 404."""
-        url = f'providers/{self.provider.uuid}/services/00000000-0000-0000-0000-000000000000'
+        url = f"providers/{self.provider.uuid}/services/00000000-0000-0000-0000-000000000000"
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 404)
 
@@ -85,13 +86,13 @@ class ProviderServicesCrudTest(rest.test.RESTTestCase):
         Uses 'TestService' which is provided by TestProvider's TestService type.
         """
         before = self._services_under(self.provider)
-        url = f'providers/{self.provider.uuid}/services'
+        url = f"providers/{self.provider.uuid}/services"
         payload: dict[str, typing.Any] = {
-            'name': 'smoke-test-service',
-            'comments': 'created by CRUD smoke test',
-            'data_type': 'TestService',
-            'tags': [],
-            'max_services_count_type': 0,
+            "name": "smoke-test-service",
+            "comments": "created by CRUD smoke test",
+            "data_type": "TestService",
+            "tags": [],
+            "max_services_count_type": 0,
         }
         response = self.client.rest_put(url, data=payload)
         # Note: response may be 200 (created) or 4xx (e.g. on provider validation).
@@ -100,19 +101,19 @@ class ProviderServicesCrudTest(rest.test.RESTTestCase):
         self.assertLess(response.status_code, 500, response.content)
         if response.status_code == 200:
             item: dict[str, typing.Any] = response.json()
-            self.assertIn('id', item)
-            self.assertEqual(item['name'], 'smoke-test-service')
+            self.assertIn("id", item)
+            self.assertEqual(item["name"], "smoke-test-service")
 
             after = self._services_under(self.provider)
-            self.assertEqual(after, before + 1, 'PUT create must add exactly one Service')
-            self.assertTrue(models.Service.objects.filter(uuid=item['id']).exists())
+            self.assertEqual(after, before + 1, "PUT create must add exactly one Service")
+            self.assertTrue(models.Service.objects.filter(uuid=item["id"]).exists())
         else:
             # If the PUT fails (e.g. provider requires extra config), at least
             # document it; we do NOT assert on count because we don't know
             # what side effects occurred. The exact contract (200 vs 4xx)
             # for TestService is exposed here without imposing our assumption.
             self.skipTest(
-                f'PUT returned {response.status_code}; cannot assert create side effects. '
-                'Test adaptation: doc-only check; service creation contract under this '
-                'provider may require additional configuration not covered by this smoke test.'
+                f"PUT returned {response.status_code}; cannot assert create side effects. "
+                "Test adaptation: doc-only check; service creation contract under this "
+                "provider may require additional configuration not covered by this smoke test."
             )

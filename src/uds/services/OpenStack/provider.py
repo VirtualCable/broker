@@ -30,17 +30,23 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, types
+from uds.core import exceptions
+from uds.core import types
 from uds.core.services import ServiceProvider
 from uds.core.ui import gui
-from uds.core.util import validators, fields, decorators
+from uds.core.util import decorators
+from uds.core.util import fields
+from uds.core.util import validators
 
-from .openstack import client, sanitized_name, types as openstack_types
+from .openstack import client
+from .openstack import sanitized_name
+from .openstack import types as openstack_types
 from .service import OpenStackLiveService
 from .service_fixed import OpenStackServiceFixed
 
@@ -51,9 +57,9 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 INTERFACE_VALUES: typing.Final[list[types.ui.ChoiceItem]] = [
-    gui.choice_item('public', 'public'),
-    gui.choice_item('private', 'private'),
-    gui.choice_item('admin', 'admin'),
+    gui.choice_item("public", "public"),
+    gui.choice_item("private", "private"),
+    gui.choice_item("admin", "admin"),
 ]
 
 
@@ -80,15 +86,15 @@ class OpenStackProvider(ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenStack')
+    type_name = _("OpenStack")
     # : Type used internally to identify this provider
-    type_type = 'openStackPlatformNew'
+    type_type = "openStackPlatformNew"
     # : Description shown at administration interface for this provider
-    type_description = _('OpenStack platform service provider')
+    type_description = _("OpenStack platform service provider")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'openstack.png'
+    icon_file = "openstack.png"
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
@@ -101,54 +107,54 @@ class OpenStackProvider(ServiceProvider):
     # "random"
     endpoint = gui.TextField(
         length=128,
-        label=_('Identity endpoint'),
+        label=_("Identity endpoint"),
         order=1,
         tooltip=_(
-            'OpenStack identity endpoint API Access (for example, https://10.0.0.1/identity). Do not include /v3.'
+            "OpenStack identity endpoint API Access (for example, https://10.0.0.1/identity). Do not include /v3."
         ),
         required=True,
     )
 
     auth_method = gui.ChoiceField(
-        label=_('Authentication method'),
+        label=_("Authentication method"),
         order=2,
-        tooltip=_('Authentication method to be used'),
+        tooltip=_("Authentication method to be used"),
         choices=[
-            gui.choice_item(str(openstack_types.AuthMethod.PASSWORD), 'Password'),
-            gui.choice_item(str(openstack_types.AuthMethod.APPLICATION_CREDENTIAL), 'Application Credential'),
+            gui.choice_item(str(openstack_types.AuthMethod.PASSWORD), "Password"),
+            gui.choice_item(str(openstack_types.AuthMethod.APPLICATION_CREDENTIAL), "Application Credential"),
         ],
-        default='password',
+        default="password",
     )
 
     access = gui.ChoiceField(
-        label=_('Access interface'),
+        label=_("Access interface"),
         order=5,
-        tooltip=_('Access interface to be used'),
+        tooltip=_("Access interface to be used"),
         choices=INTERFACE_VALUES,
-        default='public',
+        default="public",
     )
 
     domain = gui.TextField(
         length=64,
-        label=_('Domain'),
+        label=_("Domain"),
         order=8,
-        tooltip=_('Domain name (default is Default)'),
+        tooltip=_("Domain name (default is Default)"),
         required=True,
-        default='Default',
+        default="Default",
     )
     username = gui.TextField(
         length=64,
-        label=_('Username/Application Credential ID'),
+        label=_("Username/Application Credential ID"),
         order=9,
-        tooltip=_('User with valid privileges on OpenStack/Application Credential ID with valid privileges'),
+        tooltip=_("User with valid privileges on OpenStack/Application Credential ID with valid privileges"),
         required=True,
-        default='admin',
+        default="admin",
     )
     password = gui.PasswordField(
         length=32,
-        label=_('Password/Application Credential Secret'),
+        label=_("Password/Application Credential Secret"),
         order=10,
-        tooltip=_('Password of the user of OpenStack/Application Credential Secret'),
+        tooltip=_("Password of the user of OpenStack/Application Credential Secret"),
         required=True,
     )
 
@@ -158,45 +164,45 @@ class OpenStackProvider(ServiceProvider):
 
     project_id = gui.TextField(
         length=64,
-        label=_('Project Id'),
+        label=_("Project Id"),
         order=40,
-        tooltip=_('Project (tenant) for this provider. Set only if required by server.'),
+        tooltip=_("Project (tenant) for this provider. Set only if required by server."),
         required=False,
-        default='',
+        default="",
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='tenant',
+        old_field_name="tenant",
     )
     region = gui.TextField(
         length=64,
-        label=_('Region'),
+        label=_("Region"),
         order=41,
-        tooltip=_('Region for this provider. Set only if required by server.'),
+        tooltip=_("Region for this provider. Set only if required by server."),
         required=False,
-        default='',
+        default="",
         tab=types.ui.Tab.ADVANCED,
     )
 
     use_subnets_name = gui.CheckBoxField(
-        label=_('Subnets names'),
+        label=_("Subnets names"),
         order=42,
-        tooltip=_('If checked, the name of the subnets will be used instead of the names of networks'),
+        tooltip=_("If checked, the name of the subnets will be used instead of the names of networks"),
         default=False,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='useSubnetsName',
+        old_field_name="useSubnetsName",
     )
 
     verify_ssl = fields.verify_ssl_field(order=91)
 
     https_proxy = gui.TextField(
         length=96,
-        label=_('Proxy'),
+        label=_("Proxy"),
         order=92,
         tooltip=_(
-            'Proxy used on server connections for HTTPS connections (use PROTOCOL://host:port, i.e. http://10.10.0.1:8080)'
+            "Proxy used on server connections for HTTPS connections (use PROTOCOL://host:port, i.e. http://10.10.0.1:8080)"
         ),
         required=False,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='httpsProxy',
+        old_field_name="httpsProxy",
     )
 
     legacy = False
@@ -205,7 +211,7 @@ class OpenStackProvider(ServiceProvider):
     _api: client.OpenStackClient | None = None
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType' = None) -> None:
+    def initialize(self, values: "types.core.ValuesType" = None) -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -216,19 +222,15 @@ class OpenStackProvider(ServiceProvider):
             if self.auth_method.value == openstack_types.AuthMethod.APPLICATION_CREDENTIAL:
                 # Ensure that the project_id is provided, so it's bound to the application credential
                 if self.project_id.value:
-                    raise exceptions.ui.ValidationError(
-                        _('Project Id not allowed when using Application Credential')
-                    )
+                    raise exceptions.ui.ValidationError(_("Project Id not allowed when using Application Credential"))
 
-    def api(
-        self, projectid: str | None = None, region: str | None = None
-    ) -> client.OpenStackClient:
+    def api(self, projectid: str | None = None, region: str | None = None) -> client.OpenStackClient:
         projectid = projectid or self.project_id.value or None
         region = region or self.region.value or None
         if self._api is None:
             proxies: dict[str, str] | None = None
             if self.https_proxy.value.strip():
-                proxies = {'https': self.https_proxy.value}
+                proxies = {"https": self.https_proxy.value}
             self._api = client.OpenStackClient(
                 self.endpoint.value,
                 self.domain.value,
@@ -255,17 +257,17 @@ class OpenStackProvider(ServiceProvider):
 
             True if all went fine, false if id didn't
         """
-        logger.debug('Testing connection to OpenStack')
+        logger.debug("Testing connection to OpenStack")
         try:
             if self.api().test_connection() is False:
-                raise Exception('Check connection credentials, server, etc.')
+                raise Exception("Check connection credentials, server, etc.")
         except Exception as e:
-            logger.exception('Error')
-            return types.core.TestResult(False, _('Error: {}').format(e))
+            logger.exception("Error")
+            return types.core.TestResult(False, _("Error: {}").format(e))
 
         return types.core.TestResult(True)
 
-    @decorators.cached('prid', timeout=60)
+    @decorators.cached("prid", timeout=60)
     def get_project_info(self) -> tuple[str, str]:
         """
         Returns the project id and name (if known)
@@ -278,7 +280,7 @@ class OpenStackProvider(ServiceProvider):
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test ovirt Connectivity
 

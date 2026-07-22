@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -60,13 +61,13 @@ class Transport(ManagedObjectModel, TaggingMixin):
     priority = models.IntegerField(default=0, db_index=True)
     net_filtering = models.CharField(max_length=1, default=consts.auth.NO_FILTERING, db_index=True)
     # We store allowed oss as a comma-separated list
-    allowed_oss = models.CharField(max_length=255, default='')
+    allowed_oss = models.CharField(max_length=255, default="")
     # Label, to group transports on meta pools
-    label = models.CharField(max_length=32, default='', db_index=True)
+    label = models.CharField(max_length=32, default="", db_index=True)
 
     server_group = models.ForeignKey(
-        'ServerGroup',
-        related_name='transports',
+        "ServerGroup",
+        related_name="transports",
         null=True,
         on_delete=models.SET_NULL,
     )
@@ -74,12 +75,12 @@ class Transport(ManagedObjectModel, TaggingMixin):
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[Transport]'
 
-    deployedServices: 'models.manager.RelatedManager[ServicePool]'
-    networks: 'models.manager.RelatedManager[Network]'
-    
+    deployedServices: "models.manager.RelatedManager[ServicePool]"
+    networks: "models.manager.RelatedManager[Network]"
+
     @property
     # Alias for future renaming (start using alias asap)
-    def service_pools(self) -> 'models.manager.RelatedManager[ServicePool]':
+    def service_pools(self) -> "models.manager.RelatedManager[ServicePool]":
         return self.deployedServices
 
     class Meta(ManagedObjectModel.Meta):  # pyright: ignore
@@ -87,15 +88,15 @@ class Transport(ManagedObjectModel, TaggingMixin):
         Meta class to declare default order
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
+        ordering = ("name",)
+        app_label = "uds"
 
     @typing.override
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> 'transports.Transport':
-        return typing.cast('transports.Transport', super().get_instance(values=values))
+    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> "transports.Transport":
+        return typing.cast("transports.Transport", super().get_instance(values=values))
 
     @typing.override
-    def get_type(self) -> type['transports.Transport']:
+    def get_type(self) -> type["transports.Transport"]:
         """
         Get the type of the object this record represents.
 
@@ -143,7 +144,7 @@ class Transport(ManagedObjectModel, TaggingMixin):
         # Deny, must not be in any network
         return not exists
 
-    def is_os_allowed(self, os: 'types.os.KnownOS') -> bool:
+    def is_os_allowed(self, os: "types.os.KnownOS") -> bool:
         """If this transport is configured to be valid for the specified OS.
 
         Args:
@@ -152,10 +153,10 @@ class Transport(ManagedObjectModel, TaggingMixin):
         Returns:
             bool: True if this transport is valid for the specified OS, False otherwise
         """
-        return not self.allowed_oss or os.db_value().casefold() in self.allowed_oss.casefold().split(',')
+        return not self.allowed_oss or os.db_value().casefold() in self.allowed_oss.casefold().split(",")
 
     def __str__(self) -> str:
-        return f'{self.name} of type {self.data_type} (id:{self.id})'
+        return f"{self.name} of type {self.data_type} (id:{self.id})"
 
     @staticmethod
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
@@ -169,11 +170,11 @@ class Transport(ManagedObjectModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: 'Transport' = kwargs['instance']
+        to_delete: "Transport" = kwargs["instance"]
 
-        logger.debug('Before delete transport %s', to_delete)
+        logger.debug("Before delete transport %s", to_delete)
         # Only tries to get instance if data is not empty
-        if to_delete.data != '':
+        if to_delete.data != "":
             s = to_delete.get_instance()
             s.destroy()
             s.env.clean_related_data()

@@ -33,6 +33,7 @@ Integration tests for the Scheduler runtime (execute_job, release_own_schedules,
 JobThread with real database).
 """
 
+import os
 import platform
 import time
 import typing
@@ -52,30 +53,35 @@ from uds.core.util.model import sql_now
 
 class _CountingJob(Job):
     """A Job that counts executions and has a configurable delay."""
-    friendly_name = '_TestCountingJob'
+
+    friendly_name = "_TestCountingJob"
     run_count = 0
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self._delay = 42
 
+    @typing.override
     def next_execution_delay(self) -> int:
         return self._delay
 
+    @typing.override
     def run(self) -> None:
         _CountingJob.run_count += 1
 
 
 class _FailingJob(Job):
-    friendly_name = '_TestFailingJob'
+    friendly_name = "_TestFailingJob"
 
+    @typing.override
     def run(self) -> None:
-        raise RuntimeError('Simulated job failure')
+        raise RuntimeError("Simulated job failure")
 
 
 class _BlockingJob(Job):
-    friendly_name = '_TestBlockingJob'
+    friendly_name = "_TestBlockingJob"
 
+    @typing.override
     def run(self) -> None:
         time.sleep(60)  # Simulated long-running job
 
@@ -83,6 +89,13 @@ class _BlockingJob(Job):
 class SchedulerIntegrationTest(TransactionTestCase):
     """Integration tests using real database."""
 
+    # Unique per-worker hostname. Under pytest-xdist each worker is a separate
+    # process, so os.getpid() is unique per worker, which prevents
+    # cross-worker contention on owner_server = platform.node() (otherwise all
+    # workers would race for the same rows on the shared in-memory SQLite DB).
+    _WORKER_HOSTNAME = f"uds-test-worker-{os.getpid()}"
+
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         scheduler.Scheduler.granularity = 0.1  # type: ignore
@@ -90,10 +103,16 @@ class SchedulerIntegrationTest(TransactionTestCase):
         # Register test jobs
         for cls in (_CountingJob, _FailingJob, _BlockingJob):
             JobsFactory.factory().register(cls.friendly_name, cls)
+        # Patch platform.node globally so every Scheduler/release_own_schedules
+        # call in this worker sees a unique hostname.
+        self._node_patcher = mock.patch("platform.node", return_value=self._WORKER_HOSTNAME)
+        self._node_patcher.start()
 
+    @typing.override
     def tearDown(self) -> None:
-        # Release any locked rows from this test
+        # Release any locked rows by this test
         scheduler.Scheduler.release_own_schedules()
+        self._node_patcher.stop()
         super().tearDown()
 
     # == Scheduler singleton =============================================
@@ -112,7 +131,8 @@ class SchedulerIntegrationTest(TransactionTestCase):
 
     def test_execute_job_picks_due_job(self) -> None:
         import uuid
-        unique_name = f'_TestDueJob_{uuid.uuid4().hex[:8]}'
+
+        unique_name = f"_TestDueJob_{uuid.uuid4().hex[:8]}"
         JobsFactory.factory().register(unique_name, _CountingJob)
 
         # Create a Scheduler row whose next_execution is in the past
@@ -120,17 +140,18 @@ class SchedulerIntegrationTest(TransactionTestCase):
             name=unique_name,
             last_execution=sql_now() - timezone.timedelta(seconds=120),
             next_execution=sql_now() - timezone.timedelta(seconds=10),
-            owner_server='',
+            owner_server="",
             state=State.FOR_EXECUTE,
         )
         sch = scheduler.Scheduler()
-        with mock.patch('uds.core.jobs.scheduler.JobThread.start') as mock_start:
+        with mock.patch("uds.core.jobs.scheduler.JobThread.start") as mock_start:
             sch.execute_job()
             mock_start.assert_called_once()
 
     def test_execute_job_skips_future_job(self) -> None:
         import uuid
-        unique_name = f'_TestFutureJob_{uuid.uuid4().hex[:8]}'
+
+        unique_name = f"_TestFutureJob_{uuid.uuid4().hex[:8]}"
         JobsFactory.factory().register(unique_name, _CountingJob)
 
         # Job whose next_execution is still in the future
@@ -138,47 +159,53 @@ class SchedulerIntegrationTest(TransactionTestCase):
             name=unique_name,
             last_execution=sql_now() - timezone.timedelta(seconds=60),
             next_execution=sql_now() + timezone.timedelta(seconds=3600),
-            owner_server='',
+            owner_server="",
             state=State.FOR_EXECUTE,
         )
         sch = scheduler.Scheduler()
-        with mock.patch('uds.core.jobs.scheduler.JobThread.start') as mock_start:
+        with mock.patch("uds.core.jobs.scheduler.JobThread.start") as mock_start:
             sch.execute_job()
             mock_start.assert_not_called()
 
     def test_execute_job_clock_skew_triggers_execution(self) -> None:
         """If last_execution is in the future, the job should be picked up (clock skew)."""
         import uuid
-        unique_name = f'_TestClockSkew_{uuid.uuid4().hex[:8]}'
+
+        unique_name = f"_TestClockSkew_{uuid.uuid4().hex[:8]}"
         JobsFactory.factory().register(unique_name, _CountingJob)
 
         DBScheduler.objects.create(
             name=unique_name,
             last_execution=sql_now() + timezone.timedelta(seconds=3600),
             next_execution=sql_now() + timezone.timedelta(seconds=7200),
-            owner_server='',
+            owner_server="",
             state=State.FOR_EXECUTE,
         )
         sch = scheduler.Scheduler()
-        with mock.patch('uds.core.jobs.scheduler.JobThread.start') as mock_start:
+        with mock.patch("uds.core.jobs.scheduler.JobThread.start") as mock_start:
             sch.execute_job()
             mock_start.assert_called_once()
 
     def test_execute_job_claims_db_row(self) -> None:
         """After execute_job picks up a row, it should be marked RUNNING with owner_server."""
         import uuid
-        unique_name = f'_TestClaim_{uuid.uuid4().hex[:8]}'
+
+        unique_name = f"_TestClaim_{uuid.uuid4().hex[:8]}"
         JobsFactory.factory().register(unique_name, _CountingJob)
 
         DBScheduler.objects.create(
             name=unique_name,
             last_execution=sql_now() - timezone.timedelta(seconds=120),
             next_execution=sql_now() - timezone.timedelta(seconds=10),
-            owner_server='',
+            owner_server="",
             state=State.FOR_EXECUTE,
         )
         sch = scheduler.Scheduler()
-        sch.execute_job()
+        # Don't actually start the JobThread: the claim UPDATE is already
+        # committed before start() is called, but the background thread would
+        # re-acquire a write lock and contend with other workers' flushes.
+        with mock.patch("uds.core.jobs.scheduler.JobThread.start"):
+            sch.execute_job()
         row = DBScheduler.objects.get(name=unique_name)
         self.assertEqual(row.state, State.RUNNING)
         self.assertEqual(row.owner_server, platform.node())
@@ -195,7 +222,7 @@ class SchedulerIntegrationTest(TransactionTestCase):
         )
         scheduler.Scheduler.release_own_schedules()
         row = DBScheduler.objects.get(name=_CountingJob.friendly_name)
-        self.assertEqual(row.owner_server, '')
+        self.assertEqual(row.owner_server, "")
 
     def test_release_stale_running_releases_and_resets(self) -> None:
         """Jobs RUNNING for >15 min should be reset to FOR_EXECUTE."""
@@ -203,13 +230,13 @@ class SchedulerIntegrationTest(TransactionTestCase):
             name=_CountingJob.friendly_name,
             last_execution=sql_now() - timezone.timedelta(minutes=20),
             next_execution=sql_now() + timezone.timedelta(hours=1),
-            owner_server='other-server',
+            owner_server="other-server",
             state=State.RUNNING,
         )
         scheduler.Scheduler.release_own_schedules()
         row = DBScheduler.objects.get(name=_CountingJob.friendly_name)
         self.assertEqual(row.state, State.FOR_EXECUTE)
-        self.assertEqual(row.owner_server, '')
+        self.assertEqual(row.owner_server, "")
 
     # == JobThread with real DB ==========================================
 
@@ -218,7 +245,7 @@ class SchedulerIntegrationTest(TransactionTestCase):
             name=_CountingJob.friendly_name,
             last_execution=sql_now() - timezone.timedelta(seconds=120),
             next_execution=sql_now() - timezone.timedelta(seconds=10),
-            owner_server='',
+            owner_server="",
             state=State.FOR_EXECUTE,
         )
         job_instance = _CountingJob(Environment.testing_environment())
@@ -228,7 +255,7 @@ class SchedulerIntegrationTest(TransactionTestCase):
 
         row = DBScheduler.objects.get(id=db_job.id)
         self.assertEqual(row.state, State.FOR_EXECUTE)
-        self.assertEqual(row.owner_server, '')
+        self.assertEqual(row.owner_server, "")
         # next_execution should be sql_now + 42
         expected = sql_now() + timezone.timedelta(seconds=42)
         diff = abs((row.next_execution - expected).total_seconds())
@@ -239,7 +266,7 @@ class SchedulerIntegrationTest(TransactionTestCase):
             name=_FailingJob.friendly_name,
             last_execution=sql_now() - timezone.timedelta(seconds=120),
             next_execution=sql_now() - timezone.timedelta(seconds=10),
-            owner_server='',
+            owner_server="",
             state=State.FOR_EXECUTE,
         )
         job_instance = _FailingJob(Environment.testing_environment())
@@ -249,4 +276,4 @@ class SchedulerIntegrationTest(TransactionTestCase):
 
         row = DBScheduler.objects.get(id=db_job.id)
         self.assertEqual(row.state, State.FOR_EXECUTE)
-        self.assertEqual(row.owner_server, '')
+        self.assertEqual(row.owner_server, "")

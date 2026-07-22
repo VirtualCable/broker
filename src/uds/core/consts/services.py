@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 HOURS_BEFORE_CONSIDERED_LOCKED: typing.Final[int] = 2  # In hours

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import functools
 import ipaddress
 import logging
@@ -56,20 +57,18 @@ logger = logging.getLogger(__name__)
 
 # Test patters for networks IPv4
 RECIDRIPV4: typing.Final[re.Pattern[str]] = re.compile(
-    r'^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})/([0-9]{1,2})$'
+    r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})/([0-9]{1,2})$"
 )
 REMASKIPV4: typing.Final[re.Pattern[str]] = re.compile(
-    r'^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})netmask([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$'
+    r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})netmask([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
 )
-RE1ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r'^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.\*$')
-RE2ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r'^([0-9]{1,3})\.([0-9]{1,3})\.\*\.?\*?$')
-RE3ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r'^([0-9]{1,3})\.\*\.?\*?\.?\*?$')
+RE1ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.\*$")
+RE2ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.([0-9]{1,3})\.\*\.?\*?$")
+RE3ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.\*\.?\*?\.?\*?$")
 RERANGEIPV4: typing.Final[re.Pattern[str]] = re.compile(
-    r'^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})-([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$'
+    r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})-([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
 )
-RESINGLEIPV4: typing.Final[re.Pattern[str]] = re.compile(
-    r'^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$'
-)
+RESINGLEIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$")
 
 
 def ip_to_long(ip: str) -> IpType:
@@ -78,14 +77,14 @@ def ip_to_long(ip: str) -> IpType:
     """
     # First, check if it's an ipv6 address
     try:
-        if ':' in ip:
-            if '.' in ip:  # Is , for example, '::ffff:172.27.0.1'
-                ip = ip.split(':')[-1]
+        if ":" in ip:
+            if "." in ip:  # Is , for example, '::ffff:172.27.0.1'
+                ip = ip.split(":")[-1]
             else:
                 return IpType(int(ipaddress.IPv6Address(ip)), 6)
         return IpType(int(ipaddress.IPv4Address(ip)), 4)
     except Exception as e:
-        logger.error('Ivalid value: %s (%s)', ip, e)
+        logger.error("Ivalid value: %s (%s)", ip, e)
         return IpType(0, 0)  # Invalid values will map to "0.0.0.0" --> 0
 
 
@@ -99,7 +98,7 @@ def long_to_ip(n: int, version: typing.Literal[0, 4, 6] = 0) -> str:
 
 
 def network_from_str_ipv4(nets_string: str) -> NetworkType:
-    '''
+    """
     Parses the network from strings in this forms:
       - A.* (or A.*.* or A.*.*.*)
       - A.B.* (or A.B.*.* )
@@ -109,10 +108,10 @@ def network_from_str_ipv4(nets_string: str) -> NetworkType:
       - A.B.C.D - E.F.G.D (i.e. 192-168.0.0-192.168.0.255)
       - A.B.C.D
     returns a named tuple with networks start and network end
-    '''
+    """
 
     input_string = nets_string
-    logger.debug('Getting network from %s', nets_string)
+    logger.debug("Getting network from %s", nets_string)
 
     def check(*args: str) -> None:
         for n in args:
@@ -133,16 +132,16 @@ def network_from_str_ipv4(nets_string: str) -> NetworkType:
             v |= 1 << (31 - n)
         return v
 
-    nets_string = nets_string.replace(' ', '')
+    nets_string = nets_string.replace(" ", "")
 
-    if nets_string == '*':
+    if nets_string == "*":
         return NetworkType(0, 2**32 - 1, 4)
 
     try:
         # Test patterns
         m = RECIDRIPV4.match(nets_string)
         if m is not None:
-            logger.debug('Format is CIDR')
+            logger.debug("Format is CIDR")
             check(*m.groups())
             bits = int(m.group(5))
             if bits < 0 | bits > 32:
@@ -154,7 +153,7 @@ def network_from_str_ipv4(nets_string: str) -> NetworkType:
 
         m = REMASKIPV4.match(nets_string)
         if m is not None:
-            logger.debug('Format is network mask')
+            logger.debug("Format is network mask")
             check(*m.groups())
             val = to_num(*(m.groups()[0:4]))
             bits = to_num(*(m.groups()[4:8]))
@@ -163,7 +162,7 @@ def network_from_str_ipv4(nets_string: str) -> NetworkType:
 
         m = RERANGEIPV4.match(nets_string)
         if m is not None:
-            logger.debug('Format is network range')
+            logger.debug("Format is network range")
             check(*m.groups())
             val = to_num(*(m.groups()[0:4]))
             val2 = to_num(*(m.groups()[4:8]))
@@ -173,7 +172,7 @@ def network_from_str_ipv4(nets_string: str) -> NetworkType:
 
         m = RESINGLEIPV4.match(nets_string)
         if m is not None:
-            logger.debug('Format is a single host')
+            logger.debug("Format is a single host")
             check(*m.groups())
             val = to_num(*m.groups())
             return NetworkType(val, val, 4)
@@ -190,18 +189,18 @@ def network_from_str_ipv4(nets_string: str) -> NetworkType:
         # No pattern recognized, invalid network
         raise Exception()
     except Exception as e:
-        logger.error('Invalid network found: %s %s', nets_string, e)
+        logger.error("Invalid network found: %s %s", nets_string, e)
         raise ValueError(input_string) from e
 
 
 def network_from_str_ipv6(networks: str) -> NetworkType:
-    '''
+    """
     returns a named tuple with networks start and network end
-    '''
-    logger.debug('Getting network from %s', networks)
+    """
+    logger.debug("Getting network from %s", networks)
 
     # if '*' or '::*', return the whole IPv6 range
-    if networks in ('*', '::*'):
+    if networks in ("*", "::*"):
         return NetworkType(0, 2**128 - 1, 6)
 
     try:
@@ -209,7 +208,7 @@ def network_from_str_ipv6(networks: str) -> NetworkType:
         net = ipaddress.ip_network(networks, strict=False)
         return NetworkType(int(net.network_address), int(net.broadcast_address), 6)
     except Exception as e:
-        logger.error('Invalid network found: %s %s', networks, e)
+        logger.error("Invalid network found: %s %s", networks, e)
         raise ValueError(networks) from e
 
 
@@ -220,11 +219,11 @@ def network_from_str(
     check_mode: bool = False,
 ) -> NetworkType:
     try:
-        if not ':' in network_str and version != 6:
+        if not ":" in network_str and version != 6:
             return network_from_str_ipv4(network_str)
         # ':' in strNets or version == 6:
         # If is in fact an IPv4 address, return None network, this will not be used
-        if '.' in network_str:
+        if "." in network_str:
             return NetworkType(0, 0, 0)
         return network_from_str_ipv6(network_str)
     except ValueError:
@@ -258,7 +257,7 @@ def networks_from_str(
     """
     return [
         network_from_str(str_net, version, check_mode=check_mode)
-        for str_net in re.split('[;,]', networks_str)
+        for str_net in re.split("[;,]", networks_str)
         if str_net
     ]
 
@@ -285,7 +284,7 @@ def contains(
     if isinstance(ip, str):
         ip, version = ip_to_long(ip)  # Ip overrides protocol version
     if isinstance(networks, str):
-        if networks == '*':
+        if networks == "*":
             return True  # All IPs are in the * network
         networks = networks_from_str(networks, version)
     elif isinstance(networks, NetworkType):
@@ -327,13 +326,13 @@ def is_valid_fqdn(fqdn: str) -> bool:
         True if the value is a valid FQDN, False otherwise
     """
     return (
-        re.match(r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', fqdn, re.IGNORECASE)
+        re.match(r"^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$", fqdn, re.IGNORECASE)
         is not None  # Allow for non qualified domain names (such as localhost, host1, etc)
-        or re.match(r'^[a-z0-9-]+$', fqdn, re.IGNORECASE) is not None
+        or re.match(r"^[a-z0-9-]+$", fqdn, re.IGNORECASE) is not None
     )
 
 
-def recover_ips(remote_addr: str, xff: str) -> 'types.net.IpInfo':
+def recover_ips(remote_addr: str, xff: str) -> "types.net.IpInfo":
     """
     Computes the real client IP and proxy IP from a raw peer address and the
     value of the X-Forwarded-For header, applying UDS proxy-trust rules.
@@ -360,11 +359,11 @@ def recover_ips(remote_addr: str, xff: str) -> 'types.net.IpInfo':
     ip = remote_addr
 
     # X-FORWARDED-FOR: CLIENT, ..., NEAR_PROXY, NGINX  ->  reversed: NGINX, NEAR_PROXY, ..., CLIENT
-    proxies = list(reversed([i.split('%')[0].strip() for i in xff.split(',')]))
+    proxies = list(reversed([i.split("%")[0].strip() for i in xff.split(",")]))
 
     # Remote addr is empty when using Unix sockets (nginx -> gunicorn)
     if not ip:
-        ip = proxies[0] if proxies and proxies[0] else ''
+        ip = proxies[0] if proxies and proxies[0] else ""
         proxies = proxies[1:]
 
     ip_proxy = proxies[0] if proxies and proxies[0] else ip
@@ -374,11 +373,11 @@ def recover_ips(remote_addr: str, xff: str) -> 'types.net.IpInfo':
         ip_proxy = proxies[1] if len(proxies) > 1 else ip
 
     # Normalise IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
-    if '.' in ip:
-        ip = ip.replace('::ffff:', '')
-        ip_proxy = ip_proxy.replace('::ffff:', '')
+    if "." in ip:
+        ip = ip.replace("::ffff:", "")
+        ip_proxy = ip_proxy.replace("::ffff:", "")
 
-    ip_version: typing.Literal[4, 6] = 4 if '.' in ip else 6
+    ip_version: typing.Literal[4, 6] = 4 if "." in ip else 6
 
     return types_net.IpInfo(ip=ip, ip_proxy=ip_proxy, ip_version=ip_version)
 
@@ -406,26 +405,26 @@ def is_valid_mac(value: str) -> bool:
     Returns:
         True if the value is a valid MAC address, False otherwise
     """
-    return re.match(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$', value) is not None
+    return re.match(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$", value) is not None
 
 
 def test_connectivity(host: str, port: int, timeout: float = 4) -> bool:
     """
     Checks the connectivity to a host and port
-    
+
     Args:
         host: The host to check
         port: The port to check
         timeout: The timeout in seconds for the connection (default is 4 seconds)
-        
+
     Returns:
         True if the connection is successful, False otherwise
     """
     try:
-        logger.debug('Checking connection to %s:%s with %s seconds timeout', host, port, timeout)
+        logger.debug("Checking connection to %s:%s with %s seconds timeout", host, port, timeout)
         sock = socket.create_connection((host, port), timeout)
         sock.close()
     except Exception as e:
-        logger.debug('Exception checking %s:%s with %s timeout: %s', host, port, timeout, e)
+        logger.debug("Exception checking %s:%s with %s timeout: %s", host, port, timeout, e)
         return False
     return True

@@ -26,17 +26,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 from django.urls import re_path
 
 from . import views
 
 urlpatterns = [
     re_path(
-        r'^uds/ognotify/(?P<msg>[a-z]+)/(?P<token>[a-zA-Z0-9-_]+)/(?P<uuid>[a-zA-Z0-9-_]+)$',
+        r"^uds/ognotify/(?P<msg>[a-z]+)/(?P<token>[a-zA-Z0-9-_]+)/(?P<uuid>[a-zA-Z0-9-_]+)$",
         views.opengnsys,
-        name='dispatcher.opengnsys',
+        name="dispatcher.opengnsys",
     ),
 ]

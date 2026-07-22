@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds import models
@@ -43,7 +44,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
     Test server functionality
     """
 
-    server: 'models.Server'
+    server: "models.Server"
 
     def setUp(self) -> None:
         super().setUp()
@@ -67,57 +68,59 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         #     'session_id': session_id,
         # }
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'login',
-                'userservice_uuid': self.user_service_managed.uuid,
-                'username': 'local_user_name',
+                "token": self.server.token,
+                "type": "login",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
             },
         )
         self.assertEqual(response.status_code, 200)
         self.user_service_managed.refresh_from_db()
         self.assertEqual(self.user_service_managed.in_use, True)
-        result = response.json()['result']
-        self.assertEqual(self.user_service_managed.src_ip, result['ip'])
-        self.assertEqual(self.user_service_managed.src_hostname, result['hostname'])
+        result = response.json()["result"]
+        self.assertEqual(self.user_service_managed.src_ip, result["ip"])
+        self.assertEqual(self.user_service_managed.src_hostname, result["hostname"])
         session = self.user_service_managed.sessions.first()
         if session is None:
-            self.fail('Session not found')
-        self.assertEqual(session.session_id, result['session_id'])
-        self.assertEqual(self.user_service_managed.properties.get('last_username', ''), 'local_user_name')
+            self.fail("Session not found")
+        self.assertEqual(session.session_id, result["session_id"])
+        self.assertEqual(self.user_service_managed.properties.get("last_username", ""), "local_user_name")
         # Must not have ticket
-        self.assertIsNone(result.get('ticket', None))
+        self.assertIsNone(result.get("ticket", None))
 
     def test_login_with_ticket(self) -> None:
-        ticket_uuid = models.TicketStore.create({'userservice_uuid': self.user_service_managed.uuid, 'some_value': 'value'})
+        ticket_uuid = models.TicketStore.create(
+            {"userservice_uuid": self.user_service_managed.uuid, "some_value": "value"}
+        )
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'login',
-                'username': 'local_user_name',
-                'ticket': ticket_uuid,
+                "token": self.server.token,
+                "type": "login",
+                "username": "local_user_name",
+                "ticket": ticket_uuid,
             },
         )
         self.assertEqual(response.status_code, 200)
-        data = response.json()['result']
-        self.assertEqual(data['ticket']['some_value'], 'value')
+        data = response.json()["result"]
+        self.assertEqual(data["ticket"]["some_value"], "value")
 
     def test_login_fail(self) -> None:
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'login',
-                'userservice_uuid': 'invalid uuid',
-                'username': 'local_user_name',
+                "token": self.server.token,
+                "type": "login",
+                "userservice_uuid": "invalid uuid",
+                "username": "local_user_name",
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.content)
         self.assertIsNotNone(response.json())
-        self.assertIn('error', response.json())
+        self.assertIn("error", response.json())
 
     def test_logout(self) -> None:
         # REST path: servers/notify  (/uds/rest/...)
@@ -128,13 +131,13 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         #     'username': 'username', # Optional
         # }
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'logout',
-                'userservice_uuid': self.user_service_managed.uuid,
-                'username': 'local_user_name',
-                'session_id': '',
+                "token": self.server.token,
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+                "session_id": "",
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -142,58 +145,58 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
 
     def test_logout_fail(self) -> None:
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'login',
-                'userservice_uuid': 'invalid uuid',
-                'username': 'local_user_name',
+                "token": self.server.token,
+                "type": "login",
+                "userservice_uuid": "invalid uuid",
+                "username": "local_user_name",
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.content)
         self.assertIsNotNone(response.json())
-        self.assertIn('error', response.json())
+        self.assertIn("error", response.json())
 
         # No session id, shouls return error
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'logout',
-                'user_service': self.user_service_managed.uuid,
-                'username': 'local_user_name',
+                "token": self.server.token,
+                "type": "logout",
+                "user_service": self.user_service_managed.uuid,
+                "username": "local_user_name",
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.content)
         self.assertIsNotNone(response.json())
-        self.assertIn('error', response.json())
+        self.assertIn("error", response.json())
 
     def test_loging_logout(self) -> None:
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'login',
-                'userservice_uuid': self.user_service_managed.uuid,
-                'username': 'local_user_name',
+                "token": self.server.token,
+                "type": "login",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
             },
         )
         self.assertEqual(response.status_code, 200)
-        session_id = response.json()['result']['session_id']
+        session_id = response.json()["result"]["session_id"]
         self.assertIsNotNone(session_id)
         self.user_service_managed.refresh_from_db()
         self.assertEqual(self.user_service_managed.in_use, True)
 
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'logout',
-                'userservice_uuid': self.user_service_managed.uuid,
-                'username': 'local_user_name',
-                'session_id': session_id,
+                "token": self.server.token,
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+                "session_id": session_id,
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -201,15 +204,17 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         self.assertEqual(self.user_service_managed.in_use, False)
 
     def test_ticket(self) -> None:
-        ticket_uuid = models.TicketStore.create({'userservice_uuid': self.user_service_managed.uuid, 'some_value': 'value'})
+        ticket_uuid = models.TicketStore.create(
+            {"userservice_uuid": self.user_service_managed.uuid, "some_value": "value"}
+        )
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'ticket',
-                'ticket': ticket_uuid,
+                "token": self.server.token,
+                "type": "ticket",
+                "ticket": ticket_uuid,
             },
         )
         self.assertEqual(response.status_code, 200)
-        data = response.json()['result']
-        self.assertEqual(data['some_value'], 'value')
+        data = response.json()["result"]
+        self.assertEqual(data["some_value"], "value")

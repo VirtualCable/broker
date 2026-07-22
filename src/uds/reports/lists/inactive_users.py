@@ -45,56 +45,56 @@ logger = logging.getLogger(__name__)
 
 
 class InactiveUsersReport(ListReport):
-    filename = 'inactive_users.pdf'
-    name = _('Inactive users')
-    description = _('Lists users that have not accessed UDS in N days')
-    uuid = '7e2566b3-beb7-45d6-b2c5-57e572884e32'
+    filename = "inactive_users.pdf"
+    name = _("Inactive users")
+    description = _("Lists users that have not accessed UDS in N days")
+    uuid = "7e2566b3-beb7-45d6-b2c5-57e572884e32"
 
     authenticator = gui.ChoiceField(
-        label=_('Authenticator'),
+        label=_("Authenticator"),
         order=1,
-        tooltip=_('Authenticator from where to list users (or all)'),
+        tooltip=_("Authenticator from where to list users (or all)"),
         required=True,
     )
 
     days = gui.NumericField(
         order=2,
-        label=_('Inactive days'),
+        label=_("Inactive days"),
         length=4,
         min_value=1,
         max_value=3650,
         default=90,
-        tooltip=_('Threshold of days without access to consider a user inactive'),
+        tooltip=_("Threshold of days without access to consider a user inactive"),
         required=True,
     )
 
     include_never = gui.CheckBoxField(
         order=3,
-        label=_('Include never-accessed'),
-        tooltip=_('Include users that never accessed UDS'),
+        label=_("Include never-accessed"),
+        tooltip=_("Include users that never accessed UDS"),
         default=True,
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if values:
-            if self.authenticator.value == '0-0-0-0':
-                self.filename = 'inactive_users.pdf'
+            if self.authenticator.value == "0-0-0-0":
+                self.filename = "inactive_users.pdf"
             else:
                 try:
                     auth = Authenticator.objects.get(uuid=self.authenticator.value)
-                    self.filename = f'inactive_users_{auth.name}.pdf'
+                    self.filename = f"inactive_users_{auth.name}.pdf"
                 except Authenticator.DoesNotExist:
                     logger.warning(
-                        'Selected authenticator %s was not found; using default inactive users filename',
+                        "Selected authenticator %s was not found; using default inactive users filename",
                         self.authenticator.value,
                     )
-                    self.filename = 'inactive_users.pdf'
+                    self.filename = "inactive_users.pdf"
 
     @typing.override
     def init_gui(self) -> None:
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL AUTHENTICATORS'))] + [
-            gui.choice_item(v.uuid, v.name) for v in Authenticator.objects.all().order_by('name')
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL AUTHENTICATORS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in Authenticator.objects.all().order_by("name")
         ]
         self.authenticator.set_choices(vals)
 
@@ -102,12 +102,12 @@ class InactiveUsersReport(ListReport):
         days = self.days.as_int()
         threshold = timezone.now() - datetime.timedelta(days=days)
 
-        if self.authenticator.value == '0-0-0-0':
+        if self.authenticator.value == "0-0-0-0":
             auths = list(Authenticator.objects.all())
-            auth_label = gettext('All')
+            auth_label = gettext("All")
         else:
             auths = list(Authenticator.objects.filter(uuid=self.authenticator.value))
-            auth_label = auths[0].name if auths else ''
+            auth_label = auths[0].name if auths else ""
 
         now = timezone.now()
         rows: list[dict[str, typing.Any]] = []
@@ -115,20 +115,20 @@ class InactiveUsersReport(ListReport):
             qs = a.users.filter(last_access__lt=threshold)
             if not self.include_never.as_bool():
                 qs = qs.exclude(last_access=NEVER)
-            for u in qs.order_by('last_access').values('name', 'real_name', 'last_access'):
-                if u['last_access'] == NEVER:
-                    inactive_days: typing.Any = gettext('Never')
-                    last_access: typing.Any = gettext('Never')
+            for u in qs.order_by("last_access").values("name", "real_name", "last_access"):
+                if u["last_access"] == NEVER:
+                    inactive_days: typing.Any = gettext("Never")
+                    last_access: typing.Any = gettext("Never")
                 else:
-                    inactive_days = (now - u['last_access']).days
-                    last_access = u['last_access']
+                    inactive_days = (now - u["last_access"]).days
+                    last_access = u["last_access"]
                 rows.append(
                     {
-                        'auth': a.name,
-                        'name': u['name'],
-                        'real_name': u['real_name'],
-                        'last_access': last_access,
-                        'inactive_days': inactive_days,
+                        "auth": a.name,
+                        "name": u["name"],
+                        "real_name": u["real_name"],
+                        "last_access": last_access,
+                        "inactive_days": inactive_days,
                     }
                 )
 
@@ -138,40 +138,40 @@ class InactiveUsersReport(ListReport):
     def generate(self) -> bytes:
         rows, auth_label = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/lists/inactive-users.html',
+            "uds/reports/lists/inactive-users.html",
             dct={
-                'data': rows,
-                'auth': auth_label,
-                'days': self.days.as_int(),
+                "data": rows,
+                "auth": auth_label,
+                "days": self.days.as_int(),
             },
-            header=gettext('Inactive users (>{} days)').format(self.days.as_int()),
-            water=gettext('UDS Report of inactive users'),
+            header=gettext("Inactive users (>{} days)").format(self.days.as_int()),
+            water=gettext("UDS Report of inactive users"),
         )
 
 
 class InactiveUsersReportCSV(InactiveUsersReport):
-    filename = 'inactive_users.csv'
-    mime_type = 'text/csv'
+    filename = "inactive_users.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = '07c6eb22-1f38-4ee2-9152-dd77a470388d'
+    uuid = "07c6eb22-1f38-4ee2-9152-dd77a470388d"
 
     authenticator = InactiveUsersReport.authenticator
     days = InactiveUsersReport.days
     include_never = InactiveUsersReport.include_never
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if values:
-            if self.authenticator.value == '0-0-0-0':
-                self.filename = 'inactive_users.csv'
+            if self.authenticator.value == "0-0-0-0":
+                self.filename = "inactive_users.csv"
             else:
                 try:
                     auth = Authenticator.objects.get(uuid=self.authenticator.value)
-                    self.filename = f'inactive_users_{auth.name}.csv'
+                    self.filename = f"inactive_users_{auth.name}.csv"
                 except Authenticator.DoesNotExist:
                     # Keep default filename when selected authenticator no longer exists.
                     logger.debug(
-                        'Authenticator %s not found while generating inactive users CSV; using default filename.',
+                        "Authenticator %s not found while generating inactive users CSV; using default filename.",
                         self.authenticator.value,
                     )
 
@@ -181,14 +181,14 @@ class InactiveUsersReportCSV(InactiveUsersReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext('Authenticator'),
-                gettext('User ID'),
-                gettext('Real Name'),
-                gettext('Last access'),
-                gettext('Inactive days'),
+                gettext("Authenticator"),
+                gettext("User ID"),
+                gettext("Real Name"),
+                gettext("Last access"),
+                gettext("Inactive days"),
             ]
         )
         rows, _auth_label = self.get_data()
         for v in rows:
-            writer.writerow([v['auth'], v['name'], v['real_name'], v['last_access'], v['inactive_days']])
+            writer.writerow([v["auth"], v["name"], v["real_name"], v["last_access"], v["inactive_days"]])
         return output.getvalue().encode()

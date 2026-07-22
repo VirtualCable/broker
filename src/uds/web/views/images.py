@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -46,31 +47,31 @@ if typing.TYPE_CHECKING:
     from django.http import HttpRequest  # pylint: disable=ungrouped-imports
 
 
-@cache_page(3600, key_prefix='img', cache='memory')
-def image(request: 'HttpRequest', image_id: str) -> 'HttpResponse':
+@cache_page(3600, key_prefix="img", cache="memory")
+def image(request: "HttpRequest", image_id: str) -> "HttpResponse":
     try:
         icon = Image.objects.get(uuid=process_uuid(image_id))
         return icon.image_as_response()
     except (Image.DoesNotExist, ValueError):
-        return HttpResponse(DEFAULT_IMAGE, content_type='image/png')
+        return HttpResponse(DEFAULT_IMAGE, content_type="image/png")
 
 
-@cache_page(3600, key_prefix='img', cache='memory')
-def transport_icon(request: 'ExtendedHttpRequest', transport_id: str) -> HttpResponse:
+@cache_page(3600, key_prefix="img", cache="memory")
+def transport_icon(request: "ExtendedHttpRequest", transport_id: str) -> HttpResponse:
     try:
         transport: Transport
-        if transport_id[:6] == 'LABEL:':
+        if transport_id[:6] == "LABEL:":
             # Get First label
-            transport = Transport.objects.filter(label=transport_id[6:]).order_by('priority')[0]
+            transport = Transport.objects.filter(label=transport_id[6:]).order_by("priority")[0]
         else:
             transport = Transport.objects.get(uuid=process_uuid(transport_id))
-        return HttpResponse(transport.get_instance().icon(), content_type='image/png')
+        return HttpResponse(transport.get_instance().icon(), content_type="image/png")
     except Exception:
-        return HttpResponse(DEFAULT_IMAGE, content_type='image/png')
+        return HttpResponse(DEFAULT_IMAGE, content_type="image/png")
 
 
-@cache_page(3600, key_prefix='img', cache='memory')
-def service_image(request: 'ExtendedHttpRequest', image_id: str) -> HttpResponse:
+@cache_page(3600, key_prefix="img", cache="memory")
+def service_image(request: "ExtendedHttpRequest", image_id: str) -> HttpResponse:
     try:
         icon = Image.objects.get(uuid=process_uuid(image_id))
         return icon.image_as_response()
@@ -79,6 +80,6 @@ def service_image(request: 'ExtendedHttpRequest', image_id: str) -> HttpResponse
 
     try:
         transport: Transport = Transport.objects.get(uuid=process_uuid(image_id))
-        return HttpResponse(transport.get_instance().icon(), content_type='image/png')
+        return HttpResponse(transport.get_instance().icon(), content_type="image/png")
     except Exception:
-        return HttpResponse(DEFAULT_IMAGE, content_type='image/png')
+        return HttpResponse(DEFAULT_IMAGE, content_type="image/png")

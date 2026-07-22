@@ -27,18 +27,24 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services, types, consts
+from uds.core import consts
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
-from uds.core.util import validators, fields
+from uds.core.util import fields
+from uds.core.util import validators
 from uds.core.util.decorators import cached
 from uds.core.util.unique_id_generator import UniqueIDGenerator
 
-from .proxmox import client, types as prox_types, exceptions as prox_exceptions
+from .proxmox import client
+from .proxmox import exceptions as prox_exceptions
+from .proxmox import types as prox_types
 from .service import ProxmoxService
 from .service_fixed import ProxmoxServiceFixed
 
@@ -51,59 +57,59 @@ logger = logging.getLogger(__name__)
 MAX_VMID: typing.Final[int] = 999999999
 
 
-def cache_key_helper(self: 'ProxmoxProvider') -> str:
+def cache_key_helper(self: "ProxmoxProvider") -> str:
     """
     Helper function to generate cache keys for the ProxmoxProvider class
     """
-    return f'{self.host.value}-{self.port.as_int()}'
+    return f"{self.host.value}-{self.port.as_int()}"
 
 
 class ProxmoxProvider(services.ServiceProvider):
-    type_name = _('Proxmox')
-    type_type = 'ProxmoxPlatform'
-    type_description = _('Proxmox platform service provider')
-    icon_file = 'provider.png'
+    type_name = _("Proxmox")
+    type_type = "ProxmoxPlatform"
+    type_description = _("Proxmox platform service provider")
+    icon_file = "provider.png"
 
     offers = [ProxmoxService, ProxmoxServiceFixed]
 
     host = gui.TextField(
         length=64,
-        label=_('Host'),
+        label=_("Host"),
         order=1,
-        tooltip=_('Proxmox Server IP or Hostname'),
+        tooltip=_("Proxmox Server IP or Hostname"),
         required=True,
     )
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         order=2,
-        tooltip=_('Proxmox API port (default is 8006)'),
+        tooltip=_("Proxmox API port (default is 8006)"),
         required=True,
         default=8006,
     )
 
     use_api_token = gui.CheckBoxField(
-        label=_('Use API Token'),
+        label=_("Use API Token"),
         order=3,
         tooltip=_(
-            'Use API Token and secret instead of password. (username must contain the Token ID, the password will be the secret)'
+            "Use API Token and secret instead of password. (username must contain the Token ID, the password will be the secret)"
         ),
         required=False,
         default=False,
     )
     username = gui.TextField(
         length=32,
-        label=_('Username'),
+        label=_("Username"),
         order=4,
         tooltip=_('User with valid privileges on Proxmox, (use "user@authenticator" form)'),
         required=True,
-        default='root@pam',
+        default="root@pam",
     )
     password = gui.PasswordField(
         length=32,
-        label=_('Password'),
+        label=_("Password"),
         order=5,
-        tooltip=_('Password of the user of Proxmox'),
+        tooltip=_("Password of the user of Proxmox"),
         required=True,
     )
 
@@ -113,19 +119,19 @@ class ProxmoxProvider(services.ServiceProvider):
 
     start_vmid = gui.NumericField(
         length=3,
-        label=_('Starting VmId'),
+        label=_("Starting VmId"),
         default=10000,
         min_value=10000,
         max_value=100000,
         order=91,
-        tooltip=_('Starting machine id on proxmox'),
+        tooltip=_("Starting machine id on proxmox"),
         required=True,
         readonly=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='startVmId',
+        old_field_name="startVmId",
     )
 
-    macs_range = fields.macs_range_field(default='52:54:00:00:00:00-52:54:00:FF:FF:FF')
+    macs_range = fields.macs_range_field(default="52:54:00:00:00:00-52:54:00:FF:FF:FF")
 
     # Own variables
     _cached_api: client.ProxmoxClient | None = None
@@ -152,7 +158,7 @@ class ProxmoxProvider(services.ServiceProvider):
 
     # There is more fields type, but not here the best place to cover it
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -166,7 +172,7 @@ class ProxmoxProvider(services.ServiceProvider):
             logger.debug(self.host.value)
 
         # All proxmox use same UniqueId generator, even if they are different servers
-        self._vmid_generator = UniqueIDGenerator('proxmoxvmid', 'proxmox')
+        self._vmid_generator = UniqueIDGenerator("proxmoxvmid", "proxmox")
 
     def test_connection(self) -> bool:
         """
@@ -212,9 +218,9 @@ class ProxmoxProvider(services.ServiceProvider):
             # All assigned vmid will be left as unusable on UDS until released by time (3 years)
             # This is not a problem at all, in the rare case that a machine id is released from uds db
             # if it exists when we try to create a new one, we will simply try to get another one
-        raise prox_exceptions.ProxmoxError(f'Could not get a new vmid!!: last tried {vmid}')
+        raise prox_exceptions.ProxmoxError(f"Could not get a new vmid!!: last tried {vmid}")
 
-    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT, key_helper=cache_key_helper)
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def is_available(self) -> bool:
         return self.api.test()
 
@@ -223,7 +229,7 @@ class ProxmoxProvider(services.ServiceProvider):
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test Proxmox Connectivity
 
@@ -253,6 +259,6 @@ class ProxmoxProvider(services.ServiceProvider):
         # return [True, _('Nothing tested, but all went fine..')]
         prox = ProxmoxProvider(env, data)
         if prox.test_connection() is True:
-            return types.core.TestResult(True, _('Test passed'))
+            return types.core.TestResult(True, _("Test passed"))
 
-        return types.core.TestResult(False, _('Connection failed. Check connection params'))
+        return types.core.TestResult(False, _("Connection failed. Check connection params"))

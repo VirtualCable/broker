@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 
 
@@ -48,12 +49,8 @@ class ActorLoginLogoutTest(test.UDSTestCase):
         """
         auth = fixtures_authenticators.create_db_authenticator()
         # Create some ramdom users
-        admins = fixtures_authenticators.create_db_users(
-            auth, number_of_users=8, is_admin=True
-        )
-        staffs = fixtures_authenticators.create_db_users(
-            auth, number_of_users=8, is_staff=True
-        )
+        admins = fixtures_authenticators.create_db_users(auth, number_of_users=8, is_admin=True)
+        staffs = fixtures_authenticators.create_db_users(auth, number_of_users=8, is_staff=True)
         users = fixtures_authenticators.create_db_users(auth, number_of_users=8)
 
         # Create some groups
@@ -72,22 +69,14 @@ class ActorLoginLogoutTest(test.UDSTestCase):
         # All users, admin and staff must be able to login
         for user in users + admins + staffs:
             # Valid
-            response = rest.login(
-                self, self.client, auth.uuid, user.name, user.name, 200, 'user'
-            )
-            self.assertEqual(
-                response['result'], 'ok', 'Login user {}'.format(user.name)
-            )
-            self.assertIsNotNone(response['token'], 'Login user {}'.format(user.name))
-            self.assertIsNotNone(response['version'], 'Login user {}'.format(user.name))
-            self.assertIsNotNone(
-                response['scrambler'], 'Login user {}'.format(user.name)
-            )
-            self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, response['token'])
+            response = rest.login(self, self.client, auth.uuid, user.name, user.name, 200, "user")
+            self.assertEqual(response["result"], "ok", "Login user {}".format(user.name))
+            self.assertIsNotNone(response["token"], "Login user {}".format(user.name))
+            self.assertIsNotNone(response["version"], "Login user {}".format(user.name))
+            self.assertIsNotNone(response["scrambler"], "Login user {}".format(user.name))
+            self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, response["token"])
             rest.logout(self, self.client)
 
         # Login with invalid creds just for a single user, because server will "block" us for a while
-        response = rest.login(
-            self, self.client, auth.uuid, 'invalid', 'invalid', 200, 'user'
-        )
-        self.assertEqual(response['result'], 'error', 'Login user invalid')
+        response = rest.login(self, self.client, auth.uuid, "invalid", "invalid", 200, "user")
+        self.assertEqual(response["result"], "error", "Login user invalid")

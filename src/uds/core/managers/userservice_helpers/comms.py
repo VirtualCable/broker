@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import json
 import logging
 import os
@@ -47,7 +48,7 @@ TIMEOUT = 2
 
 
 def _execute_actor_request(
-    userservice: 'UserService',
+    userservice: "UserService",
     method: str,
     data: typing.Optional[collections.abc.MutableMapping[str, typing.Any]] = None,
     min_actor_version: typing.Optional[str] = None,
@@ -61,27 +62,25 @@ def _execute_actor_request(
     url = userservice.get_comms_endpoint()
     secret = userservice.get_comms_secret()
     if not url:
-        raise exceptions.actor.NoActorComms(f'No notification urls for {userservice.friendly_name}')
+        raise exceptions.actor.NoActorComms(f"No notification urls for {userservice.friendly_name}")
 
-    min_actor_version = min_actor_version or '3.5.0'
-    version = userservice.properties.get('actor_version', '0.0.0')
-    if '-' in version or version < min_actor_version:
-        logger.warning('Pool %s has old actors (%s)', userservice.deployed_service.name, version)
+    min_actor_version = min_actor_version or "3.5.0"
+    version = userservice.properties.get("actor_version", "0.0.0")
+    if "-" in version or version < min_actor_version:
+        logger.warning("Pool %s has old actors (%s)", userservice.deployed_service.name, version)
         raise exceptions.actor.OldActorVersion(
-            f'Old actor version {version} for {userservice.friendly_name}'.format(
-                version, userservice.friendly_name
-            )
+            f"Old actor version {version} for {userservice.friendly_name}".format(version, userservice.friendly_name)
         )
 
-    url += '/' + method
+    url += "/" + method
 
     try:
         verify: typing.Union[bool, str]
-        cert = userservice.properties.get('cert', '')
+        cert = userservice.properties.get("cert", "")
         # cert = ''  # Uncomment to test without cert
         if cert:
             # Generate temp file, and delete it after
-            with tempfile.NamedTemporaryFile('wb', delete=False) as f:
+            with tempfile.NamedTemporaryFile("wb", delete=False) as f:
                 f.write(cert.encode())  # Save cert
                 verify = f.name
         else:
@@ -89,16 +88,16 @@ def _execute_actor_request(
         session = secure_requests_session(verify=cert)
         if data is None:
             headers = {
-                'X-Actor-Secret': secret if secret else '',
-                'content-type': 'application/json',
-                'Accept': 'application/json',
+                "X-Actor-Secret": secret if secret else "",
+                "content-type": "application/json",
+                "Accept": "application/json",
             }
             r = session.get(url, verify=verify, headers=headers, timeout=TIMEOUT)
         else:
             r = session.post(
                 url,
                 data=json.dumps(data),
-                headers={'content-type': 'application/json'},
+                headers={"content-type": "application/json"},
                 verify=verify,
                 timeout=TIMEOUT,
             )
@@ -106,15 +105,15 @@ def _execute_actor_request(
             try:
                 os.remove(verify)
             except Exception:
-                logger.exception('removing verify')
+                logger.exception("removing verify")
         js = r.json()
 
-        if version >= '3.0.0':
-            js = js['result']
-        logger.debug('Requested %s to actor. Url=%s', method, url)
+        if version >= "3.0.0":
+            js = js["result"]
+        logger.debug("Requested %s to actor. Url=%s", method, url)
     except Exception as e:
         logger.warning(
-            'Request %s failed: %s. Check connection on destination machine: %s',
+            "Request %s failed: %s. Check connection on destination machine: %s",
             method,
             e,
             url,
@@ -124,7 +123,7 @@ def _execute_actor_request(
     return js
 
 
-def notify_preconnect(userservice: 'UserService', info: types.connections.ConnectionData) -> None:
+def notify_preconnect(userservice: "UserService", info: types.connections.ConnectionData) -> None:
     """
     Notifies a preconnect to an user service
     """
@@ -134,29 +133,29 @@ def notify_preconnect(userservice: 'UserService', info: types.connections.Connec
 
     _execute_actor_request(
         userservice,
-        'preConnect',
+        "preConnect",
         types.connections.PreconnectRequest(
             user=info.username,
             protocol=info.protocol,
             ip=src.ip,
             hostname=src.hostname,
-            udsuser=userservice.user.name + '@' + userservice.user.manager.name if userservice.user else '',
-            udsuser_uuid=userservice.user.uuid if userservice.user else '',
+            udsuser=userservice.user.name + "@" + userservice.user.manager.name if userservice.user else "",
+            udsuser_uuid=userservice.user.uuid if userservice.user else "",
             userservice_uuid=userservice.uuid,
             service_type=info.service_type,
         ).as_dict(),
     )
 
 
-def check_user_service_uuid(user_service: 'UserService') -> bool:
+def check_user_service_uuid(user_service: "UserService") -> bool:
     """
     Checks if the uuid of the service is the same of our known uuid on DB
     """
     try:
-        uuid = _execute_actor_request(user_service, 'uuid')
+        uuid = _execute_actor_request(user_service, "uuid")
         if uuid and uuid != user_service.uuid:  # Empty UUID means "no check this, fixed pool machine"
             logger.info(
-                'Machine %s do not have expected uuid %s, instead has %s',
+                "Machine %s do not have expected uuid %s, instead has %s",
                 user_service.friendly_name,
                 user_service.uuid,
                 uuid,
@@ -168,7 +167,7 @@ def check_user_service_uuid(user_service: 'UserService') -> bool:
     return True  # Actor does not supports checking
 
 
-def request_screenshot(userservice: 'UserService') -> None:
+def request_screenshot(userservice: "UserService") -> None:
     """
     Requests an screenshot to an actor on an user service
 
@@ -183,42 +182,42 @@ def request_screenshot(userservice: 'UserService') -> None:
     try:
         # Data = {} forces an empty POST
         _execute_actor_request(
-            userservice, 'screenshot', data={}, min_actor_version='4.0.0'
+            userservice, "screenshot", data={}, min_actor_version="4.0.0"
         )  # First valid version with screenshot is 3.0
     except exceptions.actor.NoActorComms:
         pass  # No actor comms, nothing to do
 
 
-def send_script(userservice: 'UserService', script: str, exec_on_user: bool = False) -> None:
+def send_script(userservice: "UserService", script: str, exec_on_user: bool = False) -> None:
     """
     If allowed, sends script to user service
     Note tha the script is a python script, so it can be executed directly by the actor
     """
     try:
-        data: collections.abc.MutableMapping[str, typing.Any] = {'script': script}
+        data: collections.abc.MutableMapping[str, typing.Any] = {"script": script}
         if exec_on_user:
-            data['user'] = exec_on_user
+            data["user"] = exec_on_user
         # Data = {} forces an empty POST
-        _execute_actor_request(userservice, 'script', data=data)
+        _execute_actor_request(userservice, "script", data=data)
     except exceptions.actor.NoActorComms:
         pass
 
 
-def request_logoff(user_service: 'UserService') -> None:
+def request_logoff(user_service: "UserService") -> None:
     """
     Ask client to logoff user
     """
     try:
-        _execute_actor_request(user_service, 'logout', data={})
+        _execute_actor_request(user_service, "logout", data={})
     except exceptions.actor.NoActorComms:
         pass
 
 
-def send_message(userService: 'UserService', message: str) -> None:
+def send_message(userService: "UserService", message: str) -> None:
     """
     Sends an screen message to client
     """
     try:
-        _execute_actor_request(userService, 'message', data={'message': message})
+        _execute_actor_request(userService, "message", data={"message": message})
     except exceptions.actor.NoActorComms:
         pass

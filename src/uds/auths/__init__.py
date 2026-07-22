@@ -40,6 +40,7 @@ The registration of modules is done locating subclases of :py:class:`uds.core.au
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from uds.core.util import modfinder
 
 

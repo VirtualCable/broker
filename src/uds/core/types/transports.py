@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import enum
@@ -42,24 +43,24 @@ from django.utils.translation import gettext_noop as _, gettext
 
 
 class Protocol(enum.StrEnum):
-    NONE = ''
-    RDP = 'rdp'
-    RDS = 'rds'  # In fact, RDS (Remote Desktop Services) is RDP, but have "more info" for connection that RDP
-    SPICE = 'spice'
-    VNC = 'vnc'
-    PCOIP = 'pcoip'
-    REMOTEFX = 'remotefx'  # This in fact is RDP als
-    HDX = 'hdx'
-    ICA = 'ica'
-    NX = 'nx'
-    X11 = 'x11'
-    X2GO = 'x2go'  # Based on NX
-    NICEDCV = 'nicedcv'
-    SSH = 'ssh'
-    OTHER = 'other'
+    NONE = ""
+    RDP = "rdp"
+    RDS = "rds"  # In fact, RDS (Remote Desktop Services) is RDP, but have "more info" for connection that RDP
+    SPICE = "spice"
+    VNC = "vnc"
+    PCOIP = "pcoip"
+    REMOTEFX = "remotefx"  # This in fact is RDP als
+    HDX = "hdx"
+    ICA = "ica"
+    NX = "nx"
+    X11 = "x11"
+    X2GO = "x2go"  # Based on NX
+    NICEDCV = "nicedcv"
+    SSH = "ssh"
+    OTHER = "other"
 
     @staticmethod
-    def generic_vdi(*extra: 'Protocol') -> tuple['Protocol', ...]:
+    def generic_vdi(*extra: "Protocol") -> tuple["Protocol", ...]:
         return (
             Protocol.RDP,
             Protocol.VNC,
@@ -74,30 +75,30 @@ class Protocol(enum.StrEnum):
 
 
 class Grouping(enum.StrEnum):
-    DIRECT = _('Direct')
-    TUNNELED = _('Tunneled')
+    DIRECT = _("Direct")
+    TUNNELED = _("Tunneled")
 
     def localized(self) -> str:
         return gettext(self.value)
 
 
 class ScriptType(enum.StrEnum):
-    JAVASCRIPT = 'javascript'
+    JAVASCRIPT = "javascript"
 
 
 class SignatureAlgorithm(enum.StrEnum):
-    MLDSA65 = 'MLDSA65'  # Post quantum safe algorithm
+    MLDSA65 = "MLDSA65"  # Post quantum safe algorithm
 
 
 @dataclasses.dataclass
 class TransportLog:
-    level: str = 'info'  # info, debug, error
+    level: str = "info"  # info, debug, error
     ticket: str | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'level': self.level,
-            'ticket': self.ticket,
+            "level": self.level,
+            "ticket": self.ticket,
         }
 
 
@@ -107,9 +108,7 @@ class TransportScript:
     script_type: ScriptType
     signature_algorithm: SignatureAlgorithm
     signature_b64: str  # Signature of the script in base64
-    parameters: collections.abc.Mapping[str, typing.Any] = dataclasses.field(
-        default_factory=dict[str, typing.Any]
-    )
+    parameters: collections.abc.Mapping[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
     log: TransportLog = dataclasses.field(default_factory=TransportLog)
     associated_ticket: str | None = None  # Ticket associated with this script, if any
 
@@ -129,12 +128,12 @@ class TransportScript:
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'script': self.encoded_script,
-            'type': self.script_type,
-            'signature_algorithm': self.signature_algorithm,
-            'signature': self.signature_b64,
-            'params': self.encoded_parameters,
-            'log': self.log.as_dict(),
+            "script": self.encoded_script,
+            "type": self.script_type,
+            "signature_algorithm": self.signature_algorithm,
+            "signature": self.signature_b64,
+            "params": self.encoded_parameters,
+            "log": self.log.as_dict(),
         }
 
     def as_encrypted_dict(self, kem_key: str, ticket_id: str) -> dict[str, str]:

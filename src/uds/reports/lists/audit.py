@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import csv
 import io
 import logging
@@ -49,22 +50,22 @@ from .base import ListReport
 logger = logging.getLogger(__name__)
 
 RESPONSE_CODES: typing.Final[dict[str, str]] = {
-    '200': 'OK',
-    '400': 'Bad Request',
-    '401': 'Unauthorized',
-    '403': 'Forbidden',
-    '404': 'Not Found',
-    '405': 'Method Not Allowed',
-    '500': 'Internal Server Error',
-    '501': 'Not Implemented',
+    "200": "OK",
+    "400": "Bad Request",
+    "401": "Unauthorized",
+    "403": "Forbidden",
+    "404": "Not Found",
+    "405": "Method Not Allowed",
+    "500": "Internal Server Error",
+    "501": "Not Implemented",
 }
 
 RESPONSE_CODE_GROUPS: typing.Final[dict[int, str]] = {
-    1: 'Informational',
-    2: 'Success',
-    3: 'Redirection',
-    4: 'Client Error',
-    5: 'Server Error',
+    1: "Informational",
+    2: "Success",
+    3: "Redirection",
+    4: "Client Error",
+    5: "Server Error",
 }
 
 
@@ -74,7 +75,7 @@ def _decode_response_code(code: str) -> str:
     except ValueError:
         group = -1  # Unknown
 
-    return code + '/' + RESPONSE_CODES.get(code, RESPONSE_CODE_GROUPS.get(group, 'Unknown'))
+    return code + "/" + RESPONSE_CODES.get(code, RESPONSE_CODE_GROUPS.get(group, "Unknown"))
 
 
 def _parse_log_data(data: str) -> tuple[str, str, str, str, str] | None:
@@ -87,52 +88,56 @@ def _parse_log_data(data: str) -> tuple[str, str, str, str, str] | None:
     Parsed by splitting instead of by regex: data is attacker-influenced (it embeds the
     request path), and the previous regexes backtracked polynomially on crafted input.
     """
-    head, sep, rest = data.partition(']: ')
+    head, sep, rest = data.partition("]: ")
     if not sep:
         return None
 
-    ip, sep, user = head.partition(' [')
+    ip, sep, user = head.partition(" [")
     if not sep:
         return None
 
-    if rest.startswith('['):
-        method_and_code, sep, request = rest[1:].partition('] ')
-        method, code_sep, code = method_and_code.partition('/')
+    if rest.startswith("["):
+        method_and_code, sep, request = rest[1:].partition("] ")
+        method, code_sep, code = method_and_code.partition("/")
         if sep and code_sep:
             return ip, user, method, _decode_response_code(code), request
 
     # Audit action row (log_audit): no method/response_code
-    return ip, user, 'AUDIT', '', rest
+    return ip, user, "AUDIT", "", rest
 
 
 class ListReportAuditCSV(ListReport):
-    name = _('Audit Log list')  # Report name
-    description = _('List administration audit logs')  # Report description
-    filename = 'audit.csv'
-    mime_type = 'text/csv'
+    name = _("Audit Log list")  # Report name
+    description = _("List administration audit logs")  # Report description
+    filename = "audit.csv"
+    mime_type = "text/csv"
     encoded = False
     # PDF Report of audit logs is extremely slow on pdf, so we will use csv only
 
     start_date = gui.DateField(
         order=2,
-        label=_('Starting date'),
-        tooltip=_('starting date for report'),
+        label=_("Starting date"),
+        tooltip=_("starting date for report"),
         default=dateutils.start_of_month,
         required=True,
     )
 
     end_date = gui.DateField(
         order=3,
-        label=_('Finish date'),
-        tooltip=_('finish date for report'),
+        label=_("Finish date"),
+        tooltip=_("finish date for report"),
         default=dateutils.tomorrow,
         required=True,
     )
 
-    uuid = 'b5f5ebc8-44e9-11ed-97a9-efa619da6a49'
+    uuid = "b5f5ebc8-44e9-11ed-97a9-efa619da6a49"
 
     # Generator of data
-    def gen_data(self) -> collections.abc.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
+    def gen_data(
+        self,
+    ) -> collections.abc.Generator[
+        tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None
+    ]:
         # as_datetime() already returns an aware datetime, so no make_aware here
         start = self.start_date.as_datetime().replace(hour=0, minute=0, second=0, microsecond=0)
         end = self.end_date.as_datetime().replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -141,7 +146,7 @@ class ListReportAuditCSV(ListReport):
             created__lte=end,
             source=types.log.LogSource.REST,
             owner_type=types.log.LogObjectType.SYSLOG,
-        ).order_by('-created'):
+        ).order_by("-created"):
             # extract ip, user, method, response_code and request from data field
             parsed = _parse_log_data(i.data)
             if not parsed:
@@ -165,13 +170,13 @@ class ListReportAuditCSV(ListReport):
 
         writer.writerow(
             [
-                gettext('Date'),
-                gettext('Level'),
-                gettext('IP'),
-                gettext('User'),
-                gettext('Method'),
-                gettext('Response code'),
-                gettext('Request'),
+                gettext("Date"),
+                gettext("Level"),
+                gettext("IP"),
+                gettext("User"),
+                gettext("Method"),
+                gettext("Response code"),
+                gettext("Request"),
             ]
         )
 

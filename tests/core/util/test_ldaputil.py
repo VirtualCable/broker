@@ -28,31 +28,31 @@ class FakeLDAPConnection:
 class LdapUtilTest(UDSTestCase):
     def test_add_raises_already_exists_for_duplicate_entry(self) -> None:
         connection = FakeLDAPConnection(
-            {'result': 68, 'description': 'entryAlreadyExists', 'message': 'entry already exists'},
+            {"result": 68, "description": "entryAlreadyExists", "message": "entry already exists"},
             add_result=False,
         )
 
         with self.assertRaises(ldaputil.ALREADY_EXISTS):
-            ldaputil.add(connection, 'cn=test,dc=example,dc=com', attributes={'cn': ['test']})  # type: ignore[arg-type]
+            ldaputil.add(connection, "cn=test,dc=example,dc=com", attributes={"cn": ["test"]})  # type: ignore[arg-type]
 
     def test_modify_raises_already_exists_for_duplicate_member(self) -> None:
         connection = FakeLDAPConnection(
-            {'result': 20, 'description': 'attributeOrValueExists', 'message': 'value already exists'},
+            {"result": 20, "description": "attributeOrValueExists", "message": "value already exists"},
             modify_result=False,
         )
 
         with self.assertRaises(ldaputil.ALREADY_EXISTS):
             ldaputil.modify(
                 connection,  # type: ignore[arg-type]
-                'cn=group,dc=example,dc=com',
-                {'member': [(ldaputil.MODIFY_ADD, ['cn=machine,dc=example,dc=com'])]},
+                "cn=group,dc=example,dc=com",
+                {"member": [(ldaputil.MODIFY_ADD, ["cn=machine,dc=example,dc=com"])]},
             )
 
     def test_add_raises_ldap_error_for_non_duplicate_failure(self) -> None:
         connection = FakeLDAPConnection(
-            {'result': 50, 'description': 'insufficientAccessRights', 'message': 'access denied'},
+            {"result": 50, "description": "insufficientAccessRights", "message": "access denied"},
             add_result=False,
         )
 
         with self.assertRaises(ldaputil.LDAPError):
-            ldaputil.add(connection, 'cn=test,dc=example,dc=com', attributes={'cn': ['test']})  # type: ignore[arg-type]
+            ldaputil.add(connection, "cn=test,dc=example,dc=com", attributes={"cn": ["test"]})  # type: ignore[arg-type]

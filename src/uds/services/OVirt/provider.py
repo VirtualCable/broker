@@ -29,14 +29,18 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services, types, consts
+from uds.core import consts
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
-from uds.core.util import validators, fields
+from uds.core.util import fields
+from uds.core.util import validators
 from uds.core.util.decorators import cached
 
 from .ovirt import client
@@ -72,15 +76,15 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('oVirt/OLVM')
+    type_name = _("oVirt/OLVM")
     # : Type used internally to identify this provider
-    type_type = 'oVirtPlatform'
+    type_type = "oVirtPlatform"
     # : Description shown at administration interface for this provider
-    type_description = _('oVirt platform service provider')
+    type_description = _("oVirt platform service provider")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
@@ -93,59 +97,59 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     # "random"
     ovirt_version = gui.ChoiceField(
         order=1,
-        label=_('Server Version'),
-        tooltip=_('oVirt/OVLM Server Version'),
+        label=_("Server Version"),
+        tooltip=_("oVirt/OVLM Server Version"),
         # In this case, the choice can have none value selected by default
         required=True,
         readonly=False,
         choices=[
-            gui.choice_item('4', '4.x'),
+            gui.choice_item("4", "4.x"),
         ],
-        default='4',  # Default value is the ID of the choicefield
-        old_field_name='ovirtVersion',
+        default="4",  # Default value is the ID of the choicefield
+        old_field_name="ovirtVersion",
     )
 
     host = gui.TextField(
         length=64,
-        label=_('Host'),
+        label=_("Host"),
         order=2,
-        tooltip=_('oVirt Server IP or Hostname'),
+        tooltip=_("oVirt Server IP or Hostname"),
         required=True,
     )
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         order=2,
-        tooltip=_('oVirt Server Port'),
+        tooltip=_("oVirt Server Port"),
         required=True,
         default=443,
     )
     username = gui.TextField(
         length=32,
-        label=_('Username'),
+        label=_("Username"),
         order=3,
         tooltip=_(
             (
-                'User with valid privileges on oVirt.'
+                "User with valid privileges on oVirt."
                 ' Use "user@domain" if using AAA, or "user@domain@provider" if using keycloak.'
                 ' I.e. "admin@ovirt@internalsso" or "admin@internal")'
             )
         ),
         required=True,
-        default='admin@internal',
+        default="admin@internal",
     )
     password = gui.PasswordField(
         length=32,
-        label=_('Password'),
+        label=_("Password"),
         order=4,
-        tooltip=_('Password of the user of oVirt'),
+        tooltip=_("Password of the user of oVirt"),
         required=True,
     )
 
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field(default=10, order=90)
-    macs_range = fields.macs_range_field(default='52:54:00:00:00:00-52:54:00:FF:FF:FF', order=91)
+    macs_range = fields.macs_range_field(default="52:54:00:00:00:00-52:54:00:FF:FF:FF", order=91)
 
     # Own variables
     _api: typing.Optional[client.Client] = None
@@ -173,7 +177,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
 
     # There is more fields type, but not here the best place to cover it
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -200,7 +204,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     def get_macs_range(self) -> str:
         return self.macs_range.value
 
-    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT)
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT)
     def is_available(self) -> bool:
         """
         Check if aws provider is reachable
@@ -209,7 +213,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test ovirt Connectivity
 
@@ -239,6 +243,6 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
         # return [True, _('Nothing tested, but all went fine..')]
         ov = OVirtProvider(env, data)
         if ov.test_connection() is True:
-            return types.core.TestResult(True, _('Connection to oVirt server is ok'))
+            return types.core.TestResult(True, _("Connection to oVirt server is ok"))
 
-        return types.core.TestResult(False, _('Connection failed. Check connection params'))
+        return types.core.TestResult(False, _("Connection failed. Check connection params"))

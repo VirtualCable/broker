@@ -27,9 +27,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import collections.abc
 import dataclasses
 import logging
@@ -68,18 +69,17 @@ class MFAItem(types.rest.BaseRestItem):
 
 
 class MFA(ModelHandler[MFAItem]):
-
     MODEL = models.MFA
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags', 'remember_device', 'validity']
+    FIELDS_TO_SAVE = ["name", "comments", "tags", "remember_device", "validity"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Multi Factor Authentication'))
-        .icon(name='name', title=_('Name'), visible=True)
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='comments', title=_('Comments'))
-        .text_column(name='tags', title=_('tags'), visible=False)
-        .with_field_mappings(type_name='data_type')
-        .with_filter_fields('name', 'data_type', 'comments')
+        ui_utils.TableBuilder(_("Multi Factor Authentication"))
+        .icon(name="name", title=_("Name"), visible=True)
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="comments", title=_("Comments"))
+        .text_column(name="tags", title=_("tags"), visible=False)
+        .with_field_mappings(type_name="data_type")
+        .with_filter_fields("name", "data_type", "comments")
         .build()
     )
 
@@ -94,10 +94,10 @@ class MFA(ModelHandler[MFAItem]):
         return mfas.factory().providers().values()
 
     @typing.override
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('type_name'):
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("type_name"):
             _, is_descending = field_info
-            order_by_field = '-data_type' if is_descending else 'data_type'
+            order_by_field = "-data_type" if is_descending else "data_type"
             return qs.order_by(order_by_field)
         return super().apply_sort(qs)
 
@@ -106,7 +106,7 @@ class MFA(ModelHandler[MFAItem]):
         mfa_type = mfas.factory().lookup(for_type)
 
         if not mfa_type:
-            raise exceptions.rest.NotFound(_('MFA type not found: {}').format(for_type))
+            raise exceptions.rest.NotFound(_("MFA type not found: {}").format(for_type))
 
         # Create a temporal instance to get the gui
         with Environment.temporary_environment() as env:
@@ -121,24 +121,24 @@ class MFA(ModelHandler[MFAItem]):
                 )
                 .add_fields(mfa.gui_description())
                 .add_numeric(
-                    name='remember_device',
+                    name="remember_device",
                     default=0,
                     min_value=0,
-                    label=gettext('Device Caching'),
-                    tooltip=gettext('Time in hours to cache device so MFA is not required again. User based.'),
+                    label=gettext("Device Caching"),
+                    tooltip=gettext("Time in hours to cache device so MFA is not required again. User based."),
                 )
                 .add_numeric(
-                    name='validity',
+                    name="validity",
                     default=5,
                     min_value=0,
-                    label=gettext('MFA code validity'),
-                    tooltip=gettext('Time in minutes to allow MFA code to be used.'),
+                    label=gettext("MFA code validity"),
+                    tooltip=gettext("Time in minutes to allow MFA code to be used."),
                 )
                 .build()
             )
 
     @typing.override
-    def get_item(self, item: 'Model') -> MFAItem:
+    def get_item(self, item: "Model") -> MFAItem:
         item = ensure.is_instance(item, models.MFA)
         type_ = item.get_type()
         return MFAItem(

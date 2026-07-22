@@ -43,24 +43,22 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramReceiver(jobs.Job):
-    friendly_name = 'Telegram Receiver'
+    friendly_name = "Telegram Receiver"
 
     @typing.override
     def next_execution_delay(self) -> int:
         return 60
 
-
-
     @typing.override
     def run(self) -> None:
-        logger.debug('Retrieving messages from Telegram')
+        logger.debug("Retrieving messages from Telegram")
 
         # Get all Notifiers that are telegram notifiers
         for telegram_db_notifier in Notifier.objects.filter(data_type=notifier.TELEGRAM_TYPE, enabled=True):
             n = typing.cast(notifier.TelegramNotifier, telegram_db_notifier.get_instance())
 
             if not n:  # even if marked as telegram, it could be not a telegram notifier
-                logger.error('Notifier %s is not a Telegram notifier', telegram_db_notifier.name)
+                logger.error("Notifier %s is not a Telegram notifier", telegram_db_notifier.name)
                 continue
 
             n.retrieve_messages()

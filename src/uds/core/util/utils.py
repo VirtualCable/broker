@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import base64
 import contextlib
 import datetime
@@ -46,7 +47,7 @@ from django.utils.translation import gettext
 
 logger = logging.getLogger(__name__)
 
-VT = typing.TypeVar('VT')
+VT = typing.TypeVar("VT")
 
 
 class CaseInsensitiveDict(dict[str, VT]):
@@ -85,9 +86,7 @@ class CaseInsensitiveDict(dict[str, VT]):
 
     @typing.override
     def setdefault(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> VT:
-        return super().setdefault(
-            CaseInsensitiveDict._k(key), *args, **kwargs
-        )  # pylint: disable=protected-access
+        return super().setdefault(CaseInsensitiveDict._k(key), *args, **kwargs)  # pylint: disable=protected-access
 
     def _convert_keys(self) -> None:
         for k in list(self.keys()):  # List is to make a copy of keys, because we are going to change it
@@ -101,7 +100,7 @@ def package_relative_file(module_name: str, file_name: str) -> str:
     This allows to keep images alongside report
     """
     mod = sys.modules[module_name]
-    if mod and hasattr(mod, '__file__') and mod.__file__:
+    if mod and hasattr(mod, "__file__") and mod.__file__:
         pkgpath = os.path.dirname(mod.__file__)
         return os.path.join(pkgpath, file_name)
     # Not found, return fileName
@@ -112,7 +111,7 @@ def timestamp_as_str(stamp: float, format_: typing.Optional[str] = None) -> str:
     """
     Converts a timestamp to date string using specified format (DJANGO format such us SHORT_DATETIME_FORMAT..)
     """
-    format_ = formats.get_format(format_ or 'SHORT_DATETIME_FORMAT')
+    format_ = formats.get_format(format_ or "SHORT_DATETIME_FORMAT")
     return filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(stamp)), format_)
 
 
@@ -124,7 +123,7 @@ def seconds_to_time_string(seconds: int) -> str:
     minutes %= 60
     days = hours // 24
     hours %= 24
-    return gettext('{} days {:d}:{:02d}:{:02d}').format(days, hours, minutes, seconds)
+    return gettext("{} days {:d}:{:02d}:{:02d}").format(days, hours, minutes, seconds)
 
 
 def remove_control_chars(s: str) -> str:
@@ -137,7 +136,7 @@ def remove_control_chars(s: str) -> str:
     Returns:
         str -- string without control characters
     """
-    return ''.join(ch for ch in s if unicodedata.category(ch)[0] != "C")
+    return "".join(ch for ch in s if unicodedata.category(ch)[0] != "C")
 
 
 def load_icon(icon_filename: str) -> bytes:
@@ -145,16 +144,16 @@ def load_icon(icon_filename: str) -> bytes:
     Loads an icon from icons directory
     """
     try:
-        with open(icon_filename, 'rb') as f:
+        with open(icon_filename, "rb") as f:
             data = f.read()
     except Exception as e:
-        logger.error('Error reading icon file  %s: %s', icon_filename, e)
+        logger.error("Error reading icon file  %s: %s", icon_filename, e)
         # blank png bytes
         data = base64.b64decode(
             (
-                b'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAY0lEQVR42u3QAREAAAQEMJKL'
-                b'/nI4W4R1KlOPtQABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAg'
-                b'AABAgQIECBAgAABAgQIECBAgAABAgQIEHDfAvLdn4FABR1mAAAAAElFTkSuQmCC'
+                b"iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAY0lEQVR42u3QAREAAAQEMJKL"
+                b"/nI4W4R1KlOPtQABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAg"
+                b"AABAgQIECBAgAABAgQIECBAgAABAgQIEHDfAvLdn4FABR1mAAAAAElFTkSuQmCC"
             )
         )
 
@@ -165,7 +164,7 @@ def load_icon_b64(iconFilename: str) -> str:
     """
     Loads an icon from icons directory
     """
-    return base64.b64encode(load_icon(iconFilename)).decode('ascii')
+    return base64.b64encode(load_icon(iconFilename)).decode("ascii")
 
 
 @contextlib.contextmanager
@@ -176,8 +175,8 @@ def ignore_exceptions(log: bool = False) -> typing.Iterator[None]:
     try:
         yield
     except Exception as e:
-        if log or getattr(settings, 'DEBUG', False):
-            logger.error('Ignoring exception: %s', e)
+        if log or getattr(settings, "DEBUG", False):
+            logger.error("Ignoring exception: %s", e)
 
 
 class ExecutionTimer:
@@ -211,7 +210,7 @@ class ExecutionTimer:
         self._delay_threshold = delay_threshold
         self._max_delay_rate = max_delay_rate
 
-    def __enter__(self) -> 'ExecutionTimer':
+    def __enter__(self) -> "ExecutionTimer":
         self._start = self._end = timezone.localtime()
         self._running = True
         return self

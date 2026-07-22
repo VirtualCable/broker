@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -57,7 +58,7 @@ class TestProxmoxPublication(UDSTransactionTestCase):
             # Wait until  types.services.Operation.CREATE_COMPLETED
             for _ in limited_iterator(lambda: publication._queue[0] != types.services.Operation.CREATE_COMPLETED, 10):
                 state = publication.check_state()
-            
+
             self.assertEqual(state, types.states.State.RUNNING)
             api.clone_vm.assert_called_once_with(
                 publication.service().machine.as_int(),
@@ -74,8 +75,7 @@ class TestProxmoxPublication(UDSTransactionTestCase):
             self.assertEqual(publication.check_state(), types.states.State.FINISHED)
             # Must have vmid, and must match machine() result
             self.assertEqual(publication.get_template_id(), publication._vmid)
-            
-            
+
     def test_publication_error(self) -> None:
         with fixtures.patched_provider() as provider:
             api = typing.cast(mock.MagicMock, provider.api)
@@ -83,16 +83,18 @@ class TestProxmoxPublication(UDSTransactionTestCase):
             publication = fixtures.create_publication(service=service)
 
             # Ensure state check returns error
-            fixtures.TASK_STATUS.status = 'stopped'
-            fixtures.TASK_STATUS.exitstatus = 'ERROR, BOOM!'
+            fixtures.TASK_STATUS.status = "stopped"
+            fixtures.TASK_STATUS.exitstatus = "ERROR, BOOM!"
 
             state = publication.publish()
-            self.assertEqual(state, types.states.State.RUNNING, f'State is not running: publication._queue={publication._queue}')
-            
+            self.assertEqual(
+                state, types.states.State.RUNNING, f"State is not running: publication._queue={publication._queue}"
+            )
+
             # Wait until  types.services.Operation.CREATE_COMPLETED
             for _ in limited_iterator(lambda: state == types.states.TaskState.RUNNING, 128):
                 state = publication.check_state()
-            
+
             try:
                 api.clone_vm.assert_called_once_with(
                     publication.service().machine.as_int(),
@@ -106,10 +108,9 @@ class TestProxmoxPublication(UDSTransactionTestCase):
                     None,
                 )
             except AssertionError:
-                self.fail(f'Clone machine not called: {api.mock_calls}  //  {publication._queue}')
+                self.fail(f"Clone machine not called: {api.mock_calls}  //  {publication._queue}")
             self.assertEqual(state, types.states.State.ERROR)
-            self.assertEqual(publication.error_reason(), 'ERROR, BOOM!')
-
+            self.assertEqual(publication.error_reason(), "ERROR, BOOM!")
 
     def test_publication_destroy(self) -> None:
         vmid = str(fixtures.VMINFO_LIST[0].id)
@@ -117,7 +118,7 @@ class TestProxmoxPublication(UDSTransactionTestCase):
             api = typing.cast(mock.MagicMock, provider.api)
             service = fixtures.create_service_linked(provider=provider)
             publication = fixtures.create_publication(service=service)
-            
+
             service.must_stop_before_deletion = False  # Avoid stopping before deletion, not needed for this test
 
             # Destroy
@@ -138,7 +139,6 @@ class TestProxmoxPublication(UDSTransactionTestCase):
 
             self.assertEqual(state, types.states.State.RUNNING)
 
-
     def test_publication_destroy_error(self) -> None:
         vmid = str(fixtures.VMINFO_LIST[0].id)
         with fixtures.patched_provider() as provider:
@@ -149,7 +149,7 @@ class TestProxmoxPublication(UDSTransactionTestCase):
             # Now, destroy in fact will not return error, because it will
             # queue the operation if failed, but api.delete_vm will be called anyway
             publication._vmid = vmid
-            api.delete_vm.side_effect = Exception('BOOM!')
+            api.delete_vm.side_effect = Exception("BOOM!")
             publication._vmid = vmid
             self.assertEqual(publication.destroy(), types.states.State.RUNNING)
             api.delete_vm.assert_not_called()
@@ -160,6 +160,6 @@ class TestProxmoxPublication(UDSTransactionTestCase):
             api.delete_vm.assert_called_once_with(int(publication.get_template_id()))
 
             # Ensure cancel calls destroy
-            with mock.patch.object(publication, 'destroy') as destroy:
+            with mock.patch.object(publication, "destroy") as destroy:
                 publication.cancel()
                 destroy.assert_called_with()

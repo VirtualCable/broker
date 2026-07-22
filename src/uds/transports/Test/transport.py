@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -51,10 +52,10 @@ class TestTransport(transports.Transport):
     Simpe testing transport. Currently a copy of URLCustomTransport
     """
 
-    type_name = _('Test Transport')
-    type_type = 'TestTransport'
-    type_description = _('Test Transport')
-    icon_file = 'transport.png'
+    type_name = _("Test Transport")
+    type_type = "TestTransport"
+    type_description = _("Test Transport")
+    icon_file = "transport.png"
 
     own_link = True
     supported_oss = consts.os.ALL_OS_LIST
@@ -62,48 +63,46 @@ class TestTransport(transports.Transport):
     group = types.transports.Grouping.DIRECT
 
     test_url = gui.TextField(
-        label=_('URL Pattern'),
+        label=_("URL Pattern"),
         order=1,
-        tooltip=_('URL Pattern to open (i.e. https://_IP_/test?user=_USER_'),
-        default='https://www.udsenterprise.com',
+        tooltip=_("URL Pattern to open (i.e. https://_IP_/test?user=_USER_"),
+        default="https://www.udsenterprise.com",
         length=256,
         required=True,
     )
 
     force_new_window = gui.CheckBoxField(
-        label=_('Force new HTML Window'),
+        label=_("Force new HTML Window"),
         order=91,
-        tooltip=_(
-            'If checked, every connection will try to open its own window instead of reusing the "global" one.'
-        ),
+        tooltip=_('If checked, every connection will try to open its own window instead of reusing the "global" one.'),
         default=False,
         tab=types.ui.Tab.ADVANCED,
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if not values:
             return
         # Strip spaces
-        if not (self.test_url.value.startswith('http://') or self.test_url.value.startswith('https://')):
-            raise exceptions.ui.ValidationError(_('The url must be http or https'))
+        if not (self.test_url.value.startswith("http://") or self.test_url.value.startswith("https://")):
+            raise exceptions.ui.ValidationError(_("The url must be http or https"))
 
     # Same check as normal RDP transport
     @typing.override
-    def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
+    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
         # No check is done for URL transport
         return True
 
     @typing.override
     def get_link(
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
+        request: "ExtendedHttpRequestWithUser",
     ) -> str:
 
         # Fix username/password acording to os manager
@@ -111,7 +110,7 @@ class TestTransport(transports.Transport):
         username, password = userservice.process_user_password(username, password)
 
         url = self.update_link_window(
-            self.test_url.value.replace('_IP_', ip).replace('_USER_', username),
+            self.test_url.value.replace("_IP_", ip).replace("_USER_", username),
             on_same_window=False,
             on_new_window=self.force_new_window.as_bool(),
         )

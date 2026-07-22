@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 
@@ -44,48 +45,53 @@ logger = logging.getLogger(__name__)
 class SystemTest(rest.test.RESTTestCase):
     def test_overview(self) -> None:
         # If not logged in, will fail
-        response = self.client.rest_get('system/overview')
+        response = self.client.rest_get("system/overview")
         self.assertEqual(response.status_code, 403)
 
         # Login as admin
         self.login()
 
         # Now, will work
-        response = self.client.get('/uds/rest/system/overview')
+        response = self.client.get("/uds/rest/system/overview")
         self.assertEqual(response.status_code, 200)
         json = response.json()
         # should have rest.test.NUMBER_OF_ITEMS_TO_CREATE * 3 users (admins, staff and plain users),
         # rest.test.NUMBER_OF_ITEMS_TO_CREATE groups
         # 2 services (1 managed, 1 unmanaged), 2 service_pools (1 for each service), 2 user_services (1 for each service pool)
         # no meta_pools, and no restrained_services_pools
-        self.assertEqual(json['users'], rest.test.NUMBER_OF_ITEMS_TO_CREATE * 3)  # 3 because will create admins, staff and plain users
-        self.assertEqual(json['groups'], rest.test.NUMBER_OF_ITEMS_TO_CREATE * 2)
+        self.assertEqual(
+            json["users"], rest.test.NUMBER_OF_ITEMS_TO_CREATE * 3
+        )  # 3 because will create admins, staff and plain users
+        self.assertEqual(json["groups"], rest.test.NUMBER_OF_ITEMS_TO_CREATE * 2)
         count = len(self.user_services) + 2
-        self.assertEqual(json['services'], count)
-        self.assertEqual(json['service_pools'], count)
-        self.assertEqual(json['user_services'], count)
-        self.assertEqual(json['meta_pools'], 0)
-        self.assertEqual(json['restrained_services_pools'], 0)
+        self.assertEqual(json["services"], count)
+        self.assertEqual(json["service_pools"], count)
+        self.assertEqual(json["user_services"], count)
+        self.assertEqual(json["meta_pools"], 0)
+        self.assertEqual(json["restrained_services_pools"], 0)
 
-        
     def test_chart_pool(self) -> None:
         # First, create fixtures for the pool
         DAYS = 30
         for pool in [self.user_service_managed, self.userservice_unmanaged]:
             stats_counters.create_stats_interval_total(
                 id=pool.deployed_service.id,
-                counter_type=[counters.types.stats.CounterType.ASSIGNED, counters.types.stats.CounterType.INUSE, counters.types.stats.CounterType.CACHED],
+                counter_type=[
+                    counters.types.stats.CounterType.ASSIGNED,
+                    counters.types.stats.CounterType.INUSE,
+                    counters.types.stats.CounterType.CACHED,
+                ],
                 since=timezone.localtime() - datetime.timedelta(days=DAYS),
                 days=DAYS,
                 number_per_hour=6,
                 value=lambda x, y: (x % y) * 10,
-                owner_type=counters.types.stats.CounterOwnerType.SERVICEPOOL
+                owner_type=counters.types.stats.CounterOwnerType.SERVICEPOOL,
             )
         # Now, test (will fail if not logged in)
-        response = self.client.get('/uds/rest/system/stats/assigned')
+        response = self.client.get("/uds/rest/system/stats/assigned")
         self.assertEqual(response.status_code, 403)
 
         # Login as admin
         self.login()
-        response = self.client.get('/uds/rest/system/stats/assigned')
+        response = self.client.get("/uds/rest/system/stats/assigned")
         self.assertEqual(response.status_code, 200)

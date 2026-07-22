@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -45,31 +46,31 @@ class TestMFA(mfas.MFA):
     MFA provider for testing purposes with a deterministic code '123456'
     """
 
-    type_name = 'Test MFA'
-    type_type = 'testMFA'
-    type_description = 'MFA for testing purposes'
-    icon_file = 'mfa.png'
+    type_name = "Test MFA"
+    type_type = "testMFA"
+    type_description = "MFA for testing purposes"
+    icon_file = "mfa.png"
 
     def send_code(
-        self, request: 'ExtendedHttpRequest', userid: str, username: str, identifier: str, code: str
+        self, request: "ExtendedHttpRequest", userid: str, username: str, identifier: str, code: str
     ) -> mfas.MFA.RESULT:
         return mfas.MFA.RESULT.OK
 
     def process(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         validity: int | None = None,
     ) -> mfas.MFA.RESULT:
         # Store a deterministic code for testing
-        self._put_data(request, userid, '123456')
+        self._put_data(request, userid, "123456")
         return mfas.MFA.RESULT.OK
 
     def validate(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
@@ -80,10 +81,10 @@ class TestMFA(mfas.MFA):
         if data and data[1] == code:
             self._remove_data(request, userid)
             return
-        raise exceptions.auth.MFAError('Invalid code')
+        raise exceptions.auth.MFAError("Invalid code")
 
     def label(self) -> str:
-        return 'Test Code'
+        return "Test Code"
 
 
 def create_db_mfa(remember_device: int = 0, validity: int = 300) -> models.MFA:
@@ -92,7 +93,7 @@ def create_db_mfa(remember_device: int = 0, validity: int = 300) -> models.MFA:
     if not factory.has(TestMFA.type_type):
         factory.insert(TestMFA)
     mfa = models.MFA()
-    mfa.name = 'Testing MFA'
+    mfa.name = "Testing MFA"
     mfa.data_type = TestMFA.type_type
     mfa.remember_device = remember_device
     mfa.validity = validity

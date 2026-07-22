@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -54,37 +55,37 @@ class ServicePoolGroup(UUIDModel):
     A deployed service is the Service produced element that is assigned finally to an user (i.e. a Virtual Machine, etc..)
     """
 
-    name = models.CharField(max_length=128, default='', db_index=True, unique=True)
-    comments = models.CharField(max_length=256, default='')
+    name = models.CharField(max_length=128, default="", db_index=True, unique=True)
+    comments = models.CharField(max_length=256, default="")
     priority = models.IntegerField(default=0, db_index=True)
     image = models.ForeignKey(
         Image,
         null=True,
         blank=True,
-        related_name='servicesPoolsGroup',
+        related_name="servicesPoolsGroup",
         on_delete=models.SET_NULL,
     )
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[ServicePoolGroup]'
-    servicesPools: 'models.manager.Manager[ServicePool]'
+    servicesPools: "models.manager.Manager[ServicePool]"
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds__pools_groups'
-        app_label = 'uds'
+        db_table = "uds__pools_groups"
+        app_label = "uds"
 
     @property
     def as_dict(self) -> collections.abc.MutableMapping[str, typing.Any]:
         return {
-            'id': self.uuid,
-            'name': self.name,
-            'comments': self.comments,
-            'priority': self.priority,
-            'imageUuid': self.image.uuid if self.image is not None else consts.UUID_ZERO,
+            "id": self.uuid,
+            "name": self.name,
+            "comments": self.comments,
+            "priority": self.priority,
+            "imageUuid": self.image.uuid if self.image is not None else consts.UUID_ZERO,
         }
 
     @property
@@ -92,13 +93,13 @@ class ServicePoolGroup(UUIDModel):
         return self.image.thumb64 if self.image else consts.images.DEFAULT_THUMB_BASE64
 
     @staticmethod
-    def default() -> 'ServicePoolGroup':
+    def default() -> "ServicePoolGroup":
         """Returns an "default" service pool group. Used on services agroupation on visualization
 
         Returns:
             [ServicePoolGroup]: Default ServicePoolGroup
         """
-        return ServicePoolGroup(uuid='', name=_('General'), comments='', priority=-10000)
+        return ServicePoolGroup(uuid="", name=_("General"), comments="", priority=-10000)
 
     def __str__(self) -> str:
-        return f'Service Pool group {self.name}({self.comments}): {self.image.name if self.image else ""}'
+        return f"Service Pool group {self.name}({self.comments}): {self.image.name if self.image else ''}"

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import collections.abc
 import typing
@@ -43,14 +44,14 @@ from ..utils import helpers
 
 # Counters so we can reinvoke the same method and generate new data
 glob = {
-    'provider_id': 1,
-    'service_id': 1,
-    'osmanager_id': 1,
-    'transport_id': 1,
-    'service_pool_id': 1,
-    'user_service_id': 1,
-    'meta_pool_id': 1,
-    'service_pool_group_id': 1,
+    "provider_id": 1,
+    "service_id": 1,
+    "osmanager_id": 1,
+    "transport_id": 1,
+    "service_pool_id": 1,
+    "user_service_id": 1,
+    "meta_pool_id": 1,
+    "service_pool_group_id": 1,
 }
 
 
@@ -58,12 +59,12 @@ def create_db_provider() -> models.Provider:
     from uds.services.Test.provider import TestProvider
 
     provider = models.Provider()
-    provider.name = 'Testing provider {}'.format(glob['provider_id'])
-    provider.comments = 'Tesging provider comment {}'.format(glob['provider_id'])
+    provider.name = "Testing provider {}".format(glob["provider_id"])
+    provider.comments = "Tesging provider comment {}".format(glob["provider_id"])
     provider.data_type = TestProvider.type_type
     provider.data = provider.get_instance().serialize()
     provider.save()
-    glob['provider_id'] += 1
+    glob["provider_id"] += 1
 
     return provider
 
@@ -72,20 +73,18 @@ def create_db_service(provider: models.Provider, use_caching_version: bool = Tru
     from uds.services.Test.service import TestServiceCache, TestServiceNoCache
 
     service = provider.services.create(
-        name='Service {}'.format(glob['service_id']),
+        name="Service {}".format(glob["service_id"]),
         data_type=TestServiceCache.type_type,
         data=(
-            TestServiceCache(
-                environment.Environment(str(glob['service_id'])), provider.get_instance()
-            ).serialize()
+            TestServiceCache(environment.Environment(str(glob["service_id"])), provider.get_instance()).serialize()
             if use_caching_version
             else TestServiceNoCache(
-                environment.Environment(str(glob['service_id'])), provider.get_instance()
+                environment.Environment(str(glob["service_id"])), provider.get_instance()
             ).serialize()
         ),
-        token=helpers.random_string(16) + str(glob['service_id']),
+        token=helpers.random_string(16) + str(glob["service_id"]),
     )
-    glob['service_id'] += 1  # In case we generate a some more services elsewhere
+    glob["service_id"] += 1  # In case we generate a some more services elsewhere
 
     return service
 
@@ -99,18 +98,18 @@ def create_db_osmanager(
         osmanager = TestOSManager(
             environment.Environment.testing_environment(),
             {
-                'on_logout': 'remove',
-                'idle': 300,
+                "on_logout": "remove",
+                "idle": 300,
             },
         )
 
     osmanager_db = models.OSManager.objects.create(
-        name=f'OS Manager {glob["osmanager_id"]}',
-        comments=f'Comment for OS Manager {glob["osmanager_id"]}',
+        name=f"OS Manager {glob['osmanager_id']}",
+        comments=f"Comment for OS Manager {glob['osmanager_id']}",
         data_type=osmanager.type_type,
         data=osmanager.serialize(),
     )
-    glob['osmanager_id'] += 1
+    glob["osmanager_id"] += 1
 
     return osmanager_db
 
@@ -118,12 +117,12 @@ def create_db_osmanager(
 def create_db_servicepool_group(
     image: models.Image | None = None,
 ) -> models.ServicePoolGroup:
-    service_pool_group: 'models.ServicePoolGroup' = models.ServicePoolGroup.objects.create(
-        name='Service pool group %d' % (glob['service_pool_group_id']),
-        comments=f'Comment for service pool group {glob["service_pool_group_id"]}',
+    service_pool_group: "models.ServicePoolGroup" = models.ServicePoolGroup.objects.create(
+        name="Service pool group %d" % (glob["service_pool_group_id"]),
+        comments=f"Comment for service pool group {glob['service_pool_group_id']}",
         image=image,
     )
-    glob['service_pool_group_id'] += 1
+    glob["service_pool_group_id"] += 1
 
     return service_pool_group
 
@@ -136,13 +135,13 @@ def create_db_servicepool(
     servicePoolGroup: models.ServicePoolGroup | None = None,
 ) -> models.ServicePool:
 
-    service_pool: 'models.ServicePool' = service.deployedServices.create(
-        name='Service pool %d' % (glob['service_pool_id']),
-        short_name='pool%d' % (glob['service_pool_id']),
-        comments='Comment for service pool %d' % (glob['service_pool_id']),
+    service_pool: "models.ServicePool" = service.deployedServices.create(
+        name="Service pool %d" % (glob["service_pool_id"]),
+        short_name="pool%d" % (glob["service_pool_id"]),
+        comments="Comment for service pool %d" % (glob["service_pool_id"]),
         osmanager=osmanager,
     )
-    glob['service_pool_id'] += 1
+    glob["service_pool_id"] += 1
 
     for g in groups or []:
         service_pool.assignedGroups.add(g)
@@ -159,7 +158,7 @@ def create_db_servicepool(
 def create_db_publication(
     service_pool: models.ServicePool,
 ) -> models.ServicePoolPublication:
-    publication: 'models.ServicePoolPublication' = service_pool.publications.create(
+    publication: "models.ServicePoolPublication" = service_pool.publications.create(
         publish_date=timezone.localtime(),
         state=types.states.State.USABLE,
         state_date=timezone.localtime(),
@@ -170,30 +169,30 @@ def create_db_publication(
     return publication
 
 
-def create_db_transport(transport_instance: 'Transport|None' = None, **kwargs: typing.Any) -> models.Transport:
+def create_db_transport(transport_instance: "Transport|None" = None, **kwargs: typing.Any) -> models.Transport:
     from uds.transports.Test import TestTransport
 
     if transport_instance is None:
         transport_instance = TestTransport(environment.Environment.testing_environment(), None)
 
-    transport: 'models.Transport' = models.Transport.objects.create(
-        name='Transport %d' % (glob['transport_id']),
-        comments='Comment for Transport %d' % (glob['transport_id']),
+    transport: "models.Transport" = models.Transport.objects.create(
+        name="Transport %d" % (glob["transport_id"]),
+        comments="Comment for Transport %d" % (glob["transport_id"]),
         data_type=transport_instance.type_type,
         data=transport_instance.serialize(),
         **kwargs,
     )
-    glob['transport_id'] += 1
+    glob["transport_id"] += 1
     return transport
 
 
 def create_db_userservice(
     servicepool: models.ServicePool,
     publication: models.ServicePoolPublication,
-    user: 'models.User|None' = None,
+    user: "models.User|None" = None,
 ) -> models.UserService:
-    user_service: 'models.UserService' = servicepool.userServices.create(
-        friendly_name='user-service-{}'.format(glob['user_service_id']),
+    user_service: "models.UserService" = servicepool.userServices.create(
+        friendly_name="user-service-{}".format(glob["user_service_id"]),
         publication=publication,
         unique_id=helpers.random_mac(),
         state=types.states.State.USABLE,
@@ -204,7 +203,7 @@ def create_db_userservice(
         src_hostname=helpers.random_string(32),
         src_ip=helpers.random_ip(),
     )
-    glob['user_service_id'] += 1
+    glob["user_service_id"] += 1
     return user_service
 
 
@@ -215,15 +214,15 @@ def create_db_metapool(
     transport_grouping: int = types.pools.TransportSelectionPolicy.AUTO,
     ha_policy: int = types.pools.HighAvailabilityPolicy.ENABLED,
 ) -> models.MetaPool:
-    meta_pool: 'models.MetaPool' = models.MetaPool.objects.create(
-        name='Meta pool %d' % (glob['meta_pool_id']),
-        short_name='meta%d' % (glob['meta_pool_id']),
-        comments='Comment for meta pool %d' % (glob['meta_pool_id']),
+    meta_pool: "models.MetaPool" = models.MetaPool.objects.create(
+        name="Meta pool %d" % (glob["meta_pool_id"]),
+        short_name="meta%d" % (glob["meta_pool_id"]),
+        comments="Comment for meta pool %d" % (glob["meta_pool_id"]),
         policy=round_policy,
         transport_grouping=transport_grouping,
         ha_policy=ha_policy,
     )
-    glob['meta_pool_id'] += 1
+    glob["meta_pool_id"] += 1
 
     for g in groups:
         meta_pool.assignedGroups.add(g)
@@ -235,13 +234,13 @@ def create_db_metapool(
 
 
 def create_db_one_assigned_userservice(
-    provider: 'models.Provider',
-    user: 'models.User',
-    groups: collections.abc.Iterable['models.Group'],
-    type_: typing.Literal['managed'] | typing.Literal['unmanaged'],
+    provider: "models.Provider",
+    user: "models.User",
+    groups: collections.abc.Iterable["models.Group"],
+    type_: typing.Literal["managed"] | typing.Literal["unmanaged"],
     osmanager: OSManager | None = None,
-    transport_instance: 'Transport | None' = None,
-) -> 'models.UserService':
+    transport_instance: "Transport | None" = None,
+) -> "models.UserService":
 
     service = create_db_service(provider)
 
@@ -249,22 +248,20 @@ def create_db_one_assigned_userservice(
     Creates several testing OS Managers
     """
 
-    osmanager_db: 'models.OSManager | None' = (
-        None if type_ == 'unmanaged' else create_db_osmanager(osmanager=osmanager)
-    )
-    transport: 'models.Transport' = create_db_transport(transport_instance=transport_instance)
-    service_pool: 'models.ServicePool' = create_db_servicepool(service, osmanager_db, groups, [transport])
-    publication: 'models.ServicePoolPublication' = create_db_publication(service_pool)
+    osmanager_db: "models.OSManager | None" = None if type_ == "unmanaged" else create_db_osmanager(osmanager=osmanager)
+    transport: "models.Transport" = create_db_transport(transport_instance=transport_instance)
+    service_pool: "models.ServicePool" = create_db_servicepool(service, osmanager_db, groups, [transport])
+    publication: "models.ServicePoolPublication" = create_db_publication(service_pool)
 
     return create_db_userservice(service_pool, publication, user)
 
 
 def create_db_assigned_userservices(
     count: int = 1,
-    type_: typing.Literal['managed', 'unmanaged'] = 'managed',
-    user: 'models.User | None' = None,
-    groups: collections.abc.Iterable['models.Group'] | None = None,
-    transport_instance: 'Transport | None' = None,
+    type_: typing.Literal["managed", "unmanaged"] = "managed",
+    user: "models.User | None" = None,
+    groups: collections.abc.Iterable["models.Group"] | None = None,
+    transport_instance: "Transport | None" = None,
 ) -> list[models.UserService]:
     from . import authenticators
 

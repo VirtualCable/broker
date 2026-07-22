@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 
@@ -36,7 +37,8 @@ import dns.reversename
 
 from uds.core.util.decorators import cached
 
-@cached(prefix='resolver.resolve', timeout=60)  # Cache for 1 hour
+
+@cached(prefix="resolver.resolve", timeout=60)  # Cache for 1 hour
 def resolve(hostname: str, rdtype: typing.Optional[str] = None) -> list[str]:
     """
     Resolves a hostname to a list of ips
@@ -44,24 +46,41 @@ def resolve(hostname: str, rdtype: typing.Optional[str] = None) -> list[str]:
     """
     ips: list[str] = []
     if rdtype is None:
-        for i in ('A', 'AAAA'):
+        for i in ("A", "AAAA"):
             try:
-                ips.extend([str(ip) for ip in typing.cast(collections.abc.Iterable[typing.Any], dns.resolver.resolve(hostname, i))])
+                ips.extend(
+                    [
+                        str(ip)
+                        for ip in typing.cast(collections.abc.Iterable[typing.Any], dns.resolver.resolve(hostname, i))
+                    ]
+                )
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                 pass
     else:
         try:
-            ips.extend([str(ip) for ip in typing.cast(collections.abc.Iterable[typing.Any], dns.resolver.resolve(hostname, rdtype))])
+            ips.extend(
+                [
+                    str(ip)
+                    for ip in typing.cast(collections.abc.Iterable[typing.Any], dns.resolver.resolve(hostname, rdtype))
+                ]
+            )
         except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):  # Ignore NoAnswer, that is, the record does not exists
             pass
     return ips
 
-@cached(prefix='resolver.reverse', timeout=60)  # Cache for 1 hour
+
+@cached(prefix="resolver.reverse", timeout=60)  # Cache for 1 hour
 def reverse_resolve(ip: str) -> list[str]:
     """
     Resolves an ip to a list of hostnames
     """
     try:
-        return[str(i).rstrip('.') for i in typing.cast(collections.abc.Iterable[typing.Any], dns.resolver.query(dns.reversename.from_address(ip).to_text(), 'PTR'))]
+        return [
+            str(i).rstrip(".")
+            for i in typing.cast(
+                collections.abc.Iterable[typing.Any],
+                dns.resolver.query(dns.reversename.from_address(ip).to_text(), "PTR"),
+            )
+        ]
     except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
         return []

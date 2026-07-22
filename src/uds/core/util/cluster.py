@@ -29,14 +29,14 @@ class UDSClusterNode(typing.NamedTuple):
         Returns a dictionary representation of the UDSClusterNode.
         """
         return {
-            'hostname': self.hostname,
-            'ip': self.ip,
-            'last_seen': self.last_seen.isoformat(),
-            'mac': self.mac,
+            "hostname": self.hostname,
+            "ip": self.ip,
+            "last_seen": self.last_seen.isoformat(),
+            "mac": self.mac,
         }
 
     def __str__(self) -> str:
-        return f'{self.hostname} ({self.ip}) - Last seen: {self.last_seen.isoformat()} - MAC: {self.mac}'
+        return f"{self.hostname} ({self.ip}) - Last seen: {self.last_seen.isoformat()} - MAC: {self.mac}"
 
 
 def store_cluster_info() -> None:
@@ -49,22 +49,22 @@ def store_cluster_info() -> None:
     mac = iface.mac if iface else consts.NULL_MAC
 
     try:
-        hostname = socket.getfqdn() + '|' + ip
+        hostname = socket.getfqdn() + "|" + ip
         date = sql_now().isoformat()
         with transaction.atomic():
             current_host_property = (
                 models.Properties.objects.select_for_update()
-                .filter(owner_id='cluster', owner_type='cluster', key=hostname)
+                .filter(owner_id="cluster", owner_type="cluster", key=hostname)
                 .first()
             )
             if current_host_property:
                 # Update existing property
-                current_host_property.value = {'last_seen': date, 'mac': mac}
+                current_host_property.value = {"last_seen": date, "mac": mac}
                 current_host_property.save()
             else:
                 # Create new property
                 models.Properties.objects.create(
-                    owner_id='cluster', owner_type='cluster', key=hostname, value={'last_seen': date}
+                    owner_id="cluster", owner_type="cluster", key=hostname, value={"last_seen": date}
                 )
 
     except OperationalError as e:
@@ -78,16 +78,16 @@ def enumerate_cluster_nodes() -> list[UDSClusterNode]:
     Returns a list of hostnames.
     """
     try:
-        properties = models.Properties.objects.filter(owner_type='cluster')
+        properties = models.Properties.objects.filter(owner_type="cluster")
         return [
             UDSClusterNode(
-                hostname=prop.key.split('|')[0],
-                ip=prop.key.split('|')[1],
-                last_seen=timezone.make_aware(datetime.datetime.fromisoformat(prop.value['last_seen'])),
-                mac=prop.value.get('mac', consts.NULL_MAC),
+                hostname=prop.key.split("|")[0],
+                ip=prop.key.split("|")[1],
+                last_seen=timezone.make_aware(datetime.datetime.fromisoformat(prop.value["last_seen"])),
+                mac=prop.value.get("mac", consts.NULL_MAC),
             )
             for prop in properties
-            if 'last_seen' in prop.value and '|' in prop.key
+            if "last_seen" in prop.value and "|" in prop.key
         ]
     except OperationalError as e:
         # If we cannot connect to the database, we log the error and return an empty list

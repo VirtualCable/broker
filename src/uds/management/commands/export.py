@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from functools import reduce
 import logging
 import operator
@@ -49,16 +50,16 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ModelType = typing.TypeVar('ModelType', bound='UUIDModel')
-T = typing.TypeVar('T')
+ModelType = typing.TypeVar("ModelType", bound="UUIDModel")
+T = typing.TypeVar("T")
 
 
-def uuid_object_exporter(obj: 'UUIDModel') -> dict[str, typing.Any]:
+def uuid_object_exporter(obj: "UUIDModel") -> dict[str, typing.Any]:
     """
     Exports a uuid model to a dict
     """
     return {
-        'uuid': obj.uuid,
+        "uuid": obj.uuid,
     }
 
 
@@ -73,10 +74,10 @@ def managed_object_exporter(
     # Extend with managed object fields
     m.update(
         {
-            'name': obj.name,
-            'comments': obj.comments,
-            'data': obj.data,
-            'data_type': obj.data_type,
+            "name": obj.name,
+            "comments": obj.comments,
+            "data": obj.data,
+            "data_type": obj.data_type,
         }
     )
     return m
@@ -87,7 +88,7 @@ def provider_exporter(provider: models.Provider) -> dict[str, typing.Any]:
     Exports a provider to a dict
     """
     p = managed_object_exporter(provider)
-    p['maintenance_mode'] = provider.maintenance_mode
+    p["maintenance_mode"] = provider.maintenance_mode
     return p
 
 
@@ -96,8 +97,8 @@ def service_exporter(service: models.Service) -> dict[str, typing.Any]:
     Exports a service to a dict
     """
     s = managed_object_exporter(service)
-    s['provider'] = service.provider.uuid
-    s['token'] = service.token
+    s["provider"] = service.provider.uuid
+    s["token"] = service.token
     return s
 
 
@@ -118,10 +119,10 @@ def authenticator_exporter(
     a = managed_object_exporter(authenticator)
     a.update(
         {
-            'priority': authenticator.priority,
-            'provider': authenticator.small_name,
-            'visible': authenticator.state == consts.auth.VISIBLE,
-            'enabled': authenticator.state != consts.auth.DISABLED,
+            "priority": authenticator.priority,
+            "provider": authenticator.small_name,
+            "visible": authenticator.state == consts.auth.VISIBLE,
+            "enabled": authenticator.state != consts.auth.DISABLED,
         }
     )
     return a
@@ -134,19 +135,19 @@ def user_exporter(user: models.User) -> dict[str, typing.Any]:
     u = uuid_object_exporter(user)
     u.update(
         {
-            'manager': user.manager.uuid,
-            'name': user.name,
-            'comments': user.comments,
-            'real_name': user.real_name,
-            'state': user.state,
-            'password': user.password,
-            'mfa_data': user.mfa_data,
-            'staff_member': user.staff_member,
-            'is_admin': user.is_admin,
-            'last_access': user.last_access,
-            'parent': user.parent,
-            'created': user.created,
-            'groups': [g.uuid for g in user.groups.all()],
+            "manager": user.manager.uuid,
+            "name": user.name,
+            "comments": user.comments,
+            "real_name": user.real_name,
+            "state": user.state,
+            "password": user.password,
+            "mfa_data": user.mfa_data,
+            "staff_member": user.staff_member,
+            "is_admin": user.is_admin,
+            "last_access": user.last_access,
+            "parent": user.parent,
+            "created": user.created,
+            "groups": [g.uuid for g in user.groups.all()],
         }
     )
     return u
@@ -159,13 +160,13 @@ def group_export(group: models.Group) -> dict[str, typing.Any]:
     g = uuid_object_exporter(group)
     g.update(
         {
-            'manager': group.manager.uuid,
-            'name': group.name,
-            'comments': group.comments,
-            'state': group.state,
-            'is_meta': group.is_meta,
-            'meta_if_any': group.meta_if_any,
-            'created': group.created,
+            "manager": group.manager.uuid,
+            "name": group.name,
+            "comments": group.comments,
+            "state": group.state,
+            "is_meta": group.is_meta,
+            "meta_if_any": group.meta_if_any,
+            "created": group.created,
         }
     )
     return g
@@ -178,11 +179,11 @@ def transport_exporter(transport: models.Transport) -> dict[str, typing.Any]:
     t = managed_object_exporter(transport)
     t.update(
         {
-            'priority': transport.priority,
-            'net_filtering': transport.net_filtering,
-            'allowed_oss': transport.allowed_oss,
-            'label': transport.label,
-            'networks': [n.uuid for n in transport.networks.all()],
+            "priority": transport.priority,
+            "net_filtering": transport.net_filtering,
+            "allowed_oss": transport.allowed_oss,
+            "label": transport.label,
+            "networks": [n.uuid for n in transport.networks.all()],
         }
     )
     return t
@@ -195,10 +196,10 @@ def network_exporter(network: models.Network) -> dict[str, typing.Any]:
     n = uuid_object_exporter(network)
     n.update(
         {
-            'name': network.name,
-            'net_start': network.net_start,
-            'net_end': network.net_end,
-            'net_string': network.net_string,
+            "name": network.name,
+            "net_start": network.net_start,
+            "net_end": network.net_end,
+            "net_string": network.net_string,
         }
     )
     return n
@@ -219,9 +220,9 @@ def calendar_exporter(calendar: models.Calendar) -> dict[str, typing.Any]:
     c = uuid_object_exporter(calendar)
     c.update(
         {
-            'name': calendar.name,
-            'comments': calendar.comments,
-            'modified': calendar.modified,
+            "name": calendar.name,
+            "comments": calendar.comments,
+            "modified": calendar.modified,
         }
     )
     return c
@@ -236,22 +237,22 @@ def calendar_rule_exporter(
     c = uuid_object_exporter(calendar_rule)
     c.update(
         {
-            'calendar': calendar_rule.calendar.uuid,
-            'name': calendar_rule.name,
-            'comments': calendar_rule.comments,
-            'start': calendar_rule.start,
-            'end': calendar_rule.end,
-            'frequency': calendar_rule.frequency,
-            'interval': calendar_rule.interval,
-            'duration': calendar_rule.duration,
-            'duration_unit': calendar_rule.duration_unit,
+            "calendar": calendar_rule.calendar.uuid,
+            "name": calendar_rule.name,
+            "comments": calendar_rule.comments,
+            "start": calendar_rule.start,
+            "end": calendar_rule.end,
+            "frequency": calendar_rule.frequency,
+            "interval": calendar_rule.interval,
+            "duration": calendar_rule.duration,
+            "duration_unit": calendar_rule.duration_unit,
         }
     )
     return c
 
 
 class Command(BaseCommand):
-    help = 'Export entities from UDS to be imported in another UDS instance'
+    help = "Export entities from UDS to be imported in another UDS instance"
 
     verbose: bool = True
     filter_args: list[tuple[str, str]] = []
@@ -260,78 +261,78 @@ class Command(BaseCommand):
         super().__init__(*args, **kwargs)
 
     @typing.override
-    def add_arguments(self, parser: 'argparse.ArgumentParser') -> None:
+    def add_arguments(self, parser: "argparse.ArgumentParser") -> None:
         # Accepts a list of valid entities to export
         parser.add_argument(
-            'entities',
-            nargs='+',
+            "entities",
+            nargs="+",
             choices=VALID_ENTITIES.keys(),
             default=VALID_ENTITIES.keys(),
-            help='Entities to export',
+            help="Entities to export",
         )
 
         # Output file name (will be appended .csv or .yaml)
         parser.add_argument(
-            '--output',
-            action='store',
-            dest='output',
-            default='/tmp/export.yaml',
-            help='Output file name. Defaults to /tmp/export.yaml',
+            "--output",
+            action="store",
+            dest="output",
+            default="/tmp/export.yaml",
+            help="Output file name. Defaults to /tmp/export.yaml",
         )
 
         # Filter ALL entities by name, multiple names can be specified
         parser.add_argument(
-            '--filter-name',
-            action='append',
-            dest='filter_name',
+            "--filter-name",
+            action="append",
+            dest="filter_name",
             default=[],
-            help='Filter ALL entities by name',
+            help="Filter ALL entities by name",
         )
 
         # Filter ALL entities by uuid, multiple uuids can be specified
         parser.add_argument(
-            '--filter-uuid',
-            action='append',
-            dest='filter_uuid',
+            "--filter-uuid",
+            action="append",
+            dest="filter_uuid",
             default=[],
-            help='Filter ALL entities by uuid',
+            help="Filter ALL entities by uuid",
         )
 
         # quiet mode
         parser.add_argument(
-            '--quiet',
-            action='store_false',
-            dest='verbose',
+            "--quiet",
+            action="store_false",
+            dest="verbose",
             default=True,
-            help='Quiet mode',
+            help="Quiet mode",
         )
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
-        self.verbose = options['verbose']
+        self.verbose = options["verbose"]
 
         if self.verbose:
-            self.stderr.write(f'Exporting entities: {",".join(options["entities"])}')
+            self.stderr.write(f"Exporting entities: {','.join(options['entities'])}")
 
         # Compose filter name for kwargs
-        for i in options['filter_name']:
-            self.filter_args.append(('name__icontains', i))
+        for i in options["filter_name"]:
+            self.filter_args.append(("name__icontains", i))
 
-        for i in options['filter_uuid']:
-            self.filter_args.append(('uuid', i))
+        for i in options["filter_uuid"]:
+            self.filter_args.append(("uuid", i))
 
         # some entities are redundant, so remove them from the list
-        entities = self.remove_reduntant_entities(options['entities'])
+        entities = self.remove_reduntant_entities(options["entities"])
 
         # For each entity, export it as yaml to output file
-        with open(options['output'], 'w', encoding='utf8') as f:
+        with open(options["output"], "w", encoding="utf8") as f:
             for entity in entities:
-                self.stderr.write(f'Exporting {entity}')
+                self.stderr.write(f"Exporting {entity}")
                 f.write(VALID_ENTITIES[entity](self))
-                f.write('')
+                f.write("")
 
         if self.verbose:
-            self.stderr.write(f'Exported to {options["output"]}')
+            self.stderr.write(f"Exported to {options['output']}")
 
     def apply_filter(self, model: type[ModelType]) -> typing.Iterator[ModelType]:
         """
@@ -339,13 +340,13 @@ class Command(BaseCommand):
         """
         if self.verbose:
             # Filter is a filter name, and an array of values
-            values = [f'{k.split("__")[0]}={v}' for k, v in self.filter_args]
-            self.stderr.write(f'Filtering {model.__name__}: \n  ', ending='')
+            values = [f"{k.split('__')[0]}={v}" for k, v in self.filter_args]
+            self.stderr.write(f"Filtering {model.__name__}: \n  ", ending="")
             self.stderr.write("\n  ".join(values))
         # Generate "OR" filter with all kwargs
         if self.filter_args:
             return typing.cast(
-                'typing.Iterator[ModelType]',
+                "typing.Iterator[ModelType]",
                 model.objects.filter(reduce(operator.or_, (Q(**{k: v}) for k, v in self.filter_args))),
             )
         return model.objects.all().iterator()
@@ -358,41 +359,39 @@ class Command(BaseCommand):
         for v in iterable:
             count += 1
             if self.verbose:
-                self.stderr.write(f'{message} {count}', ending='\r')
+                self.stderr.write(f"{message} {count}", ending="\r")
             yield v
 
         if self.verbose:
-            self.stderr.write('\n')  # New line after count
+            self.stderr.write("\n")  # New line after count
 
     def export_providers(self) -> str:
         """
         Exports all providers to a list of dicts
         """
-        return '# Providers\n' + yaml.safe_dump(
-            [provider_exporter(p) for p in self.apply_filter(models.Provider)]
-        )
+        return "# Providers\n" + yaml.safe_dump([provider_exporter(p) for p in self.apply_filter(models.Provider)])
 
     def export_services(self) -> str:
         # First, locate providers for services with the filter
-        services_list = list(self.output_count('Filtering services', self.apply_filter(models.Service)))
-        providers_list = {s.provider for s in self.output_count('Filtering providers', services_list)}
+        services_list = list(self.output_count("Filtering services", self.apply_filter(models.Service)))
+        providers_list = {s.provider for s in self.output_count("Filtering providers", services_list)}
         # Now, export those providers
-        providers = [provider_exporter(p) for p in self.output_count('Saving providers', providers_list)]
+        providers = [provider_exporter(p) for p in self.output_count("Saving providers", providers_list)]
 
         # Then, export services with the filter
-        services = [service_exporter(s) for s in self.output_count('Saving services', services_list)]
+        services = [service_exporter(s) for s in self.output_count("Saving services", services_list)]
 
-        return '# Providers\n' + yaml.safe_dump(providers) + '# Services\n' + yaml.safe_dump(services)
+        return "# Providers\n" + yaml.safe_dump(providers) + "# Services\n" + yaml.safe_dump(services)
 
     def export_mfa(self) -> str:
         """
         Exports all mfa to a list of dicts
         """
-        return '# MFA\n' + yaml.safe_dump(
+        return "# MFA\n" + yaml.safe_dump(
             [
                 mfa_exporter(m)
                 for m in self.output_count(
-                    'Saving mfa',
+                    "Saving mfa",
                     self.apply_filter(models.MFA),
                 )
             ]
@@ -402,11 +401,11 @@ class Command(BaseCommand):
         """
         Exports all authenticators to a list of dicts
         """
-        return '# Authenticators\n' + yaml.safe_dump(
+        return "# Authenticators\n" + yaml.safe_dump(
             [
                 authenticator_exporter(a)
                 for a in self.output_count(
-                    'Saving authenticators',
+                    "Saving authenticators",
                     self.apply_filter(models.Authenticator),
                 )
             ]
@@ -417,29 +416,29 @@ class Command(BaseCommand):
         Exports all users to a list of dicts
         """
         # first, locate authenticators for users with the filter
-        users_list = list(self.output_count('Filtering users', self.apply_filter(models.User)))
-        authenticators_list = {u.manager for u in self.output_count('Filtering authenticators', users_list)}
+        users_list = list(self.output_count("Filtering users", self.apply_filter(models.User)))
+        authenticators_list = {u.manager for u in self.output_count("Filtering authenticators", users_list)}
         # Now, groups that contains those users
         groups_list: typing.Set[models.Group] = set()
-        for u in self.output_count('Filtering groups', users_list):
+        for u in self.output_count("Filtering groups", users_list):
             groups_list.update(u.groups.all())
 
         # now, export those authenticators
         authenticators = [
-            authenticator_exporter(a) for a in self.output_count('Saving authenticators', authenticators_list)
+            authenticator_exporter(a) for a in self.output_count("Saving authenticators", authenticators_list)
         ]
 
         # then, export those groups
-        groups = [group_export(g) for g in self.output_count('Saving groups', groups_list)]
+        groups = [group_export(g) for g in self.output_count("Saving groups", groups_list)]
 
         # finally, export users with the filter
-        users = [user_exporter(u) for u in self.output_count('Saving users', users_list)]
+        users = [user_exporter(u) for u in self.output_count("Saving users", users_list)]
         return (
-            '# Authenticators\n'
+            "# Authenticators\n"
             + yaml.safe_dump(authenticators)
-            + '# Groups\n'
+            + "# Groups\n"
             + yaml.safe_dump(groups)
-            + '# Users\n'
+            + "# Users\n"
             + yaml.safe_dump(users)
         )
 
@@ -448,26 +447,23 @@ class Command(BaseCommand):
         Exports all groups to a list of dicts
         """
         # First export authenticators for groups with the filter
-        groups_list = list(self.output_count('Filtering groups', self.apply_filter(models.Group)))
-        authenticators_list = {g.manager for g in self.output_count('Filtering authenticators', groups_list)}
+        groups_list = list(self.output_count("Filtering groups", self.apply_filter(models.Group)))
+        authenticators_list = {g.manager for g in self.output_count("Filtering authenticators", groups_list)}
         authenticators = [
-            authenticator_exporter(a) for a in self.output_count('Saving authenticators', authenticators_list)
+            authenticator_exporter(a) for a in self.output_count("Saving authenticators", authenticators_list)
         ]
 
         # then, export groups with the filter
-        groups = [group_export(g) for g in self.output_count('Saving groups', groups_list)]
+        groups = [group_export(g) for g in self.output_count("Saving groups", groups_list)]
 
-        return '# Authenticators\n' + yaml.safe_dump(authenticators) + '# Groups\n' + yaml.safe_dump(groups)
+        return "# Authenticators\n" + yaml.safe_dump(authenticators) + "# Groups\n" + yaml.safe_dump(groups)
 
     def export_networks(self) -> str:
         """
         Exports all networks to a list of dicts
         """
-        return '# Networks\n' + yaml.safe_dump(
-            [
-                network_exporter(n)
-                for n in self.output_count('Saving networks', self.apply_filter(models.Network))
-            ]
+        return "# Networks\n" + yaml.safe_dump(
+            [network_exporter(n) for n in self.output_count("Saving networks", self.apply_filter(models.Network))]
         )
 
     def export_transports(self) -> str:
@@ -475,26 +471,23 @@ class Command(BaseCommand):
         Exports all transports to a list of dicts
         """
         # First, export networks for transports with the filter
-        transports_list = list(self.output_count('Filtering transports', self.apply_filter(models.Transport)))
-        networks_list: typing.Set['models.Network'] = set()
-        for t in self.output_count('Filtering networks', transports_list):
+        transports_list = list(self.output_count("Filtering transports", self.apply_filter(models.Transport)))
+        networks_list: typing.Set["models.Network"] = set()
+        for t in self.output_count("Filtering networks", transports_list):
             networks_list.update(t.networks.all())
-        networks = [network_exporter(n) for n in self.output_count('Saving networks', networks_list)]
+        networks = [network_exporter(n) for n in self.output_count("Saving networks", networks_list)]
 
         # then, export transports with the filter
-        transports = [transport_exporter(t) for t in self.output_count('Saving transports', transports_list)]
+        transports = [transport_exporter(t) for t in self.output_count("Saving transports", transports_list)]
 
-        return '# Networks\n' + yaml.safe_dump(networks) + '# Transports\n' + yaml.safe_dump(transports)
+        return "# Networks\n" + yaml.safe_dump(networks) + "# Transports\n" + yaml.safe_dump(transports)
 
     def export_osmanagers(self) -> str:
         """
         Exports all osmanagers to a list of dicts
         """
-        return '# OSManagers\n' + yaml.safe_dump(
-            [
-                osmanager_exporter(o)
-                for o in self.output_count('Saving osmanagers', self.apply_filter(models.OSManager))
-            ]
+        return "# OSManagers\n" + yaml.safe_dump(
+            [osmanager_exporter(o) for o in self.output_count("Saving osmanagers", self.apply_filter(models.OSManager))]
         )
 
     def remove_reduntant_entities(self, entities: list[str]) -> list[str]:
@@ -502,14 +495,14 @@ class Command(BaseCommand):
         Removes redundant entities from the list
         """
         REPLACES: collections.abc.Mapping[str, list[str]] = {
-            'users': ['authenticators', 'groups'],
-            'groups': ['authenticators'],
-            'authenticators': [],
-            'transports': ['networks'],
-            'networks': [],
-            'osmanagers': [],
-            'services': ['providers'],
-            'providers': [],
+            "users": ["authenticators", "groups"],
+            "groups": ["authenticators"],
+            "authenticators": [],
+            "transports": ["networks"],
+            "networks": [],
+            "osmanagers": [],
+            "services": ["providers"],
+            "providers": [],
         }
         entities = list(set(entities))  # remove duplicates
         # Remove entities that are replaced by other entities
@@ -520,15 +513,15 @@ class Command(BaseCommand):
 
         return entities
 
-VALID_ENTITIES: typing.Final[collections.abc.Mapping[str, collections.abc.Callable[['Command'], str]]] = {
-    'providers': Command.export_providers,
-    'services': Command.export_services,
-    'authenticators': Command.export_authenticators,
-    'users': Command.export_users,
-    'groups': Command.export_groups,
-    'mfa': Command.export_mfa,
-    'networks': Command.export_networks,
-    'transports': Command.export_transports,
-    'osmanagers': Command.export_osmanagers,
-}
 
+VALID_ENTITIES: typing.Final[collections.abc.Mapping[str, collections.abc.Callable[["Command"], str]]] = {
+    "providers": Command.export_providers,
+    "services": Command.export_services,
+    "authenticators": Command.export_authenticators,
+    "users": Command.export_users,
+    "groups": Command.export_groups,
+    "mfa": Command.export_mfa,
+    "networks": Command.export_networks,
+    "transports": Command.export_transports,
+    "osmanagers": Command.export_osmanagers,
+}

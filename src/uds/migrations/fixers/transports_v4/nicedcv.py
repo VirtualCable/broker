@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -41,34 +42,34 @@ logger = logging.getLogger(__name__)
 
 # Copy for migration
 class NICEDCVTunnelTransport(transports.Transport):
-    '''
+    """
     Provides access via NICE to service.
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
-    '''
+    """
 
-    type_type = 'NICEDCVTunnelTransport'
+    type_type = "NICEDCVTunnelTransport"
 
-    tunnelServer = gui.TextField(label='')
+    tunnelServer = gui.TextField(label="")
 
-    tunnelWait = gui.NumericField(label='',default=60)
-    verifyCertificate = gui.CheckBoxField(label='',default=True)
-    useEmptyCreds = gui.CheckBoxField(label='')
-    fixedName = gui.TextField(label='')
-    fixedPassword = gui.PasswordField(label='')
+    tunnelWait = gui.NumericField(label="", default=60)
+    verifyCertificate = gui.CheckBoxField(label="", default=True)
+    useEmptyCreds = gui.CheckBoxField(label="")
+    fixedName = gui.TextField(label="")
+    fixedPassword = gui.PasswordField(label="")
 
-    fullScreen = gui.CheckBoxField(label='')
+    fullScreen = gui.CheckBoxField(label="")
 
-    multimon = gui.CheckBoxField(label='')
-    port = gui.NumericField(label='',default=8443)
+    multimon = gui.CheckBoxField(label="")
+    port = gui.NumericField(label="", default=8443)
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, NICEDCVTunnelTransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport(apps, schema_editor, NICEDCVTunnelTransport, "tunnelServer", is_html_server=False)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, NICEDCVTunnelTransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport_back(apps, schema_editor, NICEDCVTunnelTransport, "tunnelServer", is_html_server=False)

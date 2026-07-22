@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
@@ -48,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 class LogMaintenance(Job):
-    friendly_name = 'Log maintenance'
+    friendly_name = "Log maintenance"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -56,13 +57,13 @@ class LogMaintenance(Job):
 
     @typing.override
     def run(self) -> None:
-        logger.debug('Starting Log maintenance')
+        logger.debug("Starting Log maintenance")
         # Select all disctinct owner_id and owner_type and count of each
         # For each one, check if it has more than max_elements, and if so, delete the oldest ones
         for owner_id, owner_type, count in (
-            models.Log.objects.values_list('owner_id', 'owner_type')
-            .annotate(count=Count('owner_id'))
-            .order_by('owner_id')
+            models.Log.objects.values_list("owner_id", "owner_type")
+            .annotate(count=Count("owner_id"))
+            .order_by("owner_id")
         ):
             # First, ensure we do not have more than requested logs, and we can put one more log item
             try:
@@ -76,7 +77,7 @@ class LogMaintenance(Job):
 
             if 0 < max_elements < count:  # Negative max elements means "unlimited"
                 logger.debug(
-                    'Log maintenance: Owner %s of type %s has %d logs, max is %d, cleaning up',
+                    "Log maintenance: Owner %s of type %s has %d logs, max is %d, cleaning up",
                     owner_id,
                     owner_type.name,
                     count,
@@ -87,8 +88,8 @@ class LogMaintenance(Job):
                         owner_id=owner_id,
                         owner_type=owner_type,
                     )
-                    .order_by('created', 'id')
-                    .values_list('id', flat=True)[max_elements : max_elements + MAX_BATCH_SIZE]
+                    .order_by("created", "id")
+                    .values_list("id", flat=True)[max_elements : max_elements + MAX_BATCH_SIZE]
                 )
 
                 if ids_to_delete:
@@ -99,4 +100,4 @@ class LogMaintenance(Job):
         models.Log.objects.filter(
             created__lt=sql_now() - datetime.timedelta(days=config.GlobalConfig.STATS_DURATION.as_int() * 2)
         ).delete()
-        logger.debug('Log maintenance done')
+        logger.debug("Log maintenance done")

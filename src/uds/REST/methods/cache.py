@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -47,15 +48,15 @@ class Cache(Handler):
     ROLE = consts.UserRole.ADMIN
 
     API_OPERATIONS = {
-        'get': types.rest.api.Operation(
-            summary='Purge cache',
-            description='Purges all UDS caches (default and memory)',
+        "get": types.rest.api.Operation(
+            summary="Purge cache",
+            description="Purges all UDS caches (default and memory)",
             responses={
-                '200': types.rest.api.Response(
-                    description='Cache purged',
+                "200": types.rest.api.Response(
+                    description="Cache purged",
                     content=types.rest.api.Content(
-                        media_type='application/json',
-                        schema=types.rest.api.SchemaProperty(type='string'),
+                        media_type="application/json",
+                        schema=types.rest.api.SchemaProperty(type="string"),
                     ),
                 ),
             },
@@ -66,17 +67,17 @@ class Cache(Handler):
         """
         Processes get method. Basically, clears & purges the cache, no matter what params
         """
-        logger.debug('Params: %s', self._params)
+        logger.debug("Params: %s", self._params)
         if not self._args:
             return {}
 
         if len(self._args) != 1:
-            raise exceptions.rest.RequestError('Invalid Request')
+            raise exceptions.rest.RequestError("Invalid Request")
 
         UCache.purge()
-        for i in ('default', 'memory'):
+        for i in ("default", "memory"):
             try:
                 caches[i].clear()
             except Exception:
                 pass  # Ignore non existing cache
-        return 'done'
+        return "done"

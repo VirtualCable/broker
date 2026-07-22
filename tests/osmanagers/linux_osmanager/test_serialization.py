@@ -26,9 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import typing
 
 from tests.utils.test import UDSTestCase
@@ -37,7 +38,7 @@ from uds.core.environment import Environment
 
 from uds.osmanagers.LinuxOsManager import linux_osmanager as osmanager
 
-PASSWD: typing.Final[str] = 'PASSWD'
+PASSWD: typing.Final[str] = "PASSWD"
 
 # values = data.decode('utf8').split('\t')
 # self.idle.value = -1
@@ -53,37 +54,35 @@ PASSWD: typing.Final[str] = 'PASSWD'
 #         gui.as_bool(values[3]),
 #     )
 SERIALIZED_OSMANAGER_DATA: typing.Final[typing.Mapping[str, bytes]] = {
-    'v1': b'v1\tkeep',
-    'v2': b'v2\tkeep\t999',
-    'v3': b'v3\tkeep\t999\tFALSE',
+    "v1": b"v1\tkeep",
+    "v2": b"v2\tkeep\t999",
+    "v3": b"v3\tkeep\t999\tFALSE",
 }
 
 
 class LinuxOsManagerTest(UDSTestCase):
-    def check(self, version: str, instance: 'osmanager.LinuxOsManager') -> None:
-        self.assertEqual(instance.on_logout.value, 'keep')
-        if version == 'v1':
+    def check(self, version: str, instance: "osmanager.LinuxOsManager") -> None:
+        self.assertEqual(instance.on_logout.value, "keep")
+        if version == "v1":
             self.assertEqual(instance.idle.value, -1)
             self.assertEqual(instance.deadline.value, True)
-        elif version == 'v2':
+        elif version == "v2":
             self.assertEqual(instance.idle.value, 999)
             self.assertEqual(instance.deadline.value, True)
-        elif version == 'v3':
+        elif version == "v3":
             self.assertEqual(instance.idle.value, 999)
             self.assertEqual(instance.deadline.value, False)
 
     def test_unmarshall_all_versions(self) -> None:
         for v in range(1, len(SERIALIZED_OSMANAGER_DATA) + 1):
             instance = osmanager.LinuxOsManager(environment=Environment.testing_environment())
-            instance.unmarshal(SERIALIZED_OSMANAGER_DATA['v{}'.format(v)])
-            self.check(f'v{v}', instance)
+            instance.unmarshal(SERIALIZED_OSMANAGER_DATA["v{}".format(v)])
+            self.check(f"v{v}", instance)
 
     def test_marshaling(self) -> None:
         # Unmarshall last version, remarshall and check that is marshalled using new marshalling format
-        LAST_VERSION = 'v{}'.format(len(SERIALIZED_OSMANAGER_DATA))
-        instance = osmanager.LinuxOsManager(
-            environment=Environment.testing_environment()
-        )
+        LAST_VERSION = "v{}".format(len(SERIALIZED_OSMANAGER_DATA))
+        instance = osmanager.LinuxOsManager(environment=Environment.testing_environment())
         instance.unmarshal(SERIALIZED_OSMANAGER_DATA[LAST_VERSION])
         marshaled_data = instance.marshal()
 
@@ -92,11 +91,9 @@ class LinuxOsManagerTest(UDSTestCase):
         instance.mark_for_upgrade(False)  # reset flag
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'v'))
+        self.assertFalse(marshaled_data.startswith(b"v"))
         # Reunmarshall again and check that remarshalled flag is not set
-        instance = osmanager.LinuxOsManager(
-            environment=Environment.testing_environment()
-        )
+        instance = osmanager.LinuxOsManager(environment=Environment.testing_environment())
         instance.unmarshal(marshaled_data)
         self.assertFalse(instance.needs_upgrade())
 

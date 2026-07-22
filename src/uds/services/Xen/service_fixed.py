@@ -28,13 +28,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 from uds.core.services.generics.fixed.service import FixedService
 from uds.core.services.generics.fixed.userservice import FixedUserService
 from uds.core.ui import gui
@@ -57,10 +59,10 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
     This service requires the qemu agent to be installed on the machines.
     """
 
-    type_name = _('Xen Fixed Machines')
-    type_type = 'XenFixedService'
-    type_description = _('Xen Services based on fixed machines. Needs xen agent installed on machines.')
-    icon_file = 'service.png'
+    type_name = _("Xen Fixed Machines")
+    type_type = "XenFixedService"
+    type_description = _("Xen Services based on fixed machines. Needs xen agent installed on machines.")
+    icon_file = "service.png"
 
     can_reset = True
 
@@ -81,14 +83,14 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
         readonly=False,
         order=20,
         fills={
-            'callback_name': 'xmFillMachinesFromFolder',
-            'function': helpers.get_machines,
-            'parameters': ['prov_uuid', 'folder'],
+            "callback_name": "xmFillMachinesFromFolder",
+            "function": helpers.get_machines,
+            "parameters": ["prov_uuid", "folder"],
         },
-        tooltip=_('Folder containing base machines'),
+        tooltip=_("Folder containing base machines"),
         required=True,
         tab=types.ui.Tab.MACHINE,
-        old_field_name='resourcePool',
+        old_field_name="resourcePool",
     )
     machines = FixedService.machines
     use_snapshots = FixedService.use_snapshots
@@ -110,8 +112,8 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
             self.folder.set_choices([gui.choice_item(folder, folder) for folder in api.list_folders()])
 
     @typing.override
-    def provider(self) -> 'XenProvider':
-        return typing.cast('XenProvider', super().provider())
+    def provider(self) -> "XenProvider":
+        return typing.cast("XenProvider", super().provider())
 
     def start_vm(self, vmid: str) -> str:
         """
@@ -126,7 +128,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
         """
         with self.provider().get_connection() as api:
             if api.get_vm_info(vmid).power_state.is_running():
-                return ''  # Already running
+                return ""  # Already running
             return api.start_vm(vmid)
 
     def stop_vm(self, vmid: str) -> str:
@@ -142,7 +144,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
             if api.get_vm_info(vmid).power_state.is_running():
                 return api.stop_vm(vmid)
 
-        return ''  # Already stopped
+        return ""  # Already stopped
 
     def reset_vm(self, vmid: str) -> str:
         """
@@ -157,14 +159,14 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
             if api.get_vm_info(vmid).power_state.is_running():
                 return api.reset_vm(vmid)
 
-        return ''  # Already stopped, no reset needed
+        return ""  # Already stopped, no reset needed
 
     def shutdown_vm(self, vmid: str) -> str:
         with self.provider().get_connection() as api:
             if api.get_vm_info(vmid).power_state.is_running():
                 return api.shutdown_vm(vmid)
 
-        return ''  # Already stopped
+        return ""  # Already stopped
 
     @typing.override
     def is_available(self) -> bool:
@@ -188,7 +190,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
 
     @typing.override
     def assign_from_assignables(
-        self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
+        self, assignable_id: str, user: "models.User", userservice_instance: "services.UserService"
     ) -> types.states.TaskState:
         xen_userservice_instance = typing.cast(XenFixedUserService, userservice_instance)
         with self._assigned_access() as assigned_vms:
@@ -196,7 +198,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                 assigned_vms.add(assignable_id)
                 return xen_userservice_instance.assign(assignable_id)
 
-        return xen_userservice_instance.error('VM not available!')
+        return xen_userservice_instance.error("VM not available!")
 
     @typing.override
     def snapshot_creation(self, userservice_instance: FixedUserService) -> None:
@@ -209,21 +211,19 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                     vmid, full_info=False
                 )  # Only need ids, to check if there is any snapshot
 
-                logger.debug('Using snapshots')
+                logger.debug("Using snapshots")
                 # If no snapshot exists for this vm, try to create one for it on background
                 # Lauch an snapshot. We will not wait for it to finish, but instead let it run "as is"
                 try:
                     if not snapshots:  # No snapshot, try to create one
-                        logger.debug('Not current snapshot')
+                        logger.debug("Not current snapshot")
                         # We don't need the snapshot nor the task, will simply restore to newer snapshot on remove
                         api.create_snapshot(
                             vmid,
-                            name='UDS Snapshot',
+                            name="UDS Snapshot",
                         )
                 except Exception as e:
-                    self.do_log(
-                        types.log.LogLevel.WARNING, 'Could not create SNAPSHOT for this VM. ({})'.format(e)
-                    )
+                    self.do_log(types.log.LogLevel.WARNING, "Could not create SNAPSHOT for this VM. ({})".format(e))
 
     @typing.override
     def snapshot_recovery(self, userservice_instance: FixedUserService) -> None:
@@ -240,7 +240,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                         userservice_instance._task = api.restore_snapshot(snapshots[0].opaque_ref)
                     except Exception as e:
                         self.do_log(
-                            types.log.LogLevel.WARNING, 'Could not restore SNAPSHOT for this VM. ({})'.format(e)
+                            types.log.LogLevel.WARNING, "Could not restore SNAPSHOT for this VM. ({})".format(e)
                         )
 
     @typing.override
@@ -258,20 +258,20 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                                 break
                             except Exception:  # Notifies on log, but skipt it
                                 self.provider().do_log(
-                                    types.log.LogLevel.WARNING, 'Machine {} not accesible'.format(found_vmid)
+                                    types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
                                 )
                                 logger.warning(
-                                    'The service has machines that cannot be checked on xen (connection error or machine has been deleted): %s',
+                                    "The service has machines that cannot be checked on xen (connection error or machine has been deleted): %s",
                                     found_vmid,
                                 )
 
                     if found_vmid:
                         assigned_vms.add(str(found_vmid))
                 except Exception:  #
-                    raise Exception('No machine available')
+                    raise Exception("No machine available")
 
         if not found_vmid:
-            raise Exception('All machines from list already assigned.')
+            raise Exception("All machines from list already assigned.")
 
         return str(found_vmid)
 

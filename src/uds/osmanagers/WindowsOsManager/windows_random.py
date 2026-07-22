@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import codecs
 import random
 import string
@@ -55,24 +56,24 @@ logger = logging.getLogger(__name__)
 
 
 class WinRandomPassManager(WindowsOsManager):
-    type_name = _('Windows Random Password OS Manager')
-    type_type = 'WinRandomPasswordManager'
-    type_description = _('Os Manager to control windows machines, with user password set randomly.')
-    icon_file = 'wosmanager.png'
+    type_name = _("Windows Random Password OS Manager")
+    type_type = "WinRandomPasswordManager"
+    type_description = _("Os Manager to control windows machines, with user password set randomly.")
+    icon_file = "wosmanager.png"
 
     # Apart form data from windows os manager, we need also domain and credentials
     user_account = gui.TextField(
         length=64,
-        label=_('Account'),
+        label=_("Account"),
         order=2,
-        tooltip=_('User account to change password'),
+        tooltip=_("User account to change password"),
         required=True,
     )
     password = gui.PasswordField(
         length=64,
-        label=_('Password'),
+        label=_("Password"),
         order=3,
-        tooltip=_('Current (template) password of the user account'),
+        tooltip=_("Current (template) password of the user account"),
         required=True,
     )
 
@@ -82,34 +83,34 @@ class WinRandomPassManager(WindowsOsManager):
     dead_line = WindowsOsManager.deadline
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if values:
             self.user_account.value = self.user_account.value.strip()
 
-            if self.user_account.as_str() == '':
-                raise exceptions.ui.ValidationError(_('Must provide an user account!!!'))
-            if self.password.as_str() == '':
-                raise exceptions.ui.ValidationError(_('Must provide a password for the account!!!'))
+            if self.user_account.as_str() == "":
+                raise exceptions.ui.ValidationError(_("Must provide an user account!!!"))
+            if self.password.as_str() == "":
+                raise exceptions.ui.ValidationError(_("Must provide a password for the account!!!"))
 
     @typing.override
-    def update_credentials(self, userservice: 'UserService', username: str, password: str) -> tuple[str, str]:
+    def update_credentials(self, userservice: "UserService", username: str, password: str) -> tuple[str, str]:
         if username == self.user_account.value.strip():
-            password = userservice.recover_value('winOsRandomPass')
+            password = userservice.recover_value("winOsRandomPass")
 
         return WindowsOsManager.update_credentials(self, userservice, username, password)
 
-    def gen_random_password(self, userservice: 'UserService') -> str:
-        rnd_password = userservice.recover_value('winOsRandomPass')
+    def gen_random_password(self, userservice: "UserService") -> str:
+        rnd_password = userservice.recover_value("winOsRandomPass")
         if not rnd_password:
             # Generates a password that conforms to complexity
             rnd = random.SystemRandom()
-            base = ''.join(
+            base = "".join(
                 rnd.choice(v) for v in (string.ascii_lowercase, string.ascii_uppercase, string.digits)
-            ) + rnd.choice('.+-')
-            rnd_password = ''.join(rnd.choice(string.ascii_letters + string.digits) for _ in range(12))
+            ) + rnd.choice(".+-")
+            rnd_password = "".join(rnd.choice(string.ascii_letters + string.digits) for _ in range(12))
             pos = rnd.randrange(0, len(rnd_password))
             rnd_password = rnd_password[:pos] + base + rnd_password[pos:]
-            userservice.store_value('winOsRandomPass', rnd_password)
+            userservice.store_value("winOsRandomPass", rnd_password)
             log.log(
                 userservice,
                 types.log.LogLevel.INFO,
@@ -119,26 +120,26 @@ class WinRandomPassManager(WindowsOsManager):
         return rnd_password
 
     @typing.override
-    def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
+    def actor_data(self, userservice: "UserService") -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(
-            action='rename',
+            action="rename",
             name=userservice.get_name(),
             custom={
-                'username': self.user_account.value.strip(),
-                'password': self.password.as_str(),
-                'new_password': self.gen_random_password(userservice),
+                "username": self.user_account.value.strip(),
+                "password": self.password.as_str(),
+                "new_password": self.gen_random_password(userservice),
             },
         )
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        values = data.decode('utf8').split('\t')
-        if values[0] == 'v1':
+        values = data.decode("utf8").split("\t")
+        if values[0] == "v1":
             self.user_account.value = values[1]
             self.password.value = CryptoManager.manager().decrypt(values[2])
-            super().unmarshal(codecs.decode(values[3].encode(), 'hex'))
+            super().unmarshal(codecs.decode(values[3].encode(), "hex"))
 
         self.mark_for_upgrade()  # Force upgrade to new format

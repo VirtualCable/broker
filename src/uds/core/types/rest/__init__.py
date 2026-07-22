@@ -34,6 +34,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import abc
 import enum
 import typing
+import hashlib
 import dataclasses
 import collections.abc
 
@@ -47,8 +48,8 @@ if typing.TYPE_CHECKING:
     from uds.models.managed_object_model import ManagedObjectModel
 
 
-T_Model = typing.TypeVar('T_Model', bound='ManagedObjectModel')
-T_Item = typing.TypeVar("T_Item", bound='BaseRestItem')
+T_Model = typing.TypeVar("T_Model", bound="ManagedObjectModel")
+T_Item = typing.TypeVar("T_Item", bound="BaseRestItem")
 
 
 class NotRequired:
@@ -61,7 +62,7 @@ class NotRequired:
         return False
 
     def __str__(self) -> str:
-        return 'NotRequired'
+        return "NotRequired"
 
     # Field generator for dataclasses
     @staticmethod
@@ -91,10 +92,10 @@ class CustomMethodMethod(str, enum.Enum):
     RFC 10008 safe-with-body verb (Phase 2/3 of the plan).
     """
 
-    GET = 'GET'
-    POST = 'POST'
-    PUT = 'PUT'
-    QUERY = 'QUERY'
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    QUERY = "QUERY"
 
 
 class ApiCompat(str, enum.Enum):
@@ -116,8 +117,8 @@ class ApiCompat(str, enum.Enum):
         COMPAT-guarded code are removed.
     """
 
-    COMPAT = 'COMPAT'
-    NO_COMPAT = 'NO_COMPAT'
+    COMPAT = "COMPAT"
+    NO_COMPAT = "NO_COMPAT"
 
 
 @dataclasses.dataclass
@@ -162,7 +163,6 @@ class ModelCustomMethod:
 # no forward references can be used (that is, do not use quotes around the inner field types)
 @dataclasses.dataclass
 class BaseRestItem:
-
     def as_dict(self) -> dict[str, typing.Any]:
         """
         Returns a dictionary representation of the item.
@@ -172,6 +172,13 @@ class BaseRestItem:
 
         # NOTE: the json processor should take care of converting "sub-items" to valid dictionaries
         #       (as it already does)
+
+    def inmutables(self, *fields: str) -> str:
+        return "".join(str(getattr(self, f, "")) for f in fields)
+
+    @typing.final
+    def etag(self, *fields: str) -> str:
+        return hashlib.sha256(self.inmutables(*fields).encode("utf-8")).hexdigest()
 
     @classmethod
     def api_components(cls: type[typing.Self]) -> api.Components:
@@ -203,7 +210,7 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
         self.item = tmp_item  # Restore
 
         # Remove the fields that are not needed in the dictionary
-        base.pop('item')
+        base.pop("item")
         item = self.item.get_instance()
         # item.init_gui()  # Defaults & stuff
         fields = item.get_fields_as_dict()
@@ -212,9 +219,9 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
         base.update(fields)  # Add fields to dict
         base.update(
             {
-                'type': item.mod_type(),  # Add type
-                'type_name': item.mod_name(),  # Add type name
-                'instance': fields,  # Future implementation will insert instance fields into "instance" key
+                "type": item.mod_type(),  # Add type
+                "type_name": item.mod_name(),  # Add type name
+                "instance": fields,  # Future implementation will insert instance fields into "instance" key
             }
         )
 
@@ -228,22 +235,22 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
         # get reference
         schema = component.schemas.get(cls.__name__)
         if isinstance(schema, api.Schema):
-            assert schema is not None, f'Schema for {cls.__name__} not found in components'
+            assert schema is not None, f"Schema for {cls.__name__} not found in components"
             # item is not an real field, remove it from components description and required
-            schema.properties.pop('item', None)
-            schema.required.remove('item')
+            schema.properties.pop("item", None)
+            schema.required.remove("item")
 
             # Add the specific fields to the schema
             # Note that 'instance' is incomplete, must be completed with item fields
             # But as long as python has not "real" generics, we cannot estimate the type of item
             schema.properties.update(
                 {
-                    'type': api.SchemaProperty(type='string'),
-                    'type_name': api.SchemaProperty(type='string'),
-                    'instance': api.SchemaProperty(type='object'),
+                    "type": api.SchemaProperty(type="string"),
+                    "type_name": api.SchemaProperty(type="string"),
+                    "instance": api.SchemaProperty(type="object"),
                 }
             )
-            schema.required.extend(['type', 'instance'])  # type_name is not required
+            schema.required.extend(["type", "instance"])  # type_name is not required
 
         return component
 
@@ -254,36 +261,36 @@ ItemsResult: typing.TypeAlias = list[T_Item] | collections.abc.Iterator[T_Item]
 
 @dataclasses.dataclass
 class LogEntry(BaseRestItem):
-    date: str = dataclasses.field(metadata={'description': 'Date of the log entry'})
-    level: int = dataclasses.field(metadata={'description': 'Level of the log entry'})
-    source: str = dataclasses.field(metadata={'description': 'Source of the log entry'})
-    message: str = dataclasses.field(metadata={'description': 'Message of the log entry'})
+    date: str = dataclasses.field(metadata={"description": "Date of the log entry"})
+    level: int = dataclasses.field(metadata={"description": "Level of the log entry"})
+    source: str = dataclasses.field(metadata={"description": "Source of the log entry"})
+    message: str = dataclasses.field(metadata={"description": "Message of the log entry"})
 
 @dataclasses.dataclass
 class TypeInfo:
-    name: str = dataclasses.field(metadata={'description': 'Name of the type (Human readable)'})
-    type: str = dataclasses.field(metadata={'description': 'Type name used to identify the type'})
-    description: str = dataclasses.field(metadata={'description': 'Description for this type'})
-    icon: str = dataclasses.field(metadata={'description': 'Icon of the type, in base64'})
+    name: str = dataclasses.field(metadata={"description": "Name of the type (Human readable)"})
+    type: str = dataclasses.field(metadata={"description": "Type name used to identify the type"})
+    description: str = dataclasses.field(metadata={"description": "Description for this type"})
+    icon: str = dataclasses.field(metadata={"description": "Icon of the type, in base64"})
 
     group: str | None = dataclasses.field(
-        default=None, metadata={'description': 'Group name used for grouping "similar" types'}
+        default=None, metadata={"description": 'Group name used for grouping "similar" types'}
     )
 
-    extra: 'ExtraTypeInfo|None' = dataclasses.field(
-        default=None, metadata={'description': 'Extra type info. Depends on specific type.'}
+    extra: "ExtraTypeInfo|None" = dataclasses.field(
+        default=None, metadata={"description": "Extra type info. Depends on specific type."}
     )
 
     def as_dict(self) -> dict[str, typing.Any]:
         res: dict[str, typing.Any] = {
-            'name': self.name,
-            'type': self.type,
-            'description': self.description,
-            'icon': self.icon,
+            "name": self.name,
+            "type": self.type,
+            "description": self.description,
+            "icon": self.icon,
         }
         # Add optional fields
         if self.group:
-            res['group'] = self.group
+            res["group"] = self.group
 
         if self.extra:
             res.update(self.extra.as_dict())
@@ -291,8 +298,8 @@ class TypeInfo:
         return res
 
     @staticmethod
-    def null() -> 'TypeInfo':
-        return TypeInfo(name='', type='', description='', icon='', extra=None)
+    def null() -> "TypeInfo":
+        return TypeInfo(name="", type="", description="", icon="", extra=None)
 
 
 class ExtraTypeInfo(abc.ABC):
@@ -306,16 +313,16 @@ class TableFieldType(enum.StrEnum):
     This is used to define the type of a field in a table.
     """
 
-    NUMERIC = 'numeric'
-    ALPHANUMERIC = 'alphanumeric'
-    BOOLEAN = 'boolean'
-    DATETIME = 'datetime'
-    DATETIMESEC = 'datetimesec'
-    DATE = 'date'
-    TIME = 'time'
-    ICON = 'icon'
-    DICTIONARY = 'dictionary'
-    IMAGE = 'image'
+    NUMERIC = "numeric"
+    ALPHANUMERIC = "alphanumeric"
+    BOOLEAN = "boolean"
+    DATETIME = "datetime"
+    DATETIMESEC = "datetimesec"
+    DATE = "date"
+    TIME = "time"
+    ICON = "icon"
+    DICTIONARY = "dictionary"
+    IMAGE = "image"
 
 
 @dataclasses.dataclass
@@ -337,14 +344,14 @@ class TableField:
         # Only return the fields that are set
 
         res: dict[str | int, typing.Any] = {
-            'title': self.title,
-            'type': self.type.value,
-            'visible': self.visible,
+            "title": self.title,
+            "type": self.type.value,
+            "visible": self.visible,
         }
         if self.dct:
-            res['dict'] = self.dct
+            res["dict"] = self.dct
         if self.width:
-            res['width'] = self.width
+            res["width"] = self.width
         return {self.name: res}  # Return as a dictionary with the field name as key
 
 
@@ -358,8 +365,8 @@ class RowStyleInfo:
         return dataclasses.asdict(self)
 
     @staticmethod
-    def null() -> 'RowStyleInfo':
-        return RowStyleInfo('', '')
+    def null() -> "RowStyleInfo":
+        return RowStyleInfo("", "")
 
 
 @dataclasses.dataclass
@@ -371,27 +378,27 @@ class TableInfo:
 
     title: str
     fields: list[TableField]  # List of fields in the table
-    row_style: 'RowStyleInfo'
+    row_style: "RowStyleInfo"
     subtitle: str | None = None
     filter_fields: list[str] = dataclasses.field(default_factory=list[str])
     field_mappings: dict[str, str] = dataclasses.field(default_factory=dict[str, str])
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'title': self.title,
-            'fields': [field.as_dict() for field in self.fields],
-            'row_style': self.row_style.as_dict(),
-            'subtitle': self.subtitle or '',
-            'filter_fields': self.filter_fields,
-            'field_mappings': self.field_mappings,
+            "title": self.title,
+            "fields": [field.as_dict() for field in self.fields],
+            "row_style": self.row_style.as_dict(),
+            "subtitle": self.subtitle or "",
+            "filter_fields": self.filter_fields,
+            "field_mappings": self.field_mappings,
         }
 
     @staticmethod
-    def null() -> 'TableInfo':
+    def null() -> "TableInfo":
         """
         Returns a null TableInfo instance, with no fields and an empty title.
         """
-        return TableInfo(title='', fields=[], row_style=RowStyleInfo.null(), subtitle=None)
+        return TableInfo(title="", fields=[], row_style=RowStyleInfo.null(), subtitle=None)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -401,12 +408,12 @@ class HandlerNode:
     """
 
     name: str
-    handler: type['Handler'] | None  # Handler for this node, if any
-    parent: 'HandlerNode | None'  # Parent node, if any
-    children: dict[str, 'HandlerNode']
+    handler: type["Handler"] | None  # Handler for this node, if any
+    parent: "HandlerNode | None"  # Parent node, if any
+    children: dict[str, "HandlerNode"]
 
     def __str__(self) -> str:
-        return f'HandlerNode({self.name}, {self.handler}, {self.children})'
+        return f"HandlerNode({self.name}, {self.handler}, {self.children})"
 
     def __repr__(self) -> str:
         return str(self)
@@ -415,51 +422,52 @@ class HandlerNode:
     def visit(
         self,
         callback: collections.abc.Callable[
-            ['HandlerNode', str, typing.Literal['handler', 'custom_method', 'detail_method'], int], None
+            ["HandlerNode", str, typing.Literal["handler", "custom_method", "detail_method"], int], None
         ],
-        path: str = '',
+        path: str = "",
         level: int = 0,
     ) -> None:
         from uds.REST.model import ModelHandler
 
         if self.handler:
-            callback(self, path, 'handler', level)
+            callback(self, path, "handler", level)
 
             if issubclass(self.handler, ModelHandler):
                 handler = typing.cast(
-                    type[ModelHandler[typing.Any]], self.handler  # pyright: ignore[reportUnknownMemberType]
+                    type[ModelHandler[typing.Any]],
+                    self.handler,  # pyright: ignore[reportUnknownMemberType]
                 )
                 for method in handler.CUSTOM_METHODS:
-                    callback(self, f'{path}/{method.name}' if path else method.name, 'custom_method', level + 1)
+                    callback(self, f"{path}/{method.name}" if path else method.name, "custom_method", level + 1)
                 for detail_name in handler.DETAIL.keys() if handler.DETAIL else typing.cast(list[str], []):
-                    callback(self, f'{path}/{detail_name}' if path else detail_name, 'detail_method', level + 1)
+                    callback(self, f"{path}/{detail_name}" if path else detail_name, "detail_method", level + 1)
 
         for child in self.children.values():
-            child.visit(callback, f'{path}/{child.name}' if path else child.name, level + 1)
+            child.visit(callback, f"{path}/{child.name}" if path else child.name, level + 1)
 
     def tree(self) -> str:
         """
         Returns a string representation of the tree
         """
-        ret = ''
+        ret = ""
 
         def _tree(
             node: HandlerNode,
             path: str,
-            type_: typing.Literal['handler', 'custom_method', 'detail_method'],
+            type_: typing.Literal["handler", "custom_method", "detail_method"],
             level: int,
         ) -> None:
             nonlocal ret
 
             if not node.handler:
-                raise ValueError(f'Node {node.name} has no handler, cannot generate tree')
+                raise ValueError(f"Node {node.name} has no handler, cannot generate tree")
 
-            ret += f'{"  " * level}* {path} {node.handler.__name__} ({type_})\n'
+            ret += f"{'  ' * level}* {path} {node.handler.__name__} ({type_})\n"
 
         self.visit(_tree)
         return ret
 
-    def find_path(self, path: str | list[str]) -> 'HandlerNode | None':
+    def find_path(self, path: str | list[str]) -> "HandlerNode | None":
         """
         Returns the node for a given path, or None if not found
         """
@@ -467,7 +475,7 @@ class HandlerNode:
             return self
 
         # Remove any trailing '/' to allow some "bogus" paths with trailing slashes
-        path = path.lstrip('/').split('/') if isinstance(path, str) else path
+        path = path.lstrip("/").split("/") if isinstance(path, str) else path
 
         if path[0] not in self.children:
             return None
@@ -478,12 +486,12 @@ class HandlerNode:
         """
         Returns the full path of this node
         """
-        if self.name == '' or self.parent is None:
-            return ''
+        if self.name == "" or self.parent is None:
+            return ""
 
         parent_full_path = self.parent.full_path()
 
-        if parent_full_path == '':
+        if parent_full_path == "":
             return self.name
 
-        return f'{parent_full_path}/{self.name}'
+        return f"{parent_full_path}/{self.name}"

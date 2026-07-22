@@ -33,6 +33,7 @@ Tests for OpenStackServiceFixed.get_mac unique_id resolution.
 Mirrors the live-service coverage: server 'addresses' (internal DHCP), Neutron port
 fallback (external DHCP), and resilience to not-found / permission errors -> ''.
 """
+
 import copy
 import typing
 from unittest import mock
@@ -49,7 +50,7 @@ from uds.services.OpenStack.openstack import types as openstack_types
 # Undecorated mac-resolution logic (the @cached wrapper would need a real cache backend).
 # Running it against the mocked api keeps these tests exercising the real behaviour while
 # the service simply delegates to api.get_server_mac().
-_real_get_server_mac = getattr(client.OpenStackClient.get_server_mac, '__wrapped__')
+_real_get_server_mac = getattr(client.OpenStackClient.get_server_mac, "__wrapped__")
 
 
 def _bind_real_get_server_mac(api: mock.MagicMock) -> None:
@@ -65,13 +66,13 @@ def _server_with_addresses(
     return server
 
 
-def _port(mac: str, *, device_id: str = 'sid1', ip: str = '') -> openstack_types.PortInfo:
+def _port(mac: str, *, device_id: str = "sid1", ip: str = "") -> openstack_types.PortInfo:
     return openstack_types.PortInfo(
-        id='pid1',
-        name='port1',
+        id="pid1",
+        name="port1",
         status=openstack_types.PortStatus.ACTIVE,
         device_id=device_id,
-        network_id='net1',
+        network_id="net1",
         mac_address=mac,
         fixed_ips=[ip] if ip else [],
     )
@@ -90,32 +91,32 @@ class TestOpenStackFixedGetMac(UDSTransactionTestCase):
         # Internal DHCP: server addresses carry the mac
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses(
-            [openstack_types.ServerInfo.AddresInfo(version=4, ip='10.0.0.5', mac='FA:16:3E:00:00:01', type='fixed')]
+            [openstack_types.ServerInfo.AddresInfo(version=4, ip="10.0.0.5", mac="FA:16:3E:00:00:01", type="fixed")]
         )
 
-        mac = service.get_mac('sid1')
+        mac = service.get_mac("sid1")
 
-        self.assertEqual(mac, 'FA:16:3E:00:00:01')
+        self.assertEqual(mac, "FA:16:3E:00:00:01")
         api.list_ports.assert_not_called()
 
     def test_get_mac_falls_back_to_neutron_port(self) -> None:
         # External DHCP: server addresses empty -> use the Neutron port mac
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses([])
-        api.list_ports.return_value = [_port('FA:16:3E:AB:CD:EF', device_id='sid1')]
+        api.list_ports.return_value = [_port("FA:16:3E:AB:CD:EF", device_id="sid1")]
 
-        mac = service.get_mac('sid1')
+        mac = service.get_mac("sid1")
 
-        self.assertEqual(mac, 'FA:16:3E:AB:CD:EF')
-        api.list_ports.assert_called_once_with(device_id='sid1')
+        self.assertEqual(mac, "FA:16:3E:AB:CD:EF")
+        api.list_ports.assert_called_once_with(device_id="sid1")
 
     def test_get_mac_raises_when_server_not_found(self) -> None:
         # Server missing: get_server_mac does not swallow it; the caller handles NotFoundError.
         service, api = self._service_with_api()
-        api.get_server_info.side_effect = exceptions.services.generics.NotFoundError('Not found')
+        api.get_server_info.side_effect = exceptions.services.generics.NotFoundError("Not found")
 
         with self.assertRaises(exceptions.services.generics.NotFoundError):
-            service.get_mac('sid1')
+            service.get_mac("sid1")
 
         api.list_ports.assert_not_called()
 
@@ -125,16 +126,16 @@ class TestOpenStackFixedGetMac(UDSTransactionTestCase):
         api.get_server_info.return_value = _server_with_addresses([])
         api.list_ports.return_value = []
 
-        mac = service.get_mac('sid1')
+        mac = service.get_mac("sid1")
 
-        self.assertEqual(mac, '')
+        self.assertEqual(mac, "")
 
     def test_get_mac_empty_when_port_lookup_permission_denied(self) -> None:
         # Neutron policy forbids listing ports (403) -> '' instead of crashing
         service, api = self._service_with_api()
         api.get_server_info.return_value = _server_with_addresses([])
-        api.list_ports.side_effect = exceptions.services.generics.Error('Forbidden')
+        api.list_ports.side_effect = exceptions.services.generics.Error("Forbidden")
 
-        mac = service.get_mac('sid1')
+        mac = service.get_mac("sid1")
 
-        self.assertEqual(mac, '')
+        self.assertEqual(mac, "")

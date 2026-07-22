@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from unittest import mock
 
 from . import fixtures
@@ -41,7 +42,7 @@ class TestService(UDSTransactionTestCase):
     def test_service_data(self) -> None:
         service = fixtures.create_service_single()
 
-        self.assertEqual(service.host.value, fixtures.SERVICE_SINGLE_VALUES_DICT['host'])
+        self.assertEqual(service.host.value, fixtures.SERVICE_SINGLE_VALUES_DICT["host"])
 
     def test_service_is_available(self) -> None:
         """
@@ -52,29 +53,27 @@ class TestService(UDSTransactionTestCase):
 
     def test_wakeup(self) -> None:
         # Patch security.secure_requests_session
-        with mock.patch('uds.core.util.security.secure_requests_session') as secure_requests_session:
-            service = (
-                fixtures.create_service_single()
-            )  # With only the IP, should not invoke secure_requests_session
+        with mock.patch("uds.core.util.security.secure_requests_session") as secure_requests_session:
+            service = fixtures.create_service_single()  # With only the IP, should not invoke secure_requests_session
 
             service.wakeup()
             secure_requests_session.assert_not_called()
 
             # Now, host = '127.0.0.1;01:23:45:67:89:ab', should invoke secure_requests_session
-            service = fixtures.create_service_single(host='127.0.0.1;01:23:45:67:89:ab')
+            service = fixtures.create_service_single(host="127.0.0.1;01:23:45:67:89:ab")
             service.wakeup()
             secure_requests_session.assert_called_once()
 
             # Now host is outside the range of provider wol, should not invoke secure_requests_session
             secure_requests_session.reset_mock()
-            service = fixtures.create_service_single(host='127.1.0.1;01:23:45:67:89:ab')
+            service = fixtures.create_service_single(host="127.1.0.1;01:23:45:67:89:ab")
             service.wakeup()
             secure_requests_session.assert_not_called()
 
     def test_get_unassigned(self) -> None:
         # without mac
         service = fixtures.create_service_single()
-        self.assertEqual(service.get_unassigned_host(), (fixtures.SERVICE_SINGLE_VALUES_DICT['host'], ''))
+        self.assertEqual(service.get_unassigned_host(), (fixtures.SERVICE_SINGLE_VALUES_DICT["host"], ""))
         # with mac
-        service = fixtures.create_service_single(host='127.0.0.1;01:23:45:67:89:ab')
-        self.assertEqual(service.get_unassigned_host(), ('127.0.0.1', '01:23:45:67:89:ab'))
+        service = fixtures.create_service_single(host="127.0.0.1;01:23:45:67:89:ab")
+        self.assertEqual(service.get_unassigned_host(), ("127.0.0.1", "01:23:45:67:89:ab"))

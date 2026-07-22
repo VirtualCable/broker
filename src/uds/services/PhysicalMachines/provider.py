@@ -30,41 +30,45 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
+
 import configparser
 import logging
+import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, services, types
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.ui.user_interface import gui
-from uds.core.util import net, resolver
+from uds.core.util import net
+from uds.core.util import resolver
 
 logger = logging.getLogger(__name__)
 
-VALID_CONFIG_SECTIONS = set(('wol',))
+VALID_CONFIG_SECTIONS = set(("wol",))
 
 
 class PhysicalMachinesProvider(services.ServiceProvider):
     # What services do we offer?
-    type_name = _('Static IP Machines Provider')
-    type_type = 'PhysicalMachinesServiceProvider'
-    type_description = _('Provides connection to machines by IP')
-    icon_file = 'provider.png'
+    type_name = _("Static IP Machines Provider")
+    type_type = "PhysicalMachinesServiceProvider"
+    type_description = _("Provides connection to machines by IP")
+    icon_file = "provider.png"
 
     # No extra data needed
     config = gui.TextField(
         length=8192,
         lines=6,
-        label=_('Advanced configuration'),
+        label=_("Advanced configuration"),
         order=3,
-        tooltip=_('Advanced configuration data for the provider'),
+        tooltip=_("Advanced configuration data for the provider"),
         required=False,
         tab=types.ui.Tab.ADVANCED,
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """checks and initializes values
 
         Args:
@@ -84,26 +88,24 @@ class PhysicalMachinesProvider(services.ServiceProvider):
                 config.read_string(self.config.value)
                 # Seems a valid configuration file, let's see if all se
             except Exception as e:
-                raise exceptions.ui.ValidationError(_('Invalid advanced configuration: ') + str(e))
+                raise exceptions.ui.ValidationError(_("Invalid advanced configuration: ") + str(e))
 
             for section in config.sections():
                 if section not in VALID_CONFIG_SECTIONS:
-                    raise exceptions.ui.ValidationError(
-                        _('Invalid section in advanced configuration: ') + section
-                    )
+                    raise exceptions.ui.ValidationError(_("Invalid section in advanced configuration: ") + section)
 
             # Sections are valid, check values
             # wol section
-            for key in config['wol']:
+            for key in config["wol"]:
                 try:
                     net.networks_from_str(key, check_mode=True)  # Raises exception if net is invalid
                 except Exception:
                     raise exceptions.ui.ValidationError(
-                        _('Invalid network in advanced configuration: ') + key
+                        _("Invalid network in advanced configuration: ") + key
                     ) from None
                 # Now check value is an url
-                if config['wol'][key][:4] != 'http':
-                    raise exceptions.ui.ValidationError(_('Invalid url in advanced configuration: ') + key)
+                if config["wol"][key][:4] != "http":
+                    raise exceptions.ui.ValidationError(_("Invalid url in advanced configuration: ") + key)
 
     from .service_multi import IPMachinesService  # pylint: disable=import-outside-toplevel
     from .service_single import IPSingleMachineService  # pylint: disable=import-outside-toplevel
@@ -120,7 +122,7 @@ class PhysicalMachinesProvider(services.ServiceProvider):
             str: URL of WOL server or empty ('') if no server for the ip is found
         """
         if not self.config.value or not host or not mac:
-            return ''
+            return ""
 
         # If host is a hostname, try to resolve it
         if not net.ip_to_long(host).version:
@@ -128,18 +130,18 @@ class PhysicalMachinesProvider(services.ServiceProvider):
             try:
                 host = resolver.resolve(host)[0]
             except Exception as e:
-                self.do_log(types.log.LogLevel.WARNING, f'Name {host} could not be resolved')
-                logger.warning('Name %s could not be resolved (%s)', host, e)
-                return ''
+                self.do_log(types.log.LogLevel.WARNING, f"Name {host} could not be resolved")
+                logger.warning("Name %s could not be resolved (%s)", host, e)
+                return ""
 
         try:
             config = configparser.ConfigParser()
             config.read_string(self.config.value)
-            for key in config['wol']:
+            for key in config["wol"]:
                 if net.contains(key, host):
-                    return config['wol'][key].replace('{MAC}', mac).replace('{IP}', host)
+                    return config["wol"][key].replace("{MAC}", mac).replace("{IP}", host)
 
         except Exception as e:
-            logger.error('Error parsing advanced configuration: %s', e)
+            logger.error("Error parsing advanced configuration: %s", e)
 
-        return ''
+        return ""

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from datetime import timedelta
 import logging
 import typing
@@ -51,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserServiceInfoItemsCleaner(Job):
-    friendly_name = 'User Service Info Cleaner'
+    friendly_name = "User Service Info Cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -60,7 +61,7 @@ class UserServiceInfoItemsCleaner(Job):
     @typing.override
     def run(self) -> None:
         remove_since = sql_now() - timedelta(seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True))
-        logger.debug('Removing information user services from %s', remove_since)
+        logger.debug("Removing information user services from %s", remove_since)
         with transaction.atomic():
             UserService.objects.select_for_update().filter(
                 state__in=State.INFO_STATES, state_date__lt=remove_since
@@ -68,7 +69,7 @@ class UserServiceInfoItemsCleaner(Job):
 
 
 class UserServiceRemover(Job):
-    friendly_name = 'User Service Cleaner'
+    friendly_name = "User Service Cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -99,7 +100,7 @@ class UserServiceRemover(Job):
             # if removal limit is reached, we stop
             if max_to_remove <= 0:
                 break
-            logger.debug('Checking removal of %s', candidate.name)
+            logger.debug("Checking removal of %s", candidate.name)
             try:
                 if (
                     candidate.service_pool.id not in not_removable_deployed_services
@@ -110,4 +111,4 @@ class UserServiceRemover(Job):
                 else:
                     not_removable_deployed_services.add(candidate.service_pool.id)
             except Exception:
-                logger.exception('Exception removing user service')
+                logger.exception("Exception removing user service")

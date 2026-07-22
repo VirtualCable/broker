@@ -30,13 +30,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # Request related timeouts, etc..
 DEFAULT_REQUEST_TIMEOUT: typing.Final[int] = 20  # In seconds
-DEFAULT_CONNECT_TIMEOUT: typing.Final[int] = 4   # In seconds
-SHORT_REQUEST_TIMEOUT: typing.Final[int] = 3    # In seconds
+DEFAULT_CONNECT_TIMEOUT: typing.Final[int] = 4  # In seconds
+SHORT_REQUEST_TIMEOUT: typing.Final[int] = 3  # In seconds
 
 # Default UDS Registerd Server listen port
 SERVER_DEFAULT_LISTEN_PORT: typing.Final[int] = 43910
-

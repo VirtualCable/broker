@@ -30,11 +30,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
-from uds.core.services import Publication
 from uds.core import types
+from uds.core.services import Publication
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
@@ -51,10 +52,10 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
 
     suggested_delay = 2  # : Suggested recheck time if publication is unfinished in seconds
 
-    _name = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
-    _template_id = autoserializable.StringField(default='')
-    _state = autoserializable.StringField(default='r')
+    _name = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
+    _template_id = autoserializable.StringField(default="")
+    _state = autoserializable.StringField(default="r")
     _destroy_after = autoserializable.BoolField(default=False)
 
     # _name: str = ''
@@ -63,19 +64,19 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
     # _state: str = 'r'
 
     @typing.override
-    def service(self) -> 'OpenNebulaLiveService':
-        return typing.cast('OpenNebulaLiveService', super().service())
+    def service(self) -> "OpenNebulaLiveService":
+        return typing.cast("OpenNebulaLiveService", super().service())
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.decode('utf8').split('\t')
-        if vals[0] == 'v1':
+        vals = data.decode("utf8").split("\t")
+        if vals[0] == "v1":
             self._name, self._reason, self._template_id, self._state = vals[1:]
 
         self._destroy_after = False
@@ -87,16 +88,14 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
         """
         Realizes the publication of the service
         """
-        self._name = self.service().sanitized_name(
-            'UDSP ' + self.servicepool_name() + "-" + str(self.revision())
-        )
-        self._reason = ''  # No error, no reason for it
-        self._state = 'running'
+        self._name = self.service().sanitized_name("UDSP " + self.servicepool_name() + "-" + str(self.revision()))
+        self._reason = ""  # No error, no reason for it
+        self._state = "running"
 
         try:
             self._template_id = self.service().make_template(self._name)
         except Exception as e:
-            self._state = 'error'
+            self._state = "error"
             self._reason = str(e)
             return types.states.TaskState.ERROR
 
@@ -107,26 +106,26 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
         """
         Checks state of publication creation
         """
-        if self._state == 'running':
+        if self._state == "running":
             try:
                 if self.service().check_template_published(self._template_id) is False:
                     return types.states.TaskState.RUNNING
-                self._state = 'ok'
+                self._state = "ok"
             except Exception as e:
-                self._state = 'error'
+                self._state = "error"
                 self._reason = str(e)
 
-        if self._state == 'error':
+        if self._state == "error":
             return types.states.TaskState.ERROR
 
-        if self._state == 'ok':
+        if self._state == "ok":
             if self._destroy_after:  # If we must destroy after publication, do it now
                 self._destroy_after = False
                 return self.destroy()
 
             return types.states.TaskState.FINISHED
 
-        self._state = 'ok'
+        self._state = "ok"
         return types.states.TaskState.FINISHED
 
     @typing.override
@@ -152,10 +151,10 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
         The retunred value is the same as when publishing, types.states.TaskState.RUNNING,
         types.states.TaskState.FINISHED or types.states.TaskState.ERROR.
         """
-        if self._state == 'error':
+        if self._state == "error":
             return types.states.TaskState.ERROR
 
-        if self._state == 'running':
+        if self._state == "running":
             self._destroy_after = True
             return types.states.TaskState.RUNNING
 
@@ -163,7 +162,7 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
         try:
             self.service().remove_template(self._template_id)
         except Exception as e:
-            self._state = 'error'
+            self._state = "error"
             self._reason = str(e)
             return types.states.TaskState.ERROR
 

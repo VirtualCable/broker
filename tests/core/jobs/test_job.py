@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class _DummyJob(Job):
-    friendly_name = 'Dummy Job'
+    friendly_name = "Dummy Job"
 
     def __init__(self, environment: Environment) -> None:
         super().__init__(environment)
@@ -53,7 +53,7 @@ class _DummyJob(Job):
     def run(self) -> None:
         self.run_called = True
         if self.run_should_fail:
-            raise RuntimeError('Simulated failure')
+            raise RuntimeError("Simulated failure")
 
 
 class JobBaseTest(UDSTestCase):

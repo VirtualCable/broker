@@ -55,7 +55,7 @@ _STAMP = timezone.make_aware(datetime.datetime(2024, 1, 15, 12, 0, 0))
 
 
 class AuditReportTest(UDSTransactionTestCase):
-    def _seed(self, data: str, level: 'log_util.LogLevel') -> None:
+    def _seed(self, data: str, level: "log_util.LogLevel") -> None:
         Log.objects.create(
             owner_id=0,
             owner_type=int(types.log.LogObjectType.SYSLOG),
@@ -74,7 +74,7 @@ class AuditReportTest(UDSTransactionTestCase):
 
     def test_report_renders_both_row_kinds(self) -> None:
         # REST access row: has [method/code]
-        self._seed('10.0.0.1 [admin]: [GET/200] /uds/rest/providers', log_util.LogLevel.INFO)
+        self._seed("10.0.0.1 [admin]: [GET/200] /uds/rest/providers", log_util.LogLevel.INFO)
         # log_audit action row: no [method/code]
         self._seed('10.0.0.2 [operator]: created provider "vmware-01"', log_util.LogLevel.WARNING)
 
@@ -83,8 +83,8 @@ class AuditReportTest(UDSTransactionTestCase):
         # Header (7 columns, includes Level)
         header = rows[0]
         self.assertEqual(len(header), 7)
-        self.assertIn('Level', header)
-        self.assertIn('Method', header)
+        self.assertIn("Level", header)
+        self.assertIn("Method", header)
 
         body = rows[1:]
         self.assertEqual(len(body), 2)
@@ -92,35 +92,35 @@ class AuditReportTest(UDSTransactionTestCase):
         by_ip = {r[2]: r for r in body}
 
         # REST row: method GET, response code decoded, request preserved
-        rest = by_ip['10.0.0.1']
-        self.assertEqual(rest[1], 'INFO')          # Level
-        self.assertEqual(rest[3], 'admin')          # User
-        self.assertEqual(rest[4], 'GET')            # Method
-        self.assertEqual(rest[5], '200/OK')         # Response code decoded
-        self.assertEqual(rest[6], '/uds/rest/providers')
+        rest = by_ip["10.0.0.1"]
+        self.assertEqual(rest[1], "INFO")  # Level
+        self.assertEqual(rest[3], "admin")  # User
+        self.assertEqual(rest[4], "GET")  # Method
+        self.assertEqual(rest[5], "200/OK")  # Response code decoded
+        self.assertEqual(rest[6], "/uds/rest/providers")
 
         # AUDIT row: synthetic 'AUDIT' method, empty response code
-        audit = by_ip['10.0.0.2']
-        self.assertEqual(audit[1], 'WARNING')       # Level
-        self.assertEqual(audit[3], 'operator')      # User
-        self.assertEqual(audit[4], 'AUDIT')         # Method
-        self.assertEqual(audit[5], '')              # No response code
+        audit = by_ip["10.0.0.2"]
+        self.assertEqual(audit[1], "WARNING")  # Level
+        self.assertEqual(audit[3], "operator")  # User
+        self.assertEqual(audit[4], "AUDIT")  # Method
+        self.assertEqual(audit[5], "")  # No response code
         self.assertEqual(audit[6], 'created provider "vmware-01"')
 
     def test_pathological_data_parses_linearly(self) -> None:
         # Crafted request path (spaces + '[') used to make the old regexes backtrack polynomially
-        self._seed('10.0.0.3 [admin]: [GET/200] /uds/rest/' + '[ ' * 4096, log_util.LogLevel.INFO)
+        self._seed("10.0.0.3 [admin]: [GET/200] /uds/rest/" + "[ " * 4096, log_util.LogLevel.INFO)
 
         start = time.monotonic()
         body = self._generate_rows()[1:]
         elapsed = time.monotonic() - start
 
         self.assertEqual(len(body), 1)
-        self.assertEqual(body[0][4], 'GET')
+        self.assertEqual(body[0][4], "GET")
         self.assertLess(elapsed, 5.0)  # Guards against reintroducing a backtracking parser
 
     def test_rows_outside_date_range_excluded(self) -> None:
-        self._seed('10.0.0.9 [admin]: [GET/200] /in-range', log_util.LogLevel.INFO)
+        self._seed("10.0.0.9 [admin]: [GET/200] /in-range", log_util.LogLevel.INFO)
         # Out of range
         Log.objects.create(
             owner_id=0,
@@ -128,9 +128,9 @@ class AuditReportTest(UDSTransactionTestCase):
             created=timezone.make_aware(datetime.datetime(2023, 12, 31, 12, 0, 0)),
             source=types.log.LogSource.REST,
             level=int(log_util.LogLevel.INFO),
-            data='10.0.0.8 [admin]: [GET/200] /out-of-range',
+            data="10.0.0.8 [admin]: [GET/200] /out-of-range",
         )
 
         body = self._generate_rows()[1:]
         self.assertEqual(len(body), 1)
-        self.assertEqual(body[0][6], '/in-range')
+        self.assertEqual(body[0][6], "/in-range")

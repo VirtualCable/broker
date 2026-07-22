@@ -30,6 +30,7 @@
 """
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import logging
 import typing
@@ -60,18 +61,17 @@ class ServicePoolGroupItem(types.rest.BaseRestItem):
 
 
 class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
-
-    PATH = 'gallery'
+    PATH = "gallery"
     MODEL = ServicePoolGroup
-    FIELDS_TO_SAVE = ['name', 'comments', 'image_id', 'priority']
+    FIELDS_TO_SAVE = ["name", "comments", "image_id", "priority"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Services Pool Groups'))
-        .numeric_column(name='priority', title=_('Priority'), width='6em')
-        .image(name='thumb', title=_('Image'), width='96px')
-        .text_column(name='name', title=_('Name'))
-        .text_column(name='comments', title=_('Comments'))
-        .with_filter_fields('name', 'comments')
+        ui_utils.TableBuilder(_("Services Pool Groups"))
+        .numeric_column(name="priority", title=_("Priority"), width="6em")
+        .image(name="thumb", title=_("Image"), width="96px")
+        .text_column(name="name", title=_("Name"))
+        .text_column(name="comments", title=_("Comments"))
+        .with_filter_fields("name", "comments")
         .build()
     )
 
@@ -82,15 +82,15 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
 
     @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
-        img_id = fields['image_id']
-        fields['image_id'] = None
-        logger.debug('Image id: %s', img_id)
+        img_id = fields["image_id"]
+        fields["image_id"] = None
+        logger.debug("Image id: %s", img_id)
         try:
-            if img_id != '-1':
+            if img_id != "-1":
                 image = Image.objects.get(uuid=process_uuid(img_id))
-                fields['image_id'] = image.id
+                fields["image_id"] = image.id
         except Exception:
-            logger.exception('At image recovering')
+            logger.exception("At image recovering")
 
     # Gui related
     @typing.override
@@ -106,7 +106,7 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
         )
 
     @typing.override
-    def get_item(self, item: 'Model') -> ServicePoolGroupItem:
+    def get_item(self, item: "Model") -> ServicePoolGroupItem:
         item = ensure.is_instance(item, ServicePoolGroup)
         return ServicePoolGroupItem(
             id=item.uuid,
@@ -117,7 +117,7 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
         )
 
     @typing.override
-    def get_item_summary(self, item: 'Model') -> ServicePoolGroupItem:
+    def get_item_summary(self, item: "Model") -> ServicePoolGroupItem:
         item = ensure.is_instance(item, ServicePoolGroup)
         return ServicePoolGroupItem(
             id=item.uuid,

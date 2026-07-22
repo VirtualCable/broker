@@ -30,13 +30,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
 from tests.services.openshift import fixtures
 
 from tests.utils.test import UDSTransactionTestCase
-
 
 
 class TestOpenshiftServiceFixed(UDSTransactionTestCase):
@@ -48,6 +48,7 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         provider = provider_ctx.__enter__()
         service = fixtures.create_service_fixed(provider=provider)
         return service, provider, provider_ctx
+
     def setUp(self) -> None:
         super().setUp()
         fixtures.clear()
@@ -79,20 +80,20 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         # Enumerate assignables
         machines = list(service.enumerate_assignables())
         self.assertEqual(len(machines), 3)
-        self.assertEqual(machines[0].id, 'vm-3')
-        self.assertEqual(machines[1].id, 'vm-4')
-        self.assertEqual(machines[2].id, 'vm-5')
+        self.assertEqual(machines[0].id, "vm-3")
+        self.assertEqual(machines[1].id, "vm-4")
+        self.assertEqual(machines[2].id, "vm-5")
         # Get machine name
-        machine_name = service.get_name('uid-3')
-        self.assertEqual(machine_name, 'vm-3')
+        machine_name = service.get_name("uid-3")
+        self.assertEqual(machine_name, "vm-3")
         # Get IP
-        ip = service.get_ip('uid-3')
-        self.assertTrue(ip.startswith('192.168.1.'))
+        ip = service.get_ip("uid-3")
+        self.assertTrue(ip.startswith("192.168.1."))
         # Get MAC
-        mac = service.get_mac('uid-3')
-        self.assertTrue(mac.startswith('00:11:22:33:44:'))
+        mac = service.get_mac("uid-3")
+        self.assertTrue(mac.startswith("00:11:22:33:44:"))
         # Sanitized name
-        sanitized = service.sanitized_name('Test VM 1')
+        sanitized = service.sanitized_name("Test VM 1")
         self.assertIsInstance(sanitized, str)
         provider_ctx.__exit__(None, None, None)
 
@@ -103,7 +104,7 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         """
         service, _, provider_ctx = self._create_service_fixed_with_provider()
         vmid = service.get_and_assign()
-        self.assertIn(vmid, ['vm-3', 'vm-4', 'vm-5'])
+        self.assertIn(vmid, ["vm-3", "vm-4", "vm-5"])
         # Should not assign the same again
         with service._assigned_access() as assigned:
             self.assertIn(vmid, assigned)
@@ -116,7 +117,7 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         service, _, provider_ctx = self._create_service_fixed_with_provider()
         vmid = service.get_and_assign()
         result = service.remove_and_free(vmid)
-        self.assertEqual(result.name, 'FINISHED')
+        self.assertEqual(result.name, "FINISHED")
         with service._assigned_access() as assigned:
             self.assertNotIn(vmid, assigned)
         provider_ctx.__exit__(None, None, None)

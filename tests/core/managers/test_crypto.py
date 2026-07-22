@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import uuid as uuid_type
 
@@ -40,15 +41,15 @@ from uds.core.managers import crypto
 from uds.core.types.crypto import TunnelMaterial
 from ...utils.test import UDSTestCase
 
-TEST_STRING = 'abcdefghijklπερισσότεροήλιγότερομεγάλοκείμενογιαχαρακτήρεςmnopqrstuvwxyz或多或少的字符长文本ABCD'
+TEST_STRING = "abcdefghijklπερισσότεροήλιγότερομεγάλοκείμενογιαχαρακτήρεςmnopqrstuvwxyz或多或少的字符长文本ABCD"
 CRYPTED_STRING = (
-    b'H\x85\xedtL\xca6\x8cmv4D\x1b\xbe-/4\xfc\xa8\xe9\x08\x96\x9dON\x7f\x94'
-    b'\x11`\x91(0JkC\xd6\xab\xe4\x95\xe3\x84\xd3\xd4\x10\xdeJm\x17\xb7O\x10T'
+    b"H\x85\xedtL\xca6\x8cmv4D\x1b\xbe-/4\xfc\xa8\xe9\x08\x96\x9dON\x7f\x94"
+    b"\x11`\x91(0JkC\xd6\xab\xe4\x95\xe3\x84\xd3\xd4\x10\xdeJm\x17\xb7O\x10T"
     b'\xc9"j{\xf3\xc5\xa5\xd1R\xc5\x0c\xe4!_\x03\x1elQ2\x8d3\x17\r\x84\xc0>'
-    b'\x92z2.\xf81=\xed\xf6z\xc6\x057\xe1\xb8\x7f\xc6\xc2\x14>\x10\xa4\xec\x85'
-    b'3pdux\xbbB\xc8\xe7\x8f\x96\xc3\x9f\x07\xaa\x13\xf1\x0c\x7f\xf2\xe0d\x99'
-    b'\x12\xc6s\xa5\xd9^\xd2\xbb|=\x93=\xfb\xab>w\x04\x9cti\xb9\xcf@\\\xd5\x1c'
-    b'\xd9\x90\x04Y\x82 \xb5\xa2\xf1'
+    b"\x92z2.\xf81=\xed\xf6z\xc6\x057\xe1\xb8\x7f\xc6\xc2\x14>\x10\xa4\xec\x85"
+    b"3pdux\xbbB\xc8\xe7\x8f\x96\xc3\x9f\x07\xaa\x13\xf1\x0c\x7f\xf2\xe0d\x99"
+    b"\x12\xc6s\xa5\xd9^\xd2\xbb|=\x93=\xfb\xab>w\x04\x9cti\xb9\xcf@\\\xd5\x1c"
+    b"\xd9\x90\x04Y\x82 \xb5\xa2\xf1"
 )
 
 UDSK = crypto.UDSK  # Store original UDSK
@@ -60,7 +61,7 @@ class CryptoManagerTest(UDSTestCase):
 
     def setUp(self) -> None:
         # Override UDSK
-        crypto.UDSK = b'1234567890123456'  # type: ignore  # UDSK is final,
+        crypto.UDSK = b"1234567890123456"  # type: ignore  # UDSK is final,
         return super().setUp()
 
     def tearDown(self) -> None:
@@ -68,45 +69,49 @@ class CryptoManagerTest(UDSTestCase):
         return super().tearDown()
 
     def test_rsa(self) -> None:
-        testStr = 'Test string'
+        testStr = "Test string"
         cryptStr = self.manager.encrypt(testStr)
 
-        self.assertIsInstance(cryptStr, str, 'Crypted string is not unicode')
+        self.assertIsInstance(cryptStr, str, "Crypted string is not unicode")
 
         decryptStr = self.manager.decrypt(cryptStr)
 
-        self.assertIsInstance(decryptStr, str, 'Decrypted string is not unicode')
+        self.assertIsInstance(decryptStr, str, "Decrypted string is not unicode")
         self.assertEqual(
             decryptStr,
             testStr,
-            'Decrypted test string failed!: {} vs {}'.format(decryptStr, testStr),
+            "Decrypted test string failed!: {} vs {}".format(decryptStr, testStr),
         )
 
     def test_xor(self) -> None:
-        testStr1a = 'Test String more or less with strange chars €@"áéöüìùòàäñÑ@æßðđŋħ←↓→þøŧ¶€ł@łĸµn”“«»“”nµłĸŋđðßææ@ł€¶ŧ←↓→øþ'
-        testStr1b = 'Test String 2 with some ł€¶ŧ←↓→øþ'
+        testStr1a = (
+            'Test String more or less with strange chars €@"áéöüìùòàäñÑ@æßðđŋħ←↓→þøŧ¶€ł@łĸµn”“«»“”nµłĸŋđðßææ@ł€¶ŧ←↓→øþ'
+        )
+        testStr1b = "Test String 2 with some ł€¶ŧ←↓→øþ"
 
-        testStr2a = 'xor string chasquera'
-        testStr2b = 'xor string chasquera #~½¬æßð'
+        testStr2a = "xor string chasquera"
+        testStr2b = "xor string chasquera #~½¬æßð"
 
         for s1 in (testStr1a, testStr1b):
             for s2 in (testStr2a, testStr2b):
                 xor = self.manager.xor(s1, s2)
-                self.assertIsInstance(xor, bytes, 'Returned xor string is not bytes')
+                self.assertIsInstance(xor, bytes, "Returned xor string is not bytes")
                 xorxor = self.manager.xor(xor, s2)
-                self.assertEqual(xorxor.decode('utf-8'), s1)
+                self.assertEqual(xorxor.decode("utf-8"), s1)
 
     def test_symcrypt(self) -> None:
-        testStr1a = 'Test String more or less with strange chars €@"áéöüìùòàäñÑ@æßðđŋħ←↓→þøŧ¶€ł@łĸµn”“«»“”nµłĸŋđðßææ@ł€¶ŧ←↓→øþ'
-        testStr1b = 'Test String 2 with some ł€¶ŧ←↓→øþ'
+        testStr1a = (
+            'Test String more or less with strange chars €@"áéöüìùòàäñÑ@æßðđŋħ←↓→þøŧ¶€ł@łĸµn”“«»“”nµłĸŋđðßææ@ł€¶ŧ←↓→øþ'
+        )
+        testStr1b = "Test String 2 with some ł€¶ŧ←↓→øþ"
 
-        testStr2a = 'xor string chasquera'
-        testStr2b = 'xor string chasquera #~½¬æßð'
+        testStr2a = "xor string chasquera"
+        testStr2b = "xor string chasquera #~½¬æßð"
 
         for s1 in (testStr1a, testStr1b):
             for s2 in (testStr2a, testStr2b):
                 sym = self.manager.symmetric_encrypt(s1, s2)
-                self.assertIsInstance(sym, bytes, 'Returned xor string is not bytes')
+                self.assertIsInstance(sym, bytes, "Returned xor string is not bytes")
                 symd = self.manager.symmetric_decrypt(sym, s2)
                 self.assertEqual(symd, s1)
 
@@ -115,15 +120,15 @@ class CryptoManagerTest(UDSTestCase):
         self.manager.load_private_key(settings.RSA_KEY)
 
         self.manager.load_certificate(settings.CERTIFICATE)
-        self.manager.load_certificate(settings.CERTIFICATE.encode('utf8'))
+        self.manager.load_certificate(settings.CERTIFICATE.encode("utf8"))
 
     def test_hash(self) -> None:
-        testStr = 'Test String for hash'
+        testStr = "Test String for hash"
         # knownHashValue = '4e1311c1378993b34430988f4836b8e6b8beb219'
 
-        for _ in (testStr, testStr.encode('utf-8')):
+        for _ in (testStr, testStr.encode("utf-8")):
             hashValue = self.manager.hash(testStr)
-            self.assertIsInstance(hashValue, str, 'Returned hash must be an string')
+            self.assertIsInstance(hashValue, str, "Returned hash must be an string")
 
     def test_uuid(self) -> None:
         uuid = self.manager.uuid()
@@ -135,16 +140,16 @@ class CryptoManagerTest(UDSTestCase):
         uuid_type.UUID(uuid)
 
         for o in (
-            (1, '47c69004-5f4c-5266-b93d-747b318e2d3f'),
-            (1.1, 'dfdae060-00a9-5e8d-9a28-3b77b8af18eb'),
-            ('Test String', 'dce56818-2231-5d0f-abd3-73b3b8c1c7ee'),
+            (1, "47c69004-5f4c-5266-b93d-747b318e2d3f"),
+            (1.1, "dfdae060-00a9-5e8d-9a28-3b77b8af18eb"),
+            ("Test String", "dce56818-2231-5d0f-abd3-73b3b8c1c7ee"),
             (
                 datetime.datetime(2014, 9, 15, 17, 2, 12),
-                'a42521d7-2b2f-5767-992c-482aef05b25c',
+                "a42521d7-2b2f-5767-992c-482aef05b25c",
             ),
         ):
             uuid = self.manager.uuid(o[0])
-            self.assertIsInstance(uuid, str, 'Returned uuid must be an string')
+            self.assertIsInstance(uuid, str, "Returned uuid must be an string")
             self.assertEqual(uuid, o[1])
             # Ensure is lowercase
             self.assertEqual(uuid, uuid.lower())
@@ -168,20 +173,20 @@ class CryptoManagerTest(UDSTestCase):
         self.assertEqual(
             shared_secret_enc,
             shared_secret_dec,
-            'KEM shared secrets do not match!',
+            "KEM shared secrets do not match!",
         )
 
     def test_derive_tunnel_material(self) -> None:
-        shared_secret = b'\x01' * 32
-        ticket_id = b'\x41' * 48
+        shared_secret = b"\x01" * 32
+        ticket_id = b"\x41" * 48
         material = self.manager.derive_tunnel_material(shared_secret, ticket_id)
 
         # Expected values calculated with known-good implementation
         EXPECTED = TunnelMaterial(
-            key_payload=b'T\x93\xcb\xb2O\x07\x8cq~\xbc\x1e\xddzX\x05\xadq\xa6\r\xf4\xfaz\xa1\r?<\xcc\xbf\xef\x97\x11!',
-            key_send=b'\xb0=\xbe\xe9\x9e\xf1A\xa1\x88\xc7\xc6\xfa\x8b\xdb\x0f\x07v\xeeu\xa47!J)G\xaa\xc4\x11\x81,\xd1\xe9',
-            key_receive=b'\x7f\xb6\xe0{\xf7\x9e\xe3\xd3\xf4\xe1\x11& Y7(\xbeh\xa01\xb1\xbe\x18\x04\xac\x17Ta\xbcp\xb9$',
-            nonce_payload=b'K\x96\xa7\x90\xce\x88\xb9\x96\xa1\xc8\xfc\xc3',
+            key_payload=b"T\x93\xcb\xb2O\x07\x8cq~\xbc\x1e\xddzX\x05\xadq\xa6\r\xf4\xfaz\xa1\r?<\xcc\xbf\xef\x97\x11!",
+            key_send=b"\xb0=\xbe\xe9\x9e\xf1A\xa1\x88\xc7\xc6\xfa\x8b\xdb\x0f\x07v\xeeu\xa47!J)G\xaa\xc4\x11\x81,\xd1\xe9",
+            key_receive=b"\x7f\xb6\xe0{\xf7\x9e\xe3\xd3\xf4\xe1\x11& Y7(\xbeh\xa01\xb1\xbe\x18\x04\xac\x17Ta\xbcp\xb9$",
+            nonce_payload=b"K\x96\xa7\x90\xce\x88\xb9\x96\xa1\xc8\xfc\xc3",
         )
         self.assertIsInstance(material, types.crypto.TunnelMaterial)
         self.assertEqual(material, EXPECTED)
@@ -191,17 +196,17 @@ class CryptoManagerTest(UDSTestCase):
             shared_secret,
             data,
         ) = self.manager.encrypted_dict(
-            {'key': 'value', 'number': 42},
-            'A' * 48,
-            shared_secret=b'\x01' * 32,
-            ciphertext=b'\x02' * 64,  # will only be encoded on ciphertext, any value will do
+            {"key": "value", "number": 42},
+            "A" * 48,
+            shared_secret=b"\x01" * 32,
+            ciphertext=b"\x02" * 64,  # will only be encoded on ciphertext, any value will do
         )
         EXPECTED = {
-            'algorithm': 'AES-256-GCM',
-            'ciphertext': 'AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==',
-            'data': 'QwVXqUBTA76PxOQ5h/i4QBAi0p9u8OCvOWzJ9i0Q1ynYcFXIunJhRVmUjOxaZw==',
+            "algorithm": "AES-256-GCM",
+            "ciphertext": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+            "data": "QwVXqUBTA76PxOQ5h/i4QBAi0p9u8OCvOWzJ9i0Q1ynYcFXIunJhRVmUjOxaZw==",
         }
         self.assertIsInstance(shared_secret, bytes)
-        self.assertEqual(shared_secret, b'\x01' * 32)
+        self.assertEqual(shared_secret, b"\x01" * 32)
         self.assertIsInstance(data, dict)
         self.assertEqual(data, EXPECTED)

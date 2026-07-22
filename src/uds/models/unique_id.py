@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -43,7 +44,7 @@ class UniqueId(models.Model):
     Managed via uds.core.util.unique_id_generator.unique_id_generator
     """
 
-    owner = models.CharField(max_length=128, db_index=True, default='')
+    owner = models.CharField(max_length=128, db_index=True, default="")
     basename = models.CharField(max_length=32, db_index=True)
     seq = models.BigIntegerField(db_index=True)
     assigned = models.BooleanField(db_index=True, default=True)
@@ -52,16 +53,14 @@ class UniqueId(models.Model):
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[UniqueId]'
 
-    class Meta: # pyright: ignore
+    class Meta:  # pyright: ignore
         """
         Meta class to declare default order and unique multiple field index
         """
 
-        ordering = ('-seq',)
-        app_label = 'uds'
-        constraints = [
-            models.UniqueConstraint(fields=['basename', 'seq'], name='u_uid_base_seq')
-        ]
+        ordering = ("-seq",)
+        app_label = "uds"
+        constraints = [models.UniqueConstraint(fields=["basename", "seq"], name="u_uid_base_seq")]
 
     def __str__(self) -> str:
-        return f'{self.owner} {self.basename}.{self.seq}, assigned is {self.assigned}'
+        return f"{self.owner} {self.basename}.{self.seq}, assigned is {self.assigned}"

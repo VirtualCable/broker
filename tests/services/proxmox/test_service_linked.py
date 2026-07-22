@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 import typing
 from unittest import mock
@@ -45,14 +46,14 @@ class TestProxmovLinkedService(UDSTestCase):
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_linked(provider=provider)
 
-        self.assertEqual(service.pool.value, fixtures.SERVICE_LINKED_VALUES_DICT['pool'])
-        self.assertEqual(service.ha.value, fixtures.SERVICE_LINKED_VALUES_DICT['ha'])
-        self.assertEqual(service.try_soft_shutdown.value, fixtures.SERVICE_LINKED_VALUES_DICT['try_soft_shutdown'])
-        self.assertEqual(service.machine.as_int(), fixtures.SERVICE_LINKED_VALUES_DICT['machine'])
-        self.assertEqual(service.datastore.value, fixtures.SERVICE_LINKED_VALUES_DICT['datastore'])
-        self.assertEqual(service.gpu.value, fixtures.SERVICE_LINKED_VALUES_DICT['gpu'])
-        self.assertEqual(service.basename.value, fixtures.SERVICE_LINKED_VALUES_DICT['basename'])
-        self.assertEqual(service.lenname.value, fixtures.SERVICE_LINKED_VALUES_DICT['lenname'])
+        self.assertEqual(service.pool.value, fixtures.SERVICE_LINKED_VALUES_DICT["pool"])
+        self.assertEqual(service.ha.value, fixtures.SERVICE_LINKED_VALUES_DICT["ha"])
+        self.assertEqual(service.try_soft_shutdown.value, fixtures.SERVICE_LINKED_VALUES_DICT["try_soft_shutdown"])
+        self.assertEqual(service.machine.as_int(), fixtures.SERVICE_LINKED_VALUES_DICT["machine"])
+        self.assertEqual(service.datastore.value, fixtures.SERVICE_LINKED_VALUES_DICT["datastore"])
+        self.assertEqual(service.gpu.value, fixtures.SERVICE_LINKED_VALUES_DICT["gpu"])
+        self.assertEqual(service.basename.value, fixtures.SERVICE_LINKED_VALUES_DICT["basename"])
+        self.assertEqual(service.lenname.value, fixtures.SERVICE_LINKED_VALUES_DICT["lenname"])
 
     def test_service_is_available(self) -> None:
         """
@@ -74,14 +75,14 @@ class TestProxmovLinkedService(UDSTestCase):
             # Now should return False as we have reset the cache
             self.assertFalse(service.is_available())
             api.test.assert_called_with()
-            
+
     def test_service_is_deleted(self) -> None:
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_linked(provider=provider)
             vm = random.choice(fixtures.VMINFO_LIST)
 
             self.assertFalse(service.is_deleted(str(vm.id)))
-            self.assertTrue(service.is_deleted('non_existent'))
+            self.assertTrue(service.is_deleted("non_existent"))
 
     def test_service_methods_1(self) -> None:
         with fixtures.patched_provider() as provider:
@@ -89,15 +90,15 @@ class TestProxmovLinkedService(UDSTestCase):
             service = fixtures.create_service_linked(provider=provider)
 
             # Sanitized name
-            self.assertEqual(service.sanitized_name('a.b.c$m1%233 2'), 'a-b-c-m1-233-2')
+            self.assertEqual(service.sanitized_name("a.b.c$m1%233 2"), "a-b-c-m1-233-2")
 
             # Clone machine
-            self.assertEqual(service.clone_vm('name', 'description', 1), fixtures.VM_CREATION_RESULT)
+            self.assertEqual(service.clone_vm("name", "description", 1), fixtures.VM_CREATION_RESULT)
             api.clone_vm.assert_called_with(
                 1,
                 mock.ANY,
-                'name',
-                'description',
+                "name",
+                "description",
                 True,
                 None,
                 service.datastore.value,
@@ -105,12 +106,12 @@ class TestProxmovLinkedService(UDSTestCase):
                 None,
             )
             # Clone machine, for template
-            self.assertEqual(service.clone_vm('name', 'description'), fixtures.VM_CREATION_RESULT)
+            self.assertEqual(service.clone_vm("name", "description"), fixtures.VM_CREATION_RESULT)
             api.clone_vm.assert_called_with(
                 service.machine.as_int(),
                 mock.ANY,
-                'name',
-                'description',
+                "name",
+                "description",
                 False,
                 None,
                 service.datastore.value,
@@ -123,7 +124,7 @@ class TestProxmovLinkedService(UDSTestCase):
             api.get_vm_pool_info.assert_called_with(1, service.pool.value)
 
             # Get nic mac
-            self.assertEqual(service.get_mac(None, '1'), '00:01:02:03:04:05')
+            self.assertEqual(service.get_mac(None, "1"), "00:01:02:03:04:05")
 
             # remove machine, but this is from provider
             self.assertEqual(service.provider().api.delete_vm(1), fixtures.UPID)
@@ -157,7 +158,7 @@ class TestProxmovLinkedService(UDSTestCase):
             self.assertEqual(service.should_try_soft_shutdown(), service.try_soft_shutdown.value)
 
             # Get console connection
-            self.assertEqual(service.get_console_connection('1'), fixtures.CONSOLE_CONNECTION_INFO)
+            self.assertEqual(service.get_console_connection("1"), fixtures.CONSOLE_CONNECTION_INFO)
 
             # Is available
             self.assertTrue(service.is_available())

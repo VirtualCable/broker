@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -55,10 +56,10 @@ class ManagedObjectModel(UUIDModel):
 
     name = models.CharField(max_length=128, unique=False, db_index=True)
     data_type = models.CharField(max_length=128)
-    data = models.TextField(default='')
+    data = models.TextField(default="")
     comments = models.CharField(max_length=256)
 
-    _cached_instance: 'Module | None' = None
+    _cached_instance: "Module | None" = None
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """
@@ -73,7 +74,7 @@ class ManagedObjectModel(UUIDModel):
         """
         return Environment.environment_for_table_record(self._meta.verbose_name or self._meta.db_table, self.id)
 
-    def deserialize(self, obj: 'Module', values: collections.abc.Mapping[str, str] | None) -> None:
+    def deserialize(self, obj: "Module", values: collections.abc.Mapping[str, str] | None) -> None:
         """
         Conditionally deserializes obj if not initialized via user interface and data holds something
         """
@@ -85,10 +86,10 @@ class ManagedObjectModel(UUIDModel):
             if obj.needs_upgrade():
                 # Re-serialize to db
                 self.data = obj.serialize()
-                self.save(update_fields=['data'])
+                self.save(update_fields=["data"])
                 obj.mark_for_upgrade(False)
 
-    def get_instance(self, values: dict[str, str] | None = None) -> 'Module':
+    def get_instance(self, values: dict[str, str] | None = None) -> "Module":
         """
         Instantiates the object this record contains.
 
@@ -110,19 +111,19 @@ class ManagedObjectModel(UUIDModel):
 
         env = self.get_environment()
         obj = klass(env, values)
-        obj.set_uuid(self.uuid)   # Set the uuid of the object to the one stored in the database
+        obj.set_uuid(self.uuid)  # Set the uuid of the object to the one stored in the database
         self.deserialize(obj, values)
 
         self._cached_instance = obj
 
         return obj
 
-    def get_type(self) -> type['Module']:
+    def get_type(self) -> type["Module"]:
         """
         Returns the type of self (as python type)
         Must be overriden!!!
         """
-        raise NotImplementedError(f'get_type has not been implemented for {self.__class__.__name__}')
+        raise NotImplementedError(f"get_type has not been implemented for {self.__class__.__name__}")
 
     def is_type(self, type_: str) -> bool:
         """

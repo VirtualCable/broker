@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # import traceback
 import typing
 import logging
@@ -46,22 +47,18 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class LogManager(metaclass=singleton.Singleton):
     """
     Manager for logging (at database) events
     """
+
     @staticmethod
-    def manager() -> 'LogManager':
+    def manager() -> "LogManager":
         return LogManager()  # Singleton pattern will return always the same instance
 
     def _log(
-        self,
-        owner_type: LogObjectType,
-        owner_id: int,
-        level: int,
-        message: str,
-        source: str,
-        logname: str
+        self, owner_type: LogObjectType, owner_id: int, level: int, message: str, source: str, logname: str
     ) -> None:
         """
         Logs a message associated to owner
@@ -84,16 +81,14 @@ class LogManager(metaclass=singleton.Singleton):
             # Some objects will not get logged, such as System administrator objects, but this is fine
             pass
 
-    def _get_logs(
-        self, owner_type: LogObjectType, owner_id: int, limit: int
-    ) -> list[dict[str, typing.Any]]:
+    def _get_logs(self, owner_type: LogObjectType, owner_id: int, limit: int) -> list[dict[str, typing.Any]]:
         """
         Get all logs associated with an user service, ordered by date
         """
         qs = Log.objects.filter(owner_id=owner_id, owner_type=owner_type.value)
         return [
-            {'date': x.created, 'level': x.level, 'source': x.source, 'message': x.data}
-            for x in reversed(qs.order_by('-created', '-id')[:limit])
+            {"date": x.created, "level": x.level, "source": x.source, "message": x.data}
+            for x in reversed(qs.order_by("-created", "-id")[:limit])
         ]
 
     def _clear_logs(self, owner_type: LogObjectType, owner_id: int) -> None:
@@ -104,7 +99,7 @@ class LogManager(metaclass=singleton.Singleton):
 
     def log(
         self,
-        db_obj: 'Model | None',
+        db_obj: "Model | None",
         level: int,
         message: str,
         source: str,
@@ -115,63 +110,47 @@ class LogManager(metaclass=singleton.Singleton):
 
         If the object provided do not accepts associated loggin, it simply ignores the request
         """
-        owner_type = (
-            LogObjectType.get_type_from_model(db_obj)
-            if db_obj
-            else LogObjectType.SYSLOG
-        )
-        obj_id = getattr(db_obj, 'id', -1)
-        log_name = log_name or ''
+        owner_type = LogObjectType.get_type_from_model(db_obj) if db_obj else LogObjectType.SYSLOG
+        obj_id = getattr(db_obj, "id", -1)
+        log_name = log_name or ""
 
         if owner_type is not None:
             try:
-                self._log(
-                    owner_type, obj_id, level, message, source, log_name
-                )
+                self._log(owner_type, obj_id, level, message, source, log_name)
             except Exception as e:
-                logger.error('Error logging %s.%s-%s %s: %s (%s)', db_obj.__class__, obj_id, source, level, message, e)
+                logger.error("Error logging %s.%s-%s %s: %s (%s)", db_obj.__class__, obj_id, source, level, message, e)
 
-    def get_logs(
-        self, db_obj: 'Model | None', limit: int = -1
-    ) -> list[dict[str, typing.Any]]:
+    def get_logs(self, db_obj: "Model | None", limit: int = -1) -> list[dict[str, typing.Any]]:
         """
         Get the logs associated with "wichObject", limiting to "limit" (default is GlobalConfig.MAX_LOGS_PER_ELEMENT)
         """
 
-        owner_type = (
-            LogObjectType.get_type_from_model(db_obj)
-            if db_obj
-            else LogObjectType.SYSLOG
-        )
+        owner_type = LogObjectType.get_type_from_model(db_obj) if db_obj else LogObjectType.SYSLOG
 
         if owner_type is not None:  # 0 is valid owner type, so we must check for None
             return self._get_logs(
                 owner_type,
-                getattr(db_obj, 'id', -1),
+                getattr(db_obj, "id", -1),
                 limit if limit != -1 else owner_type.get_max_elements(),
             )
 
         return []
 
-    def clear_logs(self, db_object: 'Model | None') -> None:
+    def clear_logs(self, db_object: "Model | None") -> None:
         """
         Clears all logs related to db_object
 
         Used mainly at object database removal (parent object)
         """
 
-        owner_type = (
-            LogObjectType.get_type_from_model(db_object)
-            if db_object
-            else LogObjectType.SYSLOG
-        )
+        owner_type = LogObjectType.get_type_from_model(db_object) if db_object else LogObjectType.SYSLOG
         if owner_type:
-            self._clear_logs(owner_type, getattr(db_object, 'id', -1))
-        #else:
-            # logger.debug(
-            #    'Requested clearLogs for a type of object not covered: %s: %s',
-            #    type(wichObject),
-            #    wichObject,
-            #)
-            #for line in traceback.format_stack(limit=5):
-            #    logger.debug('>> %s', line)
+            self._clear_logs(owner_type, getattr(db_object, "id", -1))
+        # else:
+        # logger.debug(
+        #    'Requested clearLogs for a type of object not covered: %s: %s',
+        #    type(wichObject),
+        #    wichObject,
+        # )
+        # for line in traceback.format_stack(limit=5):
+        #    logger.debug('>> %s', line)

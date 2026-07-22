@@ -31,12 +31,14 @@
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import auths, types
+from uds.core import auths
+from uds.core import types
 from uds.core.types.states import State
 from uds.core.ui import gui
 from uds.core.util import net
@@ -48,49 +50,47 @@ if typing.TYPE_CHECKING:
 
 
 class IPAuth(auths.Authenticator):
-    type_name = _('IP')
-    type_type = 'IPAuth'
-    type_description = _('IP Authenticator')
-    icon_file = 'auth.png'
+    type_name = _("IP")
+    type_type = "IPAuth"
+    type_description = _("IP Authenticator")
+    icon_file = "auth.png"
 
     # Allow mfa data on user form
     mfa_data_enabled = False
 
     needs_password = False
-    label_username = _('IP')
-    label_groupname = _('IP Range')
+    label_username = _("IP")
+    label_groupname = _("IP Range")
 
     block_user_on_failures = False
 
     accepts_proxy = gui.CheckBoxField(
-        label=_('Accept proxy'),
+        label=_("Accept proxy"),
         default=False,
         order=50,
         tooltip=_(
-            'If checked, requests via proxy will get FORWARDED ip address'
-            ' (take care with this bein checked, can take internal IP addresses from internet)'
+            "If checked, requests via proxy will get FORWARDED ip address"
+            " (take care with this bein checked, can take internal IP addresses from internet)"
         ),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='acceptProxy',
+        old_field_name="acceptProxy",
     )
 
     allowed_in_networks = gui.TextField(
         order=50,
-        label=_('Allowed only from this networks'),
-        default='',
-        tooltip=_(
-            'This authenticator will be allowed only from these networks. Leave empty to allow all networks'
-        ),
+        label=_("Allowed only from this networks"),
+        default="",
+        tooltip=_("This authenticator will be allowed only from these networks. Leave empty to allow all networks"),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='visibleFromNets',
+        old_field_name="visibleFromNets",
     )
 
-    def get_ip(self, request: 'types.requests.ExtendedHttpRequest') -> str:
+    def get_ip(self, request: "types.requests.ExtendedHttpRequest") -> str:
         ip = request.ip_proxy if self.accepts_proxy.as_bool() else request.ip
-        logger.debug('Client IP: %s', ip)
+        logger.debug("Client IP: %s", ip)
         # If ipv4 on ipv6, we must remove the ipv6 prefix
-        if ':' in ip and '.' in ip:
-            ip = ip.split(':')[-1]
+        if ":" in ip and "." in ip:
+            ip = ip.split(":")[-1]
         return ip
 
     @typing.override
@@ -99,10 +99,10 @@ class IPAuth(auths.Authenticator):
             return self.db_obj().users.get(name=username.lower(), state=State.ACTIVE).mfa_data
         except Exception:  # nosec: This is a "not found" exception or any other db exception
             pass
-        return ''
+        return ""
 
     @typing.override
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
+    def get_groups(self, username: str, groups_manager: "auths.GroupsManager") -> None:
         # these groups are a bit special. They are in fact ip-ranges, and we must check that the ip is in betwen
         # The ranges are stored in group names
         for g in groups_manager.enumerate_groups_name():
@@ -110,10 +110,10 @@ class IPAuth(auths.Authenticator):
                 if net.contains(g, username):
                     groups_manager.validate(g)
             except Exception as e:
-                logger.error('Invalid network for IP auth: %s', e)
+                logger.error("Invalid network for IP auth: %s", e)
 
     @typing.override
-    def is_ip_allowed(self, request: 'types.requests.ExtendedHttpRequest') -> bool:
+    def is_ip_allowed(self, request: "types.requests.ExtendedHttpRequest") -> bool:
         """
         Used by the login interface to determine if the authenticator is visible on the login page.
         """
@@ -128,8 +128,8 @@ class IPAuth(auths.Authenticator):
         self,
         username: str,
         credentials: str,  # pylint: disable=unused-argument
-        groups_manager: 'auths.GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        groups_manager: "auths.GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         # If credentials is a dict, that can't be sent directly from web interface, we allow entering
         if username == self.get_ip(request):
@@ -139,7 +139,7 @@ class IPAuth(auths.Authenticator):
 
     @staticmethod
     @typing.override
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         return types.core.TestResult(True)
 
     @typing.override
@@ -147,7 +147,7 @@ class IPAuth(auths.Authenticator):
         return _("All seems to be fine.")
 
     @typing.override
-    def get_javascript(self, request: 'types.requests.ExtendedHttpRequest') -> typing.Optional[str]:
+    def get_javascript(self, request: "types.requests.ExtendedHttpRequest") -> typing.Optional[str]:
         # We will authenticate ip here, from request.ip
         # If valid, it will simply submit form with ip submited and a cached generated random password
         ip = self.get_ip(request)
@@ -156,9 +156,9 @@ class IPAuth(auths.Authenticator):
 
         if gm.has_valid_groups() and self.db_obj().is_user_allowed(ip, True):
             return (
-                'function setVal(element, value) {{\n'  # nosec: no user input, password is always EMPTY
-                '    document.getElementById(element).value = value;\n'
-                '}}\n'
+                "function setVal(element, value) {{\n"  # nosec: no user input, password is always EMPTY
+                "    document.getElementById(element).value = value;\n"
+                "}}\n"
                 f'setVal("id_user", "{ip}");\n'
                 'setVal("id_password", "");\n'
                 'document.getElementById("loginform").submit();\n'

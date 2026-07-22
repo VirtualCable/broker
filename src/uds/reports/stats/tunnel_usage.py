@@ -51,10 +51,10 @@ def _to_int(value: str) -> int:
 
 
 class TunnelUsageReport(StatsReport):
-    filename = 'tunnel_usage.pdf'
-    name = _('Tunnel usage')
-    description = _('Tunnel sessions opened/closed, durations and bytes per pool')
-    uuid = 'ef4be537-f19b-44bc-bb9b-8fa279d2371f'
+    filename = "tunnel_usage.pdf"
+    name = _("Tunnel usage")
+    description = _("Tunnel sessions opened/closed, durations and bytes per pool")
+    uuid = "ef4be537-f19b-44bc-bb9b-8fa279d2371f"
 
     pools = StatsReport.pools
     start_date = StatsReport.start_date
@@ -62,8 +62,8 @@ class TunnelUsageReport(StatsReport):
 
     @typing.override
     def init_gui(self) -> None:
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
-            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL POOLS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name") if v.uuid
         ]
         self.pools.set_choices(vals)
 
@@ -71,12 +71,12 @@ class TunnelUsageReport(StatsReport):
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
 
-        if '0-0-0-0' in self.pools.value:
+        if "0-0-0-0" in self.pools.value:
             qs = ServicePool.objects.all()
         else:
             qs = ServicePool.objects.filter(uuid__in=self.pools.value)
 
-        pool_map: dict[int, str] = dict(qs.values_list('id', 'name'))
+        pool_map: dict[int, str] = dict(qs.values_list("id", "name"))
         if not pool_map:
             return []
 
@@ -92,62 +92,62 @@ class TunnelUsageReport(StatsReport):
                 since=start,
                 to=end,
             )
-            .values('owner_id', 'event_type', 'fld1', 'fld2', 'fld3')
+            .values("owner_id", "event_type", "fld1", "fld2", "fld3")
         )
 
         agg: dict[int, dict[str, int]] = {
-            pid: {'opens': 0, 'closes': 0, 'duration': 0, 'sent': 0, 'received': 0} for pid in pool_map
+            pid: {"opens": 0, "closes": 0, "duration": 0, "sent": 0, "received": 0} for pid in pool_map
         }
         for r in rows:
-            entry = agg[r['owner_id']]
-            if r['event_type'] == topen:
-                entry['opens'] += 1
+            entry = agg[r["owner_id"]]
+            if r["event_type"] == topen:
+                entry["opens"] += 1
             else:
-                entry['closes'] += 1
+                entry["closes"] += 1
                 # TUNNEL_CLOSE: fld1=duration, fld2=sent, fld3=received
-                entry['duration'] += _to_int(r['fld1'])
-                entry['sent'] += _to_int(r['fld2'])
-                entry['received'] += _to_int(r['fld3'])
+                entry["duration"] += _to_int(r["fld1"])
+                entry["sent"] += _to_int(r["fld2"])
+                entry["received"] += _to_int(r["fld3"])
 
         result: list[dict[str, typing.Any]] = []
         for pid, pool_name in pool_map.items():
             e = agg[pid]
-            avg_duration = (e['duration'] // e['closes']) if e['closes'] else 0
+            avg_duration = (e["duration"] // e["closes"]) if e["closes"] else 0
             result.append(
                 {
-                    'pool': pool_name,
-                    'opens': e['opens'],
-                    'closes': e['closes'],
-                    'duration': str(datetime.timedelta(seconds=e['duration'])),
-                    'avg_duration': str(datetime.timedelta(seconds=avg_duration)),
-                    'sent': e['sent'],
-                    'received': e['received'],
+                    "pool": pool_name,
+                    "opens": e["opens"],
+                    "closes": e["closes"],
+                    "duration": str(datetime.timedelta(seconds=e["duration"])),
+                    "avg_duration": str(datetime.timedelta(seconds=avg_duration)),
+                    "sent": e["sent"],
+                    "received": e["received"],
                 }
             )
 
-        result.sort(key=lambda r: r['opens'], reverse=True)
+        result.sort(key=lambda r: r["opens"], reverse=True)
         return result
 
     @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/stats/tunnel-usage.html',
+            "uds/reports/stats/tunnel-usage.html",
             dct={
-                'data': items,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "data": items,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Tunnel usage'),
-            water=gettext('UDS Report of tunnel usage'),
+            header=gettext("Tunnel usage"),
+            water=gettext("UDS Report of tunnel usage"),
         )
 
 
 class TunnelUsageReportCSV(TunnelUsageReport):
-    filename = 'tunnel_usage.csv'
-    mime_type = 'text/csv'
+    filename = "tunnel_usage.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = 'b0e38c72-a135-4f92-8700-b00753598bb2'
+    uuid = "b0e38c72-a135-4f92-8700-b00753598bb2"
 
     pools = TunnelUsageReport.pools
     start_date = TunnelUsageReport.start_date
@@ -159,25 +159,25 @@ class TunnelUsageReportCSV(TunnelUsageReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext('Pool'),
-                gettext('Opens'),
-                gettext('Closes'),
-                gettext('Total time'),
-                gettext('Mean time'),
-                gettext('Bytes sent'),
-                gettext('Bytes received'),
+                gettext("Pool"),
+                gettext("Opens"),
+                gettext("Closes"),
+                gettext("Total time"),
+                gettext("Mean time"),
+                gettext("Bytes sent"),
+                gettext("Bytes received"),
             ]
         )
         for v in self.get_data():
             writer.writerow(
                 [
-                    v['pool'],
-                    v['opens'],
-                    v['closes'],
-                    v['duration'],
-                    v['avg_duration'],
-                    v['sent'],
-                    v['received'],
+                    v["pool"],
+                    v["opens"],
+                    v["closes"],
+                    v["duration"],
+                    v["avg_duration"],
+                    v["sent"],
+                    v["received"],
                 ]
             )
         return output.getvalue().encode()

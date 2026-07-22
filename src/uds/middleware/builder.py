@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import inspect
 import logging
 import typing
@@ -45,7 +46,7 @@ logger = logging.getLogger(__name__)
 # How often to check the requests cache for stuck objects
 CHECK_SECONDS = 3600 * 24  # Once a day is more than enough
 
-RequestMiddelwareProcessorType = collections.abc.Callable[[ExtendedHttpRequest], HttpResponse|None]
+RequestMiddelwareProcessorType = collections.abc.Callable[[ExtendedHttpRequest], HttpResponse | None]
 ResponseMiddelwareProcessorType = collections.abc.Callable[[ExtendedHttpRequest, HttpResponse], HttpResponse]
 
 
@@ -66,15 +67,15 @@ def build_middleware(
         if inspect.iscoroutinefunction(get_response):
 
             async def async_middleware(
-                request: 'ExtendedHttpRequest',
-            ) -> 'HttpResponse':
+                request: "ExtendedHttpRequest",
+            ) -> "HttpResponse":
                 response = await sync_to_async(request_processor)(request)
                 return await sync_to_async(response_processor)(request, response or await get_response(request))
 
             return async_middleware
 
         # Sync middleware
-        def sync_middleware(request: 'ExtendedHttpRequest') -> 'HttpResponse':
+        def sync_middleware(request: "ExtendedHttpRequest") -> "HttpResponse":
             response = request_processor(request)
             return response_processor(request, response or get_response(request))
 

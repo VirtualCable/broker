@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from datetime import timedelta
 import logging
@@ -45,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 
 class PublicationInfoItemsCleaner(Job):
-    friendly_name = 'Publications Info Cleaner'
+    friendly_name = "Publications Info Cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -53,16 +54,12 @@ class PublicationInfoItemsCleaner(Job):
 
     @typing.override
     def run(self) -> None:
-        remove_since = sql_now() - timedelta(
-            seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True)
-        )
-        ServicePoolPublication.objects.filter(
-            state__in=State.INFO_STATES, state_date__lt=remove_since
-        ).delete()
+        remove_since = sql_now() - timedelta(seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True))
+        ServicePoolPublication.objects.filter(state__in=State.INFO_STATES, state_date__lt=remove_since).delete()
 
 
 class PublicationCleaner(Job):
-    friendly_name = 'Publication Cleaner'
+    friendly_name = "Publication Cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -78,4 +75,4 @@ class PublicationCleaner(Job):
             try:
                 publication_manager().unpublish(removable)
             except PublishException:  # Can say that it cant be removed right now
-                logger.debug('Delaying removal')
+                logger.debug("Delaying removal")

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -39,15 +40,15 @@ from uds.core.util import utils
 logger = logging.getLogger(__name__)
 
 # Default values
-LOGO = 'logo-512.png'
-CSS = 'report.css'
+LOGO = "logo-512.png"
+CSS = "report.css"
 
 
 def get_stock_image_path(stock_image: typing.Optional[str] = None) -> str:
     stock_image = stock_image or LOGO
-    return utils.package_relative_file(__name__, 'stock_images/' + stock_image)
+    return utils.package_relative_file(__name__, "stock_images/" + stock_image)
 
 
 def get_stock_css_path(css: typing.Optional[str] = None) -> str:
     css = css or CSS
-    return utils.package_relative_file(__name__, 'css/' + css)
+    return utils.package_relative_file(__name__, "css/" + css)

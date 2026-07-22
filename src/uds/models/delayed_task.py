@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -50,9 +51,7 @@ class DelayedTask(models.Model):
     """
 
     type = models.CharField(max_length=128)
-    tag = models.CharField(
-        max_length=64, db_index=True
-    )  # A tag for letting us locate delayed publications...
+    tag = models.CharField(max_length=64, db_index=True)  # A tag for letting us locate delayed publications...
     instance = models.TextField()
     insert_date = models.DateTimeField()
     execution_delay = models.PositiveIntegerField()
@@ -61,13 +60,13 @@ class DelayedTask(models.Model):
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[DelayedTask]'
 
-    class Meta():  # pyright: ignore
+    class Meta:  # pyright: ignore
         """
         Meta class to declare default order and unique multiple field index
         """
 
-        app_label = 'uds'
+        app_label = "uds"
 
     def __str__(self) -> str:
         # return f'Run Queue task {self.type} w {self.execution_time},inserted at {self.insert_date} and with {self.execution_delay} seconds delay'
-        return f'Delayed Task {self.type} ({self.tag}) at {self.execution_time} (inserted at {self.insert_date}, delay {self.execution_delay})'
+        return f"Delayed Task {self.type} ({self.tag}) at {self.execution_time} (inserted at {self.insert_date}, delay {self.execution_delay})"

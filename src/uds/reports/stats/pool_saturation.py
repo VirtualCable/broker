@@ -45,10 +45,10 @@ logger = logging.getLogger(__name__)
 
 
 class PoolSaturationReport(StatsReport):
-    filename = 'pool_saturation.pdf'
-    name = _('Pool saturation')
-    description = _('Peak ASSIGNED user services vs max capacity (%) per pool over a period')
-    uuid = '315921b4-b838-4178-a312-7bb75a8d58c4'
+    filename = "pool_saturation.pdf"
+    name = _("Pool saturation")
+    description = _("Peak ASSIGNED user services vs max capacity (%) per pool over a period")
+    uuid = "315921b4-b838-4178-a312-7bb75a8d58c4"
 
     pools = StatsReport.pools
     start_date = StatsReport.start_date
@@ -56,19 +56,17 @@ class PoolSaturationReport(StatsReport):
 
     @typing.override
     def init_gui(self) -> None:
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
-            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL POOLS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name") if v.uuid
         ]
         self.pools.set_choices(vals)
 
     def get_data(self) -> list[dict[str, typing.Any]]:
         # select_related('service'): get_max() walks self.service.get_instance().
-        if '0-0-0-0' in self.pools.value:
-            pools = list(ServicePool.objects.select_related('service').all())
+        if "0-0-0-0" in self.pools.value:
+            pools = list(ServicePool.objects.select_related("service").all())
         else:
-            pools = list(
-                ServicePool.objects.select_related('service').filter(uuid__in=self.pools.value)
-            )
+            pools = list(ServicePool.objects.select_related("service").filter(uuid__in=self.pools.value))
 
         start_dt = datetime.datetime.combine(self.start_date.as_date(), datetime.time.min)
         start_dt = timezone.make_aware(start_dt)
@@ -99,7 +97,7 @@ class PoolSaturationReport(StatsReport):
             max_user_services = pool.get_max()
             if max_user_services == consts.UNLIMITED:
                 pct = 0.0
-                max_str = gettext('Unlimited')
+                max_str = gettext("Unlimited")
             else:
                 pct = (peak * 100.0 / max_user_services) if max_user_services else 0.0
                 max_str = str(max_user_services)
@@ -108,39 +106,39 @@ class PoolSaturationReport(StatsReport):
 
             result.append(
                 {
-                    'pool': pool.name,
-                    'peak': peak,
-                    'peak_at': peak_at if peak_at else '',
-                    'avg': '{:.2f}'.format(avg),
-                    'max': max_str,
-                    'pct': '{:.1f}'.format(pct),
-                    'pct_value': pct,
+                    "pool": pool.name,
+                    "peak": peak,
+                    "peak_at": peak_at if peak_at else "",
+                    "avg": "{:.2f}".format(avg),
+                    "max": max_str,
+                    "pct": "{:.1f}".format(pct),
+                    "pct_value": pct,
                 }
             )
 
-        result.sort(key=lambda r: r['pct_value'], reverse=True)
+        result.sort(key=lambda r: r["pct_value"], reverse=True)
         return result
 
     @typing.override
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/stats/pool-saturation.html',
+            "uds/reports/stats/pool-saturation.html",
             dct={
-                'data': items,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "data": items,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Pool saturation'),
-            water=gettext('UDS Report of pool saturation'),
+            header=gettext("Pool saturation"),
+            water=gettext("UDS Report of pool saturation"),
         )
 
 
 class PoolSaturationReportCSV(PoolSaturationReport):
-    filename = 'pool_saturation.csv'
-    mime_type = 'text/csv'
+    filename = "pool_saturation.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = '7dc8eab2-4fae-454f-9dfe-8a4f4d96f106'
+    uuid = "7dc8eab2-4fae-454f-9dfe-8a4f4d96f106"
 
     pools = PoolSaturationReport.pools
     start_date = PoolSaturationReport.start_date
@@ -152,14 +150,14 @@ class PoolSaturationReportCSV(PoolSaturationReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext('Pool'),
-                gettext('Peak'),
-                gettext('Peak at'),
-                gettext('Average'),
-                gettext('Max'),
-                gettext('Saturation %'),
+                gettext("Pool"),
+                gettext("Peak"),
+                gettext("Peak at"),
+                gettext("Average"),
+                gettext("Max"),
+                gettext("Saturation %"),
             ]
         )
         for v in self.get_data():
-            writer.writerow([v['pool'], v['peak'], v['peak_at'], v['avg'], v['max'], v['pct']])
+            writer.writerow([v["pool"], v["peak"], v["peak_at"], v["avg"], v["max"], v["pct"]])
         return output.getvalue().encode()

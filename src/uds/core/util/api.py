@@ -26,7 +26,7 @@ def _resolve_forwardref(
 
 
 def get_generic_types(
-    cls: 'type[model.ModelHandler[typing.Any] | model.DetailHandler[typing.Any]]',
+    cls: "type[model.ModelHandler[typing.Any] | model.DetailHandler[typing.Any]]",
 ) -> list[type[types.rest.BaseRestItem]]:
     """
     Get the generic types of a model handler or detail handler class.
@@ -60,7 +60,7 @@ def get_generic_types(
                         typing.cast(type[typing.Any], _resolve_forwardref(base))
                         for base in filter(
                             lambda x: _resolve_forwardref(x) is not None,
-                            [base for base in getattr(cls, '__orig_bases__', [])],
+                            [base for base in getattr(cls, "__orig_bases__", [])],
                         )
                     ],
                 )
@@ -71,15 +71,15 @@ def get_generic_types(
 
 
 def get_component_from_type(
-    cls: 'type[model.ModelHandler[typing.Any] | model.DetailHandler[typing.Any]]',
+    cls: "type[model.ModelHandler[typing.Any] | model.DetailHandler[typing.Any]]",
 ) -> types.rest.api.Components:
-    logger.debug('Getting components from type %s', cls)
+    logger.debug("Getting components from type %s", cls)
     base_types = get_generic_types(cls)
 
     all_components = types.rest.api.Components()
 
     for base_type in base_types:
-        logger.debug('Processing base %s for components %s', base_type, base_type.__bases__)
+        logger.debug("Processing base %s for components %s", base_type, base_type.__bases__)
         components = base_type.api_components()
 
         # A reference
@@ -94,7 +94,7 @@ def get_component_from_type(
         mappings: list[tuple[str, str]] = []
         for type_ in possible_types:
             type_schema = types.rest.api.Schema(
-                type='object',
+                type="object",
                 required=[],
                 description=type_.__doc__ or None,
             )
@@ -106,20 +106,20 @@ def get_component_from_type(
                 if field.gui.required is True:
                     type_schema.required.append(field.name)
 
-            ref = f'#/components/schemas/{type_.mod_type()}'
+            ref = f"#/components/schemas/{type_.mod_type()}"
             refs.append(ref)
-            mappings.append((f'{type_.mod_type()}', ref))
+            mappings.append((f"{type_.mod_type()}", ref))
 
             components.schemas[type_.mod_type()] = type_schema
 
         if is_managed_object and isinstance(item_schema, types.rest.api.Schema):
             # item_schema.discriminator = types.rest.api.Discriminator(propertyName='type')
-            instance_name = f'{item_name}Instance'
-            item_schema.properties['instance'] = types.rest.api.SchemaProperty(
-                type=f'#/components/schemas/{instance_name}'
+            instance_name = f"{item_name}Instance"
+            item_schema.properties["instance"] = types.rest.api.SchemaProperty(
+                type=f"#/components/schemas/{instance_name}"
             )
             instance_comps = types.rest.api.Components(
-                schemas={instance_name: types.rest.api.RelatedSchema(property='type', mappings=mappings)}
+                schemas={instance_name: types.rest.api.RelatedSchema(property="type", mappings=mappings)}
             )
             all_components = all_components.union(instance_comps)
 
@@ -137,25 +137,25 @@ class OpenApiTypeInfo:
     items: str | None = None  # Type of items in array
 
     def as_dict(self) -> dict[str, typing.Any]:
-        dct: dict[str, typing.Any] = {'type': self.type}
+        dct: dict[str, typing.Any] = {"type": self.type}
         if self.format:
-            dct['format'] = self.format
+            dct["format"] = self.format
         if self.items:
-            dct['items'] = {'type': self.items}
+            dct["items"] = {"type": self.items}
         return dct
 
 
 class OpenApiType(enum.Enum):
-    OBJECT = OpenApiTypeInfo(type='object')
-    INTEGER = OpenApiTypeInfo(type='integer', format='int64')
-    STRING = OpenApiTypeInfo(type='string')
-    NUMBER = OpenApiTypeInfo(type='number')
-    BOOLEAN = OpenApiTypeInfo(type='boolean')
-    NULL = OpenApiTypeInfo(type='null')
-    DATE_TIME = OpenApiTypeInfo(type='string', format='date-time')
-    DATE = OpenApiTypeInfo(type='string', format='date')
-    LIST_STR = OpenApiTypeInfo(type='array', items='string')
-    LIST_INT = OpenApiTypeInfo(type='array', items='integer')
+    OBJECT = OpenApiTypeInfo(type="object")
+    INTEGER = OpenApiTypeInfo(type="integer", format="int64")
+    STRING = OpenApiTypeInfo(type="string")
+    NUMBER = OpenApiTypeInfo(type="number")
+    BOOLEAN = OpenApiTypeInfo(type="boolean")
+    NULL = OpenApiTypeInfo(type="null")
+    DATE_TIME = OpenApiTypeInfo(type="string", format="date-time")
+    DATE = OpenApiTypeInfo(type="string", format="date")
+    LIST_STR = OpenApiTypeInfo(type="array", items="string")
+    LIST_INT = OpenApiTypeInfo(type="array", items="integer")
 
 
 _OPENAPI_TYPE_MAP: typing.Final[dict[typing.Any, OpenApiType]] = {
@@ -171,9 +171,7 @@ _OPENAPI_TYPE_MAP: typing.Final[dict[typing.Any, OpenApiType]] = {
 }
 
 
-def python_type_to_openapi(
-    py_type: typing.Any, description: str | None = None
-) -> 'types.rest.api.SchemaProperty':
+def python_type_to_openapi(py_type: typing.Any, description: str | None = None) -> "types.rest.api.SchemaProperty":
     """
     Convert a Python type to an OpenAPI 3.1 schema property.
     """
@@ -187,12 +185,12 @@ def python_type_to_openapi(
     # list[...] → array
     if origin is list:
         item_type = args[0] if args else typing.Any
-        return schema_prop(type='array', items=python_type_to_openapi(item_type))
+        return schema_prop(type="array", items=python_type_to_openapi(item_type))
 
     # dict[...] → object
     elif origin is dict:
         value_type = args[1] if len(args) == 2 else typing.Any
-        return schema_prop(type='object', additionalProperties=python_type_to_openapi(value_type))
+        return schema_prop(type="object", additionalProperties=python_type_to_openapi(value_type))
 
     # Union[...] → oneOf
     # Except if one of them is None, in which case, we must extract it from the list
@@ -203,8 +201,7 @@ def python_type_to_openapi(
         one_of: list[SchemaProperty] = [
             python_type_to_openapi(arg)
             for arg in args
-            if arg is not None
-            and typing.get_origin(arg) is not typing.cast(typing.Any, collections.abc.Callable)
+            if arg is not None and typing.get_origin(arg) is not typing.cast(typing.Any, collections.abc.Callable)
         ]
         # Remove repeated
         one_of = list({item.type: item for item in one_of}.values())
@@ -213,7 +210,7 @@ def python_type_to_openapi(
             return one_of[0]
 
         return schema_prop(
-            type='not_used',
+            type="not_used",
             one_of=one_of,
         )
 
@@ -223,18 +220,16 @@ def python_type_to_openapi(
     # Literal[...] → enum
     elif origin is typing.Literal:
         literal_type = typing.cast(type[typing.Any], type(args[0]) if args else str)
-        return schema_prop(
-            type=_OPENAPI_TYPE_MAP.get(literal_type, OpenApiType.STRING).value.type, enum=list(args)
-        )
+        return schema_prop(type=_OPENAPI_TYPE_MAP.get(literal_type, OpenApiType.STRING).value.type, enum=list(args))
 
     # Enum classes
     # First, IntEnum --> int
     elif isinstance(py_type, type) and issubclass(py_type, enum.IntEnum):
-        return schema_prop(type='integer', enum=[e.value for e in py_type])
+        return schema_prop(type="integer", enum=[e.value for e in py_type])
 
     # Now, StrEnum --> string
     elif isinstance(py_type, type) and issubclass(py_type, enum.StrEnum):
-        return schema_prop(type='string', enum=[e.value for e in py_type])
+        return schema_prop(type="string", enum=[e.value for e in py_type])
 
     # Rest of cases --> enum with first item type setting the type for the field
     elif isinstance(py_type, type) and issubclass(py_type, enum.Enum):
@@ -244,9 +239,9 @@ def python_type_to_openapi(
             openapi_type = _OPENAPI_TYPE_MAP.get(value_type, OpenApiType.STRING)
             return schema_prop(type=openapi_type.value.type, enum=[e.value for e in py_type])
         except StopIteration:
-            return schema_prop(type='string')
+            return schema_prop(type="string")
     elif isinstance(py_type, type) and dataclasses.is_dataclass(py_type):
-        return schema_prop(type=f'#/components/schemas/{py_type.__name__}')
+        return schema_prop(type=f"#/components/schemas/{py_type.__name__}")
 
     # Simple types
     oa_type = _OPENAPI_TYPE_MAP.get(py_type, OpenApiType.OBJECT)
@@ -255,18 +250,18 @@ def python_type_to_openapi(
 
 def api_components(
     dataclass: type[typing.Any], *, removable_fields: list[str] | None = None
-) -> 'types.rest.api.Components':
+) -> "types.rest.api.Components":
 
     # If not dataclass, raise a ValueError
     if not dataclasses.is_dataclass(dataclass):
-        raise ValueError('Expected a dataclass')
+        raise ValueError("Expected a dataclass")
 
     our_removables: set[str] = set()
 
     child_removables: dict[str, list[str]] = {}
     for rem_fld in removable_fields or []:
-        if '.' in rem_fld:
-            child_name, child_field = rem_fld.split('.', 1)
+        if "." in rem_fld:
+            child_name, child_field = rem_fld.split(".", 1)
             if child_name not in child_removables:
                 child_removables[child_name] = []
 
@@ -275,20 +270,20 @@ def api_components(
             our_removables.add(rem_fld)
 
     components = types.rest.api.Components()
-    schema = types.rest.api.Schema(type='object', properties={}, description=None)
+    schema = types.rest.api.Schema(type="object", properties={}, description=None)
     # type_hints = typing.get_type_hints(dataclass)
 
     for field in dataclasses.fields(dataclass):
         if field.name in our_removables:
             continue
 
-        description = field.metadata.get('description')
+        description = field.metadata.get("description")
 
         # Check the type, can be a primitive or a complex type
         # complexes types accepted are list and dict currently
         field_type = field.type  # type_hints.get(field.name)
         if not field_type:
-            raise Exception(f'Field {field.name} has no type hint')
+            raise Exception(f"Field {field.name} has no type hint")
 
         args = typing.get_args(field_type)
 
@@ -327,14 +322,14 @@ def gen_response(
 
     if not single:
         data = {
-            '200': types.rest.api.Response(
-                description=f'Successfully retrieved all {type} items',
+            "200": types.rest.api.Response(
+                description=f"Successfully retrieved all {type} items",
                 content=types.rest.api.Content(
-                    media_type='application/json',
+                    media_type="application/json",
                     schema=types.rest.api.SchemaProperty(
-                        type='array',
+                        type="array",
                         items=types.rest.api.SchemaProperty(
-                            type=type if type == 'object' else f'#/components/schemas/{type}',
+                            type=type if type == "object" else f"#/components/schemas/{type}",
                         ),
                     ),
                 ),
@@ -342,42 +337,42 @@ def gen_response(
         }
     else:
         data = {
-            '200': types.rest.api.Response(
-                description=f'Successfully {"retrieved" if not delete else "deleted"} {type} item',
+            "200": types.rest.api.Response(
+                description=f"Successfully {'retrieved' if not delete else 'deleted'} {type} item",
                 content=types.rest.api.Content(
-                    media_type='application/json',
+                    media_type="application/json",
                     schema=types.rest.api.SchemaProperty(
-                        type=type if type == 'object' else f'#/components/schemas/{type}',
+                        type=type if type == "object" else f"#/components/schemas/{type}",
                     ),
                 ),
             )
         }
 
     if single:
-        data['404'] = types.rest.api.Response(
-            description=f'{type} item not found',
+        data["404"] = types.rest.api.Response(
+            description=f"{type} item not found",
             content=types.rest.api.Content(
-                media_type='application/json',
+                media_type="application/json",
                 schema=types.rest.api.SchemaProperty(
-                    type='object',
+                    type="object",
                     properties={
-                        'detail': types.rest.api.SchemaProperty(
-                            type='string',
+                        "detail": types.rest.api.SchemaProperty(
+                            type="string",
                         )
                     },
                 ),
             ),
         )
     if with_403:
-        data['403'] = types.rest.api.Response(
-            description='Forbidden. You do not have permission to access this resource with your current role.',
+        data["403"] = types.rest.api.Response(
+            description="Forbidden. You do not have permission to access this resource with your current role.",
             content=types.rest.api.Content(
-                media_type='application/json',
+                media_type="application/json",
                 schema=types.rest.api.SchemaProperty(
-                    type='object',
+                    type="object",
                     properties={
-                        'detail': types.rest.api.SchemaProperty(
-                            type='string',
+                        "detail": types.rest.api.SchemaProperty(
+                            type="string",
                         )
                     },
                 ),
@@ -389,12 +384,12 @@ def gen_response(
 
 def gen_request_body(type: str, create: bool = True) -> types.rest.api.RequestBody:
     return types.rest.api.RequestBody(
-        description=f'{"New" if create else "Updated"} {type} item{"s" if not create else ""} to create',
+        description=f"{'New' if create else 'Updated'} {type} item{'s' if not create else ''} to create",
         required=True,
         content=types.rest.api.Content(
-            media_type='application/json',
+            media_type="application/json",
             schema=types.rest.api.SchemaProperty(
-                type=f'#/components/schemas/{type}',
+                type=f"#/components/schemas/{type}",
             ),
         ),
     )
@@ -403,34 +398,34 @@ def gen_request_body(type: str, create: bool = True) -> types.rest.api.RequestBo
 def gen_odata_request_body() -> types.rest.api.RequestBody:
     """Generate a request body for QUERY operations (OData parameters in body)."""
     return types.rest.api.RequestBody(
-        description='OData query parameters ($filter, $orderby, $top, $skip, $select)',
+        description="OData query parameters ($filter, $orderby, $top, $skip, $select)",
         required=False,
         content=types.rest.api.Content(
-            media_type='application/json',
+            media_type="application/json",
             schema=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    '$filter': types.rest.api.SchemaProperty(
-                        type='string',
+                    "$filter": types.rest.api.SchemaProperty(
+                        type="string",
                         description='Filter items by property values (e.g., name eq "value")',
                     ),
-                    '$orderby': types.rest.api.SchemaProperty(
-                        type='string',
-                        description='Order items by property values (e.g., name desc)',
+                    "$orderby": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Order items by property values (e.g., name desc)",
                     ),
-                    '$top': types.rest.api.SchemaProperty(
-                        type='integer',
-                        format='int32',
-                        description='Show only the first N items',
+                    "$top": types.rest.api.SchemaProperty(
+                        type="integer",
+                        format="int32",
+                        description="Show only the first N items",
                     ),
-                    '$skip': types.rest.api.SchemaProperty(
-                        type='integer',
-                        format='int32',
-                        description='Skip the first N items',
+                    "$skip": types.rest.api.SchemaProperty(
+                        type="integer",
+                        format="int32",
+                        description="Skip the first N items",
                     ),
-                    '$select': types.rest.api.SchemaProperty(
-                        type='string',
-                        description='Select properties to be returned',
+                    "$select": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Select properties to be returned",
                     ),
                 },
             ),
@@ -441,39 +436,39 @@ def gen_odata_request_body() -> types.rest.api.RequestBody:
 def gen_odata_parameters() -> list[types.rest.api.Parameter]:
     return [
         types.rest.api.Parameter(
-            name='$filter',
-            in_='query',
+            name="$filter",
+            in_="query",
             required=False,
-            description='Filter items by property values (e.g., $filter=property eq value)',
-            schema=types.rest.api.Schema(type='string'),
+            description="Filter items by property values (e.g., $filter=property eq value)",
+            schema=types.rest.api.Schema(type="string"),
         ),
         types.rest.api.Parameter(
-            name='$select',
-            in_='query',
+            name="$select",
+            in_="query",
             required=False,
-            description='Select properties to be returned',
-            schema=types.rest.api.Schema(type='string'),
+            description="Select properties to be returned",
+            schema=types.rest.api.Schema(type="string"),
         ),
         types.rest.api.Parameter(
-            name='$orderby',
-            in_='query',
+            name="$orderby",
+            in_="query",
             required=False,
-            description='Order items by property values (e.g., $orderby=property desc)',
-            schema=types.rest.api.Schema(type='string'),
+            description="Order items by property values (e.g., $orderby=property desc)",
+            schema=types.rest.api.Schema(type="string"),
         ),
         types.rest.api.Parameter(
-            name='$top',
-            in_='query',
+            name="$top",
+            in_="query",
             required=False,
-            description='Show only the first N items',
-            schema=types.rest.api.Schema(type='integer', format='int32', minimum=1),
+            description="Show only the first N items",
+            schema=types.rest.api.Schema(type="integer", format="int32", minimum=1),
         ),
         types.rest.api.Parameter(
-            name='$skip',
-            in_='query',
+            name="$skip",
+            in_="query",
             required=False,
-            description='Skip the first N items',
-            schema=types.rest.api.Schema(type='integer', format='int32', minimum=0),
+            description="Skip the first N items",
+            schema=types.rest.api.Schema(type="integer", format="int32", minimum=0),
         ),
     ]
 
@@ -481,10 +476,10 @@ def gen_odata_parameters() -> list[types.rest.api.Parameter]:
 def gen_uuid_parameters(with_odata: bool) -> list[types.rest.api.Parameter]:
     return [
         types.rest.api.Parameter(
-            name='uuid',
-            in_='path',
+            name="uuid",
+            in_="path",
             required=True,
-            description='The UUID of the item',
-            schema=types.rest.api.Schema(type='string', format='uuid'),
+            description="The UUID of the item",
+            schema=types.rest.api.Schema(type="string", format="uuid"),
         )
     ] + (gen_odata_parameters() if with_odata else [])

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import logging
 import operator
@@ -76,26 +77,26 @@ class ServicePool(UUIDModel, TaggingMixin):
     A deployed service is the Service produced element that is assigned finally to an user (i.e. a Virtual Machine, etc..)
     """
 
-    name = models.CharField(max_length=192, default='')  # Give enouth space for "macros"
-    short_name = models.CharField(max_length=96, default='')  # Give enouth space for "macros"
-    comments = models.CharField(max_length=256, default='')
+    name = models.CharField(max_length=192, default="")  # Give enouth space for "macros"
+    short_name = models.CharField(max_length=96, default="")  # Give enouth space for "macros"
+    comments = models.CharField(max_length=256, default="")
     service = models.ForeignKey(
         Service,
-        related_name='deployedServices',
+        related_name="deployedServices",
         on_delete=models.CASCADE,
     )
     osmanager = models.ForeignKey(
         OSManager,
         null=True,
         blank=True,
-        related_name='deployedServices',
+        related_name="deployedServices",
         on_delete=models.CASCADE,
     )
-    transports: 'models.ManyToManyField[Transport, ServicePool]' = models.ManyToManyField(
-        Transport, related_name='deployedServices', db_table='uds__ds_trans'
+    transports: "models.ManyToManyField[Transport, ServicePool]" = models.ManyToManyField(
+        Transport, related_name="deployedServices", db_table="uds__ds_trans"
     )
-    assignedGroups: 'models.ManyToManyField[Group, ServicePool]' = models.ManyToManyField(
-        Group, related_name='deployedServices', db_table='uds__ds_grps'
+    assignedGroups: "models.ManyToManyField[Group, ServicePool]" = models.ManyToManyField(
+        Group, related_name="deployedServices", db_table="uds__ds_grps"
     )
     state = models.CharField(max_length=1, default=types.states.State.ACTIVE, db_index=True)
     state_date = models.DateTimeField(default=consts.NEVER)
@@ -110,7 +111,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         Image,
         null=True,
         blank=True,
-        related_name='deployedServices',
+        related_name="deployedServices",
         on_delete=models.SET_NULL,
     )
 
@@ -118,13 +119,13 @@ class ServicePool(UUIDModel, TaggingMixin):
         ServicePoolGroup,
         null=True,
         blank=True,
-        related_name='servicesPools',
+        related_name="servicesPools",
         on_delete=models.SET_NULL,
     )
 
     # Message if access denied
-    calendar_message = models.CharField(default='', max_length=256)
-    custom_message = models.CharField(default='', max_length=1024)
+    calendar_message = models.CharField(default="", max_length=256)
+    custom_message = models.CharField(default="", max_length=1024)
     display_custom_message = models.BooleanField(default=False)
 
     # Default fallback action for access
@@ -135,7 +136,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         Account,
         null=True,
         blank=True,
-        related_name='servicesPools',
+        related_name="servicesPools",
         on_delete=models.CASCADE,
     )
 
@@ -147,24 +148,24 @@ class ServicePool(UUIDModel, TaggingMixin):
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["ServicePool"]'
-    publications: 'models.manager.RelatedManager[ServicePoolPublication]'
-    memberOfMeta: 'models.manager.RelatedManager[MetaPoolMember]'
-    userServices: 'models.manager.RelatedManager[UserService]'
-    calendarAccess: 'models.manager.RelatedManager[CalendarAccess]'
-    calendaraction_set: 'models.manager.RelatedManager[CalendarAction]'
-    changelog: 'models.manager.RelatedManager[ServicePoolPublicationChangelog]'
+    publications: "models.manager.RelatedManager[ServicePoolPublication]"
+    memberOfMeta: "models.manager.RelatedManager[MetaPoolMember]"
+    userServices: "models.manager.RelatedManager[UserService]"
+    calendarAccess: "models.manager.RelatedManager[CalendarAccess]"
+    calendaraction_set: "models.manager.RelatedManager[CalendarAction]"
+    changelog: "models.manager.RelatedManager[ServicePoolPublicationChangelog]"
 
     # New nomenclature, but keeping old ones for compatibility
     @property
-    def userservices(self) -> 'models.manager.RelatedManager[UserService]':
+    def userservices(self) -> "models.manager.RelatedManager[UserService]":
         return self.userServices
 
     @property
-    def member_of_meta(self) -> 'models.manager.RelatedManager[MetaPoolMember]':
+    def member_of_meta(self) -> "models.manager.RelatedManager[MetaPoolMember]":
         return self.memberOfMeta
 
     @property
-    def calendar_access(self) -> 'models.manager.RelatedManager[CalendarAccess]':
+    def calendar_access(self) -> "models.manager.RelatedManager[CalendarAccess]":
         return self.calendarAccess
 
     class Meta(UUIDModel.Meta):  # pyright: ignore
@@ -172,8 +173,8 @@ class ServicePool(UUIDModel, TaggingMixin):
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds__deployed_service'
-        app_label = 'uds'
+        db_table = "uds__deployed_service"
+        app_label = "uds"
 
     def get_environment(self) -> Environment:
         """
@@ -181,7 +182,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         return Environment.environment_for_table_record(self._meta.verbose_name or self._meta.db_table, self.id)
 
-    def active_publication(self) -> 'ServicePoolPublication | None':
+    def active_publication(self) -> "ServicePoolPublication | None":
         """
         Returns the current valid publication for this deployed service.
 
@@ -212,7 +213,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         return username, password
 
     @staticmethod
-    def restraineds_queryset() -> 'models.QuerySet[ServicePool]':
+    def restraineds_queryset() -> "models.QuerySet[ServicePool]":
         from django.db.models import Count  # pylint: disable=import-outside-toplevel
 
         from uds.core.util.config import GlobalConfig  # pylint: disable=import-outside-toplevel
@@ -230,16 +231,16 @@ class ServicePool(UUIDModel, TaggingMixin):
         for v in typing.cast(
             list[dict[str, typing.Any]],
             UserService.objects.filter(state=types.states.State.ERROR, state_date__gt=date)
-            .values('deployed_service')
-            .annotate(how_many=Count('deployed_service'))
-            .order_by('deployed_service'),
+            .values("deployed_service")
+            .annotate(how_many=Count("deployed_service"))
+            .order_by("deployed_service"),
         ):
-            if v['how_many'] >= min_:
-                res.append(v['deployed_service'])
+            if v["how_many"] >= min_:
+                res.append(v["deployed_service"])
         return ServicePool.objects.filter(pk__in=res)
 
     @staticmethod
-    def restrained_pools() -> collections.abc.Iterator['ServicePool']:
+    def restrained_pools() -> collections.abc.Iterator["ServicePool"]:
         return ServicePool.restraineds_queryset().iterator()
 
     @property
@@ -252,7 +253,7 @@ class ServicePool(UUIDModel, TaggingMixin):
 
     @property
     def visual_name(self) -> str:
-        logger.debug("SHORT: %s %s %s", self.short_name, self.short_name != '', self.name)
+        logger.debug("SHORT: %s %s %s", self.short_name, self.short_name != "", self.name)
         if self.short_name and self.short_name.strip():
             return self.short_name.strip()
         return self.name
@@ -313,7 +314,7 @@ class ServicePool(UUIDModel, TaggingMixin):
             (
                 sql_now()
                 - self.userServices.filter(state=types.states.State.ERROR, state_date__gt=date)
-                .latest('state_date')
+                .latest("state_date")
                 .state_date
             ).total_seconds()
         )
@@ -331,8 +332,8 @@ class ServicePool(UUIDModel, TaggingMixin):
             and not self.is_restrained()
         )
 
-    def when_will_be_replaced(self, for_user: 'User') -> datetime | None:
-        active_publication: 'ServicePoolPublication | None' = self.active_publication()
+    def when_will_be_replaced(self, for_user: "User") -> datetime | None:
+        active_publication: "ServicePoolPublication | None" = self.active_publication()
         # If no publication or current revision, it's not going to be replaced
         if active_publication is None:
             return None
@@ -343,13 +344,11 @@ class ServicePool(UUIDModel, TaggingMixin):
 
         # Return the date
         try:
-            found = self.assigned_user_services().filter(
-                user=for_user, state__in=types.states.State.VALID_STATES
-            )[
+            found = self.assigned_user_services().filter(user=for_user, state__in=types.states.State.VALID_STATES)[
                 0
             ]  # Raises exception if at least one is not found
             if active_publication and found.publication and active_publication.id != found.publication.id:
-                ret = self.get_value('toBeReplacedIn')
+                ret = self.get_value("toBeReplacedIn")
                 if ret:
                     return serializer.deserialize(ret)
 
@@ -368,7 +367,7 @@ class ServicePool(UUIDModel, TaggingMixin):
 
         access = self.fallbackAccess
         # Let's see if we can access by current datetime
-        for ac in sorted(self.calendarAccess.all(), key=operator.attrgetter('priority')):
+        for ac in sorted(self.calendarAccess.all(), key=operator.attrgetter("priority")):
             if calendar.CalendarChecker(ac.calendar).check(check_datetime):
                 access = ac.access
                 break  # Stops on first rule match found
@@ -470,7 +469,7 @@ class ServicePool(UUIDModel, TaggingMixin):
 
     def mark_old_userservices_as_removable(
         self,
-        active_publication: 'ServicePoolPublication | None',
+        active_publication: "ServicePoolPublication | None",
         skip_assigned: bool = False,
     ) -> None:
         """
@@ -489,11 +488,11 @@ class ServicePool(UUIDModel, TaggingMixin):
 
         """
         now = sql_now()
-        non_active_publication: 'ServicePoolPublication'
-        userservice: 'UserService'
+        non_active_publication: "ServicePoolPublication"
+        userservice: "UserService"
 
         if active_publication is None:
-            logger.error('No active publication, don\'t know what to erase!!! (ds = %s)', self)
+            logger.error("No active publication, don't know what to erase!!! (ds = %s)", self)
             return
         for non_active_publication in self.publications.exclude(id=active_publication.id):
             for userservice in non_active_publication.userServices.filter(state=types.states.State.PREPARING):
@@ -507,7 +506,7 @@ class ServicePool(UUIDModel, TaggingMixin):
                         cache_level=0, state=types.states.State.USABLE, in_use=False
                     ).update(state=types.states.State.REMOVABLE, state_date=now)
 
-    def validate_groups(self, groups: collections.abc.Iterable['Group']) -> None:
+    def validate_groups(self, groups: collections.abc.Iterable["Group"]) -> None:
         """
         Ensures that at least a group of groups (database groups) has access to this Service Pool
         raise an InvalidUserException if fails check
@@ -522,21 +521,17 @@ class ServicePool(UUIDModel, TaggingMixin):
         Ensures that, if this service has publications, that a publication is active
         raises an IvalidServiceException if check fails
         """
-        if (
-            self.active_publication() is None
-            and self.service
-            and self.service.get_type().publication_type is not None
-        ):
+        if self.active_publication() is None and self.service and self.service.get_type().publication_type is not None:
             raise InvalidServiceException()
 
-    def validate_transport(self, transport: 'Transport') -> None:
+    def validate_transport(self, transport: "Transport") -> None:
         if (
             self.transports.filter(id=transport.id).count()  # pylint: disable=no-member
             == 0  # pylint: disable=no-member
         ):  # pylint: disable=no-member
             raise InvalidServiceException()
 
-    def validate_user(self, user: 'User') -> None:
+    def validate_user(self, user: "User") -> None:
         """
         Validates that the user has access to this deployed service
 
@@ -551,15 +546,15 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         # We have to check if at least one group from this user is valid for this deployed service
 
-        logger.debug('User: %s', user.id)
-        logger.debug('ServicePool: %s', self.id)
+        logger.debug("User: %s", user.id)
+        logger.debug("ServicePool: %s", self.id)
         self.validate_groups(user.get_groups())
         self.validate_publication()
 
     @staticmethod
     def get_pools_for_groups(
-        groups: collections.abc.Iterable['Group'], user: 'User | None' = None, *, visible_only: bool = True
-    ) -> collections.abc.Iterable['ServicePool']:
+        groups: collections.abc.Iterable["Group"], user: "User | None" = None, *, visible_only: bool = True
+    ) -> collections.abc.Iterable["ServicePool"]:
         """
         Return deployed services with publications for the groups requested.
 
@@ -571,10 +566,8 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         from uds.core import services  # pylint: disable=import-outside-toplevel
 
-        services_not_needing_publication = [
-            t.mod_type() for t in services.factory().services_not_needing_publication()
-        ]
-        visible_kwargs = {'visible': True} if visible_only else {}
+        services_not_needing_publication = [t.mod_type() for t in services.factory().services_not_needing_publication()]
+        visible_kwargs = {"visible": True} if visible_only else {}
         # Get services that HAS publications
         query = (
             ServicePool.objects.filter(
@@ -585,14 +578,14 @@ class ServicePool(UUIDModel, TaggingMixin):
             )
             .annotate(
                 pubs_active=models.Count(
-                    'publications',
+                    "publications",
                     filter=models.Q(publications__state=types.states.State.USABLE),
                     distinct=True,
                 )
             )
             .annotate(
                 usage_count=models.Count(
-                    'userServices',
+                    "userServices",
                     filter=models.Q(
                         userServices__state__in=types.states.State.VALID_STATES,
                         userServices__cache_level=0,
@@ -601,26 +594,26 @@ class ServicePool(UUIDModel, TaggingMixin):
                 )
             )
             .prefetch_related(
-                'transports',
-                'transports__networks',
-                'memberOfMeta',
-                'osmanager',
-                'publications',
-                'servicesPoolGroup',
-                'servicesPoolGroup__image',
-                'service',
-                'service__provider',
-                'calendarAccess',
-                'calendarAccess__calendar',
-                'calendarAccess__calendar__rules',
-                'image',
+                "transports",
+                "transports__networks",
+                "memberOfMeta",
+                "osmanager",
+                "publications",
+                "servicesPoolGroup",
+                "servicesPoolGroup__image",
+                "service",
+                "service__provider",
+                "calendarAccess",
+                "calendarAccess__calendar",
+                "calendarAccess__calendar__rules",
+                "image",
             )
         )
 
         if user:  # Optimize loading if there is some assgned service..
             query = query.annotate(
                 number_in_use=models.Count(
-                    'userServices',
+                    "userServices",
                     filter=models.Q(
                         userServices__user=user,
                         userServices__in_use=True,
@@ -628,7 +621,7 @@ class ServicePool(UUIDModel, TaggingMixin):
                     ),
                 )
             )
-        servicepool: 'ServicePool'
+        servicepool: "ServicePool"
         for servicepool in query:
             if typing.cast(typing.Any, servicepool).pubs_active or (
                 servicepool.service and servicepool.service.data_type in services_not_needing_publication
@@ -655,7 +648,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         if pub:
             pub.unpublish()
 
-    def cached_users_services(self) -> 'models.QuerySet[UserService]':
+    def cached_users_services(self) -> "models.QuerySet[UserService]":
         """
         ':rtype uds.models.user_service.UserService'
         Utility method to access the cached user services (level 1 and 2)
@@ -665,7 +658,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         return self.userServices.exclude(cache_level=types.services.CacheLevel.NONE)
 
-    def assigned_user_services(self) -> 'models.QuerySet[UserService]':
+    def assigned_user_services(self) -> "models.QuerySet[UserService]":
         """
         Utility method to access the assigned user services
 
@@ -695,9 +688,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         maxs = self.get_max()
 
         if cached_value == -1:
-            cached_value = (
-                self.assigned_user_services().filter(state__in=types.states.State.VALID_STATES).count()
-            )
+            cached_value = self.assigned_user_services().filter(state__in=types.states.State.VALID_STATES).count()
 
         return types.pools.UsageInfo(cached_value, maxs)
 
@@ -720,9 +711,9 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: 'ServicePool' = kwargs['instance']
+        to_delete: "ServicePool" = kwargs["instance"]
 
-        logger.debug('Deleting Service Pool %s', to_delete)
+        logger.debug("Deleting Service Pool %s", to_delete)
         to_delete.get_environment().clean_related_data()
 
         # Clears related logs
@@ -733,21 +724,21 @@ class ServicePool(UUIDModel, TaggingMixin):
 
     # returns CSV header
     @staticmethod
-    def get_cvs_header(sep: str = ',') -> str:
+    def get_cvs_header(sep: str = ",") -> str:
         return sep.join(
             [
-                'name',
-                'initial',
-                'cache_l1',
-                'cache_l2',
-                'max',
-                'assigned_services',
-                'cached_services',
+                "name",
+                "initial",
+                "cache_l1",
+                "cache_l2",
+                "max",
+                "assigned_services",
+                "cached_services",
             ]
         )
 
     # Return record as csv line using separator (default: ',')
-    def as_cvs(self, sep: str = ',') -> str:
+    def as_cvs(self, sep: str = ",") -> str:
         return sep.join(
             [
                 self.name,
@@ -762,9 +753,9 @@ class ServicePool(UUIDModel, TaggingMixin):
 
     def __str__(self) -> str:
         return (
-            f'Service pool {self.name}({self.id}) with {self.initial_srvs}'
-            f' as initial, {self.cache_l1_srvs} as L1 cache, {self.cache_l2_srvs}'
-            f' as L2 cache, {self.max_srvs} as max'
+            f"Service pool {self.name}({self.id}) with {self.initial_srvs}"
+            f" as initial, {self.cache_l1_srvs} as L1 cache, {self.cache_l2_srvs}"
+            f" as L2 cache, {self.max_srvs} as max"
         )
 
 

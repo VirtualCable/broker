@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from unittest import mock
@@ -58,52 +59,52 @@ class ServerEventsLogTest(rest.test.RESTTestCase):
         server = servers_fixtures.create_server()
         userService = self.user_service_managed
 
-        with mock.patch('uds.core.managers.log.manager.LogManager.log') as the_log:
+        with mock.patch("uds.core.managers.log.manager.LogManager.log") as the_log:
             # Now notify to server
             response = self.client.rest_post(
-                '/servers/event',
+                "/servers/event",
                 data={
-                    'token': server.token,
-                    'type': 'log',
-                    'level': 'info',
-                    'message': 'test message',
+                    "token": server.token,
+                    "type": "log",
+                    "level": "info",
+                    "message": "test message",
                 },
             )
             self.assertEqual(response.status_code, 200)
             # First call shout have
-            the_log.assert_any_call(server, types.log.LogLevel.INFO, 'test message', types.log.LogSource.SERVER, None)
+            the_log.assert_any_call(server, types.log.LogLevel.INFO, "test message", types.log.LogSource.SERVER, None)
 
             # Now notify to an userService
             response = self.client.rest_post(
-                'servers/event',
+                "servers/event",
                 data={
-                    'token': server.token,
-                    'userservice_uuid': userService.uuid,
-                    'type': 'log',
-                    'level': 'info',
-                    'message': 'test message userservice',
+                    "token": server.token,
+                    "userservice_uuid": userService.uuid,
+                    "type": "log",
+                    "level": "info",
+                    "message": "test message userservice",
                 },
             )
 
             self.assertEqual(response.status_code, 200)
             the_log.assert_any_call(
-                userService, types.log.LogLevel.INFO, 'test message userservice', types.log.LogSource.SERVER, None
+                userService, types.log.LogLevel.INFO, "test message userservice", types.log.LogSource.SERVER, None
             )
 
     def test_event_log_fail(self) -> None:
         server = servers_fixtures.create_server()
         data = {
-            'token': server.token,
-            'type': 'log',
-            'level': 'info',
-            'message': 'test',
+            "token": server.token,
+            "type": "log",
+            "level": "info",
+            "message": "test",
         }
 
         for field, value in (
-            ('token', None),
-            ('type', 'invalid'),
+            ("token", None),
+            ("type", "invalid"),
             # Invalid level should log as "other"
-            ('message', None),
+            ("message", None),
         ):
             fail_data = data.copy()
             if value is None:
@@ -112,13 +113,13 @@ class ServerEventsLogTest(rest.test.RESTTestCase):
                 fail_data[field] = value
 
             response = self.client.rest_post(
-                '/servers/event',
+                "/servers/event",
                 data=fail_data,
             )
-            if field == 'token':
-                self.assertEqual(response.status_code, 400, f'Error on field {field}')
+            if field == "token":
+                self.assertEqual(response.status_code, 400, f"Error on field {field}")
             else:
-                self.assertEqual(response.status_code, 200, f'Error on field {field}')
-                self.assertIsNotNone(response.content, f'Error not found for field {field}')
-                self.assertIsNotNone(response.json(), f'Error not found for field {field}')
-                self.assertIn('error', response.json(), f'Error not found for field {field}')
+                self.assertEqual(response.status_code, 200, f"Error on field {field}")
+                self.assertIsNotNone(response.content, f"Error not found for field {field}")
+                self.assertIsNotNone(response.json(), f"Error not found for field {field}")
+                self.assertIn("error", response.json(), f"Error not found for field {field}")

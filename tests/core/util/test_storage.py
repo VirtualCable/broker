@@ -35,61 +35,61 @@ from ...utils.test import UDSTestCase
 from uds.core.util import storage
 from uds import models
 
-UNICODE_CHARS = 'ñöçóá^(pípè)'
-UNICODE_CHARS_2 = 'ñöçóá^(€íöè)'
-VALUE_1 = ['unicode', b'string', {'a': 1, 'b': 2.0}]
+UNICODE_CHARS = "ñöçóá^(pípè)"
+UNICODE_CHARS_2 = "ñöçóá^(€íöè)"
+VALUE_1 = ["unicode", b"string", {"a": 1, "b": 2.0}]
 
 
 class StorageTest(UDSTestCase):
     def test_storage(self) -> None:
         strg = storage.Storage(UNICODE_CHARS)
 
-        strg.put(UNICODE_CHARS, b'chars')
-        strg.save_to_db('saveData', UNICODE_CHARS, UNICODE_CHARS)
-        strg.save_to_db('saveData2', UNICODE_CHARS_2, UNICODE_CHARS)
-        strg.save_to_db('saveData3', UNICODE_CHARS, 'attribute')
-        strg.save_to_db('saveData4', UNICODE_CHARS_2, 'attribute')
-        strg.put(b'key', UNICODE_CHARS)
+        strg.put(UNICODE_CHARS, b"chars")
+        strg.save_to_db("saveData", UNICODE_CHARS, UNICODE_CHARS)
+        strg.save_to_db("saveData2", UNICODE_CHARS_2, UNICODE_CHARS)
+        strg.save_to_db("saveData3", UNICODE_CHARS, "attribute")
+        strg.save_to_db("saveData4", UNICODE_CHARS_2, "attribute")
+        strg.put(b"key", UNICODE_CHARS)
         strg.put(UNICODE_CHARS_2, UNICODE_CHARS)
 
-        strg.save_pickled('pickle', VALUE_1)
+        strg.save_pickled("pickle", VALUE_1)
 
-        self.assertEqual(strg.read(UNICODE_CHARS), u'chars')  # Always returns unicod
-        self.assertEqual(strg.read_from_db('saveData'), UNICODE_CHARS)
-        self.assertEqual(strg.read_from_db('saveData2'), UNICODE_CHARS_2)
-        self.assertEqual(strg.read(b'key'), UNICODE_CHARS)
+        self.assertEqual(strg.read(UNICODE_CHARS), "chars")  # Always returns unicod
+        self.assertEqual(strg.read_from_db("saveData"), UNICODE_CHARS)
+        self.assertEqual(strg.read_from_db("saveData2"), UNICODE_CHARS_2)
+        self.assertEqual(strg.read(b"key"), UNICODE_CHARS)
         self.assertEqual(strg.read(UNICODE_CHARS_2), UNICODE_CHARS)
-        self.assertEqual(strg.read_pickled('pickle'), VALUE_1)
+        self.assertEqual(strg.read_pickled("pickle"), VALUE_1)
 
         self.assertEqual(len(list(strg.search_by_attr1(UNICODE_CHARS))), 2)
-        self.assertEqual(len(list(strg.search_by_attr1('attribute'))), 2)
+        self.assertEqual(len(list(strg.search_by_attr1("attribute"))), 2)
 
         strg.remove(UNICODE_CHARS)
-        strg.remove(b'key')
-        strg.remove('pickle')
+        strg.remove(b"key")
+        strg.remove("pickle")
 
         self.assertIsNone(strg.read(UNICODE_CHARS))
-        self.assertIsNone(strg.read(b'key'))
-        self.assertIsNone(strg.read_pickled('pickle'))
+        self.assertIsNone(strg.read(b"key"))
+        self.assertIsNone(strg.read_pickled("pickle"))
 
     def test_storage_as_dict(self) -> None:
         strg = storage.Storage(UNICODE_CHARS)
 
-        strg.put(UNICODE_CHARS, 'chars')
+        strg.put(UNICODE_CHARS, "chars")
 
         with strg.as_dict() as d:
-            d['test_key'] = UNICODE_CHARS_2
+            d["test_key"] = UNICODE_CHARS_2
 
             # Assert that UNICODE_CHARS is in the dict
-            self.assertEqual(d[UNICODE_CHARS], 'chars')
+            self.assertEqual(d[UNICODE_CHARS], "chars")
 
-            self.assertEqual(d['test_key'], UNICODE_CHARS_2)
+            self.assertEqual(d["test_key"], UNICODE_CHARS_2)
 
             # Assert that UNICODE_CHARS is in the dict
-            d['test_key2'] = 0
-            d['test_key2'] += 1
+            d["test_key2"] = 0
+            d["test_key2"] += 1
 
-            self.assertEqual(d['test_key2'], 1)
+            self.assertEqual(d["test_key2"], 1)
 
         # The values set inside the "with" are not available "outside"
         # because the format is not compatible (with the dict, the values are stored as a tuple, with the original key stored
@@ -98,7 +98,7 @@ class StorageTest(UDSTestCase):
     def test_storage_as_dict_views(self) -> None:
         strg = storage.Storage(UNICODE_CHARS)
 
-        items = {'key_{i}': f'value_{i}' for i in range(32)}
+        items = {"key_{i}": f"value_{i}" for i in range(32)}
 
         with strg.as_dict() as dct:
             # Store all items

@@ -30,11 +30,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import datetime
-import typing
-import dataclasses
-import enum
+
 import collections.abc
+import dataclasses
+import datetime
+import enum
+import typing
 
 from django.utils import timezone
 
@@ -43,11 +44,11 @@ from uds.core import exceptions
 
 class AuthMethod(enum.StrEnum):
     # Only theese two methods are supported by our OpenStack implementation
-    PASSWORD = 'password'
-    APPLICATION_CREDENTIAL = 'application_credential'
+    PASSWORD = "password"
+    APPLICATION_CREDENTIAL = "application_credential"
 
     @staticmethod
-    def from_str(s: str) -> 'AuthMethod':
+    def from_str(s: str) -> "AuthMethod":
         try:
             return AuthMethod(s.lower())
         except ValueError:
@@ -55,33 +56,33 @@ class AuthMethod(enum.StrEnum):
 
 
 class ServerStatus(enum.StrEnum):
-    ACTIVE = 'ACTIVE'  # The server is active.
-    BUILD = 'BUILD'  # The server has not finished the original build process.
-    DELETED = 'DELETED'  # The server is permanently deleted.
-    ERROR = 'ERROR'  # The server is in error.
-    HARD_REBOOT = 'HARD_REBOOT'  # The server is hard rebooting. This is equivalent to pulling the power plug on a physical server, plugging it back in, and rebooting it.
-    MIGRATING = 'MIGRATING'  # The server is being migrated to a new host.
-    PASSWORD = 'PASSWORD'  # The password is being reset on the server.
-    PAUSED = 'PAUSED'  # In a paused state, the state of the server is stored in RAM. A paused server continues to run in frozen state.
-    REBOOT = (
-        'REBOOT'  # The server is in a soft reboot state. A reboot command was passed to the operating system.
+    ACTIVE = "ACTIVE"  # The server is active.
+    BUILD = "BUILD"  # The server has not finished the original build process.
+    DELETED = "DELETED"  # The server is permanently deleted.
+    ERROR = "ERROR"  # The server is in error.
+    HARD_REBOOT = "HARD_REBOOT"  # The server is hard rebooting. This is equivalent to pulling the power plug on a physical server, plugging it back in, and rebooting it.
+    MIGRATING = "MIGRATING"  # The server is being migrated to a new host.
+    PASSWORD = "PASSWORD"  # The password is being reset on the server.
+    PAUSED = "PAUSED"  # In a paused state, the state of the server is stored in RAM. A paused server continues to run in frozen state.
+    REBOOT = "REBOOT"  # The server is in a soft reboot state. A reboot command was passed to the operating system.
+    REBUILD = "REBUILD"  # The server is currently being rebuilt from an image.
+    RESCUE = (
+        "RESCUE"  # The server is in rescue mode. A rescue image is running with the original server image attached.
     )
-    REBUILD = 'REBUILD'  # The server is currently being rebuilt from an image.
-    RESCUE = 'RESCUE'  # The server is in rescue mode. A rescue image is running with the original server image attached.
-    RESIZE = 'RESIZE'  # Server is performing the differential copy of data that changed during its initial copy. Server is down for this stage.
-    REVERT_RESIZE = 'REVERT_RESIZE'  # The resize or migration of a server failed for some reason. The destination server is being cleaned up and the original source server is restarting.
-    SHELVED = 'SHELVED'  # The server is in shelved state. Depending on the shelve offload time, the server will be automatically shelved offloaded.
-    SHELVED_OFFLOADED = 'SHELVED_OFFLOADED'  # The shelved server is offloaded (removed from the compute host) and it needs unshelved action to be used again.
-    SHUTOFF = 'SHUTOFF'  # The server is powered off and the disk image still persists.
-    SOFT_DELETED = (
-        'SOFT_DELETED'  # The server is marked as deleted but the disk images are still available to restore.
+    RESIZE = "RESIZE"  # Server is performing the differential copy of data that changed during its initial copy. Server is down for this stage.
+    REVERT_RESIZE = "REVERT_RESIZE"  # The resize or migration of a server failed for some reason. The destination server is being cleaned up and the original source server is restarting.
+    SHELVED = "SHELVED"  # The server is in shelved state. Depending on the shelve offload time, the server will be automatically shelved offloaded.
+    SHELVED_OFFLOADED = "SHELVED_OFFLOADED"  # The shelved server is offloaded (removed from the compute host) and it needs unshelved action to be used again.
+    SHUTOFF = "SHUTOFF"  # The server is powered off and the disk image still persists.
+    SOFT_DELETED = "SOFT_DELETED"  # The server is marked as deleted but the disk images are still available to restore.
+    SUSPENDED = "SUSPENDED"  # The server is suspended, either by request or necessity. When you suspend a server, its state is stored on disk, all memory is written to disk, and the server is stopped. Suspending a server is similar to placing a device in hibernation and its occupied resource will not be freed but rather kept for when the server is resumed. If a server is infrequently used and the occupied resource needs to be freed to create other servers, it should be shelved.
+    UNKNOWN = "UNKNOWN"  # The state of the server is unknown. Contact your cloud provider.
+    VERIFY_RESIZE = (
+        "VERIFY_RESIZE"  # System is awaiting confirmation that the server is operational after a move or resize.
     )
-    SUSPENDED = 'SUSPENDED'  # The server is suspended, either by request or necessity. When you suspend a server, its state is stored on disk, all memory is written to disk, and the server is stopped. Suspending a server is similar to placing a device in hibernation and its occupied resource will not be freed but rather kept for when the server is resumed. If a server is infrequently used and the occupied resource needs to be freed to create other servers, it should be shelved.
-    UNKNOWN = 'UNKNOWN'  # The state of the server is unknown. Contact your cloud provider.
-    VERIFY_RESIZE = 'VERIFY_RESIZE'  # System is awaiting confirmation that the server is operational after a move or resize.
 
     @staticmethod
-    def from_str(s: str) -> 'ServerStatus':
+    def from_str(s: str) -> "ServerStatus":
         try:
             return ServerStatus(s.upper())
         except ValueError:
@@ -98,7 +99,7 @@ class ServerStatus(enum.StrEnum):
 
     def is_paused(self) -> bool:
         return self in [ServerStatus.PAUSED, ServerStatus.SUSPENDED]
-    
+
     def is_active(self) -> bool:
         return self == ServerStatus.ACTIVE
 
@@ -128,7 +129,7 @@ class PowerState(enum.IntEnum):
     SUSPENDED = 7
 
     @staticmethod
-    def from_int(i: int) -> 'PowerState':
+    def from_int(i: int) -> "PowerState":
         try:
             return PowerState(i)
         except ValueError:
@@ -136,7 +137,7 @@ class PowerState(enum.IntEnum):
 
     def is_paused(self) -> bool:
         return self == PowerState.PAUSED
-    
+
     def is_suspended(self) -> bool:
         return self == PowerState.SUSPENDED
 
@@ -148,12 +149,12 @@ class PowerState(enum.IntEnum):
 
 
 class AccessType(enum.StrEnum):
-    PUBLIC = 'public'
-    PRIVATE = 'private'
-    INTERNAL = 'url'
+    PUBLIC = "public"
+    PRIVATE = "private"
+    INTERNAL = "url"
 
     @staticmethod
-    def from_str(s: str) -> 'AccessType':
+    def from_str(s: str) -> "AccessType":
         try:
             return AccessType(s.lower())
         except ValueError:
@@ -161,32 +162,32 @@ class AccessType(enum.StrEnum):
 
 
 class VolumeStatus(enum.StrEnum):
-    CREATING = 'creating'  # The volume is being created.
-    AVAILABLE = 'available'  # The volume is ready to attach to an instance.
-    RESERVED = 'reserved'  # The volume is reserved for attaching or shelved.
-    ATTACHING = 'attaching'  # The volume is attaching to an instance.
-    DETACHING = 'detaching'  # The volume is detaching from an instance.
-    IN_USE = 'in-use'  # The volume is attached to an instance.
-    MAINTENANCE = 'maintenance'  # The volume is locked and being migrated.
-    DELETING = 'deleting'  # The volume is being deleted.
-    AWAITING_TRANSFER = 'awaiting-transfer'  # The volume is awaiting for transfer.
-    ERROR = 'error'  # A volume creation error occurred.
-    ERROR_DELETING = 'error_deleting'  # A volume deletion error occurred.
-    BACKING_UP = 'backing-up'  # The volume is being backed up.
-    RESTORING_BACKUP = 'restoring-backup'  # A backup is being restored to the volume.
-    ERROR_BACKING_UP = 'error_backing-up'  # A backup error occurred.
-    ERROR_RESTORING = 'error_restoring'  # A backup restoration error occurred.
-    ERROR_EXTENDING = 'error_extending'  # An error occurred while attempting to extend a volume.
-    DOWNLOADING = 'downloading'  # The volume is downloading an image.
-    UPLOADING = 'uploading'  # The volume is being uploaded to an image.
-    RETYPING = 'retyping'  # The volume is changing type to another volume type.
-    EXTENDING = 'extending'  # The volume is being extended.
+    CREATING = "creating"  # The volume is being created.
+    AVAILABLE = "available"  # The volume is ready to attach to an instance.
+    RESERVED = "reserved"  # The volume is reserved for attaching or shelved.
+    ATTACHING = "attaching"  # The volume is attaching to an instance.
+    DETACHING = "detaching"  # The volume is detaching from an instance.
+    IN_USE = "in-use"  # The volume is attached to an instance.
+    MAINTENANCE = "maintenance"  # The volume is locked and being migrated.
+    DELETING = "deleting"  # The volume is being deleted.
+    AWAITING_TRANSFER = "awaiting-transfer"  # The volume is awaiting for transfer.
+    ERROR = "error"  # A volume creation error occurred.
+    ERROR_DELETING = "error_deleting"  # A volume deletion error occurred.
+    BACKING_UP = "backing-up"  # The volume is being backed up.
+    RESTORING_BACKUP = "restoring-backup"  # A backup is being restored to the volume.
+    ERROR_BACKING_UP = "error_backing-up"  # A backup error occurred.
+    ERROR_RESTORING = "error_restoring"  # A backup restoration error occurred.
+    ERROR_EXTENDING = "error_extending"  # An error occurred while attempting to extend a volume.
+    DOWNLOADING = "downloading"  # The volume is downloading an image.
+    UPLOADING = "uploading"  # The volume is being uploaded to an image.
+    RETYPING = "retyping"  # The volume is changing type to another volume type.
+    EXTENDING = "extending"  # The volume is being extended.
 
     def is_available(self) -> bool:
         return self == VolumeStatus.AVAILABLE
 
     @staticmethod
-    def from_str(s: str) -> 'VolumeStatus':
+    def from_str(s: str) -> "VolumeStatus":
         try:
             return VolumeStatus(s.lower())
         except ValueError:
@@ -194,20 +195,20 @@ class VolumeStatus(enum.StrEnum):
 
 
 class SnapshotStatus(enum.StrEnum):
-    CREATING = 'creating'  # The snapshot is being created.
-    AVAILABLE = 'available'  # The snapshot is ready to use.
-    BACKING_UP = 'backing-up'  # The snapshot is being backed up.
-    DELETING = 'deleting'  # The snapshot is being deleted.
-    ERROR = 'error'  # A snapshot creation error has occurred.
-    DELETED = 'deleted'  # The snapshot is deleted.
-    UNMANAGING = 'unmanaging'  # The snapshot is being unmanaged.
-    RESTORING = 'restoring'  # The snapshot is being restored to a volume.
-    ERROR_DELETING = 'error_deleting'  # A snapshot deletion error has occurred.
+    CREATING = "creating"  # The snapshot is being created.
+    AVAILABLE = "available"  # The snapshot is ready to use.
+    BACKING_UP = "backing-up"  # The snapshot is being backed up.
+    DELETING = "deleting"  # The snapshot is being deleted.
+    ERROR = "error"  # A snapshot creation error has occurred.
+    DELETED = "deleted"  # The snapshot is deleted.
+    UNMANAGING = "unmanaging"  # The snapshot is being unmanaged.
+    RESTORING = "restoring"  # The snapshot is being restored to a volume.
+    ERROR_DELETING = "error_deleting"  # A snapshot deletion error has occurred.
 
-    UNKNOWN = 'unknown'  # The state of the snapshot is unknown. Internal, not from openstack
+    UNKNOWN = "unknown"  # The state of the snapshot is unknown. Internal, not from openstack
 
     @staticmethod
-    def from_str(s: str) -> 'SnapshotStatus':
+    def from_str(s: str) -> "SnapshotStatus":
         try:
             return SnapshotStatus(s.lower())
         except ValueError:
@@ -218,13 +219,13 @@ class SnapshotStatus(enum.StrEnum):
 
 
 class NetworkStatus(enum.StrEnum):
-    ACTIVE = 'ACTIVE'  # The network is active.
-    DOWN = 'DOWN'  # The network is down.
-    BUILD = 'BUILD'  # The network has not finished the original build process.
-    ERROR = 'ERROR'  # The network is in error.
+    ACTIVE = "ACTIVE"  # The network is active.
+    DOWN = "DOWN"  # The network is down.
+    BUILD = "BUILD"  # The network has not finished the original build process.
+    ERROR = "ERROR"  # The network is in error.
 
     @staticmethod
-    def from_str(s: str) -> 'NetworkStatus':
+    def from_str(s: str) -> "NetworkStatus":
         try:
             return NetworkStatus(s.upper())
         except ValueError:
@@ -232,13 +233,13 @@ class NetworkStatus(enum.StrEnum):
 
 
 class PortStatus(enum.StrEnum):
-    ACTIVE = 'ACTIVE'  # The port is active.
-    DOWN = 'DOWN'  # The port is down.
-    BUILD = 'BUILD'  # The port has not finished the original build process.
-    ERROR = 'ERROR'  # The port is in error.
+    ACTIVE = "ACTIVE"  # The port is active.
+    DOWN = "DOWN"  # The port is down.
+    BUILD = "BUILD"  # The port has not finished the original build process.
+    ERROR = "ERROR"  # The port is in error.
 
     @staticmethod
-    def from_str(s: str) -> 'PortStatus':
+    def from_str(s: str) -> "PortStatus":
         try:
             return PortStatus(s.upper())
         except ValueError:
@@ -256,42 +257,41 @@ class PortInfo:
     fixed_ips: list[str]  # List of ip addresses assigned to the port (may be empty)
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'PortInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "PortInfo":
         return PortInfo(
-            id=d['id'],
-            name=d.get('name') or d['id'],
-            status=PortStatus.from_str(d.get('status', PortStatus.ERROR.value)),
-            device_id=d.get('device_id') or '',
-            network_id=d.get('network_id') or '',
+            id=d["id"],
+            name=d.get("name") or d["id"],
+            status=PortStatus.from_str(d.get("status", PortStatus.ERROR.value)),
+            device_id=d.get("device_id") or "",
+            network_id=d.get("network_id") or "",
             # Neutron always assigns a mac to the port, regardless of DHCP/IP allocation
-            mac_address=(d.get('mac_address') or '').upper(),
-            fixed_ips=[fi['ip_address'] for fi in d.get('fixed_ips', []) if fi.get('ip_address')],
+            mac_address=(d.get("mac_address") or "").upper(),
+            fixed_ips=[fi["ip_address"] for fi in d.get("fixed_ips", []) if fi.get("ip_address")],
         )
 
 
 @dataclasses.dataclass
 class ServerInfo:
-
     @dataclasses.dataclass
     class AddresInfo:
         version: int
         ip: str
         mac: str
         type: str
-        network_name: str = ''
+        network_name: str = ""
 
         @staticmethod
-        def from_dict(d: dict[str, typing.Any]) -> 'ServerInfo.AddresInfo':
+        def from_dict(d: dict[str, typing.Any]) -> "ServerInfo.AddresInfo":
             return ServerInfo.AddresInfo(
-                version=d.get('version') or 4,
-                ip=d.get('addr') or '',
-                mac=(d.get('mac_addr') or d.get('OS-EXT-IPS-MAC:mac_addr') or '').upper(),
-                type=d.get('type') or  d.get('OS-EXT-IPS:type') or '',
+                version=d.get("version") or 4,
+                ip=d.get("addr") or "",
+                mac=(d.get("mac_addr") or d.get("OS-EXT-IPS-MAC:mac_addr") or "").upper(),
+                type=d.get("type") or d.get("OS-EXT-IPS:type") or "",
             )
 
         @staticmethod
-        def from_addresses(adresses: dict[str, list[dict[str, typing.Any]]]) -> list['ServerInfo.AddresInfo']:
-            def _build() -> collections.abc.Generator['ServerInfo.AddresInfo', None, None]:
+        def from_addresses(adresses: dict[str, list[dict[str, typing.Any]]]) -> list["ServerInfo.AddresInfo"]:
+            def _build() -> collections.abc.Generator["ServerInfo.AddresInfo", None, None]:
                 for net_name, inner_addresses in adresses.items():
                     for address in inner_addresses:
                         address_info = ServerInfo.AddresInfo.from_dict(address)
@@ -299,7 +299,6 @@ class ServerInfo:
                         yield address_info
 
             return list(_build())
-
 
     id: str
     name: str
@@ -313,7 +312,7 @@ class ServerInfo:
     fault: str | None
     admin_pass: str
 
-    def validated(self) -> 'ServerInfo':
+    def validated(self) -> "ServerInfo":
         """
         Raises NotFoundError if server is lost
 
@@ -321,36 +320,36 @@ class ServerInfo:
             self
         """
         if self.status.is_lost():
-            raise exceptions.services.generics.NotFoundError(f'Server {self.id} is lost')
+            raise exceptions.services.generics.NotFoundError(f"Server {self.id} is lost")
         return self
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'ServerInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "ServerInfo":
         # Note that for list_servers only the following fields are returned:
         # id, name, href
         # Look for self link
-        href: str = ''
-        for link in d.get('links', []):
+        href: str = ""
+        for link in d.get("links", []):
             try:
-                if link.get('rel', '') == 'self':
-                    href = typing.cast(str, link['href'])
+                if link.get("rel", "") == "self":
+                    href = typing.cast(str, link["href"])
                     break
             except Exception:
                 pass  # Just ignore any error here
         # Try to get flavor, only on >= 2.47
-        flavor = d.get('flavor', {}).get('id', '')
+        flavor = d.get("flavor", {}).get("id", "")
         return ServerInfo(
-            id=d['id'],
-            name=d.get('name') or d['id'],  # On create server, name is not returned, so use id
+            id=d["id"],
+            name=d.get("name") or d["id"],  # On create server, name is not returned, so use id
             href=href,
             flavor=flavor,
-            status=ServerStatus.from_str(d.get('status', ServerStatus.UNKNOWN.value)),
-            power_state=PowerState.from_int(d.get('OS-EXT-STS:power_state', PowerState.NOSTATE)),
-            addresses=ServerInfo.AddresInfo.from_addresses(d.get('addresses', {})),
-            access_addr_ipv4=d.get('accessIPv4') or '',
-            access_addr_ipv6=d.get('accessIPv6') or '',
-            fault=d.get('fault', None),
-            admin_pass=d.get('adminPass') or '',
+            status=ServerStatus.from_str(d.get("status", ServerStatus.UNKNOWN.value)),
+            power_state=PowerState.from_int(d.get("OS-EXT-STS:power_state", PowerState.NOSTATE)),
+            addresses=ServerInfo.AddresInfo.from_addresses(d.get("addresses", {})),
+            access_addr_ipv4=d.get("accessIPv4") or "",
+            access_addr_ipv6=d.get("accessIPv6") or "",
+            fault=d.get("fault", None),
+            admin_pass=d.get("adminPass") or "",
         )
 
 
@@ -360,10 +359,10 @@ class ProjectInfo:
     name: str
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'ProjectInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "ProjectInfo":
         return ProjectInfo(
-            id=d['id'],
-            name=d['name'],
+            id=d["id"],
+            name=d["name"],
         )
 
 
@@ -373,18 +372,18 @@ class RegionInfo:
     name: str
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'RegionInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "RegionInfo":
         # Try to guess name
         # Api definition does not includes name, nor locale, but some implementations includes it
-        name: str = d['id']
-        if 'name' in d:
-            name = d['name']
+        name: str = d["id"]
+        if "name" in d:
+            name = d["name"]
         # Mayby it has a locales dict, if this is the case and it contains en-us (case insensitive), we will use it
-        if 'locales' in d and isinstance(d['locales'], dict):
-            if 'en-us' in d['locales'] and isinstance(d['locales']['en-us'], str):
-                name = d['locales']['en-us']
+        if "locales" in d and isinstance(d["locales"], dict):
+            if "en-us" in d["locales"] and isinstance(d["locales"]["en-us"], str):
+                name = d["locales"]["en-us"]
         return RegionInfo(
-            id=d['id'],
+            id=d["id"],
             name=name,
         )
 
@@ -404,22 +403,22 @@ class VolumeInfo:
     updated_at: datetime.datetime  # From ISO 8601 string
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'VolumeInfo':
-        cdt = datetime.datetime.fromisoformat(d.get('created_at') or '1970-01-01T00:00:00')
+    def from_dict(d: dict[str, typing.Any]) -> "VolumeInfo":
+        cdt = datetime.datetime.fromisoformat(d.get("created_at") or "1970-01-01T00:00:00")
         if timezone.is_naive(cdt):
             cdt = timezone.make_aware(cdt)
-        udt = datetime.datetime.fromisoformat(d.get('updated_at') or '1970-01-01T00:00:00')
+        udt = datetime.datetime.fromisoformat(d.get("updated_at") or "1970-01-01T00:00:00")
         if timezone.is_naive(udt):
             udt = timezone.make_aware(udt)
         return VolumeInfo(
-            id=d['id'],
-            name=d['name'] or '',
-            description=d.get('description', ''),
-            size=d.get('size', 0),
-            availability_zone=d.get('availability_zone', ''),
-            bootable=d.get('bootable', False),
-            encrypted=d.get('encrypted', False),
-            status=VolumeStatus.from_str(d.get('status', VolumeStatus.ERROR.value)),
+            id=d["id"],
+            name=d["name"] or "",
+            description=d.get("description", ""),
+            size=d.get("size", 0),
+            availability_zone=d.get("availability_zone", ""),
+            bootable=d.get("bootable", False),
+            encrypted=d.get("encrypted", False),
+            status=VolumeStatus.from_str(d.get("status", VolumeStatus.ERROR.value)),
             created_at=cdt,
             updated_at=udt,
         )
@@ -437,21 +436,21 @@ class SnapshotInfo:
     updated_at: datetime.datetime
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'SnapshotInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "SnapshotInfo":
         # Try to get created_at and updated_at, if not possible, just ignore it
-        created_at = datetime.datetime.fromisoformat(d.get('created_at') or '1970-01-01T00:00:00')
+        created_at = datetime.datetime.fromisoformat(d.get("created_at") or "1970-01-01T00:00:00")
         if timezone.is_naive(created_at):
             created_at = timezone.make_aware(created_at)
-        updated_at = datetime.datetime.fromisoformat(d.get('updated_at') or '1970-01-01T00:00:00')
+        updated_at = datetime.datetime.fromisoformat(d.get("updated_at") or "1970-01-01T00:00:00")
         if timezone.is_naive(updated_at):
             updated_at = timezone.make_aware(updated_at)
         return SnapshotInfo(
-            id=d['id'],
-            volume_id=d['volume_id'],
-            name=d['name'],
-            description=d['description'] or '',
-            status=SnapshotStatus.from_str(d['status']),
-            size=d['size'],
+            id=d["id"],
+            volume_id=d["volume_id"],
+            name=d["name"],
+            description=d["description"] or "",
+            status=SnapshotStatus.from_str(d["status"]),
+            size=d["size"],
             created_at=created_at,
             updated_at=updated_at,
         )
@@ -463,10 +462,10 @@ class VolumeTypeInfo:
     name: str
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'VolumeTypeInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "VolumeTypeInfo":
         return VolumeTypeInfo(
-            id=d['id'],
-            name=d['name'],
+            id=d["id"],
+            name=d["name"],
         )
 
 
@@ -477,11 +476,11 @@ class AvailabilityZoneInfo:
     available: bool
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'AvailabilityZoneInfo':
-        available = d.get('zoneState', {}).get('available', False)
+    def from_dict(d: dict[str, typing.Any]) -> "AvailabilityZoneInfo":
+        available = d.get("zoneState", {}).get("available", False)
         return AvailabilityZoneInfo(
-            id=d['zoneName'],
-            name=d['zoneName'],
+            id=d["zoneName"],
+            name=d["zoneName"],
             available=available,
         )
 
@@ -498,16 +497,16 @@ class FlavorInfo:
     disabled: bool
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'FlavorInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "FlavorInfo":
         return FlavorInfo(
-            id=d['id'],
-            name=d['name'],
-            vcpus=d['vcpus'],
-            ram=d['ram'],
-            disk=d['disk'],
-            swap=d['swap'] or 0,
-            is_public=d.get('os-flavor-access:is_public', True),
-            disabled=d.get('OS-FLV-DISABLED:disabled', False),
+            id=d["id"],
+            name=d["name"],
+            vcpus=d["vcpus"],
+            ram=d["ram"],
+            disk=d["disk"],
+            swap=d["swap"] or 0,
+            is_public=d.get("os-flavor-access:is_public", True),
+            disabled=d.get("OS-FLV-DISABLED:disabled", False),
         )
 
 
@@ -521,14 +520,14 @@ class NetworkInfo:
     availability_zones: list[str]
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'NetworkInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "NetworkInfo":
         return NetworkInfo(
-            id=d['id'],
-            name=d['name'],
-            status=NetworkStatus.from_str(d['status']),
-            shared=d['shared'],
-            subnets=d['subnets'],
-            availability_zones=d.get('availability_zones', []),
+            id=d["id"],
+            name=d["name"],
+            status=NetworkStatus.from_str(d["status"]),
+            shared=d["shared"],
+            subnets=d["subnets"],
+            availability_zones=d.get("availability_zones", []),
         )
 
 
@@ -543,16 +542,17 @@ class SubnetInfo:
     network_id: str
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'SubnetInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "SubnetInfo":
         return SubnetInfo(
-            id=d['id'],
-            name=d['name'],
-            cidr=d['cidr'],
-            enable_dhcp=d['enable_dhcp'],
-            gateway_ip=d['gateway_ip'],
-            ip_version=d['ip_version'],
-            network_id=d['network_id'],
+            id=d["id"],
+            name=d["name"],
+            cidr=d["cidr"],
+            enable_dhcp=d["enable_dhcp"],
+            gateway_ip=d["gateway_ip"],
+            ip_version=d["ip_version"],
+            network_id=d["network_id"],
         )
+
 
 @dataclasses.dataclass
 class SecurityGroupInfo:
@@ -561,9 +561,9 @@ class SecurityGroupInfo:
     description: str
 
     @staticmethod
-    def from_dict(d: dict[str, typing.Any]) -> 'SecurityGroupInfo':
+    def from_dict(d: dict[str, typing.Any]) -> "SecurityGroupInfo":
         return SecurityGroupInfo(
-            id=d['id'],
-            name=d['name'],
-            description=d['description'],
+            id=d["id"],
+            name=d["name"],
+            description=d["description"],
         )

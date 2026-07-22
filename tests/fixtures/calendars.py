@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 
@@ -35,8 +36,8 @@ from uds import models
 
 
 # fixtures for calendars and calendar rules
-CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, typing.Union[str,int,None]]]] = {
-    'calendars': [
+CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, typing.Union[str, int, None]]]] = {
+    "calendars": [
         {
             "modified": "2015-09-18T00:04:31.792",
             "uuid": "2cf6846b-d889-57ce-bb35-e647040a95b6",
@@ -68,7 +69,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, typing.Union[str,int,
             "name": "Calendar xDurations",
         },
     ],
-    'rules': [
+    "rules": [
         {
             "end": None,
             "uuid": "42846f5f-6a61-5257-beb5-67beb179d6b1",
@@ -216,6 +217,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, typing.Union[str,int,
     ],
 }
 
+
 def createCalendars() -> tuple[list[models.Calendar], list[models.CalendarRule]]:
     calendars: list[models.Calendar] = []
     rules: list[models.CalendarRule] = []
@@ -224,8 +226,8 @@ def createCalendars() -> tuple[list[models.Calendar], list[models.CalendarRule]]
     for r in CALENDAR_DATA["rules"]:
         # Extract parent calendar
         rule = r.copy()
-        parent = calendars[typing.cast(int, rule['calendar'])]
-        del rule['calendar']
+        parent = calendars[typing.cast(int, rule["calendar"])]
+        del rule["calendar"]
         rules.append(parent.rules.create(**rule))
 
     return calendars, rules

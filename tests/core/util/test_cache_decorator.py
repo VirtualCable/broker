@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # We use commit/rollback
 import typing
 from unittest import mock
@@ -42,55 +43,55 @@ import time
 
 class CacheTest(UDSTransactionTestCase):
     def test_cache_decorator_whole(self) -> None:
-        testing_value = 'test'
+        testing_value = "test"
 
-        @cached(prefix='test', timeout=1)
+        @cached(prefix="test", timeout=1)
         def cached_fnc(value: str) -> str:
             return testing_value
 
-        self.assertEqual(cached_fnc('test'), 'test')
+        self.assertEqual(cached_fnc("test"), "test")
         # Now, even changing the value, it will be the same
-        testing_value = 'test2'
-        self.assertEqual(cached_fnc('test'), 'test')
+        testing_value = "test2"
+        self.assertEqual(cached_fnc("test"), "test")
         # But now, with a different value, it will be different
-        self.assertEqual(cached_fnc('test2'), 'test2')
+        self.assertEqual(cached_fnc("test2"), "test2")
 
         # Once expired, it will be the new value
         time.sleep(1.1)
-        self.assertEqual(cached_fnc('test'), 'test2')
+        self.assertEqual(cached_fnc("test"), "test2")
 
     def test_cache_decorator_args(self) -> None:
-        testing_value = 'test'
+        testing_value = "test"
 
-        @cached(prefix='test', timeout=1, args=[0])
+        @cached(prefix="test", timeout=1, args=[0])
         def cached_fnc(value: str) -> str:
             return testing_value
 
-        self.assertEqual(cached_fnc('test'), 'test')
+        self.assertEqual(cached_fnc("test"), "test")
         # Now, even changing the value, it will be the same
-        testing_value = 'test2'
-        self.assertEqual(cached_fnc('test'), 'test')
+        testing_value = "test2"
+        self.assertEqual(cached_fnc("test"), "test")
         # But now, with a different value, it will be different
-        self.assertEqual(cached_fnc('test2'), 'test2')
+        self.assertEqual(cached_fnc("test2"), "test2")
 
     def test_cache_decorator_kwargs(self) -> None:
-        testing_value = 'test'
+        testing_value = "test"
 
-        @cached(prefix='test', timeout=1, kwargs=['value'])
+        @cached(prefix="test", timeout=1, kwargs=["value"])
         def cached_fnc(value: str) -> str:
             return testing_value
 
-        self.assertEqual(cached_fnc('test'), 'test')
+        self.assertEqual(cached_fnc("test"), "test")
         # Now, even changing the value, it will be the same
-        testing_value = 'test2'
-        self.assertEqual(cached_fnc('test'), 'test')
+        testing_value = "test2"
+        self.assertEqual(cached_fnc("test"), "test")
         # With a different value, it will be the same (because we cached only keyword args)
-        self.assertEqual(cached_fnc('test2'), 'test')
+        self.assertEqual(cached_fnc("test2"), "test")
         # But now, with a different value, it will be different using keyword args
-        self.assertEqual(cached_fnc(value='test2'), 'test2')
+        self.assertEqual(cached_fnc(value="test2"), "test2")
 
     def test_cache_decorator_key_fnc(self) -> None:
-        cache_key = mock.MagicMock(return_value='test')
+        cache_key = mock.MagicMock(return_value="test")
 
         class Test:
             value: list[str]
@@ -99,42 +100,41 @@ class CacheTest(UDSTransactionTestCase):
             def __init__(self, value: str):
                 self.value = [value] * 8
 
-            @cached(prefix='test', timeout=1, key_helper=cache_key)
+            @cached(prefix="test", timeout=1, key_helper=cache_key)
             def cached_test(self, **kwargs: typing.Any) -> list[str]:
                 self.call_count += 1
                 return self.value
 
-        test = Test('test')
+        test = Test("test")
         orig_value = test.value
         self.assertEqual(test.cached_test(), orig_value)
         self.assertEqual(cache_key.call_count, 1)
         self.assertEqual(test.call_count, 1)
 
-        test.value = ['test2'] * 8
+        test.value = ["test2"] * 8
         TESTS_COUNT = 32
         for i in range(TESTS_COUNT):
             self.assertEqual(test.cached_test(), orig_value)
-            self.assertEqual(cache_key.call_count, i+2)
+            self.assertEqual(cache_key.call_count, i + 2)
             self.assertEqual(cache_key.call_args[0][0], test)
             self.assertEqual(test.call_count, 1)
 
         # Wait for cache to expire
         time.sleep(1.1)
         self.assertEqual(test.cached_test(), test.value)
-        self.assertEqual(cache_key.call_count, TESTS_COUNT+2)
+        self.assertEqual(cache_key.call_count, TESTS_COUNT + 2)
         self.assertEqual(cache_key.call_args[0][0], test)
         self.assertEqual(test.call_count, 2)
 
         # Now lets tests with force, no matter timeout
-        test.value = ['test3'] * 8
+        test.value = ["test3"] * 8
         self.assertEqual(test.cached_test(force=True), test.value)
-        self.assertEqual(cache_key.call_count, TESTS_COUNT+3)
+        self.assertEqual(cache_key.call_count, TESTS_COUNT + 3)
         self.assertEqual(cache_key.call_args[0][0], test)
         self.assertEqual(test.call_count, 3)
-        
-        test.value = ['test4'] * 8
+
+        test.value = ["test4"] * 8
         self.assertEqual(test.cached_test(force=True), test.value)
-        self.assertEqual(cache_key.call_count, TESTS_COUNT+4)
+        self.assertEqual(cache_key.call_count, TESTS_COUNT + 4)
         self.assertEqual(cache_key.call_args[0][0], test)
         self.assertEqual(test.call_count, 4)
-        

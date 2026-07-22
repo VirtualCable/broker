@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -59,24 +60,24 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
     """
 
     priority = models.IntegerField(default=0, db_index=True)
-    small_name = models.CharField(max_length=128, default='', db_index=True)
+    small_name = models.CharField(max_length=128, default="", db_index=True)
     state = models.CharField(max_length=1, default=consts.auth.VISIBLE, db_index=True)
     # "visible" is removed from 4.0, state will do this functionality, but is more flexible
     net_filtering = models.CharField(max_length=1, default=consts.auth.NO_FILTERING, db_index=True)
 
     # "fake" relations declarations for type checking
     # objects: 'models.manager.Manager["Authenticator"]'
-    users: 'RelatedManager[User]'
-    groups: 'RelatedManager[Group]'
+    users: "RelatedManager[User]"
+    groups: "RelatedManager[Group]"
 
-    networks: 'RelatedManager[Network]'
+    networks: "RelatedManager[Network]"
     # MFA associated to this authenticator. Can be null
-    mfa: models.ForeignKey['MFA|None'] = models.ForeignKey(
-        'MFA',
+    mfa: models.ForeignKey["MFA|None"] = models.ForeignKey(
+        "MFA",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='authenticators',
+        related_name="authenticators",
     )
 
     class Meta(ManagedObjectModel.Meta):  # pyright: ignore
@@ -84,8 +85,8 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         Meta class to declare default order
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
+        ordering = ("name",)
+        app_label = "uds"
 
     @typing.override
     def get_instance(self, values: ui.gui.ValuesType = None) -> auths.Authenticator:
@@ -109,7 +110,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         if not self.id:
             # Return a fake authenticator
             return auths.Authenticator(
-                environment.Environment.environment_for_table_record('fake_auth'), values, uuid=self.uuid
+                environment.Environment.environment_for_table_record("fake_auth"), values, uuid=self.uuid
             )
 
         auth_type = self.get_type()
@@ -142,7 +143,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         """
         return auths.factory().lookup(self.data_type) is not None
 
-    def get_or_create_user(self, username: str, realname: str | None = None) -> 'User':
+    def get_or_create_user(self, username: str, realname: str | None = None) -> "User":
         """
         Used to get or create a new user at database associated with this authenticator.
 
@@ -169,21 +170,19 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
 
         Raises:
         """
-        user: 'User'
+        user: "User"
         realname = realname or username
         user, _ = self.users.get_or_create(
             name=username,
             defaults={
-                'real_name': realname,
-                'last_access': consts.NEVER,
-                'state': State.ACTIVE,
+                "real_name": realname,
+                "last_access": consts.NEVER,
+                "state": State.ACTIVE,
             },
         )
-        if (
-            user.real_name.strip() == '' or user.name.strip() == user.real_name.strip()
-        ) and realname != user.real_name:
-            user.real_name = realname or ''
-            user.save(update_fields=['real_name'])
+        if (user.real_name.strip() == "" or user.name.strip() == user.real_name.strip()) and realname != user.real_name:
+            user.real_name = realname or ""
+            user.save(update_fields=["real_name"])
 
         return user
 
@@ -212,7 +211,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         This is done so we can check non existing or non blocked users (state != Active, or do not exists)
         """
         try:
-            usr: 'User' = self.users.get(name=username)
+            usr: "User" = self.users.get(name=username)
             return State.from_str(usr.state).is_active()
         except Exception:
             return not_allowed_return_value
@@ -250,24 +249,24 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         return not exists
 
     @staticmethod
-    def all() -> 'models.QuerySet[Authenticator]':
+    def all() -> "models.QuerySet[Authenticator]":
         """
         Returns all authenticators ordered by priority
         """
-        return Authenticator.objects.all().order_by('priority')
+        return Authenticator.objects.all().order_by("priority")
 
     @staticmethod
     def get_by_tag(
         tag: str | None,
         hostname: str | None = None,
-    ) -> collections.abc.Iterable['Authenticator']:
+    ) -> collections.abc.Iterable["Authenticator"]:
         """
         Gets authenticator by tag name.
         Special tag name "disabled" is used to exclude customAuth
         """
-        available_auths = Authenticator.objects.exclude(state=consts.auth.DISABLED).order_by('priority', 'name')
+        available_auths = Authenticator.objects.exclude(state=consts.auth.DISABLED).order_by("priority", "name")
         authenticators = available_auths
-        if tag != 'disabled':
+        if tag != "disabled":
             if tag:
                 hostname = None
 
@@ -285,7 +284,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
                     authenticators = authenticators.filter(small_name__iexact=authenticators[0].small_name)
 
         for auth in authenticators:
-            if auth.get_type() and (not auth.get_type().is_custom() or tag != 'disabled'):
+            if auth.get_type() and (not auth.get_type().is_custom() or tag != "disabled"):
                 yield auth
 
     @staticmethod
@@ -301,12 +300,12 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         # pylint: disable=import-outside-toplevel
         from uds.core.util.permissions import clean
 
-        to_delete: 'Authenticator' = kwargs['instance']
+        to_delete: "Authenticator" = kwargs["instance"]
 
-        logger.debug('Before delete auth %s', to_delete)
+        logger.debug("Before delete auth %s", to_delete)
 
         # Only tries to get instance if data is not empty
-        if to_delete.data != '':
+        if to_delete.data != "":
             s = to_delete.get_instance()
             s.destroy()
             s.env.clean_related_data()
@@ -319,18 +318,18 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
 
     # returns CSV header
     @staticmethod
-    def get_cvs_header(sep: str = ',') -> str:
+    def get_cvs_header(sep: str = ",") -> str:
         return sep.join(
             [
-                'name',
-                'type',
-                'users',
-                'groups',
+                "name",
+                "type",
+                "users",
+                "groups",
             ]
         )
 
     # Return record as csv line using separator (default: ',')
-    def to_csv(self, sep: str = ',') -> str:
+    def to_csv(self, sep: str = ",") -> str:
         return sep.join(
             [
                 self.name,
@@ -341,7 +340,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         )
 
     def __str__(self) -> str:
-        return f'{self.name} of type {self.data_type} (id:{self.id})'
+        return f"{self.name} of type {self.data_type} (id:{self.id})"
 
 
 # Connects a pre deletion signal to Authenticator

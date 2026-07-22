@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
@@ -44,43 +45,40 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def uds_link(request: 'HttpRequest', ticket: str, scrambler: str) -> str:
+def uds_link(request: "HttpRequest", ticket: str, scrambler: str) -> str:
     # If we have a scheme, remove it
     rels = request.build_absolute_uri("/").split("://", maxsplit=1)
     rel = rels[1] if len(rels) > 1 else rels[0]
 
     # returns an uds link
-    return f'{consts.system.UDS_CLIENT_SCHEME}{rel}{ticket}/{scrambler}'
+    return f"{consts.system.UDS_CLIENT_SCHEME}{rel}{ticket}/{scrambler}"
 
 
 def uds_access_link(
-    request: 'HttpRequest',  # pylint: disable=unused-argument
+    request: "HttpRequest",  # pylint: disable=unused-argument
     service_id: str,
     transport_id: typing.Optional[str],
 ) -> str:
-    '''
+    """
     If transport_id (uuid) is None, this will be a meta_link
-    '''
-    return f'{consts.system.UDS_ACTION_SCHEME}{service_id}/{transport_id or "meta"}'
+    """
+    return f"{consts.system.UDS_ACTION_SCHEME}{service_id}/{transport_id or 'meta'}"
 
 
 def parse_date(string_date: str) -> datetime.date:
-    if get_language() == 'fr':
-        date_format = '%d/%m/%Y'
+    if get_language() == "fr":
+        date_format = "%d/%m/%Y"
     else:
-        date_format = (
-            formats.get_format('SHORT_DATE_FORMAT').replace('Y', '%Y').replace('m', '%m').replace('d', '%d')
-        )  # pylint: disable=maybe-no-member
+        date_format = formats.get_format("SHORT_DATE_FORMAT").replace("Y", "%Y").replace("m", "%m").replace("d", "%d")  # pylint: disable=maybe-no-member
 
     return datetime.datetime.strptime(string_date, date_format).date()
 
 
 def date_to_literal(date: datetime.datetime) -> str:
     # Fix for FR lang for datepicker
-    if get_language() == 'fr':
-        d = date.strftime('%d/%m/%Y')
+    if get_language() == "fr":
+        d = date.strftime("%d/%m/%Y")
     else:
-        d = formats.date_format(date, 'SHORT_DATE_FORMAT')
+        d = formats.date_format(date, "SHORT_DATE_FORMAT")
 
     return d
-

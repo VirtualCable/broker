@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import functools
 import logging
 import random
@@ -66,7 +67,7 @@ def _server_group_values(
         fltr = fltr.filter(subtype=subtype)
 
     return [
-        ui.gui.choice_item(v.uuid, f'{v.name} {("("+ v.pretty_host + ")") if v.pretty_host else ""}')
+        ui.gui.choice_item(v.uuid, f"{v.name} {('(' + v.pretty_host + ')') if v.pretty_host else ''}")
         for v in fltr.all()
     ]
 
@@ -82,13 +83,13 @@ def _server_group_from_field(fld: ui.gui.ChoiceField) -> models.ServerGroup:
 def tunnel_field() -> ui.gui.ChoiceField:
     """Returns a field to select a tunnel server"""
     return ui.gui.ChoiceField(
-        label=_('Tunnel server'),
+        label=_("Tunnel server"),
         order=1,
-        tooltip=_('Tunnel server to use'),
+        tooltip=_("Tunnel server to use"),
         required=True,
         choices=functools.partial(_server_group_values, [types.servers.ServerType.TUNNEL]),
         tab=types.ui.Tab.TUNNEL,
-        old_field_name='tunnel',
+        old_field_name="tunnel",
     )
 
 
@@ -114,13 +115,11 @@ def server_group_field(
     """
     valid_types = valid_types or [types.servers.ServerType.UNMANAGED]
     return ui.gui.ChoiceField(
-        label=_('Server group'),
+        label=_("Server group"),
         order=2,
-        tooltip=_('Server group to use'),
+        tooltip=_("Server group to use"),
         required=True,
-        choices=functools.partial(
-            _server_group_values, valid_types, subtype
-        ),  # So it gets evaluated at runtime
+        choices=functools.partial(_server_group_values, valid_types, subtype),  # So it gets evaluated at runtime
         tab=tab,
     )
 
@@ -136,64 +135,62 @@ def get_server_group_from_field(fld: ui.gui.ChoiceField) -> models.ServerGroup:
 
 # Ticket validity time field (for http related tunnels)
 def tunnel_ticket_validity_field(
-    order: int = 90, tab: 'types.ui.Tab|None' = types.ui.Tab.ADVANCED
+    order: int = 90, tab: "types.ui.Tab|None" = types.ui.Tab.ADVANCED
 ) -> ui.gui.NumericField:
     return ui.gui.NumericField(
         length=3,
-        label=_('Ticket Validity'),
+        label=_("Ticket Validity"),
         default=60,
         order=order,
         tooltip=_(
-            'Allowed time, in seconds, for HTML5 client to reload data from UDS Broker. The default value of 60 is recommended.'
+            "Allowed time, in seconds, for HTML5 client to reload data from UDS Broker. The default value of 60 is recommended."
         ),
         required=True,
         min_value=60,
         tab=tab,
-        old_field_name='ticketValidity',
+        old_field_name="ticketValidity",
     )
 
 
 # Tunnel wait time (for uds client related tunnels)
 def tunnel_startup_time_secs(
-    order: int = 2, tab: 'types.ui.Tab|None' = types.ui.Tab.TUNNEL,default: int = 30
+    order: int = 2, tab: "types.ui.Tab|None" = types.ui.Tab.TUNNEL, default: int = 30
 ) -> ui.gui.NumericField:
     return ui.gui.NumericField(
         length=3,
-        label=_('Startup wait time'),
+        label=_("Startup wait time"),
         default=default,
         min_value=5,
         max_value=180,
         order=order,
-        tooltip=_('Time, in seconds, to wait for first tunnel connection to be established.'),
+        tooltip=_("Time, in seconds, to wait for first tunnel connection to be established."),
         required=True,
         tab=tab,
-        old_field_name='tunnelWait',
+        old_field_name="tunnelWait",
     )
 
 
 # Get certificates from field
-def get_certificates_from_field(
-    field: ui.gui.TextField, field_value: str | None = None
-) -> list['Certificate']:
+def get_certificates_from_field(field: ui.gui.TextField, field_value: str | None = None) -> list["Certificate"]:
     # Get certificates in self.publicKey.value, encoded as PEM
     # Return a list of certificates in DER format
-    
+
     # Allows empty certificates list, returns empty list
     value = (field_value or field.value).strip()
-    if value == '':
+    if value == "":
         return []
 
     # Get certificates in PEM format
-    pem_certs_list = value.split('-----END CERTIFICATE-----')
+    pem_certs_list = value.split("-----END CERTIFICATE-----")
     # Remove empty strings
-    pem_certs_list = [cert for cert in pem_certs_list if cert.strip() != '']
+    pem_certs_list = [cert for cert in pem_certs_list if cert.strip() != ""]
     # Add back the "-----END CERTIFICATE-----" part
-    pem_certs_list = [cert + '-----END CERTIFICATE-----' for cert in pem_certs_list]
+    pem_certs_list = [cert + "-----END CERTIFICATE-----" for cert in pem_certs_list]
 
     # Convert to DER format
-    certs: list['Certificate'] = []  # PublicKey...
+    certs: list["Certificate"] = []  # PublicKey...
     for pem_cert in pem_certs_list:
-        certs.append(load_pem_x509_certificate(pem_cert.encode('ascii'), None))
+        certs.append(load_pem_x509_certificate(pem_cert.encode("ascii"), None))
 
     return certs
 
@@ -202,15 +199,15 @@ def get_certificates_from_field(
 def timeout_field(
     default: int = 8,
     order: int = 90,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
     old_field_name: str | None = None,
 ) -> ui.gui.NumericField:
     return ui.gui.NumericField(
         length=3,
-        label=_('Timeout'),
+        label=_("Timeout"),
         default=default,
         order=order,
-        tooltip=_('Timeout in seconds for network connections'),
+        tooltip=_("Timeout in seconds for network connections"),
         required=True,
         min_value=1,
         tab=tab,
@@ -222,43 +219,43 @@ def timeout_field(
 def verify_ssl_field(
     default: bool = True,
     order: int = 92,
-    tab: 'types.ui.Tab|str|None|bool' = None,
+    tab: "types.ui.Tab|str|None|bool" = None,
     old_field_name: str | None = None,
 ) -> ui.gui.CheckBoxField:
     return ui.gui.CheckBoxField(
-        label=_('Verify SSL'),
+        label=_("Verify SSL"),
         default=default,
         order=order,
-        tooltip=_('If checked, SSL verification will be enforced. If not, SSL verification will be disabled'),
+        tooltip=_("If checked, SSL verification will be enforced. If not, SSL verification will be disabled"),
         tab=None if tab is False else None if tab is None else types.ui.Tab.ADVANCED,
         old_field_name=old_field_name,
     )
 
 
 # Basename field
-def basename_field(order: int = 32, tab: 'types.ui.Tab|str|None' = None) -> ui.gui.TextField:
+def basename_field(order: int = 32, tab: "types.ui.Tab|str|None" = None) -> ui.gui.TextField:
     return ui.gui.TextField(
-        label=_('Base Name'),
+        label=_("Base Name"),
         order=order,
-        default=lambda: 'UDS' + ''.join(random.choices(string.ascii_uppercase, k=3)),
-        tooltip=_('Base name for clones from this service'),
+        default=lambda: "UDS" + "".join(random.choices(string.ascii_uppercase, k=3)),
+        tooltip=_("Base name for clones from this service"),
         tab=tab,
         required=True,
-        old_field_name='baseName',
+        old_field_name="baseName",
     )
 
 
 # Length of name field
-def lenname_field(order: int = 33, tab: 'types.ui.Tab|str|None' = None) -> ui.gui.NumericField:
+def lenname_field(order: int = 33, tab: "types.ui.Tab|str|None" = None) -> ui.gui.NumericField:
     return ui.gui.NumericField(
         length=1,
-        label=_('Name Length'),
+        label=_("Name Length"),
         default=3,
         order=order,
-        tooltip=_('Size of numeric part for the names derived from this service'),
+        tooltip=_("Size of numeric part for the names derived from this service"),
         tab=tab,
         required=True,
-        old_field_name='lenName',
+        old_field_name="lenName",
     )
 
 
@@ -266,45 +263,45 @@ def lenname_field(order: int = 33, tab: 'types.ui.Tab|str|None' = None) -> ui.gu
 def concurrent_creation_limit_field(
     order: int = 50,
     default: int = 30,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
 ) -> ui.gui.NumericField:
     # Advanced tab
     return ui.gui.NumericField(
         length=3,
-        label=_('Creation concurrency'),
+        label=_("Creation concurrency"),
         default=default,
         min_value=1,
         max_value=65536,
         order=order,
-        tooltip=_('Maximum number of concurrently creating VMs'),
+        tooltip=_("Maximum number of concurrently creating VMs"),
         required=True,
         tab=tab,
-        old_field_name='maxPreparingServices',
+        old_field_name="maxPreparingServices",
     )
 
 
 def concurrent_removal_limit_field(
     order: int = 51,
     default: int = 15,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
 ) -> ui.gui.NumericField:
     return ui.gui.NumericField(
         length=3,
-        label=_('Removal concurrency'),
+        label=_("Removal concurrency"),
         default=default,
         min_value=1,
         max_value=65536,
         order=order,
-        tooltip=_('Maximum number of concurrently removing VMs'),
+        tooltip=_("Maximum number of concurrently removing VMs"),
         required=True,
         tab=tab,
-        old_field_name='maxRemovingServices',
+        old_field_name="maxRemovingServices",
     )
 
 
 def services_limit_field(
     order: int = 4,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
 ) -> ui.gui.NumericField:
     return ui.gui.NumericField(
         order=order,
@@ -313,39 +310,39 @@ def services_limit_field(
         max_value=999999,
         default=0,  # 0 in this field means no limit
         readonly=False,
-        tooltip=_('Maximum number of allowed services (0 means no limit)'),
+        tooltip=_("Maximum number of allowed services (0 means no limit)"),
         required=True,
         tab=tab,
-        old_field_name='maxServices',
+        old_field_name="maxServices",
     )
 
 
 def remove_duplicates_field(
     order: int = 102,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
     old_field_name: str | None = None,
 ) -> ui.gui.CheckBoxField:
     return ui.gui.CheckBoxField(
-        label=_('Remove found duplicates'),
+        label=_("Remove found duplicates"),
         default=True,
         order=order,
-        tooltip=_('If active, found duplicates VApps for this service will be removed'),
+        tooltip=_("If active, found duplicates VApps for this service will be removed"),
         tab=tab,
-        old_field_name=old_field_name or 'removeDuplicates',
+        old_field_name=old_field_name or "removeDuplicates",
     )
 
 
 def soft_shutdown_field(
     order: int = 103,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
     old_field_name: str | None = None,
 ) -> ui.gui.CheckBoxField:
     return ui.gui.CheckBoxField(
-        label=_('Try SOFT Shutdown first'),
+        label=_("Try SOFT Shutdown first"),
         default=False,
         order=order,
         tooltip=_(
-            'If active, UDS will try to shutdown (soft) the machine. May delay around 2 minutes the power off of hanged machines.'
+            "If active, UDS will try to shutdown (soft) the machine. May delay around 2 minutes the power off of hanged machines."
         ),
         tab=tab,
         old_field_name=old_field_name,
@@ -354,7 +351,7 @@ def soft_shutdown_field(
 
 def soft_reset_field(
     order: int = 104,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
     old_field_name: str | None = None,
 ) -> ui.gui.ChoiceField:
     """
@@ -363,29 +360,29 @@ def soft_reset_field(
     hard: Hard reset
     """
     return ui.gui.ChoiceField(
-        label=_('Reset type'),
+        label=_("Reset type"),
         order=order,
-        tooltip=_('Type of reset to perform'),
+        tooltip=_("Type of reset to perform"),
         choices=[
-            ui.gui.choice_item('soft', _('Soft reset')),
-            ui.gui.choice_item('hard', _('Hard reset')),
+            ui.gui.choice_item("soft", _("Soft reset")),
+            ui.gui.choice_item("hard", _("Hard reset")),
         ],
         tab=tab,
-        default='hard',
+        default="hard",
         old_field_name=old_field_name,
     )
 
 
 def maintain_on_error_field(
     order: int = 105,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
     old_field_name: str | None = None,
 ) -> ui.gui.CheckBoxField:
     return ui.gui.CheckBoxField(
-        label=_('Keep on error'),
+        label=_("Keep on error"),
         value=False,
         order=order,
-        tooltip=_('If active, access errors found on machine will not be considered errors.'),
+        tooltip=_("If active, access errors found on machine will not be considered errors."),
         tab=tab,
         old_field_name=old_field_name,
     )
@@ -394,180 +391,172 @@ def maintain_on_error_field(
 def macs_range_field(
     default: str,
     order: int = 91,
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED,
     readonly: bool = False,
 ) -> ui.gui.TextField:
     return ui.gui.TextField(
         length=36,
-        label=_('Macs range'),
+        label=_("Macs range"),
         default=default,
         order=order,
         readonly=readonly,
-        tooltip=_('Range of valid macs for created machines. Must be in the range {default}').format(
-            default=default
-        ),
+        tooltip=_("Range of valid macs for created machines. Must be in the range {default}").format(default=default),
         required=True,
         tab=tab,
-        old_field_name='macsRange',
+        old_field_name="macsRange",
     )
 
 
-def mfa_attr_field(order: int = 20, tab: 'types.ui.Tab|str|None' = types.ui.Tab.MFA) -> ui.gui.TextField:
+def mfa_attr_field(order: int = 20, tab: "types.ui.Tab|str|None" = types.ui.Tab.MFA) -> ui.gui.TextField:
     return ui.gui.TextField(
         length=2048,
         lines=2,
-        label=_('MFA attribute'),
+        label=_("MFA attribute"),
         order=order,
-        tooltip=_('Attribute from where to extract the MFA code'),
+        tooltip=_("Attribute from where to extract the MFA code"),
         required=False,
         tab=tab,
-        old_field_name='mfaAttr',
+        old_field_name="mfaAttr",
     )
 
 
-def on_logout_field(
-    order: int = 10, tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED
-) -> ui.gui.ChoiceField:
+def on_logout_field(order: int = 10, tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED) -> ui.gui.ChoiceField:
     return ui.gui.ChoiceField(
-        label=_('Logout Action'),
+        label=_("Logout Action"),
         order=order,
         readonly=True,
-        tooltip=_('What to do when user logs out from service'),
+        tooltip=_("What to do when user logs out from service"),
         choices=[
-            ui.gui.choice_item('keep', _('Keep service assigned')),
-            ui.gui.choice_item('remove', _('Remove service')),
-            ui.gui.choice_item('keep-always', _('Keep service assigned even on new publication')),
+            ui.gui.choice_item("keep", _("Keep service assigned")),
+            ui.gui.choice_item("remove", _("Remove service")),
+            ui.gui.choice_item("keep-always", _("Keep service assigned even on new publication")),
         ],
         tab=tab,
-        default='keep',
+        default="keep",
     )
 
 
 def allow_skip_mfa_from_networks_field(
-    order: int = 52, tab: 'types.ui.Tab|str|None' = types.ui.Tab.CONFIG
+    order: int = 52, tab: "types.ui.Tab|str|None" = types.ui.Tab.CONFIG
 ) -> ui.gui.MultiChoiceField:
     return ui.gui.MultiChoiceField(
-        label=_('Allow skip MFA from networks'),
+        label=_("Allow skip MFA from networks"),
         readonly=False,
         rows=5,
         order=order,
-        tooltip=_('Users within these networks will not be asked for OTP'),
+        tooltip=_("Users within these networks will not be asked for OTP"),
         required=False,
         choices=mfas.LoginAllowed.network_choices,
         tab=tab,
-        old_field_name='allow_networks_without_mfa',
+        old_field_name="allow_networks_without_mfa",
     )
 
 
 def login_without_mfa_policy_networks_field(
-    order: int = 51, tab: 'types.ui.Tab|str|None' = types.ui.Tab.CONFIG
+    order: int = 51, tab: "types.ui.Tab|str|None" = types.ui.Tab.CONFIG
 ) -> ui.gui.MultiChoiceField:
     return ui.gui.MultiChoiceField(
-        label=_('MFA policy networks'),
+        label=_("MFA policy networks"),
         readonly=False,
         rows=5,
         order=order,
-        tooltip=_('Networks where MFA policy will be enforced if required'),
+        tooltip=_("Networks where MFA policy will be enforced if required"),
         required=False,
         choices=mfas.LoginAllowed.network_choices,
         tab=tab,
-        old_field_name='networks',
+        old_field_name="networks",
     )
 
 
 def login_without_mfa_policy_field(
-    order: int = 50, tab: 'types.ui.Tab|str|None' = types.ui.Tab.CONFIG
+    order: int = 50, tab: "types.ui.Tab|str|None" = types.ui.Tab.CONFIG
 ) -> ui.gui.ChoiceField:
     return ui.gui.ChoiceField(
-        label=_('Policy for users without MFA support'),
+        label=_("Policy for users without MFA support"),
         order=order,
-        default='0',
-        tooltip=_('Policy for users without MFA or server failed to ask for MFA'),
+        default="0",
+        tooltip=_("Policy for users without MFA or server failed to ask for MFA"),
         required=True,
         choices=mfas.LoginAllowed.choices,
         tab=tab,
-        old_field_name='allowLoginWithoutMFA',
+        old_field_name="allowLoginWithoutMFA",
     )
 
 
 def put_back_to_cache_field(
-    order: int = 120, tab: 'types.ui.Tab|str|None' = types.ui.Tab.ADVANCED
+    order: int = 120, tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED
 ) -> ui.gui.ChoiceField:
     return ui.gui.ChoiceField(
         order=order,
-        label=_('Put back to cache'),
-        tooltip=_('On machine releasy by logout, put it back to cache instead of deleting if possible.'),
+        label=_("Put back to cache"),
+        tooltip=_("On machine releasy by logout, put it back to cache instead of deleting if possible."),
         choices=[
-            types.ui.ChoiceItem(id='no', text=_('No. Never put it back to cache')),
-            types.ui.ChoiceItem(id='yes', text=_('Yes, try to put it back to cache')),
-            types.ui.ChoiceItem(id='snapshot', text=_('Yes, try to put it back to cache and recover snapshot')),
+            types.ui.ChoiceItem(id="no", text=_("No. Never put it back to cache")),
+            types.ui.ChoiceItem(id="yes", text=_("Yes, try to put it back to cache")),
+            types.ui.ChoiceItem(id="snapshot", text=_("Yes, try to put it back to cache and recover snapshot")),
         ],
         tab=tab,
     )
 
 
 def username_attr_field(
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ATTRIBUTES,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ATTRIBUTES,
     default: str | None = None,
     order: int = 100,
 ) -> ui.gui.TextField:
     return ui.gui.TextField(
         length=640,
-        label=_('User Name Attr'),
+        label=_("User Name Attr"),
         lines=3,
-        default=default or '',
+        default=default or "",
         order=order,
-        tooltip=_(
-            'Attributes that contains the user name attributes or attribute patterns (one for each line)'
-        ),
+        tooltip=_("Attributes that contains the user name attributes or attribute patterns (one for each line)"),
         required=True,
         tab=tab,
     )
 
 
 def groupname_attr_field(
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ATTRIBUTES,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ATTRIBUTES,
     default: str | None = None,
     order: int = 101,
 ) -> ui.gui.TextField:
     return ui.gui.TextField(
         length=640,
-        label=_('Group Name Attr'),
+        label=_("Group Name Attr"),
         lines=3,
-        default=default or '',
+        default=default or "",
         order=order,
-        tooltip=_(
-            'Attribute that contains the group name attributes or attribute patterns (one for each line)'
-        ),
+        tooltip=_("Attribute that contains the group name attributes or attribute patterns (one for each line)"),
         required=True,
         tab=tab,
     )
 
 
 def realname_attr_field(
-    tab: 'types.ui.Tab|str|None' = types.ui.Tab.ATTRIBUTES,
+    tab: "types.ui.Tab|str|None" = types.ui.Tab.ATTRIBUTES,
     default: str | None = None,
     order: int = 102,
 ) -> ui.gui.TextField:
     return ui.gui.TextField(
         length=640,
-        label=_('Real Name Attr'),
+        label=_("Real Name Attr"),
         lines=3,
-        default=default or '',
+        default=default or "",
         order=order,
-        tooltip=_('Attribute that contains the real name attributes or attribute patterns (one for each line)'),
+        tooltip=_("Attribute that contains the real name attributes or attribute patterns (one for each line)"),
         required=True,
         tab=tab,
     )
 
 
 def onlogout_field_is_persistent(fld: ui.gui.ChoiceField) -> bool:
-    return fld.value == 'keep-always'
+    return fld.value == "keep-always"
 
 
 def onlogout_field_is_removable(fld: ui.gui.ChoiceField) -> bool:
-    return fld.value == 'remove'
+    return fld.value == "remove"
 
 
 def onlogout_field_is_keep(fld: ui.gui.ChoiceField) -> bool:
-    return fld.value == 'keep'
+    return fld.value == "keep"

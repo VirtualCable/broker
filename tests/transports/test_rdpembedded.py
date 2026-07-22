@@ -28,6 +28,7 @@
 """
 Author: Janier Rodríguez
 """
+
 import typing
 
 from uds.core import types
@@ -38,9 +39,9 @@ from tests.utils.test import UDSTestCase
 
 
 def _connection_data(
-    username: str = 'testuser',
-    password: str = 'testpassword',  # noqa: S107  (synthetic test credential)
-    domain: str = 'TESTDOM',
+    username: str = "testuser",
+    password: str = "testpassword",  # noqa: S107  (synthetic test credential)
+    domain: str = "TESTDOM",
 ) -> types.connections.ConnectionData:
     return types.connections.ConnectionData(
         protocol=types.transports.Protocol.RDP,
@@ -56,29 +57,29 @@ class RDPEmbeddedTest(UDSTestCase):
         return RDPEmbeddedTransport(self.create_environment(), None)
 
     def _build(self, transport: RDPEmbeddedTransport) -> dict[str, typing.Any]:
-        return transport.build_connection_params('1.2.3.4', _connection_data()).as_dict()
+        return transport.build_connection_params("1.2.3.4", _connection_data()).as_dict()
 
     def test_default_shape(self) -> None:
         """Defaults nest flags under options/redirections and drop nothing unexpected."""
         data = self._build(self._transport())
 
-        self.assertEqual(data['server'], '1.2.3.4')
-        self.assertEqual(data['options'], {'use_nla': True, 'verify_cert': False})
+        self.assertEqual(data["server"], "1.2.3.4")
+        self.assertEqual(data["options"], {"use_nla": True, "verify_cert": False})
         # Audio on, mic off by default; "Allow none" drives policy sends an empty list.
-        self.assertEqual(data['redirections']['audio'], True)
-        self.assertEqual(data['redirections']['mic'], False)
-        self.assertEqual(data['redirections']['drives'], [])
+        self.assertEqual(data["redirections"]["audio"], True)
+        self.assertEqual(data["redirections"]["mic"], False)
+        self.assertEqual(data["redirections"]["drives"], [])
         # Webcam disabled by default → key omitted entirely.
-        self.assertNotIn('webcam', data['redirections'])
+        self.assertNotIn("webcam", data["redirections"])
         # No tunnel for the direct transport.
-        self.assertNotIn('tunnel', data)
+        self.assertNotIn("tunnel", data)
 
     def test_as_dict_prunes_none_recursively(self) -> None:
         """No None value should survive at any nesting level."""
 
         def _assert_no_none(value: typing.Any) -> None:
             if isinstance(value, dict):
-                items: dict[str, typing.Any] = typing.cast('dict[str, typing.Any]', value)
+                items: dict[str, typing.Any] = typing.cast("dict[str, typing.Any]", value)
                 for k, v in items.items():
                     self.assertIsNotNone(v, f"key '{k}' is None")
                     _assert_no_none(v)
@@ -90,26 +91,26 @@ class RDPEmbeddedTest(UDSTestCase):
         transport.enable_audio.value = False
         transport.enable_microphone.value = True
 
-        redirections = self._build(transport)['redirections']
-        self.assertFalse(redirections['audio'])
-        self.assertTrue(redirections['mic'])
+        redirections = self._build(transport)["redirections"]
+        self.assertFalse(redirections["audio"])
+        self.assertTrue(redirections["mic"])
 
     def test_drives_allow_any(self) -> None:
         transport = self._transport()
-        transport.allow_drives.value = 'true'
+        transport.allow_drives.value = "true"
 
-        self.assertEqual(self._build(transport)['redirections']['drives'], ['all'])
+        self.assertEqual(self._build(transport)["redirections"]["drives"], ["all"])
 
     def test_webcam_enabled_without_size_limit(self) -> None:
         transport = self._transport()
         transport.enable_webcam.value = True
 
-        webcam = self._build(transport)['redirections']['webcam']
-        self.assertEqual(webcam['enabled'], True)
-        self.assertEqual(webcam['quality'], 80)
-        self.assertEqual(webcam['fps'], 15)
+        webcam = self._build(transport)["redirections"]["webcam"]
+        self.assertEqual(webcam["enabled"], True)
+        self.assertEqual(webcam["quality"], 80)
+        self.assertEqual(webcam["fps"], 15)
         # Both caps at 0 → no size_limit sent.
-        self.assertNotIn('size_limit', webcam)
+        self.assertNotIn("size_limit", webcam)
 
     def test_webcam_size_limit_single_axis(self) -> None:
         """Capping a single axis must still emit size_limit (0 = no cap on that axis)."""
@@ -117,8 +118,8 @@ class RDPEmbeddedTest(UDSTestCase):
         transport.enable_webcam.value = True
         transport.webcam_max_width.value = 1280
 
-        webcam = self._build(transport)['redirections']['webcam']
-        self.assertEqual(webcam['size_limit'], (1280, 0))
+        webcam = self._build(transport)["redirections"]["webcam"]
+        self.assertEqual(webcam["size_limit"], (1280, 0))
 
     def test_webcam_size_limit_both_axes(self) -> None:
         transport = self._transport()
@@ -126,8 +127,8 @@ class RDPEmbeddedTest(UDSTestCase):
         transport.webcam_max_width.value = 1280
         transport.webcam_max_height.value = 720
 
-        webcam = self._build(transport)['redirections']['webcam']
-        self.assertEqual(webcam['size_limit'], (1280, 720))
+        webcam = self._build(transport)["redirections"]["webcam"]
+        self.assertEqual(webcam["size_limit"], (1280, 720))
 
     def test_webcam_quality_fps_bounds(self) -> None:
         """Quality and FPS expose validation bounds to the admin UI."""
@@ -144,14 +145,14 @@ class RDPEmbeddedTest(UDSTestCase):
         transport.use_sso.value = True
 
         data = self._build(transport)
-        self.assertEqual(data['password'], '__NO_PASSWORD__')
-        self.assertEqual(data['domain'], 'UDS')
-        self.assertIn('options', data)
+        self.assertEqual(data["password"], "__NO_PASSWORD__")
+        self.assertEqual(data["domain"], "UDS")
+        self.assertIn("options", data)
 
     def test_tunnel_block_included(self) -> None:
         transport = self._transport()
-        tunnel = RDPTunnelParams(host='tunnel-host', port=7777, ticket='x' * 48, startup_time=0)
+        tunnel = RDPTunnelParams(host="tunnel-host", port=7777, ticket="x" * 48, startup_time=0)
 
-        data = transport.build_connection_params('1.2.3.4', _connection_data(), tunnel=tunnel).as_dict()
-        self.assertEqual(data['tunnel']['host'], 'tunnel-host')
-        self.assertEqual(data['tunnel']['port'], 7777)
+        data = transport.build_connection_params("1.2.3.4", _connection_data(), tunnel=tunnel).as_dict()
+        self.assertEqual(data["tunnel"]["host"], "tunnel-host")
+        self.assertEqual(data["tunnel"]["port"], 7777)

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -41,22 +42,22 @@ logger = logging.getLogger(__name__)
 
 class UDSVersion(Handler):
     ROLE = consts.UserRole.ANONYMOUS
-    NAME = 'version'
+    NAME = "version"
 
     API_OPERATIONS = {
-        'get': types.rest.api.Operation(
-            summary='Get UDS version',
-            description='Returns the current UDS version and build number',
+        "get": types.rest.api.Operation(
+            summary="Get UDS version",
+            description="Returns the current UDS version and build number",
             responses={
-                '200': types.rest.api.Response(
-                    description='Version information',
+                "200": types.rest.api.Response(
+                    description="Version information",
                     content=types.rest.api.Content(
-                        media_type='application/json',
+                        media_type="application/json",
                         schema=types.rest.api.SchemaProperty(
-                            type='object',
+                            type="object",
                             properties={
-                                'version': types.rest.api.SchemaProperty(type='string'),
-                                'build': types.rest.api.SchemaProperty(type='string'),
+                                "version": types.rest.api.SchemaProperty(type="string"),
+                                "build": types.rest.api.SchemaProperty(type="string"),
                             },
                         ),
                     ),
@@ -66,4 +67,4 @@ class UDSVersion(Handler):
     }
 
     def get(self) -> collections.abc.MutableMapping[str, typing.Any]:
-        return {'version': consts.system.VERSION, 'build': consts.system.VERSION_STAMP}
+        return {"version": consts.system.VERSION, "build": consts.system.VERSION_STAMP}

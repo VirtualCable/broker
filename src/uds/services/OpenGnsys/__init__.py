@@ -32,8 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 from uds.core import managers
 
-from .provider import OGProvider
 from .jobs import OpenGnsysMaintainer
+from .provider import OGProvider
 
 # Scheduled task to do clean processes
 for cls in (OpenGnsysMaintainer,):

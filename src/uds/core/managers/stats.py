@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import datetime
 import logging
@@ -49,10 +50,10 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _FLDS_EQUIV: typing.Final[collections.abc.Mapping[str, collections.abc.Iterable[str]]] = {
-    'fld1': ('username', 'platform', 'duration'),
-    'fld2': ('source', 'srcip', 'browser', 'sent'),
-    'fld3': ('destination', 'dstip', 'received'),
-    'fld4': ('uniqueid', 'tunnel'),
+    "fld1": ("username", "platform", "duration"),
+    "fld2": ("source", "srcip", "browser", "sent"),
+    "fld3": ("destination", "dstip", "received"),
+    "fld4": ("uniqueid", "tunnel"),
 }
 
 _REVERSE_FLDS_EQUIV: typing.Final[collections.abc.Mapping[str, str]] = {
@@ -70,16 +71,14 @@ class StatsManager(metaclass=singleton.Singleton):
     """
 
     @staticmethod
-    def manager() -> 'StatsManager':
+    def manager() -> "StatsManager":
         return StatsManager()  # Singleton pattern will return always the same instance
 
     def _do_maintanance(
         self,
-        model: type[typing.Union['StatsCounters', 'StatsEvents', 'StatsCountersAccum']],
+        model: type[typing.Union["StatsCounters", "StatsEvents", "StatsCountersAccum"]],
     ) -> None:
-        min_time = time.mktime(
-            (sql_now() - datetime.timedelta(days=GlobalConfig.STATS_DURATION.as_int())).timetuple()
-        )
+        min_time = time.mktime((sql_now() - datetime.timedelta(days=GlobalConfig.STATS_DURATION.as_int())).timetuple())
         model.objects.filter(stamp__lt=min_time).delete()
 
     # Counter stats
@@ -123,7 +122,7 @@ class StatsManager(metaclass=singleton.Singleton):
             )
             return True
         except Exception:
-            logger.error('Exception handling counter stats saving (maybe database is full?)')
+            logger.error("Exception handling counter stats saving (maybe database is full?)")
         return False
 
     def enumerate_counters(
@@ -210,7 +209,7 @@ class StatsManager(metaclass=singleton.Singleton):
             counter_type=counter_type,
             stamp__gte=since,
             owner_id=owner_id if owner_id is not None else -1,
-        ).order_by('stamp')
+        ).order_by("stamp")
         if owner_type is not None:
             query = query.filter(owner_type=owner_type)
         # If points is NONE, we get all data
@@ -218,10 +217,10 @@ class StatsManager(metaclass=singleton.Singleton):
 
         # Yields all data, stamp, n, sum, max, min (stamp, v_count,v_sum,v_max,v_min)
         # Now, get exactly the points we need
-        
+
         # Note that empty values were not saved, so we can find "holes" in the data
         # that will be filled with empty values
-        
+
         stamp = since
         for rec in query:
             # While query stamp is greater than stamp, repeat last AccumStat
@@ -253,9 +252,9 @@ class StatsManager(metaclass=singleton.Singleton):
         self._do_maintanance(StatsCountersAccum)
 
     def get_event_field_for(self, fld: str) -> str:
-        '''
+        """
         Get equivalency between "cool names" and field. Will raise "KeyError" if no equivalency
-        '''
+        """
         return _REVERSE_FLDS_EQUIV[fld]
 
     # Event stats
@@ -285,7 +284,7 @@ class StatsManager(metaclass=singleton.Singleton):
 
             Nothing
         """
-        logger.debug('Adding event stat')
+        logger.debug("Adding event stat")
         if stamp is None:
             stamp_seconds = sql_stamp_seconds()
         else:
@@ -294,7 +293,7 @@ class StatsManager(metaclass=singleton.Singleton):
 
         def get_kwarg(fld: str) -> str:
             SENTINEL: typing.Final = object()
-            val: 'str|None|object' = kwargs.get(fld, SENTINEL)
+            val: "str|None|object" = kwargs.get(fld, SENTINEL)
             if val is SENTINEL and fld in _FLDS_EQUIV:
                 for i in _FLDS_EQUIV[fld]:
                     val = kwargs.get(i, SENTINEL)
@@ -302,14 +301,14 @@ class StatsManager(metaclass=singleton.Singleton):
                         break
 
             if val is SENTINEL:
-                return ''
+                return ""
 
-            return typing.cast('str|None', val) or ''
+            return typing.cast("str|None", val) or ""
 
-        fld1 = get_kwarg('fld1')
-        fld2 = get_kwarg('fld2')
-        fld3 = get_kwarg('fld3')
-        fld4 = get_kwarg('fld4')
+        fld1 = get_kwarg("fld1")
+        fld2 = get_kwarg("fld2")
+        fld3 = get_kwarg("fld3")
+        fld4 = get_kwarg("fld4")
 
         try:
             StatsEvents.objects.create(
@@ -317,27 +316,25 @@ class StatsManager(metaclass=singleton.Singleton):
                 owner_id=owner_id,
                 event_type=event_type,
                 stamp=stamp_seconds,
-                fld1=fld1 or '',
-                fld2=fld2 or '',
-                fld3=fld3 or '',
-                fld4=fld4 or '',
+                fld1=fld1 or "",
+                fld2=fld2 or "",
+                fld3=fld3 or "",
+                fld4=fld4 or "",
             )
             return True
         except Exception:
-            logger.exception('Exception handling event stats saving (maybe database is full?)')
+            logger.exception("Exception handling event stats saving (maybe database is full?)")
         return False
 
     def enumerate_events(
         self,
-        owner_type: typing.Union[
-            types.stats.EventOwnerType, collections.abc.Iterable[types.stats.EventOwnerType]
-        ],
+        owner_type: typing.Union[types.stats.EventOwnerType, collections.abc.Iterable[types.stats.EventOwnerType]],
         event_type: typing.Union[types.stats.EventType, collections.abc.Iterable[types.stats.EventType]],
-        owner_id: 'int|collections.abc.Iterable[int]|None' = None,
-        since: 'datetime.datetime|int|None' = None,
-        to: 'datetime.datetime|int|None' = None,
+        owner_id: "int|collections.abc.Iterable[int]|None" = None,
+        since: "datetime.datetime|int|None" = None,
+        to: "datetime.datetime|int|None" = None,
         limit: int = 0,
-    ) -> 'models.QuerySet[StatsEvents]':
+    ) -> "models.QuerySet[StatsEvents]":
         """
         Retrieves counters from item
 
@@ -359,12 +356,12 @@ class StatsManager(metaclass=singleton.Singleton):
         *,
         starting_id: typing.Optional[str] = None,
         number: typing.Optional[int] = None,
-    ) -> 'models.QuerySet[StatsEvents]':
+    ) -> "models.QuerySet[StatsEvents]":
         # If number is not specified, we return five last events
         number = number or 5
         if starting_id:
-            return StatsEvents.objects.filter(id__gt=starting_id).order_by('-id')[:number]
-        return StatsEvents.objects.order_by('-id')[:number]
+            return StatsEvents.objects.filter(id__gt=starting_id).order_by("-id")[:number]
+        return StatsEvents.objects.order_by("-id")[:number]
 
     def perform_events_maintenancecleanup_events(self) -> None:
         """

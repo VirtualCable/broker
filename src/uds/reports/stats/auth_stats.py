@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import time
@@ -52,17 +53,17 @@ BIG_INTERVAL = 3600 * 24 * 30 * 12  # 12 months
 
 
 class AuthenticatorsStats(StatsReportAuto):
-    dates = 'range'
+    dates = "range"
     intervals = True
-    data_source = 'Authenticator'
+    data_source = "Authenticator"
     multiple = True
 
-    filename = 'auths_stats.pdf'
-    name = _('Statistics by authenticator')  # Report name
+    filename = "auths_stats.pdf"
+    name = _("Statistics by authenticator")  # Report name
     description = _(
-        'Generates a report with the statistics of an authenticator for a desired period'
+        "Generates a report with the statistics of an authenticator for a desired period"
     )  # Report description
-    uuid = 'a5a43bc0-d543-11ea-af8f-af01fa65994e'
+    uuid = "a5a43bc0-d543-11ea-af8f-af01fa65994e"
 
     @typing.override
     def generate(self) -> bytes:
@@ -79,9 +80,9 @@ class AuthenticatorsStats(StatsReportAuto):
 
         for a in self.get_model_records():
             # Will show a.name on every change...
-            stats.append({'date': a.name, 'users': None})
+            stats.append({"date": a.name, "users": None})
 
-            auth = typing.cast('models.Authenticator', a)
+            auth = typing.cast("models.Authenticator", a)
 
             for counter1, counter2, counter3 in zip(
                 counters.enumerate_counters(
@@ -114,18 +115,18 @@ class AuthenticatorsStats(StatsReportAuto):
             ):
                 stats.append(
                     {
-                        'date': self.format_datetime_as_string(counter1[0]),
-                        'users': counter3[1],
-                        'services': counter1[1],
-                        'user_services': counter2[1],
+                        "date": self.format_datetime_as_string(counter1[0]),
+                        "users": counter3[1],
+                        "services": counter1[1],
+                        "user_services": counter2[1],
                     }
                 )
 
-        logger.debug('Report Data Done. Elapsed time: %s', time.time() - exec_start)
+        logger.debug("Report Data Done. Elapsed time: %s", time.time() - exec_start)
 
         return self.template_as_pdf(
-            'uds/reports/stats/authenticator_stats.html',
-            dct={'data': stats},
-            header=gettext('Users usage list'),
-            water=gettext('UDS Report of users usage'),
+            "uds/reports/stats/authenticator_stats.html",
+            dct={"data": stats},
+            header=gettext("Users usage list"),
+            water=gettext("UDS Report of users usage"),
         )

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -41,22 +42,20 @@ logger = logging.getLogger(__name__)
 
 
 class LoginForm(forms.Form):
-    user = forms.CharField(label=_('Username'), max_length=64, widget=forms.TextInput())
+    user = forms.CharField(label=_("Username"), max_length=64, widget=forms.TextInput())
     password = forms.CharField(
-        label=_('Password'),
-        widget=forms.PasswordInput(attrs={'title': _('Password')}),
+        label=_("Password"),
+        widget=forms.PasswordInput(attrs={"title": _("Password")}),
         required=False,
     )
-    authenticator = forms.ChoiceField(
-        label=_('Authenticator'), choices=(), required=False
-    )
+    authenticator = forms.ChoiceField(label=_("Authenticator"), choices=(), required=False)
     logouturl = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         # If an specified login is passed in, retrieve it & remove it from kwargs dict
-        tag = kwargs.get('tag', None)
-        if 'tag' in kwargs:
-            del kwargs['tag']
+        tag = kwargs.get("tag", None)
+        if "tag" in kwargs:
+            del kwargs["tag"]
 
         # Parent init
         super(LoginForm, self).__init__(*args, **kwargs)
@@ -66,8 +65,8 @@ class LoginForm(forms.Form):
         for a in Authenticator.get_by_tag(tag):
             if not a.get_type():  # Not existing manager for the auth?
                 continue
-            if a.get_type().is_custom() and tag == 'disabled':
+            if a.get_type().is_custom() and tag == "disabled":
                 continue
             choices.append((a.uuid, a.name))
 
-        typing.cast(forms.ChoiceField, self.fields['authenticator']).choices = choices  
+        typing.cast(forms.ChoiceField, self.fields["authenticator"]).choices = choices

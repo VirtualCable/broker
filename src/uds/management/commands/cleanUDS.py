@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import sys
 import typing
@@ -63,6 +64,6 @@ class Command(BaseCommand):
 
         sys.stdout.write("Releasing schedulers...\n")
         # Release all Schedulers
-        Scheduler.objects.all().update(owner_server='', state=State.FOR_EXECUTE)
+        Scheduler.objects.all().update(owner_server="", state=State.FOR_EXECUTE)
 
         sys.stdout.write("UDS Cleaned UP\n")

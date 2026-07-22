@@ -26,12 +26,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Provides useful functions for authenticating, used by web interface.
 
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import base64
 import codecs
 import collections.abc
@@ -58,10 +59,10 @@ if typing.TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-auth_logger = logging.getLogger('authLog')
+auth_logger = logging.getLogger("authLog")
 
 
-RT = typing.TypeVar('RT')
+RT = typing.TypeVar("RT")
 
 
 # Local type only
@@ -73,25 +74,25 @@ def uds_cookie(
     """
     Generates a random cookie for uds, used, for example, to encript things
     """
-    if 'uds' not in request.COOKIES:
+    if "uds" not in request.COOKIES:
         cookie = CryptoManager.manager().random_string(consts.auth.UDS_COOKIE_LENGTH)
         if response is not None:
             response.set_cookie(
-                'uds',
+                "uds",
                 cookie,
-                samesite='Lax',
+                samesite="Lax",
                 httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
                 secure=True if config.GlobalConfig.ENHANCED_SECURITY.as_bool() else False,
             )
-        request.COOKIES['uds'] = cookie
+        request.COOKIES["uds"] = cookie
     else:
-        cookie = request.COOKIES['uds'][: consts.auth.UDS_COOKIE_LENGTH]
+        cookie = request.COOKIES["uds"][: consts.auth.UDS_COOKIE_LENGTH]
 
     if response and force:
         response.set_cookie(
-            'uds',
+            "uds",
             cookie,
-            samesite='Lax',
+            samesite="Lax",
             httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
             secure=True if config.GlobalConfig.ENHANCED_SECURITY.as_bool() else False,
         )
@@ -109,7 +110,7 @@ def root_user() -> models.User:
     user = models.User(
         id=consts.auth.ROOT_ID,
         name=config.GlobalConfig.SUPER_USER_LOGIN.get(True),
-        real_name=_('System Administrator'),
+        real_name=_("System Administrator"),
         state=types.states.State.ACTIVE,
         staff_member=True,
         is_admin=True,
@@ -148,7 +149,7 @@ def weblogin_required(
     ) -> collections.abc.Callable[..., HttpResponse]:
         @wraps(view_func)
         def _wrapped_view(
-            request: 'types.requests.ExtendedHttpRequest', *args: typing.Any, **kwargs: typing.Any
+            request: "types.requests.ExtendedHttpRequest", *args: typing.Any, **kwargs: typing.Any
         ) -> HttpResponse:
             """
             Wrapped function for decorator
@@ -158,10 +159,8 @@ def weblogin_required(
                 return weblogout(request)
 
             if role in (consts.UserRole.ADMIN, consts.UserRole.STAFF):
-                if request.user.is_staff() is False or (
-                    role == consts.UserRole.ADMIN and not request.user.is_admin
-                ):
-                    return HttpResponseForbidden(_('Forbidden'))
+                if request.user.is_staff() is False or (role == consts.UserRole.ADMIN and not request.user.is_admin):
+                    return HttpResponseForbidden(_("Forbidden"))
 
             return view_func(request, *args, **kwargs)
 
@@ -189,7 +188,7 @@ def needs_trusted_source(
 
     @wraps(view_func)
     def _wrapped_view(
-        request: 'types.requests.ExtendedHttpRequest', *args: typing.Any, **kwargs: typing.Any
+        request: "types.requests.ExtendedHttpRequest", *args: typing.Any, **kwargs: typing.Any
     ) -> HttpResponse:
         """
         Wrapped function for decorator
@@ -212,9 +211,7 @@ def needs_trusted_source(
 # it's designed to be used in ajax calls mainly
 def deny_non_authenticated(view_func: collections.abc.Callable[..., RT]) -> collections.abc.Callable[..., RT]:
     @wraps(view_func)
-    def _wrapped_view(
-        request: 'types.requests.ExtendedHttpRequest', *args: typing.Any, **kwargs: typing.Any
-    ) -> RT:
+    def _wrapped_view(request: "types.requests.ExtendedHttpRequest", *args: typing.Any, **kwargs: typing.Any) -> RT:
         if not request.user or not request.authorized:
             return HttpResponseForbidden()  # type: ignore
         return view_func(request, *args, **kwargs)
@@ -226,7 +223,7 @@ def register_user(
     authenticator: models.Authenticator,
     auth_instance: AuthenticatorInstance,
     username: str,
-    request: 'types.requests.ExtendedHttpRequest',
+    request: "types.requests.ExtendedHttpRequest",
     skip_callbacks: bool = False,
 ) -> types.auth.LoginResult:
     """
@@ -261,7 +258,7 @@ def authenticate(
     username: str,
     password: str,
     authenticator: models.Authenticator,
-    request: 'types.requests.ExtendedHttpRequest',
+    request: "types.requests.ExtendedHttpRequest",
 ) -> types.auth.LoginResult:
     """
     Authenticate user with provided credentials
@@ -273,7 +270,7 @@ def authenticate(
         request (ExtendedHttpRequestWithUser): Request object
 
     """
-    logger.debug('Authenticating user %s with authenticator %s', username, authenticator)
+    logger.debug("Authenticating user %s with authenticator %s", username, authenticator)
 
     # If global root auth is enabled && user/password is correct,
     # Note: From now onwards, root "we user" can only login from a trusted source
@@ -288,34 +285,34 @@ def authenticate(
     gm = auths.GroupsManager(authenticator)
     auth_instance = authenticator.get_instance()
     username = auth_instance.transformed_username(username, request)
-    logger.debug('Transformed username: %s', username)
+    logger.debug("Transformed username: %s", username)
 
     if auth_instance.is_ip_allowed(request=request) is False:
         log_login(
             request,
             authenticator,
             username,
-            'Access tried from an unallowed source',
+            "Access tried from an unallowed source",
             as_error=True,
         )
-        return types.auth.LoginResult(errstr=_('Access tried from an unallowed source'))
+        return types.auth.LoginResult(errstr=_("Access tried from an unallowed source"))
 
     res = auth_instance.authenticate(username, password, gm, request)
 
     if res.success == types.auth.AuthenticationState.FAIL:
-        logger.debug('Authentication failed')
+        logger.debug("Authentication failed")
         # Maybe it's an redirection on auth failed?
         return types.auth.LoginResult()
 
     if res.success == types.auth.AuthenticationState.REDIRECT:
         return types.auth.LoginResult(url=res.url)
 
-    logger.debug('Groups manager: %s', gm)
+    logger.debug("Groups manager: %s", gm)
 
     # If do not have any valid group
     if gm.has_valid_groups() is False:
         logger.info(
-            'User %s has been authenticated, but he does not belongs to any UDS known group',
+            "User %s has been authenticated, but he does not belongs to any UDS known group",
             username,
         )
         return types.auth.LoginResult()
@@ -325,8 +322,8 @@ def authenticate(
 
 def authenticate_via_callback(
     authenticator: models.Authenticator,
-    params: 'types.auth.AuthCallbackParams',
-    request: 'ExtendedHttpRequestWithUser',
+    params: "types.auth.AuthCallbackParams",
+    request: "ExtendedHttpRequestWithUser",
 ) -> types.auth.LoginResult:
     """
     Given an username, this method will get invoked whenever the url for a callback
@@ -357,14 +354,14 @@ def authenticate_via_callback(
     if result.success == types.auth.AuthenticationState.FAIL or (
         result.success == types.auth.AuthenticationState.SUCCESS and not gm.has_valid_groups()
     ):
-        raise exceptions.auth.InvalidUserException('User doesn\'t has access to UDS')
+        raise exceptions.auth.InvalidUserException("User doesn't has access to UDS")
 
     if result.success == types.auth.AuthenticationState.REDIRECT:
         return types.auth.LoginResult(url=result.url)
 
     if not result.username:
-        logger.warning('Authenticator %s returned empty username', authenticator.name)
-        raise exceptions.auth.InvalidUserException('User doesn\'t has access to UDS')
+        logger.warning("Authenticator %s returned empty username", authenticator.name)
+        raise exceptions.auth.InvalidUserException("User doesn't has access to UDS")
 
     return register_user(authenticator, auth_instance, result.username, request)
 
@@ -373,7 +370,7 @@ def authenticate_callback_url(authenticator: models.Authenticator) -> str:
     """
     Helper method, so we can get the auth call back url for an authenticator
     """
-    return reverse('page.auth.callback', kwargs={'authenticator_name': authenticator.small_name})
+    return reverse("page.auth.callback", kwargs={"authenticator_name": authenticator.small_name})
 
 
 def authenticate_info_url(authenticator: str | bytes | models.Authenticator) -> str:
@@ -383,15 +380,15 @@ def authenticate_info_url(authenticator: str | bytes | models.Authenticator) -> 
     if isinstance(authenticator, str):
         name = authenticator
     elif isinstance(authenticator, bytes):
-        name = authenticator.decode('utf8')
+        name = authenticator.decode("utf8")
     else:
         name = authenticator.small_name
 
-    return reverse('page.auth.info', kwargs={'authenticator_name': name})
+    return reverse("page.auth.info", kwargs={"authenticator_name": name})
 
 
 def weblogin(
-    request: 'types.requests.ExtendedHttpRequest',
+    request: "types.requests.ExtendedHttpRequest",
     response: HttpResponse | None,
     user: models.User,
     password: str,
@@ -416,7 +413,7 @@ def weblogin(
     request.session[consts.auth.SESSION_IP_KEY] = request.ip
     # If Enabled zero trust, do not cache credentials
     if config.GlobalConfig.ENFORCE_ZERO_TRUST.as_bool(False):
-        password = ''  # nosec: clear password if zero trust is enabled
+        password = ""  # nosec: clear password if zero trust is enabled
 
     request.session[consts.auth.SESSION_USER_KEY] = user.id
     request.session[consts.auth.SESSION_PASS_KEY] = codecs.encode(
@@ -430,7 +427,7 @@ def weblogin(
         manager_id,
         user.name,
         password,
-        get_language() or '',
+        get_language() or "",
         request.os.os.name,
         cookie,
     )
@@ -443,28 +440,26 @@ def get_webpassword(request: HttpRequest) -> str:
     session (db) and client browser cookies. This method uses this two values to recompose the user password
     so we can provide it to remote sessions. (this way, the password is never completely stored at any side)
     """
-    if hasattr(request, '_cryptedpass') and hasattr(request, '_scrambler'):
+    if hasattr(request, "_cryptedpass") and hasattr(request, "_scrambler"):
         return CryptoManager.manager().symmetric_decrypt(
-            getattr(request, '_cryptedpass'),
-            getattr(request, '_scrambler'),
+            getattr(request, "_cryptedpass"),
+            getattr(request, "_scrambler"),
         )
-    passkey = base64.b64decode(request.session.get(consts.auth.SESSION_PASS_KEY, ''))
-    return CryptoManager.manager().symmetric_decrypt(
-        passkey, uds_cookie(request)
-    )  # recover as original unicode string
+    passkey = base64.b64decode(request.session.get(consts.auth.SESSION_PASS_KEY, ""))
+    return CryptoManager.manager().symmetric_decrypt(passkey, uds_cookie(request))  # recover as original unicode string
 
 
 def weblogout(
-    request: 'types.requests.ExtendedHttpRequest',
+    request: "types.requests.ExtendedHttpRequest",
     exit_url: str | None = None,
 ) -> HttpResponse:
     """
     Helper function to clear user related data from session. If this method is not used, the session we be cleaned anyway
     by django in regular basis.
     """
-    tag = request.session.pop('tag', None)
+    tag = request.session.pop("tag", None)
     if tag and config.GlobalConfig.REDIRECT_TO_TAG_ON_LOGOUT.as_bool(False):
-        exit_page = reverse(types.auth.AuthenticationInternalUrl.LOGIN_LABEL, kwargs={'tag': tag})
+        exit_page = reverse(types.auth.AuthenticationInternalUrl.LOGIN_LABEL, kwargs={"tag": tag})
     else:
         # remove, if exists, tag from session
         exit_page = reverse(types.auth.AuthenticationInternalUrl.LOGIN)
@@ -495,36 +490,36 @@ def weblogout(
 
 
 def log_login(
-    request: 'types.requests.ExtendedHttpRequest',
+    request: "types.requests.ExtendedHttpRequest",
     authenticator: models.Authenticator,
     username: str,
-    log_string: str = '',
+    log_string: str = "",
     as_error: bool = False,
 ) -> None:
     """
     Logs authentication
     """
-    if log_string == '':
-        log_string = 'Logged in'
+    if log_string == "":
+        log_string = "Logged in"
 
     log_level = types.log.LogLevel.ERROR if as_error else types.log.LogLevel.INFO
 
     auth_logger.info(
-        '|'.join(
+        "|".join(
             [
                 authenticator.name,
                 username,
                 request.ip,
                 request.os.os.name,
                 log_string,
-                request.META.get('HTTP_USER_AGENT', 'Undefined'),
+                request.META.get("HTTP_USER_AGENT", "Undefined"),
             ]
         )
     )
     log.log(
         authenticator,
         log_level,
-        f'user {username} has {log_string} from {request.ip} where os is {request.os.os.name}',
+        f"user {username} has {log_string} from {request.ip} where os is {request.os.os.name}",
         types.log.LogSource.WEB,
     )
 
@@ -534,46 +529,50 @@ def log_login(
         log.log(
             user,
             log_level,
-            f'{log_string} from {request.ip} where OS is {request.os.os.name}',
+            f"{log_string} from {request.ip} where OS is {request.os.os.name}",
             types.log.LogSource.WEB,
         )
     except Exception:  # nosec: root user is not on any authenticator, will fail with an exception we can ingore
-        logger.info('Root %s from %s where OS is %s', log_string, request.ip, request.os.os.name)
+        logger.info("Root %s from %s where OS is %s", log_string, request.ip, request.os.os.name)
 
     if ImmutableLogger.is_enabled():
-        ImmutableLogger.append_object({
-            't': 'login',
-            'a': authenticator.name,
-            'u': username,
-            'i': request.ip,
-            'o': request.os.os.name,
-            'r': log_string,
-            'e': as_error,
-        })
+        ImmutableLogger.append_object(
+            {
+                "t": "login",
+                "a": authenticator.name,
+                "u": username,
+                "i": request.ip,
+                "o": request.os.os.name,
+                "r": log_string,
+                "e": as_error,
+            }
+        )
 
 
-def log_logout(request: 'types.requests.ExtendedHttpRequest') -> None:
+def log_logout(request: "types.requests.ExtendedHttpRequest") -> None:
     if request.user:
         if request.user.manager.id:
             log.log(
                 request.user.manager,
                 types.log.LogLevel.INFO,
-                f'user {request.user.name} has logged out from {request.ip}',
+                f"user {request.user.name} has logged out from {request.ip}",
                 types.log.LogSource.WEB,
             )
             log.log(
                 request.user,
                 types.log.LogLevel.INFO,
-                f'has logged out from {request.ip}',
+                f"has logged out from {request.ip}",
                 types.log.LogSource.WEB,
             )
         else:
-            logger.info('Root has logged out from %s', request.ip)
+            logger.info("Root has logged out from %s", request.ip)
 
         if ImmutableLogger.is_enabled():
-            ImmutableLogger.append_object({
-                't': 'logout',
-                'u': request.user.name,
-                'a': request.user.manager.name if request.user.manager.id else 'root',
-                'i': request.ip,
-            })
+            ImmutableLogger.append_object(
+                {
+                    "t": "logout",
+                    "u": request.user.name,
+                    "a": request.user.manager.name if request.user.manager.id else "root",
+                    "i": request.ip,
+                }
+            )

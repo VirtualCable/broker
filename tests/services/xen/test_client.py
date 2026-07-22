@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import collections.abc
 
@@ -61,39 +62,39 @@ class TestXenClient(UDSTransactionTestCase):
     net: xen_types.NetworkInfo
 
     def setUp(self) -> None:
-        v = vars.get_vars('xen')
+        v = vars.get_vars("xen")
         if not v:
-            self.skipTest('No xen vars')
+            self.skipTest("No xen vars")
 
         self.xclient = xen_client.XenClient(
-            host=v['host'],
-            host_backup='',
-            port=int(v['port']),
-            username=v['username'],
-            password=v['password'],
+            host=v["host"],
+            host_backup="",
+            port=int(v["port"]),
+            username=v["username"],
+            password=v["password"],
             use_ssl=True,
         )
 
         # As soon as we execute one method of xclient, login will be done, so no need to do it here
 
         # Look for sr (by name) and ensure it exists
-        sr = next(filter(lambda i: i.name == v['sr'], self.xclient.list_srs()), None)
+        sr = next(filter(lambda i: i.name == v["sr"], self.xclient.list_srs()), None)
 
-        if 'net' in v:
-            net = next(filter(lambda i: i.name == v['net'], self.xclient.list_networks()), None)
+        if "net" in v:
+            net = next(filter(lambda i: i.name == v["net"], self.xclient.list_networks()), None)
             if net is None:
-                self.skipTest(f'No network found (by name) with name {v["net"]}')
+                self.skipTest(f"No network found (by name) with name {v['net']}")
             self.net = net
         else:
             # First network found that is managed
             net = next(filter(lambda i: i.managed, self.xclient.list_networks()), None)
             if net is None:
-                self.skipTest('No managed network found')
+                self.skipTest("No managed network found")
 
         if sr is None:
-            self.skipTest(f'No SR found (by name) with name {v["sr"]}')
+            self.skipTest(f"No SR found (by name) with name {v['sr']}")
         self.sr = sr
-        
+
     def tearDown(self) -> None:
         self.xclient.logout()  # Ensure we logout
 
@@ -108,17 +109,17 @@ class TestXenClient(UDSTransactionTestCase):
         created_disks: list[str] = []
         for n in range(number_of_disks):
             VDI_RECORD: dict[str, typing.Any] = {
-                'name_label': f'TEST_EMPTY_DISK_{custom_str}_{n}',
-                'name_description': f'Testing disk {timezone.localtime()}',  # Description
-                'SR': self.sr.opaque_ref,
-                'virtual_size': str(10 * 1024),  # 10 MB
-                'type': 'user',
-                'sharable': False,
-                'read_only': False,
-                'xenstore_data': {},
-                'other_config': {},
-                'sm_config': {},
-                'tags': [],
+                "name_label": f"TEST_EMPTY_DISK_{custom_str}_{n}",
+                "name_description": f"Testing disk {timezone.localtime()}",  # Description
+                "SR": self.sr.opaque_ref,
+                "virtual_size": str(10 * 1024),  # 10 MB
+                "type": "user",
+                "sharable": False,
+                "read_only": False,
+                "xenstore_data": {},
+                "other_config": {},
+                "sm_config": {},
+                "tags": [],
             }
             # Create synchronously
             created_disks.append(self.xclient._session.xenapi.VDI.create(VDI_RECORD))
@@ -131,34 +132,34 @@ class TestXenClient(UDSTransactionTestCase):
 
     def _create_vdb(self, vdi_opaque_ref: str, vm_opaque_ref: str, user_device: int) -> str:
         VBD_RECORD: dict[str, typing.Any] = {
-            'VM': vm_opaque_ref,
-            'VDI': vdi_opaque_ref,
-            'userdevice': str(user_device),
-            'bootable': False,
-            'mode': 'RW',  # Read/Write
-            'type': 'Disk',
-            'empty': False,
-            'other_config': {},
-            'qos_algorithm_type': '',
-            'qos_algorithm_params': {},
-            'qos_supported_algorithms': [],
+            "VM": vm_opaque_ref,
+            "VDI": vdi_opaque_ref,
+            "userdevice": str(user_device),
+            "bootable": False,
+            "mode": "RW",  # Read/Write
+            "type": "Disk",
+            "empty": False,
+            "other_config": {},
+            "qos_algorithm_type": "",
+            "qos_algorithm_params": {},
+            "qos_supported_algorithms": [],
         }
 
         return self.xclient._session.xenapi.VBD.create(VBD_RECORD)
 
     def _create_vif(self, network_opaque_ref: str, vm_opaque_ref: str, user_device: int) -> str:
         VIF_RECORD: dict[str, typing.Any] = {
-            'device': str(user_device),
-            'network': network_opaque_ref,
-            'VM': vm_opaque_ref,
-            'MAC': '',  # Leave blank for auto-generation or specify a MAC address
-            'MTU': '1500',  # Default MTU
-            'other_config': {},
-            'qos_algorithm_type': '',
-            'qos_algorithm_params': {},
-            'locking_mode': 'network_default',
-            'ipv4_allowed': [],
-            'ipv6_allowed': [],
+            "device": str(user_device),
+            "network": network_opaque_ref,
+            "VM": vm_opaque_ref,
+            "MAC": "",  # Leave blank for auto-generation or specify a MAC address
+            "MTU": "1500",  # Default MTU
+            "other_config": {},
+            "qos_algorithm_type": "",
+            "qos_algorithm_params": {},
+            "locking_mode": "network_default",
+            "ipv4_allowed": [],
+            "ipv6_allowed": [],
         }
 
         return self.xclient._session.xenapi.VIF.create(VIF_RECORD)
@@ -169,43 +170,43 @@ class TestXenClient(UDSTransactionTestCase):
     ) -> collections.abc.Iterator[str]:
         size_mb = size_mb * 1024 * 1024  # Convert to bytes
         VM_RECORD: dict[str, typing.Any] = {
-            'name_label': name,
-            'name_description': 'Testing VM (HVM)',
-            'user_version': '1',
-            'is_a_template': False,
-            'affinity': '',  # Use the pool master
-            'memory_static_max': str(size_mb),
-            'memory_dynamic_max': str(size_mb),
-            'memory_dynamic_min': str(size_mb),
-            'memory_static_min': str(size_mb),
-            'VCPUs_params': {},
-            'VCPUs_max': str(vcpus),
-            'VCPUs_at_startup': str(vcpus),
-            'actions_after_shutdown': 'destroy',
-            'actions_after_reboot': 'restart',
-            'actions_after_crash': 'restart',
-            'PV_bootloader': '',
-            'PV_kernel': '',
-            'PV_ramdisk': '',
-            'PV_args': '',
-            'PV_bootloader_args': '',
-            'PV_legacy_args': '',
-            'HVM_boot_policy': 'BIOS order',
-            'HVM_boot_params': {'order': 'cd'},
-            'platform': {'acpi': 'true', 'apic': 'true', 'pae': 'true', 'viridian': 'true'},
-            'PCI_bus': '',
-            'other_config': {'folder': 'TestFolder'},
-            'tags': [],
-            'blocked_operations': {},
-            'protection_policy': '',
-            'bios_strings': {},
-            'auto_power_on': False,
-            'start_delay': 0,
-            'shutdown_delay': 0,
-            'order': 0,
-            'ha_always_run': False,
-            'ha_restart_priority': '',
-            'recommendations': '',
+            "name_label": name,
+            "name_description": "Testing VM (HVM)",
+            "user_version": "1",
+            "is_a_template": False,
+            "affinity": "",  # Use the pool master
+            "memory_static_max": str(size_mb),
+            "memory_dynamic_max": str(size_mb),
+            "memory_dynamic_min": str(size_mb),
+            "memory_static_min": str(size_mb),
+            "VCPUs_params": {},
+            "VCPUs_max": str(vcpus),
+            "VCPUs_at_startup": str(vcpus),
+            "actions_after_shutdown": "destroy",
+            "actions_after_reboot": "restart",
+            "actions_after_crash": "restart",
+            "PV_bootloader": "",
+            "PV_kernel": "",
+            "PV_ramdisk": "",
+            "PV_args": "",
+            "PV_bootloader_args": "",
+            "PV_legacy_args": "",
+            "HVM_boot_policy": "BIOS order",
+            "HVM_boot_params": {"order": "cd"},
+            "platform": {"acpi": "true", "apic": "true", "pae": "true", "viridian": "true"},
+            "PCI_bus": "",
+            "other_config": {"folder": "TestFolder"},
+            "tags": [],
+            "blocked_operations": {},
+            "protection_policy": "",
+            "bios_strings": {},
+            "auto_power_on": False,
+            "start_delay": 0,
+            "shutdown_delay": 0,
+            "order": 0,
+            "ha_always_run": False,
+            "ha_restart_priority": "",
+            "recommendations": "",
         }
 
         vm_opaque_ref = self.xclient._session.xenapi.VM.create(VM_RECORD)
@@ -218,9 +219,7 @@ class TestXenClient(UDSTransactionTestCase):
             # If started, stop it before destroying
             if self.xclient.get_vm_info(vm_opaque_ref, force=True).power_state.is_running():
                 self.xclient.stop_vm(vm_opaque_ref)
-                helpers.waiter(
-                    lambda: self.xclient.get_vm_info(vm_opaque_ref, force=True).power_state.is_stopped()
-                )
+                helpers.waiter(lambda: self.xclient.get_vm_info(vm_opaque_ref, force=True).power_state.is_stopped())
 
             self.xclient._session.xenapi.VM.destroy(vm_opaque_ref)
             if delete_disks:
@@ -233,15 +232,11 @@ class TestXenClient(UDSTransactionTestCase):
         # Look for the smaller vm available
         # Smaller is based on disk size, so we will look for the one with the smallest disk size
         with self._create_empty_disk(4, autodelete=False) as disks_opaque_refs:
-            with self._create_vm(
-                f'Testing VM{int(time.time()) % 1000000}', 32, delete_disks=True
-            ) as vm_opaque_ref:
+            with self._create_vm(f"Testing VM{int(time.time()) % 1000000}", 32, delete_disks=True) as vm_opaque_ref:
                 for counter, disk_opaque_ref in enumerate(disks_opaque_refs):
                     self._create_vdb(disk_opaque_ref, vm_opaque_ref, counter)
 
-                self._create_vif(
-                    vm_opaque_ref=vm_opaque_ref, network_opaque_ref=self.net.opaque_ref, user_device=0
-                )
+                self._create_vif(vm_opaque_ref=vm_opaque_ref, network_opaque_ref=self.net.opaque_ref, user_device=0)
 
                 yield self.xclient.get_vm_info(vm_opaque_ref, force=True)
 
@@ -255,11 +250,11 @@ class TestXenClient(UDSTransactionTestCase):
         if pools:
             name = self.xclient.pool.get_name_label(pools[0])
 
-            self.assertEqual(self.xclient.has_pool(), name != '')
+            self.assertEqual(self.xclient.has_pool(), name != "")
             self.assertEqual(name, self.xclient._pool_name)
         else:
             self.assertFalse(self.xclient.has_pool())
-            self.assertEqual(self.xclient._pool_name, '')
+            self.assertEqual(self.xclient._pool_name, "")
 
     def test_get_task_info(self) -> None:
         # Ensure we have at least one vm to test
@@ -269,7 +264,7 @@ class TestXenClient(UDSTransactionTestCase):
             task = self.xclient.get_task_info(task_id)
             self.assertIsInstance(task, xen_types.TaskInfo)
             self.assertEqual(task.opaque_ref, task_id)
-            self.assertEqual(task.name, 'Async.VM.start')
+            self.assertEqual(task.name, "Async.VM.start")
             # Wait for task to finish
             helpers.waiter(lambda: self.xclient.get_task_info(task_id).is_done())
 
@@ -323,7 +318,7 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertEqual(vm_info.name, vm.name)
 
     def test_start_stop_reset_vm(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.start_vm(non_existing_vm)
 
@@ -380,7 +375,7 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertTrue(self.xclient.get_vm_info(vm.opaque_ref, force=True).power_state.is_running())
 
     def test_suspend_resume_shutdown_vm(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.suspend_vm(non_existing_vm)
 
@@ -453,29 +448,28 @@ class TestXenClient(UDSTransactionTestCase):
             self.xclient.shutdown_vm_sync(vm.opaque_ref)
             # Wait until it is really stopped/suspended
             helpers.waiter(lambda: self.xclient.get_vm_info(vm.opaque_ref, force=True).power_state.is_stopped())
-            
+
     def test_list_folders_related(self) -> None:
         with self._create_test_vm() as vm:
             folders = self.xclient.list_folders()
             self.assertTrue(all(isinstance(typing.cast(typing.Any, i), str) for i in folders))
-            
+
             # vm.folder should be in the list
             self.assertIn(vm.folder, folders)
-            
+
             # Listing vms in folder, should return vm
             vms = self.xclient.list_vms_in_folder(vm.folder)
             self.assertTrue(all(isinstance(typing.cast(typing.Any, i), xen_types.VMInfo) for i in vms))
             self.assertIn(vm.opaque_ref.upper(), {i.opaque_ref.upper() for i in vms})
-    
 
     def test_clone_vm_copy_and_delete(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
-            self.xclient.clone_vm(non_existing_vm, 'test_copy', self.sr.opaque_ref)
+            self.xclient.clone_vm(non_existing_vm, "test_copy", self.sr.opaque_ref)
 
         with self._create_test_vm() as vm:
             # Clone VM, should be a task. If we pass an SR, it will be COPY, if not, it will be CLONE
-            task_id = self.xclient.clone_vm(vm.opaque_ref, 'test_copy', self.sr.opaque_ref)
+            task_id = self.xclient.clone_vm(vm.opaque_ref, "test_copy", self.sr.opaque_ref)
             self.assertIsInstance(task_id, str)
             # Wait task to finish
             helpers.waiter(lambda: self.xclient.get_task_info(task_id).is_done())
@@ -485,26 +479,26 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertTrue(task_info.is_success())
 
             # opaque_ref is in the result
-            self.assertIn('OpaqueRef:', task_info.result)
+            self.assertIn("OpaqueRef:", task_info.result)
 
             new_vm_opaque_ref = task_info.result
 
             # Now, list vms, must contain the cloned one, both by name and by opaque_ref
             vms = self.xclient.list_vms()
-            self.assertTrue(any(i.name == 'test_copy' for i in vms))
+            self.assertTrue(any(i.name == "test_copy" for i in vms))
             self.assertTrue(any(i.opaque_ref.upper() == new_vm_opaque_ref.upper() for i in vms))
 
             # Now, destroy the cloned vm
             self.xclient.delete_vm(new_vm_opaque_ref)
 
     def test_clone_vm_clone_and_delete(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
-            self.xclient.clone_vm(non_existing_vm, 'test_clone', self.sr.opaque_ref)
+            self.xclient.clone_vm(non_existing_vm, "test_clone", self.sr.opaque_ref)
 
         with self._create_test_vm() as vm:
             # Clone VM, should be a task. If we pass an SR, it will be COPY, if not, it will be CLONE
-            task_id = self.xclient.clone_vm(vm.opaque_ref, 'test_clone')
+            task_id = self.xclient.clone_vm(vm.opaque_ref, "test_clone")
             self.assertIsInstance(task_id, str)
             # Wait task to finish
             helpers.waiter(lambda: self.xclient.get_task_info(task_id).is_done())
@@ -514,20 +508,20 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertTrue(task_info.is_success())
 
             # opaque_ref is in the result
-            self.assertIn('OpaqueRef:', task_info.result)
+            self.assertIn("OpaqueRef:", task_info.result)
 
             new_vm_opaque_ref = task_info.result
 
             # Now, list vms, must contain the cloned one, both by name and by opaque_ref
             vms = self.xclient.list_vms()
-            self.assertTrue(any(i.name == 'test_clone' for i in vms))
+            self.assertTrue(any(i.name == "test_clone" for i in vms))
             self.assertTrue(any(i.opaque_ref.upper() == new_vm_opaque_ref.upper() for i in vms))
 
             # Now, destroy the cloned vm
             self.xclient.delete_vm(new_vm_opaque_ref)
 
     def test_configure_vm(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.configure_vm(non_existing_vm, memory=1024)
 
@@ -536,17 +530,17 @@ class TestXenClient(UDSTransactionTestCase):
             self.xclient.configure_vm(
                 vm.opaque_ref,
                 mac_info={
-                    'network': self.net.opaque_ref,
-                    'mac': '00:11:22:33:44:55',
+                    "network": self.net.opaque_ref,
+                    "mac": "00:11:22:33:44:55",
                 },
             )
 
             vifs = self.xclient.VM.get_VIFs(vm.opaque_ref)
             vif = self.xclient.VIF.get_record(vifs[0])
-            self.assertEqual(vif['MAC'], '00:11:22:33:44:55')
+            self.assertEqual(vif["MAC"], "00:11:22:33:44:55")
 
     def test_get_first_ip(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.get_first_ip(non_existing_vm)
 
@@ -556,7 +550,7 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertIsInstance(ip, str)
 
     def test_get_first_mac(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.get_first_mac(non_existing_vm)
 
@@ -566,9 +560,9 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertIsInstance(mac, str)
 
     def test_snapshot_related(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
-            self.xclient.create_snapshot(non_existing_vm, 'test_snapshot')
+            self.xclient.create_snapshot(non_existing_vm, "test_snapshot")
 
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.restore_snapshot(non_existing_vm)
@@ -578,7 +572,7 @@ class TestXenClient(UDSTransactionTestCase):
 
         with self._create_test_vm() as vm:
             # Create snapshot, should be a task
-            task_id = self.xclient.create_snapshot(vm.opaque_ref, 'test_snapshot')
+            task_id = self.xclient.create_snapshot(vm.opaque_ref, "test_snapshot")
             self.assertIsInstance(task_id, str)
             # Wait task to finish
             helpers.waiter(lambda: self.xclient.get_task_info(task_id).is_done())
@@ -588,7 +582,7 @@ class TestXenClient(UDSTransactionTestCase):
 
             # Test snapshot is there
             snapshots = self.xclient.list_snapshots(vm.opaque_ref, force=True)
-            self.assertTrue(any(i.name == 'test_snapshot' for i in snapshots))
+            self.assertTrue(any(i.name == "test_snapshot" for i in snapshots))
 
             # Start VM sync
             self.xclient.start_vm_sync(vm.opaque_ref)
@@ -628,7 +622,7 @@ class TestXenClient(UDSTransactionTestCase):
                 self.assertIsNotNone(self.xclient._session.xenapi.VDI.get_record(disk))
 
     def test_template_related(self) -> None:
-        non_existing_vm = 'OpaqueRef:non-existing-vm'
+        non_existing_vm = "OpaqueRef:non-existing-vm"
         with self.assertRaises(xen_exceptions.XenNotFoundError):
             self.xclient.provision_vm(non_existing_vm)
 
@@ -636,7 +630,7 @@ class TestXenClient(UDSTransactionTestCase):
             self.xclient.convert_to_template(non_existing_vm)
 
         with self.assertRaises(xen_exceptions.XenNotFoundError):
-            self.xclient.deploy_from_template(non_existing_vm, 'test_deploy')
+            self.xclient.deploy_from_template(non_existing_vm, "test_deploy")
 
         with self._create_test_vm() as vm:
             # Convert to template, should be a task
@@ -645,7 +639,7 @@ class TestXenClient(UDSTransactionTestCase):
             self.assertTrue(self.xclient.VM.get_is_a_template(vm.opaque_ref))
 
             # Now vm is a template, so we can deploy it
-            task_id = self.xclient.deploy_from_template(vm.opaque_ref, 'test_deploy')
+            task_id = self.xclient.deploy_from_template(vm.opaque_ref, "test_deploy")
             # Wait task to finish
             helpers.waiter(lambda: self.xclient.get_task_info(task_id).is_done())
 

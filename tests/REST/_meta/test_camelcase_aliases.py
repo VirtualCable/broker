@@ -52,14 +52,14 @@ from uds.REST.model.master import ModelHandler
 from uds.REST.utils import camel_and_snake_case_from
 
 
-SECURITY_NAME: typing.Final[str] = 'udsApiAuth'
+SECURITY_NAME: typing.Final[str] = "udsApiAuth"
 
 
 def _handlers_with_snake_case() -> list[type[BaseModelHandler[typing.Any]]]:
     out: list[type[BaseModelHandler[typing.Any]]] = []
-    for cls in list(ModelHandler.__subclasses__()) + list(DetailHandler.__subclasses__()):  
-        cms = getattr(cls, 'CUSTOM_METHODS', None)
-        if cms and any('_' in cm.name for cm in cms):
+    for cls in list(ModelHandler.__subclasses__()) + list(DetailHandler.__subclasses__()):
+        cms = getattr(cls, "CUSTOM_METHODS", None)
+        if cms and any("_" in cm.name for cm in cms):
             out.append(cls)
     return out
 
@@ -79,30 +79,28 @@ def _check_pair(
     method: types.rest.CustomMethodMethod,
     handler_name: str,
 ) -> None:
-    assert canonical in paths, f'missing canonical path {canonical!r} in {handler_name}'
-    assert alias in paths, f'missing camelCase alias path {alias!r} in {handler_name}'
+    assert canonical in paths, f"missing canonical path {canonical!r} in {handler_name}"
+    assert alias in paths, f"missing camelCase alias path {alias!r} in {handler_name}"
 
     canonical_op = _op_for(paths[canonical], method)
-    assert canonical_op is not None, f'canonical {canonical!r} has no operation'
-    assert (
-        getattr(canonical_op, 'deprecated', False) is False
-    ), f'canonical {canonical!r} should not be deprecated'
+    assert canonical_op is not None, f"canonical {canonical!r} has no operation"
+    assert getattr(canonical_op, "deprecated", False) is False, f"canonical {canonical!r} should not be deprecated"
 
     alias_op = _op_for(paths[alias], method)
-    assert alias_op is not None, f'alias {alias!r} has no operation'
-    assert alias_op.deprecated is True, f'alias {alias!r} should be deprecated'
+    assert alias_op is not None, f"alias {alias!r} has no operation"
+    assert alias_op.deprecated is True, f"alias {alias!r} should be deprecated"
 
 
 @pytest.mark.parametrize(
-    'handler_cls',
+    "handler_cls",
     _handlers_with_snake_case(),
     ids=lambda c: c.__name__,
 )
 def test_snake_case_custom_methods_emit_deprecated_camelcase_aliases(
     handler_cls: type[ModelHandler[typing.Any]] | type[DetailHandler[typing.Any]],
 ) -> None:
-    snake_methods = [cm for cm in handler_cls.CUSTOM_METHODS if '_' in cm.name]
-    assert snake_methods, f'{handler_cls.__name__} has no snake_case methods to test'
+    snake_methods = [cm for cm in handler_cls.CUSTOM_METHODS if "_" in cm.name]
+    assert snake_methods, f"{handler_cls.__name__} has no snake_case methods to test"
 
     path = handler_cls.__name__.lower()
     paths = handler_cls.api_paths(path, [handler_cls.__name__], SECURITY_NAME)
@@ -115,23 +113,23 @@ def test_snake_case_custom_methods_emit_deprecated_camelcase_aliases(
             # Collection level (no uuid)
             _check_pair(
                 paths,
-                canonical=f'{path}/{cm.name}',
-                alias=f'{path}/{camel_name}',
+                canonical=f"{path}/{cm.name}",
+                alias=f"{path}/{camel_name}",
                 method=cm.method,
                 handler_name=handler_cls.__name__,
             )
         # Item level (with {uuid})
         _check_pair(
             paths,
-            canonical=f'{path}/{{uuid}}/{cm.name}',
-            alias=f'{path}/{{uuid}}/{camel_name}',
+            canonical=f"{path}/{{uuid}}/{cm.name}",
+            alias=f"{path}/{{uuid}}/{camel_name}",
             method=cm.method,
             handler_name=handler_cls.__name__,
         )
 
 
 @pytest.mark.parametrize(
-    'handler_cls',
+    "handler_cls",
     _handlers_with_snake_case(),
     ids=lambda c: c.__name__,
 )
@@ -139,23 +137,23 @@ def test_single_word_custom_methods_have_no_alias(
     handler_cls: type[ModelHandler[typing.Any]] | type[DetailHandler[typing.Any]],
 ) -> None:
     """Methods whose name has no '_' must not produce a duplicate alias entry."""
-    single = [cm for cm in handler_cls.CUSTOM_METHODS if '_' not in cm.name]
+    single = [cm for cm in handler_cls.CUSTOM_METHODS if "_" not in cm.name]
     if not single:
-        pytest.skip(f'{handler_cls.__name__} has no single-word methods')
+        pytest.skip(f"{handler_cls.__name__} has no single-word methods")
 
     path = handler_cls.__name__.lower()
     paths = handler_cls.api_paths(path, [handler_cls.__name__], SECURITY_NAME)
     is_detail = issubclass(handler_cls, DetailHandler)
     for cm in single:
-        suffixes: list[str] = [f'{path}/{{uuid}}/{cm.name}']
+        suffixes: list[str] = [f"{path}/{{uuid}}/{cm.name}"]
         if is_detail:
-            suffixes.append(f'{path}/{cm.name}')
+            suffixes.append(f"{path}/{cm.name}")
         for suffix in suffixes:
             # Each emitted level must appear at most once. CamelCase of a
             # single word equals the original, so a duplicate would mean
             # a stray alias slipped in.
             matches = [p for p in paths if p == suffix]
             assert len(matches) <= 1, (
-                f'{handler_cls.__name__}: single-word method {cm.name!r} '
-                f'produced {len(matches)} entries for {suffix!r} (expected <=1)'
+                f"{handler_cls.__name__}: single-word method {cm.name!r} "
+                f"produced {len(matches)} entries for {suffix!r} (expected <=1)"
             )

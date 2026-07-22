@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import codecs
 import logging
 import typing
@@ -49,18 +50,16 @@ logger = logging.getLogger(__name__)
 
 
 class Report(UserInterface, abc.ABC):
-    mime_type: typing.ClassVar[str] = (
-        'application/pdf'  # Report returns pdfs by default, but could be anything else
-    )
-    name: typing.ClassVar[str] = _('Base Report')  # Report name
-    group: typing.ClassVar[str] = ''  # So we can "group" reports by kind?
+    mime_type: typing.ClassVar[str] = "application/pdf"  # Report returns pdfs by default, but could be anything else
+    name: typing.ClassVar[str] = _("Base Report")  # Report name
+    group: typing.ClassVar[str] = ""  # So we can "group" reports by kind?
     encoded: typing.ClassVar[bool] = (
         True  # If the report is mean to be encoded (binary reports as PDFs == True, text reports must be False so utf-8 is correctly threated
     )
-    uuid: typing.ClassVar[str] = ''
+    uuid: typing.ClassVar[str] = ""
 
-    description: str = _('Base report')  # Report description
-    filename: str = 'file.pdf'  # Filename that will be returned as 'hint' on rest report request
+    description: str = _("Base report")  # Report description
+    filename: str = "file.pdf"  # Filename that will be returned as 'hint' on rest report request
 
     def __init__(self, values: gui.ValuesType = None):
         """
@@ -91,7 +90,7 @@ class Report(UserInterface, abc.ABC):
         """
 
     @abc.abstractmethod
-    def generate(self) -> 'bytes':
+    def generate(self) -> "bytes":
         """
         Generates the reports
 
@@ -108,9 +107,9 @@ class Report(UserInterface, abc.ABC):
         """
         data = self.generate()
         if self.encoded:
-            return codecs.encode(data, 'base64').decode().replace('\n', '')
-        return data.decode('utf-8')
-    
+            return codecs.encode(data, "base64").decode().replace("\n", "")
+        return data.decode("utf-8")
+
     @classmethod
     def translated_name(cls) -> str:
         """
@@ -135,7 +134,7 @@ class Report(UserInterface, abc.ABC):
     @classmethod
     def get_uuid(cls) -> str:
         if not cls.uuid:
-            raise Exception(f'Class does not includes an uuid!!!: {cls}')
+            raise Exception(f"Class does not includes an uuid!!!: {cls}")
         return cls.uuid
 
     @staticmethod
@@ -152,42 +151,46 @@ class Report(UserInterface, abc.ABC):
 
         # url fetcher for weasyprint
         def report_fetcher(
-            url: str, timeout: int = 10, ssl_context: typing.Any = None  # pylint: disable=unused-argument
-        ) -> dict[str, 'str|bytes|None']:
-            logger.debug('Getting url for weasyprint %s', url)
-            if url.startswith('stock://'):
+            url: str,
+            timeout: int = 10,
+            ssl_context: typing.Any = None,  # pylint: disable=unused-argument
+        ) -> dict[str, "str|bytes|None"]:
+            logger.debug("Getting url for weasyprint %s", url)
+            if url.startswith("stock://"):
                 image_path = stock.get_stock_image_path(url[8:])
-                with open(image_path, 'rb') as f:
+                with open(image_path, "rb") as f:
                     image = f.read()
-                return {'string': image, 'mime_type': 'image/png'}
+                return {"string": image, "mime_type": "image/png"}
 
-            if url.startswith('image://'):
-                img: bytes | None = b''  # Empty image
+            if url.startswith("image://"):
+                img: bytes | None = b""  # Empty image
                 if images:
                     img = images.get(url[8:])
-                    logger.debug('Getting image %s? %s', url[8:], img is not None)
-                return {'string': img, 'mime_type': 'image/png'}
+                    logger.debug("Getting image %s? %s", url[8:], img is not None)
+                return {"string": img, "mime_type": "image/png"}
 
             return default_url_fetcher(url)
 
-        with open(stock.get_stock_css_path('report.css'), 'r', encoding='utf-8') as f:
+        with open(stock.get_stock_css_path("report.css"), "r", encoding="utf-8") as f:
             css = f.read()
 
         css = (
-            css.replace("{header}", header or _('Report'))
-            .replace('{page}', _('Page'))
-            .replace('{of}', _('of'))
-            .replace('{water}', water or 'UDS Report')
+            css.replace("{header}", header or _("Report"))
+            .replace("{page}", _("Page"))
+            .replace("{of}", _("of"))
+            .replace("{water}", water or "UDS Report")
             .replace(
-                '{printed}',
-                _('Printed in {now:%Y, %b %d} at {now:%H:%M}').format(now=timezone.localtime()),
+                "{printed}",
+                _("Printed in {now:%Y, %b %d} at {now:%H:%M}").format(now=timezone.localtime()),
             )
         )
 
         h = HTML(string=html, url_fetcher=report_fetcher)
         c = CSS(string=css)
 
-        return typing.cast(bytes, h.write_pdf(stylesheets=[c]))  # Return a new bytes object  # pyright: ignore[reportUnknownMemberType]
+        return typing.cast(
+            bytes, h.write_pdf(stylesheets=[c])
+        )  # Return a new bytes object  # pyright: ignore[reportUnknownMemberType]
 
     @staticmethod
     def template_as_pdf(
@@ -205,4 +208,4 @@ class Report(UserInterface, abc.ABC):
         return Report.as_pdf(t.render(dct), header=header, water=water, images=images)
 
     def __str__(self) -> str:
-        return f'Report {self.name} with uuid {self.uuid}'
+        return f"Report {self.name} with uuid {self.uuid}"

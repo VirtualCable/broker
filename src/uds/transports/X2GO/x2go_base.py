@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import os
 import typing
@@ -58,115 +59,115 @@ class BaseX2GOTransport(transports.Transport):
 
     is_base = True
 
-    icon_file = 'x2go.png'
+    icon_file = "x2go.png"
     PROTOCOL = types.transports.Protocol.X2GO
     supported_oss = (types.os.KnownOS.LINUX, types.os.KnownOS.WINDOWS)
 
     fixed_name = gui.TextField(
         order=2,
-        label=_('Username'),
-        tooltip=_('If not empty, this username will be always used as credential'),
+        label=_("Username"),
+        tooltip=_("If not empty, this username will be always used as credential"),
         tab=types.ui.Tab.CREDENTIALS,
-        old_field_name='fixedName',
+        old_field_name="fixedName",
     )
 
     screen_size = gui.ChoiceField(
-        label=_('Screen size'),
+        label=_("Screen size"),
         order=10,
-        tooltip=_('Screen size'),
+        tooltip=_("Screen size"),
         default=CommonPrefs.SZ_FULLSCREEN,
         choices=[
-            gui.choice_item(CommonPrefs.SZ_640x480, '640x480'),
-            gui.choice_item(CommonPrefs.SZ_800x600, '800x600'),
-            gui.choice_item(CommonPrefs.SZ_1024x768, '1024x768'),
-            gui.choice_item(CommonPrefs.SZ_1366x768, '1366x768'),
-            gui.choice_item(CommonPrefs.SZ_1920x1080, '1920x1080'),
-            gui.choice_item(CommonPrefs.SZ_FULLSCREEN, gettext_lazy('Full Screen')),
+            gui.choice_item(CommonPrefs.SZ_640x480, "640x480"),
+            gui.choice_item(CommonPrefs.SZ_800x600, "800x600"),
+            gui.choice_item(CommonPrefs.SZ_1024x768, "1024x768"),
+            gui.choice_item(CommonPrefs.SZ_1366x768, "1366x768"),
+            gui.choice_item(CommonPrefs.SZ_1920x1080, "1920x1080"),
+            gui.choice_item(CommonPrefs.SZ_FULLSCREEN, gettext_lazy("Full Screen")),
         ],
         tab=types.ui.Tab.PARAMETERS,
-        old_field_name='screenSize',
+        old_field_name="screenSize",
     )
 
     desktop_type = gui.ChoiceField(
-        label=_('Desktop'),
+        label=_("Desktop"),
         order=11,
-        tooltip=_('Desktop session'),
+        tooltip=_("Desktop session"),
         choices=[
-            gui.choice_item('XFCE', 'Xfce'),
-            gui.choice_item('MATE', 'Mate'),
-            gui.choice_item('LXDE', 'Lxde'),
-            gui.choice_item('GNOME', 'Gnome (see docs)'),
-            gui.choice_item('KDE', 'Kde (see docs)'),
+            gui.choice_item("XFCE", "Xfce"),
+            gui.choice_item("MATE", "Mate"),
+            gui.choice_item("LXDE", "Lxde"),
+            gui.choice_item("GNOME", "Gnome (see docs)"),
+            gui.choice_item("KDE", "Kde (see docs)"),
             # {'id': 'UNITY', 'text': 'Unity (see docs)'},
-            gui.choice_item('gnome-session-cinnamon', 'Cinnamon 1.4 (see docs)'),
-            gui.choice_item('gnome-session-cinnamon2d', 'Cinnamon 2.2 (see docs)'),
-            gui.choice_item('UDSVAPP', 'UDS vAPP'),
+            gui.choice_item("gnome-session-cinnamon", "Cinnamon 1.4 (see docs)"),
+            gui.choice_item("gnome-session-cinnamon2d", "Cinnamon 2.2 (see docs)"),
+            gui.choice_item("UDSVAPP", "UDS vAPP"),
         ],
         tab=types.ui.Tab.PARAMETERS,
-        old_field_name='desktopType',
+        old_field_name="desktopType",
     )
 
     custom_cmd = gui.TextField(
         order=12,
-        label=_('vAPP'),
+        label=_("vAPP"),
         tooltip=_(
             'If UDS vAPP is selected as "Desktop", the FULL PATH of the app to be executed. If UDS vAPP is not selected, this field will be ignored.'
         ),
         tab=types.ui.Tab.PARAMETERS,
-        old_field_name='customCmd',
+        old_field_name="customCmd",
     )
 
     sound = gui.CheckBoxField(
         order=13,
-        label=_('Enable sound'),
-        tooltip=_('If checked, sound will be available'),
+        label=_("Enable sound"),
+        tooltip=_("If checked, sound will be available"),
         default=True,
         tab=types.ui.Tab.PARAMETERS,
     )
 
     exports = gui.CheckBoxField(
         order=14,
-        label=_('Redirect home folder'),
-        tooltip=_('If checked, user home folder will be redirected. (On linux, also redirects /media)'),
+        label=_("Redirect home folder"),
+        tooltip=_("If checked, user home folder will be redirected. (On linux, also redirects /media)"),
         default=False,
         tab=types.ui.Tab.PARAMETERS,
     )
 
     speed = gui.ChoiceField(
-        label=_('Speed'),
+        label=_("Speed"),
         order=15,
-        tooltip=_('Connection speed'),
-        default='3',
+        tooltip=_("Connection speed"),
+        default="3",
         choices=[
-            gui.choice_item('0', 'MODEM'),
-            gui.choice_item('1', 'ISDN'),
-            gui.choice_item('2', 'ADSL'),
-            gui.choice_item('3', 'WAN'),
-            gui.choice_item('4', 'LAN'),
+            gui.choice_item("0", "MODEM"),
+            gui.choice_item("1", "ISDN"),
+            gui.choice_item("2", "ADSL"),
+            gui.choice_item("3", "WAN"),
+            gui.choice_item("4", "LAN"),
         ],
         tab=types.ui.Tab.PARAMETERS,
     )
 
     sound_type = gui.ChoiceField(
-        label=_('Sound'),
+        label=_("Sound"),
         order=30,
-        tooltip=_('Sound server'),
-        default='pulse',
+        tooltip=_("Sound server"),
+        default="pulse",
         choices=[
-            gui.choice_item('pulse', 'Pulse'),
-            gui.choice_item('esd', 'ESD'),
+            gui.choice_item("pulse", "Pulse"),
+            gui.choice_item("esd", "ESD"),
         ],
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='soundType',
+        old_field_name="soundType",
     )
 
     keyboard_layout = gui.TextField(
-        label=_('Keyboard'),
+        label=_("Keyboard"),
         order=31,
-        tooltip=_('Keyboard layout (es, us, fr, ...). Empty value means autodetect.'),
-        default='',
+        tooltip=_("Keyboard layout (es, us, fr, ...). Empty value means autodetect."),
+        default="",
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='keyboardLayout',
+        old_field_name="keyboardLayout",
     )
     # 'nopack', '8', '64', '256', '512', '4k', '32k', '64k', '256k', '2m', '16m'
     # '256-rdp', '256-rdp-compressed', '32k-rdp', '32k-rdp-compressed', '64k-rdp'
@@ -182,17 +183,17 @@ class BaseX2GOTransport(transports.Transport):
     # '32k-png', '64k-png', '256k-png', '2m-png', '16m-png-%'
     # '16m-rgb-%', '16m-rle-%'
     pack = gui.TextField(
-        label=_('Pack'),
+        label=_("Pack"),
         order=32,
-        tooltip=_('Pack format. Change with care!'),
-        default='16m-jpeg',
+        tooltip=_("Pack format. Change with care!"),
+        default="16m-jpeg",
         tab=types.ui.Tab.ADVANCED,
     )
 
     quality = gui.NumericField(
-        label=_('Quality'),
+        label=_("Quality"),
         order=33,
-        tooltip=_('Quality value used on some pack formats.'),
+        tooltip=_("Quality value used on some pack formats."),
         length=1,
         default=6,
         min_value=1,
@@ -202,33 +203,33 @@ class BaseX2GOTransport(transports.Transport):
     )
 
     @typing.override
-    def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
+    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
         Override this in yours transports
         """
-        logger.debug('Checking availability for %s', ip)
+        logger.debug("Checking availability for %s", ip)
         ready = self.cache.get(ip)
         if ready is None:
             # Check again for ready
             if net.test_connectivity(ip, 22):
-                self.cache.put(ip, 'Y', READY_CACHE_TIMEOUT)
+                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
                 return True
-            self.cache.put(ip, 'N', READY_CACHE_TIMEOUT)
-        return ready == 'Y'
+            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
+        return ready == "Y"
 
     def get_screen_size(self) -> tuple[int, int]:
         return CommonPrefs.get_wh(self.screen_size.value)
 
     @typing.override
-    def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
-        v = self.process_user_password(userservice, user, '')
+    def processed_username(self, userservice: "models.UserService", user: "models.User") -> str:
+        v = self.process_user_password(userservice, user, "")
         return v.username
 
     def process_user_password(
         self,
-        userservice: 'models.UserService | models.ServicePool',
-        user: 'models.User',
+        userservice: "models.UserService | models.ServicePool",
+        user: "models.User",
         password: str,
     ) -> types.connections.ConnectionData:
         username = user.get_username_for_auth()
@@ -241,7 +242,7 @@ class BaseX2GOTransport(transports.Transport):
 
         services_type_provided = service.get_type().services_type_provided
 
-        if self.fixed_name.value != '':
+        if self.fixed_name.value != "":
             username = self.fixed_name.value
 
         # Fix username/password acording to os manager
@@ -257,8 +258,8 @@ class BaseX2GOTransport(transports.Transport):
     @typing.override
     def get_connection_info(
         self,
-        userservice: 'models.UserService | models.ServicePool',
-        user: 'models.User',
+        userservice: "models.UserService | models.ServicePool",
+        user: "models.User",
         password: str,
         *,
         for_notify: bool = False,
@@ -282,12 +283,12 @@ class BaseX2GOTransport(transports.Transport):
         return security.generate_ssh_keypair_for_ssh(SSH_KEY_LENGTH)
 
     def get_authorization_script(self, user: str, public_key: str) -> str:
-        with open(os.path.join(os.path.dirname(__file__), 'scripts/authorize.py'), encoding='utf8') as f:
+        with open(os.path.join(os.path.dirname(__file__), "scripts/authorize.py"), encoding="utf8") as f:
             data = f.read()
 
-        return data.replace('__USER__', user).replace('__KEY__', public_key)
+        return data.replace("__USER__", user).replace("__KEY__", public_key)
 
-    def get_and_push_key(self, username: str, userservice: 'models.UserService') -> tuple[str, str]:
+    def get_and_push_key(self, username: str, userservice: "models.UserService") -> tuple[str, str]:
         private_ssh_key, public_ssh_key = self.gen_keypair_for_ssh()
         auth_script = self.get_authorization_script(username, public_ssh_key)
         UserServiceManager.manager().send_script(userservice, auth_script)

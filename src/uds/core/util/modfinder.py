@@ -49,8 +49,8 @@ from uds.core import module
 
 logger = logging.getLogger(__name__)
 
-T = typing.TypeVar('T', bound='module.Module')
-V = typing.TypeVar('V')
+T = typing.TypeVar("T", bound="module.Module")
+V = typing.TypeVar("V")
 
 patterns: list[typing.Any] = []
 
@@ -61,25 +61,25 @@ def get_urlpatterns_from_modules() -> list[typing.Any]:
     Returns:
         list[typing.Any]: List of urlpatterns to add to django urlpatterns
     """
-    logger.debug('Looking for dispatching modules')
+    logger.debug("Looking for dispatching modules")
     if not patterns:
-        logger.debug('Looking for patterns')
+        logger.debug("Looking for patterns")
         try:
-            module_name = 'uds.dispatchers'
+            module_name = "uds.dispatchers"
             package_path = os.path.dirname(typing.cast(str, sys.modules[module_name].__file__))
             for _, name, _ in pkgutil.iter_modules([package_path]):
-                module_fullname = f'{module_name}.{name}.urls'
+                module_fullname = f"{module_name}.{name}.urls"
                 try:
                     mod = importlib.import_module(module_fullname)
-                    urlpatterns: list[typing.Any] = getattr(mod, 'urlpatterns')
-                    logger.debug('Loaded mod %s, url %s', mod, urlpatterns)
+                    urlpatterns: list[typing.Any] = getattr(mod, "urlpatterns")
+                    logger.debug("Loaded mod %s, url %s", mod, urlpatterns)
                     # Append patters from mod
                     for up in urlpatterns:
                         patterns.append(up)
                 except Exception as e:
-                    logger.error('No patterns found in %s (%s)', module_fullname, e)
+                    logger.error("No patterns found in %s (%s)", module_fullname, e)
         except Exception:
-            logger.exception('Processing dispatchers loading')
+            logger.exception("Processing dispatchers loading")
 
     importlib.invalidate_caches()
 
@@ -101,18 +101,18 @@ def import_modules(module_name: str, *, package_name: typing.Optional[str] = Non
     package_path = os.path.dirname(typing.cast(str, sys.modules[module_name].__file__))
     if package_name:  # Append package name to path and module name
         package_path = os.path.join(package_path, package_name)
-        module_name = f'{module_name}.{package_name}'
+        module_name = f"{module_name}.{package_name}"
 
-    logger.info('* Importing modules from %s', package_path)
+    logger.info("* Importing modules from %s", package_path)
     for _, name, _ in pkgutil.iter_modules([package_path]):
         try:
-            logger.info('   - Importing module %s.%s ', module_name, name)
-            importlib.import_module('.' + name, module_name)  # import module
+            logger.info("   - Importing module %s.%s ", module_name, name)
+            importlib.import_module("." + name, module_name)  # import module
         except Exception as e:
             if settings.DEBUG:
-                logger.exception('***** Error importing module %s.%s: %s *****', module_name, name, e)
-            logger.error('   - Error importing module %s.%s: %s', module_name, name, e)
-    logger.info('* Done importing modules from %s', package_path)
+                logger.exception("***** Error importing module %s.%s: %s *****", module_name, name, e)
+            logger.error("   - Error importing module %s.%s: %s", module_name, name, e)
+    logger.info("* Done importing modules from %s", package_path)
 
     importlib.invalidate_caches()
 
@@ -125,7 +125,7 @@ def dynamically_load_and_register_packages(
     package_name: typing.Optional[str] = None,
     checker: typing.Optional[collections.abc.Callable[[type[V]], bool]] = None,
 ) -> None:
-    '''Loads all packages from a given package that are subclasses of the given type
+    """Loads all packages from a given package that are subclasses of the given type
 
     Args:
         adder (collections.abc.Callable[[type[V]], None]): Function to use to add the objects, must support "insert" method
@@ -141,7 +141,7 @@ def dynamically_load_and_register_packages(
             def checker(cls: MyBaseclass) -> bool:
                 # Will receive all classes that are subclasses of MyBaseclass
                 return cls.__name__.startswith('MyClass')
-    '''
+    """
     # Ensures all modules under modName (and optionally packageName) are imported
     import_modules(module_name, package_name=package_name)
 
@@ -156,28 +156,28 @@ def dynamically_load_and_register_packages(
                 _process(cls_subclasses)  # recursive add sub classes
 
             if not check_function(cls):
-                logger.debug('Node is a not accepted, skipping: %s.%s', cls.__module__, cls.__name__)
+                logger.debug("Node is a not accepted, skipping: %s.%s", cls.__module__, cls.__name__)
                 continue
 
-            logger.info('   - Registering %s.%s', cls.__module__, cls.__name__)
+            logger.info("   - Registering %s.%s", cls.__module__, cls.__name__)
             try:
                 adder(cls)
             except Exception as e:
                 if settings.DEBUG:
-                    logger.exception('***** Error registering %s.%s: %s *****', cls.__module__, cls.__name__, e)
-                logger.error('   - Error registering %s.%s: %s', cls.__module__, cls.__name__, e)
+                    logger.exception("***** Error registering %s.%s: %s *****", cls.__module__, cls.__name__, e)
+                logger.error("   - Error registering %s.%s: %s", cls.__module__, cls.__name__, e)
 
-    logger.info('* Start registering %s', module_name)
+    logger.info("* Start registering %s", module_name)
     _process(type_.__subclasses__())
-    logger.info('* Done Registering %s', module_name)
+    logger.info("* Done Registering %s", module_name)
 
 
 def dynamically_load_and_register_modules(
-    factory: 'ModuleFactory[T]',
+    factory: "ModuleFactory[T]",
     type_: type[T],
     module_name: str,
 ) -> None:
-    '''Loads and registers all modules from a given package that are subclasses of the given type
+    """Loads and registers all modules from a given package that are subclasses of the given type
 
     This is an specialisation of dynamic_load_and_register_packages that uses a ModuleFactory to register the modules
 
@@ -185,7 +185,7 @@ def dynamically_load_and_register_modules(
         factory (ModuleFactory): Factory to use to create the objects, must support "insert" method
         type_ (type[T]): Type of the objects to load
         module_name (str): Name of the package to load
-    '''
+    """
 
     def _checker(cls: type[T]) -> bool:
         # Will receive all classes that are subclasses of type_ and is not the marked as base
@@ -203,4 +203,4 @@ def dynamically_load_and_register_modules(
 
 # Given a callable, return the full path to it as a string
 def callable_path(callable_: collections.abc.Callable[..., typing.Any]) -> str:
-    return f'{callable_.__module__}.{callable_.__name__}'
+    return f"{callable_.__module__}.{callable_.__name__}"

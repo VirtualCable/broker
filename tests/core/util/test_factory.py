@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from unittest import mock
@@ -59,28 +60,28 @@ class FactoryTest(UDSTestCase):
     def test_factory(self) -> None:
         test_factory = factory.Factory[FactoryObject]()
 
-        test_factory.register('first', Subclass1)
-        test_factory.register('second', Subclass2)
+        test_factory.register("first", Subclass1)
+        test_factory.register("second", Subclass2)
 
-        self.assertIn('first', test_factory.objects())
-        self.assertIn('second', test_factory.objects())
+        self.assertIn("first", test_factory.objects())
+        self.assertIn("second", test_factory.objects())
 
-        self.assertIn('first', test_factory.objects())
-        self.assertIn('second', test_factory.objects())
+        self.assertIn("first", test_factory.objects())
+        self.assertIn("second", test_factory.objects())
 
-        self.assertCountEqual(test_factory.objects(), ['first', 'second'])
+        self.assertCountEqual(test_factory.objects(), ["first", "second"])
 
-        self.assertEqual(test_factory.objects()['first'], Subclass1)
-        self.assertEqual(test_factory['first'], Subclass1)
-        self.assertEqual(test_factory.get_type('first'), Subclass1)
+        self.assertEqual(test_factory.objects()["first"], Subclass1)
+        self.assertEqual(test_factory["first"], Subclass1)
+        self.assertEqual(test_factory.get_type("first"), Subclass1)
 
-        self.assertEqual(test_factory.objects()['second'], Subclass2)
-        self.assertEqual(test_factory['second'], Subclass2)
-        self.assertEqual(test_factory.get_type('second'), Subclass2)
+        self.assertEqual(test_factory.objects()["second"], Subclass2)
+        self.assertEqual(test_factory["second"], Subclass2)
+        self.assertEqual(test_factory.get_type("second"), Subclass2)
 
         # This should not raise an exception, but call to its logger.debug
-        with mock.patch.object(factory.logger, 'debug') as mock_debug:
-            test_factory.register('first', Subclass1)
+        with mock.patch.object(factory.logger, "debug") as mock_debug:
+            test_factory.register("first", Subclass1)
             mock_debug.assert_called_once()
 
         # As singleton, another instance should be the same

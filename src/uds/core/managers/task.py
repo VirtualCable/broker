@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import threading
 import time
@@ -46,7 +47,6 @@ logger = logging.getLogger(__name__)
 
 
 class BaseThread(threading.Thread, abc.ABC):
-
     @abc.abstractmethod
     def request_stop(self) -> None:
         raise NotImplementedError
@@ -73,8 +73,7 @@ class DelayedTaskThread(BaseThread):
 
 
 class TaskManager(metaclass=singleton.Singleton):
-
-    __slots__ = ('threads', 'keep_running')
+    __slots__ = ("threads", "keep_running")
 
     keep_running: bool
     threads: list[BaseThread]
@@ -84,7 +83,7 @@ class TaskManager(metaclass=singleton.Singleton):
         self.threads = []
 
     @staticmethod
-    def manager() -> 'TaskManager':
+    def manager() -> "TaskManager":
         return TaskManager()
 
     @staticmethod
@@ -139,7 +138,7 @@ class TaskManager(metaclass=singleton.Singleton):
         if n_delayed_tasks < 1:
             n_delayed_tasks = 1  # At least one delayed task
 
-        logger.info('Starting %s schedulers and %s task executors', n_schedulers, n_delayed_tasks)
+        logger.info("Starting %s schedulers and %s task executors", n_schedulers, n_delayed_tasks)
 
         signal.signal(signal.SIGTERM, TaskManager.sig_term)
         signal.signal(signal.SIGINT, TaskManager.sig_term)

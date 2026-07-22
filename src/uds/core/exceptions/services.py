@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from .common import UDSException
@@ -113,16 +114,16 @@ class ServiceNotReadyError(ServiceException):
     Can include an optional code error
     """
 
-    code: 'ReadyStatus'
-    user_service: typing.Optional['UserService']
-    transport: typing.Optional['Transport']
+    code: "ReadyStatus"
+    user_service: typing.Optional["UserService"]
+    transport: typing.Optional["Transport"]
 
     def __init__(
         self,
         *,
-        code: typing.Optional['ReadyStatus'] = None,
-        user_service: typing.Optional['UserService'] = None,
-        transport: typing.Optional['Transport'] = None
+        code: typing.Optional["ReadyStatus"] = None,
+        user_service: typing.Optional["UserService"] = None,
+        transport: typing.Optional["Transport"] = None,
     ):
         from uds.core.types.services import ReadyStatus
 

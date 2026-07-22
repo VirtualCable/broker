@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
@@ -53,10 +54,10 @@ class StatsEvents(models.Model):
     stamp = models.IntegerField(db_index=True, default=0)
 
     # Variable fields, depends on event
-    fld1 = models.CharField(max_length=128, default='')
-    fld2 = models.CharField(max_length=128, default='')
-    fld3 = models.CharField(max_length=128, default='')
-    fld4 = models.CharField(max_length=128, default='')
+    fld1 = models.CharField(max_length=128, default="")
+    fld2 = models.CharField(max_length=128, default="")
+    fld3 = models.CharField(max_length=128, default="")
+    fld4 = models.CharField(max_length=128, default="")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[StatsEvents]'
@@ -66,21 +67,19 @@ class StatsEvents(models.Model):
         Meta class to declare db table
         """
 
-        db_table = 'uds_stats_e'
-        app_label = 'uds'
+        db_table = "uds_stats_e"
+        app_label = "uds"
 
     @staticmethod
     def enumerate_stats(
-        owner_type: typing.Union[
-            types.stats.EventOwnerType, collections.abc.Iterable[types.stats.EventOwnerType]
-        ],
+        owner_type: typing.Union[types.stats.EventOwnerType, collections.abc.Iterable[types.stats.EventOwnerType]],
         event_type: typing.Union[types.stats.EventType, collections.abc.Iterable[types.stats.EventType]],
-        owner_id: 'int|collections.abc.Iterable[int]|None' = None,
-        since: 'datetime.datetime|int|None' = None,
-        to: 'datetime.datetime|int|None' = None,
+        owner_id: "int|collections.abc.Iterable[int]|None" = None,
+        since: "datetime.datetime|int|None" = None,
+        to: "datetime.datetime|int|None" = None,
         limit: int = 0,
         # **kwargs: typing.Any,
-    ) -> 'models.QuerySet[StatsEvents]':
+    ) -> "models.QuerySet[StatsEvents]":
         """
         Returns a queryset with the average stats grouped by interval for owner_type and owner_id (optional)
         """
@@ -109,7 +108,7 @@ class StatsEvents(models.Model):
             to = int(to.timestamp())
         if to:
             q = q.filter(stamp__lte=to)
-            
+
         if limit > 0:
             q = q[:limit]
         return q
@@ -122,9 +121,9 @@ class StatsEvents(models.Model):
     @property
     def src_ip(self) -> str:
         # If ipv6, return full, if not, split it by ':' and return first part
-        if '[' in self.fld2:
+        if "[" in self.fld2:
             return self.fld2
-        return self.fld2.split(':')[0]
+        return self.fld2.split(":")[0]
 
     @property
     def dst_ip(self) -> str:
@@ -133,7 +132,7 @@ class StatsEvents(models.Model):
     @property
     def unique_id(self) -> str:
         return self.fld4
-    
+
     # on userservice events, fld4 is full username
     @property
     def full_username(self) -> str:
@@ -150,23 +149,23 @@ class StatsEvents(models.Model):
     # returns CSV header
     @staticmethod
     def get_csv_header(
-        sep: str = '',
+        sep: str = "",
     ) -> str:
         return sep.join(
             [
-                'owner_type',
-                'owner_id',
-                'event_type',
-                'stamp',
-                'field_1',
-                'field_2',
-                'field_3',
-                'field_4',
+                "owner_type",
+                "owner_id",
+                "event_type",
+                "stamp",
+                "field_1",
+                "field_2",
+                "field_3",
+                "field_4",
             ]
         )
 
     # Return record as csv line using separator (default: ',')
-    def as_csv(self, sep: str = ',') -> str:
+    def as_csv(self, sep: str = ",") -> str:
 
         return sep.join(
             [
@@ -183,6 +182,6 @@ class StatsEvents(models.Model):
 
     def __str__(self) -> str:
         return (
-            f'Log of {self.owner_type}({self.owner_id}): {self.event_type} - {self.stamp}, '
-            f'{self.fld1}, {self.fld2}, {self.fld3}'
+            f"Log of {self.owner_type}({self.owner_id}): {self.event_type} - {self.stamp}, "
+            f"{self.fld1}, {self.fld2}, {self.fld3}"
         )
