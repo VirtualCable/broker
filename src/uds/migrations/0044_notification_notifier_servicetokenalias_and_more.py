@@ -12,7 +12,7 @@ import uds.core.consts.auth as auth
 
 # Remove ServicePools with null service field
 def remove_null_service_pools(apps: typing.Any, schema_editor: typing.Any):  # pylint: disable=unused-argument
-    ServicePool = apps.get_model('uds', 'ServicePool')
+    ServicePool = apps.get_model("uds", "ServicePool")
     ServicePool.objects.filter(service__isnull=True).delete()
 
 
@@ -21,7 +21,7 @@ def remove_null_service_pools(apps: typing.Any, schema_editor: typing.Any):  # p
 def update_network_model(apps: typing.Any, schema_editor: typing.Any):  # pylint: disable=unused-argument
     import uds.models.network  # pylint: disable=import-outside-toplevel,redefined-outer-name
 
-    Network = apps.get_model('uds', 'Network')
+    Network = apps.get_model("uds", "Network")
     db_alias = schema_editor.connection.alias
     try:
         for net in Network.objects.using(db_alias).all():
@@ -32,9 +32,9 @@ def update_network_model(apps: typing.Any, schema_editor: typing.Any):  # pylint
             # pylint: disable=protected-access
             net.end = uds.models.network.Network.hexlify(net.net_end)
             net.version = 4  # Previous versions only supported ipv4
-            net.save(update_fields=['start', 'end', 'version'])
+            net.save(update_fields=["start", "end", "version"])
     except Exception as e:
-        print(f'Error updating network model: {e}')  # Will fail on pytest, but it's ok
+        print(f"Error updating network model: {e}")  # Will fail on pytest, but it's ok
 
 
 # Update transport net_filtering in base to networks field of Transport having any element
@@ -42,17 +42,15 @@ def update_network_model(apps: typing.Any, schema_editor: typing.Any):  # pylint
 # if any element and nets_positive = True: net_filtering = auth.ALLOW
 # if any element and nets_positive = False: net_filtering = auth.DENY
 # We must use the migration model, because the models.Transport does not have the nets_positive field
-def update_transport_net_filtering(
-    apps: typing.Any, schema_editor: typing.Any
-):  # pylint: disable=unused-argument
-    Transport = apps.get_model('uds', 'Transport')
+def update_transport_net_filtering(apps: typing.Any, schema_editor: typing.Any):  # pylint: disable=unused-argument
+    Transport = apps.get_model("uds", "Transport")
     db_alias = schema_editor.connection.alias
     for transport in Transport.objects.using(db_alias).all():
         if transport.networks.count() == 0:
             transport.net_filtering = auth.NO_FILTERING
         else:
             transport.net_filtering = auth.ALLOW if transport.nets_positive else auth.DENY
-        transport.save(update_fields=['net_filtering'])
+        transport.save(update_fields=["net_filtering"])
 
 
 class Migration(migrations.Migration):
@@ -488,9 +486,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="userservicesession",
-            constraint=models.UniqueConstraint(
-                fields=("session_id", "user_service"), name="u_session_userservice"
-            ),
+            constraint=models.UniqueConstraint(fields=("session_id", "user_service"), name="u_session_userservice"),
         ),
         migrations.AlterField(
             model_name="log",

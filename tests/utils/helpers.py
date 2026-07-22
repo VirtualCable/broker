@@ -38,20 +38,21 @@ import logging
 
 from . import constants
 
-logger = logging.getLogger('test')
+logger = logging.getLogger("test")
 
 
 def random_string(size: int = 6, chars: typing.Optional[str] = None) -> str:
     chars = chars or constants.STRING_CHARS
-    return ''.join(
-        random.choice(chars) for _ in range(size)  # nosec: Not used for cryptography, just for testing
+    return "".join(
+        random.choice(chars)
+        for _ in range(size)  # nosec: Not used for cryptography, just for testing
     )
 
 
 def random_utf8_string(size: int = 6) -> str:
     # Generate a random utf-8 string of length "length"
     # some utf-8 non ascii chars are generated, but not all of them
-    return ''.join(random.choice(constants.UTF_CHARS) for _ in range(size))  # nosec
+    return "".join(random.choice(constants.UTF_CHARS) for _ in range(size))  # nosec
 
 
 def random_uuid() -> str:
@@ -63,28 +64,27 @@ def random_int(start: int = 0, end: int = 100000) -> int:
 
 
 def random_ip() -> str:
-    return '.'.join(
-        str(random.randint(0, 255)) for _ in range(4)  # nosec: Not used for cryptography, just for testing
+    return ".".join(
+        str(random.randint(0, 255))
+        for _ in range(4)  # nosec: Not used for cryptography, just for testing
     )
 
 
 def random_mac(mac_range: typing.Optional[str] = None) -> str:
     if not mac_range:
-        return ':'.join(random_string(2, '0123456789ABCDEF') for _ in range(6))
+        return ":".join(random_string(2, "0123456789ABCDEF") for _ in range(6))
     else:  # Mac range is like 00:15:5D:10:00:00-00:15:5D:FF:FF:FF
-        start, end = mac_range.split('-')
+        start, end = mac_range.split("-")
         # Convert to integers
-        start = start.split(':')
-        end = end.split(':')
-        start_n = int(''.join(start), 16)
-        end_n = int(''.join(end), 16)
+        start = start.split(":")
+        end = end.split(":")
+        start_n = int("".join(start), 16)
+        end_n = int("".join(end), 16)
         mac = random.randint(start_n, end_n)
-        return ':'.join(f'{mac:012X}'[i : i + 2] for i in range(0, 12, 2))
+        return ":".join(f"{mac:012X}"[i : i + 2] for i in range(0, 12, 2))
 
 
-def limited_iterator(
-    while_checker: typing.Callable[[], bool], limit: int = 128
-) -> typing.Generator[int, None, None]:
+def limited_iterator(while_checker: typing.Callable[[], bool], limit: int = 128) -> typing.Generator[int, None, None]:
     """
     Limit an iterator to a number of elements
     Will continue until limit is reached or check() returns False
@@ -98,12 +98,10 @@ def limited_iterator(
         return
 
     # Limit reached, raise an exception
-    raise Exception(f'Limit reached: {current}/{limit}: {while_checker()}')
+    raise Exception(f"Limit reached: {current}/{limit}: {while_checker()}")
 
 
-def waiter(
-    finish_checker: typing.Callable[[], bool], timeout: int = 64, msg: typing.Optional[str] = None
-) -> None:
+def waiter(finish_checker: typing.Callable[[], bool], timeout: int = 64, msg: typing.Optional[str] = None) -> None:
     start_time = time.time()
     for _ in limited_iterator(lambda: time.time() - start_time < timeout):
         if finish_checker():
@@ -112,7 +110,7 @@ def waiter(
         time.sleep(2)
 
     if msg:
-        logger.info('%s. Elapsed time: %s', msg, time.time() - start_time)
+        logger.info("%s. Elapsed time: %s", msg, time.time() - start_time)
 
 
 def returns_true(*args: typing.Any, **kwargs: typing.Any) -> bool:
@@ -162,15 +160,16 @@ def disable_http_debug() -> None:
     urllib3_log.setLevel(logging.WARNING)
     urllib3_log.propagate = False
 
+
 @contextlib.contextmanager
 def timeit(name: str) -> typing.Generator[None, None, None]:
     """
     Context manager to time a block of code
     """
     start_time = time.time()
-    logger.info('Starting timer for %s', name)
+    logger.info("Starting timer for %s", name)
     try:
         yield
     finally:
         elapsed_time = time.time() - start_time
-        logger.info('%s took %.2f seconds', name, elapsed_time)
+        logger.info("%s took %.2f seconds", name, elapsed_time)

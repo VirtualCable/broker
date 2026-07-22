@@ -28,12 +28,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds import models
 
 # Counters so we can reinvoke the same method and generate new data
-glob = {'user_id': 0, 'group_id': 0}
+glob = {"user_id": 0, "group_id": 0}
 
 
 def createEmailNotifier(
@@ -49,20 +50,18 @@ def createEmailNotifier(
     from uds.notifiers.email.notifier import EmailNotifier
 
     notifier = models.Notifier()
-    notifier.name = 'Testing email notifier'
-    notifier.comments = 'Testing email notifier'
+    notifier.name = "Testing email notifier"
+    notifier.comments = "Testing email notifier"
     notifier.data_type = EmailNotifier.type_type
     instance: EmailNotifier = typing.cast(EmailNotifier, notifier.get_instance())
     # Fill up fields
-    instance.hostname.value = (host or 'localhost') + (
-        '' if port == 0 else ':' + str(port)
-    )
-    instance.username.value = username or ''
-    instance.password.value = password or ''
-    instance.from_email.value = fromEmail or 'from@email.com'
-    instance.to_email.value = toEmail or 'to@email.com'
+    instance.hostname.value = (host or "localhost") + ("" if port == 0 else ":" + str(port))
+    instance.username.value = username or ""
+    instance.password.value = password or ""
+    instance.from_email.value = fromEmail or "from@email.com"
+    instance.to_email.value = toEmail or "to@email.com"
     instance.enable_html.value = enableHtml
-    instance.security.value = security or 'none'
+    instance.security.value = security or "none"
     # Save
     notifier.data = instance.serialize()
     notifier.save()

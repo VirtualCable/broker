@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -48,21 +49,17 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def clean(obj: 'Model') -> None:
+def clean(obj: "Model") -> None:
     models.Permissions.clean_permissions(objtype.ObjectType.from_model(obj), obj.pk)
 
 
-def get_permissions(obj: 'Model') -> list[models.Permissions]:
+def get_permissions(obj: "Model") -> list[models.Permissions]:
     return list(
-        models.Permissions.enumerate_permissions(
-            object_type=objtype.ObjectType.from_model(obj), object_id=obj.pk
-        )
+        models.Permissions.enumerate_permissions(object_type=objtype.ObjectType.from_model(obj), object_id=obj.pk)
     )
 
 
-def effective_permissions(
-    user: 'models.User', obj: 'Model', for_type: bool = False
-) -> PermissionType:
+def effective_permissions(user: "models.User", obj: "Model", for_type: bool = False) -> PermissionType:
     try:
         if user.is_admin:
             return PermissionType.ALL
@@ -88,8 +85,8 @@ def effective_permissions(
 
 
 def add_user_permission(
-    user: 'models.User',
-    obj: 'Model',
+    user: "models.User",
+    obj: "Model",
     permission: PermissionType = PermissionType.READ,
 ) -> None:
     # Some permissions added to some object types needs at least READ_PERMISSION on parent
@@ -102,8 +99,8 @@ def add_user_permission(
 
 
 def add_group_permission(
-    group: 'models.Group',
-    obj: 'Model',
+    group: "models.Group",
+    obj: "Model",
     permission: PermissionType = PermissionType.READ,
 ) -> None:
     models.Permissions.add_permission(
@@ -115,8 +112,8 @@ def add_group_permission(
 
 
 def has_access(
-    user: 'models.User',
-    obj: 'Model',
+    user: "models.User",
+    obj: "Model",
     permission: PermissionType = PermissionType.ALL,
     for_type: bool = False,
 ) -> bool:
@@ -134,4 +131,4 @@ def revoke_permission_by_id(permUUID: str) -> None:
         models.Permissions.objects.get(uuid=permUUID).delete()
     except Exception:
         # no pemission found, log it
-        logger.warning('Permission %s not found', permUUID)
+        logger.warning("Permission %s not found", permUUID)

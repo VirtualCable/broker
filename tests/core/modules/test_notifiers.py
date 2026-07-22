@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -40,8 +41,8 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'emailnotifications',
-    'telegramnotifications',
+    "emailnotifications",
+    "telegramnotifications",
 ]
 
 
@@ -51,8 +52,8 @@ class TestNotifiers(UDSTestCase):
     """
 
     def test_notifiers_loads_correctly(self) -> None:
-        from uds import notifiers  # type: ignore  # ensure transports are registered
+        from uds import notifiers as notifiers
 
         factory = NotifierFactory()
         for notifier in MUST_HAVE:
-            self.assertTrue(factory.has(notifier), f'Notifier {notifier} not found')
+            self.assertTrue(factory.has(notifier), f"Notifier {notifier} not found")

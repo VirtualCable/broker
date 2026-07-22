@@ -30,17 +30,18 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # REST API requests (..../REST/.../overview, ..../REST/.../types, etc)
-OVERVIEW: typing.Final[str] = 'overview'
-TYPES: typing.Final[str] = 'types'
-TABLEINFO: typing.Final[str] = 'tableinfo'
-GUI: typing.Final[str] = 'gui'
-LOG: typing.Final[str] = 'log'
-POSITION: typing.Final[str] = 'position'
+OVERVIEW: typing.Final[str] = "overview"
+TYPES: typing.Final[str] = "types"
+TABLEINFO: typing.Final[str] = "tableinfo"
+GUI: typing.Final[str] = "gui"
+LOG: typing.Final[str] = "log"
+POSITION: typing.Final[str] = "position"
 
-SYSTEM: typing.Final[str] = 'system'  # Defined on system class, here for reference
+SYSTEM: typing.Final[str] = "system"  # Defined on system class, here for reference
 
 # -- Deprecation headers (RFC 9745 / RFC 8594) --
 
@@ -50,14 +51,14 @@ DEPRECATION_TS: typing.Final[int] = 1752854400  # 2025-07-18T00:00:00Z
 
 # HTTP-date for ``Sunset`` header (RFC 8594).  Points to the
 # estimated v7 removal window.  The value is informational only.
-SUNSET_DATE: typing.Final[str] = 'Sat, 01 Jan 2030 00:00:00 GMT'
+SUNSET_DATE: typing.Final[str] = "Sat, 01 Jan 2030 00:00:00 GMT"
 
 # HTTP methods the REST dispatcher understands.
 # Used to gate incoming requests and compute the ``Allow`` header.
-KNOWN_METHODS: typing.Final[tuple[str, ...]] = ('get', 'post', 'put', 'delete', 'options', 'query')
+KNOWN_METHODS: typing.Final[tuple[str, ...]] = ("get", "post", "put", "delete", "options", "query")
 
 # Standard ``Allow`` header value returned by OPTIONS (uppercase).
-DEFAULT_ALLOW: typing.Final[str] = ', '.join(m.upper() for m in KNOWN_METHODS)
+DEFAULT_ALLOW: typing.Final[str] = ", ".join(m.upper() for m in KNOWN_METHODS)
 
 
 class _NotFound:

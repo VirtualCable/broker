@@ -27,16 +27,17 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import time
+
 import logging
+import time
 import typing
 
-from uds.core import jobs
+import uds.services.Proxmox.proxmox.exceptions
 
-from uds.models import Provider
+from uds.core import jobs
 from uds.core.util.model import sql_stamp_seconds
 from uds.core.util.unique_id_generator import UniqueIDGenerator
-import uds.services.Proxmox.proxmox.exceptions
+from uds.models import Provider
 
 from . import provider
 from .proxmox import types as prox_types
@@ -53,20 +54,19 @@ logger = logging.getLogger(__name__)
 
 
 class ProxmoxDeferredRemoval(jobs.Job):
-    friendly_name = 'Proxmox removal'
+    friendly_name = "Proxmox removal"
 
     @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 3
 
-
     counter = 0
 
     def get_vmid_stored_data_from(self, data: bytes) -> tuple[int, bool]:
         vmdata = data.decode()
-        if ':' in vmdata:
-            vmid, try_graceful_shutdown_s = vmdata.split(':')
-            try_graceful_shutdown = try_graceful_shutdown_s == 'y'
+        if ":" in vmdata:
+            vmid, try_graceful_shutdown_s = vmdata.split(":")
+            try_graceful_shutdown = try_graceful_shutdown_s == "y"
         else:
             vmid = vmdata
             try_graceful_shutdown = False
@@ -108,8 +108,8 @@ class ProxmoxDeferredRemoval(jobs.Job):
 
     @staticmethod
     def wait_for_task_to_finish(
-        provider_instance: 'provider.ProxmoxProvider',
-        upid: 'prox_types.ExecResult',
+        provider_instance: "provider.ProxmoxProvider",
+        upid: "prox_types.ExecResult",
         timeout: int = 30,  # 30 * 0.3 = 9 seconds
     ) -> bool:
         counter = 0
@@ -126,21 +126,19 @@ class ProxmoxDeferredRemoval(jobs.Job):
         for db_provider in Provider.objects.filter(
             maintenance_mode=False, data_type=provider.ProxmoxProvider.type_type
         ):
-            logger.debug('Provider %s if os type proxmox', db_provider)
+            logger.debug("Provider %s if os type proxmox", db_provider)
 
             storage = db_provider.get_environment().storage
-            instance: provider.ProxmoxProvider = typing.cast(
-                provider.ProxmoxProvider, db_provider.get_instance()
-            )
+            instance: provider.ProxmoxProvider = typing.cast(provider.ProxmoxProvider, db_provider.get_instance())
 
-            for data in storage.filter('tRm'):
+            for data in storage.filter("tRm"):
                 vmid, _try_graceful_shutdown = self.get_vmid_stored_data_from(data[1])
                 # In fact, here, _try_graceful_shutdown is not used, but we keep it for mayby future use
                 # The soft shutdown has already being initiated by the remove method
 
                 try:
                     vm_info = instance.api.get_vm_info(vmid)
-                    logger.debug('Found %s for removal %s', vmid, data)
+                    logger.debug("Found %s for removal %s", vmid, data)
                     # If machine is powered on, tries to stop it
                     # tries to remove in sync mode
                     if vm_info.status.is_running():
@@ -151,27 +149,25 @@ class ProxmoxDeferredRemoval(jobs.Job):
                         ProxmoxDeferredRemoval.wait_for_task_to_finish(instance, instance.api.delete_vm(vmid))
 
                     # It this is reached, remove check
-                    storage.remove('tr' + str(vmid))
+                    storage.remove("tr" + str(vmid))
                 except uds.services.Proxmox.proxmox.exceptions.ProxmoxNotFound:
-                    storage.remove('tr' + str(vmid))  # VM does not exists anymore
+                    storage.remove("tr" + str(vmid))  # VM does not exists anymore
                 except Exception as e:  # Any other exception wil be threated again
                     # instance.log('Delayed removal of %s has failed: %s. Will retry later', vmId, e)
-                    logger.error('Delayed removal of %s failed: %s', data, e)
+                    logger.error("Delayed removal of %s failed: %s", data, e)
 
-        logger.debug('Deferred removal for proxmox finished')
+        logger.debug("Deferred removal for proxmox finished")
 
 
 class ProxmoxVmidReleaser(jobs.Job):
-    friendly_name = 'Proxmox maintenance'
+    friendly_name = "Proxmox maintenance"
 
     @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 60 * 24 * 30
 
-
-
     @typing.override
     def run(self) -> None:
-        logger.debug('Proxmox Vmid releader running')
-        gen = UniqueIDGenerator('proxmoxvmid', 'proxmox')
+        logger.debug("Proxmox Vmid releader running")
+        gen = UniqueIDGenerator("proxmoxvmid", "proxmox")
         gen.release_older_than(sql_stamp_seconds() - MAX_VMID_LIFE_SECS)

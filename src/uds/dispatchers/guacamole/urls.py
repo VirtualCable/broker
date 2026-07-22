@@ -30,14 +30,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from django.urls import re_path
 from .views import guacamole
 
 urlpatterns = [
     # Authenticated path
     re_path(
-        r'^uds/guacamole/auth/(?P<token>[^/]+)/(?P<tunnelid>.+)$',
+        r"^uds/guacamole/auth/(?P<token>[^/]+)/(?P<tunnelid>.+)$",
         guacamole,
-        name='dispatcher.guacamole',
+        name="dispatcher.guacamole",
     ),
 ]

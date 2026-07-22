@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -52,10 +53,10 @@ class URLCustomTransport(transports.Transport):
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
     """
 
-    type_name = _('URL Launcher')
-    type_type = 'URLTransport'
-    type_description = _('Launchs an external UDS customized URL')
-    icon_file = 'url.png'
+    type_name = _("URL Launcher")
+    type_type = "URLTransport"
+    type_description = _("Launchs an external UDS customized URL")
+    icon_file = "url.png"
 
     own_link = True
     supported_oss = consts.os.ALL_OS_LIST
@@ -63,60 +64,60 @@ class URLCustomTransport(transports.Transport):
     group = types.transports.Grouping.DIRECT
 
     url_pattern = gui.TextField(
-        label=_('URL Pattern'),
+        label=_("URL Pattern"),
         order=1,
-        tooltip=_('URL Pattern to open (i.e. https://_IP_/test?user=_USER_'),
-        default='https://www.udsenterprise.com',
+        tooltip=_("URL Pattern to open (i.e. https://_IP_/test?user=_USER_"),
+        default="https://www.udsenterprise.com",
         length=256,
         required=True,
-        old_field_name='urlPattern',  # Allows compat with old versions
+        old_field_name="urlPattern",  # Allows compat with old versions
     )
 
     force_new_window = gui.ChoiceField(
         order=91,
-        label=_('Force new HTML Window'),
-        tooltip=_('Select windows behavior for opening URL'),
+        label=_("Force new HTML Window"),
+        tooltip=_("Select windows behavior for opening URL"),
         required=True,
         choices=[
             gui.choice_item(
-                'false',
-                _('Open every connection on the same window, but keeps UDS window.'),
+                "false",
+                _("Open every connection on the same window, but keeps UDS window."),
             ),
-            gui.choice_item('true', _('Force every connection to be opened on a new window.')),
+            gui.choice_item("true", _("Force every connection to be opened on a new window.")),
             gui.choice_item(
-                'overwrite',
-                _('Override UDS window and replace it with the connection.'),
+                "overwrite",
+                _("Override UDS window and replace it with the connection."),
             ),
         ],
-        default='true',
+        default="true",
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='forceNewWindow',
+        old_field_name="forceNewWindow",
     )
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if not values:
             return
         # Strip spaces
-        if not (self.url_pattern.value.startswith('http://') or self.url_pattern.value.startswith('https://')):
-            raise exceptions.ui.ValidationError(_('The url must be http or https'))
+        if not (self.url_pattern.value.startswith("http://") or self.url_pattern.value.startswith("https://")):
+            raise exceptions.ui.ValidationError(_("The url must be http or https"))
 
     # Same check as normal RDP transport
     @typing.override
-    def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
+    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
         # No check is done for URL transport
         return True
 
     @typing.override
     def get_link(
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
+        request: "ExtendedHttpRequestWithUser",
     ) -> str:
 
         # Fix username/password acording to os manager
@@ -125,9 +126,9 @@ class URLCustomTransport(transports.Transport):
         mac = userservice.get_unique_id()
 
         return self.update_link_window(
-            self.url_pattern.value.replace('_IP_', ip).replace('_USER_', username).replace('_MAC_', mac),
-            on_same_window=self.force_new_window.value == 'overwrite',
-            on_new_window=self.force_new_window.value == 'true',
-            uuid=userservice.service_pool.uuid if self.force_new_window.value == 'true' else None,
+            self.url_pattern.value.replace("_IP_", ip).replace("_USER_", username).replace("_MAC_", mac),
+            on_same_window=self.force_new_window.value == "overwrite",
+            on_new_window=self.force_new_window.value == "true",
+            uuid=userservice.service_pool.uuid if self.force_new_window.value == "true" else None,
             default_uuid=userservice.service_pool.uuid,
         )

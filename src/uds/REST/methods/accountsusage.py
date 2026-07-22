@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import dataclasses
 import datetime
@@ -70,7 +71,7 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
     """
 
     @staticmethod
-    def as_dict(item: 'AccountUsage', perm: int) -> AccountItem:
+    def as_dict(item: "AccountUsage", perm: int) -> AccountItem:
         """
         Convert an account usage to a dictionary
         :param item: Account usage item (db)
@@ -91,19 +92,19 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
         )
 
     @typing.override
-    def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Account)
         return self.calc_item_position(item_uuid, parent.usages.all())
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult[AccountItem]:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult[AccountItem]:
         parent = ensure.is_instance(parent, Account)
         # Check what kind of access do we have to parent provider
         perm = permissions.effective_permissions(self._user, parent)
         return [AccountsUsage.as_dict(k, perm) for k in self.odata_filter(parent.usages.all())]
 
     @typing.override
-    def get_item(self, parent: 'Model', item: str) -> AccountItem:
+    def get_item(self, parent: "Model", item: str) -> AccountItem:
         parent = ensure.is_instance(parent, Account)
         # Check what kind of access do we have to parent provider
         return AccountsUsage.as_dict(
@@ -111,32 +112,32 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
         )
 
     @typing.override
-    def get_table(self, parent: 'Model') -> TableInfo:
+    def get_table(self, parent: "Model") -> TableInfo:
         parent = ensure.is_instance(parent, Account)
         return (
-            ui_utils.TableBuilder(_('Usages of {0}').format(parent.name))
-            .text_column(name='pool_name', title=_('Pool name'))
-            .text_column(name='user_name', title=_('User name'))
-            .text_column(name='running', title=_('Running'))
-            .datetime_column(name='start', title=_('Starts'))
-            .datetime_column(name='end', title=_('Ends'))
-            .text_column(name='elapsed', title=_('Elapsed'))
-            .datetime_column(name='elapsed_timemark', title=_('Elapsed timemark'))
-            .row_style(prefix='row-running-', field='running')
+            ui_utils.TableBuilder(_("Usages of {0}").format(parent.name))
+            .text_column(name="pool_name", title=_("Pool name"))
+            .text_column(name="user_name", title=_("User name"))
+            .text_column(name="running", title=_("Running"))
+            .datetime_column(name="start", title=_("Starts"))
+            .datetime_column(name="end", title=_("Ends"))
+            .text_column(name="elapsed", title=_("Elapsed"))
+            .datetime_column(name="elapsed_timemark", title=_("Elapsed timemark"))
+            .row_style(prefix="row-running-", field="running")
             .build()
         )
 
     @typing.override
-    def save_item(self, parent: 'Model', item: str | None) -> AccountItem:
-        raise exceptions.rest.RequestError('Accounts usage cannot be edited')
+    def save_item(self, parent: "Model", item: str | None) -> AccountItem:
+        raise exceptions.rest.RequestError("Accounts usage cannot be edited")
 
     @typing.override
-    def delete_item(self, parent: 'Model', item: str) -> None:
+    def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, Account)
-        logger.debug('Deleting account usage %s from %s', item, parent)
+        logger.debug("Deleting account usage %s from %s", item, parent)
         try:
             usage = parent.usages.get(uuid=process_uuid(item))
             usage.delete()
         except Exception:
-            logger.error('Error deleting account usage %s from %s', item, parent)
-            raise exceptions.rest.NotFound(_('Account usage not found: {}').format(item)) from None
+            logger.error("Error deleting account usage %s from %s", item, parent)
+            raise exceptions.rest.NotFound(_("Account usage not found: {}").format(item)) from None

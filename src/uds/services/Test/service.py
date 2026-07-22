@@ -30,15 +30,16 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
+
 from uds.core import services
 
-from .publication import TestPublication
 from .deployment import TestUserService
-
+from .publication import TestPublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -51,18 +52,19 @@ class TestServiceNoCache(services.Service):
     """
     Basic testing service without cache and no publication OFC
     """
-    type_name = _('Testing Service no cache')
-    type_type = 'TestService2'
-    type_description = _('Testing (and dummy) service with no cache')
-    icon_file = 'service.png'
+
+    type_name = _("Testing Service no cache")
+    type_type = "TestService2"
+    type_description = _("Testing (and dummy) service with no cache")
+    icon_file = "service.png"
 
     # Functional related data
 
     maxUserservices = 1000  # A big number for testing purposes
     uses_cache = False
-    cache_tooltip = _('None')
+    cache_tooltip = _("None")
     uses_cache_l2 = False
-    cache_tooltip_l2 = _('None')
+    cache_tooltip_l2 = _("None")
 
     needs_osmanager = False
 
@@ -70,31 +72,32 @@ class TestServiceNoCache(services.Service):
     user_service_type = TestUserService
 
     @typing.override
-    def provider(self) -> 'TestProvider':
-        return typing.cast('TestProvider', super().provider())
+    def provider(self) -> "TestProvider":
+        return typing.cast("TestProvider", super().provider())
 
     def get_name(self) -> str:
-        return self.provider().get_name() + '{' + self.type_name + '}'
+        return self.provider().get_name() + "{" + self.type_name + "}"
 
     def get_basename(self) -> str:
         return self.provider().get_name()
+
 
 class TestServiceCache(services.Service):
     """
     A simple testging service WITH cache and publication OFC
     """
 
-    type_name = _('Testing Service WITH cache')
-    type_type = 'TestService1'
-    type_description = _('Testing (and dummy) service with CACHE and PUBLICATION')
-    icon_file = 'provider.png'  # : We reuse provider icon here :-), it's just for testing purpuoses
+    type_name = _("Testing Service WITH cache")
+    type_type = "TestService1"
+    type_description = _("Testing (and dummy) service with CACHE and PUBLICATION")
+    icon_file = "provider.png"  # : We reuse provider icon here :-), it's just for testing purpuoses
 
     # Functional related data
     userservices_limit = 1000  # A big number for testing
     uses_cache = True
-    cache_tooltip = _('L1 cache for dummy elements')
+    cache_tooltip = _("L1 cache for dummy elements")
     uses_cache_l2 = True
-    cache_tooltip_l2 = _('L2 cache for dummy elements')
+    cache_tooltip_l2 = _("L2 cache for dummy elements")
 
     needs_osmanager = False
 
@@ -106,11 +109,11 @@ class TestServiceCache(services.Service):
     user_service_type = TestUserService
 
     @typing.override
-    def provider(self) -> 'TestProvider':
-        return typing.cast('TestProvider', super().provider())
+    def provider(self) -> "TestProvider":
+        return typing.cast("TestProvider", super().provider())
 
     def get_name(self) -> str:
-        return self.provider().get_name() + '{' + self.type_name + '}'
+        return self.provider().get_name() + "{" + self.type_name + "}"
 
     def get_basename(self) -> str:
         return self.provider().get_name()

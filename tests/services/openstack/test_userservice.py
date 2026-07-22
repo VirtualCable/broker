@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import contextlib
 
@@ -41,7 +42,7 @@ from uds.services.OpenStack.openstack import types as openstack_types
 
 from . import fixtures
 
-#from tests.utils import MustBeOfType
+# from tests.utils import MustBeOfType
 from ...utils.test import UDSTransactionTestCase
 from ...utils.helpers import limited_iterator
 
@@ -51,7 +52,7 @@ if typing.TYPE_CHECKING:
 
 # We use transactions on some related methods (storage access, etc...)
 class TestOpenstackLiveDeployment(UDSTransactionTestCase):
-    _old_servers: typing.List['openstack_types.ServerInfo']
+    _old_servers: typing.List["openstack_types.ServerInfo"]
 
     def setUp(self) -> None:
         # Sets all vms to running, later restore original values
@@ -63,9 +64,11 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
         fixtures.SERVERS_LIST = self._old_servers
 
     @contextlib.contextmanager
-    def setup_data(self) -> typing.Iterator[
+    def setup_data(
+        self,
+    ) -> typing.Iterator[
         tuple[
-            'OpenStackLiveUserService',
+            "OpenStackLiveUserService",
             mock.MagicMock,
         ]
     ]:
@@ -76,10 +79,10 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
 
             yield userservice, api
 
-    def assert_basic_calls(self, userservice: 'OpenStackLiveUserService', api: mock.MagicMock) -> None:
-        #return
+    def assert_basic_calls(self, userservice: "OpenStackLiveUserService", api: mock.MagicMock) -> None:
+        # return
         service = userservice.service()
-        
+
         api().create_server_from_snapshot.assert_called_with(
             snapshot_id=userservice.publication().get_template_id(),
             name=userservice.get_vmname(),
@@ -87,7 +90,7 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
             flavor_id=service.flavor.value,
             network_id=service.network.value,
             security_groups_names=service.security_groups.value,
-        )        
+        )
 
     def test_userservice_linked_cache_l1(self) -> None:
         """
@@ -120,13 +123,14 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
 
             for _ in limited_iterator(lambda: state == types.states.TaskState.RUNNING, limit=128):
                 state = userservice.check_state()
-                
 
                 # If first item in queue is WAIT, we must "simulate" the wake up from os manager
                 if userservice._queue[0] == types.services.Operation.WAIT:
                     userservice.process_ready_from_os_manager(None)
 
-            self.assertEqual(state, types.states.TaskState.FINISHED, f'Queue: {userservice._queue} {userservice._error_debug_info}')
+            self.assertEqual(
+                state, types.states.TaskState.FINISHED, f"Queue: {userservice._queue} {userservice._error_debug_info}"
+            )
 
             self.assertEqual(userservice._name[: len(service.get_basename())], service.get_basename())
             self.assertEqual(len(userservice._name), len(service.get_basename()) + service.get_lenname())
@@ -152,7 +156,7 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
             self.assertEqual(
                 state,
                 types.states.TaskState.FINISHED,
-                f'Queue: {userservice._queue}, reason: {userservice._reason}, extra_info: {userservice._error_debug_info}',
+                f"Queue: {userservice._queue}, reason: {userservice._reason}, extra_info: {userservice._error_debug_info}",
             )
 
             self.assertEqual(userservice._name[: len(service.get_basename())], service.get_basename())
@@ -177,7 +181,9 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
         Test the user service
         """
         with self.setup_data() as (userservice, api):
-            userservice.service().must_stop_before_deletion = False  # To avoid stop before delete on this test, not needed
+            userservice.service().must_stop_before_deletion = (
+                False  # To avoid stop before delete on this test, not needed
+            )
             state = userservice.deploy_for_user(mock.MagicMock())
             self.assertEqual(state, types.states.TaskState.RUNNING)
 
@@ -193,22 +199,22 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
                 state = userservice.check_state()
 
             # Now, should be finished without any problem, no call to api should have been done
-            self.assertEqual(state, types.states.TaskState.FINISHED, f'State: {state} {userservice._error_debug_info}')
+            self.assertEqual(state, types.states.TaskState.FINISHED, f"State: {state} {userservice._error_debug_info}")
             api().get_server_info.assert_called()
             api().stop_server.assert_called()
             api().delete_server.assert_called()
-            
+
             api().reset_mock()
 
             # Now again, but process check_queue a couple of times before cancel
             # we we have an _vmid
-            userservice._vmid = ''
+            userservice._vmid = ""
             state = userservice.deploy_for_user(models.User())
-            self.assertNotEqual(userservice._vmid, '')
+            self.assertNotEqual(userservice._vmid, "")
             self.assertEqual(
                 state,
                 types.states.TaskState.RUNNING,
-                f'Queue: {userservice._queue} {userservice._error_debug_info} {userservice._reason} {userservice._vmid}',
+                f"Queue: {userservice._queue} {userservice._error_debug_info} {userservice._reason} {userservice._vmid}",
             )
             # Ensure vm is running, so it gets stopped
             fixtures.set_vm_state(userservice._vmid, fixtures.openstack_types.PowerState.RUNNING)
@@ -225,11 +231,11 @@ class TestOpenstackLiveDeployment(UDSTransactionTestCase):
             for _ in limited_iterator(lambda: state == types.states.TaskState.RUNNING, limit=128):
                 state = userservice.check_state()
 
-            self.assertEqual(state, types.states.TaskState.FINISHED, f'State: {state} {userservice._error_debug_info}')
+            self.assertEqual(state, types.states.TaskState.FINISHED, f"State: {state} {userservice._error_debug_info}")
 
             api().stop_server.assert_called()
 
     def test_userservice_basics(self) -> None:
         with self.setup_data() as (userservice, _api):
-            userservice.set_ip('1.2.3.4')
-            self.assertEqual(userservice.get_ip(), '1.2.3.4')
+            userservice.set_ip("1.2.3.4")
+            self.assertEqual(userservice.get_ip(), "1.2.3.4")

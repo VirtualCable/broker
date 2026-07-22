@@ -50,14 +50,14 @@ class DummyStampProvider(StampProvider):
     Does NOT provide real external anchoring — only for development.
     """
 
-    def __init__(self, secret: bytes = b'dummy-stamp-secret'):
+    def __init__(self, secret: bytes = b"dummy-stamp-secret"):
         self._secret = secret
 
     @typing.override
     def stamp(self, hash_data: bytes) -> bytes:
-        stamp_time = int(time.time()).to_bytes(8, 'big')
+        stamp_time = int(time.time()).to_bytes(8, "big")
         token = hashlib.sha256(self._secret + stamp_time + hash_data).digest()
-        logger.debug('Dummy stamp: hash=%s token=%s', hash_data.hex(), token.hex())
+        logger.debug("Dummy stamp: hash=%s token=%s", hash_data.hex(), token.hex())
         return stamp_time + token
 
     @typing.override

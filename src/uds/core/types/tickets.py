@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import datetime
 import typing
@@ -52,9 +53,9 @@ class TunnelTicketRemote:
     def as_dict(self) -> dict[str, typing.Any]:
         """Returns a dict representation of the remote"""
         return {
-            'host': self.host,
-            'port': self.port,
-            'extra': self.extra,
+            "host": self.host,
+            "port": self.port,
+            "extra": self.extra,
         }
 
 
@@ -62,49 +63,49 @@ class TunnelTicketRemote:
 class TunnelTicket:
     """Dataclass that represents a tunnel ticket"""
 
-    userservice: 'UserService | None'
+    userservice: "UserService | None"
     remotes: list[TunnelTicketRemote] = dataclasses.field(default_factory=list[TunnelTicketRemote])
     started: datetime.datetime = dataclasses.field(default_factory=sql_now)
     shared_secret: bytes | None = None
 
     def remotes_as_str(self) -> str:
         """Returns a string representation of the remotes"""
-        return ', '.join(f'{r.host}:{r.port}' for r in self.remotes)
+        return ", ".join(f"{r.host}:{r.port}" for r in self.remotes)
 
     def as_dict(self) -> dict[str, str]:
         """Returns a dict representation of the ticket"""
         return {
-            'userservice_uuid': self.userservice.uuid if self.userservice else '',
-            'remotes': json.dumps([r.as_dict() for r in self.remotes]),
-            'started': self.started.isoformat(),
-            'shared_secret': self.shared_secret.hex() if self.shared_secret else '',
+            "userservice_uuid": self.userservice.uuid if self.userservice else "",
+            "remotes": json.dumps([r.as_dict() for r in self.remotes]),
+            "started": self.started.isoformat(),
+            "shared_secret": self.shared_secret.hex() if self.shared_secret else "",
         }
 
     @staticmethod
-    def from_dict(data: dict[str, str]) -> 'TunnelTicket':
+    def from_dict(data: dict[str, str]) -> "TunnelTicket":
         # Import here to avoid circular imports, global is only for type checking
         from uds.models import UserService
 
         """Creates a ticket from a dict representation"""
-        userservice = UserService.objects.filter(uuid=data['userservice_uuid']).first()
-        userservice_ip = userservice.get_instance().get_ip() if userservice else ''
+        userservice = UserService.objects.filter(uuid=data["userservice_uuid"]).first()
+        userservice_ip = userservice.get_instance().get_ip() if userservice else ""
 
         remotes: list[TunnelTicketRemote] = []
-        if data['remotes'].startswith('['):
+        if data["remotes"].startswith("["):
             # New JSON format
-            for r in json.loads(data['remotes']):
+            for r in json.loads(data["remotes"]):
                 remotes.append(
                     TunnelTicketRemote(
-                        host=r.get('host') or userservice_ip,
-                        port=int(r.get('port', 0)),
-                        extra=r.get('extra') or {},
+                        host=r.get("host") or userservice_ip,
+                        port=int(r.get("port", 0)),
+                        extra=r.get("extra") or {},
                     )
                 )
         else:
             # Old format
-            for part in data['remotes'].split('#'):
+            for part in data["remotes"].split("#"):
                 if part:
-                    host, port = part.split(',')
+                    host, port = part.split(",")
                     remotes.append(
                         TunnelTicketRemote(
                             host=host or userservice_ip,
@@ -115,8 +116,8 @@ class TunnelTicket:
         return TunnelTicket(
             userservice=userservice,
             remotes=remotes,
-            started=datetime.datetime.fromisoformat(data['started']),
-            shared_secret=bytes.fromhex(data['shared_secret']) if data['shared_secret'] else None,
+            started=datetime.datetime.fromisoformat(data["started"]),
+            shared_secret=bytes.fromhex(data["shared_secret"]) if data["shared_secret"] else None,
         )
 
 
@@ -126,35 +127,35 @@ class TunnelTicketRequest:
     ticket: str  # Ticket string
     command: str  # start/stop right now
     ip: str  # Source IP address (who originates the connection request)
-    kem_kyber_key: str = ''  # KEM Kyber public key (base64 encoded, only for start command)
+    kem_kyber_key: str = ""  # KEM Kyber public key (base64 encoded, only for start command)
     sent: int = 0  # Used only on stop command
     recv: int = 0  # Used only on stop command
 
     def as_dict(self) -> dict[str, str | int]:
         """Returns a dict representation of the ticket request"""
         return {
-            'token': self.token,
-            'ticket': self.ticket,
-            'command': self.command,
-            'ip': self.ip,
-            'kem_kyber_key': self.kem_kyber_key,
-            'sent': self.sent,
-            'recv': self.recv,
+            "token": self.token,
+            "ticket": self.ticket,
+            "command": self.command,
+            "ip": self.ip,
+            "kem_kyber_key": self.kem_kyber_key,
+            "sent": self.sent,
+            "recv": self.recv,
         }
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any]) -> 'TunnelTicketRequest':
+    def from_dict(data: dict[str, typing.Any]) -> "TunnelTicketRequest":
         """Creates a ticket request from a dict representation
         Truncates fields to their maximum expected length
         """
         return TunnelTicketRequest(
-            token=data['token'][:48],
-            ticket=data['ticket'][:48],
-            command=data['command'][:16],
-            kem_kyber_key=(data.get('kem_kyber_key') or '')[:16384],  # Kem keys can be large
-            ip=data['ip'][:32],
-            sent=int(data.get('sent') or 0),
-            recv=int(data.get('recv') or 0),
+            token=data["token"][:48],
+            ticket=data["ticket"][:48],
+            command=data["command"][:16],
+            kem_kyber_key=(data.get("kem_kyber_key") or "")[:16384],  # Kem keys can be large
+            ip=data["ip"][:32],
+            sent=int(data.get("sent") or 0),
+            recv=int(data.get("recv") or 0),
         )
 
 
@@ -167,9 +168,9 @@ class TunnelTicketResponse:
     def as_dict(self) -> dict[str, typing.Any]:
         """Returns a dict representation of the ticket response"""
         return {
-            'remotes': [r.as_dict() for r in self.remotes],
-            'notify': self.notify,
-            'shared_secret': self.shared_secret,
+            "remotes": [r.as_dict() for r in self.remotes],
+            "notify": self.notify,
+            "shared_secret": self.shared_secret,
         }
 
     def as_encrypted_dict(self, kem_key: str, ticket_id: str) -> dict[str, str]:
@@ -183,19 +184,19 @@ class TunnelTicketResponse:
         return dct
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any]) -> 'TunnelTicketResponse':
+    def from_dict(data: dict[str, typing.Any]) -> "TunnelTicketResponse":
         """Creates a ticket response from a dict representation"""
         return TunnelTicketResponse(
             remotes=[
                 TunnelTicketRemote(
-                    host=part['host'],
-                    port=int(part['port']),
-                    extra=part.get('extra') or {},
+                    host=part["host"],
+                    port=int(part["port"]),
+                    extra=part.get("extra") or {},
                 )
-                for part in data['remotes']
+                for part in data["remotes"]
             ],
-            notify=data['notify'],
-            shared_secret=data['shared_secret'],
+            notify=data["notify"],
+            shared_secret=data["shared_secret"],
         )
 
 
@@ -211,18 +212,18 @@ class TunnelTicketLegacyResponse:
     def as_dict(self) -> dict[str, str | int]:
         """Returns a dict representation of the ticket response"""
         return {
-            'host': self.host,
-            'port': self.port,
-            'notify': self.notify,
-            'shared_secret': self.shared_secret if self.shared_secret else '',
+            "host": self.host,
+            "port": self.port,
+            "notify": self.notify,
+            "shared_secret": self.shared_secret if self.shared_secret else "",
         }
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any]) -> 'TunnelTicketLegacyResponse':
+    def from_dict(data: dict[str, typing.Any]) -> "TunnelTicketLegacyResponse":
         """Creates a ticket response from a dict representation"""
         return TunnelTicketLegacyResponse(
-            host=data['host'],
-            port=int(data['port']),
-            notify=data['notify'],
-            shared_secret=data['shared_secret'] if data['shared_secret'] else None,
+            host=data["host"],
+            port=int(data["port"]),
+            notify=data["notify"],
+            shared_secret=data["shared_secret"] if data["shared_secret"] else None,
         )

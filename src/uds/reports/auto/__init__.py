@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
@@ -55,45 +56,46 @@ ReportAutoModel = typing.Union[
 ]
 
 REPORT_AUTOMODEL: typing.Final[collections.abc.Mapping[str, type[ReportAutoModel]]] = {
-    'ServicePool': models.ServicePool,
-    'Authenticator': models.Authenticator,
-    'Service': models.Service,
-    'Provider': models.Provider,
+    "ServicePool": models.ServicePool,
+    "Authenticator": models.Authenticator,
+    "Service": models.Service,
+    "Provider": models.Provider,
 }
 
 
 class ReportAutoType(UserInterfaceType):
     def __new__(
-        mcs: type['UserInterfaceType'],
+        mcs: type["UserInterfaceType"],
         classname: str,
         bases: tuple[type, ...],
         namespace: dict[str, typing.Any],
-    ) -> 'ReportAutoType':
+    ) -> "ReportAutoType":
         # Add gui for elements...
         order = 1
 
         # Check what source
-        if namespace.get('data_source'):
-            namespace['source'] = fields.source_field(order, namespace['data_source'], namespace['multiple'])
+        if namespace.get("data_source"):
+            namespace["source"] = fields.source_field(order, namespace["data_source"], namespace["multiple"])
             order += 1
 
             # Check if date must be added
-            if namespace.get('dates') == 'single':
-                namespace['date_start'] = fields.single_date_field(order)
+            if namespace.get("dates") == "single":
+                namespace["date_start"] = fields.single_date_field(order)
                 order += 1
-            elif namespace.get('dates') == 'range':
-                namespace['date_start'] = fields.start_date_field(order)
+            elif namespace.get("dates") == "range":
+                namespace["date_start"] = fields.start_date_field(order)
                 order += 1
-                namespace['date_end'] = fields.end_date_field(order)
+                namespace["date_end"] = fields.end_date_field(order)
                 order += 1
 
             # Check if data interval should be included
-            if namespace.get('intervals'):
-                namespace['interval'] = fields.intervals_field(order)
+            if namespace.get("intervals"):
+                namespace["interval"] = fields.intervals_field(order)
                 order += 1
 
         return typing.cast(
-            'ReportAutoType', super().__new__(mcs, classname, bases, namespace)  # pyright: ignore
+            "ReportAutoType",
+            super().__new__(mcs, classname, bases, namespace),  # pyright: ignore
         )
 
 
@@ -114,13 +116,13 @@ class ReportAuto(Report, metaclass=ReportAutoType):
     # * Authenticator.users
     # * Authenticator.services
     # * Authenticator.user_with_services
-    data_source: str = ''
+    data_source: str = ""
 
     # If True, will allow selection of multiple "source" elements
     multiple: bool = False
 
     def get_model(self) -> type[ReportAutoModel]:
-        data_source = self.data_source.split('.', maxsplit=1)[0]
+        data_source = self.data_source.split(".", maxsplit=1)[0]
 
         return REPORT_AUTOMODEL[data_source]
 
@@ -128,14 +130,14 @@ class ReportAuto(Report, metaclass=ReportAutoType):
     def init_gui(self) -> None:
         # Fills datasource
         fields.source_field_data(self.get_model(), self.source)
-        logger.debug('Source field data: %s', self.source)
+        logger.debug("Source field data: %s", self.source)
 
     def get_model_records(self) -> collections.abc.Iterable[ReportAutoModel]:
         MODEL = self.get_model()
 
         filters = [self.source.value] if isinstance(self.source, gui.ChoiceField) else self.source.value
 
-        if '0-0-0-0' in filters:
+        if "0-0-0-0" in filters:
             items = MODEL.objects.all()
         else:
             items = MODEL.objects.filter(uuid__in=filters)
@@ -143,7 +145,7 @@ class ReportAuto(Report, metaclass=ReportAutoType):
         return items
 
     def get_interval_as_hours(self) -> int:
-        return {'hour': 1, 'day': 24, 'week': 24 * 7, 'month': 24 * 30}[self.interval.value]
+        return {"hour": 1, "day": 24, "week": 24 * 7, "month": 24 * 30}[self.interval.value]
 
     def get_intervals_list(self) -> list[tuple[datetime.datetime, datetime.datetime]]:
         intervals: list[tuple[datetime.datetime, datetime.datetime]] = []
@@ -153,16 +155,16 @@ class ReportAuto(Report, metaclass=ReportAutoType):
         to = datetime.datetime.combine(self.ending_date(), datetime.time.max)
         to = timezone.make_aware(to)
         while start < to:
-            if self.interval.value == 'hour':
+            if self.interval.value == "hour":
                 intervals.append((start, start + datetime.timedelta(hours=1)))
                 start += datetime.timedelta(hours=1)
-            elif self.interval.value == 'day':
+            elif self.interval.value == "day":
                 intervals.append((start, start + datetime.timedelta(days=1)))
                 start += datetime.timedelta(days=1)
-            elif self.interval.value == 'week':
+            elif self.interval.value == "week":
                 intervals.append((start, start + datetime.timedelta(days=7)))
                 start += datetime.timedelta(days=7)
-            elif self.interval.value == 'month':
+            elif self.interval.value == "month":
                 next = (start + datetime.timedelta(days=32)).replace(day=1)
                 intervals.append((start, next))
                 start = next
@@ -170,24 +172,24 @@ class ReportAuto(Report, metaclass=ReportAutoType):
         return intervals
 
     def adjust_date(self, d: datetime.date, is_ending_date: bool) -> datetime.date:
-        if self.interval.value in ('hour', 'day'):
+        if self.interval.value in ("hour", "day"):
             return d
-        if self.interval.value == 'week':
+        if self.interval.value == "week":
             return (d - datetime.timedelta(days=d.weekday())).replace()
-        if self.interval.value == 'month':
+        if self.interval.value == "month":
             if not is_ending_date:
                 return d.replace(day=1)
             return (d + datetime.timedelta(days=32)).replace(day=1) - datetime.timedelta(days=1)
         return d
 
     def format_datetime_as_string(self, d: datetime.date) -> str:
-        if self.interval.value in ('hour', 'day'):
-            return d.strftime('%Y-%b-%d %H:%M:%S')
-        if self.interval.value == 'week':
-            return d.strftime('%Y-%b-%d')
-        if self.interval.value == 'month':
-            return d.strftime('%Y-%b')
-        return d.strftime('%Y-%b-%d %H:%M:%S')
+        if self.interval.value in ("hour", "day"):
+            return d.strftime("%Y-%b-%d %H:%M:%S")
+        if self.interval.value == "week":
+            return d.strftime("%Y-%b-%d")
+        if self.interval.value == "month":
+            return d.strftime("%Y-%b")
+        return d.strftime("%Y-%b-%d %H:%M:%S")
 
     def starting_date(self) -> datetime.date:
         return self.adjust_date(self.date_start.as_date(), False)

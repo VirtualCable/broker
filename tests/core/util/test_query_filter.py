@@ -26,6 +26,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import copy
 import dataclasses
 import typing

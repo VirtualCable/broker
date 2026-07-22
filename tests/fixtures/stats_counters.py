@@ -28,9 +28,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import datetime
-import typing
 
 from uds import models
 from uds.core import types
@@ -43,13 +43,13 @@ def create_stats_counters(
     counter_type: types.stats.CounterType,
     since: datetime.datetime,
     to: datetime.datetime,
-    number: typing.Optional[int] = None,
-    interval: typing.Optional[int] = None,
+    number: int | None = None,
+    interval: int | None = None,
 ) -> list[models.StatsCounters]:
-    '''
+    """
     Create a list of counters with the given type, counter_type, since and to, save it in the database
     and return it
-    '''
+    """
     # Convert datetime to unix timestamp
     since_stamp = int(since.timestamp())
     to_stamp = int(to.timestamp())
@@ -57,7 +57,7 @@ def create_stats_counters(
     # Calculate the time interval between each counter
     if number is None:
         if interval is None:
-            raise ValueError('Either number or interval must be provided')
+            raise ValueError("Either number or interval must be provided")
         number = (to_stamp - since_stamp) // interval
     interval = (to_stamp - since_stamp) // number
 
@@ -67,7 +67,7 @@ def create_stats_counters(
             owner_type=owner_type,
             counter_type=counter_type,
             stamp=since_stamp + interval * i,
-            value=i*10,
+            value=i * 10,
         )
         for i in range(number)
     ]
@@ -82,17 +82,17 @@ def create_stats_interval_total(
     since: datetime.datetime,
     days: int,
     number_per_hour: int,
-    value: typing.Union[int, collections.abc.Callable[[int, int], int]],
+    value: int | collections.abc.Callable[[int, int], int],
     owner_type: int = counters.types.stats.CounterOwnerType.SERVICEPOOL,
 ) -> list[models.StatsCounters]:
-    '''
+    """
     Creates a list of counters with the given type, counter_type, since and to, save it in the database
     and return it
-    '''
+    """
     # Calculate the time interval between each counter
     # Ensure number_per hour fix perfectly in an hour
     if 3600 % number_per_hour != 0:
-        raise ValueError('Number of counters per hour must be a divisor of 3600')
+        raise ValueError("Number of counters per hour must be a divisor of 3600")
 
     interval = 3600 // number_per_hour
 
@@ -100,7 +100,11 @@ def create_stats_interval_total(
 
     if isinstance(value, int):
         xv = value
-        value = lambda x, y: xv
+
+        def x_value(x: int, y: int) -> int:
+            return xv
+
+        value = x_value
 
     cntrs = [
         models.StatsCounters(
@@ -109,7 +113,9 @@ def create_stats_interval_total(
             counter_type=ct,
             stamp=since_stamp + interval * i,
             value=value(i, ct),
-        ) for ct in counter_type for i in range(days * 24 * number_per_hour)
+        )
+        for ct in counter_type
+        for i in range(days * 24 * number_per_hour)
     ]
 
     # Bulk create the counters

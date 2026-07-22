@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -67,17 +68,17 @@ class Connection(Handler):
         :param error: If present, This response represents an error. Result will contain an "Explanation" and error contains the error code
         :return: A dictionary, suitable for response to Caller
         """
-        result = result if result is not None else ''
-        res = {'result': result, 'date': timezone.localtime()}
+        result = result if result is not None else ""
+        res = {"result": result, "date": timezone.localtime()}
         if error:
             if isinstance(error, int):
                 error = types.errors.Error.from_int(error).message
             error = str(error)  # Ensure error is an string
             if error_code != 0:
-                error += f' (code {error_code:04X})'
-            res['error'] = error
+                error += f" (code {error_code:04X})"
+            res["error"] = error
 
-        res['retryable'] = '1' if is_retrayable else '0'
+        res["retryable"] = "1" if is_retrayable else "0"
 
         return res
 
@@ -88,8 +89,8 @@ class Connection(Handler):
 
         return Connection.result(result=self.filter_odata_data(services.get_services_info_dict(self._request)))
 
-    def connection(self, id_service: str, id_transport: str, skip: str = '') -> dict[str, typing.Any]:
-        skip_check = skip in ('doNotCheck', 'do_not_check', 'no_check', 'nocheck', 'skip_check')
+    def connection(self, id_service: str, id_transport: str, skip: str = "") -> dict[str, typing.Any]:
+        skip_check = skip in ("doNotCheck", "do_not_check", "no_check", "nocheck", "skip_check")
         try:
             info = UserServiceManager.manager().get_user_service_info(  # pylint: disable=unused-variable
                 self._user,
@@ -100,17 +101,15 @@ class Connection(Handler):
                 not skip_check,
             )
             connection_info = {
-                'username': '',
-                'password': '',
-                'domain': '',
-                'protocol': 'unknown',
-                'ip': info.ip or '',
+                "username": "",
+                "password": "",
+                "domain": "",
+                "protocol": "unknown",
+                "ip": info.ip or "",
             }
             if info.ip:  # only will be available id doNotCheck is False
                 connection_info.update(
-                    info.transport.get_instance()
-                    .get_connection_info(info.userservice, self._user, 'UNKNOWN')
-                    .as_dict()
+                    info.transport.get_instance().get_connection_info(info.userservice, self._user, "UNKNOWN").as_dict()
                 )
             return Connection.result(result=connection_info)
         except ServiceNotReadyError as e:
@@ -122,14 +121,12 @@ class Connection(Handler):
             logger.exception("Exception")
             return Connection.result(error=str(e))
 
-    def script(
-        self, id_service: str, id_transport: str, scrambler: str, hostname: str
-    ) -> dict[str, typing.Any]:
+    def script(self, id_service: str, id_transport: str, scrambler: str, hostname: str) -> dict[str, typing.Any]:
         try:
             info = UserServiceManager.manager().get_user_service_info(
                 self._user, self._request.os, self._request.ip, id_service, id_transport
             )
-            password = CryptoManager.manager().symmetric_decrypt(self.recover_value('password'), scrambler)
+            password = CryptoManager.manager().symmetric_decrypt(self.recover_value("password"), scrambler)
 
             info.userservice.set_connection_source(
                 types.connections.ConnectionSource(self._request.ip, hostname)
@@ -164,29 +161,29 @@ class Connection(Handler):
     def get_uds_link(self, id_service: str, id_transport: str) -> dict[str, typing.Any]:
         # Returns the UDS link for the user & transport
         self._request.user = self._user
-        setattr(self._request, '_cryptedpass', self.session['REST']['password'])
-        setattr(self._request, '_scrambler', self._request.META['HTTP_SCRAMBLER'])
+        setattr(self._request, "_cryptedpass", self.session["REST"]["password"])
+        setattr(self._request, "_scrambler", self._request.META["HTTP_SCRAMBLER"])
         link_info = services.enable_service(self._request, service_id=id_service, transport_id=id_transport)
-        if link_info['error']:
-            return Connection.result(error=link_info['error'])
-        return Connection.result(result=link_info['url'])
+        if link_info["error"]:
+            return Connection.result(error=link_info["error"])
+        return Connection.result(result=link_info["url"])
 
     def get(self) -> dict[str, typing.Any]:
         """
         Processes get requests
         """
-        logger.debug('Connection args for GET: %s', self._args)
+        logger.debug("Connection args for GET: %s", self._args)
 
         def error() -> dict[str, typing.Any]:
-            raise exceptions.rest.RequestError('Invalid Request')
+            raise exceptions.rest.RequestError("Invalid Request")
 
         return match_args(
             self._args,
             error,
             ((), self.service_list),
-            (('<ticketId>',), self.get_ticket_content),
-            (('<idService>', '<idTransport>', 'udslink'), self.get_uds_link),
-            (('<idService>', '<idTransport>', '<skip>'), self.connection),
-            (('<idService>', '<idTransport>'), self.connection),
-            (('<idService>', '<idTransport>', '<scrambler>', '<hostname>'), self.script),
+            (("<ticketId>",), self.get_ticket_content),
+            (("<idService>", "<idTransport>", "udslink"), self.get_uds_link),
+            (("<idService>", "<idTransport>", "<skip>"), self.connection),
+            (("<idService>", "<idTransport>"), self.connection),
+            (("<idService>", "<idTransport>", "<scrambler>", "<hostname>"), self.script),
         )

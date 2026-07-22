@@ -93,8 +93,8 @@ from ...utils.test import UDSTransactionTestCase
 logger = logging.getLogger(__name__)
 
 pytestmark = [
-    pytest.mark.filterwarnings('ignore::UserWarning'),
-    pytest.mark.filterwarnings('ignore::DeprecationWarning'),
+    pytest.mark.filterwarnings("ignore::UserWarning"),
+    pytest.mark.filterwarnings("ignore::DeprecationWarning"),
 ]
 
 
@@ -126,7 +126,7 @@ class _NewReportsBase(UDSTransactionTestCase):
         logout = int(types.stats.EventType.LOGOUT)
         owner_type = int(types.stats.EventOwnerType.SERVICEPOOL)
         for _ in range(n_pairs):
-            user = rng.choice(['alice', 'bob', 'carol'])
+            user = rng.choice(["alice", "bob", "carol"])
             t = _stamp(rng)
             rows.append(
                 models.StatsEvents(
@@ -134,7 +134,7 @@ class _NewReportsBase(UDSTransactionTestCase):
                     owner_type=owner_type,
                     event_type=login,
                     stamp=t,
-                    fld2='10.0.0.1:1234',
+                    fld2="10.0.0.1:1234",
                     fld4=user,
                 )
             )
@@ -144,7 +144,7 @@ class _NewReportsBase(UDSTransactionTestCase):
                     owner_type=owner_type,
                     event_type=logout,
                     stamp=t + rng.randint(60, 3600),
-                    fld2='10.0.0.1:1234',
+                    fld2="10.0.0.1:1234",
                     fld4=user,
                 )
             )
@@ -185,9 +185,9 @@ class _NewReportsBase(UDSTransactionTestCase):
                     owner_type=owner_type,
                     event_type=int(types.stats.EventType.TUNNEL_CLOSE),
                     stamp=_stamp(rng),
-                    fld1='1234',
-                    fld2='2048',
-                    fld3='4096',
+                    fld1="1234",
+                    fld2="2048",
+                    fld3="4096",
                 )
             )
         models.StatsEvents.objects.bulk_create(rows)
@@ -203,9 +203,9 @@ class _NewReportsBase(UDSTransactionTestCase):
                     owner_type=owner_type,
                     event_type=int(types.stats.EventType.PLATFORM),
                     stamp=_stamp(rng),
-                    fld1=rng.choice(['Linux', 'Windows', 'macOS']),
-                    fld2=rng.choice(['Firefox', 'Chrome', 'Safari']),
-                    fld3='1.0',
+                    fld1=rng.choice(["Linux", "Windows", "macOS"]),
+                    fld2=rng.choice(["Firefox", "Chrome", "Safari"]),
+                    fld3="1.0",
                 )
             )
         models.StatsEvents.objects.bulk_create(rows)
@@ -311,7 +311,7 @@ class InactiveUsersTest(_NewReportsBase):
     def test_generate(self) -> None:
         for cls in (InactiveUsersReport, InactiveUsersReportCSV):
             r = cls()
-            r.authenticator.value = '0-0-0-0'  # type: ignore[assignment]
+            r.authenticator.value = "0-0-0-0"  # type: ignore[assignment]
             r.days.value = 30
             r.include_never.value = True
             self.assertGreater(len(r.generate()), 0)
@@ -331,7 +331,7 @@ class FailedLoginsTest(_NewReportsBase):
     def test_generate(self) -> None:
         for cls in (FailedLoginsReport, FailedLoginsReportCSV):
             r = cls()
-            r.authenticator.value = '0-0-0-0'  # type: ignore[assignment]
+            r.authenticator.value = "0-0-0-0"  # type: ignore[assignment]
             r.start_date.value = RANGE_START
             r.end_date.value = RANGE_END
             self.assertGreater(len(r.generate()), 0)

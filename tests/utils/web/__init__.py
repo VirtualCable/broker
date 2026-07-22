@@ -49,19 +49,19 @@ def login(
     errorMessage: typing.Optional[str] = None,
 ) -> collections.abc.Mapping[str, typing.Any]:
     response = client.post(
-        '/uds/rest/auth/login',
+        "/uds/rest/auth/login",
         {
-            'auth_id': auth_id,
-            'username': username,
-            'password': password,
+            "auth_id": auth_id,
+            "username": username,
+            "password": password,
         },
-        content_type='application/json',
+        content_type="application/json",
     )
 
     caller.assertEqual(
         response.status_code,
         expectedResponseCode,
-        'Login from {}'.format(errorMessage or caller.__class__.__name__),
+        "Login from {}".format(errorMessage or caller.__class__.__name__),
     )
 
     if response.status_code == 200:
@@ -72,9 +72,9 @@ def login(
 
 def logout(caller: SimpleTestCase, client: Client, auth_token: str) -> None:
     response = client.get(
-        '/uds/rest/auth/logout',
-        content_type='application/json',
-        **{consts.auth.AUTH_TOKEN_HEADER: auth_token} # pyright: ignore
+        "/uds/rest/auth/logout",
+        content_type="application/json",
+        **{consts.auth.AUTH_TOKEN_HEADER: auth_token},  # pyright: ignore
     )
-    caller.assertEqual(response.status_code, 200, 'Logout')
-    caller.assertEqual(response.json(), {'result': 'ok'}, 'Logout')
+    caller.assertEqual(response.status_code, 200, "Logout")
+    caller.assertEqual(response.json(), {"result": "ok"}, "Logout")

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from django.utils.translation import gettext_noop as _
 from uds.core import reports, ui
@@ -38,53 +39,51 @@ from ..auto import ReportAuto
 
 
 class StatsReport(reports.Report):
-    group = _('Statistics')  # So we can make submenus with reports
+    group = _("Statistics")  # So we can make submenus with reports
 
     # basic fields for most stats reports
     pool = ui.gui.MultiChoiceField(
         order=1,
-        label=_('Pool'),
-        tooltip=_('Pool for report'),
+        label=_("Pool"),
+        tooltip=_("Pool for report"),
         required=True,
     )
 
     # pool or pools may be used, but not both
-    pools = ui.gui.MultiChoiceField(
-        order=1, label=_('Pools'), tooltip=_('Pools for report'), required=True
-    )
-    
+    pools = ui.gui.MultiChoiceField(order=1, label=_("Pools"), tooltip=_("Pools for report"), required=True)
+
     start_date = ui.gui.DateField(
         order=2,
-        label=_('Starting date'),
-        tooltip=_('starting date for report'),
+        label=_("Starting date"),
+        tooltip=_("starting date for report"),
         default=dateutils.start_of_month,
         required=True,
-        old_field_name='startDate',
+        old_field_name="startDate",
     )
 
     end_date = ui.gui.DateField(
         order=3,
-        label=_('Finish date'),
-        tooltip=_('finish date for report'),
+        label=_("Finish date"),
+        tooltip=_("finish date for report"),
         default=dateutils.tomorrow,
         required=True,
-        old_field_name='endDate',
+        old_field_name="endDate",
     )
 
     sampling_points = ui.gui.NumericField(
         order=4,
-        label=_('Number of intervals'),
+        label=_("Number of intervals"),
         length=3,
         min_value=0,
         max_value=32,
-        tooltip=_('Number of sampling points used in charts'),
+        tooltip=_("Number of sampling points used in charts"),
         default=8,
-        old_field_name='samplingPoints',
+        old_field_name="samplingPoints",
     )
 
     @typing.override
     def generate(self) -> bytes:
-        raise NotImplementedError('StatsReport generate invoked and not implemented')
+        raise NotImplementedError("StatsReport generate invoked and not implemented")
 
 
 # pylint: disable=abstract-method

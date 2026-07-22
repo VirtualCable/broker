@@ -39,34 +39,35 @@ from tests.utils import vars
 
 logger = logging.getLogger(__name__)
 
+
 class TestOpenshiftClient(UDSTransactionTestCase):
     """Tests for operations with OpenShiftClient."""
 
     os_client: openshift_client.OpenshiftClient
-    test_vm: str = 'vm-test'
-    test_pool: str = ''
-    test_storage: str = ''
+    test_vm: str = "vm-test"
+    test_pool: str = ""
+    test_storage: str = ""
 
     def setUp(self) -> None:
         """
         Set up OpenShift client and test variables for each test.
         Skips tests if required variables are missing.
         """
-        v = vars.get_vars('openshift')
+        v = vars.get_vars("openshift")
         if not v:
-            self.skipTest('No OpenShift test variables found')
+            self.skipTest("No OpenShift test variables found")
         self.os_client = openshift_client.OpenshiftClient(
-            cluster_url=v['cluster_url'],
-            api_url=v['api_url'],
-            username=v['username'],
-            password=v['password'],
-            namespace=v['namespace'],
-            timeout=int(v['timeout']),
-            verify_ssl=v['verify_ssl'] == 'true',
+            cluster_url=v["cluster_url"],
+            api_url=v["api_url"],
+            username=v["username"],
+            password=v["password"],
+            namespace=v["namespace"],
+            timeout=int(v["timeout"]),
+            verify_ssl=v["verify_ssl"] == "true",
         )
-        self.test_vm = v.get('test_vm', '')
-        self.test_pool = v.get('test_pool', '')
-        self.test_storage = v.get('test_storage', '')
+        self.test_vm = v.get("test_vm", "")
+        self.test_pool = v.get("test_pool", "")
+        self.test_storage = v.get("test_storage", "")
 
     # --- Token/API Tests ---
     def test_get_token(self) -> None:
@@ -80,16 +81,16 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         """
         Test that get_api_url constructs a valid URL with path and parameters.
         """
-        url = self.os_client.get_api_url('/test/path', ('param1', 'value1'))
-        self.assertIn('/test/path', url)
-        self.assertIn('param1=value1', url)
+        url = self.os_client.get_api_url("/test/path", ("param1", "value1"))
+        self.assertIn("/test/path", url)
+        self.assertIn("param1=value1", url)
 
     def test_get_api_url_invalid(self):
         """
         Test that get_api_url works with an invalid path.
         """
-        url = self.os_client.get_api_url('/invalid/path', ('param', 'value'))
-        self.assertIn('/invalid/path', url)
+        url = self.os_client.get_api_url("/invalid/path", ("param", "value"))
+        self.assertIn("/invalid/path", url)
 
     # --- VM Listing/Info Tests ---
     def test_list_vms(self) -> None:
@@ -101,7 +102,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         self.assertIsInstance(vms, list)
         if len(vms) > 1:
             vm = vms[1]
-            if hasattr(vm, 'name'):
+            if hasattr(vm, "name"):
                 info = self.os_client.get_vm_info(vm.name)
                 self.assertIsNotNone(info)
 
@@ -112,43 +113,44 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         vms = list(self.os_client.list_vms())
         self.assertIsInstance(vms, list)
         for vm in vms:
-            self.assertTrue(hasattr(vm, 'name'))
-            self.assertTrue(hasattr(vm, 'namespace'))
+            self.assertTrue(hasattr(vm, "name"))
+            self.assertTrue(hasattr(vm, "namespace"))
 
     def test_get_vm_info_invalid(self):
         """
         Test that get_vm_info raises OpenshiftNotFoundError for an invalid VM name.
         """
         from uds.services.OpenShift.openshift import exceptions
+
         with self.assertRaises(exceptions.OpenshiftNotFoundError):
-            self.os_client.get_vm_info('nonexistent-vm')
+            self.os_client.get_vm_info("nonexistent-vm")
 
     def test_get_vm_info(self):
         """
         Test that get_vm_info returns info or None for a valid VM name.
         """
         if not self.test_vm:
-            self.skipTest('No test_vm specified')
+            self.skipTest("No test_vm specified")
         info = self.os_client.get_vm_info(self.test_vm)
-        self.assertTrue(hasattr(info, 'name'))
+        self.assertTrue(hasattr(info, "name"))
 
     # --- VM Lifecycle and Actions ---
     def test_vm_lifecycle(self) -> None:
         """
         Test VM lifecycle actions: start, stop, delete (skipped in shared environments).
         """
-        #self.skipTest('Skip this test to avoid issues in shared environments')
+        # self.skipTest('Skip this test to avoid issues in shared environments')
         if not self.test_vm:
-            self.skipTest('No test_vm specified in test-vars.ini')
+            self.skipTest("No test_vm specified in test-vars.ini")
         self.assertTrue(self.os_client.start_vm(self.test_vm))
         self.assertTrue(self.os_client.stop_vm(self.test_vm))
-        #self.assertTrue(self.os_client.delete_vm(self.test_vm))
+        # self.assertTrue(self.os_client.delete_vm(self.test_vm))
 
     def test_delete_vm_invalid(self):
         """
         Test that delete_vm returns False for an invalid VM name.
         """
-        self.assertTrue(self.os_client.delete_vm('nonexistent-vm'))
+        self.assertTrue(self.os_client.delete_vm("nonexistent-vm"))
 
     # --- DataVolume Tests ---
     # --- DataVolume Tests ---
@@ -156,12 +158,12 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         """
         Test that get_datavolume_phase returns a string for a valid datavolume.
         """
-        phase = self.os_client.get_datavolume_phase('test-dv')
+        phase = self.os_client.get_datavolume_phase("test-dv")
         self.assertIsInstance(phase, str)
 
     def test_datavolume_phase_invalid(self):
         """
         Test that get_datavolume_phase returns a string for an invalid datavolume.
         """
-        phase = self.os_client.get_datavolume_phase('nonexistent-dv')
+        phase = self.os_client.get_datavolume_phase("nonexistent-dv")
         self.assertIsInstance(phase, str)

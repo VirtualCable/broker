@@ -30,6 +30,7 @@
 """
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import datetime
 import logging
@@ -68,19 +69,19 @@ class Calendars(ModelHandler[CalendarItem]):
     """
 
     MODEL = Calendar
-    DETAIL = {'rules': CalendarRules}
+    DETAIL = {"rules": CalendarRules}
 
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags']
+    FIELDS_TO_SAVE = ["name", "comments", "tags"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Calendars'))
-        .text_column(name='name', title=_('Name'), visible=True)
-        .text_column(name='comments', title=_('Comments'))
-        .datetime_column(name='modified', title=_('Modified'))
-        .numeric_column(name='number_rules', title=_('Rules'), width='5rem')
-        .numeric_column(name='number_access', title=_('Pools with Accesses'), width='5rem')
-        .numeric_column(name='number_actions', title=_('Pools with Actions'), width='5rem')
-        .text_column(name='tags', title=_('tags'), visible=False)
+        ui_utils.TableBuilder(_("Calendars"))
+        .text_column(name="name", title=_("Name"), visible=True)
+        .text_column(name="comments", title=_("Comments"))
+        .datetime_column(name="modified", title=_("Modified"))
+        .numeric_column(name="number_rules", title=_("Rules"), width="5rem")
+        .numeric_column(name="number_access", title=_("Pools with Accesses"), width="5rem")
+        .numeric_column(name="number_actions", title=_("Pools with Actions"), width="5rem")
+        .text_column(name="tags", title=_("tags"), visible=False)
         .build()
     )
 
@@ -90,7 +91,7 @@ class Calendars(ModelHandler[CalendarItem]):
     )
 
     @typing.override
-    def get_item(self, item: 'models.Model') -> CalendarItem:
+    def get_item(self, item: "models.Model") -> CalendarItem:
         item = ensure.is_instance(item, Calendar)
         return CalendarItem(
             id=item.uuid,
@@ -99,8 +100,8 @@ class Calendars(ModelHandler[CalendarItem]):
             comments=item.comments,
             modified=item.modified,
             number_rules=item.rules.count(),
-            number_access=item.calendaraccess_set.all().values('service_pool').distinct().count(),
-            number_actions=item.calendaraction_set.all().values('service_pool').distinct().count(),
+            number_access=item.calendaraccess_set.all().values("service_pool").distinct().count(),
+            number_actions=item.calendaraction_set.all().values("service_pool").distinct().count(),
             permission=permissions.effective_permissions(self._user, item),
         )
 

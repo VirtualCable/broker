@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import base64
 import time
 import pickle  # nosec: pickle is safe here
@@ -56,7 +57,7 @@ class DelayedTaskThread(threading.Thread):
     Class responsible of executing a delayed task in its own thread
     """
 
-    __slots__ = ('_task_instance',)
+    __slots__ = ("_task_instance",)
 
     _task_instance: DelayedTask
 
@@ -72,7 +73,7 @@ class DelayedTaskThread(threading.Thread):
             logger.exception("Exception in thread %s: %s", e.__class__, e)
         finally:
             # This is run on a different thread, so we ensure the connection is closed
-            connections['default'].close()
+            connections["default"].close()
 
 
 class DelayedTaskRunner(metaclass=singleton.Singleton):
@@ -99,7 +100,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
         DelayedTaskRunner._keep_running = False
 
     @staticmethod
-    def runner() -> 'DelayedTaskRunner':
+    def runner() -> "DelayedTaskRunner":
         """
         Static method that returns an instance (singleton instance) to a Delayed Runner.
         There is only one instance of DelayedTaksRunner, but its "run" method is executed on
@@ -114,15 +115,17 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
         try:
             with transaction.atomic():  # Encloses
                 # Throws exception if no delayed task is avilable
-                task: DBDelayedTask|None = DBDelayedTask.objects.select_for_update().filter(filt).order_by('execution_time').first()
+                task: DBDelayedTask | None = (
+                    DBDelayedTask.objects.select_for_update().filter(filt).order_by("execution_time").first()
+                )
                 if not task:
                     return
-                
-                logger.debug('Obtained delayed task %s for execution', task)
-                
+
+                logger.debug("Obtained delayed task %s for execution", task)
+
                 if task.insert_date > now + timedelta(seconds=3):
                     logger.warning(
-                        'Executed %s due to insert_date being in the future!, insert_date: %s, now: %s',
+                        "Executed %s due to insert_date being in the future!, insert_date: %s, now: %s",
                         task.type,
                         task.insert_date,
                         now,
@@ -131,21 +134,21 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
                 task.delete()
             task_instance = pickle.loads(task_instance_dump)  # nosec: controlled pickle
         except OperationalError:
-            logger.info('Retrying delayed task')
+            logger.info("Retrying delayed task")
             return
         except Exception:
             # Transaction have been rolled back using the "with atomic", so here just return
             # Note that is taskInstance can't be loaded, this task will not be run
-            logger.exception('Obtainint one task for execution')
+            logger.exception("Obtainint one task for execution")
             return
 
         if task_instance:
-            logger.debug('Executing delayedtask:>%s<', task)
+            logger.debug("Executing delayedtask:>%s<", task)
             # Re-create environment data
             task_instance.env = Environment.type_environment(task_instance.__class__)
             DelayedTaskThread(task_instance).start()
         else:
-            logger.error('Could not load delayed task instance from %s <%s>', task, task_instance_dump)
+            logger.error("Could not load delayed task instance from %s <%s>", task, task_instance_dump)
 
     def _insert(self, instance: DelayedTask, delay: int, tag: str) -> None:
         now = sql_now()
@@ -158,10 +161,10 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
         instance_dump = base64.b64encode(pickle.dumps(instance)).decode()
         instance.env = env
 
-        type_name = str(cls.__module__ + '.' + cls.__name__)
+        type_name = str(cls.__module__ + "." + cls.__name__)
 
         logger.debug(
-            'Inserting delayed task %s with %s bytes (%s)',
+            "Inserting delayed task %s with %s bytes (%s)",
             type_name,
             len(instance_dump),
             exec_time,
@@ -175,23 +178,23 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
             execution_time=exec_time,
             tag=tag,
         )
-        
-        logger.debug('Delayed task %s inserted with', created)
 
-    def insert(self, instance: DelayedTask, delay: int, tag: str = '') -> bool:
+        logger.debug("Delayed task %s inserted with", created)
+
+    def insert(self, instance: DelayedTask, delay: int, tag: str = "") -> bool:
         retries = 3
         while retries > 0:
             retries -= 1
             try:
                 self._insert(instance, delay, tag)
-                logger.debug('Delayed task %s inserted with tag %s', instance, tag)
+                logger.debug("Delayed task %s inserted with tag %s", instance, tag)
                 break
             except Exception as e:
-                logger.info('Exception inserting a delayed task %s: %s', e.__class__, e)
+                logger.info("Exception inserting a delayed task %s: %s", e.__class__, e)
                 try:
-                    connections['default'].close()
+                    connections["default"].close()
                 except Exception:
-                    logger.exception('Closing db connection at insert')
+                    logger.exception("Closing db connection at insert")
                 time.sleep(1)  # Wait a bit before next try...
         # If retries == 0, this is a big error
         if retries == 0:
@@ -204,7 +207,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
             with transaction.atomic():
                 DBDelayedTask.objects.select_for_update().filter(tag=tag).delete()  # @UndefinedVariable
         except Exception as e:
-            logger.exception('Exception removing a delayed task %s: %s', e.__class__, e)
+            logger.exception("Exception removing a delayed task %s: %s", e.__class__, e)
 
     def tag_exists(self, tag: str) -> bool:
         if not tag:
@@ -214,7 +217,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
             number = DBDelayedTask.objects.filter(tag=tag).count()  # @UndefinedVariable
         except Exception:
             number = 0
-            logger.error('Exception looking for a delayed task tag %s', tag)
+            logger.error("Exception looking for a delayed task tag %s", tag)
 
         return number > 0
 
@@ -224,10 +227,10 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
             try:
                 self.execute_delayed_task()
             except Exception as e:
-                logger.error('Unexpected exception at run loop %s: %s', e.__class__, e)
+                logger.error("Unexpected exception at run loop %s: %s", e.__class__, e)
                 try:
-                    connections['default'].close()
+                    connections["default"].close()
                 except Exception:
-                    logger.exception('Exception clossing connection at delayed task')
+                    logger.exception("Exception clossing connection at delayed task")
             time.sleep(self.granularity)
-        logger.info('Exiting DelayedTask Runner because stop has been requested')
+        logger.info("Exiting DelayedTask Runner because stop has been requested")

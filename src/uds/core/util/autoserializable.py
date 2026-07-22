@@ -34,7 +34,7 @@ This class in incompatible with UserInterface derived classes, as it metaclass i
 
 To use it, simple place it as first parent class, and follow by the rest of the classes to inherit from
 
-Example: 
+Example:
 from uds.core.util import AutoSerializable
 from uds.core import services
 
@@ -70,8 +70,8 @@ class _Unassigned:
 # means field has no default value
 UNASSIGNED: typing.Final[_Unassigned] = _Unassigned()
 
-T = typing.TypeVar('T')
-V = typing.TypeVar('V')
+T = typing.TypeVar("T")
+V = typing.TypeVar("V")
 
 DefaultValueType: typing.TypeAlias = T | collections.abc.Callable[[], T] | _Unassigned
 
@@ -82,9 +82,9 @@ logger = logging.getLogger(__name__)
 # Headers for the serialized data
 # A header is composed of:
 # 6 bytes -> Header, where last byte is the version (1..9 for now, a..z can be also used in the future)
-HEADER_BASE: typing.Final[bytes] = b'MGBAS1'
-HEADER_COMPRESSED: typing.Final[bytes] = b'MGZAS1'
-HEADER_ENCRYPTED: typing.Final[bytes] = b'MGEAS1'
+HEADER_BASE: typing.Final[bytes] = b"MGBAS1"
+HEADER_COMPRESSED: typing.Final[bytes] = b"MGZAS1"
+HEADER_ENCRYPTED: typing.Final[bytes] = b"MGEAS1"
 
 # Size of crc32 checksum
 CRC_SIZE: typing.Final[int] = 4
@@ -92,7 +92,7 @@ CRC_SIZE: typing.Final[int] = 4
 VERSION_SIZE: typing.Final[int] = 2  # 2 bytes for version
 
 # Packing data struct
-PACKED_LENGHS: typing.Final[struct.Struct] = struct.Struct('<HHI')
+PACKED_LENGHS: typing.Final[struct.Struct] = struct.Struct("<HHI")
 
 
 # Helper functions
@@ -123,9 +123,9 @@ def is_autoserializable_data(data: bytes) -> bool:
 
 
 class _ObservableList(list[T]):
-    _owner: 'AutoSerializable'
+    _owner: "AutoSerializable"
 
-    def __init__(self, owner: 'AutoSerializable', *args: typing.Any):
+    def __init__(self, owner: "AutoSerializable", *args: typing.Any):
         self._owner = owner
         self._owner._dirty = True
         super().__init__(*args)
@@ -187,9 +187,9 @@ class _ObservableList(list[T]):
 
 # Observable dict
 class _ObservableDict(dict[T, V]):
-    _owner: 'AutoSerializable'
+    _owner: "AutoSerializable"
 
-    def __init__(self, owner: 'AutoSerializable', *args: typing.Any, **kwargs: typing.Any):
+    def __init__(self, owner: "AutoSerializable", *args: typing.Any, **kwargs: typing.Any):
         self._owner = owner
         self._owner._dirty = True
         super().__init__(*args, **kwargs)
@@ -266,7 +266,7 @@ class _MarshalInfo:
         )
 
     @staticmethod
-    def unmarshal(data: bytes) -> tuple['_MarshalInfo', bytes]:
+    def unmarshal(data: bytes) -> tuple["_MarshalInfo", bytes]:
         """Field data unmarshalling
 
         Args:
@@ -294,10 +294,10 @@ class _MarshalInfo:
 # pylint: disable=unnecessary-dunder-call
 class _SerializableField(typing.Generic[T]):
     name: str
-    obj_type: 'type[T]'
+    obj_type: "type[T]"
     default: DefaultValueType[T]
 
-    def __init__(self, obj_type: 'type[T]', default: DefaultValueType[T] = UNASSIGNED):
+    def __init__(self, obj_type: "type[T]", default: DefaultValueType[T] = UNASSIGNED):
         self.obj_type = obj_type
         self.default = default
 
@@ -310,8 +310,8 @@ class _SerializableField(typing.Generic[T]):
 
     def __get__(
         self,
-        instance: 'AutoSerializable',
-        _objtype: 'type[AutoSerializable] | None' = None,
+        instance: "AutoSerializable",
+        _objtype: "type[AutoSerializable] | None" = None,
     ) -> T:
         """Get field value
 
@@ -325,7 +325,7 @@ class _SerializableField(typing.Generic[T]):
 
         return instance._fields[self.name]
 
-    def __set__(self, instance: 'AutoSerializable', value: T) -> None:
+    def __set__(self, instance: "AutoSerializable", value: T) -> None:
         # If type is float and value is int, convert it
         # Or if type is int and value is float, convert it
         # if self.obj_type == int and isinstance(value, float):
@@ -353,13 +353,11 @@ class _SerializableField(typing.Generic[T]):
                 else:  # Maybe it has a constructor that accepts a single value or is a callable...
                     value = typing.cast(collections.abc.Callable[..., typing.Any], self.obj_type)(value)
             except Exception as e:
-                raise ValueError(
-                    f"Field {self.name} cannot be set to {value} (type {self.obj_type.__name__})"
-                ) from e
+                raise ValueError(f"Field {self.name} cannot be set to {value} (type {self.obj_type.__name__})") from e
 
         instance._fields[self.name] = value
 
-    def marshal(self, instance: 'AutoSerializable') -> bytes:
+    def marshal(self, instance: "AutoSerializable") -> bytes:
         """Basic marshalling of field
 
         Args:
@@ -375,7 +373,7 @@ class _SerializableField(typing.Generic[T]):
             return str(self.__get__(instance)).encode()
         raise TypeError(f"Field {self.name} cannot be marshalled (type {self.obj_type})")
 
-    def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
+    def unmarshal(self, instance: "AutoSerializable", data: bytes) -> None:
         """Basic unmarshalling of field
 
         Args:
@@ -402,7 +400,7 @@ class IntegerField(_SerializableField[int]):
 
 
 class StringField(_SerializableField[str]):
-    def __init__(self, default: str = ''):
+    def __init__(self, default: str = ""):
         super().__init__(str, default)
 
 
@@ -416,12 +414,12 @@ class BoolField(_SerializableField[bool]):
         super().__init__(bool, default)
 
     @typing.override
-    def marshal(self, instance: 'AutoSerializable') -> bytes:
-        return b'\xff' if self.__get__(instance) else b'\x00'
+    def marshal(self, instance: "AutoSerializable") -> bytes:
+        return b"\xff" if self.__get__(instance) else b"\x00"
 
     @typing.override
-    def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
-        self.__set__(instance, data != b'\x00')
+    def unmarshal(self, instance: "AutoSerializable", data: bytes) -> None:
+        self.__set__(instance, data != b"\x00")
 
 
 class ListField(_SerializableField[list[T]], list[T]):
@@ -448,18 +446,16 @@ class ListField(_SerializableField[list[T]], list[T]):
         self._cast = cast
 
     @typing.override
-    def marshal(self, instance: 'AutoSerializable') -> bytes:
+    def marshal(self, instance: "AutoSerializable") -> bytes:
         # \x01 is the version of this field marshal format, so we can change it in the future
-        return b'\x01' + json.dumps(self.__get__(instance)).encode()
+        return b"\x01" + json.dumps(self.__get__(instance)).encode()
 
     @typing.override
-    def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
+    def unmarshal(self, instance: "AutoSerializable", data: bytes) -> None:
         if data[0] != 1:
-            raise ValueError('Invalid list data')
+            raise ValueError("Invalid list data")
 
-        self.__set__(
-            instance, [self._cast(i) for i in json.loads(data[1:])] if self._cast else json.loads(data[1:])
-        )
+        self.__set__(instance, [self._cast(i) for i in json.loads(data[1:])] if self._cast else json.loads(data[1:]))
 
 
 class DictField(_SerializableField[dict[T, V]], dict[T, V]):
@@ -486,21 +482,17 @@ class DictField(_SerializableField[dict[T, V]], dict[T, V]):
         self._cast = cast
 
     @typing.override
-    def marshal(self, instance: 'AutoSerializable') -> bytes:
+    def marshal(self, instance: "AutoSerializable") -> bytes:
         # \x01 is the version of this field marshal format, so we can change it in the future
-        return b'\x01' + json.dumps(self.__get__(instance)).encode()
+        return b"\x01" + json.dumps(self.__get__(instance)).encode()
 
     @typing.override
-    def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
+    def unmarshal(self, instance: "AutoSerializable", data: bytes) -> None:
         if data[0] != 1:
-            raise ValueError('Invalid dict data')
+            raise ValueError("Invalid dict data")
         self.__set__(
             instance,
-            (
-                dict(self._cast(k, v) for k, v in json.loads(data[1:]).items())
-                if self._cast
-                else json.loads(data[1:])
-            ),
+            (dict(self._cast(k, v) for k, v in json.loads(data[1:]).items()) if self._cast else json.loads(data[1:])),
         )
 
 
@@ -520,26 +512,26 @@ class ObjectField(_SerializableField[T]):
 
     """
 
-    def __init__(self, obj_type: 'type[T]', default: DefaultValueType[T] = UNASSIGNED):
+    def __init__(self, obj_type: "type[T]", default: DefaultValueType[T] = UNASSIGNED):
         super().__init__(obj_type, default)
 
     @typing.override
-    def marshal(self, instance: 'AutoSerializable') -> bytes:
+    def marshal(self, instance: "AutoSerializable") -> bytes:
         # if is a dataclass
         value = typing.cast(typing.Any, self.__get__(instance))
         if dataclasses.is_dataclass(self.obj_type):
             to_marshal = dataclasses.asdict(value)
-        elif hasattr(value, 'as_dict'):
+        elif hasattr(value, "as_dict"):
             to_marshal = value.as_dict()  # Serialize namedtuples as dicts
         else:
             to_marshal = value
 
-        return b'\x01' + json.dumps(to_marshal).encode()
+        return b"\x01" + json.dumps(to_marshal).encode()
 
     @typing.override
-    def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
+    def unmarshal(self, instance: "AutoSerializable", data: bytes) -> None:
         if data[0] != 1:
-            raise ValueError('Invalid object data')
+            raise ValueError("Invalid object data")
         self.__set__(instance, json.loads(data[1:]))
 
 
@@ -550,9 +542,9 @@ class PasswordField(StringField):
         The password is stored as a compressed string.
     """
 
-    _crypt_key: str = ''
+    _crypt_key: str = ""
 
-    def __init__(self, default: str = '', crypt_key: str = ''):
+    def __init__(self, default: str = "", crypt_key: str = ""):
         super().__init__(default)
         self._crypt_key = crypt_key or settings.SECRET_KEY[:32]  # If no SECRET_KEY, will raise an exception...
 
@@ -592,14 +584,14 @@ class PasswordField(StringField):
         return zlib.decompress(value)
 
     @typing.override
-    def marshal(self, instance: 'AutoSerializable') -> bytes:
+    def marshal(self, instance: "AutoSerializable") -> bytes:
         # \x01 is the version of this field marshal format, so we can change it in the future
-        return b'\x01' + base64.b64encode(self._encrypt(self.__get__(instance)))
+        return b"\x01" + base64.b64encode(self._encrypt(self.__get__(instance)))
 
     @typing.override
-    def unmarshal(self, instance: 'AutoSerializable', data: bytes) -> None:
-        if data[:1] != b'\x01':
-            raise ValueError('Invalid password data')
+    def unmarshal(self, instance: "AutoSerializable", data: bytes) -> None:
+        if data[:1] != b"\x01":
+            raise ValueError("Invalid password data")
         self.__set__(instance, self._decrypt(base64.b64decode(data[1:])).decode())
 
 
@@ -638,7 +630,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
     serialization_version: int = 0  # So autoserializable classes can keep their version if needed
 
     # Use __new__ to avoid using __init__ in the class to initialize fields
-    def __new__(cls: type['typing.Self'], *args: typing.Any, **kwargs: typing.Any) -> 'typing.Self':
+    def __new__(cls: type["typing.Self"], *args: typing.Any, **kwargs: typing.Any) -> "typing.Self":
         instance = super().__new__(cls)
         # Ensure fields is initialized
         instance._fields = {}
@@ -711,15 +703,13 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
         # n bytes -> name
         # n bytes -> type name
         # n bytes -> data
-        data = b''.join(field.marshal() for field in fields)
+        data = b"".join(field.marshal() for field in fields)
 
         # Calculate checksum
         checksum = zlib.crc32(data)
         # Compose header, that is V1_HEADER + checksum (4 bytes, big endian)
         header = (
-            HEADER_BASE
-            + self.serialization_version.to_bytes(VERSION_SIZE, 'big')
-            + checksum.to_bytes(CRC_SIZE, 'big')
+            HEADER_BASE + self.serialization_version.to_bytes(VERSION_SIZE, "big") + checksum.to_bytes(CRC_SIZE, "big")
         )
         # Return data processed with header
         return header + self.process_data(header, data)
@@ -730,23 +720,21 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
     def unmarshal(self, data: bytes) -> None:
         # Check header
         if data[: len(HEADER_BASE)] != HEADER_BASE:
-            raise ValueError('Invalid header')
+            raise ValueError("Invalid header")
 
         header = data[: len(HEADER_BASE) + VERSION_SIZE + CRC_SIZE]
         # extract version
-        self._serialization_version = int.from_bytes(
-            header[len(HEADER_BASE) : len(HEADER_BASE) + VERSION_SIZE], 'big'
-        )
+        self._serialization_version = int.from_bytes(header[len(HEADER_BASE) : len(HEADER_BASE) + VERSION_SIZE], "big")
         # Extract checksum
         checksum = int.from_bytes(
-            header[len(HEADER_BASE) + VERSION_SIZE : len(HEADER_BASE) + VERSION_SIZE + CRC_SIZE], 'big'
+            header[len(HEADER_BASE) + VERSION_SIZE : len(HEADER_BASE) + VERSION_SIZE + CRC_SIZE], "big"
         )
         # Unprocess data
         data = self.unprocess_data(header, data[len(header) :])
 
         # Check checksum
         if zlib.crc32(data) != checksum:
-            raise ValueError('Invalid checksum')
+            raise ValueError("Invalid checksum")
 
         # Iterate over fields
         fields: dict[str, _MarshalInfo] = {}
@@ -760,13 +748,13 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
                     v.unmarshal(self, fields[v.name].value)
                 else:
                     logger.warning(
-                        'Field %s has wrong type in unmarshalled data (should be %s and is %s',
+                        "Field %s has wrong type in unmarshalled data (should be %s and is %s",
                         v.name,
                         fields[v.name].type_name,
                         v.__class__.__name__,
                     )
             else:
-                logger.debug('Field %s not found in unmarshalled data', v.name)
+                logger.debug("Field %s not found in unmarshalled data", v.name)
                 v.__set__(self, v._default())  # Set default value
 
         self._dirty = False  # Reset dirty flag after unmarshalling
@@ -799,9 +787,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
         return True
 
     def __str__(self) -> str:
-        return ', '.join(
-            [f"{k}={v.obj_type.__name__}({v.__get__(self)})" for k, v in self._autoserializable_fields()]
-        )
+        return ", ".join([f"{k}={v.obj_type.__name__}({v.__get__(self)})" for k, v in self._autoserializable_fields()])
 
 
 class AutoSerializableCompressed(AutoSerializable):
@@ -838,7 +824,7 @@ class AutoSerializableEncrypted(AutoSerializable):
         Note: if password is not set, this will raise an exception
         """
         if not self._crypt_key:
-            raise ValueError('Password not set')
+            raise ValueError("Password not set")
 
         return fernet_key(seed + (self._crypt_key.encode()))
 

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -53,22 +54,22 @@ class OSManager(ManagedObjectModel, TaggingMixin):
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[OSManager]'
-    deployedServices: 'models.manager.RelatedManager[ServicePool]'
+    deployedServices: "models.manager.RelatedManager[ServicePool]"
 
     class Meta(ManagedObjectModel.Meta):  # pyright: ignore
         """
         Meta class to declare default order
         """
 
-        ordering = ('name',)
-        app_label = 'uds'
+        ordering = ("name",)
+        app_label = "uds"
 
     @typing.override
-    def get_instance(self, values: dict[str, str] | None = None) -> 'osmanagers.OSManager':
-        return typing.cast('osmanagers.OSManager', super().get_instance(values=values))
+    def get_instance(self, values: dict[str, str] | None = None) -> "osmanagers.OSManager":
+        return typing.cast("osmanagers.OSManager", super().get_instance(values=values))
 
     @typing.override
-    def get_type(self) -> type['osmanagers.OSManager']:
+    def get_type(self) -> type["osmanagers.OSManager"]:
         """
         Get the type of the object this record represents.
 
@@ -110,19 +111,19 @@ class OSManager(ManagedObjectModel, TaggingMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: 'OSManager' = kwargs['instance']
+        to_delete: "OSManager" = kwargs["instance"]
         if to_delete.deployedServices.count() > 0:
-            raise IntegrityError('Can\'t remove os managers with assigned deployed services')
+            raise IntegrityError("Can't remove os managers with assigned deployed services")
         # Only tries to get instance if data is not empty
-        if to_delete.data != '':
+        if to_delete.data != "":
             s = to_delete.get_instance()
             s.destroy()
             s.env.clean_related_data()
 
-        logger.debug('Before delete os manager %s', to_delete)
+        logger.debug("Before delete os manager %s", to_delete)
 
     def __str__(self) -> str:
-        return f'{self.name} of type {self.data_type} (id:{self.id})'
+        return f"{self.name} of type {self.data_type} (id:{self.id})"
 
 
 # : Connects a pre deletion signal to OS Manager

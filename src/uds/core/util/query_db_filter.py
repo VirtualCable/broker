@@ -26,6 +26,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnknownMemberType=false
 import typing
 import re
@@ -52,9 +53,7 @@ logger = logging.getLogger(__name__)
 
 from .query_filter import _QUERY_GRAMMAR, _FUNCTIONS_PARAMS_NUM
 
-_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar(
-    "db_query_parser"
-)
+_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar("db_query_parser")
 
 _REMOVE_QUOTES_RE: typing.Final[re.Pattern[str]] = re.compile(r"^(['\"])(.*)\1$")
 
@@ -72,16 +71,16 @@ class AnnotatedField(str):
 
 
 _UNARY_FUNCTIONS: typing.Final[dict[str, collections.abc.Callable[[F], typing.Any]]] = {
-    'tolower': Lower,
-    'toupper': Upper,
-    'trim': lambda arg: Func(arg, function='TRIM'),
-    'length': Length,
-    'year': ExtractYear,
-    'month': ExtractMonth,
-    'day': ExtractDay,
-    'floor': lambda arg: Func(arg, function='FLOOR'),
-    'ceiling': lambda arg: Func(arg, function='CEIL'),
-    'round': lambda arg: Func(arg, function='ROUND'),
+    "tolower": Lower,
+    "toupper": Upper,
+    "trim": lambda arg: Func(arg, function="TRIM"),
+    "length": Length,
+    "year": ExtractYear,
+    "month": ExtractMonth,
+    "day": ExtractDay,
+    "floor": lambda arg: Func(arg, function="FLOOR"),
+    "ceiling": lambda arg: Func(arg, function="CEIL"),
+    "round": lambda arg: Func(arg, function="ROUND"),
 }
 
 
@@ -94,14 +93,14 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
     def value(self, arg: lark.Token | str | int | float) -> typing.Any:
         if isinstance(arg, lark.Token):
             match arg.type:
-                case 'ESCAPED_STRING':
+                case "ESCAPED_STRING":
                     match = _REMOVE_QUOTES_RE.match(arg.value)
                     return match.group(2) if match else arg.value
-                case 'NUMBER':
-                    return float(arg.value) if '.' in arg.value else int(arg.value)
-                case 'BOOLEAN':
-                    return arg.value.lower() == 'true'
-                case 'CNAME':
+                case "NUMBER":
+                    return float(arg.value) if "." in arg.value else int(arg.value)
+                case "BOOLEAN":
+                    return arg.value.lower() == "true"
+                case "CNAME":
                     return F(arg.value)
                 case _:
                     raise ValueError(f"Unexpected token type: {arg.type}")
@@ -132,22 +131,22 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
         elif isinstance(left, F):
             field_name = left.name
         else:
-            raise ValueError(f"Left side of binary expression must be a field name or annotated field")
+            raise ValueError("Left side of binary expression must be a field name or annotated field")
 
         logger.debug("Binary expr: field=%s, op=%s, value=%s", field_name, op, right)
 
         match op:
-            case 'eq':
+            case "eq":
                 return Q(**{field_name: right})
-            case 'ne':
+            case "ne":
                 return ~Q(**{field_name: right})
-            case 'gt':
+            case "gt":
                 return Q(**{f"{field_name}__gt": right})
-            case 'lt':
+            case "lt":
                 return Q(**{f"{field_name}__lt": right})
-            case 'ge':
+            case "ge":
                 return Q(**{f"{field_name}__gte": right})
-            case 'le':
+            case "le":
                 return Q(**{f"{field_name}__lte": right})
             case _:
                 raise ValueError(f"Unknown operator: {op}")
@@ -177,22 +176,22 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
         if func_name not in _FUNCTIONS_PARAMS_NUM:
             raise ValueError(f"Unknown function: {func_name}")
 
-        if func_name in ('substringof', 'contains', 'startswith', 'endswith'):
+        if func_name in ("substringof", "contains", "startswith", "endswith"):
             if len(func_args) != 2:
                 raise ValueError(f"{func_name} requires 2 arguments")
             field, value = func_args
             if not isinstance(field, str):
-                raise ValueError(f"Field name must be a string")
+                raise ValueError("Field name must be a string")
             if isinstance(value, F):
                 raise ValueError(f"Function '{func_name}' does not support field-to-field comparison")
             match func_name:
-                case 'substringof':
+                case "substringof":
                     return Q(**{f"{value}__icontains": field})  # Note the order swap
-                case 'contains':
+                case "contains":
                     return Q(**{f"{field}__icontains": value})
-                case 'startswith':
+                case "startswith":
                     return Q(**{f"{field}__istartswith": value})
-                case 'endswith':
+                case "endswith":
                     return Q(**{f"{field}__iendswith": value})
 
         if func_name in _UNARY_FUNCTIONS:
@@ -205,7 +204,7 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
             self.annotations[alias] = _UNARY_FUNCTIONS[func_name](F(field))
             return AnnotatedField(alias)
 
-        if func_name == 'concat':
+        if func_name == "concat":
             if len(func_args) < 2:
                 raise ValueError("concat requires at least 2 arguments")
             concat_args = [F(arg) if isinstance(arg, FieldName) else Value(arg) for arg in func_args]
@@ -213,7 +212,7 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
             alias = DjangoQueryTransformer._make_alias(func_name, func_args)
             self.annotations[alias] = Concat(*concat_args)
             return AnnotatedField(alias)
-        elif func_name == 'substring':
+        elif func_name == "substring":
             # 2 or 3 args
             if len(func_args) not in (2, 3):
                 raise ValueError(f"{func_name} requires 2 or 3 arguments")
@@ -238,8 +237,9 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
     @staticmethod
     def _make_alias(func_name: str, args: list[typing.Any]) -> str:
         raw = f"{func_name}:{','.join(str(a) for a in args)}"
-        digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()[:10]
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:10]
         return f"{func_name}_{digest}"
+
 
 def get_parser() -> lark.Lark:
     try:
@@ -250,7 +250,7 @@ def get_parser() -> lark.Lark:
         return parser
 
 
-T = typing.TypeVar('T', bound=typing.Any)
+T = typing.TypeVar("T", bound=typing.Any)
 
 
 def exec_query(query: str, qs: QuerySet[T]) -> QuerySet[T]:

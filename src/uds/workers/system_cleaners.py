@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from importlib import import_module
 import logging
 import typing
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheCleaner(Job):
-    friendly_name = 'Utility Cache Cleaner'
+    friendly_name = "Utility Cache Cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -51,13 +52,13 @@ class CacheCleaner(Job):
 
     @typing.override
     def run(self) -> None:
-        logger.debug('Starting cache cleanup')
+        logger.debug("Starting cache cleanup")
         Cache.purge_outdated()
-        logger.debug('Done cache cleanup')
+        logger.debug("Done cache cleanup")
 
 
 class TicketStoreCleaner(Job):
-    friendly_name = 'Ticket Storage Cleaner'
+    friendly_name = "Ticket Storage Cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -65,13 +66,13 @@ class TicketStoreCleaner(Job):
 
     @typing.override
     def run(self) -> None:
-        logger.debug('Starting ticket storage cleanup')
+        logger.debug("Starting ticket storage cleanup")
         TicketStore.cleanup()
-        logger.debug('Done ticket storage cleanup')
+        logger.debug("Done ticket storage cleanup")
 
 
 class SessionsCleaner(Job):
-    friendly_name = 'User Sessions cleaner'
+    friendly_name = "User Sessions cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -79,11 +80,11 @@ class SessionsCleaner(Job):
 
     @typing.override
     def run(self) -> None:
-        logger.debug('Starting session cleanup')
+        logger.debug("Starting session cleanup")
         try:
             engine: typing.Any = import_module(settings.SESSION_ENGINE)
         except Exception:
-            logger.exception('DjangoSessionsCleaner')
+            logger.exception("DjangoSessionsCleaner")
             return
 
         try:
@@ -91,4 +92,4 @@ class SessionsCleaner(Job):
         except NotImplementedError:
             pass  # No problem if no cleanup
 
-        logger.debug('Done session cleanup')
+        logger.debug("Done session cleanup")

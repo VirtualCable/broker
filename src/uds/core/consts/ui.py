@@ -30,11 +30,11 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # Old encryption key, log ago deprecated, but still here for reading old data
-UDSB: typing.Final[bytes] = b'udsprotect'
+UDSB: typing.Final[bytes] = b"udsprotect"
 
-SERIALIZATION_HEADER: typing.Final[bytes] = b'GUIZ'
-SERIALIZATION_VERSION: typing.Final[bytes] = b'\001'
-
+SERIALIZATION_HEADER: typing.Final[bytes] = b"GUIZ"
+SERIALIZATION_VERSION: typing.Final[bytes] = b"\001"

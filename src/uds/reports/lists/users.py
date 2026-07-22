@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import io
 import csv
@@ -51,28 +52,28 @@ logger = logging.getLogger(__name__)
 
 
 class ListReportUsers(ListReport):
-    filename = 'users.pdf'
+    filename = "users.pdf"
 
     authenticator = gui.ChoiceField(
         label=_("Authenticator"),
         order=1,
-        tooltip=_('Authenticator from where to list users'),
+        tooltip=_("Authenticator from where to list users"),
         required=True,
     )
 
-    name = _('Users list')  # Report name
-    description = _('List users of platform')  # Report description
-    uuid = '8cd1cfa6-ed48-11e4-83e5-10feed05884b'
+    name = _("Users list")  # Report name
+    description = _("List users of platform")  # Report description
+    uuid = "8cd1cfa6-ed48-11e4-83e5-10feed05884b"
 
     @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         if values:
             auth = Authenticator.objects.get(uuid=self.authenticator.value)
-            self.filename = auth.name + '.pdf'
+            self.filename = auth.name + ".pdf"
 
     @typing.override
     def init_gui(self) -> None:
-        logger.debug('Initializing gui')
+        logger.debug("Initializing gui")
         vals = [gui.choice_item(v.uuid, v.name) for v in Authenticator.objects.all()]
 
         self.authenticator.set_choices(vals)
@@ -80,25 +81,25 @@ class ListReportUsers(ListReport):
     @typing.override
     def generate(self) -> bytes:
         auth = Authenticator.objects.get(uuid=self.authenticator.value)
-        users = auth.users.order_by('name')
+        users = auth.users.order_by("name")
 
         return self.template_as_pdf(
-            'uds/reports/lists/users.html',
+            "uds/reports/lists/users.html",
             dct={
-                'users': users,
-                'auth': auth.name,
+                "users": users,
+                "auth": auth.name,
             },
-            header=gettext('Users List for {}').format(auth.name),
-            water=gettext('UDS Report of users in {}').format(auth.name),
+            header=gettext("Users List for {}").format(auth.name),
+            water=gettext("UDS Report of users in {}").format(auth.name),
         )
 
 
 class ListReportsUsersCSV(ListReportUsers):
-    filename = 'users.csv'
-    mime_type = 'text/csv'
+    filename = "users.csv"
+    mime_type = "text/csv"
     encoded = False
 
-    uuid = '5da93a76-1849-11e5-ac1a-10feed05884b'
+    uuid = "5da93a76-1849-11e5-ac1a-10feed05884b"
 
     authenticator = ListReportUsers.authenticator
 
@@ -106,18 +107,16 @@ class ListReportsUsersCSV(ListReportUsers):
     def initialize(self, values: types.core.ValuesType) -> None:
         if values:
             auth = Authenticator.objects.get(uuid=self.authenticator.value)
-            self.filename = auth.name + '.csv'
+            self.filename = auth.name + ".csv"
 
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
         auth = Authenticator.objects.get(uuid=self.authenticator.value)
-        users = auth.users.order_by('name')
+        users = auth.users.order_by("name")
 
-        writer.writerow(
-            [gettext('User ID'), gettext('Real Name'), gettext('Last access')]
-        )
+        writer.writerow([gettext("User ID"), gettext("Real Name"), gettext("Last access")])
 
         for v in users:
             writer.writerow([v.name, v.real_name, v.last_access])

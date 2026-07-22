@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pylint: disable=too-many-lines
 import base64
 import codecs
@@ -57,9 +58,7 @@ logger = logging.getLogger(__name__)
 
 # To simplify choice parameters declaration of fields
 _ChoicesParamType: typing.TypeAlias = (
-    collections.abc.Iterable[types.ui.ChoiceItem]
-    | collections.abc.Callable[[], list['types.ui.ChoiceItem']]
-    | None
+    collections.abc.Iterable[types.ui.ChoiceItem] | collections.abc.Callable[[], list["types.ui.ChoiceItem"]] | None
 )
 # typing.Union[
 #     collections.abc.Callable[[], list['types.ui.ChoiceItem']],
@@ -125,7 +124,7 @@ class gui:
     ] = {}
 
     @staticmethod
-    def choice_item(id_: 'str|int', text: 'str | Promise | typing.Any') -> 'types.ui.ChoiceItem':
+    def choice_item(id_: "str|int", text: "str | Promise | typing.Any") -> "types.ui.ChoiceItem":
         """
         Helper method to create a single choice item.
         """
@@ -144,13 +143,9 @@ class gui:
     @staticmethod
     def as_choices(
         vals: (
-            _ChoicesParamType
-            | dict[str, str]
-            | str
-            | collections.abc.Iterable[str | types.ui.ChoiceItem]
-            | None
+            _ChoicesParamType | dict[str, str] | str | collections.abc.Iterable[str | types.ui.ChoiceItem] | None
         ) = None,
-    ) -> collections.abc.Callable[[], list['types.ui.ChoiceItem']] | list['types.ui.ChoiceItem']:
+    ) -> collections.abc.Callable[[], list["types.ui.ChoiceItem"]] | list["types.ui.ChoiceItem"]:
         """
         Helper to convert from array of strings (or dictionaries) to the same dict used in choice,
         multichoice, ..
@@ -162,7 +157,7 @@ class gui:
         if callable(vals):
             return vals
 
-        def _choice_from_value(val: str | types.ui.ChoiceItem) -> 'types.ui.ChoiceItem':
+        def _choice_from_value(val: str | types.ui.ChoiceItem) -> "types.ui.ChoiceItem":
             if isinstance(val, str):
                 return gui.choice_item(val, val)
             return val
@@ -297,7 +292,7 @@ class gui:
             type: types.ui.FieldType,
             old_field_name: types.ui.OldFieldNameType,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             length: int | None = None,
             required: bool | None = None,
             default: collections.abc.Callable[[], typing.Any] | typing.Any = None,
@@ -330,11 +325,11 @@ class gui:
             return self._field_info.field_name
 
         @property
-        def field_type(self) -> 'types.ui.FieldType':
+        def field_type(self) -> "types.ui.FieldType":
             return types.ui.FieldType(self._field_info.type)
 
         @field_type.setter
-        def field_type(self, type_: 'types.ui.FieldType') -> None:
+        def field_type(self, type_: "types.ui.FieldType") -> None:
             """
             Sets the type of this field.
 
@@ -394,9 +389,9 @@ class gui:
             """
             data = copy.copy(self._field_info)
             data.value = data.old_field_name = None  # We don't want to send some values on gui_description
-            data.label = gettext(data.label) if data.label else ''
+            data.label = gettext(data.label) if data.label else ""
             # Translate label and tooltip
-            data.tooltip = gettext(data.tooltip) if data.tooltip else ''
+            data.tooltip = gettext(data.tooltip) if data.tooltip else ""
 
             # And, if tab is set, translate it too
             if data.tab:
@@ -477,7 +472,7 @@ class gui:
             return gui.as_bool(self.value)
 
         def __repr__(self) -> str:
-            return f'{self.__class__.__name__}: {repr(self._field_info)}'
+            return f"{self.__class__.__name__}: {repr(self._field_info)}"
 
     class TextField(InputField):
         """
@@ -517,10 +512,10 @@ class gui:
             length: int = consts.system.DEFAULT_TEXT_LENGTH,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | str = '',
+            default: collections.abc.Callable[[], str] | str = "",
             value: str | None = None,
             pattern: str | types.ui.FieldPatternType = types.ui.FieldPatternType.NONE,
             lines: int = 0,
@@ -556,9 +551,7 @@ class gui:
             #  Checks are performed on admin side, so they are not 100% reliable.
             if pattern:
                 self._field_info.pattern = (
-                    pattern
-                    if isinstance(pattern, types.ui.FieldPatternType)
-                    else types.ui.FieldPatternType(pattern)
+                    pattern if isinstance(pattern, types.ui.FieldPatternType) else types.ui.FieldPatternType(pattern)
                 )
 
         @typing.override
@@ -630,10 +623,10 @@ class gui:
             length: int = consts.system.DEFAULT_TEXT_LENGTH,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | str = '',
+            default: collections.abc.Callable[[], str] | str = "",
             value: str | None = None,
             choices: _ChoicesParamType = None,
             old_field_name: types.ui.OldFieldNameType = None,
@@ -688,7 +681,7 @@ class gui:
             length: int | None = None,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: collections.abc.Callable[[], int] | int = 0,
@@ -741,7 +734,7 @@ class gui:
             length: int | None = None,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: collections.abc.Callable[[], datetime.date] | datetime.date | None = None,
@@ -792,9 +785,9 @@ class gui:
             elif isinstance(value, datetime.date):
                 pass  # Stay as is
             elif isinstance(value, str):  # YYYY-MM-DD
-                value = datetime.datetime.strptime(value, '%Y-%m-%d').date()
+                value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
             else:
-                raise ValueError(f'Invalid value for date: {value}')
+                raise ValueError(f"Invalid value for date: {value}")
 
             super()._set_value(value)
 
@@ -842,10 +835,10 @@ class gui:
             length: int = consts.system.DEFAULT_TEXT_LENGTH,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | str = '',
+            default: collections.abc.Callable[[], str] | str = "",
             value: str | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
         ):
@@ -886,7 +879,7 @@ class gui:
             self._set_value(value)
 
         def __str__(self) -> str:
-            return '********'  # Override so we do not show the password
+            return "********"  # Override so we do not show the password
 
     class HiddenField(InputField):
         """
@@ -925,7 +918,7 @@ class gui:
 
         def __init__(
             self,
-            label: str = '',  # label is optional on hidden fields
+            label: str = "",  # label is optional on hidden fields
             order: int = 0,
             default: typing.Any = None,  # May be also callable
             value: typing.Any = None,
@@ -981,7 +974,7 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: collections.abc.Callable[[], bool] | bool = False,
@@ -1111,7 +1104,7 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             fills: types.ui.Filler | None = None,
@@ -1136,15 +1129,15 @@ class gui:
             self._field_info.choices = gui.as_choices(choices)
             # if has fillers, set them
             if fills:
-                if 'function' not in fills:
-                    raise ValueError('Invalid fills parameters')
-                fills['callback_name'] = fills.get('callback_name', modfinder.callable_path(fills['function']))
-                fnc = fills['function']
-                fills.pop('function')
+                if "function" not in fills:
+                    raise ValueError("Invalid fills parameters")
+                fills["callback_name"] = fills.get("callback_name", modfinder.callable_path(fills["function"]))
+                fnc = fills["function"]
+                fills.pop("function")
                 self._field_info.fills = fills
                 # Store it only if not already present
-                if fills['callback_name'] not in gui.callbacks:
-                    gui.callbacks[fills['callback_name']] = fnc
+                if fills["callback_name"] not in gui.callbacks:
+                    gui.callbacks[fills["callback_name"]] = fnc
 
         def set_choices(self, values: collections.abc.Iterable[types.ui.ChoiceItem]) -> None:
             """
@@ -1164,7 +1157,7 @@ class gui:
             return gui.as_str(self.value)
 
         @property
-        def value(self) -> str:    # pyrefly: ignore[missing-override-decorator]
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
@@ -1177,7 +1170,7 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             tab: str | types.ui.Tab | None = None,
@@ -1265,16 +1258,12 @@ class gui:
             readonly: bool = False,
             rows: int | None = None,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             tab: str | types.ui.Tab | None = None,
             default: (
-                collections.abc.Callable[[], str]
-                | collections.abc.Callable[[], list[str]]
-                | list[str]
-                | str
-                | None
+                collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None
             ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
@@ -1363,15 +1352,11 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: (
-                collections.abc.Callable[[], str]
-                | collections.abc.Callable[[], list[str]]
-                | list[str]
-                | str
-                | None
+                collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None
             ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
@@ -1448,11 +1433,11 @@ class UserInterfaceType(abc.ABCMeta, type):
     """
 
     def __new__(
-        mcs: type['UserInterfaceType'],
+        mcs: type["UserInterfaceType"],
         classname: str,
         bases: tuple[type, ...],
         namespace: dict[str, typing.Any],
-    ) -> 'UserInterfaceType':
+    ) -> "UserInterfaceType":
         new_class_dict: dict[str, typing.Any] = {}
         _gui: collections.abc.MutableMapping[str, gui.InputField] = {}
 
@@ -1466,7 +1451,7 @@ class UserInterfaceType(abc.ABCMeta, type):
                 _gui[attr_name] = attr
 
             new_class_dict[attr_name] = attr
-        new_class_dict['_gui_fields_template'] = _gui
+        new_class_dict["_gui_fields_template"] = _gui
         return super().__new__(mcs, classname, bases, new_class_dict)
 
 
@@ -1513,7 +1498,7 @@ class UserInterface(metaclass=UserInterfaceType):
             setattr(self, fld_name, fld)  # Reference to self._gui[key]
 
             # Check for "callable" fields and update them if needed
-            for field in ['choices', 'default']:  # Update references to self for callable fields
+            for field in ["choices", "default"]:  # Update references to self for callable fields
                 attr = getattr(fld._field_info, field, None)
                 if attr and callable(attr):
                     # val is an InputField derived instance, so it is a reference to self._gui[key]
@@ -1523,10 +1508,10 @@ class UserInterface(metaclass=UserInterfaceType):
                 if fld_name in values:
                     fld.value = values[fld_name]
                 else:
-                    logger.warning('Field %s.%s not found in values data, ', self.__class__.__name__, fld_name)
-                    if getattr(settings, 'DEBUG', False):
+                    logger.warning("Field %s.%s not found in values data, ", self.__class__.__name__, fld_name)
+                    if getattr(settings, "DEBUG", False):
                         for caller in itertools.islice(inspect.stack(), 1, 8):
-                            logger.warning('  %s:%s:%s', caller.filename, caller.lineno, caller.function)
+                            logger.warning("  %s:%s:%s", caller.filename, caller.lineno, caller.function)
 
     def init_gui(self) -> None:
         """
@@ -1592,7 +1577,7 @@ class UserInterface(metaclass=UserInterfaceType):
                 fields[fld] = ensure.as_list(fld_gui.value)
             else:
                 fields[fld] = fld_gui.value
-        logger.debug('Values Dict: %s', fields)
+        logger.debug("Values Dict: %s", fields)
         return fields
 
     def serialize_fields(
@@ -1664,7 +1649,7 @@ class UserInterface(metaclass=UserInterfaceType):
         values = values[len(consts.ui.SERIALIZATION_HEADER) + len(consts.ui.SERIALIZATION_VERSION) :]
 
         if not values:  # Apart of the header, there is nothing...
-            logger.debug('Empty values on unserialize_fields')
+            logger.debug("Empty values on unserialize_fields")
             return False
 
         fields: list[typing.Any] = serializer.deserialize(values) or []
@@ -1688,11 +1673,11 @@ class UserInterface(metaclass=UserInterfaceType):
             field_name = field_names_translations.get(field_name, field_name)
             if field_name not in self._gui:
                 # Probably removed, just to note this in case of debugging
-                logger.debug('Field %s not found in form (%s)', field_name, field_value)
+                logger.debug("Field %s not found in form (%s)", field_name, field_value)
                 continue
             internal_field_type = self._gui[field_name].field_type
             if internal_field_type not in FIELD_DECODERS:
-                logger.warning('Field %s has no decoder', field_name)
+                logger.warning("Field %s has no decoder", field_name)
                 continue
 
             if field_type != internal_field_type.name:
@@ -1701,7 +1686,7 @@ class UserInterface(metaclass=UserInterfaceType):
                         # If the field type is not valid for the internal field type, we log a warning
                         # and do not include this field in the form
                         logger.warning(
-                            'Field %s has different type than expected: %s != %s. Not included in form',
+                            "Field %s has different type than expected: %s != %s. Not included in form",
                             field_name,
                             field_type,
                             internal_field_type.name,
@@ -1719,12 +1704,12 @@ class UserInterface(metaclass=UserInterfaceType):
         the valid values form form fileds inside its corresponding field
         """
         # Separators for fields, old implementation
-        MULTIVALUE_FIELD: typing.Final[bytes] = b'\001'
-        OLD_PASSWORD_FIELD: typing.Final[bytes] = b'\004'
-        PASSWORD_FIELD: typing.Final[bytes] = b'\005'
+        MULTIVALUE_FIELD: typing.Final[bytes] = b"\001"
+        OLD_PASSWORD_FIELD: typing.Final[bytes] = b"\004"
+        PASSWORD_FIELD: typing.Final[bytes] = b"\005"
 
-        FIELD_SEPARATOR: typing.Final[bytes] = b'\002'
-        NAME_VALUE_SEPARATOR: typing.Final[bytes] = b'\003'
+        FIELD_SEPARATOR: typing.Final[bytes] = b"\002"
+        NAME_VALUE_SEPARATOR: typing.Final[bytes] = b"\003"
 
         if not values:  # Has nothing
             return
@@ -1737,7 +1722,7 @@ class UserInterface(metaclass=UserInterfaceType):
                     continue
                 self._gui[k].value = self._gui[k].default
 
-            values = codecs.decode(values, 'zip')
+            values = codecs.decode(values, "zip")
             if not values:  # Has nothing
                 return
 
@@ -1745,7 +1730,7 @@ class UserInterface(metaclass=UserInterfaceType):
 
             for txt in values.split(FIELD_SEPARATOR):
                 kb, v = txt.split(NAME_VALUE_SEPARATOR)
-                k = kb.decode('utf8')  # Convert name to string
+                k = kb.decode("utf8")  # Convert name to string
                 # convert to new name if needed
                 k = field_names_translations.get(k, k)
                 if k in self._gui:
@@ -1753,20 +1738,18 @@ class UserInterface(metaclass=UserInterfaceType):
                         if v.startswith(MULTIVALUE_FIELD):
                             val = pickle.loads(v[1:])
                         elif v.startswith(OLD_PASSWORD_FIELD):
-                            val = (
-                                CryptoManager.manager().aes256_cbc_decrypt(v[1:], consts.ui.UDSB, True).decode()
-                            )
+                            val = CryptoManager.manager().aes256_cbc_decrypt(v[1:], consts.ui.UDSB, True).decode()
                         elif v.startswith(PASSWORD_FIELD):
                             val = CryptoManager.manager().aes256_cbc_decrypt(v[1:], UDSK, True).decode()
                         else:
-                            val = v.decode('utf8')
+                            val = v.decode("utf8")
                     except Exception:
-                        logger.exception('Pickling %s from %s', k, self)
-                        val = ''
+                        logger.exception("Pickling %s from %s", k, self)
+                        val = ""
                     self._gui[k].value = val
                 # logger.debug('Value for {0}:{1}'.format(k, val))
         except Exception:
-            logger.exception('Exception on unserialization on %s', self.__class__)
+            logger.exception("Exception on unserialization on %s", self.__class__)
             # Values can contain invalid characters, so we log every single char
             # logger.info('Invalid serialization data on {0} {1}'.format(self, values.encode('hex')))
 
@@ -1803,9 +1786,9 @@ class UserInterface(metaclass=UserInterfaceType):
         found_errors: list[UserInterface.ValidationFieldInfo] = []
         for key, val in self._gui.items():
             if val.required and not val.value:
-                found_errors.append(UserInterface.ValidationFieldInfo(key, 'Field is required'))
+                found_errors.append(UserInterface.ValidationFieldInfo(key, "Field is required"))
             if not val.validate():
-                found_errors.append(UserInterface.ValidationFieldInfo(key, 'Field is not valid'))
+                found_errors.append(UserInterface.ValidationFieldInfo(key, "Field is not valid"))
 
         return found_errors
 
@@ -1838,7 +1821,7 @@ def password_compat_field_decoder(value: str) -> str:
     Compatibility function to decode text fields converted to password fields
     """
     try:
-        value = CryptoManager.manager().aes256_cbc_decrypt(value.encode('utf8'), UDSK, True).decode()
+        value = CryptoManager.manager().aes256_cbc_decrypt(value.encode("utf8"), UDSK, True).decode()
     except Exception:
         pass
     return value
@@ -1852,7 +1835,7 @@ FIELDS_ENCODERS: typing.Final[
     types.ui.FieldType.TEXT_AUTOCOMPLETE: lambda x: x.value,
     types.ui.FieldType.NUMERIC: lambda x: str(gui.as_int(x.value)),
     types.ui.FieldType.PASSWORD: lambda x: (
-        CryptoManager.manager().aes256_cbc_encrypt(x.value.encode('utf8'), UDSK, True).decode()
+        CryptoManager.manager().aes256_cbc_encrypt(x.value.encode("utf8"), UDSK, True).decode()
     ),
     types.ui.FieldType.HIDDEN: (lambda x: None if not x.is_serializable() else x.value),
     types.ui.FieldType.CHOICE: lambda x: x.value,

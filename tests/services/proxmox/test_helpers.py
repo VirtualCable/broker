@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -43,27 +44,27 @@ from ...utils.test import UDSTransactionTestCase
 
 class TestProxmoxHelpers(UDSTransactionTestCase):
     _parameters: dict[str, typing.Any] = {
-        'prov_uuid': 'test',
-        'machine': fixtures.VMINFO_LIST[0].id,  # Used on get_storage
-        'pool': fixtures.POOLS[0].id,  # Used on get_machines
+        "prov_uuid": "test",
+        "machine": fixtures.VMINFO_LIST[0].id,  # Used on get_storage
+        "pool": fixtures.POOLS[0].id,  # Used on get_machines
     }
 
     def test_get_provider(self) -> None:
         # with fixtures.patched_provider() as provider:
         #    pass
-        with mock.patch('uds.models.Provider.objects.get') as get_provider:
+        with mock.patch("uds.models.Provider.objects.get") as get_provider:
             helpers.get_provider(self._parameters)
-            get_provider.assert_called_once_with(uuid=self._parameters['prov_uuid'])
+            get_provider.assert_called_once_with(uuid=self._parameters["prov_uuid"])
 
     def test_get_storage(self) -> None:
         with fixtures.patched_provider() as provider:
-            with mock.patch('uds.models.Provider.objects.get') as get_provider:
+            with mock.patch("uds.models.Provider.objects.get") as get_provider:
                 api = typing.cast(mock.Mock, provider.api)
                 get_provider.return_value.get_instance.return_value = provider
                 result = helpers.get_storage(self._parameters)
                 self.assertEqual(len(result), 1)
-                self.assertEqual(result[0]['name'], 'datastore')
-                choices = result[0]['choices']
+                self.assertEqual(result[0]["name"], "datastore")
+                choices = result[0]["choices"]
                 self.assertIsInstance(choices, list)
                 self.assertGreaterEqual(len(choices), 1)
                 for choice in choices:
@@ -76,13 +77,13 @@ class TestProxmoxHelpers(UDSTransactionTestCase):
 
     def test_get_machines(self) -> None:
         with fixtures.patched_provider() as provider:
-            with mock.patch('uds.models.Provider.objects.get') as get_provider:
+            with mock.patch("uds.models.Provider.objects.get") as get_provider:
                 api = typing.cast(mock.Mock, provider.api)
                 get_provider.return_value.get_instance.return_value = provider
                 result = helpers.get_machines(self._parameters)
                 self.assertEqual(len(result), 1)
-                self.assertEqual(result[0]['name'], 'machines')
-                choices = result[0]['choices']
+                self.assertEqual(result[0]["name"], "machines")
+                choices = result[0]["choices"]
                 self.assertIsInstance(choices, list)
                 self.assertGreaterEqual(len(choices), 1)
                 for choice in choices:

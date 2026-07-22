@@ -49,17 +49,28 @@ from .base import StampProvider
 logger = logging.getLogger(__name__)
 
 # SHA-256 OID: 2.16.840.1.101.3.4.2.1 (DER encoded)
-_SHA256_OID = bytes((
-    0x06, 0x09,
-    0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,
-))
+_SHA256_OID = bytes(
+    (
+        0x06,
+        0x09,
+        0x60,
+        0x86,
+        0x48,
+        0x01,
+        0x65,
+        0x03,
+        0x04,
+        0x02,
+        0x01,
+    )
+)
 
 
 def _der_length(value: int) -> bytes:
     """DER-encode a length value."""
     if value < 0x80:
         return bytes((value,))
-    encoded = value.to_bytes((value.bit_length() + 7) // 8, 'big')
+    encoded = value.to_bytes((value.bit_length() + 7) // 8, "big")
     return bytes((0x80 | len(encoded),)) + encoded
 
 
@@ -72,7 +83,7 @@ def _der_integer(value: int) -> bytes:
     """DER-encode an INTEGER."""
     if value == 0:
         return bytes((0x02, 0x01, 0x00))
-    val_bytes = value.to_bytes((value.bit_length() + 7) // 8, 'big')
+    val_bytes = value.to_bytes((value.bit_length() + 7) // 8, "big")
     if val_bytes[0] & 0x80:
         val_bytes = bytes((0x00,)) + val_bytes
     return bytes((0x02,)) + _der_length(len(val_bytes)) + val_bytes
@@ -116,7 +127,7 @@ def _encode_timestamp_request(hash_data: bytes) -> bytes:
     #   certReq BOOLEAN DEFAULT TRUE,
     # }
     version = _der_integer(1)
-    nonce = _der_integer(int.from_bytes(os.urandom(8), 'big'))
+    nonce = _der_integer(int.from_bytes(os.urandom(8), "big"))
     cert_req = _der_boolean(True)
 
     req_content = version + message_imprint + nonce + cert_req
@@ -137,7 +148,7 @@ class RFC3161StampProvider(StampProvider):
 
     def __init__(
         self,
-        url: str = 'https://freetsa.org/tsr',
+        url: str = "https://freetsa.org/tsr",
         timeout: int = 30,
         verify_ssl: bool = True,
     ):
@@ -151,7 +162,7 @@ class RFC3161StampProvider(StampProvider):
         Send a TimeStampReq to the TSA and return the TimeStampResp token.
         """
         if len(hash_data) != 32:
-            raise ValueError(f'Expected 32-byte SHA-256 hash, got {len(hash_data)} bytes')
+            raise ValueError(f"Expected 32-byte SHA-256 hash, got {len(hash_data)} bytes")
 
         request_der = _encode_timestamp_request(hash_data)
 
@@ -166,24 +177,24 @@ class RFC3161StampProvider(StampProvider):
                 self._url,
                 data=request_der,
                 headers={
-                    'Content-Type': 'application/timestamp-query',
+                    "Content-Type": "application/timestamp-query",
                 },
-                method='POST',
+                method="POST",
             )
             with urllib.request.urlopen(req, timeout=self._timeout, context=ctx) as resp:
                 token = resp.read()
         except urllib.error.HTTPError as e:
-            logger.error('TSA HTTP error %s: %s', e.code, e.reason)
+            logger.error("TSA HTTP error %s: %s", e.code, e.reason)
             raise
         except urllib.error.URLError as e:
-            logger.error('TSA connection error: %s', e.reason)
+            logger.error("TSA connection error: %s", e.reason)
             raise
         except OSError as e:
-            logger.error('TSA network error: %s', e)
+            logger.error("TSA network error: %s", e)
             raise
 
         logger.debug(
-            'TSA stamp: hash=%s... url=%s token_len=%d',
+            "TSA stamp: hash=%s... url=%s token_len=%d",
             hash_data.hex()[:16],
             self._url,
             len(token),
@@ -203,7 +214,7 @@ class RFC3161StampProvider(StampProvider):
         try:
             new_token = self.stamp(hash_data)
         except Exception:
-            logger.exception('TSA verification failed: cannot reach TSA')
+            logger.exception("TSA verification failed: cannot reach TSA")
             return False
 
         if len(new_token) != len(token):

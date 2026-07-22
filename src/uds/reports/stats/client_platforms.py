@@ -43,10 +43,10 @@ logger = logging.getLogger(__name__)
 
 
 class ClientPlatformsReport(StatsReport):
-    filename = 'client_platforms.pdf'
-    name = _('Client platforms breakdown')
-    description = _('Breakdown of client platforms, browsers and versions seen on web logins')
-    uuid = '5aa4bcf9-cbff-4e9a-81a3-16915347a77a'
+    filename = "client_platforms.pdf"
+    name = _("Client platforms breakdown")
+    description = _("Breakdown of client platforms, browsers and versions seen on web logins")
+    uuid = "5aa4bcf9-cbff-4e9a-81a3-16915347a77a"
 
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
@@ -72,37 +72,37 @@ class ClientPlatformsReport(StatsReport):
                 since=start,
                 to=end,
             )
-            .values('fld1', 'fld2', 'fld3')
-            .annotate(c=Count('id'))
+            .values("fld1", "fld2", "fld3")
+            .annotate(c=Count("id"))
         )
 
-        total = sum(r['c'] for r in rows)
+        total = sum(r["c"] for r in rows)
 
         platforms: dict[str, int] = collections.defaultdict(int)
         browsers: dict[str, int] = collections.defaultdict(int)
         combo: list[dict[str, typing.Any]] = []
         for r in rows:
-            p = r['fld1'] or gettext('Unknown')
-            b = r['fld2'] or gettext('Unknown')
-            v = r['fld3']
-            platforms[p] += r['c']
-            browsers[b] += r['c']
-            combo.append({'platform': p, 'browser': b, 'version': v, 'count': r['c']})
+            p = r["fld1"] or gettext("Unknown")
+            b = r["fld2"] or gettext("Unknown")
+            v = r["fld3"]
+            platforms[p] += r["c"]
+            browsers[b] += r["c"]
+            combo.append({"platform": p, "browser": b, "version": v, "count": r["c"]})
 
         def _pct(n: int) -> str:
-            return '{:.1f}'.format(n * 100.0 / total) if total else '0.0'
+            return "{:.1f}".format(n * 100.0 / total) if total else "0.0"
 
         platforms_list = sorted(
-            ({'name': k, 'count': v, 'pct': _pct(v)} for k, v in platforms.items()),
-            key=lambda r: r['count'],
+            ({"name": k, "count": v, "pct": _pct(v)} for k, v in platforms.items()),
+            key=lambda r: r["count"],
             reverse=True,
         )
         browsers_list = sorted(
-            ({'name': k, 'count': v, 'pct': _pct(v)} for k, v in browsers.items()),
-            key=lambda r: r['count'],
+            ({"name": k, "count": v, "pct": _pct(v)} for k, v in browsers.items()),
+            key=lambda r: r["count"],
             reverse=True,
         )
-        combo.sort(key=lambda r: r['count'], reverse=True)
+        combo.sort(key=lambda r: r["count"], reverse=True)
 
         return platforms_list, browsers_list, combo, total
 
@@ -110,25 +110,25 @@ class ClientPlatformsReport(StatsReport):
     def generate(self) -> bytes:
         platforms, browsers, combo, total = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/stats/client-platforms.html',
+            "uds/reports/stats/client-platforms.html",
             dct={
-                'platforms': platforms,
-                'browsers': browsers,
-                'combo': combo,
-                'total': total,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "platforms": platforms,
+                "browsers": browsers,
+                "combo": combo,
+                "total": total,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Client platforms breakdown'),
-            water=gettext('UDS Report of client platforms'),
+            header=gettext("Client platforms breakdown"),
+            water=gettext("UDS Report of client platforms"),
         )
 
 
 class ClientPlatformsReportCSV(ClientPlatformsReport):
-    filename = 'client_platforms.csv'
-    mime_type = 'text/csv'
+    filename = "client_platforms.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = '26638387-4d35-4dd1-a7d6-bd45d0c3dcf4'
+    uuid = "26638387-4d35-4dd1-a7d6-bd45d0c3dcf4"
 
     start_date = ClientPlatformsReport.start_date
     end_date = ClientPlatformsReport.end_date
@@ -139,13 +139,13 @@ class ClientPlatformsReportCSV(ClientPlatformsReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext('Platform'),
-                gettext('Browser'),
-                gettext('Version'),
-                gettext('Count'),
+                gettext("Platform"),
+                gettext("Browser"),
+                gettext("Version"),
+                gettext("Count"),
             ]
         )
         _platforms, _browsers, combo, _total = self.get_data()
         for v in combo:
-            writer.writerow([v['platform'], v['browser'], v['version'], v['count']])
+            writer.writerow([v["platform"], v["browser"], v["version"], v["count"]])
         return output.getvalue().encode()

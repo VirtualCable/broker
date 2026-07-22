@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from datetime import datetime, timedelta
 import logging
@@ -53,7 +54,7 @@ class StuckCleaner(Job):
     We keep it in a new place to "control" more specific thins
     """
 
-    friendly_name = 'Stuck States cleaner'
+    friendly_name = "Stuck States cleaner"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -67,7 +68,7 @@ class StuckCleaner(Job):
         servicepools_with_stucks = (
             ServicePool.objects.annotate(
                 stuck_count=Count(
-                    'userServices',
+                    "userServices",
                     filter=Q(userServices__state_date__lt=since_state)
                     & (
                         Q(
@@ -94,11 +95,11 @@ class StuckCleaner(Job):
                 continue
             # logger.debug('Searching for stuck states for %s', servicePool.name)
             for stuck in _retrieve_stuck_user_services(servicepool):
-                logger.debug('Found stuck user service %s', stuck)
+                logger.debug("Found stuck user service %s", stuck)
                 log.log(
                     servicepool,
                     types.log.LogLevel.ERROR,
-                    f'User service {stuck.name} has been hard removed because it\'s stuck',
+                    f"User service {stuck.name} has been hard removed because it's stuck",
                 )
                 # stuck.set_state(State.ERROR)
                 stuck.delete()

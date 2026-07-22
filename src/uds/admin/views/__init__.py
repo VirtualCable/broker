@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -46,15 +47,16 @@ if typing.TYPE_CHECKING:
 
 
 @weblogin_required(role=consts.UserRole.ADMIN)
-def index(request: 'HttpRequest') -> HttpResponse:
+def index(request: "HttpRequest") -> HttpResponse:
     # Gets csrf token
     csrf_token = csrf.get_token(request)
 
     return render(
         request,
-        'uds/admin/index.html',
-        {'csrf_field': consts.auth.CSRF_FIELD, 'csrf_token': csrf_token},
+        "uds/admin/index.html",
+        {"csrf_field": consts.auth.CSRF_FIELD, "csrf_token": csrf_token},
     )
+
 
 # from django.template import RequestContext, loader
 # @weblogin_required(role=consts.Roles.ADMIN)

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import logging
 import sys
@@ -64,10 +65,10 @@ class Transport(Module):
     """
 
     # Transport informational related data, inherited from BaseModule
-    type_name = 'Base Transport Manager'
-    type_type = 'Base Transport'
-    type_description = 'Base Transport'
-    icon_file = 'transport.png'
+    type_name = "Base Transport Manager"
+    type_type = "Base Transport"
+    type_description = "Base Transport"
+    icon_file = "transport.png"
     # Supported names for OS (used right now, but lots of more names for sure)
     # Windows
     # Macintosh
@@ -83,13 +84,13 @@ class Transport(Module):
     # For allowing grouping transport on dashboard "new" menu, and maybe other places
     group: typing.ClassVar[types.transports.Grouping] = types.transports.Grouping.DIRECT
 
-    _db_obj: 'models.Transport|None' = None
+    _db_obj: "models.Transport|None" = None
 
-    def __init__(self, environment: 'Environment', values: types.core.ValuesType):
+    def __init__(self, environment: "Environment", values: types.core.ValuesType):
         super().__init__(environment, values)
         self.initialize(values)
 
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         This method will be invoked from __init__ constructor.
         This is provided so you don't have to provide your own __init__ method,
@@ -112,7 +113,7 @@ class Transport(Module):
         """
 
     @typing.override
-    def db_obj(self) -> 'models.Transport':
+    def db_obj(self) -> "models.Transport":
         """
         Returns the database object for this provider
         """
@@ -127,26 +128,26 @@ class Transport(Module):
 
     def test_connectivity(
         self,
-        userservice: 'models.UserService',
+        userservice: "models.UserService",
         ip: str,
         port: str | int,
         timeout: float = 4,
     ) -> bool:
         return net.test_connectivity(ip, int(port), timeout)
 
-    def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
+    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
         Override this in yours transports
         """
         return False
 
-    def get_available_error_msg(self, userservice: 'models.UserService', ip: str) -> str:
+    def get_available_error_msg(self, userservice: "models.UserService", ip: str) -> str:
         """
         Returns a customized error message, that will be used when a service fails to check "isAvailableFor"
         Override this in yours transports if needed
         """
-        return f'Not accessible (using service ip {ip})'
+        return f"Not accessible (using service ip {ip})"
 
     @classmethod
     def is_protocol_supported(cls, protocol: collections.abc.Iterable[str] | str) -> bool:
@@ -175,8 +176,8 @@ class Transport(Module):
 
     def get_connection_info(
         self,
-        userservice: 'models.UserService | models.ServicePool',
-        user: 'models.User',
+        userservice: "models.UserService | models.ServicePool",
+        user: "models.User",
         password: str,
         *,
         for_notify: bool = False,  # To differentiate SSO from information
@@ -208,11 +209,11 @@ class Transport(Module):
             protocol=self.PROTOCOL,
             username=username,
             service_type=types.services.ServiceType.VDI,
-            password='',  # nosec: password is empty string, no password
-            domain='',
+            password="",  # nosec: password is empty string, no password
+            domain="",
         )
 
-    def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
+    def processed_username(self, userservice: "models.UserService", user: "models.User") -> str:
         """
         Used to "transform" username that will be sent to service
         This is used to make the "user" that will receive the service match with that sent in notification
@@ -229,13 +230,13 @@ class Transport(Module):
 
     def get_transport_script(
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',  # pylint: disable=redefined-outer-name
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",  # pylint: disable=redefined-outer-name
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
+        request: "ExtendedHttpRequestWithUser",
     ) -> types.transports.TransportScript:
         """
         If this is an uds transport, this will return the tranport script needed for executing
@@ -255,13 +256,11 @@ class Transport(Module):
         # Reads script and signature
         import os  # pylint: disable=import-outside-toplevel
 
-        base_path = os.path.dirname(
-            sys.modules[self.__module__].__file__ or 'not_found'
-        )  # Will raise if not found
+        base_path = os.path.dirname(sys.modules[self.__module__].__file__ or "not_found")  # Will raise if not found
 
-        with open(os.path.join(base_path, scriptname), 'r', encoding='utf8') as script_file:
+        with open(os.path.join(base_path, scriptname), "r", encoding="utf8") as script_file:
             script = script_file.read()
-        with open(os.path.join(base_path, scriptname + '.mldsa65.sig'), 'r', encoding='utf8') as signature_file:
+        with open(os.path.join(base_path, scriptname + ".mldsa65.sig"), "r", encoding="utf8") as signature_file:
             signature = signature_file.read()
 
         return types.transports.TransportScript(
@@ -276,7 +275,7 @@ class Transport(Module):
     def get_script(
         self,
         osname: str,
-        type: typing.Literal['tunnel', 'direct'],
+        type: typing.Literal["tunnel", "direct"],
         params: dict[str, typing.Any],
         *,
         associated_ticket: str | None = None,
@@ -284,23 +283,23 @@ class Transport(Module):
         """
         Returns a script for the given os and type
         """
-        return self.get_relative_script(f'scripts/{osname.lower()}/{type}.js', params, associated_ticket)
+        return self.get_relative_script(f"scripts/{osname.lower()}/{type}.js", params, associated_ticket)
 
     def get_link(
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',  # pylint: disable=redefined-outer-name
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",  # pylint: disable=redefined-outer-name
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
+        request: "ExtendedHttpRequestWithUser",
     ) -> str:
         """
         Must override if transport does provides its own link
         If transport provides own link, this method provides the link itself
         """
-        return 'https://www.udsenterprise.com'
+        return "https://www.udsenterprise.com"
 
     def update_link_window(
         self,
@@ -314,13 +313,13 @@ class Transport(Module):
         uuid = uuid or self.get_uuid()
         default_uuid = default_uuid or self.get_uuid()
 
-        amp = '&' if '?' in link else '?'
+        amp = "&" if "?" in link else "?"
 
         if not on_new_window and not on_same_window:
-            return f'{link}{amp}{consts.transports.ON_SAME_WINDOW_VAR}={default_uuid}'
+            return f"{link}{amp}{consts.transports.ON_SAME_WINDOW_VAR}={default_uuid}"
 
         if on_same_window:
-            return f'{link}{amp}{consts.transports.ON_SAME_WINDOW_VAR}=yes'
+            return f"{link}{amp}{consts.transports.ON_SAME_WINDOW_VAR}=yes"
 
         # Must be on new window
-        return f'{link}{amp}{consts.transports.ON_NEW_WINDOW_VAR}={uuid}'
+        return f"{link}{amp}{consts.transports.ON_NEW_WINDOW_VAR}={uuid}"

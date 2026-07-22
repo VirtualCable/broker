@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -54,95 +55,95 @@ class BaseSpiceTransport(transports.Transport):
 
     is_base = True
 
-    icon_file = 'spice.png'
+    icon_file = "spice.png"
     PROTOCOL = types.transports.Protocol.SPICE
 
     force_empty_creds = gui.CheckBoxField(
         order=1,
-        label=_('Empty credentials'),
-        tooltip=_('If checked, the credentials used to connect will be emtpy'),
+        label=_("Empty credentials"),
+        tooltip=_("If checked, the credentials used to connect will be emtpy"),
         tab=types.ui.Tab.CREDENTIALS,
-        old_field_name='useEmptyCreds',
+        old_field_name="useEmptyCreds",
     )
     forced_username = gui.TextField(
         order=2,
-        label=_('Username'),
-        tooltip=_('If not empty, this username will be always used as credential'),
+        label=_("Username"),
+        tooltip=_("If not empty, this username will be always used as credential"),
         tab=types.ui.Tab.CREDENTIALS,
-        old_field_name='fixedName',
+        old_field_name="fixedName",
     )
     forced_password = gui.PasswordField(
         order=3,
-        label=_('Password'),
-        tooltip=_('If not empty, this password will be always used as credential'),
+        label=_("Password"),
+        tooltip=_("If not empty, this password will be always used as credential"),
         tab=types.ui.Tab.CREDENTIALS,
-        old_field_name='fixedPassword',
+        old_field_name="fixedPassword",
     )
     server_certificate = gui.TextField(
         order=4,
         length=4096,
         lines=4,
-        label=_('Certificate'),
+        label=_("Certificate"),
         tooltip=_(
-            'Server certificate (public), can be found on your ovirt engine, probably at /etc/pki/ovirt-engine/certs/ca.der (Use the contents of this file).'
+            "Server certificate (public), can be found on your ovirt engine, probably at /etc/pki/ovirt-engine/certs/ca.der (Use the contents of this file)."
         ),
         required=False,
-        old_field_name='serverCertificate',
+        old_field_name="serverCertificate",
     )
     fullscreen = gui.CheckBoxField(
         order=5,
-        label=_('Fullscreen Mode'),
-        tooltip=_('If checked, viewer will be shown on fullscreen mode-'),
+        label=_("Fullscreen Mode"),
+        tooltip=_("If checked, viewer will be shown on fullscreen mode-"),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='fullScreen',
+        old_field_name="fullScreen",
     )
     allow_smartcards = gui.CheckBoxField(
         order=6,
-        label=_('Smartcard Redirect'),
-        tooltip=_('If checked, SPICE protocol will allow smartcard redirection.'),
+        label=_("Smartcard Redirect"),
+        tooltip=_("If checked, SPICE protocol will allow smartcard redirection."),
         default=False,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='smartCardRedirect',
+        old_field_name="smartCardRedirect",
     )
     allow_usb_redirection = gui.CheckBoxField(
         order=7,
-        label=_('Enable USB'),
-        tooltip=_('If checked, USB redirection will be allowed.'),
+        label=_("Enable USB"),
+        tooltip=_("If checked, USB redirection will be allowed."),
         default=False,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='usbShare',
+        old_field_name="usbShare",
     )
     allow_usb_redirection_new_plugs = gui.CheckBoxField(
         order=8,
-        label=_('New USB Auto Sharing'),
-        tooltip=_('Auto-redirect USB devices when plugged in.'),
+        label=_("New USB Auto Sharing"),
+        tooltip=_("Auto-redirect USB devices when plugged in."),
         default=False,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='autoNewUsbShare',
+        old_field_name="autoNewUsbShare",
     )
     ssl_connection = gui.CheckBoxField(
         order=9,
-        label=_('SSL Connection'),
-        tooltip=_('If checked, SPICE protocol will allow SSL connections.'),
+        label=_("SSL Connection"),
+        tooltip=_("If checked, SPICE protocol will allow SSL connections."),
         default=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='SSLConnection',
+        old_field_name="SSLConnection",
     )
 
     overrided_proxy = gui.TextField(
         order=10,
-        label=_('Override Proxy'),
+        label=_("Override Proxy"),
         tooltip=_(
-            'If not empty, this proxy will be used to connect to the service instead of the one provided by the hypervisor. Format: http://host:port'
+            "If not empty, this proxy will be used to connect to the service instead of the one provided by the hypervisor. Format: http://host:port"
         ),
         required=False,
         tab=types.ui.Tab.ADVANCED,
         pattern=types.ui.FieldPatternType.URL,
-        old_field_name='overridedProxy',
+        old_field_name="overridedProxy",
     )
 
     @typing.override
-    def is_ip_allowed(self, userservice: 'models.UserService', ip: str) -> bool:
+    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
         """
         Checks if the transport is available for the requested destination ip
         """
@@ -151,7 +152,7 @@ class BaseSpiceTransport(transports.Transport):
             userservice_instance = userservice.get_instance()
             con = userservice_instance.get_console_connection()
 
-            logger.debug('Connection data: %s', con)
+            logger.debug("Connection data: %s", con)
 
             if con is None:
                 return False
@@ -163,13 +164,13 @@ class BaseSpiceTransport(transports.Transport):
             port_to_test = con.port if con.port != -1 else con.secure_port
             if port_to_test == -1:
                 self.cache.put(
-                    'cached_message', 'Could not find the PORT for connection', 120
+                    "cached_message", "Could not find the PORT for connection", 120
                 )  # Write a message, that will be used from getCustom
-                logger.info('SPICE didn\'t find has any port: %s', con)
+                logger.info("SPICE didn't find has any port: %s", con)
                 return False
 
             self.cache.put(
-                'cached_message',
+                "cached_message",
                 'Could not reach server "{}" on port "{}" from broker (prob. causes are name resolution & firewall rules)'.format(
                     con.address, port_to_test
                 ),
@@ -177,27 +178,27 @@ class BaseSpiceTransport(transports.Transport):
             )
 
             if self.test_connectivity(userservice, con.address, port_to_test) is True:
-                self.cache.put(ip, 'Y', READY_CACHE_TIMEOUT)
-                ready = 'Y'
+                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
+                ready = "Y"
 
-        return ready == 'Y'
+        return ready == "Y"
 
     @typing.override
-    def get_available_error_msg(self, userservice: 'models.UserService', ip: str) -> str:
-        msg = self.cache.get('cached_message')
+    def get_available_error_msg(self, userservice: "models.UserService", ip: str) -> str:
+        msg = self.cache.get("cached_message")
         if msg is None:
             return transports.Transport.get_available_error_msg(self, userservice, ip)
         return msg
 
     @typing.override
-    def processed_username(self, userservice: 'models.UserService', user: 'models.User') -> str:
-        v = self.process_user_password(userservice, user, '')
+    def processed_username(self, userservice: "models.UserService", user: "models.User") -> str:
+        v = self.process_user_password(userservice, user, "")
         return v.username
 
     def process_user_password(
         self,
-        userservice: typing.Union['models.UserService', 'models.ServicePool'],
-        user: 'models.User',
+        userservice: typing.Union["models.UserService", "models.ServicePool"],
+        user: "models.User",
         password: str,
     ) -> types.connections.ConnectionData:
         username = user.get_username_for_auth()
@@ -209,7 +210,7 @@ class BaseSpiceTransport(transports.Transport):
             password = self.forced_password.value
 
         if self.force_empty_creds.as_bool():
-            username, password = '', ''
+            username, password = "", ""
 
         # Fix username/password acording to os manager
         username, password = userservice.process_user_password(username, password)
@@ -224,8 +225,8 @@ class BaseSpiceTransport(transports.Transport):
     @typing.override
     def get_connection_info(
         self,
-        userservice: typing.Union['models.UserService', 'models.ServicePool'],
-        user: 'models.User',
+        userservice: typing.Union["models.UserService", "models.ServicePool"],
+        user: "models.User",
         password: str,
         *,
         for_notify: bool = False,

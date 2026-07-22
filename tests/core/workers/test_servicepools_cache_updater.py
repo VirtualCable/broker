@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -51,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 class ServiceCacheUpdaterTest(UDSTestCase):
-    servicepool: 'models.ServicePool'
+    servicepool: "models.ServicePool"
 
     def setUp(self) -> None:
         # Default values for max
@@ -98,7 +99,7 @@ class ServiceCacheUpdaterTest(UDSTestCase):
     def test_initial_locked_servicepool(self) -> None:
         self.set_cache(initial=100, cache=10, max=500)
         self.servicepool.state = types.states.State.LOCKED
-        self.servicepool.save(update_fields=['state'])
+        self.servicepool.save(update_fields=["state"])
 
         # Locked service pools should be updated
         self.assertEqual(

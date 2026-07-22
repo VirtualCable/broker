@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import itertools
@@ -106,45 +107,50 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     # Custom get method "search" that requires authenticator id
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'search', True,
-            description='Search users or groups in the authenticator by name or identifier',
+            "search",
+            True,
+            description="Search users or groups in the authenticator by name or identifier",
             params=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    'text': types.rest.api.SchemaProperty(
-                        type='string',
-                        description='Search text to match against user or group names',
+                    "text": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Search text to match against user or group names",
                     ),
                 },
             ),
         ),
-        types.rest.ModelCustomMethod('users_with_services', True, description='Retrieve all users in this authenticator that have active services assigned'),
+        types.rest.ModelCustomMethod(
+            "users_with_services",
+            True,
+            description="Retrieve all users in this authenticator that have active services assigned",
+        ),
     ]
-    DETAIL = {'users': Users, 'groups': Groups}
+    DETAIL = {"users": Users, "groups": Groups}
     FIELDS_TO_SAVE = [
-        'name',
-        'comments',
-        'tags',
-        'priority',
-        'small_name',
-        'mfa_id:_',
-        'state',
-        'net_filtering',
+        "name",
+        "comments",
+        "tags",
+        "priority",
+        "small_name",
+        "mfa_id:_",
+        "state",
+        "net_filtering",
     ]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Authenticators'))
-        .numeric_column(name='numeric_id', title=_('Id'), visible=True, width='1rem')
-        .icon(name='name', title=_('Name'), visible=True)
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='comments', title=_('Comments'))
-        .numeric_column(name='priority', title=_('Priority'), width='8rem')
-        .text_column(name='small_name', title=_('Label'))
-        .numeric_column(name='users_count', title=_('Users'), width='6rem')
-        .text_column(name='mfa_name', title=_('MFA'))
-        .text_column(name='tags', title=_('tags'), visible=False)
-        .row_style(prefix='row-state-', field='state')
-        .with_filter_fields('name', 'data_type', 'comments', 'small_name')
+        ui_utils.TableBuilder(_("Authenticators"))
+        .numeric_column(name="numeric_id", title=_("Id"), visible=True, width="1rem")
+        .icon(name="name", title=_("Name"), visible=True)
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="comments", title=_("Comments"))
+        .numeric_column(name="priority", title=_("Priority"), width="8rem")
+        .text_column(name="small_name", title=_("Label"))
+        .numeric_column(name="users_count", title=_("Users"), width="6rem")
+        .text_column(name="mfa_name", title=_("MFA"))
+        .text_column(name="tags", title=_("tags"), visible=False)
+        .row_style(prefix="row-state-", field="state")
+        .with_filter_fields("name", "data_type", "comments", "small_name")
         .build()
     )
 
@@ -160,7 +166,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     @classmethod
     @typing.override
-    def extra_type_info(cls: type[typing.Self], type_: type['Module']) -> AuthenticatorTypeInfo | None:
+    def extra_type_info(cls: type[typing.Self], type_: type["Module"]) -> AuthenticatorTypeInfo | None:
         if issubclass(type_, auths.Authenticator):
             return AuthenticatorTypeInfo(
                 search_users_supported=type_.search_users != auths.Authenticator.search_users,
@@ -199,36 +205,34 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                         )
                         .add_fields(auth_instance.gui_description())
                         .add_choice(
-                            name='state',
+                            name="state",
                             default=consts.auth.VISIBLE,
                             choices=[
-                                ui.gui.choice_item(consts.auth.VISIBLE, _('Visible')),
-                                ui.gui.choice_item(consts.auth.HIDDEN, _('Hidden')),
-                                ui.gui.choice_item(consts.auth.DISABLED, _('Disabled')),
+                                ui.gui.choice_item(consts.auth.VISIBLE, _("Visible")),
+                                ui.gui.choice_item(consts.auth.HIDDEN, _("Hidden")),
+                                ui.gui.choice_item(consts.auth.DISABLED, _("Disabled")),
                             ],
-                            label=gettext('Access'),
+                            label=gettext("Access"),
                         )
                     )
 
                     if auth_type.provides_mfa_identifier():
                         gui.add_choice(
-                            name='mfa_id',
-                            label=gettext('MFA Provider'),
-                            choices=[ui.gui.choice_item('', str(_('None')))]
-                            + ui.gui.sorted_choices(
-                                [ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]
-                            ),
+                            name="mfa_id",
+                            label=gettext("MFA Provider"),
+                            choices=[ui.gui.choice_item("", str(_("None")))]
+                            + ui.gui.sorted_choices([ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]),
                         )
 
                     return gui.build()
 
             raise Exception()  # Not found
         except Exception as e:
-            logger.info('Authenticator type not found: %s', e)
-            raise exceptions.rest.NotFound('Authenticator type not found') from e
+            logger.info("Authenticator type not found: %s", e)
+            raise exceptions.rest.NotFound("Authenticator type not found") from e
 
     @typing.override
-    def get_item(self, item: 'models.Model') -> AuthenticatorItem:
+    def get_item(self, item: "models.Model") -> AuthenticatorItem:
         item = ensure.is_instance(item, Authenticator)
 
         return AuthenticatorItem(
@@ -241,7 +245,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             net_filtering=item.net_filtering,
             networks=[n.uuid for n in item.networks.all()],
             state=item.state,
-            mfa_id=item.mfa.uuid if item.mfa else '',
+            mfa_id=item.mfa.uuid if item.mfa else "",
             small_name=item.small_name,
             users_count=item.users.count(),
             permission=permissions.effective_permissions(self._user, item),
@@ -250,44 +254,44 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         )
 
     @typing.override
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('users_count'):
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("users_count"):
             field_name, is_descending = field_info
             order_by_field = f"-{field_name}" if is_descending else field_name
-            return qs.annotate(users_count=models.Count('users')).order_by(order_by_field)
+            return qs.annotate(users_count=models.Count("users")).order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('type_name'):
+        if field_info := self.get_sort_field_info("type_name"):
             _, is_descending = field_info
-            order_by_field = f'-data_type' if is_descending else 'data_type'
+            order_by_field = "-data_type" if is_descending else "data_type"
             return qs.order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('numeric_id'):
+        if field_info := self.get_sort_field_info("numeric_id"):
             _, is_descending = field_info
-            order_by_field = f'-pk' if is_descending else 'pk'
+            order_by_field = "-pk" if is_descending else "pk"
             return qs.order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('mfa_name'):
+        if field_info := self.get_sort_field_info("mfa_name"):
             _, is_descending = field_info
-            order_by_field = f'-mfa__name' if is_descending else 'mfa__name'
+            order_by_field = "-mfa__name" if is_descending else "mfa__name"
             return qs.order_by(order_by_field)
 
         return super().apply_sort(qs)
 
     @typing.override
-    def post_save(self, item: 'models.Model') -> None:
+    def post_save(self, item: "models.Model") -> None:
         item = ensure.is_instance(item, Authenticator)
         try:
-            networks = self._params['networks']
+            networks = self._params["networks"]
         except Exception:  # No networks passed in, this is ok
-            logger.debug('No networks')
+            logger.debug("No networks")
             return
         if networks is None:  # None is not provided, empty list is ok and means no networks
             return
-        logger.debug('Networks: %s', networks)
+        logger.debug("Networks: %s", networks)
         item.networks.set(Network.objects.filter(uuid__in=networks))
 
     # Custom "search" method
-    def search(self, item: 'models.Model') -> list[types.auth.SearchResultItem.ItemDict]:
+    def search(self, item: "models.Model") -> list[types.auth.SearchResultItem.ItemDict]:
         """
         API:
             Search for users or groups in this authenticator
@@ -295,20 +299,20 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         item = ensure.is_instance(item, Authenticator)
         self.check_access(item, types.permissions.PermissionType.READ)
         try:
-            type_ = self._params['type']
-            if type_ not in ('user', 'group'):
-                raise exceptions.rest.RequestError(_('Invalid type: {}').format(type_))
+            type_ = self._params["type"]
+            if type_ not in ("user", "group"):
+                raise exceptions.rest.RequestError(_("Invalid type: {}").format(type_))
 
-            term = self._params['term']
+            term = self._params["term"]
 
-            limit = int(self._params.get('limit', '50'))
+            limit = int(self._params.get("limit", "50"))
 
             auth = item.get_instance()
 
             # Cast to Any because we want to compare with the default method or if it's overriden
             # Cast is neccesary to avoid mypy errors, for example
             search_supported = (
-                type_ == 'user'
+                type_ == "user"
                 and (
                     typing.cast(typing.Any, auth.search_users)
                     != typing.cast(typing.Any, auths.Authenticator.search_users)
@@ -319,23 +323,21 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                 )
             )
             if search_supported is False:
-                raise exceptions.rest.NotSupportedError(_('Search not supported'))
+                raise exceptions.rest.NotSupportedError(_("Search not supported"))
 
-            if type_ == 'user':
+            if type_ == "user":
                 iterable = auth.search_users(term)
             else:
                 iterable = auth.search_groups(term)
 
             return [i.as_dict() for i in itertools.islice(iterable, limit)]
         except Exception as e:
-            logger.exception('Too many results: %s', e)
-            return [
-                types.auth.SearchResultItem(id=_('Too many results...'), name=_('Refine your query')).as_dict()
-            ]
+            logger.exception("Too many results: %s", e)
+            return [types.auth.SearchResultItem(id=_("Too many results..."), name=_("Refine your query")).as_dict()]
             # self.invalidResponseException('{}'.format(e))
 
     # Custom method "users_with_services" method
-    def users_with_services(self, item: 'models.Model') -> list[UserItem]:
+    def users_with_services(self, item: "models.Model") -> list[UserItem]:
         """
         API:
             Returns a list of users with services assigned in this authenticator
@@ -353,10 +355,10 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     def test(self, type_: str) -> typing.Any:
         auth_type = auths.factory().lookup(type_)
         if not auth_type:
-            raise exceptions.rest.RequestError(_('Invalid type: {}').format(type_))
+            raise exceptions.rest.RequestError(_("Invalid type: {}").format(type_))
 
         dct = self._params.copy()
-        dct['_request'] = self._request
+        dct["_request"] = self._request
         with Environment.temporary_environment() as env:
             res = auth_type.test(env, dct)
             if res.success:
@@ -364,27 +366,25 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             return res.error
 
     @typing.override
-    def pre_save(
-        self, fields: dict[str, typing.Any]
-    ) -> None:  # pylint: disable=too-many-branches,too-many-statements
+    def pre_save(self, fields: dict[str, typing.Any]) -> None:  # pylint: disable=too-many-branches,too-many-statements
         logger.debug(self._params)
-        if fields.get('mfa_id'):
+        if fields.get("mfa_id"):
             try:
-                mfa = MFA.objects.get(uuid=process_uuid(fields['mfa_id']))
-                fields['mfa_id'] = mfa.id
+                mfa = MFA.objects.get(uuid=process_uuid(fields["mfa_id"]))
+                fields["mfa_id"] = mfa.id
             except MFA.DoesNotExist:
                 pass  # will set field to null
         else:
-            fields['mfa_id'] = None
+            fields["mfa_id"] = None
 
         # If label has spaces, replace them with underscores
-        fields['small_name'] = fields['small_name'].strip().replace(' ', '_')
+        fields["small_name"] = fields["small_name"].strip().replace(" ", "_")
         # And ensure small_name chars are valid [a-zA-Z0-9:-]+
-        if fields['small_name'] and not re.match(r'^[a-zA-Z0-9:.-]+$', fields['small_name']):
-            raise exceptions.rest.RequestError(_('Label must contain only letters, numbers, or symbols: - : .'))
+        if fields["small_name"] and not re.match(r"^[a-zA-Z0-9:.-]+$", fields["small_name"]):
+            raise exceptions.rest.RequestError(_("Label must contain only letters, numbers, or symbols: - : ."))
 
     @typing.override
-    def delete_item(self, item: 'models.Model') -> None:
+    def delete_item(self, item: "models.Model") -> None:
         # For every user, remove assigned services (mark them for removal)
         item = ensure.is_instance(item, Authenticator)
 

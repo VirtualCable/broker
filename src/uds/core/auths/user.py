@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -51,12 +52,12 @@ class User:
     and its groups.
     """
 
-    _cached_manager: 'AuthenticatorInstance'
-    _groups_manager: 'GroupsManager'
-    _db_user: 'models.User'
+    _cached_manager: "AuthenticatorInstance"
+    _groups_manager: "GroupsManager"
+    _db_user: "models.User"
     _groups: typing.Optional[list[Group]]
 
-    def __init__(self, db_user: 'models.User') -> None:
+    def __init__(self, db_user: "models.User") -> None:
         self._cached_manager = db_user.get_manager()
         self._groups_manager = GroupsManager(db_user.manager)
         self._db_user = db_user
@@ -86,13 +87,13 @@ class User:
                 self._groups = [Group(g) for g in usr.get_groups()]
         return self._groups
 
-    def manager(self) -> 'AuthenticatorInstance':
+    def manager(self) -> "AuthenticatorInstance":
         """
         Returns the authenticator instance
         """
         return self._cached_manager
 
-    def db_obj(self) -> 'models.User':
+    def db_obj(self) -> "models.User":
         """
         Returns the database user
         """

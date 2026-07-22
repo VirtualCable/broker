@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core.util import factory
@@ -38,5 +39,5 @@ if typing.TYPE_CHECKING:
     from .mfa import MFA
 
 
-class MFAsFactory(factory.ModuleFactory['MFA']):
+class MFAsFactory(factory.ModuleFactory["MFA"]):
     pass

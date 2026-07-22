@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import operator
 import typing
@@ -65,30 +66,30 @@ class MetaPool(UUIDModel, TaggingMixin):
     A meta pool is a pool that has pool members
     """
 
-    name = models.CharField(max_length=192, default='')  # Give enouth space for "macros"
-    short_name = models.CharField(max_length=96, default='')  # Give enouth space for "macros"
-    comments = models.CharField(max_length=256, default='')
+    name = models.CharField(max_length=192, default="")  # Give enouth space for "macros"
+    short_name = models.CharField(max_length=96, default="")  # Give enouth space for "macros"
+    comments = models.CharField(max_length=256, default="")
     visible = models.BooleanField(default=True)
     image = models.ForeignKey(
         Image,
         null=True,
         blank=True,
-        related_name='metaPools',
+        related_name="metaPools",
         on_delete=models.SET_NULL,
     )
     servicesPoolGroup = models.ForeignKey(
         ServicePoolGroup,
         null=True,
         blank=True,
-        related_name='metaPools',
+        related_name="metaPools",
         on_delete=models.SET_NULL,
     )
-    assignedGroups: 'models.ManyToManyField[Group, MetaPool]' = models.ManyToManyField(
-        Group, related_name='metaPools', db_table='uds__meta_grps'
+    assignedGroups: "models.ManyToManyField[Group, MetaPool]" = models.ManyToManyField(
+        Group, related_name="metaPools", db_table="uds__meta_grps"
     )
 
     # Message if access denied
-    calendar_message = models.CharField(default='', max_length=256)
+    calendar_message = models.CharField(default="", max_length=256)
     # Default fallback action for access
     fallbackAccess = models.CharField(default=types.states.State.ALLOW, max_length=8)
 
@@ -101,16 +102,16 @@ class MetaPool(UUIDModel, TaggingMixin):
 
     # "fake" declarations for type checking
     # objects: 'models.BaseManager["MetaPool"]'
-    calendarAccess: 'models.manager.RelatedManager[CalendarAccessMeta]'
-    members: 'models.manager.RelatedManager[MetaPoolMember]'
+    calendarAccess: "models.manager.RelatedManager[CalendarAccessMeta]"
+    members: "models.manager.RelatedManager[MetaPoolMember]"
 
     class Meta(UUIDModel.Meta):  # pyright: ignore
         """
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds__pool_meta'
-        app_label = 'uds'
+        db_table = "uds__pool_meta"
+        app_label = "uds"
 
     @property
     def allow_users_remove(self) -> bool:
@@ -135,14 +136,14 @@ class MetaPool(UUIDModel, TaggingMixin):
             bool -- [description]
         """
         total, maintenance = 0, 0
-        p: 'MetaPoolMember'
+        p: "MetaPoolMember"
         for p in self.members.filter(enabled=True):
             total += 1
             if p.pool.is_in_maintenance():
                 maintenance += 1
         return total == maintenance
 
-    def is_access_allowed(self, check_datetime: 'datetime.datetime | None' = None) -> bool:
+    def is_access_allowed(self, check_datetime: "datetime.datetime | None" = None) -> bool:
         """
         Checks if the access for a service pool is allowed or not (based esclusively on associated calendars)
         """
@@ -151,7 +152,7 @@ class MetaPool(UUIDModel, TaggingMixin):
 
         access = self.fallbackAccess
         # Let's see if we can access by current datetime
-        for ac in sorted(self.calendarAccess.all(), key=operator.attrgetter('priority')):
+        for ac in sorted(self.calendarAccess.all(), key=operator.attrgetter("priority")):
             if CalendarChecker(ac.calendar).check(check_datetime):
                 access = ac.access
                 break  # Stops on first rule match found
@@ -178,7 +179,7 @@ class MetaPool(UUIDModel, TaggingMixin):
             )
             .annotate(
                 usage_count=models.Count(
-                    'userServices',
+                    "userServices",
                     filter=models.Q(
                         userServices__state__in=types.states.State.VALID_STATES,
                         userServices__cache_level=0,
@@ -187,8 +188,8 @@ class MetaPool(UUIDModel, TaggingMixin):
                 )
             )
             .prefetch_related(
-                'service',
-                'service__provider',
+                "service",
+                "service__provider",
             )
         )
 
@@ -210,14 +211,14 @@ class MetaPool(UUIDModel, TaggingMixin):
 
     @property
     def visual_name(self) -> str:
-        logger.debug('SHORT: %s %s %s', self.short_name, bool(self.short_name), self.name)
+        logger.debug("SHORT: %s %s %s", self.short_name, bool(self.short_name), self.name)
         sn = str(self.short_name).strip()
         return sn if sn else self.name
 
     @staticmethod
     def metapools_for_groups(
-        groups: collections.abc.Iterable['Group'], user: 'User | None' = None
-    ) -> 'QuerySet[MetaPool]':
+        groups: collections.abc.Iterable["Group"], user: "User | None" = None
+    ) -> "QuerySet[MetaPool]":
         """
         Return deployed services with publications for the groups requested.
 
@@ -233,25 +234,25 @@ class MetaPool(UUIDModel, TaggingMixin):
             assignedGroups__state=types.states.State.ACTIVE,
             visible=True,
         ).prefetch_related(
-            'servicesPoolGroup',
-            'servicesPoolGroup__image',
-            'assignedGroups',
-            'assignedGroups',
-            'members__pool',
-            'members__pool__service',
-            'members__pool__service__provider',
-            'members__pool__image',
-            'members__pool__transports',
-            'members__pool__transports__networks',
-            'calendarAccess',
-            'calendarAccess__calendar',
-            'calendarAccess__calendar__rules',
-            'image',
+            "servicesPoolGroup",
+            "servicesPoolGroup__image",
+            "assignedGroups",
+            "assignedGroups",
+            "members__pool",
+            "members__pool__service",
+            "members__pool__service__provider",
+            "members__pool__image",
+            "members__pool__transports",
+            "members__pool__transports__networks",
+            "calendarAccess",
+            "calendarAccess__calendar",
+            "calendarAccess__calendar__rules",
+            "image",
         )
         if user:
             meta = meta.annotate(
                 number_in_use=models.Count(
-                    'members__pool__userServices',
+                    "members__pool__userServices",
                     filter=models.Q(
                         members__pool__userServices__user=user,
                         members__pool__userServices__in_use=True,
@@ -275,7 +276,7 @@ class MetaPool(UUIDModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: 'MetaPool' = kwargs['instance']
+        to_delete: "MetaPool" = kwargs["instance"]
 
         # Clears related logs
         log.clear_logs(to_delete)
@@ -284,7 +285,7 @@ class MetaPool(UUIDModel, TaggingMixin):
         clean(to_delete)
 
     def __str__(self) -> str:
-        return f'Meta pool: {self.name}, no. pools: {self.members.all().count()}, visible: {self.visible}, policy: {self.policy}'
+        return f"Meta pool: {self.name}, no. pools: {self.members.all().count()}, visible: {self.visible}, policy: {self.policy}"
 
 
 # Connects a pre deletion signal
@@ -292,8 +293,8 @@ signals.pre_delete.connect(MetaPool.pre_delete, sender=MetaPool)
 
 
 class MetaPoolMember(UUIDModel):
-    pool = models.ForeignKey(ServicePool, related_name='memberOfMeta', on_delete=models.CASCADE)
-    meta_pool = models.ForeignKey(MetaPool, related_name='members', on_delete=models.CASCADE)
+    pool = models.ForeignKey(ServicePool, related_name="memberOfMeta", on_delete=models.CASCADE)
+    meta_pool = models.ForeignKey(MetaPool, related_name="members", on_delete=models.CASCADE)
     priority = models.PositiveIntegerField(default=0)
     enabled = models.BooleanField(default=True)
 
@@ -302,8 +303,8 @@ class MetaPoolMember(UUIDModel):
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds__meta_pool_member'
-        app_label = 'uds'
+        db_table = "uds__meta_pool_member"
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'Meta pool member: {self.pool.name}/{self.meta_pool.name}, priority: {self.priority}, enabled: {self.enabled}'
+        return f"Meta pool member: {self.pool.name}/{self.meta_pool.name}, priority: {self.priority}, enabled: {self.enabled}"

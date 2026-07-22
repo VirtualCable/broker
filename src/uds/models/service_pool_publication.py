@@ -55,10 +55,10 @@ logger = logging.getLogger(__name__)
 
 class ServicePoolPublicationChangelog(models.Model):
     # This should be "servicePool"
-    publication = models.ForeignKey(ServicePool, on_delete=models.CASCADE, related_name='changelog')
+    publication = models.ForeignKey(ServicePool, on_delete=models.CASCADE, related_name="changelog")
     stamp = models.DateTimeField()
     revision = models.PositiveIntegerField(default=1)
-    log = models.TextField(default='')
+    log = models.TextField(default="")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[ServicePoolPublicationChangelog]'
@@ -68,11 +68,11 @@ class ServicePoolPublicationChangelog(models.Model):
         Meta class to declare default order and unique multiple field index
         """
 
-        db_table = 'uds__deployed_service_pub_cl'
-        app_label = 'uds'
+        db_table = "uds__deployed_service_pub_cl"
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'Changelog for publication {self.publication.name}, rev {self.revision}: {self.log}'
+        return f"Changelog for publication {self.publication.name}, rev {self.revision}: {self.log}"
 
 
 class ServicePoolPublication(UUIDModel):
@@ -80,10 +80,10 @@ class ServicePoolPublication(UUIDModel):
     A deployed service publication keep track of data needed by services that needs "preparation". (i.e. Virtual machine --> base machine --> children of base machines)
     """
 
-    deployed_service = models.ForeignKey(ServicePool, on_delete=models.CASCADE, related_name='publications')
+    deployed_service = models.ForeignKey(ServicePool, on_delete=models.CASCADE, related_name="publications")
     publish_date = models.DateTimeField(db_index=True)
     # data_type = models.CharField(max_length=128) # The data type is specified by the service itself
-    data = models.TextField(default='')
+    data = models.TextField(default="")
     # Preparation state. The preparation of a service is a task that runs over time, we need to:
     #   * Prepare it
     #   * Use it
@@ -97,18 +97,18 @@ class ServicePoolPublication(UUIDModel):
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["ServicePoolPublication"]'
-    userServices: 'models.manager.RelatedManager[UserService]'
+    userServices: "models.manager.RelatedManager[UserService]"
 
-    _cached_instance: typing.Optional['services.Publication'] = None
+    _cached_instance: typing.Optional["services.Publication"] = None
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """
         Meta class to declare default order and unique multiple field index
         """
 
-        db_table = 'uds__deployed_service_pub'
-        ordering = ('publish_date',)
-        app_label = 'uds'
+        db_table = "uds__deployed_service_pub"
+        ordering = ("publish_date",)
+        app_label = "uds"
 
     def get_environment(self) -> Environment:
         """
@@ -116,7 +116,7 @@ class ServicePoolPublication(UUIDModel):
         """
         return Environment.environment_for_table_record(self._meta.verbose_name or self._meta.db_table, self.id)
 
-    def get_instance(self) -> 'services.Publication':
+    def get_instance(self) -> "services.Publication":
         """
         Instantiates the object this record contains.
 
@@ -135,7 +135,7 @@ class ServicePoolPublication(UUIDModel):
             return self._cached_instance
 
         if not self.deployed_service.service:
-            raise Exception('No service assigned to publication')
+            raise Exception("No service assigned to publication")
         service_instance = self.deployed_service.service.get_instance()
         osmanager = self.deployed_service.osmanager
         osmanager_instance = osmanager.get_instance() if osmanager else None
@@ -145,7 +145,7 @@ class ServicePoolPublication(UUIDModel):
 
         if service_instance.publication_type is None:
             raise Exception(
-                f'Class {service_instance.__class__.__name__} do not have defined publication_type but needs to be published!!!'
+                f"Class {service_instance.__class__.__name__} do not have defined publication_type but needs to be published!!!"
             )
 
         instance = service_instance.publication_type(
@@ -168,7 +168,7 @@ class ServicePoolPublication(UUIDModel):
 
         return instance
 
-    def update_data(self, publication_instance: 'services.Publication') -> None:
+    def update_data(self, publication_instance: "services.Publication") -> None:
         """
         Updates the data field with the serialized uds.core.services.Publication
 
@@ -178,11 +178,11 @@ class ServicePoolPublication(UUIDModel):
         :note: This method do not saves the updated record, just updates the field
         """
         if not publication_instance.is_dirty():
-            logger.debug('Skipping update of publication %s, no changes', self)
+            logger.debug("Skipping update of publication %s, no changes", self)
             return  # Nothing to do
 
         self.data = publication_instance.serialize()
-        self.save(update_fields=['data'])
+        self.save(update_fields=["data"])
 
     def set_state(self, state: str) -> None:
         """
@@ -196,7 +196,7 @@ class ServicePoolPublication(UUIDModel):
         """
         self.state_date = sql_now()
         self.state = state
-        self.save(update_fields=['state_date', 'state'])
+        self.save(update_fields=["state_date", "state"])
 
     def unpublish(self) -> None:
         """
@@ -224,7 +224,7 @@ class ServicePoolPublication(UUIDModel):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: ServicePoolPublication = kwargs['instance']
+        to_delete: ServicePoolPublication = kwargs["instance"]
         to_delete.get_environment().clean_related_data()
 
         # Delete method is invoked directly by PublicationManager,
@@ -234,10 +234,10 @@ class ServicePoolPublication(UUIDModel):
         # Clears related logs
         log.clear_logs(to_delete)
 
-        logger.debug('Deleted publication %s', to_delete)
+        logger.debug("Deleted publication %s", to_delete)
 
     def __str__(self) -> str:
-        return f'Publication {self.deployed_service.name}, rev {self.revision}, state {State.from_str(self.state).localized}'
+        return f"Publication {self.deployed_service.name}, rev {self.revision}, state {State.from_str(self.state).localized}"
 
 
 # Connects a pre deletion signal to Authenticator

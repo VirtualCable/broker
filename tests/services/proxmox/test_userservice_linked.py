@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 import typing
 from unittest import mock
@@ -44,6 +45,7 @@ from ...utils.test import UDSTransactionTestCase
 from ...utils.helpers import limited_iterator
 
 from uds.services.Proxmox.proxmox import types as prox_types
+
 
 # We use transactions on some related methods (storage access, etc...)
 class TestProxmoxLinkedUserService(UDSTransactionTestCase):
@@ -80,7 +82,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
             api.clone_vm.assert_called_with(
                 int(publication.get_template_id()),
                 mock.ANY,
-                f'UDS-{userservice._name}',
+                f"UDS-{userservice._name}",
                 mock.ANY,
                 True,
                 None,
@@ -107,7 +109,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
             api = typing.cast(mock.MagicMock, provider.api)
             service = fixtures.create_service_linked(provider=provider)
             userservice = fixtures.create_userservice_linked(service=service)
-            service.ha.value = '__'  # Disabled
+            service.ha.value = "__"  # Disabled
 
             publication = userservice.publication()
             publication._vmid = str(vm.id)
@@ -133,7 +135,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
             api.clone_vm.assert_called_with(
                 int(publication.get_template_id()),
                 mock.ANY,
-                f'UDS-{userservice._name}',
+                f"UDS-{userservice._name}",
                 mock.ANY,
                 True,
                 None,
@@ -178,7 +180,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
             self.assertEqual(
                 state,
                 types.states.TaskState.FINISHED,
-                f'Queue: {userservice._queue}, reason: {userservice._reason}, extra_info: {userservice._error_debug_info}',
+                f"Queue: {userservice._queue}, reason: {userservice._reason}, extra_info: {userservice._error_debug_info}",
             )
 
             self.assertEqual(userservice._name[: len(service.get_basename())], service.get_basename())
@@ -189,7 +191,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
             api.clone_vm.assert_called_with(
                 int(publication.get_template_id()),
                 mock.ANY,
-                f'UDS-{userservice._name}',
+                f"UDS-{userservice._name}",
                 mock.ANY,
                 True,
                 None,
@@ -233,7 +235,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
                 service.try_soft_shutdown.value = graceful
                 publication = userservice.publication()
                 publication._vmid = str(vm.id)
-                
+
                 service.must_stop_before_deletion = False  # Avoid stopping before deletion, not needed for this test
 
                 # Set machine state for fixture to started
@@ -288,7 +290,11 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
                         for vminfo in fixtures.VMINFO_LIST:
                             vminfo.status = prox_types.VMStatus.STOPPED
 
-                self.assertEqual(state, types.states.TaskState.FINISHED, f'Extra info: {userservice._error_debug_info} {userservice._reason} {userservice._queue}')
+                self.assertEqual(
+                    state,
+                    types.states.TaskState.FINISHED,
+                    f"Extra info: {userservice._error_debug_info} {userservice._reason} {userservice._queue}",
+                )
 
                 if graceful:
                     api.shutdown_vm.assert_called()
@@ -299,5 +305,5 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_linked(provider=provider)
             userservice = fixtures.create_userservice_linked(service=service)
-            userservice.set_ip('1.2.3.4')
-            self.assertEqual(userservice.get_ip(), '1.2.3.4')
+            userservice.set_ip("1.2.3.4")
+            self.assertEqual(userservice.get_ip(), "1.2.3.4")

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import typing
 import functools
@@ -49,7 +50,7 @@ def autospec(
     cls: type,
     metods_info: collections.abc.Iterable[AutoSpecMethodInfo],
     test_data: dict[str, typing.Any] | None = None,
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ) -> mock.Mock:
     """
     This is a helper function that will create a mock object with the same methods as the class passed as parameter.

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -42,8 +43,8 @@ logger = logging.getLogger(__name__)
 NUM_USERSERVICES = 8
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'dispatcher.guacamole',
-    'dispatcher.opengnsys',
+    "dispatcher.guacamole",
+    "dispatcher.opengnsys",
 ]
 
 
@@ -57,4 +58,4 @@ class TestDispatcherUrls(UDSTestCase):
             self.assertIsNotNone(i.pattern)
 
         for i in MUST_HAVE:
-            self.assertIn(i, names, f'Url {i} not found')
+            self.assertIn(i, names, f"Url {i} not found")

@@ -53,59 +53,72 @@ class WorkerDelayTest(UDSTestCase):
 
     def test_stuck_cleaner_delay(self) -> None:
         from uds.workers.stuck_cleaner import StuckCleaner
+
         self.assertEqual(StuckCleaner(self._env).next_execution_delay(), 3601 * 8)
 
     def test_usage_accounting_delay(self) -> None:
         from uds.workers.usage_accounting import UsageAccounting
+
         self.assertEqual(UsageAccounting(self._env).next_execution_delay(), 60)
 
     def test_deferred_deletion_delay(self) -> None:
         from uds.workers.deferred_deleter import DeferredDeletionWorker
+
         self.assertEqual(DeferredDeletionWorker(self._env).next_execution_delay(), 7)
 
     def test_scheduled_action_delay(self) -> None:
         from uds.workers.scheduled_action_executor import ScheduledAction
+
         self.assertEqual(ScheduledAction(self._env).next_execution_delay(), 29)
 
     def test_cache_cleaner_delay(self) -> None:
         from uds.workers.system_cleaners import CacheCleaner
+
         self.assertEqual(CacheCleaner(self._env).next_execution_delay(), 3600 * 24)
 
     def test_ticket_store_cleaner_delay(self) -> None:
         from uds.workers.system_cleaners import TicketStoreCleaner
+
         self.assertEqual(TicketStoreCleaner(self._env).next_execution_delay(), 60)
 
     def test_sessions_cleaner_delay(self) -> None:
         from uds.workers.system_cleaners import SessionsCleaner
+
         self.assertEqual(SessionsCleaner(self._env).next_execution_delay(), 3600 * 24 * 7)
 
     def test_system_information_delay(self) -> None:
         from uds.workers.system_info import SystemInformation
+
         self.assertEqual(SystemInformation(self._env).next_execution_delay(), 300)
 
     def test_user_service_info_cleaner_delay(self) -> None:
         from uds.workers.userservice_cleaner import UserServiceInfoItemsCleaner
+
         self.assertEqual(UserServiceInfoItemsCleaner(self._env).next_execution_delay(), 600)
 
     def test_deployed_service_info_cleaner_delay(self) -> None:
         from uds.workers.service_pool_cleaner import DeployedServiceInfoItemsCleaner
+
         self.assertEqual(DeployedServiceInfoItemsCleaner(self._env).next_execution_delay(), 600)
 
     def test_stats_cleaner_delay(self) -> None:
         from uds.workers.stats_collector import StatsCleaner
+
         self.assertEqual(StatsCleaner(self._env).next_execution_delay(), 3600 * 24 * 15)
 
     def test_deployed_stats_collector_delay(self) -> None:
         from uds.workers.stats_collector import DeployedServiceStatsCollector
+
         self.assertEqual(DeployedServiceStatsCollector(self._env).next_execution_delay(), 599)
 
     # -- config-driven workers ---------------------------------------------
 
     def test_publication_info_cleaner_reads_config(self) -> None:
-        with mock.patch('uds.core.audit.immutable.config.GlobalConfig.CLEANUP_CHECK') as m:
+        with mock.patch("uds.core.audit.immutable.config.GlobalConfig.CLEANUP_CHECK") as m:
             # The publication_cleaner imports GlobalConfig as:
             # from uds.core.util.config import GlobalConfig
             from uds.core.util.config import GlobalConfig as GC
+
             m.as_int.return_value = 1234
             # Actually, let's just check the mock on the right object
             # Use the correct import path
@@ -113,42 +126,49 @@ class WorkerDelayTest(UDSTestCase):
 
         # Simpler: just check it's an int
         from uds.workers.publication_cleaner import PublicationInfoItemsCleaner
+
         delay = PublicationInfoItemsCleaner(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)
 
     def test_publication_cleaner_reads_config(self) -> None:
         from uds.workers.publication_cleaner import PublicationCleaner
+
         delay = PublicationCleaner(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)
 
     def test_user_service_remover_reads_config(self) -> None:
         from uds.workers.userservice_cleaner import UserServiceRemover
+
         delay = UserServiceRemover(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)
 
     def test_hanged_cleaner_reads_config(self) -> None:
         from uds.workers.hanged_userservice_cleaner import HangedCleaner
+
         delay = HangedCleaner(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)
 
     def test_stats_accumulator_reads_config(self) -> None:
         from uds.workers.stats_collector import StatsAccumulator
+
         delay = StatsAccumulator(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)
 
     def test_deployed_service_remover_reads_config(self) -> None:
         from uds.workers.service_pool_cleaner import DeployedServiceRemover
+
         delay = DeployedServiceRemover(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)
 
     def test_cache_updater_reads_config(self) -> None:
         from uds.workers.servicepools_cache_updater import ServiceCacheUpdater
+
         delay = ServiceCacheUpdater(self._env).next_execution_delay()
         self.assertIsInstance(delay, int)
         self.assertGreater(delay, 0)

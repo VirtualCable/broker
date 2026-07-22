@@ -87,6 +87,7 @@ class Backoff:
         scale:     multiplier applied to the previous backoff on each
                    consecutive failure (must be ``>= 1``).
     """
+
     _cache: CacheLike
     _owner: str
     _fail_time: int
@@ -107,17 +108,17 @@ class Backoff:
         scale: float = 2.0,
     ) -> None:
         if not owner:
-            raise ValueError('owner must be a non-empty namespace')
+            raise ValueError("owner must be a non-empty namespace")
         if fail_time <= 0:
-            raise ValueError('fail_time must be > 0')
+            raise ValueError("fail_time must be > 0")
         if max_time < fail_time:
-            raise ValueError('max_time must be >= fail_time')
+            raise ValueError("max_time must be >= fail_time")
         if scale < 1.0:
-            raise ValueError('scale must be >= 1.0')
+            raise ValueError("scale must be >= 1.0")
         # Shared process-wide cache when none is provided. ``Cache`` itself
         # is a thin wrapper over the DB-backed ``Cache`` model and is safe
         # to instantiate multiple times (each instance has its own owner).
-        self._cache = cache if cache is not None else Cache('backoff')
+        self._cache = cache if cache is not None else Cache("backoff")
         self._owner = owner
         self._fail_time = fail_time
         self._max_time = max_time
@@ -128,10 +129,10 @@ class Backoff:
         self._max_ttl = max_time * 4
 
     def _bad_key(self, key: str) -> str:
-        return f'{self._owner}.bad.{key}'
+        return f"{self._owner}.bad.{key}"
 
     def _cooldown_key(self, key: str) -> str:
-        return f'{self._owner}.cooldown.{key}'
+        return f"{self._owner}.cooldown.{key}"
 
     def is_bad(self, key: str) -> bool:
         """``True`` if the resource identified by ``key`` is in cooldown."""
@@ -181,4 +182,4 @@ class Backoff:
         try:
             self._cache.put(key, value, validity=ttl)
         except Exception:
-            logger.debug('Cache.put raised in Backoff; ignoring')
+            logger.debug("Cache.put raised in Backoff; ignoring")

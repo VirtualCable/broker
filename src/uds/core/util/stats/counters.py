@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
@@ -51,23 +52,23 @@ from uds.core import consts, types
 
 logger = logging.getLogger(__name__)
 
-CounterClass = typing.TypeVar('CounterClass', Provider, Service, ServicePool, Authenticator)
+CounterClass = typing.TypeVar("CounterClass", Provider, Service, ServicePool, Authenticator)
 
 
 # Helpers
-def _get_id(obj: 'CounterClass') -> typing.Optional[int]:
+def _get_id(obj: "CounterClass") -> typing.Optional[int]:
     return obj.id if obj.id != -1 else None
 
 
-def _get_prov_serv_ids(provider: 'Provider') -> tuple[int, ...]:
+def _get_prov_serv_ids(provider: "Provider") -> tuple[int, ...]:
     return tuple(i.id for i in provider.services.all())
 
 
-def _get_serv_pool_ids(service: 'Service') -> tuple[int, ...]:
+def _get_serv_pool_ids(service: "Service") -> tuple[int, ...]:
     return tuple(i.id for i in service.deployedServices.all())
 
 
-def _get_prov_serv_pool_ids(provider: 'Provider') -> tuple[int, ...]:
+def _get_prov_serv_pool_ids(provider: "Provider") -> tuple[int, ...]:
     res: tuple[int, ...] = tuple()
     for i in provider.services.all():
         res += _get_serv_pool_ids(i)
@@ -103,9 +104,7 @@ TYPE_TO_ID_RETRIEVER: typing.Final[
     },
 }
 
-VALID_MODEL_FOR_COUNTER_TYPE_DICT: typing.Final[
-    dict[types.stats.CounterType, tuple[type[Model], ...]]
-] = {
+VALID_MODEL_FOR_COUNTER_TYPE_DICT: typing.Final[dict[types.stats.CounterType, tuple[type[Model], ...]]] = {
     types.stats.CounterType.LOAD: (Provider,),
     types.stats.CounterType.STORAGE: (Service,),
     types.stats.CounterType.ASSIGNED: (ServicePool,),
@@ -142,16 +141,14 @@ def add_counter(
     type_ = type(obj)
     if type_ not in VALID_MODEL_FOR_COUNTER_TYPE_DICT.get(counter_type, ()):  # pylint: disable
         logger.error(
-            'Type %s does not accepts counter of type %s',
+            "Type %s does not accepts counter of type %s",
             type_,
             value,
             exc_info=True,
         )
         return False
 
-    return StatsManager.manager().add_counter(
-        OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp
-    )
+    return StatsManager.manager().add_counter(OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp)
 
 
 def enumerate_counters(
@@ -188,13 +185,13 @@ def enumerate_counters(
     type_to_id_dct = TYPE_TO_ID_RETRIEVER.get(obj_type)
 
     if not type_to_id_dct:
-        logger.error('Type %s has no registered stats', obj_type)
+        logger.error("Type %s has no registered stats", obj_type)
         return
 
     id_retriever_fnc = type_to_id_dct.get(counter_type)
 
     if not id_retriever_fnc:
-        logger.error('Type %s has no registerd stats of type %s', obj_type, counter_type)
+        logger.error("Type %s has no registerd stats of type %s", obj_type, counter_type)
         return
 
     if not all:

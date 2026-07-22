@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -48,9 +49,7 @@ logger = logging.getLogger(__name__)
 
 class CalendarAccess(UUIDModel):
     calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
-    service_pool = models.ForeignKey(
-        ServicePool, related_name='calendarAccess', on_delete=models.CASCADE
-    )
+    service_pool = models.ForeignKey(ServicePool, related_name="calendarAccess", on_delete=models.CASCADE)
     access = models.CharField(max_length=8, default=types.states.State.DENY)
     priority = models.IntegerField(default=0, db_index=True)
 
@@ -62,17 +61,17 @@ class CalendarAccess(UUIDModel):
         Meta class to declare db table
         """
 
-        db_table = 'uds_cal_access'
-        ordering = ('priority',)
-        app_label = 'uds'
+        db_table = "uds_cal_access"
+        ordering = ("priority",)
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'Calendar Access {self.calendar}/{self.access}'
+        return f"Calendar Access {self.calendar}/{self.access}"
 
 
 class CalendarAccessMeta(UUIDModel):
     calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
-    meta_pool = models.ForeignKey(MetaPool, related_name='calendarAccess', on_delete=models.CASCADE)
+    meta_pool = models.ForeignKey(MetaPool, related_name="calendarAccess", on_delete=models.CASCADE)
     access = models.CharField(max_length=8, default=types.states.State.DENY)
     priority = models.IntegerField(default=0, db_index=True)
 
@@ -84,9 +83,9 @@ class CalendarAccessMeta(UUIDModel):
         Meta class to declare db table
         """
 
-        db_table = 'uds_cal_maccess'
-        ordering = ('priority',)
-        app_label = 'uds'
+        db_table = "uds_cal_maccess"
+        ordering = ("priority",)
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'Calendar Access Meta {self.calendar}/{self.access}'
+        return f"Calendar Access Meta {self.calendar}/{self.access}"

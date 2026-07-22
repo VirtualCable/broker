@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import json
 import logging
 import typing
@@ -50,7 +51,6 @@ from uds.core.exceptions.services import ServiceNotReadyError, MaxServicesReache
 
 from uds.web.util import services
 from uds.web.util.services import get_services_info_dict
-from uds.web.views.main import logger
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -61,12 +61,10 @@ logger = logging.getLogger(__name__)
 
 
 @weblogin_required()
-def transport_own_link(
-    request: 'ExtendedHttpRequestWithUser', service_id: str, transport_id: str
-) -> HttpResponse:
-    def _response(url: str = '', percent: int = 100, error: typing.Any = '') -> dict[str, typing.Any]:
-        return {'running': percent, 'url': url, 'error': str(error)}
-    
+def transport_own_link(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
+    def _response(url: str = "", percent: int = 100, error: typing.Any = "") -> dict[str, typing.Any]:
+        return {"running": percent, "url": url, "error": str(error)}
+
     response: dict[str, typing.Any] = {}
 
     try:
@@ -88,7 +86,7 @@ def transport_own_link(
                 ),
             )
     except ServiceNotReadyError as e:
-        logger.debug('Service not ready')
+        logger.debug("Service not ready")
         # Not ready, show message and return to this page in a while
         # error += ' (code {0:04X})'.format(e.code)
         response = _response(percent=e.code)
@@ -98,49 +96,45 @@ def transport_own_link(
     except ServiceAccessDeniedByCalendar:
         logger.info('Access tried to a calendar limited access pool "%s"', service_id)
         response = _response(error=types.errors.Error.SERVICE_CALENDAR_DENIED.message)
-    except Exception as e:
-        logger.exception('Error')
-        response = _response(error=gettext('Internal error'))
-        
-    return HttpResponse(content=json.dumps(response), content_type='application/json')
+    except Exception:
+        logger.exception("Error")
+        response = _response(error=gettext("Internal error"))
+
+    return HttpResponse(content=json.dumps(response), content_type="application/json")
 
 
 @weblogin_required()
 @never_cache
-def user_service_enabler(
-    request: 'ExtendedHttpRequestWithUser', service_id: str, transport_id: str
-) -> HttpResponse:
+def user_service_enabler(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
     return HttpResponse(
         json.dumps(services.enable_service(request, service_id=service_id, transport_id=transport_id)),
-        content_type='application/json',
+        content_type="application/json",
     )
 
 
-def closer(request: 'ExtendedHttpRequest') -> HttpResponse:
+def closer(request: "ExtendedHttpRequest") -> HttpResponse:
     """Returns a page that closes itself (used by transports)"""
     return HttpResponse(
-        '<html><head><script>window.close();</script></head><body></body></html>',
-        content_type='text/html',
+        "<html><head><script>window.close();</script></head><body></body></html>",
+        content_type="text/html",
     )
     # return HttpResponse('<html><body onload="window.close()"></body></html>')
 
 
 @weblogin_required()
 @never_cache
-def user_service_status(
-    request: 'ExtendedHttpRequestWithUser', service_id: str, transport_id: str
-) -> HttpResponse:
-    '''
+def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
+    """
     Returns;
      'running' if not ready
      'ready' if is ready but not accesed by client
      'accessed' if ready and accesed by UDS client
      'error' if error is found (for example, intancing user service)
     Note:
-    '''
-    ip: str |  None | bool
-    userservice: 'UserService | None' = None
-    status = 'running'
+    """
+    ip: str | None | bool
+    userservice: "UserService | None" = None
+    status = "running"
     # If service exists (meta or not)
     if UserServiceManager.manager().is_meta_service(service_id):
         userservice = UserServiceManager.manager().locate_meta_service(user=request.user, id_metapool=service_id)
@@ -152,36 +146,37 @@ def user_service_status(
         # Service exists...
         try:
             userservice_instance = userservice.get_instance()
-            ip = userservice_instance.get_ip()
-            userservice.log_ip(ip)
+            userservice_ip = userservice_instance.get_ip()
+            userservice.log_ip(userservice_ip)
+            ip = userservice_ip
             # logger.debug('Res: %s %s %s %s %s', ip, userService, userServiceInstance, transport, transportInstance)
         except ServiceNotReadyError:
             ip = None
         except Exception:
             ip = False
 
-        ready = 'ready'
-        if userservice.properties.get('accessed_by_client', False) is True:
-            ready = 'accessed'
+        ready = "ready"
+        if userservice.properties.get("accessed_by_client", False) is True:
+            ready = "accessed"
 
-        status = 'running' if ip is None else 'error' if ip is False else ready
+        status = "running" if ip is None else "error" if ip is False else ready
 
-    return HttpResponse(json.dumps({'status': status}), content_type='application/json')
+    return HttpResponse(json.dumps({"status": status}), content_type="application/json")
 
 
 @weblogin_required()
 @never_cache
-def action(request: 'ExtendedHttpRequestWithUser', service_id: str, action_string: str) -> HttpResponse:
+def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_string: str) -> HttpResponse:
     # favorite/unfavorite do not require an existing UserService,
     # so handle them before the userservice lookup.
     # service_id is 'F<pool_uuid>' or 'M<meta_uuid>' — strip the prefix.
-    if action_string in ('favorite', 'unfavorite'):
+    if action_string in ("favorite", "unfavorite"):
         pool_uuid = service_id[1:]
-        if action_string == 'favorite':
+        if action_string == "favorite":
             request.user.add_favorite(pool_uuid)
         else:
             request.user.remove_favorite(pool_uuid)
-        return HttpResponse(json.dumps(None), content_type='application/json')
+        return HttpResponse(json.dumps(None), content_type="application/json")
 
     userservice = UserServiceManager.manager().locate_meta_service(request.user, service_id)
     if not userservice:
@@ -191,7 +186,7 @@ def action(request: 'ExtendedHttpRequestWithUser', service_id: str, action_strin
     rebuild: bool = False
     if userservice:
         match action_string:
-            case 'release':
+            case "release":
                 if userservice.service_pool.allow_users_remove:
                     rebuild = True
                     log.log(
@@ -204,9 +199,9 @@ def action(request: 'ExtendedHttpRequestWithUser', service_id: str, action_strin
                     )
                     UserServiceManager.manager().request_logoff(userservice)
                     userservice.release()
-            case 'reset':
+            case "reset":
                 if userservice.service_pool.allow_users_reset and userservice.service_pool.service.get_type().can_reset:
-                    logger.info('Resetting service')
+                    logger.info("Resetting service")
                     rebuild = True
                     log.log(
                         userservice.service_pool,
@@ -221,17 +216,20 @@ def action(request: 'ExtendedHttpRequestWithUser', service_id: str, action_strin
                 log.log(
                     userservice.service_pool,
                     types.log.LogLevel.ERROR,
-                    "Unknown action '{}' requested by {} from {}".format(action_string, request.user.pretty_name, request.ip),
+                    "Unknown action '{}' requested by {} from {}".format(
+                        action_string, request.user.pretty_name, request.ip
+                    ),
                     types.log.LogSource.WEB,
                 )
 
     if rebuild:
-        for v in services.get_services_info_dict(request)['services']:
-            if v['id'] == service_id:
+        for v in services.get_services_info_dict(request)["services"]:
+            if v["id"] == service_id:
                 response = v
                 break
 
-    return HttpResponse(json.dumps(response), content_type='application/json')
+    return HttpResponse(json.dumps(response), content_type="application/json")
+
 
 @never_cache
 @auth.deny_non_authenticated  # web_login_required not used here because this is not a web page, but js
@@ -245,28 +243,26 @@ def update_transport_ticket(
     request: types.requests.ExtendedHttpRequestWithUser, ticket_id: str, scrambler: str
 ) -> HttpResponse:
     try:
-        if request.method == 'POST':
+        if request.method == "POST":
             # Get request body as json
             data: dict[str, str] = json.loads(request.body)
 
             # Update username andd password in ticket
-            username = data.get('username', None) or None  # None if not present
-            password: 'str|bytes|None' = (
-                data.get('password', None) or None
-            )  # If password is empty, set it to None
-            domain = data.get('domain', None) or None  # If empty string, set to None
-            if domain and '.' in domain:
-                username = f'{username}@{domain}'
+            username = data.get("username", None) or None  # None if not present
+            password: "str|bytes|None" = data.get("password", None) or None  # If password is empty, set it to None
+            domain = data.get("domain", None) or None  # If empty string, set to None
+            if domain and "." in domain:
+                username = f"{username}@{domain}"
                 domain = None
 
             if password:
                 password = CryptoManager.manager().symmetric_encrypt(password, scrambler)
 
             def _is_ticket_valid(data: collections.abc.Mapping[str, typing.Any]) -> bool:
-                if 'ticket-info' in data:
+                if "ticket-info" in data:
                     try:
                         user = models.User.objects.get(
-                            uuid=typing.cast(dict[str, str], data['ticket-info']).get('user', None)
+                            uuid=typing.cast(dict[str, str], data["ticket-info"]).get("user", None)
                         )
                         if request.user != user:
                             return False
@@ -276,14 +272,14 @@ def update_transport_ticket(
                     if username:
                         try:
                             userservice = models.UserService.objects.get(
-                                uuid=data['ticket-info'].get('userService', None)
+                                uuid=data["ticket-info"].get("userService", None)
                             )
                             UserServiceManager.manager().notify_preconnect(
                                 userservice,
                                 types.connections.ConnectionData(
                                     username=username,
-                                    protocol=data.get('protocol', ''),
-                                    service_type=data['ticket-info'].get('service_type', ''),
+                                    protocol=data.get("protocol", ""),
+                                    service_type=data["ticket-info"].get("service_type", ""),
                                 ),
                             )
                         except models.UserService.DoesNotExist:
@@ -298,10 +294,10 @@ def update_transport_ticket(
                 password=password,
                 domain=domain,
             )
-            return HttpResponse('{"status": "OK"}', status=200, content_type='application/json')
+            return HttpResponse('{"status": "OK"}', status=200, content_type="application/json")
     except Exception as e:
         # fallback to error
-        logger.warning('Error updating ticket: %s', e)
+        logger.warning("Error updating ticket: %s", e)
 
     # Invalid request
-    return HttpResponse('{"status": "Invalid Request"}', status=400, content_type='application/json')
+    return HttpResponse('{"status": "Invalid Request"}', status=400, content_type="application/json")

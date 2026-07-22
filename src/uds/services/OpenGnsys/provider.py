@@ -31,15 +31,18 @@ Created on Jun 22, 2012
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types, consts
+from uds.core import consts
+from uds.core import types
 from uds.core.services import ServiceProvider
 from uds.core.ui import gui
-from uds.core.util import fields, validators
+from uds.core.util import fields
+from uds.core.util import validators
 from uds.core.util.decorators import cached
 
 from . import og
@@ -51,7 +54,7 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-MIN_VERSION = '1.1.0'
+MIN_VERSION = "1.1.0"
 
 
 class OGProvider(ServiceProvider):
@@ -77,15 +80,15 @@ class OGProvider(ServiceProvider):
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('OpenGnsys')
+    type_name = _("OpenGnsys")
     # : Type used internally to identify this provider
-    type_type = 'openGnsysPlatform'
+    type_type = "openGnsysPlatform"
     # : Description shown at administration interface for this provider
-    type_description = _('OpenGnsys platform service provider (experimental)')
+    type_description = _("OpenGnsys platform service provider (experimental)")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
@@ -96,38 +99,38 @@ class OGProvider(ServiceProvider):
     # but used for sample purposes
     # If we don't indicate an order, the output order of fields will be
     # "random"
-    host = gui.TextField(length=64, label=_('Host'), order=1, tooltip=_('OpenGnsys Host'), required=True)
+    host = gui.TextField(length=64, label=_("Host"), order=1, tooltip=_("OpenGnsys Host"), required=True)
     port = gui.NumericField(
         length=5,
-        label=_('Port'),
+        label=_("Port"),
         default=443,
         order=2,
-        tooltip=_('OpenGnsys Port (default is 443, and only ssl connection is allowed)'),
+        tooltip=_("OpenGnsys Port (default is 443, and only ssl connection is allowed)"),
         required=True,
     )
-    verify_ssl = fields.verify_ssl_field(order=3, old_field_name='checkCert')
+    verify_ssl = fields.verify_ssl_field(order=3, old_field_name="checkCert")
     username = gui.TextField(
         length=32,
-        label=_('Username'),
+        label=_("Username"),
         order=4,
-        tooltip=_('User with valid privileges on OpenGnsys'),
+        tooltip=_("User with valid privileges on OpenGnsys"),
         required=True,
     )
     password = gui.PasswordField(
         length=32,
-        label=_('Password'),
+        label=_("Password"),
         order=5,
-        tooltip=_('Password of the user of OpenGnsys'),
+        tooltip=_("Password of the user of OpenGnsys"),
         required=True,
     )
     uds_endpoint = gui.TextField(
         length=32,
-        label=_('UDS Server endpoint'),
+        label=_("UDS Server endpoint"),
         order=6,
-        tooltip=_('URL used by OpenGnsys to access UDS. If empty, UDS will try to guess it.'),
+        tooltip=_("URL used by OpenGnsys to access UDS. If empty, UDS will try to guess it."),
         required=False,
         tab=types.ui.Tab.PARAMETERS,
-        old_field_name='udsServerAccessUrl',
+        old_field_name="udsServerAccessUrl",
     )
 
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
@@ -135,10 +138,10 @@ class OGProvider(ServiceProvider):
 
     timeout = gui.NumericField(
         length=3,
-        label=_('Timeout'),
+        label=_("Timeout"),
         default=10,
         order=90,
-        tooltip=_('Timeout in seconds of connection to OpenGnsys'),
+        tooltip=_("Timeout in seconds of connection to OpenGnsys"),
         required=True,
         tab=types.ui.Tab.ADVANCED,
     )
@@ -147,7 +150,7 @@ class OGProvider(ServiceProvider):
     _api: typing.Optional[og.OpenGnsysClient] = None
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         We will use the "autosave" feature for form fields
         """
@@ -157,23 +160,23 @@ class OGProvider(ServiceProvider):
 
         if values:
             self.timeout.value = validators.validate_timeout(self.timeout.value)
-            logger.debug('Endpoint: %s', self.endpoint)
+            logger.debug("Endpoint: %s", self.endpoint)
 
             try:
-                request = values['_request']
+                request = values["_request"]
 
-                if self.uds_endpoint.value.strip() == '':
-                    self.uds_endpoint.value = request.build_absolute_uri('/')
+                if self.uds_endpoint.value.strip() == "":
+                    self.uds_endpoint.value = request.build_absolute_uri("/")
 
                 # Ensure that url ends with /
-                self.uds_endpoint.value = self.uds_endpoint.as_str().strip('/') + '/'
+                self.uds_endpoint.value = self.uds_endpoint.as_str().strip("/") + "/"
             except Exception as e:
-                logger.error('Error while trying to get UDS endpoint: %s', e)
-                self.uds_endpoint.value = ''
+                logger.error("Error while trying to get UDS endpoint: %s", e)
+                self.uds_endpoint.value = ""
 
     @property
     def endpoint(self) -> str:
-        return 'https://{}:{}/opengnsys/rest'.format(self.host.value, self.port.value)
+        return "https://{}:{}/opengnsys/rest".format(self.host.value, self.port.value)
 
     @property
     def api(self) -> og.OpenGnsysClient:
@@ -186,7 +189,7 @@ class OGProvider(ServiceProvider):
                 self.verify_ssl.as_bool(),
             )
 
-        logger.debug('Api: %s', self._api)
+        logger.debug("Api: %s", self._api)
         return self._api
 
     def clear_api(self) -> None:
@@ -204,19 +207,19 @@ class OGProvider(ServiceProvider):
             if self.api.version[0:5] < MIN_VERSION:
                 return types.core.TestResult(
                     False,
-                    _(
-                        'OpenGnsys version is not supported (required version 1.1.0 or newer and found {})'
-                    ).format(self.api.version),
+                    _("OpenGnsys version is not supported (required version 1.1.0 or newer and found {})").format(
+                        self.api.version
+                    ),
                 )
         except Exception as e:
-            logger.exception('Error')
-            return types.core.TestResult(False, _('Error testing OpenGnsys connection: {}').format(e))
+            logger.exception("Error")
+            return types.core.TestResult(False, _("Error testing OpenGnsys connection: {}").format(e))
 
-        return types.core.TestResult(True, _('OpenGnsys test connection passed'))
+        return types.core.TestResult(True, _("OpenGnsys test connection passed"))
 
     @staticmethod
     @typing.override
-    def test(env: 'Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test ovirt Connectivity
 
@@ -255,7 +258,7 @@ class OGProvider(ServiceProvider):
     def status(self, machineid: str) -> typing.Any:
         return self.api.status(machineid)
 
-    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT)
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT)
     def is_available(self) -> bool:
         """
         Check if aws provider is reachable

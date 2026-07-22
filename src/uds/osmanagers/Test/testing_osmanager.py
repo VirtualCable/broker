@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -48,24 +49,24 @@ logger = logging.getLogger(__name__)
 
 
 class TestOSManager(osmanagers.OSManager):
-    type_name = _('Test OS Manager')
-    type_type = 'TestOsManager'
-    type_description = _('Os Manager for testing pourposes')
-    icon_file = 'osmanager.png'
+    type_name = _("Test OS Manager")
+    type_type = "TestOsManager"
+    type_description = _("Os Manager for testing pourposes")
+    icon_file = "osmanager.png"
 
     services_types = types.services.ServiceType.VDI
 
     on_logout = gui.ChoiceField(
-        label=_('Logout Action'),
+        label=_("Logout Action"),
         order=10,
         readonly=True,
-        tooltip=_('What to do when user logs out from service'),
+        tooltip=_("What to do when user logs out from service"),
         choices=[
-            gui.choice_item('keep', gettext_lazy('Keep service assigned')),
-            gui.choice_item('remove', gettext_lazy('Remove service')),
-            gui.choice_item('keep-always', gettext_lazy('Keep service assigned even on new publication')),
+            gui.choice_item("keep", gettext_lazy("Keep service assigned")),
+            gui.choice_item("remove", gettext_lazy("Remove service")),
+            gui.choice_item("keep-always", gettext_lazy("Keep service assigned even on new publication")),
         ],
-        default='remove',
+        default="remove",
     )
 
     idle = gui.NumericField(
@@ -75,44 +76,44 @@ class TestOSManager(osmanagers.OSManager):
         readonly=False,
         order=11,
         tooltip=_(
-            'Maximum idle time (in seconds) before session is automatically closed to the user (<= 0 means no max. idle time)'
+            "Maximum idle time (in seconds) before session is automatically closed to the user (<= 0 means no max. idle time)"
         ),
         required=True,
     )
-    
+
     @typing.override
     def manages_unused_userservices(self) -> bool:
         return True
 
     @typing.override
-    def release(self, userservice: 'UserService') -> None:
-        logger.debug('User service %s released', userservice)
+    def release(self, userservice: "UserService") -> None:
+        logger.debug("User service %s released", userservice)
 
     @typing.override
-    def is_removable_on_logout(self, userservice: 'UserService') -> bool:
-        '''
+    def is_removable_on_logout(self, userservice: "UserService") -> bool:
+        """
         Says if a machine is removable on logout
-        '''
+        """
         if not userservice.in_use:
-            if (self.on_logout.value == 'remove') or (
-                not userservice.is_publication_valid() and self.on_logout.value == 'keep'
+            if (self.on_logout.value == "remove") or (
+                not userservice.is_publication_valid() and self.on_logout.value == "keep"
             ):
                 return True
 
         return False
 
-    def get_name(self, userservice: 'UserService') -> str:
+    def get_name(self, userservice: "UserService") -> str:
         """
         gets name from deployed
         """
         return userservice.get_name()
 
     @typing.override
-    def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
-        return types.osmanagers.ActorData(action='rename', name=userservice.get_name())
+    def actor_data(self, userservice: "UserService") -> types.osmanagers.ActorData:
+        return types.osmanagers.ActorData(action="rename", name=userservice.get_name())
 
     @typing.override
-    def handle_unused(self, userservice: 'UserService') -> None:
+    def handle_unused(self, userservice: "UserService") -> None:
         """
         This will be invoked for every assigned and unused user service that has been in this state at least 1/2 of Globalconfig.CHECK_UNUSED_TIME
         This function can update userservice values. Normal operation will be remove machines if this state is not valid
@@ -121,18 +122,18 @@ class TestOSManager(osmanagers.OSManager):
             log.log(
                 userservice,
                 types.log.LogLevel.INFO,
-                'Unused user service for too long. Removing due to OS Manager parameters.',
+                "Unused user service for too long. Removing due to OS Manager parameters.",
                 types.log.LogSource.OSMANAGER,
             )
             userservice.release()
 
     @typing.override
     def is_persistent(self) -> bool:
-        return self.on_logout.value == 'keep-always'
+        return self.on_logout.value == "keep-always"
 
     @typing.override
-    def check_state(self, userservice: 'UserService') -> types.states.State:
-        logger.debug('Checking state for service %s', userservice)
+    def check_state(self, userservice: "UserService") -> types.states.State:
+        logger.debug("Checking state for service %s", userservice)
         return State.RUNNING
 
     @typing.override

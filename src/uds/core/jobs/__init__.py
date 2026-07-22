@@ -32,6 +32,7 @@ UDS jobs related modules
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 import typing
 from .job import Job
@@ -42,7 +43,7 @@ if typing.TYPE_CHECKING:
     from .jobs_factory import JobsFactory
 
 
-def factory() -> 'JobsFactory':
+def factory() -> "JobsFactory":
     """
     Returns a singleton to a jobs factory
     """

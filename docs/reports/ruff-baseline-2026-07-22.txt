@@ -1,0 +1,314 @@
+src/uds/REST/model/__init__.py:33:19: F401 `.base.BaseModelHandler` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/REST/model/__init__.py:34:21: F401 `.detail.DetailHandler` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/REST/model/__init__.py:35:21: F401 `.master.ModelHandler` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/REST/model/detail/api_helpers.py:38:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/REST/model/master/api_helpers.py:38:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/__init__.py:75:23: F401 `.services` imported but unused
+src/uds/__init__.py:76:23: F401 `.auths` imported but unused
+src/uds/__init__.py:77:23: F401 `.mfas` imported but unused
+src/uds/__init__.py:78:23: F401 `.osmanagers` imported but unused
+src/uds/__init__.py:79:23: F401 `.notifiers` imported but unused
+src/uds/__init__.py:80:23: F401 `.transports` imported but unused
+src/uds/__init__.py:81:23: F401 `.reports` imported but unused
+src/uds/__init__.py:82:23: F401 `.dispatchers` imported but unused
+src/uds/__init__.py:83:23: F401 `.plugins` imported but unused
+src/uds/__init__.py:84:23: F401 `.REST` imported but unused
+src/uds/admin/views/__init__.py:37:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/auths/IP/__init__.py:36:34: F401 `uds.core.util.config.Config` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/IP/__init__.py:37:28: F401 `.authenticator.IPAuth` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/InternalDB/__init__.py:34:28: F401 `.authenticator.InternalDBAuth` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/OAuth2/__init__.py:38:28: F401 `.authenticator.OAuth2Authenticator` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/Radius/__init__.py:36:28: F401 `.authenticator.RadiusAuth` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/RegexLdap/__init__.py:33:28: F401 `.authenticator.RegexLdap` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/SAML/__init__.py:33:22: F401 `uds.core.managers` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/SAML/__init__.py:34:19: F401 `.saml.SAMLAuthenticator` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/Sample/__init__.py:38:26: F401 `.sample_auth.SampleAuth` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/SimpleLDAP/__init__.py:33:28: F401 `.authenticator.SimpleLDAPAuthenticator` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/auths/X509Certificate/__init__.py:2:28: F401 `.authenticator.X509CertificateAuthenticator` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/auths/__init__.py:35:5: F401 `.authenticator.Authenticator` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/auths/__init__.py:38:19: F401 `.user.User` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/auths/__init__.py:39:20: F401 `.group.Group` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/auths/__init__.py:40:29: F401 `.groups_manager.GroupsManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/auths/authfactory.py:39:32: F401 `.authenticator.Authenticator` imported but unused
+src/uds/core/auths/groups_manager.py:165:13: F402 Import `group` from line 41 shadowed by loop variable
+src/uds/core/exceptions/__init__.py:34:15: F401 `.actor` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/__init__.py:35:15: F401 `.auth` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/__init__.py:36:15: F401 `.transport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/__init__.py:37:15: F401 `.services` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/__init__.py:38:15: F401 `.ui` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/__init__.py:39:15: F401 `.rest` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/__init__.py:42:21: F401 `.common.UDSException` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/exceptions/services.py:38:36: F401 `.services_generics` imported but unused
+src/uds/core/jobs/__init__.py:37:18: F401 `.job.Job` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/jobs/__init__.py:38:27: F401 `.delayed_task.DelayedTask` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/jobs/jobs_factory.py:41:22: F401 `.job.Job` imported but unused
+src/uds/core/managers/crypto/__init__.py:55:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:58:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:59:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:60:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:61:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:62:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:63:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:64:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:67:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:68:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:70:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:71:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:73:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:74:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/__init__.py:75:1: E402 Module level import not at top of file
+src/uds/core/managers/crypto/rdp.py:187:35: E741 Ambiguous variable name: `l`
+src/uds/core/managers/crypto/rdp.py:193:9: E741 Ambiguous variable name: `l`
+src/uds/core/managers/log/__init__.py:32:22: F401 `.manager.LogManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/managers/servers.py:564:16: F402 Import `_` from line 41 shadowed by loop variable
+src/uds/core/managers/task.py:110:25: F401 `uds.workers` imported but unused
+src/uds/core/messaging/__init__.py:33:23: F401 `.provider.Notifier` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/messaging/__init__.py:33:33: F401 `.provider.LogLevel` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/messaging/__init__.py:36:15: F401 `.config` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/messaging/msgfactory.py:39:27: F401 `.provider.Notifier` imported but unused
+src/uds/core/mfas/__init__.py:34:18: F401 `.mfa.MFA` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/mfas/__init__.py:34:23: F401 `.mfa.LoginAllowed` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/mfas/mfafactory.py:38:22: F401 `.mfa.MFA` imported but unused
+src/uds/core/osmanagers/__init__.py:33:24: F401 `.osmanager.OSManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/osmanagers/osmfactory.py:38:28: F401 `.osmanager.OSManager` imported but unused
+src/uds/core/reports/__init__.py:34:21: F401 `.report.Report` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/reports/graphs.py:45:41: F401 `mpl_toolkits.mplot3d.axes3d.Axes3D` imported but unused
+src/uds/core/services/__init__.py:37:27: F401 `.user_service.UserService` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/services/__init__.py:38:26: F401 `.publication.Publication` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/services/__init__.py:39:22: F401 `.service.Service` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/services/__init__.py:40:23: F401 `.provider.ServiceProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/services/generics/dynamic/publication.py:18:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/core/transports/__init__.py:37:24: F401 `.transport.Transport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/transports/transport.py:38:54: F401 `django.utils.translation.gettext_noop` imported but unused
+src/uds/core/types/rest/__init__.py:41:15: F401 `.stock` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/types/rest/__init__.py:42:15: F401 `.actor` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/types/rest/__init__.py:47:33: F401 `uds.core.module.Module` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/types/rest/stock/__init__.py:33:21: F401 `.fields.StockField` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/ui/__init__.py:39:1: E402 Module level import not at top of file
+src/uds/core/ui/__init__.py:39:29: F401 `.user_interface.gui` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/ui/__init__.py:39:34: F401 `.user_interface.UserInterface` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/ui/user_interface.py:189:13: E731 Do not assign a `lambda` expression, use a `def`
+src/uds/core/ui/user_interface.py:191:13: E731 Do not assign a `lambda` expression, use a `def`
+src/uds/core/util/AutoAttributes.py:6:1: F403 `from .auto_attributes import *` used; unable to detect undefined names
+src/uds/core/util/backoff.py:56:1: E402 Module level import not at top of file
+src/uds/core/util/backoff.py:57:1: E402 Module level import not at top of file
+src/uds/core/util/backoff.py:59:1: E402 Module level import not at top of file
+src/uds/core/util/hash.py:37:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil.py:18:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil.py:34:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil.py:35:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil.py:37:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil.py:38:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil.py:39:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil_old.py:60:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil_old.py:61:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil_old.py:64:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil_old.py:70:1: E402 Module level import not at top of file
+src/uds/core/util/ldaputil_old.py:138:5: E741 Ambiguous variable name: `l`
+src/uds/core/util/ldaputil_old.py:149:9: E741 Ambiguous variable name: `l`
+src/uds/core/util/net.py:223:16: E713 Test for membership should be `not in`
+src/uds/core/util/query_db_filter.py:53:1: E402 Module level import not at top of file
+src/uds/core/util/stats/__init__.py:33:15: F401 `.counters` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/util/stats/__init__.py:34:15: F401 `.events` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/core/util/stats/counters.py:36:54: F401 `django.utils.translation.gettext_lazy` imported but unused
+src/uds/management/commands/fs.py:33:20: F401 `.udsfs.Command` imported but unused
+src/uds/management/commands/tree.py:182:37: E741 Ambiguous variable name: `l`
+src/uds/mfas/Email/__init__.py:30:15: F401 `.mfa` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/mfas/Radius/__init__.py:32:15: F401 `.mfa` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/mfas/SMS/__init__.py:32:15: F401 `.mfa` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/mfas/Sample/__init__.py:32:15: F401 `.mfa` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/mfas/TOTP/__init__.py:32:15: F401 `.mfa` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/migrations/0043_auto_20220704_2120.py:5:23: F401 `django.db.connection` imported but unused
+src/uds/migrations/fixers/providers_v4/physical_machine_multiple.py:146:49: E713 Test for membership should be `not in`
+src/uds/models/__init__.py:36:35: F401 `.managed_object_model.ManagedObjectModel` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:39:26: F401 `.permissions.Permissions` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:42:23: F401 `.provider.Provider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:43:22: F401 `.service.Service` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:43:31: F401 `.service.ServiceTokenAlias` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:46:24: F401 `.osmanager.OSManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:49:24: F401 `.transport.Transport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:50:22: F401 `.network.Network` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:53:28: F401 `.authenticator.Authenticator` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:54:19: F401 `.user.User` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:55:20: F401 `.group.Group` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:58:27: F401 `.service_pool.ServicePool` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:59:24: F401 `.meta_pool.MetaPool` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:59:34: F401 `.meta_pool.MetaPoolMember` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:60:33: F401 `.service_pool_group.ServicePoolGroup` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:61:39: F401 `.service_pool_publication.ServicePoolPublication` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:61:63: F401 `.service_pool_publication.ServicePoolPublicationChangelog` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:63:27: F401 `.user_service.UserService` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:64:35: F401 `.user_service_session.UserServiceSession` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:67:18: F401 `.log.Log` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:70:29: F401 `.stats_counters.StatsCounters` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:71:35: F401 `.stats_counters_accum.StatsCountersAccum` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:72:27: F401 `.stats_events.StatsEvents` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:76:20: F401 `.cache.Cache` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:77:21: F401 `.config.Config` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:78:22: F401 `.storage.Storage` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:79:24: F401 `.unique_id.UniqueId` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:80:25: F401 `.properties.Properties` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:83:24: F401 `.scheduler.Scheduler` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:84:27: F401 `.delayed_task.DelayedTask` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:87:20: F401 `.image.Image` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:90:27: F401 `.ticket_store.TicketStore` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:93:23: F401 `.calendar.Calendar` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:94:28: F401 `.calendar_rule.CalendarRule` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:96:30: F401 `.calendar_access.CalendarAccess` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:96:46: F401 `.calendar_access.CalendarAccessMeta` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:97:30: F401 `.calendar_action.CalendarAction` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:100:22: F401 `.account.Account` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:101:28: F401 `.account_usage.AccountUsage` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:104:18: F401 `.tag.Tag` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:104:23: F401 `.tag.TaggingMixin` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:107:22: F401 `.servers.Server` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:107:30: F401 `.servers.ServerGroup` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:110:28: F401 `.notifications.Notification` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:110:42: F401 `.notifications.Notifier` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:110:52: F401 `.notifications.LogLevel` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:112:18: F401 `.mfa.MFA` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/__init__.py:115:28: F401 `.immutable_log.ImmutableLog` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/models/meta_pool.py:40:54: F401 `django.utils.translation.gettext_noop` imported but unused
+src/uds/models/permissions.py:37:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/notifiers/email/__init__.py:35:23: F401 `.notifier.EmailNotifier` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/notifiers/telegram/__init__.py:35:23: F401 `.notifier.TelegramNotifier` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/LinuxOsManager/__init__.py:37:8: F401 `sys` imported but unused
+src/uds/osmanagers/LinuxOsManager/__init__.py:43:30: F401 `.linux_osmanager.LinuxOsManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/LinuxOsManager/__init__.py:44:41: F401 `.linux_randompass_osmanager.LinuxRandomPassManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/LinuxOsManager/__init__.py:45:33: F401 `.linux_ad_osmanager.LinuxOsADManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/Test/__init__.py:33:32: F401 `.testing_osmanager.TestOSManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/WindowsOsManager/__init__.py:42:22: F401 `.windows.WindowsOsManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/WindowsOsManager/__init__.py:43:29: F401 `.windows_domain.WinDomainOsManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/osmanagers/WindowsOsManager/__init__.py:44:29: F401 `.windows_random.WinRandomPassManager` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/auto/__init__.py:38:54: F401 `django.utils.translation.gettext_noop` imported but unused
+src/uds/reports/lists/__init__.py:34:15: F401 `.users` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/lists/__init__.py:35:15: F401 `.audit` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/lists/__init__.py:36:15: F401 `.inactive_users` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/lists/__init__.py:37:15: F401 `.admin_activity` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/lists/__init__.py:38:15: F401 `.failed_logins` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/lists/audit.py:178:13: E741 Ambiguous variable name: `l`
+src/uds/reports/stats/__init__.py:36:15: F401 `.user_access` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:37:15: F401 `.pools_performance` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:38:15: F401 `.pools_usage_day` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:39:15: F401 `.usage_by_pool` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:40:15: F401 `.pool_users_summary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:41:15: F401 `.pools_usage_summary` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:43:15: F401 `.auth_stats` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:45:15: F401 `.peak_concurrency` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:46:15: F401 `.pool_saturation` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:47:15: F401 `.cache_efficiency` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:48:15: F401 `.tunnel_usage` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:49:15: F401 `.client_platforms` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:50:15: F401 `.top_users` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:51:15: F401 `.session_duration` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:52:15: F401 `.userservice_errors` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/__init__.py:53:15: F401 `.usage_by_group` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/reports/stats/pools_performance.py:191:24: E741 Ambiguous variable name: `l`
+src/uds/reports/stats/pools_performance.py:207:24: E741 Ambiguous variable name: `l`
+src/uds/reports/stats/pools_usage_summary.py:92:13: F402 Import `_` from line 39 shadowed by loop variable
+src/uds/reports/stats/user_access.py:172:24: E741 Ambiguous variable name: `l`
+src/uds/reports/stats/user_access.py:193:24: E741 Ambiguous variable name: `l`
+src/uds/reports/stats/user_access.py:227:24: E741 Ambiguous variable name: `l`
+src/uds/services/OVirt/__init__.py:35:23: F401 `.provider.OVirtProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenGnsys/__init__.py:35:23: F401 `.provider.OGProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenGnsys/helpers.py:56:49: E741 Ambiguous variable name: `l`
+src/uds/services/OpenGnsys/og/__init__.py:214:17: E741 Ambiguous variable name: `l`
+src/uds/services/OpenGnsys/og/__init__.py:226:17: E741 Ambiguous variable name: `l`
+src/uds/services/OpenNebula/__init__.py:34:23: F401 `.provider.OpenNebulaProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenNebula/on/__init__.py:5:15: F401 `.storage` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenNebula/on/__init__.py:6:15: F401 `.template` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenNebula/on/__init__.py:7:15: F401 `.vm` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenNebula/on/__init__.py:8:15: F401 `.client` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenNebula/on/__init__.py:9:15: F401 `.types` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenNebula/on/__init__.py:11:21: F401 `.common.sanitized_name` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenShift/__init__.py:10:22: F401 `uds.core.managers` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenShift/__init__.py:12:23: F401 `.provider.OpenshiftProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenStack/__init__.py:34:30: F401 `.provider_legacy.OpenStackProviderLegacy` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenStack/__init__.py:35:23: F401 `.provider.OpenStackProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/OpenStack/helpers.py:35:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/services/OpenStack/openstack/client.py:338:56: E711 Comparison to `None` should be `cond is not None`
+src/uds/services/PhysicalMachines/__init__.py:34:23: F401 `.provider.PhysicalMachinesProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/Proxmox/__init__.py:33:23: F401 `.provider.ProxmoxProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/Proxmox/provider.py:208:13: F402 Import `_` from line 33 shadowed by loop variable
+src/uds/services/Proxmox/publication.py:35:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/services/Sample/__init__.py:47:1: E402 Module level import not at top of file
+src/uds/services/Sample/__init__.py:47:23: F401 `.provider.Provider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/Test/__init__.py:36:23: F401 `.provider.TestProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/Test/publication.py:38:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/services/Xen/__init__.py:33:23: F401 `.provider.XenProvider` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/services/Xen/helpers.py:33:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/transports/HTML5RDP/__init__.py:34:23: F401 `.html5rdp.HTML5RDPTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/HTML5SSH/__init__.py:34:23: F401 `.html5ssh.HTML5SSHTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/RDP/__init__.py:34:18: F401 `.rdp.RDPTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/RDP/__init__.py:35:24: F401 `.rdptunnel.TRDPTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/RDP/rdp_file.py:187:66: E713 Test for membership should be `not in`
+src/uds/transports/RDPEmbedded/__init__.py:34:21: F401 `.direct.RDPEmbeddedTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/RDPEmbedded/__init__.py:35:21: F401 `.tunnel.TRDPEmbeddedTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/SPICE/__init__.py:35:20: F401 `.spice.SPICETransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/SPICE/__init__.py:36:26: F401 `.spicetunnel.TSPICETransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/Test/__init__.py:35:24: F401 `.transport.TestTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/URL/__init__.py:35:25: F401 `.url_custom.URLCustomTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/X2GO/__init__.py:35:19: F401 `.x2go.X2GOTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/X2GO/__init__.py:36:25: F401 `.x2gotunnel.TX2GOTransport` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+src/uds/transports/X2GO/x2go_file.py:113:5: E731 Do not assign a `lambda` expression, use a `def`
+src/uds/web/util/errors.py:35:54: F401 `django.utils.translation.gettext_lazy` imported but unused
+src/uds/web/util/services.py:229:13: E731 Do not assign a `lambda` expression, use a `def`
+src/uds/web/views/errors.py:39:54: F401 `django.utils.translation.gettext_lazy` imported but unused
+src/uds/web/views/main.py:37:49: F401 `django.utils.translation.gettext` imported but unused
+src/uds/ws/sample.py:39:1: E402 Module level import not at top of file
+src/uds/ws/sample.py:39:25: F401 `uds.ws.base.BaseUDSWebSocketConsumer` imported but unused
+tests/REST/methods/actor_v3/test_test.py:63:9: E731 Do not assign a `lambda` expression, use a `def`
+tests/REST/methods/actor_v3/test_test.py:68:9: E731 Do not assign a `lambda` expression, use a `def`
+tests/auths/x509certificate/fixtures.py:46:33: F401 `uds.core.types.auth.AuthTypeGroup` imported but unused
+tests/auths/x509certificate/test_x509_certificate.py:41:5: F401 `uds.auths.X509Certificate.authenticator.X509CertificateAuthenticator` imported but unused
+tests/core/jobs/test_job_thread.py:46:38: F401 `uds.models.scheduler.Scheduler` imported but unused
+tests/core/jobs/test_jobs_factory.py:33:8: F401 `re` imported but unused
+tests/core/jobs/test_worker_delays.py:108:62: F401 `uds.core.util.config.GlobalConfig` imported but unused
+tests/core/managers/__init__.py:32:15: F401 `.test_certs` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+tests/core/managers/__init__.py:33:15: F401 `.test_crypto` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+tests/core/managers/__init__.py:34:15: F401 `.test_downloads` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+tests/core/managers/__init__.py:35:15: F401 `.test_rdp` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+tests/core/managers/test_rdp.py:106:32: E741 Ambiguous variable name: `l`
+tests/core/managers/test_rdp.py:107:32: E741 Ambiguous variable name: `l`
+tests/core/managers/test_rdp.py:130:32: E741 Ambiguous variable name: `l`
+tests/core/modules/test_authenticators.py:61:25: F401 `uds.auths` imported but unused
+tests/core/modules/test_mfas.py:57:25: F401 `uds.mfas` imported but unused
+tests/core/modules/test_notifiers.py:54:25: F401 `uds.notifiers` imported but unused
+tests/core/modules/test_osmanagers.py:59:25: F401 `uds.osmanagers` imported but unused
+tests/core/modules/test_services.py:60:25: F401 `uds.services` imported but unused
+tests/core/modules/test_transports.py:64:40: F401 `uds.transports` imported but unused
+tests/core/util/test_query_db_filter.py:3:8: F401 `typing` imported but unused
+tests/core/util/test_stats_counters.py:57:9: E741 Ambiguous variable name: `l`
+tests/core/util/test_stats_counters.py:92:9: E741 Ambiguous variable name: `l`
+tests/fixtures/images.py:63:1: E402 Module level import not at top of file
+tests/fixtures/images.py:64:1: E402 Module level import not at top of file
+tests/fixtures/images.py:66:1: E402 Module level import not at top of file
+tests/fixtures/stats_counters.py:103:9: E731 Do not assign a `lambda` expression, use a `def`
+tests/services/openshift/fixtures.py:37:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:38:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:39:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:40:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:41:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:42:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:44:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:45:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:48:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:49:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:50:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:52:1: E402 Module level import not at top of file
+tests/services/openshift/fixtures.py:53:1: E402 Module level import not at top of file
+tests/services/openshift/test_service.py:20:1: E402 Module level import not at top of file
+tests/services/openshift/test_service.py:21:1: E402 Module level import not at top of file
+tests/services/openshift/test_service.py:22:1: E402 Module level import not at top of file
+tests/services/openshift/test_service.py:24:1: E402 Module level import not at top of file
+tests/services/openshift/test_service.py:25:1: E402 Module level import not at top of file
+tests/services/ovirt/fixtures.py:58:15: E741 Ambiguous variable name: `l`
+tests/services/proxmox/test_service_fixed.py:79:13: E731 Do not assign a `lambda` expression, use a `def`
+tests/services/xen/test_service_fixed.py:97:13: E731 Do not assign a `lambda` expression, use a `def`
+tests/transports/test_html5rdp.py:34:22: F401 `uds.core.types` imported but unused
+tests/transports/test_html5ssh.py:32:8: F401 `json` imported but unused
+tests/transports/test_html5ssh.py:34:22: F401 `uds.core.types` imported but unused
+tests/transports/test_html5ssh.py:36:27: F401 `uds.core.util.fields` imported but unused
+tests/utils/rest/__init__.py:41:15: F401 `.test` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+tests/utils/rest/__init__.py:42:15: F401 `.assertions` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+Found 313 errors.

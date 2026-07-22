@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import copy
 import typing
 from uds.core import types
@@ -91,8 +92,8 @@ class GuiBuilder:
             gui=types.ui.FieldInfo(
                 order=order or self.next(),
                 type=type,
-                label=label or '',
-                tooltip=tooltip or '',
+                label=label or "",
+                tooltip=tooltip or "",
                 tab=tab or self.saved_tab,
                 length=length,
                 min_value=min_value,
@@ -191,7 +192,7 @@ class GuiBuilder:
         name: str,
         label: str,
         *,
-        tooltip: str = '',
+        tooltip: str = "",
         tab: types.ui.Tab | str | None = None,
         default: str | None = None,
         readonly: bool = False,
@@ -207,7 +208,7 @@ class GuiBuilder:
                 types.ui.FieldType.TEXT,
                 label=label,
                 tab=tab,
-                default=default or '',
+                default=default or "",
                 readonly=readonly,
                 length=length,
                 required=required,
@@ -221,7 +222,7 @@ class GuiBuilder:
         name: str,
         label: str,
         *,
-        tooltip: str = '',
+        tooltip: str = "",
         tab: types.ui.Tab | str | None = None,
         default: int | None = None,
         readonly: bool = False,
@@ -253,7 +254,7 @@ class GuiBuilder:
         name: str,
         label: str,
         *,
-        tooltip: str = '',
+        tooltip: str = "",
         tab: types.ui.Tab | str | None = None,
         default: bool | None = None,
         readonly: bool = False,
@@ -282,7 +283,7 @@ class GuiBuilder:
         label: str,
         choices: list[types.ui.ChoiceItem],
         *,
-        tooltip: str = '',
+        tooltip: str = "",
         tab: types.ui.Tab | str | None = None,
         default: str | None = None,
         readonly: bool = False,
@@ -312,7 +313,7 @@ class GuiBuilder:
         label: str,
         choices: list[types.ui.ChoiceItem],
         *,
-        tooltip: str = '',
+        tooltip: str = "",
         tab: types.ui.Tab | str | None = None,
         default: str | None = None,
         readonly: bool = False,
@@ -355,16 +356,16 @@ class GuiBuilder:
         from uds.core.consts.images import DEFAULT_THUMB_BASE64
         from uds.models import Image
 
-        name = name or 'image_id'
-        label = label or gettext('Associated Image')
+        name = name or "image_id"
+        label = label or gettext("Associated Image")
         if tooltip is None:
-            tooltip = gettext('Select an image')
+            tooltip = gettext("Select an image")
 
         if choices is None:
             choices = [ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in Image.objects.all()]
 
         # Prepend ui.gui.choice_image(-1, '--------', DEFAULT_THUMB_BASE64)
-        choices = [ui.gui.choice_image(-1, '--------', DEFAULT_THUMB_BASE64)] + ui.gui.sorted_choices(choices)
+        choices = [ui.gui.choice_image(-1, "--------", DEFAULT_THUMB_BASE64)] + ui.gui.sorted_choices(choices)
 
         self.fields.append(
             self.make_gui(
@@ -438,9 +439,7 @@ class TableBuilder:
         """
         return self._add_field(name, title, types.rest.TableFieldType.ALPHANUMERIC, visible, width)
 
-    def numeric_column(
-        self, name: str, title: str, visible: bool = True, width: str | None = None
-    ) -> typing.Self:
+    def numeric_column(self, name: str, title: str, visible: bool = True, width: str | None = None) -> typing.Self:
         """
         Adds a number field to the table fields.
         """
@@ -452,17 +451,13 @@ class TableBuilder:
         """
         return self._add_field(name, title, types.rest.TableFieldType.BOOLEAN, visible, width)
 
-    def datetime_column(
-        self, name: str, title: str, visible: bool = True, width: str | None = None
-    ) -> typing.Self:
+    def datetime_column(self, name: str, title: str, visible: bool = True, width: str | None = None) -> typing.Self:
         """
         Adds a datetime field to the table fields.
         """
         return self._add_field(name, title, types.rest.TableFieldType.DATETIME, visible, width)
 
-    def datetime_sec(
-        self, name: str, title: str, visible: bool = True, width: str | None = None
-    ) -> typing.Self:
+    def datetime_sec(self, name: str, title: str, visible: bool = True, width: str | None = None) -> typing.Self:
         """
         Adds a datetime with seconds field to the table fields.
         """

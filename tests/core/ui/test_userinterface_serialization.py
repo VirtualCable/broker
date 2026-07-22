@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -53,7 +54,7 @@ from .fixtures import (
 logger = logging.getLogger(__name__)
 
 
-def old_serialize_form(ui: 'UserInterface') -> bytes:
+def old_serialize_form(ui: "UserInterface") -> bytes:
     """
     All values stored at form fields are serialized and returned as a single
     string
@@ -76,12 +77,12 @@ def old_serialize_form(ui: 'UserInterface') -> bytes:
     from uds.core.ui.user_interface import UDSK
 
     # Separators for fields, old implementation
-    MULTIVALUE_FIELD: typing.Final[bytes] = b'\001'
+    MULTIVALUE_FIELD: typing.Final[bytes] = b"\001"
     # OLD_PASSWORD_FIELD: typing.Final[bytes] = b'\004'
-    PASSWORD_FIELD: typing.Final[bytes] = b'\005'
+    PASSWORD_FIELD: typing.Final[bytes] = b"\005"
 
-    FIELD_SEPARATOR: typing.Final[bytes] = b'\002'
-    NAME_VALUE_SEPARATOR: typing.Final[bytes] = b'\003'
+    FIELD_SEPARATOR: typing.Final[bytes] = b"\002"
+    NAME_VALUE_SEPARATOR: typing.Final[bytes] = b"\003"
 
     # import inspect
     # logger.debug('Caller is : {}'.format(inspect.stack()))
@@ -89,7 +90,7 @@ def old_serialize_form(ui: 'UserInterface') -> bytes:
     arr: list[bytes] = []
     val: typing.Any
     for k, v in ui._gui.items():
-        logger.debug('serializing Key: %s/%s', k, v.value)
+        logger.debug("serializing Key: %s/%s", k, v.value)
         if v.is_type(types.ui.FieldType.HIDDEN) and v.is_serializable() is False:
             # logger.debug('Field {0} is not serializable'.format(k))
             continue
@@ -100,53 +101,53 @@ def old_serialize_form(ui: 'UserInterface') -> bytes:
             # logger.debug('Serializing value {0}'.format(v.value))
             val = MULTIVALUE_FIELD + pickle.dumps(v.value, protocol=0)
         elif v.is_type(types.ui.FieldType.PASSWORD):
-            val = PASSWORD_FIELD + CryptoManager.manager().aes256_cbc_encrypt(v.value.encode('utf8'), UDSK, True)
+            val = PASSWORD_FIELD + CryptoManager.manager().aes256_cbc_encrypt(v.value.encode("utf8"), UDSK, True)
         elif v.is_type(types.ui.FieldType.NUMERIC):
-            val = str(int(v.as_int())).encode('utf8')
+            val = str(int(v.as_int())).encode("utf8")
         elif v.is_type(types.ui.FieldType.CHECKBOX):
             val = v.as_bool()
         elif v.is_type(types.ui.FieldType.DATE):
-            val = typing.cast(datetime.date, v.value).isoformat().encode('utf8')
+            val = typing.cast(datetime.date, v.value).isoformat().encode("utf8")
         else:
-            val = v.value.encode('utf8')
+            val = v.value.encode("utf8")
         if val is True:
-            val = consts.TRUE_STR.encode('utf8')
+            val = consts.TRUE_STR.encode("utf8")
         elif val is False:
-            val = consts.FALSE_STR.encode('utf8')
+            val = consts.FALSE_STR.encode("utf8")
 
-        arr.append(k.encode('utf8') + NAME_VALUE_SEPARATOR + val)
-    logger.debug('Arr, >>%s<<', arr)
+        arr.append(k.encode("utf8") + NAME_VALUE_SEPARATOR + val)
+    logger.debug("Arr, >>%s<<", arr)
 
-    return codecs.encode(FIELD_SEPARATOR.join(arr), 'zip')
+    return codecs.encode(FIELD_SEPARATOR.join(arr), "zip")
 
 
 class UserinterfaceTest(UDSTestCase):
     # Helpers
     def ensure_values_fine(self, ui: TestingUserInterface) -> None:
         # Ensure that all values are fine for the ui fields
-        self.assertEqual(ui.str_field.value, DEFAULTS['str_field'], 'str_field')
-        self.assertEqual(ui.str_auto_field.value, DEFAULTS['str_auto_field'], 'str_auto_field')
-        self.assertEqual(ui.num_field.as_int(), DEFAULTS['num_field'], 'num_field')
-        self.assertEqual(ui.password_field.value, DEFAULTS['password_field'], 'password_field')
+        self.assertEqual(ui.str_field.value, DEFAULTS["str_field"], "str_field")
+        self.assertEqual(ui.str_auto_field.value, DEFAULTS["str_auto_field"], "str_auto_field")
+        self.assertEqual(ui.num_field.as_int(), DEFAULTS["num_field"], "num_field")
+        self.assertEqual(ui.password_field.value, DEFAULTS["password_field"], "password_field")
         # Hidden field is not stored, so it's not checked
-        self.assertEqual(ui.choice_field.value, DEFAULTS['choice_field'], 'choice_field')
+        self.assertEqual(ui.choice_field.value, DEFAULTS["choice_field"], "choice_field")
         self.assertEqual(
             ui.multi_choice_field.value,
-            DEFAULTS['multi_choice_field'],
-            'multi_choice_field',
+            DEFAULTS["multi_choice_field"],
+            "multi_choice_field",
         )
         self.assertEqual(
             ui.editable_list_field.value,
-            DEFAULTS['editable_list_field'],
-            'editable_list_field',
+            DEFAULTS["editable_list_field"],
+            "editable_list_field",
         )
-        self.assertEqual(ui.checkbox_field.value, DEFAULTS['checkbox_field'], 'checkbox_field')
+        self.assertEqual(ui.checkbox_field.value, DEFAULTS["checkbox_field"], "checkbox_field")
         self.assertEqual(
             ui.image_choice_field.value,
-            DEFAULTS['image_choice_field'],
-            'image_choice_field',
+            DEFAULTS["image_choice_field"],
+            "image_choice_field",
         )
-        self.assertEqual(ui.date_field.value, DEFAULTS['date_field'], 'date_field')
+        self.assertEqual(ui.date_field.value, DEFAULTS["date_field"], "date_field")
 
     def test_old_serialization(self) -> None:
         # This test is to ensure that old serialized data can be loaded
@@ -203,8 +204,8 @@ class UserinterfaceTest(UDSTestCase):
 
         # On current version, we do noallow backwards compatibility, so a warning is issued
         # and the field is not loaded
-        with mock.patch('logging.Logger.debug') as mock_log:
-            ui2.str_field.value = 'new value'
+        with mock.patch("logging.Logger.debug") as mock_log:
+            ui2.str_field.value = "new value"
             data_ui = ui2.serialize_fields()  # Should store str_field as strField
 
             self.assertFalse(ui.deserialize_fields(data_ui))  # Should need upgrade, current format serialized

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
 import dataclasses
 
@@ -46,9 +47,9 @@ class LoadBalancingPolicy(enum.IntEnum):
     @staticmethod
     def enumerate() -> list[tuple[int, str]]:
         return [
-            (LoadBalancingPolicy.ROUND_ROBIN, _('Evenly distributed')),
-            (LoadBalancingPolicy.PRIORITY, _('Priority')),
-            (LoadBalancingPolicy.GREATER_PERCENT_FREE, _('Greater % available')),
+            (LoadBalancingPolicy.ROUND_ROBIN, _("Evenly distributed")),
+            (LoadBalancingPolicy.PRIORITY, _("Priority")),
+            (LoadBalancingPolicy.GREATER_PERCENT_FREE, _("Greater % available")),
         ]
 
 
@@ -63,9 +64,9 @@ class TransportSelectionPolicy(enum.IntEnum):
     @staticmethod
     def enumerate() -> list[tuple[int, str]]:
         return [
-            (TransportSelectionPolicy.AUTO, _('Automatic selection')),
-            (TransportSelectionPolicy.COMMON, _('Use only common transports')),
-            (TransportSelectionPolicy.LABEL, _('Group Transports by label')),
+            (TransportSelectionPolicy.AUTO, _("Automatic selection")),
+            (TransportSelectionPolicy.COMMON, _("Use only common transports")),
+            (TransportSelectionPolicy.LABEL, _("Group Transports by label")),
         ]
 
 
@@ -79,8 +80,8 @@ class HighAvailabilityPolicy(enum.IntEnum):
     @staticmethod
     def enumerate() -> list[tuple[int, str]]:
         return [
-            (HighAvailabilityPolicy.DISABLED, _('Disabled')),
-            (HighAvailabilityPolicy.ENABLED, _('Enabled')),
+            (HighAvailabilityPolicy.DISABLED, _("Disabled")),
+            (HighAvailabilityPolicy.ENABLED, _("Enabled")),
         ]
 
 
@@ -104,26 +105,26 @@ class UsageInfoVars:
         if pool_usage_info is None:
             pool_usage_info = UsageInfo(0, 0)
 
-        self.use_percent = str(pool_usage_info.percent) + '%' if pool_usage_info.total > 0 else ''
-        self.use_count = str(pool_usage_info.used) if pool_usage_info.total > 0 else ''
-        self.left_count = str(pool_usage_info.total - pool_usage_info.used) if pool_usage_info.total > 0 else ''
-        self.max_srvs = str(pool_usage_info.total) if pool_usage_info.total > 0 else ''
+        self.use_percent = str(pool_usage_info.percent) + "%" if pool_usage_info.total > 0 else ""
+        self.use_count = str(pool_usage_info.used) if pool_usage_info.total > 0 else ""
+        self.left_count = str(pool_usage_info.total - pool_usage_info.used) if pool_usage_info.total > 0 else ""
+        self.max_srvs = str(pool_usage_info.total) if pool_usage_info.total > 0 else ""
 
     def replace(self, x: str) -> str:
         return (
-            x.replace('{use}', self.use_percent)
-            .replace('{total}', self.max_srvs)
-            .replace('{usec}', self.use_count)
-            .replace('{left}', self.left_count)
+            x.replace("{use}", self.use_percent)
+            .replace("{total}", self.max_srvs)
+            .replace("{usec}", self.use_count)
+            .replace("{left}", self.left_count)
         )
 
     @staticmethod
     def has_macros(x: str) -> bool:
-        return any(y in x for y in ('{use}', '{total}', '{usec}', '{left}'))
-    
+        return any(y in x for y in ("{use}", "{total}", "{usec}", "{left}"))
+
     @staticmethod
     def processed_macros_len(x: str) -> int:
         """
         Calculates an aproximation of the length of the string witho macros processed
         """
-        return len(x.replace('{use}', 'xx').replace('{total}', 'xx').replace('{usec}', 'xx').replace('{left}', 'xx'))
+        return len(x.replace("{use}", "xx").replace("{total}", "xx").replace("{usec}", "xx").replace("{left}", "xx"))

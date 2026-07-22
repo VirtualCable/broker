@@ -11,6 +11,7 @@ Tests for the "DC orchestration" helpers in ``uds.core.util.ldaputil``:
 ``ldaputil.connection``, monkeypatched. TCP reachability is delegated to
 ``uds.core.util.net.test_connectivity`` (covered by its own tests).
 """
+
 import typing
 import collections.abc
 import unittest
@@ -62,17 +63,17 @@ class _DummyConn:
 
 class DnFromDomainTest(UDSTestCase):
     def test_simple(self) -> None:
-        self.assertEqual(ldaputil.dn_from_domain('a.b.c'), 'dc=a,dc=b,dc=c')
+        self.assertEqual(ldaputil.dn_from_domain("a.b.c"), "dc=a,dc=b,dc=c")
 
     def test_single_label(self) -> None:
-        self.assertEqual(ldaputil.dn_from_domain('local'), 'dc=local')
+        self.assertEqual(ldaputil.dn_from_domain("local"), "dc=local")
 
     def test_strips_spaces(self) -> None:
-        self.assertEqual(ldaputil.dn_from_domain(' a . b '), 'dc=a,dc=b')
+        self.assertEqual(ldaputil.dn_from_domain(" a . b "), "dc=a,dc=b")
 
     def test_empty(self) -> None:
-        self.assertEqual(ldaputil.dn_from_domain(''), '')
-        self.assertEqual(ldaputil.dn_from_domain('   '), '')
+        self.assertEqual(ldaputil.dn_from_domain(""), "")
+        self.assertEqual(ldaputil.dn_from_domain("   "), "")
 
 
 class ConnectWithPoolTest(UDSTestCase):
@@ -99,91 +100,91 @@ class ConnectWithPoolTest(UDSTestCase):
             calls.append((host, port))
             action: collections.abc.Callable[[], typing.Any] | None = behavior.get((host, port))
             if action is None:
-                raise ldaputil.LDAPError(f'no behavior for {host}:{port}')
+                raise ldaputil.LDAPError(f"no behavior for {host}:{port}")
             result: typing.Any = action()
             if result is None:
-                raise ldaputil.LDAPError(f'{host}:{port} refused')
+                raise ldaputil.LDAPError(f"{host}:{port} refused")
             return result
 
-        setattr(ldaputil, 'connection', fake_connection)
+        setattr(ldaputil, "connection", fake_connection)
 
         def _restore() -> None:
-            setattr(ldaputil, 'connection', original)
+            setattr(ldaputil, "connection", original)
 
         return _restore, calls
 
     def test_picks_first_good(self) -> None:
         cache = _DummyCache()
         restore_conn, calls = self._patch_connection(
-            behavior={('h1', 389): lambda: _DummyConn()},
+            behavior={("h1", 389): lambda: _DummyConn()},
         )
         try:
             con: typing.Any = ldaputil.connect_with_pool(
-                user='u',
-                password='p',
-                hosts=[('h1', 389)],
+                user="u",
+                password="p",
+                hosts=[("h1", 389)],
                 cache=cache,
                 probe=False,
             )
         finally:
             restore_conn()
         self.assertIsInstance(con, _DummyConn)
-        self.assertEqual(calls, [('h1', 389)])
-        self.assertEqual(cache.get('ldap.preferred'), [('h1', 389)])
+        self.assertEqual(calls, [("h1", 389)])
+        self.assertEqual(cache.get("ldap.preferred"), [("h1", 389)])
 
     def test_skips_bad_then_picks_next(self) -> None:
         cache = _DummyCache()
-        cache.put('ldap.bad.h1:389', True, validity=60)
+        cache.put("ldap.bad.h1:389", True, validity=60)
         restore_conn, calls = self._patch_connection(
-            behavior={('h2', 389): lambda: _DummyConn()},
+            behavior={("h2", 389): lambda: _DummyConn()},
         )
         try:
             ldaputil.connect_with_pool(
-                user='u',
-                password='p',
-                hosts=[('h1', 389), ('h2', 389)],
+                user="u",
+                password="p",
+                hosts=[("h1", 389), ("h2", 389)],
                 cache=cache,
                 probe=False,
             )
         finally:
             restore_conn()
-        self.assertEqual(calls, [('h2', 389)])
+        self.assertEqual(calls, [("h2", 389)])
 
     def test_marks_bad_on_failure(self) -> None:
         cache = _DummyCache()
         restore_conn, _ = self._patch_connection(
             behavior={
-                ('h1', 389): lambda: (_ for _ in ()).throw(ldaputil.LDAPError('nope')),
-                ('h2', 389): lambda: _DummyConn(),
+                ("h1", 389): lambda: (_ for _ in ()).throw(ldaputil.LDAPError("nope")),
+                ("h2", 389): lambda: _DummyConn(),
             },
         )
         try:
             ldaputil.connect_with_pool(
-                user='u',
-                password='p',
-                hosts=[('h1', 389), ('h2', 389)],
+                user="u",
+                password="p",
+                hosts=[("h1", 389), ("h2", 389)],
                 cache=cache,
                 probe=False,
             )
         finally:
             restore_conn()
-        self.assertTrue(cache.get('ldap.bad.h1:389'))
-        self.assertEqual(cache.get('ldap.preferred'), [('h2', 389)])
+        self.assertTrue(cache.get("ldap.bad.h1:389"))
+        self.assertEqual(cache.get("ldap.preferred"), [("h2", 389)])
 
     def test_preferred_first(self) -> None:
         cache = _DummyCache()
-        cache.put('ldap.preferred', [('h3', 389)], validity=3600)
+        cache.put("ldap.preferred", [("h3", 389)], validity=3600)
         restore_conn, calls = self._patch_connection(
             behavior={
-                ('h3', 389): lambda: _DummyConn(),
-                ('h1', 389): lambda: _DummyConn(),
+                ("h3", 389): lambda: _DummyConn(),
+                ("h1", 389): lambda: _DummyConn(),
             },
         )
         try:
             ldaputil.connect_with_pool(
-                user='u',
-                password='p',
-                hosts=[('h1', 389), ('h2', 389), ('h3', 389)],
+                user="u",
+                password="p",
+                hosts=[("h1", 389), ("h2", 389), ("h3", 389)],
                 cache=cache,
                 probe=False,
             )
@@ -191,26 +192,27 @@ class ConnectWithPoolTest(UDSTestCase):
             restore_conn()
         # Preferred (h3) is tried first; if it succeeds no further host is
         # probed.
-        self.assertEqual(calls, [('h3', 389)])
+        self.assertEqual(calls, [("h3", 389)])
 
     def test_all_fail_raises(self) -> None:
         cache = _DummyCache()
         restore_conn, _ = self._patch_connection(
             behavior={
-                ('h1', 389): lambda: (_ for _ in ()).throw(ldaputil.LDAPError('nope')),
+                ("h1", 389): lambda: (_ for _ in ()).throw(ldaputil.LDAPError("nope")),
             },
         )
         try:
             with self.assertRaises(ldaputil.LDAPError):
                 ldaputil.connect_with_pool(
-                    user='u',
-                    password='p',
-                    hosts=[('h1', 389)],
+                    user="u",
+                    password="p",
+                    hosts=[("h1", 389)],
                     cache=cache,
                     probe=False,
                 )
         finally:
             restore_conn()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

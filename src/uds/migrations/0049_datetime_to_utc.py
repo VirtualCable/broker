@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("uds", "0048_alter_ticketstore_owner"),
     ]
@@ -14,65 +13,39 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="account",
             name="time_mark",
-            field=models.DateTimeField(
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                )
-            ),
+            field=models.DateTimeField(default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc)),
         ),
         migrations.AlterField(
             model_name="accountusage",
             name="end",
-            field=models.DateTimeField(
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                )
-            ),
+            field=models.DateTimeField(default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc)),
         ),
         migrations.AlterField(
             model_name="accountusage",
             name="start",
-            field=models.DateTimeField(
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                )
-            ),
+            field=models.DateTimeField(default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc)),
         ),
         migrations.AlterField(
             model_name="scheduler",
             name="next_execution",
             field=models.DateTimeField(
                 db_index=True,
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                ),
+                default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc),
             ),
         ),
         migrations.AlterField(
             model_name="servicepool",
             name="state_date",
-            field=models.DateTimeField(
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                )
-            ),
+            field=models.DateTimeField(default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc)),
         ),
         migrations.AlterField(
             model_name="user",
             name="last_access",
-            field=models.DateTimeField(
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                )
-            ),
+            field=models.DateTimeField(default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc)),
         ),
         migrations.AlterField(
             model_name="userservice",
             name="in_use_date",
-            field=models.DateTimeField(
-                default=datetime.datetime(
-                    1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc
-                )
-            ),
+            field=models.DateTimeField(default=datetime.datetime(1972, 7, 1, 0, 0, tzinfo=datetime.timezone.utc)),
         ),
     ]

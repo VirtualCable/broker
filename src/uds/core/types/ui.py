@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import enum
 import typing
@@ -41,18 +42,18 @@ OldFieldNameType = str | list[str] | None
 
 
 class Tab(enum.StrEnum):
-    ADVANCED = gettext_noop('Advanced')
-    PARAMETERS = gettext_noop('Parameters')
-    CREDENTIALS = gettext_noop('Credentials')
-    TUNNEL = gettext_noop('Tunnel')
-    DISPLAY = gettext_noop('Display')
-    MFA = gettext_noop('MFA')
-    MACHINE = gettext_noop('Machine')
-    CONFIG = gettext_noop('Config')
-    ATTRIBUTES = gettext_noop('Attributes')
+    ADVANCED = gettext_noop("Advanced")
+    PARAMETERS = gettext_noop("Parameters")
+    CREDENTIALS = gettext_noop("Credentials")
+    TUNNEL = gettext_noop("Tunnel")
+    DISPLAY = gettext_noop("Display")
+    MFA = gettext_noop("MFA")
+    MACHINE = gettext_noop("Machine")
+    CONFIG = gettext_noop("Config")
+    ATTRIBUTES = gettext_noop("Attributes")
 
     @staticmethod
-    def from_str(value: str | None) -> 'Tab | str | None':
+    def from_str(value: str | None) -> "Tab | str | None":
         """Returns a Tab from a string
         If value is not a valid Tab, returns Tab.PARAMETERS
 
@@ -68,22 +69,22 @@ class Tab(enum.StrEnum):
 
 
 class FieldType(enum.StrEnum):
-    TEXT = 'text'
-    TEXT_AUTOCOMPLETE = 'text-autocomplete'
-    NUMERIC = 'numeric'
-    PASSWORD = 'password'  # nosec: this is not a password
-    HIDDEN = 'hidden'
-    CHOICE = 'choice'
-    MULTICHOICE = 'multichoice'
-    EDITABLELIST = 'editlist'
-    CHECKBOX = 'checkbox'
-    IMAGECHOICE = 'imgchoice'
-    DATE = 'date'
-    INFO = 'internal-info'
-    TAGLIST = 'taglist'
+    TEXT = "text"
+    TEXT_AUTOCOMPLETE = "text-autocomplete"
+    NUMERIC = "numeric"
+    PASSWORD = "password"  # nosec: this is not a password
+    HIDDEN = "hidden"
+    CHOICE = "choice"
+    MULTICHOICE = "multichoice"
+    EDITABLELIST = "editlist"
+    CHECKBOX = "checkbox"
+    IMAGECHOICE = "imgchoice"
+    DATE = "date"
+    INFO = "internal-info"
+    TAGLIST = "taglist"
 
     @staticmethod
-    def from_str(value: str) -> 'FieldType':
+    def from_str(value: str) -> "FieldType":
         """Returns a FieldType from a string
         If value is not a valid FieldType, returns FieldType.TEXT
 
@@ -97,17 +98,17 @@ class FieldType(enum.StrEnum):
 
 
 class FieldPatternType(enum.StrEnum):
-    IPV4 = 'ipv4'
-    IPV6 = 'ipv6'
-    IP = 'ip'
-    MAC = 'mac'
-    URL = 'url'
-    EMAIL = 'email'
-    FQDN = 'fqdn'
-    HOSTNAME = 'hostname'
-    HOST = 'host'
-    PATH = 'path'
-    NONE = ''
+    IPV4 = "ipv4"
+    IPV6 = "ipv6"
+    IP = "ip"
+    MAC = "mac"
+    URL = "url"
+    EMAIL = "email"
+    FQDN = "fqdn"
+    HOSTNAME = "hostname"
+    HOST = "host"
+    PATH = "path"
+    NONE = ""
 
 
 # Callbacks
@@ -116,7 +117,7 @@ class FieldPatternType(enum.StrEnum):
 class CallbackResultItem(typing.TypedDict):
     # {'name': 'datastore', 'choices': res}
     name: str
-    choices: collections.abc.Sequence['ChoiceItem']
+    choices: collections.abc.Sequence["ChoiceItem"]
 
 
 CallbackResultType = collections.abc.Sequence[CallbackResultItem]
@@ -133,23 +134,21 @@ class Filler(typing.TypedDict):
 
 @dataclasses.dataclass
 class ChoiceItem:
-    id: 'str|int'
+    id: "str|int"
     text: str
     img: str | None = None  # Only for IMAGECHOICE
 
     def as_dict(self) -> dict[str, typing.Any]:
         data = {
-            'id': self.id,
-            'text': self.text,
+            "id": self.id,
+            "text": self.text,
         }
         if self.img:
-            data['img'] = self.img
+            data["img"] = self.img
         return data
 
 
-ChoicesType = (
-    collections.abc.Callable[[], collections.abc.Iterable[ChoiceItem]] | collections.abc.Iterable[ChoiceItem]
-)
+ChoicesType = collections.abc.Callable[[], collections.abc.Iterable[ChoiceItem]] | collections.abc.Iterable[ChoiceItem]
 
 
 # Field Info
@@ -159,7 +158,7 @@ class FieldInfo:
     tooltip: str
     order: int
     type: FieldType
-    field_name: str = ''
+    field_name: str = ""
     old_field_name: OldFieldNameType = None
     readonly: bool | None = None
     value: collections.abc.Callable[[], typing.Any] | typing.Any | None = None
@@ -167,7 +166,7 @@ class FieldInfo:
     required: bool | None = None
     length: int | None = None
     lines: int | None = None
-    pattern: 'FieldPatternType | str | None' = None
+    pattern: "FieldPatternType | str | None" = None
     tab: Tab | str | None = None
     choices: ChoicesType | None = None
     min_value: int | None = None
@@ -189,7 +188,7 @@ class GuiElement:
     def as_dict(self) -> dict[str, typing.Any]:
         """Returns a dict with all fields that are not None"""
         return {
-            'name': self.name,
-            'gui': self.gui.as_dict(),
-            'value': self.value,
+            "name": self.name,
+            "gui": self.gui.as_dict(),
+            "value": self.value,
         }

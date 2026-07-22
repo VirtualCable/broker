@@ -3,6 +3,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Converted to ldap3 by GitHub Copilot
 """
+
 import logging
 import typing
 import collections.abc
@@ -13,7 +14,7 @@ import ssl
 # It is not recommended to ignore warnings :)
 import warnings
 
-warnings.filterwarnings("ignore", module='pyasn1', category=DeprecationWarning)
+warnings.filterwarnings("ignore", module="pyasn1", category=DeprecationWarning)
 
 from ldap3 import (
     Server,
@@ -52,7 +53,7 @@ MODIFY_REPLACE = LDAP_MODIFY_REPLACE
 MODIFY_INCREMENT = LDAP_MODIFY_INCREMENT
 
 LDAP_ALREADY_EXISTS_RESULT_CODES = frozenset({20, 68})
-LDAP_ALREADY_EXISTS_DESCRIPTIONS = frozenset({'attributeOrValueExists', 'entryAlreadyExists'})
+LDAP_ALREADY_EXISTS_DESCRIPTIONS = frozenset({"attributeOrValueExists", "entryAlreadyExists"})
 
 LDAPResultType = dict[str, typing.Any]
 LDAPSearchResultType = list[dict[str, typing.Any]] | None
@@ -63,7 +64,7 @@ LDAPConnection: typing.TypeAlias = Connection
 class LDAPError(Exception):
     @staticmethod
     def reraise(e: typing.Any) -> typing.NoReturn:
-        _str = _('Connection error: ')
+        _str = _("Connection error: ")
         _str += str(e)
         raise LDAPError(_str) from e
 
@@ -76,9 +77,9 @@ ALREADY_EXISTS = AlreadyExistsError
 
 
 def _raise_for_result(operation: str, result: collections.abc.Mapping[str, typing.Any]) -> typing.NoReturn:
-    result_code = result.get('result')
-    description = str(result.get('description', ''))
-    message = f'{operation} operation failed: {result}'
+    result_code = result.get("result")
+    description = str(result.get("description", ""))
+    message = f"{operation} operation failed: {result}"
 
     try:
         numeric_result = int(typing.cast(str | int, result_code))
@@ -97,11 +98,7 @@ def escape(value: str) -> str:
     """
     # ldap3 does not provide a direct escape, but this is a safe replacement
     return (
-        value.replace('\\', '\\5c')
-        .replace('*', '\\2a')
-        .replace('(', '\\28')
-        .replace(')', '\\29')
-        .replace('\0', '\\00')
+        value.replace("\\", "\\5c").replace("*", "\\2a").replace("(", "\\28").replace(")", "\\29").replace("\0", "\\00")
     )
 
 
@@ -117,11 +114,11 @@ def connection(
     debug: bool = False,
     verify_ssl: bool = False,
     certificate_data: str | None = None,  # Content of the certificate, not the file itself
-) -> 'LDAPConnection':
+) -> "LDAPConnection":
     """
     Tries to connect to ldap using ldap3. If username is None, it tries to connect using user provided credentials.
     """
-    logger.debug('Login in to %s as user %s', host, username)
+    logger.debug("Login in to %s as user %s", host, username)
 
     if port == -1:
         port = 636 if use_ssl else 389
@@ -131,13 +128,13 @@ def connection(
         # Use ldap3's own constants for validate and version, not ssl module
         tls_validate = ssl.CERT_REQUIRED if verify_ssl else ssl.CERT_NONE
 
-        if hasattr(settings, 'SECURE_MIN_TLS_VERSION') and settings.SECURE_MIN_TLS_VERSION:
+        if hasattr(settings, "SECURE_MIN_TLS_VERSION") and settings.SECURE_MIN_TLS_VERSION:
             # format is "1.0, 1.1, 1.2 or 1.3", convert to ssl.TLSVersion.TLSv1_0, ssl.TLSVersion.TLSv1_1, ssl.TLSVersion.TLSv1_2 or ssl.TLSVersion.TLSv1_3
-            tls_version = getattr(ssl.TLSVersion, 'TLSv' + settings.SECURE_MIN_TLS_VERSION.replace('.', '_'))
+            tls_version = getattr(ssl.TLSVersion, "TLSv" + settings.SECURE_MIN_TLS_VERSION.replace(".", "_"))
         else:
             tls_version = ssl.TLSVersion.TLSv1_2
 
-        if hasattr(settings, 'SECURE_CIPHERS') and settings.SECURE_CIPHERS:
+        if hasattr(settings, "SECURE_CIPHERS") and settings.SECURE_CIPHERS:
             cipher = settings.SECURE_CIPHERS
         else:
             cipher = None
@@ -166,13 +163,13 @@ def connection(
         )
         conn.open()
         if not conn.bind():
-            logger.error('Could not bind to LDAP server %s as user %s', host, username)
-            raise LDAPError(_('Could not bind to LDAP server: {host}').format(host=host))
+            logger.error("Could not bind to LDAP server %s as user %s", host, username)
+            raise LDAPError(_("Could not bind to LDAP server: {host}").format(host=host))
 
-        logger.debug('Connection was successful')
+        logger.debug("Connection was successful")
         return conn
     except Exception as e:
-        logger.exception('Exception connection:')
+        logger.exception("Exception connection:")
         raise LDAPError(str(e)) from e
 
 
@@ -188,7 +185,7 @@ def as_dict(
     """
     Makes a search on LDAP, returns a generator with the results, where each result is a dictionary where values are always a list of strings
     """
-    logger.debug('Filter: %s, attr list: %s', ldap_filter, attributes)
+    logger.debug("Filter: %s, attr list: %s", ldap_filter, attributes)
     attr_list = list(attributes) if attributes else ALL_ATTRIBUTES
     try:
         con.search(
@@ -201,11 +198,11 @@ def as_dict(
         for entry in typing.cast(typing.Any, con.entries):
             dct = utils.CaseInsensitiveDict[list[str]]()
             for attr in attr_list:
-                dct[attr] = entry[attr].values if attr in entry else ['']
-            dct['dn'] = entry.entry_dn
+                dct[attr] = entry[attr].values if attr in entry else [""]
+            dct["dn"] = entry.entry_dn
             yield dct
     except Exception as e:
-        logger.exception('Exception in search:')
+        logger.exception("Exception in search:")
         raise LDAPError(str(e)) from e
 
 
@@ -218,19 +215,19 @@ def first(
     *,
     attributes: collections.abc.Iterable[str] | None = None,
     max_entries: int = 50,
-) -> 'LDAPResultType | None':
+) -> "LDAPResultType | None":
     """
     Searchs for the username and returns its LDAP entry
     """
     value = escape(value)
     attr_list = [field] + list(attributes) if attributes else [field]
-    ldap_filter = f'(&(objectClass={object_class})({field}={value}))'
+    ldap_filter = f"(&(objectClass={object_class})({field}={value}))"
     try:
         gen = as_dict(con, base, ldap_filter, attributes=attr_list, limit=max_entries)
         obj = next(gen)
     except StopIteration:
         return None
-    obj['_id'] = value
+    obj["_id"] = value
     return obj
 
 
@@ -252,12 +249,12 @@ def add(
     try:
         result = typing.cast(typing.Any, con.add(dn, attributes=attributes))
         if not result:
-            _raise_for_result('Add', typing.cast(collections.abc.Mapping[str, typing.Any], con.result))
+            _raise_for_result("Add", typing.cast(collections.abc.Mapping[str, typing.Any], con.result))
         return True
     except LDAPError:
         raise
     except Exception as e:
-        logger.exception('Exception in add:')
+        logger.exception("Exception in add:")
         raise LDAPError(str(e)) from e
 
 
@@ -272,18 +269,18 @@ def delete(con: Connection, dn: str, *, depth: int = 1) -> None:
         None. Raises LDAPError on failure.
     """
     try:
-        con.search(dn, '(objectClass=*)', search_scope=SCOPE_ONELEVEL, attributes=['dn'])
+        con.search(dn, "(objectClass=*)", search_scope=SCOPE_ONELEVEL, attributes=["dn"])
         for entry in typing.cast(list[typing.Any], con.entries):
             child_dn: str = entry.entry_dn
             delete(con, child_dn, depth=depth - 1)
             result = typing.cast(typing.Any, con.delete(child_dn))
             if not result:
-                raise LDAPError(f'Delete operation failed: {con.result}')
+                raise LDAPError(f"Delete operation failed: {con.result}")
         result = typing.cast(typing.Any, con.delete(dn))
         if not result:
-            raise LDAPError(f'Delete operation failed: {con.result}')
+            raise LDAPError(f"Delete operation failed: {con.result}")
     except Exception as e:
-        logger.exception('Exception in delete:')
+        logger.exception("Exception in delete:")
         raise LDAPError(str(e)) from e
 
 
@@ -314,21 +311,21 @@ def modify(
     try:
         result = typing.cast(typing.Any, con.modify(dn, changes, controls=controls))
         if not result:
-            _raise_for_result('Modify', typing.cast(collections.abc.Mapping[str, typing.Any], con.result))
+            _raise_for_result("Modify", typing.cast(collections.abc.Mapping[str, typing.Any], con.result))
         return True
     except LDAPError:
         raise
     except Exception as e:
-        logger.exception('Exception in modify:')
+        logger.exception("Exception in modify:")
         raise LDAPError(str(e)) from e
 
 
-def get_root_dse(con: Connection) -> 'LDAPResultType | None':
-    con.search('', '(objectClass=*)', search_scope=SCOPE_BASE)
+def get_root_dse(con: Connection) -> "LDAPResultType | None":
+    con.search("", "(objectClass=*)", search_scope=SCOPE_BASE)
     if con.entries:
         entry = typing.cast(typing.Any, con.entries[0])
         dct: dict[str, typing.Any] = {attr: entry[attr].values for attr in entry.entry_attributes}
-        dct['dn'] = entry.entry_dn
+        dct["dn"] = entry.entry_dn
         return dct
     return None
 
@@ -337,15 +334,15 @@ def dn_from_domain(domain: str) -> str:
     """
     `'a.b.c'` -> `'dc=a,dc=b,dc=c'`. Empty / whitespace input -> empty string.
     """
-    parts = [p.strip() for p in domain.split('.') if p.strip()]
+    parts = [p.strip() for p in domain.split(".") if p.strip()]
     if not parts:
-        return ''
-    return ','.join(f'dc={p}' for p in parts)
+        return ""
+    return ",".join(f"dc={p}" for p in parts)
 
 
-BAD_COOLDOWN_DEFAULT: typing.Final[int] = 30    # 30s seed (transient glitches heal fast)
-BAD_COOLDOWN_MAX: typing.Final[int] = 28800      # 8h cap (matches daily DC cycle)
-BAD_COOLDOWN_OWNER: typing.Final[str] = 'ldap'  # namespace inside the global backoff cache
+BAD_COOLDOWN_DEFAULT: typing.Final[int] = 30  # 30s seed (transient glitches heal fast)
+BAD_COOLDOWN_MAX: typing.Final[int] = 28800  # 8h cap (matches daily DC cycle)
+BAD_COOLDOWN_OWNER: typing.Final[str] = "ldap"  # namespace inside the global backoff cache
 
 
 def connect_with_pool(
@@ -363,7 +360,7 @@ def connect_with_pool(
     bad_cooldown: int = BAD_COOLDOWN_DEFAULT,
     probe: bool = True,
     probe_timeout: float = 1.5,
-) -> 'LDAPConnection':
+) -> "LDAPConnection":
     """
     Try, in order, to bind against each `(host, port)`. Skips any host that
     is currently in backoff (per-key exponential cooldown). A previously
@@ -380,10 +377,10 @@ def connect_with_pool(
     """
     host_list: list[tuple[str, int]] = [(h, p) for h, p in hosts if h and h.strip()]
     if not host_list:
-        raise LDAPError(_('No LDAP servers configured'))
+        raise LDAPError(_("No LDAP servers configured"))
 
     def _host_key(host: str, port: int) -> str:
-        return f'{host.lower().rstrip(".")}:{port}'
+        return f"{host.lower().rstrip('.')}:{port}"
 
     # Our own cache. ``Backoff`` receives the same instance for the badness
     # state; both code paths use the ``ldap`` namespace.
@@ -400,11 +397,11 @@ def connect_with_pool(
 
         Storage format is just the list — the cache serialises it.
         """
-        return ldap_cache.get('ldap.preferred', default=[])
+        return ldap_cache.get("ldap.preferred", default=[])
 
     def _set_preferred(hosts: list[tuple[str, int]]) -> None:
         """Store the hosts as the new preferred list (priority order)."""
-        ldap_cache.put('ldap.preferred', hosts or [], 3600)
+        ldap_cache.put("ldap.preferred", hosts or [], 3600)
 
     # Order: preferred first (tried in priority order), then the rest in
     # the order the caller supplied. Duplicates collapse, but we never drop
@@ -417,14 +414,14 @@ def connect_with_pool(
             seen.add((h, p))
             ordered.append((h, p))
 
-    last_error: str = ''
+    last_error: str = ""
     for h, p in ordered:
         key = _host_key(h, p)
         if bo.is_bad(key):
-            logger.debug('Skipping bad host %s:%s (in cooldown)', h, p)
+            logger.debug("Skipping bad host %s:%s (in cooldown)", h, p)
             continue
         if probe and not util_net.test_connectivity(h, p, timeout=probe_timeout):
-            logger.debug('Probe TCP failed for %s:%s, marking as bad', h, p)
+            logger.debug("Probe TCP failed for %s:%s, marking as bad", h, p)
             bo.mark_bad(key)
             continue
         try:
@@ -441,12 +438,12 @@ def connect_with_pool(
             )
         except LDAPError as e:
             last_error = str(e)
-            logger.debug('LDAPError connecting to %s:%s: %s', h, p, e)
+            logger.debug("LDAPError connecting to %s:%s: %s", h, p, e)
             bo.mark_bad(key)
             continue
         except Exception as e:  # pragma: no cover - safety net
             last_error = str(e)
-            logger.debug('Exception connecting to %s:%s: %s', h, p, e)
+            logger.debug("Exception connecting to %s:%s: %s", h, p, e)
             bo.mark_bad(key)
             continue
 
@@ -462,7 +459,7 @@ def connect_with_pool(
         return con
 
     raise LDAPError(
-        _('Could not connect to any LDAP server ({}). Last error: {}').format(
-            ', '.join(f'{h}:{p}' for h, p in ordered), last_error
+        _("Could not connect to any LDAP server ({}). Last error: {}").format(
+            ", ".join(f"{h}:{p}" for h, p in ordered), last_error
         )
     )

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from uds import models
 from uds.core import types
@@ -41,7 +42,6 @@ from ...utils.test import UDSTransactionTestCase
 
 
 class TestOpenstackFixedService(UDSTransactionTestCase):
-
     def test_service_fixed(self) -> None:
         """
         Test the service
@@ -58,17 +58,15 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
 
                 # assignables should be same as service.macines
                 assignables = set(i.id for i in service.enumerate_assignables())
-                self.assertEqual(assignables, set(service.machines.value), f'legacy={prov.legacy}')
+                self.assertEqual(assignables, set(service.machines.value), f"legacy={prov.legacy}")
 
                 # Remove one machine from fixtures servers_list (from the first one on service.machine.value)
                 prev_servers_list = fixtures.SERVERS_LIST.copy()
-                fixtures.SERVERS_LIST[:] = [
-                    i for i in fixtures.SERVERS_LIST if i.id != service.machines.value[0]
-                ]
+                fixtures.SERVERS_LIST[:] = [i for i in fixtures.SERVERS_LIST if i.id != service.machines.value[0]]
 
                 # Now should not return the first from service.machines.value
                 assignables = set(i.id for i in service.enumerate_assignables())
-                self.assertEqual(assignables, set(set(service.machines.value[1:])), f'legacy={prov.legacy}')
+                self.assertEqual(assignables, set(set(service.machines.value[1:])), f"legacy={prov.legacy}")
 
                 # Restore servers_list and assignables
                 fixtures.SERVERS_LIST[:] = prev_servers_list

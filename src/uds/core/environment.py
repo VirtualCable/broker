@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import secrets
 import collections.abc
@@ -42,14 +43,14 @@ if typing.TYPE_CHECKING:
     from uds.core.util.unique_id_generator import UniqueGenerator
 
 
-TEST_ENV = 'testing_env'
-COMMON_ENV = 'global'
+TEST_ENV = "testing_env"
+COMMON_ENV = "global"
 
 # Generators of ids
-GENERATORS_TYPES: typing.Final[collections.abc.Mapping[str, type['UniqueGenerator']]] = {
-    'mac': unique_mac_generator.UniqueMacGenerator,
-    'name': unique_name_generator.UniqueNameGenerator,
-    'id': unique_gid_generator.UniqueGIDGenerator,
+GENERATORS_TYPES: typing.Final[collections.abc.Mapping[str, type["UniqueGenerator"]]] = {
+    "mac": unique_mac_generator.UniqueMacGenerator,
+    "name": unique_name_generator.UniqueNameGenerator,
+    "id": unique_gid_generator.UniqueGIDGenerator,
 }
 
 
@@ -61,12 +62,12 @@ class Environment:
     The environment is composed of a "cache" and a "storage". First are volatile data, while second are persistent data.
     """
 
-    __slots__ = ['_key', '_cache', '_storage', '_id_generators']
+    __slots__ = ["_key", "_cache", "_storage", "_id_generators"]
 
     _key: str
-    _cache: 'Cache'
-    _storage: 'Storage'
-    _id_generators: dict[str, 'UniqueGenerator']
+    _cache: "Cache"
+    _storage: "Storage"
+    _id_generators: dict[str, "UniqueGenerator"]
 
     def __init__(
         self,
@@ -89,7 +90,7 @@ class Environment:
         self._id_generators = {k: v(self._key) for k, v in GENERATORS_TYPES.items()}
 
     @property
-    def cache(self) -> 'Cache':
+    def cache(self) -> "Cache":
         """
         Method to acces the cache of the environment.
         @return: a referente to a Cache instance
@@ -97,27 +98,27 @@ class Environment:
         return self._cache
 
     @property
-    def storage(self) -> 'Storage':
+    def storage(self) -> "Storage":
         """
         Method to acces the cache of the environment.
         @return: a referente to an Storage Instance
         """
         return self._storage
 
-    def id_generator(self, generator_id: str) -> 'UniqueGenerator':
+    def id_generator(self, generator_id: str) -> "UniqueGenerator":
         """
         The idea of generator of id is to obtain at some moment Ids with a proper generator.
         If the environment do not contains generators of id, this method will return None.
         The id generator feature is used by User Services to obtain different auto-id generators, as macs or names
-        
+
         Args:
             generator_id: Id of the generator to obtain
-            
+
         Returns:
             Generator for that id, or None if no generator for that id is found
         """
         if not self._id_generators or generator_id not in self._id_generators:
-            raise Exception(f'No generator found for {generator_id}')
+            raise Exception(f"No generator found for {generator_id}")
         return self._id_generators[generator_id]
 
     @property
@@ -139,46 +140,46 @@ class Environment:
     @staticmethod
     def environment_for_table_record(
         table_name: str,
-        record_id: 'str|int|None' = None,
-    ) -> 'Environment':
+        record_id: "str|int|None" = None,
+    ) -> "Environment":
         """
         From a table name, and a id, tries to load the associated environment or creates a new
         one if no environment exists at database. The table name and the id are used to obtain the key
         for the environment, so each element at database can have its own environment.
-        
+
         Args:
             table_name: Table name
             record_id: Id of the element (normally primary key of the record for which we want an environment)
-            
+
         Returns:
             Obtained associated environment (may be empty if none exists at database, but it will be valid)
         """
         if isinstance(record_id, int):  # So we keep zero int value
             record_id = str(record_id)
-        record_id = record_id or ''  # If no record id, get environment for table instead of record
+        record_id = record_id or ""  # If no record id, get environment for table instead of record
 
-        name = 't-' + table_name + '-' + record_id
+        name = "t-" + table_name + "-" + record_id
         return Environment(name)
 
     @staticmethod
-    def type_environment(type_: typing.Type[typing.Any]) -> 'Environment':
+    def type_environment(type_: typing.Type[typing.Any]) -> "Environment":
         """
         Obtains an environment associated with a type instead of a record
         @param type_: Type
         @return Associated Environment
         """
-        return Environment('type-' + str(type_))
+        return Environment("type-" + str(type_))
 
     @staticmethod
-    def private_environment(owner: typing.Any) -> 'Environment':
+    def private_environment(owner: typing.Any) -> "Environment":
         """
         Obtains an environment with an unique identifier
         @return: An environment with an unique identifier
         """
-        return Environment('#_#' + str(owner) + '#^#')
+        return Environment("#_#" + str(owner) + "#^#")
 
     @staticmethod
-    def temporary_environment() -> 'Environment':
+    def temporary_environment() -> "Environment":
         """
         Obtains an enviromnet with an unique identifier
 
@@ -189,11 +190,11 @@ class Environment:
             Use this with "with" statement to ensure that environment is cleared after use
         """
         return Environment(
-            '#_#' + secrets.token_hex(16) + '#^#'
+            "#_#" + secrets.token_hex(16) + "#^#"
         )  # Weird enough name to be unique, unless you try hard :)
 
     @staticmethod
-    def testing_environment() -> 'Environment':
+    def testing_environment() -> "Environment":
         """
         Provides a temporary environment needed in some calls (test provider, for example)
         It will not make environment persistent
@@ -203,21 +204,21 @@ class Environment:
         return env
 
     @staticmethod
-    def common_environment() -> 'Environment':
+    def common_environment() -> "Environment":
         """
         Provides global environment
         """
         return Environment(COMMON_ENV)  # This environment is a global environment for general utility.
 
-    def __enter__(self) -> 'Environment':
+    def __enter__(self) -> "Environment":
         return self
 
     def __exit__(self, exc_type: typing.Any, exc_value: typing.Any, traceback: typing.Any) -> None:
-        if self._key == TEST_ENV or (self._key.startswith('#_#') and self._key.endswith('#^#')):
+        if self._key == TEST_ENV or (self._key.startswith("#_#") and self._key.endswith("#^#")):
             self.clean_related_data()
-            
+
     def __str__(self) -> str:
-        return f'Environment: {self._key}'
+        return f"Environment: {self._key}"
 
 
 class Environmentable:
@@ -225,11 +226,11 @@ class Environmentable:
     This is a base class provided for all objects that have an environment associated. These are mainly modules
     """
 
-    __slots__ = ['_env']
+    __slots__ = ["_env"]
 
     _env: Environment
 
-    def __init__(self, environment: 'Environment'):
+    def __init__(self, environment: "Environment"):
         """
         Initialized the element
 
@@ -239,7 +240,7 @@ class Environmentable:
         self._env = environment
 
     @property
-    def env(self) -> 'Environment':
+    def env(self) -> "Environment":
         """
         Utility method to access the envionment contained by this object
 
@@ -249,7 +250,7 @@ class Environmentable:
         return self._env
 
     @env.setter
-    def env(self, environment: 'Environment') -> None:
+    def env(self, environment: "Environment") -> None:
         """
         Assigns a new environment
 
@@ -259,7 +260,7 @@ class Environmentable:
         self._env = environment
 
     @property
-    def cache(self) -> 'Cache':
+    def cache(self) -> "Cache":
         """
         Utility method to access the cache of the environment containe by this object
 
@@ -270,7 +271,7 @@ class Environmentable:
         return self._env.cache
 
     @property
-    def storage(self) -> 'Storage':
+    def storage(self) -> "Storage":
         """
         Utility method to access the storage of the environment containe by this object
 
@@ -281,7 +282,7 @@ class Environmentable:
         """
         return self._env.storage
 
-    def id_generator(self, generator_id: str) -> 'UniqueGenerator':
+    def id_generator(self, generator_id: str) -> "UniqueGenerator":
         """
         Utility method to access the id generator of the environment containe by this object
 

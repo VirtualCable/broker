@@ -50,66 +50,68 @@ logger = logging.getLogger(__name__)
 
 class UDSFS(Operations):
     dispatchers: typing.ClassVar[dict[str, types.UDSFSInterface]] = {
-        'events': events.EventFS(),
-        'stats': stats.StatsFS(),
+        "events": events.EventFS(),
+        "stats": stats.StatsFS(),
     }
 
     # Own stats are the service creation date and 2 hardlinks because of the root folder
     _own_stats = types.StatType(st_mode=(stat.S_IFDIR | 0o755), st_nlink=2 + len(dispatchers))
 
-    def _dispatch(self, path: typing.Optional[str], operation: str, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+    def _dispatch(
+        self, path: typing.Optional[str], operation: str, *args: typing.Any, **kwargs: typing.Any
+    ) -> typing.Any:
         try:
             if path:
-                path_parts = path.split('/')
-                logger.debug('Dispatching %s for %s', operation, path_parts)
+                path_parts = path.split("/")
+                logger.debug("Dispatching %s for %s", operation, path_parts)
                 if path_parts[1] in self.dispatchers:
                     return getattr(self.dispatchers[path_parts[1]], operation)(path_parts[2:], *args, **kwargs)
         except Exception as e:
-            logger.error('Error while dispatching %s for %s: %s', operation, path, e)
+            logger.error("Error while dispatching %s for %s: %s", operation, path, e)
 
         raise FuseOSError(errno.ENOENT)
 
     @typing.override
     def getattr(self, path: typing.Optional[str], fh: typing.Any = None) -> dict[str, int]:
         # If root folder, return service creation date
-        if path == '/':
+        if path == "/":
             return self._own_stats.as_dict()
         # If not root folder, split path to locate dispatcher and call it with the rest of the path
-        attrs = typing.cast(types.StatType, self._dispatch(path, 'getattr')).as_dict()
-        logger.debug('Attrs for %s: %s', path, attrs)
+        attrs = typing.cast(types.StatType, self._dispatch(path, "getattr")).as_dict()
+        logger.debug("Attrs for %s: %s", path, attrs)
         return attrs
 
     @typing.override
     def getxattr(self, path: str, name: str, position: int = 0) -> str:
-        '''
+        """
         Get extended attribute for the given path. Right now, always returns an "empty" string
-        '''
-        logger.debug('Getting attr %s from %s (%s)', name, path, position)
-        return ''
+        """
+        logger.debug("Getting attr %s from %s (%s)", name, path, position)
+        return ""
 
     @typing.override
     def readdir(self, path: str, fh: typing.Any) -> list[str]:
-        '''
+        """
         Read directory, that is composed of the dispatcher names and the "dot" entries
         in case of the root folder, otherwise call the dispatcher with the rest of the path
-        '''
-        if path == '/':
-            return ['.', '..'] + list(self.dispatchers.keys())
-        return typing.cast(list[str], self._dispatch(path, 'readdir'))
+        """
+        if path == "/":
+            return [".", ".."] + list(self.dispatchers.keys())
+        return typing.cast(list[str], self._dispatch(path, "readdir"))
 
     @typing.override
     def read(self, path: typing.Optional[str], size: int, offset: int, fh: typing.Any) -> bytes:
-        '''
+        """
         Reads the content of the "virtual" file
-        '''
-        return typing.cast(bytes, self._dispatch(path, 'read', size, offset))
+        """
+        return typing.cast(bytes, self._dispatch(path, "read", size, offset))
 
     @typing.override
     def flush(self, path: typing.Optional[str], fh: typing.Any) -> None:
-        '''
+        """
         Flushes the content of the "virtual" file
-        '''
-        self._dispatch(path, 'flush') 
+        """
+        self._dispatch(path, "flush")
 
 
 class Command(BaseCommand):
@@ -118,8 +120,8 @@ class Command(BaseCommand):
 
     @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument('mount_point', type=str, help='Mount point for the FUSE filesystem')
-        parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
+        parser.add_argument("mount_point", type=str, help="Mount point for the FUSE filesystem")
+        parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
@@ -128,8 +130,8 @@ class Command(BaseCommand):
         # Mount FUSE filesystem and waits here until unmounted
         _fuse = FUSE(
             UDSFS(),
-            options['mount_point'],
+            options["mount_point"],
             foreground=True,
             allow_other=True,
-            debug=options['debug'],
+            debug=options["debug"],
         )

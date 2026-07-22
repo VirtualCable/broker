@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 import logging
@@ -65,17 +66,17 @@ class Permissions(UUIDModel):
     )  # Future "permisions ends at this moment", not assigned right now
 
     user = models.ForeignKey(
-        'User',
+        "User",
         on_delete=models.CASCADE,
-        related_name='permissions',
+        related_name="permissions",
         null=True,
         blank=True,
         default=None,
     )
     group = models.ForeignKey(
-        'Group',
+        "Group",
         on_delete=models.CASCADE,
-        related_name='permissions',
+        related_name="permissions",
         null=True,
         blank=True,
         default=None,
@@ -92,20 +93,20 @@ class Permissions(UUIDModel):
     @staticmethod
     def add_permission(
         *,
-        user: typing.Optional['User'] = None,
-        group: typing.Optional['Group'] = None,
-        object_type: 'objtype.ObjectType',
+        user: typing.Optional["User"] = None,
+        group: typing.Optional["Group"] = None,
+        object_type: "objtype.ObjectType",
         object_id: typing.Optional[int] = None,
         permission: PermissionType = PermissionType.NONE,
-    ) -> 'Permissions':
+    ) -> "Permissions":
         """
         Adds a permission to an object and an user or group
         """
         if user and group:
-            raise Exception('Use only user or group, but not both')
+            raise Exception("Use only user or group, but not both")
 
         if user is None and group is None:
-            raise Exception('Must at least indicate user or group')
+            raise Exception("Must at least indicate user or group")
 
         if user is not None:
             q = Q(user=user)
@@ -113,9 +114,7 @@ class Permissions(UUIDModel):
             q = Q(group=group)
 
         try:
-            existing: Permissions = Permissions.objects.filter(
-                q, object_type=object_type.type, object_id=object_id
-            )[0]
+            existing: Permissions = Permissions.objects.filter(q, object_type=object_type.type, object_id=object_id)[0]
             existing.permission = permission
             existing.save()
             return existing
@@ -132,10 +131,10 @@ class Permissions(UUIDModel):
 
     @staticmethod
     def get_permissions(
-        object_type: 'objtype.ObjectType',
+        object_type: "objtype.ObjectType",
         object_id: typing.Optional[int] = None,
-        user: typing.Optional['User'] = None,
-        groups: typing.Optional[collections.abc.Iterable['Group']] = None,
+        user: typing.Optional["User"] = None,
+        groups: typing.Optional[collections.abc.Iterable["Group"]] = None,
     ) -> PermissionType:
         """
         Retrieves the permission for a given object
@@ -158,16 +157,14 @@ class Permissions(UUIDModel):
                 Q(object_type=object_type.type),
                 Q(object_id=None) | Q(object_id=object_id),
                 q,
-            ).order_by('-permission')[0]
-            logger.debug('Got permission %s', perm)
+            ).order_by("-permission")[0]
+            logger.debug("Got permission %s", perm)
             return PermissionType(perm.permission)
         except Exception:  # DoesNotExists
             return PermissionType.NONE
 
     @staticmethod
-    def enumerate_permissions(
-        object_type: 'objtype.ObjectType', object_id: int
-    ) -> 'models.QuerySet[Permissions]':
+    def enumerate_permissions(object_type: "objtype.ObjectType", object_id: int) -> "models.QuerySet[Permissions]":
         """
         Get users permissions over object
         """
@@ -175,10 +172,10 @@ class Permissions(UUIDModel):
 
     @staticmethod
     def clean_permissions(
-        object_type: 'objtype.ObjectType',
+        object_type: "objtype.ObjectType",
         object_id: int,
-        user: typing.Optional['User'] = None,
-        group: typing.Optional['Group'] = None,
+        user: typing.Optional["User"] = None,
+        group: typing.Optional["Group"] = None,
     ) -> None:
         if user and group:  # Using both is same as using none
             user = None
@@ -198,7 +195,7 @@ class Permissions(UUIDModel):
 
     def __str__(self) -> str:
         return (
-            f'Permission {self.uuid}, user {self.user} group {self.group} '
-            f'object_type {self.object_type} object_id {self.object_id} '
-            f'permission {PermissionType(self.permission).as_str()}'
+            f"Permission {self.uuid}, user {self.user} group {self.group} "
+            f"object_type {self.object_type} object_id {self.object_id} "
+            f"permission {PermissionType(self.permission).as_str()}"
         )

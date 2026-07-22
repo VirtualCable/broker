@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import argparse
 import logging
 import typing
@@ -48,18 +49,18 @@ class Command(BaseCommand):
     @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '--csv',
-            action='store_true',
-            dest='csv',
+            "--csv",
+            action="store_true",
+            dest="csv",
             default=False,
-            help='Shows configuration in CVS format',
+            help="Shows configuration in CVS format",
         )
         parser.add_argument(
-            '--yaml',
-            action='store_true',
-            dest='yaml',
+            "--yaml",
+            action="store_true",
+            dest="yaml",
             default=False,
-            help='Shows configuration in YAML format',
+            help="Shows configuration in YAML format",
         )
 
     @typing.override
@@ -68,29 +69,29 @@ class Command(BaseCommand):
         config.GlobalConfig.initialize()
         try:
             writer: typing.Any = None
-            if options['csv']:
+            if options["csv"]:
                 # Print header
-                writer = csv.writer(self.stdout, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow(['Section', 'Name', 'Value'])
-            elif options['yaml']:
+                writer = csv.writer(self.stdout, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(["Section", "Name", "Value"])
+            elif options["yaml"]:
                 writer = {}  # Create a dict to store data, and write at the end
             # Get sections, key, value as a list of tuples
             for section, data in config.Config.get_config_values().items():
                 str_section = str(section)
                 for key, value in data.items():
                     # value is a dict, get 'value' key
-                    if options['csv']:
-                        writer.writerow([str_section, key, value['value']])
-                    elif options['yaml']:
+                    if options["csv"]:
+                        writer.writerow([str_section, key, value["value"]])
+                    elif options["yaml"]:
                         if str_section not in writer:
                             writer[str_section] = {}
-                        writer[str_section][key] = value['value']
+                        writer[str_section][key] = value["value"]
                     else:
-                        v = value['value'].replace('\n', '\\n')
+                        v = value["value"].replace("\n", "\\n")
                         self.stdout.write(f'{section}.{key}="{v}"')
-            if options['yaml']:
-                self.stdout.write(yaml.safe_dump(writer, default_flow_style=False)) 
+            if options["yaml"]:
+                self.stdout.write(yaml.safe_dump(writer, default_flow_style=False))
         except Exception as e:
-            self.stdout.write(f'The command could not be processed: {e}')
+            self.stdout.write(f"The command could not be processed: {e}")
             self.stdout.flush()
-            logger.exception('Exception processing %s', args)
+            logger.exception("Exception processing %s", args)

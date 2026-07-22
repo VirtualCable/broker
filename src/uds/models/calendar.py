@@ -29,6 +29,7 @@
 """
 Author:: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -46,28 +47,28 @@ if typing.TYPE_CHECKING:
 
 
 class Calendar(UUIDModel, TaggingMixin):
-    name = models.CharField(max_length=128, default='')
-    comments = models.CharField(max_length=256, default='')
+    name = models.CharField(max_length=128, default="")
+    comments = models.CharField(max_length=256, default="")
     modified = models.DateTimeField(auto_now=True)
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["Calendar"]'
-    rules: 'models.manager.RelatedManager[CalendarRule]'
-    calendaraction_set: 'models.manager.RelatedManager[CalendarAction]'
-    calendaraccess_set: 'models.manager.RelatedManager[CalendarAccess]'
+    rules: "models.manager.RelatedManager[CalendarRule]"
+    calendaraction_set: "models.manager.RelatedManager[CalendarAction]"
+    calendaraccess_set: "models.manager.RelatedManager[CalendarAccess]"
 
     class Meta:  # pyright: ignore
         """
         Meta class to declare db table
         """
 
-        db_table = 'uds_calendar'
-        app_label = 'uds'
+        db_table = "uds_calendar"
+        app_label = "uds"
 
     # Override default save to add uuid
     @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        logger.debug('Saving calendar')
+        logger.debug("Saving calendar")
 
         UUIDModel.save(self, *args, **kwargs)
 
@@ -75,9 +76,7 @@ class Calendar(UUIDModel, TaggingMixin):
         try:
             for v in self.calendaraction_set.all():
                 v.save()
-        except (
-            Exception
-        ):  # nosec: catch all, we don't want to fail here (if one action cannot be saved, we don't want to fail all)
+        except Exception:  # nosec: catch all, we don't want to fail here (if one action cannot be saved, we don't want to fail all)
             pass
 
     def __str__(self) -> str:

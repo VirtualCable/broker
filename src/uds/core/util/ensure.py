@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 
@@ -53,7 +54,7 @@ def as_list(obj: typing.Any) -> list[typing.Any]:
 
     if isinstance(obj, list):
         return typing.cast(list[typing.Any], obj)
-    
+
     try:
         return list(obj)
     except Exception:  # Not iterable (list will fail)
@@ -84,7 +85,7 @@ def as_iterable(obj: typing.Any) -> typing.Generator[typing.Any, None, None]:
         yield obj  # if not iterable, return the object itself
 
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 def is_instance(obj: typing.Any, cls: type[T]) -> T:
@@ -106,4 +107,4 @@ def is_instance(obj: typing.Any, cls: type[T]) -> T:
     if isinstance(obj, cls):
         return obj
 
-    raise ValueError(f'Object {obj} is not an instance of {cls}')
+    raise ValueError(f"Object {obj} is not an instance of {cls}")

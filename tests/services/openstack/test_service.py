@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # from uds.core import types, environment
 import typing
 from unittest import mock
@@ -52,21 +53,21 @@ class TestOpenstackService(UDSTransactionTestCase):
                 api = typing.cast(mock.MagicMock, prov.api())
                 service = fixtures.create_live_service(prov)  # Will use provider patched api
                 self.assertEqual(service.api, api)
-                self.assertEqual(service.sanitized_name('a b c'), 'a_b_c')
+                self.assertEqual(service.sanitized_name("a b c"), "a_b_c")
 
-                template = service.make_template('template', 'desc')
+                template = service.make_template("template", "desc")
                 self.assertIsInstance(template, openstack_types.SnapshotInfo)
-                api.create_snapshot.assert_called_once_with(service.volume.value, 'template', 'desc')
+                api.create_snapshot.assert_called_once_with(service.volume.value, "template", "desc")
 
                 template = service.get_template(fixtures.VOLUME_SNAPSHOTS_LIST[0].id)
                 self.assertIsInstance(template, openstack_types.SnapshotInfo)
                 api.get_snapshot_info.assert_called_once_with(fixtures.VOLUME_SNAPSHOTS_LIST[0].id)
 
-                data: typing.Any = service.deploy_from_template('name', fixtures.VOLUME_SNAPSHOTS_LIST[0].id)
+                data: typing.Any = service.deploy_from_template("name", fixtures.VOLUME_SNAPSHOTS_LIST[0].id)
                 self.assertIsInstance(data, openstack_types.ServerInfo)
                 api.create_server_from_snapshot.assert_called_once_with(
                     snapshot_id=fixtures.VOLUME_SNAPSHOTS_LIST[0].id,
-                    name='name',
+                    name="name",
                     availability_zone=service.availability_zone.value,
                     flavor_id=service.flavor.value,
                     network_id=service.network.value,
@@ -107,7 +108,5 @@ class TestOpenstackService(UDSTransactionTestCase):
 
                 self.assertEqual(service.get_basename(), service.basename.value)
                 self.assertEqual(service.get_lenname(), service.lenname.value)
-                self.assertEqual(
-                    service.allows_errored_userservice_cleanup(), not service.maintain_on_error.value
-                )
+                self.assertEqual(service.allows_errored_userservice_cleanup(), not service.maintain_on_error.value)
                 self.assertEqual(service.should_maintain_on_error(), service.maintain_on_error.value)

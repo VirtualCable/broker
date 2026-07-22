@@ -25,9 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import datetime
 import secrets
 import typing
@@ -62,7 +63,7 @@ class ServerGroup(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     """
 
     name = models.CharField(max_length=64, unique=True)
-    comments = models.CharField(max_length=255, default='')
+    comments = models.CharField(max_length=255, default="")
 
     # A Server Group can have a host and port that listent to
     # (For example for tunnel servers)
@@ -72,31 +73,31 @@ class ServerGroup(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     # Note that servers type are always considered same as group type
     type = models.IntegerField(default=types.servers.ServerType.UNMANAGED, db_index=True)
     # Subtype of server, if any (I.E. LinuxDocker, RDS, etc..). so we can filter/group them
-    subtype = models.CharField(max_length=32, default='', db_index=True)
+    subtype = models.CharField(max_length=32, default="", db_index=True)
 
     # On some cases, the group will have a host and port that will be used to connect to the servers
     # I.e. UDS Tunnels can be a lot of them, but have a load balancer that redirects to them
-    host = models.CharField(max_length=consts.system.MAX_DNS_NAME_LENGTH, default='')
+    host = models.CharField(max_length=consts.system.MAX_DNS_NAME_LENGTH, default="")
     port = models.IntegerField(default=0)
 
     # 'Fake' declarations for type checking
-    transports: 'models.manager.RelatedManager[Transport]'
-    servers: 'models.manager.RelatedManager[Server]'
+    transports: "models.manager.RelatedManager[Transport]"
+    servers: "models.manager.RelatedManager[Server]"
 
     # For properties
     @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
-        return self.uuid, 'servergroup'
+        return self.uuid, "servergroup"
 
     class Meta:  # pyright: ignore
         # Unique for host and port, so we can have only one group for each host:port
-        app_label = 'uds'
+        app_label = "uds"
 
     @property
     def pretty_host(self) -> str:
         if self.port == 0:
             return self.host
-        return f'{self.host}:{self.port}'
+        return f"{self.host}:{self.port}"
 
     @property
     def server_type(self) -> types.servers.ServerType:
@@ -114,7 +115,7 @@ class ServerGroup(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     @property
     def weights(self) -> types.servers.ServerStatsWeights:
         """Returns the server stats weights for this server group"""
-        weights_dict = self.properties.get('weights', None)
+        weights_dict = self.properties.get("weights", None)
         if weights_dict:
             return types.servers.ServerStatsWeights.from_dict(weights_dict)
         return types.servers.ServerStatsWeights()
@@ -122,27 +123,27 @@ class ServerGroup(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     @weights.setter
     def weights(self, value: types.servers.ServerStatsWeights) -> None:
         """Sets the server stats weights for this server group"""
-        self.properties['weights'] = value.as_dict()
+        self.properties["weights"] = value.as_dict()
 
     @weights.deleter
     def weights(self) -> None:
         """Deletes the server stats weights for this server group"""
-        if 'weights' in self.properties:
-            del self.properties['weights']
+        if "weights" in self.properties:
+            del self.properties["weights"]
 
     def is_managed(self) -> bool:
         """Returns if this server group is managed or not"""
         return self.server_type != types.servers.ServerType.UNMANAGED
 
     def https_url(self, path: str) -> str:
-        if not path.startswith('/'):
-            path = '/' + path
-        return f'https://{self.host}:{self.port}{path}'
+        if not path.startswith("/"):
+            path = "/" + path
+        return f"https://{self.host}:{self.port}{path}"
 
     def __str__(self) -> str:
         return self.name
 
-    def search(self, ip_or_host_or_mac: str) -> 'Server | None':
+    def search(self, ip_or_host_or_mac: str) -> "Server | None":
         """Locates a server by ip or hostname
 
         It uses reverse dns lookup if ip_or_host is an ip and not found on database
@@ -154,9 +155,7 @@ class ServerGroup(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         Returns:
             The server found, or None if not found
         """
-        found = self.servers.filter(
-            Q(ip=ip_or_host_or_mac) | Q(hostname=ip_or_host_or_mac) | Q(mac=ip_or_host_or_mac)
-        )
+        found = self.servers.filter(Q(ip=ip_or_host_or_mac) | Q(hostname=ip_or_host_or_mac) | Q(mac=ip_or_host_or_mac))
         if found:
             return found[0]
         # If not found, try to resolve ip_or_host and search again
@@ -216,10 +215,10 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     type = models.IntegerField(default=types.servers.ServerType.TUNNEL.value, db_index=True)
     # Subtype of server, if any (I.E. LinuxDocker, RDS, etc..) so we can group it for
     # selections
-    subtype = models.CharField(max_length=32, default='', db_index=True)
+    subtype = models.CharField(max_length=32, default="", db_index=True)
     # Version of the UDS API of the server. Starst at 4.0.0
     # If version is empty, means that it has no API
-    version = models.CharField(max_length=32, default='')
+    version = models.CharField(max_length=32, default="")
 
     # If server is in "maintenance mode". Not used on tunnels (Because they are "redirected" by an external load balancer)
     # But used on other servers, so we can disable them for maintenance
@@ -236,7 +235,7 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     mac = models.CharField(max_length=32, default=NULL_MAC, db_index=True)
     # certificate of server, if any. VDI Actors will have it's certificate on a property of the userService
     # In fact CA of the certificate, but self signed will be created most times, so it will be the certificate itself
-    certificate = models.TextField(default='', blank=True)
+    certificate = models.TextField(default="", blank=True)
 
     # Log level, so we can filter messages for this server
     log_level = models.IntegerField(default=types.log.LogLevel.ERROR.value)
@@ -246,18 +245,18 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
 
     # Group (of registered servers) this server belongs to
     # Note that only Tunnel servers can belong to more than one servergroup
-    groups: 'models.ManyToManyField[ServerGroup, Server]' = models.ManyToManyField(
+    groups: "models.ManyToManyField[ServerGroup, Server]" = models.ManyToManyField(
         ServerGroup,
-        related_name='servers',
+        related_name="servers",
     )
 
     class Meta:  # pyright: ignore
-        app_label = 'uds'
+        app_label = "uds"
 
     # For properties
     @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
-        return self.uuid, 'server'
+        return self.uuid, "server"
 
     @property
     def server_type(self) -> types.servers.ServerType:
@@ -289,17 +288,17 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
             ips = resolver.resolve(self.hostname)
             if ips:
                 return ips[0]
-        return ''
+        return ""
 
     @property
     def ip_version(self) -> int:
         """Returns the ip version of this server"""
-        return 6 if ':' in self.ip else 4
+        return 6 if ":" in self.ip else 4
 
     @property
     def stats(self) -> types.servers.ServerStats | None:
         """Returns the current stats of this server, or None if not available"""
-        stats_dict = self.properties.get('stats', None)
+        stats_dict = self.properties.get("stats", None)
         if stats_dict:
             return types.servers.ServerStats.from_dict(stats_dict)
         return None
@@ -308,12 +307,12 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     def stats(self, value: types.servers.ServerStats | None) -> None:
         """Sets the current stats of this server"""
         if value is None:
-            del self.properties['stats']
+            del self.properties["stats"]
         else:
             # Set stamp to current time and save it, overwriting existing stamp if any
             stats_dict = value.as_dict()
-            stats_dict['stamp'] = sql_stamp()
-            self.properties['stats'] = stats_dict
+            stats_dict["stamp"] = sql_stamp()
+            self.properties["stats"] = stats_dict
 
     def lock(self, duration: datetime.timedelta | None) -> None:
         """Locks this server for a duration
@@ -330,21 +329,21 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
             self.locked_until = None
         else:
             self.locked_until = sql_now() + duration
-        self.save(update_fields=['locked_until'])
+        self.save(update_fields=["locked_until"])
 
     def interpolate_new_assignation(self) -> None:
         """Interpolates, with current stats, the addition of a new user"""
         stats = self.stats
         if stats and stats.is_valid:  # If rae invalid, do not waste time recalculating
             # Avoid replacing current "stamp" value, this is just a "simulation"
-            self.properties['stats'] = stats.adjust(users_increment=1).as_dict()
+            self.properties["stats"] = stats.adjust(users_increment=1).as_dict()
 
     def interpolate_new_release(self) -> None:
         """Interpolates, with current stats, the release of a user"""
         stats = self.stats
         if stats and stats.is_valid:
             # Avoid replacing current "stamp" value, this is just a "simulation"
-            self.properties['stats'] = stats.adjust(users_increment=-1).as_dict()
+            self.properties["stats"] = stats.adjust(users_increment=-1).as_dict()
 
     def is_restrained(self) -> bool:
         """Returns if this server is restrained or not
@@ -352,7 +351,7 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         For this, we get the property (if available) "available" (datetime) and compare it with current time
         If it is not available, we return False, otherwise True
         """
-        restrained_until = datetime.datetime.fromtimestamp(self.properties.get('available', consts.NEVER_UNIX))
+        restrained_until = datetime.datetime.fromtimestamp(self.properties.get("available", consts.NEVER_UNIX))
         restrained_until = timezone.make_aware(restrained_until)
         return restrained_until > sql_now()
 
@@ -361,21 +360,21 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         If value is None, it will be available right now
         """
         if value is None:
-            del self.properties['available']
+            del self.properties["available"]
         else:
-            self.properties['available'] = value.timestamp()  # Encode as timestamp
+            self.properties["available"] = value.timestamp()  # Encode as timestamp
 
     @property
     def last_ping(self) -> datetime.datetime:
         """Returns the last ping of this server"""
-        last: float = self.properties.get('last_ping', consts.NEVER_UNIX)
+        last: float = self.properties.get("last_ping", consts.NEVER_UNIX)
         result = datetime.datetime.fromtimestamp(last)
         return timezone.make_aware(result)
 
     @last_ping.setter
     def last_ping(self, value: datetime.datetime) -> None:
         """Sets the last ping of this server"""
-        self.properties['last_ping'] = value.timestamp()
+        self.properties["last_ping"] = value.timestamp()
 
     @staticmethod
     def create_token() -> str:
@@ -409,17 +408,17 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
                 tt = Server.objects.get(token=token, type__in=[st.value for st in server_type])
             # We could check the request ip here
             if request and request.ip != tt.ip:
-                raise Exception('Invalid ip')
+                raise Exception("Invalid ip")
             return True
         except Server.DoesNotExist:
             pass
         except Server.MultipleObjectsReturned:
-            raise Exception('Multiple objects returned for token')
+            raise Exception("Multiple objects returned for token")
         return False
 
-    def set_actor_version(self, userservice: 'UserService') -> None:
+    def set_actor_version(self, userservice: "UserService") -> None:
         """Sets the actor version of this server to the userservice"""
-        userservice.actor_version = f'Server {self.version or "unknown"}'
+        userservice.actor_version = f"Server {self.version or 'unknown'}"
 
     def get_comms_endpoint(self, *, path: str | None = None) -> str | None:
         """
@@ -441,16 +440,16 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
             The "token" will be sent by server api on header, and it is a sha256 of the server token
             (so we don't sent it directly to client) on X-AUTH-HASH
         """
-        path = path or ''
+        path = path or ""
 
-        path = path.lstrip('/')  # Remove leading slashes
-        pre, post = ('[', ']') if self.ip_version == 6 else ('', '')
+        path = path.lstrip("/")  # Remove leading slashes
+        pre, post = ("[", "]") if self.ip_version == 6 else ("", "")
         # The url is composed of https://[ip]:[port]/[server_type]/v1/[path]
         # v1 is currently the only version, but we can add more in the future
-        return f'https://{pre}{self.ip}{post}:{self.listen_port}/{self.server_type.path()}/v1/{path}'
+        return f"https://{pre}{self.ip}{post}:{self.listen_port}/{self.server_type.path()}/v1/{path}"
 
     def __str__(self) -> str:
-        return f'<RegisterdServer {self.token} of type {self.server_type.name} created on {self.stamp} by {self.register_username} from {self.ip}/{self.hostname}>'
+        return f"<RegisterdServer {self.token} of type {self.server_type.name} created on {self.stamp} by {self.register_username} from {self.ip}/{self.hostname}>"
 
 
 properties.PropertiesMixin.setup_signals(Server)

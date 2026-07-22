@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds.core import exceptions, types, consts
@@ -46,15 +47,16 @@ class Callback(Handler):
     API:
         Executes a callback from the GUI. Internal use, not intended to be called from outside.
     """
-    PATH = 'gui'
+
+    PATH = "gui"
 
     ROLE = consts.UserRole.STAFF
 
     def get(self) -> types.ui.CallbackResultType:
         if len(self._args) != 1:
-            raise exceptions.rest.RequestError('Invalid Request')
+            raise exceptions.rest.RequestError("Invalid Request")
 
         if self._args[0] in gui.callbacks:
             return gui.callbacks[self._args[0]](self._params)
 
-        raise exceptions.rest.NotFound('callback {0} not found'.format(self._args[0]))
+        raise exceptions.rest.NotFound("callback {0} not found".format(self._args[0]))

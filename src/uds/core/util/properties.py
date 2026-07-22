@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 import collections.abc
@@ -50,7 +51,7 @@ class PropertyAccessor:
     Property accessor, used to access properties of an object
     """
 
-    transaction: 'transaction.Atomic|None'
+    transaction: "transaction.Atomic|None"
     owner_id: str
     owner_type: str
 
@@ -58,7 +59,7 @@ class PropertyAccessor:
         self.owner_id = owner_id
         self.owner_type = owner_type
 
-    def _filter(self) -> 'models.QuerySet[Properties]':
+    def _filter(self) -> "models.QuerySet[Properties]":
         return Properties.objects.filter(owner_id=self.owner_id, owner_type=self.owner_type)
 
     def __getitem__(self, key: str) -> typing.Any:
@@ -71,7 +72,7 @@ class PropertyAccessor:
         try:
             p = self._filter().get(key=key)
             p.value = value
-            p.save(update_fields=['value'])
+            p.save(update_fields=["value"])
         except Properties.DoesNotExist:
             Properties.objects.create(owner_id=self.owner_id, owner_type=self.owner_type, key=key, value=value)
 
@@ -85,7 +86,7 @@ class PropertyAccessor:
         return bool(self._filter().filter(key=key).exists())
 
     def __iter__(self) -> collections.abc.Iterator[str]:
-        return iter(self._filter().values_list('key', flat=True))
+        return iter(self._filter().values_list("key", flat=True))
 
     def __len__(self) -> int:
         return int(self._filter().count())
@@ -104,13 +105,13 @@ class PropertyAccessor:
             return default
 
     def keys(self) -> collections.abc.Iterator[str]:
-        return iter(self._filter().values_list('key', flat=True))
+        return iter(self._filter().values_list("key", flat=True))
 
     def values(self) -> collections.abc.Iterator[typing.Any]:
-        return iter(self._filter().values_list('value', flat=True))
+        return iter(self._filter().values_list("value", flat=True))
 
     def items(self) -> collections.abc.Iterator[tuple[str, typing.Any]]:
-        return iter(self._filter().values_list('key', 'value'))
+        return iter(self._filter().values_list("key", "value"))
 
     def clear(self) -> None:
         self._filter().delete()
@@ -123,7 +124,7 @@ class PropertyAccessor:
         except KeyError:
             return default
 
-    def __enter__(self) -> 'PropertyAccessor':
+    def __enter__(self) -> "PropertyAccessor":
         self.transaction = transaction.atomic()
         self.transaction.__enter__()
         return self
@@ -144,7 +145,7 @@ class PropertiesMixin:
             tuple[str, str]: Owner id and type
         """
         # Default implementation does not provide any owner id or type
-        return '', self.__class__.__name__
+        return "", self.__class__.__name__
 
     @property
     def properties(self) -> PropertyAccessor:
@@ -152,16 +153,14 @@ class PropertiesMixin:
         return PropertyAccessor(owner_id=owner_id, owner_type=owner_type)
 
     @staticmethod
-    def _pre_delete_properties_signal(
-        sender: typing.Any, **kwargs: typing.Any
-    ) -> None:  # pylint: disable=unused-argument
-        to_delete: 'PropertiesMixin' = kwargs['instance']
+    def _pre_delete_properties_signal(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
+        to_delete: "PropertiesMixin" = kwargs["instance"]
         # We are deleting the object, so we delete the properties too
         # Remember that properties is a generic table, does not have any cascade delete
         to_delete.properties.clear()
 
     @staticmethod
-    def setup_signals(model: 'type[models.Model]') -> None:
+    def setup_signals(model: "type[models.Model]") -> None:
         """Connects a pre deletion signal to delete properties
         Note that this method must be added to every class creation that inherits from PropertiesMixin
         Or the properties will not be deleted on deletion of the object

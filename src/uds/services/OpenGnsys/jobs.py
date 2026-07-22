@@ -30,12 +30,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
 import logging
 import typing
 
-from uds.core import jobs
 from uds import models
+from uds.core import jobs
 from uds.core.util.model import sql_now
 
 from .provider import OGProvider
@@ -49,24 +50,20 @@ logger = logging.getLogger(__name__)
 
 
 class OpenGnsysMaintainer(jobs.Job):
-    friendly_name = 'OpenGnsys cache renewal job'
+    friendly_name = "OpenGnsys cache renewal job"
 
     @typing.override
     def next_execution_delay(self) -> int:
         return 60 * 60 * 4
 
-
-
     @typing.override
     def run(self) -> None:
-        logger.debug('Looking for OpenGnsys renewable cache elements')
+        logger.debug("Looking for OpenGnsys renewable cache elements")
 
         # Look for Providers of type VMWareVCServiceProvider
         provider: models.Provider
-        for provider in models.Provider.objects.filter(
-            maintenance_mode=False, data_type=OGProvider.type_type
-        ):
-            logger.debug('Provider %s is type OpenGnsys', provider)
+        for provider in models.Provider.objects.filter(maintenance_mode=False, data_type=OGProvider.type_type):
+            logger.debug("Provider %s is type OpenGnsys", provider)
 
             # Locate all services inside the provider
             service: models.Service
@@ -83,9 +80,9 @@ class OpenGnsysMaintainer(jobs.Job):
                     cache_level=1,
                 ):
                     logger.info(
-                        'The cached user service %s is about to expire. Removing it so it can be recreated',
+                        "The cached user service %s is about to expire. Removing it so it can be recreated",
                         userservice,
                     )
                     userservice.release()
 
-        logger.debug('OpenGnsys job finished')
+        logger.debug("OpenGnsys job finished")

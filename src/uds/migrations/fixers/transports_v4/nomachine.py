@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -46,25 +47,25 @@ class TSNoMachineTransport(transports.Transport):
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
     """
 
-    type_type = 'TSNoMachineTransport'
+    type_type = "TSNoMachineTransport"
 
-    tunnelServer = gui.TextField(label='')
-    tunnelWait = gui.NumericField(label='', default=30)
-    verifyCertificate = gui.CheckBoxField(label='', default=False)
-    useEmptyCreds = gui.CheckBoxField(label='')
-    fixedName = gui.TextField(label='')
-    fixedPassword = gui.PasswordField(label='')
-    listenPort = gui.NumericField(label='', default=4000)
-    windowSize = gui.ChoiceField(label='', default='normal')
+    tunnelServer = gui.TextField(label="")
+    tunnelWait = gui.NumericField(label="", default=30)
+    verifyCertificate = gui.CheckBoxField(label="", default=False)
+    useEmptyCreds = gui.CheckBoxField(label="")
+    fixedName = gui.TextField(label="")
+    fixedPassword = gui.PasswordField(label="")
+    listenPort = gui.NumericField(label="", default=4000)
+    windowSize = gui.ChoiceField(label="", default="normal")
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, TSNoMachineTransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport(apps, schema_editor, TSNoMachineTransport, "tunnelServer", is_html_server=False)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, TSNoMachineTransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport_back(apps, schema_editor, TSNoMachineTransport, "tunnelServer", is_html_server=False)

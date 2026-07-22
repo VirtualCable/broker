@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -49,22 +50,23 @@ class Group:
 
     It's only constructor expect a database group as parameter.
     """
-    _db_group: 'models.Group'
 
-    def __init__(self, db_group: 'models.Group'):
+    _db_group: "models.Group"
+
+    def __init__(self, db_group: "models.Group"):
         """
         Initializes internal data
         """
         self._cached_manager = db_group.get_manager()
         self._db_group = db_group
 
-    def manager(self) -> 'AuthenticatorInstance':
+    def manager(self) -> "AuthenticatorInstance":
         """
         Returns the database authenticator associated with this group
         """
         return self._cached_manager
 
-    def db_obj(self) -> 'models.Group':
+    def db_obj(self) -> "models.Group":
         """
         Returns the database group associated with this
         """

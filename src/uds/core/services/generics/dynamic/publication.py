@@ -31,11 +31,11 @@ logger = logging.getLogger(__name__)
 # Used by some default methods that require a vmid to work
 def must_have_vmid(
     fnc: collections.abc.Callable[[typing.Any], None],
-) -> collections.abc.Callable[['DynamicPublication'], None]:
+) -> collections.abc.Callable[["DynamicPublication"], None]:
     @functools.wraps(fnc)
-    def wrapper(self: 'DynamicPublication') -> None:
-        if self._vmid == '':
-            raise exceptions.services.generics.FatalError(f'No machine id on {self._name} for {fnc}')
+    def wrapper(self: "DynamicPublication") -> None:
+        if self._vmid == "":
+            raise exceptions.services.generics.FatalError(f"No machine id on {self._name} for {fnc}")
         return fnc(self)
 
     return wrapper
@@ -56,10 +56,10 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
     # If must wait until finish queue for destroying the machine
     wait_until_finish_to_destroy: typing.ClassVar[bool] = False
 
-    _name = autoserializable.StringField(default='')
-    _vmid = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="")
+    _vmid = autoserializable.StringField(default="")
     _queue = autoserializable.ListField[Operation](cast=Operation.from_int)
-    _reason = autoserializable.StringField(default='')
+    _reason = autoserializable.StringField(default="")
     _is_flagged_for_destroy = autoserializable.BoolField(default=False)
 
     # Extra info, not serializable, to keep information in case of exception and debug it
@@ -83,32 +83,30 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
     @typing.final
     def _reset_checks_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['exec_count'] = 0
+            data["exec_count"] = 0
 
     @typing.final
     def _inc_checks_counter(self, op: Operation) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            count = data.get('exec_count', 0) + 1
-            data['exec_count'] = count
+            count = data.get("exec_count", 0) + 1
+            data["exec_count"] = count
         if count > self.max_state_checks:
-            return self._error(f'Max checks reached on {op}')
+            return self._error(f"Max checks reached on {op}")
         return None
 
     @typing.final
     def _reset_retries_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['retries'] = 0
+            data["retries"] = 0
 
     @typing.final
     def _inc_retries_counter(self) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            retries = data.get('retries', 0) + 1
-            data['retries'] = retries
+            retries = data.get("retries", 0) + 1
+            data["retries"] = retries
 
-        if (
-            retries > self.max_retries
-        ):  # Use self to access class variables, so we can override them on subclasses
-            return self._error(f'Max retries reached')
+        if retries > self.max_retries:  # Use self to access class variables, so we can override them on subclasses
+            return self._error("Max retries reached")
 
         return None
 
@@ -135,16 +133,16 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         Returns:
             State.ERROR, so we can do "return self._error(reason)"
         """
-        self._error_debug_info = self._debug(f'{repr(reason)}  {getattr(reason, "__backtrace__", "")}')
+        self._error_debug_info = self._debug(f"{repr(reason)}  {getattr(reason, '__backtrace__', '')}")
         reason = str(reason)
         logger.error(reason)
 
         if self._vmid:
             try:
                 self.service().delete(self, self._vmid)
-                self._vmid = ''
+                self._vmid = ""
             except Exception as e:
-                logger.exception('Exception removing machine: %s', e)
+                logger.exception("Exception removing machine: %s", e)
 
         self._queue = [Operation.ERROR]
         self._reason = reason
@@ -152,7 +150,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
 
     @typing.final
     def _execute_queue(self) -> types.states.TaskState:
-        self._debug('execute_queue')
+        self._debug("execute_queue")
         op = self._current_op()
 
         if op == Operation.ERROR:
@@ -174,11 +172,11 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
                 getattr(self, operation_runner.__name__)()
 
             return types.states.TaskState.RUNNING
-        except exceptions.services.generics.RetryableError as e:
+        except exceptions.services.generics.RetryableError:
             # This is a retryable error, so we will retry later
             return self.retry_later()
         except Exception as e:
-            logger.debug('Exception on %s: %s', op, e, exc_info=True)
+            logger.debug("Exception on %s: %s", op, e, exc_info=True)
             return self._error(str(e))
 
     @typing.final
@@ -191,26 +189,26 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         In any case, if we overpass the max retries, we will set the machine to error state
         """
         if self._inc_retries_counter() is not None:
-            return self._error('Max retries reached')
+            return self._error("Max retries reached")
         self._queue.insert(0, Operation.RETRY)
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def service(self) -> 'DynamicService':
-        return typing.cast('DynamicService', super().service())
+    def service(self) -> "DynamicService":
+        return typing.cast("DynamicService", super().service())
 
     def generate_name(self) -> str:
         # Returns a name suitable for the publication
-        if self.service().has_field('basename'):
-            name = time.strftime(f'{self.service().basename.value}-%Y%m%d%H%M%S')
+        if self.service().has_field("basename"):
+            name = time.strftime(f"{self.service().basename.value}-%Y%m%d%H%M%S")
         else:
             # Get the service pool name, and remove all {} macros
             name = self.servicepool_name()
 
-        return self.service().sanitized_name(f'UDS-Pub-{name}-v{self.revision()}')
+        return self.service().sanitized_name(f"UDS-Pub-{name}-v{self.revision()}")
 
     def generate_annotation(self) -> str:
-        return f'UDS publication for {self.servicepool_name()} created on {time.strftime("%Y-%m-%d %H:%M:%S")}'
+        return f"UDS publication for {self.servicepool_name()} created on {time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     def check_space(self) -> bool:
         """
@@ -227,7 +225,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
     def publish(self) -> types.states.TaskState:
         """ """
         self._queue[:] = self._publish_queue.copy()
-        self._debug('publish')
+        self._debug("publish")
         return self._execute_queue()
 
     @typing.final
@@ -236,7 +234,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         Check what operation is going on, and acts acordly to it
         """
-        self._debug('check_state')
+        self._debug("check_state")
         op = self._current_op()
 
         if op == Operation.ERROR:
@@ -272,13 +270,13 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
                 return self._execute_queue()
 
             return state
-        except exceptions.services.generics.RetryableError as e:
+        except exceptions.services.generics.RetryableError:
             # This is a retryable error, so we will retry later
             # We don not need to push a NOP here, as we will retry the same operation checking again
             # And it has not been removed from the queue
             return types.states.TaskState.RUNNING
         except Exception as e:
-            logger.debug('Exception on %s: %s', op, e, exc_info=True)
+            logger.debug("Exception on %s: %s", op, e, exc_info=True)
             return self._error(e)
 
     @typing.final
@@ -295,7 +293,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
             return types.states.TaskState.RUNNING
 
         if op == Operation.ERROR:
-            return self._error('Machine is already in error state!')
+            return self._error("Machine is already in error state!")
 
         destroy_operations = [
             types.services.Operation.DESTROY_VALIDATOR
@@ -336,7 +334,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         Default initialization method sets the name and flags the service as not for destroy after finish (for cancel, i.e.)
         """
         if self.check_space() is False:
-            raise Exception('Not enough space to publish')
+            raise Exception("Not enough space to publish")
 
         # First we should create a full clone, so base machine do not get fullfilled with "garbage" delta disks...
         # Add a number based on current time to avoid collisions
@@ -423,7 +421,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         Note that can be overrided to do something else
         """
         # If does not have vmid, we can finish right now
-        if self._vmid == '':
+        if self._vmid == "":
             self._queue[:] = [Operation.FINISH]  # so we can finish right now
             return
 
@@ -539,13 +537,13 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
     # We use same operation type for Publication and UserService. We add "unsupported" to
     # cover not defined operations (will raise an exception)
     def op_unsupported(self) -> None:
-        raise Exception('Operation not defined')
+        raise Exception("Operation not defined")
 
     def op_unsupported_checker(self) -> types.states.TaskState:
-        raise Exception('Operation not defined')
+        raise Exception("Operation not defined")
 
     def _debug(self, txt: str) -> str:
-        msg = f'{txt} on {self._name}: {self._queue}, vmid:{self._vmid}'
+        msg = f"{txt} on {self._name}: {self._queue}, vmid:{self._vmid}"
         logger.debug(
             msg,
         )
@@ -559,9 +557,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
 # Operation methods, due to the fact that can be overrided, must be invoked via instance
 # We use getattr(FNC.__name__, ...) to use them, so we can use type checking and invoke them via instance
 # Note that ERROR and FINISH are not here, as they final states not needing to be executed
-_EXECUTORS: typing.Final[
-    collections.abc.Mapping[Operation, collections.abc.Callable[[DynamicPublication], None]]
-] = {
+_EXECUTORS: typing.Final[collections.abc.Mapping[Operation, collections.abc.Callable[[DynamicPublication], None]]] = {
     Operation.INITIALIZE: DynamicPublication.op_initialize,
     Operation.CREATE: DynamicPublication.op_create,
     Operation.CREATE_COMPLETED: DynamicPublication.op_create_completed,

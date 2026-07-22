@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import random
 import typing
@@ -49,7 +50,7 @@ class ServerEventsPingTest(rest.test.RESTTestCase):
     Test server functionality
     """
 
-    server: 'models.Server'
+    server: "models.Server"
 
     def setUp(self) -> None:
         super().setUp()
@@ -77,12 +78,12 @@ class ServerEventsPingTest(rest.test.RESTTestCase):
             uptime=random.randint(0, 1000000),  # nosec: test data
             disks=[
                 types.servers.ServerDiskInfo(
-                    'c:\\',
+                    "c:\\",
                     random.randint(0, 100000000),  # nosec: test data
                     random.randint(100000000, 1000000000),  # nosec: test data
                 ),
                 types.servers.ServerDiskInfo(
-                    'd:\\',
+                    "d:\\",
                     random.randint(0, 100000000),  # nosec: test data
                     random.randint(100000000, 1000000000),  # nosec: test data
                 ),
@@ -92,24 +93,24 @@ class ServerEventsPingTest(rest.test.RESTTestCase):
         )
 
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'ping',
-                'stats': stats.as_dict(),
+                "token": self.server.token,
+                "type": "ping",
+                "stats": stats.as_dict(),
             },
         )
 
         self.assertEqual(response.status_code, 200)
 
-        server_stats = self.server.properties.get('stats', None)
+        server_stats = self.server.properties.get("stats", None)
         self.assertIsNotNone(server_stats)
         # Get stats, but clear stamp
         stats_response = types.servers.ServerStats.from_dict(server_stats)
         stats_response.stamp = 0  # Clear stamp to compare
         self.assertEqual(stats_response, stats)
         # Ensure that stamp is not 0 on server_stats dict
-        self.assertNotEqual(server_stats['stamp'], 0)
+        self.assertNotEqual(server_stats["stamp"], 0)
 
         # Ensure stat is valid right now
         stats_response = types.servers.ServerStats.from_dict(server_stats)
@@ -121,14 +122,14 @@ class ServerEventsPingTest(rest.test.RESTTestCase):
     def test_event_ping_without_stats(self) -> None:
         # Create an stat object
         response = self.client.rest_post(
-            '/servers/event',
+            "/servers/event",
             data={
-                'token': self.server.token,
-                'type': 'ping',
+                "token": self.server.token,
+                "type": "ping",
             },
         )
 
         self.assertEqual(response.status_code, 200)
 
-        server_stats = self.server.properties.get('stats', None)
+        server_stats = self.server.properties.get("stats", None)
         self.assertIsNone(server_stats)

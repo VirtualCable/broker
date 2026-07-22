@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -54,19 +55,19 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
         ip: typing.Optional[str] = None,
     ) -> dict[str, typing.Any]:
         response = self.client.post(
-            '/uds/rest/actor/v3/unmanaged',
+            "/uds/rest/actor/v3/unmanaged",
             data={
-                'id': [{'mac': mac or '42:AC:11:22:33', 'ip': ip or '1.2.3.4'}],
-                'token': token,
-                'seecret': 'test_secret',
-                'port': 1234,
+                "id": [{"mac": mac or "42:AC:11:22:33", "ip": ip or "1.2.3.4"}],
+                "token": token,
+                "seecret": "test_secret",
+                "port": 1234,
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIsInstance(data['result'], dict)
-        return data['result']
+        self.assertIsInstance(data["result"], dict)
+        return data["result"]
 
     def invoke_failure(
         self,
@@ -77,22 +78,22 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
         expect_forbidden: bool = False,
     ) -> dict[str, typing.Any]:
         response = self.client.post(
-            '/uds/rest/actor/v3/unmanaged',
+            "/uds/rest/actor/v3/unmanaged",
             data={
-                'id': [{'mac': mac or '42:AC:11:22:33', 'ip': ip or '1.2.3.4'}],
-                'token': token,
-                'seecret': 'test_secret',
-                'port': 1234,
+                "id": [{"mac": mac or "42:AC:11:22:33", "ip": ip or "1.2.3.4"}],
+                "token": token,
+                "seecret": "test_secret",
+                "port": 1234,
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200 if not expect_forbidden else 403)
         if expect_forbidden:
             return {}
 
         data = response.json()
-        self.assertIsInstance(data['result'], dict)
-        return data['result']
+        self.assertIsInstance(data["result"], dict)
+        return data["result"]
 
     def test_unmanaged(self) -> None:
         """
@@ -101,10 +102,10 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
         userservice = self.userservice_unmanaged
         actor_token: str = (
             userservice.deployed_service.service.token if userservice.deployed_service.service else None
-        ) or ''
+        ) or ""
 
-        if actor_token == '':
-            self.fail('Service token not found')
+        if actor_token == "":
+            self.fail("Service token not found")
 
         TEST_MAC: typing.Final[str] = consts.NULL_MAC
         # This will succeed, but only alias token is returned because MAC is not registered by UDS
@@ -120,12 +121,12 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
         # 'password': password,
         # 'ciphers': getattr(settings, 'SECURE_CIPHERS', ''),
 
-        self.assertIn('private_key', result)
-        self.assertIn('key', result)
-        self.assertIn('server_certificate', result)
-        self.assertIn('certificate', result)
-        self.assertIn('password', result)
-        self.assertIn('ciphers', result)
+        self.assertIn("private_key", result)
+        self.assertIn("key", result)
+        self.assertIn("server_certificate", result)
+        self.assertIn("certificate", result)
+        self.assertIn("password", result)
+        self.assertIn("ciphers", result)
 
         # Create a token_alias assiciated with the service
         token_alias = CryptoManager.manager().random_string(40)
@@ -134,16 +135,16 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
             unique_id=TEST_MAC,
             service=userservice.service_pool.service,
         )
-        
+
         result2 = self.invoke_success(
             actor_token,
             mac=TEST_MAC,
         )
-        
+
         # Keys showld be different
-        self.assertIn('private_key', result2)
-        self.assertIn('key', result2)
-        self.assertIn('server_certificate', result2)
-        self.assertIn('certificate', result2)
-        self.assertIn('password', result2)
-        self.assertEqual(result['ciphers'], result2['ciphers'])
+        self.assertIn("private_key", result2)
+        self.assertIn("key", result2)
+        self.assertIn("server_certificate", result2)
+        self.assertIn("certificate", result2)
+        self.assertIn("password", result2)
+        self.assertEqual(result["ciphers"], result2["ciphers"])

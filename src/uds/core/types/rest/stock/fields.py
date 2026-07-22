@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import copy
 import typing
 import enum
@@ -45,14 +46,14 @@ class StockField(enum.StrEnum):
     It is used to define the fields that are common to all models in the system.
     """
 
-    TAGS = 'tags'
-    NAME = 'name'
-    COMMENTS = 'comments'
-    PRIORITY = 'priority'
-    LABEL = 'small_name'
-    NETWORKS = 'networks'
+    TAGS = "tags"
+    NAME = "name"
+    COMMENTS = "comments"
+    PRIORITY = "priority"
+    LABEL = "small_name"
+    NETWORKS = "networks"
 
-    def get_fields(self) -> list['ui.GuiElement']:
+    def get_fields(self) -> list["ui.GuiElement"]:
         """
         Returns the GUI elements for the field.
         """
@@ -73,39 +74,39 @@ class StockField(enum.StrEnum):
 
 # Note tha Table Builder will update the order, but keep the order here for, maybe, compatibility with older code
 # Eventullay, should be removed
-_STATIC_FLDS: typing.Final[dict[StockField, list['ui.GuiElement']]] = {
+_STATIC_FLDS: typing.Final[dict[StockField, list["ui.GuiElement"]]] = {
     StockField.TAGS: [
         ui.GuiElement(
-            name='tags',
+            name="tags",
             gui=ui.FieldInfo(
-                label=_('Tags'),
+                label=_("Tags"),
                 type=ui.FieldType.TAGLIST,
-                tooltip=_('Tags for this element'),
+                tooltip=_("Tags for this element"),
                 order=0 - 110,
             ),
         )
     ],
     StockField.NAME: [
         ui.GuiElement(
-            name='name',
+            name="name",
             gui=ui.FieldInfo(
                 type=ui.FieldType.TEXT,
                 required=True,
-                label=_('Name'),
+                label=_("Name"),
                 length=128,
-                tooltip=_('Name of this element'),
+                tooltip=_("Name of this element"),
                 order=0 - 100,
             ),
         )
     ],
     StockField.COMMENTS: [
         ui.GuiElement(
-            name='comments',
+            name="comments",
             gui=ui.FieldInfo(
-                label=_('Comments'),
+                label=_("Comments"),
                 type=ui.FieldType.TEXT,
                 lines=3,
-                tooltip=_('Comments for this element'),
+                tooltip=_("Comments for this element"),
                 length=256,
                 order=0 - 90,
             ),
@@ -113,36 +114,36 @@ _STATIC_FLDS: typing.Final[dict[StockField, list['ui.GuiElement']]] = {
     ],
     StockField.PRIORITY: [
         ui.GuiElement(
-            name='priority',
+            name="priority",
             gui=ui.FieldInfo(
-                label=_('Priority'),
+                label=_("Priority"),
                 type=ui.FieldType.NUMERIC,
                 required=True,
                 default=1,
                 length=4,
-                tooltip=_('Selects the priority of this element (lower number means higher priority)'),
+                tooltip=_("Selects the priority of this element (lower number means higher priority)"),
                 order=0 - 80,
             ),
         )
     ],
     StockField.LABEL: [
         ui.GuiElement(
-            name='small_name',
+            name="small_name",
             gui=ui.FieldInfo(
-                label=_('Label'),
+                label=_("Label"),
                 type=ui.FieldType.TEXT,
                 required=True,
                 length=128,
-                tooltip=_('Label for this element'),
+                tooltip=_("Label for this element"),
                 order=0 - 70,
             ),
         )
     ],
     StockField.NETWORKS: [
         ui.GuiElement(
-            name='networks',
+            name="networks",
             gui=ui.FieldInfo(
-                label=_('Networks'),
+                label=_("Networks"),
                 type=ui.FieldType.MULTICHOICE,
                 tooltip=_('Networks associated. If No network selected, will mean "all networks"'),
                 choices=[],  # Will be filled dynamically
@@ -151,15 +152,15 @@ _STATIC_FLDS: typing.Final[dict[StockField, list['ui.GuiElement']]] = {
             ),
         ),
         ui.GuiElement(
-            name='net_filtering',
+            name="net_filtering",
             gui=ui.FieldInfo(
-                label=_('Network Filtering'),
+                label=_("Network Filtering"),
                 type=ui.FieldType.CHOICE,  # Type of network filtering
-                default='n',
+                default="n",
                 choices=[
-                    ui.ChoiceItem(id='n', text= _('No filtering')),
-                    ui.ChoiceItem(id='a', text= _('Allow selected networks')),
-                    ui.ChoiceItem(id='d', text= _('Deny selected networks')),
+                    ui.ChoiceItem(id="n", text=_("No filtering")),
+                    ui.ChoiceItem(id="a", text=_("Allow selected networks")),
+                    ui.ChoiceItem(id="d", text=_("Deny selected networks")),
                 ],
                 tooltip=_(
                     'Type of network filtering. Use "Disabled" to disable origin check, "Allow" to only enable for selected networks or "Deny" to deny from selected networks'
@@ -167,6 +168,6 @@ _STATIC_FLDS: typing.Final[dict[StockField, list['ui.GuiElement']]] = {
                 order=100,  # At end
                 tab=ui.Tab.ADVANCED,
             ),
-        )
+        ),
     ],
 }

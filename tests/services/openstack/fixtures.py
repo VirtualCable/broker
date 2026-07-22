@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import copy
 import datetime
@@ -63,12 +64,12 @@ AnyOpenStackProvider: typing.TypeAlias = typing.Union[
 ]
 
 
-DEF_GUEST_IP_ADDRESS: typing.Final[str] = '1.0.0.1'
+DEF_GUEST_IP_ADDRESS: typing.Final[str] = "1.0.0.1"
 
 DEF_FLAVORS_LIST: typing.Final[list[openstack_types.FlavorInfo]] = [
     openstack_types.FlavorInfo(
-        id=f'fid{n}',
-        name=f'Flavor name{n}',
+        id=f"fid{n}",
+        name=f"Flavor name{n}",
         vcpus=n,
         ram=1024 * n,  # MiB
         disk=1024 * 1024 * n,  # GiB
@@ -81,8 +82,8 @@ DEF_FLAVORS_LIST: typing.Final[list[openstack_types.FlavorInfo]] = [
 
 DEF_AVAILABILITY_ZONES_LIST: typing.Final[list[openstack_types.AvailabilityZoneInfo]] = [
     openstack_types.AvailabilityZoneInfo(
-        id=f'az{n}',
-        name=f'az name{n}',
+        id=f"az{n}",
+        name=f"az name{n}",
         available=n % 2 == 0,
     )
     for n in range(1, 16)
@@ -90,53 +91,53 @@ DEF_AVAILABILITY_ZONES_LIST: typing.Final[list[openstack_types.AvailabilityZoneI
 
 
 DEF_PROJECTS_LIST: typing.Final[list[openstack_types.ProjectInfo]] = [
-    openstack_types.ProjectInfo(id=f'pid{n}', name=f'project name{n}') for n in range(1, 16)
+    openstack_types.ProjectInfo(id=f"pid{n}", name=f"project name{n}") for n in range(1, 16)
 ]
 
 DEF_REGIONS_LIST: typing.Final[list[openstack_types.RegionInfo]] = [
-    openstack_types.RegionInfo(id=f'rid{n}', name=f'region name{n}') for n in range(1, 16)
+    openstack_types.RegionInfo(id=f"rid{n}", name=f"region name{n}") for n in range(1, 16)
 ]
 
 DEF_SERVERS_LIST: typing.Final[list[openstack_types.ServerInfo]] = [
     openstack_types.ServerInfo(
-        id=f'sid{n}',
-        name=f'server name{n}',
-        href=f'https://xxxx/v2/yyyy/servers/zzzzz{n}',
+        id=f"sid{n}",
+        name=f"server name{n}",
+        href=f"https://xxxx/v2/yyyy/servers/zzzzz{n}",
         flavor=DEF_FLAVORS_LIST[(n - 1) % len(DEF_FLAVORS_LIST)].id,
         status=openstack_types.ServerStatus.ACTIVE,
         power_state=openstack_types.PowerState.SHUTDOWN,
         addresses=[
             openstack_types.ServerInfo.AddresInfo(
                 version=4,
-                ip='172.16.0.148',
-                mac='fa:16:3e:0d:fd:91',
-                type='fixed',
-                network_name='724cc8a5-0ce2-4224-ab1a-f2b84501dcfd',
+                ip="172.16.0.148",
+                mac="fa:16:3e:0d:fd:91",
+                type="fixed",
+                network_name="724cc8a5-0ce2-4224-ab1a-f2b84501dcfd",
             )
         ],
-        access_addr_ipv4='',
-        access_addr_ipv6='',
+        access_addr_ipv4="",
+        access_addr_ipv6="",
         fault=None,
-        admin_pass='',
+        admin_pass="",
     )
     for n in range(1, 32)
 ]
 
 DEF_VOLUMES_TYPE_LIST: typing.Final[list[openstack_types.VolumeTypeInfo]] = [
     openstack_types.VolumeTypeInfo(
-        id=f'vid{n}',
-        name=f'volume type name{n}',
+        id=f"vid{n}",
+        name=f"volume type name{n}",
     )
     for n in range(1, 16)
 ]
 
 DEF_VOLUMES_LIST: typing.Final[list[openstack_types.VolumeInfo]] = [
     openstack_types.VolumeInfo(
-        id=f'vid{n}',
-        name=f'volume name{n}',
-        description=f'volume description{n}',
+        id=f"vid{n}",
+        name=f"volume name{n}",
+        description=f"volume description{n}",
         size=1024 * n,  # GiB
-        availability_zone=f'zone{n}',
+        availability_zone=f"zone{n}",
         bootable=n % 2 == 0,
         encrypted=n % 3 == 0,
         status=openstack_types.VolumeStatus.AVAILABLE,
@@ -148,10 +149,10 @@ DEF_VOLUMES_LIST: typing.Final[list[openstack_types.VolumeInfo]] = [
 
 DEF_VOLUME_SNAPSHOTS_LIST: typing.Final[list[openstack_types.SnapshotInfo]] = [
     openstack_types.SnapshotInfo(
-        id=f'vsid{n}',
+        id=f"vsid{n}",
         volume_id=DEF_VOLUMES_LIST[(n - 1) % len(DEF_VOLUMES_LIST)].id,
-        name=f'volume snapshot name{n}',
-        description=f'volume snapshot description{n}',
+        name=f"volume snapshot name{n}",
+        description=f"volume snapshot description{n}",
         status=openstack_types.SnapshotStatus.AVAILABLE,
         size=128 * n,
         created_at=timezone.make_aware(datetime.datetime(2009, 12, 9, 0, 0, 0)),
@@ -162,21 +163,21 @@ DEF_VOLUME_SNAPSHOTS_LIST: typing.Final[list[openstack_types.SnapshotInfo]] = [
 
 DEF_SUBNETS_LIST: typing.Final[list[openstack_types.SubnetInfo]] = [
     openstack_types.SubnetInfo(
-        id=f'subnetid{n}',
-        name=f'subnet name{n}',
-        cidr=f'192.168.{n}.0/24',
+        id=f"subnetid{n}",
+        name=f"subnet name{n}",
+        cidr=f"192.168.{n}.0/24",
         enable_dhcp=n % 2 == 0,
-        gateway_ip=f'192.168.{n}.1',
+        gateway_ip=f"192.168.{n}.1",
         ip_version=[4, 6][n % 2],
-        network_id=f'netid{n}',
+        network_id=f"netid{n}",
     )
     for n in range(1, 16)
 ]
 
 DEF_NETWORKS_LIST: typing.Final[list[openstack_types.NetworkInfo]] = [
     openstack_types.NetworkInfo(
-        id=f'netid{n}',
-        name=f'network name{n}',
+        id=f"netid{n}",
+        name=f"network name{n}",
         status=openstack_types.NetworkStatus.ACTIVE,
         shared=n % 2 == 0,
         subnets=random.sample([s.id for s in DEF_SUBNETS_LIST], 2),
@@ -189,25 +190,23 @@ DEF_NETWORKS_LIST: typing.Final[list[openstack_types.NetworkInfo]] = [
 
 DEF_SECURITY_GROUPS_LIST: typing.Final[list[openstack_types.SecurityGroupInfo]] = [
     openstack_types.SecurityGroupInfo(
-        id=f'sgid{n}',
-        name=f'security group name{n}',
-        description=f'security group description{n}',
+        id=f"sgid{n}",
+        name=f"security group name{n}",
+        description=f"security group description{n}",
     )
     for n in range(1, 16)
 ]
 
-DEF_CONSOLE_CONNECTION_INFO: typing.Final[types.services.ConsoleConnectionInfo] = (
-    types.services.ConsoleConnectionInfo(
-        type='spice',
-        address=DEF_GUEST_IP_ADDRESS,
-        port=5900,
-        secure_port=5901,
-        cert_subject='',
-        ticket=types.services.ConsoleConnectionTicket(value='ticket'),
-        ca='',
-        proxy='',
-        monitors=1,
-    )
+DEF_CONSOLE_CONNECTION_INFO: typing.Final[types.services.ConsoleConnectionInfo] = types.services.ConsoleConnectionInfo(
+    type="spice",
+    address=DEF_GUEST_IP_ADDRESS,
+    port=5900,
+    secure_port=5901,
+    cert_subject="",
+    ticket=types.services.ConsoleConnectionTicket(value="ticket"),
+    ca="",
+    proxy="",
+    monitors=1,
 )
 
 
@@ -246,7 +245,7 @@ def clear() -> None:
     )
 
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 def set_all_vms_status(status: openstack_types.ServerStatus) -> None:
@@ -255,13 +254,13 @@ def set_all_vms_status(status: openstack_types.ServerStatus) -> None:
 
 
 def search_id(lst: list[T], id: str, *args: typing.Any, **kwargs: typing.Any) -> T:
-    return search_item_by_attr(lst, 'id', id)
+    return search_item_by_attr(lst, "id", id)
 
 
 def set_vm_state(id: str, state: openstack_types.PowerState, **kwargs: typing.Any) -> str:
     vm = search_id(SERVERS_LIST, id)
     vm.power_state = state
-    return str(state) + '_task_uuid'
+    return str(state) + "_task_uuid"
 
 
 def random_element(lst: list[T], *args: typing.Any, **kwargs: typing.Any) -> T:
@@ -317,27 +316,27 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
     AutoSpecMethodInfo(
         client.OpenStackClient.start_server,
         returns=set_vm_state,
-        partial_kwargs={'state': openstack_types.PowerState.RUNNING},
+        partial_kwargs={"state": openstack_types.PowerState.RUNNING},
     ),
     AutoSpecMethodInfo(
         client.OpenStackClient.stop_server,
         returns=set_vm_state,
-        partial_kwargs={'state': openstack_types.PowerState.SHUTDOWN},
+        partial_kwargs={"state": openstack_types.PowerState.SHUTDOWN},
     ),
     AutoSpecMethodInfo(
         client.OpenStackClient.reboot_server,
         returns=set_vm_state,
-        partial_kwargs={'state': openstack_types.PowerState.RUNNING},
+        partial_kwargs={"state": openstack_types.PowerState.RUNNING},
     ),
     AutoSpecMethodInfo(
         client.OpenStackClient.suspend_server,
         returns=set_vm_state,
-        partial_kwargs={'state': openstack_types.PowerState.SUSPENDED},
+        partial_kwargs={"state": openstack_types.PowerState.SUSPENDED},
     ),
     AutoSpecMethodInfo(
         client.OpenStackClient.resume_server,
         returns=set_vm_state,
-        partial_kwargs={'state': openstack_types.PowerState.RUNNING},
+        partial_kwargs={"state": openstack_types.PowerState.RUNNING},
     ),
     # connect returns None
     # Test method
@@ -349,57 +348,57 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
 ]
 
 PROVIDER_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'endpoint': 'https://host',
-    'auth_method': 'application_credential',
-    'access': 'public',
-    'domain': 'domain',
-    'username': 'username',
-    'password': 'password',
-    'concurrent_creation_limit': 1,
-    'concurrent_removal_limit': 1,
-    'timeout': 10,
-    'project_id': '',  # No project_id allowed if using application_credential, it's implicit
-    'region': 'region',
-    'use_subnets_name': False,
-    'https_proxy': 'https_proxy',
-    'verify_ssl': False,
+    "endpoint": "https://host",
+    "auth_method": "application_credential",
+    "access": "public",
+    "domain": "domain",
+    "username": "username",
+    "password": "password",
+    "concurrent_creation_limit": 1,
+    "concurrent_removal_limit": 1,
+    "timeout": 10,
+    "project_id": "",  # No project_id allowed if using application_credential, it's implicit
+    "region": "region",
+    "use_subnets_name": False,
+    "https_proxy": "https_proxy",
+    "verify_ssl": False,
 }
 
 PROVIDER_LEGACY_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'host': 'host',
-    'port': 5000,
-    'ssl': False,
-    'access': 'public',
-    'domain': 'domain',
-    'username': 'username',
-    'password': 'password',
-    'concurrent_creation_limit': 1,
-    'concurrent_removal_limit': 1,
-    'timeout': 10,
-    'https_proxy': 'https_proxy',
+    "host": "host",
+    "port": 5000,
+    "ssl": False,
+    "access": "public",
+    "domain": "domain",
+    "username": "username",
+    "password": "password",
+    "concurrent_creation_limit": 1,
+    "concurrent_removal_limit": 1,
+    "timeout": 10,
+    "https_proxy": "https_proxy",
 }
 
 
 SERVICE_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'region': random.choice(DEF_REGIONS_LIST).id,
-    'project': random.choice(DEF_PROJECTS_LIST).id,
-    'availability_zone': random.choice(DEF_AVAILABILITY_ZONES_LIST).id,
-    'volume': random.choice(DEF_VOLUMES_LIST).id,
-    'network': random.choice(DEF_NETWORKS_LIST).id,
-    'flavor': random.choice(DEF_FLAVORS_LIST).id,
-    'security_groups': [random.choice(DEF_SECURITY_GROUPS_LIST).id],
-    'basename': 'bname',
-    'lenname': 5,
-    'maintain_on_error': False,
-    'try_soft_shutdown': False,
-    'prov_uuid': 'prov_uuid',
+    "region": random.choice(DEF_REGIONS_LIST).id,
+    "project": random.choice(DEF_PROJECTS_LIST).id,
+    "availability_zone": random.choice(DEF_AVAILABILITY_ZONES_LIST).id,
+    "volume": random.choice(DEF_VOLUMES_LIST).id,
+    "network": random.choice(DEF_NETWORKS_LIST).id,
+    "flavor": random.choice(DEF_FLAVORS_LIST).id,
+    "security_groups": [random.choice(DEF_SECURITY_GROUPS_LIST).id],
+    "basename": "bname",
+    "lenname": 5,
+    "maintain_on_error": False,
+    "try_soft_shutdown": False,
+    "prov_uuid": "prov_uuid",
 }
 
 SERVICES_FIXED_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'token': 'token',
-    'region': random.choice(DEF_REGIONS_LIST).id,
-    'project': random.choice(DEF_PROJECTS_LIST).id,
-    'machines': [i.id for i in random.sample(DEF_SERVERS_LIST, 10)],
+    "token": "token",
+    "region": random.choice(DEF_REGIONS_LIST).id,
+    "project": random.choice(DEF_PROJECTS_LIST).id,
+    "machines": [i.id for i in random.sample(DEF_SERVERS_LIST, 10)],
     # 'prov_uuid': str(uuid.uuid4()),  # Not stored on db, so not needed
 }
 
@@ -417,7 +416,7 @@ def patched_provider(
 ) -> typing.Generator[provider.OpenStackProvider, None, None]:
     client = create_client_mock()
     provider = create_provider(**kwargs)
-    with mock.patch.object(provider, 'api') as api:
+    with mock.patch.object(provider, "api") as api:
         provider.do_log = mock.MagicMock()  # Avoid logging
         api.return_value = client
         yield provider
@@ -429,7 +428,7 @@ def patched_provider_legacy(
 ) -> typing.Generator[provider_legacy.OpenStackProviderLegacy, None, None]:
     client = create_client_mock()
     provider = create_provider_legacy(**kwargs)
-    with mock.patch.object(provider, 'api') as api:
+    with mock.patch.object(provider, "api") as api:
         api.return_value = client
         yield provider
 
@@ -476,7 +475,7 @@ def create_live_service(provider: AnyOpenStackProvider, **kwargs: typing.Any) ->
     )
     service_db_mock = mock.MagicMock()
     service_db_mock.uuid = uuid_
-    service_db_mock.name = 'ServiceName'
+    service_db_mock.name = "ServiceName"
     srvc.db_obj = mock.MagicMock()
     srvc.db_obj.return_value = service_db_mock
     return srvc
@@ -491,7 +490,7 @@ def create_publication(service: service.OpenStackLiveService) -> publication.Ope
         environment=environment.Environment.private_environment(uuid_),
         service=service,
         revision=1,
-        servicepool_name='servicepool_name',
+        servicepool_name="servicepool_name",
         uuid=uuid_,
     )
     pub._vmid = helpers.random_string(8)
@@ -514,9 +513,7 @@ def create_live_userservice(
     )
 
 
-def create_fixed_service(
-    provider: AnyOpenStackProvider, **kwargs: typing.Any
-) -> service_fixed.OpenStackServiceFixed:
+def create_fixed_service(provider: AnyOpenStackProvider, **kwargs: typing.Any) -> service_fixed.OpenStackServiceFixed:
     """
     Create a fixed service
     """

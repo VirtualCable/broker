@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import functools
 import logging
@@ -49,30 +50,30 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
     def invoke_success(
         self,
-        type_: typing.Literal['managed'] | typing.Literal['unmanaged'],
+        type_: typing.Literal["managed"] | typing.Literal["unmanaged"],
         token: str,
         *,
         mac: str | None = None,
         ip: str | None = None,
     ) -> dict[str, typing.Any]:
         response = self.client.post(
-            '/uds/rest/actor/v3/initialize',
+            "/uds/rest/actor/v3/initialize",
             data={
-                'type': type_,
-                'version': consts.system.VERSION,
-                'token': token,
-                'id': [{'mac': mac or '42:AC:11:22:33', 'ip': ip or '1.2.3.4'}],
+                "type": type_,
+                "version": consts.system.VERSION,
+                "token": token,
+                "id": [{"mac": mac or "42:AC:11:22:33", "ip": ip or "1.2.3.4"}],
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIsInstance(data['result'], dict)
-        return data['result']
+        self.assertIsInstance(data["result"], dict)
+        return data["result"]
 
     def invoke_failure(
         self,
-        type_: typing.Literal['managed'] | typing.Literal['unmanaged'],
+        type_: typing.Literal["managed"] | typing.Literal["unmanaged"],
         token: str,
         *,
         mac: str | None = None,
@@ -80,22 +81,22 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         expect_forbidden: bool = False,
     ) -> dict[str, typing.Any]:
         response = self.client.post(
-            '/uds/rest/actor/v3/initialize',
+            "/uds/rest/actor/v3/initialize",
             data={
-                'type': type_,
-                'version': consts.system.VERSION,
-                'token': token,
-                'id': [{'mac': mac or '42:AC:33:22:11', 'ip': ip or '4.3.2.1'}],
+                "type": type_,
+                "version": consts.system.VERSION,
+                "token": token,
+                "id": [{"mac": mac or "42:AC:33:22:11", "ip": ip or "4.3.2.1"}],
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200 if not expect_forbidden else 403)
         if expect_forbidden:
             return {}
 
         data = response.json()
-        self.assertIsInstance(data['result'], dict)
-        return data['result']
+        self.assertIsInstance(data["result"], dict)
+        return data["result"]
 
     def test_initialize_managed_by_mac(self) -> None:
         """
@@ -108,37 +109,37 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         # Get the user service unique_id, the default
         unique_id = user_service.get_unique_id()
 
-        success = functools.partial(self.invoke_success, 'managed', actor_token, ip='1.2.3.4')
-        failure = functools.partial(self.invoke_failure, 'managed', ip='1.2.3.4')
+        success = functools.partial(self.invoke_success, "managed", actor_token, ip="1.2.3.4")
+        failure = functools.partial(self.invoke_failure, "managed", ip="1.2.3.4")
 
         result = success(mac=unique_id)
 
         # Ensure own token is assigned
-        self.assertEqual(result['token'], user_service.uuid)
-        self.assertEqual(result['own_token'], result['token'])  # Compat value with 3.x actors
+        self.assertEqual(result["token"], user_service.uuid)
+        self.assertEqual(result["own_token"], result["token"])  # Compat value with 3.x actors
 
         # Ensure unique_id detected is ours
-        self.assertEqual(result['unique_id'], unique_id)
+        self.assertEqual(result["unique_id"], unique_id)
 
         # Ensure os is set and it is a dict
-        self.assertIsInstance(result['os'], dict)
-        os = result['os']
+        self.assertIsInstance(result["os"], dict)
+        os = result["os"]
 
         # Ensure requested action is rename
-        self.assertEqual(os['action'], 'rename')
+        self.assertEqual(os["action"], "rename")
         # And name is userservice name
-        self.assertEqual(os['name'], user_service.friendly_name)
+        self.assertEqual(os["name"], user_service.friendly_name)
 
         # Now invoke failure
-        failure('invalid token', mac=unique_id, expect_forbidden=True)
+        failure("invalid token", mac=unique_id, expect_forbidden=True)
 
         # Now invoke failure with valid token but invalid mac
-        result = failure(actor_token, mac='invalid mac', expect_forbidden=False)
+        result = failure(actor_token, mac="invalid mac", expect_forbidden=False)
 
-        self.assertIsNone(result['own_token'])
-        self.assertIsNone(result['token'])
-        self.assertIsNone(result['os'])
-        self.assertIsNone(result['unique_id'])
+        self.assertIsNone(result["own_token"])
+        self.assertIsNone(result["token"])
+        self.assertIsNone(result["os"])
+        self.assertIsNone(result["unique_id"])
 
     def test_initialize_managed_by_ip(self) -> None:
         """
@@ -148,47 +149,47 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
             self.provider,
             self.admins[0],
             self.groups,
-            'managed',
+            "managed",
         )
 
         # Set an IP as unique_id
-        unique_id = '1.2.3.4'
+        unique_id = "1.2.3.4"
         user_service.unique_id = unique_id
         user_service.save()
 
         actor_token = self.login_and_register()
 
-        success = functools.partial(self.invoke_success, 'managed', actor_token, mac='42:AC:99:99:99')
-        failure = functools.partial(self.invoke_failure, 'managed', mac='42:AC:99:99:99')
+        success = functools.partial(self.invoke_success, "managed", actor_token, mac="42:AC:99:99:99")
+        failure = functools.partial(self.invoke_failure, "managed", mac="42:AC:99:99:99")
 
         result = success(ip=unique_id)
 
         # Ensure own token is assigned
-        self.assertEqual(result['token'], user_service.uuid)
-        self.assertEqual(result['own_token'], result['token'])  # Compat value with 3.x actors
+        self.assertEqual(result["token"], user_service.uuid)
+        self.assertEqual(result["own_token"], result["token"])  # Compat value with 3.x actors
 
         # Ensure unique_id detected is ours
-        self.assertEqual(result['unique_id'], unique_id)
+        self.assertEqual(result["unique_id"], unique_id)
 
         # Ensure os is set and it is a dict
-        self.assertIsInstance(result['os'], dict)
-        os = result['os']
+        self.assertIsInstance(result["os"], dict)
+        os = result["os"]
 
         # Ensure requested action is rename
-        self.assertEqual(os['action'], 'rename')
+        self.assertEqual(os["action"], "rename")
         # And name is userservice name
-        self.assertEqual(os['name'], user_service.friendly_name)
+        self.assertEqual(os["name"], user_service.friendly_name)
 
         # Now invoke failure
-        failure('invalid token', ip=unique_id, expect_forbidden=True)
+        failure("invalid token", ip=unique_id, expect_forbidden=True)
 
         # Now invoke failure with valid token but invalid ip
-        result = failure(actor_token, ip='invalid ip', expect_forbidden=False)
+        result = failure(actor_token, ip="invalid ip", expect_forbidden=False)
 
-        self.assertIsNone(result['own_token'])
-        self.assertIsNone(result['token'])
-        self.assertIsNone(result['os'])
-        self.assertIsNone(result['unique_id'])
+        self.assertIsNone(result["own_token"])
+        self.assertIsNone(result["token"])
+        self.assertIsNone(result["os"])
+        self.assertIsNone(result["unique_id"])
 
     def test_initialize_unmanaged_by_mac(self) -> None:
         """
@@ -197,13 +198,13 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         userservice = self.userservice_unmanaged
         actor_token: str = (
             userservice.deployed_service.service.token if userservice.deployed_service.service else None
-        ) or ''
+        ) or ""
 
-        if actor_token == '':
-            self.fail('Service token not found')
+        if actor_token == "":
+            self.fail("Service token not found")
 
-        success = functools.partial(self.invoke_success, 'unmanaged')
-        failure = functools.partial(self.invoke_failure, 'unmanaged')
+        success = functools.partial(self.invoke_success, "unmanaged")
+        failure = functools.partial(self.invoke_failure, "unmanaged")
 
         NONEXISTING_MAC: typing.Final[str] = consts.NULL_MAC
         USERSERVICE_MAC: typing.Final[str] = userservice.get_unique_id()
@@ -215,13 +216,13 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         )
 
         # Unmanaged host is the response for initialization of unmanaged actor ALWAYS
-        self.assertIsInstance(result['master_token'], str)
-        self.assertIsNone(result['unique_id'])
-        self.assertIsNone(result['os'])
-        self.assertIsNone(result['own_token'])
-        self.assertIsNone(result['token'])
+        self.assertIsInstance(result["master_token"], str)
+        self.assertIsNone(result["unique_id"])
+        self.assertIsNone(result["os"])
+        self.assertIsNone(result["own_token"])
+        self.assertIsNone(result["token"])
 
-        alias_token = result['master_token']
+        alias_token = result["master_token"]
         # Ensure that the alias returned is on alias db, and it points to the same service as the one we belong to
         alias = models.ServiceTokenAlias.objects.get(alias=alias_token)
         self.assertEqual(alias.service, userservice.deployed_service.service)
@@ -232,7 +233,7 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
             actor_token,
             mac=NONEXISTING_MAC,
         )
-        self.assertEqual(result['master_token'], alias_token)
+        self.assertEqual(result["master_token"], alias_token)
 
         # Now, invoke with a correct mac (Exists os user services)
         result = success(
@@ -241,15 +242,15 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         )
 
         # Note that due the change of mac, a new alias is created, not equal to the previous one
-        self.assertNotEqual(alias_token, result['master_token'])
-        alias_token = result['master_token']
+        self.assertNotEqual(alias_token, result["master_token"])
+        alias_token = result["master_token"]
         alias = models.ServiceTokenAlias.objects.get(alias=alias_token)
         self.assertEqual(alias.service, userservice.deployed_service.service)
         self.assertEqual(alias.unique_id, USERSERVICE_MAC.lower())
 
-        self.assertEqual(USERSERVICE_MAC, result['unique_id'])
-        self.assertEqual(result['own_token'], result['token'])
-        self.assertEqual(result['token'], userservice.uuid)
+        self.assertEqual(USERSERVICE_MAC, result["unique_id"])
+        self.assertEqual(result["own_token"], result["token"])
+        self.assertEqual(result["token"], userservice.uuid)
 
         # Now, invoke with alias, result shouls be the same
         result2 = success(
@@ -260,7 +261,7 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         # master_token should be the same as the alias token
         self.assertEqual(result, result2)
         #
-        failure('invalid token', mac=USERSERVICE_MAC, expect_forbidden=True)
+        failure("invalid token", mac=USERSERVICE_MAC, expect_forbidden=True)
 
     def test_initialize_unmanaged_by_ip(self) -> None:
         """
@@ -270,19 +271,19 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
             self.provider,
             self.admins[0],
             self.groups,
-            'unmanaged',
+            "unmanaged",
         )
         # Set an IP as unique_id
-        USERSERVICE_IP: typing.Final[str] = '1.2.3.4'
+        USERSERVICE_IP: typing.Final[str] = "1.2.3.4"
         userservice.unique_id = USERSERVICE_IP
         userservice.save()
 
         actor_token: str = (
             userservice.deployed_service.service.token if userservice.deployed_service.service else None
-        ) or ''
+        ) or ""
 
-        success = functools.partial(self.invoke_success, 'unmanaged', mac=consts.NULL_MAC)
-        failure = functools.partial(self.invoke_failure, 'unmanaged', mac=consts.NULL_MAC)
+        success = functools.partial(self.invoke_success, "unmanaged", mac=consts.NULL_MAC)
+        failure = functools.partial(self.invoke_failure, "unmanaged", mac=consts.NULL_MAC)
 
         # This will succeed, but only alias token is returned because MAC is not registered by UDS
         result = success(
@@ -291,13 +292,13 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         )
 
         # Unmanaged host is the response for initialization of unmanaged actor ALWAYS
-        self.assertIsInstance(result['master_token'], str)
-        self.assertIsNone(result['unique_id'])
-        self.assertIsNone(result['os'])
-        self.assertIsNone(result['own_token'])
-        self.assertIsNone(result['token'])
+        self.assertIsInstance(result["master_token"], str)
+        self.assertIsNone(result["unique_id"])
+        self.assertIsNone(result["os"])
+        self.assertIsNone(result["own_token"])
+        self.assertIsNone(result["token"])
 
-        alias_token = result['master_token']
+        alias_token = result["master_token"]
         # Ensure that the alias returned is on alias db, and it points to the same service as the one we belong to
         alias = models.ServiceTokenAlias.objects.get(alias=alias_token)
         self.assertEqual(alias.service, userservice.deployed_service.service)
@@ -310,14 +311,14 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         )
 
         # Note that due the change of mac, a new alias is created
-        alias_token = result['master_token']
+        alias_token = result["master_token"]
         alias = models.ServiceTokenAlias.objects.get(alias=alias_token)
         self.assertEqual(alias.service, userservice.deployed_service.service)
         self.assertEqual(alias.unique_id, USERSERVICE_IP.lower())
 
-        self.assertEqual(USERSERVICE_IP, result['unique_id'])
-        self.assertEqual(result['own_token'], result['token'])
-        self.assertEqual(result['token'], userservice.uuid)
+        self.assertEqual(USERSERVICE_IP, result["unique_id"])
+        self.assertEqual(result["own_token"], result["token"])
+        self.assertEqual(result["token"], userservice.uuid)
 
         # Now, invoke with alias, result shouls be the same
         result2 = success(
@@ -328,4 +329,4 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         # master_token should be the same as the alias token
         self.assertEqual(result, result2)
         #
-        failure('invalid token', mac=USERSERVICE_IP, expect_forbidden=True)
+        failure("invalid token", mac=USERSERVICE_IP, expect_forbidden=True)

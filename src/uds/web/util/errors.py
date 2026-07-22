@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -49,15 +50,14 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def error_view(request: 'HttpRequest', error_code: int) -> HttpResponseRedirect:
-    return HttpResponseRedirect(reverse('page.error', kwargs={'err': error_code}))
+def error_view(request: "HttpRequest", error_code: int) -> HttpResponseRedirect:
+    return HttpResponseRedirect(reverse("page.error", kwargs={"err": error_code}))
 
 
-def exception_view(request: 'HttpRequest', exception: Exception) -> HttpResponseRedirect:
+def exception_view(request: "HttpRequest", exception: Exception) -> HttpResponseRedirect:
     """
     Tries to render an error page with error information
     """
     # import traceback
     # logger.debug(traceback.format_exc())
     return error_view(request, types.errors.Error.from_exception(exception))
-

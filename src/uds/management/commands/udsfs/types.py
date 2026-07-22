@@ -54,29 +54,29 @@ class StatType(typing.NamedTuple):
 
     def as_dict(self) -> dict[str, int]:
         rst = {
-            'st_mode': self.st_mode,
-            'st_ctime': self.st_ctime,
-            'st_mtime': self.st_mtime,
-            'st_atime': self.st_atime,
-            'st_nlink': self.st_nlink,
+            "st_mode": self.st_mode,
+            "st_ctime": self.st_ctime,
+            "st_mtime": self.st_mtime,
+            "st_atime": self.st_atime,
+            "st_nlink": self.st_nlink,
         }
         # Append optional fields
         if self.st_dev != -1:
-            rst['st_dev'] = self.st_dev
+            rst["st_dev"] = self.st_dev
         if self.st_ino != -1:
-            rst['st_ino'] = self.st_ino
+            rst["st_ino"] = self.st_ino
         if self.st_uid != -1:
-            rst['st_uid'] = self.st_uid
+            rst["st_uid"] = self.st_uid
         if self.st_gid != -1:
-            rst['st_gid'] = self.st_gid
+            rst["st_gid"] = self.st_gid
         if self.st_rdev != -1:
-            rst['st_rdev'] = self.st_rdev
+            rst["st_rdev"] = self.st_rdev
         if self.st_size != -1:
-            rst['st_size'] = self.st_size
+            rst["st_size"] = self.st_size
         if self.st_blksize != -1:
-            rst['st_blksize'] = self.st_blksize
+            rst["st_blksize"] = self.st_blksize
         if self.st_blocks != -1:
-            rst['st_blocks'] = self.st_blocks
+            rst["st_blocks"] = self.st_blocks
 
         return rst
 

@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import enum
 import typing
@@ -39,8 +40,8 @@ from uds.core.util import autoserializable
 
 from ...utils.test import UDSTestCase
 
-UNICODE_CHARS = 'ñöçóá^(pípè)'
-UNICODE_CHARS_2 = 'ñöçóá^(€íöè)'
+UNICODE_CHARS = "ñöçóá^(pípè)"
+UNICODE_CHARS_2 = "ñöçóá^(€íöè)"
 
 
 class EnumTest(enum.IntEnum):
@@ -49,44 +50,44 @@ class EnumTest(enum.IntEnum):
     VALUE3 = 3
 
     @staticmethod
-    def from_int(value: int) -> 'EnumTest':
+    def from_int(value: int) -> "EnumTest":
         return EnumTest(value)
 
 
 @dataclasses.dataclass
 class SerializableDataclass:
     int_val: int = 0
-    str_val: str = ''
+    str_val: str = ""
     float_val: float = 0.0
 
 
 class SerializableNamedTuple(typing.NamedTuple):
     int_val: int = 0
-    str_val: str = ''
+    str_val: str = ""
     float_val: float = 0.0
 
 
 class AutoSerializableClass(autoserializable.AutoSerializable):
     int_field = autoserializable.IntegerField(default=11)
-    str_field = autoserializable.StringField(default='str')
+    str_field = autoserializable.StringField(default="str")
     float_field = autoserializable.FloatField(default=44.0)
     bool_field = autoserializable.BoolField(default=False)
-    password_field = autoserializable.PasswordField(default='password')  # nosec: test password
+    password_field = autoserializable.PasswordField(default="password")  # nosec: test password
     list_field = autoserializable.ListField[int](default=lambda: [1, 2, 3])
     # Casting from int to EnumTest on deserialization
     list_field_with_cast = autoserializable.ListField[EnumTest](
         default=lambda: [EnumTest.VALUE1, EnumTest.VALUE2, EnumTest.VALUE3], cast=EnumTest.from_int
     )
-    dict_field = autoserializable.DictField[str, int](default=lambda: {'a': 1, 'b': 2, 'c': 3})
+    dict_field = autoserializable.DictField[str, int](default=lambda: {"a": 1, "b": 2, "c": 3})
     # Note that due to the dict being serialized as json, the keys are always strings
     dict_field_with_cast = autoserializable.DictField[EnumTest, EnumTest](
         cast=lambda k, v: (EnumTest(int(k)), EnumTest(v))
     )
     obj_dc_field = autoserializable.ObjectField[SerializableDataclass](
-        SerializableDataclass, default=lambda: SerializableDataclass(1, '2', 3.0)
+        SerializableDataclass, default=lambda: SerializableDataclass(1, "2", 3.0)
     )
     obj_nt_field = autoserializable.ObjectField[SerializableNamedTuple](
-        SerializableNamedTuple, default=lambda: SerializableNamedTuple(1, '2', 3.0)
+        SerializableNamedTuple, default=lambda: SerializableNamedTuple(1, "2", 3.0)
     )
 
     non_auto_int = 1
@@ -130,7 +131,7 @@ class AutoSerializableEncryptedClass(autoserializable.AutoSerializableEncrypted)
 
 class AddedClass:
     tr1: int = 0
-    tr2: str = 'tr2'
+    tr2: str = "tr2"
 
 
 class DerivedAutoSerializableClass(AutoSerializableClass):
@@ -156,8 +157,8 @@ class AutoSerializableClassWithMissingFields(autoserializable.AutoSerializable):
 class AutoSerializable(UDSTestCase):
     def basic_check(
         self,
-        cls1: type['AutoSerializableClass|AutoSerializableCompressedClass|AutoSerializableEncryptedClass'],
-        cls2: type['AutoSerializableClass|AutoSerializableCompressedClass|AutoSerializableEncryptedClass'],
+        cls1: type["AutoSerializableClass|AutoSerializableCompressedClass|AutoSerializableEncryptedClass"],
+        cls2: type["AutoSerializableClass|AutoSerializableCompressedClass|AutoSerializableEncryptedClass"],
     ) -> None:
         # Test basic serialization
         a = cls1()
@@ -168,10 +169,10 @@ class AutoSerializable(UDSTestCase):
         a.password_field = UNICODE_CHARS_2  # nosec: test password
         a.list_field = [1, 2, 3]
         a.list_field_with_cast = [EnumTest.VALUE1, EnumTest.VALUE2, EnumTest.VALUE3]
-        a.dict_field = {'a': 1, 'b': 2, 'c': 3}
+        a.dict_field = {"a": 1, "b": 2, "c": 3}
         a.dict_field_with_cast = {EnumTest.VALUE1: EnumTest.VALUE2, EnumTest.VALUE2: EnumTest.VALUE3}
-        a.obj_dc_field = SerializableDataclass(1, '2', 3.0)
-        a.obj_nt_field = SerializableNamedTuple(1, '2', 3.0)
+        a.obj_dc_field = SerializableDataclass(1, "2", 3.0)
+        a.obj_nt_field = SerializableNamedTuple(1, "2", 3.0)
 
         a.non_auto_int = 2
 
@@ -193,15 +194,15 @@ class AutoSerializable(UDSTestCase):
             self.assertEqual(i.list_field_with_cast, [EnumTest.VALUE1, EnumTest.VALUE2, EnumTest.VALUE3])
             for vv in i.list_field_with_cast:
                 self.assertIsInstance(vv, EnumTest)
-            self.assertEqual(i.dict_field, {'a': 1, 'b': 2, 'c': 3})
+            self.assertEqual(i.dict_field, {"a": 1, "b": 2, "c": 3})
             self.assertEqual(
                 i.dict_field_with_cast, {EnumTest.VALUE1: EnumTest.VALUE2, EnumTest.VALUE2: EnumTest.VALUE3}
             )
             for kk, vv in i.dict_field_with_cast.items():
                 self.assertIsInstance(kk, EnumTest)
                 self.assertIsInstance(vv, EnumTest)
-            self.assertEqual(i.obj_dc_field, SerializableDataclass(1, '2', 3.0))
-            self.assertEqual(i.obj_nt_field, SerializableNamedTuple(1, '2', 3.0))
+            self.assertEqual(i.obj_dc_field, SerializableDataclass(1, "2", 3.0))
+            self.assertEqual(i.obj_nt_field, SerializableNamedTuple(1, "2", 3.0))
 
         self.assertEqual(a.non_auto_int, 2)  # Not altered by serialization
 
@@ -251,7 +252,7 @@ class AutoSerializable(UDSTestCase):
         instance.bool_field = True
         instance.password_field = UNICODE_CHARS_2
         instance.list_field = [1, 2, 3]
-        instance.dict_field = {'a': 1, 'b': 2, 'c': 3}
+        instance.dict_field = {"a": 1, "b": 2, "c": 3}
         instance.int_field2 = 2
         instance.str_field2 = UNICODE_CHARS_2
 
@@ -270,7 +271,7 @@ class AutoSerializable(UDSTestCase):
         instance.bool_field = True
         instance.password_field = UNICODE_CHARS_2
         instance.list_field = [1, 2, 3]
-        instance.dict_field = {'a': 1, 'b': 2, 'c': 3}
+        instance.dict_field = {"a": 1, "b": 2, "c": 3}
         instance.int_field2 = 2
         instance.str_field2 = UNICODE_CHARS_2
         instance.tr1 = 3
@@ -291,9 +292,9 @@ class AutoSerializable(UDSTestCase):
         instance.bool_field = True
         instance.password_field = UNICODE_CHARS_2  # nosec: test password
         instance.list_field = [1, 2, 3]
-        instance.dict_field = {'a': 1, 'b': 2, 'c': 3}
-        instance.obj_dc_field = SerializableDataclass(1, '2', 3.0)
-        instance.obj_nt_field = SerializableNamedTuple(2, '3', 4.0)
+        instance.dict_field = {"a": 1, "b": 2, "c": 3}
+        instance.obj_dc_field = SerializableDataclass(1, "2", 3.0)
+        instance.obj_nt_field = SerializableNamedTuple(2, "3", 4.0)
 
         data = instance.marshal()
 
@@ -306,7 +307,7 @@ class AutoSerializable(UDSTestCase):
         self.assertEqual(instance2.bool_field, True)
         self.assertEqual(instance2.password_field, UNICODE_CHARS_2)
         self.assertEqual(instance2.list_field, [1, 2, 3])
-        self.assertEqual(instance2.obj_nt_field, SerializableNamedTuple(2, '3', 4.0))
+        self.assertEqual(instance2.obj_nt_field, SerializableNamedTuple(2, "3", 4.0))
 
     def test_auto_serializable_with_added_fields(self) -> None:
         instance = AutoSerializableClassWithMissingFields()
@@ -314,7 +315,7 @@ class AutoSerializable(UDSTestCase):
         instance.bool_field = True
         instance.password_field = UNICODE_CHARS_2  # nosec: test password
         instance.list_field = [1, 2, 3]
-        instance.obj_nt_field = SerializableNamedTuple(2, '3', 4.0)
+        instance.obj_nt_field = SerializableNamedTuple(2, "3", 4.0)
 
         data = instance.marshal()
 
@@ -322,8 +323,8 @@ class AutoSerializable(UDSTestCase):
         # Overwrite defaults, so we can check that they are restored on unmarshal
         instance2.str_field = UNICODE_CHARS
         instance2.float_field = 3.0
-        instance2.dict_field = {'a': 11, 'b': 22, 'c': 33}
-        instance2.obj_dc_field = SerializableDataclass(11, '22', 33.0)
+        instance2.dict_field = {"a": 11, "b": 22, "c": 33}
+        instance2.obj_dc_field = SerializableDataclass(11, "22", 33.0)
 
         instance2.unmarshal(data)
 
@@ -332,14 +333,14 @@ class AutoSerializable(UDSTestCase):
         # Ensure that missing fields are set to default values
         # and deserialize correctly the rest of the fields
         self.assertEqual(instance2.int_field, 1)  # deserialized value
-        self.assertEqual(instance2.str_field, 'str')  # default value
+        self.assertEqual(instance2.str_field, "str")  # default value
         self.assertEqual(instance2.float_field, 44.0)  # default value
         self.assertEqual(instance2.bool_field, True)  # deserialized value
         self.assertEqual(instance2.password_field, UNICODE_CHARS_2)  # deserialized value
         self.assertEqual(instance2.list_field, [1, 2, 3])  # deserialized value
-        self.assertEqual(instance2.dict_field, {'a': 1, 'b': 2, 'c': 3})  # default value
-        self.assertEqual(instance2.obj_dc_field, SerializableDataclass(1, '2', 3.0))  # default value
-        self.assertEqual(instance2.obj_nt_field, SerializableNamedTuple(2, '3', 4.0))  # deserialized value
+        self.assertEqual(instance2.dict_field, {"a": 1, "b": 2, "c": 3})  # default value
+        self.assertEqual(instance2.obj_dc_field, SerializableDataclass(1, "2", 3.0))  # default value
+        self.assertEqual(instance2.obj_nt_field, SerializableNamedTuple(2, "3", 4.0))  # deserialized value
 
     def test_autoserializable_dirty_list(self) -> None:
         instance = AutoSerializableClass()
@@ -396,32 +397,32 @@ class AutoSerializable(UDSTestCase):
         self.assertFalse(instance._dirty)
 
         # Test list field dirty flag
-        self.assertEqual(instance.dict_field['a'], 1)
+        self.assertEqual(instance.dict_field["a"], 1)
         # First access sets default value, so it's dirty
         self.assertTrue(instance._dirty)
 
         instance._dirty = False
-        self.assertEqual(instance.dict_field['b'], 2)
+        self.assertEqual(instance.dict_field["b"], 2)
         # Second access to ANY value does not set dirty flag because
         self.assertFalse(instance._dirty)
 
-        instance.dict_field = {'a': 3, 'b': 5, 'c': 7}
+        instance.dict_field = {"a": 3, "b": 5, "c": 7}
         self.assertTrue(instance._dirty)
 
         instance._dirty = False
-        instance.dict_field['a'] = 1
+        instance.dict_field["a"] = 1
         self.assertTrue(instance._dirty)
 
         instance._dirty = False
-        instance.dict_field.update({'d': 9})
+        instance.dict_field.update({"d": 9})
         self.assertTrue(instance._dirty)
 
         instance._dirty = False
-        del instance.dict_field['b']
+        del instance.dict_field["b"]
         self.assertTrue(instance._dirty)
 
         instance._dirty = False
-        instance.dict_field.pop('a')
+        instance.dict_field.pop("a")
         self.assertTrue(instance._dirty)
 
         instance._dirty = False

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import dataclasses
@@ -44,11 +45,13 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 @dataclasses.dataclass
 class _ObjTypeInfo:
     obj_type: int
-    model: 'type[Model]'
-    
+    model: "type[Model]"
+
+
 @enum.unique
 class ObjectType(enum.Enum):
     PROVIDER = _ObjTypeInfo(1, models.Provider)
@@ -78,7 +81,7 @@ class ObjectType(enum.Enum):
     TICKET_STORE = _ObjTypeInfo(26, models.TicketStore)
 
     @property
-    def model(self) -> type['Model']:
+    def model(self) -> type["Model"]:
         return self.value.model
 
     @property
@@ -87,11 +90,11 @@ class ObjectType(enum.Enum):
         return self.value.obj_type
 
     @staticmethod
-    def from_model(model: 'Model') -> 'ObjectType':
+    def from_model(model: "Model") -> "ObjectType":
         for objtype in ObjectType:
-            if objtype.model == type(model):
+            if objtype.model is type(model):
                 return objtype
-        raise ValueError(f'Invalid model type: {model}')
+        raise ValueError(f"Invalid model type: {model}")
 
     def __eq__(self, __o: object) -> bool:
         """Compares with another ObjType, and includes int comparison
@@ -101,7 +104,7 @@ class ObjectType(enum.Enum):
 
         Returns:
             bool: True if equal, False otherwise
-            
+
         Examples:
             >>> ObjectType.PROVIDER == ObjectType.PROVIDER
             True
@@ -112,4 +115,6 @@ class ObjectType(enum.Enum):
             >>> ObjectType.PROVIDER == 2
             False
         """
-        return super().__eq__(__o) or self.value.obj_type == __o
+        if isinstance(__o, ObjectType):
+            return super().__eq__(__o)
+        return self.value.obj_type == __o

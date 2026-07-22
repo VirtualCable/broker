@@ -29,6 +29,7 @@
 """
 Authot: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import typing
 from unittest import mock
@@ -47,7 +48,7 @@ class FixedServiceIterationInfo:
     user_service_calls: list[mock._Call] = dataclasses.field(default_factory=list[mock._Call])
     state: str = types.states.TaskState.RUNNING
 
-    def __mul__(self, other: int) -> list['FixedServiceIterationInfo']:
+    def __mul__(self, other: int) -> list["FixedServiceIterationInfo"]:
         return [self] * other
 
 
@@ -63,8 +64,8 @@ EXPECTED_DEPLOY_ITERATIONS_INFO: typing.Final[list[FixedServiceIterationInfo]] =
         ],
         service_calls=[
             mock.call.get_and_assign_machine(),
-            mock.call.get_first_network_mac('assigned'),
-            mock.call.get_machine_name('assigned'),
+            mock.call.get_first_network_mac("assigned"),
+            mock.call.get_machine_name("assigned"),
         ],
     ),
     # Machine has no snapshot, and it's running, try to stop
@@ -138,7 +139,7 @@ EXPECTED_REMOVAL_ITERATIONS_INFO: typing.Final[list[FixedServiceIterationInfo]] 
             types.services.Operation.SNAPSHOT_RECOVER,
             types.services.Operation.FINISH,
         ],
-        service_calls=[mock.call.remove_and_free_machine('assigned')],
+        service_calls=[mock.call.remove_and_free_machine("assigned")],
     ),
     FixedServiceIterationInfo(
         queue=[
@@ -159,9 +160,7 @@ EXPECTED_REMOVAL_ITERATIONS_INFO: typing.Final[list[FixedServiceIterationInfo]] 
 class FixedServiceTest(UDSTestCase):
     def create_elements(
         self,
-    ) -> tuple[
-        'fixtures.FixedTestingProvider', 'fixtures.FixedTestingService', 'fixtures.FixedTestingUserService'
-    ]:
+    ) -> tuple["fixtures.FixedTestingProvider", "fixtures.FixedTestingService", "fixtures.FixedTestingUserService"]:
         provider = fixtures.create_fixed_provider()
         service = fixtures.create_fixed_service(provider=provider)
         user_service = fixtures.create_fixed_user_service(service=service)
@@ -169,8 +168,8 @@ class FixedServiceTest(UDSTestCase):
 
     def check_iterations(
         self,
-        service: 'fixtures.FixedTestingService',
-        userservice: 'fixtures.FixedTestingUserService',
+        service: "fixtures.FixedTestingService",
+        userservice: "fixtures.FixedTestingUserService",
         iterations: list[FixedServiceIterationInfo],
         removal: bool,
     ) -> None:
@@ -191,31 +190,31 @@ class FixedServiceTest(UDSTestCase):
                 first = False
             else:
                 state = userservice.check_state()
-            self.assertEqual(state, iteration.state, f'Iteration {iteration} {state}')
+            self.assertEqual(state, iteration.state, f"Iteration {iteration} {state}")
             # Assert queues are the same, and if not, show the difference ONLY
             diff = [x for x in iteration.queue if x not in userservice._queue]
             self.assertEqual(
                 userservice._queue,
                 iteration.queue,
-                f'Iteration {num} {iteration} {diff}',
+                f"Iteration {num} {iteration} {diff}",
             )
             diff_mock_calls = [x for x in iteration.service_calls if x not in service.mock.mock_calls]
             self.assertEqual(
                 service.mock.mock_calls,
                 iteration.service_calls,
-                f'Iteration {num} {iteration} {diff_mock_calls}',
+                f"Iteration {num} {iteration} {diff_mock_calls}",
             )
             diff_mock_calls = [x for x in iteration.user_service_calls if x not in userservice.mock.mock_calls]
             self.assertEqual(
                 userservice.mock.mock_calls,
                 iteration.user_service_calls,
-                f'Iteration {num} {iteration} {diff_mock_calls}',
+                f"Iteration {num} {iteration} {diff_mock_calls}",
             )
 
     def deploy_service(
         self,
-        service: 'fixtures.FixedTestingService',
-        userservice: 'fixtures.FixedTestingUserService',
+        service: "fixtures.FixedTestingService",
+        userservice: "fixtures.FixedTestingUserService",
         max_iterations: int = 100,
     ) -> None:
         if userservice.deploy_for_user(models.User()) != types.states.TaskState.FINISHED:
@@ -259,7 +258,7 @@ class FixedServiceTest(UDSTestCase):
 
     def test_service_random_machine_list(self) -> None:
         _prov, service, _userservice = self.create_elements()
-        service.machines.value = [f'machine{i}' for i in range(10)]
+        service.machines.value = [f"machine{i}" for i in range(10)]
         for randomized in (True, False):
             service.randomize.value = randomized
             machines_list = service.sorted_assignables_list()
@@ -273,13 +272,13 @@ class FixedServiceTest(UDSTestCase):
     def test_service_keep_on_error(self) -> None:
         for maintain_on_error in (True, False):
             _prov, service, userservice = self.create_elements()
-            service.machines.value = [f'machine{i}' for i in range(10)]
+            service.machines.value = [f"machine{i}" for i in range(10)]
             service.maintain_on_error.value = maintain_on_error
             self.deploy_service(service, userservice)
             self.assertEqual(userservice.check_state(), types.states.TaskState.FINISHED)
 
             # Now, ensure that we will raise an exception, overriding is_ready of service
-            service.is_ready = mock.MagicMock(side_effect=Exception('Error'))
+            service.is_ready = mock.MagicMock(side_effect=Exception("Error"))
             if maintain_on_error is False:
                 self.assertEqual(userservice.set_ready(), types.states.TaskState.ERROR)
             else:
@@ -293,11 +292,11 @@ class FixedServiceTest(UDSTestCase):
 
         # Force failure
         # patch userservice op_start_checker to raise an exception
-        with mock.patch.object(userservice, 'op_start_checker', side_effect=Exception('Error')):
+        with mock.patch.object(userservice, "op_start_checker", side_effect=Exception("Error")):
             userservice._queue = [types.services.Operation.START]
-            userservice._vmid = ''
+            userservice._vmid = ""
             self.assertEqual(userservice.check_state(), types.states.TaskState.ERROR)
-            self.assertEqual(userservice.error_reason(), 'Error')
+            self.assertEqual(userservice.error_reason(), "Error")
 
     def test_userservice_maintain_on_error_created(self) -> None:
         _prov, service, userservice = self.create_elements()
@@ -307,15 +306,15 @@ class FixedServiceTest(UDSTestCase):
 
         # Force failure
         # patch userservice op_start_checker to raise an exception, but with a vmid
-        with mock.patch.object(userservice, 'op_start_checker', side_effect=Exception('Error')):
+        with mock.patch.object(userservice, "op_start_checker", side_effect=Exception("Error")):
             userservice._queue = [types.services.Operation.START]
-            userservice._vmid = 'vmid'
+            userservice._vmid = "vmid"
             self.assertEqual(userservice.check_state(), types.states.TaskState.FINISHED)
 
     def test_userservice_max_retries_executor(self) -> None:
         _prov, _service, userservice = self.create_elements()
         # Patch userservice op_start to call retry_later()
-        with mock.patch.object(userservice, 'op_start', side_effect=userservice.retry_later):
+        with mock.patch.object(userservice, "op_start", side_effect=userservice.retry_later):
             userservice._queue = [
                 types.services.Operation.NOP,
                 types.services.Operation.START,
@@ -335,7 +334,7 @@ class FixedServiceTest(UDSTestCase):
                 state = userservice.check_state()
 
             self.assertEqual(userservice.check_state(), types.states.TaskState.ERROR)
-            self.assertEqual(userservice.error_reason(), 'Max retries reached')
+            self.assertEqual(userservice.error_reason(), "Max retries reached")
             self.assertEqual(
                 counter, 11
             )  # 4 retries + 5 retries after reset + 1 of the reset itself + 1 of initial NOP
@@ -343,7 +342,7 @@ class FixedServiceTest(UDSTestCase):
     def test_userservice_max_retries_checker(self) -> None:
         _prov, _service, userservice = self.create_elements()
         # Patch userservice op_start to call retry_later()
-        with mock.patch.object(userservice, 'op_start_checker', side_effect=userservice.retry_later):
+        with mock.patch.object(userservice, "op_start_checker", side_effect=userservice.retry_later):
             userservice._queue = [
                 types.services.Operation.START,
                 types.services.Operation.START,

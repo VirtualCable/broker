@@ -48,61 +48,61 @@ _PrivateKey = RSAPrivateKey | EllipticCurvePrivateKey
 
 # order matters, mstsc reads signscope in this exact order
 _RDP_SECURE_SETTINGS: list[tuple[str, str]] = [
-    ('full address:s:', 'Full Address'),
-    ('alternate full address:s:', 'Alternate Full Address'),
-    ('pcb:s:', 'PCB'),
-    ('use redirection server name:i:', 'Use Redirection Server Name'),
-    ('server port:i:', 'Server Port'),
-    ('negotiate security layer:i:', 'Negotiate Security Layer'),
-    ('enablecredsspsupport:i:', 'EnableCredSspSupport'),
-    ('disableconnectionsharing:i:', 'DisableConnectionSharing'),
-    ('autoreconnection enabled:i:', 'AutoReconnection Enabled'),
-    ('gatewayhostname:s:', 'GatewayHostname'),
-    ('gatewayusagemethod:i:', 'GatewayUsageMethod'),
-    ('gatewayprofileusagemethod:i:', 'GatewayProfileUsageMethod'),
-    ('gatewaycredentialssource:i:', 'GatewayCredentialsSource'),
-    ('support url:s:', 'Support URL'),
-    ('promptcredentialonce:i:', 'PromptCredentialOnce'),
-    ('require pre-authentication:i:', 'Require pre-authentication'),
-    ('pre-authentication server address:s:', 'Pre-authentication server address'),
-    ('alternate shell:s:', 'Alternate Shell'),
-    ('shell working directory:s:', 'Shell Working Directory'),
-    ('remoteapplicationprogram:s:', 'RemoteApplicationProgram'),
-    ('remoteapplicationexpandworkingdir:s:', 'RemoteApplicationExpandWorkingdir'),
-    ('remoteapplicationmode:i:', 'RemoteApplicationMode'),
-    ('remoteapplicationguid:s:', 'RemoteApplicationGuid'),
-    ('remoteapplicationname:s:', 'RemoteApplicationName'),
-    ('remoteapplicationicon:s:', 'RemoteApplicationIcon'),
-    ('remoteapplicationfile:s:', 'RemoteApplicationFile'),
-    ('remoteapplicationfileextensions:s:', 'RemoteApplicationFileExtensions'),
-    ('remoteapplicationcmdline:s:', 'RemoteApplicationCmdLine'),
-    ('remoteapplicationexpandcmdline:s:', 'RemoteApplicationExpandCmdLine'),
-    ('prompt for credentials:i:', 'Prompt For Credentials'),
-    ('authentication level:i:', 'Authentication Level'),
-    ('audiomode:i:', 'AudioMode'),
-    ('audiocapturemode:i:', 'AudioCaptureMode'),
-    ('redirectdrives:i:', 'RedirectDrives'),
-    ('redirectprinters:i:', 'RedirectPrinters'),
-    ('redirectcomports:i:', 'RedirectCOMPorts'),
-    ('redirectsmartcards:i:', 'RedirectSmartCards'),
-    ('redirectposdevices:i:', 'RedirectPOSDevices'),
-    ('redirectclipboard:i:', 'RedirectClipboard'),
-    ('devicestoredirect:s:', 'DevicesToRedirect'),
-    ('drivestoredirect:s:', 'DrivesToRedirect'),
-    ('camerastoredirect:s:', 'CamerasToRedirect'),
-    ('loadbalanceinfo:s:', 'LoadBalanceInfo'),
-    ('redirectdirectx:i:', 'RedirectDirectX'),
-    ('rdgiskdcproxy:i:', 'RDGIsKDCProxy'),
-    ('kdcproxyname:s:', 'KDCProxyName'),
-    ('eventloguploadaddress:s:', 'EventLogUploadAddress'),
+    ("full address:s:", "Full Address"),
+    ("alternate full address:s:", "Alternate Full Address"),
+    ("pcb:s:", "PCB"),
+    ("use redirection server name:i:", "Use Redirection Server Name"),
+    ("server port:i:", "Server Port"),
+    ("negotiate security layer:i:", "Negotiate Security Layer"),
+    ("enablecredsspsupport:i:", "EnableCredSspSupport"),
+    ("disableconnectionsharing:i:", "DisableConnectionSharing"),
+    ("autoreconnection enabled:i:", "AutoReconnection Enabled"),
+    ("gatewayhostname:s:", "GatewayHostname"),
+    ("gatewayusagemethod:i:", "GatewayUsageMethod"),
+    ("gatewayprofileusagemethod:i:", "GatewayProfileUsageMethod"),
+    ("gatewaycredentialssource:i:", "GatewayCredentialsSource"),
+    ("support url:s:", "Support URL"),
+    ("promptcredentialonce:i:", "PromptCredentialOnce"),
+    ("require pre-authentication:i:", "Require pre-authentication"),
+    ("pre-authentication server address:s:", "Pre-authentication server address"),
+    ("alternate shell:s:", "Alternate Shell"),
+    ("shell working directory:s:", "Shell Working Directory"),
+    ("remoteapplicationprogram:s:", "RemoteApplicationProgram"),
+    ("remoteapplicationexpandworkingdir:s:", "RemoteApplicationExpandWorkingdir"),
+    ("remoteapplicationmode:i:", "RemoteApplicationMode"),
+    ("remoteapplicationguid:s:", "RemoteApplicationGuid"),
+    ("remoteapplicationname:s:", "RemoteApplicationName"),
+    ("remoteapplicationicon:s:", "RemoteApplicationIcon"),
+    ("remoteapplicationfile:s:", "RemoteApplicationFile"),
+    ("remoteapplicationfileextensions:s:", "RemoteApplicationFileExtensions"),
+    ("remoteapplicationcmdline:s:", "RemoteApplicationCmdLine"),
+    ("remoteapplicationexpandcmdline:s:", "RemoteApplicationExpandCmdLine"),
+    ("prompt for credentials:i:", "Prompt For Credentials"),
+    ("authentication level:i:", "Authentication Level"),
+    ("audiomode:i:", "AudioMode"),
+    ("audiocapturemode:i:", "AudioCaptureMode"),
+    ("redirectdrives:i:", "RedirectDrives"),
+    ("redirectprinters:i:", "RedirectPrinters"),
+    ("redirectcomports:i:", "RedirectCOMPorts"),
+    ("redirectsmartcards:i:", "RedirectSmartCards"),
+    ("redirectposdevices:i:", "RedirectPOSDevices"),
+    ("redirectclipboard:i:", "RedirectClipboard"),
+    ("devicestoredirect:s:", "DevicesToRedirect"),
+    ("drivestoredirect:s:", "DrivesToRedirect"),
+    ("camerastoredirect:s:", "CamerasToRedirect"),
+    ("loadbalanceinfo:s:", "LoadBalanceInfo"),
+    ("redirectdirectx:i:", "RedirectDirectX"),
+    ("rdgiskdcproxy:i:", "RDGIsKDCProxy"),
+    ("kdcproxyname:s:", "KDCProxyName"),
+    ("eventloguploadaddress:s:", "EventLogUploadAddress"),
 ]
 
 
 def _ensure_signer_key(key: object) -> _PrivateKey:
     if not isinstance(key, (RSAPrivateKey, EllipticCurvePrivateKey)):
         raise ValueError(
-            f'Unsupported private key type for RDP signing: {type(key).__name__} '
-            f'(expected RSA or EC; PKCS7 rejects DSA/DH/Ed25519)'
+            f"Unsupported private key type for RDP signing: {type(key).__name__} "
+            f"(expected RSA or EC; PKCS7 rejects DSA/DH/Ed25519)"
         )
     return key
 
@@ -110,12 +110,12 @@ def _ensure_signer_key(key: object) -> _PrivateKey:
 def _check_pubkey_matches_key(cert: x509.Certificate, key: _PrivateKey) -> None:
     fmt = serialization.PublicFormat.SubjectPublicKeyInfo
     if cert.public_key().public_bytes(Encoding.DER, fmt) != key.public_key().public_bytes(Encoding.DER, fmt):
-        raise ValueError('Leaf certificate public key does not match provided private key')
+        raise ValueError("Leaf certificate public key does not match provided private key")
 
 
 def _load_cert_key_chain() -> tuple[x509.Certificate, _PrivateKey, list[x509.Certificate]]:
     cert_path = _certs.get_server_cert()
-    with open(cert_path, 'rb') as f:
+    with open(cert_path, "rb") as f:
         cert_data = f.read()
 
     # try PFX first, it carries key+chain in one file
@@ -134,9 +134,9 @@ def _load_cert_key_chain() -> tuple[x509.Certificate, _PrivateKey, list[x509.Cer
 
     certs = _certs.load_certificates_any_format(cert_data)
     if not certs:
-        raise ValueError(f'No certificates found in {cert_path}')
+        raise ValueError(f"No certificates found in {cert_path}")
 
-    with open(_certs.get_server_key(), 'rb') as f:
+    with open(_certs.get_server_key(), "rb") as f:
         key_data = f.read()
     key = _ensure_signer_key(_certs.load_private_key_any_format(key_data))
 
@@ -159,9 +159,7 @@ def sign_rdp_settings(
                 signnames.append(name)
                 signlines.append(line)
 
-    msgblob = (
-        '\r\n'.join(signlines) + '\r\nsignscope:s:' + ','.join(signnames) + '\r\n\x00'
-    ).encode('utf-16le')
+    msgblob = ("\r\n".join(signlines) + "\r\nsignscope:s:" + ",".join(signnames) + "\r\n\x00").encode("utf-16le")
 
     if cert is None or key is None:
         cert, key, chain = _load_cert_key_chain()
@@ -172,8 +170,8 @@ def sign_rdp_settings(
     signature = builder.sign(Encoding.DER, [pkcs7.PKCS7Options.DetachedSignature, pkcs7.PKCS7Options.Binary])
 
     # rdpsign.exe prepends this 12-byte header; first 8 bytes are magic, nobody knows what they mean
-    msgsig = struct.pack('<III', 0x00010001, 0x00000001, len(signature)) + signature
-    return base64.b64encode(msgsig).decode('ascii'), signnames
+    msgsig = struct.pack("<III", 0x00010001, 0x00000001, len(signature)) + signature
+    return base64.b64encode(msgsig).decode("ascii"), signnames
 
 
 def sign_rdp(
@@ -184,21 +182,22 @@ def sign_rdp(
 ) -> str:
     # strip any previous signature/signscope and blank lines
     lines = [
-        s for s in (l.strip() for l in rdp_text.splitlines())
-        if s and not s.startswith(('signature:s:', 'signscope:s:'))
+        s
+        for s in (l.strip() for l in rdp_text.splitlines())
+        if s and not s.startswith(("signature:s:", "signscope:s:"))
     ]
 
     # mirror full address into alternate, otherwise it's a tampering hole
     full = alt = None
     for l in lines:
-        if l.startswith('full address:s:'):
+        if l.startswith("full address:s:"):
             full = l[15:]
-        elif l.startswith('alternate full address:s:'):
+        elif l.startswith("alternate full address:s:"):
             alt = l[25:]
     if full and not alt:
-        lines.append('alternate full address:s:' + full)
+        lines.append("alternate full address:s:" + full)
 
     sigval, signnames = sign_rdp_settings(lines, cert, key, chain)
-    lines.append('signscope:s:' + ','.join(signnames))
-    lines.append('signature:s:' + sigval)
-    return '\r\n'.join(lines) + '\r\n'
+    lines.append("signscope:s:" + ",".join(signnames))
+    lines.append("signature:s:" + sigval)
+    return "\r\n".join(lines) + "\r\n"

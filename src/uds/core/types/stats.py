@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import enum
 
@@ -56,7 +57,7 @@ class EventType(enum.IntEnum):
     UNKNOWN = 9999
 
     @staticmethod
-    def from_int(value: int) -> 'EventType':
+    def from_int(value: int) -> "EventType":
         try:
             return EventType(value)
         except ValueError:
@@ -64,7 +65,7 @@ class EventType(enum.IntEnum):
 
     @property
     def event_name(self) -> str:
-        return self.name.capitalize().replace('_', ' ')
+        return self.name.capitalize().replace("_", " ")
 
 
 class EventOwnerType(enum.IntEnum):
@@ -75,7 +76,7 @@ class EventOwnerType(enum.IntEnum):
     OSMANAGER = 4
 
     @staticmethod
-    def from_int(value: int) -> 'EventOwnerType':
+    def from_int(value: int) -> "EventOwnerType":
         try:
             return EventOwnerType(value)
         except ValueError:
@@ -105,7 +106,7 @@ class CounterType(enum.IntEnum):
     UNKNOWN = 9999
 
     @staticmethod
-    def from_int(value: int) -> 'CounterType':
+    def from_int(value: int) -> "CounterType":
         try:
             return CounterType(value)
         except ValueError:
@@ -113,7 +114,7 @@ class CounterType(enum.IntEnum):
 
     @property
     def counter_name(self) -> str:
-        return self.name.capitalize().replace('_', ' ')
+        return self.name.capitalize().replace("_", " ")
 
 
 class CounterOwnerType(enum.IntEnum):
@@ -127,7 +128,7 @@ class CounterOwnerType(enum.IntEnum):
     AUTHENTICATOR = 3
 
     @staticmethod
-    def from_int(value: int) -> 'CounterOwnerType':
+    def from_int(value: int) -> "CounterOwnerType":
         try:
             return CounterOwnerType(value)
         except ValueError:
@@ -143,6 +144,7 @@ class AccumStat:
     """
     Accumulated statistics for a given interval, as stored in the database
     """
+
     stamp: int
     count: int  # Number of elements in this interval
     sum: int  # Sum of elements in this interval

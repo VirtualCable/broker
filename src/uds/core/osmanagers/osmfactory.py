@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core.util import factory
@@ -37,5 +38,6 @@ from uds.core.util import factory
 if typing.TYPE_CHECKING:
     from .osmanager import OSManager
 
-class OSManagersFactory(factory.ModuleFactory['OSManager']):
+
+class OSManagersFactory(factory.ModuleFactory["OSManager"]):
     pass

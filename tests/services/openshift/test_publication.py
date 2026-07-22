@@ -55,8 +55,8 @@ class TestOpenshiftPublication(UDSTransactionTestCase):
             service = fixtures.create_service(provider=provider)
             publication = fixtures.create_publication(service=service)
 
-            api.get_vm_pvc_or_dv_name.return_value = ('test-pvc', 'pvc')
-            api.get_pvc_size.return_value = '10Gi'
+            api.get_vm_pvc_or_dv_name.return_value = ("test-pvc", "pvc")
+            api.get_pvc_size.return_value = "10Gi"
             api.create_vm_from_pvc.return_value = True
             api.wait_for_datavolume_clone_progress.return_value = True
             # Return a mock for get_datavolume_phase with is_error()=False and is_succeeded()=True
@@ -109,12 +109,12 @@ class TestOpenshiftPublication(UDSTransactionTestCase):
             running_vm.status = running_status
 
             def get_vm_info_side_effect(name: str, **kwargs: typing.Any) -> mock.Mock | None:
-                return running_vm if name == 'test-vm' else None
+                return running_vm if name == "test-vm" else None
 
             api.get_vm_info.side_effect = get_vm_info_side_effect
-            publication._name = 'test-vm'
+            publication._name = "test-vm"
             publication.op_create_completed()
-            api.stop_vm.assert_called_with('test-vm')
+            api.stop_vm.assert_called_with("test-vm")
 
             # VM stopped
             stopped_status = mock.Mock()
@@ -126,7 +126,7 @@ class TestOpenshiftPublication(UDSTransactionTestCase):
             api.get_vm_info.return_value = stopped_vm
             api.stop_vm.reset_mock()
             publication.op_create_completed()
-            api.stop_vm.assert_called_with('test-vm')
+            api.stop_vm.assert_called_with("test-vm")
 
             # VM not found (get_vm_info returns None)
             api.get_vm_info.return_value = None
@@ -154,8 +154,8 @@ class TestOpenshiftPublication(UDSTransactionTestCase):
             service = fixtures.create_service(provider=provider)
             publication = fixtures.create_publication(service=service)
 
-            api.get_vm_pvc_or_dv_name.return_value = ('test-pvc', 'pvc')
-            api.get_pvc_size.return_value = '10Gi'
+            api.get_vm_pvc_or_dv_name.return_value = ("test-pvc", "pvc")
+            api.get_pvc_size.return_value = "10Gi"
             api.create_vm_from_pvc.return_value = True
             api.wait_for_datavolume_clone_progress.return_value = True
 
@@ -170,18 +170,19 @@ class TestOpenshiftPublication(UDSTransactionTestCase):
                 vm = mock.Mock()
                 vm.status = mock.Mock()
                 vm.name = publication._name
-                vm.interfaces = [mock.Mock(mac_address='00:11:22:33:44:55')]
+                vm.interfaces = [mock.Mock(mac_address="00:11:22:33:44:55")]
                 vm.is_usable = mock.Mock(return_value=True)
                 vm.is_running = mock.Mock(return_value=False)
                 return vm
+
             api.get_vm_info.side_effect = vm_info_side_effect
 
             # Set attributes directly on the MagicMock api
-            api.get_token = mock.Mock(return_value='dummy-token')
+            api.get_token = mock.Mock(return_value="dummy-token")
             api.connect = mock.Mock(return_value=mock.Mock(headers={}))
             api.session = mock.Mock(headers={})
-            api.get_vm_interfaces = mock.Mock(return_value=[mock.Mock(mac_address='00:11:22:33:44:55')])
-            api.do_request = mock.Mock(return_value={'status': {'interfaces': [{'mac_address': '00:11:22:33:44:55'}]}})
+            api.get_vm_interfaces = mock.Mock(return_value=[mock.Mock(mac_address="00:11:22:33:44:55")])
+            api.do_request = mock.Mock(return_value={"status": {"interfaces": [{"mac_address": "00:11:22:33:44:55"}]}})
 
             state = publication.publish()
             self.assertEqual(state, types.states.State.RUNNING)
@@ -200,6 +201,6 @@ class TestOpenshiftPublication(UDSTransactionTestCase):
         """
         service = fixtures.create_service()
         publication = fixtures.create_publication(service=service)
-        publication._name = 'test-template'
+        publication._name = "test-template"
         template_id = publication.get_template_id()
-        self.assertEqual(template_id, 'test-template')
+        self.assertEqual(template_id, "test-template")

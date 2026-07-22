@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 import typing
 
@@ -40,7 +41,8 @@ if typing.TYPE_CHECKING:
     from django.apps.registry import Apps
     from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 
-def perform_upgrade(apps: 'Apps', schema_editor: 'BaseDatabaseSchemaEditor') -> None:
+
+def perform_upgrade(apps: "Apps", schema_editor: "BaseDatabaseSchemaEditor") -> None:
     """
     Entry point for migration 0051 RunPython.
 
@@ -54,7 +56,7 @@ def perform_upgrade(apps: 'Apps', schema_editor: 'BaseDatabaseSchemaEditor') -> 
     upgrade_osmanagers()
 
 
-def noop_reverse(apps: 'Apps', schema_editor: 'BaseDatabaseSchemaEditor') -> None:
+def noop_reverse(apps: "Apps", schema_editor: "BaseDatabaseSchemaEditor") -> None:
     """
     Dummy reverse operation for migration 0051.
     The conversion is forward-compatible (old unmarshal still exists in v5),

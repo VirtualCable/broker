@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import csv
 import dataclasses
@@ -72,38 +73,37 @@ class TokenItem(types.rest.BaseRestItem):
 
 # REST API for Server Tokens management (for admin interface)
 class ServersTokens(ModelHandler[TokenItem]):
-
     # servers/groups/[id]/servers
     MODEL = models.Server
     EXCLUDE = {
-        'type__in': [
+        "type__in": [
             types.servers.ServerType.ACTOR,
             types.servers.ServerType.UNMANAGED,
         ]
     }
-    PATH = 'servers'
-    NAME = 'tokens'
+    PATH = "servers"
+    NAME = "tokens"
 
     TABLE = (
-        ui_utils.TableBuilder(_('Registered Servers'))
-        .text_column(name='hostname', title=_('Hostname'), visible=True)
-        .text_column(name='ip', title=_('IP'), visible=True)
-        .text_column(name='mac', title=_('MAC'), visible=True)
-        .text_column(name='type', title=_('Type'), visible=False)
-        .text_column(name='os', title=_('OS'), visible=True)
-        .text_column(name='username', title=_('Issued by'), visible=True)
-        .datetime_column(name='stamp', title=_('Date'), visible=True)
-        .with_field_mappings(username='register_username', os='os_type')
-        .with_filter_fields('hostname', 'ip', 'mac', 'register_username', 'os_type')
+        ui_utils.TableBuilder(_("Registered Servers"))
+        .text_column(name="hostname", title=_("Hostname"), visible=True)
+        .text_column(name="ip", title=_("IP"), visible=True)
+        .text_column(name="mac", title=_("MAC"), visible=True)
+        .text_column(name="type", title=_("Type"), visible=False)
+        .text_column(name="os", title=_("OS"), visible=True)
+        .text_column(name="username", title=_("Issued by"), visible=True)
+        .datetime_column(name="stamp", title=_("Date"), visible=True)
+        .with_field_mappings(username="register_username", os="os_type")
+        .with_filter_fields("hostname", "ip", "mac", "register_username", "os_type")
         .build()
     )
 
     @typing.override
-    def get_item(self, item: 'Model') -> TokenItem:
-        item = typing.cast('models.Server', item)  # We will receive for sure
+    def get_item(self, item: "Model") -> TokenItem:
+        item = typing.cast("models.Server", item)  # We will receive for sure
         return TokenItem(
             id=item.uuid,
-            name=str(_('Token isued by {} from {}')).format(item.register_username, item.ip),
+            name=str(_("Token isued by {} from {}")).format(item.register_username, item.ip),
             stamp=item.stamp,
             username=item.register_username,
             ip=item.ip,
@@ -121,7 +121,7 @@ class ServersTokens(ModelHandler[TokenItem]):
         Processes a DELETE request
         """
         if len(self._args) != 1:
-            raise RequestError('Delete need one and only one argument')
+            raise RequestError("Delete need one and only one argument")
 
         self.check_access(
             self.MODEL(), types.permissions.PermissionType.ALL, root=True
@@ -130,7 +130,7 @@ class ServersTokens(ModelHandler[TokenItem]):
         try:
             self.MODEL.objects.get(uuid=process_uuid(self._args[0])).delete()
         except self.MODEL.DoesNotExist:
-            raise NotFound('Element do not exists') from None
+            raise NotFound("Element do not exists") from None
 
         return consts.OK
 
@@ -149,28 +149,25 @@ class ServerItem(types.rest.BaseRestItem):
 
 # REST API For servers (except tunnel servers nor actors)
 class ServersServers(DetailHandler[ServerItem]):
-
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'maintenance',
+            "maintenance",
             method=types.rest.CustomMethodMethod.POST,
-            description='Toggle maintenance mode for a server (enable if disabled, disable if enabled)',
+            description="Toggle maintenance mode for a server (enable if disabled, disable if enabled)",
         ),
         types.rest.ModelCustomMethod(
-            'importcsv',
+            "importcsv",
             method=types.rest.CustomMethodMethod.POST,
-            description='Import server configuration from CSV data',
+            description="Import server configuration from CSV data",
             params=types.rest.api.SchemaProperty(
-                type='object',
+                type="object",
                 properties={
-                    'data': types.rest.api.SchemaProperty(
-                        type='string', description='CSV content with server entries'
+                    "data": types.rest.api.SchemaProperty(type="string", description="CSV content with server entries"),
+                    "has_header": types.rest.api.SchemaProperty(
+                        type="boolean", description="Whether the CSV has a header row"
                     ),
-                    'has_header': types.rest.api.SchemaProperty(
-                        type='boolean', description='Whether the CSV has a header row'
-                    ),
-                    'separator': types.rest.api.SchemaProperty(
-                        type='string', description='CSV field separator character (default comma)'
+                    "separator": types.rest.api.SchemaProperty(
+                        type="string", description="CSV field separator character (default comma)"
                     ),
                 },
             ),
@@ -182,76 +179,76 @@ class ServersServers(DetailHandler[ServerItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
-    def as_server_item(self, item: 'models.Server') -> ServerItem:
+    def as_server_item(self, item: "models.Server") -> ServerItem:
         return ServerItem(
             id=item.uuid,
             hostname=item.hostname,
             ip=item.ip,
             listen_port=item.listen_port,
-            mac=item.mac if item.mac != consts.NULL_MAC else '',
+            mac=item.mac if item.mac != consts.NULL_MAC else "",
             maintenance_mode=item.maintenance_mode,
             register_username=item.register_username,
             stamp=item.stamp,
         )
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ServerItem]:
-        parent = typing.cast('models.ServerGroup', parent)  # We will receive for sure
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult[ServerItem]:
+        parent = typing.cast("models.ServerGroup", parent)  # We will receive for sure
         return [self.as_server_item(i) for i in self.filter_odata_queryset(parent.servers.all())]
 
     @typing.override
-    def get_item(self, parent: 'Model', item: str) -> ServerItem:
-        parent = typing.cast('models.ServerGroup', parent)  # We will receive for sure
+    def get_item(self, parent: "Model", item: str) -> ServerItem:
+        parent = typing.cast("models.ServerGroup", parent)  # We will receive for sure
         return self.as_server_item(parent.servers.get(uuid=process_uuid(item)))
 
     @typing.override
-    def get_table(self, parent: 'Model') -> TableInfo:
+    def get_table(self, parent: "Model") -> TableInfo:
         parent = ensure.is_instance(parent, models.ServerGroup)
         table_info = (
-            ui_utils.TableBuilder(_('Servers of {0}').format(parent.name))
-            .text_column(name='hostname', title=_('Hostname'))
-            .text_column(name='ip', title=_('Ip'))
-            .text_column(name='mac', title=_('Mac'))
+            ui_utils.TableBuilder(_("Servers of {0}").format(parent.name))
+            .text_column(name="hostname", title=_("Hostname"))
+            .text_column(name="ip", title=_("Ip"))
+            .text_column(name="mac", title=_("Mac"))
         )
         if parent.is_managed():
-            table_info.text_column(name='listen_port', title=_('Port'))
+            table_info.text_column(name="listen_port", title=_("Port"))
 
         return (
             table_info.dict_column(
-                name='maintenance_mode',
-                title=_('State'),
-                dct={True: _('Maintenance'), False: _('Normal')},
+                name="maintenance_mode",
+                title=_("State"),
+                dct={True: _("Maintenance"), False: _("Normal")},
             )
-            .row_style(prefix='row-maintenance-', field='maintenance_mode')
+            .row_style(prefix="row-maintenance-", field="maintenance_mode")
             .build()
         )
 
     @typing.override
-    def get_gui(self, parent: 'Model', for_type: str) -> list[types.ui.GuiElement]:
+    def get_gui(self, parent: "Model", for_type: str) -> list[types.ui.GuiElement]:
         parent = ensure.is_instance(parent, models.ServerGroup)
         kind, subkind = parent.server_type, parent.subtype
-        title = _('of type') + f' {subkind.upper()} {kind.name.capitalize()}'
+        title = _("of type") + f" {subkind.upper()} {kind.name.capitalize()}"
         gui_builder = ui_utils.GuiBuilder(order=100)
         if kind == types.servers.ServerType.UNMANAGED:
             return (
                 gui_builder.add_text(
-                    name='hostname',
-                    label=gettext('Hostname'),
-                    tooltip=gettext('Hostname of the server. It must be resolvable by UDS'),
-                    default='',
+                    name="hostname",
+                    label=gettext("Hostname"),
+                    tooltip=gettext("Hostname of the server. It must be resolvable by UDS"),
+                    default="",
                 )
                 .add_text(
-                    name='ip',
-                    label=gettext('IP'),
+                    name="ip",
+                    label=gettext("IP"),
                 )
                 .add_text(
-                    name='mac',
-                    label=gettext('Server MAC'),
-                    tooltip=gettext('Optional MAC address of the server'),
-                    default='',
+                    name="mac",
+                    label=gettext("Server MAC"),
+                    tooltip=gettext("Optional MAC address of the server"),
+                    default="",
                 )
                 .add_info(
-                    name='title',
+                    name="title",
                     default=title,
                 )
                 .build()
@@ -259,38 +256,38 @@ class ServersServers(DetailHandler[ServerItem]):
 
         return (
             gui_builder.add_choice(
-                name='server',
-                label=gettext('Server'),
-                tooltip=gettext('Server to include on group'),
+                name="server",
+                label=gettext("Server"),
+                tooltip=gettext("Server to include on group"),
                 choices=[
                     types.ui.ChoiceItem(item.uuid, item.hostname)
                     for item in models.Server.objects.filter(type=parent.type, subtype=parent.subtype)
                     if item.groups.count() == 0
                 ],
             )
-            .add_info(name='title', default=title)
+            .add_info(name="title", default=title)
             .build()
         )
 
     @typing.override
-    def save_item(self, parent: 'Model', item: str | None) -> typing.Any:
+    def save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServerGroup)
         # Item is the uuid of the server to add
-        server: 'models.Server | None' = None  # Avoid warning on reference before assignment
-        mac: str = ''
+        server: "models.Server | None" = None  # Avoid warning on reference before assignment
+        mac: str = ""
         if item is None:
             # Create new, depending on server type
             if parent.type == types.servers.ServerType.UNMANAGED:
                 # Ensure mac is empty or valid
-                mac = self._params['mac'].strip().upper()
+                mac = self._params["mac"].strip().upper()
                 if mac and not net.is_valid_mac(mac):
-                    raise exceptions.rest.RequestError(_('Invalid MAC address'))
+                    raise exceptions.rest.RequestError(_("Invalid MAC address"))
                 # Create a new one, and add it to group
                 server = models.Server.objects.create(
                     register_username=self._user.pretty_name,
                     register_ip=self._request.ip,
-                    ip=self._params['ip'],
-                    hostname=self._params['hostname'],
+                    ip=self._params["ip"],
+                    hostname=self._params["hostname"],
                     listen_port=0,
                     mac=mac,
                     type=parent.type,
@@ -299,43 +296,43 @@ class ServersServers(DetailHandler[ServerItem]):
                 )
                 # Add to group
                 parent.servers.add(server)
-                return {'id': server.uuid}
+                return {"id": server.uuid}
             elif parent.type == types.servers.ServerType.SERVER:
                 # Get server
                 try:
-                    server = models.Server.objects.get(uuid=process_uuid(self._params['server']))
+                    server = models.Server.objects.get(uuid=process_uuid(self._params["server"]))
                     # Check server type is also SERVER
                     if server and server.type != types.servers.ServerType.SERVER:
-                        logger.error('Server type for %s is not SERVER', server.host)
-                        raise exceptions.rest.RequestError('Invalid server type') from None
+                        logger.error("Server type for %s is not SERVER", server.host)
+                        raise exceptions.rest.RequestError("Invalid server type") from None
                     parent.servers.add(server)
                 except models.Server.DoesNotExist:
-                    raise exceptions.rest.NotFound(f'Server not found: {self._params["server"]}') from None
+                    raise exceptions.rest.NotFound(f"Server not found: {self._params['server']}") from None
                 except Exception as e:
-                    logger.error('Error getting server: %s', e)
-                    raise exceptions.rest.ResponseError('Error getting server') from None
+                    logger.error("Error getting server: %s", e)
+                    raise exceptions.rest.ResponseError("Error getting server") from None
 
-                return {'id': server.uuid}
+                return {"id": server.uuid}
         else:
             if parent.type == types.servers.ServerType.UNMANAGED:
-                mac = self._params['mac'].strip().upper()
+                mac = self._params["mac"].strip().upper()
                 if mac and not net.is_valid_mac(mac):
-                    raise exceptions.rest.RequestError('Invalid MAC address')
+                    raise exceptions.rest.RequestError("Invalid MAC address")
                 try:
                     models.Server.objects.filter(uuid=process_uuid(item)).update(
                         # Update register info also on update
                         register_username=self._user.pretty_name,
                         register_ip=self._request.ip,
-                        hostname=self._params['hostname'],
-                        ip=self._params['ip'],
+                        hostname=self._params["hostname"],
+                        ip=self._params["ip"],
                         mac=mac,
                         stamp=sql_now(),  # Modified now
                     )
                 except models.Server.DoesNotExist:
-                    raise exceptions.rest.NotFound(f'Server not found: {item}') from None
+                    raise exceptions.rest.NotFound(f"Server not found: {item}") from None
                 except Exception as e:
-                    logger.error('Error updating server: %s', e)
-                    raise exceptions.rest.ResponseError('Error updating server') from None
+                    logger.error("Error updating server: %s", e)
+                    raise exceptions.rest.ResponseError("Error updating server") from None
 
             else:
                 # Remove current server and add the new one in a single transaction
@@ -343,12 +340,12 @@ class ServersServers(DetailHandler[ServerItem]):
                     server = models.Server.objects.get(uuid=process_uuid(item))
                     parent.servers.add(server)
                 except models.Server.DoesNotExist:
-                    raise exceptions.rest.NotFound(f'Server not found: {item}') from None
+                    raise exceptions.rest.NotFound(f"Server not found: {item}") from None
 
-            return {'id': item}
+            return {"id": item}
 
     @typing.override
-    def delete_item(self, parent: 'Model', item: str) -> None:
+    def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, models.ServerGroup)
         try:
             server = models.Server.objects.get(uuid=process_uuid(item))
@@ -358,13 +355,13 @@ class ServersServers(DetailHandler[ServerItem]):
             else:
                 parent.servers.remove(server)  # Just remove reference
         except models.Server.DoesNotExist:
-            raise exceptions.rest.NotFound(f'Server not found: {item}') from None
+            raise exceptions.rest.NotFound(f"Server not found: {item}") from None
         except Exception as e:
-            logger.error('Error deleting server %s from %s: %s', item, parent, e)
-            raise exceptions.rest.ResponseError('Error deleting server') from None
+            logger.error("Error deleting server %s from %s: %s", item, parent, e)
+            raise exceptions.rest.ResponseError("Error deleting server") from None
 
     # Custom methods
-    def maintenance(self, parent: 'Model', id: str) -> typing.Any:
+    def maintenance(self, parent: "Model", id: str) -> typing.Any:
         """
         Custom method that swaps maintenance mode state for a server
         :param item:
@@ -374,18 +371,18 @@ class ServersServers(DetailHandler[ServerItem]):
         self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
         item.maintenance_mode = not item.maintenance_mode
         item.save()
-        return 'ok'
+        return "ok"
 
-    def importcsv(self, parent: 'Model') -> typing.Any:
+    def importcsv(self, parent: "Model") -> typing.Any:
         """
         We receive the file
         Has no header, only the data.
         """
         parent = ensure.is_instance(parent, models.ServerGroup)
-        data: str = self._params.get('data', '')
-        has_header: bool = self._params.get('has_header', False)
-        separator: str = self._params.get('separator', ',')
-        logger.debug('Data received: %s, has_header: %s..., separator: %s', data[:64], has_header, separator)
+        data: str = self._params.get("data", "")
+        has_header: bool = self._params.get("has_header", False)
+        separator: str = self._params.get("separator", ",")
+        logger.debug("Data received: %s, has_header: %s..., separator: %s", data[:64], has_header, separator)
 
         csv_file = io.StringIO(data)
         reader = csv.reader(csv_file, delimiter=separator)
@@ -399,41 +396,41 @@ class ServersServers(DetailHandler[ServerItem]):
             try:
                 next(reader)  # Skip header
             except StopIteration:
-                return ['CSV has no data rows']
+                return ["CSV has no data rows"]
 
         for line_number, row in enumerate(reader, 1):
             if len(row) == 0:
                 continue
             hostname = row[0].strip()
-            ip = ''
+            ip = ""
             mac = consts.NULL_MAC
             if len(row) > 1:
                 ip = row[1].strip()
             if len(row) > 2:
                 mac = row[2].strip().upper().strip() or consts.NULL_MAC
                 if mac and not net.is_valid_mac(mac):
-                    import_errors.append(f'Line {line_number}: MAC {mac} is invalid, skipping')
+                    import_errors.append(f"Line {line_number}: MAC {mac} is invalid, skipping")
                     continue  # skip invalid macs
             if ip and not net.is_valid_ip(ip):
-                import_errors.append(f'Line {line_number}: IP {ip} is invalid, skipping')
+                import_errors.append(f"Line {line_number}: IP {ip} is invalid, skipping")
                 continue  # skip invalid ips if not empty
             # Must have at least a valid ip or a valid hostname
             if not ip and not hostname:
-                import_errors.append(f'Line {line_number}: No IP or hostname, skipping')
+                import_errors.append(f"Line {line_number}: No IP or hostname, skipping")
                 continue
 
             if hostname and not net.is_valid_host(hostname):
                 # Log it has been skipped
-                import_errors.append(f'Line {line_number}: Hostname {hostname} is invalid, skipping')
+                import_errors.append(f"Line {line_number}: Hostname {hostname} is invalid, skipping")
                 continue  # skip invalid hostnames
 
             # Seems valid, create server if not exists already (by ip OR hostname)
-            logger.debug('Creating server with ip %s, hostname %s and mac %s', ip, hostname, mac)
+            logger.debug("Creating server with ip %s, hostname %s and mac %s", ip, hostname, mac)
             try:
                 q = parent.servers.all()
-                if ip != '':
+                if ip != "":
                     q = q.filter(ip=ip)
-                if hostname != '':
+                if hostname != "":
                     q = q.filter(hostname=hostname)
                 if q.count() == 0:
                     server = models.Server.objects.create(
@@ -450,10 +447,10 @@ class ServersServers(DetailHandler[ServerItem]):
                     parent.servers.add(server)  # And register it on group
                 else:
                     # Log it has been skipped
-                    import_errors.append(f'Line {line_number}: duplicated server, skipping')
+                    import_errors.append(f"Line {line_number}: duplicated server, skipping")
             except Exception as e:
-                import_errors.append(f'Error creating server on line {line_number}: {str(e)}')
-                logger.exception('Error creating server on line %s', line_number)
+                import_errors.append(f"Error creating server on line {line_number}: {str(e)}")
+                logger.exception("Error creating server on line %s", line_number)
 
         return import_errors
 
@@ -476,44 +473,43 @@ class GroupItem(types.rest.BaseRestItem):
 
 
 class ServersGroups(ModelHandler[GroupItem]):
-
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'stats',
+            "stats",
             True,
-            description='Retrieve aggregate server statistics including counts by state, type, and resource usage',
+            description="Retrieve aggregate server statistics including counts by state, type, and resource usage",
         ),
     ]
     MODEL = models.ServerGroup
     FILTER = {
-        'type__in': [
+        "type__in": [
             types.servers.ServerType.SERVER,
             types.servers.ServerType.UNMANAGED,
         ]
     }
-    DETAIL = {'servers': ServersServers}
+    DETAIL = {"servers": ServersServers}
 
-    PATH = 'servers'
-    NAME = 'groups'
+    PATH = "servers"
+    NAME = "groups"
 
     FIELDS_TO_SAVE = [
-        'name',
-        'comments',
-        'type:_',
-        'subtype:_',
-        'data_type:_',
-        'tags',
+        "name",
+        "comments",
+        "type:_",
+        "subtype:_",
+        "data_type:_",
+        "tags",
     ]  # Subtype is appended on pre_save
 
     TABLE = (
-        ui_utils.TableBuilder(_('Servers Groups'))
-        .text_column(name='name', title=_('Name'), visible=True)
-        .text_column(name='comments', title=_('Comments'))
-        .text_column(name='type_name', title=_('Type'), visible=True)
-        .text_column(name='type', title='', visible=False)
-        .text_column(name='subtype', title=_('Subtype'), visible=True)
-        .numeric_column(name='servers_count', title=_('Servers'), width='5rem')
-        .text_column(name='tags', title=_('tags'), visible=False)
+        ui_utils.TableBuilder(_("Servers Groups"))
+        .text_column(name="name", title=_("Name"), visible=True)
+        .text_column(name="comments", title=_("Comments"))
+        .text_column(name="type_name", title=_("Type"), visible=True)
+        .text_column(name="type", title="", visible=False)
+        .text_column(name="subtype", title=_("Subtype"), visible=True)
+        .numeric_column(name="servers_count", title=_("Servers"), width="5rem")
+        .text_column(name="tags", title=_("tags"), visible=False)
         .build()
     )
 
@@ -529,22 +525,22 @@ class ServersGroups(ModelHandler[GroupItem]):
         for i in types.servers.ServerSubtype.manager().enum():
             yield types.rest.TypeInfo(
                 name=i.description,
-                type=f'{i.type.name}@{i.subtype}',
-                description='',
+                type=f"{i.type.name}@{i.subtype}",
+                description="",
                 icon=i.icon,
-                group=gettext('Managed') if i.managed else gettext('Unmanaged'),
+                group=gettext("Managed") if i.managed else gettext("Unmanaged"),
             )
 
     @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
-        if '@' not in for_type:  # If no subtype, use default
-            for_type += '@default'
-        kind, subkind = for_type.split('@')[:2]
+        if "@" not in for_type:  # If no subtype, use default
+            for_type += "@default"
+        kind, subkind = for_type.split("@")[:2]
         if kind == types.servers.ServerType.SERVER.name:
-            kind = _('Standard')
+            kind = _("Standard")
         elif kind == types.servers.ServerType.UNMANAGED.name:
-            kind = _('Unmanaged')
-        title = _('of type') + f' {subkind.upper()} {kind}'
+            kind = _("Unmanaged")
+        title = _("of type") + f" {subkind.upper()} {kind}"
 
         return (
             ui_utils.GuiBuilder()
@@ -559,33 +555,33 @@ class ServersGroups(ModelHandler[GroupItem]):
             # max_expected_users: int = 100  # Max expected users to consider in load calculation
             # min_memory: int = 0  # Minimum free memory in bytes to consider server as available, 0 means no limit
             # users_limit: int = 0  # Maximum number of users to consider server as available, 0 means no limit
-            .new_tab(_('Load calculation weights'))
+            .new_tab(_("Load calculation weights"))
             .add_numeric(
-                name='weights_cpu',
-                label=_('CPU weight'),
-                tooltip=_('Weight of CPU load on server load calculation. Value between 0 and 1'),
+                name="weights_cpu",
+                label=_("CPU weight"),
+                tooltip=_("Weight of CPU load on server load calculation. Value between 0 and 1"),
                 default=30,
             )
             .add_numeric(
-                name='weights_memory',
-                label=_('Memory weight'),
-                tooltip=_('Weight of memory load on server load calculation. Value between 0 and 1'),
+                name="weights_memory",
+                label=_("Memory weight"),
+                tooltip=_("Weight of memory load on server load calculation. Value between 0 and 1"),
                 default=60,
             )
             .add_numeric(
-                name='weights_users',
-                label=_('Users weight'),
-                tooltip=_('Weight of users load on server load calculation. Value between 0 and 1'),
+                name="weights_users",
+                label=_("Users weight"),
+                tooltip=_("Weight of users load on server load calculation. Value between 0 and 1"),
                 default=10,
             )
             .add_numeric(
-                name='weights_max_expected_users',
-                label=_('Max expected users'),
-                tooltip=_('Max expected users to consider in load calculation'),
+                name="weights_max_expected_users",
+                label=_("Max expected users"),
+                tooltip=_("Max expected users to consider in load calculation"),
                 default=100,
             )
             .add_info(
-                name='title',
+                name="title",
                 default=title,
             )
             .build()
@@ -595,34 +591,34 @@ class ServersGroups(ModelHandler[GroupItem]):
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
         # Allow from admin gui (data_type) or from API (type and subtype)
         # Extract weights if they are on fields
-        if 'data_type' in fields:
-            type, subtype = typing.cast(str, fields['data_type']).split('@')
-            fields['type'] = types.servers.ServerType[type.upper()].value
-            fields['subtype'] = subtype
-            del fields['data_type']
-        elif not ('type' in fields and 'subtype' in fields):
-            raise exceptions.rest.RequestError('Type and subtype must be provided') from None
+        if "data_type" in fields:
+            type, subtype = typing.cast(str, fields["data_type"]).split("@")
+            fields["type"] = types.servers.ServerType[type.upper()].value
+            fields["subtype"] = subtype
+            del fields["data_type"]
+        elif not ("type" in fields and "subtype" in fields):
+            raise exceptions.rest.RequestError("Type and subtype must be provided") from None
 
         return super().pre_save(fields)
 
     @typing.override
-    def post_save(self, item: 'Model') -> None:
+    def post_save(self, item: "Model") -> None:
         # Save weights if they are on fields
         item = ensure.is_instance(item, models.ServerGroup)
         weights_params = [
-            'weights_cpu',
-            'weights_memory',
-            'weights_users',
-            'weights_max_expected_users',
+            "weights_cpu",
+            "weights_memory",
+            "weights_users",
+            "weights_max_expected_users",
         ]
         args = self.fields_from_params(weights_params)
         # Load parameters to be normalized
-        cpu = int(args['weights_cpu']) if args['weights_cpu'] is not None else 0
-        memory = int(args['weights_memory']) if args['weights_memory'] is not None else 0
-        users = int(args['weights_users']) if args['weights_users'] is not None else 0
+        cpu = int(args["weights_cpu"]) if args["weights_cpu"] is not None else 0
+        memory = int(args["weights_memory"]) if args["weights_memory"] is not None else 0
+        users = int(args["weights_users"]) if args["weights_users"] is not None else 0
         # rest of parameters, not normalized
         max_expected_users = (
-            int(args['weights_max_expected_users']) if args['weights_max_expected_users'] is not None else 100
+            int(args["weights_max_expected_users"]) if args["weights_max_expected_users"] is not None else 100
         )
         # Normalize weights to sum 100 if they are not
         all_sum = cpu + memory + users
@@ -639,13 +635,13 @@ class ServersGroups(ModelHandler[GroupItem]):
         )
 
     @typing.override
-    def get_item(self, item: 'Model') -> GroupItem:
+    def get_item(self, item: "Model") -> GroupItem:
         item = ensure.is_instance(item, models.ServerGroup)
         return GroupItem(
             id=item.uuid,
             name=item.name,
             comments=item.comments,
-            type=f'{types.servers.ServerType(item.type).name}@{item.subtype}',
+            type=f"{types.servers.ServerType(item.type).name}@{item.subtype}",
             subtype=item.subtype.capitalize(),
             type_name=types.servers.ServerType(item.type).name.capitalize(),
             tags=[tag.tag for tag in item.tags.all()],
@@ -658,7 +654,7 @@ class ServersGroups(ModelHandler[GroupItem]):
         )
 
     @typing.override
-    def delete_item(self, item: 'Model') -> None:
+    def delete_item(self, item: "Model") -> None:
         item = ensure.is_instance(item, models.ServerGroup)
         """
         Processes a DELETE request
@@ -674,9 +670,9 @@ class ServersGroups(ModelHandler[GroupItem]):
                     server.delete()
             item.delete()
         except self.MODEL.DoesNotExist:
-            raise NotFound('Element do not exists') from None
+            raise NotFound("Element do not exists") from None
 
-    def stats(self, item: 'Model') -> typing.Any:
+    def stats(self, item: "Model") -> typing.Any:
         # Avoid circular imports
         from uds.core.managers.servers import ServerManager
 
@@ -684,14 +680,14 @@ class ServersGroups(ModelHandler[GroupItem]):
 
         return [
             {
-                'stats': s[0].as_dict() if s[0] else None,
-                'server': {
-                    'id': s[1].uuid,
-                    'hostname': s[1].hostname,
-                    'mac': s[1].mac if s[1].mac != consts.NULL_MAC else '',
-                    'ip': s[1].ip,
-                    'load': s[0].load(weights=item.weights) if s[0] else 0,
-                    'weights': item.weights.as_dict(),
+                "stats": s[0].as_dict() if s[0] else None,
+                "server": {
+                    "id": s[1].uuid,
+                    "hostname": s[1].hostname,
+                    "mac": s[1].mac if s[1].mac != consts.NULL_MAC else "",
+                    "ip": s[1].ip,
+                    "load": s[0].load(weights=item.weights) if s[0] else 0,
+                    "weights": item.weights.as_dict(),
                 },
             }
             for s in ServerManager.manager().get_server_stats(item.servers.all())

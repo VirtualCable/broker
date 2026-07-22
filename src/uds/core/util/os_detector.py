@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -45,24 +46,21 @@ def detect_os(
     """
     Basic OS Client detector (very basic indeed :-))
     """
-    ua = headers.get('User-Agent') or types.os.KnownOS.UNKNOWN.value[0]
+    ua = headers.get("User-Agent") or types.os.KnownOS.UNKNOWN.value[0]
 
-    res = types.os.DetectedOsInfo(
-        os=types.os.KnownOS.UNKNOWN, browser=types.os.KnownBrowser.OTHER, version='0.0'
-    )
+    res = types.os.DetectedOsInfo(os=types.os.KnownOS.UNKNOWN, browser=types.os.KnownBrowser.OTHER, version="0.0")
 
     # First, try to detect from Sec-Ch-Ua-Platform
     # Remember all Sec... headers are only available on secure connections
-    
 
-    if (sec_ch_ua_platform := typing.cast(str|None, headers.get('Sec-Ch-Ua-Platform'))) is not None:
+    if (sec_ch_ua_platform := typing.cast(str | None, headers.get("Sec-Ch-Ua-Platform"))) is not None:
         # Strip initial and final " chars if present
         sec_ch_ua_platform = sec_ch_ua_platform.strip('"')
         for os in consts.os.KNOWN_OS_LIST:
             if sec_ch_ua_platform in os.value:
                 res.os = os
                 break
-            
+
     if res.os == types.os.KnownOS.UNKNOWN:
         ual = ua.lower()
         for os in consts.os.KNOWN_OS_LIST:
@@ -72,15 +70,15 @@ def detect_os(
                     break
 
     # Try to detect browser from Sec-Ch-Ua first
-    if (sec_ch_ua := typing.cast(str|None, headers.get('Sec-Ch-Ua'))) is not None:
+    if (sec_ch_ua := typing.cast(str | None, headers.get("Sec-Ch-Ua"))) is not None:
         for browser in consts.os.KNOW_BROWSERS:
             if browser in sec_ch_ua:
                 res.browser = browser
                 break
-    
+
     if res.browser == types.os.KnownBrowser.OTHER:
         # Try to detect browser from User-Agent
-        found: 'None|typing.Match[str]' = None
+        found: "None|typing.Match[str]" = None
 
         browser_type = None
         for browser_type, rules in consts.os.BROWSER_RULES.items():
@@ -105,8 +103,8 @@ def detect_os(
 
         if found is not None:
             res.browser = browser_type or types.os.KnownBrowser.OTHER
-            res.version = '0.0'
+            res.version = "0.0"
 
-    logger.debug('Detected: %s %s', res.os, res.browser)
+    logger.debug("Detected: %s %s", res.os, res.browser)
 
     return res

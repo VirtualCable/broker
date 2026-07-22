@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import dataclasses
 import random
@@ -58,17 +59,17 @@ from uds.services.Xen import (
 
 from uds.services.Xen.xen import types as xen_types, exceptions as xen_exceptions, client
 
-DEF_POOL_NAME: typing.Final[str] = 'TEST_pool_NAME'
-DEF_GENERAL_OPAQUE_REF: typing.Final[str] = 'OpaqueRef:12345678-cdef-abcd-1234-1234567890ab'
-DEF_GENERAL_IP: typing.Final[str] = '10.11.12.13'
-DEF_GENERAL_MAC: typing.Final[str] = '02:04:06:08:0A:0C'
+DEF_POOL_NAME: typing.Final[str] = "TEST_pool_NAME"
+DEF_GENERAL_OPAQUE_REF: typing.Final[str] = "OpaqueRef:12345678-cdef-abcd-1234-1234567890ab"
+DEF_GENERAL_IP: typing.Final[str] = "10.11.12.13"
+DEF_GENERAL_MAC: typing.Final[str] = "02:04:06:08:0A:0C"
 
 DEF_SRS_INFO: typing.Final[list[xen_types.StorageInfo]] = [
     xen_types.StorageInfo(
-        opaque_ref=f'OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}',
-        uuid=f'12345678-1234-1234-1234-1234567890{i:02x}',
-        name=f'test_sr{i:02x}',
-        description=f'Test SR description {i:02x}',
+        opaque_ref=f"OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}",
+        uuid=f"12345678-1234-1234-1234-1234567890{i:02x}",
+        name=f"test_sr{i:02x}",
+        description=f"Test SR description {i:02x}",
         allowed_operations=[
             xen_types.StorageOperations.VDI_CREATE,
             xen_types.StorageOperations.VDI_CLONE,
@@ -80,60 +81,60 @@ DEF_SRS_INFO: typing.Final[list[xen_types.StorageInfo]] = [
         virtual_allocation=(i + 32) * 1024,
         physical_utilisation=i * 1024,
         physical_size=(i + 32) * 1024,
-        type='',
-        content_type='',
+        type="",
+        content_type="",
         shared=True,
     )
     for i in range(8)
 ]
 
 LOW_SPACE_SR_INFO: typing.Final[xen_types.StorageInfo] = xen_types.StorageInfo(
-    opaque_ref='OpaqueRef:12345678-1234-1234-1234-1234567890ff',
-    uuid='12345678-1234-1234-1234-1234567890ff',
-    name='low_space_sr',
-    description='Low space SR description',
+    opaque_ref="OpaqueRef:12345678-1234-1234-1234-1234567890ff",
+    uuid="12345678-1234-1234-1234-1234567890ff",
+    name="low_space_sr",
+    description="Low space SR description",
     allowed_operations=[],
     VDIs=[],
     PBDs=[],
     virtual_allocation=32 * 1024,
     physical_utilisation=32 * 1024,
     physical_size=32 * 1024,
-    type='',
-    content_type='',
+    type="",
+    content_type="",
     shared=True,
 )
 
 
 DEF_NETWORKS_INFO: typing.Final[list[xen_types.NetworkInfo]] = [
     xen_types.NetworkInfo(
-        opaque_ref=f'OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}',
-        uuid=f'12345678-1234-1234-1234-1234567890{i:02x}',
-        name=f'test_network{i:02x}',
-        description=f'Test network description {i:02x}',
+        opaque_ref=f"OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}",
+        uuid=f"12345678-1234-1234-1234-1234567890{i:02x}",
+        name=f"test_network{i:02x}",
+        description=f"Test network description {i:02x}",
         managed=True,
         VIFs=[],
         PIFs=[],
         is_guest_installer_network=False,
         is_host_internal_management_network=False,
-        ip_begin=f'10.0.0.{i}',
-        ip_end=f'10.0.0.{i + 1}',
-        netmask='255.255.0.0',
+        ip_begin=f"10.0.0.{i}",
+        ip_end=f"10.0.0.{i + 1}",
+        netmask="255.255.0.0",
     )
     for i in range(8)
 ]
 
 DEF_VMS_INFO: typing.Final[list[xen_types.VMInfo]] = [
     xen_types.VMInfo(
-        opaque_ref=f'OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}',
-        uuid=f'12345678-1234-1234-1234-1234567890{i:02x}',
-        name=f'test_vm{i:02x}',
-        description=f'Test VM description {i:02x}',
+        opaque_ref=f"OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}",
+        uuid=f"12345678-1234-1234-1234-1234567890{i:02x}",
+        name=f"test_vm{i:02x}",
+        description=f"Test VM description {i:02x}",
         power_state=xen_types.PowerState.RUNNING,
         is_control_domain=False,
         is_a_template=False,
         snapshot_time=timezone.make_aware(datetime.datetime(2024, 1, 1, 0, 0, 0)),
         # For testing, snapshot refers to itself 3 times, just for testing...
-        snapshots=[f'OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}'] * 3,
+        snapshots=[f"OpaqueRef:12345678-1234-1234-1234-1234567890{i:02x}"] * 3,
         VIFs=[],
         VBDs=[],
         allowed_operations=[
@@ -142,16 +143,16 @@ DEF_VMS_INFO: typing.Final[list[xen_types.VMInfo]] = [
             xen_types.VMOperations.COPY,
             xen_types.VMOperations.SNAPSHOT,
         ],
-        folder=f'/test_folder_{i//6}',
+        folder=f"/test_folder_{i // 6}",
     )
     for i in range(24)
 ]
 
 DEF_TASK_INFO: typing.Final[xen_types.TaskInfo] = xen_types.TaskInfo(
-    opaque_ref='OpaqueRef:12345678-1234-1234-1234-1234567890ab',
-    uuid='12345678-1234-1234-1234-1234567890ab',
-    name='test_task',
-    description='Test task description',
+    opaque_ref="OpaqueRef:12345678-1234-1234-1234-1234567890ab",
+    uuid="12345678-1234-1234-1234-1234567890ab",
+    name="test_task",
+    description="Test task description",
     created=timezone.make_aware(datetime.datetime(2024, 1, 1, 0, 0, 0)),
     finished=timezone.make_aware(datetime.datetime(2024, 1, 1, 0, 0, 0)),
     status=xen_types.TaskStatus.SUCCESS,
@@ -193,7 +194,7 @@ def clean() -> None:
     DEF_FOLDERS[:] = list(set(vm.folder for vm in DEF_VMS_INFO))
 
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 def random_from_list(lst: list[T], *args: typing.Any, **kwargs: typing.Any) -> T:
@@ -227,12 +228,12 @@ def search_by_attr(lst: list[T], attribute: str, value: typing.Any, **kwargs: ty
         raise xen_exceptions.XenNotFoundError(f'Item with {attribute}=="{value}" not found in list')
 
 
-def set_vm_state(is_async: bool, state: xen_types.PowerState, vmid: str) -> 'str|None':
+def set_vm_state(is_async: bool, state: xen_types.PowerState, vmid: str) -> "str|None":
     """
     Set the power state of a VM
     """
     try:
-        vm = search_item_by_attr(VMS_INFO, 'opaque_ref', vmid)
+        vm = search_item_by_attr(VMS_INFO, "opaque_ref", vmid)
         vm.power_state = state
     except ValueError:
         raise xen_exceptions.XenNotFoundError(f'Item with opaque_ref=="{vmid}" not found in list')
@@ -249,8 +250,10 @@ def set_all_vm_state(state: xen_types.PowerState) -> None:
     for vm in VMS_INFO:
         vm.power_state = state
 
+
 def task_info(*args: typing.Any, **kwargs: typing.Any) -> xen_types.TaskInfo:
     return TASK_INFO
+
 
 # Methods that returns None or "internal" methods are not tested
 CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
@@ -279,7 +282,7 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
     AutoSpecMethodInfo(
         client.XenClient.get_sr_info,
         returns=search_by_attr,
-        partial_args=(SRS_INFO, 'opaque_ref'),
+        partial_args=(SRS_INFO, "opaque_ref"),
     ),
     AutoSpecMethodInfo(
         client.XenClient.list_networks,
@@ -288,7 +291,7 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
     AutoSpecMethodInfo(
         client.XenClient.get_network_info,
         returns=search_by_attr,
-        partial_args=(NETWORKS_INFO, 'opaque_ref'),
+        partial_args=(NETWORKS_INFO, "opaque_ref"),
     ),
     AutoSpecMethodInfo(
         client.XenClient.list_vms,
@@ -297,7 +300,7 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
     AutoSpecMethodInfo(
         client.XenClient.get_vm_info,
         returns=search_by_attr,
-        partial_args=(VMS_INFO, 'opaque_ref'),
+        partial_args=(VMS_INFO, "opaque_ref"),
     ),
     AutoSpecMethodInfo(
         client.XenClient.start_vm,
@@ -394,7 +397,7 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
     AutoSpecMethodInfo(
         client.XenClient.list_vms_in_folder,
         returns=filter_list_by_attr,
-        partial_args=(VMS_INFO, 'folder'),
+        partial_args=(VMS_INFO, "folder"),
     ),
     AutoSpecMethodInfo(
         client.XenClient.deploy_from_template,
@@ -403,41 +406,41 @@ CLIENT_METHODS_INFO: typing.Final[list[AutoSpecMethodInfo]] = [
 ]
 
 PROVIDER_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'host': 'test.example.com',
-    'port': 443,
-    'username': 'root',
-    'password': 'some_test_password',
-    'concurrent_creation_limit': 18,
-    'concurrent_removal_limit': 7,
-    'macs_range': '02:99:00:00:00:00-02:AA:00:FF:FF:FF',
-    'verify_ssl': True,
-    'timeout': 30,
-    'host_backup': 'test_backup.example.com',
+    "host": "test.example.com",
+    "port": 443,
+    "username": "root",
+    "password": "some_test_password",
+    "concurrent_creation_limit": 18,
+    "concurrent_removal_limit": 7,
+    "macs_range": "02:99:00:00:00:00-02:AA:00:FF:FF:FF",
+    "verify_ssl": True,
+    "timeout": 30,
+    "host_backup": "test_backup.example.com",
 }
 
 
 SERVICE_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'datastore': random.choice(SRS_INFO).opaque_ref,
-    'min_space_gb': 32,
-    'machine': random.choice(VMS_INFO).opaque_ref,
-    'network': random.choice(NETWORKS_INFO).opaque_ref,
-    'memory': 256,
-    'shadow': 4,
-    'remove_duplicates': True,
-    'maintain_on_error': False,
-    'try_soft_shutdown': False,
-    'basename': 'xcpng8',
-    'lenname': 5,
+    "datastore": random.choice(SRS_INFO).opaque_ref,
+    "min_space_gb": 32,
+    "machine": random.choice(VMS_INFO).opaque_ref,
+    "network": random.choice(NETWORKS_INFO).opaque_ref,
+    "memory": 256,
+    "shadow": 4,
+    "remove_duplicates": True,
+    "maintain_on_error": False,
+    "try_soft_shutdown": False,
+    "basename": "xcpng8",
+    "lenname": 5,
 }
 
 
 SERVICE_FIXED_VALUES_DICT: gui.ValuesDictType = {
-    'token': 'TEST_TOKEN_XEN',
-    'folder': FOLDERS[0],
-    'machines': random.sample([i.opaque_ref for i in VMS_INFO if i.folder == FOLDERS[0]], 2),
-    'use_snapshots': True,
-    'randomize': True,
-    'prov_uuid': '',
+    "token": "TEST_TOKEN_XEN",
+    "folder": FOLDERS[0],
+    "machines": random.sample([i.opaque_ref for i in VMS_INFO if i.folder == FOLDERS[0]], 2),
+    "use_snapshots": True,
+    "randomize": True,
+    "prov_uuid": "",
 }
 
 
@@ -454,7 +457,7 @@ def patched_provider(
 ) -> typing.Generator[provider.XenProvider, None, None]:
     client = create_client_mock()
     provider = create_provider(**kwargs)
-    with mock.patch('uds.services.Xen.provider.XenProvider.api', new_callable=mock.PropertyMock) as api:
+    with mock.patch("uds.services.Xen.provider.XenProvider.api", new_callable=mock.PropertyMock) as api:
         api.return_value = client
         yield provider
 
@@ -489,7 +492,7 @@ def create_service_linked(
     )
     service_db_mock = mock.MagicMock()
     service_db_mock.uuid = uuid_
-    service_db_mock.name = 'ServiceName'
+    service_db_mock.name = "ServiceName"
     srvc.db_obj = mock.MagicMock()
     srvc.db_obj.return_value = service_db_mock
     srvc.is_deletion_in_progress = mock.MagicMock()
@@ -517,7 +520,7 @@ def create_service_fixed(
 def create_publication(
     service: typing.Optional[service.XenLinkedService] = None,
     **kwargs: typing.Any,
-) -> 'publication.XenPublication':
+) -> "publication.XenPublication":
     """
     Create a publication
     """
@@ -526,7 +529,7 @@ def create_publication(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_service_linked(**kwargs),
         revision=1,
-        servicepool_name='servicepool_name',
+        servicepool_name="servicepool_name",
         uuid=uuid_,
     )
 
@@ -548,7 +551,7 @@ def create_userservice_fixed(
 
 def create_userservice_linked(
     service: typing.Optional[service.XenLinkedService] = None,
-    publication: typing.Optional['publication.XenPublication'] = None,
+    publication: typing.Optional["publication.XenPublication"] = None,
 ) -> deployment.XenLinkedUserService:
     """
     Create a linked user service

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import json
 import logging
 import typing
@@ -48,7 +49,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def error(request: 'HttpRequest', err: str) -> 'HttpResponse':
+def error(request: "HttpRequest", err: str) -> "HttpResponse":
     """
     Error view, responsible of error display
     """
@@ -56,12 +57,12 @@ def error(request: 'HttpRequest', err: str) -> 'HttpResponse':
 
     return render(
         request,
-        'uds/modern/index.html',
-        context={'csrf_field': consts.auth.CSRF_FIELD, 'csrf_token': csrf_token},
+        "uds/modern/index.html",
+        context={"csrf_field": consts.auth.CSRF_FIELD, "csrf_token": csrf_token},
     )
 
 
-def error_message(request: 'HttpRequest', err: str) -> 'HttpResponse':
+def error_message(request: "HttpRequest", err: str) -> "HttpResponse":
     """
     Error view, responsible of error display
     """
@@ -73,6 +74,6 @@ def error_message(request: 'HttpRequest', err: str) -> 'HttpResponse':
         err_int = 0
 
     return HttpResponse(
-        json.dumps({'error': types.errors.Error.from_int(err_int).message, 'code': err}),
-        content_type='application/json',
+        json.dumps({"error": types.errors.Error.from_int(err_int).message, "code": err}),
+        content_type="application/json",
     )

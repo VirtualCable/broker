@@ -48,56 +48,57 @@ class ImmutableLogAnchorJobTest(UDSTestCase):
         self._env = Environment.testing_environment()
 
     def test_next_delay_disabled_returns_10min(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=False
-        ):
+        with unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=False):
             job = ImmutableLogAnchorJob(self._env)
             self.assertEqual(job.next_execution_delay(), 600)
 
     def test_next_delay_interval_zero_returns_10min(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=True
-        ), unittest.mock.patch('uds.workers.immutable_log_anchor.GlobalConfig') as mock_cfg:
+        with (
+            unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=True),
+            unittest.mock.patch("uds.workers.immutable_log_anchor.GlobalConfig") as mock_cfg,
+        ):
             mock_cfg.IMMUTABLE_LOG_REANCHOR.as_int.return_value = 0
             job = ImmutableLogAnchorJob(self._env)
             self.assertEqual(job.next_execution_delay(), 600)
 
     def test_next_delay_minimum_120s(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=True
-        ), unittest.mock.patch('uds.workers.immutable_log_anchor.GlobalConfig') as mock_cfg:
+        with (
+            unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=True),
+            unittest.mock.patch("uds.workers.immutable_log_anchor.GlobalConfig") as mock_cfg,
+        ):
             mock_cfg.IMMUTABLE_LOG_REANCHOR.as_int.return_value = 30
             job = ImmutableLogAnchorJob(self._env)
             self.assertEqual(job.next_execution_delay(), 120)  # clamped to min 120
 
     def test_next_delay_uses_config_value(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=True
-        ), unittest.mock.patch('uds.workers.immutable_log_anchor.GlobalConfig') as mock_cfg:
+        with (
+            unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=True),
+            unittest.mock.patch("uds.workers.immutable_log_anchor.GlobalConfig") as mock_cfg,
+        ):
             mock_cfg.IMMUTABLE_LOG_REANCHOR.as_int.return_value = 3600
             job = ImmutableLogAnchorJob(self._env)
             self.assertEqual(job.next_execution_delay(), 3600)
 
     def test_run_does_nothing_when_disabled(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=False
-        ):
+        with unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=False):
             job = ImmutableLogAnchorJob(self._env)
             # Should not raise, should not call create_anchor
             job.run()
 
     def test_run_does_nothing_when_interval_zero(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=True
-        ), unittest.mock.patch('uds.workers.immutable_log_anchor.GlobalConfig') as mock_cfg:
+        with (
+            unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=True),
+            unittest.mock.patch("uds.workers.immutable_log_anchor.GlobalConfig") as mock_cfg,
+        ):
             mock_cfg.IMMUTABLE_LOG_REANCHOR.as_int.return_value = 0
             job = ImmutableLogAnchorJob(self._env)
             job.run()
 
     def test_run_does_nothing_when_empty_chain(self) -> None:
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=True
-        ), unittest.mock.patch('uds.workers.immutable_log_anchor.GlobalConfig') as mock_cfg:
+        with (
+            unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=True),
+            unittest.mock.patch("uds.workers.immutable_log_anchor.GlobalConfig") as mock_cfg,
+        ):
             mock_cfg.IMMUTABLE_LOG_REANCHOR.as_int.return_value = 3600
             job = ImmutableLogAnchorJob(self._env)
             # Chain is empty → no crash
@@ -110,15 +111,16 @@ class ImmutableLogAnchorJobTest(UDSTestCase):
         ImmutableLog.objects.create(
             sequence=1,
             anchor=True,
-            stamp='2025-01-01T00:00:00Z',
-            previous_hash=b'\x00' * 32,
-            data=b'x',
-            entry_hash=hashlib.sha256(b'x').digest(),
+            stamp="2025-01-01T00:00:00Z",
+            previous_hash=b"\x00" * 32,
+            data=b"x",
+            entry_hash=hashlib.sha256(b"x").digest(),
         )
 
-        with unittest.mock.patch(
-            'uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled', return_value=True
-        ), unittest.mock.patch('uds.workers.immutable_log_anchor.GlobalConfig') as mock_cfg:
+        with (
+            unittest.mock.patch("uds.workers.immutable_log_anchor.ImmutableLogger.is_enabled", return_value=True),
+            unittest.mock.patch("uds.workers.immutable_log_anchor.GlobalConfig") as mock_cfg,
+        ):
             mock_cfg.IMMUTABLE_LOG_REANCHOR.as_int.return_value = 3600
             job = ImmutableLogAnchorJob(self._env)
             job.run()

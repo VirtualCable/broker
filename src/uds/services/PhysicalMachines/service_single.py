@@ -30,14 +30,18 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
-from django.utils.translation import gettext_lazy as _, gettext
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import net
-from uds.core import exceptions, types, services
 from uds.core.util import security
 
 from .deployment import IPMachineUserService
@@ -51,12 +55,12 @@ logger = logging.getLogger(__name__)
 
 class IPSingleMachineService(services.Service):
     # Description of service
-    type_name = _('Static Single IP')
-    type_type = 'IPSingleMachineService'
+    type_name = _("Static Single IP")
+    type_type = "IPSingleMachineService"
     type_description = _(
-        'This service provides access to POWERED-ON Machine by IP. (You can configure WOL to power on the machine)'
+        "This service provides access to POWERED-ON Machine by IP. (You can configure WOL to power on the machine)"
     )
-    icon_file = 'machine.png'
+    icon_file = "machine.png"
 
     uses_cache = False  # Cache are running machine awaiting to be assigned
     uses_cache_l2 = False  # L2 Cache are running machines in suspended state
@@ -67,27 +71,27 @@ class IPSingleMachineService(services.Service):
     services_type_provided = types.services.ServiceType.VDI
 
     # Does not really mind. But do not show the field on admin form
-    overrided_fields = {'max_services_count_type': types.services.ServicesCountingType.STANDARD}
+    overrided_fields = {"max_services_count_type": types.services.ServicesCountingType.STANDARD}
 
     # Gui
     host = gui.TextField(
         length=64,
-        label=_('Host IP/FQDN'),
+        label=_("Host IP/FQDN"),
         order=1,
         tooltip=_(
             'IP or FQDN of the server to connect to. Can include MAC address separated by ";" after the IP/Hostname'
         ),
         required=True,
-        old_field_name='ip',
+        old_field_name="ip",
     )
 
     def get_host_mac(self) -> tuple[str, str]:
-        if ';' in self.host.as_str():
-            return typing.cast(tuple[str, str], tuple(self.host.as_str().split(';', 2)[:2]))
-        return self.host.as_str(), ''
+        if ";" in self.host.as_str():
+            return typing.cast(tuple[str, str], tuple(self.host.as_str().split(";", 2)[:2]))
+        return self.host.as_str(), ""
 
     @typing.override
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         if values is None:
             return
 
@@ -103,25 +107,25 @@ class IPSingleMachineService(services.Service):
         return self.get_host_mac()
 
     @typing.override
-    def provider(self) -> 'provider.PhysicalMachinesProvider':
-        return typing.cast('provider.PhysicalMachinesProvider', super().provider())
+    def provider(self) -> "provider.PhysicalMachinesProvider":
+        return typing.cast("provider.PhysicalMachinesProvider", super().provider())
 
     def wakeup(self, verify_ssl: bool = False) -> None:
         host, mac = self.get_host_mac()
         if mac:
             wake_on_land_endpoint = self.provider().wake_on_lan_endpoint(host, mac)
             if wake_on_land_endpoint:
-                logger.info('Launching WOL: %s', wake_on_land_endpoint)
+                logger.info("Launching WOL: %s", wake_on_land_endpoint)
                 try:
                     security.secure_requests_session(verify=verify_ssl).get(wake_on_land_endpoint)
                     # logger.debug('Result: %s', result)
                 except Exception as e:
-                    logger.error('Error on WOL: %s', e)
+                    logger.error("Error on WOL: %s", e)
 
     def get_counter_and_inc(self) -> int:
         with self.storage.as_dict() as storage:
-            counter = storage.get('counter', 0)
-            storage['counter'] = counter + 1
+            counter = storage.get("counter", 0)
+            storage["counter"] = counter + 1
             return counter
 
     # Phisical machines does not have "real" providers, so

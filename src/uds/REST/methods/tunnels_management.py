@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import logging
 import typing
@@ -60,15 +61,13 @@ class TunnelServerItem(types.rest.BaseRestItem):
 class TunnelServers(DetailHandler[TunnelServerItem]):
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'maintenance',
+            "maintenance",
             method=types.rest.CustomMethodMethod.POST,
-            description='Toggle maintenance mode for a tunnel server (enable if disabled, disable if enabled)',
+            description="Toggle maintenance mode for a tunnel server (enable if disabled, disable if enabled)",
         ),
     ]
 
-    REST_API_INFO = types.rest.api.RestApiInfo(
-        name='TunnelServers', description='Tunnel servers assigned to a tunnel'
-    )
+    REST_API_INFO = types.rest.api.RestApiInfo(name="TunnelServers", description="Tunnel servers assigned to a tunnel")
 
     @staticmethod
     def as_tunnel_server_item(item: models.Server) -> TunnelServerItem:
@@ -76,7 +75,7 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
             id=item.uuid,
             hostname=item.hostname,
             ip=item.ip,
-            mac=item.mac if item.mac != consts.NULL_MAC else '',
+            mac=item.mac if item.mac != consts.NULL_MAC else "",
             maintenance=item.maintenance_mode,
         )
 
@@ -86,46 +85,46 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
         return self.calc_item_position(item_uuid, parent.servers.all())
 
     @typing.override
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult[TunnelServerItem]:
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult[TunnelServerItem]:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return [TunnelServers.as_tunnel_server_item(i) for i in self.odata_filter(parent.servers.all())]
 
     @typing.override
-    def get_item(self, parent: 'Model', item: str) -> TunnelServerItem:
+    def get_item(self, parent: "Model", item: str) -> TunnelServerItem:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return TunnelServers.as_tunnel_server_item(parent.servers.get(uuid=process_uuid(item)))
 
     @typing.override
-    def get_table(self, parent: 'Model') -> TableInfo:
+    def get_table(self, parent: "Model") -> TableInfo:
         parent = ensure.is_instance(parent, models.ServerGroup)
         return (
-            ui_utils.TableBuilder(_('Servers of {0}').format(parent.name))
-            .text_column(name='hostname', title=_('Hostname'))
-            .text_column(name='ip', title=_('Ip'))
-            .text_column(name='mac', title=_('Mac'))
+            ui_utils.TableBuilder(_("Servers of {0}").format(parent.name))
+            .text_column(name="hostname", title=_("Hostname"))
+            .text_column(name="ip", title=_("Ip"))
+            .text_column(name="mac", title=_("Mac"))
             .dict_column(
-                name='maintenance',
-                title=_('State'),
-                dct={True: _('Maintenance'), False: _('Normal')},
+                name="maintenance",
+                title=_("State"),
+                dct={True: _("Maintenance"), False: _("Normal")},
             )
-            .row_style(prefix='row-maintenance-', field='maintenance')
+            .row_style(prefix="row-maintenance-", field="maintenance")
         ).build()
 
     # Cannot save a tunnel server, it's not editable...
 
     @typing.override
-    def delete_item(self, parent: 'Model', item: str) -> None:
+    def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, models.ServerGroup)
         try:
             parent.servers.remove(models.Server.objects.get(uuid=process_uuid(item)))
         except models.Server.DoesNotExist:
-            raise exceptions.rest.NotFound(_('Tunnel server not found')) from None
+            raise exceptions.rest.NotFound(_("Tunnel server not found")) from None
         except Exception as e:
-            logger.error('Error deleting tunnel server %s from %s: %s', item, parent, e)
-            raise exceptions.rest.ResponseError(_('Error deleting tunnel server')) from None
+            logger.error("Error deleting tunnel server %s from %s: %s", item, parent, e)
+            raise exceptions.rest.ResponseError(_("Error deleting tunnel server")) from None
 
     # Custom methods
-    def maintenance(self, parent: 'Model', id: str) -> typing.Any:
+    def maintenance(self, parent: "Model", id: str) -> typing.Any:
         """
         API:
             Custom method that swaps maintenance mode state for a tunnel server
@@ -136,7 +135,7 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
         self.check_access(item, uds.core.types.permissions.PermissionType.MANAGEMENT)
         item.maintenance_mode = not item.maintenance_mode
         item.save()
-        return 'ok'
+        return "ok"
 
 
 @dataclasses.dataclass
@@ -154,42 +153,41 @@ class TunnelItem(types.rest.BaseRestItem):
 
 # Enclosed methods under /auth path
 class Tunnels(ModelHandler[TunnelItem]):
-
-    PATH = 'tunnels'
-    NAME = 'tunnels'
+    PATH = "tunnels"
+    NAME = "tunnels"
     MODEL = models.ServerGroup
-    FILTER = {'type': types.servers.ServerType.TUNNEL}
+    FILTER = {"type": types.servers.ServerType.TUNNEL}
     CUSTOM_METHODS = [
         types.rest.ModelCustomMethod(
-            'tunnels',
+            "tunnels",
             needs_parent=True,
-            description='List tunnel servers that are not yet assigned to this tunnel group',
+            description="List tunnel servers that are not yet assigned to this tunnel group",
         ),
         types.rest.ModelCustomMethod(
-            'assign',
+            "assign",
             needs_parent=True,
             method=types.rest.CustomMethodMethod.POST,
-            description='Assign an existing server to this tunnel group',
+            description="Assign an existing server to this tunnel group",
         ),
     ]
 
-    DETAIL = {'servers': TunnelServers}
-    FIELDS_TO_SAVE = ['name', 'comments', 'host:', 'port:0']
+    DETAIL = {"servers": TunnelServers}
+    FIELDS_TO_SAVE = ["name", "comments", "host:", "port:0"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Tunnels'))
-        .icon(name='name', title=_('Name'))
-        .text_column(name='comments', title=_('Comments'))
-        .text_column(name='host', title=_('Host'))
-        .numeric_column(name='port', title=_('Port'), width='6em')
-        .numeric_column(name='servers_count', title=_('Servers'), width='1rem')
-        .text_column(name='tags', title=_('tags'), visible=False)
+        ui_utils.TableBuilder(_("Tunnels"))
+        .icon(name="name", title=_("Name"))
+        .text_column(name="comments", title=_("Comments"))
+        .text_column(name="host", title=_("Host"))
+        .numeric_column(name="port", title=_("Port"), width="6em")
+        .numeric_column(name="servers_count", title=_("Servers"), width="1rem")
+        .text_column(name="tags", title=_("tags"), visible=False)
         .build()
     )
 
     REST_API_INFO = types.rest.api.RestApiInfo(
-        name='Tunnels',
-        description='Tunnel management',
+        name="Tunnels",
+        description="Tunnel management",
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
@@ -201,23 +199,21 @@ class Tunnels(ModelHandler[TunnelItem]):
             .add_stock_field(types.rest.stock.StockField.COMMENTS)
             .add_stock_field(types.rest.stock.StockField.TAGS)
             .add_text(
-                name='host',
-                label=gettext('Hostname'),
-                tooltip=gettext(
-                    'Hostname or IP address of the server where the tunnel is visible by the users'
-                ),
+                name="host",
+                label=gettext("Hostname"),
+                tooltip=gettext("Hostname or IP address of the server where the tunnel is visible by the users"),
             )
             .add_numeric(
-                name='port',
+                name="port",
                 default=443,
-                label=gettext('Port'),
-                tooltip=gettext('Port where the tunnel is visible by the users'),
+                label=gettext("Port"),
+                tooltip=gettext("Port where the tunnel is visible by the users"),
             )
             .build()
         )
 
     @typing.override
-    def get_item(self, item: 'Model') -> TunnelItem:
+    def get_item(self, item: "Model") -> TunnelItem:
         item = ensure.is_instance(item, models.ServerGroup)
         return TunnelItem(
             id=item.uuid,
@@ -233,44 +229,42 @@ class Tunnels(ModelHandler[TunnelItem]):
 
     @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
-        fields['type'] = types.servers.ServerType.TUNNEL.value
-        fields['port'] = int(fields['port'])
+        fields["type"] = types.servers.ServerType.TUNNEL.value
+        fields["port"] = int(fields["port"])
         # Ensure host is a valid IP(4 or 6) or hostname
-        validators.validate_host(fields['host'])
+        validators.validate_host(fields["host"])
 
     @typing.override
-    def validate_delete(self, item: 'Model') -> None:
+    def validate_delete(self, item: "Model") -> None:
         item = ensure.is_instance(item, models.ServerGroup)
         # Only can delete if no ServicePools attached
         if item.transports.count() > 0:
-            raise exceptions.rest.RequestError(
-                gettext('Cannot delete a tunnel server group with transports attached')
-            )
+            raise exceptions.rest.RequestError(gettext("Cannot delete a tunnel server group with transports attached"))
 
-    def assign(self, parent: 'Model') -> typing.Any:
+    def assign(self, parent: "Model") -> typing.Any:
         parent = ensure.is_instance(parent, models.ServerGroup)
         self.check_access(parent, uds.core.types.permissions.PermissionType.MANAGEMENT)
 
-        server: 'models.Server | None' = None  # Avoid warning on reference before assignment
+        server: "models.Server | None" = None  # Avoid warning on reference before assignment
 
         item = self._args[-1]
 
         if not item:
-            raise exceptions.rest.RequestError('No server specified')
+            raise exceptions.rest.RequestError("No server specified")
 
         try:
             server = models.Server.objects.get(uuid=process_uuid(item))
             self.check_access(server, uds.core.types.permissions.PermissionType.READ)
             parent.servers.add(server)
         except models.Server.DoesNotExist:
-            raise exceptions.rest.NotFound(_('Tunnel server not found')) from None
+            raise exceptions.rest.NotFound(_("Tunnel server not found")) from None
         except Exception as e:
-            logger.error('Error assigning server %s to %s: %s', item, parent, e)
-            raise exceptions.rest.ResponseError(_('Error assigning server')) from None
+            logger.error("Error assigning server %s to %s: %s", item, parent, e)
+            raise exceptions.rest.ResponseError(_("Error assigning server")) from None
 
-        return 'ok'
+        return "ok"
 
-    def tunnels(self, parent: 'Model') -> typing.Any:
+    def tunnels(self, parent: "Model") -> typing.Any:
         parent = ensure.is_instance(parent, models.ServerGroup)
         """
         Custom method that returns all tunnels of a tunnel server NOT already assigned to THIS tunnel group
@@ -279,11 +273,10 @@ class Tunnels(ModelHandler[TunnelItem]):
         all_servers = set(parent.servers.all())
         return [
             {
-                'id': i.uuid,
-                'name': i.hostname,
+                "id": i.uuid,
+                "name": i.hostname,
             }
             for i in models.Server.objects.filter(type=types.servers.ServerType.TUNNEL)
-            if permissions.effective_permissions(self._user, i)
-            >= uds.core.types.permissions.PermissionType.READ
+            if permissions.effective_permissions(self._user, i) >= uds.core.types.permissions.PermissionType.READ
             and i not in all_servers
         ]

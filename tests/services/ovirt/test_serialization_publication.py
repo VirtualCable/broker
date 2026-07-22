@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from tests.utils.test import UDSTestCase
@@ -53,30 +54,29 @@ from uds.services.OVirt.publication import OVirtPublication as Publication
 #     ) = vals[1:]
 # else:
 #     raise ValueError('Invalid data format')
-    
+
 # self._destroy_after = destroy_after == 't'
 # self.flag_for_upgrade(False)  # reset flag
-    
+
 # self._destroy_after = destroy_after != ''
 EXPECTED_FIELDS: typing.Final[set[str]] = {
-    '_name',
-    '_reason',
-    '_destroy_after',
-    '_template_id',
-    '_state',
+    "_name",
+    "_reason",
+    "_destroy_after",
+    "_template_id",
+    "_state",
 }
 
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b'v1\tname\treason\tt\ttemplate_id\tstate'
+SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\treason\tt\ttemplate_id\tstate"
 
 
 class OvirtPublicationSerializationTest(UDSTestCase):
     def check(self, instance: Publication) -> None:
-        self.assertEqual(instance._name, 'name')
-        self.assertEqual(instance._reason, 'reason')
+        self.assertEqual(instance._name, "name")
+        self.assertEqual(instance._reason, "reason")
         self.assertEqual(instance._destroy_after, True)
-        self.assertEqual(instance._template_id, 'template_id')
-        self.assertEqual(instance._state, 'state')
-        
+        self.assertEqual(instance._template_id, "template_id")
+        self.assertEqual(instance._state, "state")
 
     def test_marshaling(self) -> None:
         environment = Environment.testing_environment()
@@ -91,7 +91,7 @@ class OvirtPublicationSerializationTest(UDSTestCase):
         marshaled_data = instance.marshal()
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'\1'))
+        self.assertFalse(marshaled_data.startswith(b"\1"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = Publication(environment=environment, service=None)  # type: ignore
         instance.unmarshal(marshaled_data)

@@ -28,35 +28,36 @@
 """
 Author: Adolfo Gomez, dkmaster at dkmon dot com
 """
+
 from tests.utils.test import UDSTestCase
 from uds.core.util.model import process_uuid
 
 
 class TestProcessUuid(UDSTestCase):
     def test_valid_lowercase(self) -> None:
-        uuid = '550e8400-e29b-41d4-a716-446655440000'
+        uuid = "550e8400-e29b-41d4-a716-446655440000"
         self.assertEqual(process_uuid(uuid), uuid)
 
     def test_valid_uppercase(self) -> None:
-        result = process_uuid('550E8400-E29B-41D4-A716-446655440000')
-        self.assertEqual(result, '550e8400-e29b-41d4-a716-446655440000')
+        result = process_uuid("550E8400-E29B-41D4-A716-446655440000")
+        self.assertEqual(result, "550e8400-e29b-41d4-a716-446655440000")
 
     def test_valid_bytes(self) -> None:
-        result = process_uuid(b'550E8400-E29B-41D4-A716-446655440000')
-        self.assertEqual(result, '550e8400-e29b-41d4-a716-446655440000')
+        result = process_uuid(b"550E8400-E29B-41D4-A716-446655440000")
+        self.assertEqual(result, "550e8400-e29b-41d4-a716-446655440000")
 
     def test_invalid_chars(self) -> None:
         with self.assertRaises(ValueError):
-            process_uuid('not-a-uuid')
+            process_uuid("not-a-uuid")
 
     def test_invalid_no_hyphens(self) -> None:
         with self.assertRaises(ValueError):
-            process_uuid('550e8400e29b41d4a716446655440000')
+            process_uuid("550e8400e29b41d4a716446655440000")
 
     def test_invalid_empty(self) -> None:
         with self.assertRaises(ValueError):
-            process_uuid('')
+            process_uuid("")
 
     def test_invalid_short(self) -> None:
         with self.assertRaises(ValueError):
-            process_uuid('550e8400')
+            process_uuid("550e8400")

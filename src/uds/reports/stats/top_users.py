@@ -52,33 +52,33 @@ class UserEntry(typing.TypedDict):
 
 
 class TopUsersReport(StatsReport):
-    filename = 'top_users.pdf'
-    name = _('Top users')
-    description = _('Top users by total session time across all pools')
-    uuid = '3948fd95-0117-41fe-a9ca-7c6efedd4f79'
+    filename = "top_users.pdf"
+    name = _("Top users")
+    description = _("Top users by total session time across all pools")
+    uuid = "3948fd95-0117-41fe-a9ca-7c6efedd4f79"
 
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
     top_n = gui.NumericField(
         order=4,
-        label=_('Top N'),
+        label=_("Top N"),
         length=3,
         min_value=1,
         max_value=1000,
         default=50,
-        tooltip=_('Number of users to show'),
+        tooltip=_("Number of users to show"),
         required=True,
     )
 
     sort_by = gui.ChoiceField(
         order=5,
-        label=_('Sort by'),
-        tooltip=_('Sorting criterion'),
-        default='time',
+        label=_("Sort by"),
+        tooltip=_("Sorting criterion"),
+        default="time",
         choices=[
-            gui.choice_item('time', _('Total time')),
-            gui.choice_item('sessions', _('Sessions')),
+            gui.choice_item("time", _("Total time")),
+            gui.choice_item("sessions", _("Sessions")),
         ],
     )
 
@@ -89,50 +89,48 @@ class TopUsersReport(StatsReport):
         login = stats.events.types.stats.EventType.LOGIN
         logout = stats.events.types.stats.EventType.LOGOUT
 
-        partition = [F('owner_id'), F('fld4')]
+        partition = [F("owner_id"), F("fld4")]
         items = (
             StatsManager.manager()
             .enumerate_events(
                 stats.events.types.stats.EventOwnerType.SERVICEPOOL,
                 (login, logout),
-                owner_id=list(ServicePool.objects.values_list('id', flat=True)),
+                owner_id=list(ServicePool.objects.values_list("id", flat=True)),
                 since=start,
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=partition, order_by=[F('stamp')]),
-                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by=[F('stamp')]),
+                prev_type=Window(Lag("event_type"), partition_by=partition, order_by=[F("stamp")]),
+                prev_stamp=Window(Lag("stamp"), partition_by=partition, order_by=[F("stamp")]),
             )
-            .values('event_type', 'stamp', 'fld4', 'prev_type', 'prev_stamp', 'owner_id')
+            .values("event_type", "stamp", "fld4", "prev_type", "prev_stamp", "owner_id")
         )
 
-        users: dict[str, UserEntry] = collections.defaultdict(
-            lambda: UserEntry(sessions=0, time=0, pools=set())
-        )
+        users: dict[str, UserEntry] = collections.defaultdict(lambda: UserEntry(sessions=0, time=0, pools=set()))
         for i in items:
-            if i['event_type'] != logout or i['prev_type'] != login:
+            if i["event_type"] != logout or i["prev_type"] != login:
                 continue
-            entry = users[i['fld4'] or '']
-            entry['sessions'] += 1
-            entry['time'] += i['stamp'] - i['prev_stamp']
-            entry['pools'].add(i['owner_id'])
+            entry = users[i["fld4"] or ""]
+            entry["sessions"] += 1
+            entry["time"] += i["stamp"] - i["prev_stamp"]
+            entry["pools"].add(i["owner_id"])
 
         rows = [
             {
-                'user': k,
-                'sessions': v['sessions'],
-                'pools': len(v['pools']),
-                'time_seconds': v['time'],
-                'hours': '{:.2f}'.format(v['time'] / 3600.0),
-                'average': '{:.2f}'.format(v['time'] / 3600.0 / v['sessions']),
+                "user": k,
+                "sessions": v["sessions"],
+                "pools": len(v["pools"]),
+                "time_seconds": v["time"],
+                "hours": "{:.2f}".format(v["time"] / 3600.0),
+                "average": "{:.2f}".format(v["time"] / 3600.0 / v["sessions"]),
             }
             for k, v in users.items()
         ]
 
-        if self.sort_by.value == 'sessions':
-            rows.sort(key=lambda r: r['sessions'], reverse=True)
+        if self.sort_by.value == "sessions":
+            rows.sort(key=lambda r: r["sessions"], reverse=True)
         else:
-            rows.sort(key=lambda r: r['time_seconds'], reverse=True)
+            rows.sort(key=lambda r: r["time_seconds"], reverse=True)
 
         return rows[: self.top_n.as_int()]
 
@@ -140,23 +138,23 @@ class TopUsersReport(StatsReport):
     def generate(self) -> bytes:
         items = self.get_data()
         return self.template_as_pdf(
-            'uds/reports/stats/top-users.html',
+            "uds/reports/stats/top-users.html",
             dct={
-                'data': items,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
-                'top_n': self.top_n.as_int(),
+                "data": items,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
+                "top_n": self.top_n.as_int(),
             },
-            header=gettext('Top users by usage'),
-            water=gettext('UDS Top users report'),
+            header=gettext("Top users by usage"),
+            water=gettext("UDS Top users report"),
         )
 
 
 class TopUsersReportCSV(TopUsersReport):
-    filename = 'top_users.csv'
-    mime_type = 'text/csv'
+    filename = "top_users.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = 'eb31b347-0f68-4509-b807-988815ae53ee'
+    uuid = "eb31b347-0f68-4509-b807-988815ae53ee"
 
     start_date = TopUsersReport.start_date
     end_date = TopUsersReport.end_date
@@ -169,13 +167,13 @@ class TopUsersReportCSV(TopUsersReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext('User'),
-                gettext('Sessions'),
-                gettext('Pools used'),
-                gettext('Hours'),
-                gettext('Average hours/session'),
+                gettext("User"),
+                gettext("Sessions"),
+                gettext("Pools used"),
+                gettext("Hours"),
+                gettext("Average hours/session"),
             ]
         )
         for v in self.get_data():
-            writer.writerow([v['user'], v['sessions'], v['pools'], v['hours'], v['average']])
+            writer.writerow([v["user"], v["sessions"], v["pools"], v["hours"], v["average"]])
         return output.getvalue().encode()

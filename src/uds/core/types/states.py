@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import enum
 
@@ -45,40 +46,40 @@ class State(enum.StrEnum):
     Take in consideration that objects do not have to support all states, they are here for commodity
     """
 
-    ACTIVE = 'A'
-    BLOCKED = 'B'
-    CANCELED = 'C'
-    ERROR = 'E'
-    FINISHED = 'F'
-    BALANCING = 'H'
-    INACTIVE = 'I'
-    SLOWED_DOWN = 'J'  # Only used on admin dashboard, not internal real state
-    CANCELING = 'K'
-    LAUNCHING = 'L'
-    REMOVING = 'M'
-    PREPARING = 'P'
-    REMOVABLE = 'R'
-    REMOVED = 'S'
+    ACTIVE = "A"
+    BLOCKED = "B"
+    CANCELED = "C"
+    ERROR = "E"
+    FINISHED = "F"
+    BALANCING = "H"
+    INACTIVE = "I"
+    SLOWED_DOWN = "J"  # Only used on admin dashboard, not internal real state
+    CANCELING = "K"
+    LAUNCHING = "L"
+    REMOVING = "M"
+    PREPARING = "P"
+    REMOVABLE = "R"
+    REMOVED = "S"
     # "Visual" state, no element will in fact be in this state, but admins uses it to "notily" user
-    RESTRAINED = 'T'
-    USABLE = 'U'
-    RUNNING = 'W'
-    FOR_EXECUTE = 'X'
+    RESTRAINED = "T"
+    USABLE = "U"
+    RUNNING = "W"
+    FOR_EXECUTE = "X"
     # "Visual" state, no element will be in fact in maintenance, but used to show "Services Pools" for which a Provider is in maintenance
-    MAINTENANCE = 'Y'
+    MAINTENANCE = "Y"
     # "Visual" state, no element will be in fact in WAITING_OS, but used to show "User Services" that are waiting for os manager
-    WAITING_OS = 'Z'
+    WAITING_OS = "Z"
     # "Visual" state, no element will be in fact in META_MEMBER, but used to show "User Services" that are waiting for os manager
-    META_MEMBER = 'V'
+    META_MEMBER = "V"
     # Internal state, not to be used by users. USed to lock edit of the object
-    LOCKED = 'Q'
+    LOCKED = "Q"
 
     # For accesses (calendar actions)
-    ALLOW = 'ALLOW'
-    DENY = 'DENY'
+    ALLOW = "ALLOW"
+    DENY = "DENY"
 
     # Unkonwn state
-    UNKNOWN = 'UKN'
+    UNKNOWN = "UKN"
 
     # States that are merely for "information" to the user. They don't contain any usable instance
     @classproperty
@@ -89,7 +90,7 @@ class State(enum.StrEnum):
     @classproperty
     def VALID_STATES(self) -> list[str]:
         return [self.USABLE, self.PREPARING]
-    
+
     @classproperty
     def PROCESABLE_STATES(self) -> list[str]:
         return [self.ACTIVE, self.LOCKED]
@@ -147,14 +148,14 @@ class State(enum.StrEnum):
         return self == State.FOR_EXECUTE
 
     @staticmethod
-    def from_str(state: str) -> 'State':
+    def from_str(state: str) -> "State":
         try:
             return State(state)
         except ValueError:
             return State.UNKNOWN
 
     @staticmethod
-    def literals_dict(*lst: 'State') -> dict[str, str]:
+    def literals_dict(*lst: "State") -> dict[str, str]:
         """
         Returns a dictionary with current active locale translation of States to States String
         if lst is empty, returns all states
@@ -182,7 +183,7 @@ class TaskState(enum.StrEnum):
         return self == TaskState.RUNNING
 
     @staticmethod
-    def from_str(state: str) -> 'TaskState':
+    def from_str(state: str) -> "TaskState":
         try:
             return TaskState(state)
         except ValueError:
@@ -190,29 +191,29 @@ class TaskState(enum.StrEnum):
 
 
 _TRANSLATIONS: typing.Final[dict[State, str]] = {
-    State.ACTIVE: _('Active'),
-    State.INACTIVE: _('Inactive'),
-    State.BLOCKED: _('Blocked'),
-    State.LAUNCHING: _('Waiting publication'),
-    State.PREPARING: _('In preparation'),
-    State.USABLE: _('Valid'),
-    State.REMOVABLE: _('Removing'),  # Display as it is removing
-    State.RESTRAINED: _('Restrained'),
-    State.REMOVING: _('Removing'),
-    State.REMOVED: _('Removed'),
-    State.CANCELED: _('Canceled'),
-    State.CANCELING: _('Canceling'),
-    State.ERROR: _('Error'),
-    State.RUNNING: _('Running'),
-    State.FINISHED: _('Finished'),
-    State.FOR_EXECUTE: _('Waiting execution'),
-    State.BALANCING: _('Balancing'),
-    State.MAINTENANCE: _('In maintenance'),
-    State.WAITING_OS: _('Waiting OS'),
-    State.SLOWED_DOWN: _('Too many preparing services'),
-    State.META_MEMBER: _('Meta member'),
-    State.ALLOW: _('Allowed'),
-    State.DENY: _('Denied'),
-    State.UNKNOWN: _('Unknown'),
-    State.LOCKED: _('Locked'),
+    State.ACTIVE: _("Active"),
+    State.INACTIVE: _("Inactive"),
+    State.BLOCKED: _("Blocked"),
+    State.LAUNCHING: _("Waiting publication"),
+    State.PREPARING: _("In preparation"),
+    State.USABLE: _("Valid"),
+    State.REMOVABLE: _("Removing"),  # Display as it is removing
+    State.RESTRAINED: _("Restrained"),
+    State.REMOVING: _("Removing"),
+    State.REMOVED: _("Removed"),
+    State.CANCELED: _("Canceled"),
+    State.CANCELING: _("Canceling"),
+    State.ERROR: _("Error"),
+    State.RUNNING: _("Running"),
+    State.FINISHED: _("Finished"),
+    State.FOR_EXECUTE: _("Waiting execution"),
+    State.BALANCING: _("Balancing"),
+    State.MAINTENANCE: _("In maintenance"),
+    State.WAITING_OS: _("Waiting OS"),
+    State.SLOWED_DOWN: _("Too many preparing services"),
+    State.META_MEMBER: _("Meta member"),
+    State.ALLOW: _("Allowed"),
+    State.DENY: _("Denied"),
+    State.UNKNOWN: _("Unknown"),
+    State.LOCKED: _("Locked"),
 }

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from unittest import mock
 
 from uds import models
@@ -41,6 +42,7 @@ from ...utils.test import UDSTransactionTestCase
 from ...utils.helpers import limited_iterator
 
 from uds.services.Xen.xen import types as xen_types
+
 
 # We use transactions on some related methods (storage access, etc...)
 class TestXenFixedUserService(UDSTransactionTestCase):
@@ -82,37 +84,35 @@ class TestXenFixedUserService(UDSTransactionTestCase):
             # vmid should have been assigned, so it must be in the assigned machines
             with service._assigned_access() as assigned_machines:
                 self.assertEqual({userservice._vmid}, assigned_machines)
-            
+
             # Now, let's release the service
             state = userservice.destroy()
-            
+
             self.assertEqual(state, types.states.TaskState.RUNNING)
-            
+
             while state == types.states.TaskState.RUNNING:
                 state = userservice.check_state()
-                
+
             self.assertEqual(state, types.states.TaskState.FINISHED)
-            
+
             # must be empty now
             with service._assigned_access() as assigned_machines:
                 self.assertEqual(assigned_machines, set())
-            
+
             # set_ready, machine is "started", set by mock fixture with the start invokation
             state = userservice.set_ready()
             self.assertEqual(state, types.states.TaskState.FINISHED)
-            
+
             # Set vm state to stopped
             fixtures.set_all_vm_state(xen_types.PowerState.HALTED)
             # Anc clear userservice cache
             userservice.cache.clear()
-            
+
             state = userservice.set_ready()
             self.assertEqual(state, types.states.TaskState.RUNNING)  # Now running
-            
+
             for _ in limited_iterator(lambda: state == types.states.TaskState.RUNNING, limit=32):
                 state = userservice.check_state()
-            
+
             # Should be finished now
             self.assertEqual(state, types.states.TaskState.FINISHED)
-            
-            

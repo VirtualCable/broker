@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import random  # nosec: testing only
 
@@ -36,7 +37,7 @@ from uds.core import types
 from uds.core.managers.crypto import CryptoManager
 
 # Counters so we can reinvoke the same method and generate new data
-glob = {'user_id': 0, 'group_id': 0}
+glob = {"user_id": 0, "group_id": 0}
 
 
 def create_db_authenticator(
@@ -50,8 +51,8 @@ def create_db_authenticator(
         from uds.auths.InternalDB.authenticator import InternalDBAuth
 
         authenticator = models.Authenticator()
-        authenticator.name = 'Testing authenticator'
-        authenticator.comments = 'Tesging authenticator'
+        authenticator.name = "Testing authenticator"
+        authenticator.comments = "Tesging authenticator"
         authenticator.data_type = InternalDBAuth.type_type
         authenticator.save()  # get id, so no fake authenticator is created
         authenticator.data = authenticator.get_instance().serialize()
@@ -74,17 +75,17 @@ def create_db_users(
     """
     users = [
         authenticator.users.create(
-            name=f'user{i}',
-            password=CryptoManager.manager().hash(f'user{i}'),
-            real_name=f'Real name {i}',
-            comments=f'User {i}',
+            name=f"user{i}",
+            password=CryptoManager.manager().hash(f"user{i}"),
+            real_name=f"Real name {i}",
+            comments=f"User {i}",
             staff_member=is_staff or is_admin,
             is_admin=is_admin,
             state=types.states.State.ACTIVE if enabled else types.states.State.BLOCKED,
         )
-        for i in range(glob['user_id'], glob['user_id'] + number_of_users)
+        for i in range(glob["user_id"], glob["user_id"] + number_of_users)
     ]
-    glob['user_id'] += number_of_users
+    glob["user_id"] += number_of_users
 
     # If groups are given, add them to the users
     if groups:
@@ -95,40 +96,36 @@ def create_db_users(
     return users
 
 
-def create_db_groups(
-    authenticator: models.Authenticator, number_of_groups: int = 1
-) -> list[models.Group]:
+def create_db_groups(authenticator: models.Authenticator, number_of_groups: int = 1) -> list[models.Group]:
     """
     Creates a bunch of groups
     """
     groups = [
         authenticator.groups.create(
-            name=f'group{i}',
-            comments=f'Group {i}',
+            name=f"group{i}",
+            comments=f"Group {i}",
             is_meta=False,
         )
-        for i in range(glob['group_id'], glob['group_id'] + number_of_groups)
+        for i in range(glob["group_id"], glob["group_id"] + number_of_groups)
     ]
 
-    glob['group_id'] += number_of_groups
+    glob["group_id"] += number_of_groups
 
     return groups
 
 
-def create_db_metagroups(
-    authenticator: models.Authenticator, number_of_meta: int = 1
-) -> list[models.Group]:
+def create_db_metagroups(authenticator: models.Authenticator, number_of_meta: int = 1) -> list[models.Group]:
     """
     Creates a bunch of meta groups
     """
     meta_groups = [
         authenticator.groups.create(
-            name=f'meta-group{i}',
-            comments=f'Meta group {i}',
+            name=f"meta-group{i}",
+            comments=f"Meta group {i}",
             is_meta=True,
             meta_if_any=i % 2 == 0,
         )
-        for i in range(glob['group_id'], glob['group_id'] + number_of_meta)
+        for i in range(glob["group_id"], glob["group_id"] + number_of_meta)
     ]
 
     # Add some groups to the meta groups
@@ -137,10 +134,11 @@ def create_db_metagroups(
     if groups:
         for meta in meta_groups:
             for group in random.sample(
-                groups, random.randint(1, len(groups) // 2)  # nosec: testing only
+                groups,
+                random.randint(1, len(groups) // 2),  # nosec: testing only
             ):
                 meta.groups.add(group)
 
-    glob['group_id'] += number_of_meta
+    glob["group_id"] += number_of_meta
 
     return meta_groups

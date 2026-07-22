@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -56,10 +57,10 @@ class Log(models.Model):
     owner_type = models.SmallIntegerField(db_index=True, default=0)
 
     created = models.DateTimeField(db_index=True)
-    source = models.CharField(max_length=16, default='internal', db_index=True)
+    source = models.CharField(max_length=16, default="internal", db_index=True)
     level = models.PositiveIntegerField(default=0, db_index=True)
-    name = models.CharField(max_length=64, default='')  # If syslog, log name, else empty
-    data = models.CharField(max_length=4000, default='')
+    name = models.CharField(max_length=64, default="")  # If syslog, log name, else empty
+    data = models.CharField(max_length=4000, default="")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[Log]'
@@ -69,8 +70,8 @@ class Log(models.Model):
         Meta class to declare db table
         """
 
-        db_table = 'uds_log'
-        app_label = 'uds'
+        db_table = "uds_log"
+        app_label = "uds"
 
     @property
     def level_as_str(self) -> str:
@@ -80,7 +81,4 @@ class Log(models.Model):
         return LogLevel.from_int(self.level).name
 
     def __str__(self) -> str:
-        return (
-            f'Log of {self.owner_type}({self.owner_id}):'
-            f' {self.created} - {self.source} - {self.level} - {self.data}'
-        )
+        return f"Log of {self.owner_type}({self.owner_id}): {self.created} - {self.source} - {self.level} - {self.data}"

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -54,15 +55,15 @@ class TunnelTicketPQ(Handler):
     """
 
     ROLE = consts.UserRole.ANONYMOUS
-    PATH = 'tunnelpq'
-    NAME = 'ticket'
+    PATH = "tunnelpq"
+    NAME = "ticket"
 
     def post(self) -> typing.Any:
         """
         Processes get requests
         """
         logger.debug(
-            'TunnelPQ parameters for post: %s (%s) from %s',
+            "TunnelPQ parameters for post: %s (%s) from %s",
             self._args,
             self._params,
             self._request.ip,
@@ -83,14 +84,14 @@ class TunnelTicketPQ(Handler):
         try:
             ticket = models.TicketStore.get_for_tunnel(req.ticket)
             if ticket.userservice is None or ticket.userservice.user is None:
-                raise Exception('Ticket has no associated userservice or the userservice has no user')
+                raise Exception("Ticket has no associated userservice or the userservice has no user")
 
             match req.command:
-                case 'stop':
+                case "stop":
                     # This data will always be with tz info (from 5.0 onwards)
                     total_time = sql_now() - ticket.started
 
-                    msg = f'User {ticket.userservice.user.name} stopped tunnel {req.token[:8]}... to {ticket.remotes_as_str()}: u:{req.sent}/d:{req.recv}/t:{total_time}.'
+                    msg = f"User {ticket.userservice.user.name} stopped tunnel {req.token[:8]}... to {ticket.remotes_as_str()}: u:{req.sent}/d:{req.recv}/t:{total_time}."
                     log.log(ticket.userservice.user.manager, types.log.LogLevel.INFO, msg)
                     log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
 
@@ -106,9 +107,9 @@ class TunnelTicketPQ(Handler):
                     )
                     return {}
 
-                case 'start':
+                case "start":
                     if net.ip_to_long(req.ip).version == 0:
-                        raise Exception('Invalid from IP')
+                        raise Exception("Invalid from IP")
                     events.add_event(
                         ticket.userservice.service_pool,
                         events.types.stats.EventType.TUNNEL_OPEN,
@@ -117,7 +118,7 @@ class TunnelTicketPQ(Handler):
                         dstip=ticket.remotes_as_str(),
                         tunnel=req.token,
                     )
-                    msg = f'User {ticket.userservice.user.name} started tunnel {req.token[:8]}... to {ticket.remotes_as_str()} from {req.ip}.'
+                    msg = f"User {ticket.userservice.user.name} started tunnel {req.token[:8]}... to {ticket.remotes_as_str()} from {req.ip}."
                     log.log(ticket.userservice.user.manager, types.log.LogLevel.INFO, msg)
                     log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
                     # Generate new, notify only, ticket, for the userservice to notify when done
@@ -130,24 +131,24 @@ class TunnelTicketPQ(Handler):
                     return types.tickets.TunnelTicketResponse(
                         remotes=ticket.remotes,
                         notify=notify_ticket,
-                        shared_secret=ticket.shared_secret.hex() if ticket.shared_secret else '',
+                        shared_secret=ticket.shared_secret.hex() if ticket.shared_secret else "",
                     ).as_encrypted_dict(req.kem_kyber_key, ticket_id=req.ticket)
                 case _:
-                    raise Exception('Invalid command')
+                    raise Exception("Invalid command")
 
         except Exception as e:
-            logger.info('Ticket Request ignored: %s', e)
+            logger.info("Ticket Request ignored: %s", e)
             raise exceptions.rest.AccessDenied() from e
 
 
 class TunnelRegisterPC(ServerRegisterBase):
     ROLE = consts.UserRole.ADMIN
 
-    PATH = 'tunnelpq'
-    NAME = 'register'
+    PATH = "tunnelpq"
+    NAME = "register"
 
     # Just a compatibility method for old tunnel servers
     @typing.override
     def post(self) -> dict[str, typing.Any]:
-        self._params['type'] = types.servers.ServerType.TUNNEL
+        self._params["type"] = types.servers.ServerType.TUNNEL
         return super().post()

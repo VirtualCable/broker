@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import pickle
 
 from tests.services.openshift import fixtures
@@ -38,7 +39,7 @@ from tests.utils.test import UDSTransactionTestCase
 
 
 class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
-    EXPECTED_FIELDS = {'_name', '_waiting_name', '_reason', '_queue', '_vmid', '_is_flagged_for_destroy'}
+    EXPECTED_FIELDS = {"_name", "_waiting_name", "_reason", "_queue", "_vmid", "_is_flagged_for_destroy"}
 
     def setUp(self) -> None:
         """
@@ -46,24 +47,24 @@ class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
         """
         super().setUp()
         fixtures.clear()
-        
+
     def _make_publication(self):
         """
         Helper to create a publication with all fields set for serialization tests.
         """
         publication = fixtures.create_publication()
-        publication._name = 'test-template'
-        publication._reason = 'test-reason'
+        publication._name = "test-template"
+        publication._reason = "test-reason"
         publication._waiting_name = True
         return publication
 
     # --- Field Check Helper ---
-    def check_fields(self, instance: 'fixtures.publication.OpenshiftTemplatePublication') -> None:
+    def check_fields(self, instance: "fixtures.publication.OpenshiftTemplatePublication") -> None:
         """
         Helper to check expected field values in a publication instance.
         """
-        self.assertEqual(instance._name, 'test-template')
-        self.assertEqual(instance._reason, 'test-reason')
+        self.assertEqual(instance._name, "test-template")
+        self.assertEqual(instance._reason, "test-reason")
         self.assertTrue(instance._waiting_name)
 
     # --- Serialization Tests ---
@@ -101,5 +102,5 @@ class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
         publication = self._make_publication()
         data = pickle.dumps(publication)
         publication2 = pickle.loads(data)
-        self.assertEqual(publication2._name, 'test-template')
-        self.assertEqual(publication2.get_template_id(), 'test-template')
+        self.assertEqual(publication2._name, "test-template")
+        self.assertEqual(publication2.get_template_id(), "test-template")

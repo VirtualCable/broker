@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from datetime import timedelta
 import time
@@ -51,7 +52,7 @@ class SchedulerHousekeeping(Job):
     Ensures no task is executed for more than 15 minutes
     """
 
-    friendly_name = 'Scheduler house keeping'
+    friendly_name = "Scheduler house keeping"
 
     @typing.override
     def next_execution_delay(self) -> int:
@@ -68,8 +69,8 @@ class SchedulerHousekeeping(Job):
                 with transaction.atomic():
                     Scheduler.objects.select_for_update(skip_locked=True).filter(
                         last_execution__lt=since, state=State.RUNNING
-                    ).update(owner_server='', state=State.FOR_EXECUTE)
+                    ).update(owner_server="", state=State.FOR_EXECUTE)
                 break
             except Exception:
-                logger.info('Retrying Scheduler cleanup transaction')
+                logger.info("Retrying Scheduler cleanup transaction")
                 time.sleep(1)

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from django.db import models
@@ -60,21 +61,21 @@ class ImmutableLog(models.Model):
     entry_hash = models.BinaryField(max_length=HASH_SIZE, editable=False, unique=True)
 
     class Meta:
-        app_label = 'uds'
-        ordering = ['sequence']
-        get_latest_by = 'sequence'
-        db_table = 'uds_immutable_log'
-        verbose_name = 'Immutable Log Entry'
-        verbose_name_plural = 'Immutable Log Entries'
+        app_label = "uds"
+        ordering = ["sequence"]
+        get_latest_by = "sequence"
+        db_table = "uds_immutable_log"
+        verbose_name = "Immutable Log Entry"
+        verbose_name_plural = "Immutable Log Entries"
 
     def __repr__(self) -> str:
-        return f'<ImmutableLog #{self.sequence} hash={self.entry_hash.hex()[:16]}...>'
+        return f"<ImmutableLog #{self.sequence} hash={self.entry_hash.hex()[:16]}...>"
 
     @typing.override
     def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if self.pk is not None:
-            raise ValidationError('ImmutableLog entries cannot be updated.')
+            raise ValidationError("ImmutableLog entries cannot be updated.")
         super().save(*args, **kwargs)
 
     def delete(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:  # type: ignore
-        raise ValidationError('ImmutableLog entries cannot be deleted.')
+        raise ValidationError("ImmutableLog entries cannot be deleted.")

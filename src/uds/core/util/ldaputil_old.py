@@ -33,6 +33,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 import collections.abc
@@ -82,9 +83,9 @@ LDAPSearchResultType = typing.Optional[list[tuple[typing.Optional[str], dict[str
 class LDAPError(Exception):
     @staticmethod
     def reraise(e: typing.Any) -> typing.NoReturn:
-        _str = _('Connection error: ')
-        if hasattr(e, 'message') and isinstance(getattr(e, 'message'), dict):
-            _str += f'{getattr(e, "message").get("info", "")}, {e.message.get("desc", "")}'
+        _str = _("Connection error: ")
+        if hasattr(e, "message") and isinstance(getattr(e, "message"), dict):
+            _str += f"{getattr(e, 'message').get('info', '')}, {e.message.get('desc', '')}"
         else:
             _str += str(e)
         raise LDAPError(_str) from e
@@ -108,7 +109,7 @@ def connection(
     debug: bool = False,
     verify_ssl: bool = False,
     certificate: typing.Optional[str] = None,  # Content of the certificate, not the file itself
-) -> 'LDAPObject':
+) -> "LDAPObject":
     """
     Tries to connect to ldap. If username is None, it tries to connect using user provided credentials.
 
@@ -132,19 +133,19 @@ def connection(
 
     @raise exception: If connection could not be established
     """
-    logger.debug('Login in to %s as user %s', host, username)
-    password = passwd.encode('utf-8') if isinstance(passwd, str) else passwd
+    logger.debug("Login in to %s as user %s", host, username)
+    password = passwd.encode("utf-8") if isinstance(passwd, str) else passwd
 
-    l: 'LDAPObject'
+    l: "LDAPObject"
     try:
         if debug:
             ldap.set_option(ldap.OPT_DEBUG_LEVEL, 8191)  # pyright: ignore
 
-        schema = 'ldaps' if ssl else 'ldap'
+        schema = "ldaps" if ssl else "ldap"
         if port == -1:
             port = 636 if ssl else 389
-        uri = f'{schema}://{host}:{port}'
-        logger.debug('Ldap uri: %s', uri)
+        uri = f"{schema}://{host}:{port}"
+        logger.debug("Ldap uri: %s", uri)
 
         l = ldap.initialize(uri=uri)  # pyright: ignore
         l.set_option(ldap.OPT_REFERRALS, 0)  # pyright: ignore
@@ -152,36 +153,37 @@ def connection(
         l.network_timeout = int(timeout)
         l.protocol_version = ldap.VERSION3  # pyright: ignore
 
-        certificate = (certificate or '').strip()
+        certificate = (certificate or "").strip()
 
         if ssl:
-            cipher_suite = getattr(settings, 'LDAP_CIPHER_SUITE', 'PFS')
+            cipher_suite = getattr(settings, "LDAP_CIPHER_SUITE", "PFS")
             if certificate and verify_ssl:  # If not verify_ssl, we don't need the certificate
                 # Create a semi-temporary ca file, with the content of the certificate
                 # The name is from the host, so we can ovwerwrite it if needed
-                cert_filename = os.path.join(tempfile.gettempdir(), f'ldap-cert-{host}.pem')
-                with open(cert_filename, 'w') as f:
+                cert_filename = os.path.join(tempfile.gettempdir(), f"ldap-cert-{host}.pem")
+                with open(cert_filename, "w") as f:
                     f.write(certificate)
                 l.set_option(ldap.OPT_X_TLS_CACERTFILE, cert_filename)  # pyright: ignore
                 # If enforced on settings, do no change it here
-                if not getattr(settings, 'LDAP_CIPHER_SUITE', None):
-                    cipher_suite = 'PFS'
+                if not getattr(settings, "LDAP_CIPHER_SUITE", None):
+                    cipher_suite = "PFS"
 
             if not verify_ssl:
                 l.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # pyright: ignore
             # Disable TLS1 and TLS1.1
             # 0x304 = TLS1.3, 0x303 = TLS1.2, 0x302 = TLS1.1, 0x301 = TLS1.0, but use ldap module constants
             # Ensure that libldap is compiled with TLS1.3 support
-            min_tls_version = getattr(settings, 'SECURE_MIN_TLS_VERSION', '1.2')
-            if hasattr(ldap, 'OPT_X_TLS_PROTOCOL_TLS1_3'):
+            min_tls_version = getattr(settings, "SECURE_MIN_TLS_VERSION", "1.2")
+            if hasattr(ldap, "OPT_X_TLS_PROTOCOL_TLS1_3"):
                 tls_version = typing.cast(
                     typing.Any,
                     {  # for pyright to ignore
-                        '1.2': ldap.OPT_X_TLS_PROTOCOL_TLS1_2,  # pyright: ignore
-                        '1.3': ldap.OPT_X_TLS_PROTOCOL_TLS1_3,  # pyright: ignore
+                        "1.2": ldap.OPT_X_TLS_PROTOCOL_TLS1_2,  # pyright: ignore
+                        "1.3": ldap.OPT_X_TLS_PROTOCOL_TLS1_3,  # pyright: ignore
                     },
                 ).get(
-                    min_tls_version, ldap.OPT_X_TLS_PROTOCOL_TLS1_2  # pyright: ignore
+                    min_tls_version,
+                    ldap.OPT_X_TLS_PROTOCOL_TLS1_2,  # pyright: ignore
                 )
 
                 l.set_option(ldap.OPT_X_TLS_PROTOCOL_MIN, tls_version)  # pyright: ignore
@@ -199,25 +201,25 @@ def connection(
                 l.set_option(ldap.OPT_X_TLS_CIPHER_SUITE, cipher_suite)  # pyright: ignore
                 l.set_option(ldap.OPT_X_TLS_NEWCTX, 0)  # pyright: ignore
             except Exception:
-                logger.info('Cipher suite %s not supported by libldap', cipher_suite)
+                logger.info("Cipher suite %s not supported by libldap", cipher_suite)
 
         l.simple_bind_s(who=username, cred=password)  # pyright: ignore reportGeneralTypeIssues
 
-        logger.debug('Connection was successful')
+        logger.debug("Connection was successful")
         return l
     except ldap.SERVER_DOWN as e:  # pyright: ignore
-        raise LDAPError(_('Can\'t contact LDAP server') + f': {e}') from e
+        raise LDAPError(_("Can't contact LDAP server") + f": {e}") from e
     except ldap.LDAPError as e:  # pyright: ignore
         LDAPError.reraise(e)
     except Exception as e:
-        logger.exception('Exception connection:')
+        logger.exception("Exception connection:")
         raise LDAPError(str(e)) from e
 
-    raise LDAPError(_('Unknown error'))
+    raise LDAPError(_("Unknown error"))
 
 
 def as_dict(
-    con: 'LDAPObject',
+    con: "LDAPObject",
     base: str,
     ldap_filter: str,
     attributes: typing.Optional[collections.abc.Iterable[str]] = None,
@@ -228,7 +230,7 @@ def as_dict(
     Makes a search on LDAP, adjusting string to required type (ascii on python2, str on python3).
     returns an generator with the results, where each result is a dictionary where it values are always a list of strings
     """
-    logger.debug('Filter: %s, attr list: %s', ldap_filter, attributes)
+    logger.debug("Filter: %s, attr list: %s", ldap_filter, attributes)
 
     if attributes:
         attributes = list(attributes)  # Ensures iterable is a list
@@ -246,12 +248,10 @@ def as_dict(
     except ldap.LDAPError as e:  # pyright: ignore
         LDAPError.reraise(e)
     except Exception as e:
-        logger.exception('Exception connection:')
+        logger.exception("Exception connection:")
         raise LDAPError(str(e)) from e
 
-    logger.debug(
-        'Result of search %s on %s: %s', ldap_filter, base, res
-    )  # pyright: ignore reportGeneralTypeIssues
+    logger.debug("Result of search %s on %s: %s", ldap_filter, base, res)  # pyright: ignore reportGeneralTypeIssues
 
     if res is not None:
         for r in res:
@@ -260,22 +260,22 @@ def as_dict(
 
             # Convert back attritutes to test_type ONLY on python2
             dct: dict[str, typing.Any] = (
-                utils.CaseInsensitiveDict[list[str]]((k, ['']) for k in attributes)
+                utils.CaseInsensitiveDict[list[str]]((k, [""]) for k in attributes)
                 if attributes is not None
                 else utils.CaseInsensitiveDict[list[str]]()
             )
 
             # Convert back result fields to str
             for k, v in r[1].items():
-                dct[k] = list(i.decode('utf8', errors='replace') for i in v)
+                dct[k] = list(i.decode("utf8", errors="replace") for i in v)
 
-            dct.update(typing.cast(dict[str, typing.Any], {'dn': r[0]}))
+            dct.update(typing.cast(dict[str, typing.Any], {"dn": r[0]}))
 
             yield dct
 
 
 def first(
-    con: 'LDAPObject',
+    con: "LDAPObject",
     base: str,
     object_class: str,
     field: str,
@@ -302,20 +302,20 @@ def first(
 
     attributes = [field] + list(attributes) if attributes else []
 
-    ldap_filter = f'(&(objectClass={object_class})({field}={value}))'
+    ldap_filter = f"(&(objectClass={object_class})({field}={value}))"
 
     try:
         obj = next(as_dict(con, base, ldap_filter, attributes, max_entries))
     except StopIteration:
         return None  # None found
 
-    obj['_id'] = value
+    obj["_id"] = value
 
     return obj
 
 
 # Recursive delete
-def recursive_delete(con: 'LDAPObject', base_dn: str) -> None:
+def recursive_delete(con: "LDAPObject", base_dn: str) -> None:
     search: LDAPSearchResultType = con.search_s(  # pyright: ignore reportGeneralTypeIssues
         base_dn, SCOPE_ONELEVEL
     )
@@ -328,7 +328,7 @@ def recursive_delete(con: 'LDAPObject', base_dn: str) -> None:
     con.delete_s(base_dn)  # pyright: ignore reportGeneralTypeIssues
 
 
-def get_root_dse(con: 'LDAPObject') -> typing.Optional[LDAPResultType]:
+def get_root_dse(con: "LDAPObject") -> typing.Optional[LDAPResultType]:
     """
     Gets the root DSE of the LDAP server
     @param cont: Connection to LDAP server
@@ -337,8 +337,8 @@ def get_root_dse(con: 'LDAPObject') -> typing.Optional[LDAPResultType]:
     return next(
         as_dict(
             con=con,
-            base='',
-            ldap_filter='(objectClass=*)',
+            base="",
+            ldap_filter="(objectClass=*)",
             scope=SCOPE_BASE,
         )
     )

@@ -48,6 +48,7 @@ Reference: src/uds/REST/methods/user_services.py  (AssignedUserService)
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -82,10 +83,10 @@ class PoolUserServicesCrudTest(rest.test.RESTTestCase):
         # Pick any pool that has user services from setUp
         any_userservice = self._any_user_service_under_pool()
         if any_userservice is None:
-            self.skipTest('No UserService available from setUp; cannot test list')
+            self.skipTest("No UserService available from setUp; cannot test list")
 
         pool_id = any_userservice.deployed_service.uuid  # ServicePool uuid
-        url = f'servicespools/{pool_id}/services/overview'
+        url = f"servicespools/{pool_id}/services/overview"
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 200)
         items: list[dict[str, typing.Any]] = response.json()
@@ -94,17 +95,17 @@ class PoolUserServicesCrudTest(rest.test.RESTTestCase):
         self.assertGreaterEqual(
             len(items),
             1,
-            'Overview must include at least the user services created by RESTTestCase.setUp',
+            "Overview must include at least the user services created by RESTTestCase.setUp",
         )
 
     def test_get_nonexistent_user_service_under_pool_returns_404(self) -> None:
         """GET /servicespools/<uuid>/services/<bogus> returns 404."""
         any_userservice = self._any_user_service_under_pool()
         if any_userservice is None:
-            self.skipTest('No UserService available from setUp')
+            self.skipTest("No UserService available from setUp")
 
         pool_id = any_userservice.deployed_service.uuid
-        url = f'servicespools/{pool_id}/services/00000000-0000-0000-0000-000000000000'
+        url = f"servicespools/{pool_id}/services/00000000-0000-0000-0000-000000000000"
         response = self.client.rest_get(url)
         self.assertEqual(response.status_code, 404)
 
@@ -112,11 +113,11 @@ class PoolUserServicesCrudTest(rest.test.RESTTestCase):
         """DetailHandler.post() rejects POST with RequestError (no detail writes via POST)."""
         any_userservice = self._any_user_service_under_pool()
         if any_userservice is None:
-            self.skipTest('No UserService available from setUp')
+            self.skipTest("No UserService available from setUp")
 
         pool_id = any_userservice.deployed_service.uuid
-        url = f'servicespools/{pool_id}/services'
-        response = self.client.rest_post(url, data={'ignored': True})
+        url = f"servicespools/{pool_id}/services"
+        response = self.client.rest_post(url, data={"ignored": True})
         # The base DetailHandler.post raises RequestError -> 400.
         # We assert "<= 500" so any future change of the error class is
         # explicitly noted via this contract snapshot.

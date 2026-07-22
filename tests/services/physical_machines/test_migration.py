@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import datetime
 from unittest import mock
@@ -54,35 +55,35 @@ from uds.services.PhysicalMachines import (
 # Data from 3.6 version
 
 PROVIDER_DATA: typing.Final[dict[str, typing.Any]] = {
-    'id': 1,
-    'uuid': 'e8af96f0-49aa-5a14-be45-1ffea6e4d340',
-    'name': '--- Test Machines',
-    'data_type': 'PhysicalMachinesServiceProvider',
-    'data': 'eJxLzs9Ly0xnBgALIAJ6',
-    'comments': '',
-    'maintenance_mode': False,
+    "id": 1,
+    "uuid": "e8af96f0-49aa-5a14-be45-1ffea6e4d340",
+    "name": "--- Test Machines",
+    "data_type": "PhysicalMachinesServiceProvider",
+    "data": "eJxLzs9Ly0xnBgALIAJ6",
+    "comments": "",
+    "maintenance_mode": False,
 }
 
 SERVICES_DATA: typing.Final[list[dict[str, typing.Any]]] = [
     {
-        'id': 144,
-        'uuid': '35a58de3-5af9-5099-bfcf-25a1581c2385',
-        'name': 'Multiple IPS',
-        'data_type': 'IPMachinesService',
-        'data': 'djcATVVMVElfVE9LRU4AMAAzMgA0OAB0cnVlAHRydWU=',
-        'comments': '',
-        'provider_id': 1,
-        'token': 'MULTI_TOKEN',
+        "id": 144,
+        "uuid": "35a58de3-5af9-5099-bfcf-25a1581c2385",
+        "name": "Multiple IPS",
+        "data_type": "IPMachinesService",
+        "data": "djcATVVMVElfVE9LRU4AMAAzMgA0OAB0cnVlAHRydWU=",
+        "comments": "",
+        "provider_id": 1,
+        "token": "MULTI_TOKEN",
     },
     {
-        'id': 142,
-        'uuid': 'edadff6c-fd63-570f-a8be-0af4574ec3a4',
-        'name': 'Single ip',
-        'data_type': 'IPSingleMachineService',
-        'data': 'eJzLLGDOyU9OzMnILy4BAByIBKY=',
-        'comments': '',
-        'provider_id': 1,
-        'token': None,
+        "id": 142,
+        "uuid": "edadff6c-fd63-570f-a8be-0af4574ec3a4",
+        "name": "Single ip",
+        "data_type": "IPSingleMachineService",
+        "data": "eJzLLGDOyU9OzMnILy4BAByIBKY=",
+        "comments": "",
+        "provider_id": 1,
+        "token": None,
     },
 ]
 
@@ -91,56 +92,56 @@ MULTIPLE_IP_SERVICE_IDX: typing.Final[int] = 0
 
 SERVICEPOOLS_DATA: typing.Final[list[dict[str, typing.Any]]] = [
     {
-        'id': 100,
-        'uuid': 'c7b3d1a4-dcf1-5381-96c2-c27c7a7df414',
-        'name': '--- Multiple IP',
-        'short_name': '',
-        'comments': '',
-        'service_id': 144,
-        'osmanager_id': None,
-        'state': 'A',
-        'state_date': timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
-        'show_transports': True,
-        'visible': True,
-        'allow_users_remove': False,
-        'allow_users_reset': False,
-        'ignores_unused': False,
-        'image_id': None,
-        'servicesPoolGroup_id': None,
-        'calendar_message': '',
-        'fallbackAccess': 'ALLOW',
-        'account_id': None,
-        'initial_srvs': 0,
-        'cache_l1_srvs': 0,
-        'cache_l2_srvs': 0,
-        'max_srvs': 0,
-        'current_pub_revision': 1,
+        "id": 100,
+        "uuid": "c7b3d1a4-dcf1-5381-96c2-c27c7a7df414",
+        "name": "--- Multiple IP",
+        "short_name": "",
+        "comments": "",
+        "service_id": 144,
+        "osmanager_id": None,
+        "state": "A",
+        "state_date": timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
+        "show_transports": True,
+        "visible": True,
+        "allow_users_remove": False,
+        "allow_users_reset": False,
+        "ignores_unused": False,
+        "image_id": None,
+        "servicesPoolGroup_id": None,
+        "calendar_message": "",
+        "fallbackAccess": "ALLOW",
+        "account_id": None,
+        "initial_srvs": 0,
+        "cache_l1_srvs": 0,
+        "cache_l2_srvs": 0,
+        "max_srvs": 0,
+        "current_pub_revision": 1,
     },
     {
-        'id': 101,
-        'uuid': 'a1ea4c12-b625-5bea-9968-e27d1deb5981',
-        'name': '--- Single IP',
-        'short_name': '',
-        'comments': '',
-        'service_id': 142,
-        'osmanager_id': None,
-        'state': 'A',
-        'state_date': timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
-        'show_transports': True,
-        'visible': True,
-        'allow_users_remove': False,
-        'allow_users_reset': False,
-        'ignores_unused': False,
-        'image_id': None,
-        'servicesPoolGroup_id': None,
-        'calendar_message': '',
-        'fallbackAccess': 'ALLOW',
-        'account_id': None,
-        'initial_srvs': 0,
-        'cache_l1_srvs': 0,
-        'cache_l2_srvs': 0,
-        'max_srvs': 0,
-        'current_pub_revision': 1,
+        "id": 101,
+        "uuid": "a1ea4c12-b625-5bea-9968-e27d1deb5981",
+        "name": "--- Single IP",
+        "short_name": "",
+        "comments": "",
+        "service_id": 142,
+        "osmanager_id": None,
+        "state": "A",
+        "state_date": timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
+        "show_transports": True,
+        "visible": True,
+        "allow_users_remove": False,
+        "allow_users_reset": False,
+        "ignores_unused": False,
+        "image_id": None,
+        "servicesPoolGroup_id": None,
+        "calendar_message": "",
+        "fallbackAccess": "ALLOW",
+        "account_id": None,
+        "initial_srvs": 0,
+        "cache_l1_srvs": 0,
+        "cache_l2_srvs": 0,
+        "max_srvs": 0,
+        "current_pub_revision": 1,
     },
 ]
 
@@ -149,78 +150,78 @@ MULTIPLE_IP_SERVICEPOOL_IDX: typing.Final[int] = 0
 
 USERSERVICES_DATA: typing.Final[list[dict[str, typing.Any]]] = [
     {
-        'id': 1000,
-        'uuid': 'f1ac7d5-58c8-55c3-8bab-24ea1ed40be5',
-        'deployed_service_id': 100,
-        'publication_id': None,
-        'unique_id': 'localhost',
-        'friendly_name': 'localhost',
-        'state': 'U',
-        'os_state': 'U',
-        'state_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 51, 13)),
-        'creation_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 51, 12)),
-        'data': 'QlpoOTFBWSZTWR3s2WMAAJbfgDAQAEF/4CEBEQC+9d8gMAD4AwyNNNMjCZGCaAwYZGmmmRhMjBNAYG9VIJ6U8jTRMEmnoGmp+qfP8+6zBteG1ucJvU7tHB7PDN+qJKe/t1dlXWO88OKzF0gvY0JepWOsfMfq2LmqsX6sdKvdkxWx5jKLe61gxYLGr6VUWMpNHla6mqi9g52xyXNkUjLmzf7nZFjfZFViriy4OVIuUa4bElzVxWyOzFJ57RVJyVVjfWvq3M5fok0ii5q2xsaqs3RV6OcZqR0VVdmT/i7kinChIDvZssY=',
-        'user_id': None,  # Invalid value on a production system, but valid for tests
-        'in_use': False,
-        'in_use_date': timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
-        'cache_level': 0,
-        'src_hostname': '172.27.0.8',
-        'src_ip': '172.27.0.8',
+        "id": 1000,
+        "uuid": "f1ac7d5-58c8-55c3-8bab-24ea1ed40be5",
+        "deployed_service_id": 100,
+        "publication_id": None,
+        "unique_id": "localhost",
+        "friendly_name": "localhost",
+        "state": "U",
+        "os_state": "U",
+        "state_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 51, 13)),
+        "creation_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 51, 12)),
+        "data": "QlpoOTFBWSZTWR3s2WMAAJbfgDAQAEF/4CEBEQC+9d8gMAD4AwyNNNMjCZGCaAwYZGmmmRhMjBNAYG9VIJ6U8jTRMEmnoGmp+qfP8+6zBteG1ucJvU7tHB7PDN+qJKe/t1dlXWO88OKzF0gvY0JepWOsfMfq2LmqsX6sdKvdkxWx5jKLe61gxYLGr6VUWMpNHla6mqi9g52xyXNkUjLmzf7nZFjfZFViriy4OVIuUa4bElzVxWyOzFJ57RVJyVVjfWvq3M5fok0ii5q2xsaqs3RV6OcZqR0VVdmT/i7kinChIDvZssY=",
+        "user_id": None,  # Invalid value on a production system, but valid for tests
+        "in_use": False,
+        "in_use_date": timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
+        "cache_level": 0,
+        "src_hostname": "172.27.0.8",
+        "src_ip": "172.27.0.8",
     },
     {
-        'id': 1001,
-        'uuid': 'd78c4e51-58d2-55dc-902e-07c45b8ba636',
-        'deployed_service_id': 100,
-        'publication_id': None,
-        'unique_id': '172.27.1.26',
-        'friendly_name': '172.27.1.26',
-        'state': 'U',
-        'os_state': 'U',
-        'state_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 56, 17)),
-        'creation_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 56, 12)),
-        'data': 'QlpoOTFBWSZTWSXhxOYAAJrfgDAQAEF/4CEBEQC+td8gMAD4AwaaNNMJiZMBA0wwaaNNMJiZMBA0wb1URMJiNI0yGmk09D1Pn67XzBm8M2jk4u7Vyezw0faiS3t7dXqwdY7y3LXw8m7N0jppVjZKyMKKY1jeupIxZR1j/R9rI3Nl8bOHO5wZMVkfkb47qsGbBVs+mKirKTV+rHubKNzBWPNY3RSN/Vok2aVi5Vc1cXlSLFF1qSxs4rJHRgk/PSL0nJevjS7Vm0t4JO0UWtmUXNl7RzXsXnGikc1690ZP4XckU4UJAl4cTmA=',
-        'user_id': None,
-        'in_use': False,
-        'in_use_date': timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
-        'cache_level': 0,
-        'src_hostname': '172.27.0.1',
-        'src_ip': '172.27.0.1',
+        "id": 1001,
+        "uuid": "d78c4e51-58d2-55dc-902e-07c45b8ba636",
+        "deployed_service_id": 100,
+        "publication_id": None,
+        "unique_id": "172.27.1.26",
+        "friendly_name": "172.27.1.26",
+        "state": "U",
+        "os_state": "U",
+        "state_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 56, 17)),
+        "creation_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 2, 56, 12)),
+        "data": "QlpoOTFBWSZTWSXhxOYAAJrfgDAQAEF/4CEBEQC+td8gMAD4AwaaNNMJiZMBA0wwaaNNMJiZMBA0wb1URMJiNI0yGmk09D1Pn67XzBm8M2jk4u7Vyezw0faiS3t7dXqwdY7y3LXw8m7N0jppVjZKyMKKY1jeupIxZR1j/R9rI3Nl8bOHO5wZMVkfkb47qsGbBVs+mKirKTV+rHubKNzBWPNY3RSN/Vok2aVi5Vc1cXlSLFF1qSxs4rJHRgk/PSL0nJevjS7Vm0t4JO0UWtmUXNl7RzXsXnGikc1690ZP4XckU4UJAl4cTmA=",
+        "user_id": None,
+        "in_use": False,
+        "in_use_date": timezone.make_aware(datetime.datetime(1972, 7, 1, 0, 0)),
+        "cache_level": 0,
+        "src_hostname": "172.27.0.1",
+        "src_ip": "172.27.0.1",
     },
     {
-        'id': 1002,
-        'uuid': '57d441a4-d152-583c-b11a-0a0a7b36ab09',
-        'deployed_service_id': 101,
-        'publication_id': None,
-        'unique_id': 'dc.dkmon.local:1',
-        'friendly_name': 'dc.dkmon.local:1',
-        'state': 'U',
-        'os_state': 'U',
-        'state_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 3, 13, 47)),
-        'creation_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 3, 13, 47)),
-        'data': 'QlpoOTFBWSZTWbWQavUAAJlfgDAQAEF/4CEBEQC+v98hMAD4Aw0MmQMjEGJk0NMGGhkyBkYgxMmhpgbVJkekMlPEm0yhhNNqep+qePjyyiSPRImZL2HdTEyNj0YG44Sr+duhqROiOq/DM7v1kaoo5JESbgUR1yGRaj9HogUGRQsvzY+i8uHo3RvJEO5AtLi0qKHkwiVvIE0siQ82DgcVlxUjkPK0ORbzI4D3I4S/sE9ESoiZmuZzpUiscRsEnlCY9I2LhLjZDCXuMMjGzkSMIYiWKHECheiwoMTNBi00RMcjQYY1Lxv8XckU4UJC1kGr1A==',
-        'user_id': None,
-        'in_use': True,
-        'in_use_date': timezone.make_aware(datetime.datetime(2024, 4, 25, 3, 13, 47)),
-        'cache_level': 0,
-        'src_hostname': '172.27.0.8',
-        'src_ip': '172.27.0.8',
+        "id": 1002,
+        "uuid": "57d441a4-d152-583c-b11a-0a0a7b36ab09",
+        "deployed_service_id": 101,
+        "publication_id": None,
+        "unique_id": "dc.dkmon.local:1",
+        "friendly_name": "dc.dkmon.local:1",
+        "state": "U",
+        "os_state": "U",
+        "state_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 3, 13, 47)),
+        "creation_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 3, 13, 47)),
+        "data": "QlpoOTFBWSZTWbWQavUAAJlfgDAQAEF/4CEBEQC+v98hMAD4Aw0MmQMjEGJk0NMGGhkyBkYgxMmhpgbVJkekMlPEm0yhhNNqep+qePjyyiSPRImZL2HdTEyNj0YG44Sr+duhqROiOq/DM7v1kaoo5JESbgUR1yGRaj9HogUGRQsvzY+i8uHo3RvJEO5AtLi0qKHkwiVvIE0siQ82DgcVlxUjkPK0ORbzI4D3I4S/sE9ESoiZmuZzpUiscRsEnlCY9I2LhLjZDCXuMMjGzkSMIYiWKHECheiwoMTNBi00RMcjQYY1Lxv8XckU4UJC1kGr1A==",
+        "user_id": None,
+        "in_use": True,
+        "in_use_date": timezone.make_aware(datetime.datetime(2024, 4, 25, 3, 13, 47)),
+        "cache_level": 0,
+        "src_hostname": "172.27.0.8",
+        "src_ip": "172.27.0.8",
     },
 ]
 
 STORAGE_DATA: typing.Final[list[dict[str, typing.Any]]] = [
     {
-        'owner': 't-service-144',
-        'key': '1511fcef403a937af1d7360a297e2b44',
-        'data': 'gASVBgAAAAAAAABKMaopZi4=\n',
-        'attr1': '',
+        "owner": "t-service-144",
+        "key": "1511fcef403a937af1d7360a297e2b44",
+        "data": "gASVBgAAAAAAAABKMaopZi4=\n",
+        "attr1": "",
     },
     {
-        'owner': 't-service-144',
-        'key': '848d16fb421048c690c9761c11dc1699',
-        'data': 'gASVRwAAAAAAAABdlCiMHzE3Mi4yNy4xLjI1OzAxOjIzOjQ1OjY3Ojg5OkFCfjGUjA0xNzIuMjcuMS4yNn4xlIwNMTcyLjI3LjEuMjd+MpRlLg==',
-        'attr1': '',
+        "owner": "t-service-144",
+        "key": "848d16fb421048c690c9761c11dc1699",
+        "data": "gASVRwAAAAAAAABdlCiMHzE3Mi4yNy4xLjI1OzAxOjIzOjQ1OjY3Ojg5OkFCfjGUjA0xNzIuMjcuMS4yNn4xlIwNMTcyLjI3LjEuMjd+MpRlLg==",
+        "attr1": "",
     },
-    {'owner': 't-service-142', 'key': 'b6ac33477ae0a82fa2681c4d398d88d7', 'data': 'gARLAS4=\n', 'attr1': ''},
+    {"owner": "t-service-142", "key": "b6ac33477ae0a82fa2681c4d398d88d7", "data": "gARLAS4=\n", "attr1": ""},
 ]
 
 
@@ -249,11 +250,11 @@ class TestPhysicalMigration(UDSTransactionTestCase):
 
     def apps_mock(self) -> mock.MagicMock:
         def _get_model(_app: str, model: str) -> typing.Any:
-            if model == 'Service':
+            if model == "Service":
                 return models.Service
-            elif model == 'ServerGroup':
+            elif model == "ServerGroup":
                 return models.ServerGroup
-            elif model == 'ServicePool':
+            elif model == "ServicePool":
                 return models.ServicePool
             else:
                 raise ValueError(f"Model {model} not found")
@@ -288,7 +289,7 @@ class TestPhysicalMigration(UDSTransactionTestCase):
         #  - Two user services
         #    * First one, is localhost
         #    * Second one is 172.27.1.26
-        
+
         # Note: On Gitgub automated test, localhost CAN be resolved, so i have removed it from the list of ips to add
         # So test is valid for both cases
 
@@ -298,32 +299,32 @@ class TestPhysicalMigration(UDSTransactionTestCase):
         # Now check that data has been migrated correctly
         # Single ip
         single_ip = typing.cast(
-            'service_single.IPSingleMachineService',
-            models.Service.objects.get(uuid=SERVICES_DATA[SINGLE_IP_SERVICE_IDX]['uuid']).get_instance(),
+            "service_single.IPSingleMachineService",
+            models.Service.objects.get(uuid=SERVICES_DATA[SINGLE_IP_SERVICE_IDX]["uuid"]).get_instance(),
         )
-        self.assertEqual(single_ip.host.value, 'localhost')
+        self.assertEqual(single_ip.host.value, "localhost")
 
         # Multiple ip
         multi_ip = typing.cast(
-            'service_multi.IPMachinesService',
-            models.Service.objects.get(uuid=SERVICES_DATA[MULTIPLE_IP_SERVICE_IDX]['uuid']).get_instance(),
+            "service_multi.IPMachinesService",
+            models.Service.objects.get(uuid=SERVICES_DATA[MULTIPLE_IP_SERVICE_IDX]["uuid"]).get_instance(),
         )
         server_group = fields.get_server_group_from_field(multi_ip.server_group)
-        self.assertEqual(server_group.name, 'Physical Machines Server Group for Multiple IPS')
+        self.assertEqual(server_group.name, "Physical Machines Server Group for Multiple IPS")
         # Localhost will be filtered out because cannot be resolved by dns query
         ips_to_check = {
-            '172.27.1.25',
-            '172.27.1.26',
-            '172.27.1.27',
+            "172.27.1.25",
+            "172.27.1.26",
+            "172.27.1.27",
         }
         self.assertEqual(server_group.servers.count(), len(ips_to_check))
         for server in server_group.servers.all():
             self.assertEqual(
-                server.server_type, types.servers.ServerType.UNMANAGED, f'Invalid server type for {server.ip}'
+                server.server_type, types.servers.ServerType.UNMANAGED, f"Invalid server type for {server.ip}"
             )
-            self.assertIn(server.ip, ips_to_check, f'Invalid server ip {server.ip}: {ips_to_check}')
+            self.assertIn(server.ip, ips_to_check, f"Invalid server ip {server.ip}: {ips_to_check}")
             ips_to_check.remove(server.ip)
-            
+
             # Note: to this to work, reverse dns for
             # 172.27.1.25-27 must be configured on the system where tests are run
             # If not, the test will fail
@@ -331,19 +332,19 @@ class TestPhysicalMigration(UDSTransactionTestCase):
             # self.assertNotEqual(server.hostname, '')
 
             # 172.27.1.25 has a MAC, rest of servers have NULL_MAC (empty equivalent)
-            if server.ip == '172.27.1.25':
-                self.assertEqual(server.mac, '01:23:45:67:89:AB')
+            if server.ip == "172.27.1.25":
+                self.assertEqual(server.mac, "01:23:45:67:89:AB")
             else:
                 self.assertEqual(server.mac, consts.NULL_MAC)
 
             # If is 172.27.1.26 ensure is locked
-            if server.ip == '172.27.1.26':
+            if server.ip == "172.27.1.26":
                 self.assertTrue(
                     server.locked_until is not None and server.locked_until > timezone.localtime(),
-                    f'Server {server.ip} is not locked',
+                    f"Server {server.ip} is not locked",
                 )
             else:
-                self.assertIsNone(server.locked_until, f'Server {server.ip} is locked')
+                self.assertIsNone(server.locked_until, f"Server {server.ip} is locked")
 
         # Ensure all ips have been checked
         self.assertEqual(len(ips_to_check), 0)
@@ -351,19 +352,19 @@ class TestPhysicalMigration(UDSTransactionTestCase):
         # Now, check UserServices
         for userservice_data in USERSERVICES_DATA:
             # Get the user service
-            if userservice_data['deployed_service_id'] == SERVICEPOOLS_DATA[SINGLE_IP_SERVICEPOOL_IDX]['id']:
+            if userservice_data["deployed_service_id"] == SERVICEPOOLS_DATA[SINGLE_IP_SERVICEPOOL_IDX]["id"]:
                 userservice = typing.cast(
-                    'deployment.IPMachineUserService',
-                    models.UserService.objects.get(uuid=userservice_data['uuid']).get_instance(),
+                    "deployment.IPMachineUserService",
+                    models.UserService.objects.get(uuid=userservice_data["uuid"]).get_instance(),
                 )
-                self.assertEqual(userservice._ip, 'dc.dkmon.local~1')  # Same as original data
+                self.assertEqual(userservice._ip, "dc.dkmon.local~1")  # Same as original data
             else:
                 userservice = typing.cast(
-                    'deployment_multi.IPMachinesUserService',
-                    models.UserService.objects.get(uuid=userservice_data['uuid']).get_instance(),
+                    "deployment_multi.IPMachinesUserService",
+                    models.UserService.objects.get(uuid=userservice_data["uuid"]).get_instance(),
                 )
                 self.assertEqual(
                     userservice._ip,
-                    userservice_data['unique_id'],
-                    f'Invalid IP for {userservice_data["unique_id"]}: {userservice._ip}',
+                    userservice_data["unique_id"],
+                    f"Invalid IP for {userservice_data['unique_id']}: {userservice._ip}",
                 )

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.urls import reverse
@@ -44,51 +45,49 @@ class SecurityMiddlewareTest(test.UDSTransactionTestCase):
     """
     Test actor functionality
     """
+
     def test_security(self) -> None:
-        SecurityMiddlewareTest.add_middleware('uds.middleware.security.UDSSecurityMiddleware')
+        SecurityMiddlewareTest.add_middleware("uds.middleware.security.UDSSecurityMiddleware")
         # No trusted sources
-        config.GlobalConfig.TRUSTED_SOURCES.set('')
+        config.GlobalConfig.TRUSTED_SOURCES.set("")
         # Without user agent, security middleware will return forbidden (403) if not Trusted IP
         # With user agent, it will process normally (/ will redirect to index, for example, and index will return 200)
         # If user agent contains "bot" or "spider" it will return 403 in all cases
-        response = self.client.get('/', secure=False)
+        response = self.client.get("/", secure=False)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('page.index'))
+        self.assertEqual(response.url, reverse("page.index"))
         # Try secure, will redirect to index also
-        response = self.client.get('/', secure=True)
+        response = self.client.get("/", secure=True)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('page.index'))
+        self.assertEqual(response.url, reverse("page.index"))
 
         # Remove user agent, will return 403
         self.client.set_user_agent(None)
-        response = self.client.get('/', secure=False)
+        response = self.client.get("/", secure=False)
         self.assertEqual(response.status_code, 403)
-        response = self.client.get('/', secure=True)
+        response = self.client.get("/", secure=True)
         self.assertEqual(response.status_code, 403)
 
         # Bots also are denied
-        self.client.set_user_agent('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
-        response = self.client.get('/', secure=False)
+        self.client.set_user_agent("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+        response = self.client.get("/", secure=False)
         self.assertEqual(response.status_code, 403)
-        response = self.client.get('/', secure=True)
+        response = self.client.get("/", secure=True)
         self.assertEqual(response.status_code, 403)
 
         # Add trusted ip, 127.0.0.1
-        config.GlobalConfig.TRUSTED_SOURCES.set('127.0.0.1')
+        config.GlobalConfig.TRUSTED_SOURCES.set("127.0.0.1")
         # Bot will be denied anyway, even if trusted source
-        response = self.client.get('/', secure=False)
+        response = self.client.get("/", secure=False)
         self.assertEqual(response.status_code, 403)
-        response = self.client.get('/', secure=True)
+        response = self.client.get("/", secure=True)
         self.assertEqual(response.status_code, 403)
-        
+
         # Emtpy user agent will be allowed from trusted source
         self.client.set_user_agent(None)
-        response = self.client.get('/', secure=False)
+        response = self.client.get("/", secure=False)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('page.index'))
-        response = self.client.get('/', secure=True)
+        self.assertEqual(response.url, reverse("page.index"))
+        response = self.client.get("/", secure=True)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('page.index'))
-
-
-
+        self.assertEqual(response.url, reverse("page.index"))

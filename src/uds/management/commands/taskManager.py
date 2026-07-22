@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import argparse
 import sys
 import os
@@ -47,19 +48,19 @@ from uds.core.util.config import GlobalConfig
 
 logger = logging.getLogger(__name__)
 
-PID_FILE = 'taskmanager.pid'
+PID_FILE = "taskmanager.pid"
 
 
 def pid_file_path() -> str:
-    return settings.BASE_DIR + '/' + PID_FILE
+    return settings.BASE_DIR + "/" + PID_FILE
 
 
 # become_daemon seems te be removed on django 1.9
 # This is a copy of posix version from django 1.8
 def become_daemon(
-    our_home_dir: str = '.',
-    out_log: str = '/dev/null',
-    err_log: str = '/dev/null',
+    our_home_dir: str = ".",
+    out_log: str = "/dev/null",
+    err_log: str = "/dev/null",
     umask: int = 0o022,
 ) -> None:
     """Robustly turn into a UNIX daemon, running in our_home_dir."""
@@ -68,7 +69,7 @@ def become_daemon(
         if os.fork() > 0:
             sys.exit(0)  # kill off parent
     except OSError as e:
-        sys.stderr.write(f'fork #1 failed: ({e.errno}) {e.strerror}')
+        sys.stderr.write(f"fork #1 failed: ({e.errno}) {e.strerror}")
         sys.exit(1)
     os.setsid()
     os.chdir(our_home_dir)
@@ -79,12 +80,12 @@ def become_daemon(
         if os.fork() > 0:
             os._exit(0)  # pylint: disable=protected-access
     except OSError as e:
-        sys.stderr.write(f'fork #2 failed: ({e.errno}) {e.strerror}')
+        sys.stderr.write(f"fork #2 failed: ({e.errno}) {e.strerror}")
         os._exit(1)  # pylint: disable=protected-access
 
-    si = open('/dev/null', 'r', encoding='utf-8')  # pylint: disable=consider-using-with
-    so = open(out_log, 'a+', 1, encoding='utf-8')  # pylint: disable=consider-using-with
-    se = open(err_log, 'a+', 1, encoding='utf-8')  # pylint: disable=consider-using-with
+    si = open("/dev/null", "r", encoding="utf-8")  # pylint: disable=consider-using-with
+    so = open(out_log, "a+", 1, encoding="utf-8")  # pylint: disable=consider-using-with
+    se = open(err_log, "a+", 1, encoding="utf-8")  # pylint: disable=consider-using-with
     os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
@@ -99,32 +100,32 @@ class Command(BaseCommand):
     @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '--start',
-            action='store_true',
-            dest='start',
+            "--start",
+            action="store_true",
+            dest="start",
             default=False,
-            help='Starts a new daemon',
+            help="Starts a new daemon",
         )
         parser.add_argument(
-            '--stop',
-            action='store_true',
-            dest='stop',
+            "--stop",
+            action="store_true",
+            dest="stop",
             default=False,
-            help='Stop any running daemon',
+            help="Stop any running daemon",
         )
         parser.add_argument(
-            '--foreground',
-            action='store_true',
-            dest='foreground',
+            "--foreground",
+            action="store_true",
+            dest="foreground",
             default=True,
-            help='Stop any running daemon',
+            help="Stop any running daemon",
         )
         parser.add_argument(
-            '--background',
-            action='store_false',
-            dest='foreground',
+            "--background",
+            action="store_false",
+            dest="foreground",
             default=True,
-            help='Stop any running daemon',
+            help="Stop any running daemon",
         )
 
     @typing.override
@@ -133,21 +134,21 @@ class Command(BaseCommand):
 
         GlobalConfig.initialize()
 
-        start = options.get('start', False)
-        stop = options.get('stop', False)
-        foreground = options.get('foreground', False)
+        start = options.get("start", False)
+        stop = options.get("stop", False)
+        foreground = options.get("foreground", False)
 
-        logger.debug('Start: %s, Stop: %s, Foreground: %s', start, stop, foreground)
+        logger.debug("Start: %s, Stop: %s, Foreground: %s", start, stop, foreground)
 
         pid: int = 0
         try:
-            pid = int(open(pid_file_path(), 'r', encoding='utf8').readline())
+            pid = int(open(pid_file_path(), "r", encoding="utf8").readline())
         except Exception:
             pid = 0
 
         if stop and pid:
             try:
-                logger.info('Stopping task manager. pid: %s', pid)
+                logger.info("Stopping task manager. pid: %s", pid)
                 os.kill(pid, signal.SIGTERM)
                 time.sleep(1)  # Wait a bit before running new one
                 os.unlink(pid_file_path())
@@ -156,8 +157,8 @@ class Command(BaseCommand):
                 os.unlink(pid_file_path())
 
         if start:
-            logger.info('Starting task manager.')
-            
+            logger.info("Starting task manager.")
+
             # Store cluster hostname intially.
             # will be updated by system_info worker every hour
             cluster.store_cluster_info()
@@ -165,21 +166,19 @@ class Command(BaseCommand):
             if not foreground:
                 become_daemon(
                     settings.BASE_DIR,
-                    settings.LOGDIR + '/taskManagerStdout.log',
-                    settings.LOGDIR + '/taskManagerStderr.log',
+                    settings.LOGDIR + "/taskManagerStdout.log",
+                    settings.LOGDIR + "/taskManagerStderr.log",
                 )
                 pid = os.getpid()
 
-                with open(pid_file_path(), 'w+', encoding='utf8') as f:
-                    f.write(f'{pid}\n')
+                with open(pid_file_path(), "w+", encoding="utf8") as f:
+                    f.write(f"{pid}\n")
 
             manager = task_manager()
             manager.run()
 
         if not start and not stop:
             if pid:
-                self.stdout.write(
-                    f'Task manager found running (pid file exists: {pid})\n'
-                )
+                self.stdout.write(f"Task manager found running (pid file exists: {pid})\n")
             else:
                 self.stdout.write("Task manager not found (pid file do not exits)\n")

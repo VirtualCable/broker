@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import re
 from unittest import mock
 
@@ -40,24 +41,20 @@ from uds.core.jobs import jobs_factory
 
 class JobsFactoryTest(TransactionTestCase):
     def test_ensure_workers_initialized(self) -> None:
-        with mock.patch('uds.workers.initialize') as mock_initialize:
+        with mock.patch("uds.workers.initialize") as mock_initialize:
             jobs_factory.JobsFactory.factory().ensure_jobs_registered()
             mock_initialize.assert_called_once()
 
     def test_jobs_stores_on_db(self) -> None:
-        with mock.patch(
-            'uds.models.Scheduler'
-        ) as mock_scheduler:
+        with mock.patch("uds.models.Scheduler") as mock_scheduler:
             jobs_factory.JobsFactory.factory().ensure_jobs_registered()
             # Currently there are 34 jobs registered. If this changes to a lower number, fail
             self.assertGreaterEqual(mock_scheduler.objects.create.call_count, 26)
 
     def test_ensure_does_not_pass_frecuency(self) -> None:
         """frecuency field was removed from the model — create() must never include it."""
-        with mock.patch(
-            'uds.models.Scheduler'
-        ) as mock_scheduler:
+        with mock.patch("uds.models.Scheduler") as mock_scheduler:
             jobs_factory.JobsFactory.factory().ensure_jobs_registered()
             for call_args in mock_scheduler.objects.create.call_args_list:
                 kwargs = call_args[1] if len(call_args) > 1 else {}
-                self.assertNotIn('frecuency', kwargs)
+                self.assertNotIn("frecuency", kwargs)

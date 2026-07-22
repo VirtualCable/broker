@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from django.utils import timezone
@@ -39,31 +40,31 @@ from ..utils import helpers
 
 
 def create_server(
-    type: 'types.servers.ServerType' = types.servers.ServerType.SERVER,
+    type: "types.servers.ServerType" = types.servers.ServerType.SERVER,
     subtype: typing.Optional[str] = None,
     version: typing.Optional[str] = None,
     ip: typing.Optional[str] = None,
     listen_port: int = 0,
     data: typing.Any = None,
-) -> 'models.Server':
+) -> "models.Server":
     # Token is created by default on record creation
     return models.Server.objects.create(
         register_username=helpers.random_string(),
-        register_ip=ip or '127.0.0.1',
-        ip=ip or '127.0.0.1',
+        register_ip=ip or "127.0.0.1",
+        ip=ip or "127.0.0.1",
         hostname=helpers.random_string(),
         listen_port=listen_port,
         stamp=timezone.localtime(),
         type=type,
-        subtype=subtype or '',
+        subtype=subtype or "",
         os_type=types.os.KnownOS.WINDOWS.os_name(),
-        version=version or '4.0.0',
+        version=version or "4.0.0",
         data=data or {},
     )
 
 
 def create_server_group(
-    type: 'types.servers.ServerType' = types.servers.ServerType.SERVER,
+    type: "types.servers.ServerType" = types.servers.ServerType.SERVER,
     subtype: typing.Optional[str] = None,
     version: typing.Optional[str] = None,
     ip: typing.Optional[str] = None,
@@ -76,8 +77,8 @@ def create_server_group(
         name=helpers.random_string(),
         comments=helpers.random_string(),
         type=type,
-        subtype=subtype or '',
-        host=host or '',
+        subtype=subtype or "",
+        host=host or "",
         port=port,
     )
     for _ in range(num_servers):

@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -45,10 +46,8 @@ class Storage(models.Model):
 
     owner = models.CharField(max_length=128, db_index=True)
     key = models.CharField(max_length=64, primary_key=True)
-    data = models.TextField(default='')
-    attr1 = models.CharField(
-        max_length=64, db_index=True, null=True, blank=True, default=None
-    )
+    data = models.TextField(default="")
+    attr1 = models.CharField(max_length=64, db_index=True, null=True, blank=True, default=None)
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[Storage]'
@@ -58,7 +57,7 @@ class Storage(models.Model):
         Meta class to declare the name of the table at database
         """
 
-        app_label = 'uds'
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'{self.owner} {self.key}  > str= {self.data}, {self.attr1 or ""}'
+        return f"{self.owner} {self.key}  > str= {self.data}, {self.attr1 or ''}"

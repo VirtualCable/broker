@@ -25,9 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import collections.abc
 import logging
 import typing
@@ -70,7 +71,7 @@ def _service_info(
     description: str,
     group: collections.abc.Mapping[str, typing.Any],
     transports: list[collections.abc.Mapping[str, typing.Any]],
-    image: 'Image | None',
+    image: "Image | None",
     show_transports: bool,
     allow_users_remove: bool,
     allow_users_reset: bool,
@@ -84,31 +85,31 @@ def _service_info(
     favorite: bool = False,
 ) -> collections.abc.Mapping[str, typing.Any]:
     return {
-        'id': ('M' if is_meta else 'F') + uuid,
-        'is_meta': is_meta,
-        'name': name,
-        'visual_name': visual_name,
-        'description': description,
-        'group': group,
-        'transports': transports,
-        'imageId': image and image.uuid or consts.UUID_ZERO,
-        'show_transports': show_transports,
-        'allow_users_remove': allow_users_remove,
-        'allow_users_reset': allow_users_reset,
-        'maintenance': maintenance,
-        'not_accesible': not_accesible,
-        'in_use': in_use,
-        'to_be_replaced': to_be_replaced,
-        'to_be_replaced_text': to_be_replaced_text,
-        'custom_calendar_text': custom_calendar_text,
-        'custom_message_text': custom_message_text,
-        'favorite': favorite,
+        "id": ("M" if is_meta else "F") + uuid,
+        "is_meta": is_meta,
+        "name": name,
+        "visual_name": visual_name,
+        "description": description,
+        "group": group,
+        "transports": transports,
+        "imageId": image and image.uuid or consts.UUID_ZERO,
+        "show_transports": show_transports,
+        "allow_users_remove": allow_users_remove,
+        "allow_users_reset": allow_users_reset,
+        "maintenance": maintenance,
+        "not_accesible": not_accesible,
+        "in_use": in_use,
+        "to_be_replaced": to_be_replaced,
+        "to_be_replaced_text": to_be_replaced_text,
+        "custom_calendar_text": custom_calendar_text,
+        "custom_message_text": custom_message_text,
+        "favorite": favorite,
     }
 
 
 # pylint: disable=too-many-locals, too-many-branches, too-many-statements
 def get_services_info_dict(
-    request: 'ExtendedHttpRequestWithUser',
+    request: "ExtendedHttpRequestWithUser",
 ) -> dict[str, typing.Any]:  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Obtains the service data dictionary will all available services for this request
 
@@ -135,11 +136,11 @@ def get_services_info_dict(
     now = sql_now()
 
     # Information for administrators
-    nets = ''
-    valid_transports = ''
+    nets = ""
+    valid_transports = ""
 
-    os_type: 'types.os.KnownOS' = request.os.os
-    logger.debug('OS: %s', os_type)
+    os_type: "types.os.KnownOS" = request.os.os
+    logger.debug("OS: %s", os_type)
 
     user_favorites: set[str] = request.user.get_favorites()
 
@@ -153,38 +154,38 @@ def get_services_info_dict(
         )
 
     # Metapool helpers
-    def _valid_transports(member: 'MetaPoolMember') -> collections.abc.Iterable[Transport]:
+    def _valid_transports(member: "MetaPoolMember") -> collections.abc.Iterable[Transport]:
         t: Transport
-        for t in member.pool.transports.all().order_by('priority'):
+        for t in member.pool.transports.all().order_by("priority"):
             try:
                 if _is_valid_transport(t):
                     yield t
             except Exception as e:
-                logger.warning('Transport %s of %s not found. Ignoring. (%s)', t, member.pool, e)
+                logger.warning("Transport %s of %s not found. Ignoring. (%s)", t, member.pool, e)
 
     def _build_transports_for_meta(
-        transports: collections.abc.Iterable[Transport], is_by_label: bool, meta: 'MetaPool'
+        transports: collections.abc.Iterable[Transport], is_by_label: bool, meta: "MetaPool"
     ) -> list[collections.abc.Mapping[str, typing.Any]]:
-        def idd(i: 'Transport') -> str:
-            return i.uuid if not is_by_label else 'LABEL:' + i.label
+        def idd(i: "Transport") -> str:
+            return i.uuid if not is_by_label else "LABEL:" + i.label
 
         return [
             {
-                'id': idd(i),
-                'name': i.name,
-                'link': html.uds_access_link(request, 'M' + meta.uuid, idd(i)),
-                'priority': i.priority,
+                "id": idd(i),
+                "name": i.name,
+                "link": html.uds_access_link(request, "M" + meta.uuid, idd(i)),
+                "priority": i.priority,
             }
             for i in sorted(transports, key=lambda x: x.priority)  # Sorted by priority
         ]
 
     if request.user.is_staff():
-        nets = ','.join([n.name for n in Network.get_networks_for_ip(request.ip)])
-        valid_transports = ','.join(
-            t.name for t in Transport.objects.all().prefetch_related('networks') if t.is_ip_allowed(request.ip)
+        nets = ",".join([n.name for n in Network.get_networks_for_ip(request.ip)])
+        valid_transports = ",".join(
+            t.name for t in Transport.objects.all().prefetch_related("networks") if t.is_ip_allowed(request.ip)
         )
 
-    logger.debug('Checking meta pools: %s', available_metapools)
+    logger.debug("Checking meta pools: %s", available_metapools)
     services: list[collections.abc.Mapping[str, typing.Any]] = []
 
     # Preload all assigned user services for this user
@@ -204,11 +205,7 @@ def get_services_info_dict(
 
         # Get first member with custom message visible and enabled for metapools
         for member in sorted_members:
-            if (
-                member.pool.display_custom_message
-                and member.pool.visible
-                and member.pool.custom_message.strip()
-            ):
+            if member.pool.display_custom_message and member.pool.visible and member.pool.custom_message.strip():
                 custom_message = member.pool.custom_message
                 break
 
@@ -226,9 +223,7 @@ def get_services_info_dict(
             # Keep only transports that are in all pools
             # This will be done by getting all transports from all pools and then intersecting them
             # using reduce
-            reducer: collections.abc.Callable[[set[Transport], set[Transport]], set[Transport]] = (
-                lambda x, y: x & y
-            )
+            reducer: collections.abc.Callable[[set[Transport], set[Transport]], set[Transport]] = lambda x, y: x & y
             transports_in_all_pools: collections.abc.Iterable[Transport] = (
                 reduce(
                     reducer,
@@ -273,10 +268,10 @@ def get_services_info_dict(
             transports_in_meta = [
                 (
                     {
-                        'id': 'meta',
-                        'name': 'meta',
-                        'link': html.uds_access_link(request, 'M' + meta.uuid, None),
-                        'priority': 0,
+                        "id": "meta",
+                        "name": "meta",
+                        "link": html.uds_access_link(request, "M" + meta.uuid, None),
+                        "priority": 0,
                     }
                     if any(_valid_transports(member) for member in meta.members.filter(enabled=True))
                     else {}
@@ -306,7 +301,7 @@ def get_services_info_dict(
                     not_accesible=not meta.is_access_allowed(now),
                     in_use=in_use,
                     to_be_replaced=None,
-                    to_be_replaced_text='',
+                    to_be_replaced_text="",
                     custom_calendar_text=meta.calendar_message,
                     custom_message_text=custom_message,
                     favorite=meta.uuid in user_favorites,
@@ -320,27 +315,27 @@ def get_services_info_dict(
             continue
 
         # If no macro on names, skip calculation
-        if '{' in service_pool.name or '{' in service_pool.visual_name:
+        if "{" in service_pool.name or "{" in service_pool.visual_name:
             pool_usage_info = service_pool.usage(
                 typing.cast(typing.Any, service_pool).usage_count,  # anotated value
             )
-            use_percent = str(pool_usage_info.percent) + '%'
+            use_percent = str(pool_usage_info.percent) + "%"
             use_count = str(pool_usage_info.used)
             left_count = str(pool_usage_info.total - pool_usage_info.used)
             max_srvs = str(pool_usage_info.total)
         else:
-            max_srvs = ''
-            use_percent = ''
-            use_count = ''
-            left_count = ''
+            max_srvs = ""
+            use_percent = ""
+            use_count = ""
+            left_count = ""
 
         # pylint: disable=cell-var-from-loop
         def _replace_macro_vars(x: str) -> str:
             return (
-                x.replace('{use}', use_percent)
-                .replace('{total}', max_srvs)
-                .replace('{usec}', use_count)
-                .replace('{left}', left_count)
+                x.replace("{use}", use_percent)
+                .replace("{total}", max_srvs)
+                .replace("{usec}", use_count)
+                .replace("{left}", left_count)
             )
 
         trans: list[collections.abc.Mapping[str, typing.Any]] = []
@@ -350,10 +345,10 @@ def get_services_info_dict(
             transport_type = t.get_type()
             if _is_valid_transport(t):
                 if transport_type.own_link:
-                    link = reverse('webapi.transport_own_link', args=('F' + service_pool.uuid, t.uuid))
+                    link = reverse("webapi.transport_own_link", args=("F" + service_pool.uuid, t.uuid))
                 else:
-                    link = html.uds_access_link(request, 'F' + service_pool.uuid, t.uuid)
-                trans.append({'id': t.uuid, 'name': t.name, 'link': link, 'priority': t.priority})
+                    link = html.uds_access_link(request, "F" + service_pool.uuid, t.uuid)
+                trans.append({"id": t.uuid, "name": t.name, "link": link, "priority": t.priority})
 
         # If empty transports, do not include it on list
         if not trans:
@@ -377,13 +372,13 @@ def get_services_info_dict(
         )
         # tbr = False
         if when_will_be_replaced:
-            replace_date_as_str = formats.date_format(when_will_be_replaced, 'SHORT_DATETIME_FORMAT')
+            replace_date_as_str = formats.date_format(when_will_be_replaced, "SHORT_DATETIME_FORMAT")
             replace_date_info_text = gettext(
-                'This service is about to be replaced by a new version. Please, close the session before {} and save all your work to avoid loosing it.'
+                "This service is about to be replaced by a new version. Please, close the session before {} and save all your work to avoid loosing it."
             ).format(when_will_be_replaced)
         else:
             replace_date_as_str = None
-            replace_date_info_text = ''
+            replace_date_info_text = ""
 
         services.append(
             _service_info(
@@ -417,34 +412,34 @@ def get_services_info_dict(
     # logger.debug('Services: %s', services)
 
     # Sort services and remove services with no transports...
-    services = [s for s in sorted(services, key=lambda s: s['name'].upper()) if s['transports']]
+    services = [s for s in sorted(services, key=lambda s: s["name"].upper()) if s["transports"]]
 
     autorun = False
     if (
-        hasattr(request, 'session')
+        hasattr(request, "session")
         and len(services) == 1
         and GlobalConfig.AUTORUN_SERVICE.as_bool(False)
-        and services[0]['transports']
+        and services[0]["transports"]
     ):
-        if request.session.get('autorunDone', '0') == '0':
-            request.session['autorunDone'] = '1'
+        if request.session.get("autorunDone", "0") == "0":
+            request.session["autorunDone"] = "1"
             autorun = True
 
     return {
-        'services': services,
-        'ip': request.ip,
-        'nets': nets,
-        'transports': valid_transports,
-        'autorun': autorun,
+        "services": services,
+        "ip": request.ip,
+        "nets": nets,
+        "transports": valid_transports,
+        "autorun": autorun,
     }
 
 
 def enable_service(
-    request: 'ExtendedHttpRequestWithUser', service_id: str, transport_id: str
+    request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str
 ) -> collections.abc.Mapping[str, typing.Any]:
     # Maybe we could even protect this even more by limiting referer to own server /? (just a meditation..)
-    logger.debug('idService: %s, idTransport: %s', service_id, transport_id)
-    url = ''
+    logger.debug("idService: %s, idTransport: %s", service_id, transport_id)
+    url = ""
     try:
         info = UserServiceManager.manager().get_user_service_info(
             request.user, request.os, request.ip, service_id, transport_id, test_userservice_status=False
@@ -452,31 +447,31 @@ def enable_service(
         scrambler = CryptoManager.manager().random_string(32)
         password = CryptoManager.manager().symmetric_encrypt(get_webpassword(request), scrambler)
 
-        info.userservice.properties['accessed_by_client'] = False  # Reset accesed property to
+        info.userservice.properties["accessed_by_client"] = False  # Reset accesed property to
 
         transport_type = info.transport.get_type()
 
-        error = ''  # No error
+        error = ""  # No error
 
         if transport_type.own_link:
-            url = reverse('webapi.transport_own_link', args=('A' + info.userservice.uuid, info.transport.uuid))
+            url = reverse("webapi.transport_own_link", args=("A" + info.userservice.uuid, info.transport.uuid))
         else:
             data = {
-                'service': 'A' + info.userservice.uuid,
-                'transport': info.transport.uuid,
-                'user': request.user.uuid,
-                'password': password,
+                "service": "A" + info.userservice.uuid,
+                "transport": info.transport.uuid,
+                "user": request.user.uuid,
+                "password": password,
             }
 
             ticket = TicketStore.create(data)
             url = html.uds_link(request, ticket, scrambler)
     except ServiceNotReadyError as e:
-        logger.debug('Service not ready')
+        logger.debug("Service not ready")
         # Not ready, show message and return to this page in a while
         # error += ' (code {0:04X})'.format(e.code)
         error = (
-            gettext('Your service is being created, please, wait for a few seconds while we complete it.)')
-            + f'({e.code.as_percent()}%)'
+            gettext("Your service is being created, please, wait for a few seconds while we complete it.)")
+            + f"({e.code.as_percent()}%)"
         )
     except MaxServicesReachedError:
         logger.info('Number of service reached MAX for service pool "%s"', service_id)
@@ -485,10 +480,10 @@ def enable_service(
         logger.info('Access tried to a calendar limited access pool "%s"', service_id)
         error = types.errors.Error.SERVICE_CALENDAR_DENIED.message
     except InvalidServiceException as e:
-        logger.warning('Invalid service: %s', e)
+        logger.warning("Invalid service: %s", e)
         error = types.errors.Error.INVALID_SERVICE.message
     except Exception as e:
-        logger.exception('Error')
+        logger.exception("Error")
         error = str(e)
 
-    return {'url': str(url), 'error': str(error)}
+    return {"url": str(url), "error": str(error)}

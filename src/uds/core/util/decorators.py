@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import functools
 import inspect
@@ -44,8 +45,8 @@ import uds.core.exceptions.rest
 logger = logging.getLogger(__name__)
 
 # FT = typing.TypeVar('FT', bound=collections.abc.Callable[..., typing.Any])
-P = typing.ParamSpec('P')
-R = typing.TypeVar('R', bound=typing.Any, covariant=True)  # R is covariant, so we can return a subclass of R
+P = typing.ParamSpec("P")
+R = typing.TypeVar("R", bound=typing.Any, covariant=True)  # R is covariant, so we can return a subclass of R
 
 
 @dataclasses.dataclass
@@ -89,13 +90,13 @@ def deprecated(func: collections.abc.Callable[P, R]) -> collections.abc.Callable
         try:
             caller = inspect.stack()[1]
             logger.warning(
-                'Call to deprecated function %s from %s:%s.',
+                "Call to deprecated function %s from %s:%s.",
                 func.__name__,
                 caller[1],
                 caller[2],
             )
         except Exception:
-            logger.info('No stack info on deprecated function call %s', func.__name__)
+            logger.info("No stack info on deprecated function call %s", func.__name__)
 
         return func(*args, **kwargs)
 
@@ -124,14 +125,14 @@ def deprecated_class_value(new_var_name: str) -> collections.abc.Callable[..., t
             try:
                 caller = inspect.stack()[1]
                 logger.warning(
-                    'Use of deprecated class value %s from %s:%s. Use %s instead.',
+                    "Use of deprecated class value %s from %s:%s. Use %s instead.",
                     self.fget.__name__,
                     caller.filename,
                     caller.lineno,
                     self.new_var_name,
                 )
             except Exception:
-                logger.info('No stack info on deprecated value use %s', self.fget.__name__)
+                logger.info("No stack info on deprecated value use %s", self.fget.__name__)
 
             return self.fget(cls)
 
@@ -147,7 +148,7 @@ class _HasConnect(typing.Protocol):
 
 # Keep this, but mypy does not likes it... it's perfect with pyright
 # We use pyright for type checking, so we will use this
-HAS_CONNECT = typing.TypeVar('HAS_CONNECT', bound=_HasConnect)
+HAS_CONNECT = typing.TypeVar("HAS_CONNECT", bound=_HasConnect)
 
 
 def ensure_connected(
@@ -176,6 +177,7 @@ def ensure_connected(
 #     def cache_info(self) -> CacheInfo: ...
 # Now, we could use this by creating two decorators, one for the class methods and one for the functions
 # But the inheritance problem will still be there, so we will keep the current implementation
+
 
 # Decorator for caching
 # This decorator will cache the result of the function for a given time, and given parameters
@@ -229,7 +231,7 @@ def cached(
         try:
             if not args_list and not kwargs_list:
                 for pos, (param_name, param) in enumerate(inspect.signature(fnc).parameters.items()):
-                    if param_name == 'self':  # Self will provide a key, if necesary, using key_fnc
+                    if param_name == "self":  # Self will provide a key, if necesary, using key_fnc
                         continue
                     # Parameters can be included twice in the cache, but it's not a problem
                     if param.kind in (
@@ -244,12 +246,12 @@ def cached(
                         kwargs_list.append(param_name)
                     # *args and **kwargs are not supported as cache parameters
         except Exception:
-            logger.debug('Function %s is not inspectable, no caching possible', fnc.__name__)
+            logger.debug("Function %s is not inspectable, no caching possible", fnc.__name__)
             # Not inspectable, no caching possible, return original function
 
             # Ensure compat with methods of cached functions
-            setattr(fnc, 'cache_info', cache_info)
-            setattr(fnc, 'cache_clear', cache_clear)
+            setattr(fnc, "cache_info", cache_info)
+            setattr(fnc, "cache_clear", cache_clear)
             return fnc
 
         key_helper_fnc: collections.abc.Callable[[typing.Any], str] = key_helper or (lambda x: fnc.__name__)
@@ -263,13 +265,13 @@ def cached(
                 if i < len(args):
                     cache_key += str(args[i])
             for s in kwargs_list:
-                cache_key += str(kwargs.get(s, ''))
+                cache_key += str(kwargs.get(s, ""))
 
             # Append key helper to cache key and get real cache
             # Note tha this value (cache_key) will be hashed by cache, so it's not a problem if it's too long
             if len(args) > 0:
                 cache_key += key_helper_fnc(args[0])
-                inner_cache: 'Cache|None' = getattr(args[0], 'cache', None)
+                inner_cache: "Cache|None" = getattr(args[0], "cache", None)
             else:
                 cache_key += key_helper_fnc(fnc.__name__)
                 inner_cache = None
@@ -278,8 +280,8 @@ def cached(
             # or if args[0] is an object, use its class name as cache name
             # or use the global 'functionCache' (generic, common cache, may clash with other functions)
             cache = inner_cache or Cache(
-                (getattr(getattr(args[0], '__class__', None), '__name__', None) if len(args) > 0 else None)
-                or 'functionCache'
+                (getattr(getattr(args[0], "__class__", None), "__name__", None) if len(args) > 0 else None)
+                or "functionCache"
             )
 
             # if timeout is a function, call it
@@ -287,10 +289,10 @@ def cached(
 
             data: typing.Any = None
             # If misses is 0, we are starting, so we will not try to get from cache
-            if not kwargs.get('force', False) and effective_timeout > 0 and misses > 0:
-                if 'force' in kwargs:
+            if not kwargs.get("force", False) and effective_timeout > 0 and misses > 0:
+                if "force" in kwargs:
                     # Remove force key
-                    del kwargs['force']
+                    del kwargs["force"]
                 data = cache.get(cache_key, default=consts.cache.CACHE_NOT_FOUND)
                 if data is not consts.cache.CACHE_NOT_FOUND:
                     hits += 1
@@ -308,7 +310,7 @@ def cached(
                 cache.put(cache_key, data, effective_timeout)
             except Exception as e:
                 logger.debug(
-                    'Data for %s is not serializable on call to %s, not cached. %s (%s)',
+                    "Data for %s is not serializable on call to %s, not cached. %s (%s)",
                     cache_key,
                     fnc.__name__,
                     data,
@@ -317,8 +319,8 @@ def cached(
             return data
 
         # Same as lru_cache
-        setattr(wrapper, 'cache_info', cache_info)
-        setattr(wrapper, 'cache_clear', cache_clear)
+        setattr(wrapper, "cache_info", cache_info)
+        setattr(wrapper, "cache_clear", cache_clear)
 
         return wrapper
 
@@ -360,7 +362,7 @@ def blocker(
     from uds.core.util.cache import Cache  # To avoid circular references
     from uds.core.util.config import GlobalConfig
 
-    mycache = Cache('uds:blocker')  # Cache for blocked ips
+    mycache = Cache("uds:blocker")  # Cache for blocked ips
 
     max_failures = max_failures or consts.system.ALLOWED_FAILS
 
@@ -373,11 +375,11 @@ def blocker(
                 except uds.core.exceptions.rest.BlockAccess:
                     raise exceptions.rest.AccessDenied()
 
-            req: typing.Any | None = getattr(args[0], request_attr or '_request', None)
+            req: typing.Any | None = getattr(args[0], request_attr or "_request", None)
 
             # No request object, so we can't block
-            if req is None or getattr(req, 'ip', None) is None:
-                logger.debug('No request object, so we can\'t block: (value is %s)', req)
+            if req is None or getattr(req, "ip", None) is None:
+                logger.debug("No request object, so we can't block: (value is %s)", req)
                 return f(*args, **kwargs)
 
             request = typing.cast(types.requests.ExtendedHttpRequest, req)
@@ -431,13 +433,13 @@ def profiler(
             import pstats
             import tempfile
 
-            log_file = log_file or tempfile.gettempdir() + f.__name__ + '.profile'
+            log_file = log_file or tempfile.gettempdir() + f.__name__ + ".profile"
 
             profiler = cProfile.Profile()
             result = profiler.runcall(f, *args, **kwargs)
             stats = pstats.Stats(profiler)
             stats.strip_dirs()
-            stats.sort_stats('cumulative')
+            stats.sort_stats("cumulative")
             stats.dump_stats(log_file)
             return result
 
@@ -463,7 +465,7 @@ def retry_on_exception(
                     return fnc(*args, **kwargs)
                 except Exception as e:
                     if do_log:
-                        logger.error('Exception raised in function %s: %s', fnc.__name__, e)
+                        logger.error("Exception raised in function %s: %s", fnc.__name__, e)
 
                     if not any(isinstance(e, exception_type) for exception_type in to_retry):
                         raise e

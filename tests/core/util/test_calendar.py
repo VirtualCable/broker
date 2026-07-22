@@ -40,12 +40,11 @@ from django.utils import timezone
 
 
 class CalendarTest(UDSTestCase):
-
     def setUp(self) -> None:
         createCalendars()
 
     def test_calendar_dayly(self) -> None:
-        cal = Calendar.objects.get(uuid='2cf6846b-d889-57ce-bb35-e647040a95b6')
+        cal = Calendar.objects.get(uuid="2cf6846b-d889-57ce-bb35-e647040a95b6")
         chk = calendar.CalendarChecker(cal)
         calendar.CalendarChecker.updates = 0
 
@@ -83,20 +82,16 @@ class CalendarTest(UDSTestCase):
         for day in range(365):
             date = datetime.date(2015, 1, 1) + datetime.timedelta(days=day)
 
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(7, 59, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(7, 59, 0)))))
             fnc = self.assertTrue if date >= datetime.date(2015, 9, 1) else self.assertFalse
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(8, 0, 0)))))
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(19, 59, 0)))))
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(20, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(20, 0, 0)))))
 
         self.assertEqual(chk.updates, 366)
 
     def test_calendar_weekly(self) -> None:
-        cal = Calendar.objects.get(uuid='c1221a6d-3848-5fa3-ae98-172662c0f554')
+        cal = Calendar.objects.get(uuid="c1221a6d-3848-5fa3-ae98-172662c0f554")
         chk = calendar.CalendarChecker(cal)
         calendar.CalendarChecker.updates = 0
 
@@ -109,12 +104,8 @@ class CalendarTest(UDSTestCase):
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(10, 0, 0)))))
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(11, 59, 0)))))
 
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 59, 0))))
-            )
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 59, 0)))))
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0)))))
 
         # update 31
         self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 8, 25, 10, 0, 0))))
@@ -128,25 +119,17 @@ class CalendarTest(UDSTestCase):
         for day in range(365):
             date = datetime.date(2015, 1, 1) + datetime.timedelta(days=day)
 
-            fnc = (
-                self.assertTrue
-                if date >= datetime.date(2015, 9, 1) and date.isoweekday() == 2
-                else self.assertFalse
-            )
+            fnc = self.assertTrue if date >= datetime.date(2015, 9, 1) and date.isoweekday() == 2 else self.assertFalse
 
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(7, 0, 0)))))
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(8, 59, 0)))))
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(6, 59, 0))))
-            )
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(6, 59, 0)))))
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 0, 0)))))
 
         self.assertEqual(chk.updates, 365)
 
     def test_calendar_monthly(self) -> None:
-        cal = Calendar.objects.get(uuid='353c4cb8-e02d-5387-a18f-f634729fde81')
+        cal = Calendar.objects.get(uuid="353c4cb8-e02d-5387-a18f-f634729fde81")
         chk = calendar.CalendarChecker(cal)
         calendar.CalendarChecker.updates = 0
 
@@ -164,26 +147,18 @@ class CalendarTest(UDSTestCase):
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(10, 0, 0)))))
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(11, 59, 0)))))
 
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 59, 0))))
-            )
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 59, 0)))))
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0)))))
 
             fnc2(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(7, 0, 0)))))
             fnc2(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(8, 59, 0)))))
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(6, 59, 0))))
-            )
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(6, 59, 0)))))
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 0, 0)))))
 
         self.assertEqual(chk.updates, 730)
 
     def test_calendar_weekdays(self) -> None:
-        cal = Calendar.objects.get(uuid='bccfd011-605b-565f-a08e-80bf75114dce')
+        cal = Calendar.objects.get(uuid="bccfd011-605b-565f-a08e-80bf75114dce")
         chk = calendar.CalendarChecker(cal)
         calendar.CalendarChecker.updates = 0
 
@@ -194,8 +169,7 @@ class CalendarTest(UDSTestCase):
 
             fnc = (
                 self.assertTrue
-                if date.isoweekday() in valid_days
-                and datetime.date(2015, 9, 1) <= date <= datetime.date(2015, 10, 1)
+                if date.isoweekday() in valid_days and datetime.date(2015, 9, 1) <= date <= datetime.date(2015, 10, 1)
                 else self.assertFalse
             )
             fnc2 = (
@@ -207,26 +181,18 @@ class CalendarTest(UDSTestCase):
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(10, 0, 0)))))
             fnc(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(11, 59, 0)))))
 
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 59, 0))))
-            )
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 59, 0)))))
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0)))))
 
             fnc2(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(7, 0, 0)))))
             fnc2(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(8, 59, 0)))))
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(6, 59, 0))))
-            )
-            self.assertFalse(
-                chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 0, 0))))
-            )
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(6, 59, 0)))))
+            self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(9, 0, 0)))))
 
         self.assertEqual(chk.updates, 730)
 
     def test_calendar_durations(self) -> None:
-        cal = Calendar.objects.get(uuid='60160f94-c8fe-5fdc-bbbe-325010980106')
+        cal = Calendar.objects.get(uuid="60160f94-c8fe-5fdc-bbbe-325010980106")
         chk = calendar.CalendarChecker(cal)
 
         # Force UTC timezone for tests

@@ -29,27 +29,30 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import logging
 import re
-import collections.abc
 import typing
 
 from django.utils.translation import gettext_noop as _
-from uds.core import exceptions, types
+
+from uds.core import exceptions
+from uds.core import types
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
-from uds.core.util import validators
 from uds.core.ui import gui
+from uds.core.util import validators
 
-from .publication import XenPublication
 from .deployment import XenLinkedUserService
-
+from .publication import XenPublication
 from .xen import exceptions as xen_exceptions
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .provider import XenProvider
     from uds.core.services.generics.dynamic.publication import DynamicPublication
+
+    from .provider import XenProvider
 
 logger = logging.getLogger(__name__)
 
@@ -62,15 +65,15 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    type_name = _('Xen Linked Clone')
+    type_name = _("Xen Linked Clone")
     # : Type used internally to identify this provider
-    type_type = 'XenLinkedService'
+    type_type = "XenLinkedService"
     # : Description shown at administration interface for this provider
-    type_description = _('Xen Services based on templates')
+    type_description = _("Xen Services based on templates")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
-    icon_file = 'service.png'
+    icon_file = "service.png"
 
     # Functional related data
 
@@ -80,13 +83,13 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
     uses_cache = True
     # : Tooltip shown to user when this item is pointed at admin interface, none
     # : because we don't use it
-    cache_tooltip = _('Number of desired machines to keep running waiting for a user')
+    cache_tooltip = _("Number of desired machines to keep running waiting for a user")
     # : If we need to generate a "Level 2" cache for this service (i.e., L1
     # : could be running machines and L2 suspended machines)
     uses_cache_l2 = True
     # : Tooltip shown to user when this item is pointed at admin interface, None
     # : also because we don't use it
-    cache_tooltip_l2 = _('Number of desired machines to keep suspended waiting for use')
+    cache_tooltip_l2 = _("Number of desired machines to keep suspended waiting for use")
 
     # : If the service needs a s.o. manager (managers are related to agents
     # : provided by services itselfs, i.e. virtual machines with actors)
@@ -106,24 +109,24 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         label=_("Storage SR"),
         readonly=False,
         order=100,
-        tooltip=_('Storage where to publish and put incrementals (only shared storages are supported)'),
+        tooltip=_("Storage where to publish and put incrementals (only shared storages are supported)"),
         required=True,
     )
 
     min_space_gb = gui.NumericField(
         length=3,
-        label=_('Reserved Space'),
+        label=_("Reserved Space"),
         default=32,
         order=101,
-        tooltip=_('Minimal free space in GB'),
+        tooltip=_("Minimal free space in GB"),
         required=True,
-        old_field_name='minSpaceGB',
+        old_field_name="minSpaceGB",
     )
 
     machine = gui.ChoiceField(
         label=_("Base Machine"),
         order=110,
-        tooltip=_('Service base machine'),
+        tooltip=_("Service base machine"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -132,7 +135,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         label=_("Network"),
         readonly=False,
         order=111,
-        tooltip=_('Network used for virtual machines'),
+        tooltip=_("Network used for virtual machines"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -143,7 +146,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         default=512,
         readonly=False,
         order=112,
-        tooltip=_('Memory assigned to machines'),
+        tooltip=_("Memory assigned to machines"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -154,7 +157,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         default=1,
         readonly=False,
         order=113,
-        tooltip=_('Shadow memory multiplier (use with care)'),
+        tooltip=_("Shadow memory multiplier (use with care)"),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
@@ -179,11 +182,11 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             validators.validate_basename(self.basename.value, self.lenname.as_int())
 
             if int(self.memory.value) < 256:
-                raise exceptions.ui.ValidationError(_('The minimum allowed memory is 256 Mb'))
+                raise exceptions.ui.ValidationError(_("The minimum allowed memory is 256 Mb"))
 
     @typing.override
-    def provider(self) -> 'XenProvider':
-        return typing.cast('XenProvider', super().provider())
+    def provider(self) -> "XenProvider":
+        return typing.cast("XenProvider", super().provider())
 
     @typing.override
     def init_gui(self) -> None:
@@ -197,7 +200,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             storages_list: list[types.ui.ChoiceItem] = [
                 gui.choice_item(
                     storage.opaque_ref,
-                    f'{storage.name} ({storage.physical_size/GB:.2f} Gb/{storage.free_space/GB:.2f} Gb)',
+                    f"{storage.name} ({storage.physical_size / GB:.2f} Gb/{storage.free_space / GB:.2f} Gb)",
                 )
                 for storage in api.list_srs()
             ]
@@ -210,11 +213,11 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
     def has_datastore_space(self) -> None:
         with self.provider().get_connection() as api:
             info = api.get_sr_info(self.datastore.value)
-            logger.debug('Checking datastore space for %s: %s', self.datastore.value, info)
+            logger.debug("Checking datastore space for %s: %s", self.datastore.value, info)
             availableGB = (info.physical_size - info.physical_utilisation) // 1024
             if availableGB < self.min_space_gb.as_int():
                 raise xen_exceptions.XenFatalError(
-                    'Not enough free space available: (Needs at least {} GB and there is only {} GB '.format(
+                    "Not enough free space available: (Needs at least {} GB and there is only {} GB ".format(
                         self.min_space_gb.as_int(), availableGB
                     )
                 )
@@ -228,7 +231,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         """
         Xen Seems to allow all kind of names, but let's sanitize a bit
         """
-        return re.sub(r'([^a-zA-Z0-9_ .-]+)', r'_', name)
+        return re.sub(r"([^a-zA-Z0-9_ .-]+)", r"_", name)
 
     @typing.override
     def find_duplicates(self, name: str, mac: str) -> collections.abc.Iterable[str]:
@@ -267,7 +270,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         """
 
         logger.debug(
-            'Starting deploy of template from machine %s on datastore %s',
+            "Starting deploy of template from machine %s on datastore %s",
             self.machine.value,
             self.datastore.value,
         )
@@ -296,7 +299,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         Returns:
             str: Id of the task created for this operation
         """
-        logger.debug('Deploying from template %s machine %s', template_opaque_ref, name)
+        logger.debug("Deploying from template %s machine %s", template_opaque_ref, name)
 
         with self.provider().get_connection() as api:
             self.has_datastore_space()
@@ -313,23 +316,21 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
     def configure_vm(self, vm_opaque_ref: str, mac: str) -> None:
         with self.provider().get_connection() as api:
             api.configure_vm(
-                vm_opaque_ref, mac_info={'network': self.network.value, 'mac': mac}, memory=self.memory.value
+                vm_opaque_ref, mac_info={"network": self.network.value, "mac": mac}, memory=self.memory.value
             )
 
     @typing.override
-    def get_ip(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
-    ) -> str:
+    def get_ip(self, caller_instance: typing.Optional["DynamicUserService | DynamicPublication"], vmid: str) -> str:
         """
         Returns the ip of the machine
         If cannot be obtained, MUST raise an exception
         """
-        return ''  # No ip will be get, UDS will assign one (from actor)
+        return ""  # No ip will be get, UDS will assign one (from actor)
 
     @typing.override
     def get_mac(
         self,
-        caller_instance: typing.Optional['DynamicUserService | DynamicPublication'],
+        caller_instance: typing.Optional["DynamicUserService | DynamicPublication"],
         vmid: str,
         *,
         for_unique_id: bool = False,
@@ -341,10 +342,10 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
 
         with self.provider().get_connection() as api:
             return api.get_first_mac(vmid)
-    
+
     @typing.override
     def is_running(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
+        self, caller_instance: typing.Optional["DynamicUserService | DynamicPublication"], vmid: str
     ) -> bool:
         """
         Returns if the machine is ready and running
@@ -356,9 +357,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             return False
 
     @typing.override
-    def start(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
-    ) -> None:
+    def start(self, caller_instance: typing.Optional["DynamicUserService | DynamicPublication"], vmid: str) -> None:
         """
         Starts the machine
         Can return a task, or None if no task is returned
@@ -367,9 +366,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             api.start_vm(vmid)
 
     @typing.override
-    def stop(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
-    ) -> None:
+    def stop(self, caller_instance: typing.Optional["DynamicUserService | DynamicPublication"], vmid: str) -> None:
         """
         Stops the machine
         Can return a task, or None if no task is returned
@@ -378,9 +375,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             api.stop_vm(vmid)
 
     @typing.override
-    def shutdown(
-        self, caller_instance: typing.Optional['DynamicUserService | DynamicPublication'], vmid: str
-    ) -> None:
+    def shutdown(self, caller_instance: typing.Optional["DynamicUserService | DynamicPublication"], vmid: str) -> None:
         with self.provider().get_connection() as api:
             api.shutdown_vm(vmid)
 

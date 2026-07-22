@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -42,6 +43,7 @@ from ...utils import MustBeOfType
 from ...utils.helpers import limited_iterator
 
 from uds.services.Xen.xen import types as xen_types
+
 
 # USe transactional, used by publication access to db on "removal"
 class TestXenPublication(UDSTransactionTestCase):
@@ -57,9 +59,7 @@ class TestXenPublication(UDSTransactionTestCase):
 
             state = publication.publish()
             # Wait until  types.services.Operation.CREATE_COMPLETED
-            for _ in limited_iterator(
-                lambda: publication._queue[0] != types.services.Operation.CREATE_COMPLETED, 10
-            ):
+            for _ in limited_iterator(lambda: publication._queue[0] != types.services.Operation.CREATE_COMPLETED, 10):
                 state = publication.check_state()
 
             self.assertEqual(state, types.states.State.RUNNING)
@@ -80,14 +80,14 @@ class TestXenPublication(UDSTransactionTestCase):
             publication = fixtures.create_publication(service=service)
 
             # Ensure state check returns error
-            fixtures.TASK_INFO.result = 'ERROR, BOOM!'
+            fixtures.TASK_INFO.result = "ERROR, BOOM!"
             fixtures.TASK_INFO.status = xen_types.TaskStatus.FAILURE
 
             state = publication.publish()
             self.assertEqual(
                 state,
                 types.states.State.RUNNING,
-                f'State is not running: publication._queue={publication._queue}',
+                f"State is not running: publication._queue={publication._queue}",
             )
 
             for _ in limited_iterator(lambda: state == types.states.TaskState.RUNNING, 128):
@@ -100,9 +100,9 @@ class TestXenPublication(UDSTransactionTestCase):
                     MustBeOfType(str),
                 )
             except AssertionError:
-                self.fail(f'Clone machine not called: {api.mock_calls}  //  {publication._queue}')
+                self.fail(f"Clone machine not called: {api.mock_calls}  //  {publication._queue}")
             self.assertEqual(state, types.states.State.ERROR)
-            self.assertEqual(publication.error_reason(), 'ERROR, BOOM!')
+            self.assertEqual(publication.error_reason(), "ERROR, BOOM!")
 
     def test_publication_destroy(self) -> None:
         vmid = str(fixtures.VMS_INFO[0].opaque_ref)
@@ -110,7 +110,7 @@ class TestXenPublication(UDSTransactionTestCase):
             api = typing.cast(mock.MagicMock, provider.api)
             service = fixtures.create_service_linked(provider=provider)
             publication = fixtures.create_publication(service=service)
-           
+
             service.must_stop_before_deletion = False  # avoid stop before deletion, not needed for this test
 
             # Destroy
@@ -137,13 +137,13 @@ class TestXenPublication(UDSTransactionTestCase):
             api = typing.cast(mock.MagicMock, provider.api)
             service = fixtures.create_service_linked(provider=provider)
             publication = fixtures.create_publication(service=service)
-            
+
             service.must_stop_before_deletion = False  # avoid stop before deletion, not needed for this test
 
             # Now, destroy in fact will not return error, because it will
             # queue the operation if failed, but api.remove_machine will be called anyway
             publication._vmid = vmid
-            api.delete_vm.side_effect = Exception('BOOM!')
+            api.delete_vm.side_effect = Exception("BOOM!")
             publication._vmid = vmid
             # destroy, in Xen, will call delete_vm on invocation (not queued), but deferred delete will enqueue it if errored
             # wo destroy will end find
@@ -158,6 +158,6 @@ class TestXenPublication(UDSTransactionTestCase):
             self.assertEqual(api.delete_vm.call_count, 1)
 
             # Ensure cancel calls destroy
-            with mock.patch.object(publication, 'destroy') as destroy:
+            with mock.patch.object(publication, "destroy") as destroy:
                 publication.cancel()
                 destroy.assert_called_with()

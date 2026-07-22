@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import enum
 import typing
@@ -40,7 +41,7 @@ from django.utils.translation import gettext as _
 from uds.core import consts
 from uds.core.util import ensure, singleton
 
-IP_SUBTYPE: typing.Final[str] = 'ip'
+IP_SUBTYPE: typing.Final[str] = "ip"
 
 logger = logging.getLogger(__name__)
 
@@ -57,19 +58,19 @@ class ServerType(enum.IntEnum):
 
     def path(self) -> str:
         return {
-            ServerType.TUNNEL: 'tunnel',
-            ServerType.ACTOR: 'actor',
-            ServerType.SERVER: 'server',
-            ServerType.UNMANAGED: '',  # Unmanaged has no path, does not listen to anything
+            ServerType.TUNNEL: "tunnel",
+            ServerType.ACTOR: "actor",
+            ServerType.SERVER: "server",
+            ServerType.UNMANAGED: "",  # Unmanaged has no path, does not listen to anything
         }[self]
 
     @staticmethod
     def enumerate() -> list[tuple[int, str]]:
         return [
-            (ServerType.TUNNEL, _('Tunnel')),
-            (ServerType.ACTOR, _('Actor')),
-            (ServerType.SERVER, _('Server')),
-            (ServerType.UNMANAGED, _('Unmanaged')),
+            (ServerType.TUNNEL, _("Tunnel")),
+            (ServerType.ACTOR, _("Actor")),
+            (ServerType.SERVER, _("Server")),
+            (ServerType.UNMANAGED, _("Unmanaged")),
         ]
 
 
@@ -87,7 +88,7 @@ class ServerSubtype(metaclass=singleton.Singleton):
         self.registered = {}
 
     @staticmethod
-    def manager() -> 'ServerSubtype':
+    def manager() -> "ServerSubtype":
         return ServerSubtype()
 
     def register(self, type: ServerType, subtype: str, description: str, icon: str, managed: bool) -> None:
@@ -115,7 +116,7 @@ class ServerSubtype(metaclass=singleton.Singleton):
 # I.e. "linuxapp" will be registered by the Linux Applications Provider
 # The main usage of this subtypes is to allow to group servers by type, and to allow to filter by type
 ServerSubtype.manager().register(
-    ServerType.UNMANAGED, IP_SUBTYPE, 'Unmanaged IP Server', consts.images.DEFAULT_IMAGE_BASE64, False
+    ServerType.UNMANAGED, IP_SUBTYPE, "Unmanaged IP Server", consts.images.DEFAULT_IMAGE_BASE64, False
 )
 
 
@@ -126,14 +127,14 @@ class ServerDiskInfo:
     total: int
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any]) -> 'ServerDiskInfo':
-        return ServerDiskInfo(data['mountpoint'], data['used'], data['total'])
+    def from_dict(data: dict[str, typing.Any]) -> "ServerDiskInfo":
+        return ServerDiskInfo(data["mountpoint"], data["used"], data["total"])
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'mountpoint': self.mountpoint,
-            'used': self.used,
-            'total': self.total,
+            "mountpoint": self.mountpoint,
+            "used": self.used,
+            "total": self.total,
         }
 
 
@@ -145,7 +146,7 @@ class ServerStatsWeights:
     max_expected_users: int = 100  # Max expected users to consider in load calculation
     min_memory: int = 0  # Minimum free memory in bytes to consider server as available
 
-    def normalize(self) -> 'ServerStatsWeights':
+    def normalize(self) -> "ServerStatsWeights":
         total = self.cpu + self.memory + self.users
         self.cpu /= total
         self.memory /= total
@@ -154,19 +155,19 @@ class ServerStatsWeights:
 
     def as_dict(self) -> dict[str, float]:
         return {
-            'cpu': self.cpu,
-            'memory': self.memory,
-            'users': self.users,
-            'max_expected_users': self.max_expected_users,
+            "cpu": self.cpu,
+            "memory": self.memory,
+            "users": self.users,
+            "max_expected_users": self.max_expected_users,
         }
 
     @staticmethod
-    def from_dict(data: dict[str, float]) -> 'ServerStatsWeights':
+    def from_dict(data: dict[str, float]) -> "ServerStatsWeights":
         return ServerStatsWeights(
-            data.get('cpu', 0.3),
-            data.get('memory', 0.6),
-            data.get('users', 0.1),
-            int(data.get('max_expected_users', 100)),
+            data.get("cpu", 0.3),
+            data.get("memory", 0.6),
+            data.get("users", 0.1),
+            int(data.get("max_expected_users", 100)),
         ).normalize()
 
 
@@ -223,7 +224,7 @@ class ServerStats:
 
         return w
 
-    def adjust(self, users_increment: int) -> 'ServerStats':
+    def adjust(self, users_increment: int) -> "ServerStats":
         """
         Fix the current stats as if new users are assigned or removed
 
@@ -253,44 +254,44 @@ class ServerStats:
         )
 
     @staticmethod
-    def from_dict(data: collections.abc.Mapping[str, typing.Any], **kwargs: typing.Any) -> 'ServerStats':
+    def from_dict(data: collections.abc.Mapping[str, typing.Any], **kwargs: typing.Any) -> "ServerStats":
         from uds.core.util.model import sql_stamp  # Avoid circular import
 
         dct = {k: v for k, v in data.items()}  # Make a copy
         dct.update(kwargs)  # and update with kwargs
         disks: list[ServerDiskInfo] = []
-        for disk in dct.get('disks', []):
+        for disk in dct.get("disks", []):
             disks.append(ServerDiskInfo.from_dict(disk))
         return ServerStats(
-            memused=dct.get('memused', 1),
-            memtotal=dct.get('memtotal') or 1,  # Avoid division by zero
-            cpuused=dct.get('cpuused', 0),
-            uptime=dct.get('uptime', 0),
+            memused=dct.get("memused", 1),
+            memtotal=dct.get("memtotal") or 1,  # Avoid division by zero
+            cpuused=dct.get("cpuused", 0),
+            uptime=dct.get("uptime", 0),
             disks=disks,
-            connections=dct.get('connections', 0),
-            current_users=dct.get('current_users', 0),
+            connections=dct.get("connections", 0),
+            current_users=dct.get("current_users", 0),
             stamp=sql_stamp(),
         )
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
-            'memused': self.memused,
-            'memtotal': self.memtotal,
-            'cpuused': self.cpuused,
-            'uptime': self.uptime,
-            'disks': [d.as_dict() for d in self.disks],
-            'connections': self.connections,
-            'current_users': self.current_users,
-            'stamp': self.stamp,
+            "memused": self.memused,
+            "memtotal": self.memtotal,
+            "cpuused": self.cpuused,
+            "uptime": self.uptime,
+            "disks": [d.as_dict() for d in self.disks],
+            "connections": self.connections,
+            "current_users": self.current_users,
+            "stamp": self.stamp,
         }
 
     @staticmethod
-    def null() -> 'ServerStats':
+    def null() -> "ServerStats":
         return ServerStats()
 
     def __str__(self) -> str:
         # Human readable
-        return f'memory: {self.memused//(1024*1024)}/{self.memtotal//(1024*1024)} cpu: {self.cpuused*100} users: {self.current_users}, load: {self.load()}, valid: {self.is_valid}'
+        return f"memory: {self.memused // (1024 * 1024)}/{self.memtotal // (1024 * 1024)} cpu: {self.cpuused * 100} users: {self.current_users}, load: {self.load()}, valid: {self.is_valid}"
 
 
 # ServerCounter must be serializable by json, so
@@ -302,12 +303,12 @@ class ServerCounter(typing.NamedTuple):
     @staticmethod
     def from_iterable(
         data: collections.abc.Iterable[typing.Any] | None,
-    ) -> 'ServerCounter | None':
+    ) -> "ServerCounter | None":
         if data is None:
             return None
 
         return ServerCounter(*ensure.as_iterable(data))
 
     @staticmethod
-    def null() -> 'ServerCounter':
-        return ServerCounter('', 0)
+    def null() -> "ServerCounter":
+        return ServerCounter("", 0)

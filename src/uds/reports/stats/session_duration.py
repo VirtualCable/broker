@@ -46,19 +46,19 @@ logger = logging.getLogger(__name__)
 
 # (label, lower_bound_seconds, upper_bound_seconds_exclusive)
 BUCKETS: typing.Final[tuple[tuple[str, int, int], ...]] = (
-    ('< 5 min', 0, 5 * 60),
-    ('5-30 min', 5 * 60, 30 * 60),
-    ('30 min - 2 h', 30 * 60, 2 * 3600),
-    ('2 - 8 h', 2 * 3600, 8 * 3600),
-    ('> 8 h', 8 * 3600, 24 * 3600 * 365),
+    ("< 5 min", 0, 5 * 60),
+    ("5-30 min", 5 * 60, 30 * 60),
+    ("30 min - 2 h", 30 * 60, 2 * 3600),
+    ("2 - 8 h", 2 * 3600, 8 * 3600),
+    ("> 8 h", 8 * 3600, 24 * 3600 * 365),
 )
 
 
 class SessionDurationReport(StatsReport):
-    filename = 'session_duration.pdf'
-    name = _('Session duration histogram')
-    description = _('Distribution of session durations across selected pools')
-    uuid = '6bd74f52-7ce3-4877-88cd-153fe3781801'
+    filename = "session_duration.pdf"
+    name = _("Session duration histogram")
+    description = _("Distribution of session durations across selected pools")
+    uuid = "6bd74f52-7ce3-4877-88cd-153fe3781801"
 
     pools = StatsReport.pools
     start_date = StatsReport.start_date
@@ -66,8 +66,8 @@ class SessionDurationReport(StatsReport):
 
     @typing.override
     def init_gui(self) -> None:
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
-            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by('name') if v.uuid
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL POOLS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name") if v.uuid
         ]
         self.pools.set_choices(vals)
 
@@ -75,17 +75,17 @@ class SessionDurationReport(StatsReport):
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
 
-        if '0-0-0-0' in self.pools.value:
-            pool_ids = list(ServicePool.objects.values_list('id', flat=True))
+        if "0-0-0-0" in self.pools.value:
+            pool_ids = list(ServicePool.objects.values_list("id", flat=True))
         else:
-            pool_ids = list(ServicePool.objects.filter(uuid__in=self.pools.value).values_list('id', flat=True))
+            pool_ids = list(ServicePool.objects.filter(uuid__in=self.pools.value).values_list("id", flat=True))
         if not pool_ids:
             return [], 0, 0
 
         login = stats.events.types.stats.EventType.LOGIN
         logout = stats.events.types.stats.EventType.LOGOUT
 
-        partition = [F('owner_id'), F('fld4')]
+        partition = [F("owner_id"), F("fld4")]
         items = (
             StatsManager.manager()
             .enumerate_events(
@@ -96,19 +96,19 @@ class SessionDurationReport(StatsReport):
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=partition, order_by=[F('stamp')]),
-                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by=[F('stamp')]),
+                prev_type=Window(Lag("event_type"), partition_by=partition, order_by=[F("stamp")]),
+                prev_stamp=Window(Lag("stamp"), partition_by=partition, order_by=[F("stamp")]),
             )
-            .values('event_type', 'stamp', 'prev_type', 'prev_stamp')
+            .values("event_type", "stamp", "prev_type", "prev_stamp")
         )
 
         counts = [0] * len(BUCKETS)
         total_seconds = 0
         total_sessions = 0
         for i in items:
-            if i['event_type'] != logout or i['prev_type'] != login:
+            if i["event_type"] != logout or i["prev_type"] != login:
                 continue
-            duration = i['stamp'] - i['prev_stamp']
+            duration = i["stamp"] - i["prev_stamp"]
             if duration < 0:
                 continue
             total_seconds += duration
@@ -121,7 +121,7 @@ class SessionDurationReport(StatsReport):
         rows: list[dict[str, typing.Any]] = []
         for (label, _lo, _hi), c in zip(BUCKETS, counts):
             pct = (c * 100.0 / total_sessions) if total_sessions else 0.0
-            rows.append({'bucket': label, 'count': c, 'pct': '{:.1f}'.format(pct)})
+            rows.append({"bucket": label, "count": c, "pct": "{:.1f}".format(pct)})
 
         return rows, total_sessions, total_seconds
 
@@ -130,25 +130,25 @@ class SessionDurationReport(StatsReport):
         rows, total_sessions, total_seconds = self.get_data()
         avg_seconds = (total_seconds // total_sessions) if total_sessions else 0
         return self.template_as_pdf(
-            'uds/reports/stats/session-duration.html',
+            "uds/reports/stats/session-duration.html",
             dct={
-                'data': rows,
-                'total_sessions': total_sessions,
-                'total_seconds': total_seconds,
-                'avg_seconds': avg_seconds,
-                'beginning': self.start_date.as_date(),
-                'ending': self.end_date.as_date(),
+                "data": rows,
+                "total_sessions": total_sessions,
+                "total_seconds": total_seconds,
+                "avg_seconds": avg_seconds,
+                "beginning": self.start_date.as_date(),
+                "ending": self.end_date.as_date(),
             },
-            header=gettext('Session duration histogram'),
-            water=gettext('UDS Report of session durations'),
+            header=gettext("Session duration histogram"),
+            water=gettext("UDS Report of session durations"),
         )
 
 
 class SessionDurationReportCSV(SessionDurationReport):
-    filename = 'session_duration.csv'
-    mime_type = 'text/csv'
+    filename = "session_duration.csv"
+    mime_type = "text/csv"
     encoded = False
-    uuid = '318ad9e3-e5ed-404d-bd57-d3db2fc63556'
+    uuid = "318ad9e3-e5ed-404d-bd57-d3db2fc63556"
 
     pools = SessionDurationReport.pools
     start_date = SessionDurationReport.start_date
@@ -158,8 +158,8 @@ class SessionDurationReportCSV(SessionDurationReport):
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([gettext('Bucket'), gettext('Count'), gettext('Percent')])
+        writer.writerow([gettext("Bucket"), gettext("Count"), gettext("Percent")])
         rows, _ts, _tot = self.get_data()
         for v in rows:
-            writer.writerow([v['bucket'], v['count'], v['pct']])
+            writer.writerow([v["bucket"], v["count"], v["pct"]])
         return output.getvalue().encode()

@@ -29,6 +29,7 @@
 """
 Authot: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import typing
 from unittest import mock
@@ -49,15 +50,15 @@ class DynamicServiceIterationInfo:
     user_service_calls: list[mock._Call] = dataclasses.field(default_factory=list[mock._Call])
     state: str = types.states.TaskState.RUNNING
 
-    def __mul__(self, other: int) -> list['DynamicServiceIterationInfo']:
+    def __mul__(self, other: int) -> list["DynamicServiceIterationInfo"]:
         return [self] * other
 
 
 class DynamicServiceTest(UDSTestCase):
     def check_iterations(
         self,
-        service: 'fixtures.DynamicTestingService',
-        userservice: 'fixtures.DynamicTestingUserServiceQueue',
+        service: "fixtures.DynamicTestingService",
+        userservice: "fixtures.DynamicTestingUserServiceQueue",
         iterations_info: list[DynamicServiceIterationInfo],
     ) -> None:
         first: bool = True
@@ -66,7 +67,7 @@ class DynamicServiceTest(UDSTestCase):
             # Clear mocks
             service.mock.reset_mock()
             userservice.mock.reset_mock()
-            
+
             userservice.unmarshal(userservice.marshal())  # As done by worker, to simulate the step-by-step
 
             if first:  # First iteration is call for deploy
@@ -74,33 +75,31 @@ class DynamicServiceTest(UDSTestCase):
                 first = False
             else:
                 state = userservice.check_state()
-            self.assertEqual(
-                state, info.state, f' ************ State: {iteration} {state}: {userservice._reason}'
-            )
+            self.assertEqual(state, info.state, f" ************ State: {iteration} {state}: {userservice._reason}")
 
             # Assert queues are the same, and if not, show the difference ONLY
             diff = set(info.queue) ^ set(userservice._queue)
             self.assertEqual(
                 userservice._queue,
                 info.queue,
-                f' ************ Queue: {iteration} {diff}',
+                f" ************ Queue: {iteration} {diff}",
             )
             self.assertEqual(
                 service.mock.mock_calls,
                 info.service_calls,
-                f' ************ Service calls: {iteration} {service.mock.mock_calls}',
+                f" ************ Service calls: {iteration} {service.mock.mock_calls}",
             )
             self.assertEqual(
                 userservice.mock.mock_calls,
                 info.user_service_calls,
-                f'************ Userservice calls: {iteration} {userservice.mock.mock_calls}',
+                f"************ Userservice calls: {iteration} {userservice.mock.mock_calls}",
             )
 
     def test_userservice_queue_works_fine(self) -> None:
         service = fixtures.create_dynamic_service()
         service.machine_running_flag = False
         userservice = fixtures.create_dynamic_userservice_queue(service)
-        userservice._vmid = 'vmid'
+        userservice._vmid = "vmid"
         self.check_iterations(service, userservice, EXPECTED_DEPLOY_ITERATIONS_INFO)
 
     def test_userservice_deploy_for_user(self) -> None:
@@ -146,7 +145,7 @@ class DynamicServiceTest(UDSTestCase):
             userservice.unmarshal(userservice.marshal())  # As done by worker, to simulate the step-by-step
             # if cache is L2, will be stuck on types.services.Operations.WAIT until wake up
             if userservice._queue[0] == types.services.Operation.WAIT:
-                state = userservice.process_ready_from_os_manager('')  # Wake up
+                state = userservice.process_ready_from_os_manager("")  # Wake up
             else:
                 state = userservice.check_state()
 
@@ -166,7 +165,7 @@ class DynamicServiceTest(UDSTestCase):
         service = fixtures.create_dynamic_service()
         userservice = fixtures.create_dynamic_userservice(service)
 
-        userservice._vmid = ''
+        userservice._vmid = ""
         # If no vmid, will stop after first step
         state = userservice.destroy()
         self.assertEqual(state, types.states.TaskState.RUNNING)
@@ -174,7 +173,7 @@ class DynamicServiceTest(UDSTestCase):
         self.assertEqual(state, types.states.TaskState.FINISHED)
 
         # With vmid, will go through all the steps
-        userservice._vmid = 'vmid'
+        userservice._vmid = "vmid"
         service.machine_running_flag = True
 
         userservice.mock.reset_mock()
@@ -206,7 +205,7 @@ class DynamicServiceTest(UDSTestCase):
         # Force failure
         userservice._set_queue([types.services.Operation.CUSTOM_1])
         self.assertEqual(userservice.check_state(), types.states.TaskState.ERROR)
-        self.assertEqual(userservice.error_reason(), 'CUSTOM_1')
+        self.assertEqual(userservice.error_reason(), "CUSTOM_1")
 
     def test_userservice_maintain_on_error_created(self) -> None:
         service = fixtures.create_dynamic_service(maintain_on_error=True)
@@ -220,13 +219,13 @@ class DynamicServiceTest(UDSTestCase):
         userservice.unmarshal(userservice.marshal())  # As done by worker, to simulate the step-by-step
         state = userservice.check_state()
         self.assertEqual(state, types.states.TaskState.RUNNING)
-        self.assertEqual(userservice._vmid, 'vmid')
+        self.assertEqual(userservice._vmid, "vmid")
 
         # Now, force failure (will be raise on op_custom_1_checker)
         userservice._queue = [types.services.Operation.CUSTOM_1]
         # Now, no error should be returned, but finish
         self.assertEqual(userservice.check_state(), types.states.TaskState.FINISHED)
-        self.assertNotEqual(userservice._error_debug_info, '')
+        self.assertNotEqual(userservice._error_debug_info, "")
 
     def test_userservice_try_soft_shutdown(self) -> None:
         service = fixtures.create_dynamic_service(try_soft_shutdown=True)
@@ -291,10 +290,8 @@ class DynamicServiceTest(UDSTestCase):
             state = userservice.check_state()
 
         self.assertEqual(userservice.check_state(), types.states.TaskState.ERROR)
-        self.assertEqual(userservice.error_reason(), 'Max retries reached')
-        self.assertEqual(
-            counter, 11
-        )  # 4 retries + 5 retries after reset + 1 of the reset itself + 1 of initial NOP
+        self.assertEqual(userservice.error_reason(), "Max retries reached")
+        self.assertEqual(counter, 11)  # 4 retries + 5 retries after reset + 1 of the reset itself + 1 of initial NOP
 
     def test_userservice_max_retries_checker(self) -> None:
         service = fixtures.create_dynamic_service()
@@ -317,13 +314,13 @@ class DynamicServiceTest(UDSTestCase):
             state = userservice.check_state()
 
         self.assertEqual(userservice.check_state(), types.states.TaskState.ERROR)
-        self.assertEqual(userservice.error_reason(), 'Max retries reached')
+        self.assertEqual(userservice.error_reason(), "Max retries reached")
         self.assertEqual(counter, 10)  # 4 retries + 5 retries after reset + 1 of the reset itself
-        
+
     def test_userservice_delete(self) -> None:
         service = fixtures.create_dynamic_service(override_mockables=False)
         userservice = fixtures.create_dynamic_userservice(service)
-        userservice._vmid = 'vmid'
+        userservice._vmid = "vmid"
         userservice._queue = [
             types.services.Operation.NOP,  # First check
             types.services.Operation.DELETE,  # Execute-check
@@ -337,7 +334,7 @@ class DynamicServiceTest(UDSTestCase):
             state = userservice.check_state()
             if counter == 16:  # After 16 iterations, we will call notify_deleted
                 userservice.service().notify_deleted(userservice._vmid)
-                
+
         # Counter should be greater than 16
         self.assertGreater(counter, 16)
         # And state shoudl be finished
@@ -371,9 +368,7 @@ EXPECTED_DEPLOY_ITERATIONS_INFO: typing.Final[list[DynamicServiceIterationInfo]]
     DynamicServiceIterationInfo(  # 5, START_COMPLETED
         queue=fixtures.ALL_TESTEABLE_OPERATIONS[4:],
         user_service_calls=[call.start_completed()],
-        service_calls=[
-            call.is_running(MustBeOfType(fixtures.DynamicTestingUserServiceQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.is_running(MustBeOfType(fixtures.DynamicTestingUserServiceQueue), MustBeOfType(str))],
     ),
     DynamicServiceIterationInfo(  # 6, STOP
         queue=fixtures.ALL_TESTEABLE_OPERATIONS[5:],
@@ -386,9 +381,7 @@ EXPECTED_DEPLOY_ITERATIONS_INFO: typing.Final[list[DynamicServiceIterationInfo]]
     DynamicServiceIterationInfo(  # 7, STOP_COMPLETED
         queue=fixtures.ALL_TESTEABLE_OPERATIONS[6:],
         user_service_calls=[call.stop_completed()],
-        service_calls=[
-            call.is_running(MustBeOfType(fixtures.DynamicTestingUserServiceQueue), MustBeOfType(str))
-        ],
+        service_calls=[call.is_running(MustBeOfType(fixtures.DynamicTestingUserServiceQueue), MustBeOfType(str))],
     ),
     DynamicServiceIterationInfo(  # 8, SHUTDOWN
         queue=fixtures.ALL_TESTEABLE_OPERATIONS[7:],

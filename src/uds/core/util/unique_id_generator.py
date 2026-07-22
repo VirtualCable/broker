@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import time
 import typing
@@ -48,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 class UniqueGenerator:
-    __slots__ = ('_owner', '_basename')
+    __slots__ = ("_owner", "_basename")
 
     # owner is the owner of the UniqueID
     _owner: str
@@ -57,14 +58,14 @@ class UniqueGenerator:
 
     def __init__(self, owner: str, basename: str | None = None) -> None:
         self._owner = owner
-        self._basename = basename or 'uds'
+        self._basename = basename or "uds"
 
     def set_basename(self, basename: str) -> None:
         self._basename = basename
 
     def _range_filter(
         self, range_start: int, range_end: int = consts.system.MAX_SEQ, for_update: bool = False
-    ) -> 'models.QuerySet[UniqueId]':
+    ) -> "models.QuerySet[UniqueId]":
         # Order is defined on UniqueId model, and is '-seq' by default (so this gets items in sequence order)
         # if not for update, do not use the clause :)
         objects = UniqueId.objects.select_for_update() if for_update else UniqueId.objects
@@ -90,11 +91,11 @@ class UniqueGenerator:
                     range_filter = self._range_filter(range_start, range_end, for_update=True)
                     item: UniqueId | None = None
                     try:
-                        item = range_filter.filter(assigned=False).order_by('seq')[0]
+                        item = range_filter.filter(assigned=False).order_by("seq")[0]
                         item.owner = self._owner
                         item.assigned = True
                         item.stamp = stamp
-                        item.save(update_fields=['owner', 'assigned', 'stamp'])
+                        item.save(update_fields=["owner", "assigned", "stamp"])
 
                         seq = item.seq
                         break
@@ -104,14 +105,14 @@ class UniqueGenerator:
                     # No item was found on first instance (already created, but freed)
                     # No free "reuseable" found, so we will create a new one
                     try:
-                        last = range_filter.filter(assigned=True).order_by('-seq')[0]
+                        last = range_filter.filter(assigned=True).order_by("-seq")[0]
                         seq = last.seq + 1
                     except IndexError:
                         # If there is no assigned at database, so first one
                         seq = range_start
 
                     if seq > range_end:
-                        logger.error('No more ids available in range %s - %s', range_start, range_end)
+                        logger.error("No more ids available in range %s - %s", range_start, range_end)
                         return -1  # No ids free in range
 
                     # May ocurr on some circustance that a concurrency access gives same item twice, in this case, we
@@ -133,11 +134,11 @@ class UniqueGenerator:
                 # Concurrent creation, may fail, simply retry
                 pass
             except Exception:
-                logger.exception('Error')
+                logger.exception("Error")
                 return -1
         return seq
 
-    def _transfer(self, seq: int, to_generator: 'UniqueGenerator') -> bool:
+    def _transfer(self, seq: int, to_generator: "UniqueGenerator") -> bool:
         self._range_filter(0, for_update=True).filter(owner=self._owner, seq=seq).update(
             owner=to_generator._owner,
             basename=to_generator._basename,
@@ -146,12 +147,12 @@ class UniqueGenerator:
         return True
 
     def _free(self, seq: int) -> None:
-        logger.debug('Freeing seq %s from %s (%s)', seq, self._owner, self._basename)
+        logger.debug("Freeing seq %s from %s (%s)", seq, self._owner, self._basename)
         with transaction.atomic():
             flt = (
                 self._range_filter(0, for_update=True)
                 .filter(owner=self._owner, seq=seq)
-                .update(owner='', assigned=False, stamp=sql_stamp_seconds())
+                .update(owner="", assigned=False, stamp=sql_stamp_seconds())
             )
         if flt > 0:
             self._purge()
@@ -159,7 +160,7 @@ class UniqueGenerator:
     def _purge(self) -> None:
         try:
             last: UniqueId = self._range_filter(0, for_update=False).filter(assigned=True)[0]
-            logger.debug('Last: %s', last)
+            logger.debug("Last: %s", last)
             seq = last.seq + 1
         except Exception:
             seq = 0
@@ -168,14 +169,14 @@ class UniqueGenerator:
 
     def release(self) -> None:
         UniqueId.objects.select_for_update().filter(owner=self._owner).update(
-            assigned=False, owner='', stamp=sql_stamp_seconds()
+            assigned=False, owner="", stamp=sql_stamp_seconds()
         )
         self._purge()
 
     def release_older_than(self, stamp: int | None = None) -> None:
         stamp = sql_stamp_seconds() if stamp is None else stamp
         UniqueId.objects.select_for_update().filter(owner=self._owner, stamp__lt=stamp).update(
-            assigned=False, owner='', stamp=stamp
+            assigned=False, owner="", stamp=stamp
         )
         self._purge()
 
@@ -188,7 +189,7 @@ class UniqueIDGenerator(UniqueGenerator):
     def get(self, range_start: int = 0, range_end: int = consts.system.MAX_SEQ) -> int:
         return self._get(range_start, range_end)
 
-    def transfer(self, seq: int, target_id_generator: 'UniqueIDGenerator') -> bool:
+    def transfer(self, seq: int, target_id_generator: "UniqueIDGenerator") -> bool:
         return self._transfer(seq, target_id_generator)
 
     def free(self, seq: int) -> None:

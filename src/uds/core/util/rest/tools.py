@@ -30,13 +30,14 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import collections.abc
 import logging
 
 logger = logging.getLogger(__name__)
 
-T = typing.TypeVar('T', bound=typing.Any)
+T = typing.TypeVar("T", bound=typing.Any)
 
 
 # We want to write something like this:
@@ -75,7 +76,7 @@ def match_args(
         # Check if all the arguments match
         matched = True
         for i, arg in enumerate(arg_list):
-            if pattern[i].startswith('<') and pattern[i].endswith('>'):
+            if pattern[i].startswith("<") and pattern[i].endswith(">"):
                 continue
 
             if arg != pattern[i]:
@@ -85,15 +86,10 @@ def match_args(
         if matched:
             # All the arguments match, call the callback
             return function(
-                *[
-                    arg
-                    for i, arg in enumerate(arg_list)
-                    if pattern[i].startswith('<') and pattern[i].endswith('>')
-                ]
+                *[arg for i, arg in enumerate(arg_list) if pattern[i].startswith("<") and pattern[i].endswith(">")]
             )
 
-    logger.warning('No match found for %s with %s', arg_list, args)
+    logger.warning("No match found for %s with %s", arg_list, args)
     # Invoke error callback
     error()
     return None  # In fact, error is expected to raise an exception, so this is never reached
-
