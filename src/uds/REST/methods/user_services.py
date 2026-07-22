@@ -50,8 +50,6 @@ from uds.core.util import ensure, log, permissions, ui as ui_utils
 from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
 
-from ._overview_cache import cached_overview
-
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +173,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     def do_get_item_position(self, for_cached: bool, parent: "Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
         return self.calc_item_position(item_uuid, self.get_qs(for_cached, parent).all())
-    
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         return self.do_get_item_position(for_cached=False, parent=parent, item_uuid=item_uuid)
@@ -358,7 +356,7 @@ class CachedService(AssignedUserService):
     """
 
     CUSTOM_METHODS = []  # Remove custom methods from assigned services
-    
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         return self.do_get_item_position(for_cached=True, parent=parent, item_uuid=item_uuid)

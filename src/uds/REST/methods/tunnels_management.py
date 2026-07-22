@@ -78,7 +78,7 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
             mac=item.mac if item.mac != consts.NULL_MAC else "",
             maintenance=item.maintenance_mode,
         )
-        
+
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServerGroup)
@@ -87,10 +87,7 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
     @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult[TunnelServerItem]:
         parent = ensure.is_instance(parent, models.ServerGroup)
-        return [
-            TunnelServers.as_tunnel_server_item(i)
-                for i in self.odata_filter(parent.servers.all())
-            ]
+        return [TunnelServers.as_tunnel_server_item(i) for i in self.odata_filter(parent.servers.all())]
 
     @typing.override
     def get_item(self, parent: "Model", item: str) -> TunnelServerItem:

@@ -336,7 +336,7 @@ def createImage(use_big: bool = False) -> "models.Image":
         stamp=timezone.localtime(),
     )
 
-    image.storeImageFromBase64(big if use_big else small)   # type: ignore
+    image.image = big if use_big else small
     image.save()
-    
+
     return image

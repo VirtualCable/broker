@@ -47,10 +47,10 @@ V = typing.TypeVar("V", bound=collections.abc.Mapping[str, typing.Any])
 def compare_dicts(
     expected: collections.abc.Mapping[str, typing.Any],
     actual: collections.abc.Mapping[str, typing.Any],
-    ignore_keys: typing.Optional[list[str]] = None,
-    ignore_values: typing.Optional[list[str]] = None,
-    ignore_keys_startswith: typing.Optional[list[str]] = None,
-    ignore_values_startswith: typing.Optional[list[str]] = None,
+    ignore_keys: list[str] | None = None,
+    ignore_values: list[str] | None = None,
+    ignore_keys_startswith: list[str] | None = None,
+    ignore_values_startswith: list[str] | None = None,
 ) -> list[tuple[str, str]]:
     """
     Compares two dictionaries, returning a list of differences
@@ -88,8 +88,8 @@ def compare_dicts(
 def ensure_data(
     item: models.Model,
     dct: collections.abc.Mapping[str, typing.Any],
-    ignore_keys: typing.Optional[list[str]] = None,
-    ignore_values: typing.Optional[list[str]] = None,
+    ignore_keys: list[str] | None = None,
+    ignore_values: list[str] | None = None,
 ) -> bool:
     """
     Reads model as dict, fix some fields if needed and compares to dct
@@ -225,7 +225,7 @@ def check_userinterface_values(obj: ui.UserInterface, values: ui.gui.ValuesDictT
     """
     for k, v in values.items():
         if isinstance(v, MustBeOfType):
-            assert isinstance(getattr(obj, k), v._kind)
+            assert isinstance(getattr(obj, k), v._kind)  # pyrefly: ignore[invalid-argument]
         elif v == mock.ANY:
             pass
         else:

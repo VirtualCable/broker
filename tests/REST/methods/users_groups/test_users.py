@@ -34,7 +34,6 @@ import collections.abc
 import functools
 import datetime
 import logging
-from typing_extensions import override
 
 from django.utils import timezone
 
@@ -53,7 +52,6 @@ class UsersTest(rest.test.RESTActorTestCase):
     Test users group rest api
     """
 
-    @override
     def setUp(self) -> None:
         timezone.activate(datetime.timezone.utc)
         super().setUp()
@@ -108,7 +106,7 @@ class UsersTest(rest.test.RESTActorTestCase):
             functools.reduce(
                 lambda x, y: x and y,  # pyright: ignore
                 typing.cast(
-                    collections.abc.Iterable[bool],
+                    typing.Iterable[bool],
                     map(
                         lambda f: next(iter(f.keys())) in MUST_HAVE_FIELDS,
                         fields,

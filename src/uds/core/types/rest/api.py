@@ -15,7 +15,11 @@ def _as_dict_without_none(v: typing.Any) -> typing.Any:
     elif dataclasses.is_dataclass(v):
         return _as_dict_without_none(dataclasses.asdict(typing.cast(typing.Any, v)))
     elif isinstance(v, list):
-        return [_as_dict_without_none(item) for item in typing.cast(list[typing.Any], v) if item is not None]
+        return [
+            _as_dict_without_none(item)
+            for item in typing.cast(list[typing.Any], v)  # pyrefly: ignore[redundant-cast]
+            if item is not None
+        ]
     elif isinstance(v, dict):
         return {
             k: _as_dict_without_none(val) for k, val in typing.cast(dict[str, typing.Any], v).items() if val is not None

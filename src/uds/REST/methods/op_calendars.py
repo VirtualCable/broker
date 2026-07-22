@@ -74,14 +74,14 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
             access=item.access,
             priority=item.priority,
         )
-        
+
     @typing.override
     def get_item_position(self, parent: "Model", item_uuid: str) -> int:
         # parent can be a ServicePool or a metaPool
         if isinstance(parent, models.ServicePool):
             parent = ensure.is_instance(parent, models.ServicePool)
             return self.calc_item_position(item_uuid, parent.calendarAccess.all())
-        
+
         parent = ensure.is_instance(parent, models.MetaPool)
         return self.calc_item_position(item_uuid, parent.calendarAccess.all())
 
@@ -167,8 +167,8 @@ class ActionCalendarItem(types.rest.BaseRestItem):
     events_offset: int
     params: dict[str, typing.Any]
     pretty_params: str
-    next_execution: typing.Optional[datetime.datetime]
-    last_execution: typing.Optional[datetime.datetime]
+    next_execution: datetime.datetime | None
+    last_execution: datetime.datetime | None
 
 
 class ActionsCalendars(DetailHandler[ActionCalendarItem]):
@@ -202,7 +202,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
             next_execution=item.next_execution,
             last_execution=item.last_execution,
         )
-        
+
     @typing.override
     def get_item_position(self, parent: "Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
