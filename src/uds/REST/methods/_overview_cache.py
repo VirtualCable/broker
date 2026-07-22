@@ -38,8 +38,11 @@ without an import cycle (users_groups imports user_services).
 import collections.abc
 import typing
 
+from django.db import models as django_models
+
 from uds.core import consts
 from uds.core.util.cache import Cache
+from uds.models import Group, User
 
 # Authenticator/pool overviews are hammered by the dashboard drill-down yet change
 # seldom, so we memoize the assembled list for a short while. flush=1 bypasses it.
@@ -65,3 +68,15 @@ def cached_overview(
     data = builder()
     _overview_cache.put(cache_key, data, consts.cache.SHORT_CACHE_TIMEOUT)
     return data
+
+
+def invalidate_overviews(*args: typing.Any, **kwargs: typing.Any) -> None:
+    _overview_cache.clear()
+
+
+# An edit must be visible on the next listing, so drop every overview on write.
+# Deliberately not hooked to UserService: its churn would keep the cache empty,
+# so the counts derived from it stay stale until the timeout.
+for _model in (User, Group):
+    django_models.signals.post_save.connect(invalidate_overviews, sender=_model)
+    django_models.signals.post_delete.connect(invalidate_overviews, sender=_model)

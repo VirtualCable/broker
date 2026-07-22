@@ -51,7 +51,6 @@ from uds.core.types.states import State
 from uds.models import Account, Image, OSManager, Service, ServicePool, ServicePoolGroup, User
 from uds.REST.model import ModelHandler
 
-from ._overview_cache import cached_overview
 from .op_calendars import AccessCalendars, ActionsCalendars
 from .services import Services, ServiceInfo
 from .user_services import AssignedUserService, CachedService, Changelog, Groups, Publications, Transports
@@ -280,7 +279,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 usage_ratio=ExpressionWrapper(
                     F("usage_count") / F("max_srvs_safe"),
                     output_field=FloatField(),
-                )
+                ),
             )
             _, is_descending = field_info
             order_by_field = "-usage_ratio" if is_descending else "usage_ratio"
@@ -292,22 +291,10 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     def get_items(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> collections.abc.Generator[ServicePoolItem, None, None]:
-        sumarize = kwargs.get('sumarize', True)
-        # Heavy annotated query hammered by the dashboard (restrained pools) yet
-        # changes seldom: memoize briefly. Key on sumarize (overview vs full list)
-        # and the odata filter, since both change the result. flush=1 bypasses it.
-        items = cached_overview(
-            self,
-            f'service_pools_overview:{sumarize}:{self._odata}',
-            lambda: list(self._build_items(sumarize)),
-        )
-        return (item for item in items)
-
-    def _build_items(self, sumarize: bool) -> collections.abc.Generator[ServicePoolItem, None, None]:
         # Optimized query, due that there is a lot of info needed for theee
         d = sql_now() - datetime.timedelta(seconds=GlobalConfig.RESTRAINT_TIME.as_int())
         return super().get_items(
-            sumarize=sumarize,
+            sumarize=kwargs.get("sumarize", True),
             query=(
                 ServicePool.objects.prefetch_related(
                     "service",

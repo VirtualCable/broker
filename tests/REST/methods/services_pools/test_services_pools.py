@@ -117,6 +117,18 @@ class ServicePoolTest(rest.test.RESTTestCase):
             db_pool = models.ServicePool.objects.get(uuid=service_pool["id"])
             self.assertTrue(rest.assertions.assert_servicepool_is(db_pool, service_pool))
 
+    def test_overview_reflects_edit_immediately(self) -> None:
+        url = "servicespools/overview"
+
+        pool = models.ServicePool.objects.all()[0]
+        self.assertEqual(self.client.rest_get(url).status_code, 200)
+
+        pool.comments = "edited after a first listing"
+        pool.save()
+
+        edited = next(p for p in self.client.rest_get(url).json() if p["id"] == pool.uuid)
+        self.assertEqual(edited["comments"], pool.comments)
+
     # ------------------------------------------------------------------
     # CRUD smoke extension (Phase 1 — Safety net)
     # ------------------------------------------------------------------
