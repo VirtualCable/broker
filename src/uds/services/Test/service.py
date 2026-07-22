@@ -35,11 +35,11 @@ import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
+
 from uds.core import services
 
-from .publication import TestPublication
 from .deployment import TestUserService
-
+from .publication import TestPublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

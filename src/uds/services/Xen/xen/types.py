@@ -29,14 +29,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import dataclasses
 import datetime
 import enum
-import dataclasses
+import logging
 import typing
 
 from django.utils import timezone
-
-import logging
 
 logger = logging.getLogger(__name__)
 

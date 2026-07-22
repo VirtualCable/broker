@@ -31,13 +31,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
+import logging
 import random
 import string
-import logging
+import typing
 
 from django.utils.translation import gettext as _
-from uds.core import services, types
+
+from uds.core import services
+from uds.core import types
 
 logger = logging.getLogger(__name__)
 

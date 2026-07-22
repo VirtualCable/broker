@@ -33,9 +33,9 @@ import typing
 
 from django.utils.translation import gettext as _
 
+from uds import models
 from uds.core import types
 from uds.core.ui.user_interface import gui
-from uds import models
 
 if typing.TYPE_CHECKING:
     from .provider import ProxmoxProvider

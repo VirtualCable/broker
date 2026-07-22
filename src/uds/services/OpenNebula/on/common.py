@@ -32,9 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # import sys
-import re
-
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 

@@ -35,13 +35,15 @@ import codecs
 import logging
 import typing
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
-    from .service import ServiceOne
+
     from .publication import SamplePublication
+    from .service import ServiceOne
 
 logger = logging.getLogger(__name__)
 

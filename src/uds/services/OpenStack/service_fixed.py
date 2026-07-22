@@ -45,7 +45,6 @@ from .deployment_fixed import OpenStackUserServiceFixed
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from .openstack import client
-
     from .provider import OpenStackProvider
     from .provider_legacy import OpenStackProviderLegacy
 

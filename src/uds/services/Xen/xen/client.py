@@ -30,18 +30,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import xmlrpc.client
 import logging
 import typing
-
-from uds.core import consts
-from uds.core.util.decorators import cached
-from uds.core.util import security
+import xmlrpc.client
 
 import XenAPI  # pyright: ignore
 
-from . import types as xen_types
+from uds.core import consts
+from uds.core.util import security
+from uds.core.util.decorators import cached
+
 from . import exceptions
+from . import types as xen_types
 
 logger = logging.getLogger(__name__)
 

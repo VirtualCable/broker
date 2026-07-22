@@ -34,11 +34,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from django.utils.translation import gettext_lazy as _, gettext
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import net
-from uds.core import exceptions, types, services
 from uds.core.util import security
 
 from .deployment import IPMachineUserService

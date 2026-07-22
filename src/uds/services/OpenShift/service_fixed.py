@@ -43,12 +43,12 @@ from .deployment_fixed import OpenshiftUserServiceFixed
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .openshift import client
-    from .provider import OpenshiftProvider
     from uds.core.services.generics.fixed.userservice import FixedUserService
 
-from .openshift import exceptions as oshift_exceptions
+    from .openshift import client
+    from .provider import OpenshiftProvider
 
+from .openshift import exceptions as oshift_exceptions
 
 logger = logging.getLogger(__name__)
 

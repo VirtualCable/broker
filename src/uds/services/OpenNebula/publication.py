@@ -34,8 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.services import Publication
 from uds.core import types
+from uds.core.services import Publication
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking

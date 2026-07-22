@@ -30,9 +30,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

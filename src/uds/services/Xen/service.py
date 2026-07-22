@@ -30,27 +30,29 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import re
-import collections.abc
 import typing
 
 from django.utils.translation import gettext_noop as _
-from uds.core import exceptions, types
+
+from uds.core import exceptions
+from uds.core import types
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
-from uds.core.util import validators
 from uds.core.ui import gui
+from uds.core.util import validators
 
-from .publication import XenPublication
 from .deployment import XenLinkedUserService
-
+from .publication import XenPublication
 from .xen import exceptions as xen_exceptions
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .provider import XenProvider
     from uds.core.services.generics.dynamic.publication import DynamicPublication
+
+    from .provider import XenProvider
 
 logger = logging.getLogger(__name__)
 

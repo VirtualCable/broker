@@ -34,9 +34,9 @@ import typing
 
 from django.utils.translation import gettext as _
 
+from uds import models
 from uds.core import types
 from uds.core.ui import gui
-from uds import models
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

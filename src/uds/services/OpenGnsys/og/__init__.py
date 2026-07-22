@@ -31,25 +31,25 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import re
+import collections.abc
 import json
 import logging
+import re
 import typing
-import collections.abc
 
 from uds.core import consts
-
-from uds.core.util.decorators import ensure_connected
 from uds.core.util import security
+from uds.core.util.decorators import ensure_connected
 
-from . import urls
 from . import fake
 from . import types
+from . import urls
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     import requests
+
     from uds.core.util.cache import Cache
 
 # Fake part
@@ -61,7 +61,7 @@ RT = typing.TypeVar("RT")
 
 
 # Result checker
-def ensure_response_is_valid(response: "requests.Response", error_message: typing.Optional[str] = None) -> typing.Any:
+def ensure_response_is_valid(response: "requests.Response", error_message: str | None = None) -> typing.Any:
     if not response.ok:
         if not error_message:
             error_message = "Invalid response"
@@ -88,10 +88,10 @@ class OpenGnsysClient:
     username: str
     password: str
     endpoint: str
-    auth: typing.Optional[str]
+    auth: str | None
     cache: "Cache"
     verify_ssl: bool
-    cached_version: typing.Optional[str]
+    cached_version: str | None
 
     def __init__(
         self,
@@ -123,7 +123,7 @@ class OpenGnsysClient:
     def _og_endpoint(self, path: str) -> str:
         return self.endpoint + "/" + path
 
-    def _post(self, path: str, data: typing.Any, error_message: typing.Optional[str] = None) -> typing.Any:
+    def _post(self, path: str, data: typing.Any, error_message: str | None = None) -> typing.Any:
         if not FAKE:
             return ensure_response_is_valid(
                 security.secure_requests_session(verify=self.verify_ssl).post(
@@ -137,7 +137,7 @@ class OpenGnsysClient:
         # FAKE Connection :)
         return fake.post(path, data, error_message)
 
-    def _get(self, path: str, error_message: typing.Optional[str] = None) -> typing.Any:
+    def _get(self, path: str, error_message: str | None = None) -> typing.Any:
         if not FAKE:
             return ensure_response_is_valid(
                 security.secure_requests_session(verify=self.verify_ssl).get(
@@ -151,7 +151,7 @@ class OpenGnsysClient:
         # FAKE Connection :)
         return fake.get(path, error_message)
 
-    def _delete(self, path: str, error_message: typing.Optional[str] = None) -> typing.Any:
+    def _delete(self, path: str, error_message: str | None = None) -> typing.Any:
         if not FAKE:
             return ensure_response_is_valid(
                 security.secure_requests_session(verify=self.verify_ssl).delete(
@@ -206,9 +206,9 @@ class OpenGnsysClient:
         # Take into accout that we must exclude the ones with "inremotepc" set to false.
         error_message = "Getting list of labs from ou {}".format(ou)
         return [
-            {"id": l["id"], "name": l["name"]}
-            for l in self._get(urls.LABS.format(ou=ou), error_message=error_message)
-            if l.get("inremotepc", False) is True
+            {"id": lab["id"], "name": lab["name"]}
+            for lab in self._get(urls.LABS.format(ou=ou), error_message=error_message)
+            if lab.get("inremotepc", False) is True
         ]
 
     @ensure_connected
@@ -218,9 +218,9 @@ class OpenGnsysClient:
         # Take into accout that we must exclude the ones with "inremotepc" set to false.
         error_message = "Getting list of images from ou {}".format(ou)
         return [
-            {"id": l["id"], "name": l["name"]}
-            for l in self._get(urls.IMAGES.format(ou=ou), error_message=error_message)
-            if l.get("inremotepc", False) is True
+            {"id": lab["id"], "name": lab["name"]}
+            for lab in self._get(urls.IMAGES.format(ou=ou), error_message=error_message)
+            if lab.get("inremotepc", False) is True
         ]
 
     @ensure_connected
@@ -238,7 +238,7 @@ class OpenGnsysClient:
             "image": image,
             "lab": lab,
             "client": res["id"],
-            "id": ".".join((str(ou), str(res["lab"]["id"]), str(res["id"]))),
+            "id": ".".join((ou, str(res["lab"]["id"]), str(res["id"]))),
             "name": res["name"],
             "ip": res["ip"],
             "mac": ":".join(re.findall("..", res["mac"])),
@@ -276,7 +276,7 @@ class OpenGnsysClient:
         self._post(urls.EVENTS.format(ou=ou, lab=lab, client=client), data, error_message="Notifying login/logout urls")
 
     @ensure_connected
-    def notify_deadline(self, vmid: str, dead_line: typing.Optional[int]) -> None:
+    def notify_deadline(self, vmid: str, dead_line: int | None) -> None:
         ou, lab, client = vmid.split(".")
         dead_line = dead_line or 0
         data = {"deadLine": dead_line}

@@ -29,21 +29,21 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import collections.abc
+import logging
 import time
 import typing
 import urllib.parse
-import logging
 
+import requests
 
 from uds.core import types as core_types
 from uds.core.util import security
 from uds.core.util.cache import Cache
 from uds.core.util.decorators import cached
 
-from . import types, consts, exceptions
-
-
-import requests
+from . import consts
+from . import exceptions
+from . import types
 
 logger = logging.getLogger(__name__)
 

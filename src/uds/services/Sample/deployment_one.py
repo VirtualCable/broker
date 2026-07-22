@@ -34,7 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 
 from . import service as sample_service
 

@@ -10,11 +10,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from uds.core import types
+from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.types.states import TaskState
 from uds.core.util import autoserializable
-from uds.core import types
-
-from uds.core.services.generics.dynamic.publication import DynamicPublication
 
 from .openshift import exceptions as openshift_exceptions
 

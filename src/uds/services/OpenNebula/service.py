@@ -35,12 +35,14 @@ import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
-from uds.core import services, types
-from uds.core.util import validators
-from uds.core.ui import gui
 
-from .publication import OpenNebulaLivePublication
+from uds.core import services
+from uds.core import types
+from uds.core.ui import gui
+from uds.core.util import validators
+
 from .deployment import OpenNebulaLiveDeployment
+from .publication import OpenNebulaLivePublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

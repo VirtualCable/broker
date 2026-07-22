@@ -49,15 +49,18 @@ class _SpyJob(Job):
         super().__init__(*args, **kwargs)
         self.next_delay_called = False
 
+    @typing.override
     def next_execution_delay(self) -> int:
         self.next_delay_called = True
         return 42
 
+    @typing.override
     def run(self) -> None:
         pass
 
 
 class SchedulerTest(TransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         scheduler.Scheduler.granularity = 0.1  # type: ignore  # Speed up tests
 

@@ -1,8 +1,8 @@
 import collections.abc
 import dataclasses
 import enum
-import typing
 import logging
+import typing
 
 from . import exceptions
 

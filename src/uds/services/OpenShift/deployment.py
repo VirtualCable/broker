@@ -19,8 +19,8 @@ from .openshift import types as otypes
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .service import OpenshiftService
     from .publication import OpenshiftTemplatePublication
+    from .service import OpenshiftService
 
 logger = logging.getLogger(__name__)
 

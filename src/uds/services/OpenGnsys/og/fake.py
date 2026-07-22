@@ -32,12 +32,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import copy
-import random
 import logging
+import random
 import typing
 
 from . import urls
-
 
 logger = logging.getLogger(__name__)
 

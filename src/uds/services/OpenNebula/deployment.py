@@ -31,13 +31,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import enum
-import pickle  # nosec: not insecure, we are loading our own data
-import logging
-import typing
 import collections.abc
+import enum
+import logging
+import pickle  # nosec: not insecure, we are loading our own data
+import typing
 
-from uds.core import services, consts, types
+from uds.core import consts
+from uds.core import services
+from uds.core import types
 from uds.core.util import autoserializable
 
 from . import on
@@ -45,8 +47,9 @@ from . import on
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
-    from .service import OpenNebulaLiveService
+
     from .publication import OpenNebulaLivePublication
+    from .service import OpenNebulaLiveService
 
 logger = logging.getLogger(__name__)
 

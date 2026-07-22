@@ -8,19 +8,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
-import typing
 import re
+import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types as core_types, consts
+from uds.core import consts
+from uds.core import types as core_types
 from uds.core.services import ServiceProvider
 from uds.core.ui import gui
 from uds.core.util import fields
 from uds.core.util.decorators import cached
 
 from .openshift import client
-
 from .service import OpenshiftService
 from .service_fixed import OpenshiftServiceFixed
 

@@ -29,14 +29,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import re
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types, exceptions
+from uds.core import exceptions
+from uds.core import types
 from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
@@ -49,11 +50,12 @@ from .publication import ProxmoxPublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .proxmox import types as prox_types
-    from .provider import ProxmoxProvider
     from uds.core.services.generics.dynamic.publication import DynamicPublication
     from uds.core.services.generics.dynamic.service import DynamicService
     from uds.core.services.generics.dynamic.userservice import DynamicUserService
+
+    from .provider import ProxmoxProvider
+    from .proxmox import types as prox_types
 
 logger = logging.getLogger(__name__)
 

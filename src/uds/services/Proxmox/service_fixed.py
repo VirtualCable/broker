@@ -35,7 +35,8 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 from uds.core.services.generics.fixed.service import FixedService
 from uds.core.services.generics.fixed.userservice import FixedUserService
 from uds.core.ui import gui
@@ -47,8 +48,8 @@ from .deployment_fixed import ProxmoxUserServiceFixed
 if typing.TYPE_CHECKING:
     from uds import models
 
-    from .proxmox import types as prox_types
     from .provider import ProxmoxProvider
+    from .proxmox import types as prox_types
 
 logger = logging.getLogger(__name__)
 

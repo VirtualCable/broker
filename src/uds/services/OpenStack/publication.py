@@ -34,8 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core import types
+from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.util import autoserializable
 
 from .openstack import types as openstack_types

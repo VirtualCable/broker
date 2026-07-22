@@ -9,8 +9,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import logging
 import collections.abc
+import logging
 import typing
 
 from django.utils.translation import gettext_lazy as _
@@ -20,19 +20,19 @@ from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
 from uds.core.ui import gui
-from uds.core.util import validators, fields
-
-from .publication import OpenshiftTemplatePublication
+from uds.core.util import fields
+from uds.core.util import validators
 
 from .deployment import OpenshiftUserService
 from .openshift import exceptions as oshift_exceptions
+from .publication import OpenshiftTemplatePublication
 
 logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .provider import OpenshiftProvider
     from .openshift.client import OpenshiftClient
+    from .provider import OpenshiftProvider
 
 
 class OpenshiftService(DynamicService):

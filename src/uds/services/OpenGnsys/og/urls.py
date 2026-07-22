@@ -32,7 +32,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-
 LOGIN: typing.Final[str] = "/login"
 INFO: typing.Final[str] = "/info"
 OUS: typing.Final[str] = "/ous"

@@ -38,7 +38,8 @@ from uds.core import types
 from uds.core.services.generics.fixed.userservice import FixedUserService
 from uds.core.util import autoserializable
 
-from .proxmox import types as prox_types, exceptions as prox_exceptions
+from .proxmox import exceptions as prox_exceptions
+from .proxmox import types as prox_types
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

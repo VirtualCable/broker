@@ -1,6 +1,6 @@
+import dataclasses
 import enum
 import typing
-import dataclasses
 
 
 class VMStatus(enum.StrEnum):

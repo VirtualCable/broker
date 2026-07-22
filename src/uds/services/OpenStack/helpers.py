@@ -45,8 +45,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_api(parameters: dict[str, str]) -> tuple[client.OpenStackClient, bool]:
-    from .provider_legacy import OpenStackProviderLegacy
     from .provider import OpenStackProvider
+    from .provider_legacy import OpenStackProviderLegacy
 
     provider = typing.cast(
         OpenStackProviderLegacy | OpenStackProvider,

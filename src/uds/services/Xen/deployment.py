@@ -31,18 +31,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import enum
-import pickle  # nosec: not insecure, we are loading our own data
 import logging
+import pickle  # nosec: not insecure, we are loading our own data
 import typing
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .service import XenLinkedService
     from .publication import XenPublication
+    from .service import XenLinkedService
 
 logger = logging.getLogger(__name__)
 

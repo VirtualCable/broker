@@ -34,8 +34,8 @@ import logging
 import typing
 
 from uds.core import jobs
-
 from uds.models import Provider
+
 from .ovirt import types as ov_types
 
 # Not imported at runtime, just for type checking

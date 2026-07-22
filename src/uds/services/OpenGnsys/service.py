@@ -35,7 +35,8 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types, services
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import fields
 

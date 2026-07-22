@@ -32,12 +32,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pylint: disable=maybe-no-member
-import xmlrpc.client
+import collections.abc
 import logging
 import typing
-import collections.abc
+import xmlrpc.client
 
-from uds.core.util import ensure, xml2dict
+from uds.core.util import ensure
+from uds.core.util import xml2dict
 
 from . import types
 

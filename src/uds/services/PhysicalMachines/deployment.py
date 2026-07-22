@@ -34,12 +34,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core import services, types
-from uds.core.util import autoserializable, auto_attributes
+from uds.core import services
+from uds.core import types
+from uds.core.util import auto_attributes
+from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from .service_single import IPSingleMachineService
 
 logger = logging.getLogger(__name__)

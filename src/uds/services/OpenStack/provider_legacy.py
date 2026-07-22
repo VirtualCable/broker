@@ -38,12 +38,16 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import environment, types
+from uds.core import environment
+from uds.core import types
 from uds.core.services import ServiceProvider
 from uds.core.ui import gui
-from uds.core.util import validators, fields
+from uds.core.util import fields
+from uds.core.util import validators
 
-from .openstack import client, sanitized_name, types as openstack_types
+from .openstack import client
+from .openstack import sanitized_name
+from .openstack import types as openstack_types
 from .service import OpenStackLiveService
 from .service_fixed import OpenStackServiceFixed
 

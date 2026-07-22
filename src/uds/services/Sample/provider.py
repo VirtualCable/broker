@@ -36,11 +36,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-
 from django.utils.translation import gettext_noop as _
-from uds.core import services, exceptions, types
+
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
-from .service import ServiceOne, ServiceTwo
+
+from .service import ServiceOne
+from .service import ServiceTwo
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

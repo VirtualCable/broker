@@ -31,23 +31,23 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import pickle  # nosec: controled data
 import enum
 import logging
+import pickle  # nosec: controled data
 import typing
+
+import uds.services.Proxmox.proxmox.exceptions
 
 from uds.core import types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
 from uds.core.util import autoserializable
-import uds.services.Proxmox.proxmox.exceptions
 
 from .proxmox import types as prox_types
 
-
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .service import ProxmoxService
     from .publication import ProxmoxPublication
+    from .service import ProxmoxService
 
 logger = logging.getLogger(__name__)
 

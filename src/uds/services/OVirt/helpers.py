@@ -5,7 +5,6 @@ Author: dkmaster
 """
 
 import logging
-
 import typing
 
 from uds import models

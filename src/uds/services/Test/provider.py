@@ -31,16 +31,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import dataclasses
 import logging
 import random
 import string
-import dataclasses
 import typing
 
-
 from django.utils.translation import gettext_noop as _
-from uds.core import services, types
-from .service import TestServiceNoCache, TestServiceCache
+
+from uds.core import services
+from uds.core import types
+
+from .service import TestServiceCache
+from .service import TestServiceNoCache
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

@@ -34,13 +34,16 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
-    from .service import TestServiceNoCache, TestServiceCache
+
+    from .service import TestServiceCache
+    from .service import TestServiceNoCache
 
 logger = logging.getLogger(__name__)
 

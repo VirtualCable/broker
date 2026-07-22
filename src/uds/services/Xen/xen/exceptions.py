@@ -29,11 +29,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
+import contextlib
 import functools
 import logging
 import typing
-import collections.abc
-import contextlib
 
 import XenAPI  # pyright: ignore
 

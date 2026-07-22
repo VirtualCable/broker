@@ -30,17 +30,18 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pyright: reportUnknownMemberType=false, reportAttributeAccessIssue=false
 
-import contextlib
-import threading
-import logging
-import typing
 import collections.abc
+import contextlib
+import logging
 import ssl  # for getting server certificate
+import threading
+import typing
 
 import ovirtsdk4
 import ovirtsdk4.types
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.util import decorators
 
 from . import types as ov_types

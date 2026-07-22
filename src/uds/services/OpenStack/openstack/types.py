@@ -31,11 +31,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import datetime
-import typing
-import dataclasses
-import enum
 import collections.abc
+import dataclasses
+import datetime
+import enum
+import typing
 
 from django.utils import timezone
 
