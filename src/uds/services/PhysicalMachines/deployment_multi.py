@@ -98,6 +98,9 @@ class IPMachinesUserService(services.UserService, autoserializable.AutoSerializa
 
     @typing.override
     def set_ready(self) -> types.states.TaskState:
+        # User-services migrated from v3.6 may carry an empty _mac, so refresh from
+        # the Server model before waking up or WOL would be sent to nothing.
+        self.update_ip()
         self.service().wakeup(self._ip, self._mac)
         return types.states.TaskState.FINISHED
 
