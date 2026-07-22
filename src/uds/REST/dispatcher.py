@@ -289,7 +289,7 @@ class Dispatcher(View):
             return Dispatcher.error_response(http.HttpResponseServerError, handler, "Unexpected error", e)
 
     @staticmethod
-    def _allowed_methods_for_cls(cls: type[Handler]) -> str:
+    def _allowed_methods_for_cls(klass: type[Handler]) -> str:
         """Compute the ``Allow`` header value for a handler class.
 
         Returns a comma-separated, uppercase list of HTTP methods that the
@@ -298,7 +298,7 @@ class Dispatcher(View):
         """
         allowed = ["OPTIONS"]
         for m in ("get", "post", "put", "delete", "query"):
-            if any(getattr(c, m, None) is not None for c in cls.__mro__):
+            if any(getattr(c, m, None) is not None for c in klass.__mro__):
                 allowed.append(m.upper())
         return ", ".join(allowed)
 
