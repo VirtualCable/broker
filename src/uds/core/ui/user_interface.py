@@ -60,11 +60,14 @@ from uds.core.util import modfinder
 from uds.core.util import serializer
 from uds.core.util import validators
 
+
 logger = logging.getLogger(__name__)
 
 # To simplify choice parameters declaration of fields
 _ChoicesParamType: typing.TypeAlias = (
-    collections.abc.Iterable[types.ui.ChoiceItem] | collections.abc.Callable[[], list["types.ui.ChoiceItem"]] | None
+    collections.abc.Iterable[types.ui.ChoiceItem]
+    | collections.abc.Callable[[], list["types.ui.ChoiceItem"]]
+    | None
 )
 # typing.Union[
 #     collections.abc.Callable[[], list['types.ui.ChoiceItem']],
@@ -149,12 +152,17 @@ class gui:
     @staticmethod
     def as_choices(
         vals: (
-            _ChoicesParamType | dict[str, str] | str | collections.abc.Iterable[str | types.ui.ChoiceItem] | None
+            _ChoicesParamType
+            | dict[str, str]
+            | str
+            | collections.abc.Iterable[str | types.ui.ChoiceItem]
+            | None
         ) = None,
     ) -> collections.abc.Callable[[], list["types.ui.ChoiceItem"]] | list["types.ui.ChoiceItem"]:
         """
-        Helper to convert from array of strings (or dictionaries) to the same dict used in choice,
-        multichoice, ..
+        Helper to convert an array of :py:class:`types.ui.ChoiceItem` instances
+        (or dicts / strings / callables) into a uniform list of ChoiceItems
+        suitable for ``choices``, ``multichoice`` and similar fields.
         """
         if not vals:
             return []
@@ -462,7 +470,7 @@ class gui:
 
             Intended to be overriden by descendants
             """
-            return True
+            return self.value not in (None, "", []) if self.required else True
 
         def as_int(self) -> int:
             """
@@ -563,10 +571,11 @@ class gui:
             #   - 'path'     # Path (absolute or relative, Windows or Unix)
             # Note:
             #  Checks are performed on admin side, so they are not 100% reliable.
-            if pattern:
-                self._field_info.pattern = (
-                    pattern if isinstance(pattern, types.ui.FieldPatternType) else types.ui.FieldPatternType(pattern)
-                )
+            self._field_info.pattern = (
+                pattern
+                if isinstance(pattern, types.ui.FieldPatternType)
+                else types.ui.FieldPatternType(pattern)
+            )
 
         @typing.override
         def validate(self) -> bool:
@@ -725,7 +734,7 @@ class gui:
             """
             To ensure value is an int
             """
-            super()._set_value(gui.as_int(value))
+            super()._set_value(gui.as_int(value, self.default))
 
         @property
         def value(self) -> int:  # pyrefly: ignore[missing-override-decorator]
@@ -734,6 +743,19 @@ class gui:
         @value.setter
         def value(self, value: int) -> None:
             self._set_value(value)
+
+        @typing.override
+        def validate(self) -> bool:
+            """B1: enforce min_value/max_value bounds when set."""
+            if not super().validate():
+                return False
+            min_v = self._field_info.min_value
+            max_v = self._field_info.max_value
+            if min_v is not None and self.value < min_v:
+                return False
+            if max_v is not None and self.value > max_v:
+                return False
+            return True
 
     class DateField(InputField):
         """
@@ -794,14 +816,19 @@ class gui:
         # Override value setter, so we can convert from datetime.datetime or str to datetime.date
         @typing.override
         def _set_value(self, value: typing.Any) -> None:
-            if isinstance(value, datetime.datetime):
-                value = value.date()
-            elif isinstance(value, datetime.date):
-                pass  # Stay as is
-            elif isinstance(value, str):  # YYYY-MM-DD
-                value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
-            else:
-                raise ValueError(f"Invalid value for date: {value}")
+            # B6: degrade gracefully to NEVER.date() on invalid input rather than raising.
+            match value:
+                case datetime.datetime():
+                    value = value.date()
+                case datetime.date():
+                    pass
+                case str():
+                    try:
+                        value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
+                    except Exception:  # Any problem, fall back
+                        value = consts.NEVER.date()
+                case _:
+                    value = consts.NEVER.date()
 
             super()._set_value(value)
 
@@ -1024,6 +1051,17 @@ class gui:
         def value(self, value: bool) -> None:
             self._set_value(value)
 
+        @typing.override
+        def validate(self) -> bool:
+            """B5: value must be bool (or bool-coercible)."""
+            if not super().validate():
+                return False
+            try:
+                gui.as_bool(self.value)
+            except Exception:
+                return False
+            return True
+
     class ChoiceField(InputField):
         """
         This represents a simple combo box with single selection.
@@ -1038,8 +1076,13 @@ class gui:
 
            .. code-block:: python
 
-              choices = gui.ChoiceField(label="choices", choices=[ {'id':'1',
-                  'text':'Text 1'}, {'id':'xxx', 'text':'Text 2'}])
+              choices = gui.ChoiceField(
+                label=_("choices"),
+                choices=[
+                    gui.ChoiceItem(id='1', text='Text 1'),
+                    gui.ChoiceItem(id='xxx', text='Text 2'),
+                ],
+            )
 
            You can specify a multi valuated field via id-values, or a
            single-valued field via id-value
@@ -1232,6 +1275,18 @@ class gui:
         def value(self, value: str) -> None:
             self._set_value(value)
 
+        @typing.override
+        def validate(self) -> bool:
+            """B4: selected value must be one of declared choices (or empty)."""
+            if not super().validate():
+                return False
+            if not self.value:
+                return True
+            choices_raw = self._field_info.choices
+            choices_list = choices_raw() if callable(choices_raw) else choices_raw
+            valid_ids = {c.id for c in choices_list or []}
+            return self.value in valid_ids
+
     class MultiChoiceField(InputField):
         """
         Multichoices are list of items that are multi-selectable.
@@ -1244,8 +1299,8 @@ class gui:
 
         This class do not have callback support, as ChoiceField does.
 
-        The values is an array of dictionaries, in the form [ { 'id' : 'a',
-        'text': b }, ... ]
+        The values are :py:class:`types.ui.ChoiceItem` instances, with the
+        fields ``id``, ``text`` and optional ``img``.
 
         Example usage:
 
@@ -1261,8 +1316,10 @@ class gui:
                   readonly = False, rows = 5, order = 8,
                   tooltip = _('Datastores where to put incrementals'),
                   required = True,
-                  choices = [ {'id': '0', 'text': 'datastore0' },
-                      {'id': '1', 'text': 'datastore1' } ]
+                  choices=[
+                        gui.ChoiceItem(id='0', text='datastore0'),
+                        gui.ChoiceItem(id='1', text='datastore1'),
+                  ],
                   )
         """
 
@@ -1277,7 +1334,11 @@ class gui:
             choices: _ChoicesParamType = None,
             tab: str | types.ui.Tab | None = None,
             default: (
-                collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None
+                collections.abc.Callable[[], str]
+                | collections.abc.Callable[[], list[str]]
+                | list[str]
+                | str
+                | None
             ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
@@ -1334,6 +1395,16 @@ class gui:
         def value(self, value: collections.abc.Iterable[str]) -> None:
             self._set_value(value)
 
+        @typing.override
+        def validate(self) -> bool:
+            """B3: every selected item must be one of declared choices (callable-resolved)."""
+            if not super().validate():
+                return False
+            choices_raw = self._field_info.choices
+            choices_list = choices_raw() if callable(choices_raw) else choices_raw
+            valid_ids = {c.id for c in choices_list or []}
+            return all(item in valid_ids for item in self.value)
+
     class EditableListField(InputField):
         """
         Editables list are lists of editable elements (i.e., a list of IPs, macs,
@@ -1370,7 +1441,11 @@ class gui:
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: (
-                collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None
+                collections.abc.Callable[[], str]
+                | collections.abc.Callable[[], list[str]]
+                | list[str]
+                | str
+                | None
             ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
@@ -1752,7 +1827,9 @@ class UserInterface(metaclass=UserInterfaceType):
                         if v.startswith(MULTIVALUE_FIELD):
                             val = pickle.loads(v[1:])
                         elif v.startswith(OLD_PASSWORD_FIELD):
-                            val = CryptoManager.manager().aes256_cbc_decrypt(v[1:], consts.ui.UDSB, True).decode()
+                            val = (
+                                CryptoManager.manager().aes256_cbc_decrypt(v[1:], consts.ui.UDSB, True).decode()
+                            )
                         elif v.startswith(PASSWORD_FIELD):
                             val = CryptoManager.manager().aes256_cbc_decrypt(v[1:], UDSK, True).decode()
                         else:

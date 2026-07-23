@@ -110,6 +110,19 @@ class FieldPatternType(enum.StrEnum):
     PATH = "path"
     NONE = ""
 
+    @staticmethod
+    def from_str(value: str) -> "FieldPatternType":
+        """Returns a FieldPatternType from a string
+        If value is not a valid FieldPatternType, returns FieldPatternType.NONE
+
+        Args:
+            value (str): String to convert to FieldPatternType
+        """
+        try:
+            return FieldPatternType(value)
+        except ValueError:
+            return FieldPatternType.NONE
+
 
 # Callbacks
 
@@ -134,7 +147,7 @@ class Filler(typing.TypedDict):
 
 @dataclasses.dataclass
 class ChoiceItem:
-    id: "str|int"
+    id: str | int
     text: str
     img: str | None = None  # Only for IMAGECHOICE
 
@@ -148,7 +161,9 @@ class ChoiceItem:
         return data
 
 
-ChoicesType = collections.abc.Callable[[], collections.abc.Iterable[ChoiceItem]] | collections.abc.Iterable[ChoiceItem]
+ChoicesType = (
+    collections.abc.Callable[[], collections.abc.Iterable[ChoiceItem]] | collections.abc.Iterable[ChoiceItem]
+)
 
 
 # Field Info
@@ -166,7 +181,7 @@ class FieldInfo:
     required: bool | None = None
     length: int | None = None
     lines: int | None = None
-    pattern: "FieldPatternType | str | None" = None
+    pattern: FieldPatternType | str = FieldPatternType.NONE
     tab: Tab | str | None = None
     choices: ChoicesType | None = None
     min_value: int | None = None
