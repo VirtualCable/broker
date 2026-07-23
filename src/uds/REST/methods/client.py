@@ -247,6 +247,11 @@ class Client(Handler):
                     self._params.get("kem_kyber_key", ""),
                 )
 
+            # rdp_sign moved to POST; its ticket carries no user/userservice,
+            # so resolve it before the lookup below. PUT still works for old clients.
+            if command == "rdp_sign":
+                return self._sign_rdp_ticket(ticket)
+
             try:
                 data: dict[str, typing.Any] = TicketStore.get(ticket)
             except TicketStore.DoesNotExist:
@@ -284,6 +289,17 @@ class Client(Handler):
 
         return Client.result(result="Ok")
 
+    def _sign_rdp_ticket(self, ticket: str) -> dict[str, typing.Any]:
+        try:
+            data: dict[str, typing.Any] = TicketStore.get(ticket)
+        except TicketStore.DoesNotExist:
+            return Client.result(error=types.errors.Error.ACCESS_DENIED)
+
+        if data.get("type") != "rdp":
+            return Client.result(error=types.errors.Error.ACCESS_DENIED)
+
+        return self.sign_rdp(self._params.get("rdp") or "")
+
     def put(self) -> dict[str, typing.Any]:
         """
         Processes put requests
@@ -299,15 +315,7 @@ class Client(Handler):
         if command != "rdp_sign":
             return Client.result(error="Invalid command")
 
-        try:
-            data: dict[str, typing.Any] = TicketStore.get(ticket)
-        except TicketStore.DoesNotExist:
-            return Client.result(error=types.errors.Error.ACCESS_DENIED)
-
-        if data.get("type") != "rdp":
-            return Client.result(error=types.errors.Error.ACCESS_DENIED)
-
-        return self.sign_rdp(self._params.get("rdp") or "")
+        return self._sign_rdp_ticket(ticket)
 
     def get(self) -> dict[str, typing.Any]:
         """

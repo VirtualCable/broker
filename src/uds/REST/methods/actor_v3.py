@@ -920,9 +920,9 @@ class Notify(ActorV3Action):
     NAME = "notify"
 
     @typing.override
-    def post(self) -> dict[str, typing.Any]:
-        # Raplaces original post (non existent here)
-        raise exceptions.rest.AccessDenied("Access denied")
+    def post(self) -> collections.abc.MutableMapping[str, typing.Any]:
+        # Actors are migrating notify from GET to POST; keep both verbs working.
+        return self.get()
 
     def get(self) -> collections.abc.MutableMapping[str, typing.Any]:
         logger.debug("Args: %s,  Params: %s", self._args, self._params)
