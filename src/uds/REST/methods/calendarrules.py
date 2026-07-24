@@ -36,15 +36,21 @@ import datetime
 import logging
 import typing
 
-from django.db import IntegrityError, models
-from django.utils.translation import gettext as _
+from django.db import IntegrityError
+from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
-from uds.core import exceptions, types
-from uds.core.util import ensure, permissions, ui as ui_utils
-from uds.core.util.model import process_uuid, sql_now
+from uds.core import exceptions
+from uds.core import types
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
+from uds.core.util.model import sql_now
 from uds.models.calendar import Calendar
-from uds.models.calendar_rule import CalendarRule, FrequencyInfo
+from uds.models.calendar_rule import CalendarRule
+from uds.models.calendar_rule import FrequencyInfo
 from uds.REST.model import DetailHandler
 
 # Not imported at runtime, just for type checking

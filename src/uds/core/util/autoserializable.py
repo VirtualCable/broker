@@ -43,20 +43,19 @@ class UserDeploymentService(AutoSerializable, services.UserDeployment):
 
 """
 
-import dataclasses
-import itertools
-import typing
-import collections.abc
-import logging
-import json
-import zlib
-import base64
-import hashlib
-import struct
 import abc
+import base64
+import collections.abc
+import dataclasses
+import hashlib
+import itertools
+import json
+import logging
+import struct
+import typing
+import zlib
 
 from cryptography import fernet
-
 from django.conf import settings
 
 from uds.core.serializable import Serializable

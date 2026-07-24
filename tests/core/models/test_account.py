@@ -31,17 +31,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import datetime
-import typing
 import logging
-
-from uds import models
-from uds.core.util import model
-from uds.core import consts
-from uds.models.account_usage import AccountUsage
+import typing
 
 from tests.fixtures import services as services_fixtures
-
 from tests.utils.test import UDSTestCase
+from uds import models
+from uds.core import consts
+from uds.core.util import model
+from uds.models.account_usage import AccountUsage
 
 if typing.TYPE_CHECKING:
     pass

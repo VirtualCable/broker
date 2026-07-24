@@ -32,19 +32,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pyright: reportUnknownMemberType=false
 
-import logging
-import io
-import typing
 import collections.abc
-
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib import colormaps
-
-# This must be imported to allow 3d projections
-from mpl_toolkits.mplot3d.axes3d import Axes3D  # pyright: ignore[reportUnusedImport]
+import io
+import logging
+import typing
 
 import numpy as np
+
+from matplotlib import colormaps
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+# This must be imported to allow 3d projections
+from mpl_toolkits.mplot3d.axes3d import Axes3D as Axes3D
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def surface_chart(
     logger.debug("Y: %s", y)
     logger.debug("Z: %s", z)
 
-    x, y = np.meshgrid(x, y)
+    x, y = typing.cast(tuple[int, int], np.meshgrid(x, y))
     z = np.array(z)
 
     logger.debug("X': %s", x)

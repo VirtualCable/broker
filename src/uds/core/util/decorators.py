@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import functools
 import inspect
@@ -36,11 +37,12 @@ import logging
 import threading
 import time
 import typing
-import collections.abc
-
-from uds.core import consts, types, exceptions
 
 import uds.core.exceptions.rest
+
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
 
 logger = logging.getLogger(__name__)
 

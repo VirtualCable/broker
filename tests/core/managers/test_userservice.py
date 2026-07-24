@@ -33,15 +33,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
+from tests.fixtures import services as services_fixtures
+from tests.utils.test import UDSTransactionTestCase
 from uds import models
 from uds.core import types as core_types
-
 from uds.core.managers.userservice import UserServiceManager
-
-
-from tests.fixtures import services as services_fixtures
-
-from tests.utils.test import UDSTransactionTestCase
 
 logger = logging.getLogger(__name__)
 

@@ -34,10 +34,12 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import os.path
 import random
 
+from django.urls import reverse
+
+from uds.core.managers.downloads import DownloadsManager
+
 # We use commit/rollback
 from ...utils.web.test import WEBTestCase
-from django.urls import reverse
-from uds.core.managers.downloads import DownloadsManager
 
 
 class DownloadsManagerTest(WEBTestCase):

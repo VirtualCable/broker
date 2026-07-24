@@ -32,8 +32,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import copy
 import typing
-from uds.core import types
+
 from django.utils.translation import gettext
+
+from uds.core import types
 
 
 class GuiBuilder:

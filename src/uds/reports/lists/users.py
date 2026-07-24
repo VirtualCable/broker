@@ -31,22 +31,21 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import io
 import csv
+import io
 import logging
+import typing
 
 # import openpyxl
 # import openpyxl.writer.excel
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
-from django.utils.translation import gettext, gettext_lazy as _
 from uds.core import types
-
 from uds.core.ui import gui
 from uds.models import Authenticator
 
 from .base import ListReport
-
 
 logger = logging.getLogger(__name__)
 

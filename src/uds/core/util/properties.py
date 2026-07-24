@@ -31,12 +31,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-import logging
 import collections.abc
+import logging
+import typing
 
-from django.db.models import signals
 from django.db import transaction
+from django.db.models import signals
 
 from uds.models.properties import Properties
 

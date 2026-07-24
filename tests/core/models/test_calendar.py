@@ -30,14 +30,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import datetime
 import logging
+import typing
 
 from django.utils import timezone
 
 from uds import models
-from uds.models.calendar_rule import FrequencyInfo, DurationInfo
+from uds.models.calendar_rule import DurationInfo
+from uds.models.calendar_rule import FrequencyInfo
 
 # FREQ_NAMES, dunits, WEEKDAYS_LIST
 from ...utils.test import UDSTestCase

@@ -46,8 +46,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
-import typing
 import logging
+import typing
 
 from tests.utils import rest
 

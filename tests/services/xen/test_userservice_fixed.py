@@ -35,13 +35,11 @@ from unittest import mock
 
 from uds import models
 from uds.core import types
-
-from . import fixtures
-
-from ...utils.test import UDSTransactionTestCase
-from ...utils.helpers import limited_iterator
-
 from uds.services.Xen.xen import types as xen_types
+
+from ...utils.helpers import limited_iterator
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 # We use transactions on some related methods (storage access, etc...)

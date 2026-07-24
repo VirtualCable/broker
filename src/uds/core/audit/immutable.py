@@ -52,23 +52,25 @@ Data layout summary::
     Normal:    <raw payload bytes>
 """
 
+import collections.abc
 import hashlib
 import logging
 import os
 import pickle
 import struct
 import typing
-import collections.abc
 
 from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from uds.models.immutable_log import ImmutableLog
-from uds.core.audit.stamping import StampProvider, DummyStampProvider, RFC3161StampProvider
+from uds.core.audit.stamping import DummyStampProvider
+from uds.core.audit.stamping import RFC3161StampProvider
+from uds.core.audit.stamping import StampProvider
 from uds.core.util import config
 from uds.core.util.model import sql_now
+from uds.models.immutable_log import ImmutableLog
 
 logger = logging.getLogger(__name__)
 

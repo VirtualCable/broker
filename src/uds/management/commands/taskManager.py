@@ -32,15 +32,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import argparse
-import sys
+import logging
 import os
 import signal
+import sys
 import time
-import logging
 import typing
 
-from django.core.management.base import BaseCommand  # , CommandError
 from django.conf import settings
+from django.core.management.base import BaseCommand  # , CommandError
 
 from uds.core.managers import task_manager
 from uds.core.util import cluster

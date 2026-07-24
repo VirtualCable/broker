@@ -1,13 +1,13 @@
-from datetime import datetime
 import logging
 import typing
 
+from datetime import datetime
+
 from django.utils import timezone
 
-from uds.models import Log
-from uds.core.util.query_db_filter import exec_query
-
 from tests.utils.test import UDSTestCase
+from uds.core.util.query_db_filter import exec_query
+from uds.models import Log
 
 logger = logging.getLogger(__name__)
 

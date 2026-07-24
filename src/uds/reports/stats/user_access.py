@@ -37,14 +37,16 @@ import logging
 import typing
 
 import django.template.defaultfilters as filters
+
+from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core.managers.stats import StatsManager
 from uds.core.reports import graphs
 from uds.core.ui import gui
-from uds.core.util import stats, utils
+from uds.core.util import stats
+from uds.core.util import utils
 
 from .base import StatsReport
 
@@ -170,8 +172,8 @@ class StatsReportLogin(StatsReport):
         #
         graph1 = io.BytesIO()
 
-        def _tick_fnc1(l: int) -> str:
-            return filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(l)), x_label_format)
+        def _tick_fnc1(val: int) -> str:
+            return filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(val)), x_label_format)
 
         x = [v[0] for v in data]
         d: dict[str, typing.Any] = {
@@ -191,7 +193,7 @@ class StatsReportLogin(StatsReport):
         graph4 = io.BytesIO()
         data_week, data_hour, data_week_hour = self.get_week_hourly_data()
 
-        def _tick_fnc2(l: int) -> str:
+        def _tick_fnc2(val: int) -> str:
             return [
                 _("Monday"),
                 _("Tuesday"),
@@ -200,7 +202,7 @@ class StatsReportLogin(StatsReport):
                 _("Friday"),
                 _("Saturday"),
                 _("Sunday"),
-            ][l]
+            ][val]
 
         x = list(range(7))
         d = {
@@ -225,8 +227,8 @@ class StatsReportLogin(StatsReport):
 
         graphs.bar_chart(SIZE, d, graph3)
 
-        def _tick_fnc3(l: int) -> str:
-            return str(l)
+        def _tick_fnc3(val: int) -> str:
+            return str(val)
 
         x = list(range(24))
         Y = list(range(7))

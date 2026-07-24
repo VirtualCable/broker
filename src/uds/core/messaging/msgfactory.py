@@ -37,7 +37,7 @@ import typing
 from uds.core.util import factory
 
 if typing.TYPE_CHECKING:
-    from .provider import Notifier
+    from .provider import Notifier as Notifier
 
 logger = logging.getLogger(__name__)
 

@@ -34,13 +34,14 @@ correctly when updating the DB after a job completes.
 """
 
 import typing
+
 from unittest import mock
 
-from ...utils.test import UDSTestCase
-
-from uds.core.jobs.scheduler import JobThread
-from uds.core.jobs.job import Job
 from uds.core.environment import Environment
+from uds.core.jobs.job import Job
+from uds.core.jobs.scheduler import JobThread
+
+from ...utils.test import UDSTestCase
 
 
 class _FakeJob(Job):

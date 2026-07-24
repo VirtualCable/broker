@@ -32,20 +32,24 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.conf import settings
 
 from uds import models
-from uds.core import consts, exceptions, types
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.exceptions.services import ServiceNotReadyError
 from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.userservice import UserServiceManager
-from uds.core.exceptions.services import ServiceNotReadyError
-from uds.core.types.log import LogLevel, LogSource
+from uds.core.types.log import LogLevel
+from uds.core.types.log import LogSource
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_stamp_seconds
 from uds.core.util.rest.tools import match_args
-from uds.models import TicketStore, User
+from uds.models import TicketStore
+from uds.models import User
 from uds.REST import Handler
 
 logger = logging.getLogger(__name__)

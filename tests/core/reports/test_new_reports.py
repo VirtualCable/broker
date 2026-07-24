@@ -39,52 +39,30 @@ import pytest
 
 from uds import models
 from uds.core import types
-
-from uds.reports.lists.inactive_users import (
-    InactiveUsersReport,
-    InactiveUsersReportCSV,
-)
-from uds.reports.lists.admin_activity import (
-    AdminActivityReport,
-    AdminActivityReportCSV,
-)
-from uds.reports.lists.failed_logins import (
-    FailedLoginsReport,
-    FailedLoginsReportCSV,
-)
-from uds.reports.stats.peak_concurrency import (
-    PeakConcurrencyReport,
-    PeakConcurrencyReportCSV,
-)
-from uds.reports.stats.pool_saturation import (
-    PoolSaturationReport,
-    PoolSaturationReportCSV,
-)
-from uds.reports.stats.cache_efficiency import (
-    CacheEfficiencyReport,
-    CacheEfficiencyReportCSV,
-)
-from uds.reports.stats.tunnel_usage import (
-    TunnelUsageReport,
-    TunnelUsageReportCSV,
-)
-from uds.reports.stats.client_platforms import (
-    ClientPlatformsReport,
-    ClientPlatformsReportCSV,
-)
-from uds.reports.stats.top_users import TopUsersReport, TopUsersReportCSV
-from uds.reports.stats.session_duration import (
-    SessionDurationReport,
-    SessionDurationReportCSV,
-)
-from uds.reports.stats.userservice_errors import (
-    UserServiceErrorsReport,
-    UserServiceErrorsReportCSV,
-)
-from uds.reports.stats.usage_by_group import (
-    UsageByGroupReport,
-    UsageByGroupReportCSV,
-)
+from uds.reports.lists.admin_activity import AdminActivityReport
+from uds.reports.lists.admin_activity import AdminActivityReportCSV
+from uds.reports.lists.failed_logins import FailedLoginsReport
+from uds.reports.lists.failed_logins import FailedLoginsReportCSV
+from uds.reports.lists.inactive_users import InactiveUsersReport
+from uds.reports.lists.inactive_users import InactiveUsersReportCSV
+from uds.reports.stats.cache_efficiency import CacheEfficiencyReport
+from uds.reports.stats.cache_efficiency import CacheEfficiencyReportCSV
+from uds.reports.stats.client_platforms import ClientPlatformsReport
+from uds.reports.stats.client_platforms import ClientPlatformsReportCSV
+from uds.reports.stats.peak_concurrency import PeakConcurrencyReport
+from uds.reports.stats.peak_concurrency import PeakConcurrencyReportCSV
+from uds.reports.stats.pool_saturation import PoolSaturationReport
+from uds.reports.stats.pool_saturation import PoolSaturationReportCSV
+from uds.reports.stats.session_duration import SessionDurationReport
+from uds.reports.stats.session_duration import SessionDurationReportCSV
+from uds.reports.stats.top_users import TopUsersReport
+from uds.reports.stats.top_users import TopUsersReportCSV
+from uds.reports.stats.tunnel_usage import TunnelUsageReport
+from uds.reports.stats.tunnel_usage import TunnelUsageReportCSV
+from uds.reports.stats.usage_by_group import UsageByGroupReport
+from uds.reports.stats.usage_by_group import UsageByGroupReportCSV
+from uds.reports.stats.userservice_errors import UserServiceErrorsReport
+from uds.reports.stats.userservice_errors import UserServiceErrorsReportCSV
 
 from ...fixtures import authenticators as fixtures_auths
 from ...fixtures import services as fixtures_services

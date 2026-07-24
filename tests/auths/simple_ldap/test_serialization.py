@@ -33,10 +33,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import typing
 
 from tests.utils.test import UDSTestCase
-from uds.core.environment import Environment
-
-
 from uds.auths.SimpleLDAP import authenticator
+from uds.core.environment import Environment
 
 PASSWD: typing.Final[str] = "PASSWD"
 

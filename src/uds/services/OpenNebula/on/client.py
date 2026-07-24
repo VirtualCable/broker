@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -26,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
@@ -81,7 +78,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
     password: str
     endpoint: str
     connection: xmlrpc.client.ServerProxy
-    cached_version: typing.Optional[list[str]]
+    cached_version: list[str] | None
 
     def __init__(self, username: str, password: str, endpoint: str) -> None:
         self.username = username
@@ -217,7 +214,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
         4.- Update type. 0 replace the whole template, 1 merge with the existing one
         """
         result = self.connection.one.template.update(
-            self.session_string, int(template_id), template_data, int(update_type)
+            self.session_string, int(template_id), template_data, update_type
         )
         return check_result_raw(result)
 
@@ -244,7 +241,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
         return check_result_raw(result)
 
     @ensure_connected
-    def clone_image(self, src_id: str, name: str, datastore_id: typing.Union[str, int] = -1) -> str:
+    def clone_image(self, src_id: str, name: str, datastore_id: str | int = -1) -> str:
         """
         Clones the image.
         """

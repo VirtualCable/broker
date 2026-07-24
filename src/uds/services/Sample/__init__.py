@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -29,19 +27,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
 
-"""
-Sample Service module.
-
-This package simply shows how a new service can be implemented.
-
-
-The first thing to do in every package that is a module is register the
-class that is responsible of providing the module with the system.
-
-For this, we must simply import the class at __init__, UDS will take care
-of the rest
-"""
-
-from .provider import Provider
+from .provider import Provider as Provider

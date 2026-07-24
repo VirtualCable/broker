@@ -30,11 +30,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false
-import typing
+import configparser
+import logging
 import os
 import os.path
-import logging
-import configparser
+import typing
 
 logger = logging.getLogger(__name__)
 

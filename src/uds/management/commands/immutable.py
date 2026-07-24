@@ -48,7 +48,8 @@ import typing
 
 from django.core.management.base import BaseCommand
 
-from uds.core.audit.immutable import ImmutableLogger, content_from_bytes
+from uds.core.audit.immutable import ImmutableLogger
+from uds.core.audit.immutable import content_from_bytes
 from uds.core.util import model
 from uds.core.util.config import GlobalConfig
 from uds.models.immutable_log import ImmutableLog

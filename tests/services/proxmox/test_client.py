@@ -31,24 +31,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
+import contextlib
+import logging
 import random
 import time
 import typing
-import logging
-import contextlib
-import collections.abc
-
-from uds.core import types as core_types
-
-from uds.services.Proxmox.proxmox import (
-    types as prox_types,
-    client as prox_client,
-    exceptions as prox_exceptions,
-)
 
 from tests.utils import vars
-
 from tests.utils.test import UDSTransactionTestCase
+from uds.core import types as core_types
+from uds.services.Proxmox.proxmox import client as prox_client
+from uds.services.Proxmox.proxmox import exceptions as prox_exceptions
+from uds.services.Proxmox.proxmox import types as prox_types
 
 logger = logging.getLogger(__name__)
 

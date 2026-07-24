@@ -32,25 +32,28 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import argparse
+import collections.abc
+import datetime
 import logging
 import typing
-import datetime
-import collections.abc
 
 import yaml
 
 from django.core.management.base import BaseCommand
 
-from uds.core.util import cluster, log, model, config
 from uds import models
 from uds.core import types
-
+from uds.core.util import cluster
+from uds.core.util import config
+from uds.core.util import log
+from uds.core.util import model
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from uds.core.module import Module
     from django.db import models as dbmodels
+
+    from uds.core.module import Module
 
 CONSIDERED_OLD: typing.Final[datetime.timedelta] = datetime.timedelta(days=365)
 
@@ -79,7 +82,7 @@ def get_serialized_from_managed_object(
         # Append type_name to list
         values["id"] = mod.id
         values["uuid"] = mod.uuid
-        values["type_name"] = str(obj.type_name)
+        values["type_name"] = obj.type_name
         values["comments"] = mod.comments
 
         # May alter values with callback
@@ -177,16 +180,16 @@ class Command(BaseCommand):
                             )
                         for item in fltr_list[:max_items]:  # at most max_items items
                             logs = [
-                                f"{l['date']}: {types.log.LogLevel.from_int(l['level'])} [{l['source']}] - {l['message']}"
-                                for l in log.get_logs(item)
+                                f"{log_item['date']}: {types.log.LogLevel.from_int(log_item['level'])} [{log_item['source']}] - {log_item['message']}"
+                                for log_item in log.get_logs(item)
                             ]
                             userservices[item.friendly_name] = {
                                 "_": {
                                     "id": item.uuid,
                                     "unique_id": item.unique_id,
                                     "friendly_name": item.friendly_name,
-                                    "state": str(types.states.State.from_str(item.state).localized),
-                                    "os_state": str(types.states.State.from_str(item.os_state).localized),
+                                    "state": types.states.State.from_str(item.state).localized,
+                                    "os_state": types.states.State.from_str(item.os_state).localized,
                                     "state_date": item.state_date,
                                     "creation_date": item.creation_date,
                                     "revision": item.publication and item.publication.revision or "",

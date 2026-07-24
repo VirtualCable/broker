@@ -34,8 +34,6 @@ import typing
 
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
-
-
 from uds.osmanagers.LinuxOsManager import linux_ad_osmanager as osmanager
 
 # This class has no old serialization format, so we can use the same data for all versions

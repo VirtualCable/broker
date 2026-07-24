@@ -34,8 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 from unittest import mock
 
 from tests.services.openshift import fixtures
-from uds.core.types.states import TaskState
 from tests.utils.test import UDSTransactionTestCase
+from uds.core.types.states import TaskState
 
 
 class TestOpenshiftDeployment(UDSTransactionTestCase):

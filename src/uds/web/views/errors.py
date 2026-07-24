@@ -37,7 +37,6 @@ import typing
 from django.http import HttpResponse
 from django.middleware import csrf
 from django.shortcuts import render
-from django.utils.translation import gettext_lazy as _
 
 from uds.core import consts, types
 

@@ -35,7 +35,6 @@ import typing
 import collections.abc
 import logging
 
-from django.utils.translation import gettext as _
 from django.db import models
 from django.db.models import Q
 
@@ -93,10 +92,10 @@ class Permissions(UUIDModel):
     @staticmethod
     def add_permission(
         *,
-        user: typing.Optional["User"] = None,
-        group: typing.Optional["Group"] = None,
+        user: "User | None" = None,
+        group: "Group | None" = None,
         object_type: "objtype.ObjectType",
-        object_id: typing.Optional[int] = None,
+        object_id: int | None = None,
         permission: PermissionType = PermissionType.NONE,
     ) -> "Permissions":
         """
@@ -132,9 +131,9 @@ class Permissions(UUIDModel):
     @staticmethod
     def get_permissions(
         object_type: "objtype.ObjectType",
-        object_id: typing.Optional[int] = None,
-        user: typing.Optional["User"] = None,
-        groups: typing.Optional[collections.abc.Iterable["Group"]] = None,
+        object_id: int | None = None,
+        user: "User | None" = None,
+        groups: collections.abc.Iterable["Group"] | None = None,
     ) -> PermissionType:
         """
         Retrieves the permission for a given object
@@ -174,8 +173,8 @@ class Permissions(UUIDModel):
     def clean_permissions(
         object_type: "objtype.ObjectType",
         object_id: int,
-        user: typing.Optional["User"] = None,
-        group: typing.Optional["Group"] = None,
+        user: "User | None" = None,
+        group: "Group | None" = None,
     ) -> None:
         if user and group:  # Using both is same as using none
             user = None

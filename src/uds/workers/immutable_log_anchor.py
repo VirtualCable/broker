@@ -33,13 +33,13 @@ Worker that periodically inserts re-anchor entries into the immutable
 audit log.  Controlled by ``GlobalConfig.IMMUTABLE_LOG_REANCHOR`` (seconds).
 """
 
-import typing
 import logging
+import typing
 
-from uds.core.jobs import Job
 from uds.core.audit.immutable import ImmutableLogger
-from uds.models.immutable_log import ImmutableLog
+from uds.core.jobs import Job
 from uds.core.util.config import GlobalConfig
+from uds.models.immutable_log import ImmutableLog
 
 logger = logging.getLogger(__name__)
 

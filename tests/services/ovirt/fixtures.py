@@ -31,27 +31,27 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import contextlib
 import enum
+import random
 import typing
 import uuid
-import random
-import collections.abc
 
 from unittest import mock
 
-from uds.core import environment, types
+from uds.core import environment
+from uds.core import types
 from uds.core.ui.user_interface import gui
+from uds.services.OVirt import deployment_linked
+from uds.services.OVirt import provider
+from uds.services.OVirt import publication
+from uds.services.OVirt import service_linked
+from uds.services.OVirt.ovirt import client
+from uds.services.OVirt.ovirt import types as ov_types
 
-from ...utils.autospec import autospec, AutoSpecMethodInfo
-
-from uds.services.OVirt import (
-    provider,
-    service_linked,
-    publication,
-    deployment_linked,
-)
-from uds.services.OVirt.ovirt import client, types as ov_types
+from ...utils.autospec import AutoSpecMethodInfo
+from ...utils.autospec import autospec
 
 T = typing.TypeVar("T")
 V = typing.TypeVar("V", bound=enum.Enum)

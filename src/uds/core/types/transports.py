@@ -31,15 +31,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import base64
+import bz2
 import collections.abc
 import dataclasses
 import enum
 import json
 import typing
-import base64
-import bz2
 
-from django.utils.translation import gettext_noop as _, gettext
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
 
 
 class Protocol(enum.StrEnum):

@@ -88,8 +88,9 @@ class IPMachinesService(services.Service):
     # This value is the new server group that contains the "ipList"
     server_group = gui.ChoiceField(label="")
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
-        values: typing.List[bytes] = data.split(b"\0")
+        values: list[bytes] = data.split(b"\0")
         d = self.storage.read_from_db("ips")
         _ips: list[str] = []
         if isinstance(d, bytes):
@@ -142,7 +143,9 @@ class IPMachinesService(services.Service):
             if not locked:
                 continue
 
-            if isinstance(locked, str) and not "." in locked:  # Convert to int and treat it as a "locked" element
+            if (
+                isinstance(locked, str) and "." not in locked
+            ):  # Convert to int and treat it as a "locked" element
                 locked = int(locked)
 
             # If maxSessionForMachine is 0, we will lock the server

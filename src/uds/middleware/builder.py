@@ -29,17 +29,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import inspect
 import logging
 import typing
-import collections.abc
 
 from asgiref.sync import sync_to_async
+from django.http import HttpResponse
 from django.utils.decorators import sync_and_async_middleware
 
-from django.http import HttpResponse
 from uds.core.types.requests import ExtendedHttpRequest
-
 
 logger = logging.getLogger(__name__)
 

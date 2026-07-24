@@ -29,20 +29,21 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import functools
 import logging
 import random
 import string
 import typing
-import collections.abc
-
-from django.utils.translation import gettext_lazy as _
-from django.db.models import Q
 
 from cryptography.x509 import load_pem_x509_certificate
+from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from uds import models
-from uds.core import types, ui, mfas
+from uds.core import mfas
+from uds.core import types
+from uds.core import ui
 
 if typing.TYPE_CHECKING:
     from cryptography.x509 import Certificate

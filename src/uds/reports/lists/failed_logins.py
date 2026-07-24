@@ -32,13 +32,15 @@ import logging
 import re
 import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import dateutils
-from uds.models import Authenticator, Log
+from uds.models import Authenticator
+from uds.models import Log
 
 from .base import ListReport
 

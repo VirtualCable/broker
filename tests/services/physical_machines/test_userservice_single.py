@@ -35,9 +35,8 @@ from unittest import mock
 
 from uds.core import types
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 # from ...utils.generators import limited_iterator
 

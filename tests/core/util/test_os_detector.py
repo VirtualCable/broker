@@ -32,11 +32,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
+from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.core.util import os_detector
-
-from tests.utils.test import UDSTestCase
-
 
 logger = logging.getLogger(__name__)
 

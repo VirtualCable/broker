@@ -40,12 +40,11 @@ from django.utils.translation import gettext as _
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
-from uds.core.util import permissions
 from uds.core.module import Module
+from uds.core.util import permissions
 from uds.REST.utils import sanitize_params
 
 # from uds.models import ManagedObjectModel
-
 from ..handlers import Handler
 
 # Not imported at runtime, just for type checking

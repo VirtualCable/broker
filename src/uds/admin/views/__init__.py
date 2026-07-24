@@ -29,13 +29,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from django.http import HttpResponse
 from django.middleware import csrf
 from django.shortcuts import render
-from django.utils.translation import gettext as _
 
 from uds.core import consts
 from uds.core.auths.auth import weblogin_required

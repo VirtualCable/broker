@@ -32,15 +32,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from unittest import mock
 
 from uds.core import types
 
-from . import fixtures
-
-from ...utils.test import UDSTransactionTestCase
 from ...utils import MustBeOfType
 from ...utils.helpers import limited_iterator
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 # USe transactional, used by publication access to db on "removal"

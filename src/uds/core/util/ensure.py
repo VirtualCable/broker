@@ -29,8 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
+import typing
 
 
 def as_list(obj: typing.Any) -> list[typing.Any]:

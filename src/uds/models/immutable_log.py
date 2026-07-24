@@ -77,5 +77,6 @@ class ImmutableLog(models.Model):
             raise ValidationError("ImmutableLog entries cannot be updated.")
         super().save(*args, **kwargs)
 
-    def delete(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:  # type: ignore
+    @typing.override
+    def delete(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
         raise ValidationError("ImmutableLog entries cannot be deleted.")

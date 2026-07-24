@@ -31,10 +31,11 @@ Author: dkmaster@dkmon.com
 """
 
 # pyright: reportUnknownMemberType=false,reportUnknownVariableType=false,reportUnknownArgumentType=false
-import typing
 import collections.abc
+import typing
 
 from collections import defaultdict
+
 import defusedxml.ElementTree as ET
 
 if typing.TYPE_CHECKING:

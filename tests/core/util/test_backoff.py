@@ -12,9 +12,10 @@ Unit tests for ``uds.core.util.backoff.Backoff``.
 import typing
 import unittest
 
-from ...utils.test import UDSTestCase
 from uds.core.util import cache
 from uds.core.util.backoff import Backoff
+
+from ...utils.test import UDSTestCase
 
 
 class _DummyCache:

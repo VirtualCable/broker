@@ -33,13 +33,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import threading
 import typing
+
 from unittest import mock
 
 from django.test import TransactionTestCase
 
-from uds.core.jobs import scheduler, jobs_factory
-from uds.core.jobs.job import Job
 from uds.core.environment import Environment
+from uds.core.jobs import jobs_factory
+from uds.core.jobs import scheduler
+from uds.core.jobs.job import Job
 
 
 class _SpyJob(Job):

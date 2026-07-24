@@ -34,15 +34,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import time
 
 from uds.core import consts
-from uds.core.util.unique_id_generator import UniqueIDGenerator
+from uds.core.util.model import sql_stamp_seconds
 from uds.core.util.unique_gid_generator import UniqueGIDGenerator
+from uds.core.util.unique_id_generator import UniqueIDGenerator
 from uds.core.util.unique_mac_generator import UniqueMacGenerator
 from uds.core.util.unique_name_generator import UniqueNameGenerator
 
-from uds.core.util.model import sql_stamp_seconds
-
 from ...utils.test import UDSTestCase
-
 
 NUM_THREADS = 8
 TESTS_PER_TRHEAD = 30

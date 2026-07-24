@@ -30,8 +30,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import enum
 import dataclasses
+import enum
 
 from django.utils.translation import gettext as _
 

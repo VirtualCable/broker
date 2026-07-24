@@ -29,14 +29,15 @@
 @author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import array
+import fcntl
 import platform
 import socket
-import fcntl
 import struct
-import array
 import typing
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 
 
 def list_ifaces() -> typing.Iterator[types.net.Iface]:

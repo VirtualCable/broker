@@ -30,16 +30,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import dataclasses
 import enum
+import typing
 
 from django.urls import reverse
-
 
 if typing.TYPE_CHECKING:
     from django.http import HttpRequest
     from django.http.request import QueryDict
+
     from uds.models import User
 
 

@@ -29,18 +29,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
-import functools
 import datetime
+import functools
 import logging
+import typing
 
 from django.utils import timezone
 
 from uds import models
 
-from ....utils import rest
 from ....fixtures import rest as rest_fixtures
+from ....utils import rest
 
 logger = logging.getLogger(__name__)
 

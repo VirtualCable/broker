@@ -31,5 +31,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .html5ssh import HTML5SSHTransport
+# Make this visible to loaders
+
+from .html5ssh import HTML5SSHTransport as HTML5SSHTransport

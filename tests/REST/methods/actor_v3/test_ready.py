@@ -33,13 +33,11 @@ import logging
 
 from unittest import mock
 
-from uds.core import consts, types
-from uds.core.util.model import sql_stamp_seconds
-
-from uds.osmanagers.Test.testing_osmanager import TestOSManager
-
 from tests.utils import rest
-
+from uds.core import consts
+from uds.core import types
+from uds.core.util.model import sql_stamp_seconds
+from uds.osmanagers.Test.testing_osmanager import TestOSManager
 
 logger = logging.getLogger(__name__)
 

@@ -42,6 +42,7 @@ from ...utils.web import test
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
+
     from ...utils.test import UDSHttpResponse
 
 

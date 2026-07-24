@@ -35,8 +35,9 @@ import logging
 import time
 import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from uds.core.util.stats import counters
 

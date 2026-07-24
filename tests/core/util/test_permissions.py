@@ -33,20 +33,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
-import uds.core.types.permissions
 
 from django.db.models import Model
 
-from uds.core.util import permissions
-from uds.core.util import objtype
-from uds import models
+import uds.core.types.permissions
 
+from uds import models
+from uds.core.util import objtype
+from uds.core.util import permissions
+
+from ...fixtures import authenticators as authenticators_fixtures
+from ...fixtures import networks as network_fixtures
+from ...fixtures import services as services_fixtures
 from ...utils.test import UDSTestCase
-from ...fixtures import (
-    authenticators as authenticators_fixtures,
-    services as services_fixtures,
-    networks as network_fixtures,
-)
 
 
 class PermissionsTest(UDSTestCase):

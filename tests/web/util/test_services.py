@@ -33,17 +33,18 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import itertools
 import typing
+
 from unittest import mock
 
 from django.utils import timezone
 
-from uds import models
-from uds.core import consts, types
-from uds.web.util import services
-
 from tests.fixtures import authenticators as fixtures_authenticators
 from tests.fixtures import services as fixtures_services
 from tests.utils.test import UDSTransactionTestCase
+from uds import models
+from uds.core import consts
+from uds.core import types
+from uds.web.util import services
 
 
 class TestGetServicesData(UDSTransactionTestCase):

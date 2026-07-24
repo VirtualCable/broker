@@ -17,19 +17,21 @@
 
 # pyright: reportConstantRedefinition=false,reportUnknownVariableType=false,reportUnknownMemberType=false
 
-import sys
-import platform
-import os
+import collections.abc
 import ctypes
 import errno
-import typing
-import collections.abc
 import logging
+import os
+import platform
+import sys
+import typing
 
 from ctypes.util import find_library
-from signal import signal, SIGINT, SIG_DFL
-from stat import S_IFDIR
 from functools import partial
+from signal import SIG_DFL
+from signal import SIGINT
+from signal import signal
+from stat import S_IFDIR
 
 logger = logging.getLogger(__name__)
 

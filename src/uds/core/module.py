@@ -41,9 +41,11 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 from uds.core.ui.user_interface import UserInterface
-from uds.core.util import utils, log
+from uds.core.util import log
+from uds.core.util import utils
 
-from .environment import Environment, Environmentable
+from .environment import Environment
+from .environment import Environmentable
 from .serializable import Serializable
 
 logger = logging.getLogger(__name__)

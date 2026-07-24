@@ -32,14 +32,16 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+
 from unittest import mock
 
-from uds.core import types, ui, environment
+from tests.utils.test import UDSTransactionTestCase
+from uds.core import environment
+from uds.core import types
+from uds.core import ui
 from uds.services.OpenShift.provider import OpenshiftProvider
 
 from . import fixtures
-
-from tests.utils.test import UDSTransactionTestCase
 
 
 class TestOpenshiftProvider(UDSTransactionTestCase):

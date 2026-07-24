@@ -33,16 +33,17 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import codecs
+import logging
 import random
 import string
-import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
-from uds.core import types
-from uds.core.ui import gui
-from uds.core.managers.crypto import CryptoManager
+
 from uds.core import exceptions
+from uds.core import types
+from uds.core.managers.crypto import CryptoManager
+from uds.core.ui import gui
 from uds.core.util import log
 
 from .windows import WindowsOsManager

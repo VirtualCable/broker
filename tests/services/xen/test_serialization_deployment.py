@@ -34,15 +34,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import pickle
 import typing
 
-from uds.core.environment import Environment
-from uds.core import types
-
 # We use storage, so we need transactional tests
 from tests.utils.test import UDSTransactionTestCase
+from uds.core import types
+from uds.core.environment import Environment
+from uds.services.Xen.deployment import OldOperation
+from uds.services.Xen.deployment import XenLinkedUserService as Deployment
 
 from . import fixtures
-
-from uds.services.Xen.deployment import OldOperation, XenLinkedUserService as Deployment
 
 TEST_QUEUE_OLD: typing.Final[list[OldOperation]] = [
     OldOperation.CREATE,

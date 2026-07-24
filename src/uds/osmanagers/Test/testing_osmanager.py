@@ -34,12 +34,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from django.utils.translation import gettext_noop as _, gettext_lazy
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_noop as _
 
-from uds.core import types
-from uds.core.ui import gui
 from uds.core import osmanagers
+from uds.core import types
 from uds.core.types.states import State
+from uds.core.ui import gui
 from uds.core.util import log
 
 if typing.TYPE_CHECKING:

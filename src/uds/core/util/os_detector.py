@@ -31,11 +31,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
-import collections.abc
 
-from uds.core import types, consts
+from uds.core import consts
+from uds.core import types
 
 logger = logging.getLogger(__name__)
 

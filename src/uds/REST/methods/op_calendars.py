@@ -37,14 +37,18 @@ import json
 import logging
 import typing
 
-from django.utils.translation import gettext as _
 from django.db.models import Model
+from django.utils.translation import gettext as _
 
-from uds.core import exceptions, types, consts
-from uds.core.types.rest import TableInfo
-from uds.core.util import log, ensure, ui as ui_utils
-from uds.core.util.model import process_uuid
 from uds import models
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.types.rest import TableInfo
+from uds.core.util import ensure
+from uds.core.util import log
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
 
 # Not imported at runtime, just for type checking

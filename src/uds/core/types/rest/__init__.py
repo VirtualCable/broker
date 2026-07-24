@@ -32,19 +32,19 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # pyright: reportUnusedImport=false
 
 import abc
-import enum
-import typing
-import hashlib
-import dataclasses
 import collections.abc
+import dataclasses
+import enum
+import hashlib
+import typing
 
-from . import stock as stock
 from . import actor as actor
 from . import api
+from . import stock as stock
 
 if typing.TYPE_CHECKING:
-    from uds.REST.handlers import Handler
     from uds.models.managed_object_model import ManagedObjectModel
+    from uds.REST.handlers import Handler
 
 
 T_Model = typing.TypeVar("T_Model", bound="ManagedObjectModel")

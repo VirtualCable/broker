@@ -1,10 +1,9 @@
-import typing
 import collections.abc
 import logging
+import typing
 
-from uds.core.util import singleton
 from uds.core import module
-
+from uds.core.util import singleton
 
 logger = logging.getLogger(__name__)
 

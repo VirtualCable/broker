@@ -38,12 +38,14 @@ import typing
 from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_noop as _
 
-from uds.core import transports, types
+from uds import models
+from uds.core import transports
+from uds.core import types
 from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.preferences import CommonPrefs
 from uds.core.ui import gui
-from uds.core.util import net, security
-from uds import models
+from uds.core.util import net
+from uds.core.util import security
 
 logger = logging.getLogger(__name__)
 

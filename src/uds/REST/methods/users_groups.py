@@ -30,29 +30,38 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import datetime
 import logging
 import typing
-import collections.abc
 
-from django.utils.translation import gettext as _
-from django.db import IntegrityError, transaction
-from django.db.models import Model
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.db import transaction
+from django.db.models import Model
+from django.utils.translation import gettext as _
 
-from uds.core.types.states import State
-
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
 from uds.core.auths.user import User as AUser
-from uds.core.util import log, ensure, ui as ui_utils
-from uds.core.util.model import process_uuid, sql_stamp_seconds
-from uds.models import Authenticator, User, Group, ServicePool, UserService
 from uds.core.managers.crypto import CryptoManager
-from uds.core import consts, exceptions, types
-
+from uds.core.types.states import State
+from uds.core.util import ensure
+from uds.core.util import log
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
+from uds.core.util.model import sql_stamp_seconds
+from uds.models import Authenticator
+from uds.models import Group
+from uds.models import ServicePool
+from uds.models import User
+from uds.models import UserService
 from uds.REST.model import DetailHandler
 
-from .user_services import AssignedUserService, UserServiceItem
+from .user_services import AssignedUserService
+from .user_services import UserServiceItem
 
 if typing.TYPE_CHECKING:
     from django.db.models.query import QuerySet

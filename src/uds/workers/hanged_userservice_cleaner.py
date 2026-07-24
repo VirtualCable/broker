@@ -30,18 +30,21 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-from datetime import timedelta
 import logging
+import typing
 
-from django.db.models import Q, Count
+from datetime import timedelta
+
+from django.db.models import Count
+from django.db.models import Q
 
 from uds.core import types
-from uds.core.util.config import GlobalConfig
-from uds.models import ServicePool, UserService
-from uds.core.util.model import sql_now
 from uds.core.jobs import Job
 from uds.core.util import log
+from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
+from uds.models import ServicePool
+from uds.models import UserService
 
 logger = logging.getLogger(__name__)
 

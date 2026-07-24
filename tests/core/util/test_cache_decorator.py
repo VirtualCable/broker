@@ -33,12 +33,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # We use commit/rollback
+import time
 import typing
+
 from unittest import mock
 
-from ...utils.test import UDSTransactionTestCase
 from uds.core.util.decorators import cached
-import time
+
+from ...utils.test import UDSTransactionTestCase
 
 
 class CacheTest(UDSTransactionTestCase):

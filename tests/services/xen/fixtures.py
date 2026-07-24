@@ -33,31 +33,31 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import contextlib
 import dataclasses
+import datetime
 import random
 import typing
-import datetime
+import uuid
 
 from unittest import mock
-import uuid
 
 from django.utils import timezone
 
-from tests.utils import search_item_by_attr, filter_list_by_attr
+from tests.utils import filter_list_by_attr
+from tests.utils import search_item_by_attr
 from uds.core import environment
 from uds.core.ui.user_interface import gui
+from uds.services.Xen import deployment
+from uds.services.Xen import deployment_fixed
+from uds.services.Xen import provider
+from uds.services.Xen import publication
+from uds.services.Xen import service
+from uds.services.Xen import service_fixed
+from uds.services.Xen.xen import client
+from uds.services.Xen.xen import exceptions as xen_exceptions
+from uds.services.Xen.xen import types as xen_types
 
-from ...utils.autospec import autospec, AutoSpecMethodInfo
-
-from uds.services.Xen import (
-    deployment,
-    provider,
-    service_fixed,
-    publication,
-    deployment_fixed,
-    service,
-)
-
-from uds.services.Xen.xen import types as xen_types, exceptions as xen_exceptions, client
+from ...utils.autospec import AutoSpecMethodInfo
+from ...utils.autospec import autospec
 
 DEF_POOL_NAME: typing.Final[str] = "TEST_pool_NAME"
 DEF_GENERAL_OPAQUE_REF: typing.Final[str] = "OpaqueRef:12345678-cdef-abcd-1234-1234567890ab"

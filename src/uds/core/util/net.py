@@ -219,7 +219,7 @@ def network_from_str(
     check_mode: bool = False,
 ) -> NetworkType:
     try:
-        if not ":" in network_str and version != 6:
+        if ":" not in network_str and version != 6:
             return network_from_str_ipv4(network_str)
         # ':' in strNets or version == 6:
         # If is in fact an IPv4 address, return None network, this will not be used
@@ -350,9 +350,9 @@ def recover_ips(remote_addr: str, xff: str) -> "types.net.IpInfo":
         types.net.IpInfo(ip, ip_proxy, ip_version)
     """
     # Local imports to avoid circular dependencies
-    from uds.core.util.config import GlobalConfig  # noqa: PLC0415
     from uds.core.auths.auth import is_trusted_ip_forwarder  # noqa: PLC0415
     from uds.core.types import net as types_net  # noqa: PLC0415
+    from uds.core.util.config import GlobalConfig  # noqa: PLC0415
 
     behind_proxy = GlobalConfig.BEHIND_PROXY.as_bool(False)
 

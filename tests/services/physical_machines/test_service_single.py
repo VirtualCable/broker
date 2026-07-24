@@ -33,9 +33,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 from unittest import mock
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestService(UDSTransactionTestCase):

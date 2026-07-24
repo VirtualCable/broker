@@ -38,19 +38,18 @@ import unittest.mock
 
 from django.core.exceptions import ValidationError
 
-from ...utils.test import UDSTestCase
-
-from uds.models.immutable_log import ImmutableLog, HASH_SIZE
-from uds.core.audit.immutable import (
-    ImmutableLogger,
-    _pack_genesis_data,
-    _unpack_genesis_data,
-    content_to_bytes,
-    content_from_bytes,
-    HASH_ALGO,
-    NONCE_SIZE,
-)
+from uds.core.audit.immutable import HASH_ALGO
+from uds.core.audit.immutable import NONCE_SIZE
+from uds.core.audit.immutable import ImmutableLogger
+from uds.core.audit.immutable import _pack_genesis_data
+from uds.core.audit.immutable import _unpack_genesis_data
+from uds.core.audit.immutable import content_from_bytes
+from uds.core.audit.immutable import content_to_bytes
 from uds.core.audit.stamping import DummyStampProvider
+from uds.models.immutable_log import HASH_SIZE
+from uds.models.immutable_log import ImmutableLog
+
+from ...utils.test import UDSTestCase
 
 
 class ImmutableLogModelTest(UDSTestCase):
@@ -276,7 +275,8 @@ class ImmutableLoggerTest(UDSTestCase):
             self.assertTrue(ImmutableLogger.is_enabled())
 
     def test_compute_hash_deterministic(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
+        from datetime import timezone
 
         stamp = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
         hash1 = ImmutableLogger._compute_hash(b"\x00" * 32, stamp, 1, b"data")
@@ -284,7 +284,8 @@ class ImmutableLoggerTest(UDSTestCase):
         self.assertEqual(hash1, hash2)
 
     def test_compute_hash_differs_on_data_change(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
+        from datetime import timezone
 
         stamp = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
         hash1 = ImmutableLogger._compute_hash(b"\x00" * 32, stamp, 1, b"data_a")

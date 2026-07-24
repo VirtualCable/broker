@@ -39,7 +39,7 @@ from uds.core.util import factory
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from .job import Job
+    from .job import Job as Job
 
 
 class JobsFactory(factory.Factory["Job"]):
@@ -47,10 +47,10 @@ class JobsFactory(factory.Factory["Job"]):
         """
         Ensures that uds core workers are correctly registered in database and in factory
         """
-        from uds.models import Scheduler  # pylint: disable=import-outside-toplevel
-        from uds.core.util.model import sql_now  # pylint: disable=import-outside-toplevel
-        from uds.core.types.states import State  # pylint: disable=import-outside-toplevel
         from uds import workers  # pylint: disable=import-outside-toplevel
+        from uds.core.types.states import State  # pylint: disable=import-outside-toplevel
+        from uds.core.util.model import sql_now  # pylint: disable=import-outside-toplevel
+        from uds.models import Scheduler  # pylint: disable=import-outside-toplevel
 
         try:
             logger.debug("Ensuring that jobs are registered inside database")

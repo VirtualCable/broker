@@ -29,13 +29,14 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from . import builder
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
+
     from uds.core.types.requests import ExtendedHttpRequest
 
 logger = logging.getLogger(__name__)

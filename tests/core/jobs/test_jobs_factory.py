@@ -30,8 +30,8 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+import typing
 
-import re
 from unittest import mock
 
 from django.test import TransactionTestCase
@@ -56,5 +56,5 @@ class JobsFactoryTest(TransactionTestCase):
         with mock.patch("uds.models.Scheduler") as mock_scheduler:
             jobs_factory.JobsFactory.factory().ensure_jobs_registered()
             for call_args in mock_scheduler.objects.create.call_args_list:
-                kwargs = call_args[1] if len(call_args) > 1 else {}
+                kwargs: dict[str, typing.Any] = call_args[1] if len(call_args) > 1 else {}
                 self.assertNotIn("frecuency", kwargs)

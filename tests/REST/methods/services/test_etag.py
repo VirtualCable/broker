@@ -47,7 +47,6 @@ from uds import models
 from ....fixtures import services as services_fixtures
 from ....utils import rest
 
-
 # ``data_type`` for the built-in ``TestProvider`` / ``TestServiceCache`` types.
 _TEST_PROVIDER_TYPE: typing.Final[str] = "TestProvider"
 _TEST_SERVICE_TYPE: typing.Final[str] = "TestService1"

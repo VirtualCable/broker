@@ -32,28 +32,26 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnusedImport=false
+import datetime
 import enum
 import time
 import typing
-import datetime
 
 from django.utils.translation import gettext as _
 
-from . import (
-    actor as actor,
-    auth as auth,
-    cache as cache,
-    calendar as calendar,
-    images as images,
-    net as net,
-    os as os,
-    system as system,
-    ticket as ticket,
-    rest as rest,
-    services as services,
-    transports as transports,
-    ui as ui,
-)
+from . import actor as actor
+from . import auth as auth
+from . import cache as cache
+from . import calendar as calendar
+from . import images as images
+from . import net as net
+from . import os as os
+from . import rest as rest
+from . import services as services
+from . import system as system
+from . import ticket as ticket
+from . import transports as transports
+from . import ui as ui
 
 # Date related constants
 NEVER: typing.Final[datetime.datetime] = datetime.datetime(1972, 7, 1, tzinfo=datetime.timezone.utc)

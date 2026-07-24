@@ -36,7 +36,7 @@ import typing
 from uds.core.util import factory
 
 if typing.TYPE_CHECKING:
-    from .mfa import MFA
+    from .mfa import MFA as MFA
 
 
 class MFAsFactory(factory.ModuleFactory["MFA"]):

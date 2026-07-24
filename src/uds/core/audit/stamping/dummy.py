@@ -32,10 +32,10 @@ Dummy stamp provider for testing and development.
 Always returns a deterministic token and always verifies as valid.
 """
 
-import typing
 import hashlib
 import logging
 import time
+import typing
 
 from .base import StampProvider
 

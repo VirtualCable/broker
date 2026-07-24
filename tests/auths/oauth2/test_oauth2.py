@@ -30,18 +30,19 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from urllib.parse import urlparse, parse_qs
 from base64 import b64encode
 from hashlib import sha256
 from unittest import mock
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 from tests.utils.test import UDSTestCase
+from uds.auths.OAuth2 import consts as oauth2_consts
+from uds.auths.OAuth2 import types as oauth2_types
 from uds.auths.OAuth2.authenticator import OAuth2Authenticator
 from uds.core import types
 
 from . import fixtures
-
-from uds.auths.OAuth2 import types as oauth2_types, consts as oauth2_consts
 
 
 class OAuth2Test(UDSTestCase):

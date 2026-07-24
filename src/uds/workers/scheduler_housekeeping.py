@@ -30,17 +30,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-from datetime import timedelta
-import time
 import logging
+import time
+import typing
+
+from datetime import timedelta
 
 from django.db import transaction
 
-from uds.models import Scheduler
-from uds.core.util.model import sql_now
-from uds.core.types.states import State
 from uds.core.jobs import Job
+from uds.core.types.states import State
+from uds.core.util.model import sql_now
+from uds.models import Scheduler
 
 logger = logging.getLogger(__name__)
 

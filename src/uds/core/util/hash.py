@@ -31,14 +31,10 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-
-hasher: typing.Any
-
 import hashlib
 
 
-def hash_key(key: typing.Union[str, bytes]) -> str:
+def hash_key(key: str | bytes) -> str:
     """
     Returns a hash of the given key
     Return value should be, at most, 64 bytes long (as db field is 64 bytes long)

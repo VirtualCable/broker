@@ -34,11 +34,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import typing
 
 # We use commit/rollback
-
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
-
-
 from uds.services.OpenGnsys import publication
 
 EXPECTED_FIELDS: typing.Final[set[str]] = set()

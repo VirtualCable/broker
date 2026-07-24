@@ -32,16 +32,17 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from django.urls import reverse
-from django.http import HttpResponsePermanentRedirect
 from django.conf import settings
+from django.http import HttpResponsePermanentRedirect
+from django.urls import reverse
 
 from . import builder
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from django.http import HttpRequest, HttpResponse
+    from django.http import HttpRequest
+    from django.http import HttpResponse
 
 
 def _check_redirectable(request: "HttpRequest") -> typing.Optional["HttpResponse"]:

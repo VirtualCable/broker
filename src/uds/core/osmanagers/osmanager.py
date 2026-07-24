@@ -37,11 +37,11 @@ import typing
 from django.utils.translation import gettext_noop as _
 
 from uds.core import types
+from uds.core.module import Module
 from uds.core.types.states import State
-from uds.core.util.stats.events import add_event
 from uds.core.util import log
 from uds.core.util.config import GlobalConfig
-from uds.core.module import Module
+from uds.core.util.stats.events import add_event
 
 STORAGE_KEY = "osmk"
 

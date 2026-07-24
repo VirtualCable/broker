@@ -30,18 +30,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import datetime
+import typing
 
 from django.utils import timezone
 
-
-from uds.core.util.stats import counters
 from uds import models
+from uds.core.util.stats import counters
+
+from ...fixtures.stats_counters import create_stats_counters
 
 # We use commit/rollback
 from ...utils.test import UDSTestCase
-from ...fixtures.stats_counters import create_stats_counters
 
 START_DATE = timezone.make_aware(datetime.datetime(2020, 1, 1, 0, 0, 0))
 END_DATE_DAY = timezone.make_aware(datetime.datetime(2020, 1, 2, 0, 0, 0))

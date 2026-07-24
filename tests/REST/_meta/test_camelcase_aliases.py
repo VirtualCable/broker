@@ -51,7 +51,6 @@ from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
 from uds.REST.utils import camel_and_snake_case_from
 
-
 SECURITY_NAME: typing.Final[str] = "udsApiAuth"
 
 

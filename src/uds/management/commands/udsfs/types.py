@@ -29,9 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import logging
 import stat
 import time
-import logging
 import typing
 
 logger = logging.getLogger(__name__)

@@ -30,9 +30,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import dataclasses
 import enum
+import typing
 
 if typing.TYPE_CHECKING:
     from uds import models

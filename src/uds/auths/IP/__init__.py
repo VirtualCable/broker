@@ -33,7 +33,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from uds.core.util.config import Config
+# Make this available to loaders
 
-from .authenticator import IPAuth
+from .authenticator import IPAuth as IPAuth

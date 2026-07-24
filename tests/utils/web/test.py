@@ -33,8 +33,9 @@ import typing
 
 from uds import models
 
+from ...fixtures import authenticators as authenticators_fixtures
+from ...fixtures import services as service_fixtures
 from .. import test
-from ...fixtures import authenticators as authenticators_fixtures, services as service_fixtures
 
 NUMBER_OF_ITEMS_TO_CREATE = 4
 

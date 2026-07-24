@@ -14,11 +14,13 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import osmanagers, types
+from uds.core import osmanagers
+from uds.core import types
 from uds.core.managers.userservice import UserServiceManager
-from uds.core.ui import gui
-from uds.core.util import log, fields
 from uds.core.types.states import State
+from uds.core.ui import gui
+from uds.core.util import fields
+from uds.core.util import log
 from uds.models import TicketStore
 
 # Not imported at runtime, just for type checking

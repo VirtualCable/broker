@@ -31,8 +31,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import json
+import typing
 
 
 class SessionSerializer:

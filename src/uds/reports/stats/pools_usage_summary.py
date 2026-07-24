@@ -30,14 +30,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import io
+import collections.abc
 import csv
 import datetime
-import typing
-import collections.abc
+import io
 import logging
+import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from .usage_by_pool import UsageByPool
 
@@ -88,7 +89,7 @@ class PoolsUsageSummary(UsageByPool):
 
         logger.debug("Pools %s", pools)
         # Remove unique users, and keep only counts...
-        for _, pn in pools.items():
+        for _i, pn in pools.items():
             pn["users"] = len(pn["users"])
 
         return pools.values(), total_time, total_count or 1, len(unique_users)

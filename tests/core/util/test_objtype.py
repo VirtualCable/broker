@@ -38,14 +38,12 @@ Covers:
 """
 
 from __future__ import annotations
-
 import typing
 
 from django.db import models
 
-from uds.core.util import objtype
-
 from tests.utils.test import UDSTestCase
+from uds.core.util import objtype
 
 
 def _bare_instance(cls: type) -> typing.Any:

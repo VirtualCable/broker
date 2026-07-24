@@ -33,15 +33,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 from uds import models
 from uds.core import types
-
 from uds.services.OVirt.deployment_linked import Operation
 from uds.services.OVirt.ovirt import types as ov_types
 
-from . import fixtures
-
 from ... import utils
-from ...utils.test import UDSTransactionTestCase
 from ...utils.helpers import limited_iterator
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 # We use transactions on some related methods (storage access, etc...)

@@ -37,9 +37,8 @@ import typing
 # We use storage, so we need transactional tests
 from tests.utils.test import UDSTransactionTestCase
 from uds.core.environment import Environment
-
-
-from uds.services.OVirt.deployment_linked import Operation as Operation, OVirtLinkedUserService
+from uds.services.OVirt.deployment_linked import Operation as Operation
+from uds.services.OVirt.deployment_linked import OVirtLinkedUserService
 
 # if not data.startswith(b'v'):
 #     return super().unmarshal(data)

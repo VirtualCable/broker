@@ -27,8 +27,8 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
 import logging
+import typing
 
 from django.utils import timezone
 

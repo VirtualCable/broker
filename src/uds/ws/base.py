@@ -39,7 +39,8 @@ import typing
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.utils import timezone
 
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.auths.auth import root_user
 from uds.models import User
 

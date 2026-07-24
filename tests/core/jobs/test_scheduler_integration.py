@@ -37,18 +37,19 @@ import os
 import platform
 import time
 import typing
+
 from unittest import mock
 
 from django.test import TransactionTestCase
 from django.utils import timezone
 
-from uds.core.jobs import scheduler
-from uds.core.jobs.jobs_factory import JobsFactory
-from uds.core.jobs.job import Job
 from uds.core.environment import Environment
-from uds.models.scheduler import Scheduler as DBScheduler
+from uds.core.jobs import scheduler
+from uds.core.jobs.job import Job
+from uds.core.jobs.jobs_factory import JobsFactory
 from uds.core.types.states import State
 from uds.core.util.model import sql_now
+from uds.models.scheduler import Scheduler as DBScheduler
 
 
 class _CountingJob(Job):

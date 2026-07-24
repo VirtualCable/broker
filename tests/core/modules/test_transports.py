@@ -32,10 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.transports.transport_factory import TransportsFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.transports.transport_factory import TransportsFactory
 
 logger = logging.getLogger(__name__)
 

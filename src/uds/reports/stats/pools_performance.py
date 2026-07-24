@@ -38,9 +38,10 @@ import logging
 import typing
 
 import django.template.defaultfilters as filters
+
+from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core.managers.stats import StatsManager
 from uds.core.reports import graphs
@@ -183,10 +184,10 @@ class PoolPerformanceReport(StatsReport):
 
         # l is the index of the x value
         # returns the date in the x value to be used as label on the x axis
-        def _tick_fnc1(l: int) -> str:
+        def _tick_fnc1(val: int) -> str:
             return (
-                filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(x[l])), x_label_format)
-                if int(x[l]) >= 0
+                filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(x[val])), x_label_format)
+                if int(x[val]) >= 0
                 else ""
             )
 
@@ -203,10 +204,10 @@ class PoolPerformanceReport(StatsReport):
 
         x = [v[0] for v in pools_data[0]["dataAccesses"]]
 
-        def _tick_fnc2(l: int) -> str:
+        def _tick_fnc2(val: int) -> str:
             return (
-                filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(x[l])), x_label_format)
-                if int(x[l]) >= 0
+                filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(x[val])), x_label_format)
+                if int(x[val]) >= 0
                 else ""
             )
 

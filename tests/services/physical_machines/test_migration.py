@@ -31,26 +31,24 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import datetime
+import typing
+
 from unittest import mock
 
 from django.utils import timezone
 
 from uds import models
-from uds.core import consts, types
+from uds.core import consts
+from uds.core import types
 from uds.core.util import fields
+from uds.migrations.fixers.providers_v4 import physical_machine_multiple
+from uds.services.PhysicalMachines import deployment
+from uds.services.PhysicalMachines import deployment_multi
+from uds.services.PhysicalMachines import service_multi
+from uds.services.PhysicalMachines import service_single
 
 from ...utils.test import UDSTransactionTestCase
-
-from uds.migrations.fixers.providers_v4 import physical_machine_multiple
-
-from uds.services.PhysicalMachines import (
-    service_single,
-    service_multi,
-    deployment,
-    deployment_multi,
-)
 
 # Data from 3.6 version
 

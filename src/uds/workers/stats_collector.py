@@ -30,18 +30,17 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from uds import models
-from uds.core.util import model
 from uds.core import types
-from uds.core.util.stats import counters
-from uds.core.managers.stats import StatsManager
 from uds.core.jobs import Job
+from uds.core.managers.stats import StatsManager
 from uds.core.util import config
+from uds.core.util import model
 from uds.core.util.config import GlobalConfig
-
+from uds.core.util.stats import counters
 
 logger = logging.getLogger(__name__)
 

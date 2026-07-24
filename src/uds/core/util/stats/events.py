@@ -31,18 +31,23 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import dataclasses
 import datetime
-import time
 import logging
+import time
 import typing
-import collections.abc
 
 from django.utils import timezone
 
-from uds.core.managers.stats import StatsManager, _REVERSE_FLDS_EQUIV
 from uds.core import types
-from uds.models import Provider, Service, ServicePool, Authenticator, OSManager
+from uds.core.managers.stats import _REVERSE_FLDS_EQUIV
+from uds.core.managers.stats import StatsManager
+from uds.models import Authenticator
+from uds.models import OSManager
+from uds.models import Provider
+from uds.models import Service
+from uds.models import ServicePool
 
 logger = logging.getLogger(__name__)
 

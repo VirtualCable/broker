@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Copyright (c) 2016-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -26,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TOdecorators.FT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
@@ -328,7 +325,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
         # If credential is cached, use it instead of requesting it again
         # Note that credentials will only be cached if it has a projectid
         # this is because we need the projectid to get the endpoints
-        if (cached_creds := self.cache.get("auth")) != None:
+        if (cached_creds := self.cache.get("auth")) is not None:
             self._authenticated_projectid, self._projectid, self._tokenid, self._userid, self._catalog = cached_creds
             return
 

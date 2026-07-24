@@ -30,17 +30,20 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
-from datetime import timedelta
-import logging
 import collections.abc
+import logging
+import typing
+
+from datetime import timedelta
 
 from django.db import transaction
-from uds.core.util.config import GlobalConfig
-from uds.models import ServicePool, UserService
-from uds.core.util.model import sql_now
-from uds.core.types.states import State
+
 from uds.core.jobs import Job
+from uds.core.types.states import State
+from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
+from uds.models import ServicePool
+from uds.models import UserService
 
 logger = logging.getLogger(__name__)
 

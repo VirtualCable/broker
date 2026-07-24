@@ -30,23 +30,21 @@ Author: Daniel Torregrosa
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
-from django.utils.translation import gettext_noop as _, gettext
-
-from uds.core import mfas, exceptions, types
-from uds.core.ui import gui
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
 
 from uds.auths.Radius import client
-from uds.auths.Radius.client import (
-    # NOT_CHECKED,
-    INCORRECT,
-    CORRECT,
-    NOT_NEEDED,
-    # NEEDED
-)
+from uds.auths.Radius.client import CORRECT
+from uds.auths.Radius.client import INCORRECT  # NOT_CHECKED,
+from uds.auths.Radius.client import NOT_NEEDED  # NEEDED
+from uds.core import exceptions
+from uds.core import mfas
+from uds.core import types
 from uds.core.auths.auth import get_webpassword
+from uds.core.ui import gui
 from uds.core.util import fields
 
 if typing.TYPE_CHECKING:

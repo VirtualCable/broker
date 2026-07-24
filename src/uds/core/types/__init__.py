@@ -31,31 +31,29 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnusedImport=false
-from . import (
-    auth as auth,
-    calendar as calendar,
-    connections as connections,
-    crypto as crypto,
-    downloads as downloads,
-    errors as errors,
-    osmanagers as osmanagers,
-    os as os,
-    permissions as permissions,
-    pools as pools,
-    requests as requests,
-    servers as servers,
-    services as services,
-    states as states,
-    stats as stats,
-    tickets as tickets,
-    transports as transports,
-    ui as ui,
-    core as core,
-    log as log,
-    net as net,
-    rest as rest,
-    plugins as plugins,
-)
+from . import auth as auth
+from . import calendar as calendar
+from . import connections as connections
+from . import core as core
+from . import crypto as crypto
+from . import downloads as downloads
+from . import errors as errors
+from . import log as log
+from . import net as net
+from . import os as os
+from . import osmanagers as osmanagers
+from . import permissions as permissions
+from . import plugins as plugins
+from . import pools as pools
+from . import requests as requests
+from . import rest as rest
+from . import servers as servers
+from . import services as services
+from . import states as states
+from . import stats as stats
+from . import tickets as tickets
+from . import transports as transports
+from . import ui as ui
 
 # Log is not imported here, as it is a special case with lots of dependencies
 # Preferences must be include explicitly, as it is not a "normal use" type

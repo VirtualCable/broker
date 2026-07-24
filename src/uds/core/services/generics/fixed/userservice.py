@@ -32,17 +32,20 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import abc
+import collections.abc
 import logging
 import typing
-import collections.abc
 
-from uds.core import consts, services, types, exceptions
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.util import autoserializable
-
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from . import service
 
 logger = logging.getLogger(__name__)

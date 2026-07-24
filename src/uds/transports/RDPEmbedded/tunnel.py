@@ -40,7 +40,8 @@ from uds.core import types
 from uds.core.util import fields
 from uds.models import TicketStore
 
-from .common import BaseRDPEmbeddedTransport, RDPTunnelParams
+from .common import BaseRDPEmbeddedTransport
+from .common import RDPTunnelParams
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

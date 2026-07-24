@@ -31,11 +31,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import csv
 import io
 import logging
 import typing
-import collections.abc
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -180,7 +180,7 @@ class ListReportAuditCSV(ListReport):
             ]
         )
 
-        for l in self.gen_data():
-            writer.writerow(l)
+        for line in self.gen_data():
+            writer.writerow(line)
 
         return output.getvalue().encode()

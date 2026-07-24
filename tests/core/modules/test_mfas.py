@@ -32,10 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.mfas.mfafactory import MFAsFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.mfas.mfafactory import MFAsFactory
 
 logger = logging.getLogger(__name__)
 

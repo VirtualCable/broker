@@ -1,7 +1,6 @@
-from django.utils.translation import gettext as _
-
-
 import enum
+
+from django.utils.translation import gettext as _
 
 
 class PermissionType(enum.IntEnum):

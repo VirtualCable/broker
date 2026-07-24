@@ -33,9 +33,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
-from uds.services.OpenShift.openshift import client as openshift_client
-from tests.utils.test import UDSTransactionTestCase
 from tests.utils import vars
+from tests.utils.test import UDSTransactionTestCase
+from uds.services.OpenShift.openshift import client as openshift_client
 
 logger = logging.getLogger(__name__)
 

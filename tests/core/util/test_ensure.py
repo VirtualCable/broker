@@ -30,13 +30,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
-
-
-from ...utils.test import UDSTestCase
+import typing
 
 from uds.core.util import ensure
+
+from ...utils.test import UDSTestCase
 
 logger = logging.getLogger(__name__)
 

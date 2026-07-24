@@ -33,9 +33,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # We use commit/rollback
-from ...utils.test import UDSTransactionTestCase
-from uds.core.util.cache import Cache
 import time
+
+from uds.core.util.cache import Cache
+
+from ...utils.test import UDSTransactionTestCase
 
 # Some random chars, that include unicode non-ascci chars
 UNICODE_CHARS = "ñöçóá^(pípè)"

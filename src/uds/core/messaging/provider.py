@@ -31,16 +31,15 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-
 from django.utils.translation import gettext_noop as _
 
-from uds.core.util.log import LogLevel
 from uds.core.module import Module
+from uds.core.util.log import LogLevel
 
 if typing.TYPE_CHECKING:
-    from uds.core.environment import Environment
-    from uds.core import types
     from uds import models
+    from uds.core import types
+    from uds.core.environment import Environment
 
 
 class Notifier(Module):

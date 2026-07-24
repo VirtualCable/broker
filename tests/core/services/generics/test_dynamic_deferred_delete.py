@@ -34,18 +34,19 @@ import contextlib
 import datetime
 import itertools
 import typing
+
 from unittest import mock
 
 from uds import models
-from uds.core import services, exceptions
+from uds.core import exceptions
+from uds.core import services
+from uds.core.consts import deferred_deletion as deferred_consts
+from uds.core.types import deferred_deletion as deferred_types
 from uds.core.util.model import sql_now
 from uds.workers import deferred_deleter
 
-from uds.core.consts import deferred_deletion as deferred_consts
-from uds.core.types import deferred_deletion as deferred_types
-
-from ....utils.test import UDSTransactionTestCase
 from ....utils import helpers
+from ....utils.test import UDSTransactionTestCase
 from . import fixtures
 
 

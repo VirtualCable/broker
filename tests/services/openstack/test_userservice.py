@@ -31,20 +31,20 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import contextlib
+import typing
+
+from unittest import mock
 
 from uds import models
 from uds.core import types
-from unittest import mock
-
 from uds.services.OpenStack.openstack import types as openstack_types
 
-from . import fixtures
+from ...utils.helpers import limited_iterator
 
 # from tests.utils import MustBeOfType
 from ...utils.test import UDSTransactionTestCase
-from ...utils.helpers import limited_iterator
+from . import fixtures
 
 if typing.TYPE_CHECKING:
     from uds.services.OpenStack.deployment import OpenStackLiveUserService

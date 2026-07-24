@@ -35,7 +35,6 @@ import typing
 from django.http import HttpRequest, HttpResponse
 from django.middleware import csrf
 from django.shortcuts import render
-from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 
 from uds.core import consts, types

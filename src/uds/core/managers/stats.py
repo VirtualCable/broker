@@ -41,8 +41,11 @@ from django.utils import timezone
 from uds.core import types
 from uds.core.util import singleton
 from uds.core.util.config import GlobalConfig
-from uds.core.util.model import sql_now, sql_stamp_seconds
-from uds.models import StatsCounters, StatsCountersAccum, StatsEvents
+from uds.core.util.model import sql_now
+from uds.core.util.model import sql_stamp_seconds
+from uds.models import StatsCounters
+from uds.models import StatsCountersAccum
+from uds.models import StatsEvents
 
 if typing.TYPE_CHECKING:
     from django.db import models

@@ -33,5 +33,6 @@ take care of registering it as provider
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .authenticator import RadiusAuth
+# Make this available to loaders
+
+from .authenticator import RadiusAuth as RadiusAuth

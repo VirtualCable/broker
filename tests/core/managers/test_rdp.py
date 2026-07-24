@@ -34,9 +34,10 @@ import base64
 import struct
 
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519
+from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.serialization import pkcs12
-
 from django.test import override_settings
 
 from uds.core.managers.crypto import rdp
@@ -104,8 +105,8 @@ class RdpTest(cf.CertTestCase):
         rdp_text = "full address:s:host.example.com\r\nserver port:i:3389\r\n"
         signed = rdp.sign_rdp(rdp_text, cert=cert, key=key, chain=[])
         out_lines = signed.splitlines()
-        signscope = next(l for l in out_lines if l.startswith("signscope:s:"))
-        signature = next(l for l in out_lines if l.startswith("signature:s:"))
+        signscope = next(line for line in out_lines if line.startswith("signscope:s:"))
+        signature = next(line for line in out_lines if line.startswith("signature:s:"))
         self.assertIn("Full Address", signscope)
         self.assertIn("Server Port", signscope)
         self.assertTrue(signature.startswith("signature:s:"))
@@ -124,7 +125,7 @@ class RdpTest(cf.CertTestCase):
         rdp_text = "full address:s:host.example.com\r\n"
         signed = rdp.sign_rdp(rdp_text, cert=cert, key=key, chain=[])
         self.assertIn("alternate full address:s:host.example.com", signed)
-        signscope = next(l for l in signed.splitlines() if l.startswith("signscope:s:"))
+        signscope = next(line for line in signed.splitlines() if line.startswith("signscope:s:"))
         self.assertIn("Alternate Full Address", signscope)
 
     def test_sign_rdp_keeps_existing_alternate(self) -> None:
@@ -198,10 +199,11 @@ class RdpTest(cf.CertTestCase):
 
     def test_sign_rdp_with_ec_key(self) -> None:
         ec_key = ec.generate_private_key(ec.SECP256R1())
+        import datetime as _dt
+
         from cryptography import x509
         from cryptography.hazmat.primitives import hashes
         from cryptography.x509.oid import NameOID
-        import datetime as _dt
 
         now = _dt.datetime.now(_dt.timezone.utc)
         name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "EC-SIGNER")])

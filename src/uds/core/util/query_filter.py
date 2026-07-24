@@ -28,15 +28,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false
-import math
-import typing
-import re
-import contextvars
 import collections.abc
+import contextvars
 import logging
+import math
+import re
+import typing
 
 import lark
-
 
 logger = logging.getLogger(__name__)
 

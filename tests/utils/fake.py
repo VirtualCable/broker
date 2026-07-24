@@ -31,7 +31,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import uuid
 
-from uds.core import services, environment
+from uds.core import environment
+from uds.core import services
 
 
 def fake_service_provider() -> services.ServiceProvider:

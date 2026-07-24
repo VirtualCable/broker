@@ -38,11 +38,13 @@ import typing
 
 from django.utils.translation import gettext_lazy as _
 
-from uds.core import exceptions, types, consts
-from uds.core.util.rest.tools import match_args
-from uds.core.util import ui as ui_utils
-from uds.REST import model
 from uds import reports
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.util import ui as ui_utils
+from uds.core.util.rest.tools import match_args
+from uds.REST import model
 
 if typing.TYPE_CHECKING:
     from uds.core.reports.report import Report

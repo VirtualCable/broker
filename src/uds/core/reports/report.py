@@ -31,20 +31,23 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import abc
 import codecs
 import logging
 import typing
-import abc
 
-from weasyprint import HTML, CSS, default_url_fetcher  # pyright: ignore[reportUnknownVariableType]
-
-from django.utils.translation import gettext, gettext_noop as _
-from django.utils import timezone
 from django.template import loader
+from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
+from weasyprint import CSS  # pyright: ignore[reportUnknownVariableType]
+from weasyprint import HTML  # pyright: ignore[reportUnknownVariableType]
+from weasyprint import default_url_fetcher  # pyright: ignore[reportUnknownVariableType]
 
-from uds.core.ui import UserInterface, gui
+from uds.core.ui import UserInterface
+from uds.core.ui import gui
+
 from . import stock
-
 
 logger = logging.getLogger(__name__)
 

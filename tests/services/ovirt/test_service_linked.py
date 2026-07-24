@@ -32,9 +32,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # from unittest import mock
 
-from . import fixtures
 from ... import utils
 from ...utils.test import UDSTestCase
+from . import fixtures
 
 
 class TestProxmovLinkedService(UDSTestCase):

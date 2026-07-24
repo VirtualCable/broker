@@ -29,8 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import random  # nosec: testing only
+import typing
 
 from uds import models
 from uds.core import types

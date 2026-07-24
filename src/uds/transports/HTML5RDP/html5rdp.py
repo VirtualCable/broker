@@ -37,7 +37,10 @@ import typing
 from django.utils.translation import gettext_noop as _
 
 from uds import models
-from uds.core import transports, types, ui, consts
+from uds.core import consts
+from uds.core import transports
+from uds.core import types
+from uds.core import ui
 from uds.core.util import fields
 
 # Not imported at runtime, just for type checking

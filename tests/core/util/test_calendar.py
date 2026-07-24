@@ -30,13 +30,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from ...utils.test import UDSTestCase
-from ...fixtures.calendars import createCalendars
-from uds.core.util import calendar
-from uds.models import Calendar
 import datetime
 
 from django.utils import timezone
+
+from uds.core.util import calendar
+from uds.models import Calendar
+
+from ...fixtures.calendars import createCalendars
+from ...utils.test import UDSTestCase
 
 
 class CalendarTest(UDSTestCase):

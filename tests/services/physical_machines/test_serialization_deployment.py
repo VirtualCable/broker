@@ -13,10 +13,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 from unittest import mock
 
 from tests.utils.test import UDSTestCase
-from uds.core.util import autoserializable
 from uds.core.environment import Environment
-
-
+from uds.core.util import autoserializable
 from uds.services.PhysicalMachines import deployment
 
 

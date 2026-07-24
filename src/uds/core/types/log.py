@@ -1,7 +1,7 @@
-import typing
 import collections.abc
-import functools
 import enum
+import functools
+import typing
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

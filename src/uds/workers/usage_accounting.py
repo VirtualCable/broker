@@ -30,14 +30,14 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
 from django.db import transaction
 
-from uds.models import AccountUsage
-from uds.core.util.model import sql_now
 from uds.core.jobs import Job
+from uds.core.util.model import sql_now
+from uds.models import AccountUsage
 
 logger = logging.getLogger(__name__)
 

@@ -42,9 +42,9 @@ import time
 
 from django.utils import timezone
 
-from uds.models import Log
 from uds.core import types
 from uds.core.util import log as log_util
+from uds.models import Log
 from uds.reports.lists.audit import ListReportAuditCSV
 
 from ...utils.test import UDSTransactionTestCase

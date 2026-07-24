@@ -1,12 +1,12 @@
-import typing
-import itertools
 import collections.abc
-import logging
 import dataclasses
 import datetime
 import enum
 import functools
+import itertools
+import logging
 import types as py_types
+import typing
 
 from uds.core import types
 from uds.core.types.rest.api import SchemaProperty

@@ -36,20 +36,19 @@ import typing
 from django.http import HttpResponseForbidden
 from django.utils import timezone
 
+from uds.core import consts
+from uds.core import types
+from uds.core.auths.auth import root_user
+from uds.core.auths.auth import weblogout
 from uds.core.util import os_detector as OsDetector
 from uds.core.util.config import GlobalConfig
-from uds.core import consts, types
-from uds.core.auths.auth import (
-    root_user,
-    weblogout,
-)
 from uds.models import User
-
 
 from . import builder
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
+
     from uds.core.types.requests import ExtendedHttpRequest
 
 

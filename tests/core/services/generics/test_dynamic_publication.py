@@ -32,14 +32,15 @@ Authot: Adolfo Gómez, dkmaster at dkmon dot com
 
 import dataclasses
 import typing
+
 from unittest import mock
 from unittest.mock import call
 
 from uds.core import types
 
+from ....utils import MustBeOfType
 from ....utils.helpers import limited_iterator
 from ....utils.test import UDSTestCase
-from ....utils import MustBeOfType
 
 # from ....utils.generators import limited_iterator
 from . import fixtures

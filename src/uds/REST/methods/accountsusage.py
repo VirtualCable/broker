@@ -31,21 +31,24 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import dataclasses
 import datetime
 import logging
+import typing
 
-from django.utils.translation import gettext as _
 from django.db.models import Model
+from django.utils.translation import gettext as _
 
-from uds.core import exceptions, types
+from uds.core import exceptions
+from uds.core import types
 from uds.core.types.rest import TableInfo
-from uds.core.util import ensure, permissions, ui as ui_utils
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
 from uds.core.util.model import process_uuid
-from uds.models import Account, AccountUsage
+from uds.models import Account
+from uds.models import AccountUsage
 from uds.REST.model import DetailHandler
-
 
 logger = logging.getLogger(__name__)
 

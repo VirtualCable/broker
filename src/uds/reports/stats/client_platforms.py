@@ -32,7 +32,8 @@ import logging
 import typing
 
 from django.db.models import Count
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from uds.core.managers.stats import StatsManager
 from uds.core.util import stats

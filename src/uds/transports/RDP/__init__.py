@@ -31,6 +31,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from .rdp import RDPTransport
-from .rdptunnel import TRDPTransport
+# Make this visible to loaders
+
+from .rdp import RDPTransport as RDPTransport
+from .rdptunnel import TRDPTransport as TRDPTransport

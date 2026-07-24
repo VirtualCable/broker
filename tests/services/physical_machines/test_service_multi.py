@@ -32,16 +32,16 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import random
+
 from unittest import mock
 
 from uds import models
 from uds.core.util import fields
 from uds.core.util.model import sql_now
 
-from . import fixtures
-
 # from ...utils import MustBeOfType
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestServiceMulti(UDSTransactionTestCase):

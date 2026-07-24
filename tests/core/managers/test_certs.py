@@ -35,7 +35,6 @@ import datetime
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs7
-
 from django.test import override_settings
 
 from uds.core.managers.crypto import certs

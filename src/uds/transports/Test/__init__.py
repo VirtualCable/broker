@@ -30,6 +30,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
 
-from .transport import TestTransport
+from .transport import TestTransport as TestTransport

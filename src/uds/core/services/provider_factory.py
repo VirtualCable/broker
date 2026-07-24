@@ -31,15 +31,14 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
 import logging
+import typing
 
 from uds.core.util import factory
 
 from .provider import ServiceProvider
 from .service import Service
-
 
 logger = logging.getLogger(__name__)
 

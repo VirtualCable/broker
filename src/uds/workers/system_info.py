@@ -30,11 +30,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
+import typing
 
-from uds.core.util import cluster
 from uds.core.jobs import Job
+from uds.core.util import cluster
 
 logger = logging.getLogger(__name__)
 

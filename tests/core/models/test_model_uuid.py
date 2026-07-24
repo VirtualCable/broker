@@ -32,9 +32,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-from ...utils.test import UDSTestCase
-from ...fixtures import authenticators as authenticators_fixtures
 from uds import models
+
+from ...fixtures import authenticators as authenticators_fixtures
+from ...utils.test import UDSTestCase
 
 if typing.TYPE_CHECKING:
     pass

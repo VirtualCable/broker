@@ -31,23 +31,30 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pylint: disable=too-many-public-methods
 
-import logging
-import typing
 import abc
 import collections.abc
+import logging
+import typing
 
-from django.db import IntegrityError, models
+from django.db import IntegrityError
+from django.db import models
 from django.db.models import QuerySet
 
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
 from uds.core.module import Module
-from uds.core.util import log, permissions, model as model_utils, api as api_utils
-from uds.models import ManagedObjectModel, Tag, TaggingMixin
-
+from uds.core.util import api as api_utils
+from uds.core.util import log
+from uds.core.util import model as model_utils
+from uds.core.util import permissions
+from uds.models import ManagedObjectModel
+from uds.models import Tag
+from uds.models import TaggingMixin
 from uds.REST.model.base import BaseModelHandler
-from uds.REST.utils import camel_and_snake_case_from, is_camel_case, sanitize_params
+from uds.REST.utils import camel_and_snake_case_from
+from uds.REST.utils import is_camel_case
+from uds.REST.utils import sanitize_params
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

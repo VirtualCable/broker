@@ -32,10 +32,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import codecs
-import pickle  # nosec: This is fine, we are not loading untrusted data
-import logging
-import typing
 import collections.abc
+import logging
+import pickle  # nosec: This is fine, we are not loading untrusted data
+import typing
 
 from uds.core.serializable import Serializable
 

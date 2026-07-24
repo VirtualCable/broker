@@ -32,17 +32,18 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-import typing
 import os.path
+import typing
 
 from django.utils.translation import gettext_noop as _
+
 from uds.core import managers
 from uds.core.consts.system import VERSION
 
-from .windows import WindowsOsManager
-from .windows_domain import WinDomainOsManager
-from .windows_random import WinRandomPassManager
+# Make this visible to loaders
+from .windows import WindowsOsManager as WindowsOsManager
+from .windows_domain import WinDomainOsManager as WinDomainOsManager
+from .windows_random import WinRandomPassManager as WinRandomPassManager
 
 _mypath: typing.Final[str] = os.path.dirname(__spec__.origin)  # type: ignore[type-var, assignment]  # mypy has some problem with dirname??
 # Old version, using spec is better, but we can use __package__ as well

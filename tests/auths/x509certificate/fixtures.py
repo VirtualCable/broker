@@ -32,18 +32,22 @@ import hashlib
 import hmac as hmac_module
 import json
 import os
-import typing
+import collections.abc
+
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
-from cryptography.hazmat.primitives import hashes, padding as sym_padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import padding as sym_padding
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import modes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
-from uds.core.environment import Environment
 from uds.auths.X509Certificate.authenticator import X509CertificateAuthenticator
-from uds.core.types.auth import AuthTypeGroup
+from uds.core.environment import Environment
 
 # Test shared secret — must match DATA_TEMPLATE
 _TEST_SHARED_SECRET = "test-shared-secret"
@@ -57,7 +61,7 @@ def _derive_keys(shared_secret: str) -> tuple[bytes, bytes, bytes]:
     return enc_key, mac_key, sign_key
 
 
-def _encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = "") -> str:
+def encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = "") -> str:
     """Simulate the bridge service: encrypt + sign a cert payload. Returns base64 string."""
     import base64
 
@@ -106,7 +110,8 @@ def _build_cert(
     ca: bool = False,
 ) -> x509.Certificate:
     """Build a certificate signed by issuer_key."""
-    from cryptography.x509 import BasicConstraints, CertificateBuilder
+    from cryptography.x509 import BasicConstraints
+    from cryptography.x509 import CertificateBuilder
 
     builder = (
         CertificateBuilder()
@@ -210,7 +215,7 @@ def create_authenticator(
     trusted_issuer: str = "",
     username_attr: str = "CN=([^,]*)",
     common_groups: str = "x509_users",
-) -> typing.Iterator[X509CertificateAuthenticator]:
+) -> collections.abc.Generator[X509CertificateAuthenticator, None, None]:
     with Environment.temporary_environment() as env:
         data = DATA_TEMPLATE.copy()
         data["ca_certificate"] = fixture.ca_pem

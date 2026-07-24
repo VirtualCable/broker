@@ -34,22 +34,20 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import logging
-import typing
 import collections.abc
-import tempfile
+import logging
 import os.path
+import tempfile
+import typing
 
 import ldap.filter
 
+from ldap import ALREADY_EXISTS as S_ALREADY_EX  # pyright: ignore  # SCOPE_SUBORDINATE,  # pyright: ignore
+
 # Import for local use, and reexport
-from ldap import (
-    SCOPE_BASE as S_BASE,  # pyright: ignore
-    SCOPE_SUBTREE as S_SUBTREE,  # pyright: ignore
-    SCOPE_ONELEVEL as S_ONELEVEL,  # pyright: ignore
-    ALREADY_EXISTS as S_ALREADY_EX,  # pyright: ignore
-    # SCOPE_SUBORDINATE,  # pyright: ignore
-)
+from ldap import SCOPE_BASE as S_BASE  # pyright: ignore
+from ldap import SCOPE_ONELEVEL as S_ONELEVEL  # pyright: ignore
+from ldap import SCOPE_SUBTREE as S_SUBTREE  # pyright: ignore
 
 # Reexporting, so we can use them as ldaputil.SCOPE_BASE, etc...
 # This allows us to replace this in a future with another ldap library if needed
@@ -58,8 +56,8 @@ SCOPE_SUBTREE: int = S_SUBTREE  # pyright: ignore
 SCOPE_ONELEVEL: int = S_ONELEVEL  # pyright: ignore
 ALREADY_EXISTS: int = S_ALREADY_EX  # pyright: ignore
 
-from django.utils.translation import gettext as _
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 # So it is avaliable for importers
 from ldap.ldapobject import LDAPObject as S_LDAPObject  # pyright: ignore
@@ -69,7 +67,6 @@ from ldap.ldapobject import LDAPObject as S_LDAPObject  # pyright: ignore
 LDAPObject: typing.TypeAlias = S_LDAPObject
 
 from uds.core.util import utils
-
 
 logger = logging.getLogger(__name__)
 

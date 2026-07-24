@@ -27,11 +27,11 @@
 
 import contextlib
 import typing
-from uds.core.environment import Environment
-from uds.core.util import security
 
 from uds.auths.OAuth2.authenticator import OAuth2Authenticator
 from uds.auths.OAuth2.types import ResponseType
+from uds.core.environment import Environment
+from uds.core.util import security
 
 KEYS: typing.Final[list[tuple[str, str]]] = [security.generate_rsa_keypair() for _ in range(3)]
 

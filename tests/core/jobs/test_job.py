@@ -34,10 +34,10 @@ Unit tests for the Job base class (next_execution_delay, execute, run).
 
 import logging
 
-from ...utils.test import UDSTestCase
-
-from uds.core.jobs.job import Job
 from uds.core.environment import Environment
+from uds.core.jobs.job import Job
+
+from ...utils.test import UDSTestCase
 
 logger = logging.getLogger(__name__)
 

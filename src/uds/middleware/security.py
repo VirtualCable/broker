@@ -29,16 +29,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import re
 import logging
+import re
 import typing
-
 
 from django.http import HttpResponseForbidden
 
 from uds.core import consts
+from uds.core.auths.auth import is_trusted_source
+from uds.core.auths.auth import weblogout
 from uds.core.util.config import GlobalConfig
-from uds.core.auths.auth import is_trusted_source, weblogout
 
 from . import builder
 
@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
+
     from uds.core.types.requests import ExtendedHttpRequest
 
 # Simple Bot detection

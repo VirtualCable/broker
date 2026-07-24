@@ -33,12 +33,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import random
 import typing
+
 from unittest import mock
 
-
-from . import fixtures
-
 from ...utils.test import UDSTestCase
+from . import fixtures
 
 
 class TestProxmovLinkedService(UDSTestCase):

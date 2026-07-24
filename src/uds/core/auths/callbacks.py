@@ -31,15 +31,18 @@ Base module for all authenticators
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import re
 import typing
-import collections.abc
-
 
 from uds import models
-from uds.core import types, consts
-from uds.core.util import config, cache, log, security
+from uds.core import consts
+from uds.core import types
+from uds.core.util import cache
+from uds.core.util import config
+from uds.core.util import log
+from uds.core.util import security
 
 logger = logging.getLogger(__name__)
 

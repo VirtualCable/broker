@@ -35,12 +35,10 @@ import logging
 import typing
 
 from django.db import models
-from django.utils.translation import gettext as _
 
 from uds.core import consts
 from uds.core import types
 from uds.core.util import api as api_utils
-
 from uds.REST.utils import camel_and_snake_case_from
 
 # Not imported at runtime, just for type checking

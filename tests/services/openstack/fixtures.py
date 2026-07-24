@@ -34,30 +34,30 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import contextlib
 import copy
 import datetime
+import random
 import typing
 import uuid
-import random
 
 from unittest import mock
 
 from django.utils import timezone
 
-from uds.core import environment, types
+from tests.utils import helpers
+from tests.utils import search_item_by_attr
+from tests.utils.autospec import AutoSpecMethodInfo
+from tests.utils.autospec import autospec
+from uds.core import environment
+from uds.core import types
 from uds.core.ui.user_interface import gui
-
-from tests.utils.autospec import autospec, AutoSpecMethodInfo
-from tests.utils import helpers, search_item_by_attr
-
-from uds.services.OpenStack import (
-    provider,
-    provider_legacy,
-    service,
-    publication,
-    deployment,
-    service_fixed,
-    deployment_fixed,
-)
-from uds.services.OpenStack.openstack import client, types as openstack_types
+from uds.services.OpenStack import deployment
+from uds.services.OpenStack import deployment_fixed
+from uds.services.OpenStack import provider
+from uds.services.OpenStack import provider_legacy
+from uds.services.OpenStack import publication
+from uds.services.OpenStack import service
+from uds.services.OpenStack import service_fixed
+from uds.services.OpenStack.openstack import client
+from uds.services.OpenStack.openstack import types as openstack_types
 
 AnyOpenStackProvider: typing.TypeAlias = typing.Union[
     provider.OpenStackProvider, provider_legacy.OpenStackProviderLegacy

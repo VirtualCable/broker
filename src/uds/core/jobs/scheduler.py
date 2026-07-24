@@ -31,19 +31,23 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
+import logging
 import platform
 import threading
 import time
-import logging
+import typing
+
 from datetime import timedelta
 
-from django.db import transaction, DatabaseError, connections
+from django.db import DatabaseError
+from django.db import connections
+from django.db import transaction
 from django.db.models import Q
 
-from uds.models import Scheduler as DBScheduler
-from uds.core.util.model import sql_now
 from uds.core.types.states import State
+from uds.core.util.model import sql_now
+from uds.models import Scheduler as DBScheduler
+
 from .jobs_factory import JobsFactory
 
 logger = logging.getLogger(__name__)
