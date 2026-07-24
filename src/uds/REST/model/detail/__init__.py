@@ -473,6 +473,13 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Returns:
             int: Position of the item in the default ordering, -1 if not found
         """
+        # get_position_in_queryset counts rows by materializing the queryset in
+        # its current order, so an unordered queryset yields a position that does
+        # not line up with the ordered rows the overview renders (the client then
+        # jumps to/highlights the wrong detail row). Pin a stable order when the
+        # model declares none, mirroring the master handler's guarantee.
+        if not qs.model._meta.ordering:
+            qs = qs.order_by("pk")
         # Find item in qs, may be none, then return -1
         obj = qs.filter(uuid__iexact=process_uuid(item_uuid)).first()
         if obj:
