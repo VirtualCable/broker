@@ -115,7 +115,7 @@ class ServicePoolItem(types.rest.BaseRestItem):
     allow_users_remove: bool
     allow_users_reset: bool
     ignores_unused: bool
-    fallbackAccess: str
+    fallback_access: str
     meta_member: list[dict[str, str]]
     calendar_message: str
     custom_message: str
@@ -204,7 +204,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "fallbackAccess": types.rest.api.SchemaProperty(
+                    "fallback_access": types.rest.api.SchemaProperty(
                         type="string", description="Fallback access policy: ALLOW (default) or DENY"
                     )
                 },
@@ -254,7 +254,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     "level": types.rest.api.SchemaProperty(
                         type="string", description="Log severity level (INFO, WARN, ERROR)"
                     ),
-                    "log_name": types.rest.api.SchemaProperty(type="string", description="Optional log source name"),
+                    "log_name": types.rest.api.SchemaProperty(
+                        type="string", description="Optional log source name"
+                    ),
                 },
             ),
         ),
@@ -402,7 +404,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             allow_users_remove=item.allow_users_remove,
             allow_users_reset=item.allow_users_reset,
             ignores_unused=item.ignores_unused,
-            fallbackAccess=item.fallbackAccess,
+            fallback_access=item.fallbackAccess,
             meta_member=[{"id": i.meta_pool.uuid, "name": i.meta_pool.name} for i in item.memberOfMeta.all()],
             calendar_message=item.calendar_message,
             custom_message=item.custom_message,
@@ -741,7 +743,8 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         item = ensure.is_instance(item, ServicePool)
         self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
 
-        fallback = self._params.get("fallbackAccess", self.params.get("fallback", None))
+        # Keep fallback as shot legacy name. TBR soon
+        fallback = self._params.get("fallback_access", self.params.get("fallback", None))
         if fallback:
             logger.debug("Setting fallback of %s to %s", item.name, fallback)
             item.fallbackAccess = fallback
