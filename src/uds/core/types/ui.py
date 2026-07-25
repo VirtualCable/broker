@@ -140,11 +140,10 @@ class Filler(typing.TypedDict):
     callback_name: typing.NotRequired[str]
     parameters: list[str]
     function: typing.NotRequired[collections.abc.Callable[..., CallbackResultType]]
+    cb_ticket: typing.NotRequired[dict[str, typing.Any] | str]
 
 
 # Choices
-
-
 @dataclasses.dataclass
 class ChoiceItem:
     id: str | int

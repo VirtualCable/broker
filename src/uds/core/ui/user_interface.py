@@ -1220,6 +1220,31 @@ class gui:
         def value(self, value: str) -> None:
             self._set_value(value)
 
+        def set_cb_ticket(self, fld_name: str, value: typing.Any) -> None:
+            # Note: here we may or maynot have a fills
+            fills = self._field_info.fills
+            if not isinstance(fills, dict):
+                raise ValueError("Could not set a value without fills")
+
+            dct = typing.cast(dict[str, typing.Any], fills.get("cb_ticket", {}))
+            dct[fld_name] = value
+            fills["cb_ticket"] = dct
+
+        @typing.override
+        def gui_description(self) -> types.ui.FieldInfo:
+            from uds.models import TicketStore
+
+            the_gui = super().gui_description()
+            if fills := the_gui.fills:
+                fills = fills.copy()  # Ensure not alter original
+                if cb_ticket := typing.cast(dict[str, typing.Any], fills.get("cb_ticket", {})):
+                    # cb_ticket here is always a dict, it comes from original
+                    # store on ticket, get uuid an replace
+                    the_ticket = TicketStore.create(cb_ticket, consts.ticket.CB_TICKET_VALIDITY_TIME)
+                    fills["cb_ticket"] = the_ticket
+
+            return the_gui
+
     class ImageChoiceField(InputField):
         def __init__(
             self,

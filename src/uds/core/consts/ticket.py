@@ -37,6 +37,7 @@ import typing
 DEFAULT_TICKET_VALIDITY_TIME: typing.Final[int] = 60  # 1 minute
 MAX_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week
 TUNNEL_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week
+CB_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60  # 1 Hour
 
 TICKET_SECURED_OWNER: typing.Final[str] = (
     "#SECURE#"  # Just a "different" owner. If used anywhere, it's not important (will not fail), but weird enough
