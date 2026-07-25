@@ -77,7 +77,7 @@ class MetaPoolItem(types.rest.BaseRestItem):
     user_services_in_preparation: int
     visible: bool
     policy: str
-    fallbackAccess: str
+    fallback_access: str
     permission: int
     calendar_message: str
     transport_grouping: int
@@ -143,16 +143,18 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "fallbackAccess": types.rest.api.SchemaProperty(
+                    "fallback_access": types.rest.api.SchemaProperty(
                         type="string", description="Fallback access policy: ALLOW (default) or DENY"
                     )
                 },
             ),
+            required_permission=types.permissions.PermissionType.ALL,
         ),
         types.rest.ModelCustomMethod(
             "get_fallback_access",
             True,
             description="Retrieve the current fallback access policy for a meta pool member",
+            required_permission=types.permissions.PermissionType.READ,
         ),
     ]
 
@@ -196,7 +198,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             user_services_in_preparation=userservices_in_preparation,
             visible=item.visible,
             policy=str(item.policy),
-            fallbackAccess=item.fallbackAccess,
+            fallback_access=item.fallbackAccess,
             permission=permissions.effective_permissions(self._user, item),
             calendar_message=item.calendar_message,
             transport_grouping=item.transport_grouping,
@@ -321,11 +323,11 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         """
         self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
 
-        fallback = self._params.get("fallbackAccess", "ALLOW")
+        fallback = self._params.get("fallback_access", State.ALLOW)
         logger.debug("Setting fallback of %s to %s", item.name, fallback)
         item.fallbackAccess = fallback
         item.save()
-        return ""
+        return item.fallbackAccess
 
     def get_fallback_access(self, item: MetaPool) -> typing.Any:
         return item.fallbackAccess

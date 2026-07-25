@@ -209,11 +209,13 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     )
                 },
             ),
+            required_permission=types.permissions.PermissionType.ALL,
         ),
         types.rest.ModelCustomMethod(
             "get_fallback_access",
             True,
             description="Retrieve the current fallback access policy for a service pool",
+            required_permission=types.permissions.PermissionType.READ,
         ),
         types.rest.ModelCustomMethod(
             "actions_list",
@@ -254,9 +256,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     "level": types.rest.api.SchemaProperty(
                         type="string", description="Log severity level (INFO, WARN, ERROR)"
                     ),
-                    "log_name": types.rest.api.SchemaProperty(
-                        type="string", description="Optional log source name"
-                    ),
+                    "log_name": types.rest.api.SchemaProperty(type="string", description="Optional log source name"),
                 },
             ),
         ),
