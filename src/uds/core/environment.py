@@ -164,7 +164,7 @@ class Environment:
         return Environment(name)
 
     @staticmethod
-    def type_environment(type_: typing.Type[typing.Any]) -> "Environment":
+    def type_environment(type_: type[typing.Any]) -> "Environment":
         """
         Obtains an environment associated with a type instead of a record
         @param type_: Type
