@@ -175,3 +175,98 @@ class CbTicketGuiDescriptionTest(UDSTestCase):
             self.assertNotIsInstance(info.fills["cb_ticket"], dict)  # type: ignore[index]
             self.assertIsInstance(info.fills["cb_ticket"], str)  # type: ignore[index]
             transaction.set_rollback(True)
+
+    def test_gui_description_reuses_uuid_on_second_call(self) -> None:
+        """Calling ``gui_description()`` twice on the same field must not create
+        a second ticket — the original fills dict was replaced in-place by the
+        uuid, and the ``isinstance(cb_ticket, dict)`` guard makes the second
+        call a no-op.
+        """
+        field = gui.ChoiceField(
+            label="Region",
+            choices=[gui.choice_item("us-east-1", "US East 1")],
+            fills={
+                "callback_name": "sampleCallback",
+                "function": _dummy_callback,
+                "parameters": ["prov_uuid", "region"],
+            },
+        )
+        field.set_cb_ticket("prov_uuid", "provider-uuid-xyz")
+        with transaction.atomic():
+            from uds.models import TicketStore  # noqa: PLC0415
+
+            first = field.gui_description()
+            first_uuid = first.fills["cb_ticket"]  # type: ignore[index]
+            second = field.gui_description()
+            second_uuid = second.fills["cb_ticket"]  # type: ignore[index]
+            self.assertEqual(first_uuid, second_uuid)
+            self.assertEqual(
+                TicketStore.objects.filter(uuid=first_uuid).count(),
+                1,
+            )
+            transaction.set_rollback(True)
+
+    def test_gui_description_uuid_resolves_to_original_dict(self) -> None:
+        """Round-trip: the uuid emitted by ``gui_description()`` resolves to the
+        dict the service set via ``set_cb_ticket``.
+        """
+        field = gui.ChoiceField(
+            label="Region",
+            choices=[gui.choice_item("us-east-1", "US East 1")],
+            fills={
+                "callback_name": "sampleCallback",
+                "function": _dummy_callback,
+                "parameters": ["prov_uuid", "region"],
+            },
+        )
+        field.set_cb_ticket("prov_uuid", "provider-uuid-xyz")
+        field.set_cb_ticket("region", "us-east-1")
+        with transaction.atomic():
+            info = field.gui_description()
+            cb_ticket = typing.cast(str, info.fills["cb_ticket"])  # type: ignore[reportTypedDictNotRequiredAccess]
+
+            from uds.models import TicketStore  # noqa: PLC0415
+
+            stored = TicketStore.objects.get(uuid=cb_ticket)
+            import pickle  # noqa: PLC0415 -- local import
+
+            self.assertEqual(
+                pickle.loads(stored.data),
+                {"prov_uuid": "provider-uuid-xyz", "region": "us-east-1"},
+            )
+            transaction.set_rollback(True)
+
+    def test_gui_description_does_not_mutate_other_fields(self) -> None:
+        """The cb_ticket replacement must not touch sibling fields' params or
+        unrelated keys in ``fills`` — only the ``cb_ticket`` key is replaced.
+        """
+        field = gui.ChoiceField(
+            label="Region",
+            choices=[gui.choice_item("us-east-1", "US East 1")],
+            fills=typing.cast(  # type: ignore[reportArgumentType]
+                "types.ui.Filler",
+                {
+                    "callback_name": "sampleCallback",
+                    "function": _dummy_callback,
+                    "parameters": ["prov_uuid", "region"],
+                    "sibling_field_param": "untouched",
+                },
+            ),
+        )
+        field.set_cb_ticket("prov_uuid", "provider-uuid-xyz")
+        info = field.gui_description()
+        fills = info.fills
+        assert fills is not None
+        self.assertEqual(
+            fills["parameters"],  # type: ignore[index]
+            ["prov_uuid", "region"],
+        )
+        self.assertEqual(
+            fills["callback_name"],  # type: ignore[index]
+            "sampleCallback",
+        )
+        self.assertEqual(
+            fills["sibling_field_param"],  # type: ignore[index]
+            "untouched",
+        )
+        self.assertIsInstance(fills["cb_ticket"], str)  # type: ignore[index]
