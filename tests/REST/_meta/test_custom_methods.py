@@ -111,26 +111,29 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
     # ------------------------------------------------------------------
     # Known POST custom methods (unsafe / state-mutating).
     # If you add a new unsafe custom method, add it here.
-    _POST_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str]]] = frozenset(
+    # The key includes the HTTP method so a single ``name`` may appear
+    # twice when handlers expose both a GET (read) and a POST (write)
+    # variant (e.g. ``fallback_access``).
+    _POST_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str, str]]] = frozenset(
         {
-            ("Accounts", "clear"),
-            ("Accounts", "timemark"),
-            ("MetaPools", "set_fallback_access"),
-            ("Providers", "maintenance"),
-            ("ServicesPools", "set_fallback_access"),
-            ("ServicesPools", "create_from_assignable"),
-            ("ServicesPools", "add_log"),
-            ("TunnelServers", "maintenance"),
-            ("Tunnels", "assign"),
-            ("ActionsCalendars", "execute"),
-            ("AssignedUserService", "reset"),
-            ("Publications", "publish"),
-            ("Publications", "cancel"),
-            ("ServersServers", "maintenance"),
-            ("ServersServers", "importcsv"),
-            ("Users", "clean_related"),
-            ("Users", "add_to_group"),
-            ("Users", "enable_client_logging"),
+            ("Accounts", "clear", "POST"),
+            ("Accounts", "timemark", "POST"),
+            ("MetaPools", "fallback_access", "POST"),
+            ("Providers", "maintenance", "POST"),
+            ("ServicesPools", "fallback_access", "POST"),
+            ("ServicesPools", "create_from_assignable", "POST"),
+            ("ServicesPools", "add_log", "POST"),
+            ("TunnelServers", "maintenance", "POST"),
+            ("Tunnels", "assign", "POST"),
+            ("ActionsCalendars", "execute", "POST"),
+            ("AssignedUserService", "reset", "POST"),
+            ("Publications", "publish", "POST"),
+            ("Publications", "cancel", "POST"),
+            ("ServersServers", "maintenance", "POST"),
+            ("ServersServers", "importcsv", "POST"),
+            ("Users", "clean_related", "POST"),
+            ("Users", "add_to_group", "POST"),
+            ("Users", "enable_client_logging", "POST"),
         }
     )
 
@@ -149,7 +152,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         offenders: list[str] = []
         for cls_name, _cls, cms in sources:
             for cm in cms:
-                key = (cls_name, cm.name)
+                key = (cls_name, cm.name, cm.method.name)
                 if key in self._POST_CUSTOM_METHODS:
                     if cm.method != types.rest.CustomMethodMethod.POST:
                         offenders.append(f"{cls_name}.{cm.name}: expected POST, got {cm.method!r}")
@@ -179,11 +182,11 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             if cms:
                 sources.append((cls.__name__, cls, cms))
 
-        actual_post: set[tuple[str, str]] = set()
+        actual_post: set[tuple[str, str, str]] = set()
         for cls_name, _cls, cms in sources:
             for cm in cms:
                 if cm.method == types.rest.CustomMethodMethod.POST:
-                    actual_post.add((cls_name, cm.name))
+                    actual_post.add((cls_name, cm.name, cm.method.name))
 
         missing = actual_post - self._POST_CUSTOM_METHODS
         extra = self._POST_CUSTOM_METHODS - actual_post

@@ -85,20 +85,20 @@ class MetaPoolTest(rest.test.RESTTestCase):
         self.assertEqual(self._pool_count_in_db(), before - 1)
 
     # ------------------------------------------------------------------
-    # Custom-method coverage: set_fallback_access / get_fallback_access
+    # Custom-method coverage: fallback_access (GET reads, POST writes)
     # ------------------------------------------------------------------
     def test_get_fallback_access_default_is_allow(self) -> None:
-        """GET /metapools/<id>/get_fallback_access on a fresh pool returns ALLOW.
+        """GET /metapools/<id>/fallback_access on a fresh pool returns ALLOW.
 
         ``models.MetaPool.fallbackAccess`` defaults to ``State.ALLOW``.
         """
         pool = self._create_pool_for_fallback_tests()
-        response = self.client.rest_get(f"metapools/{pool.uuid}/get_fallback_access")
+        response = self.client.rest_get(f"metapools/{pool.uuid}/fallback_access")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json(), State.ALLOW)
 
-    def test_set_fallback_access_snake_case(self) -> None:
-        """POST /metapools/<id>/set_fallback_access with snake_case body key.
+    def test_post_fallback_access_snake_case(self) -> None:
+        """POST /metapools/<id>/fallback_access with snake_case body key.
 
         Mirrors what the admin GUI sends (see
         ``gui/admin/src/app/types/rest.ts`` and the
@@ -107,7 +107,7 @@ class MetaPoolTest(rest.test.RESTTestCase):
         """
         pool = self._create_pool_for_fallback_tests()
         response = self.client.rest_post(
-            f"metapools/{pool.uuid}/set_fallback_access",
+            f"metapools/{pool.uuid}/fallback_access",
             data={"fallback_access": State.DENY},
         )
         self.assertEqual(response.status_code, 200, response.content)
@@ -117,13 +117,13 @@ class MetaPoolTest(rest.test.RESTTestCase):
         pool.refresh_from_db()
         self.assertEqual(pool.fallbackAccess, State.DENY)
 
-        # get_fallback_access now reports the new value.
-        get_resp = self.client.rest_get(f"metapools/{pool.uuid}/get_fallback_access")
+        # GET fallback_access now reports the new value.
+        get_resp = self.client.rest_get(f"metapools/{pool.uuid}/fallback_access")
         self.assertEqual(get_resp.status_code, 200, get_resp.content)
         self.assertEqual(get_resp.json(), State.DENY)
 
-    def test_set_fallback_access_is_idempotent(self) -> None:
-        """Calling set_fallback_access repeatedly with the same value is a no-op.
+    def test_post_fallback_access_is_idempotent(self) -> None:
+        """Calling POST fallback_access repeatedly with the same value is a no-op.
 
         Five POSTs with the same target value must end up with exactly one
         logical row in DB (pool count unchanged) and the same final value.
@@ -133,7 +133,7 @@ class MetaPoolTest(rest.test.RESTTestCase):
 
         for _ in range(5):
             resp = self.client.rest_post(
-                f"metapools/{pool.uuid}/set_fallback_access",
+                f"metapools/{pool.uuid}/fallback_access",
                 data={"fallback_access": State.DENY},
             )
             self.assertEqual(resp.status_code, 200, resp.content)
@@ -144,13 +144,13 @@ class MetaPoolTest(rest.test.RESTTestCase):
         pool.refresh_from_db()
         self.assertEqual(pool.fallbackAccess, State.DENY)
 
-    def test_set_fallback_access_round_trip_allow_to_deny(self) -> None:
+    def test_post_fallback_access_round_trip_allow_to_deny(self) -> None:
         """Round-trip DENY -> ALLOW leaves the pool in ALLOW state."""
         pool = self._create_pool_for_fallback_tests()
 
         # First deny.
         deny = self.client.rest_post(
-            f"metapools/{pool.uuid}/set_fallback_access",
+            f"metapools/{pool.uuid}/fallback_access",
             data={"fallback_access": State.DENY},
         )
         self.assertEqual(deny.status_code, 200, deny.content)
@@ -158,7 +158,7 @@ class MetaPoolTest(rest.test.RESTTestCase):
 
         # Then allow.
         allow = self.client.rest_post(
-            f"metapools/{pool.uuid}/set_fallback_access",
+            f"metapools/{pool.uuid}/fallback_access",
             data={"fallback_access": State.ALLOW},
         )
         self.assertEqual(allow.status_code, 200, allow.content)

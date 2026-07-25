@@ -196,8 +196,18 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     )
 
     CUSTOM_METHODS = [
+        # GET must come first: in NO_COMPAT mode a GET request that hits a
+        # POST-only ``fallback_access`` raises GoneError. Declaring both at
+        # the same name lets the framework dispatch by HTTP verb.
         types.rest.ModelCustomMethod(
-            "set_fallback_access",
+            "fallback_access",
+            True,
+            method=types.rest.CustomMethodMethod.GET,
+            description="Retrieve the current fallback access policy for a service pool",
+            required_permission=types.permissions.PermissionType.READ,
+        ),
+        types.rest.ModelCustomMethod(
+            "fallback_access",
             True,
             method=types.rest.CustomMethodMethod.POST,
             description="Update the fallback access policy for a service pool",
@@ -210,12 +220,6 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 },
             ),
             required_permission=types.permissions.PermissionType.ALL,
-        ),
-        types.rest.ModelCustomMethod(
-            "get_fallback_access",
-            True,
-            description="Retrieve the current fallback access policy for a service pool",
-            required_permission=types.permissions.PermissionType.READ,
         ),
         types.rest.ModelCustomMethod(
             "actions_list",
@@ -738,21 +742,22 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         except Exception:
             return []
 
-    # Set fallback status
-    def set_fallback_access(self, item: "Model") -> typing.Any:
+    # Read/Write the fallback access policy for the pool.
+    # GET returns the current value; POST writes the new one.
+    def fallback_access(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
-        self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
 
-        # Keep fallback as shot legacy name. TBR soon
+        if self._operation == "get":
+            return item.fallbackAccess
+
+        # POST — write
+        self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
+        # Keep legacy "fallback" key as a transitional alias for the body.
         fallback = self._params.get("fallback_access", self.params.get("fallback", None))
         if fallback:
             logger.debug("Setting fallback of %s to %s", item.name, fallback)
             item.fallbackAccess = fallback
             item.save()
-        return item.fallbackAccess
-
-    def get_fallback_access(self, item: "Model") -> typing.Any:
-        item = ensure.is_instance(item, ServicePool)
         return item.fallbackAccess
 
     #  Returns the action list based on current element, for calendar
