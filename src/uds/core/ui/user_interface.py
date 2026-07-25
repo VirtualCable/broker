@@ -1236,12 +1236,14 @@ class gui:
 
             the_gui = super().gui_description()
             if fills := the_gui.fills:
-                fills = fills.copy()  # Ensure not alter original
-                if cb_ticket := typing.cast(dict[str, typing.Any], fills.get("cb_ticket", {})):
-                    # cb_ticket here is always a dict, it comes from original
-                    # store on ticket, get uuid an replace
+                # If cb_ticket is a dict, create the ticket and replace by uuid.
+                # If it's already a string (uuid from a previous serialisation),
+                # leave it as-is — TicketStore.create() would choke on a string.
+                if isinstance(cb_ticket := fills.get("cb_ticket"), dict):
                     the_ticket = TicketStore.create(cb_ticket, consts.ticket.CB_TICKET_VALIDITY_TIME)
                     fills["cb_ticket"] = the_ticket
+
+                the_gui.fills = fills
 
             return the_gui
 
