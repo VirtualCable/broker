@@ -159,7 +159,6 @@ class CbTicketGuiDescriptionTest(UDSTestCase):
             cb_ticket = fills.get("cb_ticket")
             self.assertIsInstance(cb_ticket, str)
             # Re-narrow so pyright knows the type for subsequent uses.
-            cb_ticket = typing.cast(str, cb_ticket)
 
             stored = TicketStore.objects.get(uuid=cb_ticket)
             from uds.core.consts import ticket as ticket_consts
@@ -173,8 +172,6 @@ class CbTicketGuiDescriptionTest(UDSTestCase):
         stored_field_fills = _fills_dict(field.gui_description())
         stored_field_cb_ticket = stored_field_fills.get("cb_ticket")
         self.assertIsInstance(stored_field_cb_ticket, str)
-        # Re-narrow so pyright knows the type for subsequent uses.
-        stored_field_cb_ticket = typing.cast(str, stored_field_cb_ticket)
 
     def test_gui_description_returns_a_copy_with_replaced_dict(self) -> None:
         field = gui.ChoiceField(
@@ -193,7 +190,6 @@ class CbTicketGuiDescriptionTest(UDSTestCase):
             cb_ticket = fills.get("cb_ticket")
             self.assertIsInstance(cb_ticket, str)
             # Re-narrow so pyright knows the type for subsequent uses.
-            cb_ticket = typing.cast(str, cb_ticket)
             transaction.set_rollback(True)
 
     def test_gui_description_reuses_uuid_on_second_call(self) -> None:
@@ -216,11 +212,9 @@ class CbTicketGuiDescriptionTest(UDSTestCase):
             first = field.gui_description()
             first_cb_ticket = _fills_dict(first).get("cb_ticket")
             self.assertIsInstance(first_cb_ticket, str)
-            first_cb_ticket = typing.cast(str, first_cb_ticket)
             second = field.gui_description()
             second_cb_ticket = _fills_dict(second).get("cb_ticket")
             self.assertIsInstance(second_cb_ticket, str)
-            second_cb_ticket = typing.cast(str, second_cb_ticket)
             self.assertEqual(first_cb_ticket, second_cb_ticket)
             self.assertEqual(
                 TicketStore.objects.filter(uuid=first_cb_ticket).count(),
@@ -247,7 +241,6 @@ class CbTicketGuiDescriptionTest(UDSTestCase):
             info = field.gui_description()
             cb_ticket = _fills_dict(info).get("cb_ticket")
             self.assertIsInstance(cb_ticket, str)
-            cb_ticket = typing.cast(str, cb_ticket)
 
             stored = TicketStore.objects.get(uuid=cb_ticket)
             self.assertEqual(
