@@ -33,9 +33,10 @@ import logging
 import typing
 
 from uds import models
+from uds.core.types.states import State
 
-from ....fixtures import services as services_fixtures
-from ....utils import rest
+from tests.fixtures import services as services_fixtures
+from tests.utils import rest
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,17 @@ class ServicePoolTest(rest.test.RESTTestCase):
         # Override number of items to create
         super().setUp()
         self.login()
+
+    def _create_pool_for_fallback_tests(self) -> models.ServicePool:
+        """Create a real ServicePool via the public REST API (PUT create).
+
+        Going through the REST API mirrors the path real clients use and
+        gives us the canonical ``id`` they would call the custom method on.
+        """
+        payload = self._create_pool_payload(name="pool-for-fallback-tests")
+        resp = self.client.rest_put("servicespools", data=payload)
+        assert resp.status_code == 200, resp.content  # help test debugging
+        return models.ServicePool.objects.get(uuid=resp.json()["id"])
 
     def _pool_count_in_db(self) -> int:
         return models.ServicePool.objects.all().count()
@@ -251,3 +263,121 @@ class ServicePoolTest(rest.test.RESTTestCase):
             State.REMOVABLE,
             "After DELETE, GET must report state=REMOVABLE (soft-delete contract).",
         )
+
+    # ------------------------------------------------------------------
+    # fallback_access custom method (GET reads, POST writes)
+    # ------------------------------------------------------------------
+    # These tests pin the *current* REST contract after the
+    # ``fallbackAccess`` -> ``fallback_access`` migration on services_pools:
+    #
+    # * The custom-method URL is ``/servicespools/<id>/fallback_access`` for
+    #   both verbs. GET reads, POST writes.
+    # * The POST body uses the snake_case key ``fallback_access``.
+    # * For backwards compatibility, the POST body also accepts the legacy
+    #   ``fallback`` key (handled inside ``fallback_access``).
+    # * The custom method returns the final value as a plain string
+    #   (``"ALLOW"`` or ``"DENY"``).
+
+    def test_get_fallback_access_default_is_allow(self) -> None:
+        """GET /servicespools/<id>/fallback_access on a fresh pool returns ALLOW.
+
+        ``models.ServicePool.fallbackAccess`` defaults to ``State.ALLOW``.
+        """
+        pool = self._create_pool_for_fallback_tests()
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/fallback_access")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), State.ALLOW)
+
+    def test_post_fallback_access_snake_case(self) -> None:
+        """POST /servicespools/<id>/fallback_access with snake_case body key.
+
+        Mirrors what the admin GUI sends (see gui/admin src/app/types/rest.ts
+        and meta-pools-detail.component.ts after the
+        ``fallbackAccess`` -> ``fallback_access`` migration).
+        """
+        pool = self._create_pool_for_fallback_tests()
+
+        response = self.client.rest_post(
+            f"servicespools/{pool.uuid}/fallback_access",
+            data={"fallback_access": State.DENY},
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), State.DENY)
+
+        # Persisted on the model (DB row), not just echoed in the response.
+        pool.refresh_from_db()
+        self.assertEqual(pool.fallbackAccess, State.DENY)
+
+        # And GET fallback_access now reports the new value.
+        get_resp = self.client.rest_get(f"servicespools/{pool.uuid}/fallback_access")
+        self.assertEqual(get_resp.status_code, 200, get_resp.content)
+        self.assertEqual(get_resp.json(), State.DENY)
+
+    def test_post_fallback_access_legacy_keyword_still_works(self) -> None:
+        """POST with the legacy ``fallback`` key keeps working (transitional).
+
+        ``fallback_access`` looks up ``self._params['fallback_access']``
+        first and then ``self.params['fallback']`` as a fallback. Pin that
+        behaviour so the legacy client is not silently broken.
+        """
+        pool = self._create_pool_for_fallback_tests()
+
+        response = self.client.rest_post(
+            f"servicespools/{pool.uuid}/fallback_access",
+            data={"fallback": State.DENY},
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), State.DENY)
+
+        pool.refresh_from_db()
+        self.assertEqual(pool.fallbackAccess, State.DENY)
+
+    def test_post_fallback_access_is_idempotent(self) -> None:
+        """Calling POST fallback_access repeatedly with the same value is a no-op.
+
+        Five POSTs with the same target value must end up with exactly one
+        logical row in the DB (pool count unchanged) and the same final value.
+        """
+        pool = self._create_pool_for_fallback_tests()
+        pool_count_before = models.ServicePool.objects.count()
+
+        for _ in range(5):
+            resp = self.client.rest_post(
+                f"servicespools/{pool.uuid}/fallback_access",
+                data={"fallback_access": State.DENY},
+            )
+            self.assertEqual(resp.status_code, 200, resp.content)
+            self.assertEqual(resp.json(), State.DENY)
+
+        # No extra ServicePool rows were created.
+        self.assertEqual(models.ServicePool.objects.count(), pool_count_before)
+
+        pool.refresh_from_db()
+        self.assertEqual(pool.fallbackAccess, State.DENY)
+
+    def test_post_fallback_access_round_trip_allow_to_deny(self) -> None:
+        """Round-trip DENY -> ALLOW leaves the pool in ALLOW state."""
+        pool = self._create_pool_for_fallback_tests()
+
+        # First deny.
+        deny = self.client.rest_post(
+            f"servicespools/{pool.uuid}/fallback_access",
+            data={"fallback_access": State.DENY},
+        )
+        self.assertEqual(deny.status_code, 200, deny.content)
+        self.assertEqual(deny.json(), State.DENY)
+
+        # Then allow.
+        allow = self.client.rest_post(
+            f"servicespools/{pool.uuid}/fallback_access",
+            data={"fallback_access": State.ALLOW},
+        )
+        self.assertEqual(allow.status_code, 200, allow.content)
+        self.assertEqual(allow.json(), State.ALLOW)
+
+        pool.refresh_from_db()
+        self.assertEqual(pool.fallbackAccess, State.ALLOW)

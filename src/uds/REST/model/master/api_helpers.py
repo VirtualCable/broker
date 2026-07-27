@@ -212,9 +212,20 @@ def api_paths(
             )
 
         if cm.method == types.rest.CustomMethodMethod.POST:
-            api_desc[cm_path] = types.rest.api.PathItem(post=op)
+            op_attr = "post"
         else:
-            api_desc[cm_path] = types.rest.api.PathItem(get=op)
+            op_attr = "get"
+
+        # Merge with any existing PathItem for the same path. Several
+        # ``ModelCustomMethod``s may share a ``name`` when they only differ
+        # in HTTP verb (e.g. ``fallback_access`` declared twice — once GET
+        # and once POST) and the spec must expose both verbs on the same
+        # path item rather than overwrite one with the other.
+        existing = api_desc.get(cm_path)
+        if existing is None:
+            api_desc[cm_path] = types.rest.api.PathItem(**{op_attr: op})
+        else:
+            setattr(existing, op_attr, op)
 
     for cm in cls.CUSTOM_METHODS:
         emit_custom_method(cm, None, False)
