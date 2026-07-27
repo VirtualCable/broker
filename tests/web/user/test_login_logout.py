@@ -99,7 +99,7 @@ class WebLoginLogoutTest(test.WEBTestCase):
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         users_pass = [(user.name, user.name) for user in users + admins + stafs]
         users_pass.append((root, rootpass))
-        for num, up in enumerate(users_pass, start=1):
+        for _, up in enumerate(users_pass, start=1):
             self.do_login(up[0], up[1], auth.uuid)
             # Now invoke logout
             response = typing.cast("HttpResponse", self.client.get("/uds/page/logout"))
