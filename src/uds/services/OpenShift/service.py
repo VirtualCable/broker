@@ -255,7 +255,7 @@ class OpenshiftService(DynamicService):
         Checks if the VM and its associated DataVolume/PVC are deleted.
         """
         logger.debug("Checking if VM %s is deleted", vmid)
-        # 1. Check if VM exists
+
         try:
             self.api.get_vm_info(vmid)
             logger.debug("VM %s still exists", vmid)
@@ -263,15 +263,13 @@ class OpenshiftService(DynamicService):
         except oshift_exceptions.OpenshiftNotFoundError:
             pass  # VM not found, continue
 
-        # 2. Try to get associated DataVolume or PVC
         try:
-            name, typ = self.api.get_vm_pvc_or_dv_name(self.api.namespace, vmid)
+            name, typ = self.api.get_vm_pvc_or_dv_name(vmid)
             logger.debug("Associated storage for VM %s: %s (%s)", vmid, name, typ)
         except Exception as e:
             logger.debug("No associated DataVolume/PVC for VM %s or already deleted: %s", vmid, e)
             return True  # If can't find storage, consider deleted
 
-        # 3. Check if DataVolume or PVC exists
         if typ == "dv":
             try:
                 phase = self.api.get_datavolume_phase(name)
@@ -282,7 +280,7 @@ class OpenshiftService(DynamicService):
                 return True
         elif typ == "pvc":
             try:
-                self.api.get_pvc_size(self.api.namespace, name)
+                self.api.get_pvc_size(name)
                 logger.debug("PVC %s for VM %s still exists", name, vmid)
                 return False
             except Exception as e:

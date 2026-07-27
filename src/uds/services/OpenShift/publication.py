@@ -71,9 +71,8 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         self._waiting_name = True
         api = self.service().api
         template_vm_name = self.service().template.value
-        namespace = api.namespace
 
-        source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(namespace, template_vm_name)
+        source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(template_vm_name)
 
         self._name = self.service().sanitized_name(self._name)
         self._waiting_name = False
@@ -81,7 +80,6 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         new_pvc_name = f"{self._name}-disk"
 
         api.create_vm_from_pvc(
-            namespace=namespace,
             source_vm_name=template_vm_name,
             new_vm_name=self._name,
             new_dv_name=new_pvc_name,
