@@ -211,13 +211,13 @@ class TestOpenshiftClientToken(UDSTransactionTestCase):
             with self.assertRaises(openshift_exceptions.OpenshiftAuthError):
                 client.get_token()
 
-    def test_connect_reuses_session_and_token(self) -> None:
+    def test_session_reconnects_on_every_access(self) -> None:
         client = self._client()
         with mock.patch.object(client, "get_token", return_value="a-token") as get_token:
             first = client.session
             second = client.session
-            self.assertIs(first, second)
-            get_token.assert_called_once()  # no new OAuth round trip per request
+            self.assertIsNot(first, second)
+            self.assertEqual(get_token.call_count, 2)
 
     def test_connect_refetches_token_after_invalidation(self) -> None:
         client = self._client()

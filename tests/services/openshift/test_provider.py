@@ -160,23 +160,21 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         provider.initialize({})
         self.assertIsNone(provider._cached_api)
 
-    def test_api_recreates_client_when_config_changed(self) -> None:
+    def test_api_keeps_cached_client_when_config_changed(self) -> None:
         """
-        api property creates a new OpenshiftClient when the connection params have changed.
+        api property does not inspect the connection params: only initialize() drops the cached
+        client, which is what runs when the configuration changes.
         """
         provider = fixtures.create_provider()
         old_client = fixtures.create_client_mock()
         old_client.cache_key.return_value = (
-            "https://old-cluster.example.com|https://old-api.example.com:6443|kubeadmin|default|False"
+            "https://old-cluster.example.com|https://old-api.example.com:6443|kubeadmin|default"
         )
         provider._cached_api = old_client
 
         with mock.patch("uds.services.OpenShift.provider.client.OpenshiftClient") as MockClient:
-            new_mock = mock.MagicMock()
-            MockClient.return_value = new_mock
-            result = provider.api
-            MockClient.assert_called_once()
-            self.assertIs(result, new_mock)
+            self.assertIs(provider.api, old_client)
+            MockClient.assert_not_called()
 
     def test_api_reuses_client_when_config_unchanged(self) -> None:
         """

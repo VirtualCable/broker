@@ -131,7 +131,7 @@ class OpenshiftProvider(ServiceProvider):
     def test_connection(self) -> bool:
         return self.api.test()
 
-    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.connection_key())
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.api.cache_key())
     def is_available(self) -> bool:
         return self.api.test()
 
