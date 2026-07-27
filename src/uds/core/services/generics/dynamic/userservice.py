@@ -30,20 +30,25 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
+import collections.abc
 import functools
 import logging
 import typing
-import collections.abc
 
-from uds.core import services, types, consts, exceptions
-from uds.core.util import autoserializable, log
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
+from uds.core.util import autoserializable
+from uds.core.util import log
 from uds.core.util.model import sql_stamp_seconds
-
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from . import service
 
 logger = logging.getLogger(__name__)
@@ -53,10 +58,10 @@ logger = logging.getLogger(__name__)
 # Used by some default methods that require a vmid to work
 def must_have_vmid(
     fnc: collections.abc.Callable[[typing.Any], None],
-) -> collections.abc.Callable[['DynamicUserService'], None]:
+) -> collections.abc.Callable[["DynamicUserService"], None]:
     @functools.wraps(fnc)
-    def wrapper(self: 'DynamicUserService') -> None:
-        if self._vmid == '':
+    def wrapper(self: "DynamicUserService") -> None:
+        if self._vmid == "":
             # Change current operation to NOP and return
             # This is so we do not invoque the "checker" method again an nonexisent vmid
             self._queue[0] = types.services.Operation.NOP
@@ -82,17 +87,17 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
     # If ip can be manually overriden, normally True... (set by actor, for example)
     can_set_ip: typing.ClassVar[bool] = True
     # If true, the IP will be cached on the user service
-    can_cache_ip: typing.ClassVar[bool] = True  
+    can_cache_ip: typing.ClassVar[bool] = True
     # If store_error_as_finished is true, and an error occurs, the machine is set to FINISHED instead of ERROR
     store_error_as_finished: typing.ClassVar[bool] = False
     # If must wait untill finish queue for destroying the machine
     wait_until_finish_to_destroy: typing.ClassVar[bool] = False
 
-    _name = autoserializable.StringField(default='')
-    _mac = autoserializable.StringField(default='')
-    _ip = autoserializable.StringField(default='')
-    _vmid = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')
+    _name = autoserializable.StringField(default="")
+    _mac = autoserializable.StringField(default="")
+    _ip = autoserializable.StringField(default="")
+    _vmid = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
     # cast is used to ensure that when data is reloaded, it's casted to the correct type
     _queue = autoserializable.ListField[types.services.Operation](cast=types.services.Operation.from_int)
     _is_flagged_for_destroy = autoserializable.BoolField(default=False)
@@ -153,30 +158,30 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
     @typing.final
     def _reset_checks_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['exec_count'] = 0
+            data["exec_count"] = 0
 
     @typing.final
     def _inc_checks_counter(self, op: types.services.Operation) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            count = data.get('exec_count', 0) + 1
-            data['exec_count'] = count
+            count = data.get("exec_count", 0) + 1
+            data["exec_count"] = count
         if count > self.max_state_checks:
-            return self.error(f'Max checks reached on {op.as_str()}: {self.max_state_checks}')
+            return self.error(f"Max checks reached on {op.as_str()}: {self.max_state_checks}")
         return None
 
     @typing.final
     def _reset_retries_counter(self) -> None:
         with self.storage.as_dict() as data:
-            data['retries'] = 0
+            data["retries"] = 0
 
     @typing.final
     def _inc_retries_counter(self) -> types.states.TaskState | None:
         with self.storage.as_dict() as data:
-            retries = data.get('retries', 0) + 1
-            data['retries'] = retries
+            retries = data.get("retries", 0) + 1
+            data["retries"] = retries
 
         if retries > self.max_retries:  # get "own class" max retries
-            return self.error(f'Max retries reached on {self._current_op().as_str()}: {self.max_retries}')
+            return self.error(f"Max retries reached on {self._current_op().as_str()}: {self.max_retries}")
 
         return None
 
@@ -226,20 +231,20 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         self._error_debug_info = self._debug(repr(reason))
         reason = str(reason)
-        logger.debug('Setting error state, reason: %s (%s)', reason, self._queue, stack_info=True, stacklevel=3)
+        logger.debug("Setting error state, reason: %s (%s)", reason, self._queue, stack_info=True, stacklevel=3)
         self.do_log(types.log.LogLevel.ERROR, reason)
 
         if self._vmid:
             if self.service().should_maintain_on_error() is False:
                 try:
                     self.service().delete(self, self._vmid)
-                    self._vmid = ''
+                    self._vmid = ""
                 except Exception as e:
-                    logger.exception('Exception removing machine %s: %s', self._vmid, e)
-                    self._vmid = ''
-                    self.do_log(types.log.LogLevel.ERROR, f'Error removing machine: {e}')
+                    logger.exception("Exception removing machine %s: %s", self._vmid, e)
+                    self._vmid = ""
+                    self.do_log(types.log.LogLevel.ERROR, f"Error removing machine: {e}")
             else:
-                logger.debug('Keep on error is enabled, not removing machine')
+                logger.debug("Keep on error is enabled, not removing machine")
                 self._set_queue(
                     [types.services.Operation.FINISH]
                     if self.store_error_as_finished
@@ -253,7 +258,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
 
     @typing.final
     def _execute_queue(self) -> types.states.TaskState:
-        self._debug('execute_queue')
+        self._debug("execute_queue")
         op = self._current_op()
 
         if op == types.services.Operation.ERROR:
@@ -281,11 +286,11 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
                 getattr(self, operation_runner.__name__)()
 
             return types.states.TaskState.RUNNING
-        except exceptions.services.generics.RetryableError as e:
+        except exceptions.services.generics.RetryableError:
             # This is a retryable error, so we will retry later
             return self.retry_later()
         except Exception as e:
-            logger.exception('Unexpected DynamicUserService exception: %s', e)
+            logger.exception("Unexpected DynamicUserService exception: %s", e)
             return self.error(e)
 
     def _check_deferred_operations(self) -> types.states.TaskState | None:
@@ -297,7 +302,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         # If has a deferred destroy, do it now
         if self.wait_until_finish_to_destroy and self._is_flagged_for_destroy:
             # Simply ensures nothing is left on queue and returns FINISHED
-            logger.debug('Destroying service after finish')
+            logger.debug("Destroying service after finish")
             self._set_queue([types.services.Operation.FINISH])
             return self.destroy()
 
@@ -328,14 +333,15 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         In any case, if we overpass the max retries, we will set the machine to error state
         """
         if self._inc_retries_counter() is not None:
-            return self.error('Max retries reached')
+            return self.error("Max retries reached")
         self._queue.insert(0, types.services.Operation.RETRY)
         return types.states.TaskState.FINISHED
 
     # Utility overrides for type checking...
     # Probably, overriden again on child classes
-    def service(self) -> 'service.DynamicService':
-        return typing.cast('service.DynamicService', super().service())
+    @typing.override
+    def service(self) -> "service.DynamicService":
+        return typing.cast("service.DynamicService", super().service())
 
     def get_vmname(self) -> str:
         """
@@ -350,19 +356,18 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         name = self.get_name()
         if name == consts.NO_MORE_NAMES:
-            raise Exception(
-                'No more names available for this service. (Increase digits for this service to fix)'
-            )
+            raise Exception("No more names available for this service. (Increase digits for this service to fix)")
 
-        return self.service().sanitized_name(f'UDS_{name}')  # Default implementation
+        return self.service().sanitized_name(f"UDS_{name}")  # Default implementation
 
     # overridable, to allow receiving notifications from, for example, services
     def notify(self, message: str, data: typing.Any = None) -> None:
         pass
 
     @typing.final
+    @typing.override
     def get_name(self) -> str:
-        if self._name == '':
+        if self._name == "":
             try:
                 self._name = self._generate_name()
             except KeyError:
@@ -370,42 +375,48 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._name
 
     @typing.final
+    @typing.override
     def set_ip(self, ip: str) -> None:
         if self.can_set_ip:
-            logger.debug('Setting IP to %s', ip)
+            logger.debug("Setting IP to %s", ip)
             self._ip = ip
         else:
-            logger.debug('Setting IP to %s (ignored)', ip)
+            logger.debug("Setting IP to %s (ignored)", ip)
 
     @typing.final
+    @typing.override
     def get_unique_id(self) -> str:
         # Provide self to the service, so it can some of our methods to generate the unique id
         # (for example, own mac generator, that will autorelease the mac as soon as the machine is removed)
         # Note that get_mac is used for creating a new mac, returning the one of the vm or whatever
         # This is responsibility of the service, not of the user service
         if not self._mac:
-            self._mac = self.service().get_mac(self, self._vmid, for_unique_id=True) or ''
+            self._mac = self.service().get_mac(self, self._vmid, for_unique_id=True) or ""
         return self._mac
 
     @typing.final
+    @typing.override
     def get_ip(self) -> str:
-        if self._ip == '' or not self.can_cache_ip:
+        if self._ip == "" or not self.can_cache_ip:
             try:
                 if self._vmid:
                     # Provide self to the service, so it can use some of our methods for whaterever it needs
                     self._ip = self.service().get_ip(self, self._vmid)
             except Exception:
                 logger.warning(
-                    'Error obtaining IP for %s: %s', self.__class__.__name__, self._vmid  # , exc_info=True
+                    "Error obtaining IP for %s: %s",
+                    self.__class__.__name__,
+                    self._vmid,  # , exc_info=True
                 )
         return self._ip
 
     @typing.final
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    @typing.override
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         """
         Deploys an service instance for an user.
         """
-        logger.debug('Deploying for user')
+        logger.debug("Deploying for user")
         self._set_queue(self._create_queue.copy())  # copy is needed to avoid modifying class var
 
         # if back to cache with snapshot, add wait and snapshot creation to queue, so we can create the snapshot before going to cache
@@ -415,6 +426,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         if level == types.services.CacheLevel.L1:
             self._set_queue(self._create_queue_l1_cache.copy())
@@ -424,6 +436,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def move_to_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         if level == types.services.CacheLevel.L1:
             self._set_queue(self._move_to_l1_queue.copy())
@@ -435,6 +448,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def process_ready_from_os_manager(self, data: typing.Any) -> types.states.TaskState:
         # Eat the WAIT operation if it is in the queue
         # At most, we will have one WAIT operation in the queue
@@ -446,13 +460,14 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return types.states.TaskState.FINISHED
 
     @typing.final
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
         # If already ready, return finished
         try:
-            if self.cache.get('ready', '0') == '1':
+            if self.cache.get("ready", "0") == "1":
                 self._set_queue([types.services.Operation.FINISH])
             elif self.service().is_running(self, self._vmid):
-                self.cache.put('ready', '1', consts.cache.SHORT_CACHE_TIMEOUT // 2)  # short cache timeout
+                self.cache.put("ready", "1", consts.cache.SHORT_CACHE_TIMEOUT // 2)  # short cache timeout
                 self._set_queue([types.services.Operation.FINISH])
             else:
                 self._set_queue(
@@ -463,12 +478,13 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
                     ]
                 )
         except Exception as e:
-            return self.error(f'Error on set_ready: {e}')
+            return self.error(f"Error on set_ready: {e}")
 
         return self._execute_queue()
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
-        if self._vmid != '':
+        if self._vmid != "":
             self._set_queue(
                 [
                     types.services.Operation.RESET,
@@ -479,11 +495,12 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         return self._execute_queue()
 
     @typing.final
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         """
         Check what operation is going on, and acts acordly to it
         """
-        self._debug('check_state')
+        self._debug("check_state")
         op = self._current_op()
 
         if op == types.services.Operation.ERROR:
@@ -510,14 +527,12 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             if state == types.states.TaskState.FINISHED:
                 # Remove finished operation from queue
                 top_op = self._queue.pop(0)
-                if (
-                    top_op != types.services.Operation.RETRY
-                ):  # Inserted if a retrayable error occurs on execution queue
+                if top_op != types.services.Operation.RETRY:  # Inserted if a retrayable error occurs on execution queue
                     self._reset_retries_counter()
                 return self._execute_queue()
 
             return state
-        except exceptions.services.generics.RetryableError as e:
+        except exceptions.services.generics.RetryableError:
             # This is a retryable error, so we will retry later
             # We don not need to push a NOP here, as we will retry the same operation checking again
             # And it has not been removed from the queue
@@ -526,6 +541,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             return self.error(e)
 
     @typing.final
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         """
         Destroys the service
@@ -534,7 +550,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         op = self._current_op()
 
         if op == types.services.Operation.ERROR:
-            return self.error('Machine is already in error state!')
+            return self.error("Machine is already in error state!")
 
         shutdown_operations: list[types.services.Operation] = (
             []
@@ -547,7 +563,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
 
         # If a "paused" state, reset queue to destroy
         if op in (types.services.Operation.FINISH, types.services.Operation.WAIT):
-            logger.debug('Destroying service with these operations: %s', destroy_operations)
+            logger.debug("Destroying service with these operations: %s", destroy_operations)
             self._set_queue(destroy_operations)
             return self._execute_queue()
 
@@ -560,6 +576,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             # Do not execute anything.here, just continue normally
         return types.states.TaskState.RUNNING
 
+    @typing.override
     def error_reason(self) -> str:
         return self._reason
 
@@ -572,7 +589,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
                 log.log(
                     userservice.service_pool,
                     types.log.LogLevel.WARNING,
-                    f'Found duplicated vm {name} with mac {self.get_unique_id()}. Removing it',  # mac is the unique id
+                    f"Found duplicated vm {name} with mac {self.get_unique_id()}. Removing it",  # mac is the unique id
                     types.log.LogSource.SERVICE,
                 )
                 self.service().delete(self, vmid)
@@ -584,7 +601,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
                 # when the deletion is requested
                 self.retry_later()
         except Exception as e:
-            logger.warning('Locating duplicated machines: %s', e)
+            logger.warning("Locating duplicated machines: %s", e)
 
     # Execution methods
     # Every types.services.Operation has an execution method and a check method
@@ -600,10 +617,10 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         # By default, should return a VALID username and unique_id
         # Note that valid is anything different from consts.NO_MORE_NAMES or consts.NO_MORE_MACS
         if self.get_name() == consts.NO_MORE_NAMES:
-            self.error('No more names available')  # Will mark as error and check will note it
+            self.error("No more names available")  # Will mark as error and check will note it
             return
         if self.get_unique_id() == consts.NO_MORE_MACS:
-            self.error('No more MACs available')  # Will mark as error and check will note it
+            self.error("No more MACs available")  # Will mark as error and check will note it
             return
         self.remove_duplicates()
 
@@ -619,7 +636,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         This method is called when the service creation is completed
         """
         # By default, get the MAC address if not set already by get_unique_id at start
-        if self._mac == '' and self._vmid != '':
+        if self._mac == "" and self._vmid != "":
             self._mac = self.service().get_mac(self, self._vmid)
 
     def op_back_to_cache_snapshot_create(self) -> None:
@@ -689,7 +706,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         shutdown_stamp = sql_stamp_seconds()
 
         with self.storage.as_dict() as data:
-            data['shutdown'] = shutdown_stamp
+            data["shutdown"] = shutdown_stamp
 
     def op_shutdown_completed(self) -> None:
         """
@@ -763,7 +780,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         Note that can be overrided to do something else
         """
         # If does not have vmid, we can finish right now
-        if self._vmid == '':
+        if self._vmid == "":
             self._set_queue([types.services.Operation.FINISH])  # so we can finish right now
 
     def op_custom(self, operation: types.services.Operation) -> None:
@@ -839,29 +856,29 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         Else, will fall back to stop
         """
         with self.storage.as_dict() as data:
-            shutdown_start = data.get('shutdown', -1)
-        logger.debug('Shutdown start: %s', shutdown_start)
+            shutdown_start = data.get("shutdown", -1)
+        logger.debug("Shutdown start: %s", shutdown_start)
 
         if shutdown_start < 0:  # Was already stopped
             # Machine is already stop
-            logger.debug('Machine WAS stopped')
+            logger.debug("Machine WAS stopped")
             return types.states.TaskState.FINISHED
 
-        logger.debug('Checking State')
+        logger.debug("Checking State")
         # Check if machine is already stopped  (As soon as it is not running, we will consider it stopped)
         if self.service().is_running(self, self._vmid) is False:
             return types.states.TaskState.FINISHED
 
-        logger.debug('State is running')
+        logger.debug("State is running")
         if sql_stamp_seconds() - shutdown_start > consts.os.MAX_GUEST_SHUTDOWN_WAIT:
-            logger.debug('Time is consumed, falling back to stop on vmid %s', self._vmid)
+            logger.debug("Time is consumed, falling back to stop on vmid %s", self._vmid)
             self.do_log(
                 types.log.LogLevel.ERROR,
-                f'Could not shutdown machine using soft power off in time ({consts.os.MAX_GUEST_SHUTDOWN_WAIT} seconds). Powering off.',
+                f"Could not shutdown machine using soft power off in time ({consts.os.MAX_GUEST_SHUTDOWN_WAIT} seconds). Powering off.",
             )
             # Not stopped by guest in time, but must be stopped normally
             with self.storage.as_dict() as data:
-                data['shutdown'] = -1
+                data["shutdown"] = -1
             # If stop is in queue, mark this as finished, else, add it to queue just after first (our) operation
             if types.services.Operation.STOP not in self._queue:
                 # After current operation, add stop
@@ -957,10 +974,10 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
     def _debug(self, txt: str) -> None:
         # f'Queue at {txt} for {self._name}: {", ".join([DynamicUserService._op2str(op) for op in self._queue])}, mac:{self._mac}, vmid:{self._vmid}'
         logger.debug(
-            'Queue at %s for %s: %s, mac:%s, vmid:%s',
+            "Queue at %s for %s: %s, mac:%s, vmid:%s",
             txt,
             self._name,
-            ', '.join([DynamicUserService._op2str(op) for op in self._queue]),
+            ", ".join([DynamicUserService._op2str(op) for op in self._queue]),
             self._mac,
             self._vmid,
         )

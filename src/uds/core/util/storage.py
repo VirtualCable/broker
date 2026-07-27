@@ -29,22 +29,25 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import contextlib
-import pickle  # nosec: This is e controled pickle use
+
 import base64
-import hashlib
 import codecs
+import collections.abc
+import contextlib
+import hashlib
+import logging
+import pickle  # nosec: This is e controled pickle use
 import pickletools
 import typing
-import collections.abc
-import logging
 
-from django.db import transaction, models
+from django.db import models
+from django.db import transaction
+
 from uds.models.storage import Storage as DBStorage
 
 logger = logging.getLogger(__name__)
 
-MARK = '_mgb_'
+MARK = "_mgb_"
 
 
 def _old_calculate_key(owner: bytes, key: bytes) -> str:
@@ -72,13 +75,13 @@ def _decode_value(dbk: str, value: str | None) -> tuple[str, typing.Any]:
             if isinstance(v, tuple) and v[0] == MARK:
                 return typing.cast(tuple[str, typing.Any], v[1:])
             # Fix value so it contains also the "key" (in this case, the original key is lost, we have only the hash value...)
-            return ('#' + dbk, typing.cast(typing.Any, v))
+            return ("#" + dbk, typing.cast(typing.Any, v))
         except Exception:
             try:
-                return ('#' + dbk, base64.b64decode(value.encode()).decode())
+                return ("#" + dbk, base64.b64decode(value.encode()).decode())
             except Exception as e:
-                logger.warning('Unknown decodeable value: %s (%s)', value, e)
-    return ('', None)
+                logger.warning("Unknown decodeable value: %s (%s)", value, e)
+    return ("", None)
 
 
 class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
@@ -87,47 +90,56 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
     """
 
     class DBBasedItemsView(collections.abc.ItemsView[str, typing.Any]):
-        _storage: 'StorageAsDict'
+        _storage: "StorageAsDict"
 
-        def __init__(self, storage: 'StorageAsDict'):
+        def __init__(self, storage: "StorageAsDict"):
             self._storage = storage
 
+        @typing.override
         def __contains__(self, key: object) -> bool:
             return key in self._storage
 
+        @typing.override
         def __iter__(self) -> collections.abc.Iterator[tuple[str, typing.Any]]:
             return self._storage.items_iter()
 
+        @typing.override
         def __len__(self) -> int:
             return len(self._storage)
 
     class DBBasedKeysView(collections.abc.KeysView[str]):
-        _storage: 'StorageAsDict'
+        _storage: "StorageAsDict"
 
-        def __init__(self, storage: 'StorageAsDict'):
+        def __init__(self, storage: "StorageAsDict"):
             self._storage = storage
 
+        @typing.override
         def __contains__(self, key: object) -> bool:
             return key in self._storage
 
+        @typing.override
         def __iter__(self) -> collections.abc.Iterator[str]:
             return self._storage.keys_iter()
 
+        @typing.override
         def __len__(self) -> int:
             return len(self._storage)
 
     class DBBasedValuesView(collections.abc.ValuesView[typing.Any]):
-        _storage: 'StorageAsDict'
+        _storage: "StorageAsDict"
 
-        def __init__(self, storage: 'StorageAsDict'):
+        def __init__(self, storage: "StorageAsDict"):
             self._storage = storage
 
+        @typing.override
         def __contains__(self, value: object) -> bool:
             return value in self._storage.values_iter()
 
+        @typing.override
         def __iter__(self) -> collections.abc.Iterator[typing.Any]:
             return self._storage.values_iter()
 
+        @typing.override
         def __len__(self) -> int:
             return len(self._storage)
 
@@ -150,13 +162,11 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
             compat (bool, optional): if True, keys will be SAVED with old format
                                      (that is, without the key) so it can be read by old api
         """
-        self._group = group or ''
+        self._group = group or ""
         self._owner = owner
         self._atomic = atomic  # Not used right now, maybe removed
 
-    def _db(
-        self, *, skip_locked: bool = False
-    ) -> 'models.QuerySet[DBStorage] | models.Manager[DBStorage]':
+    def _db(self, *, skip_locked: bool = False) -> "models.QuerySet[DBStorage] | models.Manager[DBStorage]":
         if self._atomic:
             if skip_locked:
                 # TODO: add skip_locked (as select_for_update(...) argument) ASAP (mariadb 10.6+)
@@ -165,25 +175,24 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
 
         return DBStorage.objects
 
-    def _filtered(self, *, skip_locked: bool = False) -> 'models.QuerySet[DBStorage]':
-        fltr_params = {'owner': self._owner}
+    def _filtered(self, *, skip_locked: bool = False) -> "models.QuerySet[DBStorage]":
+        fltr_params = {"owner": self._owner}
         if self._group:
-            fltr_params['attr1'] = self._group
-        return typing.cast(
-            'models.QuerySet[DBStorage]', self._db(skip_locked=skip_locked).filter(**fltr_params)
-        )
+            fltr_params["attr1"] = self._group
+        return typing.cast("models.QuerySet[DBStorage]", self._db(skip_locked=skip_locked).filter(**fltr_params))
 
     def _key(self, key: str, old_method: bool = False) -> str:
-        if key[0] == '#':
+        if key[0] == "#":
             # Compat with old db key
             return key[1:]
         if not old_method:
             return _calculate_key(self._owner.encode(), key.encode())
         return _old_calculate_key(self._owner.encode(), key.encode())
 
+    @typing.override
     def __getitem__(self, key: str) -> typing.Any:
         if not isinstance(key, str):  # pyright: ignore reportUnnecessaryIsInstance
-            raise TypeError(f'Key must be str, {type(key)} found')
+            raise TypeError(f"Key must be str, {type(key)} found")
 
         # First, try new key, and, if needed, old key
         # If old key is found, it will be updated to new key
@@ -192,7 +201,7 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
             try:
                 c: DBStorage = self._db().get(pk=db_key)
                 if c.owner != self._owner:  # Maybe a key collision,
-                    logger.error('Key collision detected for key %s', key)
+                    logger.error("Key collision detected for key %s", key)
                     return None
                 _, value = _decode_value(db_key, c.data)
                 if use_old_method:
@@ -204,32 +213,35 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
                 pass
         return None
 
+    @typing.override
     def __setitem__(self, key: str, value: typing.Any) -> None:
         if not isinstance(key, str):  # pyright: ignore reportUnnecessaryIsInstance
-            raise TypeError(f'Key must be str type, {type(key)} found')
+            raise TypeError(f"Key must be str type, {type(key)} found")
 
         dbk = self._key(key)
         data = _encode_value(key, value)
         # ignores return value, we don't care if it was created or updated
-        DBStorage.objects.update_or_create(
-            key=dbk, defaults={'data': data, 'attr1': self._group, 'owner': self._owner}
-        )
+        DBStorage.objects.update_or_create(key=dbk, defaults={"data": data, "attr1": self._group, "owner": self._owner})
 
+    @typing.override
     def __delitem__(self, key: str) -> None:
         dbk = self._key(key)
         DBStorage.objects.filter(key=dbk).delete()
 
+    @typing.override
     def __iter__(self) -> collections.abc.Iterator[str]:
         """
         Iterates through keys
         """
         return iter(_decode_value(i.key, i.data)[0] for i in self._filtered())
 
+    @typing.override
     def __contains__(self, key: object) -> bool:
         if isinstance(key, str):
             return self._filtered().filter(key=self._key(key)).exists()
         return False
 
+    @typing.override
     def __len__(self) -> int:
         return self._filtered().count()
 
@@ -246,32 +258,37 @@ class StorageAsDict(collections.abc.MutableMapping[str, typing.Any]):
         return iter(_decode_value(i.key, i.data) for i in self._filtered(skip_locked=True))
 
     # Optimized methods, avoid re-reading from DB
+    @typing.override
     def items(self) -> collections.abc.ItemsView[str, typing.Any]:
         return StorageAsDict.DBBasedItemsView(self)
 
+    @typing.override
     def keys(self) -> collections.abc.KeysView[str]:
         return StorageAsDict.DBBasedKeysView(self)
 
+    @typing.override
     def values(self) -> collections.abc.ValuesView[typing.Any]:
         return StorageAsDict.DBBasedValuesView(self)
 
+    @typing.override
     def get(self, key: str, default: typing.Any = None) -> typing.Any:
         return self[key] or default
 
     def delete(self, key: str) -> None:
         self.__delitem__(key)  # pylint: disable=unnecessary-dunder-call
 
+    @typing.override
     def clear(self) -> None:
         self._filtered().delete()  # Removes all keys
 
     # Custom utility methods
     @property
     def group(self) -> str:
-        return self._group or ''
+        return self._group or ""
 
     @group.setter
     def group(self, value: str) -> None:
-        self._group = value or ''
+        self._group = value or ""
 
 
 class Storage:
@@ -280,18 +297,16 @@ class Storage:
 
     def __init__(self, owner: str | bytes):
         if isinstance(owner, bytes):
-            self._owner = owner.decode('utf-8')
+            self._owner = owner.decode("utf-8")
             self._bowner = owner
-        elif isinstance(
-            owner, str
-        ):  # pyright: ignore reportUnnecessaryIsInstance  Wants to ensure that it is a string no runtime error
+        elif isinstance(owner, str):  # pyright: ignore reportUnnecessaryIsInstance  Wants to ensure that it is a string no runtime error
             self._owner = owner
-            self._bowner = owner.encode('utf8')
+            self._bowner = owner.encode("utf8")
         else:
-            raise TypeError(f'Owner must be str or bytes, {type(owner)} found')
+            raise TypeError(f"Owner must be str or bytes, {type(owner)} found")
 
     def get_key(self, key: str | bytes, old_method: bool = False) -> str:
-        bkey: bytes = key.encode('utf8') if isinstance(key, str) else key
+        bkey: bytes = key.encode("utf8") if isinstance(key, str) else key
         if not old_method:
             return _calculate_key(self._bowner, bkey)
         return _old_calculate_key(self._bowner, bkey)
@@ -309,9 +324,9 @@ class Storage:
 
         key = self.get_key(skey)
         if isinstance(data, str):
-            data = data.encode('utf-8')
+            data = data.encode("utf-8")
         data_encoded = base64.b64encode(data).decode()
-        attr1 = attr1 or ''
+        attr1 = attr1 or ""
         try:
             DBStorage.objects.create(owner=self._owner, key=key, data=data_encoded, attr1=attr1)
         except Exception:
@@ -348,9 +363,7 @@ class Storage:
     ) -> None:
         self.save_to_db(skey, data, attr1)
 
-    def read_from_db(
-        self, skey: str | bytes, from_pickle: bool = False
-    ) -> str | bytes | None:
+    def read_from_db(self, skey: str | bytes, from_pickle: bool = False) -> str | bytes | None:
         for use_old_method in (False, True):
             try:
                 key = self.get_key(skey, old_method=use_old_method)
@@ -360,15 +373,13 @@ class Storage:
                 if use_old_method:
                     # Remove and re-create with new key
                     c.delete()
-                    DBStorage.objects.create(
-                        key=self.get_key(skey), owner=self._owner, data=c.data, attr1=c.attr1
-                    )
+                    DBStorage.objects.create(key=self.get_key(skey), owner=self._owner, data=c.data, attr1=c.attr1)
 
                 if from_pickle:
                     return val
 
                 try:
-                    return val.decode('utf-8')  # Tries to encode in utf-8
+                    return val.decode("utf-8")  # Tries to encode in utf-8
                 except Exception:
                     return val
             except DBStorage.DoesNotExist:
@@ -381,13 +392,13 @@ class Storage:
     def read_string(self, skey: str | bytes) -> str | None:
         data = self.read(skey)
         if isinstance(data, bytes):
-            return data.decode('utf-8')
+            return data.decode("utf-8")
         return data
 
     def read_bytes(self, skey: str | bytes) -> bytes | None:
         data = self.read(skey)
         if isinstance(data, str):
-            return data.encode('utf-8')
+            return data.encode("utf-8")
         return data
 
     def read_pickled(self, skey: str | bytes) -> typing.Any:
@@ -402,14 +413,12 @@ class Storage:
             if for_update:
                 query = query.select_for_update()
             return pickle.loads(  # nosec: This is e controled pickle loading
-                codecs.decode(query[0].data.encode(), 'base64')
+                codecs.decode(query[0].data.encode(), "base64")
             )  # @UndefinedVariable
         except Exception:
             return None
 
-    def remove(
-        self, skey: collections.abc.Iterable[str | bytes] | str | bytes
-    ) -> None:
+    def remove(self, skey: collections.abc.Iterable[str | bytes] | str | bytes) -> None:
         keys: collections.abc.Iterable[str | bytes]
         if isinstance(skey, (str, bytes)):
             keys = [skey]
@@ -427,27 +436,25 @@ class Storage:
         self,
         group: str | None = None,
         atomic: bool = False,
-    ) ->collections.abc.Generator[StorageAsDict]:
+    ) -> collections.abc.Generator[StorageAsDict]:
         if atomic:
             with transaction.atomic():
                 yield StorageAsDict(self._owner, group=group, atomic=True)
         else:
             yield StorageAsDict(self._owner, group=group, atomic=False)
 
-    def search_by_attr1(
-        self, attr1: collections.abc.Iterable[str] | str
-    ) -> collections.abc.Iterable[bytes]:
+    def search_by_attr1(self, attr1: collections.abc.Iterable[str] | str) -> collections.abc.Iterable[bytes]:
         if isinstance(attr1, str):
             query = DBStorage.objects.filter(owner=self._owner, attr1=attr1)  # @UndefinedVariable
         else:
             query = DBStorage.objects.filter(owner=self._owner, attr1__in=attr1)  # @UndefinedVariable
 
         for v in query:
-            yield codecs.decode(v.data.encode(), 'base64')
+            yield codecs.decode(v.data.encode(), "base64")
 
     def filter(
         self, attr1: str | None = None, for_update: bool = False
-    ) -> collections.abc.Iterable[tuple[str, bytes, 'str|None']]:
+    ) -> collections.abc.Iterable[tuple[str, bytes, "str|None"]]:
         if attr1 is None:
             query = DBStorage.objects.filter(owner=self._owner)  # @UndefinedVariable
         else:
@@ -457,11 +464,11 @@ class Storage:
             query = query.select_for_update()
 
         for v in query:  # @UndefinedVariable
-            yield (v.key, codecs.decode(v.data.encode(), 'base64'), v.attr1)
+            yield (v.key, codecs.decode(v.data.encode(), "base64"), v.attr1)
 
     def filter_unpickle_by_attr(
         self, attr1: str | None = None, for_update: bool = False
-    ) -> collections.abc.Iterable[tuple[str, typing.Any, 'str|None']]:
+    ) -> collections.abc.Iterable[tuple[str, typing.Any, "str|None"]]:
         for v in self.filter(attr1, for_update):
             yield (v[0], pickle.loads(v[1]), v[2])  # nosec: secure pickle load
 

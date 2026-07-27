@@ -28,19 +28,22 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
-import time
 import logging
+import time
 import typing
 
+from uds.core import consts
+from uds.core import types
 from uds.core.managers.notifications import NotificationsManager
 from uds.core.managers.task import BaseThread
-
-from uds.models import Notifier, Notification
-from uds.core import consts, types
 from uds.core.util.model import sql_now
-from .provider import Notifier as NotificationProviderModule
+from uds.models import Notification
+from uds.models import Notifier
+
 from .config import DO_NOT_REPEAT
+from .provider import Notifier as NotificationProviderModule
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +52,12 @@ logger = logging.getLogger(__name__)
 class MessageProcessorThread(BaseThread):
     _keep_running: bool = True
 
-    _cached_providers: typing.Optional[list[tuple[int, NotificationProviderModule]]]
+    _cached_providers: list[tuple[int, NotificationProviderModule]] | None
     _cached_stamp: float
 
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'MessageProcessorThread'
+        self.name = "MessageProcessorThread"
         self._cached_providers = None
         self._cached_stamp = 0.0
 
@@ -62,26 +65,37 @@ class MessageProcessorThread(BaseThread):
     def providers(self) -> list[tuple[int, NotificationProviderModule]]:
         # If _cached_providers is invalid or _cached_time is older than CACHE_TIMEOUT,
         # we need to refresh it
-        if (
-            self._cached_providers is None
-            or time.time() - self._cached_stamp > consts.cache.SHORT_CACHE_TIMEOUT
-        ):
-            self._cached_providers = [
-                (p.level, p.get_instance()) for p in Notifier.objects.filter(enabled=True)
-            ]
+        if self._cached_providers is None or time.time() - self._cached_stamp > consts.cache.SHORT_CACHE_TIMEOUT:
+            self._cached_providers = [(p.level, p.get_instance()) for p in Notifier.objects.filter(enabled=True)]
             self._cached_stamp = time.time()
         return self._cached_providers
 
+    @typing.override
     def run(self) -> None:
         while NotificationsManager.manager().ensure_local_db_exists() is False:
-            logger.info('Waiting for local notifications database to be ready...')
+            logger.info("Waiting for local notifications database to be ready...")
             time.sleep(1)
+
+        # Get a "look" at the DB, and log the notifications number awaiting
+        # to be processed
+        def notify_awaiting() -> None:
+            waiting_notifications = Notification.get_persistent_queryset().count()
+            if waiting_notifications > 1024:
+                fnc = logger.error
+            elif waiting_notifications > 256:
+                fnc = logger.warning
+            else:
+                fnc = logger.info
+            fnc("Notifications awaiting processing: %d", waiting_notifications)
+
+        notify_awaiting()
 
         while self._keep_running:
             # Locate all notifications from "persistent" and try to process them
             # If no notification can be fully resolved, it will be kept in the database
             not_before = sql_now() - datetime.timedelta(seconds=DO_NOT_REPEAT.as_int())
-            for n in Notification.get_persistent_queryset().all():
+            # Limit to 128 notifications per iteration, to avoid long processing times and memory issues. If there are more, they will be processed in the next iteration.
+            for n in Notification.get_persistent_queryset().all()[:128]:
                 # If there are any other notification simmilar to this on default db, skip it
                 # Simmilar means that group, identificator and message are already been logged less than DO_NOT_REPEAT seconds ago
                 # from last time
@@ -95,19 +109,17 @@ class MessageProcessorThread(BaseThread):
                     n.delete_persistent()
                     continue
                 # Try to insert into Main DB
-                notify = (
-                    not n.processed
-                )  # If it was already processed, the only thing left to do is to add to main DB and remove it from persistent
+                notify = not n.processed  # If it was already processed, the only thing left to do is to add to main DB and remove it from persistent
                 pk = n.pk
                 n.processed = True
                 try:
                     # Trick to save it to main DB
                     n.pk = None
-                    n.save(using='default')
+                    n.save(using="default")
                     # Delete from Persistent DB, first restore PK
                     n.pk = pk
                     n.delete_persistent()
-                    logger.debug('Saved notification %s to main DB', n)
+                    logger.debug("Saved notification %s to main DB", n)
                 except Exception:
                     # try notificators, but keep on db with error
                     # Restore pk, and save locally so we can try again
@@ -115,7 +127,7 @@ class MessageProcessorThread(BaseThread):
                     try:
                         Notification.save_persistent(n)
                     except Exception:
-                        logger.error('Error saving notification %s to persistent DB', n)
+                        logger.error("Error saving notification %s to persistent DB", n)
                         continue
                     # Process notificators, but this is kept on db with processed flat as True
                     # logger.warning(
@@ -137,7 +149,7 @@ class MessageProcessorThread(BaseThread):
                             )
                         except Exception:
                             logger.error(
-                                'Error sending notification %s to %s',
+                                "Error sending notification %s to %s",
                                 n,
                                 p.type_name,
                                 exc_info=True,
@@ -150,5 +162,6 @@ class MessageProcessorThread(BaseThread):
                     break
                 time.sleep(1)
 
+    @typing.override
     def request_stop(self) -> None:
         self._keep_running = False

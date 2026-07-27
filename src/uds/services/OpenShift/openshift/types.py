@@ -1,8 +1,8 @@
 import collections.abc
 import dataclasses
 import enum
-import typing
 import logging
+import typing
 
 from . import exceptions
 
@@ -15,40 +15,40 @@ class State(enum.StrEnum):
     """
 
     # Phases
-    PENDING = 'Pending'
-    SCHEDULING = 'Scheduling'
-    SCHEDULED = 'Scheduled'
-    RUNNING = 'Running'
-    SUCCEEDED = 'Succeeded'
-    FAILED = 'Failed'
-    UNKNOWN = 'Unknown'
+    PENDING = "Pending"
+    SCHEDULING = "Scheduling"
+    SCHEDULED = "Scheduled"
+    RUNNING = "Running"
+    SUCCEEDED = "Succeeded"
+    FAILED = "Failed"
+    UNKNOWN = "Unknown"
 
     # Statuses (printableStatus)
-    STARTING = 'Starting'
-    STOPPED = 'Stopped'
-    STOPPING = 'Stopping'
-    MIGRATING = 'Migrating'
-    PAUSED = 'Paused'
-    SUSPENDED = 'Suspended'
-    RESTORING = 'Restoring'
-    CLONING = 'Cloning'
-    ERROR = 'Error'
-    CRASH_LOOP_BACK_OFF = 'CrashLoopBackOff'
-    WAITING_FOR_VMI = 'WaitingForVMI'
-    WAITING_FOR_VOLUME_BIND = 'WaitingForVolumeBind'
-    WAITING_FOR_NETWORK = 'WaitingForNetwork'
-    WAITING_FOR_LAUNCHER_POD = 'WaitingForLauncherPod'
-    WAITING_FOR_IMAGE = 'WaitingForImage'
-    WAITING_FOR_DATA_VOLUME = 'WaitingForDataVolume'
-    WAITING_FOR_USER_DATA = 'WaitingForUserData'
-    WAITING_FOR_CLOUD_INIT = 'WaitingForCloudInit'
-    WAITING_FOR_GUEST_AGENT = 'WaitingForGuestAgent'
-    DELETING = 'Deleting'
-    TERMINATING = 'Terminating'
+    STARTING = "Starting"
+    STOPPED = "Stopped"
+    STOPPING = "Stopping"
+    MIGRATING = "Migrating"
+    PAUSED = "Paused"
+    SUSPENDED = "Suspended"
+    RESTORING = "Restoring"
+    CLONING = "Cloning"
+    ERROR = "Error"
+    CRASH_LOOP_BACK_OFF = "CrashLoopBackOff"
+    WAITING_FOR_VMI = "WaitingForVMI"
+    WAITING_FOR_VOLUME_BIND = "WaitingForVolumeBind"
+    WAITING_FOR_NETWORK = "WaitingForNetwork"
+    WAITING_FOR_LAUNCHER_POD = "WaitingForLauncherPod"
+    WAITING_FOR_IMAGE = "WaitingForImage"
+    WAITING_FOR_DATA_VOLUME = "WaitingForDataVolume"
+    WAITING_FOR_USER_DATA = "WaitingForUserData"
+    WAITING_FOR_CLOUD_INIT = "WaitingForCloudInit"
+    WAITING_FOR_GUEST_AGENT = "WaitingForGuestAgent"
+    DELETING = "Deleting"
+    TERMINATING = "Terminating"
     # Custom/legacy
-    NOT_USABLE = 'notUsable'
-    DENIED = 'Denied'
-    WARNING = 'Warning'
+    NOT_USABLE = "notUsable"
+    DENIED = "Denied"
+    WARNING = "Warning"
 
     # Not usable, own state
     # We do not support multinode instances, and will not support them because it's a nonsense for UDS
@@ -134,14 +134,14 @@ class State(enum.StrEnum):
         return self not in (State.NOT_USABLE, State.UNKNOWN)
 
     @staticmethod
-    def from_string(state: str) -> 'State':
+    def from_string(state: str) -> "State":
         """
         Convert a string to a OpenshiftState.
         """
         try:
             return State(state)
         except ValueError:
-            logger.warning(f'Unknown instance state: {state}')
+            logger.warning(f"Unknown instance state: {state}")
             return State.UNKNOWN
 
 
@@ -152,16 +152,16 @@ class Interface:
     ip_address: str
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'Interface':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "Interface":
         try:
             return Interface(
-                name=dictionary.get('interfaceName', ''),
-                mac_address=dictionary.get('mac', ''),
-                ip_address=dictionary.get('ipAddress', ''),
+                name=dictionary.get("interfaceName", ""),
+                mac_address=dictionary.get("mac", ""),
+                ip_address=dictionary.get("ipAddress", ""),
             )
         except Exception as e:
-            logger.error(f'Error creating Interface from dict: {e}')
-            raise exceptions.OpenshiftError('Invalid Interface data') from e
+            logger.error(f"Error creating Interface from dict: {e}")
+            raise exceptions.OpenshiftError("Invalid Interface data") from e
 
 
 @dataclasses.dataclass
@@ -170,21 +170,21 @@ class VolumeTemplate:
     storage: str
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'VolumeTemplate':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "VolumeTemplate":
         try:
-            meta = dictionary.get('metadata', {})
-            spec = dictionary.get('spec', {})
-            storage = spec.get('storage', {})
-            resources = storage.get('resources', {})
-            requests = resources.get('requests', {})
-            return VolumeTemplate(name=meta.get('name', ''), storage=requests.get('storage', ''))
+            meta = dictionary.get("metadata", {})
+            spec = dictionary.get("spec", {})
+            storage = spec.get("storage", {})
+            resources = storage.get("resources", {})
+            requests = resources.get("requests", {})
+            return VolumeTemplate(name=meta.get("name", ""), storage=requests.get("storage", ""))
         except Exception as e:
-            logger.error(f'Error creating VolumeTemplate from dict: {e}')
-            raise exceptions.OpenshiftError('Invalid VolumeTemplate data') from e
+            logger.error(f"Error creating VolumeTemplate from dict: {e}")
+            raise exceptions.OpenshiftError("Invalid VolumeTemplate data") from e
 
     @staticmethod
-    def none() -> 'VolumeTemplate':
-        return VolumeTemplate(name='', storage='')
+    def none() -> "VolumeTemplate":
+        return VolumeTemplate(name="", storage="")
 
 
 @dataclasses.dataclass
@@ -193,15 +193,15 @@ class DeviceDisk:
     boot_order: int
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'DeviceDisk':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "DeviceDisk":
         try:
             return DeviceDisk(
-                name=dictionary.get('name', ''),
-                boot_order=dictionary.get('bootOrder', 0),
+                name=dictionary.get("name", ""),
+                boot_order=dictionary.get("bootOrder", 0),
             )
         except Exception as e:
-            logger.error(f'Error creating DeviceDisk from dict: {e}')
-            raise exceptions.OpenshiftError('Invalid DeviceDisk data') from e
+            logger.error(f"Error creating DeviceDisk from dict: {e}")
+            raise exceptions.OpenshiftError("Invalid DeviceDisk data") from e
 
 
 @dataclasses.dataclass
@@ -210,16 +210,16 @@ class Volume:
     data_volume: str
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'Volume':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "Volume":
         try:
-            dv = dictionary.get('dataVolume', {})
+            dv = dictionary.get("dataVolume", {})
             return Volume(
-                name=dictionary.get('name', ''),
-                data_volume=dv.get('name', ''),
+                name=dictionary.get("name", ""),
+                data_volume=dv.get("name", ""),
             )
         except Exception as e:
-            logger.error(f'Error creating Volume from dict: {e}')
-            raise exceptions.OpenshiftError('Invalid Volume data') from e
+            logger.error(f"Error creating Volume from dict: {e}")
+            raise exceptions.OpenshiftError("Invalid Volume data") from e
 
 
 @dataclasses.dataclass
@@ -233,9 +233,9 @@ class VM:
     volumes: list[Volume]
     # phase: State = State.UNKNOWN  # Use InstanceStatus for phase
 
-    def validate(self) -> 'VM':
+    def validate(self) -> "VM":
         if not self.is_usable():
-            raise exceptions.OpenshiftError(f'VM {self.name} is not usable (status: {self.status})')
+            raise exceptions.OpenshiftError(f"VM {self.name} is not usable (status: {self.status})")
 
         return self
 
@@ -246,22 +246,22 @@ class VM:
         return self.status.is_running()
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'VM':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "VM":
         try:
-            metadata = dictionary.get('metadata', {})
-            status = dictionary.get('status', {}).get('printableStatus', 'UNKNOWN')
-            spec: dict[str, typing.Any] = dictionary.get('spec', {})
-            template = spec.get('template', {}).get('spec', {})
+            metadata = dictionary.get("metadata", {})
+            status = dictionary.get("status", {}).get("printableStatus", "UNKNOWN")
+            spec: dict[str, typing.Any] = dictionary.get("spec", {})
+            template = spec.get("template", {}).get("spec", {})
             return VM(
-                name=metadata.get('name', ''),
-                namespace=metadata.get('namespace', ''),
-                uid=metadata.get('uid', ''),
+                name=metadata.get("name", ""),
+                namespace=metadata.get("namespace", ""),
+                uid=metadata.get("uid", ""),
                 status=State.from_string(status),
-                volume_template=VolumeTemplate.from_dict(spec.get('dataVolumeTemplates', [{}])[0]),
-                disks=[DeviceDisk.from_dict(disk) for disk in template.get('devices', {}).get('disks', [])],
-                volumes=[Volume.from_dict(vol) for vol in template.get('volumes', [])],
+                volume_template=VolumeTemplate.from_dict(spec.get("dataVolumeTemplates", [{}])[0]),
+                disks=[DeviceDisk.from_dict(disk) for disk in template.get("devices", {}).get("disks", [])],
+                volumes=[Volume.from_dict(vol) for vol in template.get("volumes", [])],
                 # phase=State.from_string(phase_str) if phase_str else State.UNKNOWN,
             )
         except Exception as e:
-            logger.error(f'Error creating Definition from dict: {e}')
-            raise exceptions.OpenshiftError('Invalid Definition data') from e
+            logger.error(f"Error creating Definition from dict: {e}")
+            raise exceptions.OpenshiftError("Invalid Definition data") from e

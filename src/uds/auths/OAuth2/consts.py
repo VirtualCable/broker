@@ -25,10 +25,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing
 import string
+import typing
 
 # Alphabet used for PKCE
-PKCE_ALPHABET: typing.Final[str] = string.ascii_letters + string.digits + '-._~'
+PKCE_ALPHABET: typing.Final[str] = string.ascii_letters + string.digits + "-._~"
 # Length of the State parameter
 STATE_LENGTH: typing.Final[int] = 24

@@ -29,13 +29,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
+
 import logging
-
-
-from ...utils.test import UDSTestCase
+import typing
 
 from uds.core.util import ensure
+
+from ...utils.test import UDSTestCase
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +46,11 @@ class EnsureTest(UDSTestCase):
         self.assertEqual(ensure.as_list([1, 2, 3]), [1, 2, 3])
         self.assertEqual(ensure.as_list((1, 2, 3)), [1, 2, 3])
         self.assertEqual(ensure.as_list(1), [1])
-        self.assertEqual(ensure.as_list('111'), ['111'])
+        self.assertEqual(ensure.as_list("111"), ["111"])
         self.assertEqual(ensure.as_list(None), [])
         self.assertEqual(ensure.as_list(set()), [])
         self.assertEqual(ensure.as_list({}), [{}])  # Dict into list of dict
         self.assertEqual(ensure.as_list({1, 2, 3}), [1, 2, 3])
-
 
     def test_ensure_iterable(self) -> None:
         self.assertEqual(list(ensure.as_iterable([])), [])
@@ -62,12 +61,11 @@ class EnsureTest(UDSTestCase):
         self.assertIsInstance(ensure.as_iterable((1, 2, 3)), typing.Iterator)
         self.assertEqual(list(ensure.as_iterable(1)), [1])
         self.assertIsInstance(ensure.as_iterable(1), typing.Iterator)
-        self.assertEqual(list(ensure.as_iterable('111')), ['111'])
-        self.assertIsInstance(ensure.as_iterable('111'), typing.Iterator)
+        self.assertEqual(list(ensure.as_iterable("111")), ["111"])
+        self.assertIsInstance(ensure.as_iterable("111"), typing.Iterator)
         self.assertEqual(list(ensure.as_iterable(None)), [])
         self.assertIsInstance(ensure.as_iterable(None), typing.Iterator)
         self.assertEqual(list(ensure.as_iterable({})), [])
         self.assertIsInstance(ensure.as_iterable({}), typing.Iterator)
         self.assertEqual(list(ensure.as_iterable({1, 2, 3})), [1, 2, 3])
         self.assertIsInstance(ensure.as_iterable({1, 2, 3}), typing.Iterator)
-

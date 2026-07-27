@@ -29,5 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .fields import StockField
+
+# Make this visible to loaders
+
+from .fields import StockField as StockField

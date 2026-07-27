@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from django.http import HttpRequest
@@ -42,10 +43,10 @@ class ExtendedHttpRequest(HttpRequest):
     ip: str
     ip_version: int
     ip_proxy: str
-    os: 'types.os.DetectedOsInfo'
-    user: typing.Optional['User'] # type: ignore  # Overrides the user attribute from HttpRequest
+    os: "types.os.DetectedOsInfo"
+    user: typing.Optional["User"]  # type: ignore  # Overrides the user attribute from HttpRequest
     authorized: bool
 
 
 class ExtendedHttpRequestWithUser(ExtendedHttpRequest):
-    user: 'User' # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
+    user: "User"  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]

@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -46,48 +47,48 @@ class HTML5RDSTransport(transports.Transport):
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
     """
 
-    type_name = 'RDS'
-    type_type = 'HTML5RDSTransport'
+    type_name = "RDS"
+    type_type = "HTML5RDSTransport"
 
-    guacamoleServer = gui.TextField(label='',default='https://')
-    useGlyptodonTunnel = gui.CheckBoxField(label='')
-    useEmptyCreds = gui.CheckBoxField(label='')
-    withoutDomain = gui.CheckBoxField(label='')
-    fixedDomain = gui.TextField(label='')
-    wallpaper = gui.CheckBoxField(label='')
-    desktopComp = gui.CheckBoxField(label='')
-    smooth = gui.CheckBoxField(label='')
-    enableAudio = gui.CheckBoxField(label='',default=True)
-    enableAudioInput = gui.CheckBoxField(label='')
-    enablePrinting = gui.CheckBoxField(label='')
-    enableFileSharing = gui.ChoiceField(label='',default='false')
-    enableClipboard = gui.ChoiceField(label='',default='enabled')
-    serverLayout = gui.ChoiceField(label='',default='-')
-    ticketValidity = gui.NumericField(label='',default=60)
+    guacamoleServer = gui.TextField(label="", default="https://")
+    useGlyptodonTunnel = gui.CheckBoxField(label="")
+    useEmptyCreds = gui.CheckBoxField(label="")
+    withoutDomain = gui.CheckBoxField(label="")
+    fixedDomain = gui.TextField(label="")
+    wallpaper = gui.CheckBoxField(label="")
+    desktopComp = gui.CheckBoxField(label="")
+    smooth = gui.CheckBoxField(label="")
+    enableAudio = gui.CheckBoxField(label="", default=True)
+    enableAudioInput = gui.CheckBoxField(label="")
+    enablePrinting = gui.CheckBoxField(label="")
+    enableFileSharing = gui.ChoiceField(label="", default="false")
+    enableClipboard = gui.ChoiceField(label="", default="enabled")
+    serverLayout = gui.ChoiceField(label="", default="-")
+    ticketValidity = gui.NumericField(label="", default=60)
 
-    forceNewWindow = gui.ChoiceField(label='',default='false')
-    security = gui.ChoiceField(label='',default='any')
-    rdpPort = gui.NumericField(label='',default=3389)
+    forceNewWindow = gui.ChoiceField(label="", default="false")
+    security = gui.ChoiceField(label="", default="any")
+    rdpPort = gui.NumericField(label="", default=3389)
 
-    customGEPath = gui.TextField(label='',default='/')
+    customGEPath = gui.TextField(label="", default="/")
 
     # Load balancing info
-    loadBalancingInfo = gui.TextField(label='',default='')
+    loadBalancingInfo = gui.TextField(label="", default="")
 
-    gatewayHostname = gui.TextField(label='',default='')
-    gatewayPort = gui.NumericField(label='',default=443)
-    gatewayUsername = gui.TextField(label='',default='')
-    gatewayPassword = gui.PasswordField(label='',default='')
-    gatewayDomain = gui.TextField(label='',default='')
+    gatewayHostname = gui.TextField(label="", default="")
+    gatewayPort = gui.NumericField(label="", default=443)
+    gatewayUsername = gui.TextField(label="", default="")
+    gatewayPassword = gui.PasswordField(label="", default="")
+    gatewayDomain = gui.TextField(label="", default="")
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, HTML5RDSTransport, 'guacamoleServer', is_html_server=True)
+    _migrator.tunnel_transport(apps, schema_editor, HTML5RDSTransport, "guacamoleServer", is_html_server=True)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, HTML5RDSTransport, 'guacamoleServer', is_html_server=True)
+    _migrator.tunnel_transport_back(apps, schema_editor, HTML5RDSTransport, "guacamoleServer", is_html_server=True)

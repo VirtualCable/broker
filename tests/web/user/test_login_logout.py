@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import random
 import typing
 
@@ -36,8 +37,8 @@ from django.urls import reverse
 from uds import models
 from uds.core.util.config import GlobalConfig
 
-from ...utils.web import test
 from ...fixtures import authenticators as fixtures_authenticators
+from ...utils.web import test
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
@@ -48,12 +49,22 @@ class WebLoginLogoutTest(test.WEBTestCase):
     Test WEB login and logout
     """
 
-    def assertInvalidLogin(self, response: 'HttpResponse') -> None:
+    def assertInvalidLogin(self, response: "HttpResponse") -> None:
         # Returns login page with a message on uds.js
-        self.assertContains(response, '<svg', status_code=200)
+        self.assertContains(response, "<svg", status_code=200)
         # Fetch uds.js
-        response = typing.cast('HttpResponse', self.client.get('/uds/utility/uds.js'))
+        response = typing.cast("HttpResponse", self.client.get("/uds/utility/uds.js"))
         self.assertContains(response, '"errors": ["Access denied"]', status_code=200)
+
+    def setUp(self) -> None:
+        # These tests assert absolute counts on ``models.Log.objects.count()``
+        # (they enumerate log entries emitted by the login/logout flow itself).
+        # Under pytest-xdist, sibling tests in other modules can land on the
+        # same worker and pre-populate the log table, which would make the
+        # absolute counts non-deterministic. Wipe the table before each test
+        # so the assertions are self-contained.
+        super().setUp()
+        models.Log.objects.all().delete()
 
     def test_login_logout_success(self) -> None:
         """
@@ -61,12 +72,8 @@ class WebLoginLogoutTest(test.WEBTestCase):
         """
         auth = fixtures_authenticators.create_db_authenticator()
         # Create some ramdom users
-        admins = fixtures_authenticators.create_db_users(
-            auth, number_of_users=8, is_admin=True
-        )
-        stafs = fixtures_authenticators.create_db_users(
-            auth, number_of_users=8, is_staff=True
-        )
+        admins = fixtures_authenticators.create_db_users(auth, number_of_users=8, is_admin=True)
+        stafs = fixtures_authenticators.create_db_users(auth, number_of_users=8, is_staff=True)
         users = fixtures_authenticators.create_db_users(auth, number_of_users=8)
 
         # Create some groups
@@ -85,8 +92,8 @@ class WebLoginLogoutTest(test.WEBTestCase):
         # All users, admin and staff must be able to login
         root = GlobalConfig.SUPER_USER_LOGIN.get(True)
         # Ensure web login for super user is enabled
-        rootpass = 'testRootPasword'
-        GlobalConfig.SUPER_USER_PASS.set(rootpass)       
+        rootpass = "testRootPasword"
+        GlobalConfig.SUPER_USER_PASS.set(rootpass)
         # Ensure web login for super user is enabled
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         users_pass = [(user.name, user.name) for user in users + admins + stafs]
@@ -94,8 +101,8 @@ class WebLoginLogoutTest(test.WEBTestCase):
         for num, up in enumerate(users_pass, start=1):
             self.do_login(up[0], up[1], auth.uuid)
             # Now invoke logout
-            response = typing.cast('HttpResponse', self.client.get('/uds/page/logout'))
-            self.assertRedirects(response, reverse('page.login'), status_code=302)
+            response = typing.cast("HttpResponse", self.client.get("/uds/page/logout"))
+            self.assertRedirects(response, reverse("page.login"), status_code=302)
             # Ensures a couple of logs are created for every operation
             # Except for root, that has no user associated on db
             if up[0] is not root and up[1] is not rootpass:  # root user is last one
@@ -109,11 +116,11 @@ class WebLoginLogoutTest(test.WEBTestCase):
 
         # Esure invalid password for root user is not allowed
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
-        response = self.do_login(root, 'invalid', auth.uuid)
+        response = self.do_login(root, "invalid", auth.uuid)
         self.assertInvalidLogin(response)
 
         # And also, taht invalid user is not allowed
-        response = self.do_login('invalid', rootpass, auth.uuid)
+        response = self.do_login("invalid", rootpass, auth.uuid)
         self.assertInvalidLogin(response)
 
     def test_login_valid_user_no_group(self) -> None:
@@ -151,7 +158,7 @@ class WebLoginLogoutTest(test.WEBTestCase):
             fixtures_authenticators.create_db_authenticator(),
         )[0]
 
-        response = self.do_login(user.name, 'wrong password', user.manager.uuid)
+        response = self.do_login(user.name, "wrong password", user.manager.uuid)
         self.assertInvalidLogin(response)
 
         # Invalid password log & access denied, in auth and user log
@@ -163,7 +170,7 @@ class WebLoginLogoutTest(test.WEBTestCase):
             is_staff=True,
         )[0]
 
-        response = self.do_login(user.name, 'wrong password', user.manager.uuid)
+        response = self.do_login(user.name, "wrong password", user.manager.uuid)
         self.assertInvalidLogin(response)
 
         self.assertEqual(models.Log.objects.count(), 12)
@@ -173,7 +180,7 @@ class WebLoginLogoutTest(test.WEBTestCase):
             is_admin=True,
         )[0]
 
-        response = self.do_login(user.name, 'wrong password', user.manager.uuid)
+        response = self.do_login(user.name, "wrong password", user.manager.uuid)
         self.assertInvalidLogin(response)
 
         self.assertEqual(models.Log.objects.count(), 18)

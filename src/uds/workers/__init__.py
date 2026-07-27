@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds.core.util import modfinder
@@ -46,12 +47,8 @@ def initialize() -> None:
     from uds.core.managers import task_manager  # pylint: disable=import-outside-toplevel
 
     def registerer(cls: type[jobs.Job]) -> None:
-        if cls.__module__.startswith('uds.workers'):
-            logger.debug('Registering job: %s', cls.__module__)
+        if cls.__module__.startswith("uds.workers"):
+            logger.debug("Registering job: %s", cls.__module__)
             task_manager().register_job(cls)
 
-    modfinder.dynamically_load_and_register_packages(
-        registerer,
-        jobs.Job,
-        __name__
-    )
+    modfinder.dynamically_load_and_register_packages(registerer, jobs.Job, __name__)

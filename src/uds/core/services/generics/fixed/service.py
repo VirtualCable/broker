@@ -29,21 +29,26 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import random  # Not for cryptographic purposes, just to randomize the assignation of machines
 import abc
+import collections.abc
 import contextlib
 import logging
+import random  # Not for cryptographic purposes, just to randomize the assignation of machines
 import typing
-import collections.abc
 
-from django.utils.translation import gettext_noop as _, gettext
-from uds.core import services, types, exceptions
+from django.utils.translation import gettext
+from django.utils.translation import gettext_noop as _
+
+from uds.core import exceptions
+from uds.core import services
+from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import fields
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from .userservice import FixedUserService
 
 logger = logging.getLogger(__name__)
@@ -63,10 +68,10 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
 
     # Override the counting type to conservative on Fixed Services by default, that
     # is the desired behaviour for fixed services
-    overrided_fields = {'max_services_count_type': types.services.ServicesCountingType.CONSERVATIVE}
+    overrided_fields = {"max_services_count_type": types.services.ServicesCountingType.CONSERVATIVE}
 
     # If machines has an alternate field with it, it will be used instead of "machines" field
-    machines_field: typing.ClassVar[str] = 'machines'
+    machines_field: typing.ClassVar[str] = "machines"
 
     # : Types of publications (preparated data for deploys)
     # : In our case, we do no need a publication, so this is None
@@ -82,29 +87,29 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
     # Gui remplates, to be "incorporated" by inherited classes if needed
     token = gui.TextField(
         order=1,
-        label=_('Service Token'),
+        label=_("Service Token"),
         length=16,
         tooltip=_(
-            'Service token that will be used by actors to communicate with service. Leave empty for persistent assignation.'
+            "Service token that will be used by actors to communicate with service. Leave empty for persistent assignation."
         ),
-        default='',
+        default="",
         required=False,
         readonly=False,
     )
     machines = gui.MultiChoiceField(
         label=_("Machines"),
         order=30,
-        tooltip=_('Machines for this service'),
+        tooltip=_("Machines for this service"),
         required=True,
         tab=types.ui.Tab.MACHINE,
         rows=10,
     )
     # Randomize machine assignation isntead of linear
     randomize = gui.CheckBoxField(
-        label=_('Randomize machine assignation'),
+        label=_("Randomize machine assignation"),
         order=100,
         default=True,
-        tooltip=_('If active, UDS will assign machines in a random way, instead of linear'),
+        tooltip=_("If active, UDS will assign machines in a random way, instead of linear"),
         tab=types.ui.Tab.ADVANCED,
     )
     maintain_on_error = fields.maintain_on_error_field(
@@ -112,32 +117,33 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         tab=types.ui.Tab.ADVANCED,
     )
     use_snapshots = gui.CheckBoxField(
-        label=_('Use snapshots'),
+        label=_("Use snapshots"),
         default=False,
         order=104,
         tooltip=_(
-            'If active, UDS will try to create an snapshot (if one already does not exists) before accessing a machine, and restore it after usage.'
+            "If active, UDS will try to create an snapshot (if one already does not exists) before accessing a machine, and restore it after usage."
         ),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='useSnapshots',
+        old_field_name="useSnapshots",
     )
     # This one replaces use_snapshots, and is used to select the snapshot type (No snapshot, recover snapshot and stop machine, recover snapshot and start machine)
     snapshot_type = gui.ChoiceField(
-        label=_('Snapshot type'),
+        label=_("Snapshot type"),
         order=105,
-        default='0',
+        default="0",
         tooltip=_(
-            'If active, UDS will try to create an snapshot (if one already does not exists) before accessing a machine, and restore it after usage.'
+            "If active, UDS will try to create an snapshot (if one already does not exists) before accessing a machine, and restore it after usage."
         ),
         tab=types.ui.Tab.ADVANCED,
         choices=[
-            gui.choice_item('no', _('No snapshot')),
-            gui.choice_item('stop', _('Recover snapshot and stop machine')),
-            gui.choice_item('start', _('Recover snapshot and start machine')),
+            gui.choice_item("no", _("No snapshot")),
+            gui.choice_item("stop", _("Recover snapshot and stop machine")),
+            gui.choice_item("start", _("Recover snapshot and start machine")),
         ],
     )
 
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    @typing.override
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         Fixed token value, ensure we have at least one machine,
         ensure assigned machines stored values are updated acording to the machines list
@@ -146,7 +152,7 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         """
         if values:
             if not self.machines.value:
-                raise exceptions.ui.ValidationError(gettext('We need at least a machine'))
+                raise exceptions.ui.ValidationError(gettext("We need at least a machine"))
 
             # Do not allow removing machines that still have assigned user services.
             # (their UserService rows would linger, counting against userservices_limit)
@@ -154,37 +160,38 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
                 removed_assigned = assigned_vms - set(self.machines.as_list())
                 if removed_assigned:
                     raise exceptions.ui.ValidationError(
-                        gettext('Cannot remove machines with assigned services: {}').format(
-                            ', '.join(self.get_name(m) or m for m in sorted(removed_assigned))
+                        gettext("Cannot remove machines with assigned services: {}").format(
+                            ", ".join(self.get_name(m) or m for m in sorted(removed_assigned))
                         )
                     )
             self.token.value = self.token.value.strip()
 
     @contextlib.contextmanager
-    def _assigned_access(self) -> collections.abc.Iterator[set[str]]:
+    def _assigned_access(self) -> collections.abc.Generator[set[str]]:
         with self.storage.as_dict(atomic=True) as d:
-            machines: set[str] = d.get('vms', set())
+            machines: set[str] = d.get("vms", set())
             initial_machines = machines.copy()  # for comparison later
             yield machines
             # If has changed, save it
             if machines != initial_machines:
-                d['vms'] = machines  # Store it
+                d["vms"] = machines  # Store it
 
     def _get_machines_field(self) -> gui.MultiChoiceField:
         return typing.cast(gui.MultiChoiceField, getattr(self, self.machines_field))
 
-    def snapshot_creation(self, userservice_instance: 'FixedUserService') -> None:
+    def snapshot_creation(self, userservice_instance: "FixedUserService") -> None:
         """
         Creates a snapshot for the machine
         """
         return
 
-    def snapshot_recovery(self, userservice_instance: 'FixedUserService') -> None:
+    def snapshot_recovery(self, userservice_instance: "FixedUserService") -> None:
         """
         Removes the snapshot for the machine
         """
         return
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         super().unmarshal(data)
         # Recover userservice limit from machines list
@@ -218,8 +225,8 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
                     assigned.remove(vmid)
             return types.states.TaskState.FINISHED
         except Exception as e:
-            logger.error('Error processing remove and free: %s', e)
-            raise Exception(f'Error processing remove and free: {e} on {vmid}') from e
+            logger.error("Error processing remove and free: %s", e)
+            raise Exception(f"Error processing remove and free: {e} on {vmid}") from e
 
     def is_ready(self, vmid: str) -> bool:
         """
@@ -248,27 +255,30 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         raise NotImplementedError()
 
     @abc.abstractmethod
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
         Returns a list of tuples with the id and the name of the assignables
+        Redeclare as abstract as this is a MUST for derived classes
         """
         raise NotImplementedError()
 
+    @typing.override
     def assign_from_assignables(
-        self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
+        self, assignable_id: str, user: "models.User", userservice_instance: "services.UserService"
     ) -> types.states.TaskState:
         """
         Assigns a machine from the assignables
         Default implementation NEEDS machines field to be present!!
         """
-        fixed_instance = typing.cast('FixedUserService', userservice_instance)
+        fixed_instance = typing.cast("FixedUserService", userservice_instance)
         machines = self._get_machines_field()
         with self._assigned_access() as assigned_vms:
             if assignable_id not in assigned_vms and assignable_id in machines.as_list():
                 assigned_vms.add(assignable_id)
                 return fixed_instance.assign(assignable_id)
 
-        return fixed_instance.error(f'{assignable_id} not available!')
+        return fixed_instance.error(f"{assignable_id} not available!")
 
     def sorted_assignables_list(self) -> list[str]:
         """
@@ -276,12 +286,13 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         """
         machines = self._get_machines_field()
 
-        if hasattr(self, 'randomize') and self.randomize.value is True:
+        if hasattr(self, "randomize") and self.randomize.value is True:
             # Randomize the list
             return random.sample(machines.as_list(), len(machines.as_list()))
 
         return machines.as_list()
 
+    @typing.override
     def allows_errored_userservice_cleanup(self) -> bool:
         """
         Returns if this service can clean errored services. This is used to check if a service can be cleaned
@@ -290,11 +301,12 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
         return not self.should_maintain_on_error()
 
     def should_maintain_on_error(self) -> bool:
-        if self.has_field('maintain_on_error'):  # If has been defined on own class...
+        if self.has_field("maintain_on_error"):  # If has been defined on own class...
             return self.maintain_on_error.value
         return False
 
+    @typing.override
     def get_token(self) -> str | None:
-        if self.has_field('token') and self.token.value:
+        if self.has_field("token") and self.token.value:
             return self.token.value
         return None

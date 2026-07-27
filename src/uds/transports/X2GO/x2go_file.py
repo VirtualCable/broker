@@ -30,10 +30,10 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
-import collections.abc
 
-template = '''[General]
+import typing
+
+template = """[General]
 UDS=@ByteArray()
 
 [20160101100758147]
@@ -94,7 +94,7 @@ sshproxysamepass=false
 sshproxysameuser=false
 sshproxyautologin=false
 sshproxykrblogin=false
-'''
+"""
 
 
 def get_template(
@@ -110,14 +110,15 @@ def get_template(
     height: typing.Any,
     user: typing.Any,
 ) -> str:
-    true_false: collections.abc.Callable[[bool], str] = lambda x: 'true' if x else 'false'
-    export = 'export="{export}"' if exports else ''
+    def true_false(x: bool) -> str:
+        return "true" if x else "false"
+    export = 'export="{export}"' if exports else ""
     if width == -1 or height == -1:
         width = 800
         height = 600
-        fullscreen = 'true'
+        fullscreen = "true"
     else:
-        fullscreen = 'false'
+        fullscreen = "false"
     return template.format(
         speed=speed,
         pack=pack,
@@ -126,7 +127,7 @@ def get_template(
         soundSystem=sound_system,
         windowManager=window_manager,
         export=export,
-        rootless=rootless and 'true' or 'false',
+        rootless=rootless and "true" or "false",
         width=width,
         height=height,
         fullscreen=fullscreen,

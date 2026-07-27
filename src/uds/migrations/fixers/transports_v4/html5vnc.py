@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -46,28 +47,28 @@ class HTML5VNCTransport(transports.Transport):
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
     """
 
-    type_name = 'HTML5 VNC Experimental'
-    type_type = 'HTML5VNCTransport'
-    guacamoleServer = gui.TextField(label='',default='https://')
+    type_name = "HTML5 VNC Experimental"
+    type_type = "HTML5VNCTransport"
+    guacamoleServer = gui.TextField(label="", default="https://")
 
-    username = gui.TextField(label='')
-    password = gui.PasswordField(label='')
-    vncPort = gui.NumericField(label='',default=5900)
-    colorDepth = gui.ChoiceField(label='',default='-')
-    swapRedBlue = gui.CheckBoxField(label='')
-    cursor = gui.CheckBoxField(label='')
-    readOnly = gui.CheckBoxField(label='')
-    ticketValidity = gui.NumericField(label='',default=60)
-    forceNewWindow = gui.ChoiceField(label='',default='false')
+    username = gui.TextField(label="")
+    password = gui.PasswordField(label="")
+    vncPort = gui.NumericField(label="", default=5900)
+    colorDepth = gui.ChoiceField(label="", default="-")
+    swapRedBlue = gui.CheckBoxField(label="")
+    cursor = gui.CheckBoxField(label="")
+    readOnly = gui.CheckBoxField(label="")
+    ticketValidity = gui.NumericField(label="", default=60)
+    forceNewWindow = gui.ChoiceField(label="", default="false")
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, HTML5VNCTransport, 'guacamoleServer', is_html_server=True)
+    _migrator.tunnel_transport(apps, schema_editor, HTML5VNCTransport, "guacamoleServer", is_html_server=True)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, HTML5VNCTransport, 'guacamoleServer', is_html_server=True)
+    _migrator.tunnel_transport_back(apps, schema_editor, HTML5VNCTransport, "guacamoleServer", is_html_server=True)

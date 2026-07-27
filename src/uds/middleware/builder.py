@@ -28,25 +28,24 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import inspect
 import logging
 import typing
-import collections.abc
 
+from asgiref.sync import sync_to_async
+from django.http import HttpResponse
 from django.utils.decorators import sync_and_async_middleware
 
-from django.conf import settings
-
-from django.http import HttpResponse
 from uds.core.types.requests import ExtendedHttpRequest
-
 
 logger = logging.getLogger(__name__)
 
 # How often to check the requests cache for stuck objects
 CHECK_SECONDS = 3600 * 24  # Once a day is more than enough
 
-RequestMiddelwareProcessorType = collections.abc.Callable[[ExtendedHttpRequest], HttpResponse|None]
+RequestMiddelwareProcessorType = collections.abc.Callable[[ExtendedHttpRequest], HttpResponse | None]
 ResponseMiddelwareProcessorType = collections.abc.Callable[[ExtendedHttpRequest, HttpResponse], HttpResponse]
 
 
@@ -58,25 +57,24 @@ def build_middleware(
 ]:
     """
     Creates a method to be used as a middleware, synchronously or asynchronously.
-    Currently, the is forced to sync an production, but it will be changed in the future to allow async
     """
 
     @sync_and_async_middleware
     def middleware(
         get_response: typing.Any,
     ) -> collections.abc.Callable[..., typing.Any] | collections.abc.Coroutine[typing.Any, None, None]:
-        if settings.DEBUG and inspect.iscoroutinefunction(get_response):
+        if inspect.iscoroutinefunction(get_response):
 
             async def async_middleware(
-                request: 'ExtendedHttpRequest',
-            ) -> 'HttpResponse':
-                response = request_processor(request)
-                return response_processor(request, response or await get_response(request))
+                request: "ExtendedHttpRequest",
+            ) -> "HttpResponse":
+                response = await sync_to_async(request_processor)(request)
+                return await sync_to_async(response_processor)(request, response or await get_response(request))
 
             return async_middleware
 
         # Sync middleware
-        def sync_middleware(request: 'ExtendedHttpRequest') -> 'HttpResponse':
+        def sync_middleware(request: "ExtendedHttpRequest") -> "HttpResponse":
             response = request_processor(request)
             return response_processor(request, response or get_response(request))
 

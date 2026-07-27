@@ -29,16 +29,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-from datetime import timedelta
-import time
+
 import logging
+import time
+import typing
+
+from datetime import timedelta
 
 from django.db import transaction
 
-from uds.models import Scheduler
-from uds.core.util.model import sql_now
-from uds.core.types.states import State
 from uds.core.jobs import Job
+from uds.core.types.states import State
+from uds.core.util.model import sql_now
+from uds.models import Scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +53,13 @@ class SchedulerHousekeeping(Job):
     Ensures no task is executed for more than 15 minutes
     """
 
-    frecuency = 301  # Frecuncy for this job
-    friendly_name = 'Scheduler house keeping'
+    friendly_name = "Scheduler house keeping"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return 301
+
+    @typing.override
     def run(self) -> None:
         """
         Look for "hanged" scheduler tasks and reschedule them
@@ -63,8 +70,8 @@ class SchedulerHousekeeping(Job):
                 with transaction.atomic():
                     Scheduler.objects.select_for_update(skip_locked=True).filter(
                         last_execution__lt=since, state=State.RUNNING
-                    ).update(owner_server='', state=State.FOR_EXECUTE)
+                    ).update(owner_server="", state=State.FOR_EXECUTE)
                 break
             except Exception:
-                logger.info('Retrying Scheduler cleanup transaction')
+                logger.info("Retrying Scheduler cleanup transaction")
                 time.sleep(1)

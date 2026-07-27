@@ -29,9 +29,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pylint: disable=too-many-lines
+import abc
 import base64
 import codecs
+import collections.abc
 import copy
 import datetime
 import inspect
@@ -41,24 +44,29 @@ import pickle  # nosec: safe usage
 import re
 import time
 import typing
-import collections.abc
-import abc
 
 from django.conf import settings
-from django.utils.translation import gettext
-from django.utils.functional import Promise  # To recognize lazy translations
 from django.utils import timezone
+from django.utils.functional import Promise  # To recognize lazy translations
+from django.utils.translation import gettext
 
-from uds.core import consts, exceptions, types
-from uds.core.managers.crypto import UDSK, CryptoManager
-from uds.core.util import modfinder, serializer, validators, ensure
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.managers.crypto import UDSK
+from uds.core.managers.crypto import CryptoManager
+from uds.core.util import ensure
+from uds.core.util import modfinder
+from uds.core.util import serializer
+from uds.core.util import validators
+
 
 logger = logging.getLogger(__name__)
 
 # To simplify choice parameters declaration of fields
 _ChoicesParamType: typing.TypeAlias = (
     collections.abc.Iterable[types.ui.ChoiceItem]
-    | collections.abc.Callable[[], list['types.ui.ChoiceItem']]
+    | collections.abc.Callable[[], list["types.ui.ChoiceItem"]]
     | None
 )
 # typing.Union[
@@ -125,7 +133,7 @@ class gui:
     ] = {}
 
     @staticmethod
-    def choice_item(id_: 'str|int', text: 'str | Promise | typing.Any') -> 'types.ui.ChoiceItem':
+    def choice_item(id_: "str|int", text: "str | Promise | typing.Any") -> "types.ui.ChoiceItem":
         """
         Helper method to create a single choice item.
         """
@@ -150,10 +158,11 @@ class gui:
             | collections.abc.Iterable[str | types.ui.ChoiceItem]
             | None
         ) = None,
-    ) -> collections.abc.Callable[[], list['types.ui.ChoiceItem']] | list['types.ui.ChoiceItem']:
+    ) -> collections.abc.Callable[[], list["types.ui.ChoiceItem"]] | list["types.ui.ChoiceItem"]:
         """
-        Helper to convert from array of strings (or dictionaries) to the same dict used in choice,
-        multichoice, ..
+        Helper to convert an array of :py:class:`types.ui.ChoiceItem` instances
+        (or dicts / strings / callables) into a uniform list of ChoiceItems
+        suitable for ``choices``, ``multichoice`` and similar fields.
         """
         if not vals:
             return []
@@ -162,7 +171,7 @@ class gui:
         if callable(vals):
             return vals
 
-        def _choice_from_value(val: str | types.ui.ChoiceItem) -> 'types.ui.ChoiceItem':
+        def _choice_from_value(val: str | types.ui.ChoiceItem) -> "types.ui.ChoiceItem":
             if isinstance(val, str):
                 return gui.choice_item(val, val)
             return val
@@ -185,10 +194,18 @@ class gui:
         reverse: bool = False,
         key: collections.abc.Callable[[types.ui.ChoiceItem], typing.Any] | None = None,
     ) -> list[types.ui.ChoiceItem]:
+        def key_fnc_for_id(item: types.ui.ChoiceItem) -> typing.Any:
+            return item.id
+
+        def key_fnc_for_text(item: types.ui.ChoiceItem) -> typing.Any:
+            return item.text.casefold()
+
         if by_id:
-            key = lambda item: item.id
+            key = key_fnc_for_id
+            # lambda item: item.id
         elif key is None:
-            key = lambda item: item.text.casefold()
+            key = key_fnc_for_text
+            # lambda item: item.text.casefold()
         return sorted(choices, key=key, reverse=reverse)
 
     @staticmethod
@@ -297,7 +314,7 @@ class gui:
             type: types.ui.FieldType,
             old_field_name: types.ui.OldFieldNameType,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             length: int | None = None,
             required: bool | None = None,
             default: collections.abc.Callable[[], typing.Any] | typing.Any = None,
@@ -330,11 +347,11 @@ class gui:
             return self._field_info.field_name
 
         @property
-        def field_type(self) -> 'types.ui.FieldType':
+        def field_type(self) -> "types.ui.FieldType":
             return types.ui.FieldType(self._field_info.type)
 
         @field_type.setter
-        def field_type(self, type_: 'types.ui.FieldType') -> None:
+        def field_type(self, type_: "types.ui.FieldType") -> None:
             """
             Sets the type of this field.
 
@@ -394,9 +411,9 @@ class gui:
             """
             data = copy.copy(self._field_info)
             data.value = data.old_field_name = None  # We don't want to send some values on gui_description
-            data.label = gettext(data.label) if data.label else ''
+            data.label = gettext(data.label) if data.label else ""
             # Translate label and tooltip
-            data.tooltip = gettext(data.tooltip) if data.tooltip else ''
+            data.tooltip = gettext(data.tooltip) if data.tooltip else ""
 
             # And, if tab is set, translate it too
             if data.tab:
@@ -453,7 +470,7 @@ class gui:
 
             Intended to be overriden by descendants
             """
-            return True
+            return self.value not in (None, "", []) if self.required else True
 
         def as_int(self) -> int:
             """
@@ -477,7 +494,7 @@ class gui:
             return gui.as_bool(self.value)
 
         def __repr__(self) -> str:
-            return f'{self.__class__.__name__}: {repr(self._field_info)}'
+            return f"{self.__class__.__name__}: {repr(self._field_info)}"
 
     class TextField(InputField):
         """
@@ -517,10 +534,10 @@ class gui:
             length: int = consts.system.DEFAULT_TEXT_LENGTH,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | str = '',
+            default: collections.abc.Callable[[], str] | str = "",
             value: str | None = None,
             pattern: str | types.ui.FieldPatternType = types.ui.FieldPatternType.NONE,
             lines: int = 0,
@@ -554,13 +571,13 @@ class gui:
             #   - 'path'     # Path (absolute or relative, Windows or Unix)
             # Note:
             #  Checks are performed on admin side, so they are not 100% reliable.
-            if pattern:
-                self._field_info.pattern = (
-                    pattern
-                    if isinstance(pattern, types.ui.FieldPatternType)
-                    else types.ui.FieldPatternType(pattern)
-                )
+            self._field_info.pattern = (
+                pattern
+                if isinstance(pattern, types.ui.FieldPatternType)
+                else types.ui.FieldPatternType(pattern)
+            )
 
+        @typing.override
         def validate(self) -> bool:
             return super().validate() and self._validate_pattern()
 
@@ -603,13 +620,14 @@ class gui:
             return True  # No pattern, so it's valid
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
         def value(self, value: str) -> None:
             super()._set_value(value)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
@@ -628,10 +646,10 @@ class gui:
             length: int = consts.system.DEFAULT_TEXT_LENGTH,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | str = '',
+            default: collections.abc.Callable[[], str] | str = "",
             value: str | None = None,
             choices: _ChoicesParamType = None,
             old_field_name: types.ui.OldFieldNameType = None,
@@ -686,7 +704,7 @@ class gui:
             length: int | None = None,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: collections.abc.Callable[[], int] | int = 0,
@@ -711,19 +729,33 @@ class gui:
             self._field_info.min_value = min_value
             self._field_info.max_value = max_value
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an int
             """
-            super()._set_value(gui.as_int(value))
+            super()._set_value(gui.as_int(value, self.default))
 
         @property
-        def value(self) -> int:
+        def value(self) -> int:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_int(super().value)
 
         @value.setter
         def value(self, value: int) -> None:
             self._set_value(value)
+
+        @typing.override
+        def validate(self) -> bool:
+            """Enforce min_value/max_value bounds when set."""
+            if not super().validate():
+                return False
+            min_v = self._field_info.min_value
+            max_v = self._field_info.max_value
+            if min_v is not None and self.value < min_v:
+                return False
+            if max_v is not None and self.value > max_v:
+                return False
+            return True
 
     class DateField(InputField):
         """
@@ -738,7 +770,7 @@ class gui:
             length: int | None = None,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: collections.abc.Callable[[], datetime.date] | datetime.date | None = None,
@@ -773,33 +805,41 @@ class gui:
             return int(time.mktime(self.as_date().timetuple()))
             # return int(time.mktime(datetime.datetime.strptime(self.value, '%Y-%m-%d').timetuple()))
 
+        @typing.override
         def as_int(self) -> int:
             return self.as_timestamp()
 
+        @typing.override
         def as_str(self) -> str:
             return str(self.as_date())
 
         # Override value setter, so we can convert from datetime.datetime or str to datetime.date
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
-            if isinstance(value, datetime.datetime):
-                value = value.date()
-            elif isinstance(value, datetime.date):
-                pass  # Stay as is
-            elif isinstance(value, str):  # YYYY-MM-DD
-                value = datetime.datetime.strptime(value, '%Y-%m-%d').date()
-            else:
-                raise ValueError(f'Invalid value for date: {value}')
+            match value:
+                case datetime.datetime():
+                    value = value.date()
+                case datetime.date():
+                    pass
+                case str():
+                    try:
+                        value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
+                    except Exception:  # Any problem, fall back
+                        value = consts.NEVER.date()
+                case _:
+                    value = consts.NEVER.date()
 
             super()._set_value(value)
 
         @property
-        def value(self) -> datetime.date:
+        def value(self) -> datetime.date:  # pyrefly: ignore[missing-override-decorator]
             return self.as_date()
 
         @value.setter
         def value(self, value: datetime.date | str) -> None:
             self._set_value(value)
 
+        @typing.override
         def gui_description(self) -> types.ui.FieldInfo:
             fldgui = super().gui_description()
             # Convert if needed value and default to string (YYYY-MM-DD)
@@ -835,10 +875,10 @@ class gui:
             length: int = consts.system.DEFAULT_TEXT_LENGTH,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | str = '',
+            default: collections.abc.Callable[[], str] | str = "",
             value: str | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
         ):
@@ -856,12 +896,14 @@ class gui:
                 type=types.ui.FieldType.PASSWORD,
             )
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
             """
             super()._set_value(gui.as_str(value))
 
+        @typing.override
         def as_str(self) -> str:
             """Returns the password as string (stripped)"""
             return gui.as_str(self.value).strip()
@@ -869,7 +911,7 @@ class gui:
         as_clean_str = as_str  # Alias in facet, for coherence with other string fields
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)  # Avoid recursion
 
         @value.setter
@@ -877,7 +919,7 @@ class gui:
             self._set_value(value)
 
         def __str__(self) -> str:
-            return '********'  # Override so we do not show the password
+            return "********"  # Override so we do not show the password
 
     class HiddenField(InputField):
         """
@@ -916,7 +958,7 @@ class gui:
 
         def __init__(
             self,
-            label: str = '',  # label is optional on hidden fields
+            label: str = "",  # label is optional on hidden fields
             order: int = 0,
             default: typing.Any = None,  # May be also callable
             value: typing.Any = None,
@@ -933,9 +975,11 @@ class gui:
             )
             self._is_serializable = serializable
 
+        @typing.override
         def is_serializable(self) -> bool:
             return self._is_serializable
 
+        @typing.override
         def set_default(self, value: typing.Any) -> None:
             """
             Sets the default value of the field. Overriden for HiddenField
@@ -970,7 +1014,7 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
             default: collections.abc.Callable[[], bool] | bool = False,
@@ -990,6 +1034,7 @@ class gui:
                 type=types.ui.FieldType.CHECKBOX,
             )
 
+        @typing.override
         def _set_value(self, value: str | bytes | bool) -> None:
             """
             Override to set value to True or False (bool)
@@ -998,12 +1043,23 @@ class gui:
             # self._fields_info.value = gui.as_bool(value)
 
         @property
-        def value(self) -> bool:
+        def value(self) -> bool:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_bool(super().value)
 
         @value.setter
         def value(self, value: bool) -> None:
             self._set_value(value)
+
+        @typing.override
+        def validate(self) -> bool:
+            """``value`` must be bool (or bool-coercible)."""
+            if not super().validate():
+                return False
+            try:
+                gui.as_bool(self.value)
+            except Exception:
+                return False
+            return True
 
     class ChoiceField(InputField):
         """
@@ -1019,8 +1075,13 @@ class gui:
 
            .. code-block:: python
 
-              choices = gui.ChoiceField(label="choices", choices=[ {'id':'1',
-                  'text':'Text 1'}, {'id':'xxx', 'text':'Text 2'}])
+              choices = gui.ChoiceField(
+                label=_("choices"),
+                choices=[
+                    gui.ChoiceItem(id='1', text='Text 1'),
+                    gui.ChoiceItem(id='xxx', text='Text 2'),
+                ],
+            )
 
            You can specify a multi valuated field via id-values, or a
            single-valued field via id-value
@@ -1099,7 +1160,7 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             fills: types.ui.Filler | None = None,
@@ -1124,15 +1185,15 @@ class gui:
             self._field_info.choices = gui.as_choices(choices)
             # if has fillers, set them
             if fills:
-                if 'function' not in fills:
-                    raise ValueError('Invalid fills parameters')
-                fills['callback_name'] = fills.get('callback_name', modfinder.callable_path(fills['function']))
-                fnc = fills['function']
-                fills.pop('function')
+                if "function" not in fills:
+                    raise ValueError("Invalid fills parameters")
+                fills["callback_name"] = fills.get("callback_name", modfinder.callable_path(fills["function"]))
+                fnc = fills["function"]
+                fills.pop("function")
                 self._field_info.fills = fills
                 # Store it only if not already present
-                if fills['callback_name'] not in gui.callbacks:
-                    gui.callbacks[fills['callback_name']] = fnc
+                if fills["callback_name"] not in gui.callbacks:
+                    gui.callbacks[fills["callback_name"]] = fnc
 
         def set_choices(self, values: collections.abc.Iterable[types.ui.ChoiceItem]) -> None:
             """
@@ -1140,17 +1201,19 @@ class gui:
             """
             self._field_info.choices = gui.as_choices(values)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
             """
             super()._set_value(gui.as_str(value))
 
+        @typing.override
         def as_str(self) -> str:
             return gui.as_str(self.value)
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
@@ -1163,7 +1226,7 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             tab: str | types.ui.Tab | None = None,
@@ -1192,22 +1255,36 @@ class gui:
             """
             self._field_info.choices = gui.as_choices(values)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an str
             """
             super()._set_value(gui.as_str(value))
 
+        @typing.override
         def as_str(self) -> str:
             return gui.as_str(self.value)
 
         @property
-        def value(self) -> str:
+        def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
             return gui.as_str(super().value)
 
         @value.setter
         def value(self, value: str) -> None:
             self._set_value(value)
+
+        @typing.override
+        def validate(self) -> bool:
+            """Selected value must be one of the declared choices (or empty)."""
+            if not super().validate():
+                return False
+            if not self.value:
+                return True
+            choices_raw = self._field_info.choices
+            choices_list = choices_raw() if callable(choices_raw) else choices_raw
+            valid_ids = {c.id for c in choices_list or []}
+            return self.value in valid_ids
 
     class MultiChoiceField(InputField):
         """
@@ -1221,8 +1298,8 @@ class gui:
 
         This class do not have callback support, as ChoiceField does.
 
-        The values is an array of dictionaries, in the form [ { 'id' : 'a',
-        'text': b }, ... ]
+        The values are :py:class:`types.ui.ChoiceItem` instances, with the
+        fields ``id``, ``text`` and optional ``img``.
 
         Example usage:
 
@@ -1238,8 +1315,10 @@ class gui:
                   readonly = False, rows = 5, order = 8,
                   tooltip = _('Datastores where to put incrementals'),
                   required = True,
-                  choices = [ {'id': '0', 'text': 'datastore0' },
-                      {'id': '1', 'text': 'datastore1' } ]
+                  choices=[
+                        gui.ChoiceItem(id='0', text='datastore0'),
+                        gui.ChoiceItem(id='1', text='datastore1'),
+                  ],
                   )
         """
 
@@ -1249,11 +1328,17 @@ class gui:
             readonly: bool = False,
             rows: int | None = None,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             choices: _ChoicesParamType = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None = None,
+            default: (
+                collections.abc.Callable[[], str]
+                | collections.abc.Callable[[], list[str]]
+                | list[str]
+                | str
+                | None
+            ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
         ):
@@ -1279,6 +1364,7 @@ class gui:
             """
             self._field_info.choices = gui.as_choices(choices)
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an list of strings
@@ -1301,12 +1387,22 @@ class gui:
                 return []
 
         @property
-        def value(self) -> list[str]:
+        def value(self) -> list[str]:  # pyrefly: ignore[missing-override-decorator]
             return self.as_list()
 
         @value.setter
         def value(self, value: collections.abc.Iterable[str]) -> None:
             self._set_value(value)
+
+        @typing.override
+        def validate(self) -> bool:
+            """Every selected item must be one of the declared choices (callable-resolved)."""
+            if not super().validate():
+                return False
+            choices_raw = self._field_info.choices
+            choices_list = choices_raw() if callable(choices_raw) else choices_raw
+            valid_ids = {c.id for c in choices_list or []}
+            return all(item in valid_ids for item in self.value)
 
     class EditableListField(InputField):
         """
@@ -1340,10 +1436,16 @@ class gui:
             label: str,
             readonly: bool = False,
             order: int = 0,
-            tooltip: str = '',
+            tooltip: str = "",
             required: bool | None = None,
             tab: str | types.ui.Tab | None = None,
-            default: collections.abc.Callable[[], str] | collections.abc.Callable[[], list[str]] | list[str] | str | None = None,
+            default: (
+                collections.abc.Callable[[], str]
+                | collections.abc.Callable[[], list[str]]
+                | list[str]
+                | str
+                | None
+            ) = None,
             value: collections.abc.Iterable[str] | None = None,
             old_field_name: types.ui.OldFieldNameType = None,
         ) -> None:
@@ -1360,6 +1462,7 @@ class gui:
                 type=types.ui.FieldType.EDITABLELIST,
             )
 
+        @typing.override
         def _set_value(self, value: typing.Any) -> None:
             """
             To ensure value is an list of strings
@@ -1382,7 +1485,7 @@ class gui:
                 return []
 
         @property
-        def value(self) -> list[str]:
+        def value(self) -> list[str]:  # pyrefly: ignore[missing-override-decorator]
             return self.as_list()
 
         @value.setter
@@ -1418,11 +1521,11 @@ class UserInterfaceType(abc.ABCMeta, type):
     """
 
     def __new__(
-        mcs: type['UserInterfaceType'],
+        mcs: type["UserInterfaceType"],
         classname: str,
         bases: tuple[type, ...],
         namespace: dict[str, typing.Any],
-    ) -> 'UserInterfaceType':
+    ) -> "UserInterfaceType":
         new_class_dict: dict[str, typing.Any] = {}
         _gui: collections.abc.MutableMapping[str, gui.InputField] = {}
 
@@ -1436,7 +1539,7 @@ class UserInterfaceType(abc.ABCMeta, type):
                 _gui[attr_name] = attr
 
             new_class_dict[attr_name] = attr
-        new_class_dict['_gui_fields_template'] = _gui
+        new_class_dict["_gui_fields_template"] = _gui
         return super().__new__(mcs, classname, bases, new_class_dict)
 
 
@@ -1483,7 +1586,7 @@ class UserInterface(metaclass=UserInterfaceType):
             setattr(self, fld_name, fld)  # Reference to self._gui[key]
 
             # Check for "callable" fields and update them if needed
-            for field in ['choices', 'default']:  # Update references to self for callable fields
+            for field in ["choices", "default"]:  # Update references to self for callable fields
                 attr = getattr(fld._field_info, field, None)
                 if attr and callable(attr):
                     # val is an InputField derived instance, so it is a reference to self._gui[key]
@@ -1493,10 +1596,10 @@ class UserInterface(metaclass=UserInterfaceType):
                 if fld_name in values:
                     fld.value = values[fld_name]
                 else:
-                    logger.warning('Field %s.%s not found in values data, ', self.__class__.__name__, fld_name)
-                    if getattr(settings, 'DEBUG', False):
+                    logger.warning("Field %s.%s not found in values data, ", self.__class__.__name__, fld_name)
+                    if getattr(settings, "DEBUG", False):
                         for caller in itertools.islice(inspect.stack(), 1, 8):
-                            logger.warning('  %s:%s:%s', caller.filename, caller.lineno, caller.function)
+                            logger.warning("  %s:%s:%s", caller.filename, caller.lineno, caller.function)
 
     def init_gui(self) -> None:
         """
@@ -1562,7 +1665,7 @@ class UserInterface(metaclass=UserInterfaceType):
                 fields[fld] = ensure.as_list(fld_gui.value)
             else:
                 fields[fld] = fld_gui.value
-        logger.debug('Values Dict: %s', fields)
+        logger.debug("Values Dict: %s", fields)
         return fields
 
     def serialize_fields(
@@ -1634,7 +1737,7 @@ class UserInterface(metaclass=UserInterfaceType):
         values = values[len(consts.ui.SERIALIZATION_HEADER) + len(consts.ui.SERIALIZATION_VERSION) :]
 
         if not values:  # Apart of the header, there is nothing...
-            logger.debug('Empty values on unserialize_fields')
+            logger.debug("Empty values on unserialize_fields")
             return False
 
         fields: list[typing.Any] = serializer.deserialize(values) or []
@@ -1658,11 +1761,11 @@ class UserInterface(metaclass=UserInterfaceType):
             field_name = field_names_translations.get(field_name, field_name)
             if field_name not in self._gui:
                 # Probably removed, just to note this in case of debugging
-                logger.debug('Field %s not found in form (%s)', field_name, field_value)
+                logger.debug("Field %s not found in form (%s)", field_name, field_value)
                 continue
             internal_field_type = self._gui[field_name].field_type
             if internal_field_type not in FIELD_DECODERS:
-                logger.warning('Field %s has no decoder', field_name)
+                logger.warning("Field %s has no decoder", field_name)
                 continue
 
             if field_type != internal_field_type.name:
@@ -1671,7 +1774,7 @@ class UserInterface(metaclass=UserInterfaceType):
                         # If the field type is not valid for the internal field type, we log a warning
                         # and do not include this field in the form
                         logger.warning(
-                            'Field %s has different type than expected: %s != %s. Not included in form',
+                            "Field %s has different type than expected: %s != %s. Not included in form",
                             field_name,
                             field_type,
                             internal_field_type.name,
@@ -1689,12 +1792,12 @@ class UserInterface(metaclass=UserInterfaceType):
         the valid values form form fileds inside its corresponding field
         """
         # Separators for fields, old implementation
-        MULTIVALUE_FIELD: typing.Final[bytes] = b'\001'
-        OLD_PASSWORD_FIELD: typing.Final[bytes] = b'\004'
-        PASSWORD_FIELD: typing.Final[bytes] = b'\005'
+        MULTIVALUE_FIELD: typing.Final[bytes] = b"\001"
+        OLD_PASSWORD_FIELD: typing.Final[bytes] = b"\004"
+        PASSWORD_FIELD: typing.Final[bytes] = b"\005"
 
-        FIELD_SEPARATOR: typing.Final[bytes] = b'\002'
-        NAME_VALUE_SEPARATOR: typing.Final[bytes] = b'\003'
+        FIELD_SEPARATOR: typing.Final[bytes] = b"\002"
+        NAME_VALUE_SEPARATOR: typing.Final[bytes] = b"\003"
 
         if not values:  # Has nothing
             return
@@ -1707,7 +1810,7 @@ class UserInterface(metaclass=UserInterfaceType):
                     continue
                 self._gui[k].value = self._gui[k].default
 
-            values = codecs.decode(values, 'zip')
+            values = codecs.decode(values, "zip")
             if not values:  # Has nothing
                 return
 
@@ -1715,7 +1818,7 @@ class UserInterface(metaclass=UserInterfaceType):
 
             for txt in values.split(FIELD_SEPARATOR):
                 kb, v = txt.split(NAME_VALUE_SEPARATOR)
-                k = kb.decode('utf8')  # Convert name to string
+                k = kb.decode("utf8")  # Convert name to string
                 # convert to new name if needed
                 k = field_names_translations.get(k, k)
                 if k in self._gui:
@@ -1729,14 +1832,14 @@ class UserInterface(metaclass=UserInterfaceType):
                         elif v.startswith(PASSWORD_FIELD):
                             val = CryptoManager.manager().aes256_cbc_decrypt(v[1:], UDSK, True).decode()
                         else:
-                            val = v.decode('utf8')
+                            val = v.decode("utf8")
                     except Exception:
-                        logger.exception('Pickling %s from %s', k, self)
-                        val = ''
+                        logger.exception("Pickling %s from %s", k, self)
+                        val = ""
                     self._gui[k].value = val
                 # logger.debug('Value for {0}:{1}'.format(k, val))
         except Exception:
-            logger.exception('Exception on unserialization on %s', self.__class__)
+            logger.exception("Exception on unserialization on %s", self.__class__)
             # Values can contain invalid characters, so we log every single char
             # logger.info('Invalid serialization data on {0} {1}'.format(self, values.encode('hex')))
 
@@ -1773,9 +1876,9 @@ class UserInterface(metaclass=UserInterfaceType):
         found_errors: list[UserInterface.ValidationFieldInfo] = []
         for key, val in self._gui.items():
             if val.required and not val.value:
-                found_errors.append(UserInterface.ValidationFieldInfo(key, 'Field is required'))
+                found_errors.append(UserInterface.ValidationFieldInfo(key, "Field is required"))
             if not val.validate():
-                found_errors.append(UserInterface.ValidationFieldInfo(key, 'Field is not valid'))
+                found_errors.append(UserInterface.ValidationFieldInfo(key, "Field is not valid"))
 
         return found_errors
 
@@ -1808,7 +1911,7 @@ def password_compat_field_decoder(value: str) -> str:
     Compatibility function to decode text fields converted to password fields
     """
     try:
-        value = CryptoManager.manager().aes256_cbc_decrypt(value.encode('utf8'), UDSK, True).decode()
+        value = CryptoManager.manager().aes256_cbc_decrypt(value.encode("utf8"), UDSK, True).decode()
     except Exception:
         pass
     return value
@@ -1822,7 +1925,7 @@ FIELDS_ENCODERS: typing.Final[
     types.ui.FieldType.TEXT_AUTOCOMPLETE: lambda x: x.value,
     types.ui.FieldType.NUMERIC: lambda x: str(gui.as_int(x.value)),
     types.ui.FieldType.PASSWORD: lambda x: (
-        CryptoManager.manager().aes256_cbc_encrypt(x.value.encode('utf8'), UDSK, True).decode()
+        CryptoManager.manager().aes256_cbc_encrypt(x.value.encode("utf8"), UDSK, True).decode()
     ),
     types.ui.FieldType.HIDDEN: (lambda x: None if not x.is_serializable() else x.value),
     types.ui.FieldType.CHOICE: lambda x: x.value,

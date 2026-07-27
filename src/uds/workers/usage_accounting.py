@@ -29,28 +29,30 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
+import typing
 
 from django.db import transaction
 
-from uds.models import AccountUsage
-from uds.core.util.model import sql_now
 from uds.core.jobs import Job
+from uds.core.util.model import sql_now
+from uds.models import AccountUsage
 
 logger = logging.getLogger(__name__)
 
 
 class UsageAccounting(Job):
-    frecuency = 60
-    friendly_name = 'Usage Accounting update'
+    friendly_name = "Usage Accounting update"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return 60
+
+    @typing.override
     def run(self) -> None:
         with transaction.atomic():
-            AccountUsage.objects.select_for_update().filter(
-                user_service__in_use=True
-            ).update(end=sql_now())
-            AccountUsage.objects.select_for_update().filter(
-                user_service__in_use=False
-            ).update(
+            AccountUsage.objects.select_for_update().filter(user_service__in_use=True).update(end=sql_now())
+            AccountUsage.objects.select_for_update().filter(user_service__in_use=False).update(
                 user_service=None
             )  # Cleanup

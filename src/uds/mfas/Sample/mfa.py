@@ -34,7 +34,8 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import mfas, types
+from uds.core import mfas
+from uds.core import types
 from uds.core.ui import gui
 
 if typing.TYPE_CHECKING:
@@ -44,27 +45,30 @@ logger = logging.getLogger(__name__)
 
 
 class SampleMFA(mfas.MFA):
-    type_name = _('Sample Multi Factor')
-    type_type = 'sampleMFA'
-    type_description = _('Sample Multi Factor Authenticator')
-    icon_file = 'sample.png'
+    type_name = _("Sample Multi Factor")
+    type_type = "sampleMFA"
+    type_description = _("Sample Multi Factor Authenticator")
+    icon_file = "sample.png"
 
     useless = gui.CheckBoxField(
-        label=_('Sample useless field'),
+        label=_("Sample useless field"),
         order=90,
-        tooltip=_('This is a useless field, for sample and testing pourposes'),
+        tooltip=_("This is a useless field, for sample and testing pourposes"),
         tab=types.ui.Tab.ADVANCED,
         default=True,
     )
 
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    @typing.override
+    def initialize(self, values: "types.core.ValuesType") -> None:
         return super().initialize(values)
 
+    @typing.override
     def label(self) -> str:
-        return 'Code is in log'
+        return "Code is in log"
 
+    @typing.override
     def send_code(
-        self, request: 'ExtendedHttpRequest', userid: str, username: str, identifier: str, code: str
+        self, request: "ExtendedHttpRequest", userid: str, username: str, identifier: str, code: str
     ) -> mfas.MFA.RESULT:
-        logger.debug('Sending code: %s (from %s)', code, request.ip)
+        logger.debug("Sending code: %s (from %s)", code, request.ip)
         return mfas.MFA.RESULT.OK

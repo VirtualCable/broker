@@ -29,22 +29,45 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import datetime
-import codecs
-import typing
-import collections.abc
-import logging
 
+import codecs
+import collections.abc
+import datetime
+import logging
+import typing
 
 from django.db import transaction
-from uds.models.cache import Cache as DBCache
-from uds.core.util.model import sql_now
-from uds.core.util import serializer
+
 from uds.core import consts
+from uds.core.util import serializer
+from uds.core.util.model import sql_now
+from uds.models.cache import Cache as DBCache
 
 from .hash import hash_key
 
 logger = logging.getLogger(__name__)
+
+KeyType: typing.TypeAlias = str | bytes
+
+
+class CacheLike(typing.Protocol):
+    """Minimal cache surface used by ``AD``. Allows tests to provide
+    a custom in-memory cache without subclassing ``uds.core.util.cache.Cache``."""
+
+    def get(
+        self,
+        skey: KeyType,
+        default: typing.Any = None,
+    ) -> typing.Any: ...
+
+    def put(
+        self,
+        skey: KeyType,
+        value: typing.Any,
+        validity: int | None = None,
+    ) -> None: ...
+
+    def remove(self, skey: KeyType) -> bool: ...
 
 
 class Cache:
@@ -57,29 +80,25 @@ class Cache:
 
     @staticmethod
     def _basic_serialize(value: typing.Any) -> str:
-        return codecs.encode(serializer.serialize(value), 'base64').decode()
+        return codecs.encode(serializer.serialize(value), "base64").decode()
 
     @staticmethod
     def _basic_deserialize(value: str) -> typing.Any:
-        return serializer.deserialize(codecs.decode(value.encode(), 'base64'))
+        return serializer.deserialize(codecs.decode(value.encode(), "base64"))
 
     _serializer: typing.ClassVar[collections.abc.Callable[[typing.Any], str]] = _basic_serialize
     _deserializer: typing.ClassVar[collections.abc.Callable[[str], typing.Any]] = _basic_deserialize
 
-    def __init__(
-        self, owner: typing.Union[str, bytes], default_timeout: int = consts.cache.DEFAULT_CACHE_TIMEOUT
-    ) -> None:
-        self._owner = owner.decode('utf-8') if isinstance(owner, bytes) else owner
+    def __init__(self, owner: str | bytes, default_timeout: int = consts.cache.DEFAULT_CACHE_TIMEOUT) -> None:
+        self._owner = owner.decode("utf-8") if isinstance(owner, bytes) else owner
         self._timeout = default_timeout
 
-    def _get_key(self, key: typing.Union[str, bytes]) -> str:
+    def _get_key(self, key: str | bytes) -> str:
         if isinstance(key, str):
-            key = key.encode('utf8')
+            key = key.encode("utf8")
         return hash_key(self._owner.encode() + key)
 
-    def get(
-        self, skey: typing.Union[str, bytes], default: typing.Any = None, *, remove: bool = False
-    ) -> typing.Any:
+    def get(self, skey: KeyType, default: typing.Any = None, *, remove: bool = False) -> typing.Any:
         now = sql_now()
         # logger.debug('Requesting key "%s" for cache "%s"', skey, self._owner)
         try:
@@ -118,29 +137,29 @@ class Cache:
             import inspect
 
             # Get caller
-            error = 'Error Getting cache key from: '
+            error = "Error Getting cache key from: "
             for caller in inspect.stack():
-                error += f'{caller.filename}:{caller.lineno} -> '
+                error += f"{caller.filename}:{caller.lineno} -> "
             logger.error(error)
 
             # logger.exception('Error getting cache key: %s', skey)
             Cache.misses += 1
             return default
 
-    def pop(self, skey: typing.Union[str, bytes], default: typing.Any = None) -> typing.Any:
+    def pop(self, skey: KeyType, default: typing.Any = None) -> typing.Any:
         """
         Removes an stored cached item and returns it or default if not found
         If cached item does not exists, just returns default, but else, it will be removed
         """
         return self.get(skey, default=default, remove=True)
 
-    def __getitem__(self, key: typing.Union[str, bytes]) -> typing.Any:
+    def __getitem__(self, key: KeyType) -> typing.Any:
         """
         Returns the cached value for the given key using the [] operator
         """
         return self.get(key)
 
-    def remove(self, skey: typing.Union[str, bytes]) -> bool:
+    def remove(self, skey: KeyType) -> bool:
         """
         Removes an stored cached item
         If cached item does not exists, nothing happens (no exception thrown)
@@ -151,10 +170,10 @@ class Cache:
             DBCache.objects.get(pk=key).delete()  # @UndefinedVariable
             return True
         except DBCache.DoesNotExist:  # @UndefinedVariable
-            logger.debug('key not found')
+            logger.debug("key not found")
             return False
 
-    def __delitem__(self, key: typing.Union[str, bytes]) -> None:
+    def __delitem__(self, key: KeyType) -> None:
         """
         Removes an stored cached item using the [] operator
         """
@@ -166,9 +185,9 @@ class Cache:
 
     def put(
         self,
-        skey: typing.Union[str, bytes],
+        skey: KeyType,
         value: typing.Any,
-        validity: typing.Optional[int] = None,
+        validity: int | None = None,
     ) -> None:
         # logger.debug('Saving key "%s" for cache "%s"' % (skey, self._owner,))
         validity = validity if validity is not None else self._timeout
@@ -182,11 +201,11 @@ class Cache:
                     pk=key,
                     owner=self._owner,
                     defaults={
-                        'owner': self._owner,
-                        'key': key,
-                        'value': value_str,
-                        'created': now,
-                        'validity': validity,
+                        "owner": self._owner,
+                        "key": key,
+                        "value": value_str,
+                        "created": now,
+                        "validity": validity,
                     },
                 )
 
@@ -202,15 +221,15 @@ class Cache:
                 # )  # @UndefinedVariable
                 return  # And return
             except Exception as e:
-                logger.debug('Transaction in course, cannot store value: %s', e)
+                logger.debug("Transaction in course, cannot store value: %s", e)
 
-    def __setitem__(self, key: typing.Union[str, bytes], value: typing.Any) -> None:
+    def __setitem__(self, key: KeyType, value: typing.Any) -> None:
         """
         Stores a value in the cache using the [] operator with default validity
         """
         self.put(key, value)
 
-    def refresh(self, skey: typing.Union[str, bytes]) -> None:
+    def refresh(self, skey: KeyType) -> None:
         # logger.debug('Refreshing key "%s" for cache "%s"' % (skey, self._owner,))
         try:
             key = self._get_key(skey)
@@ -218,7 +237,7 @@ class Cache:
             c.created = sql_now()
             c.save()
         except DBCache.DoesNotExist:
-            logger.debug('Can\'t refresh cache key %s because it doesn\'t exists', skey)
+            logger.debug("Can't refresh cache key %s because it doesn't exists", skey)
             return
 
     @staticmethod
@@ -232,7 +251,7 @@ class Cache:
         DBCache.purge_outdated()
 
     @staticmethod
-    def delete(owner: typing.Optional[str] = None) -> None:
+    def delete(owner: str | None = None) -> None:
         with transaction.atomic():
             # logger.info("Deleting cache items")
             if owner is None:

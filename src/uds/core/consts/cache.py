@@ -30,8 +30,8 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
 
+import typing
 
 # Default timeouts, in seconds
 BASE_CACHE_TIMEOUT: typing.Final[int] = 3  # 3 seconds

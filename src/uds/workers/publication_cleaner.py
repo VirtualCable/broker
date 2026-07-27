@@ -29,43 +29,44 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-from datetime import timedelta
-import logging
 
-from uds.core.managers import publication_manager
-from uds.core.util.config import GlobalConfig
-from uds.models import ServicePoolPublication
-from uds.core.util.model import sql_now
+import logging
+import typing
+
+from datetime import timedelta
+
 from uds.core.exceptions.services import PublishException
-from uds.core.types.states import State
 from uds.core.jobs import Job
+from uds.core.managers import publication_manager
+from uds.core.types.states import State
+from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
+from uds.models import ServicePoolPublication
 
 logger = logging.getLogger(__name__)
 
 
 class PublicationInfoItemsCleaner(Job):
-    frecuency = 3607
-    frecuency_cfg = (
-        GlobalConfig.CLEANUP_CHECK
-    )  # Request run cache "info" cleaner every configured seconds. If config value is changed, it will be used at next reload
-    friendly_name = 'Publications Info Cleaner'
+    friendly_name = "Publications Info Cleaner"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.CLEANUP_CHECK.as_int()
+
+    @typing.override
     def run(self) -> None:
-        remove_since = sql_now() - timedelta(
-            seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True)
-        )
-        ServicePoolPublication.objects.filter(
-            state__in=State.INFO_STATES, state_date__lt=remove_since
-        ).delete()
+        remove_since = sql_now() - timedelta(seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True))
+        ServicePoolPublication.objects.filter(state__in=State.INFO_STATES, state_date__lt=remove_since).delete()
 
 
 class PublicationCleaner(Job):
-    frecuency = 31
-    frecuency_cfg = (
-        GlobalConfig.REMOVAL_CHECK
-    )  # Request run publication "removal" every configued seconds. If config value is changed, it will be used at next reload
-    friendly_name = 'Publication Cleaner'
+    friendly_name = "Publication Cleaner"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.REMOVAL_CHECK.as_int()
+
+    @typing.override
     def run(self) -> None:
         removables = ServicePoolPublication.objects.filter(
             state=State.REMOVABLE,
@@ -75,4 +76,4 @@ class PublicationCleaner(Job):
             try:
                 publication_manager().unpublish(removable)
             except PublishException:  # Can say that it cant be removed right now
-                logger.debug('Delaying removal')
+                logger.debug("Delaying removal")

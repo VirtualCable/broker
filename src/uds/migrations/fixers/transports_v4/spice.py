@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -45,28 +46,28 @@ class TSPICETransport(transports.Transport):
     Provides access via SPICE to service.
     """
 
-    type_type = 'TSSPICETransport'
+    type_type = "TSSPICETransport"
 
-    tunnelServer = gui.TextField(label='')
-    tunnelWait = gui.NumericField(label='', default=30)
-    verifyCertificate = gui.CheckBoxField(label='')
-    serverCertificate = gui.TextField(label='')
-    fullScreen = gui.CheckBoxField(label='')
-    smartCardRedirect = gui.CheckBoxField(label='', default=False)
-    usbShare = gui.CheckBoxField(label='', default=False)
-    autoNewUsbShare = gui.CheckBoxField(label='', default=False)
-    SSLConnection = gui.CheckBoxField(label='', default=True)
+    tunnelServer = gui.TextField(label="")
+    tunnelWait = gui.NumericField(label="", default=30)
+    verifyCertificate = gui.CheckBoxField(label="")
+    serverCertificate = gui.TextField(label="")
+    fullScreen = gui.CheckBoxField(label="")
+    smartCardRedirect = gui.CheckBoxField(label="", default=False)
+    usbShare = gui.CheckBoxField(label="", default=False)
+    autoNewUsbShare = gui.CheckBoxField(label="", default=False)
+    SSLConnection = gui.CheckBoxField(label="", default=True)
 
-    overridedProxy = gui.TextField(label='')
+    overridedProxy = gui.TextField(label="")
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, TSPICETransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport(apps, schema_editor, TSPICETransport, "tunnelServer", is_html_server=False)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, TSPICETransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport_back(apps, schema_editor, TSPICETransport, "tunnelServer", is_html_server=False)

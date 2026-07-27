@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import re
 
@@ -44,23 +45,23 @@ class UniqueMacGenerator(UniqueGenerator):
     __slots__ = ()
 
     def __init__(self, owner: str) -> None:
-        super().__init__(owner, '\tmac')
+        super().__init__(owner, "\tmac")
 
     def _to_int(self, mac: str) -> int:
-        return int(mac.replace(':', ''), 16)
+        return int(mac.replace(":", ""), 16)
 
     def _to_mac_addr(self, seq: int) -> str:
         if seq == -1:  # No more macs available
-            logger.error('No more MAC addresses available')
+            logger.error("No more MAC addresses available")
             return consts.NO_MORE_MACS
-        return re.sub(r"(..)", r"\1:", f'{seq:012X}')[:-1]
+        return re.sub(r"(..)", r"\1:", f"{seq:012X}")[:-1]
 
     # Mac Generator rewrites the signature of parent class, so we need to redefine it here
     def get(self, mac_range: str) -> str:
-        first_mac, last_mac = mac_range.split('-')
+        first_mac, last_mac = mac_range.split("-")
         return self._to_mac_addr(super()._get(self._to_int(first_mac), self._to_int(last_mac)))
 
-    def transfer(self, seq: str, target_mac_generator: 'UniqueMacGenerator') -> bool:
+    def transfer(self, seq: str, target_mac_generator: "UniqueMacGenerator") -> bool:
         return super()._transfer(self._to_int(seq), target_mac_generator)
 
     def free(self, seq: str) -> None:

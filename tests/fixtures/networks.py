@@ -32,11 +32,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 from uds import models
 
 # Counters so we can reinvoke the same method and generate new data
-glob = {'network_id': 1}
+glob = {"network_id": 1}
 
 
 def create_network() -> models.Network:
     return models.Network.create(
-        'Network %d' % glob['network_id'],
-        '192.168.{n}.0-192.168.{n}.255'.format(n=glob['network_id']),
+        "Network %d" % glob["network_id"],
+        "192.168.{n}.0-192.168.{n}.255".format(n=glob["network_id"]),
     )

@@ -30,14 +30,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 # DEFAULT_PORT = 8006
 
-from uds.core import consts
-
-import datetime
 import typing
 
-# OAuth tokens issued by Openshift last much longer (24h by default), but we prefer to
-# renew ours often enough to not have to care about the cluster's configured lifetime
-TOKEN_VALIDITY: typing.Final[datetime.timedelta] = datetime.timedelta(minutes=30)
+from uds.core import consts
 
 CACHE_DURATION: typing.Final[int] = consts.cache.DEFAULT_CACHE_TIMEOUT
 CACHE_INFO_DURATION: typing.Final[int] = consts.cache.SHORT_CACHE_TIMEOUT

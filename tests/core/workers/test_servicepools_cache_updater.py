@@ -29,20 +29,20 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
-import logging
 
+import logging
+import typing
 
 from uds.core import types
-from uds.core.types.states import State
-from uds.workers.servicepools_cache_updater import ServiceCacheUpdater
 from uds.core.environment import Environment
-
+from uds.core.types.states import State
 from uds.services.Test.provider import TestProvider
-from uds.services.Test.service import TestServiceCache, TestServiceNoCache
+from uds.services.Test.service import TestServiceCache
+from uds.services.Test.service import TestServiceNoCache
+from uds.workers.servicepools_cache_updater import ServiceCacheUpdater
 
-from ...utils.test import UDSTestCase
 from ...fixtures import services as services_fixtures
+from ...utils.test import UDSTestCase
 
 if typing.TYPE_CHECKING:
     from uds import models
@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 class ServiceCacheUpdaterTest(UDSTestCase):
-    servicepool: 'models.ServicePool'
+    servicepool: "models.ServicePool"
 
     def setUp(self) -> None:
         # Default values for max
@@ -60,7 +60,6 @@ class ServiceCacheUpdaterTest(UDSTestCase):
         TestServiceCache.userservices_limit = 1000
         TestServiceNoCache.userservices_limit = 1000
 
-        ServiceCacheUpdater.setup()
         userService = services_fixtures.create_db_assigned_userservices()[0]
         self.servicepool = userService.deployed_service
         userService.delete()  # empty all
@@ -99,7 +98,7 @@ class ServiceCacheUpdaterTest(UDSTestCase):
     def test_initial_locked_servicepool(self) -> None:
         self.set_cache(initial=100, cache=10, max=500)
         self.servicepool.state = types.states.State.LOCKED
-        self.servicepool.save(update_fields=['state'])
+        self.servicepool.save(update_fields=["state"])
 
         # Locked service pools should be updated
         self.assertEqual(

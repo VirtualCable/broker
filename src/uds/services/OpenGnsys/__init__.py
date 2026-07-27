@@ -28,12 +28,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
 
 from uds.core import managers
 
-from .provider import OGProvider
 from .jobs import OpenGnsysMaintainer
+# Make this visible to loaders
+from .provider import OGProvider as OGProvider
 
 # Scheduled task to do clean processes
 for cls in (OpenGnsysMaintainer,):

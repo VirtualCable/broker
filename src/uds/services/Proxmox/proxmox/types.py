@@ -9,20 +9,20 @@ from django.utils import timezone
 
 from . import exceptions as prox_exceptions
 
-NETWORK_RE: typing.Final[re.Pattern[str]] = re.compile(r'([a-zA-Z0-9]+)=([^,]+)')  # May have vla id at end
+NETWORK_RE: typing.Final[re.Pattern[str]] = re.compile(r"([a-zA-Z0-9]+)=([^,]+)")  # May have vla id at end
 
 
 class VMStatus(enum.StrEnum):
-    RUNNING = 'running'
-    STOPPED = 'stopped'
+    RUNNING = "running"
+    STOPPED = "stopped"
 
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
     def is_running(self) -> bool:
         return self == VMStatus.RUNNING
 
     @staticmethod
-    def from_str(value: str) -> 'VMStatus':
+    def from_str(value: str) -> "VMStatus":
         try:
             return VMStatus(value)
         except ValueError:
@@ -39,13 +39,13 @@ class Cluster:
     quorate: int
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'Cluster':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "Cluster":
         return Cluster(
-            name=dictionary.get('name', ''),
-            version=dictionary.get('version', ''),
-            id=dictionary.get('id', ''),
-            nodes=dictionary.get('nodes', 0),
-            quorate=dictionary.get('quorate', 0),
+            name=dictionary.get("name", ""),
+            version=dictionary.get("version", ""),
+            id=dictionary.get("id", ""),
+            nodes=dictionary.get("nodes", 0),
+            quorate=dictionary.get("quorate", 0),
         )
 
 
@@ -60,27 +60,27 @@ class Node:
     id: str
 
     @staticmethod
-    def from_dict(dictionary: dict[str, typing.Any]) -> 'Node':
+    def from_dict(dictionary: dict[str, typing.Any]) -> "Node":
         return Node(
-            name=dictionary.get('name', ''),
-            online=dictionary.get('online', False),
-            local=dictionary.get('local', False),
-            nodeid=dictionary.get('nodeid', 0),
-            ip=dictionary.get('ip', ''),
-            level=dictionary.get('level', ''),
-            id=dictionary.get('id', ''),
+            name=dictionary.get("name", ""),
+            online=dictionary.get("online", False),
+            local=dictionary.get("local", False),
+            nodeid=dictionary.get("nodeid", 0),
+            ip=dictionary.get("ip", ""),
+            level=dictionary.get("level", ""),
+            id=dictionary.get("id", ""),
         )
 
     @staticmethod
-    def null() -> 'Node':
+    def null() -> "Node":
         return Node(
-            name='',
+            name="",
             online=False,
             local=False,
             nodeid=0,
-            ip='',
-            level='',
-            id='',
+            ip="",
+            level="",
+            id="",
         )
 
 
@@ -99,31 +99,31 @@ class NodeStats:
     maxcpu: int
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'NodeStats':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "NodeStats":
         return NodeStats(
-            name=dictionary.get('node', ''),
-            status=dictionary.get('status', ''),
-            uptime=dictionary.get('uptime', 0),
-            disk=dictionary.get('disk', 0),
-            maxdisk=dictionary.get('maxdisk', 0),
-            level=dictionary.get('level', ''),
-            id=dictionary.get('id', ''),
-            mem=dictionary.get('mem', 0),
-            maxmem=dictionary.get('maxmem', 0),
-            cpu=dictionary.get('cpu', 0),
-            maxcpu=dictionary.get('maxcpu', 0),
+            name=dictionary.get("node", ""),
+            status=dictionary.get("status", ""),
+            uptime=dictionary.get("uptime", 0),
+            disk=dictionary.get("disk", 0),
+            maxdisk=dictionary.get("maxdisk", 0),
+            level=dictionary.get("level", ""),
+            id=dictionary.get("id", ""),
+            mem=dictionary.get("mem", 0),
+            maxmem=dictionary.get("maxmem", 0),
+            cpu=dictionary.get("cpu", 0),
+            maxcpu=dictionary.get("maxcpu", 0),
         )
 
     @staticmethod
-    def null() -> 'NodeStats':
+    def null() -> "NodeStats":
         return NodeStats(
-            name='',
-            status='offline',
+            name="",
+            status="offline",
             uptime=0,
             disk=0,
             maxdisk=0,
-            level='',
-            id='',
+            level="",
+            id="",
             mem=1,
             maxmem=1,
             cpu=1,
@@ -137,12 +137,12 @@ class ClusterInfo:
     nodes: list[Node]
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'ClusterInfo':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "ClusterInfo":
         nodes: list[Node] = []
         cluster: Cluster | None = None
 
-        for i in dictionary['data']:
-            if i['type'] == 'cluster':
+        for i in dictionary["data"]:
+            if i["type"] == "cluster":
                 cluster = Cluster.from_dict(i)
             else:
                 nodes.append(Node.from_dict(i))
@@ -162,11 +162,11 @@ class ExecResult:
     upid: str
 
     @staticmethod
-    def from_dict(data: collections.abc.MutableMapping[str, typing.Any]) -> 'ExecResult':
-        upid = data['data']
+    def from_dict(data: collections.abc.MutableMapping[str, typing.Any]) -> "ExecResult":
+        upid = data["data"]
         if upid is None:
             return ExecResult.null()  # No data, return null, that in turn, has a finished task
-        d = upid.split(':')
+        d = upid.split(":")
         return ExecResult(
             node=d[1],
             pid=int(d[2], 16),
@@ -179,16 +179,16 @@ class ExecResult:
         )
 
     @staticmethod
-    def null() -> 'ExecResult':
+    def null() -> "ExecResult":
         return ExecResult(
-            node='',
+            node="",
             pid=0,
             pstart=0,
             starttime=timezone.localtime(),
-            type='',
+            type="",
             vmid=0,
-            user='',
-            upid='',
+            user="",
+            upid="",
         )
 
 
@@ -206,44 +206,44 @@ class TaskStatus:
     id: str
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'TaskStatus':
-        data = dictionary['data']
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "TaskStatus":
+        data = dictionary["data"]
         return TaskStatus(
-            node=data['node'],
-            pid=data['pid'],
-            pstart=data['pstart'],
-            starttime=timezone.make_aware(datetime.datetime.fromtimestamp(data['starttime'])),
-            type=data['type'],
-            status=data['status'],
-            exitstatus=data.get('exitstatus', ''),
-            user=data['user'],
-            upid=data['upid'],
-            id=data['id'],
+            node=data["node"],
+            pid=data["pid"],
+            pstart=data["pstart"],
+            starttime=timezone.make_aware(datetime.datetime.fromtimestamp(data["starttime"])),
+            type=data["type"],
+            status=data["status"],
+            exitstatus=data.get("exitstatus", ""),
+            user=data["user"],
+            upid=data["upid"],
+            id=data["id"],
         )
 
     @staticmethod
-    def done_task() -> 'TaskStatus':
+    def done_task() -> "TaskStatus":
         return TaskStatus(
-            node='',
+            node="",
             pid=0,
             pstart=0,
             starttime=timezone.localtime(),
-            type='',
-            status='stopped',
-            exitstatus='OK',
-            user='',
-            upid='',
-            id='',
+            type="",
+            status="stopped",
+            exitstatus="OK",
+            user="",
+            upid="",
+            id="",
         )
 
     def is_running(self) -> bool:
-        return self.status == 'running'
+        return self.status == "running"
 
     def is_finished(self) -> bool:
-        return self.status == 'stopped'
+        return self.status == "stopped"
 
     def is_completed(self) -> bool:
-        return self.is_finished() and self.exitstatus == 'OK'
+        return self.is_finished() and self.exitstatus == "OK"
 
     def is_errored(self) -> bool:
         return self.is_finished() and not self.is_completed()
@@ -258,25 +258,25 @@ class NetworkConfiguration:
     netdata: str  # Original data
 
     def is_null(self) -> bool:
-        return self.net == ''
+        return self.net == ""
 
     def set_mac_address(self, macaddr: str) -> None:
         self.macaddr = macaddr
         # Replace mac address in netdata
-        self.netdata = re.sub(r'^([^=]+)=([^,]+),', r'\1={},'.format(macaddr), self.netdata)
+        self.netdata = re.sub(r"^([^=]+)=([^,]+),", r"\1={},".format(macaddr), self.netdata)
 
     @staticmethod
-    def from_str(net: str, netdata: str) -> 'NetworkConfiguration':
+    def from_str(net: str, netdata: str) -> "NetworkConfiguration":
         v = NETWORK_RE.match(netdata)
-        type = mac = ''
+        type = mac = ""
         if v:
             type, mac = v.group(1), v.group(2)
 
         return NetworkConfiguration(net=net, type=type, macaddr=mac, netdata=netdata)
 
     @staticmethod
-    def null() -> 'NetworkConfiguration':
-        return NetworkConfiguration(net='', type='', macaddr='', netdata='')
+    def null() -> "NetworkConfiguration":
+        return NetworkConfiguration(net="", type="", macaddr="", netdata="")
 
 
 @dataclasses.dataclass
@@ -286,18 +286,18 @@ class HAInfo:
     managed: bool
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'HAInfo':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "HAInfo":
         return HAInfo(
-            state=dictionary.get('state', ''),
-            group=dictionary.get('group', ''),
-            managed=dictionary.get('managed', False),
+            state=dictionary.get("state", ""),
+            group=dictionary.get("group", ""),
+            managed=dictionary.get("managed", False),
         )
 
     @staticmethod
-    def null() -> 'HAInfo':
+    def null() -> "HAInfo":
         return HAInfo(
-            state='',
-            group='',
+            state="",
+            group="",
             managed=False,
         )
 
@@ -328,22 +328,22 @@ class VMInfo:
     diskwrite: int | None
     vgpu_type: str | None
 
-    def validate(self) -> 'VMInfo':
+    def validate(self) -> "VMInfo":
         if self.id < 0:
-            raise prox_exceptions.ProxmoxNotFound('VM not found')
+            raise prox_exceptions.ProxmoxNotFound("VM not found")
         return self
 
     def is_null(self) -> bool:
         return self.id == -1
 
     @staticmethod
-    def from_dict(data: collections.abc.MutableMapping[str, typing.Any]) -> 'VMInfo':
+    def from_dict(data: collections.abc.MutableMapping[str, typing.Any]) -> "VMInfo":
         vgpu_type = None
         # Look for vgpu type if present
         for k, v in data.items():
-            if k.startswith('hostpci'):
-                for i in v.split(','):
-                    if i.startswith('mdev='):
+            if k.startswith("hostpci"):
+                for i in v.split(","):
+                    if i.startswith("mdev="):
                         vgpu_type = i[5:]
                         break  # found it, stop looking
 
@@ -351,36 +351,36 @@ class VMInfo:
                 break  # Already found it, stop looking
 
         return VMInfo(
-            status=VMStatus.from_str(data['status']),
-            id=int(data.get('vmid', 0)),
-            node=data.get('node', ''),
-            template=bool(data.get('template', False)),
-            ha=HAInfo.from_dict(data.get('ha', {})),
-            agent=data.get('agent', None),
-            cpus=data.get('cpus', None),
-            lock=data.get('lock', None),
-            disk=data.get('disk', None),
-            maxdisk=data.get('maxdisk', None),
-            mem=data.get('mem', None),
-            maxmem=data.get('maxmem', None),
-            name=data.get('name', None),
-            pid=data.get('pid', None),
-            qmpstatus=data.get('qmpstatus', None),
-            tags=data.get('tags', None),
-            uptime=data.get('uptime', None),
-            netin=data.get('netin', None),
-            netout=data.get('netout', None),
-            diskread=data.get('diskread', None),
-            diskwrite=data.get('diskwrite', None),
+            status=VMStatus.from_str(data["status"]),
+            id=int(data.get("vmid", 0)),
+            node=data.get("node", ""),
+            template=bool(data.get("template", False)),
+            ha=HAInfo.from_dict(data.get("ha", {})),
+            agent=data.get("agent", None),
+            cpus=data.get("cpus", None),
+            lock=data.get("lock", None),
+            disk=data.get("disk", None),
+            maxdisk=data.get("maxdisk", None),
+            mem=data.get("mem", None),
+            maxmem=data.get("maxmem", None),
+            name=data.get("name", None),
+            pid=data.get("pid", None),
+            qmpstatus=data.get("qmpstatus", None),
+            tags=data.get("tags", None),
+            uptime=data.get("uptime", None),
+            netin=data.get("netin", None),
+            netout=data.get("netout", None),
+            diskread=data.get("diskread", None),
+            diskwrite=data.get("diskwrite", None),
             vgpu_type=vgpu_type,
         )
 
     @staticmethod
-    def null() -> 'VMInfo':
+    def null() -> "VMInfo":
         return VMInfo(
             status=VMStatus.UNKNOWN,
             id=-1,
-            node='',
+            node="",
             template=False,
             ha=HAInfo.null(),
             agent=None,
@@ -418,23 +418,23 @@ class VMConfiguration:
     protection: bool
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'VMConfiguration':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "VMConfiguration":
         nets: list[NetworkConfiguration] = []
         for k in dictionary.keys():
-            if k[:3] == 'net':
+            if k[:3] == "net":
                 nets.append(NetworkConfiguration.from_str(k, dictionary[k]))
 
         return VMConfiguration(
-            name=dictionary.get('name', ''),
-            vga=dictionary.get('vga', ''),
-            sockets=dictionary.get('sockets', 0),
-            cores=dictionary.get('cores', 0),
-            vmgenid=dictionary.get('vmgenid', ''),
-            digest=dictionary.get('digest', ''),
+            name=dictionary.get("name", ""),
+            vga=dictionary.get("vga", ""),
+            sockets=dictionary.get("sockets", 0),
+            cores=dictionary.get("cores", 0),
+            vmgenid=dictionary.get("vmgenid", ""),
+            digest=dictionary.get("digest", ""),
             networks=nets,
-            tpmstate0=dictionary.get('tpmstate0', ''),
-            template=dictionary.get('template', False),
-            protection=dictionary.get('protection', False),
+            tpmstate0=dictionary.get("tpmstate0", ""),
+            template=dictionary.get("template", False),
+            protection=dictionary.get("protection", False),
         )
 
 
@@ -456,33 +456,31 @@ class StorageInfo:
     used: int
     avail: int
     total: int
-    _version: str = dataclasses.field(repr=False, compare=False, default='')
+    _version: str = dataclasses.field(repr=False, compare=False, default="")
 
     def is_null(self) -> bool:
-        return self.node == '' and self.storage == ''
+        return self.node == "" and self.storage == ""
 
     @staticmethod
-    def from_dict(
-        dictionary: collections.abc.MutableMapping[str, typing.Any], version: str = ''
-    ) -> 'StorageInfo':
-        if 'maxdisk' in dictionary:  # From cluster/resources
-            total = int(dictionary['maxdisk'])
-            used = int(dictionary['disk'])
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any], version: str = "") -> "StorageInfo":
+        if "maxdisk" in dictionary:  # From cluster/resources
+            total = int(dictionary["maxdisk"])
+            used = int(dictionary["disk"])
             avail = total - used
-            ttype = dictionary.get('plugintype', '')
-            active = dictionary.get('status', '') == 'available'
+            ttype = dictionary.get("plugintype", "")
+            active = dictionary.get("status", "") == "available"
         else:  # From nodes/storage
-            total = int(dictionary.get('total', 0))
-            used = int(dictionary.get('used', 0))
-            avail = int(dictionary.get('avail', 0))
-            ttype = dictionary.get('type', '')
-            active = bool(dictionary.get('active', False))
+            total = int(dictionary.get("total", 0))
+            used = int(dictionary.get("used", 0))
+            avail = int(dictionary.get("avail", 0))
+            ttype = dictionary.get("type", "")
+            active = bool(dictionary.get("active", False))
         return StorageInfo(
-            node=dictionary.get('node', ''),
-            storage=dictionary.get('storage', ''),
-            content=tuple(dictionary.get('content', '').split(',')),
+            node=dictionary.get("node", ""),
+            storage=dictionary.get("storage", ""),
+            content=tuple(dictionary.get("content", "").split(",")),
             type=ttype,
-            shared=bool(dictionary.get('shared', False)),
+            shared=bool(dictionary.get("shared", False)),
             active=active,
             used=used,
             avail=avail,
@@ -491,12 +489,12 @@ class StorageInfo:
         )
 
     @staticmethod
-    def null() -> 'StorageInfo':
+    def null() -> "StorageInfo":
         return StorageInfo(
-            node='',
-            storage='',
+            node="",
+            storage="",
             content=(),
-            type='',
+            type="",
             shared=False,
             active=False,
             used=0,
@@ -507,12 +505,12 @@ class StorageInfo:
     def supports_snapshots(self) -> bool:
         # Only storage types that support snapshots are those that allow differential storage
         # Note: On Promxmox 9, lvm allows snapshots
-        return self.type not in ('iscsi', 'iscsidirect', 'lvm') or (self._version >= '9' and self.type == 'lvm')
+        return self.type not in ("iscsi", "iscsidirect", "lvm") or (self._version >= "9" and self.type == "lvm")
 
     def supports_linked_clone(self) -> bool:
         # Only storage types that support snapshots are those that allow differential storage
         # Note: On Promxmox 9, lvm allows snapshots
-        return self.type not in ('iscsi', 'iscsidirect', 'lvm')
+        return self.type not in ("iscsi", "iscsidirect", "lvm")
 
 
 @dataclasses.dataclass
@@ -525,14 +523,14 @@ class PoolMemberInfo:
     vmname: str
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'PoolMemberInfo':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "PoolMemberInfo":
         return PoolMemberInfo(
-            id=dictionary.get('id', ''),
-            node=dictionary.get('node', ''),
-            storage=dictionary.get('storage', ''),
-            type=dictionary.get('type', ''),
-            vmid=dictionary.get('vmid', 0),
-            vmname=dictionary.get('vmname', ''),
+            id=dictionary.get("id", ""),
+            node=dictionary.get("node", ""),
+            storage=dictionary.get("storage", ""),
+            type=dictionary.get("type", ""),
+            vmid=dictionary.get("vmid", 0),
+            vmname=dictionary.get("vmname", ""),
         )
 
 
@@ -543,30 +541,28 @@ class PoolInfo:
     members: list[PoolMemberInfo]
 
     @staticmethod
-    def from_dict(
-        data: collections.abc.MutableMapping[str, typing.Any], *, poolid: str | None = None
-    ) -> 'PoolInfo':
-        if 'members' in data:
-            members: list[PoolMemberInfo] = [PoolMemberInfo.from_dict(i) for i in data['members']]
+    def from_dict(data: collections.abc.MutableMapping[str, typing.Any], *, poolid: str | None = None) -> "PoolInfo":
+        if "members" in data:
+            members: list[PoolMemberInfo] = [PoolMemberInfo.from_dict(i) for i in data["members"]]
         else:
             members = []
 
         return PoolInfo(
-            id=data.get('poolid', poolid) or '',
-            comments=data.get('comments', ''),
+            id=data.get("poolid", poolid) or "",
+            comments=data.get("comments", ""),
             members=members,
         )
 
     @staticmethod
-    def null() -> 'PoolInfo':
+    def null() -> "PoolInfo":
         return PoolInfo(
-            id='',
-            comments='',
+            id="",
+            comments="",
             members=[],
         )
 
     def is_null(self) -> bool:
-        return self.id == ''
+        return self.id == ""
 
 
 @dataclasses.dataclass
@@ -579,13 +575,13 @@ class SnapshotInfo:
     vmstate: bool | None
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'SnapshotInfo':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "SnapshotInfo":
         return SnapshotInfo(
-            name=dictionary.get('name', ''),
-            description=dictionary.get('description', ''),
-            parent=dictionary.get('parent', None),
-            snaptime=dictionary.get('snaptime', None),
-            vmstate=dictionary.get('vmstate', None),
+            name=dictionary.get("name", ""),
+            description=dictionary.get("description", ""),
+            parent=dictionary.get("parent", None),
+            snaptime=dictionary.get("snaptime", None),
+            vmstate=dictionary.get("vmstate", None),
         )
 
 
@@ -598,11 +594,11 @@ class VGPUInfo:
     type: str
 
     @staticmethod
-    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> 'VGPUInfo':
+    def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "VGPUInfo":
         return VGPUInfo(
-            name=dictionary.get('name', ''),
-            description=dictionary.get('description', ''),
-            device=dictionary.get('device', ''),
-            available=dictionary.get('available', False),
-            type=dictionary.get('type', ''),
+            name=dictionary.get("name", ""),
+            description=dictionary.get("description", ""),
+            device=dictionary.get("device", ""),
+            available=dictionary.get("available", False),
+            type=dictionary.get("type", ""),
         )

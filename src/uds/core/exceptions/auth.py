@@ -30,7 +30,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from . import common
+
 
 class AuthenticatorException(common.UDSException):
     """
@@ -67,6 +69,7 @@ class MFAError(AuthenticatorException):
     """
     This exceptions indicates than an MFA error has ocurred
     """
+
 
 class PasswordExpired(AuthenticatorException):
     """

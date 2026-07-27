@@ -28,5 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from . import mfa
+
+# Make this visible to loaders
+
+from . import mfa as mfa

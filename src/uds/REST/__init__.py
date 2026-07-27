@@ -29,7 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+
 # Convenience imports, must be present before initializing handlers
-from .handlers import Handler
-from .dispatcher import Dispatcher
+from .handlers import Handler as Handler
+from .dispatcher import Dispatcher as Dispatcher

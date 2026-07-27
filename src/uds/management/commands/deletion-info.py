@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import argparse
 import logging
 import sys
@@ -44,23 +45,25 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Generate report of deletion queue"
 
+    @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '--output',
-            action='store',
-            dest='output',
+            "--output",
+            action="store",
+            dest="output",
             default=None,
-            help='Output file',
+            help="Output file",
         )
 
+    @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
         logger.debug("Show settings")
         config.GlobalConfig.initialize()
 
-        output = options.get('output', None)
+        output = options.get("output", None)
         if output is None:
             logger.debug("Output file: %s", output)
             DeferredDeletionWorker.report(sys.stdout)
         else:
-            with open(output, 'w', encoding='utf8') as f:
+            with open(output, "w", encoding="utf8") as f:
                 DeferredDeletionWorker.report(f)

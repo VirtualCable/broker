@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -52,14 +53,14 @@ class Account(UUIDModel, TaggingMixin):
 
     name = models.CharField(max_length=128, unique=False, db_index=True)
     time_mark = models.DateTimeField(default=NEVER)
-    comments = models.CharField(max_length=256, default='')
+    comments = models.CharField(max_length=256, default="")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["Account"]'
-    usages: 'models.manager.RelatedManager[AccountUsage]'
+    usages: "models.manager.RelatedManager[AccountUsage]"
 
-    def start_accounting(self, userservice: 'UserService') -> typing.Optional['AccountUsage']:
-        if hasattr(userservice, 'accounting'):  # Already has an account
+    def start_accounting(self, userservice: "UserService") -> typing.Optional["AccountUsage"]:
+        if hasattr(userservice, "accounting"):  # Already has an account
             return None
 
         start = sql_now()
@@ -68,8 +69,8 @@ class Account(UUIDModel, TaggingMixin):
             username = userservice.user.pretty_name
             user_uuid = userservice.user.uuid
         else:
-            username = '??????'
-            user_uuid = '00000000-0000-0000-0000-000000000000'
+            username = "??????"
+            user_uuid = "00000000-0000-0000-0000-000000000000"
 
         return self.usages.create(
             user_service=userservice,
@@ -81,13 +82,13 @@ class Account(UUIDModel, TaggingMixin):
             end=start,
         )
 
-    def stop_accounting(self, userservice: 'UserService') -> typing.Optional['AccountUsage']:
+    def stop_accounting(self, userservice: "UserService") -> typing.Optional["AccountUsage"]:
         # if one to one does not exists, attr is not there
-        if not hasattr(userservice, 'accounting'):
+        if not hasattr(userservice, "accounting"):
             return None
 
         tmp = userservice.accounting
-        tmp.user_service = None 
+        tmp.user_service = None
         tmp.end = sql_now()
         tmp.save()
         return tmp
@@ -97,8 +98,8 @@ class Account(UUIDModel, TaggingMixin):
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds_accounts'
-        app_label = 'uds'
+        db_table = "uds_accounts"
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'Account id {self.id}, name {self.name}'
+        return f"Account id {self.id}, name {self.name}"

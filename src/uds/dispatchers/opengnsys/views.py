@@ -26,9 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import typing
 import collections.abc
 import logging
@@ -43,8 +44,8 @@ from uds.core import types
 
 logger = logging.getLogger(__name__)
 
-OK = 'OK'
-CONTENT_TYPE = 'text/plain'
+OK = "OK"
+CONTENT_TYPE = "text/plain"
 
 
 @auth.needs_trusted_source
@@ -54,30 +55,30 @@ def opengnsys(
     token: str,
     uuid: str,
 ) -> HttpResponse:
-    logger.debug('Received opengnsys message %s, token %s, uuid %s', msg, token, uuid)
+    logger.debug("Received opengnsys message %s, token %s, uuid %s", msg, token, uuid)
 
     def _get_userservice() -> typing.Optional[UserService]:
         try:
             userservice = UserService.objects.get(uuid=process_uuid(uuid), state=types.states.State.USABLE)
-            if userservice.properties.get('token') == token:
+            if userservice.properties.get("token") == token:
                 return userservice
             logger.warning(
-                'OpenGnsys: invalid token %s for userservice %s. (Ignored)',
+                "OpenGnsys: invalid token %s for userservice %s. (Ignored)",
                 token,
                 uuid,
             )
             # Sleep a while in case of error?
         except Exception:
             # Any exception will stop process
-            logger.warning('OpenGnsys: invalid userservice %s:%s. (Ignored)', token, uuid)
+            logger.warning("OpenGnsys: invalid userservice %s:%s. (Ignored)", token, uuid)
 
         return None
 
     def release() -> None:
         userservice = _get_userservice()
         if userservice:
-            logger.info('Released from OpenGnsys %s', userservice.friendly_name)
-            userservice.properties['from_release'] = True
+            logger.info("Released from OpenGnsys %s", userservice.friendly_name)
+            userservice.properties["from_release"] = True
             userservice.release()
 
     def login() -> None:
@@ -86,12 +87,12 @@ def opengnsys(
             # Ignore login to cached machines...
             if userservice.cache_level != 0:
                 logger.info(
-                    'Ignored OpenGnsys login to %s to cached machine',
+                    "Ignored OpenGnsys login to %s to cached machine",
                     userservice.friendly_name,
                 )
                 return
-            logger.debug('Processing login from OpenGnsys %s', userservice.friendly_name)
-            actor_v3.Login.process_login(userservice, 'OpenGnsys')
+            logger.debug("Processing login from OpenGnsys %s", userservice.friendly_name)
+            actor_v3.Login.process_login(userservice, "OpenGnsys")
 
     def logout() -> None:
         userservice = _get_userservice()
@@ -99,17 +100,17 @@ def opengnsys(
             # Ignore logout to cached machines...
             if userservice.cache_level != 0:
                 logger.info(
-                    'Ignored OpenGnsys logout to %s to cached machine',
+                    "Ignored OpenGnsys logout to %s to cached machine",
                     userservice.friendly_name,
                 )
                 return
-            logger.debug('Processing logout from OpenGnsys %s', userservice.friendly_name)
-            actor_v3.Logout.process_logout(userservice, 'OpenGnsys', '')  # Close all sessions
+            logger.debug("Processing logout from OpenGnsys %s", userservice.friendly_name)
+            actor_v3.Logout.process_logout(userservice, "OpenGnsys", "")  # Close all sessions
 
     fnc: typing.Optional[collections.abc.Callable[[], None]] = {
-        'login': login,
-        'logout': logout,
-        'release': release,
+        "login": login,
+        "logout": logout,
+        "release": release,
     }.get(msg)
 
     if fnc:

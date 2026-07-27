@@ -30,18 +30,18 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import sys
 import typing
 
-from django.core.management.base import BaseCommand
 from django.core.cache import cache
+from django.core.management.base import BaseCommand
 
-from uds.core.util.config import GlobalConfig
-from uds.core.util.cache import Cache
 from uds.core.types.states import State
+from uds.core.util.cache import Cache
+from uds.core.util.config import GlobalConfig
 from uds.models import Scheduler
-
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +50,7 @@ class Command(BaseCommand):
     args = "None"
     help = "Clean up all uneeded data from UDS (cache, ...). This is mainly used for versions installations, so he have clean data"
 
+    @typing.override
     def handle(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         sys.stdout.write("Cleaning up UDS\n")
         GlobalConfig.initialize()
@@ -62,6 +63,6 @@ class Command(BaseCommand):
 
         sys.stdout.write("Releasing schedulers...\n")
         # Release all Schedulers
-        Scheduler.objects.all().update(owner_server='', state=State.FOR_EXECUTE)
+        Scheduler.objects.all().update(owner_server="", state=State.FOR_EXECUTE)
 
         sys.stdout.write("UDS Cleaned UP\n")

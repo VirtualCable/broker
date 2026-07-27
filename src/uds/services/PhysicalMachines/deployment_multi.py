@@ -30,15 +30,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
-from uds.core import consts, services, types
+from uds.core import consts
+from uds.core import services
+from uds.core import types
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
+
     from .service_multi import IPMachinesService
 
 logger = logging.getLogger(__name__)
@@ -47,14 +51,15 @@ logger = logging.getLogger(__name__)
 class IPMachinesUserService(services.UserService, autoserializable.AutoSerializable):
     suggested_delay = 10
 
-    _ip = autoserializable.StringField(default='')
-    _mac = autoserializable.StringField(default='')
-    _vmid = autoserializable.StringField(default='')
-    _reason = autoserializable.StringField(default='')  # If != '', this is the error message and state is ERROR
+    _ip = autoserializable.StringField(default="")
+    _mac = autoserializable.StringField(default="")
+    _vmid = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")  # If != '', this is the error message and state is ERROR
 
     # Utility overrides for type checking...
-    def service(self) -> 'IPMachinesService':
-        return typing.cast('IPMachinesService', super().service())
+    @typing.override
+    def service(self) -> "IPMachinesService":
+        return typing.cast("IPMachinesService", super().service())
 
     def _set_in_use(self) -> None:
         if not self.service().get_token():
@@ -71,27 +76,36 @@ class IPMachinesUserService(services.UserService, autoserializable.AutoSerializa
         except Exception:
             pass  # Maybe the server is already unassigned, so just ignore errors here
 
+    @typing.override
     def set_ip(self, ip: str) -> None:
-        logger.debug('Setting IP to %s (ignored)', ip)
+        logger.debug("Setting IP to %s (ignored)", ip)
 
+    @typing.override
     def get_ip(self) -> str:
         self.update_ip()
         return self._ip
 
+    @typing.override
     def get_name(self) -> str:
         return self.get_unique_id()
 
+    @typing.override
     def get_unique_id(self) -> str:
         # Note: Unique id must be unique.
         # If a hostname is used, it will be resolved first. so If it is a dynamic IP
         # you MUST provide a mac so it can be used as unique id, or this will cause problems.
         return self._mac if self._mac and self._mac != consts.NULL_MAC else self._ip
 
+    @typing.override
     def set_ready(self) -> types.states.TaskState:
+        # User-services migrated from v3.6 may carry an empty _mac, so refresh from
+        # the Server model before waking up or WOL would be sent to nothing.
+        self.update_ip()
         self.service().wakeup(self._ip, self._mac)
         return types.states.TaskState.FINISHED
 
-    def deploy_for_user(self, user: 'models.User') -> types.states.TaskState:
+    @typing.override
+    def deploy_for_user(self, user: "models.User") -> types.states.TaskState:
         logger.debug("Starting deploy of %s for user %s", self._ip, user)
         self._vmid = self.service().get_unassigned()
 
@@ -100,11 +114,12 @@ class IPMachinesUserService(services.UserService, autoserializable.AutoSerializa
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
-        return self._error('Cache deploy not supported')
+        return self._error("Cache deploy not supported")
 
     def assign(self, vmid: str) -> types.states.TaskState:
-        logger.debug('Assigning from assignable with id %s', vmid)
+        logger.debug("Assigning from assignable with id %s", vmid)
         self._vmid = vmid
         # Update ip & mac
         self.update_ip()
@@ -115,17 +130,19 @@ class IPMachinesUserService(services.UserService, autoserializable.AutoSerializa
     def _error(self, reason: str) -> types.states.TaskState:
         if self._vmid:
             self.service().unlock_server(self._vmid)
-        self._vmid = ''
-        self._ip = ''
-        self._mac = ''
-        self._reason = reason or 'Unknown error'
+        self._vmid = ""
+        self._ip = ""
+        self._mac = ""
+        self._reason = reason or "Unknown error"
         return types.states.TaskState.ERROR
 
+    @typing.override
     def check_state(self) -> types.states.TaskState:
         if self._reason:
             return types.states.TaskState.ERROR
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def error_reason(self) -> str:
         """
         If a publication produces an error, here we must notify the reason why it happened. This will be called just after
@@ -133,14 +150,16 @@ class IPMachinesUserService(services.UserService, autoserializable.AutoSerializa
         """
         return self._reason
 
+    @typing.override
     def destroy(self) -> types.states.TaskState:
         if self._vmid:
             self.service().unlock_server(self._vmid)
-        self._vmid = ''
-        self._ip = ''
-        self._mac = ''
+        self._vmid = ""
+        self._ip = ""
+        self._mac = ""
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def cancel(self) -> types.states.TaskState:
         return self.destroy()
 

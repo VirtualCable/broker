@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import time
 import typing
 
@@ -39,14 +40,14 @@ if typing.TYPE_CHECKING:
     pass
 
 # UDS Version related
-VERSION: typing.Final[str] = '5.0.0'
-VERSION_STAMP: typing.Final[str] = f'{time.strftime("%Y%m%d")}-devel'
+VERSION: typing.Final[str] = "5.0.0"
+VERSION_STAMP: typing.Final[str] = f"{time.strftime('%Y%m%d')}-devel"
 # Minimal uds client version required to connect to this server
-VERSION_REQUIRED_CLIENT: typing.Final[str] = '5.0.0'
+VERSION_REQUIRED_CLIENT: typing.Final[str] = "5.0.0"
 
 # Max size of a rest request body
 MAX_REQUEST_SIZE: typing.Final[int] = int(
-    getattr(settings, 'MAX_REST_BODY_SIZE', 1024 * 1024 * 10)
+    getattr(settings, "MAX_REST_BODY_SIZE", 1024 * 1024 * 10)
 )  # from settings, 10Mb by default
 
 # Max ip v6 string length representation, allowing ipv4 mapped addresses
@@ -57,9 +58,9 @@ MAX_DNS_NAME_LENGTH: typing.Final[int] = 255
 ALLOWED_FAILS: typing.Final[int] = 5
 
 # Servers communications constants (note, servers providing services TO UDS, not UDS servers)
-USER_AGENT: typing.Final[str] = f'UDS/{VERSION}'
+USER_AGENT: typing.Final[str] = f"UDS/{VERSION}"
 COMMS_TIMEOUT: typing.Final[int] = 5  # Timeout for communications with servers
-MIN_SERVER_VERSION: typing.Final[str] = '4.0.0'
+MIN_SERVER_VERSION: typing.Final[str] = "4.0.0"
 FAILURE_TIMEOUT: typing.Final[int] = 60  # In case of failure, wait this time before retrying (where applicable)
 
 # Default length for Gui Text Fields
@@ -72,8 +73,8 @@ DEFAULT_MAX_PREPARING_SERVICES: typing.Final[int] = 15
 DEFAULT_WAIT_TIME: typing.Final[int] = 8  # seconds
 
 # UDS Action url scheme
-UDS_ACTION_SCHEME: typing.Final[str] = 'udsa://'
-UDS_CLIENT_SCHEME: typing.Final[str] = 'udssv2://'
+UDS_ACTION_SCHEME: typing.Final[str] = "udsa://"
+UDS_CLIENT_SCHEME: typing.Final[str] = "udssv2://"
 
 # Max sequence number for generators
 MAX_SEQ: typing.Final[int] = 1000000000000000
@@ -81,4 +82,3 @@ MAX_SEQ: typing.Final[int] = 1000000000000000
 # Security related
 SECURITY_KEY_SIZE: typing.Final[int] = 4096
 SECURITY_SECRET_SIZE: typing.Final[int] = 32
-

@@ -28,13 +28,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.http import HttpRequest, HttpResponse
 from django.middleware import csrf
 from django.shortcuts import render
-from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 
 from uds.core import consts, types
@@ -54,8 +54,8 @@ def index(request: HttpRequest) -> HttpResponse:
 
     response = render(
         request=request,
-        template_name='uds/modern/index.html',
-        context={'csrf_field': consts.auth.CSRF_FIELD, 'csrf_token': csrf_token},
+        template_name="uds/modern/index.html",
+        context={"csrf_field": consts.auth.CSRF_FIELD, "csrf_token": csrf_token},
     )
 
     # Ensure UDS cookie is present
@@ -73,4 +73,4 @@ def ticket_launcher(request: HttpRequest) -> HttpResponse:
 # Javascript configuration
 @never_cache
 def js(request: types.requests.ExtendedHttpRequest) -> HttpResponse:
-    return HttpResponse(content=configjs.uds_js(request), content_type='application/javascript')
+    return HttpResponse(content=configjs.uds_js(request), content_type="application/javascript")

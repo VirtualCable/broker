@@ -29,5 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .provider import XenProvider
+
+# Make this visible to loaders
+
+from .provider import XenProvider as XenProvider

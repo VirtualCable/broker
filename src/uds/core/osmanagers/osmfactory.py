@@ -30,12 +30,14 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core.util import factory
 
 if typing.TYPE_CHECKING:
-    from .osmanager import OSManager
+    from .osmanager import OSManager as OSManager
 
-class OSManagersFactory(factory.ModuleFactory['OSManager']):
+
+class OSManagersFactory(factory.ModuleFactory["OSManager"]):
     pass

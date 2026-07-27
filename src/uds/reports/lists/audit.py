@@ -30,15 +30,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import csv
 import io
 import logging
-import re
 import typing
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core import types
 from uds.core.ui import gui
@@ -49,104 +49,138 @@ from .base import ListReport
 
 logger = logging.getLogger(__name__)
 
+RESPONSE_CODES: typing.Final[dict[str, str]] = {
+    "200": "OK",
+    "400": "Bad Request",
+    "401": "Unauthorized",
+    "403": "Forbidden",
+    "404": "Not Found",
+    "405": "Method Not Allowed",
+    "500": "Internal Server Error",
+    "501": "Not Implemented",
+}
+
+RESPONSE_CODE_GROUPS: typing.Final[dict[int, str]] = {
+    1: "Informational",
+    2: "Success",
+    3: "Redirection",
+    4: "Client Error",
+    5: "Server Error",
+}
+
+
+def _decode_response_code(code: str) -> str:
+    try:
+        group = int(code) // 100
+    except ValueError:
+        group = -1  # Unknown
+
+    return code + "/" + RESPONSE_CODES.get(code, RESPONSE_CODE_GROUPS.get(group, "Unknown"))
+
+
+def _parse_log_data(data: str) -> tuple[str, str, str, str, str] | None:
+    """Splits a syslog REST entry into (ip, user, method, response_code, request).
+
+    Two formats are produced by uds.REST.log:
+      * log_operation: "ip [user]: [method/response_code] request"
+      * log_audit:     "ip [user]: action request"  (no method/response_code)
+
+    Parsed by splitting instead of by regex: data is attacker-influenced (it embeds the
+    request path), and the previous regexes backtracked polynomially on crafted input.
+    """
+    head, sep, rest = data.partition("]: ")
+    if not sep:
+        return None
+
+    ip, sep, user = head.partition(" [")
+    if not sep:
+        return None
+
+    if rest.startswith("["):
+        method_and_code, sep, request = rest[1:].partition("] ")
+        method, code_sep, code = method_and_code.partition("/")
+        if sep and code_sep:
+            return ip, user, method, _decode_response_code(code), request
+
+    # Audit action row (log_audit): no method/response_code
+    return ip, user, "AUDIT", "", rest
+
 
 class ListReportAuditCSV(ListReport):
-    name = _('Audit Log list')  # Report name
-    description = _('List administration audit logs')  # Report description
-    filename = 'audit.csv'
-    mime_type = 'text/csv'
+    name = _("Audit Log list")  # Report name
+    description = _("List administration audit logs")  # Report description
+    filename = "audit.csv"
+    mime_type = "text/csv"
     encoded = False
     # PDF Report of audit logs is extremely slow on pdf, so we will use csv only
 
     start_date = gui.DateField(
         order=2,
-        label=_('Starting date'),
-        tooltip=_('starting date for report'),
+        label=_("Starting date"),
+        tooltip=_("starting date for report"),
         default=dateutils.start_of_month,
         required=True,
     )
 
     end_date = gui.DateField(
         order=3,
-        label=_('Finish date'),
-        tooltip=_('finish date for report'),
+        label=_("Finish date"),
+        tooltip=_("finish date for report"),
         default=dateutils.tomorrow,
         required=True,
     )
 
-    uuid = 'b5f5ebc8-44e9-11ed-97a9-efa619da6a49'
+    uuid = "b5f5ebc8-44e9-11ed-97a9-efa619da6a49"
 
     # Generator of data
-    def gen_data(self) -> typing.Generator[tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None]:
-        # Xtract user method, response_code and request from data
-        # the format is "user: [method/response_code] request"
-        rx = re.compile(
-            r'(?P<ip>[^\[ ]*) *(?P<user>.*?): \[(?P<method>[^/]*)/(?P<response_code>[^\]]*)\] (?P<request>.*)'
-        )
-
+    def gen_data(
+        self,
+    ) -> collections.abc.Generator[
+        tuple[typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any, typing.Any], None, None
+    ]:
+        # as_datetime() already returns an aware datetime, so no make_aware here
         start = self.start_date.as_datetime().replace(hour=0, minute=0, second=0, microsecond=0)
-        start = timezone.make_aware(start)
         end = self.end_date.as_datetime().replace(hour=23, minute=59, second=59, microsecond=999999)
-        end = timezone.make_aware(end)
         for i in Log.objects.filter(
             created__gte=start,
             created__lte=end,
             source=types.log.LogSource.REST,
             owner_type=types.log.LogObjectType.SYSLOG,
-        ).order_by('-created'):
-            # extract user, method, response_code and request from data field
-            m = rx.match(i.data)
-        
-            if m:
-                code: str = m.group('response_code')
-                try:
-                    code_grp = int(code) // 100
-                except Exception:
-                    code_grp = 500
-                    
-                response_code = code + '/' + {
-                    '200': 'OK',
-                    '400': 'Bad Request',
-                    '401': 'Unauthorized',
-                    '403': 'Forbidden',
-                    '404': 'Not Found',
-                    '405': 'Method Not Allowed',
-                    '500': 'Internal Server Error',
-                    '501': 'Not Implemented',
-                }.get(code, {
-                    1: 'Informational',
-                    2: 'Success',
-                    3: 'Redirection',
-                    4: 'Client Error',
-                    5: 'Server Error',
-                }.get(code_grp, 'Unknown')
-                )
-                
-                yield (
-                    i.created,
-                    m.group('ip'),
-                    m.group('user'),
-                    m.group('method'),
-                    response_code,
-                    m.group('request'),
-                )
+        ).order_by("-created"):
+            # extract ip, user, method, response_code and request from data field
+            parsed = _parse_log_data(i.data)
+            if not parsed:
+                continue
 
+            ip, user, method, response_code, request = parsed
+            yield (
+                i.created,
+                i.level_as_str,
+                ip,
+                user,
+                method,
+                response_code,
+                request,
+            )
+
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
 
         writer.writerow(
             [
-                gettext('Date'),
-                gettext('IP'),
-                gettext('User'),
-                gettext('Method'),
-                gettext('Response code'),
-                gettext('Request'),
+                gettext("Date"),
+                gettext("Level"),
+                gettext("IP"),
+                gettext("User"),
+                gettext("Method"),
+                gettext("Response code"),
+                gettext("Request"),
             ]
         )
 
-        for l in self.gen_data():
-            writer.writerow(l)
+        for line in self.gen_data():
+            writer.writerow(line)
 
         return output.getvalue().encode()

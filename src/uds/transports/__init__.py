@@ -52,9 +52,7 @@ def initialize() -> None:
     from uds.core import transports
 
     # Transports ignores non leaf modules
-    modfinder.dynamically_load_and_register_modules(
-        transports.factory(), transports.Transport, __name__
-    )
+    modfinder.dynamically_load_and_register_modules(transports.factory(), transports.Transport, __name__)
 
 
 initialize()

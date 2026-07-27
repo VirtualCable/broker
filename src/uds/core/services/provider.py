@@ -30,17 +30,21 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
+from uds.core import consts
+from uds.core import environment
+from uds.core import module
 from uds.core import types
-from uds.core import module, environment, consts
 from uds.core.ui import gui
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .service import Service
     from uds import models
+
+    from .service import Service
 
 logger = logging.getLogger(__name__)
 
@@ -82,58 +86,58 @@ class ServiceProvider(module.Module):
     # : Services that we offers. Here is a list of service types (python types) that
     # : this class will provide. This types are the python clases, derived from
     # : Service, that are childs of this provider
-    offers: list[type['Service']] = []
+    offers: list[type["Service"]] = []
 
     # : Name of type, used at administration interface to identify this
     # : provider (i.e. Xen server, oVirt Server, ...)
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "translatable" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_name = 'Base Provider'
+    type_name = "Base Provider"
 
     # : Name of type used by Managers to identify this tipe of service
     # : Must not be modified once assigned, because it's stored at database, and any saved
     # : data will not be able to be unmarshalled if this is changed.
-    type_type = 'BaseServiceProvider'
+    type_type = "BaseServiceProvider"
 
     # : Description shown at administration level for this provider.
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "translatable" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_description = 'Base Service Provider'
+    type_description = "Base Service Provider"
 
     # : Icon file, used to represent this provider at administration interface
     # : This file should be at same folder as this class is, except if you provide
     # : your own py:meth:`uds.core.module.BaseModule.icon` method.
-    icon_file = 'provider.png'
+    icon_file = "provider.png"
 
     # : This defines the maximum number of concurrent services that should be in state "in preparation" for this provider
     # : Default is return the GlobalConfig value of GlobalConfig.MAX_PREPARING_SERVICES
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value property)
     # : Note: This cannot be renamed with out a "migration", because it's used at database
-    concurrent_creation_limit: typing.Optional[typing.Union[int, gui.NumericField]] = None
+    concurrent_creation_limit: int | gui.NumericField | None = None
 
     # : This defines the maximum number of concurrent services that should be in state "removing" for this provider
     # : Default is return the GlobalConfig value of GlobalConfig.MAX_REMOVING_SERVICES
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value property)
     # : Note: This cannot be renamed with out a "migration", because it's used at database
-    concurrent_removal_limit: typing.Optional[typing.Union[int, gui.NumericField]] = None
+    concurrent_removal_limit: int | gui.NumericField | None = None
 
     # : This defines if the limits (concurrent... vars) should be taken into accout or simply ignored
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value)
-    ignore_limits: typing.Optional[typing.Union[bool, gui.CheckBoxField]] = None
+    ignore_limits: bool | gui.CheckBoxField | None = None
 
-    _db_obj: typing.Optional['models.Provider'] = None
+    _db_obj: "models.Provider | None" = None
 
     @classmethod
-    def get_provided_services(cls) -> list[type['Service']]:
+    def get_provided_services(cls) -> list[type["Service"]]:
         """
         Returns what type of services this provider offers
         """
         return cls.offers
 
     @classmethod
-    def get_service_by_type(cls, type_name: str) -> typing.Optional[type['Service']]:
+    def get_service_by_type(cls, type_name: str) -> type["Service"] | None:
         """
         Tries to locate a child service which type corresponds with the
         one provided.
@@ -150,8 +154,8 @@ class ServiceProvider(module.Module):
     def __init__(
         self,
         environment: environment.Environment,
-        values: 'types.core.ValuesType' = None,
-        uuid: typing.Optional[str] = None,
+        values: "types.core.ValuesType" = None,
+        uuid: "str | None" = None,
     ):
         """
         Do not forget to invoke this in your derived class using "super(self.__class__, self).__init__(environment, values)"
@@ -163,7 +167,7 @@ class ServiceProvider(module.Module):
         super().__init__(environment, values, uuid=uuid)
         self.initialize(values)
 
-    def initialize(self, values: 'types.core.ValuesType') -> None:
+    def initialize(self, values: "types.core.ValuesType") -> None:
         """
         This method will be invoked from __init__ constructor.
         This is provided so you don't have to provide your own __init__ method,
@@ -173,7 +177,7 @@ class ServiceProvider(module.Module):
         Args:
             values: Values from administration interface. If None, this is being
                     initialized internally and not from administration
-            
+
         Notes:
             If values is not none, this object is being initialized
             from administration interface, and not unmarshal is needed because data is already loaded
@@ -181,11 +185,12 @@ class ServiceProvider(module.Module):
             If values is None, this is being initialized internally, and unmarshal will
             be called AFTER invoking this method. No unmarshalled means that no automatic field
             will be filled with values from database, so take care whith this.
-            
+
         Default implementation does nothing
         """
 
-    def db_obj(self) -> 'models.Provider':
+    @typing.override
+    def db_obj(self) -> "models.Provider":
         """
         Returns the database object for this provider
         """
@@ -231,17 +236,19 @@ class ServiceProvider(module.Module):
 
         return ret_val
 
+    @typing.override
     def do_log(
         self,
-        level: 'types.log.LogLevel',
+        level: "types.log.LogLevel",
         message: str,
-        source: 'types.log.LogSource' = types.log.LogSource.SERVICE,
+        source: "types.log.LogSource" = types.log.LogSource.SERVICE,
     ) -> None:
         return super().do_log(level, message, source)
 
+    @typing.override
     def __str__(self) -> str:
         """
         Basic implementation, mostly used for debuging and testing, never used
         at user or admin interfaces.
         """
-        return 'Base Service Provider'
+        return "Base Service Provider"

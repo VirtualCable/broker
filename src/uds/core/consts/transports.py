@@ -30,7 +30,8 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
-ON_NEW_WINDOW_VAR: typing.Final[str] = 'o_n_w'
-ON_SAME_WINDOW_VAR: typing.Final[str] = 'o_s_w'
+ON_NEW_WINDOW_VAR: typing.Final[str] = "o_n_w"
+ON_SAME_WINDOW_VAR: typing.Final[str] = "o_s_w"

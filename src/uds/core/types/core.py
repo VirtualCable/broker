@@ -30,8 +30,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
+
 import dataclasses
+import typing
 
 # Module values type
 ValuesType = dict[str, typing.Any] | None
@@ -41,4 +42,4 @@ ValuesType = dict[str, typing.Any] | None
 @dataclasses.dataclass
 class TestResult:
     success: bool
-    error: str = ''
+    error: str = ""

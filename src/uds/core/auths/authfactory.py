@@ -30,14 +30,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core.util import factory
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .authenticator import Authenticator
+    from .authenticator import Authenticator as Authenticator
 
 
-class AuthsFactory(factory.ModuleFactory['Authenticator']):
+class AuthsFactory(factory.ModuleFactory["Authenticator"]):
     pass

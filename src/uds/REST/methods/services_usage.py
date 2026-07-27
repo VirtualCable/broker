@@ -32,19 +32,22 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import dataclasses
-import logging
 import datetime
+import logging
+import typing
 
-from django.utils.translation import gettext as _
 from django.db.models import Model
+from django.utils.translation import gettext as _
 
-from uds.core import exceptions, types
-
-from uds.models import UserService, Provider
+from uds.core import exceptions
+from uds.core import types
 from uds.core.types.states import State
+from uds.core.util import ensure
+from uds.core.util import ui as ui_utils
 from uds.core.util.model import process_uuid
+from uds.models import Provider
+from uds.models import UserService
 from uds.REST.model import DetailHandler
-from uds.core.util import ensure, ui as ui_utils
 
 # Not imported at runtime, just for type checking
 
@@ -86,11 +89,11 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             props = dict(p)
 
         if item.user is None:
-            owner = ''
-            owner_info = {'auth_id': '', 'user_id': ''}
+            owner = ""
+            owner_info = {"auth_id": "", "user_id": ""}
         else:
             owner = item.user.pretty_name
-            owner_info = {'auth_id': item.user.manager.uuid, 'user_id': item.user.uuid}
+            owner_info = {"auth_id": item.user.manager.uuid, "user_id": item.user.uuid}
 
         return ServicesUsageItem(
             id=item.uuid,
@@ -104,75 +107,78 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             service_id=item.deployed_service.service.uuid,
             pool=item.deployed_service.name,
             pool_id=item.deployed_service.uuid,
-            ip=props.get('ip', _('unknown')),
+            ip=props.get("ip", _("unknown")),
             source_host=item.src_hostname,
             source_ip=item.src_ip,
             in_use=item.in_use,
         )
-        
-    def get_item_position(self, parent: 'Model', item_uuid: str) -> int:
+
+    @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, Provider)
         return self.calc_item_position(
             item_uuid,
-            UserService.objects.filter(deployed_service__service__provider=parent).order_by('creation_date'),
+            UserService.objects.filter(deployed_service__service__provider=parent).order_by("creation_date"),
         )
 
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ServicesUsageItem]:
+    @typing.override
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult[ServicesUsageItem]:
         parent = ensure.is_instance(parent, Provider)
         try:
             userservices = self.odata_filter(
                 UserService.objects.filter(deployed_service__service__provider=parent)
-                .order_by('creation_date')
-                .prefetch_related('deployed_service', 'deployed_service__service', 'user', 'user__manager')
+                .order_by("creation_date")
+                .prefetch_related("deployed_service", "deployed_service__service", "user", "user__manager")
             )
             return [ServicesUsage.item_as_dict(k) for k in userservices]
 
         except Exception as e:
-            logger.error('Error getting services usage for %s: %s', parent.uuid, e)
-            raise exceptions.rest.ResponseError(_('Error getting services usage')) from None
+            logger.error("Error getting services usage for %s: %s", parent.uuid, e)
+            raise exceptions.rest.ResponseError(_("Error getting services usage")) from None
 
-    def get_item(self, parent: 'Model', item: str) -> ServicesUsageItem:
+    @typing.override
+    def get_item(self, parent: "Model", item: str) -> ServicesUsageItem:
         ensure.is_instance(parent, Provider)  # Just ensures type
         return ServicesUsage.item_as_dict(
             UserService.objects.filter(deployed_service__service_uuid=process_uuid(item)).get()
         )
 
-    def get_table(self, parent: 'Model') -> types.rest.TableInfo:
+    @typing.override
+    def get_table(self, parent: "Model") -> types.rest.TableInfo:
         ensure.is_instance(parent, Provider)  # Just ensures type
         return (
-            ui_utils.TableBuilder(_('Services Usage'))
-            .datetime_column(name='state_date', title=_('Access'))
-            .text_column(name='owner', title=_('Owner'))
-            .text_column(name='service', title=_('Service'))
-            .text_column(name='pool', title=_('Pool'))
-            .text_column(name='unique_id', title='Unique ID')
-            .text_column(name='ip', title=_('IP'))
-            .text_column(name='friendly_name', title=_('Friendly name'))
-            .text_column(name='source_ip', title=_('Src Ip'))
-            .text_column(name='source_host', title=_('Src Host'))
-            .row_style(prefix='row-state-', field='state')
+            ui_utils.TableBuilder(_("Services Usage"))
+            .datetime_column(name="state_date", title=_("Access"))
+            .text_column(name="owner", title=_("Owner"))
+            .text_column(name="service", title=_("Service"))
+            .text_column(name="pool", title=_("Pool"))
+            .text_column(name="unique_id", title="Unique ID")
+            .text_column(name="ip", title=_("IP"))
+            .text_column(name="friendly_name", title=_("Friendly name"))
+            .text_column(name="source_ip", title=_("Src Ip"))
+            .text_column(name="source_host", title=_("Src Host"))
+            .row_style(prefix="row-state-", field="state")
             .build()
         )
 
-    def delete_item(self, parent: 'Model', item: str) -> None:
+    @typing.override
+    def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, Provider)
         userservice: UserService
         try:
-            userservice = UserService.objects.get(
-                uuid=process_uuid(item), deployed_service__service__provider=parent
-            )
+            userservice = UserService.objects.get(uuid=process_uuid(item), deployed_service__service__provider=parent)
         except UserService.DoesNotExist:
-            raise exceptions.rest.NotFound(_('User service not found')) from None
+            raise exceptions.rest.NotFound(_("User service not found")) from None
         except Exception as e:
-            logger.error('Error getting user service %s from %s: %s', item, parent, e)
-            raise exceptions.rest.ResponseError(_('Error getting user service')) from None
+            logger.error("Error getting user service %s from %s: %s", item, parent, e)
+            raise exceptions.rest.ResponseError(_("Error getting user service")) from None
 
-        logger.debug('Deleting user service')
+        logger.debug("Deleting user service")
         if userservice.state in (State.USABLE, State.REMOVING):
             userservice.release()
         elif userservice.state == State.PREPARING:
             userservice.cancel()
         elif userservice.state == State.REMOVABLE:
-            raise exceptions.rest.ResponseError(_('Item already being removed')) from None
+            raise exceptions.rest.ResponseError(_("Item already being removed")) from None
         else:
-            raise exceptions.rest.ResponseError(_('Item is not removable')) from None
+            raise exceptions.rest.ResponseError(_("Item is not removable")) from None

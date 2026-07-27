@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # Cert/key helpers for crypto manager tests. Underscore prefix keeps pytest from collecting it.
 import datetime
 import pathlib
@@ -35,11 +36,12 @@ import secrets
 import tempfile
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.x509.oid import NameOID
-
 from django.test import override_settings
 
 from uds.core.managers.crypto import certs as _certs
@@ -73,7 +75,7 @@ class CertTestCase(UDSTestCase):
         return p
 
     def install_trust(self, *roots: x509.Certificate) -> None:
-        bundle = self.write('trust.pem', chain_to_pem(*roots))
+        bundle = self.write("trust.pem", chain_to_pem(*roots))
         ov = override_settings(RDP_SIGN_CA_BUNDLE=str(bundle))
         ov.enable()
         self.addCleanup(ov.disable)
@@ -176,4 +178,4 @@ def key_to_der(key: _PrivateKey) -> bytes:
 
 
 def chain_to_pem(*certs: x509.Certificate) -> bytes:
-    return b''.join(to_pem(c) for c in certs)
+    return b"".join(to_pem(c) for c in certs)

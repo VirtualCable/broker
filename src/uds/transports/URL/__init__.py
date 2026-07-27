@@ -30,6 +30,6 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
+# Make this visible to loaders
 
-from .url_custom import URLCustomTransport
+from .url_custom import URLCustomTransport as URLCustomTransport

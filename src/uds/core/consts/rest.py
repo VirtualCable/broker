@@ -30,23 +30,53 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # REST API requests (..../REST/.../overview, ..../REST/.../types, etc)
-OVERVIEW: typing.Final[str] = 'overview'
-TYPES: typing.Final[str] = 'types'
-TABLEINFO: typing.Final[str] = 'tableinfo'
-GUI: typing.Final[str] = 'gui'
-LOG: typing.Final[str] = 'log'
-POSITION: typing.Final[str] = 'position'
+OVERVIEW: typing.Final[str] = "overview"
+TYPES: typing.Final[str] = "types"
+TABLEINFO: typing.Final[str] = "tableinfo"
+GUI: typing.Final[str] = "gui"
+LOG: typing.Final[str] = "log"
+POSITION: typing.Final[str] = "position"
 
-SYSTEM: typing.Final[str] = 'system'  # Defined on system class, here for reference
+SYSTEM: typing.Final[str] = "system"  # Defined on system class, here for reference
+
+# -- Deprecation headers (RFC 9745 / RFC 8594) --
+
+# Unix timestamp of when legacy GET-modifier endpoints were first
+# marked deprecated.  Used in the ``Deprecation`` response header.
+DEPRECATION_TS: typing.Final[int] = 1752854400  # 2025-07-18T00:00:00Z
+
+# HTTP-date for ``Sunset`` header (RFC 8594).  Points to the
+# estimated v7 removal window.  The value is informational only.
+SUNSET_DATE: typing.Final[str] = "Sat, 01 Jan 2030 00:00:00 GMT"
+
+# HTTP methods the REST dispatcher understands.
+# Used to gate incoming requests and compute the ``Allow`` header.
+KNOWN_METHODS: typing.Final[tuple[str, ...]] = ("get", "post", "put", "delete", "options", "query")
+
+# Standard ``Allow`` header value returned by OPTIONS (uppercase).
+DEFAULT_ALLOW: typing.Final[str] = ", ".join(m.upper() for m in KNOWN_METHODS)
+
+# -- GUI callback tickets --
+#
+# ``/gui/callback/<name>`` endpoints receive a single required parameter
+# ``cb_uuid`` — the uuid of a ``TicketStore`` entry that the GUI obtained
+# via the corresponding ``/gui/<type>`` response. The ticket wraps the
+# provider uuid and has a short TTL (1 h by default), so a staff cannot
+# forge a callback request just by guessing a ``prov_uuid`` — they need
+# a fresh ticket from the GUI flow. See ``doc/plan/secure_callbacks.md``.
+CALLBACK_TICKET_TTL: typing.Final[int] = 60 * 60  # 1 hour
+CALLBACK_TICKET_PARAM: typing.Final[str] = "cb_uuid"
 
 
 class _NotFound:
     pass
 
 
+# Not found guard, unique
 NOT_FOUND: typing.Final[_NotFound] = _NotFound()
 
 ITEMS_LIMIT: typing.Final[int] = 4400

@@ -30,7 +30,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
+
 
 @dataclasses.dataclass
 class Downloadable:
@@ -39,4 +41,3 @@ class Downloadable:
     path: str
     mimetype: str
     legacy: bool
-    

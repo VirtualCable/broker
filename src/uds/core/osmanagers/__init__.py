@@ -29,9 +29,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .osmanager import OSManager
+
+# Make this visible to loaders
+
+from .osmanager import OSManager as OSManager
 from .osmfactory import OSManagersFactory
+
 
 def factory() -> OSManagersFactory:
     """

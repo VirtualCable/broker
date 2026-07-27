@@ -28,49 +28,53 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
+import logging
+import signal
 import threading
 import time
-import signal
-import logging
 import typing
 
 from django.db import connection
-from uds.core.jobs.scheduler import Scheduler
-from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
+
 from uds.core import jobs
-from uds.core.util.config import GlobalConfig
+from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
+from uds.core.jobs.scheduler import Scheduler
 from uds.core.util import singleton
+from uds.core.util.config import GlobalConfig
 
 logger = logging.getLogger(__name__)
 
 
 class BaseThread(threading.Thread, abc.ABC):
-
     @abc.abstractmethod
     def request_stop(self) -> None:
         raise NotImplementedError
 
 
 class SchedulerThread(BaseThread):
+    @typing.override
     def run(self) -> None:
         Scheduler.scheduler().run()
 
+    @typing.override
     def request_stop(self) -> None:
         Scheduler.scheduler().notify_termination()
 
 
 class DelayedTaskThread(BaseThread):
+    @typing.override
     def run(self) -> None:
         DelayedTaskRunner.runner().run()
 
+    @typing.override
     def request_stop(self) -> None:
         DelayedTaskRunner.runner().request_stop()
 
 
 class TaskManager(metaclass=singleton.Singleton):
-
-    __slots__ = ('threads', 'keep_running')
+    __slots__ = ("threads", "keep_running")
 
     keep_running: bool
     threads: list[BaseThread]
@@ -80,7 +84,7 @@ class TaskManager(metaclass=singleton.Singleton):
         self.threads = []
 
     @staticmethod
-    def manager() -> 'TaskManager':
+    def manager() -> "TaskManager":
         return TaskManager()
 
     @staticmethod
@@ -103,14 +107,12 @@ class TaskManager(metaclass=singleton.Singleton):
         logger.info("Registering sheduled tasks")
 
         # Simply import this to make workers "register" themselves
-        from uds import workers  # pyright: ignore[reportUnusedImport]
+        from uds import workers as workers
 
     def add_other_tasks(self) -> None:
         logger.info("Registering other tasks")
 
-        from uds.core.messaging.processor import (
-            MessageProcessorThread,
-        )  # pylint: disable=import-outside-toplevel
+        from uds.core.messaging.processor import MessageProcessorThread  # pylint: disable=import-outside-toplevel
 
         thread = MessageProcessorThread()
         thread.start()
@@ -135,7 +137,7 @@ class TaskManager(metaclass=singleton.Singleton):
         if n_delayed_tasks < 1:
             n_delayed_tasks = 1  # At least one delayed task
 
-        logger.info('Starting %s schedulers and %s task executors', n_schedulers, n_delayed_tasks)
+        logger.info("Starting %s schedulers and %s task executors", n_schedulers, n_delayed_tasks)
 
         signal.signal(signal.SIGTERM, TaskManager.sig_term)
         signal.signal(signal.SIGINT, TaskManager.sig_term)

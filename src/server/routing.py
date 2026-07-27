@@ -10,6 +10,7 @@ WebSocket URL routing for UDS.
 Top-level router that delegates to app-specific WebSocket routes,
 equivalent to server/urls.py for HTTP (which does include('uds.urls')).
 """
+
 import typing
 
 from channels.routing import URLRouter
@@ -17,6 +18,6 @@ from django.urls import re_path
 
 from uds.ws import websocket_urlpatterns as uds_ws_routes
 
-websocket_urlpatterns: list[typing.Any]= [
-    typing.cast(typing.Any, re_path(r'^uds/ws/', URLRouter(uds_ws_routes))),  # type:ignore
+websocket_urlpatterns: list[typing.Any] = [
+    typing.cast(typing.Any, re_path(r"^uds/ws/", URLRouter(uds_ws_routes))),  # type:ignore
 ]

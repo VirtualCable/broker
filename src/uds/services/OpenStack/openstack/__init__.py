@@ -30,7 +30,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import re
+
 
 def sanitized_name(name: str) -> str:
     """

@@ -30,22 +30,26 @@
 """
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import datetime
 import logging
 import typing
 
-from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-
-from uds.REST.model import ModelHandler
-from uds.core import types
-import uds.core.types.permissions
-from uds.core.util import permissions, ensure, ui as ui_utils
-from uds.models import Account
-from .accountsusage import AccountsUsage
-
 from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+import uds.core.types.permissions
+
+from uds.core import types
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.models import Account
+from uds.REST.model import ModelHandler
+
+from .accountsusage import AccountsUsage
 
 logger = logging.getLogger(__name__)
 
@@ -68,22 +72,32 @@ class Accounts(ModelHandler[AccountItem]):
     """
 
     MODEL = Account
-    DETAIL = {'usage': AccountsUsage}
+    DETAIL = {"usage": AccountsUsage}
 
     CUSTOM_METHODS = [
-        types.rest.ModelCustomMethod('clear', True),
-        types.rest.ModelCustomMethod('timemark', True),
+        types.rest.ModelCustomMethod(
+            "clear",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description="Remove all usage records associated with an account, permanently deleting them",
+        ),
+        types.rest.ModelCustomMethod(
+            "timemark",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            description="Set a timestamp marker on an account to indicate the last processed usage record, enabling incremental data processing",
+        ),
     ]
 
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags']
+    FIELDS_TO_SAVE = ["name", "comments", "tags"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Accounts'))
-        .text_column(name='name', title=_('Name'))
-        .text_column(name='comments', title=_('Comments'))
-        .datetime_column(name='time_mark', title=_('Time mark'))
-        .text_column(name='tags', title=_('tags'), visible=False)
-        .with_filter_fields('name', 'comments')
+        ui_utils.TableBuilder(_("Accounts"))
+        .text_column(name="name", title=_("Name"))
+        .text_column(name="comments", title=_("Comments"))
+        .datetime_column(name="time_mark", title=_("Time mark"))
+        .text_column(name="tags", title=_("tags"), visible=False)
+        .with_filter_fields("name", "comments")
         .build()
     )
 
@@ -92,7 +106,8 @@ class Accounts(ModelHandler[AccountItem]):
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
 
-    def get_item(self, item: 'models.Model') -> AccountItem:
+    @typing.override
+    def get_item(self, item: "models.Model") -> AccountItem:
         item = ensure.is_instance(item, Account)
         return AccountItem(
             id=item.uuid,
@@ -103,6 +118,7 @@ class Accounts(ModelHandler[AccountItem]):
             permission=permissions.effective_permissions(self._user, item),
         )
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         return (
             ui_utils.GuiBuilder()
@@ -111,7 +127,7 @@ class Accounts(ModelHandler[AccountItem]):
             .add_stock_field(types.rest.stock.StockField.TAGS)
         ).build()
 
-    def timemark(self, item: 'models.Model') -> typing.Any:
+    def timemark(self, item: "models.Model") -> typing.Any:
         """
         API:
             Generates a time mark associated with the account.
@@ -126,9 +142,9 @@ class Accounts(ModelHandler[AccountItem]):
         item = ensure.is_instance(item, Account)
         item.time_mark = timezone.localtime()
         item.save()
-        return ''
+        return ""
 
-    def clear(self, item: 'models.Model') -> typing.Any:
+    def clear(self, item: "models.Model") -> typing.Any:
         """
         Api documentation for the method. From here, will be used by the documentation generator
         Always starts with API:

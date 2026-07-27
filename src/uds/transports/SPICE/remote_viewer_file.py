@@ -28,7 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing
 
-TEMPLATE = '''[virt-viewer]
+TEMPLATE = """[virt-viewer]
 type={type}
 host={host}
 port={port}
@@ -49,24 +49,24 @@ release-cursor=shift+f12
 secure-attention=ctrl+alt+end
 {secure_channel}
 {proxy}
-'''
+"""
 
 
 class RemoteViewerFile:
-    connection_type: str = 'spice'
-    host: str = ''
+    connection_type: str = "spice"
+    host: str = ""
     port: typing.Optional[str] = None
     tls_port: typing.Optional[str] = None
     password: str
     fullscreen: bool = False
-    title: str = 'OpenUDS'
-    host_subject: str = ''
-    ca: str = ''
+    title: str = "OpenUDS"
+    host_subject: str = ""
+    ca: str = ""
     smartcard: bool = False
     usb_auto_share: bool = True
     new_usb_auto_share: bool = False
     delete_file: bool = True
-    proxy: str = ''
+    proxy: str = ""
     ssl_connection: bool = False
 
     def __init__(
@@ -93,21 +93,19 @@ class RemoteViewerFile:
 
     @property
     def as_file_ns(self) -> str:
-        return self.get('-1')
+        return self.get("-1")
 
     def get(self, tls_port: typing.Optional[str] = None) -> str:
         if tls_port is None:
             tls_port = self.tls_port
 
-        fullscreen = '01'[self.fullscreen]
-        smartcard = '01'[self.smartcard]
-        delete_file = '01'[self.delete_file]
-        usb_auto_share = '01'[self.usb_auto_share]
-        new_usb_auto_share = '01'[self.new_usb_auto_share]
+        fullscreen = "01"[self.fullscreen]
+        smartcard = "01"[self.smartcard]
+        delete_file = "01"[self.delete_file]
+        usb_auto_share = "01"[self.usb_auto_share]
+        new_usb_auto_share = "01"[self.new_usb_auto_share]
 
-        ca = self.ca.strip().replace(
-            '\n', '\\n'
-        )  # So we get '\\n' and script works fine after replacement
+        ca = self.ca.strip().replace("\n", "\\n")  # So we get '\\n' and script works fine after replacement
 
         # If proxy is set
 
@@ -123,10 +121,10 @@ class RemoteViewerFile:
             usb_auto_share=usb_auto_share,
             new_usb_auto_share=new_usb_auto_share,
             delete_file=delete_file,
-            host_subject=self.host_subject if tls_port != '-1' else '',
-            ca=ca if tls_port != '-1' else '',
-            secure_channel='secure-channels=main;inputs;cursor;playback;record;display;usbredir;smartcard'
-            if self.ssl_connection and tls_port != '-1'
-            else '',
-            proxy=f'proxy={self.proxy}' if self.proxy else '',
+            host_subject=self.host_subject if tls_port != "-1" else "",
+            ca=ca if tls_port != "-1" else "",
+            secure_channel="secure-channels=main;inputs;cursor;playback;record;display;usbredir;smartcard"
+            if self.ssl_connection and tls_port != "-1"
+            else "",
+            proxy=f"proxy={self.proxy}" if self.proxy else "",
         )

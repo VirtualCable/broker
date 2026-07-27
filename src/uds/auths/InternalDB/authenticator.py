@@ -32,14 +32,17 @@
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 import dns.resolver
 import dns.reversename
+
 from django.utils.translation import gettext_noop as _
 
-from uds.core import auths, types
+from uds.core import auths
+from uds.core import types
 from uds.core.auths.auth import log_login
 from uds.core.managers.crypto import CryptoManager
 from uds.core.types.states import State
@@ -55,10 +58,10 @@ logger = logging.getLogger(__name__)
 
 
 class InternalDBAuth(auths.Authenticator):
-    type_name = _('Internal Database')
-    type_type = 'InternalDBAuth'
-    type_description = _('Internal dabasase authenticator. Doesn\'t use external sources')
-    icon_file = 'auth.png'
+    type_name = _("Internal Database")
+    type_type = "InternalDBAuth"
+    type_description = _("Internal dabasase authenticator. Doesn't use external sources")
+    icon_file = "auth.png"
 
     # If we need to enter the password for this user
     needs_password = True
@@ -70,62 +73,64 @@ class InternalDBAuth(auths.Authenticator):
     mfa_data_enabled = True
 
     unique_by_host = gui.CheckBoxField(
-        label=_('Different user for each host'),
+        label=_("Different user for each host"),
         order=1,
-        tooltip=_('If checked, each host will have a different user name'),
+        tooltip=_("If checked, each host will have a different user name"),
         default=False,
         readonly=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='differentForEachHost',
+        old_field_name="differentForEachHost",
     )
     reverse_dns = gui.CheckBoxField(
-        label=_('Reverse DNS'),
+        label=_("Reverse DNS"),
         order=2,
-        tooltip=_('If checked, the host will be reversed dns'),
+        tooltip=_("If checked, the host will be reversed dns"),
         default=False,
         readonly=True,
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='reverseDns',
+        old_field_name="reverseDns",
     )
     accepts_proxy = gui.CheckBoxField(
-        label=_('Accept proxy'),
+        label=_("Accept proxy"),
         order=3,
         default=False,
         tooltip=_(
-            'If checked, requests via proxy will get FORWARDED ip address (take care with this bein checked, can take internal IP addresses from internet)'
+            "If checked, requests via proxy will get FORWARDED ip address (take care with this bein checked, can take internal IP addresses from internet)"
         ),
         tab=types.ui.Tab.ADVANCED,
-        old_field_name='acceptProxy',
+        old_field_name="acceptProxy",
     )
 
-    def get_ip(self, request: 'ExtendedHttpRequest') -> str:
+    def get_ip(self, request: "ExtendedHttpRequest") -> str:
         ip = request.ip_proxy if self.accepts_proxy.as_bool() else request.ip  # pylint: disable=maybe-no-member
         if self.reverse_dns.as_bool():
             try:
-                ptr_resolv = dns.resolver.query(dns.reversename.from_address(ip).to_text(), 'PTR')
+                ptr_resolv = dns.resolver.query(dns.reversename.from_address(ip).to_text(), "PTR")
                 return str(ptr_resolv[0])  # pyright: ignore[reportUnknownArgumentType]
             except Exception:
                 # if we can't get the reverse, we will use the ip
                 pass
         return ip
 
+    @typing.override
     def mfa_identifier(self, username: str) -> str:
         try:
             return self.db_obj().users.get(name=username.lower(), state=State.ACTIVE).mfa_data
         except Exception:  # nosec: This is a "not found" exception or any other db exception
             pass
-        return ''
+        return ""
 
-    def transformed_username(self, username: str, request: 'ExtendedHttpRequest') -> str:
+    @typing.override
+    def transformed_username(self, username: str, request: "ExtendedHttpRequest") -> str:
         username = username.lower()
         if self.unique_by_host.as_bool():
-            ip_username = (request.ip_proxy if self.accepts_proxy.as_bool() else request.ip) + '-' + username
+            ip_username = (request.ip_proxy if self.accepts_proxy.as_bool() else request.ip) + "-" + username
             # Duplicate basic user into username.
             auth = self.db_obj()
             # "Derived" users will belong to no group at all, because we will extract groups from "base" user
             # This way also, we protect from using forged "ip" + "username", because those will belong in fact to no group
             # and access will be denied
-            grps: list['models.Group'] = []
+            grps: list["models.Group"] = []
 
             try:
                 usr = auth.users.get(name=username, state=State.ACTIVE)
@@ -134,7 +139,7 @@ class InternalDBAuth(auths.Authenticator):
                 typing.cast(typing.Any, usr).id = typing.cast(typing.Any, usr).uuid = (
                     None  # cast to avoid pylance error
                 )
-                if usr.real_name.strip() == '':
+                if usr.real_name.strip() == "":
                     usr.real_name = usr.name
                 usr.name = ip_username
                 usr.parent = parent
@@ -154,19 +159,20 @@ class InternalDBAuth(auths.Authenticator):
 
         return username
 
+    @typing.override
     def authenticate(
         self,
         username: str,
         credentials: str,
-        groups_manager: 'auths.GroupsManager',
-        request: 'ExtendedHttpRequest',
+        groups_manager: "auths.GroupsManager",
+        request: "ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         username = username.lower()
         auth_db = self.db_obj()
         try:
-            user: 'models.User' = auth_db.users.get(name=username, state=State.ACTIVE)
+            user: "models.User" = auth_db.users.get(name=username, state=State.ACTIVE)
         except Exception:
-            log_login(request, self.db_obj(), username, 'Invalid user', as_error=True)
+            log_login(request, self.db_obj(), username, "Invalid user", as_error=True)
             return types.auth.FAILED_AUTH
 
         if user.parent:  # Direct auth not allowed for "derived" users
@@ -177,13 +183,14 @@ class InternalDBAuth(auths.Authenticator):
             groups_manager.validate([g.name for g in user.groups.all()])
             return types.auth.SUCCESS_AUTH
 
-        log_login(request, self.db_obj(), username, 'Invalid password', as_error=True)
+        log_login(request, self.db_obj(), username, "Invalid password", as_error=True)
         return types.auth.FAILED_AUTH
 
-    def get_groups(self, username: str, groups_manager: 'auths.GroupsManager') -> None:
+    @typing.override
+    def get_groups(self, username: str, groups_manager: "auths.GroupsManager") -> None:
         auth_db = self.db_obj()
         try:
-            user: 'models.User' = auth_db.users.get(name=username.lower(), state=State.ACTIVE)
+            user: "models.User" = auth_db.users.get(name=username.lower(), state=State.ACTIVE)
         except Exception:
             return
         grps = [g.name for g in user.groups.all()]
@@ -195,6 +202,7 @@ class InternalDBAuth(auths.Authenticator):
                 pass
         groups_manager.validate(grps)
 
+    @typing.override
     def get_real_name(self, username: str) -> str:
         # Return the real name of the user, if it is set
         try:
@@ -203,15 +211,19 @@ class InternalDBAuth(auths.Authenticator):
         except Exception:
             return super().get_real_name(username)
 
+    @typing.override
     def create_user(self, user_data: dict[str, typing.Any]) -> None:
         pass
 
     @staticmethod
-    def test(env: 'environment.Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    @typing.override
+    def test(env: "environment.Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         return types.core.TestResult(True)
 
+    @typing.override
     def check(self) -> str:
         return _("All seems fine in the authenticator.")
 
+    @typing.override
     def __str__(self) -> str:
         return "Internal DB Authenticator Authenticator"

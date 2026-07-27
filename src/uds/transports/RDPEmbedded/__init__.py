@@ -30,6 +30,8 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .direct import RDPEmbeddedTransport
-from .tunnel import TRDPEmbeddedTransport
+
+# Make this visible to loaders
+
+from .direct import RDPEmbeddedTransport as RDPEmbeddedTransport
+from .tunnel import TRDPEmbeddedTransport as TRDPEmbeddedTransport

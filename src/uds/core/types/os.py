@@ -30,28 +30,32 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import dataclasses
 import enum
 
 
 @dataclasses.dataclass
 class DetectedOsInfo:
-    os: 'KnownOS'
-    browser: 'KnownBrowser'
+    os: "KnownOS"
+    browser: "KnownBrowser"
     version: str
 
 
 class KnownOS(enum.Enum):
-    LINUX = ('Linux',)  # previously got 'armv7l'
-    CHROME_OS = ('CrOS','Chrome OS',)
-    WINDOWS_PHONE = ('Windows Phone',)
-    WINDOWS = ('Windows',)
-    MAC_OS = ('MacOsX', 'MacOs', 'Mac Os X', 'macOS')  # Previous was only "Mac"
-    ANDROID = ('Android',)
-    IPAD = ('iPad',)  #
-    IPHONE = ('iPhone',)  # In fact, these are IOS both, but we can diferentiate them
-    WYSE = ('WYSE',)
-    UNKNOWN = ('Unknown',)
+    LINUX = ("Linux",)  # previously got 'armv7l'
+    CHROME_OS = (
+        "CrOS",
+        "Chrome OS",
+    )
+    WINDOWS_PHONE = ("Windows Phone",)
+    WINDOWS = ("Windows",)
+    MAC_OS = ("MacOsX", "MacOs", "Mac Os X", "macOS")  # Previous was only "Mac"
+    ANDROID = ("Android",)
+    IPAD = ("iPad",)  #
+    IPHONE = ("iPhone",)  # In fact, these are IOS both, but we can diferentiate them
+    WYSE = ("WYSE",)
+    UNKNOWN = ("Unknown",)
 
     def os_name(self) -> str:
         return self.value[0].lower()
@@ -60,22 +64,22 @@ class KnownOS(enum.Enum):
         """
         Returns the value to be stored in the database.
         This values are used so we can keep the database values even if we change the enum values.
-        
+
         Returns:
-        
+
             str: The value to be stored in the database.
         """
         return {
-            'Linux': 'Linux',
-            'CrOS': 'ChromeOS',
-            'Windows Phone': 'WindowsPhone',
-            'Windows': 'Windows',
-            'MacOsX': 'Macintosh',
-            'Android': 'Android',
-            'iPad': 'iPad',
-            'iPhone': 'iPhone',
-            'WYSE': 'WYSE',
-            'Unknown': 'Unknown',
+            "Linux": "Linux",
+            "CrOS": "ChromeOS",
+            "Windows Phone": "WindowsPhone",
+            "Windows": "Windows",
+            "MacOsX": "Macintosh",
+            "Android": "Android",
+            "iPad": "iPad",
+            "iPhone": "iPhone",
+            "WYSE": "WYSE",
+            "Unknown": "Unknown",
         }[self.value[0]]
 
     def __str__(self) -> str:
@@ -85,12 +89,12 @@ class KnownOS(enum.Enum):
 # Order is important here, as we will use the first match
 class KnownBrowser(enum.StrEnum):
     # Known browsers
-    FIREFOX = 'Firefox'
-    SEAMONKEY = 'Seamonkey'
-    EDGE = 'Microsoft Edge'
-    SAFARI = 'Safari'
-    OPERA = 'Opera'
-    CHROME = 'Chrome'
-    CHROMIUM = 'Chromium'
-    IEXPLORER = 'Explorer'
-    OTHER = 'Other'
+    FIREFOX = "Firefox"
+    SEAMONKEY = "Seamonkey"
+    EDGE = "Microsoft Edge"
+    SAFARI = "Safari"
+    OPERA = "Opera"
+    CHROME = "Chrome"
+    CHROMIUM = "Chromium"
+    IEXPLORER = "Explorer"
+    OTHER = "Other"

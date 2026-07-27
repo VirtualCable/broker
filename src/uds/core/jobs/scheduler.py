@@ -30,19 +30,24 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
+
+import logging
 import platform
 import threading
 import time
-import logging
+import typing
+
 from datetime import timedelta
 
-from django.db import transaction, DatabaseError, connections
+from django.db import DatabaseError
+from django.db import connections
+from django.db import transaction
 from django.db.models import Q
 
-from uds.models import Scheduler as DBScheduler
-from uds.core.util.model import sql_now
 from uds.core.types.states import State
+from uds.core.util.model import sql_now
+from uds.models import Scheduler as DBScheduler
+
 from .jobs_factory import JobsFactory
 
 logger = logging.getLogger(__name__)
@@ -60,16 +65,17 @@ class JobThread(threading.Thread):
       Ensures that the scheduler db entry is released after run
     """
 
-    _job_instance: 'Job'
+    _job_instance: "Job"
     _db_job_id: int
-    _freq: int
+    _delay: int
 
-    def __init__(self, job_instance: 'Job', db_job: DBScheduler) -> None:
+    def __init__(self, job_instance: "Job", db_job: DBScheduler) -> None:
         super().__init__()
         self._job_instance = job_instance
         self._db_job_id = db_job.id
-        self._freq = db_job.frecuency
+        self._delay = job_instance.next_execution_delay()
 
+    @typing.override
     def run(self) -> None:
         try:
             self._job_instance.execute()
@@ -90,14 +96,14 @@ class JobThread(threading.Thread):
             except Exception:
                 # Databases locked, maybe because we are on a multitask environment, let's try again in a while
                 try:
-                    connections['default'].close()
+                    connections["default"].close()
                 except Exception as e:
-                    logger.error('On job executor, closing db connection: %s', e)
+                    logger.error("On job executor, closing db connection: %s", e)
                 # logger.info('Database access failed... Retrying')
                 time.sleep(1)
 
         # Ensures DB connection is released after job is done
-        connections['default'].close()
+        connections["default"].close()
 
     def _update_db_record(self) -> None:
         """
@@ -106,8 +112,8 @@ class JobThread(threading.Thread):
         with transaction.atomic():
             DBScheduler.objects.select_for_update().filter(id=self._db_job_id).update(
                 state=State.FOR_EXECUTE,
-                owner_server='',
-                next_execution=sql_now() + timedelta(seconds=self._freq),
+                owner_server="",
+                next_execution=sql_now() + timedelta(seconds=self._delay),
             )
 
 
@@ -115,12 +121,12 @@ class Scheduler:
     """
     Class responsible of maintain/execute scheduled jobs
     """
-    
+
     # We check for scheduled operations every THIS seconds
     granularity: typing.Final[int] = 2
 
     # to keep singleton Scheduler
-    _scheduler: typing.Optional['Scheduler'] = None
+    _scheduler: "Scheduler | None" = None
     _hostname: str
     _keep_running: bool
 
@@ -130,7 +136,7 @@ class Scheduler:
         logger.info('Initialized scheduler for host "%s"', self._hostname)
 
     @staticmethod
-    def scheduler() -> 'Scheduler':
+    def scheduler() -> "Scheduler":
         """
         Returns a singleton to the Scheduler
         """
@@ -151,20 +157,14 @@ class Scheduler:
         job_instance = None
         try:
             now = sql_now()  # Datetimes are based on database server times
-            fltr = Q(state=State.FOR_EXECUTE) & (
-                Q(last_execution__gt=now) | Q(next_execution__lt=now)
-            )
+            fltr = Q(state=State.FOR_EXECUTE) & (Q(last_execution__gt=now) | Q(next_execution__lt=now))
             with transaction.atomic():
                 # If next execution is before now or last execution is in the future (clock changed on this server, we take that task as executable)
                 # This params are all set inside fltr (look at __init__)
-                job: DBScheduler = (
-                    DBScheduler.objects.select_for_update()
-                    .filter(fltr)
-                    .order_by('next_execution')[0]
-                )
+                job: DBScheduler = DBScheduler.objects.select_for_update().filter(fltr).order_by("next_execution")[0]
                 if job.last_execution > now + timedelta(seconds=3):  # Give some skew
                     logger.warning(
-                        'Executed %s due to last_execution being in the future!: %s > %s + 3',
+                        "Executed %s due to last_execution being in the future!: %s > %s + 3",
                         job.name,
                         job.last_execution,
                         now,
@@ -172,15 +172,15 @@ class Scheduler:
                 job.state = State.RUNNING
                 job.owner_server = self._hostname
                 job.last_execution = now
-                job.save(update_fields=['state', 'owner_server', 'last_execution'])
+                job.save(update_fields=["state", "owner_server", "last_execution"])
 
             job_instance = job.get_instance()
 
             if job_instance is None:
-                logger.error('Job instance can\'t be resolved for %s, removing it', job)
+                logger.error("Job instance can't be resolved for %s, removing it", job)
                 job.delete()
                 return
-            logger.debug('Executing job:>%s<', job.name)
+            logger.debug("Executing job:>%s<", job.name)
             JobThread(job_instance, job).start()  # Do not instatiate thread, just run it
         except IndexError:
             # Do nothing, there is no jobs for execution
@@ -191,29 +191,23 @@ class Scheduler:
             # Look at this http://dev.mysql.com/doc/refman/5.0/en/innodb-deadlocks.html
             # I have got some deadlock errors, but looking at that url, i found that it is not so abnormal
             # logger.debug('Deadlock, no problem at all :-) (sounds hards, but really, no problem, will retry later :-) )')
-            raise DatabaseError(
-                f'Database access problems. Retrying connection ({e})'
-            ) from e
+            raise DatabaseError(f"Database access problems. Retrying connection ({e})") from e
 
     @staticmethod
     def release_own_schedules() -> None:
         """
         Releases all scheduleds being executed by this server
         """
-        logger.debug('Releasing all owned scheduled tasks')
+        logger.debug("Releasing all owned scheduled tasks")
         with transaction.atomic():
-            DBScheduler.objects.select_for_update().filter(
-                owner_server=platform.node()
-            ).update(
-                owner_server=''
+            DBScheduler.objects.select_for_update().filter(owner_server=platform.node()).update(
+                owner_server=""
             )  # @UndefinedVariable
             DBScheduler.objects.select_for_update().filter(
                 last_execution__lt=sql_now() - timedelta(minutes=15),
                 state=State.RUNNING,
-            ).update(
-                owner_server='', state=State.FOR_EXECUTE
-            )  # @UndefinedVariable
-            DBScheduler.objects.select_for_update().filter(owner_server='').update(
+            ).update(owner_server="", state=State.FOR_EXECUTE)  # @UndefinedVariable
+            DBScheduler.objects.select_for_update().filter(owner_server="").update(
                 state=State.FOR_EXECUTE
             )  # @UndefinedVariable
 
@@ -223,7 +217,7 @@ class Scheduler:
         Can be executed more than once, in differents threads
         """
         # We ensure that the jobs are also in database so we can
-        logger.debug('Run Scheduler thread')
+        logger.debug("Run Scheduler thread")
         JobsFactory().ensure_jobs_registered()
         logger.debug("At loop")
         while self._keep_running:
@@ -234,12 +228,10 @@ class Scheduler:
                 # This can happen often on sqlite, and this is not problem at all as we recover it.
                 # The log is removed so we do not get increased workers.log file size with no information at all
                 if not isinstance(e, DatabaseError):
-                    logger.error(
-                        'Unexpected exception at run loop %s: %s', e.__class__, e
-                    )
+                    logger.error("Unexpected exception at run loop %s: %s", e.__class__, e)
                 try:
-                    connections['default'].close()
+                    connections["default"].close()
                 except Exception:
-                    logger.exception('Exception clossing connection at delayed task')
-        logger.info('Exiting Scheduler because stop has been requested')
+                    logger.exception("Exception clossing connection at delayed task")
+        logger.info("Exiting Scheduler because stop has been requested")
         self.release_own_schedules()

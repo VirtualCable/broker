@@ -29,16 +29,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import re
 import logging
+import re
 import typing
-
 
 from django.http import HttpResponseForbidden
 
 from uds.core import consts
+from uds.core.auths.auth import is_trusted_source
+from uds.core.auths.auth import weblogout
 from uds.core.util.config import GlobalConfig
-from uds.core.auths.auth import is_trusted_source, weblogout
 
 from . import builder
 
@@ -46,38 +46,39 @@ logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
+
     from uds.core.types.requests import ExtendedHttpRequest
 
 # Simple Bot detection
-bot = re.compile(r'bot|spider', re.IGNORECASE)
+bot = re.compile(r"bot|spider", re.IGNORECASE)
 
 
-def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
-    ua = request.META.get('HTTP_USER_AGENT', '') or 'Unknown'
+def _process_request(request: "ExtendedHttpRequest") -> "HttpResponse | None":
+    ua = request.META.get("HTTP_USER_AGENT", "") or "Unknown"
     # If bot, break now
-    if bot.search(ua) or (ua == 'Unknown' and not is_trusted_source(request.ip)):
+    if bot.search(ua) or (ua == "Unknown" and not is_trusted_source(request.ip)):
         # Return emty response if bot is detected
         logger.info(
-            'Denied Bot %s from %s to %s',
+            "Denied Bot %s from %s to %s",
             ua,
             request.META.get(
-                'REMOTE_ADDR',
-                request.META.get('HTTP_X_FORWARDED_FOR', '').split(",")[-1],
+                "REMOTE_ADDR",
+                request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[-1],
             ),
             request.path,
         )
-        return HttpResponseForbidden(content='Forbbiden', content_type='text/plain')
+        return HttpResponseForbidden(content="Forbbiden", content_type="text/plain")
 
     if GlobalConfig.ENHANCED_SECURITY.as_bool():
         # Check that ip stored in session is the same as the one that is requesting if user is logged in
         session_ip = request.session.get(consts.auth.SESSION_IP_KEY, None)
         if request.user and session_ip and session_ip != request.ip:
             logger.info(
-                'Denied request from %s to %s. User %s is logged in from a different IP (%s)',
+                "Denied request from %s to %s. User %s is logged in from a different IP (%s)",
                 request.ip,
                 request.path,
                 request.user,
-                request.session.get('ip', None),
+                request.session.get("ip", None),
             )
 
             # Clear session and redirect to login, skipping manager
@@ -87,13 +88,13 @@ def _process_request(request: 'ExtendedHttpRequest') -> 'HttpResponse | None':
 
 
 def _process_response(
-    request: 'ExtendedHttpRequest',
-    response: 'HttpResponse',
-) -> 'HttpResponse':
+    request: "ExtendedHttpRequest",
+    response: "HttpResponse",
+) -> "HttpResponse":
     if GlobalConfig.ENHANCED_SECURITY.as_bool():
         # Security headers
-        response['X-Content-Type-Options'] = 'nosniff'
-        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
         # Content Security Policy
         csp_parts = [
@@ -106,12 +107,11 @@ def _process_response(
             "object-src 'none';",
             "base-uri 'self';",
             "frame-ancestors 'none';",
-            "form-action 'self';",
         ]
-        response['Content-Security-Policy'] = " ".join(csp_parts)
+        response["Content-Security-Policy"] = " ".join(csp_parts)
 
         if request.is_secure():
-            response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+            response["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
     return response
 

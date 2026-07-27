@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import uuid
 
@@ -38,57 +39,55 @@ from unittest import mock
 from django.utils import timezone
 
 from uds import models
-from uds.core import environment, types
+from uds.core import environment
+from uds.core import types
 from uds.core.ui.user_interface import gui
-
-from uds.services.PhysicalMachines import (
-    provider,
-    service_single,
-    service_multi,
-    deployment as deployment_single,
-    deployment_multi,
-)
+from uds.services.PhysicalMachines import deployment as deployment_single
+from uds.services.PhysicalMachines import deployment_multi
+from uds.services.PhysicalMachines import provider
+from uds.services.PhysicalMachines import service_multi
+from uds.services.PhysicalMachines import service_single
 
 SERVER_GROUP_IPS_MACS: typing.Final[list[tuple[str, str]]] = [
-    (f'127.0.1.{x}', f'{x:02x}:22:{x*2:02x}:44:{x*4:02x}:66') for x in range(1, 32)
+    (f"127.0.1.{x}", f"{x:02x}:22:{x * 2:02x}:44:{x * 4:02x}:66") for x in range(1, 32)
 ]
 
 
 PROVIDER_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'config': '[wol]\n127.0.0.1/16=http://127.0.0.1:8000/test',
+    "config": "[wol]\n127.0.0.1/16=http://127.0.0.1:8000/test",
 }
 
 
 SERVICE_SINGLE_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'host': '127.0.0.1',
+    "host": "127.0.0.1",
 }
 
 
 SERVICE_MULTI_VALUES_DICT: typing.Final[gui.ValuesDictType] = {
-    'token': 'MULTI_TOKEN',
-    'server_group': '899bcad9-1b4d-59e3-90c7-bdd28b7674fa',
-    'port': 1000,  # Chekcin port
-    'ignore_minutes_on_failure': 1,
-    'max_session_hours': 2,
-    'lock_on_external_access': True,
-    'randomize_host': True,
+    "token": "MULTI_TOKEN",
+    "server_group": "899bcad9-1b4d-59e3-90c7-bdd28b7674fa",
+    "port": 1000,  # Chekcin port
+    "ignore_minutes_on_failure": 1,
+    "max_session_hours": 2,
+    "lock_on_external_access": True,
+    "randomize_host": True,
 }
 
 
 def create_server_group() -> models.ServerGroup:
     server_group = models.ServerGroup.objects.create(
-        name='Test Server Group',
+        name="Test Server Group",
         type=types.servers.ServerType.UNMANAGED,
         subtype=types.servers.IP_SUBTYPE,
     )
     for ip, mac in SERVER_GROUP_IPS_MACS:
         server = models.Server.objects.create(
-            register_username='test',
-            register_ip='127.0.0.1',
+            register_username="test",
+            register_ip="127.0.0.1",
             type=types.servers.ServerType.UNMANAGED,
             ip=ip,
             mac=mac,
-            hostname=f'test-{ip}',
+            hostname=f"test-{ip}",
             stamp=timezone.localtime(),
         )
         server.groups.set([server_group])
@@ -110,7 +109,7 @@ def create_provider(**kwargs: typing.Any) -> provider.PhysicalMachinesProvider:
     # Create a DB provider for this
     models.Provider.objects.create(
         uuid=uuid_,
-        name='Test Provider',
+        name="Test Provider",
         data_type=prov_instance.mod_type(),
         data=prov_instance.serialize(),
     )
@@ -142,7 +141,7 @@ def create_service_single(
     # Create a DB service for this
     models.Service.objects.create(
         uuid=uuid_,
-        name='Test Service',
+        name="Test Service",
         data_type=service_instance.mod_type(),
         data=service_instance.serialize(),
         provider=prov.db_obj(),
@@ -159,8 +158,8 @@ def create_service_multi(
     """
     # Create a server group, and add it to the kwargs if
     server_group = create_server_group()
-    if 'server_group' not in kwargs:
-        kwargs['server_group'] = server_group.uuid
+    if "server_group" not in kwargs:
+        kwargs["server_group"] = server_group.uuid
 
     values = SERVICE_MULTI_VALUES_DICT.copy()
     values.update(kwargs)
@@ -180,7 +179,7 @@ def create_service_multi(
     # Create a DB service for this
     models.Service.objects.create(
         uuid=uuid_,
-        name='Test Service',
+        name="Test Service",
         data_type=service_instance.mod_type(),
         data=service_instance.serialize(),
         provider=prov.db_obj(),

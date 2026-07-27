@@ -26,30 +26,31 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
- Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
 import typing
 
-from django.urls import reverse
-from django.http import HttpResponsePermanentRedirect
 from django.conf import settings
+from django.http import HttpResponsePermanentRedirect
+from django.urls import reverse
 
 from . import builder
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from django.http import HttpRequest, HttpResponse
+    from django.http import HttpRequest
+    from django.http import HttpResponse
 
 
-def _check_redirectable(request: 'HttpRequest') -> typing.Optional['HttpResponse']:
+def _check_redirectable(request: "HttpRequest") -> typing.Optional["HttpResponse"]:
     if request.is_secure() or settings.DEBUG:
         return None
 
     return HttpResponsePermanentRedirect(
-        request.build_absolute_uri(reverse('page.index')).replace('http://', 'https://', 1)
+        request.build_absolute_uri(reverse("page.index")).replace("http://", "https://", 1)
     )
 
 

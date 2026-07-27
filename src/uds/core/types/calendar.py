@@ -30,9 +30,11 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
+
 
 class CalendarAction(typing.TypedDict):
     id: str
     description: str
-    params: typing.Tuple[typing.Any, ...]
+    params: tuple[typing.Any, ...]

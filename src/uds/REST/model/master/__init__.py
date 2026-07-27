@@ -31,25 +31,30 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # pylint: disable=too-many-public-methods
 
-import logging
-import typing
 import abc
 import collections.abc
+import logging
+import typing
 
-from django.db import IntegrityError, models
+from django.db import IntegrityError
+from django.db import models
 from django.db.models import QuerySet
-from django.utils.translation import gettext as _
 
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
 from uds.core.module import Module
-from uds.core.types.rest import T_Item
-from uds.core.util import log, permissions, model as model_utils, api as api_utils
-from uds.models import ManagedObjectModel, Tag, TaggingMixin
-
+from uds.core.util import api as api_utils
+from uds.core.util import log
+from uds.core.util import model as model_utils
+from uds.core.util import permissions
+from uds.models import ManagedObjectModel
+from uds.models import Tag
+from uds.models import TaggingMixin
 from uds.REST.model.base import BaseModelHandler
-from uds.REST.utils import camel_and_snake_case_from, sanitize_params
+from uds.REST.utils import camel_and_snake_case_from
+from uds.REST.utils import is_camel_case
+from uds.REST.utils import sanitize_params
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -57,8 +62,41 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-T = typing.TypeVar('T', bound=models.Model)
-T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
+T = typing.TypeVar("T", bound=models.Model)
+T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)
+
+
+def _is_get_on_post(cm: types.rest.ModelCustomMethod, http_method: types.rest.CustomMethodMethod) -> bool:
+    """True when a GET request hits a POST-declared custom method."""
+    return cm.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET
+
+
+def _handle_camel_case_url(
+    handler: "ModelHandler[typing.Any]",
+    path_segment: str,
+    snake_case_name: str,
+) -> None:
+    """Emit deprecation headers or raise GoneError for camelCase URL segments.
+
+    Called when the URL contains a camelCase form of a custom method name
+    that is now declared in snake_case. In COMPAT mode we add deprecation
+    headers pointing to the snake_case successor; in NO_COMPAT we raise
+    GoneError, which the dispatcher turns into HTTP 410.
+    """
+    if not is_camel_case(path_segment) or path_segment == snake_case_name:
+        return  # Already snake_case — nothing to deprecate
+
+    if handler.api_compat() == types.rest.ApiCompat.COMPAT:
+        # Note: camelCase is not actually wrong on the wire — the server
+        # accepts both forms today. We only warn about it so clients can
+        # migrate before v7 removes the legacy form.
+        handler.add_deprecation_headers(
+            successor_hint=f"use snake_case form: {snake_case_name} (instead of {path_segment})"
+        )
+    else:
+        raise exceptions.rest.GoneError(
+            f'camelCase form "{path_segment}" is removed; use snake_case "{snake_case_name}"'
+        )
 
 
 class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
@@ -81,11 +119,11 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
     ROLE = consts.UserRole.STAFF
 
     # Which model does this manage, must be a django model ofc
-    MODEL: 'typing.ClassVar[type[models.Model]]'
+    MODEL: "typing.ClassVar[type[models.Model]]"
     # If the model is filtered (for overviews)
-    FILTER: 'typing.ClassVar[dict[str, typing.Any]|None]' = None
+    FILTER: "typing.ClassVar[dict[str, typing.Any]|None]" = None
     # Same, but for exclude
-    EXCLUDE: 'typing.ClassVar[dict[str, typing.Any]|None]' = None
+    EXCLUDE: "typing.ClassVar[dict[str, typing.Any]|None]" = None
 
     # If this model respond to "custom" methods, we will declare them here
     # This is an array of tuples of two items, where first is method and second inticates if method needs parent id (normal behavior is it needs it)
@@ -95,7 +133,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
     # If this model has details, which ones
     # Dictionary containing detail routing
-    DETAIL: typing.ClassVar[dict[str, type['DetailHandler[typing.Any]']] | None] = None
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = None
     # Fields that are going to be saved directly
     # * If a field is in the form "field:default" and field is not present in the request, default will be used
     # * If the "default" is the string "None", then the default will be None
@@ -113,7 +151,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
     # types related
     # def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[module.Module]]:
     @classmethod
-    def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type['Module']]:  # override this
+    def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type["Module"]]:  # override this
         """
         Must be overriden by desdencents if they support types
         Excpetcs the list of types that the handler supports
@@ -129,7 +167,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             if v.type == type_:
                 return v
 
-        raise exceptions.rest.NotFound('type not found')
+        raise exceptions.rest.NotFound("type not found")
 
     # log related
     def get_logs(self, item: models.Model) -> list[dict[typing.Any, typing.Any]]:
@@ -137,7 +175,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         try:
             return log.get_logs(item)
         except Exception as e:
-            logger.warning('Exception getting logs for %s: %s', item, e)
+            logger.warning("Exception getting logs for %s: %s", item, e)
             return []
 
     # gui related
@@ -171,37 +209,37 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
     # Helper to process detail
     # Details can be managed (writen) by any user that has MANAGEMENT permission over parent
     def process_detail(self) -> typing.Any:
-        logger.debug('Processing detail %s for with params %s', self._path, sanitize_params(self._params))
+        logger.debug("Processing detail %s for with params %s", self._path, sanitize_params(self._params))
         try:
             item: models.Model = self.MODEL.objects.get(uuid__iexact=self._args[0])
             # If we do not have access to parent to, at least, read...
 
-            if self._operation in ('put', 'post', 'delete'):
+            if self._operation in ("put", "post", "delete"):
                 required_permission = types.permissions.PermissionType.MANAGEMENT
             else:
                 required_permission = types.permissions.PermissionType.READ
 
             if permissions.has_access(self._user, item, required_permission) is False:
                 logger.debug(
-                    'Permission for user %s does not comply with %s',
+                    "Permission for user %s does not comply with %s",
                     self._user,
                     required_permission,
                 )
                 raise exceptions.rest.AccessDenied()
 
             if not self.DETAIL:
-                raise exceptions.rest.NotFound('Detail not found')
+                raise exceptions.rest.NotFound("Detail not found")
 
             # pylint: disable=unsubscriptable-object
             handler_type = self.DETAIL[self._args[1]]
             args = list(self._args[2:])
-            path = self._path + '/' + '/'.join(args[:2])
+            path = self._path + "/" + "/".join(args[:2])
             detail_handler = handler_type(self, path, self._params, *args, parent_item=item, user=self._user)
             method = getattr(detail_handler, self._operation)
 
             return method()
         except (KeyError, AttributeError) as e:
-            raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from e
+            raise exceptions.rest.InvalidMethodError(f"Invalid method {self._operation}") from e
         except exceptions.rest.HandlerError:
             raise
 
@@ -219,31 +257,30 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         default behavior is return item_as_dict
         """
         return self.get_item(item)
-    
-    def filter_model_queryset(self, qs: QuerySet[T]|None = None) -> QuerySet[T]:
-        qs = typing.cast('QuerySet[T]', self.MODEL.objects.all()) if qs is None else qs
-        
+
+    def filter_model_queryset(self, qs: QuerySet[T] | None = None) -> QuerySet[T]:
+        qs = typing.cast("QuerySet[T]", self.MODEL.objects.all()) if qs is None else qs
+
         if self.FILTER is not None:
             qs = qs.filter(**self.FILTER)
         if self.EXCLUDE is not None:
             qs = qs.exclude(**self.EXCLUDE)
-            
+
         return qs
 
     def get_item_position(self, item_uuid: str, query: QuerySet[T] | None = None) -> int:
         qs = self.filter_model_queryset(query)
-        
+
         # Ensure some order to have stable positions on reusing query
-        # At least on postgres, second query 
-        if not self.MODEL._meta.ordering:  
-            qs = qs.order_by('pk')
-        
+        # At least on postgres, second query
+        if not self.MODEL._meta.ordering:
+            qs = qs.order_by("pk")
+
         # Find item in qs, may be none, then return -1
-        obj = qs.filter(uuid__iexact=item_uuid).first()
+        obj = qs.filter(uuid__iexact=model_utils.process_uuid(item_uuid)).first()
         if obj:
             return model_utils.get_position_in_queryset(obj, qs)
         return -1
-        
 
     def get_items(
         self, *, sumarize: bool = False, query: QuerySet[T] | None = None
@@ -257,11 +294,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
         """
 
-        # Basic model filter
-        qs = self.filter_model_queryset(query)
-
-        # Custom filtering from params (odata, etc)
-        qs = self.odata_filter(qs)
+        # Basic model filter +  Custom filtering from params (odata, etc)
+        qs = self.odata_filter(self.filter_model_queryset(query))
 
         for item in qs:
             try:
@@ -277,72 +311,138 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     continue
                 yield self.get_item_summary(item) if sumarize else self.get_item(item)
             except Exception as e:  # maybe an exception is thrown to skip an item
-                logger.debug('Got exception processing item from model: %s', e)
+                logger.debug("Got exception processing item from model: %s", e)
                 # logger.exception('Exception getting item from {0}'.format(self.model))
 
-    def get(self) -> typing.Any:
-        logger.debug('method GET for %s, %s', self.__class__.__name__, self._args)
+    def _check_is_custom_method(
+        self,
+        *,
+        http_method: types.rest.CustomMethodMethod,
+    ) -> typing.Any:
+        """Look up and invoke a custom method matching the current request.
+
+        Shared dispatch logic used by ``get()`` and ``post()`` to avoid
+        duplicating the CUSTOM_METHODS iteration, name matching, HTTP-method
+        discrimination, COMPAT-mode fallback, and deprecation-header logic.
+
+        Returns the operation's result on match, or ``consts.rest.NOT_FOUND``
+        when no custom method matches.
+        """
+        is_compat = self.api_compat() == types.rest.ApiCompat.COMPAT
         number_of_args = len(self._args)
 
-        # if has custom methods, look for if this request matches any of them
         for cm in self.CUSTOM_METHODS:
-            # Convert to snake case
             camel_case_name, snake_case_name = camel_and_snake_case_from(cm.name)
-            if number_of_args > 1 and cm.needs_parent:  # Method needs parent (existing item)
-                if self._args[1] in (camel_case_name, snake_case_name):
-                    item = None
-                    # Check if operation method exists
-                    operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
-                    try:
-                        if not operation:
-                            raise Exception()  # Operation not found
-                        item = self.MODEL.objects.get(uuid__iexact=self._args[0])
-                    except self.MODEL.DoesNotExist:
-                        raise exceptions.rest.NotFound('Item not found') from None
-                    except Exception as e:
-                        logger.error(
-                            'Invalid custom method exception %s/%s/%s: %s',
-                            self.__class__.__name__,
-                            self._args,
-                            sanitize_params(self._params),
-                            e,
-                        )
-                        raise exceptions.rest.ResponseError(
-                            f'Error processing custom method: {self.__class__.__name__}/{self._args}'
-                        ) from e
 
-                    return operation(item)
+            # ---- name matching ----
+            if number_of_args > 1 and cm.needs_parent:
+                if self._args[1] not in (camel_case_name, snake_case_name):
+                    continue
+                _handle_camel_case_url(self, self._args[1], snake_case_name)
+                # ---- HTTP-method check (needs_parent) ----
+                if cm.method != http_method:
+                    if _is_get_on_post(cm, http_method):
+                        if is_compat:
+                            self.add_deprecation_headers(f"use POST {self._path}/<id>/{camel_case_name}")
+                        else:
+                            raise exceptions.rest.GoneError(
+                                f"This endpoint is deprecated. Use POST {self._path}/<id>/{camel_case_name}"
+                            )
+                    else:
+                        continue
 
-            elif self._args[0] in (snake_case_name, snake_case_name):
-                operation = getattr(self, snake_case_name) or getattr(self, snake_case_name)
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                try:
+                    if not operation:
+                        raise Exception()  # Operation not found
+                    item = self.MODEL.objects.get(uuid__iexact=self._args[0])
+                except self.MODEL.DoesNotExist:
+                    raise exceptions.rest.NotFound("Item not found") from None
+                except Exception as e:
+                    logger.error(
+                        "Invalid custom method exception %s/%s/%s: %s",
+                        self.__class__.__name__,
+                        self._args,
+                        sanitize_params(self._params),
+                        e,
+                    )
+                    raise exceptions.rest.ResponseError(
+                        f"Error processing custom method: {self.__class__.__name__}/{self._args}"
+                    ) from e
+                self.check_access(item, cm.required_permission)
+                return operation(item)
+
+            if number_of_args >= 1 and self._args[0] in (camel_case_name, snake_case_name):
+                _handle_camel_case_url(self, self._args[0], snake_case_name)
+                # ---- HTTP-method check (collection-scoped) ----
+                if cm.method != http_method:
+                    if _is_get_on_post(cm, http_method):
+                        if is_compat:
+                            self.add_deprecation_headers(f"use POST {self._path}/{camel_case_name}")
+                        else:
+                            raise exceptions.rest.GoneError(
+                                f"This endpoint is deprecated. Use POST {self._path}/{camel_case_name}"
+                            )
+                    else:
+                        continue
+
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if not operation:
-                    raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
-
+                    raise exceptions.rest.InvalidMethodError(f"Invalid method {self._operation}") from None
+                self.check_access(self.MODEL(), cm.required_permission, root=True)
                 return operation()
 
+        return consts.rest.NOT_FOUND
+
+    def _get_fields_from_gui(self, for_type: str) -> list[str]:
+        gui = self.get_gui(for_type)
+        return [i.name for i in gui]
+
+    def _item_with_etag(self, item: models.Model) -> tuple[T_Item, str]:
+        response = self.get_item(item)
+        fields: list[str] = self.FIELDS_TO_SAVE.copy()
+
+        # Append etag header
+        if isinstance(response, types.rest.ManagedObjectItem):
+            fields = fields + self._get_fields_from_gui(
+                response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            )
+            # Append etag header
+
+        return response, response.etag(*fields)  # pyright: ignore[reportUnknownVariableType]
+
+    def get(self) -> typing.Any:
+        logger.debug("method GET for %s, %s", self.__class__.__name__, self._args)
+
+        # if has custom methods, look for if this request matches any of them
+        r = self._check_is_custom_method(http_method=types.rest.CustomMethodMethod.GET)
+        if r is not consts.rest.NOT_FOUND:
+            return r
+
+        number_of_args = len(self._args)
         match self._args:
             case []:  # Same as overview, but with all data
                 return [i.as_dict() for i in self.get_items(sumarize=False)]
             case [consts.rest.OVERVIEW]:
                 return [i.as_dict() for i in self.get_items()]
             case [consts.rest.OVERVIEW, *_fails]:
-                raise exceptions.rest.RequestError('Invalid overview request') from None
+                raise exceptions.rest.RequestError("Invalid overview request") from None
             case [consts.rest.TABLEINFO]:
                 return self.TABLE.as_dict()
             case [consts.rest.TABLEINFO, *_fails]:
-                raise exceptions.rest.RequestError('Invalid table info request') from None
+                raise exceptions.rest.RequestError("Invalid table info request") from None
             case [consts.rest.TYPES]:
                 return [i.as_dict() for i in self.enum_types()]
             case [consts.rest.TYPES, for_type]:
                 return self.get_type(for_type).as_dict()
             case [consts.rest.TYPES, for_type, *_fails]:
-                raise exceptions.rest.RequestError('Invalid type request') from None
+                raise exceptions.rest.RequestError("Invalid type request") from None
             case [consts.rest.GUI]:
-                return self.get_processed_gui('')
+                return self.get_processed_gui("")
             case [consts.rest.GUI, for_type]:
                 return self.get_processed_gui(for_type)
             case [consts.rest.GUI, for_type, *_fails]:
-                raise exceptions.rest.RequestError('Invalid GUI request') from None
+                raise exceptions.rest.RequestError("Invalid GUI request") from None
             case [consts.rest.POSITION, item_uuid]:
                 return self.get_item_position(item_uuid)
             case _:  # Maybe an item or a detail
@@ -350,148 +450,234 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     try:
                         item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
                         self.check_access(item, types.permissions.PermissionType.READ)
-                        return self.get_item(item).as_dict()
+                        response, etag = self._item_with_etag(item)
+                        # Append etag header
+                        self.add_header("ETag", etag)
+                        return response
                     except Exception as e:
-                        logger.exception('Got Exception looking for item')
-                        raise exceptions.rest.NotFound('Item not found') from e
+                        logger.exception("Got Exception looking for item")
+                        raise exceptions.rest.NotFound("Item not found") from e
                 elif number_of_args == 2:
                     if self._args[1] == consts.rest.LOG:
                         try:
                             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
                             return self.get_logs(item)
                         except Exception as e:
-                            raise exceptions.rest.NotFound('Item not found') from e
+                            raise exceptions.rest.NotFound("Item not found") from e
 
                 if self.DETAIL is not None:
                     return self.process_detail()
 
-        raise exceptions.rest.RequestError('Invalid request') from None
+        raise exceptions.rest.RequestError("Invalid request") from None
 
     def post(self) -> typing.Any:
         """
-        Processes a POST request
+        Processes a POST request.
+
+        When the path has no arguments (is_new), this creates a new item
+        (Change G — POST /collection is the preferred way to create items).
+
+        Dispatches to POST custom methods when the path matches.
+        The existing 'test' special case is preserved.
         """
-        # right now
-        logger.debug('method POST for %s, %s', self.__class__.__name__, self._args)
+        logger.debug("method POST for %s, %s", self.__class__.__name__, self._args)
+
+        # Special case: /test/type>
         if len(self._args) == 2:
-            if self._args[0] == 'test':
+            if self._args[0] == "test":
                 return self.test(self._args[1])
 
-        raise exceptions.rest.InvalidMethodError(f'Invalid method {self._operation}') from None
-    
+        # POST on collection (no args) → create new item (Change G)
+        if self.is_new():
+            return self._perform_create()
+
+        # Dispatch POST custom methods
+        r = self._check_is_custom_method(http_method=types.rest.CustomMethodMethod.POST)
+        if r is not consts.rest.NOT_FOUND:
+            return r
+
+        # If we have multiple args, this might be a detail path
+        # (e.g. POST /services-pools/{id}/publications/publish).
+        # Delegate to process_detail() which routes to the detail handler.
+        if len(self._args) > 1:
+            return self.process_detail()
+
+        raise exceptions.rest.InvalidMethodError(f"Invalid method {self._operation}") from None
+
     def is_new(self) -> bool:
         """
         Helper to check if the request is for a new item (no args) or for an existing one (has args)
         """
         return len(self._args) == 0
 
-    def put(self) -> typing.Any:
+    def _perform_create(self) -> dict[str, typing.Any]:
         """
-        Processes a PUT request
+        Common create logic used by both POST (Change G) and PUT (legacy).
+        Extracted so that POST /collection and PUT /collection share the same
+        field extraction, pre_save, tag handling, ManagedObjectModel, and
+        post_save pipeline.
         """
-        logger.debug('method PUT for %s, %s', self.__class__.__name__, self._args)
+        # Append request to _params, may be needed by subclasses
+        # (e.g. to get the user IP, server name, etc.)
+        self._params["_request"] = self._request
 
-        # Append request to _params, may be needed by some classes
-        # I.e. to get the user IP, server name, etc..
-        self._params['_request'] = self._request
-
-        delete_on_error = False
-
-        # if /our_url/ID/DETAIL..., delegate to detail handler
-        if len(self._args) > 1:  # Detail (1 arg means ID, more means detail/ID)?
-            return self.process_detail()
-
-        # Here, self.model() indicates an "django model object with default params"
-        self.check_access(
-            self.MODEL(), types.permissions.PermissionType.ALL, root=True
-        )  # Must have write permissions to create, modify, etc..
+        self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
+        # On create paths, only "If-Match: *" must trigger 412 (HTTP 428 was removed from
+        # requirements: per RFC 7232 preconditions stay optional).
+        self.check_if_match_header(None)
 
         try:
-            # Extract fields
             args = self.fields_from_params(self.FIELDS_TO_SAVE)
-            logger.debug('Args: %s', sanitize_params(args))
+            logger.debug("Args: %s", sanitize_params(args))
             self.pre_save(fields=args)
+
             # If tags is in save fields, treat it "specially"
-            if 'tags' in self.FIELDS_TO_SAVE:
-                tags = args['tags']
-                del args['tags']
+            if "tags" in self.FIELDS_TO_SAVE:
+                tags = args["tags"]
+                del args["tags"]
             else:
                 tags = None
 
-            delete_on_error = False
-            item: models.Model
-            if self.is_new():  # create new?
-                item = self.MODEL.objects.create(**args)
-                delete_on_error = True
-            else:  # Must have 1 arg
-                # We have to take care with this case, update will efectively update records on db
-                item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
-                for v in self.EXCLUDED_FIELDS:
-                    if v in args:
-                        del args[v]
-                # Update fields from args
-                for k, v in args.items():
-                    setattr(item, k, v)
+            item: models.Model = self.MODEL.objects.create(**args)
 
-            # Now if tags, update them
+            # Handle tags
             if isinstance(item, TaggingMixin):
                 if tags:
-                    logger.debug('Updating tags: %s', tags)
-                    item.tags.set([Tag.objects.get_or_create(tag=val)[0] for val in tags if val != ''])
-                elif isinstance(tags, list):  # Present, but list is empty (will be proccesed on "if" else)
+                    logger.debug("Updating tags: %s", tags)
+                    item.tags.set([Tag.objects.get_or_create(tag=val)[0] for val in tags if val != ""])
+                elif isinstance(tags, list):
                     item.tags.clear()
 
-            if not delete_on_error:
-                self.validate_save(
-                    item
-                )  # Will raise an exception if item can't be saved (only for modify operations..)
-
-            # Store associated object if requested (data_type)
+            # Store associated object if requested (ManagedObjectModel)
             try:
                 if isinstance(item, ManagedObjectModel):
-                    data_type: str | None = self._params.get('data_type', self._params.get('type'))
+                    data_type: str | None = self._params.get("data_type", self._params.get("type"))
                     if data_type:
                         item.data_type = data_type
-                        # TODO: Currently support parameters outside "instance". Will be removed after tests
                         item.data = item.get_instance(
-                            self._params['instance'] if 'instance' in self._params else self._params
+                            self._params["instance"] if "instance" in self._params else self._params
                         ).serialize()
 
                 item.save()
 
                 res = self.get_item(item)
             except Exception:
-                logger.exception('Exception on put')
-                if delete_on_error:
-                    item.delete()
+                logger.exception("Exception on create")
+                item.delete()
                 raise
 
             self.post_save(item)
-
             return res.as_dict()
 
-        except self.MODEL.DoesNotExist:
-            raise exceptions.rest.NotFound('Item not found') from None
-        except IntegrityError:  # Duplicate key probably
-            raise exceptions.rest.RequestError('Element already exists (duplicate key error)') from None
+        except IntegrityError:
+            raise exceptions.rest.RequestError("Element already exists (duplicate key error)") from None
         except (exceptions.rest.SaveException, exceptions.ui.ValidationError) as e:
             raise exceptions.rest.RequestError(str(e)) from e
         except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
             raise
         except Exception as e:
-            logger.exception('Exception on put')
-            raise exceptions.rest.RequestError('incorrect invocation to PUT') from e
+            logger.exception("Exception on create")
+            raise exceptions.rest.RequestError("incorrect invocation to create") from e
+
+    def put(self) -> typing.Any:
+        """
+        Processes a PUT request.
+
+        * PUT /collection (no args) — create a new item (legacy; deprecated in
+          favour of POST /collection).
+        * PUT /collection/{uuid} (1 arg) — update an existing item.
+        * PUT /collection/{uuid}/detail... (>1 arg) — delegate to detail handler.
+        """
+        logger.debug("method PUT for %s, %s", self.__class__.__name__, self._args)
+
+        # if /our_url/ID/DETAIL..., delegate to detail handler
+        if len(self._args) > 1:
+            return self.process_detail()
+
+        # PUT on collection → create (legacy path, Change G redirects POST here too)
+        if self.is_new():
+            self.add_deprecation_headers(successor_hint=f"use POST /{self._path} to create items")
+            return self._perform_create()
+
+        # Here, self.model() indicates an "django model object with default params"
+        self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
+
+        try:
+            # Extract fields
+            args = self.fields_from_params(self.FIELDS_TO_SAVE)
+            logger.debug("Args: %s", sanitize_params(args))
+            self.pre_save(fields=args)
+            # If tags is in save fields, treat it "specially"
+            if "tags" in self.FIELDS_TO_SAVE:
+                tags = args["tags"]
+                del args["tags"]
+            else:
+                tags = None
+
+            # Must have 1 arg → update
+            item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
+            # Calculate etag
+            _, etag = self._item_with_etag(item)
+            self.check_if_match_header(etag)
+
+            for v in self.EXCLUDED_FIELDS:
+                if v in args:
+                    del args[v]
+            # Update fields from args
+            for k, v in args.items():
+                setattr(item, k, v)
+
+            # Now if tags, update them
+            if isinstance(item, TaggingMixin):
+                if tags:
+                    logger.debug("Updating tags: %s", tags)
+                    item.tags.set([Tag.objects.get_or_create(tag=val)[0] for val in tags if val != ""])
+                elif isinstance(tags, list):  # Present, but list is empty
+                    item.tags.clear()
+
+            self.validate_save(item)
+
+            # Store associated object if requested (data_type)
+            if isinstance(item, ManagedObjectModel):
+                data_type: str | None = self._params.get("data_type", self._params.get("type"))
+                if data_type:
+                    item.data_type = data_type
+                    item.data = item.get_instance(
+                        self._params["instance"] if "instance" in self._params else self._params
+                    ).serialize()
+
+            item.save()
+            res = self.get_item(item)
+
+            self.post_save(item)
+            return res.as_dict()
+
+        except self.MODEL.DoesNotExist:
+            raise exceptions.rest.NotFound("Item not found") from None
+        except IntegrityError:  # Duplicate key probably
+            raise exceptions.rest.RequestError("Element already exists (duplicate key error)") from None
+        except (exceptions.rest.SaveException, exceptions.ui.ValidationError) as e:
+            raise exceptions.rest.RequestError(str(e)) from e
+        except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
+            raise
+        except exceptions.rest.HandlerError:
+            # Re-raise UDS REST exceptions (e.g. PreconditionFailed -> 412)
+            # without rewriting them as a generic 400 RequestError below.
+            raise
+        except Exception as e:
+            logger.exception("Exception on put")
+            raise exceptions.rest.RequestError("incorrect invocation to PUT") from e
 
     def delete(self) -> typing.Any:
         """
         Processes a DELETE request
         """
-        logger.debug('method DELETE for %s, %s', self.__class__.__name__, self._args)
+        logger.debug("method DELETE for %s, %s", self.__class__.__name__, self._args)
         if len(self._args) > 1:
             return self.process_detail()
 
         if len(self._args) != 1:
-            raise exceptions.rest.RequestError('Delete need one and only one argument')
+            raise exceptions.rest.RequestError("Delete need one and only one argument")
 
         self.check_access(
             self.MODEL(), types.permissions.PermissionType.ALL, root=True
@@ -502,7 +688,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             self.validate_delete(item)
             self.delete_item(item)
         except self.MODEL.DoesNotExist:
-            raise exceptions.rest.NotFound('Element do not exists') from None
+            raise exceptions.rest.NotFound("Element do not exists") from None
 
         return consts.OK
 
@@ -513,10 +699,12 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         item.delete()
 
     @classmethod
+    @typing.override
     def api_components(cls: type[typing.Self]) -> types.rest.api.Components:
         return api_utils.get_component_from_type(cls)
 
     @classmethod
+    @typing.override
     def api_paths(
         cls: type[typing.Self], path: str, tags: list[str], security: str
     ) -> dict[str, types.rest.api.PathItem]:

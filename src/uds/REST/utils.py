@@ -25,9 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import json
 import typing
 import re
@@ -38,65 +39,72 @@ from uds.core.util.model import sql_stamp_seconds
 
 
 def rest_result(result: typing.Any, **kwargs: typing.Any) -> dict[str, typing.Any]:
-    '''
+    """
     Returns a REST result
-    '''
+    """
     # A common possible value in kwargs is "error"
     return {
-        'result': result,
-        'stamp': sql_stamp_seconds(),
-        'version': consts.system.VERSION,
-        'build': consts.system.VERSION_STAMP,
+        "result": result,
+        "stamp": sql_stamp_seconds(),
+        "version": consts.system.VERSION,
+        "build": consts.system.VERSION_STAMP,
         **kwargs,
     }
 
 
 def camel_and_snake_case_from(text: str) -> tuple[str, str]:
-    '''
+    """
     Returns a tuple with the camel case and snake case of a text
     first value is camel case, second is snake case
-    '''
-    snake_case_name = re.sub(r'(?<!^)(?=[A-Z])', '_', text).lower()
+    """
+    snake_case_name = re.sub(r"(?<!^)(?=[A-Z])", "_", text).lower()
     # And snake case to camel case (first letter lower case, rest upper case)
-    camel_case_name = ''.join(x.capitalize() for x in snake_case_name.split('_'))
+    camel_case_name = "".join(x.capitalize() for x in snake_case_name.split("_"))
     camel_case_name = camel_case_name[0].lower() + camel_case_name[1:]
 
     return camel_case_name, snake_case_name
 
 
+def is_camel_case(text: str) -> bool:
+    """
+    True if ``text`` contains at least one ASCII uppercase letter, i.e. it is
+    written in camelCase rather than snake_case.
+    """
+    return any(c.isupper() for c in text)
+
+
 def to_incremental_json(
     source: collections.abc.Generator[typing.Any, None, None],
 ) -> collections.abc.Generator[str, None, None]:
-    '''
+    """
     Converts a generator to a json incremental string
-    '''
-    yield '['
+    """
+    yield "["
     first = True
     for item in source:
         if first:
             first = False
         else:
-            yield ','
+            yield ","
         yield json.dumps(item)
-    yield ']'
+    yield "]"
 
 
 def sanitize_params(params: dict[str, typing.Any]) -> dict[str, typing.Any]:
-    '''
+    """
     Sanitizes parameters for logging, hiding sensitive info like passwords, tokens, etc.
-    '''
-    sensitive_keys = ('password', 'token', 'secret', 'pass')
+    """
+    sensitive_keys = ("password", "token", "secret", "pass")
     res: dict[str, typing.Any] = {}
     for k, v in params.items():
         match v:
             case str() if any(s in k.lower() for s in sensitive_keys):
-                res[k] = '********'
+                res[k] = "********"
             case dict():
                 res[k] = sanitize_params(typing.cast(dict[str, typing.Any], v))
             case list():
                 res[k] = [
-                    sanitize_params(x) if isinstance(x, dict) else x
-                    for x in typing.cast(dict[str, typing.Any], v)
+                    sanitize_params(x) if isinstance(x, dict) else x for x in typing.cast(dict[str, typing.Any], v)
                 ]
             case _:
                 res[k] = v

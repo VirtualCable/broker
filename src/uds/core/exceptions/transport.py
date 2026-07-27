@@ -33,8 +33,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 from .common import UDSException
 
+
 class TransportError(UDSException):
     """
     Exception used to indicate that the transport is not available
     """
-

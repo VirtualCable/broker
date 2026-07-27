@@ -6,6 +6,8 @@
     "exclude": [
         "src/**/scripts",
         "**/__pycache__",
+        "**/node_modules",
+        "**/.*",
     ],
     "typeCheckingMode": "strict",
     "reportPrivateUsage": false,
@@ -13,5 +15,6 @@
     "reportMissingTypeStubs": false,
     "disableBytesTypePromotions": true,
     "deprecateTypingAliases": true,
+    "reportMissingOverride": "error",
     "stubPath": "../../enterprise/stubs",
 }

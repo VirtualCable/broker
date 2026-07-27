@@ -29,30 +29,35 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
+import typing
 
 from uds.core import types
-
-from uds.models import CalendarAction
-from uds.core.util.model import sql_now
 from uds.core.jobs import Job
+from uds.core.util.model import sql_now
+from uds.models import CalendarAction
 
 logger = logging.getLogger(__name__)
 
 
 class ScheduledAction(Job):
-    frecuency = 29  # Frecuncy for this job
-    friendly_name = 'Scheduled action runner'
+    friendly_name = "Scheduled action runner"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return 29
+
+    @typing.override
     def run(self) -> None:
         configured_action: CalendarAction
         for configured_action in CalendarAction.objects.filter(
             service_pool__service__provider__maintenance_mode=False,  # Avoid maintenance
             service_pool__state=types.states.State.ACTIVE,  # Avoid Non active pools
             next_execution__lt=sql_now(),
-        ).order_by('next_execution'):
+        ).order_by("next_execution"):
             logger.info(
-                'Executing calendar action %s.%s (%s)',
+                "Executing calendar action %s.%s (%s)",
                 configured_action.service_pool.name,
                 configured_action.calendar.name,
                 configured_action.action,
@@ -61,6 +66,6 @@ class ScheduledAction(Job):
                 configured_action.execute()
             except Exception:
                 logger.exception(
-                    'Got an exception executing calendar access action: %s',
+                    "Got an exception executing calendar access action: %s",
                     configured_action,
                 )

@@ -66,7 +66,8 @@ def decrypt(kem_private_key_b64: str, ciphertext: bytes) -> bytes:
     # Note: this may be already tested in pqcrypto, but we ensure that is correct here
     # just in case a future version does not check it or we switch to another library
     if len(kem_private_key) != typing.cast(
-        int, kyber.SECRET_KEY_SIZE  # pyright: ignore[reportUnknownMemberType]
+        int,
+        kyber.SECRET_KEY_SIZE,  # pyright: ignore[reportUnknownMemberType]
     ):
         raise ValueError(
             f"KEM private key must be {kyber.SECRET_KEY_SIZE} bytes"  # pyright: ignore[reportUnknownMemberType]
@@ -85,7 +86,7 @@ def generate_keypair() -> tuple[str, str]:
     """
     public_key, private_key = kyber.generate_keypair()  # pyright: ignore[reportUnknownMemberType]
 
-    public_key_b64 = base64.b64encode(public_key).decode('utf-8')
-    private_key_b64 = base64.b64encode(private_key).decode('utf-8')
+    public_key_b64 = base64.b64encode(public_key).decode("utf-8")
+    private_key_b64 = base64.b64encode(private_key).decode("utf-8")
 
     return public_key_b64, private_key_b64

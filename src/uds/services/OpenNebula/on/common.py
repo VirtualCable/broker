@@ -32,11 +32,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # import sys
+import logging
 import re
 
-import logging
-
 logger = logging.getLogger(__name__)
+
 
 # module = sys.modules[__name__]
 def sanitized_name(name: str) -> str:

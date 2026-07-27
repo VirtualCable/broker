@@ -29,18 +29,21 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-from datetime import timedelta
+
+import collections.abc
 import logging
 import typing
-import collections.abc
+
+from datetime import timedelta
 
 from django.db import transaction
-from uds.core.managers.userservice import UserServiceManager
-from uds.core.util.config import GlobalConfig
-from uds.models import UserService
-from uds.core.util.model import sql_now
-from uds.core.types.states import State
+
 from uds.core.jobs import Job
+from uds.core.managers.userservice import UserServiceManager
+from uds.core.types.states import State
+from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
+from uds.models import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -51,15 +54,16 @@ logger = logging.getLogger(__name__)
 
 
 class UserServiceInfoItemsCleaner(Job):
-    frecuency = 600  # Constant time, every hour will check for old info items
-    # frecuency_cfg = (
-    #     GlobalConfig.KEEP_INFO_TIME
-    # )  # Request run cache "info" cleaner every configured seconds. If config value is changed, it will be used at next reload
-    friendly_name = 'User Service Info Cleaner'
+    friendly_name = "User Service Info Cleaner"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return 600
+
+    @typing.override
     def run(self) -> None:
         remove_since = sql_now() - timedelta(seconds=GlobalConfig.KEEP_INFO_TIME.as_int(True))
-        logger.debug('Removing information user services from %s', remove_since)
+        logger.debug("Removing information user services from %s", remove_since)
         with transaction.atomic():
             UserService.objects.select_for_update().filter(
                 state__in=State.INFO_STATES, state_date__lt=remove_since
@@ -67,12 +71,13 @@ class UserServiceInfoItemsCleaner(Job):
 
 
 class UserServiceRemover(Job):
-    frecuency = 31
-    frecuency_cfg = (
-        GlobalConfig.REMOVAL_CHECK
-    )  # Request run cache "info" cleaner every configued seconds. If config value is changed, it will be used at next reload
-    friendly_name = 'User Service Cleaner'
+    friendly_name = "User Service Cleaner"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return GlobalConfig.REMOVAL_CHECK.as_int()
+
+    @typing.override
     def run(self) -> None:
         # USER_SERVICE_REMOVAL_LIMIT is the maximum number of items to remove at once
         # This configuration value is cached at startup, so it is not updated until next reload
@@ -97,7 +102,7 @@ class UserServiceRemover(Job):
             # if removal limit is reached, we stop
             if max_to_remove <= 0:
                 break
-            logger.debug('Checking removal of %s', candidate.name)
+            logger.debug("Checking removal of %s", candidate.name)
             try:
                 if (
                     candidate.service_pool.id not in not_removable_deployed_services
@@ -108,4 +113,4 @@ class UserServiceRemover(Job):
                 else:
                     not_removable_deployed_services.add(candidate.service_pool.id)
             except Exception:
-                logger.exception('Exception removing user service')
+                logger.exception("Exception removing user service")

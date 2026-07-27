@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -46,9 +47,9 @@ class Config(models.Model):
 
     section = models.CharField(max_length=128, db_index=True)
     key = models.CharField(max_length=64, db_index=True)
-    value = models.TextField(default='')
+    value = models.TextField(default="")
     field_type = models.IntegerField(default=-1)
-    help = models.CharField(max_length=256, default='')
+    help = models.CharField(max_length=256, default="")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager[Config]'
@@ -58,10 +59,10 @@ class Config(models.Model):
         Meta class to declare default order and unique multiple field index
         """
 
-        db_table = 'uds_configuration'
-        constraints = [models.UniqueConstraint(fields=['section', 'key'], name='u_cfg_section_key')]
+        db_table = "uds_configuration"
+        constraints = [models.UniqueConstraint(fields=["section", "key"], name="u_cfg_section_key")]
 
-        app_label = 'uds'
+        app_label = "uds"
 
     def __str__(self) -> str:
-        return f'Config {self.key} = {self.value}'
+        return f"Config {self.key} = {self.value}"

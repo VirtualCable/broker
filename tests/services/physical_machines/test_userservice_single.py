@@ -30,13 +30,13 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from unittest import mock
 
 from uds.core import types
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 # from ...utils.generators import limited_iterator
 
@@ -54,11 +54,11 @@ class TestUserServiceSingle(UDSTransactionTestCase):
         self.assertEqual(userservice.check_state(), types.states.TaskState.FINISHED)
 
         self.assertEqual(userservice.get_ip(), service.host.value)
-        self.assertEqual(userservice.get_name(), f'{userservice.get_ip()}:0')
-        self.assertEqual(userservice.get_unique_id(), f'{userservice.get_ip()}:0')
+        self.assertEqual(userservice.get_name(), f"{userservice.get_ip()}:0")
+        self.assertEqual(userservice.get_unique_id(), f"{userservice.get_ip()}:0")
 
         # patch service wakeup to ensure it's called
-        with mock.patch.object(service, 'wakeup') as wakeup:
+        with mock.patch.object(service, "wakeup") as wakeup:
             userservice.set_ready()
             wakeup.assert_called_with()
 

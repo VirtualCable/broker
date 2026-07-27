@@ -5,7 +5,6 @@ Author: dkmaster
 """
 
 import logging
-
 import typing
 
 from uds import models
@@ -20,16 +19,14 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def get_api(parameters: typing.Any) -> 'client.Client':
+def get_api(parameters: typing.Any) -> "client.Client":
     """
     Helper to get an API client
     """
     from .provider import OVirtProvider
 
-    logger.debug('Parameters received by getResources Helper: %s', parameters)
-    return typing.cast(
-        OVirtProvider, models.Provider.objects.get(uuid=parameters['prov_uuid']).get_instance()
-    ).api
+    logger.debug("Parameters received by getResources Helper: %s", parameters)
+    return typing.cast(OVirtProvider, models.Provider.objects.get(uuid=parameters["prov_uuid"]).get_instance()).api
 
 
 def get_resources(parameters: typing.Any) -> types.ui.CallbackResultType:
@@ -38,26 +35,27 @@ def get_resources(parameters: typing.Any) -> types.ui.CallbackResultType:
     """
     api = get_api(parameters)
 
-    logger.debug('Parameters received by getResources Helper: %s', parameters)
+    logger.debug("Parameters received by getResources Helper: %s", parameters)
 
     # Obtains datacenter from cluster
-    ci = api.get_cluster_info(parameters['cluster'])
+    ci = api.get_cluster_info(parameters["cluster"])
 
     res: list[types.ui.ChoiceItem] = []
     # Get storages for that datacenter
     for storage in api.get_datacenter_info(ci.datacenter_id).storage:
         if storage.type == ov_types.StorageType.DATA:
             space, free = (
-                storage.available + storage.used
-            ) / 1024 / 1024 / 1024, storage.available / 1024 / 1024 / 1024
+                (storage.available + storage.used) / 1024 / 1024 / 1024,
+                storage.available / 1024 / 1024 / 1024,
+            )
 
             res.append(
                 gui.choice_item(
                     storage.id,
-                    f'{storage.name} ({space:4.2f} GB/{free:4.2f} GB) {storage.enabled and "(ok)" or "(disabled)"}',
+                    f"{storage.name} ({space:4.2f} GB/{free:4.2f} GB) {storage.enabled and '(ok)' or '(disabled)'}",
                 )
             )
-    data: types.ui.CallbackResultType = [{'name': 'datastore', 'choices': res}]
+    data: types.ui.CallbackResultType = [{"name": "datastore", "choices": res}]
 
-    logger.debug('return data: %s', data)
+    logger.debug("return data: %s", data)
     return data

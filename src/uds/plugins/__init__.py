@@ -39,9 +39,10 @@ def __load_plugins() -> None:
     This imports all packages that are descendant of this package, and, after that,
     it register all subclases of service provider as
     """
-    logger.debug('Initializing plugins...')
+    logger.debug("Initializing plugins...")
 
     # Load all modules
     modfinder.import_modules(__name__)
+
 
 __load_plugins()

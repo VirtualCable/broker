@@ -27,11 +27,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 # pyright: reportUnusedImport=false
 from uds.core import managers
 
-from .provider import ProxmoxProvider
-from .jobs import ProxmoxDeferredRemoval, ProxmoxVmidReleaser
+from .jobs import ProxmoxDeferredRemoval
+from .jobs import ProxmoxVmidReleaser
+
+# Make this visible to loaders
+from .provider import ProxmoxProvider as ProxmoxProvider
 
 # Scheduled task to do clean processes
 for cls in (ProxmoxDeferredRemoval, ProxmoxVmidReleaser):

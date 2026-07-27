@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import datetime
 import enum
@@ -41,11 +42,12 @@ import typing
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, types
-from uds.core.ui import gui
-from uds.core.module import Module
-from uds.core.util.model import sql_now
 from uds import models
+from uds.core import exceptions
+from uds.core import types
+from uds.core.module import Module
+from uds.core.ui import gui
+from uds.core.util.model import sql_now
 
 if typing.TYPE_CHECKING:
     from uds.core.environment import Environment
@@ -87,23 +89,21 @@ class LoginAllowed(enum.StrEnum):
     This enum is used to know if the MFA code was sent or not.
     """
 
-    ALLOWED = '0'
-    DENIED = '1'
-    ALLOWED_IF_IN_NETWORKS = '2'
-    DENIED_IF_IN_NETWORKS = '3'
+    ALLOWED = "0"
+    DENIED = "1"
+    ALLOWED_IF_IN_NETWORKS = "2"
+    DENIED_IF_IN_NETWORKS = "3"
 
     @staticmethod
-    def check_ip_allowed(
-        request: 'ExtendedHttpRequest', networks: collections.abc.Iterable[str] | None = None
-    ) -> bool:
+    def check_ip_allowed(request: "ExtendedHttpRequest", networks: collections.abc.Iterable[str] | None = None) -> bool:
         if networks is None:
             return True  # No network restrictions, so we allow
         return any(i.contains(request.ip) for i in models.Network.objects.filter(uuid__in=list(networks)))
 
     @staticmethod
     def check_action(
-        action: 'LoginAllowed|str',
-        request: 'ExtendedHttpRequest',
+        action: "LoginAllowed|str",
+        request: "ExtendedHttpRequest",
         networks: collections.abc.Iterable[str] | None = None,
     ) -> bool:
 
@@ -121,8 +121,8 @@ class LoginAllowed(enum.StrEnum):
     def choices(include_global_allowance: bool = True) -> list[types.ui.ChoiceItem]:
         result = (
             [
-                gui.choice_item(LoginAllowed.ALLOWED.value, gettext('Allow user login')),
-                gui.choice_item(LoginAllowed.DENIED.value, gettext('Deny user login')),
+                gui.choice_item(LoginAllowed.ALLOWED.value, gettext("Allow user login")),
+                gui.choice_item(LoginAllowed.DENIED.value, gettext("Deny user login")),
             ]
             if include_global_allowance
             else []
@@ -131,11 +131,11 @@ class LoginAllowed(enum.StrEnum):
             [
                 gui.choice_item(
                     LoginAllowed.ALLOWED_IF_IN_NETWORKS.value,
-                    gettext('Allow user to login if it IP is in the networks list'),
+                    gettext("Allow user to login if it IP is in the networks list"),
                 ),
                 gui.choice_item(
                     LoginAllowed.DENIED_IF_IN_NETWORKS.value,
-                    gettext('Deny user to login if it IP is in the networks list'),
+                    gettext("Deny user to login if it IP is in the networks list"),
                 ),
             ]
         )
@@ -143,7 +143,7 @@ class LoginAllowed(enum.StrEnum):
 
     @staticmethod
     def network_choices() -> list[types.ui.ChoiceItem]:
-        return [gui.choice_item(v.uuid, v.name) for v in models.Network.objects.all().order_by('name')]
+        return [gui.choice_item(v.uuid, v.name) for v in models.Network.objects.all().order_by("name")]
 
 
 class MFA(Module):
@@ -157,26 +157,26 @@ class MFA(Module):
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_name: typing.ClassVar[str] = _('Base MFA')
+    type_name: typing.ClassVar[str] = _("Base MFA")
 
     # : Name of type used by Managers to identify this type of service
     # : We could have used here the Class name, but we decided that the
     # : module implementator will be the one that will provide a name that
     # : will relation the class (type) and that name.
-    type_type: typing.ClassVar[str] = 'baseMFA'
+    type_type: typing.ClassVar[str] = "baseMFA"
 
     # : Description shown at administration level for this authenticator.
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_description: typing.ClassVar[str] = _('Base MFA')
+    type_description: typing.ClassVar[str] = _("Base MFA")
 
     # : Icon file, used to represent this authenticator at administration interface
     # : This file should be at same folder as this class is, except if you provide
     # : your own :py:meth:uds.core.module.BaseModule.icon method.
-    icon_file: typing.ClassVar[str] = 'mfa.png'
-    
-    _db_obj: 'models.MFA|None' = None
+    icon_file: typing.ClassVar[str] = "mfa.png"
+
+    _db_obj: "models.MFA|None" = None
 
     class RESULT(enum.IntEnum):
         """
@@ -186,7 +186,7 @@ class MFA(Module):
         OK = 1
         ALLOWED = 2
 
-    def __init__(self, environment: 'Environment', values: types.core.ValuesType):
+    def __init__(self, environment: "Environment", values: types.core.ValuesType):
         super().__init__(environment, values)
         self.initialize(values)
 
@@ -206,7 +206,8 @@ class MFA(Module):
         Default implementation does nothing
         """
 
-    def db_obj(self) -> 'models.MFA':
+    @typing.override
+    def db_obj(self) -> "models.MFA":
         """
         Returns the database object for this provider
         """
@@ -222,9 +223,9 @@ class MFA(Module):
         This method will be invoked from the MFA form, to know the human name of the field
         that will be used to enter the MFA code.
         """
-        return 'MFA Code'
+        return "MFA Code"
 
-    def html(self, request: 'ExtendedHttpRequest', userid: str, username: str) -> str:
+    def html(self, request: "ExtendedHttpRequest", userid: str, username: str) -> str:
         """
         This method will be invoked from the MFA form, to know the HTML that will be presented
         to the user below the MFA code form.
@@ -236,9 +237,9 @@ class MFA(Module):
         Returns:
             HTML to be presented to the user along with the MFA code form
         """
-        return ''
+        return ""
 
-    def allow_login_without_identifier(self, request: 'ExtendedHttpRequest') -> bool | None:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> bool | None:
         """
         If this method returns True, an user that has no "identifier" is allowed to login without MFA
         Returns:
@@ -250,38 +251,36 @@ class MFA(Module):
 
     def send_code(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         code: str,
-    ) -> 'MFA.RESULT':
+    ) -> "MFA.RESULT":
         """
         This method will be invoked from "process" method, to send the MFA code to the user.
         If returns MFA.RESULT.OK, the MFA code was sent.
         If returns MFA.RESULT.ALLOW, the MFA code was not sent, the user does not need to enter the MFA code.
         If raises an error, the MFA code was not sent, and the user needs to enter the MFA code.
         """
-        logger.error('MFA.sendCode not implemented')
-        raise exceptions.auth.MFAError('MFA.sendCode not implemented')
+        logger.error("MFA.sendCode not implemented")
+        raise exceptions.auth.MFAError("MFA.sendCode not implemented")
 
-    def _get_data(
-        self, request: 'ExtendedHttpRequest', userid: str
-    ) -> tuple[datetime.datetime, str] | None:
+    def _get_data(self, request: "ExtendedHttpRequest", userid: str) -> tuple[datetime.datetime, str] | None:
         """
         Internal method to get the data from storage
         """
         storage_key = request.ip + userid
         return self.storage.read_pickled(storage_key)
 
-    def _remove_data(self, request: 'ExtendedHttpRequest', userid: str) -> None:
+    def _remove_data(self, request: "ExtendedHttpRequest", userid: str) -> None:
         """
         Internal method to remove the data from storage
         """
         storage_key = request.ip + userid
         self.storage.remove(storage_key)
 
-    def _put_data(self, request: 'ExtendedHttpRequest', userid: str, code: str) -> None:
+    def _put_data(self, request: "ExtendedHttpRequest", userid: str, code: str) -> None:
         """
         Internal method to put the data into storage
         """
@@ -290,12 +289,12 @@ class MFA(Module):
 
     def process(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
         validity: int | None = None,
-    ) -> 'MFA.RESULT':
+    ) -> "MFA.RESULT":
         """
         This method will be invoked from the MFA form, to send the MFA code to the user.
         The identifier where to send the code, will be obtained from "mfaIdentifier" method.
@@ -331,8 +330,8 @@ class MFA(Module):
             self._remove_data(request, userid)
 
         # Generate a 6 digit code (0-9)
-        code = ''.join(random.SystemRandom().choices('0123456789', k=6))
-        logger.debug('Generated OTP is %s', code)
+        code = "".join(random.SystemRandom().choices("0123456789", k=6))
+        logger.debug("Generated OTP is %s", code)
 
         # Send the code to the user
         # May raise an exception if the code was not sent and is required to be sent
@@ -346,7 +345,7 @@ class MFA(Module):
 
     def validate(
         self,
-        request: 'ExtendedHttpRequest',
+        request: "ExtendedHttpRequest",
         userid: str,
         username: str,
         identifier: str,
@@ -368,7 +367,7 @@ class MFA(Module):
         Returns:
             None if the code is valid
             Raises an error if the code is not valid ("exceptions.MFAError")
-            
+
         Note:
             The user id is provided so you can store user related data in a persistent way, if needed.
             This user id will always be the same for the same user on same MFA authenticator.
@@ -377,7 +376,7 @@ class MFA(Module):
         """
         # Validate the code
         try:
-            err = _('Invalid MFA code')
+            err = _("Invalid MFA code")
 
             data = self._get_data(request, userid)
             if data and len(data) == 2:
@@ -386,7 +385,7 @@ class MFA(Module):
                     # if it is no more valid, raise an error
                     # Remove stored code and raise error
                     self._remove_data(request, userid)
-                    raise exceptions.auth.MFAError('MFA Code expired')
+                    raise exceptions.auth.MFAError("MFA Code expired")
 
                 # Check if the code is valid
                 if data[1] == code:
@@ -409,18 +408,18 @@ class MFA(Module):
         """
 
     @staticmethod
-    def get_user_unique_id(user: 'models.User') -> str:
+    def get_user_unique_id(user: "models.User") -> str:
         """
         Composes an unique, mfa dependant, id for the user (at this time, it's sha3_256 of user + mfa)
-        
+
         Args:
             user: User to get the unique id for
-            
+
         Returns:
             Unique id for the user
         """
         mfa = user.manager.mfa
         if not mfa:
-            raise exceptions.auth.MFAError('MFA is not enabled')
+            raise exceptions.auth.MFAError("MFA is not enabled")
 
-        return hashlib.sha3_256((user.name + (user.uuid or '') + mfa.uuid).encode()).hexdigest()
+        return hashlib.sha3_256((user.name + (user.uuid or "") + mfa.uuid).encode()).hexdigest()

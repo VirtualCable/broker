@@ -28,11 +28,11 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import time
+
 import logging
+import time
 import typing
 
-from django.utils.translation import gettext as _
 from uds.core import types
 from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.util import autoserializable
@@ -45,29 +45,30 @@ logger = logging.getLogger(__name__)
 
 
 class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
-
     suggested_delay = 20
 
     # Some customization fields
     # If must wait untill finish queue for destroying the machine
     wait_until_finish_to_destroy = True
 
-    _task = autoserializable.StringField(default='')
+    _task = autoserializable.StringField(default="")
 
     # Utility overrides for type checking...
-    def service(self) -> 'ProxmoxService':
-        return typing.cast('ProxmoxService', super().service())
+    @typing.override
+    def service(self) -> "ProxmoxService":
+        return typing.cast("ProxmoxService", super().service())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         deserializes the data and loads it inside instance.
         """
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        logger.debug('Data: %s', data)
-        vals = data.decode('utf8').split('\t')
-        if vals[0] == 'v1':
+        logger.debug("Data: %s", data)
+        vals = data.decode("utf8").split("\t")
+        if vals[0] == "v1":
             (
                 self._name,
                 self._vmid,
@@ -78,7 +79,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
                 self._reason,
             ) = vals[1:]
         else:
-            raise ValueError('Invalid data format')
+            raise ValueError("Invalid data format")
 
         self._queue = (
             # If removing
@@ -87,23 +88,25 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
                 types.services.Operation.DELETE_COMPLETED,
                 types.services.Operation.FINISH,
             ]
-            if _operation == 'd'
+            if _operation == "d"
             # If publishing, must have finished for sure
             else [types.services.Operation.FINISH]
         )
-        self._is_flagged_for_destroy = destroy_after != ''
+        self._is_flagged_for_destroy = destroy_after != ""
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    @typing.override
     def op_create(self) -> None:
         # First we should create a full clone, so base machine do not get fullfilled with "garbage" delta disks...
         # Name is generated on op_initialize by DynamicPublication
         task = self.service().clone_vm(self._name, self.generate_annotation())
         self._vmid = str(task.vmid)
-        self._task = ','.join((task.exec_result.node, task.exec_result.upid))
+        self._task = ",".join((task.exec_result.node, task.exec_result.upid))
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
-        node, upid = self._task.split(',')
+        node, upid = self._task.split(",")
         task = self.service().provider().api.get_task_info(node, upid)
         if task.is_running():
             return types.states.TaskState.RUNNING
@@ -113,6 +116,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_create_completed(self) -> None:
         # Complete the creation, disabling ha protection and adding to HA and marking as template
         self.service().provider().api.set_vm_protection(int(self._vmid), protection=False)
@@ -123,10 +127,11 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
         time.sleep(0.5)
         # Mark vm as template
         task = self.service().provider().api.convert_vm_to_template(int(self._vmid))
-        self._task = ','.join((task.node, task.upid))
+        self._task = ",".join((task.node, task.upid))
 
+    @typing.override
     def op_create_completed_checker(self) -> types.states.TaskState:
-        node, upid = self._task.split(',')
+        node, upid = self._task.split(",")
         task = self.service().provider().api.get_task_info(node, upid)
         if task.is_running():
             return types.states.TaskState.RUNNING
@@ -136,5 +141,6 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_delete(self) -> None:
         self.service().delete(self, self._vmid)

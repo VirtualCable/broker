@@ -35,12 +35,13 @@ To create a new notifier module, you will need to follow this steps:
     3.- Import the class of your service module at __init__. For example::
         from Notifier import SimpleNotifier
         This will allow to locate the class SimpleNotifier and register it
-    4.- Done. 
+    4.- Done.
 
 The registration of modules is done locating subclases of :py:class:`uds.core.messaging.Notifier`
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds.core.util import modfinder

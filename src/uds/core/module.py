@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import logging
 import os.path
@@ -40,9 +41,11 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 from uds.core.ui.user_interface import UserInterface
-from uds.core.util import utils, log
+from uds.core.util import log
+from uds.core.util import utils
 
-from .environment import Environment, Environmentable
+from .environment import Environment
+from .environment import Environmentable
 from .serializable import Serializable
 
 logger = logging.getLogger(__name__)
@@ -109,14 +112,14 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
 
     # : Which coded to use to encode module by default.
     # : Basic name used to provide the administrator an "huma readable" form for the module
-    type_name: typing.ClassVar[str] = 'Base Module'
+    type_name: typing.ClassVar[str] = "Base Module"
     # : Internal type name, used by system to locate this module
-    type_type: typing.ClassVar[str] = 'BaseModule'
+    type_type: typing.ClassVar[str] = "BaseModule"
     # : Description of this module, used at admin level
-    type_description: typing.ClassVar[str] = 'Base Module'
+    type_description: typing.ClassVar[str] = "Base Module"
     # : Icon file, relative to module folders
     # This is expected to be png, use this format always
-    icon_file: typing.ClassVar[str] = 'base.png'
+    icon_file: typing.ClassVar[str] = "base.png"
 
     # if this modules is marked as "Experimental"
     experimental: typing.ClassVar[bool] = False
@@ -128,7 +131,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
     def __init__(
         self,
         environment: Environment,
-        values: 'types.core.ValuesType' = None,
+        values: "types.core.ValuesType" = None,
         uuid: str | None = None,
     ):
         """
@@ -156,8 +159,9 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         UserInterface.__init__(self, values)
         Environmentable.__init__(self, environment)
         Serializable.__init__(self)
-        self._uuid = uuid or ''
+        self._uuid = uuid or ""
 
+    @typing.override
     def marshal(self) -> bytes:
         """
         By default and if not overriden by descendants, this method, overridden
@@ -166,6 +170,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         """
         return self.serialize_fields()
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
         """
         By default and if not overriden by descendants, this method recovers
@@ -190,7 +195,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         return self._uuid
 
     def set_uuid(self, uuid: str | None) -> None:
-        self._uuid = uuid or ''
+        self._uuid = uuid or ""
 
     def destroy(self) -> None:
         """
@@ -205,7 +210,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def db_obj(self) -> 'UUIDModel':
+    def db_obj(self) -> "UUIDModel":
         """
         Returns the database object associated with this module.
         Can return "null()" if no database object is associated with this module.
@@ -214,7 +219,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
 
     def do_log(
         self,
-        level: 'types.log.LogLevel',
+        level: "types.log.LogLevel",
         message: str,
         source: types.log.LogSource = types.log.LogSource.MODULE,
     ) -> None:
@@ -227,12 +232,12 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         """
         dbobj = self.db_obj()
         if dbobj.is_null():
-            logger.error('Trying to log a message for a null object')
+            logger.error("Trying to log a message for a null object")
             return
         log.log(dbobj, level, message, source)
 
     @classmethod
-    def mod_name(cls: type['Module']) -> str:
+    def mod_name(cls: type["Module"]) -> str:
         """
         Returns "translated" type_name, using gettext for transforming
         cls.type_name
@@ -246,7 +251,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         return _(cls.type_name)
 
     @classmethod
-    def mod_type(cls: type['Module']) -> str:
+    def mod_type(cls: type["Module"]) -> str:
         """
         Returns type_type
 
@@ -259,7 +264,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         return cls.type_type
 
     @classmethod
-    def description(cls: type['Module']) -> str:
+    def description(cls: type["Module"]) -> str:
         """
         This method returns the "translated" description, that is, using
         gettext for transforming cls.type_description.
@@ -274,7 +279,7 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         return _(cls.type_description)
 
     @classmethod
-    def icon(cls: type['Module']) -> bytes:
+    def icon(cls: type["Module"]) -> bytes:
         """
         Reads the file specified by icon_file at module folder, and returns it content.
         This is used to obtain an icon so administration can represent it.
@@ -286,23 +291,23 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
             Icon content as bytes. Look at icon64 for base64 encoded icon
         """
         return utils.load_icon(
-            os.path.dirname(typing.cast(str, sys.modules[cls.__module__].__file__)) + '/' + cls.icon_file
+            os.path.dirname(typing.cast(str, sys.modules[cls.__module__].__file__)) + "/" + cls.icon_file
         )
 
     @classmethod
-    def icon64(cls: type['Module']) -> str:
+    def icon64(cls: type["Module"]) -> str:
         """
         Reads the icon from file and returns it as base64 encoded
 
         Notes:
-            The icon_file should be defined at class level, and must be a png file in the folder of the class module        
+            The icon_file should be defined at class level, and must be a png file in the folder of the class module
         """
         return utils.load_icon_b64(
-            os.path.dirname(typing.cast(str, sys.modules[cls.__module__].__file__)) + '/' + cls.icon_file
+            os.path.dirname(typing.cast(str, sys.modules[cls.__module__].__file__)) + "/" + cls.icon_file
         )
 
     @staticmethod
-    def test(env: 'Environment', data: 'types.core.ValuesType') -> 'types.core.TestResult':
+    def test(env: "Environment", data: "types.core.ValuesType") -> "types.core.TestResult":
         """
         Test if the connection data is ok.
 

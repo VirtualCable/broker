@@ -29,13 +29,14 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
 
 
 class NotifyActionType(enum.StrEnum):
-    LOGIN = 'login'
-    LOGOUT = 'logout'
-    DATA = 'data'
+    LOGIN = "login"
+    LOGOUT = "logout"
+    DATA = "data"
 
     @staticmethod
     def valid_names() -> list[str]:

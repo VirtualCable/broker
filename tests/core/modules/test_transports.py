@@ -28,30 +28,29 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
-from uds.core.transports.transport_factory import TransportsFactory
-
 from tests.utils.test import UDSTestCase
-
+from uds.core.transports.transport_factory import TransportsFactory
 
 logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    'html5rdptransport',
-    'html5sshtransport',
+    "html5rdptransport",
+    "html5sshtransport",
     # 'nicedcvtunneltransport',
     # 'tsnomachinetransport',
-    'rdptransport',
-    'tsrdptransport',
+    "rdptransport",
+    "tsrdptransport",
     # 'trdstransport',
-    'spicetransport',
-    'tsspicetransport',
-    'urltransport',
-    'x2gotransport',
-    'tx2gotransport',
+    "spicetransport",
+    "tsspicetransport",
+    "urltransport",
+    "x2gotransport",
+    "tx2gotransport",
 ]
 
 
@@ -61,9 +60,9 @@ class TestTransports(UDSTestCase):
     """
 
     def test_transports_loads_correctly(self) -> None:
-        from uds import transports  as _  # Not used, juet to load all transports
+        from uds import transports as transports  # Not used, juet to load all transports
 
         factory = TransportsFactory()
-        
+
         for transport in MUST_HAVE:
             self.assertTrue(factory.has(transport), f"Transport {transport} not found")

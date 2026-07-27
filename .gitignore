@@ -86,3 +86,7 @@
 
 target/
 test-vars.ini
+
+/.opencode
+/graphify*
+/doc/plan

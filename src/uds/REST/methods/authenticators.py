@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import itertools
@@ -37,22 +38,32 @@ import logging
 import re
 import typing
 
-from django.utils.translation import gettext, gettext_lazy as _
 from django.db import models
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
-
-from uds.core import auths, consts, exceptions, types, ui
+from uds.core import auths
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core import ui
 from uds.core.environment import Environment
-from uds.core.util import ensure, permissions, ui as ui_utils
-from uds.core.util.model import process_uuid
-from uds.models import MFA, Authenticator, Network, Tag
-from uds.REST.model import ModelHandler
-
-from .users_groups import Groups, Users
 
 # Not imported at runtime, just for type checking
-
 from uds.core.module import Module
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
+from uds.models import MFA
+from uds.models import Authenticator
+from uds.models import Network
+from uds.models import Tag
+from uds.REST.model import ModelHandler
+
+from .users_groups import Groups
+from .users_groups import UserItem
+from .users_groups import Users
 
 if typing.TYPE_CHECKING:
     from django.db.models.query import QuerySet
@@ -73,6 +84,7 @@ class AuthenticatorTypeInfo(types.rest.ExtraTypeInfo):
     mfa_data_enabled: bool
     mfa_supported: bool
 
+    @typing.override
     def as_dict(self) -> dict[str, typing.Any]:
         return dataclasses.asdict(self)
 
@@ -103,23 +115,52 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     MODEL = Authenticator
     # Custom get method "search" that requires authenticator id
-    CUSTOM_METHODS = [types.rest.ModelCustomMethod('search', True)]
-    DETAIL = {'users': Users, 'groups': Groups}
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags', 'priority', 'small_name', 'mfa_id:_', 'state', 'net_filtering']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod(
+            "search",
+            True,
+            description="Search users or groups in the authenticator by name or identifier",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "text": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Search text to match against user or group names",
+                    ),
+                },
+            ),
+        ),
+        types.rest.ModelCustomMethod(
+            "users_with_services",
+            True,
+            description="Retrieve all users in this authenticator that have active services assigned",
+        ),
+    ]
+    DETAIL = {"users": Users, "groups": Groups}
+    FIELDS_TO_SAVE = [
+        "name",
+        "comments",
+        "tags",
+        "priority",
+        "small_name",
+        "mfa_id:_",
+        "state",
+        "net_filtering",
+    ]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Authenticators'))
-        .numeric_column(name='numeric_id', title=_('Id'), visible=True, width='1rem')
-        .icon(name='name', title=_('Name'), visible=True)
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='comments', title=_('Comments'))
-        .numeric_column(name='priority', title=_('Priority'), width='8rem')
-        .text_column(name='small_name', title=_('Label'))
-        .numeric_column(name='users_count', title=_('Users'), width='6rem')
-        .text_column(name='mfa_name', title=_('MFA'))
-        .text_column(name='tags', title=_('tags'), visible=False)
-        .row_style(prefix='row-state-', field='state')
-        .with_filter_fields('name', 'data_type', 'comments', 'small_name')
+        ui_utils.TableBuilder(_("Authenticators"))
+        .numeric_column(name="numeric_id", title=_("Id"), visible=True, width="1rem")
+        .icon(name="name", title=_("Name"), visible=True)
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="comments", title=_("Comments"))
+        .numeric_column(name="priority", title=_("Priority"), width="8rem")
+        .text_column(name="small_name", title=_("Label"))
+        .numeric_column(name="users_count", title=_("Users"), width="6rem")
+        .text_column(name="mfa_name", title=_("MFA"))
+        .text_column(name="tags", title=_("tags"), visible=False)
+        .row_style(prefix="row-state-", field="state")
+        .with_filter_fields("name", "data_type", "comments", "small_name")
         .build()
     )
 
@@ -129,13 +170,13 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
     )
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[auths.Authenticator]]:
         return auths.factory().providers().values()
 
     @classmethod
-    def extra_type_info(
-        cls: type[typing.Self], type_: type['Module']
-    ) -> AuthenticatorTypeInfo | None:
+    @typing.override
+    def extra_type_info(cls: type[typing.Self], type_: type["Module"]) -> AuthenticatorTypeInfo | None:
         if issubclass(type_, auths.Authenticator):
             return AuthenticatorTypeInfo(
                 search_users_supported=type_.search_users != auths.Authenticator.search_users,
@@ -152,6 +193,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         # Not of my type
         return None
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         try:
             auth_type = auths.factory().lookup(for_type)
@@ -173,35 +215,34 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                         )
                         .add_fields(auth_instance.gui_description())
                         .add_choice(
-                            name='state',
+                            name="state",
                             default=consts.auth.VISIBLE,
                             choices=[
-                                ui.gui.choice_item(consts.auth.VISIBLE, _('Visible')),
-                                ui.gui.choice_item(consts.auth.HIDDEN, _('Hidden')),
-                                ui.gui.choice_item(consts.auth.DISABLED, _('Disabled')),
+                                ui.gui.choice_item(consts.auth.VISIBLE, _("Visible")),
+                                ui.gui.choice_item(consts.auth.HIDDEN, _("Hidden")),
+                                ui.gui.choice_item(consts.auth.DISABLED, _("Disabled")),
                             ],
-                            label=gettext('Access'),
+                            label=gettext("Access"),
                         )
                     )
 
                     if auth_type.provides_mfa_identifier():
                         gui.add_choice(
-                            name='mfa_id',
-                            label=gettext('MFA Provider'),
-                            choices=[ui.gui.choice_item('', str(_('None')))]
-                            + ui.gui.sorted_choices(
-                                [ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]
-                            ),
+                            name="mfa_id",
+                            label=gettext("MFA Provider"),
+                            choices=[ui.gui.choice_item("", str(_("None")))]
+                            + ui.gui.sorted_choices([ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]),
                         )
 
                     return gui.build()
 
             raise Exception()  # Not found
         except Exception as e:
-            logger.info('Authenticator type not found: %s', e)
-            raise exceptions.rest.NotFound('Authenticator type not found') from e
+            logger.info("Authenticator type not found: %s", e)
+            raise exceptions.rest.NotFound("Authenticator type not found") from e
 
-    def get_item(self, item: 'models.Model') -> AuthenticatorItem:
+    @typing.override
+    def get_item(self, item: "models.Model") -> AuthenticatorItem:
         item = ensure.is_instance(item, Authenticator)
 
         return AuthenticatorItem(
@@ -214,7 +255,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             net_filtering=item.net_filtering,
             networks=[n.uuid for n in item.networks.all()],
             state=item.state,
-            mfa_id=item.mfa.uuid if item.mfa else '',
+            mfa_id=item.mfa.uuid if item.mfa else "",
             small_name=item.small_name,
             users_count=item.users.count(),
             permission=permissions.effective_permissions(self._user, item),
@@ -222,43 +263,45 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             type_info=type(self).as_typeinfo(item.get_type()),
         )
 
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('users_count'):
+    @typing.override
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("users_count"):
             field_name, is_descending = field_info
             order_by_field = f"-{field_name}" if is_descending else field_name
-            return qs.annotate(users_count=models.Count('users')).order_by(order_by_field)
+            return qs.annotate(users_count=models.Count("users")).order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('type_name'):
+        if field_info := self.get_sort_field_info("type_name"):
             _, is_descending = field_info
-            order_by_field = f'-data_type' if is_descending else 'data_type'
+            order_by_field = "-data_type" if is_descending else "data_type"
             return qs.order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('numeric_id'):
+        if field_info := self.get_sort_field_info("numeric_id"):
             _, is_descending = field_info
-            order_by_field = f'-pk' if is_descending else 'pk'
+            order_by_field = "-pk" if is_descending else "pk"
             return qs.order_by(order_by_field)
 
-        if field_info := self.get_sort_field_info('mfa_name'):
+        if field_info := self.get_sort_field_info("mfa_name"):
             _, is_descending = field_info
-            order_by_field = f'-mfa__name' if is_descending else 'mfa__name'
+            order_by_field = "-mfa__name" if is_descending else "mfa__name"
             return qs.order_by(order_by_field)
 
         return super().apply_sort(qs)
 
-    def post_save(self, item: 'models.Model') -> None:
+    @typing.override
+    def post_save(self, item: "models.Model") -> None:
         item = ensure.is_instance(item, Authenticator)
         try:
-            networks = self._params['networks']
+            networks = self._params["networks"]
         except Exception:  # No networks passed in, this is ok
-            logger.debug('No networks')
+            logger.debug("No networks")
             return
         if networks is None:  # None is not provided, empty list is ok and means no networks
             return
-        logger.debug('Networks: %s', networks)
+        logger.debug("Networks: %s", networks)
         item.networks.set(Network.objects.filter(uuid__in=networks))
 
     # Custom "search" method
-    def search(self, item: 'models.Model') -> list[types.auth.SearchResultItem.ItemDict]:
+    def search(self, item: "models.Model") -> list[types.auth.SearchResultItem.ItemDict]:
         """
         API:
             Search for users or groups in this authenticator
@@ -266,20 +309,20 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         item = ensure.is_instance(item, Authenticator)
         self.check_access(item, types.permissions.PermissionType.READ)
         try:
-            type_ = self._params['type']
-            if type_ not in ('user', 'group'):
-                raise exceptions.rest.RequestError(_('Invalid type: {}').format(type_))
+            type_ = self._params["type"]
+            if type_ not in ("user", "group"):
+                raise exceptions.rest.RequestError(_("Invalid type: {}").format(type_))
 
-            term = self._params['term']
+            term = self._params["term"]
 
-            limit = int(self._params.get('limit', '50'))
+            limit = int(self._params.get("limit", "50"))
 
             auth = item.get_instance()
 
             # Cast to Any because we want to compare with the default method or if it's overriden
             # Cast is neccesary to avoid mypy errors, for example
             search_supported = (
-                type_ == 'user'
+                type_ == "user"
                 and (
                     typing.cast(typing.Any, auth.search_users)
                     != typing.cast(typing.Any, auths.Authenticator.search_users)
@@ -290,54 +333,68 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                 )
             )
             if search_supported is False:
-                raise exceptions.rest.NotSupportedError(_('Search not supported'))
+                raise exceptions.rest.NotSupportedError(_("Search not supported"))
 
-            if type_ == 'user':
+            if type_ == "user":
                 iterable = auth.search_users(term)
             else:
                 iterable = auth.search_groups(term)
 
             return [i.as_dict() for i in itertools.islice(iterable, limit)]
         except Exception as e:
-            logger.exception('Too many results: %s', e)
-            return [
-                types.auth.SearchResultItem(id=_('Too many results...'), name=_('Refine your query')).as_dict()
-            ]
+            logger.exception("Too many results: %s", e)
+            return [types.auth.SearchResultItem(id=_("Too many results..."), name=_("Refine your query")).as_dict()]
             # self.invalidResponseException('{}'.format(e))
 
+    # Custom method "users_with_services" method
+    def users_with_services(self, item: "models.Model") -> list[UserItem]:
+        """
+        API:
+            Returns a list of users with services assigned in this authenticator
+        """
+        item = ensure.is_instance(item, Authenticator)
+        self.check_access(item, types.permissions.PermissionType.READ)
+
+        # all users from this authhenticator with userservices assigned, and not removed or canceled
+        # userServices is a RelatedManager, so we can filter it directly
+        users = item.users.filter(userServices__state__in=types.states.State.VALID_STATES).distinct()
+
+        return [Users.as_user_item(i) for i in users]
+
+    @typing.override
     def test(self, type_: str) -> typing.Any:
         auth_type = auths.factory().lookup(type_)
         if not auth_type:
-            raise exceptions.rest.RequestError(_('Invalid type: {}').format(type_))
+            raise exceptions.rest.RequestError(_("Invalid type: {}").format(type_))
 
         dct = self._params.copy()
-        dct['_request'] = self._request
+        dct["_request"] = self._request
         with Environment.temporary_environment() as env:
             res = auth_type.test(env, dct)
             if res.success:
                 return self.success()
             return res.error
 
-    def pre_save(
-        self, fields: dict[str, typing.Any]
-    ) -> None:  # pylint: disable=too-many-branches,too-many-statements
+    @typing.override
+    def pre_save(self, fields: dict[str, typing.Any]) -> None:  # pylint: disable=too-many-branches,too-many-statements
         logger.debug(self._params)
-        if fields.get('mfa_id'):
+        if fields.get("mfa_id"):
             try:
-                mfa = MFA.objects.get(uuid=process_uuid(fields['mfa_id']))
-                fields['mfa_id'] = mfa.id
+                mfa = MFA.objects.get(uuid=process_uuid(fields["mfa_id"]))
+                fields["mfa_id"] = mfa.id
             except MFA.DoesNotExist:
                 pass  # will set field to null
         else:
-            fields['mfa_id'] = None
+            fields["mfa_id"] = None
 
         # If label has spaces, replace them with underscores
-        fields['small_name'] = fields['small_name'].strip().replace(' ', '_')
+        fields["small_name"] = fields["small_name"].strip().replace(" ", "_")
         # And ensure small_name chars are valid [a-zA-Z0-9:-]+
-        if fields['small_name'] and not re.match(r'^[a-zA-Z0-9:.-]+$', fields['small_name']):
-            raise exceptions.rest.RequestError(_('Label must contain only letters, numbers, or symbols: - : .'))
+        if fields["small_name"] and not re.match(r"^[a-zA-Z0-9:.-]+$", fields["small_name"]):
+            raise exceptions.rest.RequestError(_("Label must contain only letters, numbers, or symbols: - : ."))
 
-    def delete_item(self, item: 'models.Model') -> None:
+    @typing.override
+    def delete_item(self, item: "models.Model") -> None:
         # For every user, remove assigned services (mark them for removal)
         item = ensure.is_instance(item, Authenticator)
 

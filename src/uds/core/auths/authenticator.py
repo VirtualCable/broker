@@ -32,25 +32,28 @@ Base module for all authenticators
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import logging
 import typing
-import collections.abc
 
 from django.utils.translation import gettext_noop as _
 
+from uds.core import consts
+from uds.core import types
 from uds.core.module import Module
-from uds.core import consts, types
+from uds.core.util import auth as util_auth
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from django.http import (
-        HttpRequest,
-        HttpResponse,
-    )
+    from django.http import HttpRequest
+    from django.http import HttpResponse
+
     from uds import models
-    from uds.core.types.requests import ExtendedHttpRequest
-    from uds.core.environment import Environment
     from uds.core import types
+    from uds.core.environment import Environment
+    from uds.core.types.requests import ExtendedHttpRequest
+
     from .groups_manager import GroupsManager
 
 
@@ -113,24 +116,24 @@ class Authenticator(Module):
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_name: typing.ClassVar[str] = _('Base Authenticator')
+    type_name: typing.ClassVar[str] = _("Base Authenticator")
 
     # : Name of type used by Managers to identify this type of service
     # : We could have used here the Class name, but we decided that the
     # : module implementator will be the one that will provide a name that
     # : will relation the class (type) and that name.
-    type_type: typing.ClassVar[str] = 'Authenticator'
+    type_type: typing.ClassVar[str] = "Authenticator"
 
     # : Description shown at administration level for this authenticator.
     # : This string will be translated when provided to admin interface
     # : using gettext, so you can mark it as "_" at derived classes (using gettext_noop)
     # : if you want so it can be translated.
-    type_description: typing.ClassVar[str] = _('Base Authenticator')
+    type_description: typing.ClassVar[str] = _("Base Authenticator")
 
     # : Icon file, used to represent this authenticator at administration interface
     # : This file should be at same folder as this class is, except if you provide
     # : your own :py:meth:uds.core.module.BaseModule.icon method.
-    icon_file: typing.ClassVar[str] = 'auth.png'
+    icon_file: typing.ClassVar[str] = "auth.png"
 
     # : Mark this authenticator as that the users comes from outside the UDS
     # : database, that are most authenticator (except Internal DB)
@@ -145,21 +148,21 @@ class Authenticator(Module):
     needs_password: typing.ClassVar[bool] = False
 
     # : Label for username field, shown at administration interface user form.
-    label_username: typing.ClassVar[str] = _('User name')
+    label_username: typing.ClassVar[str] = _("User name")
 
     # : Label for group field, shown at administration interface user form.
-    label_groupname: typing.ClassVar[str] = _('Group name')
+    label_groupname: typing.ClassVar[str] = _("Group name")
 
     # : Label for password field, , shown at administration interface user form.
     # : Not needed for external authenticators (where credentials are stored with
     # : an already existing user.
-    label_password: typing.ClassVar[str] = _('Password')
+    label_password: typing.ClassVar[str] = _("Password")
 
     # : If this authenticators casues a temporal block of an user on repeated login failures
     block_user_on_failures: typing.ClassVar[bool] = True
 
-    from .user import User  # pylint: disable=import-outside-toplevel
     from .group import Group  # pylint: disable=import-outside-toplevel
+    from .user import User  # pylint: disable=import-outside-toplevel
 
     # : The type of user provided, normally standard user will be enough.
     # : This is here so if we need it in some case, we can write our own
@@ -174,11 +177,11 @@ class Authenticator(Module):
     # : Identifies the 'family' of authenticator for routing purposes
     auth_type_group: typing.ClassVar[types.auth.AuthTypeGroup] = types.auth.AuthTypeGroup.GENERIC
 
-    _db_obj: 'models.Authenticator | None' = None  # Cached dbAuth object
+    _db_obj: "models.Authenticator | None" = None  # Cached dbAuth object
 
     def __init__(
         self,
-        environment: 'Environment',
+        environment: "Environment",
         values: types.core.ValuesType = None,
         uuid: str | None = None,
     ):
@@ -216,7 +219,8 @@ class Authenticator(Module):
         Default implementation does nothing
         """
 
-    def db_obj(self) -> 'models.Authenticator':
+    @typing.override
+    def db_obj(self) -> "models.Authenticator":
         """
         Helper method to access the Authenticator database object
         """
@@ -229,7 +233,7 @@ class Authenticator(Module):
             self._db_obj = Authenticator.objects.get(uuid__iexact=self.get_uuid())
         return self._db_obj
 
-    def recreate_groups(self, user: 'models.User') -> None:
+    def recreate_groups(self, user: "models.User") -> None:
         """
         Helper method, not needed to be overriden.
         It simply checks if the source is external and if so, recreates
@@ -237,9 +241,7 @@ class Authenticator(Module):
 
         user param is a database user object
         """
-        from uds.core.auths.groups_manager import (  # pylint: disable=import-outside-toplevel
-            GroupsManager,
-        )
+        from uds.core.auths.groups_manager import GroupsManager  # pylint: disable=import-outside-toplevel
 
         if self.external_source:
             groups_manager = GroupsManager(self.db_obj())
@@ -330,10 +332,10 @@ class Authenticator(Module):
               previously authenticated. (that is, authenticate method has already been called)
               So, you can store the mfa_identifier at authenticate method, and return it here for example.
         """
-        return ''
+        return ""
 
     @classmethod
-    def provides_mfa_identifier(cls: type['Authenticator']) -> bool:
+    def provides_mfa_identifier(cls: type["Authenticator"]) -> bool:
         """
         Returns if this authenticator provides a MFA identifier
         """
@@ -343,8 +345,8 @@ class Authenticator(Module):
         self,
         username: str,
         credentials: str,
-        groups_manager: 'GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        groups_manager: "GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """
         This method must be overriden, and is responsible for authenticating
@@ -392,7 +394,7 @@ class Authenticator(Module):
         """
         return types.auth.FAILED_AUTH
 
-    def is_ip_allowed(self, request: 'types.requests.ExtendedHttpRequest') -> bool:
+    def is_ip_allowed(self, request: "types.requests.ExtendedHttpRequest") -> bool:
         """
         Used by the login interface to determine if the authenticator is visible on the login page.
         """
@@ -404,7 +406,7 @@ class Authenticator(Module):
     def transformed_username(
         self,
         username: str,
-        request: 'types.requests.ExtendedHttpRequest',
+        request: "types.requests.ExtendedHttpRequest",
     ) -> str:
         """
         On login, this method get called so we can "transform" provided user name.
@@ -418,11 +420,11 @@ class Authenticator(Module):
         :note: You don't need to implement this method if your authenticator (as most authenticators does), does not
                transforms username.
         """
-        return username
+        return util_auth.normalize_username(username)
 
     def logout(
         self,
-        request: 'types.requests.ExtendedHttpRequest',
+        request: "types.requests.ExtendedHttpRequest",
         username: str,
     ) -> types.auth.AuthenticationResult:
         """
@@ -455,10 +457,10 @@ class Authenticator(Module):
     def hook_web_logout(
         self,
         username: str,
-        request: 'HttpRequest',
-        response: 'HttpResponse',
+        request: "HttpRequest",
+        response: "HttpResponse",
     ) -> None:
-        '''
+        """
         Invoked on web logout of an user
         Args:
 
@@ -472,7 +474,7 @@ class Authenticator(Module):
         :note: This method will be invoked whenever the web_logout is requested. It receives request & response so auth cna
                make changes (for example, on cookies) to it.
 
-        '''
+        """
         return
 
     def get_for_auth(self, username: str) -> str:
@@ -489,7 +491,7 @@ class Authenticator(Module):
         """
         return username
 
-    def get_groups(self, username: str, groups_manager: 'GroupsManager') -> None:
+    def get_groups(self, username: str, groups_manager: "GroupsManager") -> None:
         """
         Looks for the real groups to which the specified user belongs.
 
@@ -501,7 +503,7 @@ class Authenticator(Module):
         """
         raise NotImplementedError
 
-    def get_javascript(self, request: 'ExtendedHttpRequest') -> str | None:
+    def get_javascript(self, request: "ExtendedHttpRequest") -> str | None:
         """
         If you override this method, and returns something different of None,
         UDS will consider your authenticator as "Owner draw", that is, that it
@@ -518,9 +520,9 @@ class Authenticator(Module):
 
     def auth_callback(
         self,
-        parameters: 'types.auth.AuthCallbackParams',
-        groups_manager: 'GroupsManager',
-        request: 'types.requests.ExtendedHttpRequest',
+        parameters: "types.auth.AuthCallbackParams",
+        groups_manager: "GroupsManager",
+        request: "types.requests.ExtendedHttpRequest",
     ) -> types.auth.AuthenticationResult:
         """
         There is a view inside UDS, an url, that will redirect the petition
@@ -573,7 +575,7 @@ class Authenticator(Module):
 
         Default implementation returns just the same user name that is passed in.
         """
-        return ''
+        return ""
 
     def create_user(self, user_data: dict[str, typing.Any]) -> None:
         """

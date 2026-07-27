@@ -1,26 +1,47 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019-2024 Virtual Cable S.L.
+# Copyright (c) 2025-2026 Virtual Cable S.L.
 # All rights reserved.
 #
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright notice,
+#      this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#      may be used to endorse or promote products derived from this software
+#      without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PAdecorators.FTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TOdecorators.FT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
-import typing
 import re
+import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import types as core_types, consts
+from uds.core import consts
+from uds.core import types as core_types
 from uds.core.services import ServiceProvider
 from uds.core.ui import gui
 from uds.core.util import fields
 from uds.core.util.decorators import cached
 
 from .openshift import client
-
 from .service import OpenshiftService
 from .service_fixed import OpenshiftServiceFixed
 
@@ -33,83 +54,75 @@ logger = logging.getLogger(__name__)
 
 class OpenshiftProvider(ServiceProvider):
     offers = [OpenshiftService, OpenshiftServiceFixed]
-    type_name = _('Openshift Provider')
-    type_type = 'OpenshiftProvider'
-    type_description = _('Openshift based VMs provider')
-    icon_file = 'provider.png'
+    type_name = _("Openshift Provider")
+    type_type = "OpenshiftProvider"
+    type_description = _("Openshift based VMs provider")
+    icon_file = "provider.png"
 
     # Gui
     cluster_url = gui.TextField(
         order=1,
         length=128,
-        label=_('Cluster OAuth URL'),
+        label=_("Cluster OAuth URL"),
         tooltip=_(
-            'Openshift OAuth URL, e.g. https://oauth-openshift.apps-crc.testing or https://console-openshift.apps-crc.testing'
+            "Openshift OAuth URL, e.g. https://oauth-openshift.apps-crc.testing or https://console-openshift.apps-crc.testing"
         ),
         required=True,
-        default='',
+        default="",
     )
     api_url = gui.TextField(
         order=2,
         length=128,
-        label=_('API URL'),
-        tooltip=_('Openshift API URL, e.g. https://api.crc.testing:6443'),
+        label=_("API URL"),
+        tooltip=_("Openshift API URL, e.g. https://api.crc.testing:6443"),
         required=True,
-        default='',
+        default="",
     )
     username = gui.TextField(
         order=3,
         length=64,
-        label=_('Username'),
-        tooltip=_('User with valid privileges on Openshift Server'),
+        label=_("Username"),
+        tooltip=_("User with valid privileges on Openshift Server"),
         required=True,
-        default='kubeadmin',
+        default="kubeadmin",
     )
     password = gui.PasswordField(
         order=4,
         length=64,
-        label=_('Password'),
-        tooltip=_('Password of the user of Openshift Server'),
+        label=_("Password"),
+        tooltip=_("Password of the user of Openshift Server"),
         required=True,
-        default='',
+        default="",
     )
     namespace = gui.TextField(
         order=5,
         length=64,
-        label=_('Namespace'),
+        label=_("Namespace"),
         tooltip=_('Openshift namespace to use (default: "default")'),
         required=True,
-        default='default',
+        default="default",
     )
     verify_ssl = fields.verify_ssl_field(order=6)
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field()
 
-    _cached_api: 'client.OpenshiftClient | None' = None  # Cached API client
+    _cached_api: "client.OpenshiftClient | None" = None  # Cached API client
 
-    def initialize(self, values: 'core_types.core.ValuesType') -> None:
-        self._cached_api = None  # Config may have changed, do not reuse the client
-
-    def connection_key(self) -> str:
-        """
-        Identity of the connection parameters, in the same format as `OpenshiftClient.cache_key`,
-        so a cached client can be checked against the current configuration.
-        """
-        return (
-            f'{self.cluster_url.value}|{self.api_url.value}|{self.username.value}|'
-            f'{self.namespace.value or "default"}|{self.verify_ssl.as_bool()}'
-        )
+    @typing.override
+    def initialize(self, values: "core_types.core.ValuesType") -> None:
+        # No port validation needed, URLs are used
+        pass
 
     @property
-    def api(self) -> 'client.OpenshiftClient':
-        if self._cached_api is None or self._cached_api.cache_key() != self.connection_key():
+    def api(self) -> "client.OpenshiftClient":
+        if self._cached_api is None:
             self._cached_api = client.OpenshiftClient(
                 cluster_url=self.cluster_url.value,
                 api_url=self.api_url.value,
                 username=self.username.value,
                 password=self.password.value,
-                namespace=self.namespace.value or 'default',
+                namespace=self.namespace.value or "default",
                 cache=self.cache,
                 timeout=self.timeout.as_int(),
                 verify_ssl=self.verify_ssl.as_bool(),
@@ -119,19 +132,18 @@ class OpenshiftProvider(ServiceProvider):
     def test_connection(self) -> bool:
         return self.api.test()
 
-    @cached('reachable', consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.connection_key())
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT)
     def is_available(self) -> bool:
         return self.api.test()
 
     @staticmethod
-    def test(
-        env: 'environment.Environment', data: 'core_types.core.ValuesType'
-    ) -> 'core_types.core.TestResult':
+    @typing.override
+    def test(env: "environment.Environment", data: "core_types.core.ValuesType") -> "core_types.core.TestResult":
         ov = OpenshiftProvider(env, data)
         if ov.test_connection() is True:
-            return core_types.core.TestResult(True, _('Connection works fine'))
+            return core_types.core.TestResult(True, _("Connection works fine"))
 
-        return core_types.core.TestResult(False, _('Connection failed. Check connection params'))
+        return core_types.core.TestResult(False, _("Connection failed. Check connection params"))
 
     # Utility
     def sanitized_name(self, name: str) -> str:
@@ -145,9 +157,9 @@ class OpenshiftProvider(ServiceProvider):
         """
         name = name.lower()
         # Replace any character not allowed with '-'
-        name = re.sub(r'[^a-z0-9.-]', '-', name)
+        name = re.sub(r"[^a-z0-9.-]", "-", name)
         # Collapse multiple '-' into one
-        name = re.sub(r'-{2,}', '-', name)
+        name = re.sub(r"-{2,}", "-", name)
         # Remove leading/trailing non-alphanumeric characters
-        name = re.sub(r'^[^a-z0-9]+|[^a-z0-9]+$', '', name)
+        name = re.sub(r"^[^a-z0-9]+|[^a-z0-9]+$", "", name)
         return name[:63]

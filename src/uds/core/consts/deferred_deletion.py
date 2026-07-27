@@ -30,8 +30,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
+
 import datetime
+import typing
 
 MAX_FATAL_ERROR_RETRIES: typing.Final[int] = 16
 MAX_RETRAYABLE_ERROR_RETRIES: typing.Final[int] = 8192  # Max retries before giving up at most 72 hours
@@ -52,4 +53,3 @@ FATAL_ERROR_INTERVAL_MULTIPLIER: typing.Final[int] = 2  # Multiplier for fatal e
 # STOPPING_GROUP: typing.Final[str] = 'stopping'
 # TO_DELETE_GROUP: typing.Final[str] = 'to_delete'
 # DELETING_GROUP: typing.Final[str] = 'deleting'
-

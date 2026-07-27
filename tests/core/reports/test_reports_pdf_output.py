@@ -37,6 +37,7 @@ Each test seeds a small but visually meaningful dataset (a few hundred
 events spread across ~3 months) so the resulting graphs and tables are
 non-empty.
 """
+
 import datetime
 import logging
 import os
@@ -48,20 +49,17 @@ import pytest
 
 from uds import models
 from uds.core import types
-from uds.reports.stats.pool_users_summary import (
-    UsageSummaryByUsersPool,
-    UsageSummaryByUsersPoolCSV,
-)
-from uds.reports.stats.pools_performance import (
-    PoolPerformanceReport,
-    PoolPerformanceReportCSV,
-)
-from uds.reports.stats.usage_by_pool import UsageByPool, UsageByPoolCSV
-from uds.reports.stats.user_access import StatsReportLogin, StatsReportLoginCSV
+from uds.reports.stats.pool_users_summary import UsageSummaryByUsersPool
+from uds.reports.stats.pool_users_summary import UsageSummaryByUsersPoolCSV
+from uds.reports.stats.pools_performance import PoolPerformanceReport
+from uds.reports.stats.pools_performance import PoolPerformanceReportCSV
+from uds.reports.stats.usage_by_pool import UsageByPool
+from uds.reports.stats.usage_by_pool import UsageByPoolCSV
+from uds.reports.stats.user_access import StatsReportLogin
+from uds.reports.stats.user_access import StatsReportLoginCSV
 
 from ...fixtures import services as fixtures_services
 from ...utils.test import UDSTransactionTestCase
-
 
 logger = logging.getLogger(__name__)
 
@@ -69,16 +67,17 @@ logger = logging.getLogger(__name__)
 # auto-located ticks; weasyprint emits DeprecationWarnings on some systems.
 # Neither is from our code, so silence them here only.
 pytestmark = [
-    pytest.mark.filterwarnings('ignore::UserWarning'),
-    pytest.mark.filterwarnings('ignore::DeprecationWarning'),
+    pytest.mark.filterwarnings("ignore::UserWarning"),
+    pytest.mark.filterwarnings("ignore::DeprecationWarning"),
 ]
 
+
 def _resolve_output_dir() -> pathlib.Path:
-    env = os.environ.get('UDS_REPORT_DUMP_DIR')
-    if env in (None, '', '0'):
-        return pathlib.Path(tempfile.gettempdir()) / 'uds-reports'
-    if env == '1':
-        return pathlib.Path.home() / 'Desktop' / 'uds-reports'
+    env = os.environ.get("UDS_REPORT_DUMP_DIR")
+    if env in (None, "", "0"):
+        return pathlib.Path(tempfile.gettempdir()) / "uds-reports"
+    if env == "1":
+        return pathlib.Path.home() / "Desktop" / "uds-reports"
     return pathlib.Path(env)
 
 
@@ -90,22 +89,32 @@ RANGE_END_DATE = datetime.date(2024, 1, 31)
 # Unix epoch matching RANGE_START_DATE midnight (rough — exact tz isn't
 # important for the visual output; events are spread evenly inside the
 # date window).
-RANGE_START_STAMP = int(
-    datetime.datetime.combine(RANGE_START_DATE, datetime.time.min).timestamp()
-)
-RANGE_END_STAMP = int(
-    datetime.datetime.combine(RANGE_END_DATE, datetime.time.max).timestamp()
-)
+RANGE_START_STAMP = int(datetime.datetime.combine(RANGE_START_DATE, datetime.time.min).timestamp())
+RANGE_END_STAMP = int(datetime.datetime.combine(RANGE_END_DATE, datetime.time.max).timestamp())
 RANGE_SECONDS = RANGE_END_STAMP - RANGE_START_STAMP
 
 # Dataset sizes. Big enough to populate graphs without making the PDF huge.
 N_LOGIN_LOGOUT_PAIRS = 200  # for UsageByPool / UsageSummaryByUsersPool
-N_ACCESS_EVENTS = 500       # for PoolPerformanceReport
-N_AUTH_LOGINS = 600         # for StatsReportLogin
+N_ACCESS_EVENTS = 500  # for PoolPerformanceReport
+N_AUTH_LOGINS = 600  # for StatsReportLogin
 
 USERNAMES = [
-    'alice', 'bob', 'carol', 'david', 'eve', 'frank', 'grace', 'heidi',
-    'ivan', 'judy', 'mallory', 'oscar', 'peggy', 'trent', 'victor', 'walter',
+    "alice",
+    "bob",
+    "carol",
+    "david",
+    "eve",
+    "frank",
+    "grace",
+    "heidi",
+    "ivan",
+    "judy",
+    "mallory",
+    "oscar",
+    "peggy",
+    "trent",
+    "victor",
+    "walter",
 ]
 
 
@@ -136,7 +145,7 @@ def _build_login_logout_pairs(pool_id: int, n_pairs: int, seed: int = 0) -> list
                 owner_type=owner_type,
                 event_type=login,
                 stamp=login_stamp,
-                fld2='10.0.0.1:1234',
+                fld2="10.0.0.1:1234",
                 fld4=username,
             )
         )
@@ -146,7 +155,7 @@ def _build_login_logout_pairs(pool_id: int, n_pairs: int, seed: int = 0) -> list
                 owner_type=owner_type,
                 event_type=logout,
                 stamp=logout_stamp,
-                fld2='10.0.0.1:1234',
+                fld2="10.0.0.1:1234",
                 fld4=username,
             )
         )
@@ -202,8 +211,8 @@ class _ReportPDFBase(UDSTransactionTestCase):
     def _dump(self, filename: str, payload: bytes) -> pathlib.Path:
         path = _output_path(filename)
         path.write_bytes(payload)
-        self.assertGreater(path.stat().st_size, 0, f'{filename} empty')
-        logger.info('Wrote %s (%d bytes)', path, path.stat().st_size)
+        self.assertGreater(path.stat().st_size, 0, f"{filename} empty")
+        logger.info("Wrote %s (%d bytes)", path, path.stat().st_size)
         return path
 
 
@@ -214,12 +223,12 @@ class UsageByPoolPDFTest(_ReportPDFBase):
             batch_size=1000,
         )
 
-        for cls, ext in ((UsageByPool, 'pdf'), (UsageByPoolCSV, 'csv')):
+        for cls, ext in ((UsageByPool, "pdf"), (UsageByPoolCSV, "csv")):
             report = cls()
             report.pool.value = [self.pool.uuid]  # type: ignore[assignment]
             report.start_date.value = RANGE_START_DATE
             report.end_date.value = RANGE_END_DATE
-            self._dump(f'UsageByPool.{ext}', report.generate())
+            self._dump(f"UsageByPool.{ext}", report.generate())
 
 
 class UsageSummaryByUsersPoolPDFTest(_ReportPDFBase):
@@ -230,15 +239,15 @@ class UsageSummaryByUsersPoolPDFTest(_ReportPDFBase):
         )
 
         for cls, ext in (
-            (UsageSummaryByUsersPool, 'pdf'),
-            (UsageSummaryByUsersPoolCSV, 'csv'),
+            (UsageSummaryByUsersPool, "pdf"),
+            (UsageSummaryByUsersPoolCSV, "csv"),
         ):
             report = cls()
             # ChoiceField (single value).
             report.pool.value = self.pool.uuid  # type: ignore[assignment]
             report.start_date.value = RANGE_START_DATE
             report.end_date.value = RANGE_END_DATE
-            self._dump(f'UsageSummaryByUsersPool.{ext}', report.generate())
+            self._dump(f"UsageSummaryByUsersPool.{ext}", report.generate())
 
 
 class PoolPerformanceReportPDFTest(_ReportPDFBase):
@@ -251,15 +260,15 @@ class PoolPerformanceReportPDFTest(_ReportPDFBase):
         )
 
         for cls, ext in (
-            (PoolPerformanceReport, 'pdf'),
-            (PoolPerformanceReportCSV, 'csv'),
+            (PoolPerformanceReport, "pdf"),
+            (PoolPerformanceReportCSV, "csv"),
         ):
             report = cls()
             report.pools.value = [self.pool.uuid]  # type: ignore[assignment]
             report.start_date.value = RANGE_START_DATE
             report.end_date.value = RANGE_END_DATE
             report.sampling_points.value = self.SAMPLING_POINTS
-            self._dump(f'PoolPerformanceReport.{ext}', report.generate())
+            self._dump(f"PoolPerformanceReport.{ext}", report.generate())
 
 
 class StatsReportLoginPDFTest(_ReportPDFBase):
@@ -273,11 +282,11 @@ class StatsReportLoginPDFTest(_ReportPDFBase):
         )
 
         for cls, ext in (
-            (StatsReportLogin, 'pdf'),
-            (StatsReportLoginCSV, 'csv'),
+            (StatsReportLogin, "pdf"),
+            (StatsReportLoginCSV, "csv"),
         ):
             report = cls()
             report.start_date.value = RANGE_START_DATE
             report.end_date.value = RANGE_END_DATE
             report.sampling_points.value = self.SAMPLING_POINTS
-            self._dump(f'StatsReportLogin.{ext}', report.generate())
+            self._dump(f"StatsReportLogin.{ext}", report.generate())

@@ -28,46 +28,44 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import datetime
 import logging
 import typing
-import collections.abc
 
-from django.utils.translation import gettext_lazy as _
 from django.db.models import Model
 from django.utils import timezone
 
+from uds.core import consts
+from uds.core import types
 from uds.core.managers.stats import StatsManager
 from uds.core.types.stats import AccumStat
-from uds.models import (
-    Provider,
-    Service,
-    ServicePool,
-    Authenticator,
-    StatsCountersAccum,
-)
-from uds.core import consts, types
-
+from uds.models import Authenticator
+from uds.models import Provider
+from uds.models import Service
+from uds.models import ServicePool
+from uds.models import StatsCountersAccum
 
 logger = logging.getLogger(__name__)
 
-CounterClass = typing.TypeVar('CounterClass', Provider, Service, ServicePool, Authenticator)
+CounterClass = typing.TypeVar("CounterClass", Provider, Service, ServicePool, Authenticator)
 
 
 # Helpers
-def _get_id(obj: 'CounterClass') -> typing.Optional[int]:
+def _get_id(obj: "CounterClass") -> int | None:
     return obj.id if obj.id != -1 else None
 
 
-def _get_prov_serv_ids(provider: 'Provider') -> tuple[int, ...]:
+def _get_prov_serv_ids(provider: "Provider") -> tuple[int, ...]:
     return tuple(i.id for i in provider.services.all())
 
 
-def _get_serv_pool_ids(service: 'Service') -> tuple[int, ...]:
+def _get_serv_pool_ids(service: "Service") -> tuple[int, ...]:
     return tuple(i.id for i in service.deployedServices.all())
 
 
-def _get_prov_serv_pool_ids(provider: 'Provider') -> tuple[int, ...]:
+def _get_prov_serv_pool_ids(provider: "Provider") -> tuple[int, ...]:
     res: tuple[int, ...] = tuple()
     for i in provider.services.all():
         res += _get_serv_pool_ids(i)
@@ -103,9 +101,7 @@ TYPE_TO_ID_RETRIEVER: typing.Final[
     },
 }
 
-VALID_MODEL_FOR_COUNTER_TYPE_DICT: typing.Final[
-    dict[types.stats.CounterType, tuple[type[Model], ...]]
-] = {
+VALID_MODEL_FOR_COUNTER_TYPE_DICT: typing.Final[dict[types.stats.CounterType, tuple[type[Model], ...]]] = {
     types.stats.CounterType.LOAD: (Provider,),
     types.stats.CounterType.STORAGE: (Service,),
     types.stats.CounterType.ASSIGNED: (ServicePool,),
@@ -128,7 +124,7 @@ def add_counter(
     obj: CounterClass,
     counter_type: types.stats.CounterType,
     value: int,
-    stamp: typing.Optional[datetime.datetime] = None,
+    stamp: datetime.datetime | None = None,
 ) -> bool:
     """
     Adds a counter stat to specified object
@@ -142,30 +138,28 @@ def add_counter(
     type_ = type(obj)
     if type_ not in VALID_MODEL_FOR_COUNTER_TYPE_DICT.get(counter_type, ()):  # pylint: disable
         logger.error(
-            'Type %s does not accepts counter of type %s',
+            "Type %s does not accepts counter of type %s",
             type_,
             value,
             exc_info=True,
         )
         return False
 
-    return StatsManager.manager().add_counter(
-        OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp
-    )
+    return StatsManager.manager().add_counter(OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp)
 
 
 def enumerate_counters(
     obj: CounterClass,
     counter_type: types.stats.CounterType,
     *,
-    since: typing.Optional[datetime.datetime] = None,
-    to: typing.Optional[datetime.datetime] = None,
-    interval: typing.Optional[int] = None,
-    max_intervals: typing.Optional[int] = None,
-    limit: typing.Optional[int] = None,
+    since: datetime.datetime | None = None,
+    to: datetime.datetime | None = None,
+    interval: int | None = None,
+    max_intervals: int | None = None,
+    limit: int | None = None,
     use_max: bool = False,
     all: bool = False,
-) -> typing.Generator[tuple[datetime.datetime, int], None, None]:
+) -> collections.abc.Generator[tuple[datetime.datetime, int], None, None]:
     """
     Get counters
 
@@ -188,13 +182,13 @@ def enumerate_counters(
     type_to_id_dct = TYPE_TO_ID_RETRIEVER.get(obj_type)
 
     if not type_to_id_dct:
-        logger.error('Type %s has no registered stats', obj_type)
+        logger.error("Type %s has no registered stats", obj_type)
         return
 
     id_retriever_fnc = type_to_id_dct.get(counter_type)
 
     if not id_retriever_fnc:
-        logger.error('Type %s has no registerd stats of type %s', obj_type, counter_type)
+        logger.error("Type %s has no registerd stats of type %s", obj_type, counter_type)
         return
 
     if not all:
@@ -219,14 +213,14 @@ def enumerate_counters(
 def enumerate_accumulated_counters(
     interval_type: StatsCountersAccum.IntervalType,
     counter_type: types.stats.CounterType,
-    owner_type: typing.Optional[types.stats.CounterOwnerType] = None,
-    owner_id: typing.Optional[int] = None,
-    since: typing.Optional[typing.Union[datetime.datetime, int]] = None,
-    to: typing.Optional[datetime.datetime] = None,
-    points: typing.Optional[int] = None,
+    owner_type: types.stats.CounterOwnerType | None = None,
+    owner_id: int | None = None,
+    since: datetime.datetime | int | None = None,
+    to: datetime.datetime | None = None,
+    points: int | None = None,
     *,
-    infer_owner_type_from: typing.Optional[CounterClass] = None,
-) -> typing.Generator[AccumStat, None, None]:
+    infer_owner_type_from: CounterClass | None = None,
+) -> collections.abc.Generator[AccumStat, None, None]:
     if not owner_type and infer_owner_type_from:
         owner_type = OBJ_TYPE_FROM_MODEL_DICT[type(infer_owner_type_from)]
 

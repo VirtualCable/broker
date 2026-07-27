@@ -30,12 +30,14 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import exceptions, types
+from uds.core import exceptions
+from uds.core import types
 
 from .remote_viewer_file import RemoteViewerFile
 from .spice_base import BaseSpiceTransport
@@ -56,9 +58,9 @@ class SPICETransport(BaseSpiceTransport):
 
     is_base = False
 
-    type_name = _('SPICE')
-    type_type = 'SPICETransport'
-    type_description = _('SPICE Protocol. Direct connection.')
+    type_name = _("SPICE")
+    type_type = "SPICETransport"
+    type_description = _("SPICE Protocol. Direct connection.")
 
     # useEmptyCreds = BaseSpiceTransport.useEmptyCreds
     # fixedName = BaseSpiceTransport.fixedName
@@ -71,31 +73,30 @@ class SPICETransport(BaseSpiceTransport):
     ssl_connection = BaseSpiceTransport.ssl_connection
     overrided_proxy = BaseSpiceTransport.overrided_proxy
 
+    @typing.override
     def get_transport_script(
         self,
-        userservice: 'models.UserService',
-        transport: 'models.Transport',
+        userservice: "models.UserService",
+        transport: "models.Transport",
         ip: str,
-        os: 'types.os.DetectedOsInfo',
-        user: 'models.User',
+        os: "types.os.DetectedOsInfo",
+        user: "models.User",
         password: str,
-        request: 'ExtendedHttpRequestWithUser',
-    ) -> 'types.transports.TransportScript':
+        request: "ExtendedHttpRequestWithUser",
+    ) -> "types.transports.TransportScript":
         try:
             userservice_instance = userservice.get_instance()
-            con: typing.Optional[types.services.ConsoleConnectionInfo] = (
-                userservice_instance.get_console_connection()
-            )
+            con: typing.Optional[types.services.ConsoleConnectionInfo] = userservice_instance.get_console_connection()
         except Exception:
-            logger.exception('Error getting console connection data')
+            logger.exception("Error getting console connection data")
             raise
 
-        logger.debug('Connection data: %s', con)
+        logger.debug("Connection data: %s", con)
         if not con:
-            raise exceptions.transport.TransportError('No console connection data')
+            raise exceptions.transport.TransportError("No console connection data")
 
-        port: str = str(con.port) or '-1'
-        secure_port: str = str(con.secure_port) or '-1'
+        port: str = str(con.port) or "-1"
+        secure_port: str = str(con.secure_port) or "-1"
 
         r = RemoteViewerFile(
             con.address,
@@ -106,7 +107,7 @@ class SPICETransport(BaseSpiceTransport):
             con.cert_subject,
             fullscreen=self.fullscreen.as_bool(),
         )
-        r.proxy = self.overrided_proxy.value.strip() or con.proxy or ''
+        r.proxy = self.overrided_proxy.value.strip() or con.proxy or ""
 
         r.usb_auto_share = self.allow_usb_redirection.as_bool()
         r.new_usb_auto_share = self.allow_usb_redirection_new_plugs.as_bool()
@@ -117,10 +118,10 @@ class SPICETransport(BaseSpiceTransport):
         #     userServiceInstance.desktop_login(user, password, '')
 
         sp = {
-            'as_file': r.as_file,
+            "as_file": r.as_file,
         }
 
         try:
-            return self.get_script(os.os.os_name(), 'direct', sp)
+            return self.get_script(os.os.os_name(), "direct", sp)
         except Exception:
             return super().get_transport_script(userservice, transport, ip, os, user, password, request)

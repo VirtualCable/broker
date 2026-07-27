@@ -30,5 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .authenticator import InternalDBAuth
+
+# Make this available to loaders
+
+from .authenticator import InternalDBAuth as InternalDBAuth

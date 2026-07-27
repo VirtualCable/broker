@@ -30,18 +30,24 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import dataclasses
 import datetime
-import time
 import logging
+import time
 import typing
-import collections.abc
 
 from django.utils import timezone
 
-from uds.core.managers.stats import StatsManager, _REVERSE_FLDS_EQUIV
 from uds.core import types
-from uds.models import Provider, Service, ServicePool, Authenticator, OSManager
+from uds.core.managers.stats import _REVERSE_FLDS_EQUIV
+from uds.core.managers.stats import StatsManager
+from uds.models import Authenticator
+from uds.models import OSManager
+from uds.models import Provider
+from uds.models import Service
+from uds.models import ServicePool
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +57,7 @@ if typing.TYPE_CHECKING:
     from django.db import models
 
 
-_OWNER_FROM_MODEL: typing.Final[collections.abc.Mapping[type['models.Model'], types.stats.EventOwnerType]] = {
+_OWNER_FROM_MODEL: typing.Final[collections.abc.Mapping[type["models.Model"], types.stats.EventOwnerType]] = {
     ServicePool: types.stats.EventOwnerType.SERVICEPOOL,
     Service: types.stats.EventOwnerType.SERVICE,
     Provider: types.stats.EventOwnerType.PROVIDER,
@@ -113,7 +119,7 @@ _OWNER_FROM_MODEL: typing.Final[collections.abc.Mapping[type['models.Model'], ty
 # get owner by type and id
 def get_owner(
     owner_type: types.stats.EventOwnerType, owner_id: int
-) -> 'Provider|Service|ServicePool|Authenticator|OSManager|None':
+) -> "Provider|Service|ServicePool|Authenticator|OSManager|None":
     match owner_type:
         case types.stats.EventOwnerType.PROVIDER:
             return Provider.objects.get(pk=owner_id)
@@ -147,7 +153,7 @@ class EventTupleType:
     # Obtains the Event as a string
     def __str__(self) -> str:
         # Convert Event type to string first
-        return f'{self.stamp} {self.event_type.event_name} {self.fld1} {self.fld2} {self.fld3} {self.fld4}'
+        return f"{self.stamp} {self.event_type.event_name} {self.fld1} {self.fld2} {self.fld3} {self.fld4}"
 
 
 EventClass = typing.Union[Provider, Service, ServicePool, Authenticator]
@@ -168,10 +174,11 @@ def add_event(obj: EventClass, event_type: types.stats.EventType, **kwargs: typi
 
 
 def get_events(
-    obj: EventClass, event_type: types.stats.EventType,
+    obj: EventClass,
+    event_type: types.stats.EventType,
     *,
-    since: 'datetime.datetime|int|None' = None,
-    to: 'datetime.datetime|int|None' = None,
+    since: "datetime.datetime|int|None" = None,
+    to: "datetime.datetime|int|None" = None,
     limit: int = 0,
     all: bool = False,
 ) -> typing.Generator[EventTupleType, None, None]:

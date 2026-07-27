@@ -28,28 +28,31 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import logging
 import typing
-import collections.abc
+
 from unittest import mock
 
 from django.db import models
+
 from uds.core import ui
 
 logger = logging.getLogger(__name__)
 
 
-T = typing.TypeVar('T')
-V = typing.TypeVar('V', bound=collections.abc.Mapping[str, typing.Any])
+T = typing.TypeVar("T")
+V = typing.TypeVar("V", bound=collections.abc.Mapping[str, typing.Any])
 
 
 def compare_dicts(
     expected: collections.abc.Mapping[str, typing.Any],
     actual: collections.abc.Mapping[str, typing.Any],
-    ignore_keys: typing.Optional[list[str]] = None,
-    ignore_values: typing.Optional[list[str]] = None,
-    ignore_keys_startswith: typing.Optional[list[str]] = None,
-    ignore_values_startswith: typing.Optional[list[str]] = None,
+    ignore_keys: list[str] | None = None,
+    ignore_values: list[str] | None = None,
+    ignore_keys_startswith: list[str] | None = None,
+    ignore_values_startswith: list[str] | None = None,
 ) -> list[tuple[str, str]]:
     """
     Compares two dictionaries, returning a list of differences
@@ -87,21 +90,21 @@ def compare_dicts(
 def ensure_data(
     item: models.Model,
     dct: collections.abc.Mapping[str, typing.Any],
-    ignore_keys: typing.Optional[list[str]] = None,
-    ignore_values: typing.Optional[list[str]] = None,
+    ignore_keys: list[str] | None = None,
+    ignore_values: list[str] | None = None,
 ) -> bool:
     """
     Reads model as dict, fix some fields if needed and compares to dct
     """
     db_data = item.__class__.objects.filter(pk=item.pk).values()[0]
     # Remove if id and uuid in db_data, store uuid in id and remove uuid
-    if 'id' in db_data and 'uuid' in db_data:
-        db_data['id'] = db_data['uuid']
-        del db_data['uuid']
+    if "id" in db_data and "uuid" in db_data:
+        db_data["id"] = db_data["uuid"]
+        del db_data["uuid"]
 
     errors = compare_dicts(dct, db_data, ignore_keys=ignore_keys, ignore_values=ignore_values)
     if errors:
-        logger.info('Errors found: %s', errors)
+        logger.info("Errors found: %s", errors)
         return False
 
     return True
@@ -113,7 +116,7 @@ def random_ip_v4() -> str:
     """
     import random
 
-    return '.'.join(str(random.randint(0, 255)) for _ in range(4))  # nosec
+    return ".".join(str(random.randint(0, 255)) for _ in range(4))  # nosec
 
 
 def random_ip_v6() -> str:
@@ -122,7 +125,7 @@ def random_ip_v6() -> str:
     """
     import random
 
-    return ':'.join('{:04x}'.format(random.randint(0, 65535)) for _ in range(8))  # nosec
+    return ":".join("{:04x}".format(random.randint(0, 65535)) for _ in range(8))  # nosec
 
 
 def random_mac() -> str:
@@ -131,7 +134,7 @@ def random_mac() -> str:
     """
     import random
 
-    return ':'.join('{:02x}'.format(random.randint(0, 255)) for _ in range(6))  # nosec
+    return ":".join("{:02x}".format(random.randint(0, 255)) for _ in range(6))  # nosec
 
 
 def random_hostname() -> str:
@@ -141,7 +144,7 @@ def random_hostname() -> str:
     import random
     import string
 
-    return ''.join(random.choice(string.ascii_lowercase) for _ in range(15))  # nosec
+    return "".join(random.choice(string.ascii_lowercase) for _ in range(15))  # nosec
 
 
 # Just compare types
@@ -159,7 +162,7 @@ class MustBeOfType:
         return not self.__eq__(other)
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}({self._kind.__name__})'
+        return f"{self.__class__.__name__}({self._kind.__name__})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -188,7 +191,7 @@ def search_dict_by_attr(lst: collections.abc.Iterable[V], attribute: str, value:
 
 
 def filter_list_by_attr(
-    lst: collections.abc.Iterable[T], attribute: str, value: typing.Any, *, sorted_by: str = '', **kwargs: typing.Any
+    lst: collections.abc.Iterable[T], attribute: str, value: typing.Any, *, sorted_by: str = "", **kwargs: typing.Any
 ) -> list[T]:
     """
     Returns a list of items from a list of items
@@ -201,7 +204,12 @@ def filter_list_by_attr(
 
 
 def filter_list_by_attr_list(
-    lst: collections.abc.Iterable[T], attribute: str, values: list[typing.Any], *, sorted_by: str = '', **kwargs: typing.Any
+    lst: collections.abc.Iterable[T],
+    attribute: str,
+    values: list[typing.Any],
+    *,
+    sorted_by: str = "",
+    **kwargs: typing.Any,
 ) -> list[T]:
     """
     Returns a list of items from a list of items
@@ -219,7 +227,7 @@ def check_userinterface_values(obj: ui.UserInterface, values: ui.gui.ValuesDictT
     """
     for k, v in values.items():
         if isinstance(v, MustBeOfType):
-            assert isinstance(getattr(obj, k), v._kind)
+            assert isinstance(getattr(obj, k), v._kind)  # pyrefly: ignore[invalid-argument]
         elif v == mock.ANY:
             pass
         else:

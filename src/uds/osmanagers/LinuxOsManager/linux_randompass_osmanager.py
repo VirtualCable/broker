@@ -30,15 +30,18 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import random
-import string
+
 import codecs
 import logging
+import random
+import string
 import typing
 
 from django.utils.translation import gettext_noop as _
+
+from uds.core import exceptions
+from uds.core import types
 from uds.core.ui import gui
-from uds.core import exceptions, types
 from uds.core.util import log
 
 from .linux_osmanager import LinuxOsManager
@@ -50,17 +53,17 @@ if typing.TYPE_CHECKING:
 
 
 class LinuxRandomPassManager(LinuxOsManager):
-    type_name = _('Linux Random Password OS Manager')
-    type_type = 'LinRandomPasswordManager'
-    type_description = _('Os Manager to control linux machines, with user password set randomly.')
-    icon_file = 'losmanager.png'
+    type_name = _("Linux Random Password OS Manager")
+    type_type = "LinRandomPasswordManager"
+    type_description = _("Os Manager to control linux machines, with user password set randomly.")
+    icon_file = "losmanager.png"
 
     # Apart form data from linux os manager, we need also domain and credentials
     user_account = gui.TextField(
         length=64,
-        label=_('Account'),
+        label=_("Account"),
         order=2,
-        tooltip=_('User account to change password'),
+        tooltip=_("User account to change password"),
         required=True,
     )
 
@@ -69,23 +72,25 @@ class LinuxRandomPassManager(LinuxOsManager):
     idle = LinuxOsManager.idle
     deadline = LinuxOsManager.deadline
 
-    def initialize(self, values: 'gui.ValuesType') -> None:
+    @typing.override
+    def initialize(self, values: "gui.ValuesType") -> None:
         if values is not None:
-            if values['user_account'] == '':
-                raise exceptions.ui.ValidationError(_('Must provide an user account!!!'))
+            if values["user_account"] == "":
+                raise exceptions.ui.ValidationError(_("Must provide an user account!!!"))
 
-    def update_credentials(self, userservice: 'UserService', username: str, password: str) -> tuple[str, str]:
+    @typing.override
+    def update_credentials(self, userservice: "UserService", username: str, password: str) -> tuple[str, str]:
         if username == self.user_account.as_str():
-            return (username, userservice.recover_value('linOsRandomPass'))
+            return (username, userservice.recover_value("linOsRandomPass"))
         return username, password
 
-    def gen_random_password(self, service: 'UserService') -> str:
-        random_password = service.recover_value('linOsRandomPass')
+    def gen_random_password(self, service: "UserService") -> str:
+        random_password = service.recover_value("linOsRandomPass")
         if not random_password:
-            random_password = ''.join(
+            random_password = "".join(
                 random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(16)
             )
-            service.store_value('linOsRandomPass', random_password)
+            service.store_value("linOsRandomPass", random_password)
             log.log(
                 service,
                 types.log.LogLevel.INFO,
@@ -95,24 +100,26 @@ class LinuxRandomPassManager(LinuxOsManager):
 
         return random_password
 
-    def actor_data(self, userservice: 'UserService') -> types.osmanagers.ActorData:
+    @typing.override
+    def actor_data(self, userservice: "UserService") -> types.osmanagers.ActorData:
         return types.osmanagers.ActorData(
-            action='rename',
+            action="rename",
             name=userservice.get_name(),
             custom={
-                'username': self.user_account.as_str(),
-                'password': '',  # On linux, user password is not needed so we provide an empty one
-                'new_password': self.gen_random_password(userservice),
+                "username": self.user_account.as_str(),
+                "password": "",  # On linux, user password is not needed so we provide an empty one
+                "new_password": self.gen_random_password(userservice),
             },
         )
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             super().unmarshal(data)
         else:
-            values = data.split(b'\t')
-            if values[0] == b'v1':
+            values = data.split(b"\t")
+            if values[0] == b"v1":
                 self.user_account.value = values[1].decode()
-                LinuxOsManager.unmarshal(self, codecs.decode(values[2], 'hex'))
+                LinuxOsManager.unmarshal(self, codecs.decode(values[2], "hex"))
 
             self.mark_for_upgrade()

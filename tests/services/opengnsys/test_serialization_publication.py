@@ -30,18 +30,17 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # We use commit/rollback
-
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
-
-
 from uds.services.OpenGnsys import publication
+
 EXPECTED_FIELDS: typing.Final[set[str]] = set()
 
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b''
+SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b""
 
 
 class OpenGnsysPublicationSerializationTest(UDSTestCase):
@@ -53,20 +52,20 @@ class OpenGnsysPublicationSerializationTest(UDSTestCase):
         environment = Environment.testing_environment()
 
         instance = publication.OpenGnsysPublication(environment=environment, service=None)  # type: ignore
-        #instance.unmarshal(SERIALIZED_PUBLICATION_DATA)
+        # instance.unmarshal(SERIALIZED_PUBLICATION_DATA)
         self.check(instance)
         # Ensure remarshalled flag is set
-        #self.assertTrue(instance.needs_upgrade())
+        # self.assertTrue(instance.needs_upgrade())
         instance.mark_for_upgrade(False)  # reset flag
 
         marshaled_data = instance.marshal()
 
         # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b'\1'))
+        self.assertFalse(marshaled_data.startswith(b"\1"))
         # Reunmarshall again and check that remarshalled flag is not set
         instance = publication.OpenGnsysPublication(environment=environment, service=None)  # type: ignore
-        #instance.unmarshal(marshaled_data)
-        #self.assertFalse(instance.needs_upgrade())
+        # instance.unmarshal(marshaled_data)
+        # self.assertFalse(instance.needs_upgrade())
 
         # Check that data is correct
         self.check(instance)

@@ -30,16 +30,39 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import threading
 import typing
+
 from unittest import mock
 
 from django.test import TransactionTestCase
 
-from uds.core.jobs import scheduler, jobs_factory
+from uds.core.environment import Environment
+from uds.core.jobs import jobs_factory
+from uds.core.jobs import scheduler
+from uds.core.jobs.job import Job
+
+
+class _SpyJob(Job):
+    friendly_name = "Spy"
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.next_delay_called = False
+
+    @typing.override
+    def next_execution_delay(self) -> int:
+        self.next_delay_called = True
+        return 42
+
+    @typing.override
+    def run(self) -> None:
+        pass
 
 
 class SchedulerTest(TransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         scheduler.Scheduler.granularity = 0.1  # type: ignore  # Speed up tests
 
@@ -49,11 +72,11 @@ class SchedulerTest(TransactionTestCase):
         # * execute_job to call notify_termination
         # * release_own_shedules to do nothing
         # * jobs_factory.JobsFactory().ensure_jobs_registered to do nothing (JobsFactory is a singleton)
-        with mock.patch.object(sch, 'execute_job') as mock_execute_job, mock.patch.object(
-            sch, 'release_own_schedules'
-        ) as mock_release_own_schedules, mock.patch.object(
-            jobs_factory.JobsFactory(), 'ensure_jobs_registered'
-        ) as mock_ensure_jobs_registered:
+        with (
+            mock.patch.object(sch, "execute_job") as mock_execute_job,
+            mock.patch.object(sch, "release_own_schedules") as mock_release_own_schedules,
+            mock.patch.object(jobs_factory.JobsFactory(), "ensure_jobs_registered") as mock_ensure_jobs_registered,
+        ):
             left = 4
 
             def _our_execute_job(*args: typing.Any, **kwargs: typing.Any) -> None:
@@ -86,3 +109,15 @@ class SchedulerTest(TransactionTestCase):
             self.assertEqual(left, 0)  # If left is 0, it means that execute_job was called 4 times
             mock_release_own_schedules.assert_called_once()
             mock_ensure_jobs_registered.assert_called_once()
+
+    def test_job_thread_calls_next_execution_delay(self) -> None:
+        """JobThread should call next_execution_delay() on the job instance."""
+        job = _SpyJob(Environment.testing_environment())
+        self.assertFalse(job.next_delay_called)
+
+        db_job = mock.MagicMock(spec=["id"])
+        db_job.id = 1
+
+        thread = scheduler.JobThread(job, db_job)
+        self.assertTrue(job.next_delay_called)
+        self.assertEqual(thread._delay, 42)

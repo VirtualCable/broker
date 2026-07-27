@@ -1,28 +1,28 @@
+import dataclasses
 import enum
 import typing
-import dataclasses
 
 
 class VMStatus(enum.StrEnum):
     # Adapted from ovirtsdk4
-    DOWN = 'down'
-    IMAGE_LOCKED = 'image_locked'
-    MIGRATING = 'migrating'
-    NOT_RESPONDING = 'not_responding'
-    PAUSED = 'paused'
-    POWERING_DOWN = 'powering_down'
-    POWERING_UP = 'powering_up'
-    REBOOT_IN_PROGRESS = 'reboot_in_progress'
-    RESTORING_STATE = 'restoring_state'
-    SAVING_STATE = 'saving_state'
-    SUSPENDED = 'suspended'
-    UNASSIGNED = 'unassigned'
-    UNKNOWN = 'unknown'
-    UP = 'up'
-    WAIT_FOR_LAUNCH = 'wait_for_launch'
+    DOWN = "down"
+    IMAGE_LOCKED = "image_locked"
+    MIGRATING = "migrating"
+    NOT_RESPONDING = "not_responding"
+    PAUSED = "paused"
+    POWERING_DOWN = "powering_down"
+    POWERING_UP = "powering_up"
+    REBOOT_IN_PROGRESS = "reboot_in_progress"
+    RESTORING_STATE = "restoring_state"
+    SAVING_STATE = "saving_state"
+    SUSPENDED = "suspended"
+    UNASSIGNED = "unassigned"
+    UNKNOWN = "unknown"
+    UP = "up"
+    WAIT_FOR_LAUNCH = "wait_for_launch"
 
     @staticmethod
-    def from_str(status: str) -> 'VMStatus':
+    def from_str(status: str) -> "VMStatus":
         try:
             return VMStatus(status)
         except ValueError:
@@ -31,19 +31,19 @@ class VMStatus(enum.StrEnum):
 
 class StorageStatus(enum.StrEnum):
     # Adapted from ovirtsdk4
-    ACTIVATING = 'activating'
-    ACTIVE = 'active'
-    DETACHING = 'detaching'
-    INACTIVE = 'inactive'
-    LOCKED = 'locked'
-    MAINTENANCE = 'maintenance'
-    MIXED = 'mixed'
-    PREPARING_FOR_MAINTENANCE = 'preparing_for_maintenance'
-    UNATTACHED = 'unattached'
-    UNKNOWN = 'unknown'
+    ACTIVATING = "activating"
+    ACTIVE = "active"
+    DETACHING = "detaching"
+    INACTIVE = "inactive"
+    LOCKED = "locked"
+    MAINTENANCE = "maintenance"
+    MIXED = "mixed"
+    PREPARING_FOR_MAINTENANCE = "preparing_for_maintenance"
+    UNATTACHED = "unattached"
+    UNKNOWN = "unknown"
 
     @staticmethod
-    def from_str(status: str) -> 'StorageStatus':
+    def from_str(status: str) -> "StorageStatus":
         try:
             return StorageStatus(status)
         except ValueError:
@@ -52,18 +52,18 @@ class StorageStatus(enum.StrEnum):
 
 class StorageType(enum.StrEnum):
     # Adapted from ovirtsdk4
-    DATA = 'data'
-    EXPORT = 'export'
-    IMAGE = 'image'
-    ISO = 'iso'
-    MANAGED_BLOCK_STORAGE = 'managed_block_storage'
-    VOLUME = 'volume'
+    DATA = "data"
+    EXPORT = "export"
+    IMAGE = "image"
+    ISO = "iso"
+    MANAGED_BLOCK_STORAGE = "managed_block_storage"
+    VOLUME = "volume"
 
     # Custom value to represent an unknown storage type
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
     @staticmethod
-    def from_str(type: str) -> 'StorageType':
+    def from_str(type: str) -> "StorageType":
         try:
             return StorageType(type)
         except ValueError:
@@ -72,16 +72,16 @@ class StorageType(enum.StrEnum):
 
 class TemplateStatus(enum.StrEnum):
     # Adapted from ovirtsdk4
-    ILLEGAL = 'illegal'
-    LOCKED = 'locked'
-    OK = 'ok'
+    ILLEGAL = "illegal"
+    LOCKED = "locked"
+    OK = "ok"
 
     # Custom value to represent the template is missing
     # Used on get_template_info
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
     @staticmethod
-    def from_str(status: str) -> 'TemplateStatus':
+    def from_str(status: str) -> "TemplateStatus":
         try:
             return TemplateStatus(status)
         except ValueError:
@@ -90,15 +90,15 @@ class TemplateStatus(enum.StrEnum):
 
 class SnapshotStatus(enum.StrEnum):
     # Adapted from ovirtsdk4
-    IN_PREVIEW = 'in_preview'
-    LOCKED = 'locked'
-    OK = 'ok'
+    IN_PREVIEW = "in_preview"
+    LOCKED = "locked"
+    OK = "ok"
 
     # Custom value to represent the snapshot is missing
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
     @staticmethod
-    def from_str(status: str) -> 'SnapshotStatus':
+    def from_str(status: str) -> "SnapshotStatus":
         try:
             return SnapshotStatus(status)
         except ValueError:
@@ -107,16 +107,16 @@ class SnapshotStatus(enum.StrEnum):
 
 class SnapshotType(enum.StrEnum):
     # Adapted from ovirtsdk4
-    ACTIVE = 'active'
-    PREVIEW = 'preview'
-    REGULAR = 'regular'
-    STATELESS = 'stateless'
+    ACTIVE = "active"
+    PREVIEW = "preview"
+    REGULAR = "regular"
+    STATELESS = "stateless"
 
     # Custom value to represent the snapshot is missing
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
     @staticmethod
-    def from_str(status: str) -> 'SnapshotType':
+    def from_str(status: str) -> "SnapshotType":
         try:
             return SnapshotType(status)
         except ValueError:
@@ -137,14 +137,14 @@ class StorageInfo:
         return self.status not in (StorageStatus.INACTIVE, StorageStatus.MAINTENANCE)
 
     @staticmethod
-    def from_data(storage: typing.Any) -> 'StorageInfo':
+    def from_data(storage: typing.Any) -> "StorageInfo":
         return StorageInfo(
             id=storage.id,
             name=storage.name,
             type=StorageType.from_str(storage.type.value),
             available=storage.available,
             used=storage.used,
-            status=StorageStatus.from_str(storage.status.value if storage.status else 'unknown'),
+            status=StorageStatus.from_str(storage.status.value if storage.status else "unknown"),
         )
 
 
@@ -157,7 +157,7 @@ class DatacenterInfo:
     storage: list[StorageInfo]
 
     @staticmethod
-    def from_data(datacenter: typing.Any, storage: list[StorageInfo]) -> 'DatacenterInfo':
+    def from_data(datacenter: typing.Any, storage: list[StorageInfo]) -> "DatacenterInfo":
         return DatacenterInfo(
             name=datacenter.name,
             id=datacenter.id,
@@ -174,11 +174,11 @@ class ClusterInfo:
     datacenter_id: str
 
     @staticmethod
-    def from_data(cluster: typing.Any) -> 'ClusterInfo':
+    def from_data(cluster: typing.Any) -> "ClusterInfo":
         return ClusterInfo(
             name=cluster.name,
             id=cluster.id,
-            datacenter_id=cluster.data_center.id if cluster.data_center else '',
+            datacenter_id=cluster.data_center.id if cluster.data_center else "",
         )
 
 
@@ -193,7 +193,7 @@ class VMInfo:
     status: VMStatus
 
     @staticmethod
-    def from_data(vm: typing.Any) -> 'VMInfo':
+    def from_data(vm: typing.Any) -> "VMInfo":
         try:
             usb_enabled = vm.usb.enabled
         except Exception:
@@ -207,8 +207,8 @@ class VMInfo:
         )
 
     @staticmethod
-    def missing() -> 'VMInfo':
-        return VMInfo(name='', id='', cluster_id='', usb_enabled=False, status=VMStatus.UNKNOWN)
+    def missing() -> "VMInfo":
+        return VMInfo(name="", id="", cluster_id="", usb_enabled=False, status=VMStatus.UNKNOWN)
 
 
 @dataclasses.dataclass
@@ -220,7 +220,7 @@ class TemplateInfo:
     status: TemplateStatus
 
     @staticmethod
-    def from_data(template: typing.Any) -> 'TemplateInfo':
+    def from_data(template: typing.Any) -> "TemplateInfo":
         return TemplateInfo(
             id=template.id,
             name=template.name,
@@ -230,20 +230,20 @@ class TemplateInfo:
         )
 
     @staticmethod
-    def missing() -> 'TemplateInfo':
-        return TemplateInfo(id='', name='', description='', cluster_id='', status=TemplateStatus.UNKNOWN)
+    def missing() -> "TemplateInfo":
+        return TemplateInfo(id="", name="", description="", cluster_id="", status=TemplateStatus.UNKNOWN)
 
 
 @dataclasses.dataclass
 class SnapshotInfo:
     id: str
-    name: typing.Optional[str ]
+    name: typing.Optional[str]
     description: str
     status: SnapshotStatus
     type: SnapshotType
 
     @staticmethod
-    def from_data(snapshot: typing.Any) -> 'SnapshotInfo':
+    def from_data(snapshot: typing.Any) -> "SnapshotInfo":
         return SnapshotInfo(
             id=snapshot.id,
             name=snapshot.name,
@@ -253,7 +253,5 @@ class SnapshotInfo:
         )
 
     @staticmethod
-    def missing() -> 'SnapshotInfo':
-        return SnapshotInfo(
-            id='', name='', description='', status=SnapshotStatus.UNKNOWN, type=SnapshotType.UNKNOWN
-        )
+    def missing() -> "SnapshotInfo":
+        return SnapshotInfo(id="", name="", description="", status=SnapshotStatus.UNKNOWN, type=SnapshotType.UNKNOWN)

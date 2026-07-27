@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from datetime import timedelta
 import logging
 
@@ -48,7 +49,7 @@ class Cache(models.Model):
 
     owner = models.CharField(max_length=128, db_index=True)
     key = models.CharField(max_length=64, primary_key=True)
-    value = models.TextField(default='')
+    value = models.TextField(default="")
     # Date creation or validation of this entry. Set at write time
     created = models.DateTimeField()
     validity = models.IntegerField(default=60)  # Validity of this entry, in seconds
@@ -56,13 +57,13 @@ class Cache(models.Model):
     # "fake" relations declarations for type checking
     # objects: 'models.manager.Manager[Cache]'
 
-    class Meta():  # pyright: ignore
+    class Meta:  # pyright: ignore
         """
         Meta class to declare the name of the table at database
         """
 
-        db_table = 'uds_utility_cache'
-        app_label = 'uds'
+        db_table = "uds_utility_cache"
+        app_label = "uds"
 
     @staticmethod
     def purge_outdated() -> None:
@@ -80,4 +81,4 @@ class Cache(models.Model):
             expired = "Expired"
         else:
             expired = "Active"
-        return f'{self.owner} {self.key} = {self.value} ({expired})'
+        return f"{self.owner} {self.key} = {self.value} ({expired})"

@@ -30,38 +30,39 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 # Constants for Visibility
-VISIBLE: typing.Final[str] = 'v'
-HIDDEN: typing.Final[str] = 'h'
-DISABLED: typing.Final[str] = 'd'
+VISIBLE: typing.Final[str] = "v"
+HIDDEN: typing.Final[str] = "h"
+DISABLED: typing.Final[str] = "d"
 
 # net_filter
 # Note: this are STANDARD values used on "default field" networks on REST API
 # Named them for better reading, but cannot be changed, since they are used on REST API
-NO_FILTERING: typing.Final[str] = 'n'
-ALLOW: typing.Final[str] = 'a'
-DENY: typing.Final[str] = 'd'
+NO_FILTERING: typing.Final[str] = "n"
+ALLOW: typing.Final[str] = "a"
+DENY: typing.Final[str] = "d"
 
 # Cookie for mfa and csrf field
-MFA_COOKIE_NAME: typing.Final[str] = 'mfa_status'
-CSRF_FIELD: typing.Final[str] = 'csrfmiddlewaretoken'
+MFA_COOKIE_NAME: typing.Final[str] = "mfa_status"
+CSRF_FIELD: typing.Final[str] = "csrfmiddlewaretoken"
 
 # Headers
 # Auth token
-AUTH_TOKEN_HEADER: typing.Final[str] = 'X-Auth-Token'
+AUTH_TOKEN_HEADER: typing.Final[str] = "X-Auth-Token"
 # Meta header for auth token, not used
 # AUTH_TOKEN_HEADER: typing.Final[str] = 'HTTP_X_AUTH_TOKEN'  # nosec: this is not a password
 
-X_FORWARDED_FOR_HEADER: typing.Final[str] = 'X-Forwarded-For'
+X_FORWARDED_FOR_HEADER: typing.Final[str] = "X-Forwarded-For"
 
 # Session related
-SESSION_USER_KEY: typing.Final[str] = 'uk'
-SESSION_PASS_KEY: typing.Final[str] = 'pk'  # nosec: this is not a password but a cookie to store encrypted data
-SESSION_EXPIRY_KEY: typing.Final[str] = 'ek'
-SESSION_AUTHORIZED_KEY: typing.Final[str] = 'ak'
-SESSION_IP_KEY: typing.Final[str] = 'session_ip'
+SESSION_USER_KEY: typing.Final[str] = "uk"
+SESSION_PASS_KEY: typing.Final[str] = "pk"  # nosec: this is not a password but a cookie to store encrypted data
+SESSION_EXPIRY_KEY: typing.Final[str] = "ek"
+SESSION_AUTHORIZED_KEY: typing.Final[str] = "ak"
+SESSION_IP_KEY: typing.Final[str] = "session_ip"
 
 # Cookie length and root "fake" id
 UDS_COOKIE_LENGTH: typing.Final[int] = 48

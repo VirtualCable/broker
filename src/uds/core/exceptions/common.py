@@ -36,5 +36,3 @@ class UDSException(Exception):
     """
     Base class for all UDS exceptions
     """
-
-

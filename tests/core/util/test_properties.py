@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from uds import models
@@ -42,7 +43,7 @@ NUM_USERSERVICES = 8
 
 
 class PropertiesTest(UDSTestCase):
-    user_services: list['models.UserService']
+    user_services: list["models.UserService"]
 
     def setUp(self) -> None:
         super().setUp()
@@ -56,23 +57,21 @@ class PropertiesTest(UDSTestCase):
         Test that properties are stored and retrieved for user services
         """
         for i, us in enumerate(self.user_services):
-            key, value = 'key{}'.format(i), 'value{}'.format(i)
-            
+            key, value = "key{}".format(i), "value{}".format(i)
+
             # Test as context manager
             with us.properties as p:
                 p[key] = value
             with us.properties as p:
                 self.assertEqual(p[key], value)
 
-            prop = models.Properties.objects.get(owner_id=us.uuid, owner_type='userservice', key=key)
+            prop = models.Properties.objects.get(owner_id=us.uuid, owner_type="userservice", key=key)
             self.assertEqual(prop.value, value)
-            
+
             # Test as property
-            key, value = 'keyx{}'.format(i), 'valuex{}'.format(i)
+            key, value = "keyx{}".format(i), "valuex{}".format(i)
             us.properties[key] = value
             self.assertEqual(us.properties[key], value)
-            
-            prop = models.Properties.objects.get(owner_id=us.uuid, owner_type='userservice', key=key)
+
+            prop = models.Properties.objects.get(owner_id=us.uuid, owner_type="userservice", key=key)
             self.assertEqual(prop.value, value)
-        
-    

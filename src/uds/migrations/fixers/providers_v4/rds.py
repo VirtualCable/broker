@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -39,43 +40,44 @@ from . import _migrator
 
 logger = logging.getLogger(__name__)
 
-RDS_SUBTYPE: typing.Final[str] = 'rds'
+RDS_SUBTYPE: typing.Final[str] = "rds"
 
 
 # Copy for migration
 class RDSProvider(services.ServiceProvider):
-    type_type = 'RDSProvider'
+    type_type = "RDSProvider"
 
     # Gui
-    ipList = gui.EditableListField(label='')
-    serverCheck = gui.CheckBoxField(label='', default=False)
+    ipList = gui.EditableListField(label="")
+    serverCheck = gui.CheckBoxField(label="", default=False)
 
     # User mapping, classical
-    useUserMapping = gui.CheckBoxField(label='', default=False)
-    userMap = gui.EditableListField(label='')
-    userPass = gui.PasswordField(label='')
+    useUserMapping = gui.CheckBoxField(label="", default=False)
+    userMap = gui.EditableListField(label="")
+    userPass = gui.PasswordField(label="")
 
     # User creating, new
-    useUserCreation = gui.CheckBoxField(label='', default=False)
-    adHost = gui.TextField(label='')
-    adPort = gui.NumericField(label='', default=636)
-    adUsersDn = gui.TextField(label='')
-    adUsername = gui.TextField(label='')
-    adPassword = gui.PasswordField(label='')
-    adUserPrefix = gui.TextField(label='', default='UDS_')
-    adDomain = gui.TextField(label='')
-    adGroup = gui.TextField(label='')
-    adCertificate = gui.TextField(label='')
+    useUserCreation = gui.CheckBoxField(label="", default=False)
+    adHost = gui.TextField(label="")
+    adPort = gui.NumericField(label="", default=636)
+    adUsersDn = gui.TextField(label="")
+    adUsername = gui.TextField(label="")
+    adPassword = gui.PasswordField(label="")
+    adUserPrefix = gui.TextField(label="", default="UDS_")
+    adDomain = gui.TextField(label="")
+    adGroup = gui.TextField(label="")
+    adCertificate = gui.TextField(label="")
 
     # This value is the new server group that contains the "ipList"
-    server_group = gui.ChoiceField(label='')
+    server_group = gui.ChoiceField(label="")
 
     def post_migrate(self, apps: typing.Any, record: typing.Any) -> None:
         pass
 
+
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.migrate(apps, 'Provider', RDSProvider, RDS_SUBTYPE, 'ipList', 'RDS Server Group')
+    _migrator.migrate(apps, "Provider", RDSProvider, RDS_SUBTYPE, "ipList", "RDS Server Group")
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.rollback(apps, 'Provider', RDSProvider, RDS_SUBTYPE, 'ipList')
+    _migrator.rollback(apps, "Provider", RDSProvider, RDS_SUBTYPE, "ipList")

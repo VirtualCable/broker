@@ -31,12 +31,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from uds.core import types, ui, environment
+from uds.core import environment
+from uds.core import types
+from uds.core import ui
 from uds.services.OVirt.provider import OVirtProvider
 
-from . import fixtures
-
 from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 class TestOVirtProvider(UDSTransactionTestCase):
@@ -46,31 +47,31 @@ class TestOVirtProvider(UDSTransactionTestCase):
         """
         provider = fixtures.create_provider()  # Will not use client api, so no need to patch it
 
-        self.assertEqual(provider.ovirt_version.as_str(), fixtures.PROVIDER_VALUES_DICT['ovirt_version'])
-        self.assertEqual(provider.host.as_str(), fixtures.PROVIDER_VALUES_DICT['host'])
-        self.assertEqual(provider.port.as_int(), fixtures.PROVIDER_VALUES_DICT['port'])
-        self.assertEqual(provider.username.as_str(), fixtures.PROVIDER_VALUES_DICT['username'])
-        self.assertEqual(provider.password.as_str(), fixtures.PROVIDER_VALUES_DICT['password'])
+        self.assertEqual(provider.ovirt_version.as_str(), fixtures.PROVIDER_VALUES_DICT["ovirt_version"])
+        self.assertEqual(provider.host.as_str(), fixtures.PROVIDER_VALUES_DICT["host"])
+        self.assertEqual(provider.port.as_int(), fixtures.PROVIDER_VALUES_DICT["port"])
+        self.assertEqual(provider.username.as_str(), fixtures.PROVIDER_VALUES_DICT["username"])
+        self.assertEqual(provider.password.as_str(), fixtures.PROVIDER_VALUES_DICT["password"])
 
         if not isinstance(provider.concurrent_creation_limit, ui.gui.NumericField):
-            self.fail('concurrent_creation_limit is not a NumericField')
+            self.fail("concurrent_creation_limit is not a NumericField")
 
         self.assertEqual(
             provider.concurrent_creation_limit.as_int(),
-            fixtures.PROVIDER_VALUES_DICT['concurrent_creation_limit'],
+            fixtures.PROVIDER_VALUES_DICT["concurrent_creation_limit"],
         )
         # concurrent_removal_limit
         if not isinstance(provider.concurrent_removal_limit, ui.gui.NumericField):
-            self.fail('concurrent_creation_limit is not a NumericField')
+            self.fail("concurrent_creation_limit is not a NumericField")
 
         self.assertEqual(
             provider.concurrent_removal_limit.as_int(),
-            fixtures.PROVIDER_VALUES_DICT['concurrent_removal_limit'],
+            fixtures.PROVIDER_VALUES_DICT["concurrent_removal_limit"],
         )
-        self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT['timeout'])
-        self.assertEqual(provider.macs_range.as_str(), fixtures.PROVIDER_VALUES_DICT['macs_range'])
+        self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT["timeout"])
+        self.assertEqual(provider.macs_range.as_str(), fixtures.PROVIDER_VALUES_DICT["macs_range"])
 
-        self.assertEqual(provider.get_macs_range(), fixtures.PROVIDER_VALUES_DICT['macs_range'])
+        self.assertEqual(provider.get_macs_range(), fixtures.PROVIDER_VALUES_DICT["macs_range"])
 
     def test_provider_test(self) -> None:
         """
@@ -78,9 +79,7 @@ class TestOVirtProvider(UDSTransactionTestCase):
         """
         with fixtures.patch_provider_api() as api:
             # Fist, true result
-            result = OVirtProvider.test(
-                environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT
-            )
+            result = OVirtProvider.test(environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT)
 
             # Ensure test is called
             api.test.assert_called_once_with()
@@ -93,9 +92,7 @@ class TestOVirtProvider(UDSTransactionTestCase):
             api.test.return_value = False
             api.test.reset_mock()
 
-            result = OVirtProvider.test(
-                environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT
-            )
+            result = OVirtProvider.test(environment.Environment.temporary_environment(), fixtures.PROVIDER_VALUES_DICT)
 
             # Ensure test is called
             api.test.assert_called_once_with()

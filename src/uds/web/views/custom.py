@@ -36,12 +36,12 @@ from uds.core.util.config import GlobalConfig
 
 
 # @cache_page(3600, key_prefix='custom', cache='memory')
-def custom(request: 'HttpRequest', component: str) -> 'HttpResponse':
-    content_type = 'text/plain'
-    value = ''
+def custom(request: "HttpRequest", component: str) -> "HttpResponse":
+    content_type = "text/plain"
+    value = ""
 
-    if component == 'styles.css':
-        content_type = 'text/css'
+    if component == "styles.css":
+        content_type = "text/css"
         value = GlobalConfig.SITE_CSS.get(True)
 
     return HttpResponse(content_type=content_type, content=value)

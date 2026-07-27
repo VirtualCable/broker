@@ -30,18 +30,23 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import dataclasses
 import logging
 import typing
 
-from django.db.models import Count, Model
+from django.db.models import Count
+from django.db.models import Model
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
-from uds.core import exceptions, osmanagers, types
+from uds.core import exceptions
+from uds.core import osmanagers
+from uds.core import types
 from uds.core.environment import Environment
-from uds.core.util import ensure, permissions
+from uds.core.util import ensure
+from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
 from uds.models import OSManager
 from uds.REST.model import ModelHandler
@@ -66,19 +71,18 @@ class OsManagerItem(types.rest.ManagedObjectItem[OSManager]):
 
 
 class OsManagers(ModelHandler[OsManagerItem]):
-
     MODEL = OSManager
-    FIELDS_TO_SAVE = ['name', 'comments', 'tags']
+    FIELDS_TO_SAVE = ["name", "comments", "tags"]
 
     TABLE = (
-        ui_utils.TableBuilder(_('OS Managers'))
-        .icon(name='name', title=_('Name'))
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='comments', title=_('Comments'))
-        .numeric_column(name='deployed_count', title=_('Used by'), width='8em')
-        .text_column(name='tags', title=_('Tags'), visible=False)
-        .with_field_mappings(type_name='data_type')
-        .with_filter_fields('name', 'data_type', 'comments')
+        ui_utils.TableBuilder(_("OS Managers"))
+        .icon(name="name", title=_("Name"))
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="comments", title=_("Comments"))
+        .numeric_column(name="deployed_count", title=_("Used by"), width="8em")
+        .text_column(name="tags", title=_("Tags"), visible=False)
+        .with_field_mappings(type_name="data_type")
+        .with_filter_fields("name", "data_type", "comments")
         .build()
     )
 
@@ -87,11 +91,12 @@ class OsManagers(ModelHandler[OsManagerItem]):
         typed=types.rest.api.RestApiInfoGuiType.MULTIPLE_TYPES,
     )
 
-    def apply_sort(self, qs: 'QuerySet[typing.Any]') -> 'list[typing.Any] | QuerySet[typing.Any]':
-        if field_info := self.get_sort_field_info('deployed_count'):
+    @typing.override
+    def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
+        if field_info := self.get_sort_field_info("deployed_count"):
             _, is_descending = field_info
-            order_by_field = '-deployed_count' if is_descending else 'deployed_count'
-            return qs.annotate(deployed_count=Count('deployedServices')).order_by(order_by_field)
+            order_by_field = "-deployed_count" if is_descending else "deployed_count"
+            return qs.annotate(deployed_count=Count("deployedServices")).order_by(order_by_field)
         return super().apply_sort(qs)
 
     def os_manager_as_dict(self, item: OSManager) -> OsManagerItem:
@@ -111,30 +116,32 @@ class OsManagers(ModelHandler[OsManagerItem]):
         # Fill type and type_name
         return ret_value
 
-    def get_item(self, item: 'Model') -> OsManagerItem:
+    @typing.override
+    def get_item(self, item: "Model") -> OsManagerItem:
         item = ensure.is_instance(item, OSManager)
         return self.os_manager_as_dict(item)
 
-    def validate_delete(self, item: 'Model') -> None:
+    @typing.override
+    def validate_delete(self, item: "Model") -> None:
         item = ensure.is_instance(item, OSManager)
         # Only can delete if no ServicePools attached
         if item.deployedServices.count() > 0:
-            raise exceptions.rest.RequestError(
-                gettext('Can\'t delete an OS Manager with services pools associated')
-            )
+            raise exceptions.rest.RequestError(gettext("Can't delete an OS Manager with services pools associated"))
 
     # Types related
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[osmanagers.OSManager]]:
         return osmanagers.factory().providers().values()
 
     # Gui related
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         try:
             osmanager_type = osmanagers.factory().lookup(for_type)
 
             if not osmanager_type:
-                raise exceptions.rest.NotFound('OS Manager type not found')
+                raise exceptions.rest.NotFound("OS Manager type not found")
             with Environment.temporary_environment() as env:
                 osmanager = osmanager_type(env, None)
                 return (
@@ -145,5 +152,5 @@ class OsManagers(ModelHandler[OsManagerItem]):
                     .add_fields(osmanager.gui_description())
                     .build()
                 )
-        except:
-            raise exceptions.rest.NotFound(_('OS Manager type not found: {}').format(for_type))
+        except Exception:
+            raise exceptions.rest.NotFound(_("OS Manager type not found: {}").format(for_type))

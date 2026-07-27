@@ -29,10 +29,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds import models
 from uds.core import consts
+from uds.core.audit.immutable import ImmutableLogger
 
 # Import for REST using this module can access constants easily
 # pylint: disable=unused-import
@@ -47,13 +49,43 @@ if typing.TYPE_CHECKING:
 #   If path has ".../users/[uuid]/..." we will replace uuid with "user name" sourrounded by []
 #   If path has ".../groups/[uuid]/..." we will replace uuid with "group name" sourrounded by []
 UUID_REPLACER: tuple[
-    tuple[str, type[models.Provider | models.Service | models.ServicePool | models.User | models.Group]], ...
+    tuple[
+        str,
+        type[
+            models.Provider
+            | models.Service
+            | models.ServicePool
+            | models.MetaPool
+            | models.User
+            | models.Group
+            | models.Authenticator
+            | models.Transport
+            | models.OSManager
+            | models.Network
+            | models.Calendar
+            | models.Account
+            | models.MFA
+            | models.Image
+            | models.Notifier
+        ],
+    ],
+    ...,
 ] = (
-    ('providers', models.Provider),
-    ('services', models.Service),
-    ('servicespools', models.ServicePool),
-    ('users', models.User),
-    ('groups', models.Group),
+    ("providers", models.Provider),
+    ("services", models.Service),
+    ("servicespools", models.ServicePool),
+    ("metapools", models.MetaPool),
+    ("users", models.User),
+    ("groups", models.Group),
+    ("authenticators", models.Authenticator),
+    ("transports", models.Transport),
+    ("osmanagers", models.OSManager),
+    ("networks", models.Network),
+    ("calendars", models.Calendar),
+    ("accounts", models.Account),
+    ("mfa", models.MFA),
+    ("gallery", models.Image),
+    ("messaging", models.Notifier),
 )
 
 
@@ -62,20 +94,18 @@ def replace_path(path: str) -> str:
     All paths are in the form .../type/uuid/...
     """
     for type, model in UUID_REPLACER:
-        if f'/{type}/' in path:
+        if f"/{type}/" in path:
             try:
-                uuid = path.split(f'/{type}/')[1].split('/')[0]
+                uuid = path.split(f"/{type}/")[1].split("/")[0]
                 name = model.objects.get(uuid=uuid).name
-                path = path.replace(uuid, f'[{name}]')
+                path = path.replace(uuid, f"[{name}]")
             except Exception:  # nosec: intentionally broad exception
                 pass
 
     return path
 
 
-def log_operation(
-    handler: 'Handler | None', response_code: int, level: LogLevel = LogLevel.INFO
-) -> None:
+def log_operation(handler: "Handler | None", response_code: int, level: LogLevel = LogLevel.INFO) -> None:
     """
     Logs a request
     """
@@ -99,10 +129,59 @@ def log_operation(
 
     path = replace_path(path)
 
-    username = handler.request.user.pretty_name if handler.request.user else 'Unknown'
+    # Maybe user is not set already, this may be called
+    user: typing.Any = handler.request.user
+
+    username = user.pretty_name if user else "Unknown"
     log(
         None,  # > None Objects goes to SYSLOG (global log)
         level=level,
-        message=f'{handler.request.ip} [{username}]: [{handler.request.method}/{response_code}] {path}'[:4096],
+        message=f"{handler.request.ip} [{username}]: [{handler.request.method}/{response_code}] {path}"[:4096],
         source=LogSource.REST,
     )
+
+    if ImmutableLogger.is_enabled():
+        ImmutableLogger.append_object(
+            {
+                "t": "rest",
+                "m": handler.request.method,
+                "p": path,
+                "c": response_code,
+                "i": handler.request.ip,
+                "u": username,
+            }
+        )
+
+
+def log_audit(handler: "Handler | None", action: str, level: LogLevel = LogLevel.INFO) -> None:
+    """
+    Logs a request
+    """
+    if not handler:
+        return  # Nothing to log
+
+    path = handler.request.path
+
+    path = replace_path(path)
+
+    # Maybe user is not set already, this may be called
+    user: typing.Any = handler.request.user
+
+    username = user.pretty_name if user else "Unknown"
+    log(
+        None,  # > None Objects goes to SYSLOG (global log)
+        level=level,
+        message=f"{handler.request.ip} [{username}]: {action} {path}"[:4096],
+        source=LogSource.REST,
+    )
+
+    if ImmutableLogger.is_enabled():
+        ImmutableLogger.append_object(
+            {
+                "t": "rest",
+                "a": action,
+                "p": path,
+                "i": handler.request.ip,
+                "u": username,
+            }
+        )

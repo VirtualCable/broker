@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 import logging
 
@@ -46,52 +47,52 @@ class TRDPTransport(transports.Transport):
     This transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password
     """
 
-    type_type = 'TSRDPTransport'
+    type_type = "TSRDPTransport"
 
-    tunnelServer = gui.TextField(label='')
-    tunnelWait = gui.NumericField(label='', default=60)
-    verifyCertificate = gui.CheckBoxField(label='', default=False)
-    useEmptyCreds = gui.CheckBoxField(label='')
-    fixedName = gui.TextField(label='')
-    fixedPassword = gui.PasswordField(label='')
-    withoutDomain = gui.CheckBoxField(label='')
-    fixedDomain = gui.TextField(label='')
-    allowSmartcards = gui.CheckBoxField(label='')
-    allowPrinters = gui.CheckBoxField(label='')
-    allowDrives = gui.ChoiceField(label='', default='false')
-    enforceDrives = gui.TextField(label='')
-    allowSerials = gui.CheckBoxField(label='')
-    allowClipboard = gui.CheckBoxField(label='', default=True)
-    allowAudio = gui.CheckBoxField(label='', default=True)
-    allowWebcam = gui.CheckBoxField(label='', default=False)
-    usbRedirection = gui.ChoiceField(label='', default='false')
-    credssp = gui.CheckBoxField(label='', default=True)
-    rdpPort = gui.NumericField(label='', default=3389)
-    screenSize = gui.ChoiceField(label='', default='-1x-1')
-    colorDepth = gui.ChoiceField(label='', default='24')
-    wallpaper = gui.CheckBoxField(label='')
-    multimon = gui.CheckBoxField(label='')
-    aero = gui.CheckBoxField(label='')
-    smooth = gui.CheckBoxField(label='', default=True)
-    showConnectionBar = gui.CheckBoxField(label='', default=True)
-    multimedia = gui.CheckBoxField(label='')
-    alsa = gui.CheckBoxField(label='')
-    printerString = gui.TextField(label='')
-    smartcardString = gui.TextField(label='')
-    customParameters = gui.TextField(label='')
-    allowMacMSRDC = gui.CheckBoxField(label='', default=False)
-    customParametersMAC = gui.TextField(label='')
-    customParametersWindows = gui.TextField(label='')
-    optimizeTeams = gui.CheckBoxField(label='')
+    tunnelServer = gui.TextField(label="")
+    tunnelWait = gui.NumericField(label="", default=60)
+    verifyCertificate = gui.CheckBoxField(label="", default=False)
+    useEmptyCreds = gui.CheckBoxField(label="")
+    fixedName = gui.TextField(label="")
+    fixedPassword = gui.PasswordField(label="")
+    withoutDomain = gui.CheckBoxField(label="")
+    fixedDomain = gui.TextField(label="")
+    allowSmartcards = gui.CheckBoxField(label="")
+    allowPrinters = gui.CheckBoxField(label="")
+    allowDrives = gui.ChoiceField(label="", default="false")
+    enforceDrives = gui.TextField(label="")
+    allowSerials = gui.CheckBoxField(label="")
+    allowClipboard = gui.CheckBoxField(label="", default=True)
+    allowAudio = gui.CheckBoxField(label="", default=True)
+    allowWebcam = gui.CheckBoxField(label="", default=False)
+    usbRedirection = gui.ChoiceField(label="", default="false")
+    credssp = gui.CheckBoxField(label="", default=True)
+    rdpPort = gui.NumericField(label="", default=3389)
+    screenSize = gui.ChoiceField(label="", default="-1x-1")
+    colorDepth = gui.ChoiceField(label="", default="24")
+    wallpaper = gui.CheckBoxField(label="")
+    multimon = gui.CheckBoxField(label="")
+    aero = gui.CheckBoxField(label="")
+    smooth = gui.CheckBoxField(label="", default=True)
+    showConnectionBar = gui.CheckBoxField(label="", default=True)
+    multimedia = gui.CheckBoxField(label="")
+    alsa = gui.CheckBoxField(label="")
+    printerString = gui.TextField(label="")
+    smartcardString = gui.TextField(label="")
+    customParameters = gui.TextField(label="")
+    allowMacMSRDC = gui.CheckBoxField(label="", default=False)
+    customParametersMAC = gui.TextField(label="")
+    customParametersWindows = gui.TextField(label="")
+    optimizeTeams = gui.CheckBoxField(label="")
 
     # This value is the new "tunnel server"
     # Old guacamoleserver value will be stored also on database, but will be ignored
-    tunnel = gui.ChoiceField(label='')
+    tunnel = gui.ChoiceField(label="")
 
 
 def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport(apps, schema_editor, TRDPTransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport(apps, schema_editor, TRDPTransport, "tunnelServer", is_html_server=False)
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
-    _migrator.tunnel_transport_back(apps, schema_editor, TRDPTransport, 'tunnelServer', is_html_server=False)
+    _migrator.tunnel_transport_back(apps, schema_editor, TRDPTransport, "tunnelServer", is_html_server=False)

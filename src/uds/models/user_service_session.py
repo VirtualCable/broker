@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 
 from django.db import models
@@ -55,38 +56,30 @@ class UserServiceSession(models.Model):  # pylint: disable=too-many-public-metho
     The value field is a Text field, so we can put whatever we want in it
     """
 
-    session_id = models.CharField(
-        max_length=128, db_index=True, default=_session_id_generator, blank=True
-    )
+    session_id = models.CharField(max_length=128, db_index=True, default=_session_id_generator, blank=True)
     start = models.DateTimeField(default=sql_now)
     end = models.DateTimeField(null=True, blank=True)
 
-    user_service = models.ForeignKey(
-        UserService, on_delete=models.CASCADE, related_name='sessions'
-    )
+    user_service = models.ForeignKey(UserService, on_delete=models.CASCADE, related_name="sessions")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["UserServiceSession"]'
 
-    class Meta():  # pyright: ignore
+    class Meta:  # pyright: ignore
         """
         Meta class to declare default order and unique multiple field index
         """
 
-        db_table = 'uds__user_service_session'
-        app_label = 'uds'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['session_id', 'user_service'], name='u_session_userservice'
-            )
-        ]
+        db_table = "uds__user_service_session"
+        app_label = "uds"
+        constraints = [models.UniqueConstraint(fields=["session_id", "user_service"], name="u_session_userservice")]
 
     def __str__(self) -> str:
-        return f'Session {self.session_id} ({self.start} to {self.end})'
+        return f"Session {self.session_id} ({self.start} to {self.end})"
 
     def close(self) -> None:
         """
         Ends the session
         """
         self.end = sql_now()
-        self.save(update_fields=['end'])
+        self.save(update_fields=["end"])

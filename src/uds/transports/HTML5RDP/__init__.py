@@ -30,5 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .html5rdp import HTML5RDPTransport
+
+# Make this visible to loaders
+
+from .html5rdp import HTML5RDPTransport as HTML5RDPTransport

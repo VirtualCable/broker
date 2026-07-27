@@ -881,7 +881,7 @@ msgstr "删除服务时出错"
 #, python-brace-format
 #| msgid "Services of {}"
 msgid "Services of {0}"
-msgstr "30号服务"
+msgstr "{0}的服务"
 
 #: REST/methods/services.py:278
 msgid "Services Pools"

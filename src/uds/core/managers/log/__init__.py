@@ -28,5 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-# pyright: reportUnusedImport=false
-from .manager import LogManager
+
+# Make this visible to loaders
+
+from .manager import LogManager as LogManager

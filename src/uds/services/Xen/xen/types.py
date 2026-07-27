@@ -29,26 +29,25 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import dataclasses
 import datetime
 import enum
-import dataclasses
+import logging
 import typing
 
 from django.utils import timezone
-
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class PowerState(enum.StrEnum):
-    HALTED = 'Halted'
-    RUNNING = 'Running'
-    SUSPENDED = 'Suspended'
-    PAUSED = 'Paused'
+    HALTED = "Halted"
+    RUNNING = "Running"
+    SUSPENDED = "Suspended"
+    PAUSED = "Paused"
 
     # Internal UNKNOW state
-    UNKNOW = 'Unknow'
+    UNKNOW = "Unknow"
 
     def is_running(self) -> bool:
         return self == PowerState.RUNNING
@@ -58,12 +57,12 @@ class PowerState(enum.StrEnum):
 
     def is_suspended(self) -> bool:
         return self == PowerState.SUSPENDED
-    
+
     def is_paused(self) -> bool:
         return self == PowerState.PAUSED
 
     @staticmethod
-    def from_str(value: str) -> 'PowerState':
+    def from_str(value: str) -> "PowerState":
         try:
             return PowerState(value.capitalize())
         except ValueError:
@@ -80,14 +79,14 @@ class TaskStatus(enum.StrEnum):
         cancelled	task has been cancelled
     """
 
-    PENDING = 'pending'
-    SUCCESS = 'success'
-    FAILURE = 'failure'
-    CANCELLING = 'cancelling'
-    CANCELLED = 'cancelled'
+    PENDING = "pending"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    CANCELLING = "cancelling"
+    CANCELLED = "cancelled"
 
     # Internal UNKNOW state
-    UNKNOW = 'unknow'
+    UNKNOW = "unknow"
 
     def is_done(self) -> bool:
         return self in (TaskStatus.SUCCESS, TaskStatus.FAILURE, TaskStatus.CANCELLED)
@@ -99,7 +98,7 @@ class TaskStatus(enum.StrEnum):
         return self == TaskStatus.FAILURE
 
     @staticmethod
-    def from_str(value: str) -> 'TaskStatus':
+    def from_str(value: str) -> "TaskStatus":
         try:
             return TaskStatus(value.lower())
         except ValueError:
@@ -131,39 +130,39 @@ class StorageOperations(enum.StrEnum):
         pbd_destroy 	Destroying one of this SR's PBDs
     """
 
-    SCAN = 'scan'
-    DESTROY = 'destroy'
-    FORGET = 'forget'
-    PLUG = 'plug'
-    UNPLUG = 'unplug'
-    UPDATE = 'update'
-    VDI_CREATE = 'vdi_create'
-    VDI_INTRODUCE = 'vdi_introduce'
-    VDI_DESTROY = 'vdi_destroy'
-    VDI_RESIZE = 'vdi_resize'
-    VDI_CLONE = 'vdi_clone'
-    VDI_SNAPSHOT = 'vdi_snapshot'
-    VDI_MIRROR = 'vdi_mirror'
-    VDI_ENABLE_CBT = 'vdi_enable_cbt'
-    VDI_DISABLE_CBT = 'vdi_disable_cbt'
-    VDI_DATA_DESTROY = 'vdi_data_destroy'
-    VDI_LIST_CHANGED_BLOCKS = 'vdi_list_changed_blocks'
-    VDI_SET_ON_BOOT = 'vdi_set_on_boot'
-    PBD_CREATE = 'pbd_create'
-    PBD_DESTROY = 'pbd_destroy'
+    SCAN = "scan"
+    DESTROY = "destroy"
+    FORGET = "forget"
+    PLUG = "plug"
+    UNPLUG = "unplug"
+    UPDATE = "update"
+    VDI_CREATE = "vdi_create"
+    VDI_INTRODUCE = "vdi_introduce"
+    VDI_DESTROY = "vdi_destroy"
+    VDI_RESIZE = "vdi_resize"
+    VDI_CLONE = "vdi_clone"
+    VDI_SNAPSHOT = "vdi_snapshot"
+    VDI_MIRROR = "vdi_mirror"
+    VDI_ENABLE_CBT = "vdi_enable_cbt"
+    VDI_DISABLE_CBT = "vdi_disable_cbt"
+    VDI_DATA_DESTROY = "vdi_data_destroy"
+    VDI_LIST_CHANGED_BLOCKS = "vdi_list_changed_blocks"
+    VDI_SET_ON_BOOT = "vdi_set_on_boot"
+    PBD_CREATE = "pbd_create"
+    PBD_DESTROY = "pbd_destroy"
 
     # Internal UNKNOW storage operation
-    UNKNOW = 'unknow'
+    UNKNOW = "unknow"
 
     @staticmethod
-    def from_str(value: str) -> 'StorageOperations':
+    def from_str(value: str) -> "StorageOperations":
         try:
             return StorageOperations(value.lower())
         except ValueError:
             return StorageOperations.UNKNOW
 
     @staticmethod
-    def is_usable(values: typing.Iterable['StorageOperations']) -> bool:
+    def is_usable(values: typing.Iterable["StorageOperations"]) -> bool:
         # To be usable, must contain ALL required operations
         # Where the required operations are:
         #  VDI_CREATE, VDI_CLONE, VDI_SNAPSHOT, VDI_DESTROY
@@ -232,61 +231,61 @@ class VMOperations(enum.StrEnum):
         create_vtpm 	Creating and adding a VTPM to this VM
     """
 
-    SNAPSHOT = 'snapshot'
-    CLONE = 'clone'
-    COPY = 'copy'
-    CREATE_TEMPLATE = 'create_template'
-    REVERT = 'revert'
-    CHECKPOINT = 'checkpoint'
-    SNAPSHOT_WITH_QUIESCE = 'snapshot_with_quiesce'
-    PROVISION = 'provision'
-    START = 'start'
-    START_ON = 'start_on'
-    PAUSE = 'pause'
-    UNPAUSE = 'unpause'
-    CLEAN_SHUTDOWN = 'clean_shutdown'
-    CLEAN_REBOOT = 'clean_reboot'
-    HARD_SHUTDOWN = 'hard_shutdown'
-    POWER_STATE_RESET = 'power_state_reset'
-    HARD_REBOOT = 'hard_reboot'
-    SUSPEND = 'suspend'
-    CSVM = 'csvm'
-    RESUME = 'resume'
-    RESUME_ON = 'resume_on'
-    POOL_MIGRATE = 'pool_migrate'
-    MIGRATE_SEND = 'migrate_send'
-    GET_BOOT_RECORD = 'get_boot_record'
-    SEND_SYSRQ = 'send_sysrq'
-    SEND_TRIGGER = 'send_trigger'
-    QUERY_SERVICES = 'query_services'
-    SHUTDOWN = 'shutdown'
-    CALL_PLUGIN = 'call_plugin'
-    CHANGING_MEMORY_LIVE = 'changing_memory_live'
-    AWAITING_MEMORY_LIVE = 'awaiting_memory_live'
-    CHANGING_DYNAMIC_RANGE = 'changing_dynamic_range'
-    CHANGING_STATIC_RANGE = 'changing_static_range'
-    CHANGING_MEMORY_LIMITS = 'changing_memory_limits'
-    CHANGING_SHADOW_MEMORY = 'changing_shadow_memory'
-    CHANGING_SHADOW_MEMORY_LIVE = 'changing_shadow_memory_live'
-    CHANGING_VCPUS = 'changing_vcpus'
-    CHANGING_VCPUS_LIVE = 'changing_vcpus_live'
-    CHANGING_NVRAM = 'changing_nvram'
-    ASSERT_OPERATION_VALID = 'assert_operation_valid'
-    DATA_SOURCE_OP = 'data_source_op'
-    UPDATE_ALLOWED_OPERATIONS = 'update_allowed_operations'
-    MAKE_INTO_TEMPLATE = 'make_into_template'
-    IMPORT = 'import'
-    EXPORT = 'export'
-    METADATA_EXPORT = 'metadata_export'
-    REVERTING = 'reverting'
-    DESTROY = 'destroy'
-    CREATE_VTPM = 'create_vtpm'
+    SNAPSHOT = "snapshot"
+    CLONE = "clone"
+    COPY = "copy"
+    CREATE_TEMPLATE = "create_template"
+    REVERT = "revert"
+    CHECKPOINT = "checkpoint"
+    SNAPSHOT_WITH_QUIESCE = "snapshot_with_quiesce"
+    PROVISION = "provision"
+    START = "start"
+    START_ON = "start_on"
+    PAUSE = "pause"
+    UNPAUSE = "unpause"
+    CLEAN_SHUTDOWN = "clean_shutdown"
+    CLEAN_REBOOT = "clean_reboot"
+    HARD_SHUTDOWN = "hard_shutdown"
+    POWER_STATE_RESET = "power_state_reset"
+    HARD_REBOOT = "hard_reboot"
+    SUSPEND = "suspend"
+    CSVM = "csvm"
+    RESUME = "resume"
+    RESUME_ON = "resume_on"
+    POOL_MIGRATE = "pool_migrate"
+    MIGRATE_SEND = "migrate_send"
+    GET_BOOT_RECORD = "get_boot_record"
+    SEND_SYSRQ = "send_sysrq"
+    SEND_TRIGGER = "send_trigger"
+    QUERY_SERVICES = "query_services"
+    SHUTDOWN = "shutdown"
+    CALL_PLUGIN = "call_plugin"
+    CHANGING_MEMORY_LIVE = "changing_memory_live"
+    AWAITING_MEMORY_LIVE = "awaiting_memory_live"
+    CHANGING_DYNAMIC_RANGE = "changing_dynamic_range"
+    CHANGING_STATIC_RANGE = "changing_static_range"
+    CHANGING_MEMORY_LIMITS = "changing_memory_limits"
+    CHANGING_SHADOW_MEMORY = "changing_shadow_memory"
+    CHANGING_SHADOW_MEMORY_LIVE = "changing_shadow_memory_live"
+    CHANGING_VCPUS = "changing_vcpus"
+    CHANGING_VCPUS_LIVE = "changing_vcpus_live"
+    CHANGING_NVRAM = "changing_nvram"
+    ASSERT_OPERATION_VALID = "assert_operation_valid"
+    DATA_SOURCE_OP = "data_source_op"
+    UPDATE_ALLOWED_OPERATIONS = "update_allowed_operations"
+    MAKE_INTO_TEMPLATE = "make_into_template"
+    IMPORT = "import"
+    EXPORT = "export"
+    METADATA_EXPORT = "metadata_export"
+    REVERTING = "reverting"
+    DESTROY = "destroy"
+    CREATE_VTPM = "create_vtpm"
 
     # Internal UNKNOW VM operation
-    UNKNOW = 'unknow'
+    UNKNOW = "unknow"
 
     @staticmethod
-    def from_str(value: str) -> 'VMOperations':
+    def from_str(value: str) -> "VMOperations":
         try:
             return VMOperations(value.lower())
         except ValueError:
@@ -309,7 +308,7 @@ class StorageInfo:
     type: str  # Type of the storage
     content_type: str  # Content type of the storage
     shared: bool  # Shared storage
-    
+
     @property
     def free_space(self) -> int:
         """
@@ -317,27 +316,26 @@ class StorageInfo:
         """
         return self.physical_size - self.physical_utilisation
 
-
     @staticmethod
-    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> 'StorageInfo':
+    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> "StorageInfo":
         return StorageInfo(
             opaque_ref=opaque_ref,
-            uuid=data['uuid'],
-            name=data['name_label'],
-            description=data['name_description'],
-            allowed_operations=[StorageOperations.from_str(op) for op in data['allowed_operations']],
-            VDIs=typing.cast(list[str], data.get('VDIs', '')),
-            PBDs=typing.cast(list[str], data.get('PBDs', '')),
-            virtual_allocation=int(data['virtual_allocation']),
-            physical_utilisation=int(data['physical_utilisation']),
-            physical_size=int(data['physical_size']),
-            type=data['type'],
-            content_type=data['content_type'],
-            shared=data['shared'],
+            uuid=data["uuid"],
+            name=data["name_label"],
+            description=data["name_description"],
+            allowed_operations=[StorageOperations.from_str(op) for op in data["allowed_operations"]],
+            VDIs=typing.cast(list[str], data.get("VDIs", "")),
+            PBDs=typing.cast(list[str], data.get("PBDs", "")),
+            virtual_allocation=int(data["virtual_allocation"]),
+            physical_utilisation=int(data["physical_utilisation"]),
+            physical_size=int(data["physical_size"]),
+            type=data["type"],
+            content_type=data["content_type"],
+            shared=data["shared"],
         )
 
     def is_usable(self) -> bool:
-        if self.type == 'iso' or self.shared is False or self.name == '':
+        if self.type == "iso" or self.shared is False or self.name == "":
             return False
 
         return StorageOperations.is_usable(self.allowed_operations)
@@ -362,38 +360,38 @@ class VMInfo:
     folder: str
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> 'VMInfo':
+    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> "VMInfo":
         try:
-            snapshot_time = datetime.datetime.fromisoformat(data['snapshot_time'].value)
+            snapshot_time = datetime.datetime.fromisoformat(data["snapshot_time"].value)
             snapshot_time = timezone.make_aware(snapshot_time)
         except ValueError:
             snapshot_time = timezone.localtime()
 
-        other_config = typing.cast(dict[str, str], data.get('other_config', {}))
+        other_config = typing.cast(dict[str, str], data.get("other_config", {}))
 
         return VMInfo(
             opaque_ref=opaque_ref,
-            uuid=data['uuid'],
-            name=data['name_label'],
-            description=data['name_description'],
-            power_state=PowerState.from_str(data['power_state']),
-            is_control_domain=data['is_control_domain'],
-            is_a_template=data['is_a_template'],
+            uuid=data["uuid"],
+            name=data["name_label"],
+            description=data["name_description"],
+            power_state=PowerState.from_str(data["power_state"]),
+            is_control_domain=data["is_control_domain"],
+            is_a_template=data["is_a_template"],
             snapshot_time=snapshot_time,
-            snapshots=typing.cast(list[str], data.get('snapshots', [])),
-            VIFs=typing.cast(list[str], data.get('VIFs', [])),
-            VBDs=typing.cast(list[str], data.get('VBDs', [])),
-            allowed_operations=[VMOperations.from_str(op) for op in data['allowed_operations']],
-            folder=other_config.get('folder', ''),
+            snapshots=typing.cast(list[str], data.get("snapshots", [])),
+            VIFs=typing.cast(list[str], data.get("VIFs", [])),
+            VBDs=typing.cast(list[str], data.get("VBDs", [])),
+            allowed_operations=[VMOperations.from_str(op) for op in data["allowed_operations"]],
+            folder=other_config.get("folder", ""),
         )
 
     @staticmethod
-    def null(opaque_ref: str) -> 'VMInfo':
+    def null(opaque_ref: str) -> "VMInfo":
         return VMInfo(
             opaque_ref=opaque_ref,
-            uuid='',
-            name='Unknown',
-            description='Unknown VM',
+            uuid="",
+            name="Unknown",
+            description="Unknown VM",
             power_state=PowerState.UNKNOW,
             is_control_domain=False,
             is_a_template=False,
@@ -402,7 +400,7 @@ class VMInfo:
             VIFs=[],
             VBDs=[],
             allowed_operations=[],
-            folder='',
+            folder="",
         )
 
     def is_usable(self) -> bool:
@@ -413,7 +411,7 @@ class VMInfo:
 
     def supports_suspend(self) -> bool:
         return VMOperations.SUSPEND in self.allowed_operations
-    
+
     def supports_clean_shutdown(self) -> bool:
         return VMOperations.CLEAN_SHUTDOWN in self.allowed_operations
 
@@ -436,22 +434,22 @@ class NetworkInfo:
     netmask: str
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> 'NetworkInfo':
-        other_config = typing.cast(dict[str, typing.Any], data.get('other_config', {}))
+    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> "NetworkInfo":
+        other_config = typing.cast(dict[str, typing.Any], data.get("other_config", {}))
 
         return NetworkInfo(
             opaque_ref=opaque_ref,
-            uuid=data['uuid'],
-            name=data['name_label'],
-            description=data['name_description'],
-            managed=data['managed'],
-            VIFs=typing.cast(list[str], data.get('VIFs', [])),
-            PIFs=typing.cast(list[str], data.get('PIFs', [])),
-            is_guest_installer_network=other_config.get('is_guest_installer_network', False),
-            is_host_internal_management_network=other_config.get('is_host_internal_management_network', False),
-            ip_begin=other_config.get('ip_begin', ''),
-            ip_end=other_config.get('ip_end', ''),
-            netmask=other_config.get('netmask', ''),
+            uuid=data["uuid"],
+            name=data["name_label"],
+            description=data["name_description"],
+            managed=data["managed"],
+            VIFs=typing.cast(list[str], data.get("VIFs", [])),
+            PIFs=typing.cast(list[str], data.get("PIFs", [])),
+            is_guest_installer_network=other_config.get("is_guest_installer_network", False),
+            is_host_internal_management_network=other_config.get("is_host_internal_management_network", False),
+            ip_begin=other_config.get("ip_begin", ""),
+            ip_end=other_config.get("ip_end", ""),
+            netmask=other_config.get("netmask", ""),
         )
 
 
@@ -469,46 +467,46 @@ class TaskInfo:
     error_info: list[str]
 
     @staticmethod
-    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> 'TaskInfo':
-        result = data.get('result', '')
-        if result and result.startswith('<value>'):
+    def from_dict(data: dict[str, typing.Any], opaque_ref: str) -> "TaskInfo":
+        result = data.get("result", "")
+        if result and result.startswith("<value>"):
             result = result[7:-8]
 
         try:
-            created = datetime.datetime.fromisoformat(data['created'].value)
+            created = datetime.datetime.fromisoformat(data["created"].value)
             created = timezone.make_aware(created)
         except ValueError:
             created = timezone.localtime()
         try:
-            finished = datetime.datetime.fromisoformat(data['finished'].value)
+            finished = datetime.datetime.fromisoformat(data["finished"].value)
             finished = timezone.make_aware(finished)
         except ValueError:
             finished = created
 
         return TaskInfo(
             opaque_ref=opaque_ref,
-            uuid=data['uuid'],
-            name=data['name_label'],
-            description=data['name_description'],
+            uuid=data["uuid"],
+            name=data["name_label"],
+            description=data["name_description"],
             created=created,
             finished=finished,
-            status=TaskStatus.from_str(data['status']),
+            status=TaskStatus.from_str(data["status"]),
             result=result,
-            progress=float(data['progress']),
-            error_info=typing.cast(list[str], data.get('error_info', [])),
+            progress=float(data["progress"]),
+            error_info=typing.cast(list[str], data.get("error_info", [])),
         )
 
     @staticmethod
-    def unknown_task(opaque_ref: str) -> 'TaskInfo':
+    def unknown_task(opaque_ref: str) -> "TaskInfo":
         return TaskInfo(
             opaque_ref=opaque_ref,
-            uuid='',
-            name='Unknown',
-            description='Unknown task',
+            uuid="",
+            name="Unknown",
+            description="Unknown task",
             created=timezone.now(),
             finished=timezone.now(),
             status=TaskStatus.UNKNOW,
-            result='',
+            result="",
             progress=1.0,
             error_info=[],
         )

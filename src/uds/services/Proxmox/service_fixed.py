@@ -28,13 +28,15 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import collections.abc
 import logging
 import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services, types
+from uds.core import services
+from uds.core import types
 from uds.core.services.generics.fixed.service import FixedService
 from uds.core.services.generics.fixed.userservice import FixedUserService
 from uds.core.ui import gui
@@ -46,8 +48,8 @@ from .deployment_fixed import ProxmoxUserServiceFixed
 if typing.TYPE_CHECKING:
     from uds import models
 
-    from .proxmox import types as prox_types
     from .provider import ProxmoxProvider
+    from .proxmox import types as prox_types
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +59,10 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
     Proxmox fixed machines service.
     """
 
-    type_name = _('Proxmox Fixed Machines')
-    type_type = 'ProxmoxFixedService'
-    type_description = _('Proxmox Services based on fixed machines. Needs qemu agent installed on machines.')
-    icon_file = 'service.png'
+    type_name = _("Proxmox Fixed Machines")
+    type_type = "ProxmoxFixedService"
+    type_description = _("Proxmox Services based on fixed machines. Needs qemu agent installed on machines.")
+    icon_file = "service.png"
 
     can_reset = True
 
@@ -81,14 +83,14 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
         readonly=False,
         order=20,
         fills={
-            'callback_name': 'pmFillMachinesFromResource',
-            'function': helpers.get_machines,
-            'parameters': ['prov_uuid', 'pool'],
+            "callback_name": "pmFillMachinesFromResource",
+            "function": helpers.get_machines,
+            "parameters": ["prov_uuid", "pool"],
         },
-        tooltip=_('Resource Pool containing base machines'),
+        tooltip=_("Resource Pool containing base machines"),
         required=True,
         tab=types.ui.Tab.MACHINE,
-        old_field_name='resourcePool',
+        old_field_name="resourcePool",
     )
 
     machines = FixedService.machines
@@ -100,6 +102,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
 
     # Uses default FixedService.initialize
 
+    @typing.override
     def init_gui(self) -> None:
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
@@ -108,33 +111,34 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
         self.prov_uuid.value = self.provider().get_uuid()
 
         self.pool.set_choices(
-            [gui.choice_item('', _('None'))]
-            + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
+            [gui.choice_item("", _("None"))] + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
         )
 
-    def provider(self) -> 'ProxmoxProvider':
-        return typing.cast('ProxmoxProvider', super().provider())
+    @typing.override
+    def provider(self) -> "ProxmoxProvider":
+        return typing.cast("ProxmoxProvider", super().provider())
 
     def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().api.get_console_connection(int(vmid))
 
+    @typing.override
     def is_available(self) -> bool:
         return self.provider().is_available()
 
-    def get_vm_info(self, vmid: int) -> 'prox_types.VMInfo':
+    def get_vm_info(self, vmid: int) -> "prox_types.VMInfo":
         return self.provider().api.get_vm_info(vmid).validate()
 
+    @typing.override
     def is_ready(self, vmid: str) -> bool:
         return self.provider().api.get_vm_info(int(vmid)).validate().status.is_running()
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         # Obtain machines names and ids for asignables
         # Only machines that already exists on proxmox and are not already assigned
         vms: dict[int, str] = {}
 
-        for member in (
-            self.provider().api.get_pool_info(self.pool.value.strip(), retrieve_vm_names=True).members
-        ):
+        for member in self.provider().api.get_pool_info(self.pool.value.strip(), retrieve_vm_names=True).members:
             vms[member.vmid] = member.vmname
 
         with self._assigned_access() as assigned_vms:
@@ -145,8 +149,9 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                 and int(k) in vms  # Only machines not assigned, and that exists on provider will be available
             ]
 
+    @typing.override
     def assign_from_assignables(
-        self, assignable_id: str, user: 'models.User', userservice_instance: 'services.UserService'
+        self, assignable_id: str, user: "models.User", userservice_instance: "services.UserService"
     ) -> types.states.TaskState:
         proxmox_service_instance = typing.cast(ProxmoxUserServiceFixed, userservice_instance)
         with self._assigned_access() as assigned_vms:
@@ -154,25 +159,27 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                 assigned_vms.add(assignable_id)
                 return proxmox_service_instance.assign(assignable_id)
 
-        return proxmox_service_instance.error('VM not available!')
+        return proxmox_service_instance.error("VM not available!")
 
+    @typing.override
     def snapshot_creation(self, userservice_instance: FixedUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserServiceFixed, userservice_instance)
         if self.use_snapshots.as_bool():
             vmid = int(userservice_instance._vmid)
-            logger.debug('Using snapshots')
+            logger.debug("Using snapshots")
             # If no snapshot exists for this vm, try to create one for it on background
             # Lauch an snapshot. We will not wait for it to finish, but instead let it run "as is"
             try:
                 if not self.provider().api.get_current_vm_snapshot(vmid):
-                    logger.debug('No current snapshot')
+                    logger.debug("No current snapshot")
                     self.provider().api.create_snapshot(
                         vmid,
-                        name='UDS_Snapshot',
+                        name="UDS_Snapshot",
                     )
             except Exception as e:
-                self.do_log(types.log.LogLevel.WARNING, 'Could not create SNAPSHOT for this VM. ({})'.format(e))
+                self.do_log(types.log.LogLevel.WARNING, "Could not create SNAPSHOT for this VM. ({})".format(e))
 
+    @typing.override
     def snapshot_recovery(self, userservice_instance: FixedUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserServiceFixed, userservice_instance)
         if self.use_snapshots.as_bool():
@@ -181,14 +188,11 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                 # try to revert to snapshot
                 snapshot = self.provider().api.get_current_vm_snapshot(vmid)
                 if snapshot:
-                    userservice_instance._store_task(
-                        self.provider().api.restore_snapshot(vmid, name=snapshot.name)
-                    )
+                    userservice_instance._store_task(self.provider().api.restore_snapshot(vmid, name=snapshot.name))
             except Exception as e:
-                self.do_log(
-                    types.log.LogLevel.WARNING, 'Could not restore SNAPSHOT for this VM. ({})'.format(e)
-                )
+                self.do_log(types.log.LogLevel.WARNING, "Could not restore SNAPSHOT for this VM. ({})".format(e))
 
+    @typing.override
     def get_and_assign(self) -> str:
         found_vmid: str | None = None
         try:
@@ -202,30 +206,33 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                             break
                         except Exception:  # Notifies on log, but skipt it
                             self.provider().do_log(
-                                types.log.LogLevel.WARNING, 'Machine {} not accesible'.format(found_vmid)
+                                types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
                             )
                             logger.warning(
-                                'The service has machines that cannot be checked on proxmox (connection error or machine has been deleted): %s',
+                                "The service has machines that cannot be checked on proxmox (connection error or machine has been deleted): %s",
                                 found_vmid,
                             )
 
                 if found_vmid:
                     assigned_vms.add(found_vmid)
         except Exception as e:  #
-            logger.debug('Error getting machine: %s', e)
-            raise Exception('No machine available')
+            logger.debug("Error getting machine: %s", e)
+            raise Exception("No machine available")
 
         if not found_vmid:
-            raise Exception('All machines from list already assigned.')
+            raise Exception("All machines from list already assigned.")
 
         return str(found_vmid)
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         config = self.provider().api.get_vm_config(int(vmid))
         return config.networks[0].macaddr.lower()
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         return self.provider().api.get_guest_ip_address(int(vmid))
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
-        return self.provider().api.get_vm_info(int(vmid)).name or ''
+        return self.provider().api.get_vm_info(int(vmid)).name or ""

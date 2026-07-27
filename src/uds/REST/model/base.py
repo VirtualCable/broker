@@ -40,20 +40,19 @@ from django.utils.translation import gettext as _
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
-from uds.core.util import permissions
 from uds.core.module import Module
+from uds.core.util import permissions
 from uds.REST.utils import sanitize_params
 
 # from uds.models import ManagedObjectModel
-
 from ..handlers import Handler
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     pass
 
-T = typing.TypeVar('T', bound=models.Model)
-T_Item = typing.TypeVar('T_Item', bound=types.rest.BaseRestItem)
+T = typing.TypeVar("T", bound=models.Model)
+T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)
 
 logger = logging.getLogger(__name__)
 
@@ -67,17 +66,17 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
     def check_access(
         self,
         obj: models.Model,
-        permission: 'types.permissions.PermissionType',
+        permission: "types.permissions.PermissionType",
         root: bool = False,
     ) -> None:
         if not permissions.has_access(self._user, obj, permission, root):
-            raise exceptions.rest.AccessDenied('Access denied')
+            raise exceptions.rest.AccessDenied("Access denied")
 
     def get_permissions(self, obj: models.Model, root: bool = False) -> int:
         return permissions.effective_permissions(self._user, obj, root)
 
     @classmethod
-    def extra_type_info(cls: type[typing.Self], type_: type['Module']) -> types.rest.ExtraTypeInfo | None:
+    def extra_type_info(cls: type[typing.Self], type_: type["Module"]) -> types.rest.ExtraTypeInfo | None:
         """
         Returns info about the type
         In fact, right now, it returns an empty dict, that will be extended by typeAsDict
@@ -86,7 +85,7 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
 
     @typing.final
     @classmethod
-    def as_typeinfo(cls: type[typing.Self], type_: type['Module']) -> types.rest.TypeInfo:
+    def as_typeinfo(cls: type[typing.Self], type_: type["Module"]) -> types.rest.TypeInfo:
         """
         Returns a dictionary describing the type (the name, the icon, description, etc...)
         """
@@ -94,9 +93,9 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
             name=_(type_.mod_name()),
             type=type_.mod_type(),
             description=_(type_.description()),
-            icon=type_.icon64().replace('\n', ''),
+            icon=type_.icon64().replace("\n", ""),
             extra=cls.extra_type_info(type_),
-            group=getattr(type_, 'group', None),
+            group=getattr(type_, "group", None),
         )
 
     def fields_from_params(
@@ -104,10 +103,10 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
     ) -> dict[str, typing.Any]:
         """
         Reads the indicated fields from the parameters received, and if
-        
+
         Arguments:
             fields_list: List of fields to read, if a field is optional, it can be
-            
+
         Note:
             If a field is optional, it can be indicated with a :default_value, for example:
                 - field1:default_value
@@ -119,27 +118,27 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         try:
             for key in fields_list:
                 # if : is in the field, it is an optional field, with an "static" default value
-                if ':' in key:  # optional field? get default if not present
-                    k, default = key.split(':')[:2]
+                if ":" in key:  # optional field? get default if not present
+                    k, default = key.split(":")[:2]
                     # Convert "None" to None
-                    default = None if default == 'None' else default
+                    default = None if default == "None" else default
                     # If key is not present, and default = _, then it is not required skip it
-                    if default == '_' and k not in self._params:
+                    if default == "_" and k not in self._params:
                         continue
-                    args[k] = self._params.get(k, default)
+                    args[k] = str(self._params.get(k, default))
                 else:  # Required field, with a possible default on defaults dict
                     if key not in self._params:
                         if defaults and key in defaults:
                             args[key] = defaults[key]
                         else:
-                            raise exceptions.rest.RequestError(f'needed parameter not found in data {key}')
+                            raise exceptions.rest.RequestError(f"needed parameter not found in data {key}")
                     else:
                         # Set the value
                         args[key] = self._params[key]
 
                 # del self._params[key]
         except KeyError as e:
-            raise exceptions.rest.RequestError(f'needed parameter not found in data {e}')
+            raise exceptions.rest.RequestError(f"needed parameter not found in data {e}")
 
         return args
 
@@ -147,13 +146,13 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         """
         Invoked to filter the queryset according to parameters received
         Default implementation does not filter anything
-        
+
         Args:
             qs: Queryset to filter
-            
+
         Returns:
             Filtered queryset as a list
-            
+
         Note:
             This is not final, so we can override it in subclasses if needed
         """
@@ -164,17 +163,18 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         """
         Utility method to be invoked for simple methods that returns a simple OK response
         """
-        logger.debug('Returning success on %s %s', self.__class__, self._args)
+        logger.debug("Returning success on %s %s", self.__class__, self._args)
         return consts.OK
 
     def test(self, type_: str) -> str:
         """
         Invokes a test for an item
         """
-        logger.debug('Called base test for %s --> %s', self.__class__.__name__, sanitize_params(self._params))
-        raise exceptions.rest.NotSupportedError(_('Testing not supported'))
+        logger.debug("Called base test for %s --> %s", self.__class__.__name__, sanitize_params(self._params))
+        raise exceptions.rest.NotSupportedError(_("Testing not supported"))
 
     @classmethod
+    @typing.override
     def api_components(cls: type[typing.Self]) -> types.rest.api.Components:
         """
         Default implementation does not have any component types. (for Api specification purposes)
@@ -182,6 +182,7 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         return types.rest.api.Components()
 
     @classmethod
+    @typing.override
     def api_paths(
         cls: type[typing.Self], path: str, tags: list[str], security: str
     ) -> dict[str, types.rest.api.PathItem]:
@@ -204,7 +205,7 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
             | api_utils.api_components(types.rest.LogEntry)
             | api_utils.api_components(
                 types.ui.GuiElement,
-                removable_fields=['value', 'gui.old_field_name', 'gui.value', 'gui.field_name'],
+                removable_fields=["value", "gui.old_field_name", "gui.value", "gui.field_name"],
             )
         )
 

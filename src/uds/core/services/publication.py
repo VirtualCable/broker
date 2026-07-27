@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import abc
 import re
 import typing
@@ -40,7 +41,8 @@ from uds.core.serializable import Serializable
 
 if typing.TYPE_CHECKING:
     from uds import models
-    from uds.core import osmanagers, services
+    from uds.core import osmanagers
+    from uds.core import services
     from uds.core.environment import Environment
 
 
@@ -83,23 +85,23 @@ class Publication(Environmentable, Serializable):
     # : change suggested_delay in your implementation.
     suggested_delay: int = 10
 
-    _osmanager: typing.Optional['osmanagers.OSManager']
-    _service: 'services.Service'
+    _osmanager: "osmanagers.OSManager | None"
+    _service: "services.Service"
     _revision: int
     _servicepool_name: str
     _uuid: str
 
-    _db_obj: typing.Optional['models.ServicePoolPublication']
+    _db_obj: "models.ServicePoolPublication | None"
 
     def __init__(
         self,
-        environment: 'Environment',
+        environment: "Environment",
         *,
-        service: 'services.Service',
-        osmanager: typing.Optional['osmanagers.OSManager'] = None,
+        service: "services.Service",
+        osmanager: "osmanagers.OSManager | None" = None,
         revision: int = -1,
-        servicepool_name: typing.Optional[str] = None,
-        uuid: str = '',
+        servicepool_name: "str | None" = None,
+        uuid: str = "",
     ) -> None:
         """
         Instead of overriding __init__, override initialize method, that will be called
@@ -120,7 +122,7 @@ class Publication(Environmentable, Serializable):
         self._service = service
         self._osmanager = osmanager
         self._revision = revision
-        self._servicepool_name = servicepool_name or 'Unknown'
+        self._servicepool_name = servicepool_name or "Unknown"
         self._uuid = uuid
 
         self.initialize()
@@ -134,7 +136,7 @@ class Publication(Environmentable, Serializable):
         you can here access service, osmanager, ...
         """
 
-    def db_obj(self) -> 'models.ServicePoolPublication':
+    def db_obj(self) -> "models.ServicePoolPublication":
         """
         Returns the database object associated with this publication
         """
@@ -144,7 +146,7 @@ class Publication(Environmentable, Serializable):
             self._db_obj = ServicePoolPublication.objects.get(uuid=self._uuid)
         return self._db_obj
 
-    def service(self) -> 'services.Service':
+    def service(self) -> "services.Service":
         """
         Utility method to access parent service of this publication
 
@@ -154,7 +156,7 @@ class Publication(Environmentable, Serializable):
         """
         return self._service
 
-    def osmanager(self) -> typing.Optional['osmanagers.OSManager']:
+    def osmanager(self) -> "osmanagers.OSManager | None":
         """
         Utility method to access os manager for this publication.
 
@@ -181,7 +183,7 @@ class Publication(Environmentable, Serializable):
         at administration interface.
         Removes the macros before returning the name
         """
-        return re.sub(r'\{.*?\}', '', self._servicepool_name).strip()
+        return re.sub(r"\{.*?\}", "", self._servicepool_name).strip()
 
     def get_uuid(self) -> str:
         return self._uuid
@@ -220,7 +222,7 @@ class Publication(Environmentable, Serializable):
                to the core. Take that into account and handle exceptions inside
                this method.
         """
-        raise NotImplementedError(f'publish method for class {self.__class__.__name__} not provided! ')
+        raise NotImplementedError(f"publish method for class {self.__class__.__name__} not provided! ")
 
     @abc.abstractmethod
     def check_state(self) -> types.states.TaskState:
@@ -249,7 +251,7 @@ class Publication(Environmentable, Serializable):
             to the core. Take that into account and handle exceptions inside
             this method.
         """
-        raise NotImplementedError(f'check_state method for class {self.__class__.__name__} not provided!!!')
+        raise NotImplementedError(f"check_state method for class {self.__class__.__name__} not provided!!!")
 
     def finish(self) -> None:
         """
@@ -273,7 +275,7 @@ class Publication(Environmentable, Serializable):
         can use gettext to return a version that can be translated to administration
         interface language.
         """
-        return 'unknown'
+        return "unknown"
 
     @abc.abstractmethod
     def destroy(self) -> types.states.TaskState:
@@ -294,7 +296,7 @@ class Publication(Environmentable, Serializable):
                to the core. Take that into account and handle exceptions inside
                this method.
         """
-        raise NotImplementedError(f'destroy method for class {self.__class__.__name__} not provided!')
+        raise NotImplementedError(f"destroy method for class {self.__class__.__name__} not provided!")
 
     def cancel(self) -> types.states.TaskState:
         """
@@ -321,4 +323,4 @@ class Publication(Environmentable, Serializable):
         """
         String method, mainly used for debugging purposes
         """
-        return f'{self.__class__.__name__}({self._service.mod_name})'
+        return f"{self.__class__.__name__}({self._service.mod_name})"

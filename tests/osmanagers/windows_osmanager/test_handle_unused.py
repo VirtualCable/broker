@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from unittest import mock
 
 from tests.utils.test import UDSTestCase
@@ -42,7 +43,7 @@ class WindowsOsManagerHandleUnusedTest(UDSTestCase):
     delegate the cache/release decision to `UserServiceManager.release_from_logout`.
     """
 
-    def _make_instance(self, on_logout: str) -> 'osmanager.WindowsOsManager':
+    def _make_instance(self, on_logout: str) -> "osmanager.WindowsOsManager":
         instance = osmanager.WindowsOsManager(environment=Environment.testing_environment())
         instance.on_logout.value = on_logout
         return instance
@@ -54,19 +55,19 @@ class WindowsOsManagerHandleUnusedTest(UDSTestCase):
         return userservice
 
     def _run(
-        self, instance: 'osmanager.WindowsOsManager', userservice: mock.MagicMock
+        self, instance: "osmanager.WindowsOsManager", userservice: mock.MagicMock
     ) -> tuple[mock.MagicMock, mock.MagicMock]:
-        with mock.patch.object(
-            osmanager.osmanagers.OSManager, 'logged_out'
-        ) as logged_out, mock.patch.object(
-            osmanager.UserServiceManager, 'manager'
-        ) as manager_factory, mock.patch.object(osmanager.log, 'log'):
+        with (
+            mock.patch.object(osmanager.osmanagers.OSManager, "logged_out") as logged_out,
+            mock.patch.object(osmanager.UserServiceManager, "manager") as manager_factory,
+            mock.patch.object(osmanager.log, "log"),
+        ):
             instance.handle_unused(userservice)
 
         return logged_out, manager_factory.return_value.release_from_logout
 
     def test_in_use_does_nothing(self) -> None:
-        instance = self._make_instance('remove')
+        instance = self._make_instance("remove")
         userservice = self._make_userservice(in_use=True, publication_valid=True)
 
         logged_out, release_from_logout = self._run(instance, userservice)
@@ -75,25 +76,25 @@ class WindowsOsManagerHandleUnusedTest(UDSTestCase):
         release_from_logout.assert_not_called()
 
     def test_remove_triggers_logout_flow(self) -> None:
-        instance = self._make_instance('remove')
+        instance = self._make_instance("remove")
         userservice = self._make_userservice(in_use=False, publication_valid=True)
 
         logged_out, release_from_logout = self._run(instance, userservice)
 
-        logged_out.assert_called_once_with(userservice, username='unused')
+        logged_out.assert_called_once_with(userservice, username="unused")
         release_from_logout.assert_called_once_with(userservice)
 
     def test_keep_with_invalid_publication_triggers_logout_flow(self) -> None:
-        instance = self._make_instance('keep')
+        instance = self._make_instance("keep")
         userservice = self._make_userservice(in_use=False, publication_valid=False)
 
         logged_out, release_from_logout = self._run(instance, userservice)
 
-        logged_out.assert_called_once_with(userservice, username='unused')
+        logged_out.assert_called_once_with(userservice, username="unused")
         release_from_logout.assert_called_once_with(userservice)
 
     def test_keep_with_valid_publication_does_nothing(self) -> None:
-        instance = self._make_instance('keep')
+        instance = self._make_instance("keep")
         userservice = self._make_userservice(in_use=False, publication_valid=True)
 
         logged_out, release_from_logout = self._run(instance, userservice)
@@ -102,7 +103,7 @@ class WindowsOsManagerHandleUnusedTest(UDSTestCase):
         release_from_logout.assert_not_called()
 
     def test_keep_always_does_nothing(self) -> None:
-        instance = self._make_instance('keep-always')
+        instance = self._make_instance("keep-always")
         userservice = self._make_userservice(in_use=False, publication_valid=False)
 
         logged_out, release_from_logout = self._run(instance, userservice)

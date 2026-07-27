@@ -27,24 +27,33 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 @Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
+import collections.abc
 import dataclasses
 import logging
 import re
 import typing
-import collections.abc
 
-from django.utils.translation import gettext, gettext_lazy as _
 from django.db.models import Model
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
-from uds.core import consts, exceptions, transports, types, ui
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import transports
+from uds.core import types
+from uds.core import ui
 from uds.core.environment import Environment
-from uds.core.util import ensure, permissions, ui as ui_utils
-from uds.models import Network, ServicePool, Transport
+from uds.core.util import ensure
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.models import Network
+from uds.models import ServicePool
+from uds.models import Transport
 from uds.REST.model import ModelHandler
-
 
 logger = logging.getLogger(__name__)
 
@@ -70,29 +79,28 @@ class TransportItem(types.rest.ManagedObjectItem[Transport]):
 
 
 class Transports(ModelHandler[TransportItem]):
-
     MODEL = Transport
     FIELDS_TO_SAVE = [
-        'name',
-        'comments',
-        'tags',
-        'priority',
-        'net_filtering',
-        'allowed_oss',
-        'label',
+        "name",
+        "comments",
+        "tags",
+        "priority",
+        "net_filtering",
+        "allowed_oss",
+        "label",
     ]
 
     TABLE = (
-        ui_utils.TableBuilder(_('Transports'))
-        .numeric_column(name='priority', title=_('Priority'), width='6em')
-        .icon(name='name', title=_('Name'))
-        .text_column(name='type_name', title=_('Type'))
-        .text_column(name='comments', title=_('Comments'))
-        .numeric_column(name='pools_count', title=_('Service Pools'), width='6em')
-        .text_column(name='allowed_oss', title=_('Devices'), width='8em')
-        .text_column(name='tags', title=_('tags'), visible=False)
-        .with_field_mappings(type_name='data_type')
-        .with_filter_fields('name', 'data_type', 'comments' )
+        ui_utils.TableBuilder(_("Transports"))
+        .numeric_column(name="priority", title=_("Priority"), width="6em")
+        .icon(name="name", title=_("Name"))
+        .text_column(name="type_name", title=_("Type"))
+        .text_column(name="comments", title=_("Comments"))
+        .numeric_column(name="pools_count", title=_("Service Pools"), width="6em")
+        .text_column(name="allowed_oss", title=_("Devices"), width="8em")
+        .text_column(name="tags", title=_("tags"), visible=False)
+        .with_field_mappings(type_name="data_type")
+        .with_filter_fields("name", "data_type", "comments")
     ).build()
 
     # Rest api related information to complete the auto-generated API
@@ -101,14 +109,16 @@ class Transports(ModelHandler[TransportItem]):
     )
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[transports.Transport]]:
         return transports.factory().providers().values()
 
+    @typing.override
     def get_gui(self, for_type: str) -> list[types.ui.GuiElement]:
         transport_type = transports.factory().lookup(for_type)
 
         if not transport_type:
-            raise exceptions.rest.NotFound(_('Transport type not found: {}').format(for_type))
+            raise exceptions.rest.NotFound(_("Transport type not found: {}").format(for_type))
 
         with Environment.temporary_environment() as env:
             transport = transport_type(env, None)
@@ -122,42 +132,41 @@ class Transports(ModelHandler[TransportItem]):
                 .add_stock_field(types.rest.stock.StockField.NETWORKS)
                 .add_fields(transport.gui_description())
                 .add_multichoice(
-                    name='pools',
-                    label=gettext('Service Pools'),
+                    name="pools",
+                    label=gettext("Service Pools"),
                     choices=[
                         ui.gui.choice_item(x.uuid, x.name)
                         for x in ServicePool.objects.filter(service__isnull=False)
-                        .order_by('name')
-                        .prefetch_related('service')
+                        .order_by("name")
+                        .prefetch_related("service")
                         if transport_type.PROTOCOL in x.service.get_type().allowed_protocols
                     ],
                     tooltip=gettext(
-                        'Currently assigned services pools. If empty, no service pool is assigned to this transport'
+                        "Currently assigned services pools. If empty, no service pool is assigned to this transport"
                     ),
                 )
                 .new_tab(types.ui.Tab.ADVANCED)
                 .add_multichoice(
-                    name='allowed_oss',
-                    label=gettext('Allowed Devices'),
-                    choices=[
-                        ui.gui.choice_item(x.db_value(), x.os_name().title()) for x in consts.os.KNOWN_OS_LIST
-                    ],
+                    name="allowed_oss",
+                    label=gettext("Allowed Devices"),
+                    choices=[ui.gui.choice_item(x.db_value(), x.os_name().title()) for x in consts.os.KNOWN_OS_LIST],
                     tooltip=gettext(
-                        'If empty, any kind of device compatible with this transport will be allowed. Else, only devices compatible with selected values will be allowed'
+                        "If empty, any kind of device compatible with this transport will be allowed. Else, only devices compatible with selected values will be allowed"
                     ),
                 )
                 .add_text(
-                    name='label',
-                    label=gettext('Label'),
-                    tooltip=gettext('Metapool transport label (only used on metapool transports grouping)'),
+                    name="label",
+                    label=gettext("Label"),
+                    tooltip=gettext("Metapool transport label (only used on metapool transports grouping)"),
                 )
                 .build()
             )
 
-    def get_item(self, item: 'Model') -> TransportItem:
+    @typing.override
+    def get_item(self, item: "Model") -> TransportItem:
         item = ensure.is_instance(item, Transport)
         type_ = item.get_type()
-        pools = list(item.deployedServices.all().values_list('uuid', flat=True))
+        pools = list(item.deployedServices.all().values_list("uuid", flat=True))
         return TransportItem(
             id=item.uuid,
             name=item.name,
@@ -166,8 +175,8 @@ class Transports(ModelHandler[TransportItem]):
             priority=item.priority,
             label=item.label,
             net_filtering=item.net_filtering,
-            networks=list(item.networks.all().values_list('uuid', flat=True)),
-            allowed_oss=[x for x in item.allowed_oss.split(',')] if item.allowed_oss != '' else [],
+            networks=list(item.networks.all().values_list("uuid", flat=True)),
+            allowed_oss=[x for x in item.allowed_oss.split(",")] if item.allowed_oss != "" else [],
             pools=pools,
             pools_count=len(pools),
             deployed_count=item.deployedServices.count(),
@@ -176,40 +185,40 @@ class Transports(ModelHandler[TransportItem]):
             item=item,
         )
 
+    @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:
-        fields['allowed_oss'] = ','.join(fields['allowed_oss'])
+        fields["allowed_oss"] = ",".join(fields["allowed_oss"])
         # If label has spaces, replace them with underscores
-        fields['label'] = fields['label'].strip().replace(' ', '-')
+        fields["label"] = fields["label"].strip().replace(" ", "-")
         # And ensure small_name chars are valid [ a-zA-Z0-9:-]+
-        if fields['label'] and not re.match(r'^[a-zA-Z0-9:-]+$', fields['label']):
-            raise exceptions.rest.ValidationError(
-                gettext('Label must contain only letters, numbers, ":" and "-"')
-            )
+        if fields["label"] and not re.match(r"^[a-zA-Z0-9:-]+$", fields["label"]):
+            raise exceptions.rest.ValidationError(gettext('Label must contain only letters, numbers, ":" and "-"'))
 
-    def post_save(self, item: 'Model') -> None:
+    @typing.override
+    def post_save(self, item: "Model") -> None:
         item = ensure.is_instance(item, Transport)
         try:
-            networks = self._params['networks']
+            networks = self._params["networks"]
         except Exception:  # No networks passed in, this is ok
-            logger.debug('No networks')
+            logger.debug("No networks")
             return
         if networks is None:  # None is not provided, empty list is ok and means no networks
             return
         from uds.models import ServicePool  # Add the import statement for the ServicePool class
 
-        logger.debug('Networks: %s', networks)
+        logger.debug("Networks: %s", networks)
         item.networks.set(Network.objects.filter(uuid__in=networks))
 
         try:
-            pools = self._params['pools']
+            pools = self._params["pools"]
         except Exception:
-            logger.debug('No pools')
+            logger.debug("No pools")
             pools = None
 
         if pools is None:
             return
 
-        logger.debug('Pools: %s', pools)
+        logger.debug("Pools: %s", pools)
         item.deployedServices.set(ServicePool.objects.filter(uuid__in=pools))
 
         # try:

@@ -30,36 +30,40 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
+import collections.abc
 import dataclasses
 import logging
 import typing
-import collections.abc
 
 from django.db import IntegrityError
-from django.utils.translation import gettext as _
 from django.db.models import Model
+from django.utils.translation import gettext as _
+
+import uds.core.types.permissions
 
 from uds import models
-
-from uds.core import exceptions, types, module, services
-import uds.core.types.permissions
-from uds.core.types.rest import TableInfo
-from uds.core.util import log, permissions, ensure, ui as ui_utils
-from uds.core.util.model import process_uuid
-from uds.core.environment import Environment
-from uds.core.consts.images import DEFAULT_THUMB_BASE64
+from uds.core import exceptions
+from uds.core import module
+from uds.core import services
+from uds.core import types
 from uds.core import ui
+from uds.core.consts.images import DEFAULT_THUMB_BASE64
+from uds.core.environment import Environment
+from uds.core.types.rest import TableInfo
 from uds.core.types.states import State
-
-
+from uds.core.util import ensure
+from uds.core.util import log
+from uds.core.util import permissions
+from uds.core.util import ui as ui_utils
+from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
-
 
 logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class ServiceItem(types.rest.ManagedObjectItem['models.Service']):
+class ServiceItem(types.rest.ManagedObjectItem["models.Service"]):
     id: str
     name: str
     tags: list[str]
@@ -69,7 +73,7 @@ class ServiceItem(types.rest.ManagedObjectItem['models.Service']):
     max_services_count_type: str
     maintenance_mode: bool
     permission: int
-    info: 'ServiceInfo|types.rest.NotRequired' = types.rest.NotRequired.field()
+    info: "ServiceInfo|types.rest.NotRequired" = types.rest.NotRequired.field()
 
 
 @dataclasses.dataclass
@@ -102,7 +106,11 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
     Detail handler for Services, whose parent is a Provider
     """
 
-    CUSTOM_METHODS = ['servicepools']
+    CUSTOM_METHODS = [
+        types.rest.ModelCustomMethod(
+            "servicepools", description="List all service pools that reference this service provider"
+        ),
+    ]
 
     # Rest api related information to complete the auto-generated API
     REST_API_INFO = types.rest.api.RestApiInfo(
@@ -115,10 +123,10 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         overrided_fields = info.overrided_pools_fields or {}
 
         return ServiceInfo(
-            icon=info.icon64().replace('\n', ''),
+            icon=info.icon64().replace("\n", ""),
             needs_publication=info.publication_type is not None,
             max_deployed=info.userservices_limit,
-            uses_cache=info.uses_cache and overrided_fields.get('uses_cache', True),
+            uses_cache=info.uses_cache and overrided_fields.get("uses_cache", True),
             uses_cache_l2=info.uses_cache_l2,
             cache_tooltip=_(info.cache_tooltip),
             cache_tooltip_l2=_(info.cache_tooltip_l2),
@@ -155,18 +163,21 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             ret_value.info = Services.service_info(item)
 
         return ret_value
-    
+
+    @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.Provider)
         return self.calc_item_position(item_uuid, parent.services.all())
 
-    def get_items(self, parent: 'Model') -> types.rest.ItemsResult[ServiceItem]:
+    @typing.override
+    def get_items(self, parent: "Model") -> types.rest.ItemsResult[ServiceItem]:
         parent = ensure.is_instance(parent, models.Provider)
         # Check what kind of access do we have to parent provider
         perm = permissions.effective_permissions(self._user, parent)
         return [Services.service_item(k, perm) for k in self.odata_filter(parent.services.all())]
 
-    def get_item(self, parent: 'Model', item: str) -> ServiceItem:
+    @typing.override
+    def get_item(self, parent: "Model", item: str) -> ServiceItem:
         parent = ensure.is_instance(parent, models.Provider)
         # Check what kind of access do we have to parent provider
         return Services.service_item(
@@ -185,37 +196,40 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         except Exception:  # nosec: This is a delete, we don't care about exceptions
             pass
 
-    def save_item(self, parent: 'Model', item: str | None) -> ServiceItem:
+    @typing.override
+    def save_item(self, parent: "Model", item: str | None) -> ServiceItem:
         parent = ensure.is_instance(parent, models.Provider)
         # Extract item db fields
         # We need this fields for all
-        logger.debug('Saving service for %s / %s', parent, item)
+        logger.debug("Saving service for %s / %s", parent, item)
 
         # Get the sevice type as first step, to obtain "overrided_fields" and other info
-        service_type = parent.get_instance().get_service_by_type(self._params['data_type'])
+        service_type = parent.get_instance().get_service_by_type(self._params["data_type"])
         if not service_type:
-            raise exceptions.rest.RequestError('Service type not found')
+            raise exceptions.rest.RequestError("Service type not found")
 
         fields = self.fields_from_params(
-            ['name', 'comments', 'data_type', 'tags', 'max_services_count_type'],
+            ["name", "comments", "data_type", "tags", "max_services_count_type"],
             defaults=service_type.overrided_fields,
         )
         # Fix max_services_count_type to ServicesCountingType enum or ServicesCountingType.STANDARD if not found
         try:
-            fields['max_services_count_type'] = types.services.ServicesCountingType.from_int(
-                int(fields['max_services_count_type'])
+            fields["max_services_count_type"] = types.services.ServicesCountingType.from_int(
+                int(fields["max_services_count_type"])
             )
         except Exception:
-            fields['max_services_count_type'] = types.services.ServicesCountingType.STANDARD
-        tags = fields['tags']
-        del fields['tags']
+            fields["max_services_count_type"] = types.services.ServicesCountingType.STANDARD
+        tags = fields["tags"]
+        del fields["tags"]
         service: models.Service | None = None
         try:
             if not item:  # Create new
                 service = parent.services.create(**fields)
             else:
                 service = parent.services.get(uuid=process_uuid(item))
-                typing.cast(dict[str, typing.Any], service.__dict__).update(fields)
+                typing.cast(dict[str, typing.Any], service.__dict__).update(  # pyrefly: ignore[redundant-cast]
+                    fields
+                )
 
             service.tags.set([models.Tag.objects.get_or_create(tag=val)[0] for val in tags])
 
@@ -228,32 +242,29 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             service.data = service_instance.serialize()
 
             service.save()
-            return Services.service_item(
-                service, permissions.effective_permissions(self._user, service), full=True
-            )
+            return Services.service_item(service, permissions.effective_permissions(self._user, service), full=True)
 
         except models.Service.DoesNotExist:
-            raise exceptions.rest.NotFound('Service not found') from None
+            raise exceptions.rest.NotFound("Service not found") from None
         except IntegrityError as e:  # Duplicate key probably
             if service and service.token and not item:
                 service.delete()
                 raise exceptions.rest.RequestError(
-                    'Service token seems to be in use by other service. Please, select a new one.'
+                    "Service token seems to be in use by other service. Please, select a new one."
                 ) from e
-            raise exceptions.rest.RequestError('Element already exists (duplicate key error)') from e
+            raise exceptions.rest.RequestError("Element already exists (duplicate key error)") from e
         except exceptions.ui.ValidationError as e:
-            if (
-                not item and service
-            ):  # Only remove partially saved element if creating new (if editing, ignore this)
+            if not item and service:  # Only remove partially saved element if creating new (if editing, ignore this)
                 self._delete_incomplete_service(service)
-            raise exceptions.rest.ValidationError('Input error: {0}'.format(e)) from e
+            raise exceptions.rest.ValidationError("Input error: {0}".format(e)) from e
         except Exception as e:
             if not item and service:
                 self._delete_incomplete_service(service)
-            logger.exception('Saving Service')
-            raise exceptions.rest.RequestError('incorrect invocation to PUT: {0}'.format(e)) from e
+            logger.exception("Saving Service")
+            raise exceptions.rest.RequestError("incorrect invocation to PUT: {0}".format(e)) from e
 
-    def delete_item(self, parent: 'Model', item: str) -> None:
+    @typing.override
+    def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, models.Provider)
         try:
             service = parent.services.get(uuid=process_uuid(item))
@@ -261,40 +272,42 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                 service.delete()
                 return
         except models.Service.DoesNotExist:
-            raise exceptions.rest.NotFound(_('Service not found')) from None
+            raise exceptions.rest.NotFound(_("Service not found")) from None
         except Exception as e:
-            logger.error('Error deleting service %s from %s: %s', item, parent, e)
-            raise exceptions.rest.ResponseError(_('Error deleting service')) from None
+            logger.error("Error deleting service %s from %s: %s", item, parent, e)
+            raise exceptions.rest.ResponseError(_("Error deleting service")) from None
 
-        raise exceptions.rest.RequestError('Item has associated deployed services')
+        raise exceptions.rest.RequestError("Item has associated deployed services")
 
-    def get_table(self, parent: 'Model') -> TableInfo:
+    @typing.override
+    def get_table(self, parent: "Model") -> TableInfo:
         parent = ensure.is_instance(parent, models.Provider)
         return (
-            ui_utils.TableBuilder(_('Services of {0}').format(parent.name))
-            .icon(name='name', title=_('Name'))
-            .text_column(name='type_name', title=_('Type'))
-            .text_column(name='comments', title=_('Comments'))
-            .numeric_column(name='deployed_services_count', title=_('Services Pools'), width='12em')
-            .numeric_column(name='user_services_count', title=_('User Services'), width='12em')
+            ui_utils.TableBuilder(_("Services of {0}").format(parent.name))
+            .icon(name="name", title=_("Name"))
+            .text_column(name="type_name", title=_("Type"))
+            .text_column(name="comments", title=_("Comments"))
+            .numeric_column(name="deployed_services_count", title=_("Services Pools"), width="12em")
+            .numeric_column(name="user_services_count", title=_("User Services"), width="12em")
             .dict_column(
-                name='max_services_count_type',
-                title=_('Counting method'),
+                name="max_services_count_type",
+                title=_("Counting method"),
                 dct={
-                    types.services.ServicesCountingType.STANDARD: _('Standard'),
-                    types.services.ServicesCountingType.CONSERVATIVE: _('Conservative'),
+                    types.services.ServicesCountingType.STANDARD: _("Standard"),
+                    types.services.ServicesCountingType.CONSERVATIVE: _("Conservative"),
                 },
             )
-            .text_column(name='tags', title=_('Tags'), visible=False)
-            .row_style(prefix='row-maintenance-', field='maintenance_mode')
-            .with_field_mappings(type_name='data_type')
-            .with_filter_fields('name', 'data_type', 'comments')
+            .text_column(name="tags", title=_("Tags"), visible=False)
+            .row_style(prefix="row-maintenance-", field="maintenance_mode")
+            .with_field_mappings(type_name="data_type")
+            .with_filter_fields("name", "data_type", "comments")
             .build()
         )
 
-    def enum_types(self, parent: 'Model', for_type: str | None) -> list[types.rest.TypeInfo]:
+    @typing.override
+    def enum_types(self, parent: "Model", for_type: str | None) -> list[types.rest.TypeInfo]:
         parent = ensure.is_instance(parent, models.Provider)
-        logger.debug('get_types parameters: %s, %s', parent, for_type)
+        logger.debug("get_types parameters: %s, %s", parent, for_type)
         offers: list[types.rest.TypeInfo] = []
         if for_type is None:
             offers = [type(self).as_typeinfo(t) for t in parent.get_type().get_provided_services()]
@@ -304,11 +317,12 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                     offers = [type(self).as_typeinfo(t)]
                     break
             if not offers:
-                raise exceptions.rest.NotFound('type not found')
+                raise exceptions.rest.NotFound("type not found")
 
         return offers
 
     @classmethod
+    @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[module.Module]]:
         """
         If the detail has any possible types, provide them overriding this method
@@ -318,10 +332,11 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             for service in parent_type.get_provided_services():
                 yield service
 
-    def get_gui(self, parent: 'Model', for_type: str) -> list[types.ui.GuiElement]:
+    @typing.override
+    def get_gui(self, parent: "Model", for_type: str) -> list[types.ui.GuiElement]:
         parent = ensure.is_instance(parent, models.Provider)
         try:
-            logger.debug('getGui parameters: %s, %s', parent, for_type)
+            logger.debug("getGui parameters: %s, %s", parent, for_type)
             parent_instance = parent.get_instance()
             service_type = parent_instance.get_service_by_type(for_type)
             if not service_type:
@@ -338,17 +353,15 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                     .add_stock_field(types.rest.stock.StockField.NAME)
                     .add_stock_field(types.rest.stock.StockField.COMMENTS)
                     .add_choice(
-                        name='max_services_count_type',
+                        name="max_services_count_type",
                         choices=[
+                            ui.gui.choice_item(str(types.services.ServicesCountingType.STANDARD.value), _("Standard")),
                             ui.gui.choice_item(
-                                str(types.services.ServicesCountingType.STANDARD.value), _('Standard')
-                            ),
-                            ui.gui.choice_item(
-                                str(types.services.ServicesCountingType.CONSERVATIVE.value), _('Conservative')
+                                str(types.services.ServicesCountingType.CONSERVATIVE.value), _("Conservative")
                             ),
                         ],
-                        label=_('Service counting method'),
-                        tooltip=_('Kind of service counting for calculating if MAX is reached'),
+                        label=_("Service counting method"),
+                        tooltip=_("Kind of service counting for calculating if MAX is reached"),
                         tab=types.ui.Tab.ADVANCED,
                     )
                     .add_fields(service.gui_description())
@@ -357,40 +370,37 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                 return [field_gui for field_gui in gui.build() if field_gui.name not in overrided_fields]
 
         except Exception as e:
-            logger.exception('get_gui')
+            logger.exception("get_gui")
             raise exceptions.rest.ResponseError(str(e)) from e
 
-    def get_logs(self, parent: 'Model', item: str) -> list[typing.Any]:
+    @typing.override
+    def get_logs(self, parent: "Model", item: str) -> list[typing.Any]:
         parent = ensure.is_instance(parent, models.Provider)
         try:
             service = parent.services.get(uuid=process_uuid(item))
-            logger.debug('Getting logs for %s', item)
+            logger.debug("Getting logs for %s", item)
             return log.get_logs(service)
         except models.Service.DoesNotExist:
-            raise exceptions.rest.NotFound(_('Service not found')) from None
+            raise exceptions.rest.NotFound(_("Service not found")) from None
         except Exception as e:
-            logger.error('Error getting logs for %s: %s', item, e)
-            raise exceptions.rest.ResponseError(_('Error getting logs')) from None
+            logger.error("Error getting logs for %s: %s", item, e)
+            raise exceptions.rest.ResponseError(_("Error getting logs")) from None
 
-    def servicepools(self, parent: 'Model', item: str) -> list[ServicePoolResumeItem]:
+    def servicepools(self, parent: "Model", item: str) -> list[ServicePoolResumeItem]:
         parent = ensure.is_instance(parent, models.Provider)
         service = parent.services.get(uuid=process_uuid(item))
-        logger.debug('Got parameters for servicepools: %s, %s', parent, item)
+        logger.debug("Got parameters for servicepools: %s, %s", parent, item)
         res: list[ServicePoolResumeItem] = []
         for i in service.deployedServices.all():
             try:
-                self.check_access(
-                    i, uds.core.types.permissions.PermissionType.READ
-                )  # Ensures access before listing...
+                self.check_access(i, uds.core.types.permissions.PermissionType.READ)  # Ensures access before listing...
                 res.append(
                     ServicePoolResumeItem(
                         id=i.uuid,
                         name=i.name,
                         thumb=i.image.thumb64 if i.image is not None else DEFAULT_THUMB_BASE64,
-                        user_services_count=i.userServices.exclude(
-                            state__in=(State.REMOVED, State.ERROR)
-                        ).count(),
-                        state=_('With errors') if i.is_restrained() else _('Ok'),
+                        user_services_count=i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+                        state=_("With errors") if i.is_restrained() else _("Ok"),
                     )
                 )
             except exceptions.rest.AccessDenied:

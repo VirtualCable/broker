@@ -2,8 +2,9 @@
 """
 Url patterns for UDS project (Django)
 """
+
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('uds.urls')),
+    path("", include("uds.urls")),
 ]

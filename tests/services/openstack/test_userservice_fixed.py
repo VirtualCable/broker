@@ -30,22 +30,20 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from unittest import mock
 
 from uds import models
 from uds.core import types
-
-from . import fixtures
-
-from ...utils.test import UDSTransactionTestCase
-from ...utils.helpers import limited_iterator
-
 from uds.services.OpenStack.openstack import types as openstack_types
+
+from ...utils.helpers import limited_iterator
+from ...utils.test import UDSTransactionTestCase
+from . import fixtures
 
 
 # We use transactions on some related methods (storage access, etc...)
 class TestOpenstackFixedUserService(UDSTransactionTestCase):
-
     def test_userservice_fixed_user(self) -> None:
         """
         Test the user service
@@ -98,9 +96,9 @@ class TestOpenstackFixedUserService(UDSTransactionTestCase):
                 # ensure cache is empty, may affect from other tests
                 userservice.cache.clear()
                 # Also that machine is stopped
-                fixtures.search_id(fixtures.SERVERS_LIST, userservice._vmid).power_state = (
-                    openstack_types.PowerState.SHUTDOWN
-                )
+                fixtures.search_id(
+                    fixtures.SERVERS_LIST, userservice._vmid
+                ).power_state = openstack_types.PowerState.SHUTDOWN
                 state = userservice.set_ready()
                 self.assertEqual(state, types.states.TaskState.RUNNING)
 

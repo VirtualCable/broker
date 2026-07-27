@@ -19,14 +19,14 @@ if typing.TYPE_CHECKING:
 def migrate_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
     try:
         db_alias = schema_editor.connection.alias
-        Server: 'type[uds.models.Server]' = apps.get_model('uds', 'Server')
+        Server: "type[uds.models.Server]" = apps.get_model("uds", "Server")
         # Not typed, disappeared on this migration
-        ActorToken = apps.get_model('uds', 'ActorToken')
+        ActorToken = apps.get_model("uds", "ActorToken")
 
         # First, add uuid to existing registered servers
         for server in Server.objects.using(db_alias).all():
             server.uuid = uds.core.util.model.generate_uuid()
-            server.save(update_fields=['uuid'])
+            server.save(update_fields=["uuid"])
 
         # Current Registered servers are tunnel servers, and all tunnel servers are linux os, so update ip
         Server.objects.using(db_alias).all().update(os_type=uds.core.types.os.KnownOS.LINUX.os_name())
@@ -43,12 +43,12 @@ def migrate_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
                 type=ACTOR_TYPE,
                 os_type=uds.core.types.os.KnownOS.UNKNOWN.os_name(),
                 data={
-                    'mac': token.mac,
-                    'pre_command': token.pre_command,
-                    'post_command': token.post_command,
-                    'runonce_command': token.runonce_command,
-                    'log_level': token.log_level,
-                    'custom': token.custom,
+                    "mac": token.mac,
+                    "pre_command": token.pre_command,
+                    "post_command": token.post_command,
+                    "runonce_command": token.runonce_command,
+                    "log_level": token.log_level,
+                    "custom": token.custom,
                 },
             )
         # Migrate old transports
@@ -58,15 +58,15 @@ def migrate_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
         # Old properties to new model
         properties_v4.migrate(apps, schema_editor)
     except Exception as e:
-        if 'no such table' not in str(e) and " doesn't exist" not in str(e):
+        if "no such table" not in str(e) and " doesn't exist" not in str(e):
             # Pytest is running this method twice??
             raise e
 
 
 def rollback_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
     db_alias = schema_editor.connection.alias
-    Server: 'type[uds.models.Server]' = apps.get_model('uds', 'Server')
-    ActorToken = apps.get_model('uds', 'ActorToken')
+    Server: "type[uds.models.Server]" = apps.get_model("uds", "Server")
+    ActorToken = apps.get_model("uds", "ActorToken")
     for server in Server.objects.using(db_alias).filter(type=ACTOR_TYPE):
         if not server.data:
             continue  # Skip servers without data, they are not actors!!
@@ -77,12 +77,12 @@ def rollback_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
             hostname=server.hostname,
             token=server.token,
             stamp=server.stamp,
-            mac=server.data.get('mac', ''),
-            pre_command=server.data.get('pre_command', ''),
-            post_command=server.data.get('post_command', ''),
-            runonce_command=server.data.get('runonce_command', ''),
-            log_level=server.data.get('log_level', 50000),
-            custom=server.data.get('custom', ''),
+            mac=server.data.get("mac", ""),
+            pre_command=server.data.get("pre_command", ""),
+            post_command=server.data.get("post_command", ""),
+            runonce_command=server.data.get("runonce_command", ""),
+            log_level=server.data.get("log_level", 50000),
+            custom=server.data.get("custom", ""),
         )
         # Delete the server
         server.delete()
@@ -121,13 +121,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="properties",
-            constraint=models.UniqueConstraint(
-                fields=("owner_id", "owner_type", "key"), name="unique_property"
-            ),
+            constraint=models.UniqueConstraint(fields=("owner_id", "owner_type", "key"), name="unique_property"),
         ),
         migrations.RenameModel(
-            'TunnelToken',
-            'Server',
+            "TunnelToken",
+            "Server",
         ),
         migrations.RenameField(
             model_name="server",

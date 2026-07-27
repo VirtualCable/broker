@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 
@@ -57,6 +58,7 @@ class OGReservationInfo(typing.TypedDict):
     client: str
     ip: str
     mac: str
+
 
 class OGStatusInfo(typing.TypedDict):
     id: str

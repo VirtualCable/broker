@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -60,55 +61,63 @@ class XenFixedUserService(FixedUserService, autoserializable.AutoSerializable):
     suggested_delay = 4
 
     # Utility overrides for type checking...
-    def service(self) -> 'service_fixed.XenFixedService':
-        return typing.cast('service_fixed.XenFixedService', super().service())
+    @typing.override
+    def service(self) -> "service_fixed.XenFixedService":
+        return typing.cast("service_fixed.XenFixedService", super().service())
 
+    @typing.override
     def reset(self) -> types.states.TaskState:
         if self._vmid:
             self.service().reset_vm(self._vmid)  # Reset in sync
-            
+
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start(self) -> None:
         self._task = self.service().start_vm(self._vmid)
 
+    @typing.override
     def op_stop(self) -> None:
         self._task = self.service().stop_vm(self._vmid)
 
     # Check methods
     def _check_task_finished(self) -> types.states.TaskState:
-        if self._task == '':
+        if self._task == "":
             return types.states.TaskState.FINISHED
 
         with self.service().provider().get_connection() as api:
             task_info = api.get_task_info(self._task)
             if task_info.is_failure():
                 raise Exception(task_info.result)  # Will set error state
-            
+
             if task_info.is_success():
                 return types.states.TaskState.FINISHED
-    
+
         return types.states.TaskState.RUNNING
 
     # Check methods
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks the state of a deploy for an user or cache
         """
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start_checker(self) -> types.states.TaskState:
         """
         Checks if machine has started
         """
         return self._check_task_finished()
 
+    @typing.override
     def op_stop_checker(self) -> types.states.TaskState:
         """
         Checks if machine has stoped
         """
         return self._check_task_finished()
 
+    @typing.override
     def op_deleted_checker(self) -> types.states.TaskState:
         """
         Checks if a machine has been removed

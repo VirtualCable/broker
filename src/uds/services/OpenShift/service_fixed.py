@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012-2022 Virtual Cable S.L.
+# Copyright (c) 2025-2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -16,15 +16,14 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PAdecorators.FTICULAR PURPOSE ARE
 # DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
 # FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 # DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OR TOdecorators.FT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
@@ -43,11 +42,11 @@ from .deployment_fixed import OpenshiftUserServiceFixed
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from .openshift import client
-    from .provider import OpenshiftProvider
     from uds.core.services.generics.fixed.userservice import FixedUserService
 
-from .openshift import exceptions as oshift_exceptions
+    from .openshift import client
+    from .provider import OpenshiftProvider
+
 from .openshift import exceptions as oshift_exceptions
 
 logger = logging.getLogger(__name__)
@@ -58,10 +57,10 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     OpenStack fixed machines service.
     """
 
-    type_name = _('Fixed VMs Pool')
-    type_type = 'OpenshiftFixedService'
-    type_description = _('This service provides access to a fixed group of selected VMs on Openshift')
-    icon_file = 'service.png'
+    type_name = _("Fixed VMs Pool")
+    type_type = "OpenshiftFixedService"
+    type_description = _("This service provides access to a fixed group of selected VMs on Openshift")
+    icon_file = "service.png"
 
     can_reset = True
 
@@ -78,14 +77,14 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     token = FixedService.token
 
     on_logout = gui.ChoiceField(
-        label=_('After logout'),
+        label=_("After logout"),
         order=40,
-        default='0',
-        tooltip=_('Select the action to be performed after the user logs out.'),
+        default="0",
+        tooltip=_("Select the action to be performed after the user logs out."),
         tab=types.ui.Tab.MACHINE,
         choices=[
-            gui.choice_item('no', _('Do Nothing')),
-            gui.choice_item('stop', _('Stop Machine')),
+            gui.choice_item("no", _("Do Nothing")),
+            gui.choice_item("stop", _("Stop Machine")),
         ],
     )
 
@@ -97,11 +96,12 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     prov_uuid = gui.HiddenField()
 
     @property
-    def api(self) -> 'client.OpenshiftClient':
+    def api(self) -> "client.OpenshiftClient":
         return self.provider().api
 
     # Uses default FixedService.initialize
 
+    @typing.override
     def init_gui(self) -> None:
         """
         Initialize the GUI elements for the service.
@@ -110,32 +110,35 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
         self.machines.set_choices(
             [
-                gui.choice_item(str(machine.uid), f'{machine.name} ({machine.namespace})')
+                gui.choice_item(machine.uid, f"{machine.name} ({machine.namespace})")
                 for machine in self.provider().api.list_vms()
-                if machine.is_usable() and not machine.name.startswith('UDS-')
+                if machine.is_usable() and not machine.name.startswith("UDS-")
             ]
         )
 
-    def provider(self) -> 'OpenshiftProvider':
+    @typing.override
+    def provider(self) -> "OpenshiftProvider":
         """
         Get the Openshift provider.
         """
-        return typing.cast('OpenshiftProvider', super().provider())
+        return typing.cast("OpenshiftProvider", super().provider())
 
+    @typing.override
     def is_available(self) -> bool:
         """
         Checks if provider is available
         """
         return self.provider().is_available()
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
         Enumerates the assignable machines.
         """
         servers = {
-            str(server.name): server.name
+            server.name: server.name
             for server in self.api.list_vms()
-            if not server.name.startswith('uds-') and server.is_usable()
+            if not server.name.startswith("uds-") and server.is_usable()
         }
 
         with self._assigned_access() as assigned_servers:
@@ -146,6 +149,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                 and k in servers  # Only machines not assigned, and that exists on provider will be available
             ]
 
+    @typing.override
     def get_and_assign(self) -> str:
         """
         Gets an available machine from the fixed list and assigns it.
@@ -157,42 +161,41 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                     if checking_vmid not in assigned:  # Not already assigned
                         try:
                             # Invoke to check it exists, do not need to store the result
-                            self.api.get_vm_info(
-                                checking_vmid
-                            )  # Will raise OpenshiftDoesNotExists if not found
+                            self.api.get_vm_info(checking_vmid)  # Will raise OpenshiftDoesNotExists if not found
                             found_vmid = checking_vmid
                             break
                         except Exception:  # Notifies on log, but skipt it
                             self.provider().do_log(
-                                types.log.LogLevel.WARNING, 'Machine {} not accesible'.format(found_vmid)
+                                types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
                             )
                             logger.warning(
-                                'The service has machines that cannot be checked on proxmox (connection error or machine has been deleted): %s',
+                                "The service has machines that cannot be checked on proxmox (connection error or machine has been deleted): %s",
                                 found_vmid,
                             )
 
                 if found_vmid:
                     assigned.add(found_vmid)
         except Exception as e:  #
-            logger.debug('Error getting machine: %s', e)
-            raise Exception('No machine available')
+            logger.debug("Error getting machine: %s", e)
+            raise Exception("No machine available")
 
         if not found_vmid:
-            raise Exception('All machines from list already assigned.')
+            raise Exception("All machines from list already assigned.")
 
         return found_vmid
 
-    def snapshot_recovery(self, userservice_instance: 'FixedUserService') -> None:
+    @typing.override
+    def snapshot_recovery(self, userservice_instance: "FixedUserService") -> None:
         """
         In fact, we do not support snaphots, but will use this to stop machine after logout if requested
         """
-        if self.on_logout.value == 'stop':
+        if self.on_logout.value == "stop":
             name = userservice_instance._name
             vmi_info = self.api.get_vm_info(name)
             if vmi_info and vmi_info.is_running():
                 userservice_instance._queue.insert(0, types.services.Operation.NOP)
                 userservice_instance._queue.insert(1, types.services.Operation.SHUTDOWN)
-                self.do_log(types.log.LogLevel.INFO, f'Stopping machine {name} after logout')
+                self.do_log(types.log.LogLevel.INFO, f"Stopping machine {name} after logout")
 
     # Utility
     def sanitized_name(self, name: str) -> str:
@@ -206,6 +209,7 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         """
         return self.provider().sanitized_name(name)
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         """
         Returns the IP address of the machine.
@@ -215,8 +219,9 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         if interfaces and interfaces[0].ip_address:
             logger.info(f"IP address found: {interfaces[0].ip_address}")
             return interfaces[0].ip_address
-        return ''
+        return ""
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         """
         Returns the MAC address of the machine.
@@ -226,8 +231,9 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         if interfaces and interfaces[0].mac_address:
             logger.info(f"MAC address found: {interfaces[0].mac_address}")
             return interfaces[0].mac_address
-        return ''
+        return ""
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
         """
         Returns the name of the machine.
@@ -237,8 +243,9 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         for vm in vms:
             if vm.uid == vmid:
                 return vm.name
-        raise oshift_exceptions.OpenshiftNotFoundError(f'No VM found for VM ID {vmid}')
+        raise oshift_exceptions.OpenshiftNotFoundError(f"No VM found for VM ID {vmid}")
 
+    @typing.override
     def remove_and_free(self, vmid: str) -> types.states.TaskState:
         """
         Removes the VM from the assigned list and frees it.
@@ -249,8 +256,8 @@ class OpenshiftServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                 assigned.remove(vmid)
             return types.states.TaskState.FINISHED
         except oshift_exceptions.OpenshiftNotFoundError:
-            logger.info(f'VM {vmid} not found when trying to remove and free, considering as deleted.')
+            logger.info(f"VM {vmid} not found when trying to remove and free, considering as deleted.")
             return types.states.TaskState.FINISHED
         except Exception as e:
-            logger.warning('Cound not save assigned machines on fixed pool: %s', e)
+            logger.warning("Cound not save assigned machines on fixed pool: %s", e)
             raise

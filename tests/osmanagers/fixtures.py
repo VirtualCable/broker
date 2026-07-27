@@ -26,23 +26,24 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 Author: Adolfo Gómez, dkmaster at dkmon dot com
-'''
+"""
+
 import typing
 
 LINUX_AD_FIELDS: typing.Final[dict[str, typing.Any]] = {
-    'domain': 'domain.dom',
-    'account': 'account',
-    'password': 'password',
-    'ou': 'ou=ou,dc=domain,dc=dom',
-    'client_software': 'sssd',
-    'membership_software': 'samba',
-    'server_software': 'freeipa',
-    'remove_on_exit': True,
-    'use_ssl': True,
-    'automatic_id_mapping': True,
-    'on_logout': 'keep',
-    'idle': -1,
-    'deadline': True,
+    "domain": "domain.dom",
+    "account": "account",
+    "password": "password",
+    "ou": "ou=ou,dc=domain,dc=dom",
+    "client_software": "sssd",
+    "membership_software": "samba",
+    "server_software": "freeipa",
+    "remove_on_exit": True,
+    "use_ssl": True,
+    "automatic_id_mapping": True,
+    "on_logout": "keep",
+    "idle": -1,
+    "deadline": True,
 }

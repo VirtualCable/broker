@@ -31,6 +31,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 
 from uds.core import environment
@@ -44,7 +45,7 @@ class TestEnvironment(UDSTransactionTestCase):
     def _check_environment(
         self,
         env: environment.Environment,
-        expected_key: 'str|None',
+        expected_key: "str|None",
         is_persistent: bool,
         recreate_fnc: typing.Optional[typing.Callable[[], environment.Environment]] = None,
     ) -> None:
@@ -55,11 +56,11 @@ class TestEnvironment(UDSTransactionTestCase):
         if expected_key is not None:
             self.assertEqual(env.key, expected_key)
 
-        env.storage.put('test', 'test')
-        self.assertEqual(env.storage.read('test'), 'test')
+        env.storage.put("test", "test")
+        self.assertEqual(env.storage.read("test"), "test")
 
-        env.cache.put('test', 'test')
-        self.assertEqual(env.cache.get('test'), 'test')
+        env.cache.put("test", "test")
+        self.assertEqual(env.cache.get("test"), "test")
 
         # Recreate environment
         env = environment.Environment(env.key) if not recreate_fnc else recreate_fnc()
@@ -72,11 +73,11 @@ class TestEnvironment(UDSTransactionTestCase):
             self.assertEqual(env.key, expected_key)
 
         if is_persistent:
-            self.assertEqual(env.storage.read('test'), 'test')
-            self.assertEqual(env.cache.get('test'), 'test')
+            self.assertEqual(env.storage.read("test"), "test")
+            self.assertEqual(env.cache.get("test"), "test")
         else:
-            self.assertEqual(env.storage.read('test'), None)
-            self.assertEqual(env.cache.get('test'), None)
+            self.assertEqual(env.storage.read("test"), None)
+            self.assertEqual(env.cache.get("test"), None)
 
     def test_global_environment(self) -> None:
         env = environment.Environment.common_environment()
@@ -84,22 +85,24 @@ class TestEnvironment(UDSTransactionTestCase):
 
     def test_temporary_environment(self) -> None:
         env = environment.Environment.testing_environment()
-        self._check_environment(env, environment.TEST_ENV, False, recreate_fnc=environment.Environment.testing_environment)
+        self._check_environment(
+            env, environment.TEST_ENV, False, recreate_fnc=environment.Environment.testing_environment
+        )
 
     def test_table_record_environment(self) -> None:
-        env = environment.Environment.environment_for_table_record('test_table')
-        self._check_environment(env, 't-test_table-', True)
+        env = environment.Environment.environment_for_table_record("test_table")
+        self._check_environment(env, "t-test_table-", True)
 
     def test_table_record_environment_with_id(self) -> None:
-        env = environment.Environment.environment_for_table_record('test_table', 123)
-        self._check_environment(env, 't-test_table-123', True)
+        env = environment.Environment.environment_for_table_record("test_table", 123)
+        self._check_environment(env, "t-test_table-123", True)
 
     def test_environment_for_type(self) -> None:
         env = environment.Environment.type_environment(TestEnvironment)
-        self._check_environment(env, 'type-' + str(TestEnvironment), True)
+        self._check_environment(env, "type-" + str(TestEnvironment), True)
 
     def test_exclusive_temporary_environment(self) -> None:
-        unique_key: str = ''
+        unique_key: str = ""
         with environment.Environment.temporary_environment() as env:
             self.assertIsInstance(env, environment.Environment)
             self.assertIsInstance(env.cache, Cache)
@@ -107,11 +110,11 @@ class TestEnvironment(UDSTransactionTestCase):
             self.assertIsInstance(env._id_generators, dict)
             unique_key = env.key  # store for later test
 
-            env.storage.put('test', 'test')
-            self.assertEqual(env.storage.read('test'), 'test')
+            env.storage.put("test", "test")
+            self.assertEqual(env.storage.read("test"), "test")
 
-            env.cache.put('test', 'test')
-            self.assertEqual(env.cache.get('test'), 'test')
+            env.cache.put("test", "test")
+            self.assertEqual(env.cache.get("test"), "test")
 
         # Environment is cleared after exit, ensure it
         env = environment.Environment(unique_key)
@@ -121,5 +124,5 @@ class TestEnvironment(UDSTransactionTestCase):
             self.assertIsInstance(env.storage, Storage)
             self.assertIsInstance(env._id_generators, dict)
             self.assertEqual(env.key, unique_key)
-            self.assertEqual(env.storage.read('test'), None)
-            self.assertEqual(env.cache.get('test'), None)
+            self.assertEqual(env.storage.read("test"), None)
+            self.assertEqual(env.cache.get("test"), None)

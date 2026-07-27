@@ -1,8 +1,29 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019-2024 Virtual Cable S.L.
+# Copyright (c) 2025-2026 Virtual Cable S.L.
 # All rights reserved.
 #
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright notice,
+#      this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#      may be used to endorse or promote products derived from this software
+#      without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PAdecorators.FTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TOdecorators.FT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
@@ -10,11 +31,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core.types.states import TaskState
-from uds.core.util import autoserializable
 from uds.core import types
-
 from uds.core.services.generics.dynamic.publication import DynamicPublication
+from uds.core.types.states import TaskState
 from uds.core.util import autoserializable
 
 from .openshift import exceptions as openshift_exceptions
@@ -37,12 +56,14 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
 
     _waiting_name = autoserializable.BoolField(default=False)
 
-    def service(self) -> 'OpenshiftService':
+    @typing.override
+    def service(self) -> "OpenshiftService":
         """
         Get the Openshift service.
         """
-        return typing.cast('OpenshiftService', super().service())
+        return typing.cast("OpenshiftService", super().service())
 
+    @typing.override
     def op_create(self) -> None:
         """
         Starts the deployment process for a user or cache, cloning the template publication.
@@ -52,7 +73,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         template_vm_name = self.service().template.value
         namespace = api.namespace
 
-        source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(namespace, template_vm_name)  # type: ignore
+        source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(namespace, template_vm_name)
 
         self._name = self.service().sanitized_name(self._name)
         self._waiting_name = False
@@ -67,6 +88,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
             source_pvc_name=source_pvc_name,
         )
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks if the create operation has been completed successfully.
@@ -103,6 +125,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         logger.info(f"VM '{self._name}' is ready.")
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_create_completed(self) -> None:
         """
         Actions to perform once the create operation is completed.
@@ -115,6 +138,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         else:
             logger.info(f"VM '{self._name}' is not running or VM not found.")
 
+    @typing.override
     def op_create_completed_checker(self) -> TaskState:
         """
         Checks if the create operation has been completed successfully.
@@ -133,6 +157,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
     # Methods provided below are specific for this publication
     # and will be used by user deployments that uses this kind of publication
 
+    @typing.override
     def get_template_id(self) -> str:
         """
         Returns the template id associated with the publication

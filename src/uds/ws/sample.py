@@ -36,7 +36,7 @@ Sample WebSocket consumer.
 
 This is an example, not imported anywhere. Copy and adapt as needed.
 """
-from uds.ws.base import BaseUDSWebSocketConsumer
+# from uds.ws.base import BaseUDSWebSocketConsumer
 
 
 # NOTE: Reverse proxies (e.g. nginx) typically have a read timeout of 60 seconds.

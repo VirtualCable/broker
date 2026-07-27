@@ -3,7 +3,7 @@ import { Process, Tasks, Logger, File, Utils} from 'runtime';
 
 // We receive data in "data" variable, which is an object from json readonly
 
-async function fixSizeParameter(param) {
+async function fixSizeParameter(params) {
     // fix resolution parameters (as this needs to be a windows, calc the size)
     let width = '1024', height = '768';
     try {
@@ -16,11 +16,7 @@ async function fixSizeParameter(param) {
     } catch (e) {
         Logger.error('Error getting system profiler data for display resolution, using safe defaults');
     }
-    params = data.freerdp_params.map((param) =>
-        Utils.expandVars(param).replace('#WIDTH#', width).replace('#HEIGHT#', height)
-    );
-    params = [...params.map((param) => Utils.expandVars(param)), `/v:${data.address}`];
-    return params;
+    return params.map(p => Utils.expandVars(p).replace('#WIDTH#', width).replace('#HEIGHT#', height));
 }
 
 const msrdc_list = [
@@ -70,12 +66,13 @@ if (executablePath) {
         Tasks.addEarlyUnlinkableFile(rdpFilePath);
         params = [executablePath, '--args', data.password ? `/p:${data.password}` : '/p:', rdpFilePath];
     } else {
-        params = [executablePath, `/v:${data.address}`, ...(await fixSizeParameter(data.freerdp_params.map(p => Utils.expandVars(p))))];
+        params = [executablePath, `/v:${data.address}`, ...(await fixSizeParameter(data.freerdp_params))];
     }
 } else if (msrdExecutable) {
     let rdpFilePath = File.createTempFile(File.getHomeDirectory(), data.as_file, 'rdp');
     Tasks.addEarlyUnlinkableFile(rdpFilePath);
-    params = [msrdExecutable, '--args', rdpFilePath];
+    // Open the .rdp as a file (open -a APP FILE); behind --args the app can't parse it.
+    params = ['-a', msrdExecutable, rdpFilePath];
 } else {
     Logger.error('No RDP client found on system');
     throw new Error(errorString);

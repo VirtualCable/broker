@@ -30,30 +30,42 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import operator
 import random
 import typing
 
 from django.db import transaction
-from django.db.models import Q, Count, Case, When, IntegerField
+from django.db.models import Case
+from django.db.models import Count
+from django.db.models import IntegerField
+from django.db.models import Q
+from django.db.models import When
 from django.utils.translation import gettext as _
 
-from uds.core import consts, exceptions, types
-from uds.core.exceptions.services import (
-    InvalidServiceException,
-    MaxServicesReachedError,
-    OperationException,
-    ServiceAccessDeniedByCalendar,
-    ServiceInMaintenanceMode,
-    ServiceNotReadyError,
-)
-from uds.core.util import log, singleton
-from uds.core.util.decorators import cached
-from uds.core.util.model import generate_uuid, sql_now
+from uds.core import consts
+from uds.core import exceptions
+from uds.core import types
+from uds.core.exceptions.services import InvalidServiceException
+from uds.core.exceptions.services import MaxServicesReachedError
+from uds.core.exceptions.services import OperationException
+from uds.core.exceptions.services import ServiceAccessDeniedByCalendar
+from uds.core.exceptions.services import ServiceInMaintenanceMode
+from uds.core.exceptions.services import ServiceNotReadyError
 from uds.core.types.states import State
+from uds.core.util import log
+from uds.core.util import singleton
+from uds.core.util.decorators import cached
+from uds.core.util.model import generate_uuid
+from uds.core.util.model import sql_now
 from uds.core.util.stats import events
-from uds.models import MetaPool, ServicePool, ServicePoolPublication, Transport, User, UserService
+from uds.models import MetaPool
+from uds.models import ServicePool
+from uds.models import ServicePoolPublication
+from uds.models import Transport
+from uds.models import User
+from uds.models import UserService
 
 from .userservice_helpers import comms
 from .userservice_helpers.opchecker import UserServiceOpChecker
@@ -62,18 +74,17 @@ if typing.TYPE_CHECKING:
     from uds import models
 
 logger = logging.getLogger(__name__)
-trace_logger = logging.getLogger('traceLog')
-operations_logger = logging.getLogger('operationsLog')
+trace_logger = logging.getLogger("traceLog")
+operations_logger = logging.getLogger("operationsLog")
 
 
 class UserServiceManager(metaclass=singleton.Singleton):
-
     @staticmethod
-    def manager() -> 'UserServiceManager':
+    def manager() -> "UserServiceManager":
         return UserServiceManager()  # Singleton pattern will return always the same instance
 
     @staticmethod
-    def get_state_filter(service: 'models.Service') -> Q:
+    def get_state_filter(service: "models.Service") -> Q:
         """
         Returns a Q object that filters by valid states for a service
         """
@@ -90,22 +101,18 @@ class UserServiceManager(metaclass=singleton.Singleton):
         raises an exception that no more services of this kind can be reached
         """
         if self.maximum_user_services_reached(service_pool.service):
-            raise MaxServicesReachedError(
-                _('Maximum number of user services reached for this {}').format(service_pool)
-            )
+            raise MaxServicesReachedError(_("Maximum number of user services reached for this {}").format(service_pool))
 
     def get_cache_state_filter(self, servicepool: ServicePool, level: types.services.CacheLevel) -> Q:
         return Q(cache_level=level) & self.get_state_filter(servicepool.service)
 
-    def get_existing_user_services(self, service: 'models.Service') -> int:
+    def get_existing_user_services(self, service: "models.Service") -> int:
         """
         Returns the number of running user services for this service
         """
-        return UserService.objects.filter(
-            self.get_state_filter(service) & Q(deployed_service__service=service)
-        ).count()
+        return UserService.objects.filter(self.get_state_filter(service) & Q(deployed_service__service=service)).count()
 
-    def maximum_user_services_reached(self, service: 'models.Service') -> bool:
+    def maximum_user_services_reached(self, service: "models.Service") -> bool:
         """
         Checks if the maximum number of user services for this service has been reached
         """
@@ -119,9 +126,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         return False
 
-    def _create_cache_user_service_at_db(
-        self, publication: ServicePoolPublication, cache_level: int
-    ) -> UserService:
+    def _create_cache_user_service_at_db(self, publication: ServicePoolPublication, cache_level: int) -> UserService:
         """
         Private method to instatiate a cache element at database with default states
         """
@@ -134,15 +139,13 @@ class UserServiceManager(metaclass=singleton.Singleton):
             os_state=State.PREPARING,
             state_date=now,
             creation_date=now,
-            data='',
+            data="",
             deployed_service=publication.deployed_service,
             user=None,
             in_use=False,
         )
 
-    def _create_assigned_user_service_at_db(
-        self, publication: ServicePoolPublication, user: User
-    ) -> UserService:
+    def _create_assigned_user_service_at_db(self, publication: ServicePoolPublication, user: User) -> UserService:
         """
         Private method to instatiate an assigned element at database with default state
         """
@@ -154,15 +157,13 @@ class UserServiceManager(metaclass=singleton.Singleton):
             os_state=State.PREPARING,
             state_date=now,
             creation_date=now,
-            data='',
+            data="",
             deployed_service=publication.deployed_service,
             user=user,
             in_use=False,
         )
 
-    def _create_assigned_user_service_at_db_from_pool(
-        self, service_pool: ServicePool, user: User
-    ) -> UserService:
+    def _create_assigned_user_service_at_db_from_pool(self, service_pool: ServicePool, user: User) -> UserService:
         """
         __createCacheAtDb and __createAssignedAtDb uses a publication for create the UserService.
         There is cases where deployed services do not have publications (do not need them), so we need this method to create
@@ -176,7 +177,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             os_state=State.PREPARING,
             state_date=now,
             creation_date=now,
-            data='',
+            data="",
             publication=None,
             user=user,
             in_use=False,
@@ -189,7 +190,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         Creates a new cache for the deployed service publication at level indicated
         """
         operations_logger.info(
-            'Creating a new cache element at level %s for publication %s',
+            "Creating a new cache element at level %s for publication %s",
             cache_level,
             publication,
         )
@@ -207,7 +208,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         if not self.can_grow_service_pool(service_pool):
             # Cannot create new
             operations_logger.info(
-                'Too many preparing services. Creation of assigned service denied by max preparing services parameter. (login storm with insufficient cache?).'
+                "Too many preparing services. Creation of assigned service denied by max preparing services parameter. (login storm with insufficient cache?)."
             )
             raise MaxServicesReachedError()
 
@@ -216,18 +217,18 @@ class UserServiceManager(metaclass=singleton.Singleton):
             if publication:
                 assigned = self._create_assigned_user_service_at_db(publication, user)
                 operations_logger.info(
-                    'Creating a new assigned element for user %s for publication %s on pool %s',
+                    "Creating a new assigned element for user %s for publication %s on pool %s",
                     user.pretty_name,
                     publication.revision,
                     service_pool.name,
                 )
             else:
                 raise InvalidServiceException(
-                    f'Invalid publication creating service assignation: {service_pool.name} {user.pretty_name}'
+                    f"Invalid publication creating service assignation: {service_pool.name} {user.pretty_name}"
                 )
         else:
             operations_logger.info(
-                'Creating a new assigned element for user %s on pool %s',
+                "Creating a new assigned element for user %s on pool %s",
                 user.pretty_name,
                 service_pool.name,
             )
@@ -239,7 +240,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         except MaxServicesReachedError:
             # If we reach this point, it means that the service has reached its maximum number of user services
             operations_logger.error(
-                'Cannot create assigned service for user %s on pool %s: Maximum number of user services reached',
+                "Cannot create assigned service for user %s on pool %s: Maximum number of user services reached",
                 user.pretty_name,
                 service_pool.name,
             )
@@ -258,14 +259,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
         """
         service_instance = service_pool.service.get_instance()
         if not service_instance.can_assign():
-            raise Exception('This service type cannot assign asignables')
+            raise Exception("This service type cannot assign asignables")
 
         if service_pool.service.get_type().publication_type is not None:
             publication = service_pool.active_publication()
             if publication:
                 assigned = self._create_assigned_user_service_at_db(publication, user)
                 operations_logger.info(
-                    'Creating an assigned element from assignable %s for user %s for publication %s on pool %s',
+                    "Creating an assigned element from assignable %s for user %s for publication %s on pool %s",
                     assignable_id,
                     user.pretty_name,
                     publication.revision,
@@ -273,11 +274,11 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 )
             else:
                 raise Exception(
-                    f'Invalid publication creating service assignation: {service_pool.name} {user.pretty_name}'
+                    f"Invalid publication creating service assignation: {service_pool.name} {user.pretty_name}"
                 )
         else:
             operations_logger.info(
-                'Creating an assigned element from assignable %s for user %s on pool %s',
+                "Creating an assigned element from assignable %s for user %s on pool %s",
                 assignable_id,
                 user.pretty_name,
                 service_pool.name,
@@ -299,19 +300,21 @@ class UserServiceManager(metaclass=singleton.Singleton):
         @return: cache element
         """
         cache.refresh_from_db()
-        logger.debug('Moving cache %s to level %s', cache, cache_level)
+        logger.debug("Moving cache %s to level %s", cache, cache_level)
         cache_instance = cache.get_instance()
         state = cache_instance.move_to_cache(cache_level)
         cache.cache_level = cache_level
-        cache.save(update_fields=['cache_level'])
+        cache.save(update_fields=["cache_level"])
         logger.debug(
-            'Service State: %a %s %s',
+            "Service State: %a %s %s",
             State.from_str(state).localized,
             State.from_str(cache.state).localized,
             State.from_str(cache.os_state).localized,
         )
         if state.is_runing() and cache.is_usable():
             cache.set_state(State.PREPARING)
+        else:
+            cache.set_state(State.USABLE)
 
         # Data will be serialized on makeUnique process
         UserServiceOpChecker.make_unique(cache, state)
@@ -332,18 +335,20 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service_copy.in_use = False
         user_service_copy.state = State.REMOVED
         user_service_copy.os_state = State.USABLE
-        log.log(user_service_copy, types.log.LogLevel.INFO, 'Service moved to cache')
-
         # Save the new element.
         user_service_copy.save()
 
+        log.log(user_service_copy, types.log.LogLevel.INFO, "Service moved to cache")
+
         # Now, move the original to cache, but do it "hard" way, so we do not need to check for state
-        userservice.state = State.USABLE
+        userservice.state = (
+            State.PREPARING
+        )  # move_to_level will set real final state depending on the result of the operation
         userservice.os_state = State.USABLE
         userservice.user = None
         userservice.cache_level = types.services.CacheLevel.L1
         userservice.in_use = False
-        userservice.src_hostname = userservice.src_ip = ''
+        userservice.src_hostname = userservice.src_ip = ""
         userservice.save()
 
         # Execute back operations to move to level 1
@@ -355,7 +360,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         assigned_increased_by: int = 0,
         l1_cache_increased_by: int = 0,
         l2_cache_increased_by: int = 0,
-    ) -> 'types.services.ServicePoolStats':
+    ) -> "types.services.ServicePoolStats":
         """
         Returns the stats (for cache pourposes) for a service pool.
 
@@ -379,14 +384,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         if service_instance.uses_cache is False:
             logger.debug(
-                'Service pool does not uses cache: %s',
+                "Service pool does not uses cache: %s",
                 servicepool.name,
             )
             return types.services.ServicePoolStats.null()
 
         if servicepool.active_publication() is None and service_instance.publication_type is not None:
             logger.debug(
-                'Service pool needs publication and has none: %s',
+                "Service pool needs publication and has none: %s",
                 servicepool.name,
             )
             return types.services.ServicePoolStats.null()
@@ -394,14 +399,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
         # If it has any running publication, do not generate cache anymore
         if servicepool.publications.filter(state=State.PREPARING).count() > 0:
             logger.debug(
-                'Service pool with publication running: %s',
+                "Service pool with publication running: %s",
                 servicepool.name,
             )
             return types.services.ServicePoolStats.null()
 
         if servicepool.is_restrained():
             logger.debug(
-                'Restrained service pool: %s',
+                "Restrained service pool: %s",
                 servicepool.name,
             )
             return types.services.ServicePoolStats.null()
@@ -424,9 +429,9 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         pool_stat = types.services.ServicePoolStats(
             servicepool,
-            l1_cache_count=counts['l1_cache_count'] + l1_cache_increased_by,
-            l2_cache_count=counts['l2_cache_count'] + l2_cache_increased_by,
-            assigned_count=counts['assigned_count'] + assigned_increased_by,
+            l1_cache_count=counts["l1_cache_count"] + l1_cache_increased_by,
+            l2_cache_count=counts["l2_cache_count"] + l2_cache_increased_by,
+            assigned_count=counts["assigned_count"] + assigned_increased_by,
         )
 
         # if we bypasses max cache, we will reduce it in first place. This is so because this will free resources on service provider
@@ -435,20 +440,20 @@ class UserServiceManager(metaclass=singleton.Singleton):
         # Check for cache overflow
         # We have more than we want
         if pool_stat.has_l1_cache_overflow() or pool_stat.has_l2_cache_overflow():
-            logger.debug('We have more services than max configured.')
+            logger.debug("We have more services than max configured.")
             return pool_stat
 
         # Check for cache needed
         # If this service don't allows more starting user services...
         if not UserServiceManager.manager().can_grow_service_pool(servicepool):
             logger.debug(
-                'This pool cannot grow rithg now: %s',
+                "This pool cannot grow rithg now: %s",
                 servicepool,
             )
             return types.services.ServicePoolStats.null()
 
         if pool_stat.is_l1_cache_growth_required() or pool_stat.is_l2_cache_growth_required():
-            logger.debug('Needs to grow L1 cache for %s', servicepool)
+            logger.debug("Needs to grow L1 cache for %s", servicepool)
             return pool_stat
 
         # If this point reached, we do not need any cache
@@ -462,10 +467,10 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service.refresh_from_db()
 
         if user_service.is_preparing() is False:
-            logger.debug('Cancel requested for a non running operation, performing removal instead')
+            logger.debug("Cancel requested for a non running operation, performing removal instead")
             return self.remove(user_service, forced=True)
 
-        operations_logger.info('Canceling userservice %s', user_service.name)
+        operations_logger.info("Canceling userservice %s", user_service.name)
         user_service_instance = user_service.get_instance()
 
         # We have fixed cancelling
@@ -487,21 +492,17 @@ class UserServiceManager(metaclass=singleton.Singleton):
         """
         with transaction.atomic():
             userservice = UserService.objects.select_for_update().get(id=userservice.id)
-            operations_logger.info('Removing userservice %a', userservice.name)
+            operations_logger.info("Removing userservice %a", userservice.name)
 
             # If already removing or removed, do nothing
             if State.from_str(userservice.state) in (State.REMOVING, State.REMOVED):
-                logger.debug('Userservice %s already removing or removed', userservice.name)
+                logger.debug("Userservice %s already removing or removed", userservice.name)
                 return
 
             if userservice.is_usable() is False and State.from_str(userservice.state).is_removable() is False:
                 if not forced:
                     raise OperationException(
-                        _('Can\'t remove a non active element')
-                        + ': '
-                        + userservice.name
-                        + ', '
-                        + userservice.state
+                        _("Can't remove a non active element") + ": " + userservice.name + ", " + userservice.state
                     )
             userservice.set_state(State.REMOVING)
             logger.debug("***** The state now is %s *****", State.from_str(userservice.state).localized)
@@ -521,7 +522,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             return self.cancel(user_service)
 
         raise OperationException(
-            _('Can\'t remove nor cancel {} cause its state don\'t allow it').format(user_service.name)
+            _("Can't remove nor cancel {} cause its state don't allow it").format(user_service.name)
         )
 
     def release_from_logout(self, userservice: UserService) -> None:
@@ -538,12 +539,12 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         # Some sanity checks, should never happen
         if userservice.cache_level != types.services.CacheLevel.NONE:
-            logger.error('Cache level is not NONE for userservice %s on release_on_logout', userservice)
-            userservice.release()
+            logger.error("Cache level is not NONE for userservice %s on release_on_logout", userservice)
+            # Already on a cache, simply return
             return
 
         if userservice.is_usable() is False:
-            logger.error('State is not USABLE for userservice %s on release_on_logout', userservice)
+            logger.error("State is not USABLE for userservice %s on release_on_logout", userservice)
             userservice.release()
             return
 
@@ -563,13 +564,11 @@ class UserServiceManager(metaclass=singleton.Singleton):
             user=user, state__in=State.VALID_STATES
         )  # , deployed_service__visible=True
         if existing.exists():
-            logger.debug('Found assigned service from %s to user %s', service_pool, user.name)
+            logger.debug("Found assigned service from %s to user %s", service_pool, user.name)
             return existing.first()
         return None
 
-    def get_assignation_for_user(
-        self, servicepool: ServicePool, user: User
-    ) -> UserService | None:  # pylint: disable=too-many-branches
+    def get_assignation_for_user(self, servicepool: ServicePool, user: User) -> UserService | None:  # pylint: disable=too-many-branches
         if servicepool.service.get_instance().spawns_new is False:  # Locate first if we have an assigned one
             assigned_userservice = self.get_existing_assignation_for_user(servicepool, user)
         else:
@@ -580,10 +579,10 @@ class UserServiceManager(metaclass=singleton.Singleton):
             return assigned_userservice
 
         if servicepool.is_restrained():
-            raise InvalidServiceException(_('The requested service is restrained'))
+            raise InvalidServiceException(_("The requested service is restrained"))
 
         if servicepool.can_create_userservices() is False:
-            raise InvalidServiceException(_('Cannot create user services for this service'))
+            raise InvalidServiceException(_("Cannot create user services for this service"))
 
         if servicepool.uses_cache:
             cache: UserService | None = None
@@ -643,7 +642,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 cache.assign_to(user)
 
                 logger.debug(
-                    'Found a cached-ready service from %s for user %s, item %s',
+                    "Found a cached-ready service from %s for user %s, item %s",
                     servicepool,
                     user,
                     cache,
@@ -684,7 +683,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 cache.assign_to(user)
 
                 logger.debug(
-                    'Found a cached-preparing service from %s for user %s, item %s',
+                    "Found a cached-preparing service from %s for user %s, item %s",
                     servicepool,
                     user,
                     cache,
@@ -702,9 +701,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             service_type = servicepool.service.get_type()
             if service_type.uses_cache:
                 in_assigned = (
-                    servicepool.assigned_user_services()
-                    .filter(self.get_state_filter(servicepool.service))
-                    .count()
+                    servicepool.assigned_user_services().filter(self.get_state_filter(servicepool.service)).count()
                 )
                 if (
                     in_assigned >= servicepool.max_srvs
@@ -712,7 +709,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     log.log(
                         servicepool,
                         types.log.LogLevel.WARNING,
-                        f'Max number of services reached: {servicepool.max_srvs}',
+                        f"Max number of services reached: {servicepool.max_srvs}",
                         types.log.LogSource.INTERNAL,
                     )
                     raise MaxServicesReachedError()
@@ -721,23 +718,19 @@ class UserServiceManager(metaclass=singleton.Singleton):
             events.add_event(servicepool, events.types.stats.EventType.CACHE_MISS, fld1=0)
         return self.create_assigned_for(servicepool, user)
 
-    def count_userservices_in_states_for_provider(self, provider: 'models.Provider', states: list[str]) -> int:
+    def count_userservices_in_states_for_provider(self, provider: "models.Provider", states: list[str]) -> int:
         """
         Returns the number of services of a service provider in the state indicated
         """
-        return UserService.objects.filter(
-            deployed_service__service__provider=provider, state__in=states
-        ).count()
+        return UserService.objects.filter(deployed_service__service__provider=provider, state__in=states).count()
 
     # Avoids too many complex queries to database
-    @cached(prefix='max_srvs', timeout=30)  # Less than user service removal check time
+    @cached(prefix="max_srvs", timeout=30)  # Less than user service removal check time
     def is_userservice_removal_allowed(self, service_pool: ServicePool) -> bool:
         """
         checks if we can do a "remove" from a deployed service
         """
-        removing = self.count_userservices_in_states_for_provider(
-            service_pool.service.provider, [State.REMOVING]
-        )
+        removing = self.count_userservices_in_states_for_provider(service_pool.service.provider, [State.REMOVING])
         service_instance = service_pool.service.get_instance()
         if (
             (
@@ -769,26 +762,26 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
     def is_ready(self, user_service: UserService) -> bool:
         user_service.refresh_from_db()
-        logger.debug('Checking ready of %s', user_service)
+        logger.debug("Checking ready of %s", user_service)
 
         if user_service.state != State.USABLE or user_service.os_state != State.USABLE:
-            logger.debug('State is not usable for %s', user_service.name)
+            logger.debug("State is not usable for %s", user_service.name)
             return False
 
-        logger.debug('Service %s is usable, checking it via set_ready', user_service)
+        logger.debug("Service %s is usable, checking it via set_ready", user_service)
         userservice_instance = user_service.get_instance()
         try:
             state = userservice_instance.set_ready()
         except Exception as e:
-            logger.warning('Could not check readyness of %s: %s', user_service, e)
+            logger.warning("Could not check readyness of %s: %s", user_service, e)
             return False
 
         if state == types.states.TaskState.ERROR:
             user_service.update_data(userservice_instance)
             user_service.set_state(State.ERROR)
-            raise InvalidServiceException('Service missing or in error state')
+            raise InvalidServiceException("Service missing or in error state")
 
-        logger.debug('State: %s', state)
+        logger.debug("State: %s", state)
 
         if state == types.states.TaskState.FINISHED:
             user_service.update_data(userservice_instance)
@@ -805,7 +798,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         if not userservice.deployed_service.service.get_type().can_reset:
             return
 
-        operations_logger.info('Reseting %s', userservice)
+        operations_logger.info("Reseting %s", userservice)
 
         userservice_instance = userservice.get_instance()
         try:
@@ -815,14 +808,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
             log.log(
                 userservice,
                 types.log.LogLevel.INFO,
-                'Service reset by user',
+                "Service reset by user",
                 types.log.LogSource.WEB,
             )
         except Exception:
-            logger.exception('Reseting service')
+            logger.exception("Reseting service")
             return
 
-        logger.debug('State: %s', state)
+        logger.debug("State: %s", state)
 
         if state == types.states.TaskState.FINISHED:
             userservice.update_data(userservice_instance)
@@ -873,7 +866,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     and userservice.publication.id != active_publication.id
                 ):
                     logger.debug(
-                        'Old revision of user service, marking as removable: %s',
+                        "Old revision of user service, marking as removable: %s",
                         userservice,
                     )
                     remove = True
@@ -883,14 +876,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
     def notify_ready_from_os_manager(self, userservice: UserService, data: typing.Any) -> None:
         try:
-            logger.debug('Notifying user service ready state')
+            logger.debug("Notifying user service ready state")
             state = userservice.get_instance().process_ready_from_os_manager(data)
-            logger.debug('State: %s', state)
+            logger.debug("State: %s", state)
             if state == types.states.TaskState.FINISHED:
                 userservice.update_data(userservice.get_instance())
                 if ip := userservice.get_instance().get_ip():
                     userservice.log_ip(ip)
-                logger.debug('Service is now ready')
+                logger.debug("Service is now ready")
             elif userservice.state in (
                 State.USABLE,
                 State.PREPARING,
@@ -898,9 +891,9 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 userservice.set_state(State.PREPARING)
                 # Make unique will make sure that we do not have same machine twice
                 UserServiceOpChecker.make_unique(userservice, state)
-            userservice.save(update_fields=['os_state'])
+            userservice.save(update_fields=["os_state"])
         except Exception as e:
-            logger.exception('Unhandled exception on notyfyready: %s', e)
+            logger.exception("Unhandled exception on notyfyready: %s", e)
             userservice.set_state(State.ERROR)
             return
 
@@ -915,19 +908,19 @@ class UserServiceManager(metaclass=singleton.Singleton):
         """
         kind, uuid_userservice_pool = userservice_id[0], userservice_id[1:]
 
-        logger.debug('Kind of service: %s, idservice: %s', kind, uuid_userservice_pool)
+        logger.debug("Kind of service: %s, idservice: %s", kind, uuid_userservice_pool)
         userservice: UserService | None = None
 
-        if kind in 'A':  # This is an assigned service
-            logger.debug('Getting assigned user service %s', uuid_userservice_pool)
+        if kind in "A":  # This is an assigned service
+            logger.debug("Getting assigned user service %s", uuid_userservice_pool)
             try:
                 userservice = UserService.objects.get(uuid=uuid_userservice_pool, user=user)
                 userservice.service_pool.validate_user(user)
             except UserService.DoesNotExist:
-                logger.debug('Service does not exist')
+                logger.debug("Service does not exist")
                 return None
         else:
-            logger.debug('Getting service pool %s', uuid_userservice_pool)
+            logger.debug("Getting service pool %s", uuid_userservice_pool)
             try:
                 service_pool: ServicePool = ServicePool.objects.get(uuid=uuid_userservice_pool)
                 # We first do a sanity check for this, if the user has access to this service
@@ -940,10 +933,10 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 else:  # Sometimes maybe we only need to locate the existint user service
                     userservice = self.get_existing_assignation_for_user(service_pool, user)
             except ServicePool.DoesNotExist:
-                logger.debug('Service pool does not exist')
+                logger.debug("Service pool does not exist")
                 return None
 
-        logger.debug('Found service: %s', userservice)
+        logger.debug("Found service: %s", userservice)
 
         if userservice and userservice.state == State.ERROR:
             return None
@@ -953,7 +946,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
     def get_user_service_info(  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         self,
         user: User,
-        os: 'types.os.DetectedOsInfo',
+        os: "types.os.DetectedOsInfo",
         src_ip: str,
         user_service_id: str,
         transport_id: str | None,
@@ -975,14 +968,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
         Returns:
             UserServiceInfo: User service info
         """
-        if user_service_id[0] == 'M':  # Meta pool
-            return self.get_meta_service_info(user, src_ip, os, user_service_id[1:], transport_id or 'meta')
+        if user_service_id[0] == "M":  # Meta pool
+            return self.get_meta_service_info(user, src_ip, os, user_service_id[1:], transport_id or "meta")
 
         userservice = self.locate_user_service(user, user_service_id, create=True)
 
         if not userservice:
             raise InvalidServiceException(
-                _('Invalid service. The service is not available at this moment. Please, try later')
+                _("Invalid service. The service is not available at this moment. Please, try later")
             )
 
         # Early log of "access try" so we can imagine what is going on
@@ -995,7 +988,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             raise ServiceAccessDeniedByCalendar()
 
         if not transport_id:  # Find a suitable transport
-            for transport in userservice.deployed_service.transports.order_by('priority'):
+            for transport in userservice.deployed_service.transports.order_by("priority"):
                 transport_type = transport.get_type()
                 if (
                     transport_type
@@ -1006,12 +999,12 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     transport_id = transport.uuid
                     break
             else:
-                raise InvalidServiceException(_('No suitable transport found'))
+                raise InvalidServiceException(_("No suitable transport found"))
 
         try:
             transport = Transport.objects.get(uuid=transport_id)
         except Transport.DoesNotExist:
-            raise InvalidServiceException(_('No suitable transport found'))
+            raise InvalidServiceException(_("No suitable transport found"))
 
         # Ensures that the transport is allowed for this service
         if userservice.deployed_service.transports.filter(id=transport.id).count() == 0:
@@ -1019,11 +1012,11 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         # If transport is not available for the request IP...
         if not transport.is_ip_allowed(src_ip):
-            msg = _('The requested transport {} is not valid for {}').format(transport.name, src_ip)
+            msg = _("The requested transport {} is not valid for {}").format(transport.name, src_ip)
             logger.error(msg)
             raise InvalidServiceException(msg)
 
-        full_username = user.pretty_name if user else 'unknown'
+        full_username = user.pretty_name if user else "unknown"  # pyrefly: ignore[redundant-condition]
 
         if not test_userservice_status:
             # traceLogger.info('GOT service "{}" for user "{}" with transport "{}" (NOT TESTED)'.format(userService.name, userName, trans.name))
@@ -1035,7 +1028,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             # return None, userservice, None, transport, None
 
         userservice_status: types.services.ReadyStatus = types.services.ReadyStatus.USERSERVICE_NOT_READY
-        ip = 'unknown'
+        ip = "unknown"
         # Test if the service is ready
         if userservice.is_ready():
             # Is ready, update possible state
@@ -1050,17 +1043,17 @@ class UserServiceManager(metaclass=singleton.Singleton):
             userservice_instance = userservice.get_instance()
             ip = userservice_instance.get_ip()
             userservice.log_ip(ip)  # Update known ip
-            logger.debug('IP: %s', ip)
+            logger.debug("IP: %s", ip)
 
             if self.check_user_service_uuid(userservice) is False:  # The service is not the expected one
                 userservice_status = types.services.ReadyStatus.USERSERVICE_INVALID_UUID
                 log.log(
                     userservice,
                     types.log.LogLevel.WARNING,
-                    f'User service is not accessible due to invalid UUID (user: {user.pretty_name}, ip: {ip})',
+                    f"User service is not accessible due to invalid UUID (user: {user.pretty_name}, ip: {ip})",
                     types.log.LogSource.TRANSPORT,
                 )
-                logger.debug('UUID check failed for user service %s', userservice)
+                logger.debug("UUID check failed for user service %s", userservice)
             else:
                 events.add_event(
                     userservice.deployed_service,
@@ -1074,12 +1067,10 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     userservice_status = types.services.ReadyStatus.TRANSPORT_NOT_READY
                     transport_instance = transport.get_instance()
                     if transport_instance.is_ip_allowed(userservice, ip):
-                        log.log(
-                            userservice, types.log.LogLevel.INFO, "User service ready", types.log.LogSource.WEB
-                        )
+                        log.log(userservice, types.log.LogLevel.INFO, "User service ready", types.log.LogSource.WEB)
                         self.notify_preconnect(
                             userservice,
-                            transport_instance.get_connection_info(userservice, user, '', for_notify=True),
+                            transport_instance.get_connection_info(userservice, user, "", for_notify=True),
                         )
                         trace_logger.info(
                             'READY on service "%s" for user "%s" with transport "%s" (ip:%s)',
@@ -1098,17 +1089,17 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     message = transport_instance.get_available_error_msg(userservice, ip)
                     log.log(userservice, types.log.LogLevel.WARNING, message, types.log.LogSource.TRANSPORT)
                     logger.debug(
-                        'Transport is not ready for user service %s: %s',
+                        "Transport is not ready for user service %s: %s",
                         userservice,
                         message,
                     )
                 else:
-                    logger.debug('Ip not available from user service %s', userservice)
+                    logger.debug("Ip not available from user service %s", userservice)
         else:
             log.log(
                 userservice,
                 types.log.LogLevel.WARNING,
-                f'User {user.pretty_name} from {src_ip} tried to access, but service was not ready',
+                f"User {user.pretty_name} from {src_ip} tried to access, but service was not ready",
                 types.log.LogSource.WEB,
             )
 
@@ -1123,18 +1114,16 @@ class UserServiceManager(metaclass=singleton.Singleton):
         raise ServiceNotReadyError(code=userservice_status, user_service=userservice, transport=transport)
 
     def is_meta_service(self, meta_id: str) -> bool:
-        return meta_id[0] == 'M'
+        return meta_id[0] == "M"
 
     def locate_meta_service(self, user: User, id_metapool: str) -> UserService | None:
         kind, uuid_metapool = id_metapool[0], id_metapool[1:]
-        if kind != 'M':
+        if kind != "M":
             return None
 
         meta: MetaPool = MetaPool.objects.get(uuid=uuid_metapool)
         # Get pool members. Just pools enabled, that are "visible" and "usable"
-        pools = [
-            p.pool for p in meta.members.filter(enabled=True) if p.pool.is_visible() and p.pool.is_usable()
-        ]
+        pools = [p.pool for p in meta.members.filter(enabled=True) if p.pool.is_visible() and p.pool.is_usable()]
         # look for an existing user service in the pool
         try:
             return UserService.objects.filter(
@@ -1142,7 +1131,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 state__in=State.VALID_STATES,
                 user=user,
                 cache_level=0,
-            ).order_by('deployed_service__name')[0]
+            ).order_by("deployed_service__name")[0]
         except IndexError:
             return None
 
@@ -1150,12 +1139,12 @@ class UserServiceManager(metaclass=singleton.Singleton):
         self,
         user: User,
         src_ip: str,
-        os: 'types.os.DetectedOsInfo',
+        os: "types.os.DetectedOsInfo",
         id_metapool: str,
         id_transport: str,
         client_hostname: str | None = None,
     ) -> types.services.UserServiceInfo:
-        logger.debug('This is meta')
+        logger.debug("This is meta")
         # We need to locate the service pool related to this meta, and also the transport
         # First, locate if there is a service in any pool associated with this metapool
         meta: MetaPool = MetaPool.objects.get(uuid=id_metapool)
@@ -1165,9 +1154,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             raise ServiceAccessDeniedByCalendar()
 
         # Get pool members. Just pools "visible" and "usable"
-        metapool_members = [
-            p for p in meta.members.filter(enabled=True) if p.pool.is_visible() and p.pool.is_usable()
-        ]
+        metapool_members = [p for p in meta.members.filter(enabled=True) if p.pool.is_visible() and p.pool.is_usable()]
         # Sort pools array. List of tuples with (priority, pool)
         pools_sorted: list[tuple[int, ServicePool]]
         # Sort pools based on meta selection
@@ -1178,9 +1165,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         else:
             pools_sorted = [
                 (
-                    random.randint(
-                        0, 10000
-                    ),  # nosec: just a suffle, not a crypto (to get a round robin-like behavior)
+                    random.randint(0, 10000),  # nosec: just a suffle, not a crypto (to get a round robin-like behavior)
                     p.pool,
                 )
                 for p in metapool_members
@@ -1200,7 +1185,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             else:
                 pools.append(p[1])
 
-        logger.debug('Pools: %s/%s', pools, fully_occupied_pools)
+        logger.debug("Pools: %s/%s", pools, fully_occupied_pools)
 
         usable: tuple[ServicePool, Transport] | None = None
         # Now, Lets find first if there is one assigned in ANY pool
@@ -1210,13 +1195,13 @@ class UserServiceManager(metaclass=singleton.Singleton):
         ) -> tuple[ServicePool, Transport] | None:
             found = None
             t: Transport
-            if id_transport == 'meta':  # Autoselected:
+            if id_transport == "meta":  # Autoselected:
                 q = pool.transports.all()
-            elif id_transport[:6] == 'LABEL:':
+            elif id_transport[:6] == "LABEL:":
                 q = pool.transports.filter(label=id_transport[6:])
             else:
                 q = pool.transports.filter(uuid=id_transport)
-            for t in q.order_by('priority'):
+            for t in q.order_by("priority"):
                 transport_type = t.get_type()
                 if (
                     transport_type
@@ -1236,8 +1221,8 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 state__in=State.VALID_STATES,
                 user=user,
                 cache_level=0,
-            ).order_by('deployed_service__name')[0]
-            logger.debug('Already assigned %s', already_assigned)
+            ).order_by("deployed_service__name")[0]
+            logger.debug("Already assigned %s", already_assigned)
             # If already assigned, and HA is enabled, check if it is accessible
             if meta.ha_policy == types.pools.HighAvailabilityPolicy.ENABLED:
                 # Check that servide is accessible
@@ -1255,7 +1240,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     user,
                     os,
                     src_ip,
-                    'F' + usable[0].uuid,
+                    "F" + usable[0].uuid,
                     usable[1].uuid,
                     test_userservice_status=False,
                     client_hostname=client_hostname,
@@ -1280,14 +1265,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
                             user,
                             os,
                             src_ip,
-                            'F' + usable[0].uuid,
+                            "F" + usable[0].uuid,
                             usable[1].uuid,
                             test_userservice_status=False,
                             client_hostname=client_hostname,
                         )
                     except Exception as e:
                         logger.info(
-                            'Meta service %s:%s could not be assigned, trying a new one',
+                            "Meta service %s:%s could not be assigned, trying a new one",
                             usable[0].name,
                             e,
                         )
@@ -1296,7 +1281,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         log.log(
             meta,
             types.log.LogLevel.WARNING,
-            f'No user service accessible from device (ip {src_ip}, os: {os.os.name})',
+            f"No user service accessible from device (ip {src_ip}, os: {os.os.name})",
             types.log.LogSource.SERVICE,
         )
-        raise InvalidServiceException(_('The service is not accessible from this device'))
+        raise InvalidServiceException(_("The service is not accessible from this device"))

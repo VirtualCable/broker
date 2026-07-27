@@ -29,8 +29,9 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import datetime
+
 import calendar
+import datetime
 
 
 # Some helpers

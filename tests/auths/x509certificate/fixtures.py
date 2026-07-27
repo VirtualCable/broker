@@ -28,30 +28,75 @@
 import contextlib
 import dataclasses
 import datetime
-import typing
+import hashlib
+import hmac as hmac_module
+import json
+import os
+import collections.abc
+
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import padding as sym_padding
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import modes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
-from uds.core.environment import Environment
 from uds.auths.X509Certificate.authenticator import X509CertificateAuthenticator
-from uds.core.types.auth import AuthTypeGroup
+from uds.core.environment import Environment
+
+# Test shared secret — must match DATA_TEMPLATE
+_TEST_SHARED_SECRET = "test-shared-secret"
+
+
+def _derive_keys(shared_secret: str) -> tuple[bytes, bytes, bytes]:
+    secret = shared_secret.encode()
+    enc_key = hashlib.sha256(secret + b"enc").digest()
+    mac_key = hashlib.sha256(secret + b"mac").digest()
+    sign_key = hashlib.sha256(secret + b"sign").digest()
+    return enc_key, mac_key, sign_key
+
+
+def encrypt_payload(cert_pem: str, shared_secret: str = _TEST_SHARED_SECRET, ticket_id: str = "") -> str:
+    """Simulate the bridge service: encrypt + sign a cert payload. Returns base64 string."""
+    import base64
+
+    data: dict[str, str] = {"cert": cert_pem}
+    if ticket_id:
+        data["ticket"] = ticket_id
+    payload = json.dumps(data).encode()
+    enc_key, mac_key, _ = _derive_keys(shared_secret)
+
+    # AES-256-CBC
+    iv = os.urandom(16)
+    padder = sym_padding.PKCS7(128).padder()
+    padded = padder.update(payload) + padder.finalize()
+
+    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(padded) + encryptor.finalize()
+
+    # HMAC
+    mac = hmac_module.new(mac_key, iv + ciphertext, hashlib.sha256).digest()
+
+    return base64.b64encode(iv + ciphertext + mac).decode()
 
 
 def _build_name(**kwargs: str) -> x509.Name:
     """Build an x509.Name from keyword arguments (CN=..., O=..., etc.)."""
     oid_map: dict[str, x509.ObjectIdentifier] = {
-        'CN': NameOID.COMMON_NAME,
-        'O': NameOID.ORGANIZATION_NAME,
-        'OU': NameOID.ORGANIZATIONAL_UNIT_NAME,
-        'C': NameOID.COUNTRY_NAME,
-        'ST': NameOID.STATE_OR_PROVINCE_NAME,
-        'L': NameOID.LOCALITY_NAME,
-        'SERIALNUMBER': NameOID.SERIAL_NUMBER,
-        'E': NameOID.EMAIL_ADDRESS,
+        "CN": NameOID.COMMON_NAME,
+        "O": NameOID.ORGANIZATION_NAME,
+        "OU": NameOID.ORGANIZATIONAL_UNIT_NAME,
+        "C": NameOID.COUNTRY_NAME,
+        "ST": NameOID.STATE_OR_PROVINCE_NAME,
+        "L": NameOID.LOCALITY_NAME,
+        "SERIALNUMBER": NameOID.SERIAL_NUMBER,
+        "E": NameOID.EMAIL_ADDRESS,
     }
     return x509.Name([x509.NameAttribute(oid_map[k], v) for k, v in kwargs.items()])
 
@@ -65,7 +110,8 @@ def _build_cert(
     ca: bool = False,
 ) -> x509.Certificate:
     """Build a certificate signed by issuer_key."""
-    from cryptography.x509 import BasicConstraints, CertificateBuilder
+    from cryptography.x509 import BasicConstraints
+    from cryptography.x509 import CertificateBuilder
 
     builder = (
         CertificateBuilder()
@@ -96,8 +142,8 @@ class CertFixture:
 
 
 def make_rsa_fixture(
-    ca_cn: str = 'Test RSA CA',
-    client_cn: str = 'testuser_rsa',
+    ca_cn: str = "Test RSA CA",
+    client_cn: str = "testuser_rsa",
 ) -> CertFixture:
     """Generate an RSA CA + client certificate pair for testing."""
     ca_key = rsa.generate_private_key(65537, 2048)
@@ -124,8 +170,8 @@ def make_rsa_fixture(
 
 
 def make_ec_fixture(
-    ca_cn: str = 'Test EC CA',
-    client_cn: str = 'testuser_ec',
+    ca_cn: str = "Test EC CA",
+    client_cn: str = "testuser_ec",
 ) -> CertFixture:
     """Generate an EC CA + client certificate pair for testing."""
     ca_key = ec.generate_private_key(ec.SECP256R1())
@@ -152,27 +198,29 @@ def make_ec_fixture(
 
 
 DATA_TEMPLATE: dict[str, str] = {
-    'name': 'X509Certificate',
-    'ca_certificate': '',  # filled by fixture
-    'trusted_issuer': '',  # optional
-    'username_attr': 'CN=([^,]*)',
-    'realname_attr': 'CN=([^,]*)',
-    'common_groups': 'x509_users',
+    "name": "X509Certificate",
+    "ca_certificate": "",  # filled by fixture
+    "trusted_issuer": "",  # optional
+    "username_attr": "CN=([^,]*)",
+    "realname_attr": "CN=([^,]*)",
+    "common_groups": "x509_users",
+    "remote_url": "https://cert-auth.example.com",
+    "shared_secret": _TEST_SHARED_SECRET,
 }
 
 
 @contextlib.contextmanager
 def create_authenticator(
     fixture: CertFixture,
-    trusted_issuer: str = '',
-    username_attr: str = 'CN=([^,]*)',
-    common_groups: str = 'x509_users',
-) -> typing.Iterator[X509CertificateAuthenticator]:
+    trusted_issuer: str = "",
+    username_attr: str = "CN=([^,]*)",
+    common_groups: str = "x509_users",
+) -> collections.abc.Generator[X509CertificateAuthenticator, None, None]:
     with Environment.temporary_environment() as env:
         data = DATA_TEMPLATE.copy()
-        data['ca_certificate'] = fixture.ca_pem
-        data['trusted_issuer'] = trusted_issuer
-        data['username_attr'] = username_attr
-        data['common_groups'] = common_groups
+        data["ca_certificate"] = fixture.ca_pem
+        data["trusted_issuer"] = trusted_issuer
+        data["username_attr"] = username_attr
+        data["common_groups"] = common_groups
         instance = X509CertificateAuthenticator(environment=env, values=data)
         yield instance

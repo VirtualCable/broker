@@ -46,9 +46,9 @@ class UtilityWebTest(test.WEBTestCase):
         Test login and logout
         """
         for error_type in types.errors.Error:
-            response = self.client.get(reverse('webapi.error', kwargs={'err': error_type}))
+            response = self.client.get(reverse("webapi.error", kwargs={"err": error_type}))
             self.assertEqual(response.status_code, 200)
             # Response should be {"error": "error message", "code": error code as string}
             data = response.json()
-            self.assertEqual(data['error'], error_type.message)
-            self.assertEqual(int(data['code']), error_type.value)
+            self.assertEqual(data["error"], error_type.message)
+            self.assertEqual(int(data["code"]), error_type.value)

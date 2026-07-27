@@ -30,7 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import datetime
+
 import logging
 import typing
 
@@ -39,51 +39,42 @@ from uds.core.util import factory
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
-    from .job import Job
+    from .job import Job as Job
 
 
-class JobsFactory(factory.Factory['Job']):
+class JobsFactory(factory.Factory["Job"]):
     def ensure_jobs_registered(self) -> None:
         """
         Ensures that uds core workers are correctly registered in database and in factory
         """
-        from uds.models import Scheduler  # pylint: disable=import-outside-toplevel
-        from uds.core.util.model import sql_now  # pylint: disable=import-outside-toplevel
-        from uds.core.types.states import State  # pylint: disable=import-outside-toplevel
         from uds import workers  # pylint: disable=import-outside-toplevel
+        from uds.core.types.states import State  # pylint: disable=import-outside-toplevel
+        from uds.core.util.model import sql_now  # pylint: disable=import-outside-toplevel
+        from uds.models import Scheduler  # pylint: disable=import-outside-toplevel
 
         try:
-            logger.debug('Ensuring that jobs are registered inside database')
+            logger.debug("Ensuring that jobs are registered inside database")
             # Ensure workers are initialized
             # That is, dynamic load of packages and registration of jobs on manager
             workers.initialize()
-            for name, type_ in self.objects().items():
+            for name, _type in self.objects().items():
                 try:
-                    type_.setup()
-                    # We use database server datetime
                     now = sql_now()
-                    next_ = now
                     Scheduler.objects.create(
                         name=name,
-                        frecuency=type_.frecuency,
                         last_execution=now,
-                        next_execution=next_,
+                        next_execution=now,
                         state=State.FOR_EXECUTE,
                     )
                 except Exception:  # already exists
-                    logger.debug('Already added %s', name)
-                    job = Scheduler.objects.get(name=name)
-                    job.frecuency = type_.frecuency
-                    if job.next_execution > job.last_execution + datetime.timedelta(seconds=type_.frecuency):
-                        job.next_execution = job.last_execution + datetime.timedelta(seconds=type_.frecuency)
-                    job.save()
+                    logger.debug("Already added %s", name)
         except Exception as e:
             logger.debug(
-                'Exception at ensure_jobs_registered in JobsFactory: %s, %s',
+                "Exception at ensure_jobs_registered in JobsFactory: %s, %s",
                 e.__class__,
                 e,
             )
 
     @staticmethod
-    def factory() -> 'JobsFactory':
+    def factory() -> "JobsFactory":
         return JobsFactory()

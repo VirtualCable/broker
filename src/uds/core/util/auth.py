@@ -29,14 +29,49 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import collections.abc
-import re
-import logging
 
-from uds.core import ui, exceptions
+import collections.abc
+import logging
+import re
+import unicodedata
+
+from uds.core import exceptions
+from uds.core import ui
 from uds.core.util import ensure
 
 logger = logging.getLogger(__name__)
+
+
+# Characters that should never end up in a user identifier:
+#   Cc  = control (NUL, TAB, ...)
+#   Cf  = format (BOM U+FEFF, ZWSP U+200B, ZWNJ U+200C, ZWJ U+200D, RTL/LTR marks, soft hyphen U+00AD, ...)
+#   Cs  = surrogate (invalid in Python str)
+_INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Cs"})
+
+
+def normalize_username(username: str) -> str:
+    """
+    Returns a canonical form of ``username`` so visually identical strings compare equal.
+
+    Strips invisible / formatting / control code points that some IdPs or copy-paste
+    sources embed in attribute values (BOM U+FEFF, ZWSP U+200B, soft hyphen U+00AD,
+    RTL/LTR marks, ...), composes the result (NFC) and trims surrounding whitespace.
+    Does not alter case.
+
+    NFC and not NFKC: compatibility folding maps distinct code points onto the same
+    ASCII (fullwidth ｊohn → john, Ⅰsabel → Isabel), so two *different* identities of
+    the directory would collapse into a single UDS user, and one would inherit the
+    other's groups and assigned services.
+
+    Composing *after* the strip and not before is not cosmetic: an invisible char
+    between a base letter and its combining mark blocks composition, so normalizing
+    first would leave "e" + U+0301 decomposed once the ZWJ is removed, and it would
+    no longer match the precomposed "é" the next login sends.
+    """
+    if not username:
+        return username
+    username = "".join(ch for ch in username if unicodedata.category(ch) not in _INVISIBLE_CATEGORIES)
+    return unicodedata.normalize("NFC", username).strip()
 
 
 def validate_regex_field(field: ui.gui.TextField, field_value: str | None = None) -> None:
@@ -44,38 +79,40 @@ def validate_regex_field(field: ui.gui.TextField, field_value: str | None = None
     Validates the multi line fields refering to attributes
     """
     value: str = field_value or field.value
-    if value.strip() == '':
+    if value.strip() == "":
         return  # Ok, empty
 
     for line in value.splitlines():
-        if line.find('=') != -1:
-            pattern = line.split('=')[0:2][1]
-            if pattern.find('(') == -1:
-                pattern = '(' + pattern + ')'
+        if line.find("=") != -1:
+            pattern = line.split("=")[0:2][1]
+            if pattern.find("(") == -1:
+                pattern = "(" + pattern + ")"
             try:
-                re.search(pattern, '')
+                re.search(pattern, "")
             except Exception as e:
-                raise exceptions.ui.ValidationError(f'Invalid pattern at {field.label}: {line}') from e
+                raise exceptions.ui.ValidationError(f"Invalid pattern at {field.label}: {line}") from e
 
 
-def get_attributes_regex_field(field: 'ui.gui.TextField|str') -> set[str]:
+def get_attributes_regex_field(field: "ui.gui.TextField|str") -> set[str]:
     """
     Returns a dict of attributes from a multiline field
     """
     content: str = (field.value if isinstance(field, ui.gui.TextField) else field).strip()
 
-    if content == '':
+    if content == "":
         return set()
 
     res: set[str] = set()
     for line in content.splitlines():
-        attr, _pattern = (line.split('=')[0:2] + [''])[0:2]  # Endure 2 values
+        attr, _pattern = (line.split("=")[0:2] + [""])[0:2]  # Endure 2 values
 
         # If attributes concateated with +, add all
-        if '+' in attr:
-            res.update(attr.split('+'))
-        elif ':' in attr:  # lower precedence than +
-            res.add(attr.split(':')[0])
+        if "+" in attr:
+            res.update(attr.split("+"))
+        elif "**" in attr:  # lower precedence than +; "attr**prefix" — request the actual attribute
+            res.add(attr.split("**", 1)[0])
+        elif ":" in attr:  # lower precedence than +; "prefix:attr" — request the actual attribute
+            res.add(attr.split(":", 1)[1])
         else:  # If not, add the attribute
             res.add(attr)
 
@@ -92,60 +129,62 @@ def process_regex_field(field: str, attributes: collections.abc.Mapping[str, str
     try:
         res: list[str] = []
         field = field.strip()
-        if field == '':
+        if field == "":
             return res
 
         def _get_attr(attr_name: str) -> list[str]:
             try:
                 val: list[str] = []
-                if '+' in attr_name:
-                    attrs_list = attr_name.split('+')
+                if "+" in attr_name:
+                    attrs_list = attr_name.split("+")
                     # Check all attributes are present, and has only one value
-                    attrs_values = [ensure.as_list(attributes.get(a, [''])) for a in attrs_list]
+                    attrs_values = [ensure.as_list(attributes.get(a, [""])) for a in attrs_list]
                     if not all([len(v) <= 1 for v in attrs_values]):
-                        logger.warning(
-                            'Attribute %s do not has exactly one value, skipping %s', attr_name, line
-                        )
+                        logger.warning("Attribute %s do not has exactly one value, skipping %s", attr_name, line)
                         return val
 
-                    val = [''.join(v) for v in attrs_values]  # flatten
-                elif '**' in attr_name:
-                    # Prepend the value after : to attribute value before :
-                    attr, prependable = attr_name.split('**')
+                    val = ["".join(v) for v in attrs_values]  # flatten
+                elif "**" in attr_name:
+                    # Prepend the value after ** to attribute value before **
+                    attr, prependable = attr_name.split("**")
                     val = [prependable + a for a in ensure.as_list(attributes.get(attr, []))]
+                elif ":" in attr_name:
+                    # "prefix:attr" — look up attr, prepend prefix to each value (e.g. alumno:alum + "S" -> "alumnoS")
+                    prefix, attr = attr_name.split(":", 1)
+                    val = [prefix + a for a in ensure.as_list(attributes.get(attr, []))]
                 else:
                     val = ensure.as_list(attributes.get(attr_name, []))
                 return val
             except Exception as e:
-                logger.warning('Error processing attribute %s (%s): %s', attr_name, attributes, e)
+                logger.warning("Error processing attribute %s (%s): %s", attr_name, attributes, e)
                 return []
 
         for line in field.splitlines():
-            equal_pos = line.find('=')
+            equal_pos = line.find("=")
             if equal_pos != -1:
                 # attr before first =, pattern after
                 attr, pattern = (line[:equal_pos], line[equal_pos + 1 :])
                 # if pattern do not have groups, define one with full re
-                if pattern.find('(') == -1:
-                    pattern = '(' + pattern + ')'
+                if pattern.find("(") == -1:
+                    pattern = "(" + pattern + ")"
 
                 val = _get_attr(attr)
 
                 for v in val:
                     try:
-                        logger.debug('Pattern: %s on value %s', pattern, v)
+                        logger.debug("Pattern: %s on value %s", pattern, v)
                         srch = re.search(pattern, v)
                         if srch is None:
                             continue
-                        res.append(''.join(srch.groups()))
+                        res.append("".join(srch.groups()))
                     except Exception as e:
-                        logger.warning('Invalid regular expression')
+                        logger.warning("Invalid regular expression")
                         logger.debug(e)
                         break
             else:
                 res += _get_attr(line)
-            logger.debug('Result: %s', res)
+            logger.debug("Result: %s", res)
         return res
     except Exception as e:
-        logger.warning('Error processing field %s (%s): %s', field, attributes, e)
+        logger.warning("Error processing field %s (%s): %s", field, attributes, e)
         return []

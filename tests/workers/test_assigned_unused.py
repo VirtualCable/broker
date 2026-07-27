@@ -28,13 +28,16 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import datetime
+
 from unittest import mock
 
 from uds import models
 from uds.core.environment import Environment
 from uds.core.types.states import State
-from uds.core.util import config, model
+from uds.core.util import config
+from uds.core.util import model
 from uds.workers import assigned_unused as assigned_unused_module
 from uds.workers.assigned_unused import AssignedAndUnused
 
@@ -53,17 +56,14 @@ class AssignedAndUnusedLogoutTest(UDSTestCase):
     user_services: list[models.UserService]
 
     def setUp(self) -> None:
-        config.GlobalConfig.CHECK_UNUSED_TIME.set('600')
-        AssignedAndUnused.setup()
+        config.GlobalConfig.CHECK_UNUSED_TIME.set("600")
         # Unmanaged → service pools without osmanager (the branch we are testing)
-        self.user_services = fixtures_services.create_db_assigned_userservices(
-            count=4, type_='unmanaged'
-        )
+        self.user_services = fixtures_services.create_db_assigned_userservices(count=4, type_="unmanaged")
 
     def _expire(self, user_services: list[models.UserService]) -> None:
         for us in user_services:
             us.state_date = model.sql_now() - datetime.timedelta(seconds=602)
-            us.save(update_fields=['state_date'])
+            us.save(update_fields=["state_date"])
 
     def test_recent_unused_does_nothing(self) -> None:
         """
@@ -72,11 +72,10 @@ class AssignedAndUnusedLogoutTest(UDSTestCase):
         for us in self.user_services:
             us.set_state(State.USABLE)
 
-        with mock.patch.object(
-            assigned_unused_module.osmanagers.OSManager, 'logged_out'
-        ) as logged_out, mock.patch.object(
-            assigned_unused_module.UserServiceManager, 'manager'
-        ) as manager_factory:
+        with (
+            mock.patch.object(assigned_unused_module.osmanagers.OSManager, "logged_out") as logged_out,
+            mock.patch.object(assigned_unused_module.UserServiceManager, "manager") as manager_factory,
+        ):
             AssignedAndUnused(Environment.testing_environment()).run()
 
         logged_out.assert_not_called()
@@ -90,11 +89,10 @@ class AssignedAndUnusedLogoutTest(UDSTestCase):
         """
         self._expire(self.user_services)
 
-        with mock.patch.object(
-            assigned_unused_module.osmanagers.OSManager, 'logged_out'
-        ) as logged_out, mock.patch.object(
-            assigned_unused_module.UserServiceManager, 'manager'
-        ) as manager_factory:
+        with (
+            mock.patch.object(assigned_unused_module.osmanagers.OSManager, "logged_out") as logged_out,
+            mock.patch.object(assigned_unused_module.UserServiceManager, "manager") as manager_factory,
+        ):
             release_from_logout = manager_factory.return_value.release_from_logout
 
             AssignedAndUnused(Environment.testing_environment()).run()
@@ -110,7 +108,7 @@ class AssignedAndUnusedLogoutTest(UDSTestCase):
         self.assertEqual(release_targets, expected)
 
         for call in logged_out.call_args_list:
-            self.assertEqual(call.kwargs.get('username'), 'unused')
+            self.assertEqual(call.kwargs.get("username"), "unused")
 
     def test_expired_unused_release_from_logout_releases(self) -> None:
         """

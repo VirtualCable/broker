@@ -30,11 +30,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-import typing
+
 import collections.abc
-import pickle  # nosec:  Used with care :)
-import lzma
 import logging
+import lzma
+import pickle  # nosec:  Used with care :)
+import typing
 
 from django.conf import settings
 
@@ -42,16 +43,16 @@ from uds.core.managers.crypto import CryptoManager
 
 logger = logging.getLogger(__name__)
 
-CURRENT_SERIALIZER_VERSION: typing.Final[bytes] = getattr(settings, 'SERIALIZER_VERSION', 'v0').encode()
+CURRENT_SERIALIZER_VERSION: typing.Final[bytes] = getattr(settings, "SERIALIZER_VERSION", "v0").encode()
 
 SERIALIZERS: typing.Final[collections.abc.Mapping[bytes, collections.abc.Callable[[typing.Any], bytes]]] = {
-    b'v0': lambda x: x,
-    b'v1': CryptoManager.manager().fast_crypt,
+    b"v0": lambda x: x,
+    b"v1": CryptoManager.manager().fast_crypt,
 }
 
 DESERIALIZERS: typing.Final[collections.abc.Mapping[bytes, collections.abc.Callable[[bytes], bytes]]] = {
-    b'v0': lambda x: x,
-    b'v1': CryptoManager.manager().fast_decrypt,
+    b"v0": lambda x: x,
+    b"v1": CryptoManager.manager().fast_decrypt,
 }
 
 
@@ -68,7 +69,7 @@ def serialize(obj: typing.Any) -> bytes:
     return CURRENT_SERIALIZER_VERSION + data
 
 
-def deserialize(data: typing.Optional[bytes]) -> typing.Any:
+def deserialize(data: bytes | None) -> typing.Any:
     """
     Deserializes an object from a json string
     """
@@ -77,11 +78,9 @@ def deserialize(data: typing.Optional[bytes]) -> typing.Any:
 
     try:
         if data[0:2] in DESERIALIZERS:
-            return pickle.loads(
-                lzma.decompress(DESERIALIZERS[data[0:2]](data[2:]))
-            )  # nosec:  Secured by encryption
+            return pickle.loads(lzma.decompress(DESERIALIZERS[data[0:2]](data[2:])))  # nosec:  Secured by encryption
         # Old version, try to unpickle it
         return pickle.loads(data)  # nosec:  Backward compatibility
     except Exception:  # If error deserialize, return None
-        logger.warning('Deserialization error', exc_info=True)
+        logger.warning("Deserialization error", exc_info=True)
         return None

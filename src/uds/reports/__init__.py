@@ -38,6 +38,7 @@ The registration of modules is done locating subclases of :py:class:`uds.core.re
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -46,7 +47,7 @@ from uds.core.util import modfinder
 
 logger = logging.getLogger(__name__)
 
-available_reports: list[type['reports.Report']] = []
+available_reports: list[type["reports.Report"]] = []
 
 
 def __load_modules() -> None:
@@ -58,7 +59,7 @@ def __load_modules() -> None:
     def _add_report_class(cls: type[reports.Report]) -> None:
         already_seen.add(cls.uuid)
         available_reports.append(cls)
-        
+
     def _checker(cls: type[reports.Report]) -> bool:
         return bool(cls.uuid) and cls.uuid not in already_seen
 
@@ -68,5 +69,6 @@ def __load_modules() -> None:
         __name__,
         checker=_checker,
     )
+
 
 __load_modules()

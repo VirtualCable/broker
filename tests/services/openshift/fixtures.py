@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Test fixtures for OpenShift service tests.
-Provides reusable functions and mock objects for unit testing OpenShift provider, service, deployment, publication, and user service logic.
-All functions are designed to be used across multiple test modules for consistency and maintainability.
-"""
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -34,45 +27,51 @@ All functions are designed to be used across multiple test modules for consisten
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import contextlib
 import copy
 import functools
 import random
 import typing
-from collections.abc import Callable, Generator
-
-from unittest import mock
 import uuid
 
+from collections.abc import Callable
+from collections.abc import Generator
+from unittest import mock
 
 from uds.core import environment
 from uds.core.ui.user_interface import gui
 from uds.models.user import User
-
-from uds.services.OpenShift import service, service_fixed, provider, publication, deployment, deployment_fixed
-from uds.services.OpenShift.openshift import types as openshift_types, exceptions as oshift_exceptions
+from uds.services.OpenShift import deployment
+from uds.services.OpenShift import deployment_fixed
+from uds.services.OpenShift import provider
+from uds.services.OpenShift import publication
+from uds.services.OpenShift import service
+from uds.services.OpenShift import service_fixed
+from uds.services.OpenShift.openshift import exceptions as oshift_exceptions
+from uds.services.OpenShift.openshift import types as openshift_types
 
 DEF_VMS: list[openshift_types.VM] = [
     openshift_types.VM(
-        name=f'vm-{i}',
-        namespace='default',
-        uid=f'uid-{i}',
+        name=f"vm-{i}",
+        namespace="default",
+        uid=f"uid-{i}",
         status=openshift_types.State.STOPPED if i % 2 == 0 else openshift_types.State.RUNNING,
-        volume_template=openshift_types.VolumeTemplate(name=f'volume-{i}', storage='10Gi'),
-        disks=[openshift_types.DeviceDisk(name=f'disk-{i}', boot_order=1)],
-        volumes=[openshift_types.Volume(name=f'volume-{i}', data_volume=f'dv-{i}')],
+        volume_template=openshift_types.VolumeTemplate(name=f"volume-{i}", storage="10Gi"),
+        disks=[openshift_types.DeviceDisk(name=f"disk-{i}", boot_order=1)],
+        volumes=[openshift_types.Volume(name=f"volume-{i}", data_volume=f"dv-{i}")],
     )
     for i in range(1, 11)
 ]
 DEF_VM_INSTANCES: list[openshift_types.VM] = [
     openshift_types.VM(
-        name=f'vm-{i}',
-        namespace='default',
-        uid=f'uid-instance-{i}',
+        name=f"vm-{i}",
+        namespace="default",
+        uid=f"uid-instance-{i}",
         status=openshift_types.State.STOPPED if i % 2 == 0 else openshift_types.State.RUNNING,
-        volume_template=openshift_types.VolumeTemplate(name=f'volume-{i}', storage='10Gi'),
-        disks=[openshift_types.DeviceDisk(name=f'disk-{i}', boot_order=1)],
-        volumes=[openshift_types.Volume(name=f'volume-{i}', data_volume=f'dv-{i}')],
+        volume_template=openshift_types.VolumeTemplate(name=f"volume-{i}", storage="10Gi"),
+        disks=[openshift_types.DeviceDisk(name=f"disk-{i}", boot_order=1)],
+        volumes=[openshift_types.Volume(name=f"volume-{i}", data_volume=f"dv-{i}")],
     )
     for i in range(1, 11)
 ]
@@ -101,7 +100,7 @@ def replace_vm_info(vm_name: str, **kwargs: typing.Any) -> None:
         for k, v in kwargs.items():
             setattr(vm, k, v)
     except Exception:
-        raise oshift_exceptions.OpenshiftNotFoundError(f'VM {vm_name} not found')
+        raise oshift_exceptions.OpenshiftNotFoundError(f"VM {vm_name} not found")
 
 
 def replacer_vm_info(**kwargs: typing.Any) -> Callable[..., None]:
@@ -112,7 +111,7 @@ def replacer_vm_info(**kwargs: typing.Any) -> Callable[..., None]:
     return functools.partial(replace_vm_info, **kwargs)
 
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 def returner(value: T, *args: typing.Any, **kwargs: typing.Any) -> Callable[..., T]:
@@ -120,6 +119,7 @@ def returner(value: T, *args: typing.Any, **kwargs: typing.Any) -> Callable[...,
     Returns a function that always returns the given value.
     Useful for mocking return values in tests.
     """
+
     def inner(*args: typing.Any, **kwargs: typing.Any) -> T:
         return value
 
@@ -128,15 +128,15 @@ def returner(value: T, *args: typing.Any, **kwargs: typing.Any) -> Callable[...,
 
 # Provider values
 PROVIDER_VALUES_DICT: gui.ValuesDictType = {
-    'cluster_url': 'https://oauth-openshift.apps-crc.testing',
-    'api_url': 'https://api.crc.testing:6443',
-    'username': 'kubeadmin',
-    'password': 'test-password',
-    'namespace': 'default',
-    'verify_ssl': False,
-    'concurrent_creation_limit': 1,
-    'concurrent_removal_limit': 1,
-    'timeout': 10,
+    "cluster_url": "https://oauth-openshift.apps-crc.testing",
+    "api_url": "https://api.crc.testing:6443",
+    "username": "kubeadmin",
+    "password": "test-password",
+    "namespace": "default",
+    "verify_ssl": False,
+    "concurrent_creation_limit": 1,
+    "concurrent_removal_limit": 1,
+    "timeout": 10,
 }
 
 # Connection identity matching PROVIDER_VALUES_DICT, as OpenshiftClient.cache_key() would build it
@@ -148,20 +148,20 @@ CLIENT_CACHE_KEY = (
 
 # Service values
 SERVICE_VALUES_DICT: gui.ValuesDictType = {
-    'template': VMS[0].name,
-    'basename': 'base',
-    'lenname': 4,
-    'prov_uuid': '',
+    "template": VMS[0].name,
+    "basename": "base",
+    "lenname": 4,
+    "prov_uuid": "",
 }
 
 # Service fixed values
 SERVICE_FIXED_VALUES_DICT: gui.ValuesDictType = {
-    'token': '',
-    'machines': [VMS[2].name, VMS[3].name, VMS[4].name],
-    'on_logout': 'no',
-    'randomize': False,
-    'maintain_on_error': False,
-    'prov_uuid': '',
+    "token": "",
+    "machines": [VMS[2].name, VMS[3].name, VMS[4].name],
+    "on_logout": "no",
+    "randomize": False,
+    "maintain_on_error": False,
+    "prov_uuid": "",
 }
 
 
@@ -251,7 +251,7 @@ def create_service(
 
 
 def create_service_fixed(
-    provider: provider.OpenshiftProvider | None  = None, **kwargs: typing.Any
+    provider: provider.OpenshiftProvider | None = None, **kwargs: typing.Any
 ) -> service_fixed.OpenshiftServiceFixed:
     """
     Create an OpenshiftServiceFixed instance (fixed service).
@@ -281,7 +281,7 @@ def create_publication(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_service(**kwargs),
         revision=1,
-        servicepool_name='servicepool_name',
+        servicepool_name="servicepool_name",
         uuid=uuid_,
     )
     pub._name = f"pub-{random.randint(1000, 9999)}"
@@ -306,13 +306,13 @@ def create_userservice(
 
 
 def create_userservice_fixed(
-    service: service_fixed.OpenshiftServiceFixed | None  = None,
+    service: service_fixed.OpenshiftServiceFixed | None = None,
 ) -> deployment_fixed.OpenshiftUserServiceFixed:
     """
     Create an OpenshiftUserServiceFixed instance (fixed user service).
     Used for tests of fixed user service logic and lifecycle.
     """
-    uuid_ = str(uuid.uuid4().hex)
+    uuid_ = uuid.uuid4().hex
     return deployment_fixed.OpenshiftUserServiceFixed(
         environment=environment.Environment.private_environment(uuid_),
         service=service or create_service_fixed(),
@@ -325,14 +325,14 @@ def create_user(
     name: str = "testuser",
     real_name: str = "Test User",
     is_admin: bool = False,
-    state: str = 'A',
-    password: str = 'password',
-    mfa_data: str = '',
+    state: str = "A",
+    password: str = "password",
+    mfa_data: str = "",
     staff_member: bool = False,
     last_access: str | None = None,
     parent: User | None = None,
     created: str | None = None,
-    comments: str = '',
+    comments: str = "",
 ) -> User:
     """
     Create a mock User instance for testing.

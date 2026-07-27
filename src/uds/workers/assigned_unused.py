@@ -29,36 +29,42 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
+import typing
+
 from datetime import timedelta
 
-from django.db.models import Q, Count
+from django.db.models import Count
+from django.db.models import Q
 
-from uds.core import types, osmanagers
+from uds.core import osmanagers
+from uds.core import types
 from uds.core.jobs import Job
 from uds.core.managers.userservice import UserServiceManager
+from uds.core.types.states import State
 from uds.core.util import log
 from uds.core.util.config import GlobalConfig
-from uds.core.types.states import State
-from uds.models import ServicePool
 from uds.core.util.model import sql_now
+from uds.models import ServicePool
 
 logger = logging.getLogger(__name__)
 
 
 class AssignedAndUnused(Job):
-    frecuency = 60
-    # frecuency_cfg = GlobalConfig.CHECK_UNUSED_DELAY
-    friendly_name = 'Unused services checker'
+    friendly_name = "Unused services checker"
 
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return 60
+
+    @typing.override
     def run(self) -> None:
-        since_state = sql_now() - timedelta(
-            seconds=GlobalConfig.CHECK_UNUSED_TIME.as_int()
-        )
+        since_state = sql_now() - timedelta(seconds=GlobalConfig.CHECK_UNUSED_TIME.as_int())
         # Locate service pools with pending assigned service in use
         pending_service_pools = ServicePool.objects.annotate(
             outdated=Count(
-                'userServices',
+                "userServices",
                 filter=Q(
                     userServices__in_use=False,
                     userServices__state_date__lt=since_state,
@@ -82,23 +88,19 @@ class AssignedAndUnused(Job):
             if ds.osmanager:
                 osm = ds.osmanager.get_instance()
                 if osm.manages_unused_userservices():
-                    logger.debug(
-                        'Processing unused services for %s, %s', ds, ds.osmanager
-                    )
+                    logger.debug("Processing unused services for %s, %s", ds, ds.osmanager)
                     for us in unused_userservices:
-                        logger.debug('Found unused assigned service %s', us)
+                        logger.debug("Found unused assigned service %s", us)
                         osm.handle_unused(us)
             else:  # No os manager, simply remove unused services in specified time
                 for us in unused_userservices:
-                    logger.debug(
-                        'Found unused assigned service with no OS Manager %s', us
-                    )
+                    logger.debug("Found unused assigned service with no OS Manager %s", us)
                     log.log(
                         us,
                         types.log.LogLevel.INFO,
                         source=types.log.LogSource.SERVER,
-                        message='Releasing (logout) unused assigned service',
+                        message="Releasing (logout) unused assigned service",
                     )
-                    osmanagers.OSManager.logged_out(us, username='unused')
+                    osmanagers.OSManager.logged_out(us, username="unused")
                     # release_from_logout handles cache return if pool allows it, else releases
                     UserServiceManager.manager().release_from_logout(us)

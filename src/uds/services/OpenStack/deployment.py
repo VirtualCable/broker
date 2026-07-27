@@ -30,6 +30,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import enum
 import logging
 import pickle  # nosec: not insecure, we are loading our own data
@@ -37,11 +38,9 @@ import typing
 
 from uds.core import types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
-from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-
     from .publication import OpenStackLivePublication
     from .service import OpenStackLiveService
 
@@ -67,7 +66,7 @@ class OldOperation(enum.IntEnum):
     UNKNOWN = 99
 
     @staticmethod
-    def from_int(value: int) -> 'OldOperation':
+    def from_int(value: int) -> "OldOperation":
         try:
             return OldOperation(value)
         except ValueError:
@@ -88,7 +87,7 @@ class OldOperation(enum.IntEnum):
         }.get(self, types.services.Operation.UNKNOWN)
 
 
-class OpenStackLiveUserService(DynamicUserService, autoserializable.AutoSerializable):
+class OpenStackLiveUserService(DynamicUserService):
     """
     This class generates the user consumable elements of the service tree.
 
@@ -105,7 +104,6 @@ class OpenStackLiveUserService(DynamicUserService, autoserializable.AutoSerializ
     # _vmid: str = ''
     # _reason: str = ''
     # _queue: list[int] = []
-
 
     # Custom queue
     _create_queue = [
@@ -125,29 +123,32 @@ class OpenStackLiveUserService(DynamicUserService, autoserializable.AutoSerializ
     ]
 
     # For typing check only...
-    def service(self) -> 'OpenStackLiveService':
-        return typing.cast('OpenStackLiveService', super().service())
+    @typing.override
+    def service(self) -> "OpenStackLiveService":
+        return typing.cast("OpenStackLiveService", super().service())
 
     # For typing check only...
-    def publication(self) -> 'OpenStackLivePublication':
-        return typing.cast('OpenStackLivePublication', super().publication())
+    @typing.override
+    def publication(self) -> "OpenStackLivePublication":
+        return typing.cast("OpenStackLivePublication", super().publication())
 
+    @typing.override
     def unmarshal(self, data: bytes) -> None:
-        if not data.startswith(b'v'):
+        if not data.startswith(b"v"):
             return super().unmarshal(data)
 
-        vals = data.split(b'\1')
-        if vals[0] == b'v1':
-            self._name = vals[1].decode('utf8')
-            self._ip = vals[2].decode('utf8')
-            self._mac = vals[3].decode('utf8')
-            self._vmid = vals[4].decode('utf8')
-            self._reason = vals[5].decode('utf8')
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._vmid = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
             self._queue = [OldOperation.from_int(i).to_operation() for i in pickle.loads(vals[6])]  # nosec
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
-
+    @typing.override
     def op_create(self) -> None:
         """
         Deploys a machine from template for user/cache
@@ -157,23 +158,23 @@ class OpenStackLiveUserService(DynamicUserService, autoserializable.AutoSerializ
 
         self._vmid = self.service().deploy_from_template(name, template_id).id
         if not self._vmid:
-            raise Exception('Can\'t create machine')
+            raise Exception("Can't create machine")
 
         return None
-           
 
     # Check methods
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         """
         Checks the state of a deploy for an user or cache
         """
         # Checks if machine has been created
         # Should have a mac address assigned and be running
-        if self.service().get_mac(self, self._vmid) and self.service().is_running(self, self._vmid):
-            server_info = self.service().api.get_server_info(self._vmid).validated()
-            self._mac = server_info.addresses[0].mac
-            self._ip = server_info.addresses[0].ip
+        mac = self.service().get_mac(self, self._vmid)
+        if mac and self.service().is_running(self, self._vmid):
+            self._mac = mac
+            # external DHCP leaves Nova 'addresses' empty; the guarded getters avoid indexing it
+            self._ip = self.service().get_ip(self, self._vmid)
             return types.states.TaskState.FINISHED
-        
-        return types.states.TaskState.RUNNING
 
+        return types.states.TaskState.RUNNING

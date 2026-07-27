@@ -29,17 +29,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import csv
 import datetime
 import io
 import logging
 import typing
 
-from django.db.models import F, Window
+from django.db.models import F
+from django.db.models import Window
 from django.db.models.functions import Lag
+from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
 from uds.core.managers.stats import StatsManager
 from uds.core.ui import gui
@@ -52,22 +54,21 @@ logger = logging.getLogger(__name__)
 
 
 class UsageByPool(StatsReport):
-    filename = 'pools_usage.pdf'
-    name = _('Pools usage by users')  # Report name
-    description = _('Pools usage by user report')  # Report description
-    uuid = '38ec12dc-beaf-11e5-bd0a-10feed05884b'
+    filename = "pools_usage.pdf"
+    name = _("Pools usage by users")  # Report name
+    description = _("Pools usage by user report")  # Report description
+    uuid = "38ec12dc-beaf-11e5-bd0a-10feed05884b"
 
     # Input fields
     pool = StatsReport.pool
     start_date = StatsReport.start_date
     end_date = StatsReport.end_date
 
+    @typing.override
     def init_gui(self) -> None:
-        logger.debug('Initializing gui')
-        vals = [gui.choice_item('0-0-0-0', gettext('ALL POOLS'))] + [
-            gui.choice_item(v.uuid, v.name)
-            for v in ServicePool.objects.all().order_by('name')
-            if v.uuid
+        logger.debug("Initializing gui")
+        vals = [gui.choice_item("0-0-0-0", gettext("ALL POOLS"))] + [
+            gui.choice_item(v.uuid, v.name) for v in ServicePool.objects.all().order_by("name") if v.uuid
         ]
         self.pool.set_choices(vals)
 
@@ -75,7 +76,7 @@ class UsageByPool(StatsReport):
         start = self.start_date.as_timestamp()
         end = self.end_date.as_timestamp()
         logger.debug(self.pool.value)
-        if '0-0-0-0' in self.pool.value:
+        if "0-0-0-0" in self.pool.value:
             qs = ServicePool.objects.all()
         else:
             qs = ServicePool.objects.filter(uuid__in=self.pool.value)
@@ -83,8 +84,7 @@ class UsageByPool(StatsReport):
         # (uuid, name) per pool id. values_list avoids instantiating ServicePool
         # rows just to read 2 fields.
         pool_map: dict[int, tuple[str, str]] = {
-            p_id: (p_uuid, p_name)
-            for p_id, p_uuid, p_name in qs.values_list('id', 'uuid', 'name')
+            p_id: (p_uuid, p_name) for p_id, p_uuid, p_name in qs.values_list("id", "uuid", "name")
         }
 
         login = stats.events.types.stats.EventType.LOGIN
@@ -93,7 +93,7 @@ class UsageByPool(StatsReport):
         # LOGIN/LOGOUT pairing pushed to DB via window LAG over (owner_id, fld4) ordered by stamp.
         # Preserves "last login wins" semantics: if prev event of same (pool, user) is LOGIN -> pair.
         # Portable across MySQL 8+, PostgreSQL, SQLite 3.25+, Oracle (ANSI window functions).
-        partition = [F('owner_id'), F('fld4')]
+        partition = [F("owner_id"), F("fld4")]
         items = (
             StatsManager.manager()
             .enumerate_events(
@@ -104,52 +104,53 @@ class UsageByPool(StatsReport):
                 to=end,
             )
             .annotate(
-                prev_type=Window(Lag('event_type'), partition_by=partition, order_by=[F('stamp')]),
-                prev_stamp=Window(Lag('stamp'), partition_by=partition, order_by=[F('stamp')]),
+                prev_type=Window(Lag("event_type"), partition_by=partition, order_by=[F("stamp")]),
+                prev_stamp=Window(Lag("stamp"), partition_by=partition, order_by=[F("stamp")]),
             )
-            .values('owner_id', 'event_type', 'stamp', 'fld2', 'fld4', 'prev_type', 'prev_stamp')
+            .values("owner_id", "event_type", "stamp", "fld2", "fld4", "prev_type", "prev_stamp")
         )
 
         data: list[dict[str, typing.Any]] = []
         for i in items:
-            if i['event_type'] != logout or i['prev_type'] != login:
+            if i["event_type"] != logout or i["prev_type"] != login:
                 continue
-            pool_uuid, pool_name = pool_map[i['owner_id']]
-            login_stamp = i['prev_stamp']
-            fld2 = i['fld2']
+            pool_uuid, pool_name = pool_map[i["owner_id"]]
+            login_stamp = i["prev_stamp"]
+            fld2 = i["fld2"]
             # ipv6 handled inline (was StatsEvents.src_ip property; we use .values()).
-            origin = fld2 if '[' in fld2 else fld2.split(':')[0]
+            origin = fld2 if "[" in fld2 else fld2.split(":")[0]
             data.append(
                 {
-                    'name': i['fld4'],
-                    'origin': origin,
-                    'date': timezone.make_aware(datetime.datetime.fromtimestamp(login_stamp)),
-                    'time': i['stamp'] - login_stamp,
-                    'pool': pool_uuid,
-                    'pool_name': pool_name,
+                    "name": i["fld4"],
+                    "origin": origin,
+                    "date": timezone.make_aware(datetime.datetime.fromtimestamp(login_stamp)),
+                    "time": i["stamp"] - login_stamp,
+                    "pool": pool_uuid,
+                    "pool_name": pool_name,
                 }
             )
 
-        return data, ','.join(name for _uuid, name in pool_map.values())
+        return data, ",".join(name for _uuid, name in pool_map.values())
 
+    @typing.override
     def generate(self) -> bytes:
         items, poolname = self.get_data()
 
         return self.template_as_pdf(
-            'uds/reports/stats/usage-by-pool.html',
+            "uds/reports/stats/usage-by-pool.html",
             dct={
-                'data': items,
-                'pool': poolname,
+                "data": items,
+                "pool": poolname,
             },
-            header=gettext('Users usage list'),
-            water=gettext('UDS Report of users usage'),
+            header=gettext("Users usage list"),
+            water=gettext("UDS Report of users usage"),
         )
 
 
 class UsageByPoolCSV(UsageByPool):
-    filename = 'usage.csv'
-    mime_type = 'text/csv'  # Report returns pdfs by default, but could be anything else
-    uuid = '5f7f0844-beb1-11e5-9a96-10feed05884b'
+    filename = "usage.csv"
+    mime_type = "text/csv"  # Report returns pdfs by default, but could be anything else
+    uuid = "5f7f0844-beb1-11e5-9a96-10feed05884b"
     encoded = False
 
     # Input fields
@@ -157,6 +158,7 @@ class UsageByPoolCSV(UsageByPool):
     start_date = UsageByPool.start_date
     end_date = UsageByPool.end_date
 
+    @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
         writer = csv.writer(output)
@@ -165,17 +167,15 @@ class UsageByPoolCSV(UsageByPool):
 
         writer.writerow(
             [
-                gettext('Date'),
-                gettext('User'),
-                gettext('Seconds'),
-                gettext('Pool'),
-                gettext('Origin'),
+                gettext("Date"),
+                gettext("User"),
+                gettext("Seconds"),
+                gettext("Pool"),
+                gettext("Origin"),
             ]
         )
 
         for v in report_data:
-            writer.writerow(
-                [v['date'], v['name'], v['time'], v['pool_name'], v['origin']]
-            )
+            writer.writerow([v["date"], v["name"], v["time"], v["pool_name"], v["origin"]])
 
         return output.getvalue().encode()

@@ -29,6 +29,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 from uds.core.exceptions.common import UDSException
 
 
@@ -68,7 +69,7 @@ class ResponseError(HandlerError):
     """
     Generic response error
     """
-    
+
     pass
 
 
@@ -92,6 +93,23 @@ class SaveException(HandlerError):
 class BlockAccess(UDSException):
     """
     Exception used to signal that the access to a resource is blocked
+    """
+
+    pass
+
+
+class PreconditionFailed(HandlerError):
+    """Exception raised when an ``If-Match`` / ``If-None-Match`` precondition is
+    violated (RFC 7232, HTTP 412 Precondition Failed).
+    """
+
+    pass
+
+
+class GoneError(HandlerError):
+    """
+    Exception raised for resources that are no longer available (410 Gone).
+    Used when a legacy endpoint is accessed in NO_COMPAT mode.
     """
 
     pass

@@ -1,6 +1,7 @@
 project-includes = [
     "src/**/*.py*",
     "src/**/*.ipynb",
+    "tests/**/*.py",
 ]
 
 # Exclude scripts from transports transports/*/scripts/*
@@ -9,5 +10,15 @@ project-excludes = [
     "src/uds/core/util/ldaputil_old.py",
 ]
 
+# Let the type checker resolve `tests.utils.test` etc.
+search-path = [
+    "src",
+    "tests",
+    ".",
+]
+
 python-platform = "linux"
+
+[errors]
+missing-override-decorator = true
 

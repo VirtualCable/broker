@@ -30,22 +30,23 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+
 class CommonPrefs:
-    SZ_PREF = 'screenSize'
-    SZ_640x480 = '1'
-    SZ_800x600 = '2'
-    SZ_1024x768 = '3'
-    SZ_1366x768 = '4'
-    SZ_1920x1080 = '5'
-    SZ_FULLSCREEN = 'F'
+    SZ_PREF = "screenSize"
+    SZ_640x480 = "1"
+    SZ_800x600 = "2"
+    SZ_1024x768 = "3"
+    SZ_1366x768 = "4"
+    SZ_1920x1080 = "5"
+    SZ_FULLSCREEN = "F"
 
-    DEPTH_PREF = 'screenDepth'
-    DEPTH_8 = '1'
-    DEPTH_16 = '2'
-    DEPTH_24 = '3'
-    DEPTH_32 = '4'
+    DEPTH_PREF = "screenDepth"
+    DEPTH_8 = "1"
+    DEPTH_16 = "2"
+    DEPTH_24 = "3"
+    DEPTH_32 = "4"
 
-    BYPASS_PREF = 'bypassPluginDetection'
+    BYPASS_PREF = "bypassPluginDetection"
 
     @staticmethod
     def get_wh(size: str) -> tuple[int, int]:
