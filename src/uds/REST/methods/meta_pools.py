@@ -77,7 +77,7 @@ class MetaPoolItem(types.rest.BaseRestItem):
     user_services_in_preparation: int
     visible: bool
     policy: str
-    fallbackAccess: str
+    fallback_access: str
     permission: int
     calendar_message: str
     transport_grouping: int
@@ -135,24 +135,30 @@ class MetaPools(ModelHandler[MetaPoolItem]):
     )
 
     CUSTOM_METHODS = [
+        # GET must come first: in NO_COMPAT mode a GET request that hits a
+        # POST-only ``fallback_access`` raises GoneError. Declaring both at
+        # the same name lets the framework dispatch by HTTP verb.
         types.rest.ModelCustomMethod(
-            "set_fallback_access",
+            "fallback_access",
+            True,
+            method=types.rest.CustomMethodMethod.GET,
+            description="Retrieve the current fallback access policy for a meta pool member",
+            required_permission=types.permissions.PermissionType.READ,
+        ),
+        types.rest.ModelCustomMethod(
+            "fallback_access",
             True,
             method=types.rest.CustomMethodMethod.POST,
             description="Update the fallback access policy for a meta pool member",
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "fallbackAccess": types.rest.api.SchemaProperty(
+                    "fallback_access": types.rest.api.SchemaProperty(
                         type="string", description="Fallback access policy: ALLOW (default) or DENY"
                     )
                 },
             ),
-        ),
-        types.rest.ModelCustomMethod(
-            "get_fallback_access",
-            True,
-            description="Retrieve the current fallback access policy for a meta pool member",
+            required_permission=types.permissions.PermissionType.ALL,
         ),
     ]
 
@@ -196,7 +202,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             user_services_in_preparation=userservices_in_preparation,
             visible=item.visible,
             policy=str(item.policy),
-            fallbackAccess=item.fallbackAccess,
+            fallback_access=item.fallbackAccess,
             permission=permissions.effective_permissions(self._user, item),
             calendar_message=item.calendar_message,
             transport_grouping=item.transport_grouping,
@@ -313,21 +319,18 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         item = ensure.is_instance(item, MetaPool)
         item.delete()
 
-    # Set fallback status
-    def set_fallback_access(self, item: MetaPool) -> typing.Any:
-        """
-        API:
-            Sets the fallback access for a metapool
-        """
-        self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
+    # Read/Write the fallback access policy for the pool.
+    # GET returns the current value; POST writes the new one.
+    def fallback_access(self, item: MetaPool) -> typing.Any:
+        if self._operation == "get":
+            return item.fallbackAccess
 
-        fallback = self._params.get("fallbackAccess", "ALLOW")
+        # POST — write
+        self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
+        fallback = self._params.get("fallback_access", State.ALLOW)
         logger.debug("Setting fallback of %s to %s", item.name, fallback)
         item.fallbackAccess = fallback
         item.save()
-        return ""
-
-    def get_fallback_access(self, item: MetaPool) -> typing.Any:
         return item.fallbackAccess
 
     #  Returns the action list based on current element, for calendars (nothing right now for metapools, because no actions are allowed)

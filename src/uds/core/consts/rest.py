@@ -60,6 +60,17 @@ KNOWN_METHODS: typing.Final[tuple[str, ...]] = ("get", "post", "put", "delete", 
 # Standard ``Allow`` header value returned by OPTIONS (uppercase).
 DEFAULT_ALLOW: typing.Final[str] = ", ".join(m.upper() for m in KNOWN_METHODS)
 
+# -- GUI callback tickets --
+#
+# ``/gui/callback/<name>`` endpoints receive a single required parameter
+# ``cb_uuid`` — the uuid of a ``TicketStore`` entry that the GUI obtained
+# via the corresponding ``/gui/<type>`` response. The ticket wraps the
+# provider uuid and has a short TTL (1 h by default), so a staff cannot
+# forge a callback request just by guessing a ``prov_uuid`` — they need
+# a fresh ticket from the GUI flow. See ``doc/plan/secure_callbacks.md``.
+CALLBACK_TICKET_TTL: typing.Final[int] = 60 * 60  # 1 hour
+CALLBACK_TICKET_PARAM: typing.Final[str] = "cb_uuid"
+
 
 class _NotFound:
     pass

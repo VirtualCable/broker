@@ -115,7 +115,7 @@ class ServicePoolItem(types.rest.BaseRestItem):
     allow_users_remove: bool
     allow_users_reset: bool
     ignores_unused: bool
-    fallbackAccess: str
+    fallback_access: str
     meta_member: list[dict[str, str]]
     calendar_message: str
     custom_message: str
@@ -196,24 +196,30 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     )
 
     CUSTOM_METHODS = [
+        # GET must come first: in NO_COMPAT mode a GET request that hits a
+        # POST-only ``fallback_access`` raises GoneError. Declaring both at
+        # the same name lets the framework dispatch by HTTP verb.
         types.rest.ModelCustomMethod(
-            "set_fallback_access",
+            "fallback_access",
+            True,
+            method=types.rest.CustomMethodMethod.GET,
+            description="Retrieve the current fallback access policy for a service pool",
+            required_permission=types.permissions.PermissionType.READ,
+        ),
+        types.rest.ModelCustomMethod(
+            "fallback_access",
             True,
             method=types.rest.CustomMethodMethod.POST,
             description="Update the fallback access policy for a service pool",
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "fallbackAccess": types.rest.api.SchemaProperty(
+                    "fallback_access": types.rest.api.SchemaProperty(
                         type="string", description="Fallback access policy: ALLOW (default) or DENY"
                     )
                 },
             ),
-        ),
-        types.rest.ModelCustomMethod(
-            "get_fallback_access",
-            True,
-            description="Retrieve the current fallback access policy for a service pool",
+            required_permission=types.permissions.PermissionType.ALL,
         ),
         types.rest.ModelCustomMethod(
             "actions_list",
@@ -402,7 +408,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             allow_users_remove=item.allow_users_remove,
             allow_users_reset=item.allow_users_reset,
             ignores_unused=item.ignores_unused,
-            fallbackAccess=item.fallbackAccess,
+            fallback_access=item.fallbackAccess,
             meta_member=[{"id": i.meta_pool.uuid, "name": i.meta_pool.name} for i in item.memberOfMeta.all()],
             calendar_message=item.calendar_message,
             custom_message=item.custom_message,
@@ -736,20 +742,22 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         except Exception:
             return []
 
-    # Set fallback status
-    def set_fallback_access(self, item: "Model") -> typing.Any:
+    # Read/Write the fallback access policy for the pool.
+    # GET returns the current value; POST writes the new one.
+    def fallback_access(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
-        self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
 
-        fallback = self._params.get("fallbackAccess", self.params.get("fallback", None))
+        if self._operation == "get":
+            return item.fallbackAccess
+
+        # POST — write
+        self.check_access(item, types.permissions.PermissionType.MANAGEMENT)
+        # Keep legacy "fallback" key as a transitional alias for the body.
+        fallback = self._params.get("fallback_access", self.params.get("fallback", None))
         if fallback:
             logger.debug("Setting fallback of %s to %s", item.name, fallback)
             item.fallbackAccess = fallback
             item.save()
-        return item.fallbackAccess
-
-    def get_fallback_access(self, item: "Model") -> typing.Any:
-        item = ensure.is_instance(item, ServicePool)
         return item.fallbackAccess
 
     #  Returns the action list based on current element, for calendar

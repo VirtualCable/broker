@@ -56,6 +56,16 @@ class WebLoginLogoutTest(test.WEBTestCase):
         response = typing.cast("HttpResponse", self.client.get("/uds/utility/uds.js"))
         self.assertContains(response, '"errors": ["Access denied"]', status_code=200)
 
+    def setUp(self) -> None:
+        # These tests assert absolute counts on ``models.Log.objects.count()``
+        # (they enumerate log entries emitted by the login/logout flow itself).
+        # Under pytest-xdist, sibling tests in other modules can land on the
+        # same worker and pre-populate the log table, which would make the
+        # absolute counts non-deterministic. Wipe the table before each test
+        # so the assertions are self-contained.
+        super().setUp()
+        models.Log.objects.all().delete()
+
     def test_login_logout_success(self) -> None:
         """
         Test login and logout

@@ -369,6 +369,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     raise exceptions.rest.ResponseError(
                         f"Error processing custom method: {self.__class__.__name__}/{self._args}"
                     ) from e
+                self.check_access(item, cm.required_permission)
                 return operation(item)
 
             if number_of_args >= 1 and self._args[0] in (camel_case_name, snake_case_name):
@@ -388,6 +389,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if not operation:
                     raise exceptions.rest.InvalidMethodError(f"Invalid method {self._operation}") from None
+                self.check_access(self.MODEL(), cm.required_permission, root=True)
                 return operation()
 
         return consts.rest.NOT_FOUND

@@ -85,7 +85,7 @@ class ServicePoolRestStruct(rest.RestStruct):
     allow_users_remove: bool
     allow_users_reset: bool
     ignores_unused: bool
-    fallbackAccess: str
+    fallback_access: str
     meta_member: list[dict[str, rest.uuid_type]]
     calendar_message: str
 
