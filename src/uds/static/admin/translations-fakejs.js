@@ -1,5 +1,6 @@
 // "Fake" javascript file for translations
 // Typescript
+gettext("Item changed by another administrator");
 gettext("Error saving element");
 gettext("Error handling your request");
 gettext("Search");
