@@ -90,28 +90,58 @@ class OpenshiftClient:
     def session(self) -> requests.Session:
         return self.connect()
 
+    def cache_key(self) -> str:
+        """
+        Identity of the connection parameters. Any change here must invalidate both the cached
+        client on the provider and any data cached through the `cached` decorator.
+        Password is deliberately excluded, it does not change what data we see.
+        """
+        return f'{self.cluster_url}|{self.api_url}|{self.username}|{self.namespace}|{self._verify_ssl}'
+
     def get_token(self) -> str | None:
         try:
             url = f"{self.cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
-            r = requests.get(url, auth=(self.username, self.password), timeout=15, allow_redirects=True, verify=False)
-            if "access_token=" not in r.url:
-                raise Exception("access_token not found in response URL")
-            token = r.url.split("access_token=")[1].split("&")[0]
+            r = requests.get(
+                url,
+                auth=(self.username, self.password),
+                timeout=15,
+                allow_redirects=False,
+                verify=self._verify_ssl,
+            )
+            if r.status_code not in (301, 302, 303, 307, 308):
+                raise exceptions.OpenshiftAuthError(
+                    f"Unexpected response status while fetching token: {r.status_code}"
+                )
+            location = r.headers.get('Location', '')
+            parsed = urllib.parse.urlparse(location)
+            params = urllib.parse.parse_qs(parsed.fragment) or urllib.parse.parse_qs(parsed.query)
+            token = params.get('access_token', [None])[0]
+            if not token:
+                raise exceptions.OpenshiftAuthError("access_token not found in redirect Location")
             return token
-        except Exception as ex:
-            logging.error(f"Could not obtain token: {ex}")
+        except exceptions.OpenshiftError:
             raise
+        except Exception as ex:
+            logger.error("Could not obtain token: %s", ex)
+            raise exceptions.OpenshiftConnectionError(str(ex))
 
     def connect(self, force: bool = False) -> requests.Session:
-        # For testing, always use the fixed token
+        now = datetime.datetime.now()
+        if not force and self._session is not None and now < self._token_expiry:
+            return self._session
+
+        self._access_token = self.get_token() or ''
         session = self._session = security.secure_requests_session(verify=self._verify_ssl)
         session.headers.update(
             {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.get_token()}",
+                "Authorization": f"Bearer {self._access_token}",
             }
         )
+        # ponytail: fixed TTL instead of parsing expires_in from the redirect. do_request already
+        # drops _session on a 401, so an early expiry self-heals on the next request.
+        self._token_expiry = now + consts.TOKEN_VALIDITY
         return session
 
     def get_api_url(self, path: str, *parameters: tuple[str, str]) -> str:
