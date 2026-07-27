@@ -29,7 +29,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import collections.abc
-import datetime
 import logging
 import typing
 import urllib.parse
@@ -47,15 +46,18 @@ from . import types
 logger = logging.getLogger(__name__)
 
 
+def cache_key_helper(obj: "OpenshiftClient") -> str:
+    return obj.cache_key()
+
+
 class OpenshiftClient:
-    cluster_url: str
-    api_url: str
-    username: str
-    password: str
-    namespace: str
+    _cluster_url: str
+    _api_url: str
+    _username: str
+    _password: str
+    _namespace: str
     _verify_ssl: bool
     _timeout: int
-    _token_expiry: datetime.datetime
 
     _session: requests.Session | None = None
 
@@ -72,11 +74,11 @@ class OpenshiftClient:
         verify_ssl: bool = False,
         cache: "Cache | None" = None,
     ) -> None:
-        self.cluster_url = cluster_url
-        self.api_url = api_url
-        self.username: str = username
-        self.password: str = password
-        self.namespace: str = namespace
+        self._cluster_url = cluster_url
+        self._api_url = api_url
+        self._username: str = username
+        self._password: str = password
+        self._namespace: str = namespace
 
         self._verify_ssl: bool = verify_ssl
         self._timeout: int = timeout
@@ -84,38 +86,64 @@ class OpenshiftClient:
         self.cache = cache
 
         self._access_token = ""
-        self._token_expiry = datetime.datetime.min
 
     @property
     def session(self) -> requests.Session:
         return self.connect()
 
+    def cache_key(self) -> str:
+        """
+        Identity of the connection parameters. Any change here must invalidate both the cached
+        client on the provider and any data cached through the `cached` decorator.
+        Password is deliberately excluded, it does not change what data we see.
+        """
+        return f"{self._cluster_url}|{self._api_url}|{self._username}|{self._namespace}"
+
     def get_token(self) -> str | None:
         try:
-            url = f"{self.cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
-            r = requests.get(url, auth=(self.username, self.password), timeout=15, allow_redirects=True, verify=False)
-            if "access_token=" not in r.url:
-                raise Exception("access_token not found in response URL")
-            token = r.url.split("access_token=")[1].split("&")[0]
+            url = f"{self._cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
+            r = requests.get(
+                url,
+                auth=(self._username, self._password),
+                timeout=15,
+                allow_redirects=False,
+                verify=self._verify_ssl,
+            )
+            if r.status_code not in (301, 302, 303, 307, 308):
+                raise exceptions.OpenshiftAuthError(
+                    f"Unexpected response status while fetching token: {r.status_code}"
+                )
+            location = r.headers.get("Location", "")
+            logger.debug("Location header: %s", location)
+            parsed = urllib.parse.urlparse(location)
+            params = urllib.parse.parse_qs(parsed.fragment) or urllib.parse.parse_qs(parsed.query)
+            token = params.get("access_token", [None])[0]
+            if not token:
+                raise exceptions.OpenshiftAuthError("access_token not found in redirect Location")
             return token
-        except Exception as ex:
-            logging.error(f"Could not obtain token: {ex}")
+        except exceptions.OpenshiftError:
             raise
+        except Exception as ex:
+            logger.error("Could not obtain token: %s", ex)
+            raise exceptions.OpenshiftConnectionError(str(ex))
 
     def connect(self, force: bool = False) -> requests.Session:
-        # For testing, always use the fixed token
+        # Note: Every access to a Openshit isntantiates this class again
+        # So no need to keep the "validity" in class, as it will be ALWAY
+        # cleaned soon
+        self._access_token = self.get_token() or ""
         session = self._session = security.secure_requests_session(verify=self._verify_ssl)
         session.headers.update(
             {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.get_token()}",
+                "Authorization": f"Bearer {self._access_token}",
             }
         )
         return session
 
     def get_api_url(self, path: str, *parameters: tuple[str, str]) -> str:
-        url = self.api_url + path
+        url = self._api_url + path
         if parameters:
             url += "?" + urllib.parse.urlencode(parameters, doseq=True, safe="[]")
         return url
@@ -260,14 +288,13 @@ class OpenshiftClient:
         Get VM information by name.
         Returns the VM object if found, else None.
         """
-        response: dict[str, typing.Any] = {}
         response: dict[str, typing.Any] = self.do_request(
-            "GET", f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachines/{vm_name}"
+            "GET", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{vm_name}"
         )
 
         try:
             response["instance"] = self.do_request(
-                "GET", f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachineinstances/{vm_name}"
+                "GET", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachineinstances/{vm_name}"
             )
         except exceptions.OpenshiftNotFoundError:
             pass  # If the VMInstance is not found, we can still return the VM info
@@ -283,7 +310,8 @@ class OpenshiftClient:
         try:
             interfaces = (
                 self.do_request(
-                    "GET", f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachineinstances/{vm_name}"
+                    "GET",
+                    f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachineinstances/{vm_name}",
                 )
                 .get("status", {})
                 .get("interfaces", [])
@@ -293,11 +321,11 @@ class OpenshiftClient:
 
         return [types.Interface.from_dict(iface) for iface in interfaces]
 
-    def get_vm_pvc_or_dv_name(self, namespace: str, vm_name: str) -> tuple[str, str]:
+    def get_vm_pvc_or_dv_name(self, vm_name: str) -> tuple[str, str]:
         """
         Returns the name of the PVC or DataVolume used by the VM.
         """
-        path = f"/apis/kubevirt.io/v1/namespaces/{namespace}/virtualmachines/{vm_name}"
+        path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{vm_name}"
         response = self.do_request("GET", path)
         volumes = response.get("spec", {}).get("template", {}).get("spec", {}).get("volumes", [])
         for vol in volumes:
@@ -314,42 +342,43 @@ class OpenshiftClient:
         Get the phase of a DataVolume.
         Returns the phase as a VMStatus.
         """
-        path = f"/apis/cdi.kubevirt.io/v1beta1/namespaces/{self.namespace}/datavolumes/{datavolume_name}"
+        path = f"/apis/cdi.kubevirt.io/v1beta1/namespaces/{self._namespace}/datavolumes/{datavolume_name}"
         try:
             response = self.do_request("GET", path)
             return types.State.from_string(response.get("status", {}).get("phase", ""))
         except exceptions.OpenshiftNotFoundError:
             return types.State.ERROR
 
-    def get_datavolume_size(self, namespace: str, datavolume_name: str) -> str:
+    def get_datavolume_size(self, datavolume_name: str) -> str:
         """
         Get the size of a DataVolume.
         Returns the size as a string.
         """
-        path = f"/apis/cdi.kubevirt.io/v1beta1/namespaces/{namespace}/datavolumes/{datavolume_name}"
+        path = f"/apis/cdi.kubevirt.io/v1beta1/namespaces/{self._namespace}/datavolumes/{datavolume_name}"
         response = self.do_request("GET", path)
         size = response.get("status", {}).get("amount", None)
         if size:
             return size
-        return response.get("spec", {}).get("pvc", {}).get("resources", {}).get("requests", {}).get("storage") or ""
+        return (
+            response.get("spec", {}).get("pvc", {}).get("resources", {}).get("requests", {}).get("storage")
+            or ""
+        )
 
-    def get_pvc_size(self, namespace: str, pvc_name: str) -> str:
+    def get_pvc_size(self, pvc_name: str) -> str:
         """
         Get the size of a PVC.
         Returns the size as a string.
         """
-        path = f"/api/v1/namespaces/{namespace}/persistentvolumeclaims/{pvc_name}"
+        path = f"/api/v1/namespaces/{self._namespace}/persistentvolumeclaims/{pvc_name}"
         response = self.do_request("GET", path)
         capacity = response.get("status", {}).get("capacity", {}).get("storage")
         if capacity:
             return capacity
         raise Exception(f"Could not get the size of PVC {pvc_name}")
 
-    def get_pvc_storage_class_and_volume_mode(
-        self, namespace: str, source_pvc_name: str
-    ) -> tuple[str | None, str | None]:
+    def get_pvc_storage_class_and_volume_mode(self, source_pvc_name: str) -> tuple[str | None, str | None]:
         # Get the storageClassName and volumeMode of the source PVC
-        path = f"/api/v1/namespaces/{namespace}/persistentvolumeclaims/{source_pvc_name}"
+        path = f"/api/v1/namespaces/{self._namespace}/persistentvolumeclaims/{source_pvc_name}"
         response = self.do_request("GET", path)
         source_storage_class = response.get("spec", {}).get("storageClassName", None)
         source_volume_mode = response.get("spec", {}).get("volumeMode", None)
@@ -357,7 +386,6 @@ class OpenshiftClient:
 
     def clone_pvc_with_datavolume(
         self,
-        namespace: str,
         source_pvc_name: str,
         cloned_pvc_name: str,
         storage_class: str,
@@ -367,13 +395,13 @@ class OpenshiftClient:
         Clone a PVC using a DataVolume.
         Returns True if the DataVolume was created successfully, else False.
         """
-        path = f"/apis/cdi.kubevirt.io/v1beta1/namespaces/{namespace}/datavolumes"
+        path = f"/apis/cdi.kubevirt.io/v1beta1/namespaces/{self._namespace}/datavolumes"
         body: dict[str, typing.Any] = {
             "apiVersion": "cdi.kubevirt.io/v1beta1",
             "kind": "DataVolume",
-            "metadata": {"name": cloned_pvc_name, "namespace": namespace},
+            "metadata": {"name": cloned_pvc_name, "namespace": self._namespace},
             "spec": {
-                "source": {"pvc": {"name": source_pvc_name, "namespace": namespace}},
+                "source": {"pvc": {"name": source_pvc_name, "namespace": self._namespace}},
                 "pvc": {
                     "accessModes": ["ReadWriteOnce"],
                     "resources": {"requests": {"storage": storage_size}},
@@ -391,17 +419,16 @@ class OpenshiftClient:
 
     def create_vm_from_pvc(
         self,
-        namespace: str,
         source_vm_name: str,
         new_vm_name: str,
         new_dv_name: str,
         source_pvc_name: str,
-    ):
+    ) -> None:
         """
         Create a new VM from a cloned PVC using DataVolumeTemplates.
         Returns True if the VM was created successfully, else False.
         """
-        path = f"/apis/kubevirt.io/v1/namespaces/{namespace}/virtualmachines/{source_vm_name}"
+        path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{source_vm_name}"
         vm_obj = self.do_request("GET", path)
 
         vm_obj["metadata"]["name"] = new_vm_name
@@ -420,11 +447,9 @@ class OpenshiftClient:
                 vol["persistentVolumeClaim"]["claimName"] = new_dv_name
 
         # Use the source PVC size and volumeMode for the new DataVolumeTemplate
-        pvc_size = self.get_pvc_size(namespace, source_pvc_name)
+        pvc_size = self.get_pvc_size(source_pvc_name)
 
-        source_storage_class, source_volume_mode = self.get_pvc_storage_class_and_volume_mode(
-            namespace, source_pvc_name
-        )
+        source_storage_class, source_volume_mode = self.get_pvc_storage_class_and_volume_mode(source_pvc_name)
 
         pvc_spec = {
             "accessModes": ["ReadWriteOnce"],
@@ -457,7 +482,7 @@ class OpenshiftClient:
         logger.info(f"Creating VM '{new_vm_name}' from cloned PVC '{new_dv_name}'.")
         # logger.info(f"VM Object: {vm_obj}")
 
-        create_path = f"/apis/kubevirt.io/v1/namespaces/{namespace}/virtualmachines"
+        create_path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines"
         self.do_request("POST", create_path, data=vm_obj)
 
     def delete_vm(self, vm_name: str) -> bool:
@@ -469,7 +494,7 @@ class OpenshiftClient:
         from . import exceptions as oshift_exceptions
 
         try:
-            path = f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachines/{vm_name}"
+            path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{vm_name}"
             self.do_request("DELETE", path)
         except oshift_exceptions.OpenshiftNotFoundError:
             logging.info(f"VM {vm_name} not found when deleting, treating as already deleted.")
@@ -487,7 +512,7 @@ class OpenshiftClient:
                     claim_ref = pv.get("spec", {}).get("claimRef", {})
                     if (
                         claim_ref.get("name") == f"{vm_name}-disk"
-                        and claim_ref.get("namespace") == self.namespace
+                        and claim_ref.get("namespace") == self._namespace
                         and pv.get("status", {}).get("phase") == "Released"
                     ):
                         pv_name = pv.get("metadata", {}).get("name")
@@ -508,7 +533,7 @@ class OpenshiftClient:
         """
 
         # Get Vm info
-        path = f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachines/{vm_name}"
+        path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{vm_name}"
         try:
             vm_obj = self.do_request("GET", path)
         except Exception as e:
@@ -531,7 +556,7 @@ class OpenshiftClient:
         Returns True if the VM was stopped successfully, else False.
         """
         # Get Vm info
-        path = f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachines/{vm_name}"
+        path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{vm_name}"
         try:
             vm_obj = self.do_request("GET", path)
         except Exception as e:
@@ -548,23 +573,22 @@ class OpenshiftClient:
             logging.info(f"Error starting VM {vm_name}: {e}")
             return False
 
-    def copy_vm_same_size(self, namespace: str, source_vm_name: str, new_vm_name: str, storage_class: str) -> None:
+    def copy_vm_same_size(self, source_vm_name: str, new_vm_name: str, storage_class: str) -> None:
         """
         Copy a VM by name, creating a new VM with the same size.
         """
-        source_pvc_name, vol_type = self.get_vm_pvc_or_dv_name(namespace, source_vm_name)  # type: ignore
-        size = self.get_pvc_size(namespace, source_pvc_name)
+        source_pvc_name, _vol_type = self.get_vm_pvc_or_dv_name(source_vm_name)
+        size = self.get_pvc_size(source_pvc_name)
         new_pvc_name = f"{new_vm_name}-disk"
-        if self.clone_pvc_with_datavolume(namespace, source_pvc_name, new_pvc_name, storage_class, size):
-            self.create_vm_from_pvc(namespace, source_vm_name, new_vm_name, new_pvc_name, source_pvc_name)
+        if self.clone_pvc_with_datavolume(source_pvc_name, new_pvc_name, storage_class, size):
+            self.create_vm_from_pvc(source_vm_name, new_vm_name, new_pvc_name, source_pvc_name)
         else:
             logging.error("Error cloning PVC")
 
-    # @cached('test', consts.CACHE_VM_INFO_DURATION)
     def test(self) -> bool:
         # Simple test: try to enumerate VMs to check connectivity and authentication
         try:
-            vm_url = f"{self.api_url}/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachines"
+            vm_url = f"{self._api_url}/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines"
             headers = {"Authorization": f"Bearer {self.get_token()}", "Accept": "application/json"}
             response = requests.get(vm_url, headers=headers, verify=self._verify_ssl, timeout=self._timeout)
             response.raise_for_status()
@@ -574,11 +598,11 @@ class OpenshiftClient:
             logger.error(f"Error testing Openshift by enumerating VMs: {e}")
             raise exceptions.OpenshiftConnectionError(str(e)) from e
 
-    @cached("vms", consts.CACHE_INFO_DURATION)
-    def list_vms(self) -> collections.abc.Iterator[types.VM]:
+    @cached("vms", consts.CACHE_INFO_DURATION, key_helper=cache_key_helper)
+    def list_vms(self) -> list[types.VM]:
         """
         Fetch all VMs from KubeVirt API in the current namespace as VMDefinition objects using do_request.
         """
-        response = self.do_request("GET", f"/apis/kubevirt.io/v1/namespaces/{self.namespace}/virtualmachines")
+        response = self.do_request("GET", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines")
         vms = response.get("items", [])
-        yield from (types.VM.from_dict(vm) for vm in vms)
+        return [types.VM.from_dict(vm) for vm in vms]

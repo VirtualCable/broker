@@ -32,15 +32,21 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
+from contextlib import _GeneratorContextManager
 
 from unittest import mock
+
+from uds.services.OpenShift.provider import OpenshiftProvider
+from uds.services.OpenShift.service_fixed import OpenshiftServiceFixed
 
 from tests.services.openshift import fixtures
 from tests.utils.test import UDSTransactionTestCase
 
 
 class TestOpenshiftServiceFixed(UDSTransactionTestCase):
-    def _create_service_fixed_with_provider(self):
+    def _create_service_fixed_with_provider(
+        self,
+    ) -> tuple[OpenshiftServiceFixed, OpenshiftProvider, _GeneratorContextManager[OpenshiftProvider]]:
         """
         Helper to create a fixed service with a patched provider.
         """
@@ -49,6 +55,7 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         service = fixtures.create_service_fixed(provider=provider)
         return service, provider, provider_ctx
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         fixtures.clear()
@@ -57,8 +64,13 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
     def test_service_is_available(self) -> None:
         """
         Test provider availability and cache logic.
+
+        The provider identity is stable once loaded, so we patch
+        ``connection_key`` on the instance to feed the @cached decorator's
+        key_helper without reintroducing the method on the provider class.
         """
         service, provider, provider_ctx = self._create_service_fixed_with_provider()
+        provider.connection_key = lambda: "test-cache-key"  # type: ignore[attr-defined, unused-ignore]
         api = typing.cast(mock.MagicMock, provider.api)
         self.assertTrue(service.is_available())
         api.test.assert_called_with()
@@ -66,7 +78,7 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         api.test.return_value = False
         self.assertTrue(service.is_available())
         # Clear cache and test again
-        service.provider().is_available.cache_clear()  # type: ignore
+        service.provider().is_available.cache_clear()  # type: ignore[unused-ignore, attr-defined]
         self.assertFalse(service.is_available())
         api.test.assert_called_with()
         provider_ctx.__exit__(None, None, None)

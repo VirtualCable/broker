@@ -32,10 +32,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+import typing
+from unittest import mock
 
 from tests.utils import vars
 from tests.utils.test import UDSTransactionTestCase
 from uds.services.OpenShift.openshift import client as openshift_client
+from uds.services.OpenShift.openshift import exceptions as openshift_exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +51,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
     test_pool: str = ""
     test_storage: str = ""
 
+    @typing.override
     def setUp(self) -> None:
         """
         Set up OpenShift client and test variables for each test.
@@ -85,7 +89,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         self.assertIn("/test/path", url)
         self.assertIn("param1=value1", url)
 
-    def test_get_api_url_invalid(self):
+    def test_get_api_url_invalid(self) -> None:
         """
         Test that get_api_url works with an invalid path.
         """
@@ -106,7 +110,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
                 info = self.os_client.get_vm_info(vm.name)
                 self.assertIsNotNone(info)
 
-    def test_list_vms_and_check_fields(self):
+    def test_list_vms_and_check_fields(self) -> None:
         """
         Test that all VMs returned by list_vms have required fields.
         """
@@ -116,7 +120,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
             self.assertTrue(hasattr(vm, "name"))
             self.assertTrue(hasattr(vm, "namespace"))
 
-    def test_get_vm_info_invalid(self):
+    def test_get_vm_info_invalid(self) -> None:
         """
         Test that get_vm_info raises OpenshiftNotFoundError for an invalid VM name.
         """
@@ -125,7 +129,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         with self.assertRaises(exceptions.OpenshiftNotFoundError):
             self.os_client.get_vm_info("nonexistent-vm")
 
-    def test_get_vm_info(self):
+    def test_get_vm_info(self) -> None:
         """
         Test that get_vm_info returns info or None for a valid VM name.
         """
@@ -146,7 +150,7 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         self.assertTrue(self.os_client.stop_vm(self.test_vm))
         # self.assertTrue(self.os_client.delete_vm(self.test_vm))
 
-    def test_delete_vm_invalid(self):
+    def test_delete_vm_invalid(self) -> None:
         """
         Test that delete_vm returns False for an invalid VM name.
         """
@@ -161,9 +165,78 @@ class TestOpenshiftClient(UDSTransactionTestCase):
         phase = self.os_client.get_datavolume_phase("test-dv")
         self.assertIsInstance(phase, str)
 
-    def test_datavolume_phase_invalid(self):
+    def test_datavolume_phase_invalid(self) -> None:
         """
         Test that get_datavolume_phase returns a string for an invalid datavolume.
         """
         phase = self.os_client.get_datavolume_phase("nonexistent-dv")
         self.assertIsInstance(phase, str)
+
+
+class TestOpenshiftClientToken(UDSTransactionTestCase):
+    """Offline tests for token retrieval and session/token caching."""
+
+    def _client(self) -> openshift_client.OpenshiftClient:
+        return openshift_client.OpenshiftClient(
+            cluster_url="https://oauth-openshift.apps-crc.testing",
+            api_url="https://api.crc.testing:6443",
+            username="kubeadmin",
+            password="test-password",
+            namespace="default",
+        )
+
+    def _redirect_response(self, token: str = "a-token") -> mock.Mock:
+        response = mock.Mock()
+        response.status_code = 302
+        response.headers = {
+            "Location": f"https://oauth-openshift.apps-crc.testing/oauth/token/implicit"
+            f"#access_token={token}&expires_in=86400&token_type=Bearer"
+        }
+        return response
+
+    def test_get_token_from_redirect_fragment(self) -> None:
+        client = self._client()
+        with mock.patch("requests.get", return_value=self._redirect_response()) as requests_get:
+            self.assertEqual(client.get_token(), "a-token")
+            # verify_ssl must be honored, not hardcoded to False
+            self.assertFalse(requests_get.call_args.kwargs["verify"])
+            self.assertFalse(requests_get.call_args.kwargs["allow_redirects"])
+
+    def test_get_token_on_non_redirect_raises_auth_error(self) -> None:
+        response = mock.Mock()
+        response.status_code = 401
+        response.headers = {}
+        client = self._client()
+        with mock.patch("requests.get", return_value=response):
+            with self.assertRaises(openshift_exceptions.OpenshiftAuthError):
+                client.get_token()
+
+    def test_connect_reuses_session_and_token(self) -> None:
+        """``connect()`` rebuilds the requests.Session and re-fetches the token
+        every call (the comment in ``OpenshiftClient.connect`` notes that the
+        class is short-lived and the session is ALWAY cleaned soon). The only
+        way to truly reuse a session is to skip ``connect()`` and rely on
+        ``do_request`` setting ``self._session = None`` on a 401 to force the
+        next ``connect()`` to start over.
+        """
+        client = self._client()
+        with mock.patch.object(client, "get_token", return_value="a-token") as get_token:
+            first = client.session
+            second = client.session
+            self.assertIsNot(first, second)
+            self.assertEqual(get_token.call_count, 2)
+
+    def test_connect_refetches_token_after_invalidation(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, "get_token", return_value="a-token") as get_token:
+            client.connect()
+            client._session = None  # what do_request does on a 401
+            client.connect()
+            self.assertEqual(get_token.call_count, 2)
+
+    def test_connect_refetches_token_when_forced(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, "get_token", return_value="a-token") as get_token:
+            client.connect()
+            client.connect(force=True)
+            self.assertEqual(get_token.call_count, 2)

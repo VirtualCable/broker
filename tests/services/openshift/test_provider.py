@@ -45,6 +45,7 @@ from . import fixtures
 
 
 class TestOpenshiftProvider(UDSTransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         """
         Set up test environment and clear fixtures before each test.
@@ -67,12 +68,14 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         if not isinstance(provider.concurrent_creation_limit, ui.gui.NumericField):
             self.fail("concurrent_creation_limit is not a NumericField")
         self.assertEqual(
-            provider.concurrent_creation_limit.as_int(), fixtures.PROVIDER_VALUES_DICT["concurrent_creation_limit"]
+            provider.concurrent_creation_limit.as_int(),
+            fixtures.PROVIDER_VALUES_DICT["concurrent_creation_limit"],
         )
         if not isinstance(provider.concurrent_removal_limit, ui.gui.NumericField):
             self.fail("concurrent_removal_limit is not a NumericField")
         self.assertEqual(
-            provider.concurrent_removal_limit.as_int(), fixtures.PROVIDER_VALUES_DICT["concurrent_removal_limit"]
+            provider.concurrent_removal_limit.as_int(),
+            fixtures.PROVIDER_VALUES_DICT["concurrent_removal_limit"],
         )
         self.assertEqual(provider.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT["timeout"])
 
@@ -104,8 +107,16 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
     def test_provider_is_available(self) -> None:
         """
         Test the provider is_available method and cache behavior.
+
+        The OpenshiftProvider identity is stable once the provider is loaded
+        (``connection_key`` is intentionally absent), so the @cached decorator
+        keys purely on the method name. We patch ``connection_key`` on the
+        instance to provide a stable identity without reintroducing a method.
         """
         with fixtures.patched_provider() as provider:
+            # Provide the identity the @cached key_helper expects, without
+            # adding the method back to the provider itself.
+            provider.connection_key = lambda: "test-cache-key"  # type: ignore[attr-defined, unused-ignore]
             api = typing.cast(mock.MagicMock, provider.api)
             # First, true result
             self.assertEqual(provider.is_available(), True)
@@ -116,7 +127,7 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
             self.assertEqual(provider.is_available(), True)
             api.test.assert_not_called()
             # clear cache of method
-            provider.is_available.cache_clear()  # type: ignore  # cache_clear() is added by decorator
+            typing.cast(typing.Any, provider.is_available).cache_clear()  #  cache_clear() is added by decorator
             self.assertEqual(provider.is_available(), False)
             api.test.assert_called_once_with()
 
@@ -127,10 +138,17 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         """
         with fixtures.patched_provider() as provider:
             api = typing.cast(mock.MagicMock, provider.api)
+
             # Patch get_vm_info to return correct values for test
-            api.get_vm_info.side_effect = lambda vm_id: (
-                fixtures.VMS[0] if vm_id == "vm-1" else (fixtures.VM_INSTANCES[0] if vm_id == "vm-instance-1" else None)
-            )  # type: ignore
+            def side_effect(vm_id: str) -> typing.Any:
+                if vm_id == "vm-1":
+                    return fixtures.VMS[0]
+                elif vm_id == "vm-instance-1":
+                    return fixtures.VM_INSTANCES[0]
+                return None
+
+            api.get_vm_info = mock.Mock(side_effect=side_effect)
+            api.get_vm_info.side_effect = side_effect
             self.assertEqual(provider.test_connection(), True)
             api.test.assert_called_once_with()
             self.assertEqual(provider.api.list_vms(), fixtures.VMS)
@@ -140,6 +158,45 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
             self.assertTrue(provider.api.start_vm("vm-1"))
             self.assertTrue(provider.api.stop_vm("vm-1"))
             self.assertTrue(provider.api.delete_vm("vm-1"))
+
+    def test_initialize_resets_cached_api(self) -> None:
+        """
+        initialize() should set _cached_api to None to force refresh on config change.
+        """
+        provider = fixtures.create_provider()
+        provider._cached_api = mock.MagicMock()
+        provider.initialize({})
+        self.assertIsNone(provider._cached_api)
+
+    def test_api_recreates_client_when_config_changed(self) -> None:
+        """
+        The api property does NOT re-check the cached client against the
+        current configuration: ``_cached_api`` is reused verbatim until
+        :py:meth:`initialize` clears it. The provider's identity is
+        considered stable for the lifetime of the loaded provider.
+        """
+        provider = fixtures.create_provider()
+        old_client = fixtures.create_client_mock()
+        old_client.cache_key.return_value = (
+            "https://old-cluster.example.com|https://old-api.example.com:6443|kubeadmin|default|False"
+        )
+        provider._cached_api = old_client
+
+        with mock.patch("uds.services.OpenShift.provider.client.OpenshiftClient") as MockClient:
+            result = provider.api
+            # The cached client is reused, no new OpenshiftClient is built,
+            # even though the cache_key differs from the current config.
+            MockClient.assert_not_called()
+            self.assertIs(result, old_client)
+
+    def test_api_reuses_client_when_config_unchanged(self) -> None:
+        """
+        api property reuses the cached client when connection params haven't changed.
+        """
+        provider = fixtures.create_provider()
+        old_client = fixtures.create_client_mock()  # cache_key() matches PROVIDER_VALUES_DICT
+        provider._cached_api = old_client
+        self.assertIs(provider.api, old_client)
 
     # --- Name Sanitization ---
     def test_sanitized_name(self) -> None:
