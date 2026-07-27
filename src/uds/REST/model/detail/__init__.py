@@ -177,6 +177,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
 
             operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
             if operation:
+                self.check_access(parent, to_check.required_permission, root=True)
                 if not arg:
                     return operation(parent)
                 return operation(parent, arg)
@@ -256,7 +257,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             case _:
                 # Maybe a custom method of an specific item?
                 r = self._check_is_custom_method(self._args[1], parent, self._args[0])
-                if r is not None:
+                if r is not consts.rest.NOT_FOUND:
                     return r
 
         # Not understood, fallback, maybe the derived class can understand it

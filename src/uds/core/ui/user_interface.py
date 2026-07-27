@@ -746,7 +746,7 @@ class gui:
 
         @typing.override
         def validate(self) -> bool:
-            """B1: enforce min_value/max_value bounds when set."""
+            """Enforce min_value/max_value bounds when set."""
             if not super().validate():
                 return False
             min_v = self._field_info.min_value
@@ -816,7 +816,6 @@ class gui:
         # Override value setter, so we can convert from datetime.datetime or str to datetime.date
         @typing.override
         def _set_value(self, value: typing.Any) -> None:
-            # B6: degrade gracefully to NEVER.date() on invalid input rather than raising.
             match value:
                 case datetime.datetime():
                     value = value.date()
@@ -1053,7 +1052,7 @@ class gui:
 
         @typing.override
         def validate(self) -> bool:
-            """B5: value must be bool (or bool-coercible)."""
+            """``value`` must be bool (or bool-coercible)."""
             if not super().validate():
                 return False
             try:
@@ -1277,7 +1276,7 @@ class gui:
 
         @typing.override
         def validate(self) -> bool:
-            """B4: selected value must be one of declared choices (or empty)."""
+            """Selected value must be one of the declared choices (or empty)."""
             if not super().validate():
                 return False
             if not self.value:
@@ -1397,7 +1396,7 @@ class gui:
 
         @typing.override
         def validate(self) -> bool:
-            """B3: every selected item must be one of declared choices (callable-resolved)."""
+            """Every selected item must be one of the declared choices (callable-resolved)."""
             if not super().validate():
                 return False
             choices_raw = self._field_info.choices

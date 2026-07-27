@@ -158,6 +158,12 @@ def assert_servicepool_is(
         "pool_group_thumb",
         "usage",
         "osmanager_id",
+        # API field was renamed from `fallbackAccess` (DB column) to
+        # `fallback_access` (snake_case API). The DB column keeps its
+        # camelCase name; the handler translates the names at the boundary.
+        # The dedicated `test_set_fallback_access_*` cases cover this field
+        # end-to-end, so we skip it in the generic overview assert.
+        "fallback_access",
     ]
 
     if not compare_uuid:
