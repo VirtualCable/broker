@@ -101,10 +101,23 @@ class OpenshiftClient:
     def get_token(self) -> str | None:
         try:
             url = f"{self.cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
-            r = requests.get(url, auth=(self.username, self.password), timeout=15, allow_redirects=True, verify=False)
-            if "access_token=" not in r.url:
-                raise Exception("access_token not found in response URL")
-            token = r.url.split("access_token=")[1].split("&")[0]
+            r = requests.get(
+                url,
+                auth=(self.username, self.password),
+                timeout=15,
+                allow_redirects=False,
+                verify=self._verify_ssl,
+            )
+            if r.status_code not in (301, 302, 303, 307, 308):
+                raise exceptions.OpenshiftAuthError(
+                    f"Unexpected response status while fetching token: {r.status_code}"
+                )
+            location = r.headers.get('Location', '')
+            parsed = urllib.parse.urlparse(location)
+            params = urllib.parse.parse_qs(parsed.fragment) or urllib.parse.parse_qs(parsed.query)
+            token = params.get('access_token', [None])[0]
+            if not token:
+                raise exceptions.OpenshiftAuthError("access_token not found in redirect Location")
             return token
         except exceptions.OpenshiftError:
             raise
@@ -123,7 +136,7 @@ class OpenshiftClient:
             {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.get_token()}",
+                "Authorization": f"Bearer {self._access_token}",
             }
         )
         # ponytail: fixed TTL instead of parsing expires_in from the redirect. do_request already

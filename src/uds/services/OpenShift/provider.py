@@ -111,12 +111,21 @@ class OpenshiftProvider(ServiceProvider):
 
     @typing.override
     def initialize(self, values: "core_types.core.ValuesType") -> None:
-        # No port validation needed, URLs are used
-        pass
+        self._cached_api = None  # Config may have changed, do not reuse the client
+
+    def connection_key(self) -> str:
+        """
+        Identity of the connection parameters, in the same format as `OpenshiftClient.cache_key`,
+        so a cached client can be checked against the current configuration.
+        """
+        return (
+            f'{self.cluster_url.value}|{self.api_url.value}|{self.username.value}|'
+            f'{self.namespace.value or "default"}|{self.verify_ssl.as_bool()}'
+        )
 
     @property
     def api(self) -> "client.OpenshiftClient":
-        if self._cached_api is None:
+        if self._cached_api is None or self._cached_api.cache_key() != self.connection_key():
             self._cached_api = client.OpenshiftClient(
                 cluster_url=self.cluster_url.value,
                 api_url=self.api_url.value,
@@ -132,7 +141,7 @@ class OpenshiftProvider(ServiceProvider):
     def test_connection(self) -> bool:
         return self.api.test()
 
-    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT)
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.connection_key())
     def is_available(self) -> bool:
         return self.api.test()
 

@@ -37,6 +37,7 @@ from unittest import mock
 from tests.utils import vars
 from tests.utils.test import UDSTransactionTestCase
 from uds.services.OpenShift.openshift import client as openshift_client
+from uds.services.OpenShift.openshift import exceptions as openshift_exceptions
 
 logger = logging.getLogger(__name__)
 
