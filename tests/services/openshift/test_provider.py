@@ -141,6 +141,49 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
             self.assertTrue(provider.api.stop_vm("vm-1"))
             self.assertTrue(provider.api.delete_vm("vm-1"))
 
+    # --- Config Change Detection ---
+    def test_connection_key_matches_client_cache_key(self) -> None:
+        """
+        provider.connection_key() and OpenshiftClient.cache_key() must build the same string,
+        or the cached client would be recreated on every access.
+        """
+        provider = fixtures.create_provider()
+        self.assertEqual(provider.connection_key(), provider.api.cache_key())
+
+    def test_initialize_resets_cached_api(self) -> None:
+        """
+        initialize() should set _cached_api to None to force refresh on config change.
+        """
+        provider = fixtures.create_provider()
+        provider._cached_api = mock.MagicMock()
+        provider.initialize({})
+        self.assertIsNone(provider._cached_api)
+
+    def test_api_recreates_client_when_config_changed(self) -> None:
+        """
+        api property creates a new OpenshiftClient when the connection params have changed.
+        """
+        provider = fixtures.create_provider()
+        old_client = fixtures.create_client_mock()
+        old_client.cache_key.return_value = 'https://old-cluster.example.com|https://old-api.example.com:6443|kubeadmin|default|False'
+        provider._cached_api = old_client
+
+        with mock.patch('uds.services.OpenShift.provider.client.OpenshiftClient') as MockClient:
+            new_mock = mock.MagicMock()
+            MockClient.return_value = new_mock
+            result = provider.api
+            MockClient.assert_called_once()
+            self.assertIs(result, new_mock)
+
+    def test_api_reuses_client_when_config_unchanged(self) -> None:
+        """
+        api property reuses the cached client when connection params haven't changed.
+        """
+        provider = fixtures.create_provider()
+        old_client = fixtures.create_client_mock()  # cache_key() matches PROVIDER_VALUES_DICT
+        provider._cached_api = old_client
+        self.assertIs(provider.api, old_client)
+
     # --- Name Sanitization ---
     def test_sanitized_name(self) -> None:
         """
