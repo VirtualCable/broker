@@ -42,6 +42,8 @@ from uds.services.OpenShift.openshift import exceptions as openshift_exceptions
 
 logger = logging.getLogger(__name__)
 
+SECURE_SESSION = "uds.services.OpenShift.openshift.client.security.secure_requests_session"
+
 
 class TestOpenshiftClient(UDSTransactionTestCase):
     """Tests for operations with OpenShiftClient."""
@@ -196,18 +198,20 @@ class TestOpenshiftClientToken(UDSTransactionTestCase):
 
     def test_get_token_from_redirect_fragment(self) -> None:
         client = self._client()
-        with mock.patch("requests.get", return_value=self._redirect_response()) as requests_get:
+        with mock.patch(SECURE_SESSION) as secure_session:
+            secure_session.return_value.get.return_value = self._redirect_response()
             self.assertEqual(client.get_token(), "a-token")
             # verify_ssl must be honored, not hardcoded to False
-            self.assertFalse(requests_get.call_args.kwargs["verify"])
-            self.assertFalse(requests_get.call_args.kwargs["allow_redirects"])
+            self.assertFalse(secure_session.call_args.kwargs["verify"])
+            self.assertFalse(secure_session.return_value.get.call_args.kwargs["allow_redirects"])
 
     def test_get_token_on_non_redirect_raises_auth_error(self) -> None:
         response = mock.Mock()
         response.status_code = 401
         response.headers = {}
         client = self._client()
-        with mock.patch("requests.get", return_value=response):
+        with mock.patch(SECURE_SESSION) as secure_session:
+            secure_session.return_value.get.return_value = response
             with self.assertRaises(openshift_exceptions.OpenshiftAuthError):
                 client.get_token()
 
