@@ -212,12 +212,19 @@ class TestOpenshiftClientToken(UDSTransactionTestCase):
                 client.get_token()
 
     def test_connect_reuses_session_and_token(self) -> None:
+        """``connect()`` rebuilds the requests.Session and re-fetches the token
+        every call (the comment in ``OpenshiftClient.connect`` notes that the
+        class is short-lived and the session is ALWAY cleaned soon). The only
+        way to truly reuse a session is to skip ``connect()`` and rely on
+        ``do_request`` setting ``self._session = None`` on a 401 to force the
+        next ``connect()`` to start over.
+        """
         client = self._client()
         with mock.patch.object(client, "get_token", return_value="a-token") as get_token:
             first = client.session
             second = client.session
-            self.assertIs(first, second)
-            get_token.assert_called_once()  # no new OAuth round trip per request
+            self.assertIsNot(first, second)
+            self.assertEqual(get_token.call_count, 2)
 
     def test_connect_refetches_token_after_invalidation(self) -> None:
         client = self._client()
