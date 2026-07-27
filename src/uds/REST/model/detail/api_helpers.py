@@ -212,9 +212,16 @@ def api_paths(
             )
         # Collection custom method
         if cm.method == types.rest.CustomMethodMethod.POST:
-            api_desc[f"{path}/{method_name}"] = types.rest.api.PathItem(post=op)
+            op_attr = "post"
         else:
-            api_desc[f"{path}/{method_name}"] = types.rest.api.PathItem(get=op)
+            op_attr = "get"
+        # Merge with any existing PathItem at the same path (see master
+        # api_helpers for the rationale on multi-verb custom methods).
+        existing = api_desc.get(f"{path}/{method_name}")
+        if existing is None:
+            api_desc[f"{path}/{method_name}"] = types.rest.api.PathItem(**{op_attr: op})
+        else:
+            setattr(existing, op_attr, op)
         # Item custom method
         item_op = types.rest.api.Operation(
             summary=f"{cm_summary} ({name} item)",
@@ -235,9 +242,14 @@ def api_paths(
                 ),
             )
         if cm.method == types.rest.CustomMethodMethod.POST:
-            api_desc[f"{path}/{{uuid}}/{method_name}"] = types.rest.api.PathItem(post=item_op)
+            op_attr = "post"
         else:
-            api_desc[f"{path}/{{uuid}}/{method_name}"] = types.rest.api.PathItem(get=item_op)
+            op_attr = "get"
+        existing_item = api_desc.get(f"{path}/{{uuid}}/{method_name}")
+        if existing_item is None:
+            api_desc[f"{path}/{{uuid}}/{method_name}"] = types.rest.api.PathItem(**{op_attr: item_op})
+        else:
+            setattr(existing_item, op_attr, item_op)
 
     for cm in cls.CUSTOM_METHODS:
         emit_custom_method(cm, None, False)

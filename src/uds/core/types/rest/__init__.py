@@ -41,6 +41,7 @@ import typing
 from . import actor as actor
 from . import api
 from . import stock as stock
+from .. import permissions as permissions
 
 if typing.TYPE_CHECKING:
     from uds.models.managed_object_model import ManagedObjectModel
@@ -149,6 +150,15 @@ class ModelCustomMethod:
       it is emitted as query ``parameters``.  ``None`` (default) means
       the method takes no parameters (or they are intentionally
       undocumented).
+    - ``required_permission``: minimum permission the caller must hold
+      on the parent item (``Master``) or the parent's parent
+      (``Detail``) to invoke this method. Default
+      ``PermissionType.ALL`` preserves the historical
+      "any logged-in user can call a custom method" behaviour; declare
+      ``PermissionType.READ`` for read-only actions and
+      ``PermissionType.MANAGEMENT`` for state-mutating ones.
+      Enforced by :meth:`Master._check_is_custom_method` and
+      :meth:`Detail._check_is_custom_method` before dispatch.
     """
 
     name: str
@@ -156,6 +166,7 @@ class ModelCustomMethod:
     method: CustomMethodMethod = CustomMethodMethod.GET
     description: str | None = None
     params: api.SchemaProperty | None = None
+    required_permission: permissions.PermissionType = permissions.PermissionType.ALL
 
 
 # Note that for this item to work with documentation

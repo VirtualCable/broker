@@ -80,9 +80,6 @@ class ContentProcessor:
         returns parameters based on request method
         GET parameters are understood
         """
-        if self._request.method != "GET":
-            return {}
-
         return {k: v[0] if len(v) == 1 else v for k, v in self._request.GET.lists()}
 
     def process_parameters(self) -> dict[str, typing.Any]:
@@ -194,6 +191,13 @@ class MarshallerProcessor(ContentProcessor):
 
             if not isinstance(res, dict):
                 raise ParametersException("Invalid content")
+
+            # If the body decodes to an empty dict (e.g. Angular's
+            # ``http.post(url, {})`` which serialises ``{}`` to the literal
+            # string ``"{}"``), fall back to the query string so callers
+            # that put their parameters in the URL still get them.
+            if not res:
+                return self.process_get_parameters()
 
             return typing.cast(dict[str, typing.Any], res)
         except Exception as e:
