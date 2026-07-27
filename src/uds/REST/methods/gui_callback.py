@@ -33,6 +33,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
+from uds import models
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
@@ -58,7 +59,18 @@ class Callback(Handler):
         if len(self._args) != 1:
             raise exceptions.rest.RequestError("Invalid Request")
 
-        if self._args[0] in gui.callbacks:
-            return gui.callbacks[self._args[0]](self._params)
+        if self._args[0] not in gui.callbacks:
+            raise exceptions.rest.NotFound("callback {0} not found".format(self._args[0]))
 
-        raise exceptions.rest.NotFound("callback {0} not found".format(self._args[0]))
+        # Copy so we don't mutate the handler's params on subsequent calls.
+        params = dict(self._params)
+        cb_ticket = params.pop("cb_ticket", None)
+        if cb_ticket:
+            try:
+                ticket_data = models.TicketStore.get(cb_ticket, invalidate=False)
+            except models.TicketStore.DoesNotExist:
+                raise exceptions.rest.RequestError("Invalid or expired cb_ticket")
+            # Ticket data wins on collision with the query-string params.
+            params.update(ticket_data)
+
+        return gui.callbacks[self._args[0]](params)
