@@ -971,16 +971,17 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
     def _op2str(op: types.services.Operation) -> str:
         return op.name
 
-    def _debug(self, txt: str) -> None:
+    def _debug(self, txt: str) -> str:
         # f'Queue at {txt} for {self._name}: {", ".join([DynamicUserService._op2str(op) for op in self._queue])}, mac:{self._mac}, vmid:{self._vmid}'
+        data = f"Queue at {txt} for {self._name}: {', '.join([self._op2str(op) for op in self._queue])}"
+        if self._mac:
+            data += f", mac:{self._mac}"
+        if self._vmid:
+            data += f", vmid:{self._vmid}"
         logger.debug(
-            "Queue at %s for %s: %s, mac:%s, vmid:%s",
-            txt,
-            self._name,
-            ", ".join([DynamicUserService._op2str(op) for op in self._queue]),
-            self._mac,
-            self._vmid,
+            data,
         )
+        return data
 
 
 # This is a map of operations to methods
