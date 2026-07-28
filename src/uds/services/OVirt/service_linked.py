@@ -113,7 +113,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         fills={
             "callback_name": "ovFillResourcesFromCluster",
             "function": helpers.get_resources,
-            "parameters": ["cluster", "prov_uuid"],
+            "parameters": ["cluster"],
         },
         tooltip=_("Cluster to contain services"),
         required=True,
@@ -198,8 +198,6 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
     basename = fields.basename_field(order=115, tab=types.ui.Tab.MACHINE)
     lenname = fields.lenname_field(order=116, tab=types.ui.Tab.MACHINE)
 
-    prov_uuid = gui.HiddenField()
-
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         """
@@ -224,7 +222,12 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
         # at defValue
-        self.prov_uuid.value = self.provider().get_uuid()
+
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.cluster.set_cb_ticket("prov_uuid", self.provider().get_uuid())
 
         # This is not the same case, values is not the "value" of the field, but
         # the list of values shown because this is a "ChoiceField"
@@ -342,7 +345,7 @@ class OVirtLinkedService(services.Service):  # pylint: disable=too-many-public-m
         """
         return self.display.value
 
-    def get_console_connection(self, vmid: str) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().api.get_console_connection_info(vmid)
 
     @typing.override
