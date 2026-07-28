@@ -99,7 +99,7 @@ class OGService(services.Service):
         fills={
             "callback_name": "OgFillOuData",
             "function": helpers.get_resources,
-            "parameters": ["prov_uuid", "ou"],
+            "parameters": ["ou"],
         },
         tooltip=_("Organizational Unit"),
         required=True,
@@ -145,8 +145,6 @@ class OGService(services.Service):
 
     userservices_limit_field = fields.services_limit_field()
 
-    prov_uuid = gui.HiddenField(value=None)
-
     @typing.override
     def init_gui(self) -> None:
         """
@@ -155,7 +153,11 @@ class OGService(services.Service):
         ous = [gui.choice_item(r["id"], r["name"]) for r in self.provider().api.list_of_ous()]
         self.ou.set_choices(ous)
 
-        self.prov_uuid.value = self.provider().db_obj().uuid
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.ou.set_cb_ticket('prov_uuid', self.provider().db_obj().uuid)
 
     @typing.override
     def provider(self) -> "OGProvider":

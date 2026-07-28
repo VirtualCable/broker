@@ -48,6 +48,7 @@ class WEBTestCase(test.UDSTransactionTestCase):
     staffs: list[models.User]
     plain_users: list[models.User]
 
+    @typing.override
     def setUp(self) -> None:
         # Set up data for REST Test cases
         # First, the authenticator related
@@ -85,7 +86,7 @@ class WEBTestCase(test.UDSTransactionTestCase):
             self.assertRedirects(response, "/uds/page/services", status_code=302, target_status_code=200)
         return response
 
-    def login(self, user: typing.Optional[models.User] = None, as_admin: bool = True) -> models.User:
+    def login(self, user: models.User | None = None, as_admin: bool = True) -> models.User:
         """
         Login as specified user or first admin
         """
