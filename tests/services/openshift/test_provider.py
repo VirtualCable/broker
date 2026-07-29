@@ -107,16 +107,8 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
     def test_provider_is_available(self) -> None:
         """
         Test the provider is_available method and cache behavior.
-
-        The OpenshiftProvider identity is stable once the provider is loaded
-        (``connection_key`` is intentionally absent), so the @cached decorator
-        keys purely on the method name. We patch ``connection_key`` on the
-        instance to provide a stable identity without reintroducing a method.
         """
         with fixtures.patched_provider() as provider:
-            # Provide the identity the @cached key_helper expects, without
-            # adding the method back to the provider itself.
-            provider.connection_key = lambda: "test-cache-key"  # type: ignore[attr-defined, unused-ignore]
             api = typing.cast(mock.MagicMock, provider.api)
             # First, true result
             self.assertEqual(provider.is_available(), True)
@@ -128,6 +120,21 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
             api.test.assert_not_called()
             # clear cache of method
             typing.cast(typing.Any, provider.is_available).cache_clear()  #  cache_clear() is added by decorator
+            self.assertEqual(provider.is_available(), False)
+            api.test.assert_called_once_with()
+
+    def test_provider_is_available_keyed_on_connection_identity(self) -> None:
+        """
+        The cached entry belongs to the connection identity, not to the method name: a provider
+        pointing to another cluster must not read the previous one's answer.
+        """
+        with fixtures.patched_provider() as provider:
+            api = typing.cast(mock.MagicMock, provider.api)
+            self.assertEqual(provider.is_available(), True)
+            api.test.reset_mock()
+
+            api.cache_key.return_value = 'https://other-cluster.example.com|https://other-api:6443|kubeadmin|default'
+            api.test.return_value = False
             self.assertEqual(provider.is_available(), False)
             api.test.assert_called_once_with()
 
