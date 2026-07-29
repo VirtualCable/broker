@@ -90,3 +90,5 @@ test-vars.ini
 /.opencode
 /graphify*
 /doc/plan
+.ruff_cache
+AGENTS.md

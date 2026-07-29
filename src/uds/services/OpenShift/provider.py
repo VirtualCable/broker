@@ -111,8 +111,7 @@ class OpenshiftProvider(ServiceProvider):
 
     @typing.override
     def initialize(self, values: "core_types.core.ValuesType") -> None:
-        # No port validation needed, URLs are used
-        pass
+        self._cached_api = None  # Config may have changed, do not reuse the client
 
     @property
     def api(self) -> "client.OpenshiftClient":
@@ -132,13 +131,15 @@ class OpenshiftProvider(ServiceProvider):
     def test_connection(self) -> bool:
         return self.api.test()
 
-    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT)
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.connection_key())
     def is_available(self) -> bool:
         return self.api.test()
 
     @staticmethod
     @typing.override
-    def test(env: "environment.Environment", data: "core_types.core.ValuesType") -> "core_types.core.TestResult":
+    def test(
+        env: "environment.Environment", data: "core_types.core.ValuesType"
+    ) -> "core_types.core.TestResult":
         ov = OpenshiftProvider(env, data)
         if ov.test_connection() is True:
             return core_types.core.TestResult(True, _("Connection works fine"))

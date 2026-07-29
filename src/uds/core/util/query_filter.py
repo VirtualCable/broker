@@ -170,6 +170,15 @@ class QueryTransformer(lark.Transformer[typing.Any, _T_Result]):
         Returns:
             A filtering function that returns the value of the field from the input dictionary.
         """
+        field_name = arg.value
+        if field_name.startswith("_"):
+            # Reject names that start with underscore. They are not valid
+            # object/dict attribute paths and would leak internal lookups
+            # if Django ever exposes more underscore-prefixed kwargs.
+            raise ValueError(f"Field names cannot start with '_': {field_name!r}")
+        if "__" in field_name:
+            # Block Django field traversal (e.g. ``user__password``).
+            raise ValueError("Field names cannot contain '__'")
 
         def getter(obj: typing.Any) -> typing.Any:
             if isinstance(obj, dict):

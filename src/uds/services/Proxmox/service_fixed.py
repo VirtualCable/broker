@@ -85,7 +85,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
         fills={
             "callback_name": "pmFillMachinesFromResource",
             "function": helpers.get_machines,
-            "parameters": ["prov_uuid", "pool"],
+            "parameters": ["pool"],
         },
         tooltip=_("Resource Pool containing base machines"),
         required=True,
@@ -98,8 +98,6 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
 
     maintain_on_error = FixedService.maintain_on_error
 
-    prov_uuid = gui.HiddenField(value=None)
-
     # Uses default FixedService.initialize
 
     @typing.override
@@ -107,8 +105,12 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
         # at defValue
-        # Log with call stack
-        self.prov_uuid.value = self.provider().get_uuid()
+
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.pool.set_cb_ticket('prov_uuid', self.provider().get_uuid())
 
         self.pool.set_choices(
             [gui.choice_item("", _("None"))] + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]

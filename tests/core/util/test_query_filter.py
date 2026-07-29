@@ -266,3 +266,28 @@ class QueryFilterTest(unittest.TestCase):
         result = list(exec_query("round(age) eq 25", self.data))
         expected = [{"name": "Bob", "age": 25}]
         self.assertEqual(result, expected)
+
+    # --- Field-name hardening --------------------------------------------
+
+    def test_field_dunder_rejected(self) -> None:
+        """Fields containing ``__`` are rejected to block attribute traversal.
+        Note: a name starting with ``_`` is rejected first by the underscore
+        check; this test exercises the ``__`` check on a name that does NOT
+        start with underscore.
+        """
+        with self.assertRaises(ValueError) as ctx:
+            list(exec_query("name__x eq 'Alice'", self.data))
+        self.assertIn("cannot contain '__'", str(ctx.exception))
+
+    def test_field_underscore_prefix_rejected(self) -> None:
+        """Fields starting with ``_`` are rejected to keep the parser away from
+        internal-only names. Real dict/object attribute paths never start with ``_``.
+        """
+        with self.assertRaises(ValueError) as ctx:
+            list(exec_query("_connector eq 1", self.data))
+        self.assertIn("cannot start with '_'", str(ctx.exception))
+
+    def test_field_normal_unaffected(self) -> None:
+        """Sanity: a normal field still works after hardening."""
+        result = list(exec_query("name eq 'Alice'", self.data))
+        self.assertEqual(result, [{"name": "Alice", "age": 30}])

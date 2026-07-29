@@ -115,15 +115,13 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
         self._waiting_name = True
         api = self.service().api
         publication_vm_name = self.publication()._name
-        namespace = api.namespace
         self._name = self.service().sanitized_name(self._name)
 
-        source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(namespace, publication_vm_name)
+        source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(publication_vm_name)
 
         new_pvc_name = f"{self._name}-disk"
 
         api.create_vm_from_pvc(
-            namespace=namespace,
             source_vm_name=publication_vm_name,
             new_vm_name=self._name,
             new_dv_name=new_pvc_name,

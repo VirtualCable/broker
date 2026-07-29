@@ -91,7 +91,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
         fills={
             "callback_name": "osGetMachines",
             "function": helpers.list_servers,
-            "parameters": ["prov_uuid", "project", "region"],
+            "parameters": ["project", "region"],
         },
         tooltip=_("Project for this service"),
         required=True,
@@ -102,8 +102,6 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
     randomize = FixedService.randomize
 
     maintain_on_error = FixedService.maintain_on_error
-
-    prov_uuid = gui.HiddenField()
 
     _api: "client.OpenStackClient | None" = None
 
@@ -142,7 +140,11 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
         self.project.set_choices(projects)
 
-        self.prov_uuid.value = self.provider().get_uuid()
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.project.set_cb_ticket('prov_uuid', self.provider().get_uuid())
 
     @typing.override
     def provider(self) -> "AnyOpenStackProvider":

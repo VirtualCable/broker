@@ -123,6 +123,11 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
     @lark.visitors.v_args(inline=True)
     def field(self, arg: lark.Token) -> FieldName:
         field_name = arg.value
+        if field_name.startswith("_"):
+            # Block Django Q internal kwargs (CVE-2025-64459 family:
+            # `_connector`, `_negated`, ...). Real DB columns never start
+            # with an underscore.
+            raise ValueError(f"Field names cannot start with '_': {field_name!r}")
         if "__" in field_name:
             raise ValueError("Field names cannot contain '__'")
         return FieldName(field_name)
