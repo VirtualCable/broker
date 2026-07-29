@@ -389,7 +389,7 @@ class OpenshiftClient:
         cloned_pvc_name: str,
         storage_class: str,
         storage_size: str,
-    ) -> bool:
+    ) -> None:
         """
         Clone a PVC using a DataVolume.
         Returns True if the DataVolume was created successfully, else False.
@@ -411,10 +411,9 @@ class OpenshiftClient:
         try:
             self.do_request("POST", path, data=body)
             logging.info(f"DataVolume '{cloned_pvc_name}' created successfully")
-            return True
         except Exception as e:
             logging.error(f"Failed to create DataVolume: {e}")
-            return False
+            raise exceptions.OpenshiftError(f"Failed to create DataVolume: {e}")
 
     def create_vm_from_pvc(
         self,
@@ -579,10 +578,8 @@ class OpenshiftClient:
         source_pvc_name, _vol_type = self.get_vm_pvc_or_dv_name(source_vm_name)
         size = self.get_pvc_size(source_pvc_name)
         new_pvc_name = f"{new_vm_name}-disk"
-        if self.clone_pvc_with_datavolume(source_pvc_name, new_pvc_name, storage_class, size):
-            self.create_vm_from_pvc(source_vm_name, new_vm_name, new_pvc_name, source_pvc_name)
-        else:
-            logging.error("Error cloning PVC")
+        self.clone_pvc_with_datavolume(source_pvc_name, new_pvc_name, storage_class, size)
+        self.create_vm_from_pvc(source_vm_name, new_vm_name, new_pvc_name, source_pvc_name)
 
     def test(self) -> bool:
         # Simple test: try to enumerate VMs to check connectivity and authentication

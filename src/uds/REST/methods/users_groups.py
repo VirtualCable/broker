@@ -172,7 +172,10 @@ class Users(DetailHandler[UserItem]):
         parent = ensure.is_instance(parent, Authenticator)
 
         # Extract authenticator
-        return [self.as_user_item(i) for i in self.odata_filter(parent.users.all())]
+        return [
+            self.as_user_item(i)
+            for i in self.odata_filter(parent.users.prefetch_related("groups", "groups__manager"))
+        ]
 
     @typing.override
     def get_item(self, parent: "Model", item: str) -> UserItem:
@@ -331,7 +334,9 @@ class Users(DetailHandler[UserItem]):
                     "id": i.uuid,
                     "name": i.name,
                     "thumb": i.image.thumb64 if i.image is not None else consts.images.DEFAULT_THUMB_BASE64,
-                    "user_services_count": i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+                    "user_services_count": i.userServices.exclude(
+                        state__in=(State.REMOVED, State.ERROR)
+                    ).count(),
                     "state": _("With errors") if i.is_restrained() else _("Ok"),
                 }
             )
@@ -455,7 +460,9 @@ class Groups(DetailHandler[GroupItem]):
         ).build()
 
     @typing.override
-    def enum_types(self, parent: "Model", for_type: str | None) -> collections.abc.Iterable[types.rest.TypeInfo]:
+    def enum_types(
+        self, parent: "Model", for_type: str | None
+    ) -> collections.abc.Iterable[types.rest.TypeInfo]:
         ensure.is_instance(parent, Authenticator)  # Just ensures type
         types_dict: dict[str, dict[str, str]] = {
             "group": {"name": _("Group"), "description": _("UDS Group")},
@@ -528,7 +535,9 @@ class Groups(DetailHandler[GroupItem]):
 
             if is_meta:
                 # Do not allow to add meta groups to meta groups
-                group.groups.set(i for i in parent.groups.filter(uuid__in=self._params["groups"]) if i.is_meta is False)
+                group.groups.set(
+                    i for i in parent.groups.filter(uuid__in=self._params["groups"]) if i.is_meta is False
+                )
 
             if pools:
                 # Update pools
@@ -572,7 +581,9 @@ class Groups(DetailHandler[GroupItem]):
                     "id": i.uuid,
                     "name": i.name,
                     "thumb": i.image.thumb64 if i.image is not None else consts.images.DEFAULT_THUMB_BASE64,
-                    "user_services_count": i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+                    "user_services_count": i.userServices.exclude(
+                        state__in=(State.REMOVED, State.ERROR)
+                    ).count(),
                     "state": _("With errors") if i.is_restrained() else _("Ok"),
                 }
             )

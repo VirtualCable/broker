@@ -107,8 +107,16 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
     def test_provider_is_available(self) -> None:
         """
         Test the provider is_available method and cache behavior.
+
+        The OpenshiftProvider identity is stable once the provider is loaded
+        (``connection_key`` is intentionally absent), so the @cached decorator
+        keys purely on the method name. We patch ``connection_key`` on the
+        instance to provide a stable identity without reintroducing a method.
         """
         with fixtures.patched_provider() as provider:
+            # Provide the identity the @cached key_helper expects, without
+            # adding the method back to the provider itself.
+            provider.connection_key = lambda: "test-cache-key"  # type: ignore[attr-defined, unused-ignore]
             api = typing.cast(mock.MagicMock, provider.api)
             # First, true result
             self.assertEqual(provider.is_available(), True)

@@ -85,7 +85,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
         fills={
             "callback_name": "xmFillMachinesFromFolder",
             "function": helpers.get_machines,
-            "parameters": ["prov_uuid", "folder"],
+            "parameters": ["folder"],
         },
         tooltip=_("Folder containing base machines"),
         required=True,
@@ -98,8 +98,6 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
 
     maintain_on_error = FixedService.maintain_on_error
 
-    prov_uuid = gui.HiddenField(value=None)
-
     # Uses default FixedService.initialize
 
     @typing.override
@@ -107,7 +105,13 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
         # at defValue
-        self.prov_uuid.value = self.provider().get_uuid()
+
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.folder.set_cb_ticket('prov_uuid', self.provider().get_uuid())
+
         with self.provider().get_connection() as api:
             self.folder.set_choices([gui.choice_item(folder, folder) for folder in api.list_folders()])
 

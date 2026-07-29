@@ -54,8 +54,6 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
     # after the clone operation), needs to wait until the machine is created before destroying it.
     wait_until_finish_to_destroy: typing.ClassVar[bool] = True
 
-    _waiting_name = autoserializable.BoolField(default=False)
-
     @typing.override
     def service(self) -> "OpenshiftService":
         """
@@ -68,14 +66,12 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         """
         Starts the deployment process for a user or cache, cloning the template publication.
         """
-        self._waiting_name = True
         api = self.service().api
         template_vm_name = self.service().template.value
 
         source_pvc_name, _vol_type = api.get_vm_pvc_or_dv_name(template_vm_name)
 
         self._name = self.service().sanitized_name(self._name)
-        self._waiting_name = False
 
         new_pvc_name = f"{self._name}-disk"
 
@@ -96,31 +92,24 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         api = self.service().api
         new_pvc_name = f"{self._name}-disk"
 
-        logger.info(f"Waiting for DataVolume '{new_pvc_name}' to be ready.")
+        logger.debug(f"Waiting for DataVolume '{new_pvc_name}' to be ready.")
         dv_status = api.get_datavolume_phase(new_pvc_name)
         if dv_status.is_error():
             self._error(f"DataVolume clone {new_pvc_name} failed.")
             return types.states.TaskState.ERROR
         elif not dv_status.is_succeeded():
-            logger.info(f"Waiting for DataVolume clone {new_pvc_name}, status: {dv_status}.")
+            logger.debug(f"Waiting for DataVolume clone {new_pvc_name}, status: {dv_status}.")
             return types.states.TaskState.RUNNING
 
-        logger.info(f"VM '{self._name}' created successfully.")
+        logger.debug(f"VM '{self._name}' created successfully.")
         self._vmid = self._name  # Assign the VM identifier for future operations (deletion, etc.)
         api.stop_vm(self._name)
 
-        # If we are still waiting, we try to get the VM by name
-        if self._waiting_name:
-            logger.info(f"Waiting for VM '{self._name}' to be available.")
-            # If get_vm_info never returns None, remove the check
-            logger.info(f"VM '{self._name}' already exists.")
-            self._waiting_name = False
-
         if not self.service().api.get_vm_info(self._name).is_usable():
-            logger.info(f"Status of VM '{self._name}' not available.")
+            logger.debug(f"Status of VM '{self._name}' not available.")
             return types.states.TaskState.RUNNING
         # If there is a is_ready method or similar, use it. If not, just finish if the VM exists.
-        logger.info(f"VM '{self._name}' is ready.")
+        logger.debug(f"VM '{self._name}' is ready.")
         return types.states.TaskState.FINISHED
 
     @typing.override
@@ -129,12 +118,12 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         Actions to perform once the create operation is completed.
         In this case, we ensure the VM is stopped.
         """
-        logger.info(f"Checking if VM '{self._name}' is running to stop it.")
+        logger.debug(f"Checking if VM '{self._name}' is running to stop it.")
         if self.service().api.get_vm_info(self._name).is_running():
-            logger.info(f"Stopping VM '{self._name}'.")
+            logger.debug(f"Stopping VM '{self._name}'.")
             self.service().api.stop_vm(self._name)
         else:
-            logger.info(f"VM '{self._name}' is not running or VM not found.")
+            logger.debug(f"VM '{self._name}' is not running or VM not found.")
 
     @typing.override
     def op_create_completed_checker(self) -> TaskState:
@@ -142,7 +131,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
         Checks if the create operation has been completed successfully.
         Handles the case where the VM exists but the VMI does not (halted state).
         """
-        logger.info(f"Checking if VM '{self._name}' is stopped after publication.")
+        logger.debug(f"Checking if VM '{self._name}' is stopped after publication.")
         try:
             self.service().api.get_vm_info(self._name)
         except openshift_exceptions.OpenshiftNotFoundError:

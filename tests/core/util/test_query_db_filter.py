@@ -179,3 +179,34 @@ class DBQueryTests(UDSTestCase):
         res = list(result)
         self.assertEqual(len(res), 2)
         self.assertIn("server4", {r.source for r in res})
+
+    # --- Field-name hardening (CVE-2025-64459 family) -------------------
+
+    def test_field_dunder_rejected(self) -> None:
+        """Fields containing ``__`` are rejected to block Django traversal.
+        Note: a name starting with ``_`` is rejected first by the underscore
+        check; this test exercises the ``__`` check on a name that does NOT
+        start with underscore.
+        """
+        with self.assertRaises(ValueError) as ctx:
+            exec_query(_FLTR + "internal__x eq 1", Log.objects)
+        self.assertIn("cannot contain '__'", str(ctx.exception))
+
+    def test_field_underscore_prefix_rejected(self) -> None:
+        """Fields starting with ``_`` are rejected to block Django Q kwargs
+        like ``_connector`` / ``_negated`` (CVE-2025-64459 family).
+        """
+        with self.assertRaises(ValueError) as ctx:
+            exec_query(_FLTR + "_connector eq 1", Log.objects)
+        self.assertIn("cannot start with '_'", str(ctx.exception))
+
+    def test_field_negated_prefix_rejected(self) -> None:
+        """Same defence for ``_negated`` (adjacent vector to CVE-2025-64459)."""
+        with self.assertRaises(ValueError) as ctx:
+            exec_query(_FLTR + "_negated eq 1", Log.objects)
+        self.assertIn("cannot start with '_'", str(ctx.exception))
+
+    def test_field_normal_unaffected(self) -> None:
+        """Sanity: a normal field still works after hardening."""
+        result = exec_query(_FLTR + "name eq 'hourly_job'", Log.objects)
+        self.assertEqual(result.count(), 1)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright (c) 2014-2019 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -26,51 +26,35 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
-Author: Adolfo Gómez, dkmaster at dkmon dot com
+Proxmox secure-callback tests.
+
+These instantiate the real ``ProxmoxService`` / ``ProxmoxServiceFixed`` against
+the patched API mock and check that ``gui_description()`` swaps the naked
+``prov_uuid`` for an opaque ``cb_ticket`` ticket that resolves back to the
+provider's uuid.
 """
 
-import logging
+from unittest import mock
 
-from uds import models
-from uds.core import consts
-from uds.core import exceptions
-from uds.core import types
-from uds.core.ui import gui
-from uds.REST import Handler
+from tests.services.cb_helpers import assert_secure_callbacks
+from tests.utils.test import UDSTestCase
 
-logger = logging.getLogger(__name__)
-
-# Enclosed methods under /auth path
+from . import fixtures
 
 
-class Callback(Handler):
-    """
-    API:
-        Executes a callback from the GUI. Internal use, not intended to be called from outside.
-    """
+class ProxmoxLinkedServiceSecureCallbacksTests(UDSTestCase):
+    def test_machine_uses_cb_ticket(self) -> None:
+        with fixtures.patched_provider() as prov:
+            service = fixtures.create_service_linked(prov)
+            db_obj = mock.MagicMock()
+            db_obj.uuid = prov._uuid
+            with mock.patch.object(prov, "db_obj", return_value=db_obj):
+                assert_secure_callbacks(self, service, ("machine",))
 
-    PATH = "gui"
 
-    ROLE = consts.UserRole.STAFF
-
-    def get(self) -> types.ui.CallbackResultType:
-        if len(self._args) != 1:
-            raise exceptions.rest.RequestError("Invalid Request")
-
-        if self._args[0] not in gui.callbacks:
-            raise exceptions.rest.NotFound("callback {0} not found".format(self._args[0]))
-
-        # Copy so we don't mutate the handler's params on subsequent calls.
-        params = dict(self._params)
-        cb_ticket = params.pop("cb_ticket", None)
-        if cb_ticket:
-            try:
-                ticket_data = models.TicketStore.get(cb_ticket, invalidate=False)
-            except models.TicketStore.DoesNotExist:
-                raise exceptions.rest.RequestError("Invalid or expired cb_ticket")
-            # Ticket data wins on collision with the query-string params.
-            params.update(ticket_data)
-
-        return gui.callbacks[self._args[0]](params)
+class ProxmoxFixedServiceSecureCallbacksTests(UDSTestCase):
+    def test_pool_uses_cb_ticket(self) -> None:
+        with fixtures.patched_provider() as prov:
+            service = fixtures.create_service_fixed(prov)
+            assert_secure_callbacks(self, service, ("pool",))
