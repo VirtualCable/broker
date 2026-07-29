@@ -38,7 +38,7 @@ from tests.utils.test import UDSTransactionTestCase
 
 
 class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
-    EXPECTED_FIELDS = {"_name", "_waiting_name", "_reason", "_queue", "_vmid", "_is_flagged_for_destroy"}
+    EXPECTED_FIELDS = {"_name", "_reason", "_queue", "_vmid", "_is_flagged_for_destroy"}
 
     def setUp(self) -> None:
         """
@@ -54,7 +54,6 @@ class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
         publication = fixtures.create_publication()
         publication._name = "test-template"
         publication._reason = "test-reason"
-        publication._waiting_name = True
         return publication
 
     # --- Field Check Helper ---
@@ -64,7 +63,6 @@ class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
         """
         self.assertEqual(instance._name, "test-template")
         self.assertEqual(instance._reason, "test-reason")
-        self.assertTrue(instance._waiting_name)
 
     # --- Serialization Tests ---
     def test_autoserialization_fields(self) -> None:

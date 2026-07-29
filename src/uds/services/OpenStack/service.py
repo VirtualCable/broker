@@ -121,7 +121,7 @@ class OpenStackLiveService(DynamicService):
         fills={
             "callback_name": "osFillResources",
             "function": helpers.list_resources,
-            "parameters": ["prov_uuid", "project", "region"],
+            "parameters": ["project", "region"],
         },
         tooltip=_("Project for this service"),
         required=True,
@@ -134,7 +134,6 @@ class OpenStackLiveService(DynamicService):
             "callback_name": "osFillVolumees",
             "function": helpers.list_volumes,
             "parameters": [
-                "prov_uuid",
                 "project",
                 "region",
                 "availability_zone",
@@ -185,8 +184,6 @@ class OpenStackLiveService(DynamicService):
     remove_duplicates = DynamicService.remove_duplicates
     put_back_to_cache = DynamicService.put_back_to_cache
 
-    prov_uuid = gui.HiddenField()
-
     cached_api: "client.OpenStackClient | None" = None
 
     # Note: currently, Openstack does not provides a way of specifying how to stop the server
@@ -236,7 +233,12 @@ class OpenStackLiveService(DynamicService):
 
         self.project.set_choices(projects)
 
-        self.prov_uuid.value = self.provider().get_uuid()
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.project.set_cb_ticket('prov_uuid', self.provider().get_uuid())
+        self.availability_zone.set_cb_ticket('prov_uuid', self.provider().get_uuid())
 
     @property
     def api(self) -> "client.OpenStackClient":

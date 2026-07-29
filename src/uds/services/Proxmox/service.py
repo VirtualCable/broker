@@ -138,7 +138,7 @@ class ProxmoxService(DynamicService):
         fills={
             "callback_name": "pmFillResourcesFromMachine",
             "function": helpers.get_storage,
-            "parameters": ["machine", "prov_uuid"],
+            "parameters": ["machine"],
         },
         tooltip=_("Service base machine"),
         tab=types.ui.Tab.MACHINE,
@@ -179,8 +179,6 @@ class ProxmoxService(DynamicService):
     basename = DynamicService.basename
     lenname = DynamicService.lenname
 
-    prov_uuid = gui.HiddenField(value=None)
-
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         if values:
@@ -202,7 +200,12 @@ class ProxmoxService(DynamicService):
         # Here we have to use "default values", cause values aren't used at form initialization
         # This is that value is always '', so if we want to change something, we have to do it
         # at defValue
-        self.prov_uuid.value = self.provider().db_obj().uuid
+
+        # Replace prov_uuid in parameters with a secure cb_ticket ticket.
+        # The dispatcher (gui_callback) resolves the ticket and merges the
+        # prov_uuid into the callback params, so the secret context never
+        # travels in the query string.
+        self.machine.set_cb_ticket('prov_uuid', self.provider().db_obj().uuid)
 
         # This is not the same case, values is not the "value" of the field, but
         # the list of values shown because this is a "ChoiceField"
