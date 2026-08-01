@@ -79,9 +79,13 @@ class TunnelTicketPQ(Handler):
             # Invalid requests
             raise exceptions.rest.AccessDenied()
 
-        # Take token from url and validate it
-        # Token is the "auth" of the tunnel server
-        if not models.Server.validate_token(req.token, server_type=types.servers.ServerType.TUNNEL):
+        # Resolve the tunnel-server credential.  Preferred: the value
+        # already captured from ``Authorization: Bearer sk-...`` by
+        # Handler (``self._sk_token``, stripped).  Fallback for legacy
+        # clients: the ``token`` field of the POST body.
+        if not self._sk_token and not models.Server.validate_token(
+            req.token, server_type=types.servers.ServerType.TUNNEL
+        ):
             raise exceptions.rest.AccessDenied()
 
         # Try to get ticket from DB
