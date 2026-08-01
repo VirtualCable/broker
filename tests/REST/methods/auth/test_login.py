@@ -134,3 +134,44 @@ class LoginBearerTokenTest(rest.test.RESTTestCase):
         r = client.get(self.compose_rest_url("auth/logout"))
         self.assertEqual(r.status_code, 200, r.content)
         self.assertEqual(r.json(), {"result": "ok"})
+
+    # ------------------------------------------------------------------
+    # Deprecation signalling on legacy ``X-Auth-Token`` usage
+    # ------------------------------------------------------------------
+    def test_legacy_x_auth_token_response_is_marked_deprecated(self) -> None:
+        """A request authenticated via the legacy ``X-Auth-Token``
+        header (with the modern ``ses-`` prefix or a bare session key)
+        gets a deprecation hint on the response so clients know to
+        migrate to ``Authorization: Bearer ses-...``.
+        """
+        client, body = self._do_login()
+        token = body["token"]
+        client.add_header(consts.auth.AUTH_TOKEN_HEADER, token)
+        r = client.get(self.compose_rest_url("auth/logout"))
+        self.assertEqual(r.status_code, 200, r.content)
+        # RFC 9745/8594 deprecation headers must be present.
+        self.assertEqual(r.headers.get("X-UDS-Deprecated"), "true")
+        self.assertIn("Authorization", r.headers.get("X-UDS-Deprecated-Reason", ""))
+        self.assertIn(consts.auth.AUTH_TOKEN_HEADER, r.headers.get("X-UDS-Deprecated-Reason", ""))
+        # Sunset + Deprecation headers are present too.
+        self.assertIn("Deprecation", r.headers)
+        self.assertIn("Sunset", r.headers)
+
+    def test_modern_authorization_bearer_response_is_not_deprecated(self) -> None:
+        """A request authenticated via the modern
+        ``Authorization: Bearer ses-...`` header does NOT trigger
+        the legacy auth deprecation hint.
+        """
+        client, body = self._do_login()
+        token = body["token"]
+        client.add_header("Authorization", f"Bearer {token}")
+        r = client.get(self.compose_rest_url("auth/logout"))
+        self.assertEqual(r.status_code, 200, r.content)
+        # The legacy auth-specific reason must be absent.
+        reason = r.headers.get("X-UDS-Deprecated-Reason", "")
+        self.assertNotIn(consts.auth.AUTH_TOKEN_HEADER, reason)
+        # X-UDS-Deprecated may still be set by other reasons (e.g. an
+        # endpoint-level deprecation), so we only assert no AUTH_TOKEN
+        # hint in the reason.  Reason must be empty or unrelated.
+        if r.headers.get("X-UDS-Deprecated") == "true":
+            self.assertNotIn("X-Auth-Token", reason)

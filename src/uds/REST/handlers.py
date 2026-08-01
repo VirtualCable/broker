@@ -150,9 +150,21 @@ class Handler(abc.ABC):
                 # it so the value matches the bare session key expected
                 # by ``SessionStore``.  Untagged tokens are untouched
                 # (full backward compat).
-                self._auth_token = self._auth_token or self._request.headers.get(
-                    consts.auth.AUTH_TOKEN_HEADER, ""
-                ).removeprefix(consts.auth.SESSION_KEY_PREFIX)
+                legacy_token = self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
+                self._auth_token = self._auth_token or legacy_token.removeprefix(consts.auth.SESSION_KEY_PREFIX)
+                # If the legacy ``X-Auth-Token`` header was the actual
+                # credential (no Authorization Bearer header in play)
+                # tag the response as deprecated so clients know they
+                # should migrate to ``Authorization: Bearer ses-...``.
+                if self._auth_token and legacy_token and not self._sk_token:
+                    self.add_deprecation_headers(
+                        successor_hint=(
+                            f'use "Authorization: Bearer '
+                            f'{consts.auth.SESSION_KEY_PREFIX}<token>" instead '
+                            f"of the deprecated "
+                            f'"{consts.auth.AUTH_TOKEN_HEADER}" header'
+                        )
+                    )
                 # Warn if _sk_token is present (that means that also has AUTH_TOKEN_HEADER)
                 if self._sk_token is not None:
                     logger.warning(
@@ -273,6 +285,15 @@ class Handler(abc.ABC):
         Called when a legacy (COMPAT-mode) endpoint is invoked so
         clients can discover the preferred successor.
 
+        A response may carry several deprecation causes at once
+        (e.g. legacy ``X-Auth-Token`` header AND a GET-on-POST
+        custom-method).  ``Deprecation`` and ``Sunset`` describe a
+        single project-wide deprecation moment, so they are
+        idempotent (``add_header`` simply overwrites).  ``X-UDS-
+        Deprecated-Reason`` accumulates reasons, comma-separated,
+        so the client can see why *this* response was deprecated
+        even when more than one cause applies.
+
         Parameters
         ----------
         successor_hint:
@@ -284,7 +305,9 @@ class Handler(abc.ABC):
         self.add_header("Sunset", consts.rest.SUNSET_DATE)
         self.add_header("X-UDS-Deprecated", "true")
         if successor_hint:
-            self.add_header("X-UDS-Deprecated-Reason", successor_hint)
+            existing = self._headers.get("X-UDS-Deprecated-Reason", "")
+            merged = f"{existing}; {successor_hint}" if existing else successor_hint
+            self.add_header("X-UDS-Deprecated-Reason", merged)
 
     def delete_header(self, header: str) -> None:
         """
