@@ -194,7 +194,16 @@ class Login(Handler):
                     password, GlobalConfig.SUPER_USER_PASS.get(True)
                 ):
                     self.gen_auth_token(-1, username, password, locale, platform, scrambler)
-                    return Login.result(result="ok", token=self.get_auth_token())
+                    # Return the token prefixed with ``ses-`` so a future
+                    # ``Authorization: Bearer`` migration can recognise the
+                    # kind without deserialising.  ``Handler.__init__``
+                    # strips the prefix before lookup, so legacy clients
+                    # that still send ``X-Auth-Token: ses-XXX`` keep
+                    # working.
+                    return Login.result(
+                        result="ok",
+                        token=f"{consts.auth.SESSION_KEY_PREFIX}{self.get_auth_token()}",
+                    )
                 return Login.result(error="Invalid credentials")
 
             # Will raise an exception if no auth found
@@ -219,13 +228,14 @@ class Login(Handler):
                 return Login.result(error=auth_result.errstr or "Invalid credentials")
             return Login.result(
                 result="ok",
-                token=self.gen_auth_token(
-                    auth.id,
-                    auth_result.user.name,
-                    password,
-                    locale,
-                    platform,
-                    scrambler,
+                # Return the session token prefixed with ``ses-`` so a future
+                # ``Authorization: Bearer`` migration can recognise the kind
+                # without deserialising.  ``Handler.__init__`` strips the
+                # prefix before lookup, so legacy clients that still send
+                # ``X-Auth-Token: ses-XXX`` keep working.
+                token=(
+                    f"{consts.auth.SESSION_KEY_PREFIX}"
+                    f"{self.gen_auth_token(auth.id, auth_result.user.name, password, locale, platform, scrambler)}"
                 ),
                 scrambler=scrambler,
             )

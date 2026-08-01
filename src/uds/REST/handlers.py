@@ -137,15 +137,22 @@ class Handler(abc.ABC):
         if auth_header.startswith("Bearer "):
             token = auth_header[len("Bearer ") :]
             if token.startswith(consts.auth.SECRET_KEY_PREFIX):
-                self._sk_token = token[len(consts.auth.SECRET_KEY_PREFIX) :]
+                self._sk_token = token.removeprefix(consts.auth.SECRET_KEY_PREFIX)
             elif token.startswith(consts.auth.SESSION_KEY_PREFIX):
-                self._auth_token = token[len(consts.auth.SESSION_KEY_PREFIX) :]
+                self._auth_token = token.removeprefix(consts.auth.SESSION_KEY_PREFIX)
             else:
                 self._auth_token = token
 
         if self.ROLE.needs_authentication:
             try:
-                self._auth_token = self._auth_token or self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
+                # The legacy ``X-Auth-Token`` header may carry the ``ses-``
+                # scheme tag introduced by the new login response; strip
+                # it so the value matches the bare session key expected
+                # by ``SessionStore``.  Untagged tokens are untouched
+                # (full backward compat).
+                self._auth_token = self._auth_token or self._request.headers.get(
+                    consts.auth.AUTH_TOKEN_HEADER, ""
+                ).removeprefix(consts.auth.SESSION_KEY_PREFIX)
                 # Warn if _sk_token is present (that means that also has AUTH_TOKEN_HEADER)
                 if self._sk_token is not None:
                     logger.warning(
