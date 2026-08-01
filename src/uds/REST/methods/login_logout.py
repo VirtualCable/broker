@@ -59,7 +59,7 @@ class Login(Handler):
     """
 
     PATH = "auth"
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
 
     API_OPERATIONS = {
         "post": types.rest.api.Operation(
@@ -242,7 +242,7 @@ class Logout(Handler):
     """
 
     PATH = "auth"
-    ROLE = consts.UserRole.USER  # Must be logged in to logout :)
+    ROLE = consts.Role.USER  # Must be logged in to logout :)
 
     API_OPERATIONS = {
         "get": types.rest.api.Operation(
@@ -294,7 +294,7 @@ class Logout(Handler):
 
 class Auths(Handler):
     PATH = "auth"
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
 
     API_OPERATIONS = {
         "get": types.rest.api.Operation(

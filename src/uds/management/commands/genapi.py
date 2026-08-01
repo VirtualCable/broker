@@ -63,7 +63,7 @@ def _generate_api() -> types.rest.api.OpenAPI:
         if handler := node.handler:
             full_path = path or ("/" + node.full_path().lstrip("/"))
             tags = [full_path.split("/")[1].capitalize()] if len(full_path.split("/")) > 1 else []
-            security = SECURITY_NAME if handler.ROLE != consts.UserRole.ANONYMOUS else ""
+            security = SECURITY_NAME if handler.ROLE != consts.Role.ANONYMOUS else ""
 
             components = handler.api_components()
             comps = comps.union(components)

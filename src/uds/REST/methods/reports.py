@@ -80,7 +80,7 @@ class Reports(model.BaseModelHandler[ReportItem]):
     Processes reports requests
     """
 
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     TABLE = (
         ui_utils.TableBuilder(_("Available reports"))

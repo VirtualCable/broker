@@ -138,7 +138,7 @@ class System(Handler):
     }
     """
 
-    ROLE = consts.UserRole.STAFF
+    ROLE = consts.Role.STAFF
 
     def get(self) -> typing.Any:
         logger.debug("args: %s", self._args)

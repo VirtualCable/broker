@@ -54,6 +54,23 @@ CSRF_FIELD: typing.Final[str] = "csrfmiddlewaretoken"
 AUTH_TOKEN_HEADER: typing.Final[str] = "X-Auth-Token"
 # Meta header for auth token, not used
 # AUTH_TOKEN_HEADER: typing.Final[str] = 'HTTP_X_AUTH_TOKEN'  # nosec: this is not a password
+AUTHORIZATION_HEADER: typing.Final[str] = "Authorization"
+
+# -- Secret-key / Bearer-token prefix scheme --
+#
+# Tokens (server/tunnel/actor "secret keys", later also session tokens)
+# are returned to the client prefixed with a short scheme tag so that a
+# future dispatcher can recognise the kind without deserialising the
+# token.  Currently we only have one kind: ``sk-`` ("secret key", a
+# non-expiring token bound to a registered Server row).  Sessions will
+# later use ``ses-``.  All such prefixes will be consumed by the
+# `Authorization: Bearer <token>` header (RFC 6750).
+#
+# Storage format (DB / on-disk) remains the bare token; the prefix is
+# *presentation-only*.  Consumers must strip it before looking up the
+# row.  See `uds.core.util.tokens.strip_secret_prefix` (planned).
+SECRET_KEY_PREFIX: typing.Final[str] = "sk-"
+SESSION_KEY_PREFIX: typing.Final[str] = "ses-"
 
 X_FORWARDED_FOR_HEADER: typing.Final[str] = "X-Forwarded-For"
 

@@ -53,7 +53,7 @@ class Callback(Handler):
 
     PATH = "gui"
 
-    ROLE = consts.UserRole.STAFF
+    ROLE = consts.Role.STAFF
 
     def get(self) -> types.ui.CallbackResultType:
         if len(self._args) != 1:

@@ -47,7 +47,7 @@ from uds.core.util.config import GlobalConfig
 from uds.core.auths.auth import root_user
 from uds.core.util import net, query_db_filter, query_filter
 
-from uds.models import Authenticator, User
+from uds.models import Authenticator, User, Server
 from uds.core.managers.crypto import CryptoManager
 
 from ..core.exceptions.rest import AccessDenied
@@ -72,7 +72,10 @@ class Handler(abc.ABC):
         None  # Path for this method, so we can do /auth/login, /auth/logout, /auth/auths in a simple way
     )
 
-    ROLE: typing.ClassVar[consts.UserRole] = consts.UserRole.USER  # By default, only users can access
+    ROLE: typing.ClassVar[consts.Role] = consts.Role.USER  # By default, only users can access
+    SK_TYPE: typing.ClassVar[types.servers.ServerType | None] = (
+        None  # If this is a secret key handler, this is the type of server that can access it
+    )
 
     REST_API_INFO: typing.ClassVar[types.rest.api.RestApiInfo] = types.rest.api.RestApiInfo()
     API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {}
@@ -92,6 +95,7 @@ class Handler(abc.ABC):
     _auth_token: str | None
     _user: "User"
     _odata: "types.rest.api.ODataParams"  # OData parameters, if any
+    _sk_token: str | None  # Secret key token, if any
 
     # The dispatcher proceses the request and calls the method with the same name as the operation
     # currently, only 'get', 'post, 'put' y 'delete' are supported
@@ -112,10 +116,42 @@ class Handler(abc.ABC):
         self._args = list(args)  # copy of args
         self._headers = {}
         self._auth_token = None
+        self._sk_token = None
+
+        # ``Authorization: Bearer <token>`` is the unified entry point for
+        # both session tokens (prefix ``ses-``) and secret keys (prefix
+        # ``sk-``).  The prefix is **always** stripped on storage, so the
+        # stored value in ``_auth_token`` / ``_sk_token`` is the bare token
+        # ready to be looked up (session store / Server row).  Prefixes
+        # are defined in ``uds.core.consts.auth``:
+        #   * ``ses-``  → session key (legacy-compatible; today simply the
+        #                  same value that ``X-Auth-Token`` would carry).
+        #   * ``sk-``   → "secret key", a non-expiring token bound to a
+        #                  registered ``Server`` row, validated via
+        #                  ``models.Server.validate_token``.  Consumed only
+        #                  when the handler declares ``SK_TYPE``; otherwise
+        #                  it is captured but ignored (forward compatibility
+        #                  for the future ``Role.SECRET_KEY``).
+        #   * no prefix → legacy, no scheme tag, handled like before.
+        auth_header = self._request.headers.get(consts.auth.AUTHORIZATION_HEADER, "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[len("Bearer ") :]
+            if token.startswith(consts.auth.SECRET_KEY_PREFIX):
+                self._sk_token = token[len(consts.auth.SECRET_KEY_PREFIX) :]
+            elif token.startswith(consts.auth.SESSION_KEY_PREFIX):
+                self._auth_token = token[len(consts.auth.SESSION_KEY_PREFIX) :]
+            else:
+                self._auth_token = token
 
         if self.ROLE.needs_authentication:
             try:
-                self._auth_token = self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
+                self._auth_token = self._auth_token or self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
+                # Warn if _sk_token is present (that means that also has AUTH_TOKEN_HEADER)
+                if self._sk_token is not None:
+                    logger.warning(
+                        "Both secret key and legacy auth token present in request; ignoring secret key for role %s",
+                        self.ROLE,
+                    )
                 self._session = SessionStore(session_key=self._auth_token)
                 if "REST" not in self._session:
                     raise Exception()  # No valid session, so auth_token is also invalid
@@ -135,13 +171,32 @@ class Handler(abc.ABC):
             if not self._user.can_access(self.ROLE):
                 raise AccessDenied()
         else:
+            # No session-bound user in this branch; ``_user`` must exist
+            # because the post-init guard below inspects ``self._user.state``.
             self._user = User()  # Empty user for non authenticated handlers
             self._user.state = types.states.State.ACTIVE  # Ensure it's active
+            if self.SK_TYPE is not None:  # Secret key handler, so we need to validate the token
+                # TEMPORAL (uds-5.x): if no ``sk-`` token was provided, we do NOT
+                # authenticate here.  Legacy clients still send the token in the
+                # body and rely on the operation method doing the lookup; closing
+                # this gap is the responsibility of the final release that
+                # finishes the Bearer migration.
+                if self._sk_token:
+                    # Validate the token against the server secrets
+                    # Get type
+                    if self.SK_TYPE and not Server.validate_token(self._sk_token, server_type=self.SK_TYPE):
+                        raise AccessDenied()
 
         if self._user and self._user.state != types.states.State.ACTIVE:
             raise AccessDenied()
 
         self._odata = types.rest.api.ODataParams.from_dict(self.query_params())
+
+    def _get_auth_token_from_header(self) -> str | None:
+        """
+        Returns the authentication token from the request header
+        """
+        return self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, None)
 
     def query(self) -> typing.Any:
         """RFC 10008 QUERY — safe GET with OData in the request body.
@@ -395,7 +450,7 @@ class Handler(abc.ABC):
         """
         True if user of this REST request is administrator and SOURCE is valid admint trusted sources
         """
-        return self._user.can_access(consts.UserRole.ADMIN) and self.is_ip_allowed()
+        return self._user.can_access(consts.Role.ADMIN) and self.is_ip_allowed()
 
     def is_staff_member(self) -> bool:
         """
@@ -638,4 +693,4 @@ class ErrorHandler(Handler):
     to allow any future upgrade.
     """
 
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS

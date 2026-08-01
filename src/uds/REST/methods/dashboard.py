@@ -124,7 +124,7 @@ class Dashboard(Handler):
     window used by every time-bound widget.
     """
 
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     def _kpis(self) -> dict[str, int]:
         """Fast, point-in-time counters shown on the dashboard header."""

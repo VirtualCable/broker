@@ -57,11 +57,13 @@ class TicketTest(rest.test.RESTTestCase):
     kyber_private_key: typing.ClassVar[str]  # Base 64 encoded
 
     @classmethod
+    @typing.override
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.cm = CryptoManager.manager()
         cls.kyber_public_key, cls.kyber_private_key = kem.generate_keypair()
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
 

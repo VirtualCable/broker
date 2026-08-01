@@ -142,7 +142,7 @@ class ServerRegisterBase(Handler):
 
 
 class ServerRegister(ServerRegisterBase):
-    ROLE = consts.UserRole.STAFF
+    ROLE = consts.Role.STAFF
 
     PATH = "servers"
     NAME = "register"
@@ -168,7 +168,7 @@ class ServerRegister(ServerRegisterBase):
 
 # REST handlers for server actions
 class ServerTest(Handler):
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
 
     PATH = "servers"
     NAME = "test"
@@ -195,7 +195,7 @@ class ServerEvent(Handler):
     * log
     """
 
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
     PATH = "servers"
     NAME = "event"
 

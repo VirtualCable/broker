@@ -57,7 +57,8 @@ class TunnelTicketPQ(Handler):
     Processes tunnel requests
     """
 
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
+    SK_TYPE = types.servers.ServerType.TUNNEL
     PATH = "tunnelpq"
     NAME = "ticket"
 
@@ -145,7 +146,7 @@ class TunnelTicketPQ(Handler):
 
 
 class TunnelRegisterPC(ServerRegisterBase):
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     PATH = "tunnelpq"
     NAME = "register"
