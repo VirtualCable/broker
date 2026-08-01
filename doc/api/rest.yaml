@@ -522,7 +522,7 @@ components:
             in a random way, instead of linear
           type: boolean
         resource_group_name:
-          description: Resource Group.Resource group container of this VDI service
+          description: Resource group.Resource group for this service
           type: string
         token:
           description: Service Token.Service token that will be used by actors to
@@ -585,8 +585,7 @@ components:
             this service
           type: number
         machine:
-          description: Virtual Machine.Base virtual machine. (VMs Starting with UDS
-            will be hidden)
+          description: Machine.Base machine for this service
           type: string
         machine_size:
           description: Machine size.Size for machines created from this service.
@@ -596,14 +595,14 @@ components:
             not be considered errors.
           type: boolean
         network:
-          description: Network.Network where the clones will be attached
+          description: Network.Network for this service
           type: string
         put_back_to_cache:
           description: Put back to cache.On machine releasy by logout, put it back
             to cache instead of deleting if possible.
           type: string
         resource_group_name:
-          description: Resource Group.Resource group container of this VDI service
+          description: Resource group.Resource group for this service
           type: string
         security_group:
           description: Security Group.Security group where to attach the virtual machine
@@ -822,7 +821,7 @@ components:
           format: int64
           type: integer
         pattern:
-          type: object
+          type: string
         readonly:
           oneOf:
           - type: boolean
@@ -959,7 +958,7 @@ components:
             to cache instead of deleting if possible.
           type: string
         region:
-          description: Region.Region where the service will be deployed
+          description: Region.Region for this service
           type: string
         template:
           description: Template Instance.Template to use for instances
@@ -1780,7 +1779,7 @@ components:
           type: string
         comments:
           type: string
-        fallbackAccess:
+        fallback_access:
           type: string
         ha_policy:
           type: string
@@ -1843,7 +1842,7 @@ components:
       - user_services_in_preparation
       - visible
       - policy
-      - fallbackAccess
+      - fallback_access
       - permission
       - calendar_message
       - transport_grouping
@@ -2558,8 +2557,8 @@ components:
           WindowsManager: '#/components/schemas/WindowsManager'
         propertyName: type
       oneOf:
-      - $ref: '#/components/schemas/LinRandomPasswordManager'
       - $ref: '#/components/schemas/LinuxADManager'
+      - $ref: '#/components/schemas/LinRandomPasswordManager'
       - $ref: '#/components/schemas/LinuxManager'
       - $ref: '#/components/schemas/RDSManager'
       - $ref: '#/components/schemas/TestOsManager'
@@ -2781,7 +2780,6 @@ components:
           PrismCentralProvider: '#/components/schemas/PrismCentralProvider'
           ProxmoxPlatform: '#/components/schemas/ProxmoxPlatform'
           RDSProvider: '#/components/schemas/RDSProvider'
-          SampleProvider: '#/components/schemas/SampleProvider'
           ScalePlatform: '#/components/schemas/ScalePlatform'
           TestProvider: '#/components/schemas/TestProvider'
           VCloudServiceProvider: '#/components/schemas/VCloudServiceProvider'
@@ -2805,12 +2803,11 @@ components:
       - $ref: '#/components/schemas/openGnsysPlatform'
       - $ref: '#/components/schemas/openNebulaPlatform'
       - $ref: '#/components/schemas/OpenshiftProvider'
-      - $ref: '#/components/schemas/openStackPlatform'
       - $ref: '#/components/schemas/openStackPlatformNew'
+      - $ref: '#/components/schemas/openStackPlatform'
       - $ref: '#/components/schemas/PhysicalMachinesServiceProvider'
       - $ref: '#/components/schemas/ProxmoxPlatform'
       - $ref: '#/components/schemas/RDSProvider'
-      - $ref: '#/components/schemas/SampleProvider'
       - $ref: '#/components/schemas/ScalePlatform'
       - $ref: '#/components/schemas/TestProvider'
       - $ref: '#/components/schemas/VCloudServiceProvider'
@@ -3440,6 +3437,161 @@ components:
       required:
       - rdp_port
       type: object
+    RGSTransport:
+      description: '
+
+        Provides access via HP RGS to a service using a direct (non-tunneled)
+
+        connection to the Sender''s listener port.
+
+        '
+      properties:
+        adjustable_quality:
+          description: Adjustable quality.If checked, the image quality will be automatically
+            adjusted based on bandwidth
+          type: boolean
+        force_empty_creds:
+          description: Empty creds.If checked, the credentials used to connect will
+            be empty
+          type: boolean
+        forced_domain:
+          description: Domain.If not empty, this domain will be always used as credential
+            (DOMAIN\user)
+          type: string
+        forced_password:
+          description: Password.If not empty, this password will be always used as
+            credential
+          type: string
+        forced_username:
+          description: Username.If not empty, this username will be always used as
+            credential
+          type: string
+        image_quality:
+          description: Image quality.Quality of the image codec (0-100)
+          type: number
+        match_local_display:
+          description: Match local resolution.Change the Sender's resolution to match
+            the Receiver's resolution when connecting
+          type: boolean
+        min_adjustable_quality:
+          description: Min. adjustable quality.Lowest image quality allowed when adjusting
+            to keep a stable frame rate
+          type: number
+        min_adjustable_rate:
+          description: Adjustable frame rate.Frame rate threshold (fps) at which the
+            image quality starts to adapt
+          type: number
+        port:
+          description: RGS port.RGS Sender listener port (defaults to 42966)
+          type: number
+        redirect_audio:
+          description: Redirect audio.If checked, the audio will be redirected to
+            the Receiver
+          type: boolean
+        redirect_mic:
+          description: Redirect microphone.If checked, the microphone input will be
+            streamed to the Sender
+          type: boolean
+        redirect_usb:
+          description: Redirect USB.If checked, USB devices will be redirected to
+            the Sender session
+          type: boolean
+      required:
+      - image_quality
+      - adjustable_quality
+      - min_adjustable_quality
+      - min_adjustable_rate
+      - match_local_display
+      - redirect_audio
+      - redirect_mic
+      - redirect_usb
+      - port
+      type: object
+    RGSTunnelTransport:
+      description: '
+
+        Provides access via HP RGS to a service using a tunneled connection.
+
+        A UDS tunnel server is used so the Receiver connects to 127.0.0.1:localport
+
+        instead of the Sender''s real address.
+
+        '
+      properties:
+        adjustable_quality:
+          description: Adjustable quality.If checked, the image quality will be automatically
+            adjusted based on bandwidth
+          type: boolean
+        force_empty_creds:
+          description: Empty creds.If checked, the credentials used to connect will
+            be empty
+          type: boolean
+        forced_domain:
+          description: Domain.If not empty, this domain will be always used as credential
+            (DOMAIN\user)
+          type: string
+        forced_password:
+          description: Password.If not empty, this password will be always used as
+            credential
+          type: string
+        forced_username:
+          description: Username.If not empty, this username will be always used as
+            credential
+          type: string
+        image_quality:
+          description: Image quality.Quality of the image codec (0-100)
+          type: number
+        match_local_display:
+          description: Match local resolution.Change the Sender's resolution to match
+            the Receiver's resolution when connecting
+          type: boolean
+        min_adjustable_quality:
+          description: Min. adjustable quality.Lowest image quality allowed when adjusting
+            to keep a stable frame rate
+          type: number
+        min_adjustable_rate:
+          description: Adjustable frame rate.Frame rate threshold (fps) at which the
+            image quality starts to adapt
+          type: number
+        port:
+          description: RGS port.RGS Sender listener port (defaults to 42966)
+          type: number
+        redirect_audio:
+          description: Redirect audio.If checked, the audio will be redirected to
+            the Receiver
+          type: boolean
+        redirect_mic:
+          description: Redirect microphone.If checked, the microphone input will be
+            streamed to the Sender
+          type: boolean
+        redirect_usb:
+          description: Redirect USB.If checked, USB devices will be redirected to
+            the Sender session
+          type: boolean
+        startup_time:
+          description: Startup wait time.Time, in seconds, to wait for first tunnel
+            connection to be established.
+          type: number
+        tunnel:
+          description: Tunnel server.Tunnel server to use
+          type: string
+        verify_certificate:
+          description: Force SSL certificate verification.If enabled, the certificate
+            of the tunnel server will be verified (recommended).
+          type: boolean
+      required:
+      - tunnel
+      - startup_time
+      - image_quality
+      - adjustable_quality
+      - min_adjustable_quality
+      - min_adjustable_rate
+      - match_local_display
+      - redirect_audio
+      - redirect_mic
+      - redirect_usb
+      - port
+      type: object
     RadiusAuthenticator:
       description: '
 
@@ -3816,88 +3968,6 @@ components:
             type: string
           type: array
       type: object
-    SampleProvider:
-      description: "\nThis class represents the sample services provider\n\nIn this\
-        \ class we provide:\n   * The Provider functionality\n   * The basic configuration\
-        \ parameters for the provider\n   * The form fields needed by administrators\
-        \ to configure this provider\n\n   :note: At class level, the translation\
-        \ must be simply marked as so\n   using gettext_noop. This is so cause we\
-        \ will translate the string when\n   sent to the administration client.\n\n\
-        For this class to get visible at administration client as a provider type,\n\
-        we MUST register it at package __init__.\n\n"
-      properties:
-        meth_age:
-          description: Age of Methuselah.If you know it, please, tell me!!!
-          type: number
-        meth_alive:
-          description: Is Methuselah still alive?.If you fail, this will not get saved
-            :-)
-          type: boolean
-        meth_alive2:
-          description: Is Methuselah still alive BBBB?.If you fail, this will not
-            get saved BBBB
-          type: boolean
-        meth_alive3:
-          description: Is Methuselah still alive CCCC?.If you fail, this will not
-            get saved CCCC
-          type: boolean
-        meth_text:
-          description: Text area.This is a text area
-          type: string
-        passwd_field:
-          description: Password.This is a password field
-          type: string
-        pet_name:
-          description: Your pet's name.If you like, write the name of your pet
-          type: string
-        remote_host:
-          description: Remote host.This fields contains a remote host
-          type: string
-      required:
-      - remote_host
-      - passwd_field
-      - meth_age
-      type: object
-    SampleService1:
-      description: "\nBasic service, the first part (variables) include the description\
-        \ of the service.\n\nRemember to fill all variables needed, but at least you\
-        \ must define:\n    * type_name\n    * type_type\n    * type_description\n\
-        \    * icon_file (defaults to service.png)\n    * publication_type, type of\
-        \ publication in case it needs publication.\n      If this is not provided,\
-        \ core will assume that the service do not\n      needs publishing.\n    *\
-        \ user_service_type, type of deployed user service. Do not forget this!!!\n\
-        \nThe rest of them can be ommited, but its recommended that you fill all\n\
-        declarations shown in this sample (that in fact, are all)\n\nThis description\
-        \ informs the core what this service really provides,\nand how this is done.\
-        \ Look at description of class variables for more\ninformation.\n\n"
-      properties:
-        basename:
-          description: Services names.Base name for this user services
-          type: string
-        colour:
-          description: Colour.Colour of the field
-          type: string
-        passw:
-          description: Password.Password for testing purposes
-          type: string
-      required:
-      - colour
-      - passw
-      - basename
-      type: object
-    SampleService2:
-      description: '
-
-        Just a second service, no comments here (almost same that ServiceOne
-
-        '
-      properties:
-        names:
-          description: List of names.
-          items:
-            type: string
-          type: array
-      type: object
     ScaleFixedService:
       description: '
 
@@ -4166,8 +4236,6 @@ components:
           ProxmoxLinkedService: '#/components/schemas/ProxmoxLinkedService'
           RemoteAppService: '#/components/schemas/RemoteAppService'
           RemoteSessionService: '#/components/schemas/RemoteSessionService'
-          SampleService1: '#/components/schemas/SampleService1'
-          SampleService2: '#/components/schemas/SampleService2'
           ScaleFixedService: '#/components/schemas/ScaleFixedService'
           ScaleService: '#/components/schemas/ScaleService'
           TestService1: '#/components/schemas/TestService1'
@@ -4214,8 +4282,6 @@ components:
       - $ref: '#/components/schemas/ProxmoxFixedService'
       - $ref: '#/components/schemas/RemoteAppService'
       - $ref: '#/components/schemas/RemoteSessionService'
-      - $ref: '#/components/schemas/SampleService1'
-      - $ref: '#/components/schemas/SampleService2'
       - $ref: '#/components/schemas/ScaleService'
       - $ref: '#/components/schemas/ScaleFixedService'
       - $ref: '#/components/schemas/TestService2'
@@ -4278,7 +4344,7 @@ components:
           type: string
         display_custom_message:
           type: boolean
-        fallbackAccess:
+        fallback_access:
           type: string
         id:
           type: string
@@ -4396,7 +4462,7 @@ components:
       - allow_users_remove
       - allow_users_reset
       - ignores_unused
-      - fallbackAccess
+      - fallback_access
       - meta_member
       - calendar_message
       - custom_message
@@ -5376,6 +5442,8 @@ components:
           RDPTransport: '#/components/schemas/RDPTransport'
           RDSEmbeddedTransport: '#/components/schemas/RDSEmbeddedTransport'
           RDSTransport: '#/components/schemas/RDSTransport'
+          RGSTransport: '#/components/schemas/RGSTransport'
+          RGSTunnelTransport: '#/components/schemas/RGSTunnelTransport'
           SPICETransport: '#/components/schemas/SPICETransport'
           TRDPEmbeddedTransport: '#/components/schemas/TRDPEmbeddedTransport'
           TRDSEmbeddedTransport: '#/components/schemas/TRDSEmbeddedTransport'
@@ -5405,6 +5473,8 @@ components:
       - $ref: '#/components/schemas/TRDSEmbeddedTransport'
       - $ref: '#/components/schemas/RDSTransport'
       - $ref: '#/components/schemas/TRDSTransport'
+      - $ref: '#/components/schemas/RGSTransport'
+      - $ref: '#/components/schemas/RGSTunnelTransport'
       - $ref: '#/components/schemas/SPICETransport'
       - $ref: '#/components/schemas/TSSPICETransport'
       - $ref: '#/components/schemas/TestTransport'
@@ -7005,9 +7075,16 @@ components:
       type: object
   securitySchemes:
     udsApiAuth:
+      description: 'DEPRECATED.  Use ``Authorization: Bearer <token>`` (see ``udsApiAuthBearer``).  This
+        scheme still works today but will be removed in a future major release.'
       in: header
       name: X-Auth-Token
       type: apiKey
+    udsApiAuthBearer:
+      description: Bearer token in the ``Authorization`` header. Returned by ``/auth/login``
+        (see ``/auth/login`` response).  Treat the token as opaque.
+      scheme: bearer
+      type: http
 info:
   description: UDS REST API Documentation
   title: UDS API
@@ -7072,8 +7149,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Account items
+      - udsApiAuthBearer: []
+      summary: List Account items
       tags:
       - Accounts
     post:
@@ -7113,7 +7190,7 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Account item
       tags:
       - Accounts
@@ -7155,7 +7232,7 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Account item
       tags:
       - Accounts
@@ -7209,7 +7286,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Account items with OData in body
       tags:
       - Accounts
@@ -7237,8 +7314,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Account items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of Account items
       tags:
       - Accounts
   /accounts/overview:
@@ -7299,8 +7376,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Account items
+      - udsApiAuthBearer: []
+      summary: List Account items (overview)
       tags:
       - Accounts
   /accounts/tableinfo:
@@ -7334,8 +7411,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Account items
+      - udsApiAuthBearer: []
+      summary: Retrieve Account table info
       tags:
       - Accounts
   /accounts/{uuid}:
@@ -7376,8 +7453,8 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Account item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Account item by UUID
       tags:
       - Accounts
     get:
@@ -7451,8 +7528,8 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Account item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Account item by UUID
       tags:
       - Accounts
     put:
@@ -7499,8 +7576,8 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Account item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Account item by UUID
       tags:
       - Accounts
   /accounts/{uuid}/clear:
@@ -7542,7 +7619,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Remove all usage records associated with an account, permanently deleting
         them (Account)
       tags:
@@ -7578,8 +7655,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Account item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Account item by UUID
       tags:
       - Accounts
   /accounts/{uuid}/timemark:
@@ -7621,7 +7698,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Set a timestamp marker on an account to indicate the last processed
         usage record, enabling incremental data processing (Account)
       tags:
@@ -7691,8 +7768,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Usage items
+      - udsApiAuthBearer: []
+      summary: List Usage items
       tags:
       - Accounts
     post:
@@ -7739,7 +7816,7 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Usage item
       tags:
       - Accounts
@@ -7789,7 +7866,7 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Usage item
       tags:
       - Accounts
@@ -7850,7 +7927,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Usage items with OData in body
       tags:
       - Accounts
@@ -7919,8 +7996,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Usage items
+      - udsApiAuthBearer: []
+      summary: List Usage items (overview)
       tags:
       - Accounts
   /accounts/{uuid}/usage/tableinfo:
@@ -7961,8 +8038,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Usage items
+      - udsApiAuthBearer: []
+      summary: Retrieve Usage table info
       tags:
       - Accounts
   /accounts/{uuid}/usage/{uuid}:
@@ -8037,8 +8114,8 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Usage item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Usage item by UUID
       tags:
       - Accounts
     get:
@@ -8112,8 +8189,8 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Usage item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Usage item by UUID
       tags:
       - Accounts
     put:
@@ -8187,8 +8264,8 @@ paths:
                 type: object
           description: AccountItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Usage item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Usage item by UUID
       tags:
       - Accounts
   /actortokens:
@@ -8249,8 +8326,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Server items
+      - udsApiAuthBearer: []
+      summary: List Server items
       tags:
       - Actortokens
     post:
@@ -8290,7 +8367,7 @@ paths:
                 type: object
           description: ActorTokenItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Server item
       tags:
       - Actortokens
@@ -8333,7 +8410,7 @@ paths:
                 type: object
           description: ActorTokenItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Server item
       tags:
       - Actortokens
@@ -8387,7 +8464,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Server items with OData in body
       tags:
       - Actortokens
@@ -8449,8 +8526,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Server items
+      - udsApiAuthBearer: []
+      summary: List Server items (overview)
       tags:
       - Actortokens
   /actortokens/tableinfo:
@@ -8484,8 +8561,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Server items
+      - udsApiAuthBearer: []
+      summary: Retrieve Server table info
       tags:
       - Actortokens
   /actortokens/{uuid}:
@@ -8526,8 +8603,8 @@ paths:
                 type: object
           description: ActorTokenItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Server item by UUID
       tags:
       - Actortokens
     get:
@@ -8601,8 +8678,8 @@ paths:
                 type: object
           description: ActorTokenItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Server item by UUID
       tags:
       - Actortokens
     put:
@@ -8649,8 +8726,8 @@ paths:
                 type: object
           description: ActorTokenItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Server item by UUID
       tags:
       - Actortokens
   /actortokens/{uuid}/log:
@@ -8684,8 +8761,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Server item by UUID
       tags:
       - Actortokens
   /auth/auths:
@@ -8774,7 +8851,7 @@ paths:
                 type: object
           description: Logout result
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Logout current user
       tags:
       - Auth
@@ -8793,7 +8870,7 @@ paths:
                 type: object
           description: Logout result
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Logout current user
       tags:
       - Auth
@@ -8855,8 +8932,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Authenticator items
+      - udsApiAuthBearer: []
+      summary: List Authenticator items
       tags:
       - Authenticators
     post:
@@ -8896,7 +8973,7 @@ paths:
                 type: object
           description: AuthenticatorItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Authenticator item
       tags:
       - Authenticators
@@ -8939,7 +9016,7 @@ paths:
                 type: object
           description: AuthenticatorItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Authenticator item
       tags:
       - Authenticators
@@ -8993,7 +9070,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Authenticator items with OData in body
       tags:
       - Authenticators
@@ -9034,8 +9111,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Authenticator type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a Authenticator type
       tags:
       - Authenticators
   /authenticators/overview:
@@ -9096,8 +9173,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Authenticator items
+      - udsApiAuthBearer: []
+      summary: List Authenticator items (overview)
       tags:
       - Authenticators
   /authenticators/tableinfo:
@@ -9131,8 +9208,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Authenticator items
+      - udsApiAuthBearer: []
+      summary: Retrieve Authenticator table info
       tags:
       - Authenticators
   /authenticators/types:
@@ -9159,8 +9236,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of Authenticator items
+      - udsApiAuthBearer: []
+      summary: List Authenticator types
       tags:
       - Authenticators
   /authenticators/types/{type}:
@@ -9200,8 +9277,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get Authenticator item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a Authenticator type info
       tags:
       - Authenticators
   /authenticators/{uuid}:
@@ -9242,8 +9319,8 @@ paths:
                 type: object
           description: AuthenticatorItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Authenticator item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Authenticator item by UUID
       tags:
       - Authenticators
     get:
@@ -9317,8 +9394,8 @@ paths:
                 type: object
           description: AuthenticatorItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Authenticator item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Authenticator item by UUID
       tags:
       - Authenticators
     put:
@@ -9365,8 +9442,8 @@ paths:
                 type: object
           description: AuthenticatorItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Authenticator item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Authenticator item by UUID
       tags:
       - Authenticators
   /authenticators/{uuid}/groups:
@@ -9434,8 +9511,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Groups items
+      - udsApiAuthBearer: []
+      summary: List Groups items
       tags:
       - Authenticators
     post:
@@ -9482,7 +9559,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Groups item
       tags:
       - Authenticators
@@ -9532,7 +9609,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Groups item
       tags:
       - Authenticators
@@ -9593,7 +9670,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Groups items with OData in body
       tags:
       - Authenticators
@@ -9662,8 +9739,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Groups items
+      - udsApiAuthBearer: []
+      summary: List Groups items (overview)
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/servicesPools:
@@ -9705,7 +9782,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools that this group has access to (Groups collection)
       tags:
       - Authenticators
@@ -9747,7 +9824,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools that this group has access to (Groups collection)
       tags:
       - Authenticators
@@ -9789,8 +9866,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Groups items
+      - udsApiAuthBearer: []
+      summary: Retrieve Groups table info
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/users:
@@ -9831,7 +9908,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all users belonging to this group (Groups collection)
       tags:
       - Authenticators
@@ -9907,8 +9984,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Groups item by UUID
       tags:
       - Authenticators
     get:
@@ -9982,8 +10059,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Groups item by UUID
       tags:
       - Authenticators
     put:
@@ -10057,8 +10134,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Groups item by UUID
       tags:
       - Authenticators
   /authenticators/{uuid}/groups/{uuid}/servicesPools:
@@ -10100,7 +10177,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools that this group has access to (Groups item)
       tags:
       - Authenticators
@@ -10142,7 +10219,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools that this group has access to (Groups item)
       tags:
       - Authenticators
@@ -10184,7 +10261,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all users belonging to this group (Groups item)
       tags:
       - Authenticators
@@ -10219,8 +10296,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Authenticator item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Authenticator item by UUID
       tags:
       - Authenticators
   /authenticators/{uuid}/search:
@@ -10261,7 +10338,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Search users or groups in the authenticator by name or identifier (Authenticator)
       tags:
       - Authenticators
@@ -10330,8 +10407,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Users items
+      - udsApiAuthBearer: []
+      summary: List Users items
       tags:
       - Authenticators
     post:
@@ -10378,7 +10455,7 @@ paths:
                 type: object
           description: UserItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Users item
       tags:
       - Authenticators
@@ -10428,7 +10505,7 @@ paths:
                 type: object
           description: UserItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Users item
       tags:
       - Authenticators
@@ -10489,7 +10566,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Users items with OData in body
       tags:
       - Authenticators
@@ -10543,7 +10620,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Add this user to an existing group within the same authenticator (Users
         collection)
       tags:
@@ -10597,7 +10674,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Add this user to an existing group within the same authenticator (Users
         collection)
       tags:
@@ -10642,7 +10719,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Remove all related data for this user (assigned services, cached entries,
         pending operations) (Users collection)
       tags:
@@ -10686,7 +10763,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Remove all related data for this user (assigned services, cached entries,
         pending operations) (Users collection)
       tags:
@@ -10731,7 +10808,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Enable or disable client-side logging for this user (toggles on each
         invocation) (Users collection)
       tags:
@@ -10775,7 +10852,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Enable or disable client-side logging for this user (toggles on each
         invocation) (Users collection)
       tags:
@@ -10845,8 +10922,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Users items
+      - udsApiAuthBearer: []
+      summary: List Users items (overview)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/servicesPools:
@@ -10888,7 +10965,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools in which this user has active assignments
         (Users collection)
       tags:
@@ -10931,7 +11008,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools in which this user has active assignments
         (Users collection)
       tags:
@@ -10974,8 +11051,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Users items
+      - udsApiAuthBearer: []
+      summary: Retrieve Users table info
       tags:
       - Authenticators
   /authenticators/{uuid}/users/userServices:
@@ -11017,7 +11094,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all user services currently assigned to this user (Users collection)
       tags:
       - Authenticators
@@ -11059,7 +11136,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all user services currently assigned to this user (Users collection)
       tags:
       - Authenticators
@@ -11135,8 +11212,8 @@ paths:
                 type: object
           description: UserItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Users item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Users item by UUID
       tags:
       - Authenticators
     get:
@@ -11210,8 +11287,8 @@ paths:
                 type: object
           description: UserItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Users item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Users item by UUID
       tags:
       - Authenticators
     put:
@@ -11285,8 +11362,8 @@ paths:
                 type: object
           description: UserItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Users item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Users item by UUID
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/addToGroup:
@@ -11339,7 +11416,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Add this user to an existing group within the same authenticator (Users
         item)
       tags:
@@ -11393,7 +11470,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Add this user to an existing group within the same authenticator (Users
         item)
       tags:
@@ -11438,7 +11515,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Remove all related data for this user (assigned services, cached entries,
         pending operations) (Users item)
       tags:
@@ -11482,7 +11559,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Remove all related data for this user (assigned services, cached entries,
         pending operations) (Users item)
       tags:
@@ -11527,7 +11604,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Enable or disable client-side logging for this user (toggles on each
         invocation) (Users item)
       tags:
@@ -11571,7 +11648,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Enable or disable client-side logging for this user (toggles on each
         invocation) (Users item)
       tags:
@@ -11607,8 +11684,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Users item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Users item by UUID
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/servicesPools:
@@ -11650,7 +11727,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools in which this user has active assignments
         (Users item)
       tags:
@@ -11693,7 +11770,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all service pools in which this user has active assignments
         (Users item)
       tags:
@@ -11737,7 +11814,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all user services currently assigned to this user (Users item)
       tags:
       - Authenticators
@@ -11779,7 +11856,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all user services currently assigned to this user (Users item)
       tags:
       - Authenticators
@@ -11823,7 +11900,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all users in this authenticator that have active services
         assigned (Authenticator)
       tags:
@@ -11867,7 +11944,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve all users in this authenticator that have active services
         assigned (Authenticator)
       tags:
@@ -11884,7 +11961,7 @@ paths:
                 type: string
           description: Cache purged
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Purge cache
       tags:
       - Cache
@@ -11946,8 +12023,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Calendar items
+      - udsApiAuthBearer: []
+      summary: List Calendar items
       tags:
       - Calendars
     post:
@@ -11987,7 +12064,7 @@ paths:
                 type: object
           description: CalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Calendar item
       tags:
       - Calendars
@@ -12030,7 +12107,7 @@ paths:
                 type: object
           description: CalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Calendar item
       tags:
       - Calendars
@@ -12084,7 +12161,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Calendar items with OData in body
       tags:
       - Calendars
@@ -12112,8 +12189,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Calendar items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of Calendar items
       tags:
       - Calendars
   /calendars/overview:
@@ -12174,8 +12251,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Calendar items
+      - udsApiAuthBearer: []
+      summary: List Calendar items (overview)
       tags:
       - Calendars
   /calendars/tableinfo:
@@ -12209,8 +12286,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Calendar items
+      - udsApiAuthBearer: []
+      summary: Retrieve Calendar table info
       tags:
       - Calendars
   /calendars/{uuid}:
@@ -12251,8 +12328,8 @@ paths:
                 type: object
           description: CalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Calendar item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Calendar item by UUID
       tags:
       - Calendars
     get:
@@ -12326,8 +12403,8 @@ paths:
                 type: object
           description: CalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Calendar item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Calendar item by UUID
       tags:
       - Calendars
     put:
@@ -12374,8 +12451,8 @@ paths:
                 type: object
           description: CalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Calendar item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Calendar item by UUID
       tags:
       - Calendars
   /calendars/{uuid}/log:
@@ -12409,8 +12486,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Calendar item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Calendar item by UUID
       tags:
       - Calendars
   /calendars/{uuid}/rules:
@@ -12478,8 +12555,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Rules items
+      - udsApiAuthBearer: []
+      summary: List Rules items
       tags:
       - Calendars
     post:
@@ -12526,7 +12603,7 @@ paths:
                 type: object
           description: CalendarRuleItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Rules item
       tags:
       - Calendars
@@ -12576,7 +12653,7 @@ paths:
                 type: object
           description: CalendarRuleItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Rules item
       tags:
       - Calendars
@@ -12637,7 +12714,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Rules items with OData in body
       tags:
       - Calendars
@@ -12706,8 +12783,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Rules items
+      - udsApiAuthBearer: []
+      summary: List Rules items (overview)
       tags:
       - Calendars
   /calendars/{uuid}/rules/tableinfo:
@@ -12748,8 +12825,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Rules items
+      - udsApiAuthBearer: []
+      summary: Retrieve Rules table info
       tags:
       - Calendars
   /calendars/{uuid}/rules/{uuid}:
@@ -12824,8 +12901,8 @@ paths:
                 type: object
           description: CalendarRuleItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Rules item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Rules item by UUID
       tags:
       - Calendars
     get:
@@ -12899,8 +12976,8 @@ paths:
                 type: object
           description: CalendarRuleItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Rules item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Rules item by UUID
       tags:
       - Calendars
     put:
@@ -12974,8 +13051,8 @@ paths:
                 type: object
           description: CalendarRuleItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Rules item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Rules item by UUID
       tags:
       - Calendars
   /config:
@@ -12990,7 +13067,7 @@ paths:
                 type: object
           description: Configuration values
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Get configuration
       tags:
       - Config
@@ -13012,7 +13089,7 @@ paths:
                 type: string
           description: Configuration updated
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Update configuration
       tags:
       - Config
@@ -13074,8 +13151,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Image items
+      - udsApiAuthBearer: []
+      summary: List Image items
       tags:
       - Gallery
     post:
@@ -13115,7 +13192,7 @@ paths:
                 type: object
           description: ImageItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Image item
       tags:
       - Gallery
@@ -13158,7 +13235,7 @@ paths:
                 type: object
           description: ImageItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Image item
       tags:
       - Gallery
@@ -13212,7 +13289,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Image items with OData in body
       tags:
       - Gallery
@@ -13274,8 +13351,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Image items
+      - udsApiAuthBearer: []
+      summary: List Image items (overview)
       tags:
       - Gallery
   /gallery/images/tableinfo:
@@ -13309,8 +13386,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Image items
+      - udsApiAuthBearer: []
+      summary: Retrieve Image table info
       tags:
       - Gallery
   /gallery/images/{uuid}:
@@ -13351,8 +13428,8 @@ paths:
                 type: object
           description: ImageItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Image item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Image item by UUID
       tags:
       - Gallery
     get:
@@ -13426,8 +13503,8 @@ paths:
                 type: object
           description: ImageItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Image item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Image item by UUID
       tags:
       - Gallery
     put:
@@ -13474,8 +13551,8 @@ paths:
                 type: object
           description: ImageItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Image item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Image item by UUID
       tags:
       - Gallery
   /gallery/images/{uuid}/log:
@@ -13509,8 +13586,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Image item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Image item by UUID
       tags:
       - Gallery
   /gallery/servicespoolgroups:
@@ -13571,8 +13648,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all ServicePoolGroup items
+      - udsApiAuthBearer: []
+      summary: List ServicePoolGroup items
       tags:
       - Gallery
     post:
@@ -13612,7 +13689,7 @@ paths:
                 type: object
           description: ServicePoolGroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new ServicePoolGroup item
       tags:
       - Gallery
@@ -13655,7 +13732,7 @@ paths:
                 type: object
           description: ServicePoolGroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new ServicePoolGroup item
       tags:
       - Gallery
@@ -13709,7 +13786,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query ServicePoolGroup items with OData in body
       tags:
       - Gallery
@@ -13737,8 +13814,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of ServicePoolGroup items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of ServicePoolGroup items
       tags:
       - Gallery
   /gallery/servicespoolgroups/overview:
@@ -13799,8 +13876,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of ServicePoolGroup items
+      - udsApiAuthBearer: []
+      summary: List ServicePoolGroup items (overview)
       tags:
       - Gallery
   /gallery/servicespoolgroups/tableinfo:
@@ -13834,8 +13911,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of ServicePoolGroup items
+      - udsApiAuthBearer: []
+      summary: Retrieve ServicePoolGroup table info
       tags:
       - Gallery
   /gallery/servicespoolgroups/{uuid}:
@@ -13876,8 +13953,8 @@ paths:
                 type: object
           description: ServicePoolGroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete ServicePoolGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a ServicePoolGroup item by UUID
       tags:
       - Gallery
     get:
@@ -13951,8 +14028,8 @@ paths:
                 type: object
           description: ServicePoolGroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get ServicePoolGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a ServicePoolGroup item by UUID
       tags:
       - Gallery
     put:
@@ -13999,8 +14076,8 @@ paths:
                 type: object
           description: ServicePoolGroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update ServicePoolGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a ServicePoolGroup item by UUID
       tags:
       - Gallery
   /gallery/servicespoolgroups/{uuid}/log:
@@ -14034,8 +14111,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of ServicePoolGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a ServicePoolGroup item by UUID
       tags:
       - Gallery
   /messaging/notifiers:
@@ -14096,8 +14173,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Notifier items
+      - udsApiAuthBearer: []
+      summary: List Notifier items
       tags:
       - Messaging
     post:
@@ -14137,7 +14214,7 @@ paths:
                 type: object
           description: NotifierItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Notifier item
       tags:
       - Messaging
@@ -14180,7 +14257,7 @@ paths:
                 type: object
           description: NotifierItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Notifier item
       tags:
       - Messaging
@@ -14234,7 +14311,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Notifier items with OData in body
       tags:
       - Messaging
@@ -14275,8 +14352,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Notifier type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a Notifier type
       tags:
       - Messaging
   /messaging/notifiers/overview:
@@ -14337,8 +14414,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Notifier items
+      - udsApiAuthBearer: []
+      summary: List Notifier items (overview)
       tags:
       - Messaging
   /messaging/notifiers/tableinfo:
@@ -14372,8 +14449,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Notifier items
+      - udsApiAuthBearer: []
+      summary: Retrieve Notifier table info
       tags:
       - Messaging
   /messaging/notifiers/types:
@@ -14400,8 +14477,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of Notifier items
+      - udsApiAuthBearer: []
+      summary: List Notifier types
       tags:
       - Messaging
   /messaging/notifiers/types/{type}:
@@ -14441,8 +14518,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get Notifier item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a Notifier type info
       tags:
       - Messaging
   /messaging/notifiers/{uuid}:
@@ -14483,8 +14560,8 @@ paths:
                 type: object
           description: NotifierItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Notifier item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Notifier item by UUID
       tags:
       - Messaging
     get:
@@ -14558,8 +14635,8 @@ paths:
                 type: object
           description: NotifierItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Notifier item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Notifier item by UUID
       tags:
       - Messaging
     put:
@@ -14606,8 +14683,8 @@ paths:
                 type: object
           description: NotifierItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Notifier item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Notifier item by UUID
       tags:
       - Messaging
   /messaging/notifiers/{uuid}/log:
@@ -14641,8 +14718,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Notifier item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Notifier item by UUID
       tags:
       - Messaging
   /metapools:
@@ -14703,8 +14780,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all MetaPool items
+      - udsApiAuthBearer: []
+      summary: List MetaPool items
       tags:
       - Metapools
     post:
@@ -14744,7 +14821,7 @@ paths:
                 type: object
           description: MetaPoolItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new MetaPool item
       tags:
       - Metapools
@@ -14787,7 +14864,7 @@ paths:
                 type: object
           description: MetaPoolItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new MetaPool item
       tags:
       - Metapools
@@ -14841,7 +14918,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query MetaPool items with OData in body
       tags:
       - Metapools
@@ -14869,8 +14946,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of MetaPool items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of MetaPool items
       tags:
       - Metapools
   /metapools/overview:
@@ -14931,8 +15008,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of MetaPool items
+      - udsApiAuthBearer: []
+      summary: List MetaPool items (overview)
       tags:
       - Metapools
   /metapools/tableinfo:
@@ -14966,8 +15043,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of MetaPool items
+      - udsApiAuthBearer: []
+      summary: Retrieve MetaPool table info
       tags:
       - Metapools
   /metapools/{uuid}:
@@ -15008,8 +15085,8 @@ paths:
                 type: object
           description: MetaPoolItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete MetaPool item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a MetaPool item by UUID
       tags:
       - Metapools
     get:
@@ -15083,8 +15160,8 @@ paths:
                 type: object
           description: MetaPoolItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get MetaPool item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a MetaPool item by UUID
       tags:
       - Metapools
     put:
@@ -15131,8 +15208,8 @@ paths:
                 type: object
           description: MetaPoolItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update MetaPool item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a MetaPool item by UUID
       tags:
       - Metapools
   /metapools/{uuid}/access:
@@ -15200,8 +15277,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Access items
+      - udsApiAuthBearer: []
+      summary: List Access items
       tags:
       - Metapools
     post:
@@ -15248,7 +15325,7 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Access item
       tags:
       - Metapools
@@ -15298,7 +15375,7 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Access item
       tags:
       - Metapools
@@ -15359,7 +15436,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Access items with OData in body
       tags:
       - Metapools
@@ -15428,8 +15505,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Access items
+      - udsApiAuthBearer: []
+      summary: List Access items (overview)
       tags:
       - Metapools
   /metapools/{uuid}/access/tableinfo:
@@ -15470,8 +15547,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Access items
+      - udsApiAuthBearer: []
+      summary: Retrieve Access table info
       tags:
       - Metapools
   /metapools/{uuid}/access/{uuid}:
@@ -15546,8 +15623,8 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Access item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Access item by UUID
       tags:
       - Metapools
     get:
@@ -15621,8 +15698,8 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Access item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Access item by UUID
       tags:
       - Metapools
     put:
@@ -15696,11 +15773,11 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Access item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Access item by UUID
       tags:
       - Metapools
-  /metapools/{uuid}/getFallbackAccess:
+  /metapools/{uuid}/fallbackAccess:
     get:
       deprecated: true
       description: Retrieve the current fallback access policy for a meta pool member
@@ -15739,12 +15816,65 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve the current fallback access policy for a meta pool member
         (MetaPool)
       tags:
       - Metapools
-  /metapools/{uuid}/get_fallback_access:
+    post:
+      deprecated: true
+      description: Update the fallback access policy for a meta pool member
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallback_access:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for fallbackAccess
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Update the fallback access policy for a meta pool member (MetaPool)
+      tags:
+      - Metapools
+  /metapools/{uuid}/fallback_access:
     get:
       description: Retrieve the current fallback access policy for a meta pool member
       parameters:
@@ -15782,9 +15912,61 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve the current fallback access policy for a meta pool member
         (MetaPool)
+      tags:
+      - Metapools
+    post:
+      description: Update the fallback access policy for a meta pool member
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallback_access:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for fallback_access
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Update the fallback access policy for a meta pool member (MetaPool)
       tags:
       - Metapools
   /metapools/{uuid}/groups:
@@ -15852,8 +16034,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Groups items
+      - udsApiAuthBearer: []
+      summary: List Groups items
       tags:
       - Metapools
     post:
@@ -15900,7 +16082,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Groups item
       tags:
       - Metapools
@@ -15950,7 +16132,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Groups item
       tags:
       - Metapools
@@ -16011,7 +16193,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Groups items with OData in body
       tags:
       - Metapools
@@ -16080,8 +16262,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Groups items
+      - udsApiAuthBearer: []
+      summary: List Groups items (overview)
       tags:
       - Metapools
   /metapools/{uuid}/groups/tableinfo:
@@ -16122,8 +16304,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Groups items
+      - udsApiAuthBearer: []
+      summary: Retrieve Groups table info
       tags:
       - Metapools
   /metapools/{uuid}/groups/{uuid}:
@@ -16198,8 +16380,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Groups item by UUID
       tags:
       - Metapools
     get:
@@ -16273,8 +16455,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Groups item by UUID
       tags:
       - Metapools
     put:
@@ -16348,8 +16530,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Groups item by UUID
       tags:
       - Metapools
   /metapools/{uuid}/log:
@@ -16383,8 +16565,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of MetaPool item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a MetaPool item by UUID
       tags:
       - Metapools
   /metapools/{uuid}/pools:
@@ -16452,8 +16634,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Pools items
+      - udsApiAuthBearer: []
+      summary: List Pools items
       tags:
       - Metapools
     post:
@@ -16500,7 +16682,7 @@ paths:
                 type: object
           description: MetaItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Pools item
       tags:
       - Metapools
@@ -16550,7 +16732,7 @@ paths:
                 type: object
           description: MetaItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Pools item
       tags:
       - Metapools
@@ -16611,7 +16793,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Pools items with OData in body
       tags:
       - Metapools
@@ -16680,8 +16862,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Pools items
+      - udsApiAuthBearer: []
+      summary: List Pools items (overview)
       tags:
       - Metapools
   /metapools/{uuid}/pools/tableinfo:
@@ -16722,8 +16904,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Pools items
+      - udsApiAuthBearer: []
+      summary: Retrieve Pools table info
       tags:
       - Metapools
   /metapools/{uuid}/pools/{uuid}:
@@ -16798,8 +16980,8 @@ paths:
                 type: object
           description: MetaItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Pools item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Pools item by UUID
       tags:
       - Metapools
     get:
@@ -16873,8 +17055,8 @@ paths:
                 type: object
           description: MetaItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Pools item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Pools item by UUID
       tags:
       - Metapools
     put:
@@ -16948,8 +17130,8 @@ paths:
                 type: object
           description: MetaItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Pools item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Pools item by UUID
       tags:
       - Metapools
   /metapools/{uuid}/services:
@@ -17017,8 +17199,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Services items
+      - udsApiAuthBearer: []
+      summary: List Services items
       tags:
       - Metapools
     post:
@@ -17065,7 +17247,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Services item
       tags:
       - Metapools
@@ -17115,7 +17297,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Services item
       tags:
       - Metapools
@@ -17176,7 +17358,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Services items with OData in body
       tags:
       - Metapools
@@ -17245,8 +17427,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Services items
+      - udsApiAuthBearer: []
+      summary: List Services items (overview)
       tags:
       - Metapools
   /metapools/{uuid}/services/tableinfo:
@@ -17287,8 +17469,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Services items
+      - udsApiAuthBearer: []
+      summary: Retrieve Services table info
       tags:
       - Metapools
   /metapools/{uuid}/services/{uuid}:
@@ -17363,8 +17545,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Services item by UUID
       tags:
       - Metapools
     get:
@@ -17438,8 +17620,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Services item by UUID
       tags:
       - Metapools
     put:
@@ -17513,8 +17695,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Services item by UUID
       tags:
       - Metapools
   /metapools/{uuid}/services/{uuid}/log:
@@ -17548,115 +17730,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Services item by UUID
-      tags:
-      - Metapools
-  /metapools/{uuid}/setFallbackAccess:
-    post:
-      deprecated: true
-      description: Update the fallback access policy for a meta pool member
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                fallbackAccess:
-                  description: 'Fallback access policy: ALLOW (default) or DENY'
-                  type: string
-              type: object
-        description: Parameters for setFallbackAccess
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-          description: Successfully retrieved object item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: object item not found
-      security:
-      - udsApiAuth: []
-      summary: Update the fallback access policy for a meta pool member (MetaPool)
-      tags:
-      - Metapools
-  /metapools/{uuid}/set_fallback_access:
-    post:
-      description: Update the fallback access policy for a meta pool member
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                fallbackAccess:
-                  description: 'Fallback access policy: ALLOW (default) or DENY'
-                  type: string
-              type: object
-        description: Parameters for set_fallback_access
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-          description: Successfully retrieved object item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: object item not found
-      security:
-      - udsApiAuth: []
-      summary: Update the fallback access policy for a meta pool member (MetaPool)
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Services item by UUID
       tags:
       - Metapools
   /mfa:
@@ -17717,8 +17792,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all MFA items
+      - udsApiAuthBearer: []
+      summary: List MFA items
       tags:
       - Mfa
     post:
@@ -17758,7 +17833,7 @@ paths:
                 type: object
           description: MFAItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new MFA item
       tags:
       - Mfa
@@ -17800,7 +17875,7 @@ paths:
                 type: object
           description: MFAItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new MFA item
       tags:
       - Mfa
@@ -17854,7 +17929,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query MFA items with OData in body
       tags:
       - Mfa
@@ -17895,8 +17970,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of MFA type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a MFA type
       tags:
       - Mfa
   /mfa/overview:
@@ -17957,8 +18032,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of MFA items
+      - udsApiAuthBearer: []
+      summary: List MFA items (overview)
       tags:
       - Mfa
   /mfa/tableinfo:
@@ -17992,8 +18067,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of MFA items
+      - udsApiAuthBearer: []
+      summary: Retrieve MFA table info
       tags:
       - Mfa
   /mfa/types:
@@ -18020,8 +18095,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of MFA items
+      - udsApiAuthBearer: []
+      summary: List MFA types
       tags:
       - Mfa
   /mfa/types/{type}:
@@ -18061,8 +18136,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get MFA item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a MFA type info
       tags:
       - Mfa
   /mfa/{uuid}:
@@ -18103,8 +18178,8 @@ paths:
                 type: object
           description: MFAItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete MFA item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a MFA item by UUID
       tags:
       - Mfa
     get:
@@ -18178,8 +18253,8 @@ paths:
                 type: object
           description: MFAItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get MFA item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a MFA item by UUID
       tags:
       - Mfa
     put:
@@ -18226,8 +18301,8 @@ paths:
                 type: object
           description: MFAItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update MFA item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a MFA item by UUID
       tags:
       - Mfa
   /mfa/{uuid}/log:
@@ -18261,8 +18336,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of MFA item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a MFA item by UUID
       tags:
       - Mfa
   /networks:
@@ -18323,8 +18398,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Network items
+      - udsApiAuthBearer: []
+      summary: List Network items
       tags:
       - Networks
     post:
@@ -18364,7 +18439,7 @@ paths:
                 type: object
           description: NetworkItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Network item
       tags:
       - Networks
@@ -18406,7 +18481,7 @@ paths:
                 type: object
           description: NetworkItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Network item
       tags:
       - Networks
@@ -18460,7 +18535,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Network items with OData in body
       tags:
       - Networks
@@ -18488,8 +18563,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Network items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of Network items
       tags:
       - Networks
   /networks/overview:
@@ -18550,8 +18625,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Network items
+      - udsApiAuthBearer: []
+      summary: List Network items (overview)
       tags:
       - Networks
   /networks/tableinfo:
@@ -18585,8 +18660,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Network items
+      - udsApiAuthBearer: []
+      summary: Retrieve Network table info
       tags:
       - Networks
   /networks/{uuid}:
@@ -18627,8 +18702,8 @@ paths:
                 type: object
           description: NetworkItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Network item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Network item by UUID
       tags:
       - Networks
     get:
@@ -18702,8 +18777,8 @@ paths:
                 type: object
           description: NetworkItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Network item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Network item by UUID
       tags:
       - Networks
     put:
@@ -18750,8 +18825,8 @@ paths:
                 type: object
           description: NetworkItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Network item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Network item by UUID
       tags:
       - Networks
   /networks/{uuid}/log:
@@ -18785,8 +18860,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Network item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Network item by UUID
       tags:
       - Networks
   /osmanagers:
@@ -18847,8 +18922,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all OSManager items
+      - udsApiAuthBearer: []
+      summary: List OSManager items
       tags:
       - Osmanagers
     post:
@@ -18888,7 +18963,7 @@ paths:
                 type: object
           description: OsManagerItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new OSManager item
       tags:
       - Osmanagers
@@ -18931,7 +19006,7 @@ paths:
                 type: object
           description: OsManagerItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new OSManager item
       tags:
       - Osmanagers
@@ -18985,7 +19060,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query OSManager items with OData in body
       tags:
       - Osmanagers
@@ -19026,8 +19101,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of OSManager type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a OSManager type
       tags:
       - Osmanagers
   /osmanagers/overview:
@@ -19088,8 +19163,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of OSManager items
+      - udsApiAuthBearer: []
+      summary: List OSManager items (overview)
       tags:
       - Osmanagers
   /osmanagers/tableinfo:
@@ -19123,8 +19198,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of OSManager items
+      - udsApiAuthBearer: []
+      summary: Retrieve OSManager table info
       tags:
       - Osmanagers
   /osmanagers/types:
@@ -19151,8 +19226,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of OSManager items
+      - udsApiAuthBearer: []
+      summary: List OSManager types
       tags:
       - Osmanagers
   /osmanagers/types/{type}:
@@ -19192,8 +19267,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get OSManager item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a OSManager type info
       tags:
       - Osmanagers
   /osmanagers/{uuid}:
@@ -19234,8 +19309,8 @@ paths:
                 type: object
           description: OsManagerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete OSManager item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a OSManager item by UUID
       tags:
       - Osmanagers
     get:
@@ -19309,8 +19384,8 @@ paths:
                 type: object
           description: OsManagerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get OSManager item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a OSManager item by UUID
       tags:
       - Osmanagers
     put:
@@ -19357,8 +19432,8 @@ paths:
                 type: object
           description: OsManagerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update OSManager item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a OSManager item by UUID
       tags:
       - Osmanagers
   /osmanagers/{uuid}/log:
@@ -19392,8 +19467,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of OSManager item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a OSManager item by UUID
       tags:
       - Osmanagers
   /providers:
@@ -19454,8 +19529,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Provider items
+      - udsApiAuthBearer: []
+      summary: List Provider items
       tags:
       - Providers
     post:
@@ -19495,7 +19570,7 @@ paths:
                 type: object
           description: ProviderItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Provider item
       tags:
       - Providers
@@ -19538,7 +19613,7 @@ paths:
                 type: object
           description: ProviderItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Provider item
       tags:
       - Providers
@@ -19592,7 +19667,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Provider items with OData in body
       tags:
       - Providers
@@ -19628,7 +19703,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all services provided by this provider regardless of their parent
         service (Provider)
       tags:
@@ -19670,8 +19745,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Provider type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a Provider type
       tags:
       - Providers
   /providers/overview:
@@ -19732,8 +19807,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Provider items
+      - udsApiAuthBearer: []
+      summary: List Provider items (overview)
       tags:
       - Providers
   /providers/service:
@@ -19768,7 +19843,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve a specific service by its UUID regardless of its parent service
         (Provider)
       tags:
@@ -19804,8 +19879,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Provider items
+      - udsApiAuthBearer: []
+      summary: Retrieve Provider table info
       tags:
       - Providers
   /providers/types:
@@ -19832,8 +19907,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of Provider items
+      - udsApiAuthBearer: []
+      summary: List Provider types
       tags:
       - Providers
   /providers/types/{type}:
@@ -19873,8 +19948,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get Provider item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a Provider type info
       tags:
       - Providers
   /providers/{uuid}:
@@ -19915,8 +19990,8 @@ paths:
                 type: object
           description: ProviderItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Provider item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Provider item by UUID
       tags:
       - Providers
     get:
@@ -19990,8 +20065,8 @@ paths:
                 type: object
           description: ProviderItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Provider item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Provider item by UUID
       tags:
       - Providers
     put:
@@ -20038,8 +20113,8 @@ paths:
                 type: object
           description: ProviderItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Provider item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Provider item by UUID
       tags:
       - Providers
   /providers/{uuid}/log:
@@ -20073,8 +20148,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Provider item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Provider item by UUID
       tags:
       - Providers
   /providers/{uuid}/maintenance:
@@ -20116,7 +20191,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Toggle maintenance mode for a provider (enable if disabled, disable
         if enabled) (Provider)
       tags:
@@ -20186,8 +20261,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Services items
+      - udsApiAuthBearer: []
+      summary: List Services items
       tags:
       - Providers
     post:
@@ -20234,7 +20309,7 @@ paths:
                 type: object
           description: ServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Services item
       tags:
       - Providers
@@ -20284,7 +20359,7 @@ paths:
                 type: object
           description: ServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Services item
       tags:
       - Providers
@@ -20345,7 +20420,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Services items with OData in body
       tags:
       - Providers
@@ -20393,7 +20468,7 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Get GUI representation of Services type
       tags:
       - Providers
@@ -20462,8 +20537,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Services items
+      - udsApiAuthBearer: []
+      summary: List Services items (overview)
       tags:
       - Providers
   /providers/{uuid}/services/servicepools:
@@ -20504,7 +20579,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all service pools that reference this service provider (Services
         collection)
       tags:
@@ -20547,8 +20622,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Services items
+      - udsApiAuthBearer: []
+      summary: Retrieve Services table info
       tags:
       - Providers
   /providers/{uuid}/services/types:
@@ -20582,7 +20657,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Get types of Services items
       tags:
       - Providers
@@ -20630,7 +20705,7 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Get Services item by type
       tags:
       - Providers
@@ -20706,8 +20781,8 @@ paths:
                 type: object
           description: ServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Services item by UUID
       tags:
       - Providers
     get:
@@ -20781,8 +20856,8 @@ paths:
                 type: object
           description: ServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Services item by UUID
       tags:
       - Providers
     put:
@@ -20856,8 +20931,8 @@ paths:
                 type: object
           description: ServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Services item by UUID
       tags:
       - Providers
   /providers/{uuid}/services/{uuid}/log:
@@ -20891,8 +20966,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Services item by UUID
       tags:
       - Providers
   /providers/{uuid}/services/{uuid}/servicepools:
@@ -20933,7 +21008,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all service pools that reference this service provider (Services
         item)
       tags:
@@ -21003,8 +21078,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Usage items
+      - udsApiAuthBearer: []
+      summary: List Usage items
       tags:
       - Providers
     post:
@@ -21051,7 +21126,7 @@ paths:
                 type: object
           description: ServicesUsageItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Usage item
       tags:
       - Providers
@@ -21101,7 +21176,7 @@ paths:
                 type: object
           description: ServicesUsageItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Usage item
       tags:
       - Providers
@@ -21162,7 +21237,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Usage items with OData in body
       tags:
       - Providers
@@ -21231,8 +21306,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Usage items
+      - udsApiAuthBearer: []
+      summary: List Usage items (overview)
       tags:
       - Providers
   /providers/{uuid}/usage/tableinfo:
@@ -21273,8 +21348,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Usage items
+      - udsApiAuthBearer: []
+      summary: Retrieve Usage table info
       tags:
       - Providers
   /providers/{uuid}/usage/{uuid}:
@@ -21349,8 +21424,8 @@ paths:
                 type: object
           description: ServicesUsageItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Usage item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Usage item by UUID
       tags:
       - Providers
     get:
@@ -21424,8 +21499,8 @@ paths:
                 type: object
           description: ServicesUsageItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Usage item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Usage item by UUID
       tags:
       - Providers
     put:
@@ -21499,8 +21574,8 @@ paths:
                 type: object
           description: ServicesUsageItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Usage item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Usage item by UUID
       tags:
       - Providers
   /servers/groups:
@@ -21561,8 +21636,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all ServerGroup items
+      - udsApiAuthBearer: []
+      summary: List ServerGroup items
       tags:
       - Servers
     post:
@@ -21602,7 +21677,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new ServerGroup item
       tags:
       - Servers
@@ -21645,7 +21720,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new ServerGroup item
       tags:
       - Servers
@@ -21699,7 +21774,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query ServerGroup items with OData in body
       tags:
       - Servers
@@ -21740,8 +21815,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of ServerGroup type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a ServerGroup type
       tags:
       - Servers
   /servers/groups/overview:
@@ -21802,8 +21877,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of ServerGroup items
+      - udsApiAuthBearer: []
+      summary: List ServerGroup items (overview)
       tags:
       - Servers
   /servers/groups/tableinfo:
@@ -21837,8 +21912,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of ServerGroup items
+      - udsApiAuthBearer: []
+      summary: Retrieve ServerGroup table info
       tags:
       - Servers
   /servers/groups/types:
@@ -21865,8 +21940,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of ServerGroup items
+      - udsApiAuthBearer: []
+      summary: List ServerGroup types
       tags:
       - Servers
   /servers/groups/types/{type}:
@@ -21906,8 +21981,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get ServerGroup item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a ServerGroup type info
       tags:
       - Servers
   /servers/groups/{uuid}:
@@ -21948,8 +22023,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete ServerGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a ServerGroup item by UUID
       tags:
       - Servers
     get:
@@ -22023,8 +22098,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get ServerGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a ServerGroup item by UUID
       tags:
       - Servers
     put:
@@ -22071,8 +22146,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update ServerGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a ServerGroup item by UUID
       tags:
       - Servers
   /servers/groups/{uuid}/log:
@@ -22106,8 +22181,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of ServerGroup item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a ServerGroup item by UUID
       tags:
       - Servers
   /servers/groups/{uuid}/servers:
@@ -22175,8 +22250,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Servers items
+      - udsApiAuthBearer: []
+      summary: List Servers items
       tags:
       - Servers
     post:
@@ -22223,7 +22298,7 @@ paths:
                 type: object
           description: ServerItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Servers item
       tags:
       - Servers
@@ -22273,7 +22348,7 @@ paths:
                 type: object
           description: ServerItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Servers item
       tags:
       - Servers
@@ -22334,7 +22409,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Servers items with OData in body
       tags:
       - Servers
@@ -22369,7 +22444,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Get GUI representation of Servers items
       tags:
       - Servers
@@ -22428,7 +22503,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Import server configuration from CSV data (Servers collection)
       tags:
       - Servers
@@ -22471,7 +22546,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Toggle maintenance mode for a server (enable if disabled, disable if
         enabled) (Servers collection)
       tags:
@@ -22541,8 +22616,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Servers items
+      - udsApiAuthBearer: []
+      summary: List Servers items (overview)
       tags:
       - Servers
   /servers/groups/{uuid}/servers/tableinfo:
@@ -22583,8 +22658,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Servers items
+      - udsApiAuthBearer: []
+      summary: Retrieve Servers table info
       tags:
       - Servers
   /servers/groups/{uuid}/servers/{uuid}:
@@ -22659,8 +22734,8 @@ paths:
                 type: object
           description: ServerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Servers item by UUID
       tags:
       - Servers
     get:
@@ -22734,8 +22809,8 @@ paths:
                 type: object
           description: ServerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Servers item by UUID
       tags:
       - Servers
     put:
@@ -22809,8 +22884,8 @@ paths:
                 type: object
           description: ServerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Servers item by UUID
       tags:
       - Servers
   /servers/groups/{uuid}/servers/{uuid}/importcsv:
@@ -22868,7 +22943,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Import server configuration from CSV data (Servers item)
       tags:
       - Servers
@@ -22911,7 +22986,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Toggle maintenance mode for a server (enable if disabled, disable if
         enabled) (Servers item)
       tags:
@@ -22955,7 +23030,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve aggregate server statistics including counts by state, type,
         and resource usage (ServerGroup)
       tags:
@@ -23018,8 +23093,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Server items
+      - udsApiAuthBearer: []
+      summary: List Server items
       tags:
       - Servers
     post:
@@ -23059,7 +23134,7 @@ paths:
                 type: object
           description: TokenItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Server item
       tags:
       - Servers
@@ -23102,7 +23177,7 @@ paths:
                 type: object
           description: TokenItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Server item
       tags:
       - Servers
@@ -23156,7 +23231,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Server items with OData in body
       tags:
       - Servers
@@ -23218,8 +23293,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Server items
+      - udsApiAuthBearer: []
+      summary: List Server items (overview)
       tags:
       - Servers
   /servers/tokens/tableinfo:
@@ -23253,8 +23328,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Server items
+      - udsApiAuthBearer: []
+      summary: Retrieve Server table info
       tags:
       - Servers
   /servers/tokens/{uuid}:
@@ -23295,8 +23370,8 @@ paths:
                 type: object
           description: TokenItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Server item by UUID
       tags:
       - Servers
     get:
@@ -23370,8 +23445,8 @@ paths:
                 type: object
           description: TokenItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Server item by UUID
       tags:
       - Servers
     put:
@@ -23418,8 +23493,8 @@ paths:
                 type: object
           description: TokenItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Server item by UUID
       tags:
       - Servers
   /servers/tokens/{uuid}/log:
@@ -23453,8 +23528,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Server item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Server item by UUID
       tags:
       - Servers
   /servicespools:
@@ -23515,8 +23590,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all ServicePool items
+      - udsApiAuthBearer: []
+      summary: List ServicePool items
       tags:
       - Servicespools
     post:
@@ -23556,7 +23631,7 @@ paths:
                 type: object
           description: ServicePoolItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new ServicePool item
       tags:
       - Servicespools
@@ -23599,7 +23674,7 @@ paths:
                 type: object
           description: ServicePoolItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new ServicePool item
       tags:
       - Servicespools
@@ -23653,7 +23728,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query ServicePool items with OData in body
       tags:
       - Servicespools
@@ -23681,8 +23756,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of ServicePool items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of ServicePool items
       tags:
       - Servicespools
   /servicespools/overview:
@@ -23743,8 +23818,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of ServicePool items
+      - udsApiAuthBearer: []
+      summary: List ServicePool items (overview)
       tags:
       - Servicespools
   /servicespools/tableinfo:
@@ -23778,8 +23853,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of ServicePool items
+      - udsApiAuthBearer: []
+      summary: Retrieve ServicePool table info
       tags:
       - Servicespools
   /servicespools/{uuid}:
@@ -23820,8 +23895,8 @@ paths:
                 type: object
           description: ServicePoolItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete ServicePool item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a ServicePool item by UUID
       tags:
       - Servicespools
     get:
@@ -23895,8 +23970,8 @@ paths:
                 type: object
           description: ServicePoolItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get ServicePool item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a ServicePool item by UUID
       tags:
       - Servicespools
     put:
@@ -23943,8 +24018,8 @@ paths:
                 type: object
           description: ServicePoolItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update ServicePool item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a ServicePool item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/access:
@@ -24012,8 +24087,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Access items
+      - udsApiAuthBearer: []
+      summary: List Access items
       tags:
       - Servicespools
     post:
@@ -24060,7 +24135,7 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Access item
       tags:
       - Servicespools
@@ -24110,7 +24185,7 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Access item
       tags:
       - Servicespools
@@ -24171,7 +24246,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Access items with OData in body
       tags:
       - Servicespools
@@ -24240,8 +24315,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Access items
+      - udsApiAuthBearer: []
+      summary: List Access items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/access/tableinfo:
@@ -24282,8 +24357,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Access items
+      - udsApiAuthBearer: []
+      summary: Retrieve Access table info
       tags:
       - Servicespools
   /servicespools/{uuid}/access/{uuid}:
@@ -24358,8 +24433,8 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Access item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Access item by UUID
       tags:
       - Servicespools
     get:
@@ -24433,8 +24508,8 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Access item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Access item by UUID
       tags:
       - Servicespools
     put:
@@ -24508,8 +24583,8 @@ paths:
                 type: object
           description: AccessCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Access item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Access item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/actions:
@@ -24577,8 +24652,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Actions items
+      - udsApiAuthBearer: []
+      summary: List Actions items
       tags:
       - Servicespools
     post:
@@ -24625,7 +24700,7 @@ paths:
                 type: object
           description: ActionCalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Actions item
       tags:
       - Servicespools
@@ -24675,7 +24750,7 @@ paths:
                 type: object
           description: ActionCalendarItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Actions item
       tags:
       - Servicespools
@@ -24736,7 +24811,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Actions items with OData in body
       tags:
       - Servicespools
@@ -24779,7 +24854,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Execute a scheduled calendar action immediately, bypassing the calendar
         schedule (Actions collection)
       tags:
@@ -24849,8 +24924,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Actions items
+      - udsApiAuthBearer: []
+      summary: List Actions items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/actions/tableinfo:
@@ -24891,8 +24966,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Actions items
+      - udsApiAuthBearer: []
+      summary: Retrieve Actions table info
       tags:
       - Servicespools
   /servicespools/{uuid}/actions/{uuid}:
@@ -24967,8 +25042,8 @@ paths:
                 type: object
           description: ActionCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Actions item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Actions item by UUID
       tags:
       - Servicespools
     get:
@@ -25042,8 +25117,8 @@ paths:
                 type: object
           description: ActionCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Actions item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Actions item by UUID
       tags:
       - Servicespools
     put:
@@ -25117,8 +25192,8 @@ paths:
                 type: object
           description: ActionCalendarItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Actions item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Actions item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/actions/{uuid}/execute:
@@ -25160,7 +25235,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Execute a scheduled calendar action immediately, bypassing the calendar
         schedule (Actions item)
       tags:
@@ -25205,7 +25280,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all calendar actions available for this service pool based on
         its service type and current state (ServicePool)
       tags:
@@ -25249,7 +25324,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List all calendar actions available for this service pool based on
         its service type and current state (ServicePool)
       tags:
@@ -25310,7 +25385,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Append a log entry to the service pool audit trail (ServicePool)
       tags:
       - Servicespools
@@ -25369,7 +25444,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Append a log entry to the service pool audit trail (ServicePool)
       tags:
       - Servicespools
@@ -25438,8 +25513,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Cache items
+      - udsApiAuthBearer: []
+      summary: List Cache items
       tags:
       - Servicespools
     post:
@@ -25486,7 +25561,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Cache item
       tags:
       - Servicespools
@@ -25536,7 +25611,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Cache item
       tags:
       - Servicespools
@@ -25597,7 +25672,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Cache items with OData in body
       tags:
       - Servicespools
@@ -25666,8 +25741,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Cache items
+      - udsApiAuthBearer: []
+      summary: List Cache items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/cache/tableinfo:
@@ -25708,8 +25783,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Cache items
+      - udsApiAuthBearer: []
+      summary: Retrieve Cache table info
       tags:
       - Servicespools
   /servicespools/{uuid}/cache/{uuid}:
@@ -25784,8 +25859,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Cache item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Cache item by UUID
       tags:
       - Servicespools
     get:
@@ -25859,8 +25934,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Cache item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Cache item by UUID
       tags:
       - Servicespools
     put:
@@ -25934,8 +26009,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Cache item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Cache item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/cache/{uuid}/log:
@@ -25969,8 +26044,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Cache item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Cache item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/changelog:
@@ -26038,8 +26113,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Changelog items
+      - udsApiAuthBearer: []
+      summary: List Changelog items
       tags:
       - Servicespools
     post:
@@ -26086,7 +26161,7 @@ paths:
                 type: object
           description: ChangelogItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Changelog item
       tags:
       - Servicespools
@@ -26136,7 +26211,7 @@ paths:
                 type: object
           description: ChangelogItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Changelog item
       tags:
       - Servicespools
@@ -26197,7 +26272,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Changelog items with OData in body
       tags:
       - Servicespools
@@ -26266,8 +26341,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Changelog items
+      - udsApiAuthBearer: []
+      summary: List Changelog items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/changelog/tableinfo:
@@ -26308,8 +26383,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Changelog items
+      - udsApiAuthBearer: []
+      summary: Retrieve Changelog table info
       tags:
       - Servicespools
   /servicespools/{uuid}/changelog/{uuid}:
@@ -26384,8 +26459,8 @@ paths:
                 type: object
           description: ChangelogItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Changelog item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Changelog item by UUID
       tags:
       - Servicespools
     get:
@@ -26459,8 +26534,8 @@ paths:
                 type: object
           description: ChangelogItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Changelog item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Changelog item by UUID
       tags:
       - Servicespools
     put:
@@ -26534,8 +26609,8 @@ paths:
                 type: object
           description: ChangelogItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Changelog item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Changelog item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/createFromAssignable:
@@ -26591,7 +26666,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new service pool from an existing assignable service (ServicePool)
       tags:
       - Servicespools
@@ -26647,11 +26722,11 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new service pool from an existing assignable service (ServicePool)
       tags:
       - Servicespools
-  /servicespools/{uuid}/getFallbackAccess:
+  /servicespools/{uuid}/fallbackAccess:
     get:
       deprecated: true
       description: Retrieve the current fallback access policy for a service pool
@@ -26690,11 +26765,64 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve the current fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
-  /servicespools/{uuid}/get_fallback_access:
+    post:
+      deprecated: true
+      description: Update the fallback access policy for a service pool
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallback_access:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for fallbackAccess
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Update the fallback access policy for a service pool (ServicePool)
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/fallback_access:
     get:
       description: Retrieve the current fallback access policy for a service pool
       parameters:
@@ -26732,8 +26860,60 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Retrieve the current fallback access policy for a service pool (ServicePool)
+      tags:
+      - Servicespools
+    post:
+      description: Update the fallback access policy for a service pool
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fallback_access:
+                  description: 'Fallback access policy: ALLOW (default) or DENY'
+                  type: string
+              type: object
+        description: Parameters for fallback_access
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Update the fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/groups:
@@ -26801,8 +26981,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Groups items
+      - udsApiAuthBearer: []
+      summary: List Groups items
       tags:
       - Servicespools
     post:
@@ -26849,7 +27029,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Groups item
       tags:
       - Servicespools
@@ -26899,7 +27079,7 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Groups item
       tags:
       - Servicespools
@@ -26960,7 +27140,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Groups items with OData in body
       tags:
       - Servicespools
@@ -27029,8 +27209,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Groups items
+      - udsApiAuthBearer: []
+      summary: List Groups items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/groups/tableinfo:
@@ -27071,8 +27251,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Groups items
+      - udsApiAuthBearer: []
+      summary: Retrieve Groups table info
       tags:
       - Servicespools
   /servicespools/{uuid}/groups/{uuid}:
@@ -27147,8 +27327,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Groups item by UUID
       tags:
       - Servicespools
     get:
@@ -27222,8 +27402,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Groups item by UUID
       tags:
       - Servicespools
     put:
@@ -27297,8 +27477,8 @@ paths:
                 type: object
           description: GroupItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Groups item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Groups item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/listAssignables:
@@ -27341,7 +27521,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Enumerate all assignable services that can be used to create a new
         service pool (ServicePool)
       tags:
@@ -27385,7 +27565,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Enumerate all assignable services that can be used to create a new
         service pool (ServicePool)
       tags:
@@ -27421,8 +27601,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of ServicePool item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a ServicePool item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/publications:
@@ -27490,8 +27670,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Publications items
+      - udsApiAuthBearer: []
+      summary: List Publications items
       tags:
       - Servicespools
     post:
@@ -27538,7 +27718,7 @@ paths:
                 type: object
           description: PublicationItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Publications item
       tags:
       - Servicespools
@@ -27588,7 +27768,7 @@ paths:
                 type: object
           description: PublicationItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Publications item
       tags:
       - Servicespools
@@ -27649,7 +27829,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Publications items with OData in body
       tags:
       - Servicespools
@@ -27692,7 +27872,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Cancel a running publication; invoking twice forces an immediate cancellation
         (Publications collection)
       tags:
@@ -27762,8 +27942,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Publications items
+      - udsApiAuthBearer: []
+      summary: List Publications items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/publish:
@@ -27816,7 +27996,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Start a new publication for a deployed service, optionally with a changelog
         message (Publications collection)
       tags:
@@ -27859,8 +28039,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Publications items
+      - udsApiAuthBearer: []
+      summary: Retrieve Publications table info
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/{uuid}:
@@ -27935,8 +28115,8 @@ paths:
                 type: object
           description: PublicationItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Publications item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Publications item by UUID
       tags:
       - Servicespools
     get:
@@ -28010,8 +28190,8 @@ paths:
                 type: object
           description: PublicationItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Publications item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Publications item by UUID
       tags:
       - Servicespools
     put:
@@ -28085,8 +28265,8 @@ paths:
                 type: object
           description: PublicationItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Publications item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Publications item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/publications/{uuid}/cancel:
@@ -28128,7 +28308,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Cancel a running publication; invoking twice forces an immediate cancellation
         (Publications item)
       tags:
@@ -28183,7 +28363,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Start a new publication for a deployed service, optionally with a changelog
         message (Publications item)
       tags:
@@ -28253,8 +28433,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Servers items
+      - udsApiAuthBearer: []
+      summary: List Servers items
       tags:
       - Servicespools
     post:
@@ -28301,7 +28481,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Servers item
       tags:
       - Servicespools
@@ -28351,7 +28531,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Servers item
       tags:
       - Servicespools
@@ -28412,7 +28592,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Servers items with OData in body
       tags:
       - Servicespools
@@ -28481,8 +28661,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Servers items
+      - udsApiAuthBearer: []
+      summary: List Servers items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/servers/tableinfo:
@@ -28523,8 +28703,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Servers items
+      - udsApiAuthBearer: []
+      summary: Retrieve Servers table info
       tags:
       - Servicespools
   /servicespools/{uuid}/servers/{uuid}:
@@ -28599,8 +28779,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Servers item by UUID
       tags:
       - Servicespools
     get:
@@ -28674,8 +28854,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Servers item by UUID
       tags:
       - Servicespools
     put:
@@ -28749,8 +28929,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Servers item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/servers/{uuid}/log:
@@ -28784,8 +28964,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Servers item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Servers item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/services:
@@ -28853,8 +29033,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Services items
+      - udsApiAuthBearer: []
+      summary: List Services items
       tags:
       - Servicespools
     post:
@@ -28901,7 +29081,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Services item
       tags:
       - Servicespools
@@ -28951,7 +29131,7 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Services item
       tags:
       - Servicespools
@@ -29012,7 +29192,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Services items with OData in body
       tags:
       - Servicespools
@@ -29081,8 +29261,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Services items
+      - udsApiAuthBearer: []
+      summary: List Services items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/services/reset:
@@ -29124,7 +29304,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Reset a user service to its initial state, removing any cached or intermediate
         data (Services collection)
       tags:
@@ -29167,8 +29347,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Services items
+      - udsApiAuthBearer: []
+      summary: Retrieve Services table info
       tags:
       - Servicespools
   /servicespools/{uuid}/services/{uuid}:
@@ -29243,8 +29423,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Services item by UUID
       tags:
       - Servicespools
     get:
@@ -29318,8 +29498,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Services item by UUID
       tags:
       - Servicespools
     put:
@@ -29393,8 +29573,8 @@ paths:
                 type: object
           description: UserServiceItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Services item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/services/{uuid}/log:
@@ -29428,8 +29608,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Services item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Services item by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/services/{uuid}/reset:
@@ -29471,116 +29651,9 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Reset a user service to its initial state, removing any cached or intermediate
         data (Services item)
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/setFallbackAccess:
-    post:
-      deprecated: true
-      description: Update the fallback access policy for a service pool
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                fallbackAccess:
-                  description: 'Fallback access policy: ALLOW (default) or DENY'
-                  type: string
-              type: object
-        description: Parameters for setFallbackAccess
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-          description: Successfully retrieved object item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: object item not found
-      security:
-      - udsApiAuth: []
-      summary: Update the fallback access policy for a service pool (ServicePool)
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/set_fallback_access:
-    post:
-      description: Update the fallback access policy for a service pool
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                fallbackAccess:
-                  description: 'Fallback access policy: ALLOW (default) or DENY'
-                  type: string
-              type: object
-        description: Parameters for set_fallback_access
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-          description: Successfully retrieved object item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: object item not found
-      security:
-      - udsApiAuth: []
-      summary: Update the fallback access policy for a service pool (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/transports:
@@ -29648,8 +29721,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Transports items
+      - udsApiAuthBearer: []
+      summary: List Transports items
       tags:
       - Servicespools
     post:
@@ -29696,7 +29769,7 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Transports item
       tags:
       - Servicespools
@@ -29746,7 +29819,7 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Transports item
       tags:
       - Servicespools
@@ -29807,7 +29880,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Transports items with OData in body
       tags:
       - Servicespools
@@ -29876,8 +29949,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Transports items
+      - udsApiAuthBearer: []
+      summary: List Transports items (overview)
       tags:
       - Servicespools
   /servicespools/{uuid}/transports/tableinfo:
@@ -29918,8 +29991,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Transports items
+      - udsApiAuthBearer: []
+      summary: Retrieve Transports table info
       tags:
       - Servicespools
   /servicespools/{uuid}/transports/{uuid}:
@@ -29994,8 +30067,8 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Transports item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Transports item by UUID
       tags:
       - Servicespools
     get:
@@ -30069,8 +30142,8 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Transports item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Transports item by UUID
       tags:
       - Servicespools
     put:
@@ -30144,8 +30217,8 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Transports item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Transports item by UUID
       tags:
       - Servicespools
   /stats:
@@ -30164,7 +30237,7 @@ paths:
                 type: object
           description: Usage statistics
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Get usage statistics
       tags:
       - Stats
@@ -30215,7 +30288,7 @@ paths:
                 type: object
           description: Ticket creation result
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a ticket
       tags:
       - Tickets
@@ -30277,8 +30350,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Transport items
+      - udsApiAuthBearer: []
+      summary: List Transport items
       tags:
       - Transports
     post:
@@ -30318,7 +30391,7 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Transport item
       tags:
       - Transports
@@ -30361,7 +30434,7 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Transport item
       tags:
       - Transports
@@ -30415,7 +30488,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Transport items with OData in body
       tags:
       - Transports
@@ -30456,8 +30529,8 @@ paths:
                 type: object
           description: GuiElement item not found
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Transport type
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of a Transport type
       tags:
       - Transports
   /transports/overview:
@@ -30518,8 +30591,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Transport items
+      - udsApiAuthBearer: []
+      summary: List Transport items (overview)
       tags:
       - Transports
   /transports/tableinfo:
@@ -30553,8 +30626,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Transport items
+      - udsApiAuthBearer: []
+      summary: Retrieve Transport table info
       tags:
       - Transports
   /transports/types:
@@ -30581,8 +30654,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get types of Transport items
+      - udsApiAuthBearer: []
+      summary: List Transport types
       tags:
       - Transports
   /transports/types/{type}:
@@ -30622,8 +30695,8 @@ paths:
                 type: object
           description: TypeInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get Transport item by type
+      - udsApiAuthBearer: []
+      summary: Retrieve a Transport type info
       tags:
       - Transports
   /transports/{uuid}:
@@ -30664,8 +30737,8 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Transport item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Transport item by UUID
       tags:
       - Transports
     get:
@@ -30739,8 +30812,8 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Transport item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Transport item by UUID
       tags:
       - Transports
     put:
@@ -30787,8 +30860,8 @@ paths:
                 type: object
           description: TransportItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Transport item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Transport item by UUID
       tags:
       - Transports
   /transports/{uuid}/log:
@@ -30822,8 +30895,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Transport item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Transport item by UUID
       tags:
       - Transports
   /tunnels/tunnels:
@@ -30884,8 +30957,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all Tunnels items
+      - udsApiAuthBearer: []
+      summary: List Tunnels items
       tags:
       - Tunnels
     post:
@@ -30925,7 +30998,7 @@ paths:
                 type: object
           description: TunnelItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new Tunnels item
       tags:
       - Tunnels
@@ -30968,7 +31041,7 @@ paths:
                 type: object
           description: TunnelItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new Tunnels item
       tags:
       - Tunnels
@@ -31022,7 +31095,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query Tunnels items with OData in body
       tags:
       - Tunnels
@@ -31050,8 +31123,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get GUI representation of Tunnels items
+      - udsApiAuthBearer: []
+      summary: Retrieve GUI representation of Tunnels items
       tags:
       - Tunnels
   /tunnels/tunnels/overview:
@@ -31112,8 +31185,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of Tunnels items
+      - udsApiAuthBearer: []
+      summary: List Tunnels items (overview)
       tags:
       - Tunnels
   /tunnels/tunnels/tableinfo:
@@ -31147,8 +31220,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of Tunnels items
+      - udsApiAuthBearer: []
+      summary: Retrieve Tunnels table info
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}:
@@ -31189,8 +31262,8 @@ paths:
                 type: object
           description: TunnelItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete Tunnels item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a Tunnels item by UUID
       tags:
       - Tunnels
     get:
@@ -31264,8 +31337,8 @@ paths:
                 type: object
           description: TunnelItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get Tunnels item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a Tunnels item by UUID
       tags:
       - Tunnels
     put:
@@ -31312,8 +31385,8 @@ paths:
                 type: object
           description: TunnelItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update Tunnels item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a Tunnels item by UUID
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/assign:
@@ -31354,7 +31427,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Assign an existing server to this tunnel group (Tunnels)
       tags:
       - Tunnels
@@ -31389,8 +31462,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get logs of Tunnels item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve logs of a Tunnels item by UUID
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers:
@@ -31458,8 +31531,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get all TunnelServers items
+      - udsApiAuthBearer: []
+      summary: List TunnelServers items
       tags:
       - Tunnels
     post:
@@ -31506,7 +31579,7 @@ paths:
                 type: object
           description: TunnelServerItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Create a new TunnelServers item
       tags:
       - Tunnels
@@ -31556,7 +31629,7 @@ paths:
                 type: object
           description: TunnelServerItem item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Creates a new TunnelServers item
       tags:
       - Tunnels
@@ -31617,7 +31690,7 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Query TunnelServers items with OData in body
       tags:
       - Tunnels
@@ -31660,7 +31733,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Toggle maintenance mode for a tunnel server (enable if disabled, disable
         if enabled) (TunnelServers collection)
       tags:
@@ -31730,8 +31803,8 @@ paths:
           description: Forbidden. You do not have permission to access this resource
             with your current role.
       security:
-      - udsApiAuth: []
-      summary: Get overview of TunnelServers items
+      - udsApiAuthBearer: []
+      summary: List TunnelServers items (overview)
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers/tableinfo:
@@ -31772,8 +31845,8 @@ paths:
                 type: object
           description: TableInfo item not found
       security:
-      - udsApiAuth: []
-      summary: Get table info of TunnelServers items
+      - udsApiAuthBearer: []
+      summary: Retrieve TunnelServers table info
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers/{uuid}:
@@ -31848,8 +31921,8 @@ paths:
                 type: object
           description: TunnelServerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Delete TunnelServers item by UUID
+      - udsApiAuthBearer: []
+      summary: Delete a TunnelServers item by UUID
       tags:
       - Tunnels
     get:
@@ -31923,8 +31996,8 @@ paths:
                 type: object
           description: TunnelServerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Get TunnelServers item by UUID
+      - udsApiAuthBearer: []
+      summary: Retrieve a TunnelServers item by UUID
       tags:
       - Tunnels
     put:
@@ -31998,8 +32071,8 @@ paths:
                 type: object
           description: TunnelServerItem item not found
       security:
-      - udsApiAuth: []
-      summary: Update TunnelServers item by UUID
+      - udsApiAuthBearer: []
+      summary: Update a TunnelServers item by UUID
       tags:
       - Tunnels
   /tunnels/tunnels/{uuid}/servers/{uuid}/maintenance:
@@ -32041,7 +32114,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: Toggle maintenance mode for a tunnel server (enable if disabled, disable
         if enabled) (TunnelServers item)
       tags:
@@ -32084,7 +32157,7 @@ paths:
                 type: object
           description: object item not found
       security:
-      - udsApiAuth: []
+      - udsApiAuthBearer: []
       summary: List tunnel servers that are not yet assigned to this tunnel group
         (Tunnels)
       tags:
