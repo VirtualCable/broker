@@ -8,6 +8,7 @@ import collections.abc
 import logging
 import ssl
 import typing
+
 # For pyasn1 compatibility of ldap3
 # This is a workaround for the deprecation warning of pyasn1 when used by ldap3
 # It is not recommended to ignore warnings :)
@@ -76,6 +77,26 @@ class AlreadyExistsError(LDAPError):
 ALREADY_EXISTS = AlreadyExistsError
 
 
+class LDAPReferralError(LDAPError):
+    """
+    Raised when an LDAP search returns referrals that the caller may follow.
+
+    The list of referral URIs (as returned by the LDAP server) is available
+    on the ``referrals`` attribute. Callers can decide whether to follow them,
+    drop them, or honour an allow-list.
+
+    The default ``as_dict`` / ``first`` behaviour is to silently drop
+    referrals; pass ``raise_on_referrals=True`` to surface them instead.
+    """
+
+    referrals: list[str]
+
+    def __init__(self, referrals: collections.abc.Iterable[str]) -> None:
+        normalized: list[str] = [r for r in referrals if r]
+        super().__init__(f"LDAP referrals: {normalized}")
+        self.referrals = normalized
+
+
 def _raise_for_result(operation: str, result: collections.abc.Mapping[str, typing.Any]) -> typing.NoReturn:
     result_code = result.get("result")
     description = str(result.get("description", ""))
@@ -92,17 +113,36 @@ def _raise_for_result(operation: str, result: collections.abc.Mapping[str, typin
     raise LDAPError(message)
 
 
+def _extract_referrals(con: Connection) -> list[str]:
+    """
+    Returns the list of referral URIs from the last LDAP operation on ``con``.
+
+    ldap3 surfaces referrals as ``con.result['referrals']`` (a list of URIs).
+    Returns ``[]`` if no referrals were returned, or if the connection result
+    doesn't expose them. Defensive: never raises.
+    """
+    try:
+        result: dict[str, typing.Any] | None = con.result
+    except Exception:
+        return []
+    if not isinstance(result, dict):
+        return []
+    refs = result.get("referrals")
+    if not refs:
+        return []
+    try:
+        return [str(r) for r in refs if r]
+    except Exception:
+        return []
+
+
 def escape(value: str) -> str:
     """
     Escape filter chars for ldap search filter
     """
     # ldap3 does not provide a direct escape, but this is a safe replacement
     return (
-        value.replace("\\", "\\5c")
-        .replace("*", "\\2a")
-        .replace("(", "\\28")
-        .replace(")", "\\29")
-        .replace("\0", "\\00")
+        value.replace("\\", "\\5c").replace("*", "\\2a").replace("(", "\\28").replace(")", "\\29").replace("\0", "\\00")
     )
 
 
@@ -168,10 +208,27 @@ def connection(
         conn.open()
         if not conn.bind():
             logger.error("Could not bind to LDAP server %s as user %s", host, username)
-            raise LDAPError(_("Could not bind to LDAP server: {host}").format(host=host))
+            # Surface the LDAP result message (e.g. "AcceptSecurityContext
+            # error, data 773, ...") so callers that key off specific sub-status
+            # codes (AD password expired / must reset) can react. Without this,
+            # the bind error text is lost and those callers cannot distinguish
+            # an expired password from a generic auth failure.
+            inner_msg: str = ""
+            try:
+                inner_msg = (
+                    str(typing.cast(dict[str, typing.Any], conn.result).get("message") or "")
+                    if isinstance(conn.result, dict)
+                    else ""
+                )
+            except Exception:
+                inner_msg = ""
+            prefix = _("Could not bind to LDAP server: {host}").format(host=host)
+            raise LDAPError(f"{prefix}: {inner_msg}" if inner_msg else prefix)
 
         logger.debug("Connection was successful")
         return conn
+    except LDAPError:
+        raise
     except Exception as e:
         logger.exception("Exception connection:")
         raise LDAPError(str(e)) from e
@@ -185,9 +242,16 @@ def as_dict(
     attributes: collections.abc.Iterable[str] | None = None,
     limit: int = 100,
     scope: typing.Any = SCOPE_SUBTREE,
+    raise_on_referrals: bool = False,
 ) -> collections.abc.Generator[LDAPResultType, None, None]:
     """
     Makes a search on LDAP, returns a generator with the results, where each result is a dictionary where values are always a list of strings
+
+    If ``raise_on_referrals`` is True, raises :class:`LDAPReferralError`
+    when the server returned referrals for the search (instead of silently
+    dropping them, which is the default behaviour). The caller is then
+    responsible for deciding whether to follow the referrals, honour an
+    allow-list, or fall back to the previous behaviour.
     """
     logger.debug("Filter: %s, attr list: %s", ldap_filter, attributes)
     attr_list = list(attributes) if attributes else ALL_ATTRIBUTES
@@ -199,12 +263,18 @@ def as_dict(
             attributes=attr_list,
             size_limit=limit,
         )
+        if raise_on_referrals:
+            referrals: list[str] = _extract_referrals(con)
+            if referrals:
+                raise LDAPReferralError(referrals)
         for entry in typing.cast(typing.Any, con.entries):
             dct = utils.CaseInsensitiveDict[list[str]]()
             for attr in attr_list:
                 dct[attr] = entry[attr].values if attr in entry else [""]
             dct["dn"] = entry.entry_dn
             yield dct
+    except (LDAPError, LDAPReferralError):
+        raise
     except Exception as e:
         logger.exception("Exception in search:")
         raise LDAPError(str(e)) from e
@@ -219,16 +289,29 @@ def first(
     *,
     attributes: collections.abc.Iterable[str] | None = None,
     max_entries: int = 50,
+    raise_on_referrals: bool = False,
 ) -> "LDAPResultType | None":
     """
-    Searchs for the username and returns its LDAP entry
+    Searches for the username and returns its LDAP entry.
+
+    If ``raise_on_referrals`` is True, propagates :class:`LDAPReferralError`
+    when the server returned referrals instead of returning ``None``.
     """
     value = escape(value)
     attr_list = [field] + list(attributes) if attributes else [field]
     ldap_filter = f"(&(objectClass={object_class})({field}={value}))"
     try:
-        gen = as_dict(con, base, ldap_filter, attributes=attr_list, limit=max_entries)
+        gen = as_dict(
+            con,
+            base,
+            ldap_filter,
+            attributes=attr_list,
+            limit=max_entries,
+            raise_on_referrals=raise_on_referrals,
+        )
         obj = next(gen)
+    except LDAPReferralError:
+        raise
     except StopIteration:
         return None
     obj["_id"] = value
@@ -454,11 +537,13 @@ def connect_with_pool(
         # Success
         _set_preferred([(h, p)])
         bo.clear_bad(key)
-        # ``ignore_referrals`` / ``allowed_referral_hosts`` are part of the
-        # API for symmetry with future ldap3 features that need them
-        # (``Connection`` constructor flags). For now ldap3 builds the
-        # ``Server`` with ``get_info=ALL`` which is enough; the flags are
-        # accepted but unused here. Explicit ``del`` keeps pyrefly happy.
+        # ``ignore_referrals`` / ``allowed_referral_hosts`` are accepted for
+        # API symmetry: the caller decides the referral policy and is
+        # responsible for passing ``raise_on_referrals=True`` to ``as_dict``
+        # / ``first`` so that any ``LDAPReferralError`` is surfaced back.
+        # We don't plumb them through here because this layer only
+        # establishes a connection; the actual follow (or drop) happens
+        # at the search layer.
         del ignore_referrals, allowed_referral_hosts
         return con
 

@@ -88,7 +88,9 @@ class BaseRDPTransport(transports.Transport):
     force_no_domain = gui.CheckBoxField(
         label=_("Without Domain"),
         order=14,
-        tooltip=_("If checked, the domain part will always be emptied (to connect to xrdp for example is needed)"),
+        tooltip=_(
+            "If checked, the domain part will always be emptied (to connect to xrdp for example is needed)"
+        ),
         tab=types.ui.Tab.CREDENTIALS,
         old_field_name="withoutDomain",
     )
@@ -266,7 +268,9 @@ class BaseRDPTransport(transports.Transport):
     multimon = gui.CheckBoxField(
         label=_("Multiple monitors"),
         order=34,
-        tooltip=_("If checked, all client monitors will be used for displaying (only works on windows clients)"),
+        tooltip=_(
+            "If checked, all client monitors will be used for displaying (only works on windows clients)"
+        ),
         tab=types.ui.Tab.DISPLAY,
         old_field_name="multimon",
     )
@@ -408,7 +412,9 @@ class BaseRDPTransport(transports.Transport):
         # no sense. Block saving such a configuration.
         if self.mac_allow_msrdc.as_bool() and not self.mac_use_rdp_file.as_bool():
             raise exceptions.ui.ValidationError(
-                _('Mac OS X: "Allow Microsoft Rdp Client" requires "Use RDP file for connections" to be enabled.')
+                _(
+                    'Mac OS X: "Allow Microsoft Rdp Client" requires "Use RDP file for connections" to be enabled.'
+                )
             )
 
     @typing.override
@@ -506,7 +512,9 @@ class BaseRDPTransport(transports.Transport):
     ) -> types.connections.ConnectionData:
         username = None
         if isinstance(userservice, UserService):
-            cdata = userservice.get_instance().get_connection_data()
+            cdata: types.connections.ConnectionData | types.services.ConnectionData | None = (
+                userservice.get_instance().get_connection_data()
+            )
             if cdata:
                 username = cdata.username or username
                 password = cdata.password or password

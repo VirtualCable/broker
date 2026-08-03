@@ -64,7 +64,7 @@ class Client(Handler):
     Processes Client requests
     """
 
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
 
     @staticmethod
     def result(
