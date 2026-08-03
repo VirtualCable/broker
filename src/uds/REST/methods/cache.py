@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 # Enclosed methods under /cache path
 class Cache(Handler):
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     API_OPERATIONS = {
         "get": types.rest.api.Operation(

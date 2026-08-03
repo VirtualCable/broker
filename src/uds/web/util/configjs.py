@@ -195,8 +195,8 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
     plugins = [p.as_dict() for p in udsclients_info.PLUGINS]
     # We can add here custom downloads with something like this:
     # plugins.append({
-    #     'url': 'http://www.google.com/coche.exe',
-    #     'description': 'Cliente SPICE for download',  # Text that appears on download
+    #     'url': 'http://www.virtualcable.net/whatever.any',
+    #     'description': 'ANY client for download',  # Text that appears on download
     #     'name': 'Linux', # Can be 'Linux', 'Windows', o 'MacOS'. Sets the icon.
     #     'legacy': False  # True = Gray, False = White
     # })
@@ -206,8 +206,15 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
     if user and user.is_staff():  # Add staff things
         # If is admin (informational, REST api checks users privileges anyway...)
         profile["admin"] = True
-        # REST auth
-        config["auth_token"] = request.session.session_key
+        # REST auth.  We expose the session token prefixed with the
+        # ``ses-`` scheme tag so a future ``Authorization: Bearer``
+        # migration can recognise the kind without deserialising.
+        # ``Handler.__init__`` strips the prefix before lookup, so the
+        # existing ``X-Auth-Token: ses-XXX`` flow keeps working.
+        # We always prepend the prefix (Django's session keys are random
+        # and never start with ``ses-``); the strip on read side is
+        # idempotent.
+        config["auth_token"] = f"{consts.auth.SESSION_KEY_PREFIX}{request.session.session_key}"
         config["auth_header"] = consts.auth.AUTH_TOKEN_HEADER
         # Actors
         actors = [

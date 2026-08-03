@@ -139,7 +139,7 @@ def clear_failed_ip_counter(request: "ExtendedHttpRequest") -> None:
 
 
 class ActorV3Action(Handler):
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
     PATH = "actor/v3"
     NAME = "actorv3"
 
@@ -288,7 +288,7 @@ class Register(ActorV3Action):
 
     """
 
-    ROLE = consts.UserRole.STAFF
+    ROLE = consts.Role.STAFF
 
     NAME = "register"
 

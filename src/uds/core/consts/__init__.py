@@ -96,7 +96,7 @@ NO_MORE_MACS: typing.Final[str] = NULL_MAC
 UUID_ZERO: typing.Final[str] = "00000000-0000-0000-0000-000000000000"
 
 
-class UserRole(enum.StrEnum):
+class Role(enum.StrEnum):
     """
     Roles for users
     """
@@ -114,9 +114,9 @@ class UserRole(enum.StrEnum):
         Returns:
             True if this role needs authentication, False otherwise
         """
-        return self != UserRole.ANONYMOUS
+        return self != Role.ANONYMOUS
 
-    def can_access(self, role: "UserRole") -> bool:
+    def can_access(self, role: "Role") -> bool:
         """
         Checks if this role can access to the requested role
 
@@ -129,10 +129,10 @@ class UserRole(enum.StrEnum):
             True if this role can access to the requested role, False otherwise
         """
         ROLE_PRECEDENCE: typing.Final = {
-            UserRole.ADMIN: 3,
-            UserRole.STAFF: 2,
-            UserRole.USER: 1,
-            UserRole.ANONYMOUS: 0,
+            Role.ADMIN: 3,
+            Role.STAFF: 2,
+            Role.USER: 1,
+            Role.ANONYMOUS: 0,
         }
 
         return ROLE_PRECEDENCE[self] >= ROLE_PRECEDENCE[role]
@@ -146,8 +146,8 @@ class UserRole(enum.StrEnum):
         """
         # _('Admin') or _('Staff member')) or _('User')
         return {
-            UserRole.ADMIN: _("Admin"),
-            UserRole.STAFF: _("Staff member"),
-            UserRole.USER: _("User"),
-            UserRole.ANONYMOUS: _("Anonymous"),
+            Role.ADMIN: _("Admin"),
+            Role.STAFF: _("Staff member"),
+            Role.USER: _("User"),
+            Role.ANONYMOUS: _("Anonymous"),
         }.get(self, _("Unknown role"))  # Default case, should not happen
