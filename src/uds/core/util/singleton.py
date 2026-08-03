@@ -10,7 +10,7 @@ class Singleton(type):
         ...
     """
 
-    _instance: typing.Optional[typing.Any]
+    _instance: typing.Any | None
 
     # Ensure "_instance" is not inherited
     def __init__(cls: "Singleton", *args: typing.Any, **kwargs: typing.Any) -> None:
