@@ -111,7 +111,7 @@ def api_paths(
     api_desc = {
         path: types.rest.api.PathItem(
             get=types.rest.api.Operation(
-                summary=f"Get all {name} items",
+                summary=f"List {name} items",
                 description=f"Retrieve a list of all {name} items",
                 parameters=api_utils.gen_odata_parameters(),
                 responses=api_utils.gen_response(base_type_name, single=False),
@@ -124,7 +124,7 @@ def api_paths(
         ),
         f"{path}/{{uuid}}": types.rest.api.PathItem(
             get=types.rest.api.Operation(
-                summary=f"Get {name} item by UUID",
+                summary=f"Retrieve {name} item by UUID",
                 description=f"Retrieve a {name} item by UUID",
                 parameters=api_utils.gen_uuid_parameters(with_odata=True),
                 responses=api_utils.gen_response(base_type_name, single=True),
@@ -150,7 +150,7 @@ def api_paths(
         ),
         f"{path}/{consts.rest.OVERVIEW}": types.rest.api.PathItem(
             get=types.rest.api.Operation(
-                summary=f"Get overview of {name} items",
+                summary=f"List {name} items (overview)",
                 description=f"Retrieve an overview of {name} items",
                 parameters=api_utils.gen_odata_parameters(),
                 responses=api_utils.gen_response(base_type_name, single=False),
@@ -160,7 +160,7 @@ def api_paths(
         ),
         f"{path}/{consts.rest.TABLEINFO}": types.rest.api.PathItem(
             get=types.rest.api.Operation(
-                summary=f"Get table info of {name} items",
+                summary=f"Retrieve {name} table info",
                 description=f"Retrieve table info of {name} items",
                 parameters=[],
                 responses=api_utils.gen_response("TableInfo"),
@@ -173,7 +173,7 @@ def api_paths(
     if cls.get_logs is not DetailHandler.get_logs:  # pyright: ignore[reportUnknownMemberType]
         api_desc[f"{path}/{{uuid}}/{consts.rest.LOG}"] = types.rest.api.PathItem(
             get=types.rest.api.Operation(
-                summary=f"Get logs of {name} item by UUID",
+                summary=f"Retrieve {name} item logs by UUID",
                 description=f"Retrieve logs of a {name} item by UUID",
                 parameters=api_utils.gen_uuid_parameters(with_odata=False),
                 responses=api_utils.gen_response("LogEntry", single=False),

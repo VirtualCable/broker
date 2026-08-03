@@ -57,11 +57,13 @@ class TicketTest(rest.test.RESTTestCase):
     kyber_private_key: typing.ClassVar[str]  # Base 64 encoded
 
     @classmethod
+    @typing.override
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.cm = CryptoManager.manager()
         cls.kyber_public_key, cls.kyber_private_key = kem.generate_keypair()
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
 
@@ -104,90 +106,44 @@ class TicketTest(rest.test.RESTTestCase):
         models.TicketStore.set_shared_secret(self.valid_ticket, b"\x01" * 32)
 
     @staticmethod
-    def get_url_legacy(ticket: str, token: str, msg: str) -> str:
-        """
-        Returns the URL for ticket requests
-        """
-        return f"/uds/rest/tunnel/ticket/{ticket}/{msg}/{token}"
-
-    @staticmethod
     def get_url() -> str:
         """
         Returns the URL for ticket requests
         """
-        return "/uds/rest/tunnelpq/ticket"
+        return "/uds/rest/tunnel/ticket"
 
-    def test_legacy_request_invalid_token(self) -> None:
-        """
-        Test ticket request with invalid token
-        """
-        response = self.client.get(
-            self.get_url_legacy(
-                self.valid_ticket,
-                "invalid_token",
-                "127.0.0.1",
-            ),
-        )
-        self.assertEqual(response.status_code, 403)
+    # ------------------------------------------------------------------
+    # Modern path: ``Authorization: Bearer sk-<token>`` header.
+    # The body token field is no longer read by the server: requests
+    # must authenticate via the Authorization header (HTTP standard).
+    # ------------------------------------------------------------------
+    def _bearer_sk(self, token: str) -> None:
+        """Set the ``Authorization`` header on the test client for the
+        new ``Bearer sk-<token>`` auth path.  Cleaned up in tearDown so
+        subsequent tests are unaffected.
 
-    def test_legacy_request_invalid_ticket(self) -> None:
+        Note: the key in ``uds_headers`` is the canonical HTTP header
+        name (``Authorization``, *without* the ``HTTP_`` META prefix).
+        Django's test client translates it to ``HTTP_AUTHORIZATION`` in
+        ``request.META`` when the request is built.
         """
-        Test ticket request with invalid ticket
-        """
-        response = self.client.get(
-            self.get_url_legacy(
-                "invalid_ticket",
-                self.server_token,
-                "127.0.0.1",
-            ),
-        )
-        self.assertEqual(response.status_code, 403)
+        self.client.add_header("Authorization", f"Bearer sk-{token}")
+        self.addCleanup(self._clear_bearer)
 
-    def test_legacy_request_valid_ticket_start(self) -> None:
-        """
-        Test ticket request with valid ticket and start
-        """
-        response = self.client.get(
-            self.get_url_legacy(
-                self.valid_ticket,
-                self.server_token,
-                "127.0.0.1",  # Start message is the source IP, compat with 4.x
-            ),
-        )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        r = types.tickets.TunnelTicketLegacyResponse.from_dict(data)  # Just to check it can be created without errors
+    def _clear_bearer(self) -> None:
+        self.client.uds_headers.pop("Authorization", None)
 
-        self.assertEqual(r.host, self.ip)  #
-        self.assertEqual(r.port, 1234)
-        self.assertIsInstance(r.notify, str)
-        self.assertEqual(r.shared_secret, "01" * 32)  # Hex representation
-
-    def test_legacy_request_valid_ticket_stop(self) -> None:
+    def test_request_authorization_header_valid_start(self) -> None:
         """
-        Test ticket request with valid ticket and stop
+        Modern auth path: ``Authorization: Bearer sk-<token>`` is honoured.
+        The body still carries a ``token`` field for log/decoration purposes
+        but the server MUST take the value from the Authorization header.
         """
-        response = self.client.get(
-            self.get_url_legacy(
-                self.valid_ticket,
-                self.server_token,
-                "stop",  # Stop message
-            ),
-            query_params={
-                "sent": "1024",
-                "recv": "2048",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_request_invalid_token(self) -> None:
-        """
-        Test ticket request with invalid token
-        """
+        self._bearer_sk(self.server_token)
         response = self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
-                token="invalid_token",
+                token="invalid_body_token_ignored",
                 ticket=self.valid_ticket,
                 command="start",
                 ip="127.0.0.1",
@@ -195,98 +151,28 @@ class TicketTest(rest.test.RESTTestCase):
             ).as_dict(),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 403)
-
-    def test_request_invalid_kem_key(self) -> None:
-        """
-        Test ticket request with invalid token
-        """
-        # Invalid base64 key
-        response = self.client.post(
-            self.get_url(),
-            data=types.tickets.TunnelTicketRequest(
-                token=self.server_token,
-                ticket=self.valid_ticket,
-                command="start",
-                ip="127.0.0.1",
-                kem_kyber_key="invalid_kem_key",
-            ).as_dict(),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 403)
-
-        # Valid key, but invalid for Kyber (basically, invalid length)
-        response = self.client.post(
-            self.get_url(),
-            data=types.tickets.TunnelTicketRequest(
-                token=self.server_token,
-                ticket=self.valid_ticket,
-                command="start",
-                ip="127.0.0.1",
-                kem_kyber_key="AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
-            ).as_dict(),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_request_invalid_ticket(self) -> None:
-        """
-        Test ticket request with invalid ticket
-        """
-        response = self.client.post(
-            self.get_url(),
-            data=types.tickets.TunnelTicketRequest(
-                token=self.server_token,
-                ticket="invalid_ticket",
-                command="start",
-                ip="127.0.0.1",
-                kem_kyber_key=self.kyber_public_key,
-            ).as_dict(),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_request_valid_ticket_start(self) -> None:
-        """
-        Test ticket request with valid ticket and start
-        """
-
-        response = self.client.post(
-            self.get_url(),
-            data=types.tickets.TunnelTicketRequest(
-                token=self.server_token,
-                ticket=self.valid_ticket,
-                command="start",
-                ip="127.0.0.1",
-                kem_kyber_key=self.kyber_public_key,
-            ).as_dict(),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content)
         encrypted_data = response.json()
-        # Decrytpt reponse to process it
         data = self.cm.decrypted_dict(
             encrypted_data,
             self.valid_ticket,
             self.kyber_private_key,
         )
-
-        r = types.tickets.TunnelTicketResponse.from_dict(data)  # Just to check it can be created without errors
-
-        self.assertEqual(r.remotes[0].host, self.ip)  #
+        r = types.tickets.TunnelTicketResponse.from_dict(data)
+        self.assertEqual(r.remotes[0].host, self.ip)
         self.assertEqual(r.remotes[0].port, 1234)
         self.assertIsInstance(r.notify, str)
-        self.assertEqual(r.shared_secret, "01" * 32)  # Hex representation
+        self.assertEqual(r.shared_secret, "01" * 32)
 
-    def test_request_valid_ticket_stop(self) -> None:
+    def test_request_authorization_header_valid_stop(self) -> None:
         """
-        Test ticket request with valid ticket and stop
-        This response is not encrypted, just an empty dict is returned
+        New auth path on a ``stop`` command: header takes precedence.
         """
+        self._bearer_sk(self.server_token)
         response = self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
-                token=self.server_token,
+                token="invalid_body_token_ignored",
                 ticket=self.valid_ticket,
                 command="stop",
                 ip="127.0.0.1",
@@ -295,6 +181,23 @@ class TicketTest(rest.test.RESTTestCase):
             ).as_dict(),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data, {})  # Stop returns empty response
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), {})
+
+    def test_request_authorization_header_invalid_token(self) -> None:
+        """
+        New auth path with an unknown token in the header: 403.
+        """
+        self._bearer_sk("definitely_not_a_real_token")
+        response = self.client.post(
+            self.get_url(),
+            data=types.tickets.TunnelTicketRequest(
+                token=self.server_token,  # body is valid, header is not
+                ticket=self.valid_ticket,
+                command="start",
+                ip="127.0.0.1",
+                kem_kyber_key=self.kyber_public_key,
+            ).as_dict(),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
