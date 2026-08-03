@@ -50,7 +50,7 @@ class Config(Handler):
         Get or update UDS configuration
     """
 
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     API_OPERATIONS = {
         "get": types.rest.api.Operation(

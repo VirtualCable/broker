@@ -58,6 +58,7 @@ class Protocol(enum.StrEnum):
     X2GO = "x2go"  # Based on NX
     NICEDCV = "nicedcv"
     SSH = "ssh"
+    RGS = "rgs"
     OTHER = "other"
 
     @staticmethod
@@ -70,6 +71,7 @@ class Protocol(enum.StrEnum):
             Protocol.X2GO,
             Protocol.PCOIP,
             Protocol.NICEDCV,
+            Protocol.RGS,
             Protocol.SSH,
             Protocol.OTHER,
         ) + extra

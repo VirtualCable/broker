@@ -116,7 +116,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
     """
 
     # Authentication related
-    ROLE = consts.UserRole.STAFF
+    ROLE = consts.Role.STAFF
 
     # Which model does this manage, must be a django model ofc
     MODEL: "typing.ClassVar[type[models.Model]]"
