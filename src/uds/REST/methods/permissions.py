@@ -57,7 +57,7 @@ class Permissions(Handler):
     Processes permissions requests
     """
 
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     @staticmethod
     def get_class(class_name: str) -> type["Model"]:

@@ -48,6 +48,7 @@ from uds.REST.model.master import ModelHandler
 logger = logging.getLogger(__name__)
 
 SECURITY_NAME: typing.Final[str] = "udsApiAuth"
+BEARER_SECURITY_NAME: typing.Final[str] = "udsApiAuthBearer"
 DEFAULT_OUTPUT: typing.Final[str] = f"{tempfile.gettempdir()}/uds-api"
 
 
@@ -63,7 +64,11 @@ def _generate_api() -> types.rest.api.OpenAPI:
         if handler := node.handler:
             full_path = path or ("/" + node.full_path().lstrip("/"))
             tags = [full_path.split("/")[1].capitalize()] if len(full_path.split("/")) > 1 else []
-            security = SECURITY_NAME if handler.ROLE != consts.UserRole.ANONYMOUS else ""
+            # Prefer the bearer scheme for new integrations.  Legacy
+            # ``X-Auth-Token`` clients keep working because the server
+            # still accepts it; the deprecation note lives in the
+            # security scheme description above.
+            security = BEARER_SECURITY_NAME if handler.ROLE != consts.Role.ANONYMOUS else ""
 
             components = handler.api_components()
             comps = comps.union(components)
@@ -99,11 +104,32 @@ def _generate_api() -> types.rest.api.OpenAPI:
                 operation.parameters.append(UUID_PARAM)
 
     comps.securitySchemes = {
+        # Legacy scheme.  Kept for backward compatibility with clients
+        # still sending ``X-Auth-Token``.  Will be removed in a future
+        # release; new integrations must use ``udsApiAuthBearer``.
         SECURITY_NAME: {
             "type": "apiKey",
             "in": "header",
             "name": consts.auth.AUTH_TOKEN_HEADER,
-        }
+            "description": (
+                "DEPRECATED.  Use ``Authorization: Bearer <token>`` "
+                "(see ``udsApiAuthBearer``).  This scheme still works "
+                "today but will be removed in a future major release."
+            ),
+        },
+        # Modern scheme.  Single header, opaque token.  RFC 6750 §2.1.
+        # The internal prefix scheme (``ses-``, ``sk-``, ...) is an
+        # implementation detail and may evolve; clients should treat
+        # the token as opaque.
+        BEARER_SECURITY_NAME: {
+            "type": "http",
+            "scheme": "bearer",
+            "description": (
+                "Bearer token in the ``Authorization`` header. "
+                "Returned by ``/auth/login`` (see ``/auth/login`` "
+                "response).  Treat the token as opaque."
+            ),
+        },
     }
 
     return types.rest.api.OpenAPI(paths=paths, components=comps)

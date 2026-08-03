@@ -92,7 +92,7 @@ class Tickets(Handler):
                  - servicePool has these groups in it's allowed list
     """
 
-    ROLE = consts.UserRole.ADMIN
+    ROLE = consts.Role.ADMIN
 
     API_OPERATIONS = {
         "put": types.rest.api.Operation(

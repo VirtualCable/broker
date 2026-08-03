@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class UDSVersion(Handler):
-    ROLE = consts.UserRole.ANONYMOUS
+    ROLE = consts.Role.ANONYMOUS
     NAME = "version"
 
     API_OPERATIONS = {

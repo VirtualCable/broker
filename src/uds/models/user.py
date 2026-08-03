@@ -162,21 +162,21 @@ class User(UUIDModel, properties.PropertiesMixin):
         """
         return self.staff_member or self.is_admin
 
-    def get_role(self) -> consts.UserRole:
+    def get_role(self) -> consts.Role:
         """
         Returns the role of the user
         """
         if self.pk is None:
-            return consts.UserRole.ANONYMOUS
+            return consts.Role.ANONYMOUS
 
         if self.is_admin:
-            return consts.UserRole.ADMIN
+            return consts.Role.ADMIN
         if self.staff_member:
-            return consts.UserRole.STAFF
+            return consts.Role.STAFF
 
-        return consts.UserRole.USER
+        return consts.Role.USER
 
-    def can_access(self, role: consts.UserRole) -> bool:
+    def can_access(self, role: consts.Role) -> bool:
         """
         Returns true if the user has more or equal role than the one passed as argument
         """

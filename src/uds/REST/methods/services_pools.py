@@ -498,7 +498,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 default=True,
                 readonly=True,
                 label=gettext("Publish on save"),
-                tooltip=gettext("If active, the service will be published when saved (only for new service pools)"),
+                tooltip=gettext(
+                    "If active, the service will be published when saved (only for new service pools)"
+                ),
             )
             .new_tab(types.ui.Tab.DISPLAY)
             .add_checkbox(
@@ -510,7 +512,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             .add_image_choice()
             .add_image_choice(
                 name="pool_group_id",
-                choices=[ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()],
+                choices=[
+                    ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()
+                ],
                 label=gettext("Pool group"),
                 tooltip=gettext("Pool group for this pool (for pool classify on display)"),
             )
@@ -558,8 +562,10 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 name="max_srvs",
                 default=0,
                 min_value=0,
-                label=gettext("Max services per user"),
-                tooltip=gettext("Maximum number of services that can be assigned to a user from this pool"),
+                label=gettext("Maximum number of services to provide"),
+                tooltip=gettext(
+                    "Maximum number of service (assigned and L1 cache) that can be created for this service"
+                ),
             )
             .add_checkbox(
                 name="show_transports",

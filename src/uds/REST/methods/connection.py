@@ -55,7 +55,7 @@ class Connection(Handler):
     Processes actor requests
     """
 
-    ROLE = consts.UserRole.USER
+    ROLE = consts.Role.USER
 
     @staticmethod
     def result(

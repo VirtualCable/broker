@@ -123,7 +123,7 @@ class TestApiGenBasic(UDSTestCase):
             if handler := node.handler:
                 full_path = "/" + node.full_path().lstrip("/")
                 tags = [full_path.split("/")[1].capitalize()] if len(full_path.split("/")) > 1 else []
-                security = SECURITY_NAME if handler.ROLE != consts.UserRole.ANONYMOUS else ""
+                security = SECURITY_NAME if handler.ROLE != consts.Role.ANONYMOUS else ""
 
                 logger.info("Checking child node: %s, %s", node.name, handler.__module__)
                 components = handler.api_components()
