@@ -480,6 +480,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             return model_utils.get_position_in_queryset(obj, qs)
         return -1
 
+    @abc.abstractmethod
     def get_item_position(self, parent: models.Model, item_uuid: str) -> int:
         """
         Tries to get the position of an item in the default ordering of the detail items
@@ -492,7 +493,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Note:
             Override this method if the detail can provide item position
         """
-        return -1
+        raise exceptions.rest.InvalidMethodError("Object does not support position")
 
     @classmethod
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[module.Module]]:
