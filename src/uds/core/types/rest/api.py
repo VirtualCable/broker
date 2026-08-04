@@ -171,13 +171,17 @@ class PathItem:
     options: Operation | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
+        # NOTE: ``query`` (RFC 10008) is intentionally NOT serialised into the
+        # OpenAPI spec because OpenAPI 3.x does not recognise it as a valid
+        # PathItem operation key.  See api_helpers.py for the rationale.
+        # The dispatcher still accepts QUERY at runtime via Handler.query().
         return _as_dict_without_none(
             {
                 "get": self.get.as_dict() if self.get else None,
                 "post": self.post.as_dict() if self.post else None,
                 "put": self.put.as_dict() if self.put else None,
                 "delete": self.delete.as_dict() if self.delete else None,
-                "query": self.query.as_dict() if self.query else None,
+                # "query": self.query.as_dict() if self.query else None,
                 "options": self.options.as_dict() if self.options else None,
             }
         )

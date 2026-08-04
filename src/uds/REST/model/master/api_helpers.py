@@ -94,19 +94,30 @@ def api_paths(
         security=security,
     )
 
-    # QUERY operation (RFC 10008 — safe GET with OData in body)
-    query_op = types.rest.api.Operation(
-        summary=f"Query {name} items with OData in body",
-        description=(
-            f"Query {name} items using OData parameters "
-            f"($filter, $orderby, $top, $skip, $select) in the request body. "
-            f"Equivalent to GET but allows complex queries beyond URL length limits."
-        ),
-        requestBody=api_utils.gen_odata_request_body(),
-        responses=api_utils.gen_response(base_type_name, single=False),
-        tags=get_tags,
-        security=security,
-    )
+    # QUERY operation (RFC 10008 — safe GET with OData in body).
+    # NOT emitted in the OpenAPI spec because OpenAPI 3.x does not recognise
+    # ``query`` as a valid operation key (https://spec.openapis.org/oas/v3.1.0#path-item-object).
+    # RFC 10008 is now a Proposed Standard (June 2026, approved by IESG) and
+    # IANA has registered the QUERY method, but no OpenAPI 3.x generator as
+    # of writing accepts it (e.g. openapi-generator-cli 7.24.0 reports 38+
+    # ``attribute paths.X.query is unexpected`` errors).  Re-enable once
+    # OpenAPI 3.x adds ``query`` as a first-class PathItem key.
+    #
+    # Until then, the dispatcher still accepts QUERY at runtime
+    # (``Handler.query`` reads OData from the body the same way ``get``
+    # reads it from the query string); only the spec is incomplete.
+    # query_op = types.rest.api.Operation(
+    #     summary=f"Query {name} items with OData in body",
+    #     description=(
+    #         f"Query {name} items using OData parameters "
+    #         f"($filter, $orderby, $top, $skip, $select) in the request body. "
+    #         f"Equivalent to GET but allows complex queries beyond URL length limits."
+    #     ),
+    #     requestBody=api_utils.gen_odata_request_body(),
+    #     responses=api_utils.gen_response(base_type_name, single=False),
+    #     tags=get_tags,
+    #     security=security,
+    # )
 
     api_desc = {
         path: types.rest.api.PathItem(
@@ -120,7 +131,7 @@ def api_paths(
             ),
             post=post_create_op,
             put=put_create_op,
-            query=query_op,
+            # query=query_op,  # see comment above; disabled until OpenAPI 3.x supports it
         ),
         f"{path}/{{uuid}}": types.rest.api.PathItem(
             get=types.rest.api.Operation(

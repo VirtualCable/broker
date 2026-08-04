@@ -99,6 +99,11 @@ def _generate_api() -> types.rest.api.OpenAPI:
     for path, path_item in paths.items():
         if "{uuid}" not in path:
             continue
+        # NOTE: ``path_item.query`` (RFC 10008) is iterated historically but
+        # the field is no longer serialised (see PathItem.as_dict and
+        # api_helpers.py).  We keep iterating it for symmetry with the other
+        # methods, in case a future OpenAPI 3.x version or extension re-enables
+        # it.  When ``query`` is None, the body is a no-op.
         for operation in (path_item.get, path_item.post, path_item.put, path_item.delete, path_item.query):
             if operation and not any(p.name == "uuid" for p in operation.parameters):
                 operation.parameters.append(UUID_PARAM)
