@@ -52,6 +52,13 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def cache_key_helper(self: "OpenshiftProvider") -> str:
+    """
+    Helper function to generate cache keys for the OpenshiftProvider class
+    """
+    return self.api.cache_key()
+
+
 class OpenshiftProvider(ServiceProvider):
     offers = [OpenshiftService, OpenshiftServiceFixed]
     type_name = _("Openshift Provider")
@@ -131,7 +138,7 @@ class OpenshiftProvider(ServiceProvider):
     def test_connection(self) -> bool:
         return self.api.test()
 
-    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=lambda x: x.api.cache_key())
+    @cached("reachable", consts.cache.SHORT_CACHE_TIMEOUT, key_helper=cache_key_helper)
     def is_available(self) -> bool:
         return self.api.test()
 
