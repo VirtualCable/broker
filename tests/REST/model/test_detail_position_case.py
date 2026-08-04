@@ -59,7 +59,9 @@ class DetailPositionRealCaseTest(rest.test.RESTActorTestCase):
         self.assertNotIn(target, page_shown, "expected the item NOT to be in the page the client jumps to")
 
     def test_position_ignores_the_filter_the_table_is_using(self) -> None:
-        filtered = self._listing("$filter=contains(name, 'group1')")
+        # Group names carry a run-wide counter, so the needle is taken from a real one
+        needle = self.simple_groups[-1].name
+        filtered = self._listing(f"$filter=contains(name, '{needle}')")
         self.assertGreater(len(filtered), 0)
         target = filtered[-1]
 
