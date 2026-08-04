@@ -38,6 +38,7 @@ from django.utils.translation import gettext
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from uds import models
 from uds.core import types
@@ -61,6 +62,7 @@ logger = logging.getLogger(__name__)
 
 
 @weblogin_required()
+@require_POST
 def transport_own_link(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
     def _response(url: str = "", percent: int = 100, error: typing.Any = "") -> dict[str, typing.Any]:
         return {"running": percent, "url": url, "error": str(error)}
@@ -105,6 +107,7 @@ def transport_own_link(request: "ExtendedHttpRequestWithUser", service_id: str, 
 
 @weblogin_required()
 @never_cache
+@require_POST
 def user_service_enabler(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
     return HttpResponse(
         json.dumps(services.enable_service(request, service_id=service_id, transport_id=transport_id)),
@@ -166,6 +169,7 @@ def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str,
 
 @weblogin_required()
 @never_cache
+@require_POST
 def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_string: str) -> HttpResponse:
     # favorite/unfavorite do not require an existing UserService,
     # so handle them before the userservice lookup.
