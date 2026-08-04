@@ -31,6 +31,7 @@ Authot: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import contextlib
+import collections.abc
 import datetime
 import itertools
 import typing
@@ -51,11 +52,12 @@ from . import fixtures
 
 
 class TestDict(dict[str, deferred_types.DeletionInfo]):
-    def unlocked_items(self) -> typing.ItemsView[str, deferred_types.DeletionInfo]:
+    def unlocked_items(self) -> collections.abc.ItemsView[str, deferred_types.DeletionInfo]:
         return self.items()
 
 
 class DynamicDeferredDeleteTest(UDSTransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
 
@@ -81,7 +83,7 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         is_running: typing.Union[None, typing.Callable[..., bool]] = None,
         must_stop_before_deletion: bool = False,
         should_try_soft_shutdown: bool = False,
-    ) -> typing.Iterator[tuple[mock.MagicMock, dict[str, TestDict]]]:
+    ) -> collections.abc.Generator[tuple[mock.MagicMock, dict[str, TestDict]], None, None]:
         """
         Patch the storage to use a dict instead of the real storage
 
@@ -232,20 +234,20 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
         self.assertEqual(self.count_entries_on_storage(deferred_types.DeferredStorageGroup.TO_DELETE), 0)
 
     def test_delete_delayed_full(self) -> None:
-        service = fixtures.create_dynamic_service_for_deferred_deletion()
+        service_fix = fixtures.create_dynamic_service_for_deferred_deletion()
 
         provider = models.Provider.objects.create(
             name="provider1",
             comments="c provider1",
-            data_type=service.provider().type_type,
-            data=service.provider().serialize(),
+            data_type=service_fix.provider().type_type,
+            data=service_fix.provider().serialize(),
         )
 
         service = models.Service.objects.create(
             name="service_1",
             provider=provider,
-            data_type=service.type_type,
-            data=service.serialize(),
+            data_type=service_fix.type_type,
+            data=service_fix.serialize(),
         )
 
         instance = typing.cast(fixtures.DynamicTestingServiceForDeferredDeletion, service.get_instance())

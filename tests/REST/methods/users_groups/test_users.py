@@ -73,6 +73,19 @@ class UsersTest(rest.test.RESTActorTestCase):
             # Locate the user in the auth
             self.assertTrue(rest.assertions.assert_user_is(self.auth.users.get(name=user["name"]), user))
 
+    def test_users_overview_groups(self) -> None:
+        url = f'authenticators/{self.auth.uuid}/users'
+
+        response = self.client.rest_get(f'{url}/overview')
+        self.assertEqual(response.status_code, 200)
+        for user in response.json():
+            db_user = self.auth.users.get(name=user['name'])
+            self.assertEqual(
+                set(user['groups']),
+                {g.uuid for g in db_user.get_groups()},
+                f'Groups of user {user["name"]} do not match',
+            )
+
     def test_users_tableinfo(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users/tableinfo"
 
