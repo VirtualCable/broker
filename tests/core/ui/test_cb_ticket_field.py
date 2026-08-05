@@ -137,6 +137,60 @@ class CbTicketSetTest(UDSTestCase):
             {"prov_uuid": "provider-uuid-xyz", "region": "us-east-1"},
         )
 
+    def test_set_cb_ticket_overrides_existing_key(self) -> None:
+        """A second call with the same key replaces the previous value
+        rather than adding a duplicate.  The cb_ticket dict is still a
+        dict at this stage — the conversion to uuid happens later in
+        ``gui_description()``.
+        """
+        field = gui.ChoiceField(
+            label="Region",
+            choices=[gui.choice_item("us-east-1", "US East 1")],
+            fills=_typed_fills(
+                callback_name="sampleCallback",
+                function=_dummy_callback,
+                parameters=["prov_uuid"],
+            ),
+        )
+        field.set_cb_ticket("prov_uuid", "v1")
+        field.set_cb_ticket("prov_uuid", "v2")
+
+        fills = field._field_info.fills
+        assert fills is not None
+        self.assertEqual(fills.get("cb_ticket"), {"prov_uuid": "v2"})
+
+    def test_set_cb_ticket_after_coherced_raises(self) -> None:
+        """Once ``gui_description()`` has been called and replaced the
+        cb_ticket dict by a uuid string, calling ``set_cb_ticket`` again
+        must raise — the field is now immutable and any further mutation
+        would silently diverge from the ticket that was already created.
+        """
+        field = gui.ChoiceField(
+            label="Region",
+            choices=[gui.choice_item("us-east-1", "US East 1")],
+            fills=_typed_fills(
+                callback_name="sampleCallback",
+                function=_dummy_callback,
+                parameters=["prov_uuid"],
+            ),
+        )
+        field.set_cb_ticket("prov_uuid", "provider-uuid-xyz")
+        with transaction.atomic():
+            # Coerce the dict to a uuid (the ticket is rolled back below).
+            field.gui_description()
+            transaction.set_rollback(True)
+
+        # After gui_description() the fills.cb_ticket is a uuid string,
+        # so a subsequent set_cb_ticket must raise.
+        with self.assertRaises(ValueError):
+            field.set_cb_ticket("prov_uuid", "late-overwrite")
+
+        # The error message hints at the real reason — that the field
+        # is already locked in.
+        with self.assertRaises(ValueError) as ctx:
+            field.set_cb_ticket("prov_uuid", "late-overwrite")
+        self.assertIn("already coherced", str(ctx.exception).lower())
+
 
 class CbTicketGuiDescriptionTest(UDSTestCase):
     """``gui_description()`` swaps the dict by the ticket uuid."""

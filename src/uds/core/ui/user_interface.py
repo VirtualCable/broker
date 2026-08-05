@@ -1226,13 +1226,20 @@ class gui:
             if not isinstance(fills, dict):
                 raise ValueError("Could not set a value without fills")
 
-            dct = typing.cast(dict[str, typing.Any], fills.get("cb_ticket", {}))
+            dct = fills.get("cb_ticket")
+
+            if isinstance(dct, str):
+                raise ValueError("cb_ticket already coherced to a string, cannot set a value")
+
+            if not isinstance(dct, dict):
+                dct = {}
+
             dct[fld_name] = value
             fills["cb_ticket"] = dct
 
         @typing.override
         def gui_description(self) -> types.ui.FieldInfo:
-            from uds.models import TicketStore
+            from uds.models import TicketStore  # Needed here to avoid circular import
 
             the_gui = super().gui_description()
             if fills := the_gui.fills:
