@@ -133,7 +133,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
         )
 
     @typing.override
-    def save_item(self, parent: "models.Model", item: typing.Optional[str]) -> typing.Any:
+    def save_item(self, parent: "models.Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, Calendar)
 
         # Extract item db fields
@@ -166,7 +166,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
                 calendar_rule = parent.rules.create(**fields)
             else:
                 calendar_rule = parent.rules.get(uuid=process_uuid(item))
-                calendar_rule.__dict__.update(fields)
+                typing.cast(typing.Any, calendar_rule.__dict__).update(fields)  # Disable type errors
                 calendar_rule.save()
                 return {"id": calendar_rule.uuid}
         except CalendarRule.DoesNotExist:
