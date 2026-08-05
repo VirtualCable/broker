@@ -104,13 +104,8 @@ class TestOpenshiftService(UDSTransactionTestCase):
     def test_service_is_available(self) -> None:
         """
         Check service availability and cache handling.
-
-        The provider identity is stable once loaded, so we patch
-        ``connection_key`` on the instance to feed the @cached decorator's
-        key_helper without reintroducing the method on the provider class.
         """
         service, provider, provider_ctx = self._create_service_with_provider()
-        provider.connection_key = lambda: "test-cache-key"  # type: ignore[attr-defined, unused-ignore]
         api = typing.cast(mock.MagicMock, provider.api)
         self.assertTrue(service.is_available())
         api.test.assert_called_with()

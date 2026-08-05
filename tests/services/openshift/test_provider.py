@@ -107,16 +107,8 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
     def test_provider_is_available(self) -> None:
         """
         Test the provider is_available method and cache behavior.
-
-        The OpenshiftProvider identity is stable once the provider is loaded
-        (``connection_key`` is intentionally absent), so the @cached decorator
-        keys purely on the method name. We patch ``connection_key`` on the
-        instance to provide a stable identity without reintroducing a method.
         """
         with fixtures.patched_provider() as provider:
-            # Provide the identity the @cached key_helper expects, without
-            # adding the method back to the provider itself.
-            provider.connection_key = lambda: "test-cache-key"  # type: ignore[attr-defined, unused-ignore]
             api = typing.cast(mock.MagicMock, provider.api)
             # First, true result
             self.assertEqual(provider.is_available(), True)
@@ -128,6 +120,21 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
             api.test.assert_not_called()
             # clear cache of method
             typing.cast(typing.Any, provider.is_available).cache_clear()  #  cache_clear() is added by decorator
+            self.assertEqual(provider.is_available(), False)
+            api.test.assert_called_once_with()
+
+    def test_provider_is_available_keyed_on_connection_identity(self) -> None:
+        """
+        The cached entry belongs to the connection identity, not to the method name: a provider
+        pointing to another cluster must not read the previous one's answer.
+        """
+        with fixtures.patched_provider() as provider:
+            api = typing.cast(mock.MagicMock, provider.api)
+            self.assertEqual(provider.is_available(), True)
+            api.test.reset_mock()
+
+            api.cache_key.return_value = 'https://other-cluster.example.com|https://other-api:6443|kubeadmin|default'
+            api.test.return_value = False
             self.assertEqual(provider.is_available(), False)
             api.test.assert_called_once_with()
 
@@ -168,26 +175,21 @@ class TestOpenshiftProvider(UDSTransactionTestCase):
         provider.initialize({})
         self.assertIsNone(provider._cached_api)
 
-    def test_api_recreates_client_when_config_changed(self) -> None:
+    def test_api_keeps_cached_client_when_config_changed(self) -> None:
         """
-        The api property does NOT re-check the cached client against the
-        current configuration: ``_cached_api`` is reused verbatim until
-        :py:meth:`initialize` clears it. The provider's identity is
-        considered stable for the lifetime of the loaded provider.
+        api property does not inspect the connection params: only initialize() drops the cached
+        client, which is what runs when the configuration changes.
         """
         provider = fixtures.create_provider()
         old_client = fixtures.create_client_mock()
         old_client.cache_key.return_value = (
-            "https://old-cluster.example.com|https://old-api.example.com:6443|kubeadmin|default|False"
+            "https://old-cluster.example.com|https://old-api.example.com:6443|kubeadmin|default"
         )
         provider._cached_api = old_client
 
         with mock.patch("uds.services.OpenShift.provider.client.OpenshiftClient") as MockClient:
-            result = provider.api
-            # The cached client is reused, no new OpenshiftClient is built,
-            # even though the cache_key differs from the current config.
+            self.assertIs(provider.api, old_client)
             MockClient.assert_not_called()
-            self.assertIs(result, old_client)
 
     def test_api_reuses_client_when_config_unchanged(self) -> None:
         """

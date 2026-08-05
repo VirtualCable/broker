@@ -102,12 +102,11 @@ class OpenshiftClient:
     def get_token(self) -> str | None:
         try:
             url = f"{self._cluster_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
-            r = requests.get(
+            r = security.secure_requests_session(verify=self._verify_ssl).get(
                 url,
                 auth=(self._username, self._password),
                 timeout=15,
                 allow_redirects=False,
-                verify=self._verify_ssl,
             )
             if r.status_code not in (301, 302, 303, 307, 308):
                 raise exceptions.OpenshiftAuthError(

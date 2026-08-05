@@ -142,8 +142,7 @@ PROVIDER_VALUES_DICT: gui.ValuesDictType = {
 # Connection identity matching PROVIDER_VALUES_DICT, as OpenshiftClient.cache_key() would build it
 CLIENT_CACHE_KEY = (
     f'{PROVIDER_VALUES_DICT["cluster_url"]}|{PROVIDER_VALUES_DICT["api_url"]}|'
-    f'{PROVIDER_VALUES_DICT["username"]}|{PROVIDER_VALUES_DICT["namespace"]}|'
-    f'{PROVIDER_VALUES_DICT["verify_ssl"]}'
+    f'{PROVIDER_VALUES_DICT["username"]}|{PROVIDER_VALUES_DICT["namespace"]}'
 )
 
 # Service values
