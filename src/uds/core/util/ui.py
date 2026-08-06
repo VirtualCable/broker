@@ -384,8 +384,25 @@ class GuiBuilder:
         )
         return self
 
+    def translated_tab(self, field: types.ui.GuiElement) -> types.ui.GuiElement:
+        """
+        Returns a copy of the field with its tab name translated.
+
+        Tab names (types.ui.Tab) are translation markers, so they must be translated
+        before reaching the client, exactly as module fields do on gui_description().
+        A copy is needed because stock fields share their FieldInfo with the static
+        definitions.
+        """
+        if not field.gui.tab:
+            return field
+
+        translated = copy.copy(field)
+        translated.gui = copy.copy(field.gui)
+        translated.gui.tab = gettext(field.gui.tab)
+        return translated
+
     def build(self) -> list[types.ui.GuiElement]:
-        return self.fields
+        return [self.translated_tab(field) for field in self.fields]
 
 
 class TableBuilder:
