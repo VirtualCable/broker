@@ -123,7 +123,6 @@ class TunnelTicket:
 
 @dataclasses.dataclass(frozen=True)
 class TunnelTicketRequest:
-    token: str  # Token provided by the server on registration
     ticket: str  # Ticket string
     command: str  # start/stop right now
     ip: str  # Source IP address (who originates the connection request)
@@ -134,7 +133,6 @@ class TunnelTicketRequest:
     def as_dict(self) -> dict[str, str | int]:
         """Returns a dict representation of the ticket request"""
         return {
-            "token": self.token,
             "ticket": self.ticket,
             "command": self.command,
             "ip": self.ip,
@@ -149,7 +147,6 @@ class TunnelTicketRequest:
         Truncates fields to their maximum expected length
         """
         return TunnelTicketRequest(
-            token=data["token"][:48],
             ticket=data["ticket"][:48],
             command=data["command"][:16],
             kem_kyber_key=(data.get("kem_kyber_key") or "")[:16384],  # Kem keys can be large
