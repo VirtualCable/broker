@@ -199,6 +199,11 @@ class ServersServers(DetailHandler[ServerItem]):
         )
 
     @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
+        parent = typing.cast("models.ServerGroup", parent)  # We will receive for sure
+        return self.calc_item_position(item_uuid, parent.servers.all())
+
+    @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult[ServerItem]:
         parent = typing.cast("models.ServerGroup", parent)  # We will receive for sure
         return [self.as_server_item(i) for i in self.filter_odata_queryset(parent.servers.all())]

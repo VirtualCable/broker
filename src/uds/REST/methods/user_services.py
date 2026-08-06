@@ -435,6 +435,11 @@ class Groups(DetailHandler[GroupItem]):
     """
 
     @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
+        parent = typing.cast("models.ServicePool | models.MetaPool", parent)
+        return self.calc_item_position(item_uuid, parent.assignedGroups.all())
+
+    @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult["GroupItem"]:
         parent = typing.cast("models.ServicePool | models.MetaPool", parent)
 
@@ -512,6 +517,11 @@ class Transports(DetailHandler[TransportItem]):
     """
     Processes the transports detail requests of a Service Pool
     """
+
+    @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
+        parent = ensure.is_instance(parent, models.ServicePool)
+        return self.calc_item_position(item_uuid, parent.transports.all())
 
     @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult["TransportItem"]:
@@ -661,6 +671,11 @@ class Publications(DetailHandler[PublicationItem]):
         return self.success()
 
     @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
+        parent = ensure.is_instance(parent, models.ServicePool)
+        return self.calc_item_position(item_uuid, parent.publications.all())
+
+    @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult["PublicationItem"]:
         parent = ensure.is_instance(parent, models.ServicePool)
         return [
@@ -705,6 +720,11 @@ class Changelog(DetailHandler[ChangelogItem]):
     """
     Processes the transports detail requests of a Service Pool
     """
+
+    @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
+        # Changelog entries are identified by revision, not by uuid, so position is not applicable
+        raise exceptions.rest.InvalidMethodError("Changelog does not support position")
 
     @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult["ChangelogItem"]:

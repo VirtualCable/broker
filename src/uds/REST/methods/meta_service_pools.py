@@ -184,6 +184,17 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
         element.pool_name = item.deployed_service.name
         return element
 
+    @typing.override
+    def get_item_position(self, parent: "Model", item_uuid: str) -> int:
+        parent = ensure.is_instance(parent, models.MetaPool)
+        return self.calc_item_position(
+            item_uuid,
+            models.UserService.objects.filter(
+                cache_level=0,
+                deployed_service__in=[i.pool for i in parent.members.all()],
+            ),
+        )
+
     @staticmethod
     def _get_assigned_userservice(metapool: models.MetaPool, userservice_id: str) -> models.UserService:
         """
