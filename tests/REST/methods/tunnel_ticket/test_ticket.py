@@ -136,14 +136,13 @@ class TicketTest(rest.test.RESTTestCase):
     def test_request_authorization_header_valid_start(self) -> None:
         """
         Modern auth path: ``Authorization: Bearer sk-<token>`` is honoured.
-        The body still carries a ``token`` field for log/decoration purposes
-        but the server MUST take the value from the Authorization header.
+        The body no longer carries a ``token`` field at all — the server
+        authenticates exclusively from the Authorization header.
         """
         self._bearer_sk(self.server_token)
         response = self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
-                token="invalid_body_token_ignored",
                 ticket=self.valid_ticket,
                 command="start",
                 ip="127.0.0.1",
@@ -172,7 +171,6 @@ class TicketTest(rest.test.RESTTestCase):
         response = self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
-                token="invalid_body_token_ignored",
                 ticket=self.valid_ticket,
                 command="stop",
                 ip="127.0.0.1",
@@ -192,7 +190,6 @@ class TicketTest(rest.test.RESTTestCase):
         response = self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
-                token=self.server_token,  # body is valid, header is not
                 ticket=self.valid_ticket,
                 command="start",
                 ip="127.0.0.1",
