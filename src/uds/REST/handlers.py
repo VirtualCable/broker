@@ -37,6 +37,7 @@ import logging
 import codecs
 import collections.abc
 
+from django.core.exceptions import FieldError
 from django.contrib.sessions.backends.base import SessionBase
 from django.contrib.sessions.backends.db import SessionStore
 from django.db.models import QuerySet
@@ -573,22 +574,24 @@ class Handler(abc.ABC):
         Note: We return a list, because after applying slicing, querysets may be evaluated
               by using _result_cache, so we force evaluation here to avoid issues later.
         """
-        # OData filter
-        if self.odata.filter:
-            try:
+        # OData filter + sort. ``FieldError`` (e.g. an unknown field in
+        # ``$filter``/``$orderby``) is a client error and must not surface
+        # as an HTTP 500 leaking model schema.
+        try:
+            if self.odata.filter:
                 qs = query_db_filter.exec_query(self.odata.filter, qs)
-            except ValueError as e:
-                raise exceptions.rest.RequestError(f"Invalid odata filter: {e}") from e
 
-        # Store total count before slicing
-        self.add_header("X-Total-Count", str(qs.count()))
+            # Store total count before slicing
+            self.add_header("X-Total-Count", str(qs.count()))
 
-        # order_by must be unique and all fields are summited by once
-        # As after slicing we can have a list, we may use list result from sorting
-        if self.odata.orderby:
-            result = self.apply_sort(qs)
-        else:
-            result = qs
+            # order_by must be unique and all fields are summited by once
+            # As after slicing we can have a list, we may use list result from sorting
+            if self.odata.orderby:
+                result = self.apply_sort(qs)
+            else:
+                result = qs
+        except (ValueError, FieldError) as e:
+            raise exceptions.rest.RequestError(f"Invalid odata: {e}") from e
 
         # If odata start/limit are set, apply them
         if self.odata.start is not None:
