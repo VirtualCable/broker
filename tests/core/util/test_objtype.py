@@ -105,7 +105,7 @@ class ObjectTypeTest(UDSTestCase):
     def test_from_model_each_registered_member(self) -> None:
         """``from_model(member.model)`` must round-trip for every ObjectType."""
         for member in objtype.ObjectType:
-            with self.subTest(member=member):
+            with self.subTest(member=member.name):
                 self.assertIs(objtype.ObjectType.from_model(_bare_instance(member.model)), member)
 
     def test_from_model_unregistered_raises(self) -> None:

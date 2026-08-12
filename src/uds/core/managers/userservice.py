@@ -66,6 +66,7 @@ from uds.models import ServicePoolPublication
 from uds.models import Transport
 from uds.models import User
 from uds.models import UserService
+from uds.models.user_service import _create_default_token
 
 from .userservice_helpers import comms
 from .userservice_helpers.opchecker import UserServiceOpChecker
@@ -332,6 +333,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service_copy = UserService.objects.get(id=userservice.id)
         user_service_copy.pk = None
         user_service_copy.uuid = generate_uuid()
+        user_service_copy.token = _create_default_token()
         user_service_copy.in_use = False
         user_service_copy.state = State.REMOVED
         user_service_copy.os_state = State.USABLE
