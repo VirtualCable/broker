@@ -434,25 +434,31 @@ class OAuth2Authenticator(auths.Authenticator):
     def process_token_open_id(
         self, token_id: str, nonce: str, gm: "auths.GroupsManager"
     ) -> types.auth.AuthenticationResult:
-        # Get token headers, to extract algorithm
+        # Get token headers to extract the algorithm. This is a generic
+        # connector: the external provider may sign with any algorithm, so the
+        # verification algorithm is taken from the (still unverified) header.
+        # Only symmetric (HMAC) algorithms are rejected, as they would let a
+        # forged token use the public key as the HMAC secret.
         info = jwt.get_unverified_header(token_id)
         logger.debug("Token headers: %s", info)
+        alg = info.get("alg", "RS256")
+        if alg == "none" or alg.startswith("HS"):
+            return types.auth.FAILED_AUTH
 
         # We may have multiple public keys, try them all
         # (We should only have one, but just in case)
         for key in self.get_public_keys():
             logger.debug("Key = %s", key)
             try:
-                payload = jwt.decode(
-                    token_id, key=key, audience=self.client_id.value, algorithms=[info.get("alg", "RSA256")]
-                )
+                payload = jwt.decode(token_id, key=key, audience=self.client_id.value, algorithms=[alg])
                 # If reaches here, token is valid, raises jwt.InvalidTokenError otherwise
                 logger.debug("Payload: %s", payload)
+                # The nonce must match the one issued for this authentication
+                # flow. Reject mismatches: accepting them would allow replaying
+                # a captured id_token (login CSRF / session injection).
                 if payload.get("nonce") != nonce:
                     logger.error("Nonce does not match: %s != %s", payload.get("nonce"), nonce)
-                else:
-                    logger.debug("Payload: %s", payload)
-                    # All is fine, get user & look for groups
+                    return types.auth.FAILED_AUTH
 
                 # Process attributes from payload
                 return self.process_userinfo(payload, gm)
