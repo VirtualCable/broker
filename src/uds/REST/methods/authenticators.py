@@ -60,6 +60,7 @@ from uds.models import Authenticator
 from uds.models import Network
 from uds.models import Tag
 from uds.REST.model import ModelHandler
+from uds.REST.utils import sanitize_params
 
 from .users_groups import Groups
 from .users_groups import UserItem
@@ -377,7 +378,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     @typing.override
     def pre_save(self, fields: dict[str, typing.Any]) -> None:  # pylint: disable=too-many-branches,too-many-statements
-        logger.debug(self._params)
+        logger.debug(sanitize_params(self._params))
         if fields.get("mfa_id"):
             try:
                 mfa = MFA.objects.get(uuid=process_uuid(fields["mfa_id"]))

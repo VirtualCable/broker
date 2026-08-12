@@ -72,6 +72,7 @@ from uds.models import ServicePool
 from uds.models import ServicePoolGroup
 from uds.models import User
 from uds.REST.model import ModelHandler
+from uds.REST.utils import sanitize_params
 
 from .op_calendars import AccessCalendars
 from .op_calendars import ActionsCalendars
@@ -824,7 +825,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         if "user_id" not in self._params or "assignable_id" not in self._params:
             raise exceptions.rest.RequestError("Invalid parameters")
 
-        logger.debug("Creating from assignable: %s", self._params)
+        logger.debug("Creating from assignable: %s", sanitize_params(self._params))
         UserServiceManager.manager().create_from_assignable(
             item,
             User.objects.get(uuid__iexact=process_uuid(self._params["user_id"])),

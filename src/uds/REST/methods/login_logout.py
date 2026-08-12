@@ -39,7 +39,7 @@ import typing
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
-from uds.core.auths.auth import authenticate
+from uds.core.auths.auth import authenticate, is_trusted_source
 from uds.core.managers.crypto import CryptoManager
 from uds.core.util.cache import Cache
 from uds.core.util.config import GlobalConfig
@@ -49,6 +49,14 @@ from uds.REST import Handler
 from uds.REST.utils import rest_result
 
 logger = logging.getLogger(__name__)
+
+
+def _sanitize_login_params(params: collections.abc.Mapping[str, typing.Any] | None) -> dict[str, typing.Any]:
+    """Return a copy of the login parameters without credential fields, safe for logging."""
+    if not params:
+        return {}
+    return {k: v for k, v in params.items() if k not in ("password", "passwd", "token", "secret")}
+
 
 # Enclosed methods under /auth path
 
@@ -190,8 +198,15 @@ class Login(Handler):
                 or auth_id == "00000000-0000-0000-0000-000000000000"
                 or (not auth_id and not auth_name and not auth_label)
             ):
-                if GlobalConfig.SUPER_USER_LOGIN.get(True) == username and CryptoManager.manager().check_hash(
-                    password, GlobalConfig.SUPER_USER_PASS.get(True)
+                # Superuser login must honor the same controls as the web path
+                # (see uds.core.auths.auth.authenticate): the root account is
+                # only reachable when web access is enabled and the request
+                # comes from a trusted source.
+                if (
+                    GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.as_bool(True)
+                    and is_trusted_source(self._request.ip)
+                    and GlobalConfig.SUPER_USER_LOGIN.get(True) == username
+                    and CryptoManager.manager().check_hash(password, GlobalConfig.SUPER_USER_PASS.get(True))
                 ):
                     self.gen_auth_token(-1, username, password, locale, platform, scrambler)
                     # Return the token prefixed with ``ses-`` so a future
@@ -204,6 +219,11 @@ class Login(Handler):
                         result="ok",
                         token=f"{consts.auth.SESSION_KEY_PREFIX}{self.get_auth_token()}",
                     )
+                # Throttle online guessing of superuser credentials, same as
+                # for regular users (sleep + fail counter).
+                time.sleep(3)  # Wait 3 seconds if credentials fails for "protection"
+                # And store in cache for blocking for a while if fails
+                fail_cache.put(self._request.ip, fails + 1, GlobalConfig.LOGIN_BLOCK.as_int())
                 return Login.result(error="Invalid credentials")
 
             # Will raise an exception if no auth found
@@ -241,7 +261,9 @@ class Login(Handler):
             )
 
         except Exception as e:
-            logger.error("Invalid credentials: %s: %s", self._params, e)
+            # Log a sanitized copy of the parameters: the original dict contains
+            # the plaintext password and must never be written to the logs.
+            logger.error("Invalid credentials: %s: %s", _sanitize_login_params(self._params), e)
 
         return Login.result(error="Invalid credentials")
 

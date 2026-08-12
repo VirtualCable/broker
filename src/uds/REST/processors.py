@@ -49,6 +49,14 @@ from .utils import to_incremental_json
 
 logger = logging.getLogger(__name__)
 
+
+def _sanitize_params(params: collections.abc.Mapping[str, typing.Any] | None) -> dict[str, typing.Any]:
+    """Return a copy of the parameters without credential fields, safe for logging."""
+    if not params:
+        return {}
+    return {k: v for k, v in params.items() if k not in ("password", "passwd", "token", "secret", "scrambler")}
+
+
 if typing.TYPE_CHECKING:
     from django.http import HttpRequest
 
@@ -187,7 +195,7 @@ class MarshallerProcessor(ContentProcessor):
                 raise ParametersException("Request size too big")
 
             res = self.marshaller.loads(self._request.body.decode("utf8"))
-            logger.debug("Unmarshalled content: %s", res)
+            logger.debug("Unmarshalled content: %s", _sanitize_params(res))
 
             if not isinstance(res, dict):
                 raise ParametersException("Invalid content")

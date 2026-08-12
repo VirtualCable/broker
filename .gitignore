@@ -92,3 +92,4 @@ test-vars.ini
 /doc/plan
 .ruff_cache
 AGENTS.md
+/strix*

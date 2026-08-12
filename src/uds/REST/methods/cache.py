@@ -41,6 +41,7 @@ from uds.core import exceptions
 from uds.core import types
 from uds.core.util.cache import Cache as UCache
 from uds.REST import Handler
+from uds.REST.utils import sanitize_params
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class Cache(Handler):
         """
         Processes get method. Basically, clears & purges the cache, no matter what params
         """
-        logger.debug("Params: %s", self._params)
+        logger.debug("Params: %s", sanitize_params(self._params))
         if not self._args:
             return {}
 

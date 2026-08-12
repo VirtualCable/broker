@@ -92,7 +92,7 @@ def auth_callback(request: HttpRequest, authenticator_name: str) -> HttpResponse
 
         params = types.auth.AuthCallbackParams.from_request(request)
 
-        logger.debug("Auth callback for %s with params %s", authenticator, params)
+        logger.debug("Auth callback for %s", authenticator)
 
         ticket = TicketStore.create({"params": params, "auth": authenticator.uuid})
         return HttpResponseRedirect(reverse("page.auth.callback_stage2", args=[ticket]))

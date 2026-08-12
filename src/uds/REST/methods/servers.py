@@ -44,7 +44,7 @@ from uds.core.util import decorators
 from uds.core.util import model
 from uds.core.util import validators
 from uds.REST import Handler
-from uds.REST.utils import rest_result
+from uds.REST.utils import rest_result, sanitize_params
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +206,7 @@ class ServerEvent(Handler):
         try:
             return models.UserService.objects.get(uuid=self._params["uuid"])
         except models.UserService.DoesNotExist:
-            logger.error("User service not found (params: %s)", self._params)
+            logger.error("User service not found (params: %s)", sanitize_params(self._params))
             raise
 
     @decorators.blocker()
@@ -217,7 +217,7 @@ class ServerEvent(Handler):
         try:
             server = models.Server.objects.get(token=self._params["token"])
         except models.Server.DoesNotExist:
-            logger.error("Token error from %s (%s is an invalid token)", self._request.ip, self._params["token"])
+            logger.error("Token error from %s (%s is an invalid token)", self._request.ip, sanitize_params(self._params)["token"])
             raise rest_exceptions.BlockAccess() from None  # Block access if token is not valid
         except KeyError:
             raise rest_exceptions.RequestError("Token not present") from None  # Invalid request if token is not present
@@ -233,5 +233,5 @@ class ServerEvent(Handler):
         try:
             return ServerManager.manager().process_event(server, self._params)
         except Exception as e:
-            logger.error("Error processing event %s: %s", self._params, e)
+            logger.error("Error processing event %s: %s", sanitize_params(self._params), e)
             return rest_result("error", error="Error processing event")
