@@ -191,8 +191,13 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
             if len(func_args) != 2:
                 raise ValueError(f"{func_name} requires 2 arguments")
             field, value = func_args
-            if not isinstance(field, str):
-                raise ValueError("Field name must be a string")
+            # The argument used as the Django lookup key must be a validated
+            # field token. Accepting plain string literals would bypass the
+            # field validation (CVE-2025-64459 mitigation) and allow ``__``
+            # relation traversal, e.g. contains('user__password', 'x').
+            key_arg = value if func_name == "substringof" else field
+            if not isinstance(key_arg, (FieldName, AnnotatedField)):
+                raise ValueError("Field name must be a field name")
             if isinstance(value, F):
                 raise ValueError(f"Function '{func_name}' does not support field-to-field comparison")
             match func_name:

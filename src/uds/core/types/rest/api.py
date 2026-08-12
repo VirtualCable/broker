@@ -420,12 +420,19 @@ class ODataParams:
             # extract order by, split by ',' and replace asc by '' and desc by a '-' stripping text.
             # After this, move the - to the beginning when needed
             order_fld = typing.cast(str, data.get("$orderby", ""))
-            order_by = list(
-                map(
-                    lambda x: f"-{x.rstrip('-')}" if x.endswith("-") else x,
-                    [item.strip().replace(" asc", "").replace(" desc", "-") for item in order_fld.split(",") if item],
-                )
-            )
+            raw_fields = [item.strip() for item in order_fld.split(",") if item]
+            # ``$orderby`` fields get the same validation as ``$filter`` fields:
+            # reject empty names, underscore-prefixed fields (Django Q
+            # internals) and ``__`` relation traversal. Dot notation for
+            # related fields is preserved.
+            for raw in raw_fields:
+                field_name = raw.replace(" asc", "").replace(" desc", "")
+                if not field_name or field_name.startswith("_") or "__" in field_name:
+                    raise exceptions.rest.RequestError("Invalid OData query parameters")
+            order_by = [
+                f"-{field.rstrip('-')}" if field.endswith("-") else field
+                for field in (item.replace(" asc", "").replace(" desc", "-") for item in raw_fields)
+            ]
             select_fld = typing.cast(str, data.get("$select", ""))
             select = {item.strip() for item in select_fld.split(",") if item}
             start = int(data.get("$skip", 0)) if data.get("$skip") is not None else None

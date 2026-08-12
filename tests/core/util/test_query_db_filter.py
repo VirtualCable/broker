@@ -77,6 +77,29 @@ class DBQueryTests(UDSTestCase):
         assert first is not None
         self.assertEqual(first.name, "weekly_job")
 
+    def test_func_contains_with_quoted_field_raises(self) -> None:
+        """A quoted lookup key must be rejected (bypasses field validation)."""
+        with self.assertRaises(ValueError):
+            exec_query("contains('name', 'week')", Log.objects)
+
+    def test_func_contains_with_unquoted_field_works(self) -> None:
+        results = exec_query("contains(name, 'week')", Log.objects)
+        self.assertEqual(results.count(), 1)
+
+    def test_func_contains_quoted_traversal_raises(self) -> None:
+        """Quoted ``__`` traversal (e.g. contains('source__name', ...)) is rejected."""
+        with self.assertRaises(ValueError):
+            exec_query("contains('source__name', 'x')", Log.objects)
+
+    def test_func_substringof_with_quoted_key_raises(self) -> None:
+        """``substringof`` uses its second argument as lookup key; quoted keys are rejected."""
+        with self.assertRaises(ValueError):
+            exec_query("substringof('x', 'name')", Log.objects)
+
+    def test_func_substringof_with_unquoted_key_works(self) -> None:
+        results = exec_query("substringof('hourly', name)", Log.objects)
+        self.assertEqual(results.count(), 1)
+
     def test_not_query(self) -> None:
         results = exec_query(_FLTR + "not(source eq 'server3')", Log.objects)
         self.assertEqual(results.count(), 3)
