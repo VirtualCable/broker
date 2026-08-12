@@ -151,7 +151,7 @@ class System(Handler):
                 # the panel to all of them), but only administrators get the
                 # actual report; anyone else receives an empty one.
                 if not self._user.is_admin:
-                    return security_checks.build_report([])
+                    raise exceptions.rest.AccessDenied()
                 return security_checks.build_report()
             if self._args[0] == "overview":  # System overview
                 if not self._user.is_admin:

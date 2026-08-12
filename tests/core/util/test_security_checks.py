@@ -37,10 +37,12 @@ import typing
 from unittest import mock
 
 from uds import models
+from uds.core import consts
 from uds.core import types
 from uds.core.util import security_checks
 from uds.core.util.config import GlobalConfig
 
+from ...fixtures import services as services_fixtures
 from ...utils.test import UDSTransactionTestCase
 
 ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
@@ -51,6 +53,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "ip-forwarders-wildcard",
         "security-cookies-and-headers",
         "saml-assertions-signed",
+        "old-token-used-by-actor",
     )
 )
 
@@ -228,6 +231,54 @@ class SecurityChecksTest(UDSTransactionTestCase):
         # Requiring signed messages is also accepted as signature enforcement
         self._create_saml_authenticator("Messages SAML", messages_signed=True)
         result = self._run_check("saml-assertions-signed")
+        self.assertTrue(result.ok, result.message)
+
+    # ------------------------------------------------------------------
+    # Check 10: old (legacy uuid) actor token flow
+    # ------------------------------------------------------------------
+    def _create_userservice_with_actor_version(self, version: str) -> models.UserService:
+        from ...fixtures import authenticators as authenticators_fixtures
+
+        auth = authenticators_fixtures.create_db_authenticator()
+        groups = authenticators_fixtures.create_db_groups(auth, 1)
+        user = authenticators_fixtures.create_db_users(auth, 1, groups=groups)[0]
+
+        userservice = services_fixtures.create_db_one_assigned_userservice(
+            services_fixtures.create_db_provider(),
+            user,
+            groups,
+            "managed",
+        )
+        userservice.actor_version = version
+        userservice.save()
+        return userservice
+
+    def test_old_token_with_actor_version_detected(self) -> None:
+        # A freshly created user service has the never-rotated (AUTO) token prefix
+        userservice = self._create_userservice_with_actor_version("5.0.0")
+        self.assertTrue(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+
+        result = self._run_check("old-token-used-by-actor")
+        self.assertFalse(result.ok, result.message)
+        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertIn(userservice.service_pool.name, result.message)
+
+    def test_old_token_without_actor_version_passes(self) -> None:
+        # Never-rotated token but no actor has reported a version yet
+        self._create_userservice_with_actor_version("0.0.0")
+        result = self._run_check("old-token-used-by-actor")
+        self.assertTrue(result.ok, result.message)
+
+    def test_rotated_token_with_actor_version_passes(self) -> None:
+        # Actor uses the new token flow (token rotated, ust- prefix)
+        from uds.models.user_service import create_actor_token
+
+        userservice = self._create_userservice_with_actor_version("5.0.0")
+        userservice.token = create_actor_token()
+        userservice.save()
+        self.assertFalse(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+
+        result = self._run_check("old-token-used-by-actor")
         self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------

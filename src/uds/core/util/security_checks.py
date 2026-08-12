@@ -33,10 +33,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 Security self-assessment checks for the OpenUDS broker.
 
 Each check evaluates a single security-relevant configuration condition and
-returns its severity, whether it passes and a human readable detail.  The
-checks are based on ``strix_runs/server_6ee6/security_checks_checklist.md``
-(items 1, 2, 3, 4, 8 and 9); items handled by the front nginx (allowed
-hosts, public base URL) are intentionally out of scope here.
+returns its severity, whether it passes and a human readable detail.
 
 Checks only *notify*: they never modify any configuration value.
 """
@@ -48,8 +45,10 @@ import typing
 from django.conf import settings
 
 from uds.core import types
+from uds.core import consts
 from uds.core.managers.crypto import CryptoManager
 from uds.core.util.config import GlobalConfig
+from uds.models import Properties, ServicePool, UserService
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +191,38 @@ def _check_saml_assertions_signed() -> _CheckResult:
     )
 
 
+def _check_old_token_used_by_actor() -> _CheckResult:
+    # A user service is considered "still using the legacy flow" when its token
+    # has never been rotated (AUTO_TOKEN_PREFIX_NOT_USED) AND the actor has
+    # actually reported a version (i.e. an actor connected to it), which means it
+    # is still authenticating with the old uuid-based token.
+    legacy_actor_services = UserService.objects.filter(
+        token__startswith=consts.auth.AUTO_TOKEN_PREFIX_NOT_USED,
+        uuid__in=Properties.objects.filter(
+            owner_type="userservice",
+            key="actor_version",
+        )
+        .exclude(value="0.0.0")
+        .values("owner_id"),
+    )
+
+    affected_pools = ServicePool.objects.filter(userServices__in=legacy_actor_services).distinct().order_by("name")
+
+    if affected_pools:
+        affected = ", ".join(pool.name for pool in affected_pools)
+        return (
+            types.security.SecurityCheckSeverity.MEDIUM,
+            False,
+            f"Service pools with actors still using the legacy uuid token flow: {affected}."
+            " Re-initialize affected actors to rotate them to the new token.",
+        )
+    return (
+        types.security.SecurityCheckSeverity.MEDIUM,
+        True,
+        "No user services are using the legacy uuid actor token flow.",
+    )
+
+
 _CHECKS: typing.Final[tuple[tuple[str, _CheckFunction], ...]] = (
     ("default-superuser-credentials", _check_default_superuser_credentials),
     ("superuser-web-access", _check_superuser_web_access),
@@ -199,6 +230,7 @@ _CHECKS: typing.Final[tuple[tuple[str, _CheckFunction], ...]] = (
     ("ip-forwarders-wildcard", _check_ip_forwarders_wildcard),
     ("security-cookies-and-headers", _check_security_cookies_and_headers),
     ("saml-assertions-signed", _check_saml_assertions_signed),
+    ("old-token-used-by-actor", _check_old_token_used_by_actor),
 )
 
 
