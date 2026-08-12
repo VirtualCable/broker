@@ -1,0 +1,90 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2026 Virtual Cable S.L.
+# All rights reserved.
+#
+"""
+Tests for the REST ``/system/security_check`` endpoint.
+
+Notes
+-----
+* The endpoint is STAFF-reachable: staff members get an empty report, only
+  administrators receive the actual security self-assessment data.
+* The test database starts with the shipped configuration defaults, so the
+  expected summary is deterministic (see each test's comments).
+"""
+
+from __future__ import annotations
+
+import typing
+
+from uds.core import types
+from uds.core.util import security_checks
+from uds.core.util.config import GlobalConfig
+
+from ....utils import rest
+
+EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
+    (
+        "default-superuser-credentials",
+        "superuser-web-access",
+        "trusted-sources-wildcard",
+        "ip-forwarders-wildcard",
+        "security-cookies-and-headers",
+        "saml-assertions-signed",
+    )
+)
+
+
+class SecurityCheckEndpointTest(rest.test.RESTTestCase):
+    PATH = "system/security_check"
+
+    @typing.override
+    def tearDown(self) -> None:
+        # Restore the shipped default root password: config values keep an
+        # in-memory copy that outlives the (truncated) test database.
+        GlobalConfig.SUPER_USER_PASS.set(security_checks.DEFAULT_SUPERUSER_PASSWORD)
+        super().tearDown()
+
+    def _get_report(self) -> dict[str, typing.Any]:
+        response = self.client.rest_get("system/security_check")
+        self.assertEqual(response.status_code, 200, response.content)
+        return typing.cast("dict[str, typing.Any]", response.json())
+
+    def test_anonymous_access_is_denied(self) -> None:
+        response = self.client.rest_get("system/security_check")
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test_staff_gets_empty_report(self) -> None:
+        self.login(as_admin=False)
+        body = self._get_report()
+        self.assertEqual(body["checks"], [])
+        for severity in types.security.SecurityCheckSeverity:
+            self.assertEqual(body[severity.value], 0)
+
+    def test_admin_gets_full_report(self) -> None:
+        self.login()
+        body = self._get_report()
+        checks = body["checks"]
+        self.assertEqual({check["id"] for check in checks}, EXPECTED_CHECK_IDS)
+        # Every check carries its severity, state and message
+        for check in checks:
+            self.assertIn(check["severity"], [severity.value for severity in types.security.SecurityCheckSeverity])
+            self.assertIsInstance(check["ok"], bool)
+            self.assertTrue(check["message"])
+        # Summary counts only failed checks, per severity
+        for severity in types.security.SecurityCheckSeverity:
+            expected = sum(1 for check in checks if not check["ok"] and check["severity"] == severity.value)
+            self.assertEqual(body[severity.value], expected)
+
+    def test_admin_report_reflects_configuration_state(self) -> None:
+        self.login()
+        # Baseline defaults: default root password is still active
+        body = self._get_report()
+        critical = {check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]}
+        self.assertEqual(critical, {"default-superuser-credentials"})
+
+        # Rotating the root password clears the only critical finding
+        GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
+        body = self._get_report()
+        self.assertEqual(body["critical"], 0)

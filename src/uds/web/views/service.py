@@ -263,6 +263,7 @@ def update_transport_ticket(
                 password = CryptoManager.manager().symmetric_encrypt(password, scrambler)
 
             def _is_ticket_valid(data: collections.abc.Mapping[str, typing.Any]) -> bool:
+
                 if "ticket-info" in data:
                     try:
                         user = models.User.objects.get(
@@ -289,6 +290,12 @@ def update_transport_ticket(
                         except models.UserService.DoesNotExist:
                             pass
 
+                    return True
+
+                # Standard transport tickets (created by enable_service) carry
+                # the owner uuid in ``user``; only the owner may update them.
+                if data.get("user") and data.get("user") != request.user.uuid:
+                    return False
                 return True
 
             models.TicketStore.update(

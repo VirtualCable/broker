@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+
 #
-# Copyright (c) 2023 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -28,33 +29,49 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+
+Security self-assessment types used by ``uds.core.util.security_checks`` and
+exposed by the REST ``/system/security_check`` endpoint.
 """
 
-# pyright: reportUnusedImport=false
-from . import auth as auth
-from . import calendar as calendar
-from . import connections as connections
-from . import core as core
-from . import crypto as crypto
-from . import downloads as downloads
-from . import errors as errors
-from . import log as log
-from . import net as net
-from . import os as os
-from . import osmanagers as osmanagers
-from . import permissions as permissions
-from . import plugins as plugins
-from . import pools as pools
-from . import requests as requests
-from . import rest as rest
-from . import security as security
-from . import servers as servers
-from . import services as services
-from . import states as states
-from . import stats as stats
-from . import tickets as tickets
-from . import transports as transports
-from . import ui as ui
+import dataclasses
+import enum
+import typing
 
-# Log is not imported here, as it is a special case with lots of dependencies
-# Preferences must be include explicitly, as it is not a "normal use" type
+
+class SecurityCheckSeverity(str, enum.Enum):
+    """
+    Severity of a security check result, from most to least important.
+    """
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
+
+
+@dataclasses.dataclass(frozen=True)
+class SecurityCheckResult:
+    """
+    Result of a single security check.
+
+    - ``id``: stable machine-readable identifier of the check.
+    - ``severity``: importance of the check when it fails.
+    - ``ok``: ``True`` when the check passes, ``False`` when the checked
+      condition is a security concern.
+    - ``message``: human readable detail, suitable for operator notification.
+    """
+
+    id: str
+    severity: SecurityCheckSeverity
+    ok: bool
+    message: str
+
+    def as_dict(self) -> dict[str, typing.Any]:
+        return {
+            "id": self.id,
+            "severity": self.severity.value,
+            "ok": self.ok,
+            "message": self.message,
+        }

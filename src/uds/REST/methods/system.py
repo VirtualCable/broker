@@ -46,6 +46,7 @@ from uds.core import exceptions
 from uds.core import types
 from uds.core.types.states import State
 from uds.core.util import permissions
+from uds.core.util import security_checks
 from uds.core.util.cache import Cache
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_now
@@ -122,6 +123,7 @@ class System(Handler):
     """
     {
         'paths': [
+            "/system/security_check", "Returns the security self-assessment report (only filled for admins)",
             "/system/overview", "Returns a json object with the number of services, service pools, users, etc",
             "/system/stats/assigned", "Returns a chart of assigned services (all pools)",
             "/system/stats/inuse", "Returns a chart of in use services (all pools)",
@@ -144,6 +146,13 @@ class System(Handler):
         logger.debug("args: %s", self._args)
         # Only allow admin user for global stats
         if len(self._args) == 1:
+            if self._args[0] == "security_check":  # Security self-assessment
+                # Staff members can invoke it too (so the admin GUI can expose
+                # the panel to all of them), but only administrators get the
+                # actual report; anyone else receives an empty one.
+                if not self._user.is_admin:
+                    return security_checks.build_report([])
+                return security_checks.build_report()
             if self._args[0] == "overview":  # System overview
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
