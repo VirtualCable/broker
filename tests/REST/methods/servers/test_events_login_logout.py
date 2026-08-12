@@ -202,19 +202,3 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 200)
         self.user_service_managed.refresh_from_db()
         self.assertEqual(self.user_service_managed.in_use, False)
-
-    def test_ticket(self) -> None:
-        ticket_uuid = models.TicketStore.create(
-            {"userservice_uuid": self.user_service_managed.uuid, "some_value": "value"}
-        )
-        response = self.client.rest_post(
-            "/servers/event",
-            data={
-                "token": self.server.token,
-                "type": "ticket",
-                "ticket": ticket_uuid,
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()["result"]
-        self.assertEqual(data["some_value"], "value")

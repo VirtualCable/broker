@@ -158,10 +158,6 @@ def process_ping(server: "models.Server", data: dict[str, typing.Any]) -> typing
     return rest_result(consts.OK)
 
 
-def process_ticket(server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:
-    return rest_result(models.TicketStore.get(data["ticket"], invalidate=False))
-
-
 def process_init(server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:
     # Init like on actor to allow "userServices" to initialize inside server
     # Currently unimplemented (just an idea, anotated here for future reference)
@@ -176,7 +172,6 @@ PROCESSORS: typing.Final[
     "login": process_login,
     "logout": process_logout,
     "ping": process_ping,
-    "ticket": process_ticket,
     "init": process_init,
 }
 
@@ -188,7 +183,11 @@ def process(server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:
     * login: A login has been made (to an userservice)
     * logout: A logout has been made (to an userservice)
     * ping: A ping request (can include stats, etc...)
-    * ticket: A ticket to obtain it's data
+
+    NOTE: the "ticket" event was removed. It was unused by any server flow and
+    returned ANY TicketStore entry (no owner filter), so any valid Server token
+    could read transport, session, auth and OAuth tickets. If a ticket-reading
+    server event is ever needed again, it MUST be scoped by owner and type.
     """
     try:
         fnc = PROCESSORS[data["type"]]
