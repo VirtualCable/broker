@@ -216,6 +216,8 @@ class Dispatcher(View):
             )
         except exceptions.rest.AccessDenied:
             return Dispatcher.error_response(http.HttpResponseForbidden, handler, "Access denied")
+        except exceptions.rest.RequestError as e:
+            return Dispatcher.error_response(http.HttpResponseBadRequest, handler, str(e), e)
         except Exception:
             return Dispatcher.error_response(http.HttpResponseServerError, handler, "Unexpected error")
 

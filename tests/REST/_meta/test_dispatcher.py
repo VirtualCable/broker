@@ -120,6 +120,15 @@ class DispatcherContractTest(rest.test.RESTTestCase):
     # ------------------------------------------------------------------
     # T1A.1 - Unsupported methods return clean 405 (bug B1 fix in place)
     # ------------------------------------------------------------------
+    def test_invalid_odata_parameters_return_400(self) -> None:
+        """Invalid OData values (e.g. ``$top=abc``) are client errors, not 500s.
+
+        ``ODataParams`` parsing raises ``RequestError`` while the handler is
+        being constructed; the dispatcher must map it to an HTTP 400.
+        """
+        response = self.client.rest_get("providers", {"$top": "abc"})
+        self.assertEqual(response.status_code, 400, response.content)
+
     def test_forbidden_methods_return_405_with_allow(self) -> None:
         """Every method outside get/post/put/delete returns 405 + Allow header.
 
