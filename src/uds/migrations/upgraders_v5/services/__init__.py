@@ -34,8 +34,27 @@ from .common import upgrade_user_services, upgrade_publications, upgrade_provide
 from .service_types import SERVICE_TYPES, PROVIDER_TYPES
 
 
+def _backfill_tokens() -> int:
+    from uds.core import consts
+    from uds.core.managers.crypto import CryptoManager
+    from uds.models import UserService
+
+    prefix = consts.auth.AUTO_TOKEN_PREFIX_NOT_USED
+    token_length = consts.ticket.TICKET_LENGTH
+    suffix_length = token_length - len(prefix)
+    crypto = CryptoManager.manager()
+
+    upgraded = 0
+    for row in UserService.objects.filter(token="").iterator(chunk_size=100):
+        row.token = prefix + crypto.random_string(suffix_length)
+        row.save(update_fields=["token"])
+        upgraded += 1
+    return upgraded
+
+
 def upgrade_all_user_services() -> dict[str, int]:
     results: dict[str, int] = {}
+    results["_backfill_tokens"] = _backfill_tokens()
     for type_type, info in SERVICE_TYPES.items():
         if info.us:
             results[type_type] = upgrade_user_services(type_type)

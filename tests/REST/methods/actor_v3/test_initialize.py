@@ -113,9 +113,12 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
         result = success(mac=unique_id)
 
-        # Ensure own token is assigned
-        self.assertEqual(result["token"], user_service.uuid)
-        self.assertEqual(result["own_token"], result["token"])  # Compat value with 3.x actors
+        user_service.refresh_from_db()
+
+        self.assertEqual(result["token"], user_service.token)
+        self.assertEqual(result["own_token"], result["token"])
+        self.assertTrue(user_service.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(user_service.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
 
         # Ensure unique_id detected is ours
         self.assertEqual(result["unique_id"], unique_id)
@@ -163,9 +166,12 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
         result = success(ip=unique_id)
 
-        # Ensure own token is assigned
-        self.assertEqual(result["token"], user_service.uuid)
-        self.assertEqual(result["own_token"], result["token"])  # Compat value with 3.x actors
+        user_service.refresh_from_db()
+
+        self.assertEqual(result["token"], user_service.token)
+        self.assertEqual(result["own_token"], result["token"])
+        self.assertTrue(user_service.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(user_service.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
 
         # Ensure unique_id detected is ours
         self.assertEqual(result["unique_id"], unique_id)
@@ -249,16 +255,24 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
         self.assertEqual(USERSERVICE_MAC, result["unique_id"])
         self.assertEqual(result["own_token"], result["token"])
-        self.assertEqual(result["token"], userservice.uuid)
 
-        # Now, invoke with alias, result shouls be the same
+        userservice.refresh_from_db()
+        self.assertEqual(result["token"], userservice.token)
+        self.assertTrue(userservice.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+
+        # Now, invoke with alias, result should have same master_token but rotated token
         result2 = success(
             alias_token,
             mac=USERSERVICE_MAC,
         )
 
         # master_token should be the same as the alias token
-        self.assertEqual(result, result2)
+        self.assertEqual(result["master_token"], result2["master_token"])
+        self.assertEqual(result["unique_id"], result2["unique_id"])
+        # But token is rotated on every initialize
+        self.assertNotEqual(result["token"], result2["token"])
+        self.assertEqual(result2["own_token"], result2["token"])
         #
         failure("invalid token", mac=USERSERVICE_MAC, expect_forbidden=True)
 
@@ -317,15 +331,23 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
         self.assertEqual(USERSERVICE_IP, result["unique_id"])
         self.assertEqual(result["own_token"], result["token"])
-        self.assertEqual(result["token"], userservice.uuid)
 
-        # Now, invoke with alias, result shouls be the same
+        userservice.refresh_from_db()
+        self.assertEqual(result["token"], userservice.token)
+        self.assertTrue(userservice.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+
+        # Now, invoke with alias, result should have same master_token but rotated token
         result2 = success(
             alias_token,
             mac=USERSERVICE_IP,
         )
 
         # master_token should be the same as the alias token
-        self.assertEqual(result, result2)
+        self.assertEqual(result["master_token"], result2["master_token"])
+        self.assertEqual(result["unique_id"], result2["unique_id"])
+        # But token is rotated on every initialize
+        self.assertNotEqual(result["token"], result2["token"])
+        self.assertEqual(result2["own_token"], result2["token"])
         #
         failure("invalid token", mac=USERSERVICE_IP, expect_forbidden=True)

@@ -205,11 +205,7 @@ def get_services_info_dict(
 
         # Get first member with custom message visible and enabled for metapools
         for member in sorted_members:
-            if (
-                member.pool.display_custom_message
-                and member.pool.visible
-                and member.pool.custom_message.strip()
-            ):
+            if member.pool.display_custom_message and member.pool.visible and member.pool.custom_message.strip():
                 custom_message = member.pool.custom_message
                 break
 

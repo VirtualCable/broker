@@ -914,7 +914,9 @@ class UserServiceManager(metaclass=singleton.Singleton):
         if kind in "A":  # This is an assigned service
             logger.debug("Getting assigned user service %s", uuid_userservice_pool)
             try:
-                userservice = UserService.objects.get(uuid=uuid_userservice_pool, user=user)
+                userservice = UserService.objects.get(
+                    Q(token=uuid_userservice_pool) | Q(uuid=uuid_userservice_pool), user=user
+                )
                 userservice.service_pool.validate_user(user)
             except UserService.DoesNotExist:
                 logger.debug("Service does not exist")

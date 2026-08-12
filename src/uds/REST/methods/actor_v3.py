@@ -37,6 +37,7 @@ import time
 import typing
 
 from django.conf import settings
+from django.db.models import Q
 
 # from uds.core import VERSION
 from uds.core import consts
@@ -56,6 +57,7 @@ from uds.models import Service
 from uds.models import TicketStore
 from uds.models import UserService
 from uds.models.service import ServiceTokenAlias
+from uds.models.user_service import create_actor_token
 from uds.REST.utils import rest_result, sanitize_params
 
 from ..handlers import Handler
@@ -166,10 +168,10 @@ class ActorV3Action(Handler):
 
     def get_userservice(self) -> UserService:
         """
-        Looks for an userservice and, if not found, raises a exceptions.rest.BlockAccess request
+        Looks for an userservice by token or uuid (for backward compat) and, if not found, raises a exceptions.rest.BlockAccess request
         """
         try:
-            return UserService.objects.get(uuid=self._params["token"])
+            return UserService.objects.get(Q(token=self._params["token"]) | Q(uuid=self._params["token"]))
         except UserService.DoesNotExist:
             logger.error("User service not found (params: %s)", sanitize_params(self._params))
             raise exceptions.rest.BlockAccess() from None
@@ -505,7 +507,10 @@ class Initialize(ActorV3Action):
             if osmanager:
                 os_data = osmanager.actor_data(userservice).as_dict()
 
-            return _initialization_result(userservice.uuid, userservice.unique_id, os_data, alias_token)
+            userservice.token = create_actor_token()
+            userservice.save(update_fields=["token"])
+
+            return _initialization_result(userservice.token, userservice.unique_id, os_data, alias_token)
         except Service.DoesNotExist:
             raise exceptions.rest.BlockAccess() from None
 

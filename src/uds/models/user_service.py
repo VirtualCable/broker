@@ -39,6 +39,7 @@ from django.db.models import signals
 
 from uds.core import types, consts
 from uds.core.environment import Environment
+from uds.core.managers.crypto import CryptoManager
 from uds.core.util import log, properties
 from uds.core.util.model import sql_now
 from uds.core.types.states import State
@@ -53,6 +54,16 @@ if typing.TYPE_CHECKING:
     from uds.models import AccountUsage, OSManager, UserServiceSession
 
 logger = logging.getLogger(__name__)
+
+
+def _create_default_token() -> str:
+    prefix = consts.auth.AUTO_TOKEN_PREFIX_NOT_USED
+    return prefix + CryptoManager.manager().random_string(consts.ticket.TICKET_LENGTH - len(prefix))
+
+
+def create_actor_token() -> str:
+    prefix = consts.auth.USER_SERVICE_TOKEN_PREFIX
+    return prefix + CryptoManager.manager().random_string(consts.ticket.TICKET_LENGTH - len(prefix))
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -106,6 +117,13 @@ class UserService(UUIDModel, properties.PropertiesMixin):
     src_ip = models.CharField(
         max_length=consts.system.MAX_IPV6_LENGTH, default=""
     )  # Source IP of the user connecting to the service. Max length is 45 chars (ipv6)
+
+    token = models.CharField(
+        max_length=consts.ticket.TICKET_LENGTH,
+        default=_create_default_token,
+        unique=True,
+        db_index=True,
+    )
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["UserService"]'
