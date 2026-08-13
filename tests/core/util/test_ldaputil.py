@@ -177,6 +177,14 @@ class LDAPReferralErrorTest(UDSTestCase):
         err: ldaputil.LDAPReferralError = ldaputil.LDAPReferralError(["ldap://a/"])
         self.assertIn("ldap://a/", str(err))
 
+    def test_carries_partial_results(self) -> None:
+        partial: ldaputil.LDAPResultType = {"dn": "cn=alice,dc=corp,dc=local"}
+        err: ldaputil.LDAPReferralError = ldaputil.LDAPReferralError(
+            ["ldap://child.corp.local/dc=child"],
+            partial_results=[partial],
+        )
+        self.assertEqual(err.partial_results, [partial])
+
 
 class AsDictReferralsTest(UDSTestCase):
     def test_default_drops_referrals_silently(self) -> None:
@@ -229,6 +237,28 @@ class AsDictReferralsTest(UDSTestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["uid"], ["alice"])
         self.assertEqual(rows[0]["dn"], "cn=alice,dc=corp,dc=local")
+
+    def test_raise_on_referrals_preserves_partial_entries(self) -> None:
+        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
+            entries=[
+                _StubEntry(
+                    "cn=alice,dc=corp,dc=local",
+                    {"uid": ["alice"]},
+                )
+            ],
+            referrals=["ldap://child-dc/dc=child,dc=corp,dc=local"],
+        )
+        with self.assertRaises(ldaputil.LDAPReferralError) as ctx:
+            list(
+                ldaputil.as_dict(
+                    conn,
+                    "dc=corp,dc=local",
+                    "(uid=*)",
+                    attributes=["uid"],
+                    raise_on_referrals=True,
+                )
+            )
+        self.assertEqual(ctx.exception.partial_results[0]["uid"], ["alice"])
 
 
 class FirstReferralsTest(UDSTestCase):

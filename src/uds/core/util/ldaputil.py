@@ -83,18 +83,25 @@ class LDAPReferralError(LDAPError):
 
     The list of referral URIs (as returned by the LDAP server) is available
     on the ``referrals`` attribute. Callers can decide whether to follow them,
-    drop them, or honour an allow-list.
+    drop them, or honour an allow-list. Entries returned before the referrals
+    are available on ``partial_results``.
 
     The default ``as_dict`` / ``first`` behaviour is to silently drop
     referrals; pass ``raise_on_referrals=True`` to surface them instead.
     """
 
     referrals: list[str]
+    partial_results: list[LDAPResultType]
 
-    def __init__(self, referrals: collections.abc.Iterable[str]) -> None:
+    def __init__(
+        self,
+        referrals: collections.abc.Iterable[str],
+        partial_results: collections.abc.Iterable[LDAPResultType] = (),
+    ) -> None:
         normalized: list[str] = [r for r in referrals if r]
         super().__init__(f"LDAP referrals: {normalized}")
         self.referrals = normalized
+        self.partial_results = list(partial_results)
 
 
 def _raise_for_result(operation: str, result: collections.abc.Mapping[str, typing.Any]) -> typing.NoReturn:
@@ -266,7 +273,14 @@ def as_dict(
         if raise_on_referrals:
             referrals: list[str] = _extract_referrals(con)
             if referrals:
-                raise LDAPReferralError(referrals)
+                entries: list[LDAPResultType] = []
+                for entry in typing.cast(typing.Any, con.entries):
+                    dct = utils.CaseInsensitiveDict[list[str]]()
+                    for attr in attr_list:
+                        dct[attr] = entry[attr].values if attr in entry else [""]
+                    dct["dn"] = entry.entry_dn
+                    entries.append(dct)
+                raise LDAPReferralError(referrals, partial_results=entries)
         for entry in typing.cast(typing.Any, con.entries):
             dct = utils.CaseInsensitiveDict[list[str]]()
             for attr in attr_list:
