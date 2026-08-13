@@ -8,8 +8,8 @@ Tests for the REST ``/system/security_check`` endpoint.
 
 Notes
 -----
-* The endpoint is STAFF-reachable: staff members get an empty report, only
-  administrators receive the actual security self-assessment data.
+* The endpoint requires administrator privileges for the security report; staff
+  members receive ``403 Forbidden``.
 * The test database starts with the shipped configuration defaults, so the
   expected summary is deterministic (see each test's comments).
 """
@@ -32,6 +32,7 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "ip-forwarders-wildcard",
         "security-cookies-and-headers",
         "saml-assertions-signed",
+        "old-token-used-by-actor",
     )
 )
 
@@ -55,12 +56,10 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
         response = self.client.rest_get("system/security_check")
         self.assertEqual(response.status_code, 403, response.content)
 
-    def test_staff_gets_empty_report(self) -> None:
+    def test_staff_access_is_denied(self) -> None:
         self.login(as_admin=False)
-        body = self._get_report()
-        self.assertEqual(body["checks"], [])
-        for severity in types.security.SecurityCheckSeverity:
-            self.assertEqual(body[severity.value], 0)
+        response = self.client.rest_get("system/security_check")
+        self.assertEqual(response.status_code, 403, response.content)
 
     def test_admin_gets_full_report(self) -> None:
         self.login()
