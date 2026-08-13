@@ -84,7 +84,6 @@ def process_login(server: "models.Server", data: dict[str, typing.Any]) -> typin
         'max_idle': 'max idle time of service',  # The max time the service can be idle before being removed, optional (None if not set)
         'session_id': 'session id',  # The session id assigned to this login
         'ticket': 'ticket if any' # optional
-
     }
     """
     ticket: typing.Any = None

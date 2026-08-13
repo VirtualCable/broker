@@ -51,8 +51,8 @@ TIMEOUT = 2
 def _execute_actor_request(
     userservice: "UserService",
     method: str,
-    data: typing.Optional[collections.abc.MutableMapping[str, typing.Any]] = None,
-    min_actor_version: typing.Optional[str] = None,
+    data: collections.abc.MutableMapping[str, typing.Any] | None = None,
+    min_actor_version: str | None = None,
 ) -> typing.Any:
     """
     Makes a request to actor using "method"
@@ -76,7 +76,7 @@ def _execute_actor_request(
     url += "/" + method
 
     try:
-        verify: typing.Union[bool, str]
+        verify: bool | str
         cert = userservice.properties.get("cert", "")
         # cert = ''  # Uncomment to test without cert
         if cert:
