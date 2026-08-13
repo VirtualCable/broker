@@ -123,8 +123,10 @@ class _SearchFakeConn:
         self,
         entries: list[_StubEntry] | None = None,
         referrals: list[str] | None = None,
+        response: list[dict[str, typing.Any]] | None = None,
     ) -> None:
         self.entries: list[_StubEntry] = entries or []
+        self.response: list[dict[str, typing.Any]] = response or []
         self.result: dict[str, typing.Any] = {"result": 0, "description": "success"}
         if referrals is not None:
             self.result["referrals"] = referrals
@@ -260,6 +262,29 @@ class AsDictReferralsTest(UDSTestCase):
             )
         self.assertEqual(ctx.exception.partial_results[0]["uid"], ["alice"])
 
+    def test_search_result_references_are_detected_on_success(self) -> None:
+        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
+            response=[
+                {
+                    "type": "searchResRef",
+                    "uri": ["ldap://child-dc/dc=child,dc=corp,dc=local"],
+                }
+            ]
+        )
+        with self.assertRaises(ldaputil.LDAPReferralError) as ctx:
+            list(
+                ldaputil.as_dict(
+                    conn,
+                    "dc=corp,dc=local",
+                    "(uid=*)",
+                    raise_on_referrals=True,
+                )
+            )
+        self.assertEqual(
+            ctx.exception.referrals,
+            ["ldap://child-dc/dc=child,dc=corp,dc=local"],
+        )
+
 
 class FirstReferralsTest(UDSTestCase):
     def test_propagates_referral_error(self) -> None:
@@ -354,7 +379,7 @@ class ConnectionBindMessageTest(UDSTestCase):
     def _patch_connection_factory(
         self,
         fake: _BindFakeConn,
-    ) -> tuple[mock._patch, mock._patch]:
+    ) -> tuple[mock._patch[typing.Any], mock._patch[typing.Any]]:
         return (
             mock.patch.object(ldaputil, "Server", return_value=mock.MagicMock()),
             mock.patch.object(ldaputil, "Connection", return_value=fake),

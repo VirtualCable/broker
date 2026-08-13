@@ -124,9 +124,11 @@ def _extract_referrals(con: Connection) -> list[str]:
     """
     Returns the list of referral URIs from the last LDAP operation on ``con``.
 
-    ldap3 surfaces referrals as ``con.result['referrals']`` (a list of URIs).
-    Returns ``[]`` if no referrals were returned, or if the connection result
-    doesn't expose them. Defensive: never raises.
+    ldap3 normally surfaces referrals as ``con.result['referrals']``. AD can
+    also return ``searchResRef`` response items alongside a successful search,
+    so those URIs are collected from ``con.response`` as well. Returns ``[]``
+    if no referrals were returned or if the connection result doesn't expose
+    them. Defensive: never raises.
     """
     try:
         result: dict[str, typing.Any] | None = con.result
@@ -134,13 +136,29 @@ def _extract_referrals(con: Connection) -> list[str]:
         return []
     if not isinstance(result, dict):
         return []
-    refs = result.get("referrals")
-    if not refs:
-        return []
+    refs: list[str] = []
     try:
-        return [str(r) for r in refs if r]
+        refs.extend(str(r) for r in result.get("referrals", ()) if r)
     except Exception:
-        return []
+        pass
+
+    try:
+        response = typing.cast(typing.Any, con.response)
+        for item in typing.cast(
+            collections.abc.Iterable[typing.Any],
+            response if isinstance(response, collections.abc.Iterable) else (),
+        ):
+            if not isinstance(item, collections.abc.Mapping) or item.get("type") != "searchResRef":
+                continue
+            uris = typing.cast(typing.Any, item.get("uri", ()))
+            if isinstance(uris, str):
+                refs.append(uris)
+            elif isinstance(uris, collections.abc.Iterable):
+                refs.extend(str(uri) for uri in typing.cast(list[typing.Any], uris) if uri)
+    except Exception:
+        pass
+
+    return list(dict.fromkeys(refs))
 
 
 def escape(value: str) -> str:
@@ -149,7 +167,11 @@ def escape(value: str) -> str:
     """
     # ldap3 does not provide a direct escape, but this is a safe replacement
     return (
-        value.replace("\\", "\\5c").replace("*", "\\2a").replace("(", "\\28").replace(")", "\\29").replace("\0", "\\00")
+        value.replace("\\", "\\5c")
+        .replace("*", "\\2a")
+        .replace("(", "\\28")
+        .replace(")", "\\29")
+        .replace("\0", "\\00")
     )
 
 
