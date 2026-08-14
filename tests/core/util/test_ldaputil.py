@@ -379,7 +379,7 @@ class ConnectionBindMessageTest(UDSTestCase):
     def _patch_connection_factory(
         self,
         fake: _BindFakeConn,
-    ) -> tuple[mock._patch[typing.Any], mock._patch[typing.Any]]:
+    ) -> tuple[typing.Any, typing.Any]:
         return (
             mock.patch.object(ldaputil, "Server", return_value=mock.MagicMock()),
             mock.patch.object(ldaputil, "Connection", return_value=fake),
