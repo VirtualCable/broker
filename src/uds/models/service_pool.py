@@ -332,7 +332,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         )
 
     def when_will_be_replaced(self, for_user: "User") -> datetime | None:
-        active_publication: "ServicePoolPublication | None" = self.active_publication()
+        active_publication: ServicePoolPublication | None = self.active_publication()
         # If no publication or current revision, it's not going to be replaced
         if active_publication is None:
             return None
@@ -487,8 +487,8 @@ class ServicePool(UUIDModel, TaggingMixin):
 
         """
         now = sql_now()
-        non_active_publication: "ServicePoolPublication"
-        userservice: "UserService"
+        non_active_publication: ServicePoolPublication
+        userservice: UserService
 
         if active_publication is None:
             logger.error("No active publication, don't know what to erase!!! (ds = %s)", self)
@@ -620,7 +620,7 @@ class ServicePool(UUIDModel, TaggingMixin):
                     ),
                 )
             )
-        servicepool: "ServicePool"
+        servicepool: ServicePool
         for servicepool in query:
             if typing.cast(typing.Any, servicepool).pubs_active or (
                 servicepool.service and servicepool.service.data_type in services_not_needing_publication
@@ -710,7 +710,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: "ServicePool" = kwargs["instance"]
+        to_delete: ServicePool = kwargs["instance"]
 
         logger.debug("Deleting Service Pool %s", to_delete)
         to_delete.get_environment().clean_related_data()

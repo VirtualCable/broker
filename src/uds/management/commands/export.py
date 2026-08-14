@@ -421,7 +421,7 @@ class Command(BaseCommand):
         users_list = list(self.output_count("Filtering users", self.apply_filter(models.User)))
         authenticators_list = {u.manager for u in self.output_count("Filtering authenticators", users_list)}
         # Now, groups that contains those users
-        groups_list: typing.Set[models.Group] = set()
+        groups_list: set[models.Group] = set()
         for u in self.output_count("Filtering groups", users_list):
             groups_list.update(u.groups.all())
 
@@ -474,7 +474,7 @@ class Command(BaseCommand):
         """
         # First, export networks for transports with the filter
         transports_list = list(self.output_count("Filtering transports", self.apply_filter(models.Transport)))
-        networks_list: typing.Set["models.Network"] = set()
+        networks_list: set[models.Network] = set()
         for t in self.output_count("Filtering networks", transports_list):
             networks_list.update(t.networks.all())
         networks = [network_exporter(n) for n in self.output_count("Saving networks", networks_list)]

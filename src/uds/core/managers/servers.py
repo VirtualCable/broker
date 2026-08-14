@@ -143,7 +143,7 @@ class ServerManager(metaclass=singleton.Singleton):
         Returns a list of stats for a list of servers
         """
         # Paralelize stats retrieval
-        retrieved_stats: list[tuple["types.servers.ServerStats | None", "models.Server"]] = []
+        retrieved_stats: list[tuple[types.servers.ServerStats | None, models.Server]] = []
 
         def _retrieve_stats(server: "models.Server") -> None:
             try:
@@ -176,8 +176,8 @@ class ServerManager(metaclass=singleton.Singleton):
         """
         Finds the best server for a service
         """
-        best: tuple["models.Server", "types.servers.ServerStats"] | None = None
-        unmanaged_list: list["models.Server"] = []
+        best: tuple[models.Server, types.servers.ServerStats] | None = None
+        unmanaged_list: list[models.Server] = []
         fltrs = server_group.servers.filter(maintenance_mode=False)
         fltrs = fltrs.filter(Q(locked_until=None) | Q(locked_until__lte=now))  # Only unlocked servers
         if excluded_servers_uuids:

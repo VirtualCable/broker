@@ -53,7 +53,7 @@ def __load_modules() -> None:
     """
     This imports all packages that are descendant of this package, and, after that,
     """
-    already_seen: typing.Set[str] = set()
+    already_seen: set[str] = set()
 
     def _add_report_class(cls: type[reports.Report]) -> None:
         already_seen.add(cls.uuid)

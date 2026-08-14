@@ -126,7 +126,7 @@ class Permissions(Handler):
             raise exceptions.rest.RequestError("Invalid request")
 
         item_class = Permissions.get_class(self._args[0])
-        obj: "Model" = item_class.objects.get(uuid=self._args[1])
+        obj: Model = item_class.objects.get(uuid=self._args[1])
 
         return Permissions.as_dict(permissions.get_permissions(obj))
 

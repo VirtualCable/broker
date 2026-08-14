@@ -42,14 +42,14 @@ logger = logging.getLogger(__name__)
 
 
 class Attribute:
-    _type: typing.Type[typing.Any]
+    _type: type[typing.Any]
     _value: typing.Any
 
-    def __init__(self, the_type: typing.Type[typing.Any], value: typing.Any = None):
+    def __init__(self, the_type: type[typing.Any], value: typing.Any = None):
         self._type = the_type
         self.set_value(value)
 
-    def get_type(self) -> typing.Type[typing.Any]:
+    def get_type(self) -> type[typing.Any]:
         return self._type
 
     def get_value(self) -> typing.Any:

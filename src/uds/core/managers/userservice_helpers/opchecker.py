@@ -299,7 +299,7 @@ class UserServiceOpChecker(DelayedTask):
     @typing.override
     def run(self) -> None:
         logger.debug("Checking user service finished %s", self._svrId)
-        userservice: "UserService|None" = None
+        userservice: UserService|None = None
         try:
             userservice = typing.cast(UserService, UserService.objects.get(pk=self._svrId))  # pyright: ignore reportUnnecessaryCast
             if userservice.state != self._state:

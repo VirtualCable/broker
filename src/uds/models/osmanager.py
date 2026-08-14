@@ -110,7 +110,7 @@ class OSManager(ManagedObjectModel, TaggingMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: "OSManager" = kwargs["instance"]
+        to_delete: OSManager = kwargs["instance"]
         if to_delete.deployedServices.count() > 0:
             raise IntegrityError("Can't remove os managers with assigned deployed services")
         # Only tries to get instance if data is not empty

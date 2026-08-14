@@ -297,7 +297,7 @@ class StorageInfo:
     uuid: str
     name: str
     description: str
-    allowed_operations: typing.List[StorageOperations]
+    allowed_operations: list[StorageOperations]
     # current_operations not used
     VDIs: list[str]  # List of VDIs UUIDs
     PBDs: list[str]  # List of PDBs UUIDs
@@ -353,7 +353,7 @@ class VMInfo:
     snapshots: list[str]
     VIFs: list[str]  # List of VIFs UUIDs
     VBDs: list[str]  # List of VDBs UUIDs
-    allowed_operations: typing.List[VMOperations]
+    allowed_operations: list[VMOperations]
 
     # Other useful configuration
     folder: str

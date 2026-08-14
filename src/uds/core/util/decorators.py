@@ -272,7 +272,7 @@ def cached(
             # Note tha this value (cache_key) will be hashed by cache, so it's not a problem if it's too long
             if len(args) > 0:
                 cache_key += key_helper_fnc(args[0])
-                inner_cache: "Cache|None" = getattr(args[0], "cache", None)
+                inner_cache: Cache|None = getattr(args[0], "cache", None)
             else:
                 cache_key += key_helper_fnc(fnc.__name__)
                 inner_cache = None

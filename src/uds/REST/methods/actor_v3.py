@@ -208,7 +208,7 @@ class ActorV3Action(Handler):
         """
         try:
             # If unmanaged, use Service locator
-            service: "services.Service" = Service.objects.get(token=self._params["token"]).get_instance()
+            service: services.Service = Service.objects.get(token=self._params["token"]).get_instance()
 
             # We have a valid service, now we can make notifications
 
@@ -860,7 +860,7 @@ class Unmanaged(ActorV3Action):
                 dbservice = dbservice_alias.service
             else:
                 dbservice = Service.objects.get(token=token)
-            service: "services.Service" = dbservice.get_instance()
+            service: services.Service = dbservice.get_instance()
         except Exception:
             logger.warning("Unmanaged host request: %s", sanitize_params(self._params))
             return ActorV3Action.actor_result(error="Invalid token")

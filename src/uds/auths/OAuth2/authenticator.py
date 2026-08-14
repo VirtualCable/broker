@@ -206,7 +206,7 @@ class OAuth2Authenticator(auths.Authenticator):
                 )
 
         if self.redirection_endpoint.value.strip() == "" and self.db_obj() and "_request" in values:
-            request: "HttpRequest" = values["_request"]
+            request: HttpRequest = values["_request"]
             self.redirection_endpoint.value = request.build_absolute_uri(self.callback_url())
 
     @typing.override

@@ -404,7 +404,7 @@ class SAMLAuthenticator(auths.Authenticator):
         ):
             raise exceptions.ui.ValidationError(gettext("Certificate and private key do not match"))
 
-        request: "ExtendedHttpRequest" = values["_request"]
+        request: ExtendedHttpRequest = values["_request"]
 
         # Always generate https urls
         if self.entity_id.value == "":

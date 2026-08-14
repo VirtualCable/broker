@@ -134,7 +134,7 @@ class MetaPool(UUIDModel, TaggingMixin):
             bool -- [description]
         """
         total, maintenance = 0, 0
-        p: "MetaPoolMember"
+        p: MetaPoolMember
         for p in self.members.filter(enabled=True):
             total += 1
             if p.pool.is_in_maintenance():
@@ -274,7 +274,7 @@ class MetaPool(UUIDModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: "MetaPool" = kwargs["instance"]
+        to_delete: MetaPool = kwargs["instance"]
 
         # Clears related logs
         log.clear_logs(to_delete)

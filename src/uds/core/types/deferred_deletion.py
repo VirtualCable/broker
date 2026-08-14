@@ -125,7 +125,7 @@ class DeletionInfo:
         count = 0
         infos: list[DeletionInfo] = []
 
-        services: dict[str, "DynamicService"] = {}
+        services: dict[str, DynamicService] = {}
 
         # First, get ownership of to_delete objects to be processed
         # We do this way to release db locks as soon as possible

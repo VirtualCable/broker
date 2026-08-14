@@ -297,7 +297,7 @@ class Users(DetailHandler[UserItem]):
                     f"Removal of user {user.pretty_name} denied due to insufficients rights"
                 )
 
-            assigned_userservice: "UserService"
+            assigned_userservice: UserService
             for assigned_userservice in user.userServices.all():
                 try:
                     assigned_userservice.user = None
@@ -606,9 +606,9 @@ class Groups(DetailHandler[GroupItem]):
         if group.is_meta:
             # Get all users for everygroup and
             groups = get_groups_from_metagroup((group,))
-            users_set: set["User"] | None = None
+            users_set: set[User] | None = None
             for g in groups:
-                current_set: set["User"] = set((i for i in g.users.all()))
+                current_set: set[User] = set((i for i in g.users.all()))
                 if users_set is None:
                     users_set = current_set
                 else:

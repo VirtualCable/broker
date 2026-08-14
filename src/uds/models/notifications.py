@@ -131,7 +131,7 @@ class Notifier(ManagedObjectModel, TaggingMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: "Notifier" = kwargs["instance"]
+        to_delete: Notifier = kwargs["instance"]
         # Only tries to get instance if data is not empty
         if to_delete.data:
             try:

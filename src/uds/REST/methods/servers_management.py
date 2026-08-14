@@ -284,7 +284,7 @@ class ServersServers(DetailHandler[ServerItem]):
     def save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServerGroup)
         # Item is the uuid of the server to add
-        server: "models.Server | None" = None  # Avoid warning on reference before assignment
+        server: models.Server | None = None  # Avoid warning on reference before assignment
         mac: str = ""
         if item is None:
             # Create new, depending on server type

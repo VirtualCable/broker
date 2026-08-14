@@ -78,7 +78,7 @@ def detect_os(
 
     if res.browser == types.os.KnownBrowser.OTHER:
         # Try to detect browser from User-Agent
-        found: "None|typing.Match[str]" = None
+        found: None|typing.Match[str] = None
 
         browser_type = None
         for browser_type, rules in consts.os.BROWSER_RULES.items():

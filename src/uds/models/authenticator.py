@@ -169,7 +169,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
 
         Raises:
         """
-        user: "User"
+        user: User
         realname = realname or username
         user, _ = self.users.get_or_create(
             name=username,
@@ -210,7 +210,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         This is done so we can check non existing or non blocked users (state != Active, or do not exists)
         """
         try:
-            usr: "User" = self.users.get(name=username)
+            usr: User = self.users.get(name=username)
             return State.from_str(usr.state).is_active()
         except Exception:
             return not_allowed_return_value
@@ -299,7 +299,7 @@ class Authenticator(ManagedObjectModel, TaggingMixin):
         # pylint: disable=import-outside-toplevel
         from uds.core.util.permissions import clean
 
-        to_delete: "Authenticator" = kwargs["instance"]
+        to_delete: Authenticator = kwargs["instance"]
 
         logger.debug("Before delete auth %s", to_delete)
 

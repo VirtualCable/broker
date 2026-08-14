@@ -129,7 +129,7 @@ class InternalDBAuth(auths.Authenticator):
             # "Derived" users will belong to no group at all, because we will extract groups from "base" user
             # This way also, we protect from using forged "ip" + "username", because those will belong in fact to no group
             # and access will be denied
-            grps: list["models.Group"] = []
+            grps: list[models.Group] = []
 
             try:
                 usr = auth.users.get(name=username, state=State.ACTIVE)
@@ -169,7 +169,7 @@ class InternalDBAuth(auths.Authenticator):
         username = username.lower()
         auth_db = self.db_obj()
         try:
-            user: "models.User" = auth_db.users.get(name=username, state=State.ACTIVE)
+            user: models.User = auth_db.users.get(name=username, state=State.ACTIVE)
         except Exception:
             log_login(request, self.db_obj(), username, "Invalid user", as_error=True)
             return types.auth.FAILED_AUTH
@@ -189,7 +189,7 @@ class InternalDBAuth(auths.Authenticator):
     def get_groups(self, username: str, groups_manager: "auths.GroupsManager") -> None:
         auth_db = self.db_obj()
         try:
-            user: "models.User" = auth_db.users.get(name=username.lower(), state=State.ACTIVE)
+            user: models.User = auth_db.users.get(name=username.lower(), state=State.ACTIVE)
         except Exception:
             return
         grps = [g.name for g in user.groups.all()]

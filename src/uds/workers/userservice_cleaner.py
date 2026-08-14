@@ -95,7 +95,7 @@ class UserServiceRemover(Job):
 
         # We remove at once, but we limit the number of items to remove
         # Cache deployed_services that cannot remove to avoid checking them again
-        not_removable_deployed_services: typing.Set[int] = set()
+        not_removable_deployed_services: set[int] = set()
 
         for candidate in candidates:
             # if removal limit is reached, we stop

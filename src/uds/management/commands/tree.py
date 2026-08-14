@@ -63,7 +63,7 @@ def get_serialized_from_managed_object(
     callback: collections.abc.Callable[[models.ManagedObjectModel, dict[str, typing.Any]], None] | None = None,
 ) -> collections.abc.Mapping[str, typing.Any]:
     try:
-        obj: "Module" = mod.get_instance()
+        obj: Module = mod.get_instance()
         gui_types: dict[str, str] = {i.name: str(i.gui.type) for i in obj.gui_description(skip_init_gui=True)}
         values = obj.get_fields_as_dict()
         # Remove password fields

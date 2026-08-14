@@ -9,11 +9,11 @@ line-ending = "auto"
 docstring-code-line-length = "dynamic"
 
 [lint]
-ignore = []
+ignore = ["I001", "BLE001"]
 # "I001" for sort order fix
 # Use with a LOT OF CARE, some dependencies can break if reordered
 # Should not , but does :)
-fixable = ["F541", "F841"]
+fixable = ["F541", "F841", "UP037", "UP006"]
 
 [lint.isort]
 force-single-line = true

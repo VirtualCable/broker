@@ -56,7 +56,7 @@ def mfa(
         logger.warning("MFA: No user or user is already authorized")
         return HttpResponseRedirect(reverse("page.index"))  # No user, no MFA
 
-    store: "storage.Storage" = storage.Storage("mfs")
+    store: storage.Storage = storage.Storage("mfs")
 
     mfa_provider = request.user.manager.mfa  # Get MFA provider for user
     if not mfa_provider:

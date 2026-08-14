@@ -14,7 +14,7 @@ def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
     try:
         db_alias = schema_editor.connection.alias
         UserServiceProperty = apps.get_model("uds", "UserServiceProperty")
-        Properties: type["uds.models.Properties"] = apps.get_model("uds", "Properties")
+        Properties: type[uds.models.Properties] = apps.get_model("uds", "Properties")
         # For testing
         # from uds.models import UserServiceProperty, Properties
 
@@ -33,8 +33,8 @@ def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:
     try:
         db_alias = schema_editor.connection.alias
         UserServiceProperty = apps.get_model("uds", "UserServiceProperty")
-        Properties: type["uds.models.Properties"] = apps.get_model("uds", "Properties")
-        UserService: type["uds.models.UserService"] = apps.get_model("uds", "UserService")
+        Properties: type[uds.models.Properties] = apps.get_model("uds", "Properties")
+        UserService: type[uds.models.UserService] = apps.get_model("uds", "UserService")
         # For testing
         # from uds.models import UserServiceProperty, Properties, UserService
 

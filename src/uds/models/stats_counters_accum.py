@@ -142,8 +142,8 @@ class StatsCountersAccum(models.Model):
 
         # Assign values depending on interval type
         model: typing.Union[
-            type["StatsCountersAccum"],
-            type["StatsCounters"],
+            type[StatsCountersAccum],
+            type[StatsCounters],
         ]
         # If base interval (that menas an inteval that must be readed from stats_c),
         # we will use StatsCounters to create the accum
@@ -155,7 +155,7 @@ class StatsCountersAccum(models.Model):
         interval = interval_type.seconds()
 
         # Get last stamp in table for this interval_type
-        start_record: "StatsCounters|StatsCountersAccum|None" = (
+        start_record: StatsCounters|StatsCountersAccum|None = (
             StatsCountersAccum.objects.filter(interval_type=interval_type).order_by("stamp").last()
         )
 

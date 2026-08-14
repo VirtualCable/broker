@@ -694,7 +694,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: "UserService" = kwargs["instance"]
+        to_delete: UserService = kwargs["instance"]
         # Clear environment
         to_delete.get_environment().clean_related_data()
         # Ensure all sessions are closed (invoke with '' to close all sessions)

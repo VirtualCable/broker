@@ -134,7 +134,7 @@ class Service(ManagedObjectModel, TaggingMixin):
             # logger.debug('Got cached instance instead of deserializing a new one for {}'.format(self.name))
             return typing.cast("services.Service", self._cached_instance)
 
-        prov: "services.ServiceProvider" = self.provider.get_instance()
+        prov: services.ServiceProvider = self.provider.get_instance()
         service_type = prov.get_service_by_type(self.data_type)
 
         if service_type:
@@ -161,7 +161,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         """
         from uds.core import services  # pylint: disable=import-outside-toplevel,redefined-outer-name
 
-        prov: type["services.ServiceProvider"] = self.provider.get_type()
+        prov: type[services.ServiceProvider] = self.provider.get_type()
         return prov.get_service_by_type(self.data_type) or services.Service
 
     @property
@@ -216,7 +216,7 @@ class Service(ManagedObjectModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: "Service" = kwargs["instance"]
+        to_delete: Service = kwargs["instance"]
 
         logger.debug("Before delete service %s", to_delete)
         # Only tries to get instance if data is not empty

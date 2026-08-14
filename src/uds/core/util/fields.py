@@ -188,7 +188,7 @@ def get_certificates_from_field(field: ui.gui.TextField, field_value: str | None
     pem_certs_list = [cert + "-----END CERTIFICATE-----" for cert in pem_certs_list]
 
     # Convert to DER format
-    certs: list["Certificate"] = []  # PublicKey...
+    certs: list[Certificate] = []  # PublicKey...
     for pem_cert in pem_certs_list:
         certs.append(load_pem_x509_certificate(pem_cert.encode("ascii"), None))
 

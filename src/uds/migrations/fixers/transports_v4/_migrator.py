@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def tunnel_transport(
     apps: typing.Any,
     schema_editor: typing.Any,
-    TransportType: typing.Type[typing.Any],
+    TransportType: type[typing.Any],
     serverAttr: str,
     is_html_server: bool = False,
 ) -> None:
@@ -22,9 +22,9 @@ def tunnel_transport(
     """
     try:
         db_alias = schema_editor.connection.alias
-        Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
-        ServerGroup: "type[uds.models.ServerGroup]" = apps.get_model("uds", "ServerGroup")
-        Server: "type[uds.models.Server]" = apps.get_model("uds", "Server")
+        Transport: type[uds.models.Transport] = apps.get_model("uds", "Transport")
+        ServerGroup: type[uds.models.ServerGroup] = apps.get_model("uds", "ServerGroup")
+        Server: type[uds.models.Server] = apps.get_model("uds", "Server")
         # For testing
         # from uds.models import Transport, ServerGroup, Server
 
@@ -85,7 +85,7 @@ def tunnel_transport(
 def tunnel_transport_back(
     apps: typing.Any,
     schema_editor: typing.Any,
-    TransportType: typing.Type[typing.Any],
+    TransportType: type[typing.Any],
     serverAttr: str,
     is_html_server: bool,
 ) -> None:
@@ -94,8 +94,8 @@ def tunnel_transport_back(
     """
     try:
         db_alias = schema_editor.connection.alias
-        Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
-        ServerGroup: "type[uds.models.ServerGroup]" = apps.get_model("uds", "ServerGroup")
+        Transport: type[uds.models.Transport] = apps.get_model("uds", "Transport")
+        ServerGroup: type[uds.models.ServerGroup] = apps.get_model("uds", "ServerGroup")
         # For testing
         # from uds.models import Transport, ServerGroup
 

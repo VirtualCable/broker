@@ -175,7 +175,7 @@ class IPMachinesService(services.Service):
         user: "models.User",
         userservice_instance: "services.UserService",
     ) -> types.states.TaskState:
-        server: "models.Server" = models.Server.objects.get(uuid=assignable_id)
+        server: models.Server = models.Server.objects.get(uuid=assignable_id)
         ipmachine_instance: IPMachinesUserService = typing.cast(IPMachinesUserService, userservice_instance)
         if server.locked_until is None or server.locked_until < sql_now():
             self.lock_server(server.uuid)

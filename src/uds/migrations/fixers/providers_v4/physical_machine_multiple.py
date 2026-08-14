@@ -168,8 +168,8 @@ class IPMachinesService(services.Service):
             # print(f'Locking {server.ip} until {datetime.datetime.fromtimestamp(locked)}')
             server.lock(datetime.timedelta(seconds=locked - now.timestamp()))
 
-        Service: "type[uds.models.Service]" = apps.get_model("uds", "Service")
-        ServicePool: "type[uds.models.ServicePool]" = apps.get_model("uds", "ServicePool")
+        Service: type[uds.models.Service] = apps.get_model("uds", "Service")
+        ServicePool: type[uds.models.ServicePool] = apps.get_model("uds", "ServicePool")
 
         assigned_servers: set[str] = set()
         for servicepool in ServicePool.objects.filter(service=Service.objects.get(uuid=record.uuid)):

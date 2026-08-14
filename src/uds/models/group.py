@@ -118,7 +118,7 @@ class Group(UUIDModel):
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: "Group" = kwargs["instance"]
+        to_delete: Group = kwargs["instance"]
         # Todelete is a group
 
         # We invoke removeGroup. If this raises an exception, group will not

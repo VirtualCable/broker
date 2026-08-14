@@ -153,7 +153,7 @@ class PropertiesMixin:
 
     @staticmethod
     def _pre_delete_properties_signal(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
-        to_delete: "PropertiesMixin" = kwargs["instance"]
+        to_delete: PropertiesMixin = kwargs["instance"]
         # We are deleting the object, so we delete the properties too
         # Remember that properties is a generic table, does not have any cascade delete
         to_delete.properties.clear()

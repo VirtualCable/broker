@@ -252,7 +252,7 @@ def ticket_auth(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpR
         auth = Authenticator.objects.get(uuid=auth)
         # If user does not exists in DB, create it right now
         # Add user to groups, if they exists...
-        grps: list["models.Group"] = []
+        grps: list[models.Group] = []
         for g in groups:
             try:
                 grps.append(auth.groups.get(uuid=g))

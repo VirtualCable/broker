@@ -122,7 +122,7 @@ class LogObjectType(enum.IntEnum):
         from uds import models
 
         # Dict for translations
-        _MODEL_TO_TYPE: typing.Final[collections.abc.Mapping[type["Model"], "LogObjectType"]] = {
+        _MODEL_TO_TYPE: typing.Final[collections.abc.Mapping[type[Model], LogObjectType]] = {
             models.UserService: LogObjectType.USERSERVICE,
             models.ServicePoolPublication: LogObjectType.PUBLICATION,
             models.ServicePool: LogObjectType.SERVICEPOOL,

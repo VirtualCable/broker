@@ -94,7 +94,7 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
 
         :note: If destroy raises an exception, the deletion is not taken.
         """
-        to_delete: "MFA" = kwargs["instance"]
+        to_delete: MFA = kwargs["instance"]
         # Only tries to get instance if data is not empty
         if to_delete.data:
             try:

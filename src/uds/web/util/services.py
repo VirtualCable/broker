@@ -138,7 +138,7 @@ def get_services_info_dict(
     nets = ""
     valid_transports = ""
 
-    os_type: "types.os.KnownOS" = request.os.os
+    os_type: types.os.KnownOS = request.os.os
     logger.debug("OS: %s", os_type)
 
     user_favorites: set[str] = request.user.get_favorites()

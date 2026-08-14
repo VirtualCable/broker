@@ -295,7 +295,7 @@ class StatsManager(metaclass=singleton.Singleton):
 
         def get_kwarg(fld: str) -> str:
             SENTINEL: typing.Final = object()
-            val: "str|None|object" = kwargs.get(fld, SENTINEL)
+            val: str|None|object = kwargs.get(fld, SENTINEL)
             if val is SENTINEL and fld in _FLDS_EQUIV:
                 for i in _FLDS_EQUIV[fld]:
                     val = kwargs.get(i, SENTINEL)

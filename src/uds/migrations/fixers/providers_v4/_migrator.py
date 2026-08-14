@@ -71,15 +71,15 @@ def migrate(
     server_group_prefix: str,
 ) -> None:
     try:
-        Table: type["uds.models.ManagedObjectModel"] = apps.get_model("uds", model)
-        ServerGroup: "type[uds.models.ServerGroup]" = apps.get_model("uds", "ServerGroup")
+        Table: type[uds.models.ManagedObjectModel] = apps.get_model("uds", model)
+        ServerGroup: type[uds.models.ServerGroup] = apps.get_model("uds", "ServerGroup")
         # Server: 'type[uds.models.Server]' = apps.get_model('uds', 'Server')
         # For testing
         # from uds.models import Provider, Server, ServerGroup
 
         for record in Table.objects.filter(data_type=data_type.type_type):  # pyright: ignore
             # Extract data
-            obj: "TypeTestingClass" = data_type(_get_environment(record), None)
+            obj: TypeTestingClass = data_type(_get_environment(record), None)
             obj.deserialize(record.data)
 
             servers: list[str] = getattr(obj, ip_list_attr).value
@@ -167,8 +167,8 @@ def rollback(
     "Un-Migrates" to an old one
     """
     try:
-        Table: type["uds.models.ManagedObjectModel"] = apps.get_model("uds", model)
-        ServerGroup: "type[uds.models.ServerGroup]" = apps.get_model("uds", "ServerGroup")
+        Table: type[uds.models.ManagedObjectModel] = apps.get_model("uds", model)
+        ServerGroup: type[uds.models.ServerGroup] = apps.get_model("uds", "ServerGroup")
         # For testing
         # from uds.models import Transport, ServerGroup
 

@@ -104,7 +104,7 @@ class Scheduler(models.Model):
         """
         Used to remove environment for sheduled task
         """
-        to_delete: "Scheduler" = kwargs["instance"]
+        to_delete: Scheduler = kwargs["instance"]
         logger.debug("Deleting sheduled task %s", to_delete)
         to_delete.get_environment().clean_related_data()
 

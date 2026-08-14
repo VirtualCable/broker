@@ -214,7 +214,7 @@ class Network(UUIDModel, TaggingMixin):
     def pre_delete(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: "Network" = kwargs["instance"]
+        to_delete: Network = kwargs["instance"]
 
         logger.debug("Before delete auth %s", to_delete)
 

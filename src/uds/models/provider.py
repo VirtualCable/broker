@@ -84,7 +84,7 @@ class Provider(ManagedObjectModel, TaggingMixin):
 
     @typing.override
     def get_instance(self, values: dict[str, str] | None = None) -> "ServiceProvider":
-        prov: "ServiceProvider" = typing.cast("ServiceProvider", super().get_instance(values=values))
+        prov: ServiceProvider = typing.cast("ServiceProvider", super().get_instance(values=values))
         return prov
 
     def is_in_maintenance(self) -> bool:
@@ -110,7 +110,7 @@ class Provider(ManagedObjectModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: "Provider" = kwargs["instance"]
+        to_delete: Provider = kwargs["instance"]
         logger.debug("Before delete service provider %s", to_delete)
 
         # Only tries to get instance if data is not empty

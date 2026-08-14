@@ -168,7 +168,7 @@ class NewHTML5RDSTransport(transports.Transport):
 def _migrate_rdp(apps: typing.Any, schema_editor: typing.Any) -> None:
     """Migrate HTML5RDP transports: field-by-field conversion from old to new layout."""
     db_alias = schema_editor.connection.alias
-    Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
+    Transport: type[uds.models.Transport] = apps.get_model("uds", "Transport")
 
     for t in Transport.objects.using(db_alias).filter(data_type=OldHTML5RDPTransport.type_type):
         try:
@@ -218,7 +218,7 @@ def _migrate_rdp(apps: typing.Any, schema_editor: typing.Any) -> None:
 def _migrate_ssh(apps: typing.Any, schema_editor: typing.Any) -> None:
     """Migrate HTML5SSH transports: field-by-field conversion from old to new layout."""
     db_alias = schema_editor.connection.alias
-    Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
+    Transport: type[uds.models.Transport] = apps.get_model("uds", "Transport")
 
     for t in Transport.objects.using(db_alias).filter(data_type=OldHTML5SSHTransport.type_type):
         try:
@@ -251,7 +251,7 @@ def _migrate_ssh(apps: typing.Any, schema_editor: typing.Any) -> None:
 def _migrate_rds(apps: typing.Any, schema_editor: typing.Any) -> None:
     """Migrate HTML5RDS transports: field-by-field conversion from old to new layout."""
     db_alias = schema_editor.connection.alias
-    Transport: "type[uds.models.Transport]" = apps.get_model("uds", "Transport")
+    Transport: type[uds.models.Transport] = apps.get_model("uds", "Transport")
 
     for t in Transport.objects.using(db_alias).filter(data_type=OldHTML5RDSTransport.type_type):
         try:

@@ -97,7 +97,7 @@ def source_field(
     data_source = data_source.split(".")[0]
     # logger.debug('SOURCE: %s', data_source)
 
-    field_type: typing.Type[gui.ChoiceField | gui.MultiChoiceField] = (
+    field_type: type[gui.ChoiceField | gui.MultiChoiceField] = (
         gui.ChoiceField if not multiple else gui.MultiChoiceField
     )
 

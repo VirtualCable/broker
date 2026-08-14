@@ -121,7 +121,7 @@ class CalendarChecker:
     def _update_events(
         self, check_from: datetime.datetime, start_event: bool = True
     ) -> typing.Optional[datetime.datetime]:
-        next_event: "datetime.datetime|None" = None
+        next_event: datetime.datetime|None = None
         event: typing.Optional[datetime.datetime] = None
         for rule in self.calendar.rules.all():
             # logger.debug('RULE: start = {}, checkFrom = {}, end'.format(rule.start.date(), checkFrom.date()))

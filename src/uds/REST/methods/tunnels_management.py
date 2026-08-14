@@ -251,7 +251,7 @@ class Tunnels(ModelHandler[TunnelItem]):
         parent = ensure.is_instance(parent, models.ServerGroup)
         self.check_access(parent, uds.core.types.permissions.PermissionType.MANAGEMENT)
 
-        server: "models.Server | None" = None  # Avoid warning on reference before assignment
+        server: models.Server | None = None  # Avoid warning on reference before assignment
 
         item = self._args[-1]
 

@@ -169,7 +169,7 @@ class Transport(ManagedObjectModel, TaggingMixin):
         """
         from uds.core.util.permissions import clean  # pylint: disable=import-outside-toplevel
 
-        to_delete: "Transport" = kwargs["instance"]
+        to_delete: Transport = kwargs["instance"]
 
         logger.debug("Before delete transport %s", to_delete)
         # Only tries to get instance if data is not empty
