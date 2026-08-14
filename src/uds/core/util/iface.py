@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2014-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -30,18 +29,20 @@
 """
 
 import array
+import collections.abc
 import fcntl
+import logging
 import platform
 import socket
 import struct
-import typing
 
 from uds.core import consts
 from uds.core import types
 
+logger = logging.getLogger(__name__)
 
-def list_ifaces() -> typing.Iterator[types.net.Iface]:
-    def _get_iface_mac_addr(ifname: str) -> typing.Optional[str]:
+def list_ifaces() -> collections.abc.Iterator[types.net.Iface]:
+    def _get_iface_mac_addr(ifname: str) -> str | None:
         """
         Returns the mac address of an interface
         Mac is returned as unicode utf-8 encoded
@@ -49,12 +50,13 @@ def list_ifaces() -> typing.Iterator[types.net.Iface]:
         ifnameBytes = ifname.encode("utf-8")
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            info = bytearray(fcntl.ioctl(s.fileno(), 0x8927, struct.pack(str("256s"), ifnameBytes[:15])))
-            return str("".join(["%02x:" % char for char in info[18:24]])[:-1]).upper()
-        except Exception:
+            info = bytearray(fcntl.ioctl(s.fileno(), 0x8927, struct.pack("256s", ifnameBytes[:15])))
+            return "".join([f"{char:02x}:" for char in info[18:24]])[:-1].upper()
+        except Exception as e:
+            logger.warning("Error occurred while fetching MAC address for interface %s: %s", ifname, e)
             return None
 
-    def _get_iface_ip_addr(ifname: str) -> typing.Optional[str]:
+    def _get_iface_ip_addr(ifname: str) -> str | None:
         """
         Returns the ip address of an interface
         Ip is returned as unicode utf-8 encoded
@@ -62,16 +64,16 @@ def list_ifaces() -> typing.Iterator[types.net.Iface]:
         ifnameBytes = ifname.encode("utf-8")
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            return str(
-                socket.inet_ntoa(
-                    fcntl.ioctl(
-                        s.fileno(),
-                        0x8915,  # SIOCGIFADDR
-                        struct.pack(str("256s"), ifnameBytes[:15]),
-                    )[20:24]
-                )
+            return socket.inet_ntoa(
+                fcntl.ioctl(
+                    s.fileno(),
+                    0x8915,  # SIOCGIFADDR
+                    struct.pack(str("256s"), ifnameBytes[:15]),
+                )[20:24]
             )
-        except Exception:
+
+        except Exception as e:
+            logger.warning("Error occurred while fetching IP address for interface %s: %s", ifname, e)
             return None
 
     def _list_ifaces() -> list[str]:
@@ -85,7 +87,7 @@ def list_ifaces() -> typing.Iterator[types.net.Iface]:
         elif platform.architecture()[0] == "64bit":
             offset, length = 16, 40
         else:
-            raise OSError("Unknown arquitecture {0}".format(platform.architecture()[0]))
+            raise OSError(f"Unknown arquitecture {platform.architecture()[0]}")
 
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         names = array.array(str("B"), b"\0" * space)
@@ -109,7 +111,7 @@ def list_ifaces() -> typing.Iterator[types.net.Iface]:
             yield types.net.Iface(name=ifname, mac=mac, ip=ip)
 
 
-def get_first_iface() -> typing.Optional[types.net.Iface]:
+def get_first_iface() -> types.net.Iface | None:
     """
     Returns the first interface found, or None if no interface is found.
     """

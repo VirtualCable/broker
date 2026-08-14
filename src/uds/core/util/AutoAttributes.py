@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 # Allow old serialized autoattributes to load correctly (register path...)
 

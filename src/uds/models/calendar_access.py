@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 # Model based on https://github.com/llazzaro/django-scheduler
 #

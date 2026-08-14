@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2016-2023 Virtual Cable S.L.
 # All rights reserved.

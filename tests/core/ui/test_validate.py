@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tests for InputField.validate() and related fixes (audit 2026-07-23).
 #

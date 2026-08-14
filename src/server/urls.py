@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Url patterns for UDS project (Django)
 """

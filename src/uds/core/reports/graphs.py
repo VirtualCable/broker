@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #
 # Copyright (c) 2018-2021 Virtual Cable S.L.
@@ -26,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# -*- coding: utf-8 -*-
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
