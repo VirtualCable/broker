@@ -55,7 +55,7 @@ fixable = [
     "PLR2044",
 ]
 
-[per-file-ignores]
+[lint.per-file-ignores]
 # This is an old compat module, so pickle on those old items can still work
 "src/uds/core/util/AutoAttributes.py" = ["N999"]
 

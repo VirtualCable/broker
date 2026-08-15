@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -497,11 +496,14 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 logger.debug("Userservice %s already removing or removed", userservice.name)
                 return
 
-            if userservice.is_usable() is False and State.from_str(userservice.state).is_removable() is False:
-                if not forced:
-                    raise OperationException(
-                        _("Can't remove a non active element") + ": " + userservice.name + ", " + userservice.state
-                    )
+            if (
+                userservice.is_usable() is False
+                and State.from_str(userservice.state).is_removable() is False
+                and not forced
+            ):
+                raise OperationException(
+                    _("Can't remove a non active element") + ": " + userservice.name + ", " + userservice.state
+                )
             userservice.set_state(State.REMOVING)
             logger.debug("***** The state now is %s *****", State.from_str(userservice.state).localized)
             userservice.set_in_use(False)  # For accounting, ensure that it is not in use right now
@@ -730,7 +732,13 @@ class UserServiceManager(metaclass=singleton.Singleton):
         """
         removing = self.count_userservices_in_states_for_provider(service_pool.service.provider, [State.REMOVING])
         service_instance = service_pool.service.get_instance()
-        return not (removing >= service_instance.provider().get_concurrent_removal_limit() and service_instance.provider().get_ignore_limits() is False or service_pool.service.provider.is_in_maintenance() or service_pool.is_restrained() or not service_instance.is_available())
+        return not (
+            removing >= service_instance.provider().get_concurrent_removal_limit()
+            and service_instance.provider().get_ignore_limits() is False
+            or service_pool.service.provider.is_in_maintenance()
+            or service_pool.is_restrained()
+            or not service_instance.is_available()
+        )
 
     def can_grow_service_pool(self, service_pool: ServicePool) -> bool:
         """
@@ -740,7 +748,11 @@ class UserServiceManager(metaclass=singleton.Singleton):
             service_pool.service.provider, [State.PREPARING]
         )
         service_instance = service_pool.service.get_instance()
-        return not (self.maximum_user_services_reached(service_pool.service) or number_of_preparing >= service_instance.provider().get_concurrent_creation_limit() and service_instance.provider().get_ignore_limits() is False)
+        return not (
+            self.maximum_user_services_reached(service_pool.service)
+            or number_of_preparing >= service_instance.provider().get_concurrent_creation_limit()
+            and service_instance.provider().get_ignore_limits() is False
+        )
 
     def is_ready(self, user_service: UserService) -> bool:
         user_service.refresh_from_db()
@@ -1233,10 +1245,12 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         except Exception:  # No service already assigned, lets find a suitable one
             for pool in pools:  # Pools are already sorted, and "full" pools are filtered out
-                if meta.ha_policy == types.pools.HighAvailabilityPolicy.ENABLED:
+                if (
+                    meta.ha_policy == types.pools.HighAvailabilityPolicy.ENABLED
+                    and pool.service.get_instance().is_available() is False
+                ):
                     # If not available, skip it
-                    if pool.service.get_instance().is_available() is False:
-                        continue
+                    continue
 
                 # Ensure transport is available for the OS
                 usable = _ensure_transport(pool)

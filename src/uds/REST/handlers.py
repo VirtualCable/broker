@@ -194,17 +194,18 @@ class Handler(abc.ABC):
             # because the post-init guard below inspects ``self._user.state``.
             self._user = User()  # Empty user for non authenticated handlers
             self._user.state = types.states.State.ACTIVE  # Ensure it's active
-            if self.SK_TYPE is not None:  # Secret key handler, so we need to validate the token
-                # TEMPORAL (uds-5.x): if no ``sk-`` token was provided, we do NOT
-                # authenticate here.  Legacy clients still send the token in the
-                # body and rely on the operation method doing the lookup; closing
-                # this gap is the responsibility of the final release that
-                # finishes the Bearer migration.
-                if self._sk_token:
-                    # Validate the token against the server secrets
-                    # Get type
-                    if self.SK_TYPE and not Server.validate_token(self._sk_token, server_type=self.SK_TYPE):
-                        raise AccessDenied()
+            # Secret key handler, so we need to validate the token.
+            # TEMPORAL (uds-5.x): if no ``sk-`` token was provided, we do NOT
+            # authenticate here.  Legacy clients still send the token in the
+            # body and rely on the operation method doing the lookup; closing
+            # this gap is the responsibility of the final release that
+            # finishes the Bearer migration.
+            if (
+                self.SK_TYPE
+                and self._sk_token
+                and not Server.validate_token(self._sk_token, server_type=self.SK_TYPE)
+            ):
+                raise AccessDenied()
 
         if self._user and self._user.state != types.states.State.ACTIVE:
             raise AccessDenied()
@@ -558,11 +559,10 @@ class Handler(abc.ABC):
         Returns:
             The sorted queryset.
         """
-        if not self.odata.orderby:
+        if not self.odata.orderby and not qs.model._meta.ordering:
             # Try to sort by primary if not alrady has another in ordering meta
             # to have stable order
-            if not qs.model._meta.ordering:
-                return qs.order_by("pk")
+            return qs.order_by("pk")
         return qs.order_by(*self.odata.orderby)
 
     @typing.final

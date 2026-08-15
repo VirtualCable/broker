@@ -78,7 +78,7 @@ class StatsManager(metaclass=singleton.Singleton):
 
     def _do_maintanance(
         self,
-        model: type[typing.Union["StatsCounters", "StatsEvents", "StatsCountersAccum"]],
+        model: type["StatsCounters | StatsEvents | StatsCountersAccum"],
     ) -> None:
         min_time = time.mktime((sql_now() - datetime.timedelta(days=GlobalConfig.STATS_DURATION.as_int())).timetuple())
         model.objects.filter(stamp__lt=min_time).delete()
@@ -181,7 +181,7 @@ class StatsManager(metaclass=singleton.Singleton):
         since: datetime.datetime | int | None = None,
         to: datetime.datetime | int | None = None,
         points: int | None = None,
-    ) -> typing.Generator[types.stats.AccumStat, None, None]:
+    ) -> collections.abc.Generator[types.stats.AccumStat, None, None]:
         if to is None:
             to = sql_now()
         elif isinstance(to, int):
@@ -197,10 +197,9 @@ class StatsManager(metaclass=singleton.Singleton):
             since = timezone.make_aware(since)
 
         # If points has any value, ensure since..to is points long
-        if points is not None:
+        if points is not None and (to - since).seconds < interval_type.seconds() * points:
             # Ensure since is at least points long before to
-            if (to - since).seconds < interval_type.seconds() * points:
-                since = to - datetime.timedelta(seconds=interval_type.seconds() * points)
+            since = to - datetime.timedelta(seconds=interval_type.seconds() * points)
 
         since = int(since.replace(minute=0, second=0, microsecond=0).timestamp())
         to = int(to.replace(minute=0, second=0, microsecond=0).timestamp())
@@ -295,7 +294,7 @@ class StatsManager(metaclass=singleton.Singleton):
 
         def get_kwarg(fld: str) -> str:
             SENTINEL: typing.Final = object()
-            val: str|None|object = kwargs.get(fld, SENTINEL)
+            val: str | None | object = kwargs.get(fld, SENTINEL)
             if val is SENTINEL and fld in _FLDS_EQUIV:
                 for i in _FLDS_EQUIV[fld]:
                     val = kwargs.get(i, SENTINEL)

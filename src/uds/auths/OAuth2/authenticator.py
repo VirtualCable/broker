@@ -198,12 +198,11 @@ class OAuth2Authenticator(auths.Authenticator):
                 raise exceptions.ui.ValidationError(gettext('Token endpoint is required for "code" response types'))
             # infoEndpoint will not be necesary if the response of tokenEndpoint contains the user info
 
-        if self.response_type.value == "openid+token_id":
+        if self.response_type.value == "openid+token_id" and self.public_key.value.strip() == "":
             # Ensure we have a public key
-            if self.public_key.value.strip() == "":
-                raise exceptions.ui.ValidationError(
-                    gettext('Public key is required for "openid+token_id" response type')
-                )
+            raise exceptions.ui.ValidationError(
+                gettext('Public key is required for "openid+token_id" response type')
+            )
 
         if self.redirection_endpoint.value.strip() == "" and self.db_obj() and "_request" in values:
             request: HttpRequest = values["_request"]

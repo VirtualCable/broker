@@ -320,11 +320,10 @@ class MFA(Module):
         data = self._get_data(request, userid)
         validity = validity if validity is not None else 0
         try:
-            if data and validity:
-                # if we have a stored code, check if it's still valid
-                if data[0] + datetime.timedelta(seconds=validity) > sql_now():
-                    # if it's still valid, just return without sending a new one
-                    return MFA.RESULT.OK
+            if data and validity and data[0] + datetime.timedelta(seconds=validity) > sql_now():
+                # if we have a stored code, check if it's still valid;
+                # if it's still valid, just return without sending a new one
+                return MFA.RESULT.OK
         except Exception:
             # if we have a problem, just remove the stored code
             self._remove_data(request, userid)
