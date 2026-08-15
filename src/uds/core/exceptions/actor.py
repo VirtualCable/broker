@@ -45,7 +45,6 @@ class NoActorComms(ActorException):
     Exception used to signal that the actor user service does not have comms url
     """
 
-    pass
 
 
 class OldActorVersion(ActorException):

@@ -425,7 +425,6 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         This method is called when the service is doing a custom operation
         """
-        pass
 
     # ERROR, FINISH and UNKNOWN are not here, as they are final states not needing to be executed
 

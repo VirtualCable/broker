@@ -609,7 +609,6 @@ class Authenticator(Module):
             says that user can't be created manually
 
         """
-        pass
 
     def modify_user(self, user_data: dict[str, str]) -> None:
         """

@@ -6,7 +6,6 @@ class Error(UDSException):
     Base exception for this module
     """
 
-    pass
 
 
 class RetryableError(Error):

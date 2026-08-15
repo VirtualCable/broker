@@ -38,4 +38,3 @@ class ValidationError(UDSException):
     Exception used to indicate that the params assigned are invalid
     """
 
-    pass

@@ -320,7 +320,6 @@ class UserService(Environmentable, Serializable, abc.ABC):
         This is an utility method, invoked by some os manager to notify what they thinks is the ip for this service.
         If you assign the service IP by your own methods, do not override this
         """
-        pass
 
     def set_ready(self) -> types.states.TaskState:
         """
@@ -471,7 +470,6 @@ class UserService(Environmentable, Serializable, abc.ABC):
                not needed, but can be provided (default implementation of base class does
                nothing)
         """
-        pass
 
     def move_to_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         """
@@ -516,7 +514,6 @@ class UserService(Environmentable, Serializable, abc.ABC):
 
         The user provided is just an string, that is provided by actors.
         """
-        pass
 
     def user_logged_out(self, username: str) -> None:
         """
@@ -532,7 +529,6 @@ class UserService(Environmentable, Serializable, abc.ABC):
 
         The user provided is just an string, that is provided by actor.
         """
-        pass
 
     def actor_initialization(self, request_params: dict[str, typing.Any]) -> bool:
         """

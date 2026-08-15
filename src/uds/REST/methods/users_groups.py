@@ -608,7 +608,7 @@ class Groups(DetailHandler[GroupItem]):
             groups = get_groups_from_metagroup((group,))
             users_set: set[User] | None = None
             for g in groups:
-                current_set: set[User] = set((i for i in g.users.all()))
+                current_set: set[User] = set(g.users.all())
                 if users_set is None:
                     users_set = current_set
                 else:

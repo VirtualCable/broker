@@ -206,7 +206,6 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         Returns:
             Nothing
         """
-        pass
 
     @abc.abstractmethod
     def db_obj(self) -> "UUIDModel":

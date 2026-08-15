@@ -89,7 +89,6 @@ class OSManager(Module):
 
         Default implementation does nothing
         """
-        pass
 
     def release(self, userservice: "models.UserService") -> None:
         """
@@ -97,7 +96,6 @@ class OSManager(Module):
         Only invoked for services that reach the state "removed"
         @return nothing
         """
-        pass
 
     @typing.override
     def db_obj(self) -> "models.OSManager":
@@ -180,7 +178,6 @@ class OSManager(Module):
         This will be invoked for every assigned and unused user service that has been in this state at least 1/2 of Globalconfig.CHECK_UNUSED_TIME
         This function can update userService values. Normal operation will be remove machines if this state is not valid
         """
-        pass
 
     def is_removable_on_logout(self, userservice: "models.UserService") -> bool:
         """

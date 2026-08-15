@@ -93,7 +93,6 @@ class Notifier(Module):
 
         Default implementation does nothing
         """
-        pass
 
     @typing.override
     def db_obj(self) -> "models.Notifier":

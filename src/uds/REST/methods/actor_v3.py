@@ -80,13 +80,13 @@ def get_list_of_ids(handler: "Handler") -> list[str]:
 
         Returns the list of ids, first returns the macs (alphabetically ordered) and then the ips (alphabetically ordered)
     """
-    set_of_ids = set(
+    set_of_ids = {
         i.lower()
         for i in typing.cast(
             list[str],
             ["1" + x["mac"] for x in handler._params["id"]] + ["0" + x["ip"] for x in handler._params["id"]][:10],
         )
-    )
+    }
 
     return list(
         map(

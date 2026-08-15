@@ -37,7 +37,6 @@ class HandlerError(UDSException):
     Generic error for a REST handler
     """
 
-    pass
 
 
 class NotFound(HandlerError):
@@ -45,7 +44,6 @@ class NotFound(HandlerError):
     Item not found error
     """
 
-    pass
 
 
 class AccessDenied(HandlerError):
@@ -53,7 +51,6 @@ class AccessDenied(HandlerError):
     Access denied error
     """
 
-    pass
 
 
 class RequestError(HandlerError):
@@ -61,7 +58,6 @@ class RequestError(HandlerError):
     Request is invalid error
     """
 
-    pass
 
 
 class ResponseError(HandlerError):
@@ -69,7 +65,6 @@ class ResponseError(HandlerError):
     Generic response error
     """
 
-    pass
 
 
 class NotSupportedError(RequestError):
@@ -77,7 +72,6 @@ class NotSupportedError(RequestError):
     Some elements do not support some operations (as searching over an authenticator that does not supports it)
     """
 
-    pass
 
 
 # Exception to "rethrow" on save error
@@ -86,7 +80,6 @@ class SaveException(HandlerError):
     Exception thrown if couldn't save
     """
 
-    pass
 
 
 class BlockAccess(UDSException):
@@ -94,7 +87,6 @@ class BlockAccess(UDSException):
     Exception used to signal that the access to a resource is blocked
     """
 
-    pass
 
 
 class PreconditionFailed(HandlerError):
@@ -102,7 +94,6 @@ class PreconditionFailed(HandlerError):
     violated (RFC 7232, HTTP 412 Precondition Failed).
     """
 
-    pass
 
 
 class GoneError(HandlerError):
@@ -111,7 +102,6 @@ class GoneError(HandlerError):
     Used when a legacy endpoint is accessed in NO_COMPAT mode.
     """
 
-    pass
 
 
 class ValidationError(RequestError):
@@ -119,7 +109,6 @@ class ValidationError(RequestError):
     Exception raised for validation errors
     """
 
-    pass
 
 
 class InvalidMethodError(RequestError):
@@ -127,4 +116,3 @@ class InvalidMethodError(RequestError):
     Exception raised for invalid HTTP methods
     """
 
-    pass
