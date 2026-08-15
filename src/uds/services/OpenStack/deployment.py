@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -105,16 +104,16 @@ class OpenStackLiveUserService(DynamicUserService):
     # _queue: list[int] = []
 
     # Custom queue
-    _create_queue = [
+    _create_queue: typing.ClassVar[list[types.services.Operation]] = [
         types.services.Operation.CREATE,
         types.services.Operation.FINISH,
     ]
-    _create_queue_l1_cache = [
+    _create_queue_l1_cache: typing.ClassVar[list[types.services.Operation]] = [
         types.services.Operation.CREATE,
         types.services.Operation.FINISH,
     ]
     # Note that openstack does not implements L2 cache
-    _create_queue_l2_cache = [
+    _create_queue_l2_cache: typing.ClassVar[list[types.services.Operation]] = [
         types.services.Operation.CREATE,
         types.services.Operation.WAIT,
         types.services.Operation.STOP,
@@ -158,8 +157,6 @@ class OpenStackLiveUserService(DynamicUserService):
         self._vmid = self.service().deploy_from_template(name, template_id).id
         if not self._vmid:
             raise Exception("Can't create machine")
-
-        return None
 
     # Check methods
     @typing.override

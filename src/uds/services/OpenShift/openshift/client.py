@@ -191,7 +191,7 @@ class OpenshiftClient:
         except requests.ConnectionError as e:
             raise exceptions.OpenshiftConnectionError(str(e))
         except requests.RequestException as e:
-            raise exceptions.OpenshiftError(f"Error during request: {str(e)}")
+            raise exceptions.OpenshiftError(f"Error during request: {e!s}")
         logger.debug("Request result to %s: %s -- %s", path, response.status_code, response.content[:64])
 
         if not response.ok:
@@ -218,7 +218,7 @@ class OpenshiftClient:
         try:
             data = response.json()
         except Exception as e:
-            error_message = f"Error parsing JSON response from {method.upper()} {path}: {str(e)}"
+            error_message = f"Error parsing JSON response from {method.upper()} {path}: {e!s}"
             logger.debug(error_message)
             raise exceptions.OpenshiftError(error_message)
 
@@ -410,9 +410,9 @@ class OpenshiftClient:
         }
         try:
             self.do_request("POST", path, data=body)
-            logging.info(f"DataVolume '{cloned_pvc_name}' created successfully")
+            logger.info(f"DataVolume '{cloned_pvc_name}' created successfully")
         except Exception as e:
-            logging.error(f"Failed to create DataVolume: {e}")
+            logger.error("Failed to create DataVolume: %s", e)
             raise exceptions.OpenshiftError(f"Failed to create DataVolume: {e}")
 
     def create_vm_from_pvc(
@@ -495,10 +495,10 @@ class OpenshiftClient:
             path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{vm_name}"
             self.do_request("DELETE", path)
         except oshift_exceptions.OpenshiftNotFoundError:
-            logging.info(f"VM {vm_name} not found when deleting, treating as already deleted.")
+            logger.info(f"VM {vm_name} not found when deleting, treating as already deleted.")
             return True
         except Exception as e:
-            logging.error(f"Error deleting VM: {e}")
+            logger.error(f"Error deleting VM: {e}")
             return False
 
         # Delete persistent volume
@@ -535,17 +535,17 @@ class OpenshiftClient:
         try:
             vm_obj = self.do_request("GET", path)
         except Exception as e:
-            logging.error(f"Could not get source VM: {e}")
+            logger.error(f"Could not get source VM: {e}")
             return False
 
         # Update runStrategy to Always
         vm_obj["spec"]["runStrategy"] = "Always"
         try:
             self.do_request("PUT", path, data=vm_obj)
-            logging.info(f"VM {vm_name} will be started.")
+            logger.info(f"VM {vm_name} will be started.")
             return True
         except Exception as e:
-            logging.info(f"Error starting VM {vm_name}: {e}")
+            logger.info(f"Error starting VM {vm_name}: {e}")
             return False
 
     def stop_vm(self, vm_name: str) -> bool:
@@ -558,17 +558,17 @@ class OpenshiftClient:
         try:
             vm_obj = self.do_request("GET", path)
         except Exception as e:
-            logging.error(f"Could not get source VM: {e}")
+            logger.error(f"Could not get source VM: {e}")
             return False
 
         # Update runStrategy to Halted
         vm_obj["spec"]["runStrategy"] = "Halted"
         try:
             self.do_request("PUT", path, data=vm_obj)
-            logging.info(f"VM {vm_name} will be stopped.")
+            logger.info(f"VM {vm_name} will be stopped.")
             return True
         except Exception as e:
-            logging.info(f"Error starting VM {vm_name}: {e}")
+            logger.info(f"Error starting VM {vm_name}: {e}")
             return False
 
     def copy_vm_same_size(self, source_vm_name: str, new_vm_name: str, storage_class: str) -> None:

@@ -191,7 +191,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
 
                 if found_vmid:
                     assigned.add(found_vmid)
-        except Exception as e:  #
+        except Exception as e:
             logger.debug("Error getting machine: %s", e)
             raise Exception("No machine available")
 

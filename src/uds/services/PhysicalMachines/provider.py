@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -44,9 +43,16 @@ from uds.core.ui.user_interface import gui
 from uds.core.util import net
 from uds.core.util import resolver
 
+from .service_multi import IPMachinesService  # pylint: disable=import-outside-toplevel
+from .service_single import IPSingleMachineService  # pylint: disable=import-outside-toplevel
+
+if typing.TYPE_CHECKING:
+    from uds.core.services import Service
+
+
 logger = logging.getLogger(__name__)
 
-VALID_CONFIG_SECTIONS = set(("wol",))
+VALID_CONFIG_SECTIONS: typing.Final[set[str]] = {"wol"}
 
 
 class PhysicalMachinesProvider(services.ServiceProvider):
@@ -55,6 +61,8 @@ class PhysicalMachinesProvider(services.ServiceProvider):
     type_type = "PhysicalMachinesServiceProvider"
     type_description = _("Provides connection to machines by IP")
     icon_file = "provider.png"
+
+    offers: typing.ClassVar[list[type["Service"]]] = [IPMachinesService, IPSingleMachineService]
 
     # No extra data needed
     config = gui.TextField(
@@ -92,7 +100,9 @@ class PhysicalMachinesProvider(services.ServiceProvider):
 
             for section in config.sections():
                 if section not in VALID_CONFIG_SECTIONS:
-                    raise exceptions.ui.ValidationError(_("Invalid section in advanced configuration: ") + section)
+                    raise exceptions.ui.ValidationError(
+                        _("Invalid section in advanced configuration: ") + section
+                    )
 
             # Sections are valid, check values
             # wol section
@@ -106,11 +116,6 @@ class PhysicalMachinesProvider(services.ServiceProvider):
                 # Now check value is an url
                 if config["wol"][key][:4] != "http":
                     raise exceptions.ui.ValidationError(_("Invalid url in advanced configuration: ") + key)
-
-    from .service_multi import IPMachinesService  # pylint: disable=import-outside-toplevel
-    from .service_single import IPSingleMachineService  # pylint: disable=import-outside-toplevel
-
-    offers = [IPMachinesService, IPSingleMachineService]
 
     def wake_on_lan_endpoint(self, host: str, mac: str) -> str:
         """Tries to get WOL server for indicated IP

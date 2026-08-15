@@ -378,8 +378,12 @@ class RegionInfo:
         if "name" in d:
             name = d["name"]
         # Mayby it has a locales dict, if this is the case and it contains en-us (case insensitive), we will use it
-        if "locales" in d and isinstance(d["locales"], dict):
-            if "en-us" in d["locales"] and isinstance(d["locales"]["en-us"], str):
+        if (
+            "locales" in d
+            and isinstance(d["locales"], dict)
+            and "en-us" in d["locales"]
+            and isinstance(d["locales"]["en-us"], str)
+        ):
                 name = d["locales"]["en-us"]
         return RegionInfo(
             id=d["id"],

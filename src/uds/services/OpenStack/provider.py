@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -52,6 +51,8 @@ from .service_fixed import OpenStackServiceFixed
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core import environment
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ class OpenStackProvider(ServiceProvider):
     """
 
     # : What kind of services we offer, this are classes inherited from Service
-    offers = [OpenStackLiveService, OpenStackServiceFixed]
+    offers: typing.ClassVar[list[type["Service"]]] = [OpenStackLiveService, OpenStackServiceFixed]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
@@ -218,10 +219,14 @@ class OpenStackProvider(ServiceProvider):
 
         if values is not None:
             self.timeout.value = validators.validate_timeout(self.timeout.value)
-            if self.auth_method.value == openstack_types.AuthMethod.APPLICATION_CREDENTIAL:
-                # Ensure that the project_id is provided, so it's bound to the application credential
-                if self.project_id.value:
-                    raise exceptions.ui.ValidationError(_("Project Id not allowed when using Application Credential"))
+            # Ensure that the project_id is provided if application credential method, so it's bound to the application credential
+            if (
+                self.auth_method.value == openstack_types.AuthMethod.APPLICATION_CREDENTIAL
+                and self.project_id.value
+            ):
+                raise exceptions.ui.ValidationError(
+                    _("Project Id not allowed when using Application Credential")
+                )
 
     def api(self, projectid: str | None = None, region: str | None = None) -> client.OpenStackClient:
         projectid = projectid or self.project_id.value or None

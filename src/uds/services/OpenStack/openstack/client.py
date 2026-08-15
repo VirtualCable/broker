@@ -266,7 +266,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
                         raise exceptions.services.generics.RetryableError(
                             "All endpoints failed"
                         ) from e  # With last exception
-                    raise e
+                    raise
                 logger.warning("Error requesting %s: %s", endpoint + path, e)
                 self.cache.remove(cache_key)
                 continue
@@ -310,7 +310,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
                         raise exceptions.services.generics.RetryableError(
                             "All endpoints failed"
                         ) from e  # With last exception
-                    raise e
+                    raise
                 logger.warning("Error requesting %s: %s (%s)", endpoint + path, e, error_message)
                 self.cache.remove(cache_key)
 
@@ -878,8 +878,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
 
             logger.debug("Json: *** %s  ***", r.content)
 
-            for v in j[key]:
-                yield v
+            yield from j[key]
 
             if "next" not in j:
                 break

@@ -239,7 +239,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
                     self.service().delete(self, self._vmid)
                     self._vmid = ""
                 except Exception as e:
-                    logger.exception("Exception removing machine %s: %s", self._vmid, e)
+                    logger.exception("Exception removing machine %s", self._vmid)
                     self._vmid = ""
                     self.do_log(types.log.LogLevel.ERROR, f"Error removing machine: {e}")
             else:
@@ -289,7 +289,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
             # This is a retryable error, so we will retry later
             return self.retry_later()
         except Exception as e:
-            logger.exception("Unexpected DynamicUserService exception: %s", e)
+            logger.exception("Unexpected DynamicUserService exception")
             return self.error(e)
 
     def _check_deferred_operations(self) -> types.states.TaskState | None:
@@ -628,7 +628,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service is created
         """
-        pass
 
     def op_create_completed(self) -> None:
         """
@@ -676,7 +675,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service start is completed
         """
-        pass
 
     @must_have_vmid
     def op_stop(self) -> None:
@@ -690,7 +688,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service stop is completed
         """
-        pass
 
     @must_have_vmid
     def op_shutdown(self) -> None:
@@ -711,7 +708,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service shutdown is completed
         """
-        pass
 
     @must_have_vmid
     def op_suspend(self) -> None:
@@ -725,7 +721,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service suspension is completed
         """
-        pass
 
     @must_have_vmid
     def op_reset(self) -> None:
@@ -738,7 +733,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service reset is completed
         """
-        pass
 
     @must_have_vmid
     def op_delete(self) -> None:
@@ -755,7 +749,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service removal is completed
         """
-        pass
 
     def op_wait(self) -> None:
         """
@@ -763,14 +756,12 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         Basically, will stop the execution of the queue until something external changes it (i.e. poping from the queue)
         Executor does nothing
         """
-        pass
 
     def op_nop(self) -> None:
         """
         This method is called when the service is doing nothing
         This does nothing, as it's a NOP operation
         """
-        pass
 
     def op_destroy_validator(self) -> None:
         """
@@ -786,7 +777,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         This method is called when the service is doing a custom operation
         """
-        pass
 
     # ERROR, FINISH and UNKNOWN are not here, as they are final states not needing to be executed
 

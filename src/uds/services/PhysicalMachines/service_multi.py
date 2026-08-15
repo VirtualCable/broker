@@ -58,6 +58,26 @@ logger = logging.getLogger(__name__)
 
 
 class IPMachinesService(services.Service):
+    # Description of service
+    type_name = _("Static Multiple IP")
+    type_type = "IPMachinesService"
+    type_description = _("This service provides access to POWERED-ON Machines by IP")
+    icon_file = "machines.png"
+
+    # Override the counting type to conservative on Fixed Services by default, that
+    # is the desired behaviour for fixed services
+    overrided_fields: typing.ClassVar[dict[str, typing.Any] | None] = {
+        "max_services_count_type": types.services.ServicesCountingType.CONSERVATIVE
+    }
+
+    uses_cache = False  # Cache are running machine awaiting to be assigned
+    uses_cache_l2 = False  # L2 Cache are running machines in suspended state
+    needs_osmanager = False  # If the service needs a s.o. manager (managers are related to agents provided by services itselfs, i.e. virtual machines with agent)
+
+    user_service_type = IPMachinesUserService
+
+    services_type_provided = types.services.ServiceType.VDI
+
     # Gui
     token = gui.TextField(
         order=1,
@@ -124,23 +144,6 @@ class IPMachinesService(services.Service):
         old_field_name="useRandomIp",
     )
 
-    # Description of service
-    type_name = _("Static Multiple IP")
-    type_type = "IPMachinesService"
-    type_description = _("This service provides access to POWERED-ON Machines by IP")
-    icon_file = "machines.png"
-
-    # Override the counting type to conservative on Fixed Services by default, that
-    # is the desired behaviour for fixed services
-    overrided_fields = {"max_services_count_type": types.services.ServicesCountingType.CONSERVATIVE}
-
-    uses_cache = False  # Cache are running machine awaiting to be assigned
-    uses_cache_l2 = False  # L2 Cache are running machines in suspended state
-    needs_osmanager = False  # If the service needs a s.o. manager (managers are related to agents provided by services itselfs, i.e. virtual machines with agent)
-
-    user_service_type = IPMachinesUserService
-
-    services_type_provided = types.services.ServiceType.VDI
 
     def enumerate_servers(self) -> collections.abc.Iterable["models.Server"]:
         return fields.get_server_group_from_field(self.server_group).servers.filter(maintenance_mode=False)
