@@ -112,8 +112,7 @@ class StatsReportLogin(StatsReport):
             idx = int((row["stamp"] - start) // sampling_interval_seconds)
             if idx < 0:
                 continue
-            if idx > last_idx:
-                idx = last_idx
+            idx = min(idx, last_idx)
             counts[idx] += 1
 
         data: list[tuple[int, int]] = []

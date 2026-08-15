@@ -86,7 +86,7 @@ class Permissions(Handler):
         perms: collections.abc.Iterable[models.Permissions],
     ) -> list[dict[str, str]]:
         res: list[dict[str, typing.Any]] = []
-        entity: typing.Union[models.User, models.Group] | None
+        entity: models.User | models.Group | None
         for perm in perms:
             if perm.user is None:
                 kind = "group"

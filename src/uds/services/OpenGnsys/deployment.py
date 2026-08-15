@@ -347,10 +347,9 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         Avoids "double unreserve" in case the reservation was made from release
         """
         dbs = self.db_obj()
-        if dbs:
-            # On release callback, we will set a property on DB called "from_release"
-            # so we can avoid double unreserve
-            if dbs.properties.get("from_release") is None:
+        # On release callback, we will set a property on DB called "from_release"
+        # so we can avoid double unreserve
+        if dbs and dbs.properties.get("from_release") is None:
                 self.service().unreserve(self._machine_id)
         return types.states.TaskState.RUNNING
 

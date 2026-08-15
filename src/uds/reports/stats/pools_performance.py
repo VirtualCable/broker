@@ -129,8 +129,7 @@ class PoolPerformanceReport(StatsReport):
             idx = int((row["stamp"] - start) // sampling_interval_seconds)
             if idx < 0:
                 continue
-            if idx > last_idx:
-                idx = last_idx
+            idx = min(idx, last_idx)
             owner_id = row["owner_id"]
             distinct_users[owner_id][idx].add(row[fld])
             accesses_count[owner_id][idx] += 1

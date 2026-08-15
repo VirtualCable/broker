@@ -160,8 +160,7 @@ class FailedLoginsReport(ListReport):
             entry["attempts"] += 1
             if ip:
                 entry["ips"].add(ip)
-            if created > entry["last_attempt"]:
-                entry["last_attempt"] = created
+            entry["last_attempt"] = max(entry["last_attempt"], created)
 
         summary = sorted(
             (

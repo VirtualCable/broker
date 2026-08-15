@@ -48,6 +48,8 @@ from .service_fixed import OpenshiftServiceFixed
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core import environment
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ def cache_key_helper(self: "OpenshiftProvider") -> str:
 
 
 class OpenshiftProvider(ServiceProvider):
-    offers = [OpenshiftService, OpenshiftServiceFixed]
+    offers: typing.ClassVar[list[type["Service"]]] = [OpenshiftService, OpenshiftServiceFixed]
     type_name = _("Openshift Provider")
     type_type = "OpenshiftProvider"
     type_description = _("Openshift based VMs provider")

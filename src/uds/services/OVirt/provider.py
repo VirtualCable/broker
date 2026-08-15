@@ -48,6 +48,8 @@ from .service_linked import OVirtLinkedService
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core import environment
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     """
 
     # : What kind of services we offer, this are classes inherited from Service
-    offers = [OVirtLinkedService]
+    offers: typing.ClassVar[list[type["Service"]]] = [OVirtLinkedService]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
@@ -128,11 +130,9 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
         label=_("Username"),
         order=3,
         tooltip=_(
-            (
-                "User with valid privileges on oVirt."
-                ' Use "user@domain" if using AAA, or "user@domain@provider" if using keycloak.'
-                ' I.e. "admin@ovirt@internalsso" or "admin@internal")'
-            )
+            "User with valid privileges on oVirt."
+            ' Use "user@domain" if using AAA, or "user@domain@provider" if using keycloak.'
+            ' I.e. "admin@ovirt@internalsso" or "admin@internal")'
         ),
         required=True,
         default="admin@internal",

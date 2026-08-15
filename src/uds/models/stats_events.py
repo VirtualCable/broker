@@ -32,7 +32,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import datetime
 import logging
-import typing
 import collections.abc
 
 from django.db import models
@@ -71,8 +70,8 @@ class StatsEvents(models.Model):
 
     @staticmethod
     def enumerate_stats(
-        owner_type: typing.Union[types.stats.EventOwnerType, collections.abc.Iterable[types.stats.EventOwnerType]],
-        event_type: typing.Union[types.stats.EventType, collections.abc.Iterable[types.stats.EventType]],
+        owner_type: types.stats.EventOwnerType | collections.abc.Iterable[types.stats.EventOwnerType],
+        event_type: types.stats.EventType | collections.abc.Iterable[types.stats.EventType],
         owner_id: "int|collections.abc.Iterable[int]|None" = None,
         since: "datetime.datetime|int|None" = None,
         to: "datetime.datetime|int|None" = None,

@@ -66,11 +66,11 @@ class StatsCounters(models.Model):
 
     @staticmethod
     def get_grouped(
-        owner_type: typing.Union[int, collections.abc.Iterable[int]],
+        owner_type: int | collections.abc.Iterable[int],
         counter_type: int,
-        since: typing.Union[None, int, datetime.datetime] = None,
-        to: typing.Union[None, int, datetime.datetime] = None,
-        owner_id: typing.Union[None, int, collections.abc.Iterable[int]] = None,
+        since: None | int | datetime.datetime = None,
+        to: None | int | datetime.datetime = None,
+        owner_id: None | int | collections.abc.Iterable[int] = None,
         interval: int | None = None,
         max_intervals: int | None = None,
         use_max: bool = False,

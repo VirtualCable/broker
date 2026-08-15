@@ -50,6 +50,8 @@ from .service import OGService
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core.environment import Environment
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +77,7 @@ class OGProvider(ServiceProvider):
     """
 
     # : What kind of services we offer, this are classes inherited from Service
-    offers = [OGService]
+    offers: typing.ClassVar[list[type["Service"]]] = [OGService]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
@@ -206,9 +208,9 @@ class OGProvider(ServiceProvider):
             if self.api.version[0:5] < MIN_VERSION:
                 return types.core.TestResult(
                     False,
-                    _("OpenGnsys version is not supported (required version 1.1.0 or newer and found {})").format(
-                        self.api.version
-                    ),
+                    _(
+                        "OpenGnsys version is not supported (required version 1.1.0 or newer and found {})"
+                    ).format(self.api.version),
                 )
         except Exception as e:
             logger.exception("Error")

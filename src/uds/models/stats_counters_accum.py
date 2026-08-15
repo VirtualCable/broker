@@ -30,7 +30,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import enum
 import datetime
 import logging
@@ -141,10 +140,7 @@ class StatsCountersAccum(models.Model):
         )
 
         # Assign values depending on interval type
-        model: typing.Union[
-            type[StatsCountersAccum],
-            type[StatsCounters],
-        ]
+        model: type[StatsCountersAccum] | type[StatsCounters]
         # If base interval (that menas an inteval that must be readed from stats_c),
         # we will use StatsCounters to create the accum
         # Else, we will use StatsCountersAccum to create the accum from previous interval

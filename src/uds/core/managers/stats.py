@@ -131,7 +131,7 @@ class StatsManager(metaclass=singleton.Singleton):
         self,
         owner_type: int,
         counter_type: int,
-        owners_ids: typing.Union[collections.abc.Iterable[int], int, None],
+        owners_ids: collections.abc.Iterable[int] | int | None,
         since: datetime.datetime,
         to: datetime.datetime,
         interval: int | None,
@@ -178,8 +178,8 @@ class StatsManager(metaclass=singleton.Singleton):
         counter_type: types.stats.CounterType,
         owner_type: types.stats.CounterOwnerType | None = None,
         owner_id: int | None = None,
-        since: typing.Union[datetime.datetime, int] | None = None,
-        to: typing.Union[datetime.datetime, int] | None = None,
+        since: datetime.datetime | int | None = None,
+        to: datetime.datetime | int | None = None,
         points: int | None = None,
     ) -> typing.Generator[types.stats.AccumStat, None, None]:
         if to is None:
@@ -330,8 +330,8 @@ class StatsManager(metaclass=singleton.Singleton):
 
     def enumerate_events(
         self,
-        owner_type: typing.Union[types.stats.EventOwnerType, collections.abc.Iterable[types.stats.EventOwnerType]],
-        event_type: typing.Union[types.stats.EventType, collections.abc.Iterable[types.stats.EventType]],
+        owner_type: types.stats.EventOwnerType | collections.abc.Iterable[types.stats.EventOwnerType],
+        event_type: types.stats.EventType | collections.abc.Iterable[types.stats.EventType],
         owner_id: "int|collections.abc.Iterable[int]|None" = None,
         since: "datetime.datetime|int|None" = None,
         to: "datetime.datetime|int|None" = None,

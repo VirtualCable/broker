@@ -90,7 +90,7 @@ def intervals_field(order: int) -> gui.ChoiceField:
 
 def source_field(
     order: int, data_source: str, multiple: bool
-) -> typing.Union[gui.ChoiceField, gui.MultiChoiceField, None]:
+) -> gui.ChoiceField | gui.MultiChoiceField | None:
     if not data_source:
         return None
 
@@ -115,7 +115,7 @@ def source_field(
 
 def source_field_data(
     model: typing.Any,
-    field: typing.Union[gui.ChoiceField, gui.MultiChoiceField],
+    field: gui.ChoiceField | gui.MultiChoiceField,
 ) -> None:
     data_list: list[types.ui.ChoiceItem] = [
         gui.choice_item(str(x.uuid), x.name) for x in model.objects.all().order_by("name")

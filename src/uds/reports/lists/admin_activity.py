@@ -130,8 +130,7 @@ class AdminActivityReport(ListReport):
             entry_user["requests"] += 1
             if code >= 400:
                 entry_user["errors"] += 1
-            if created > entry_user["last_seen"]:
-                entry_user["last_seen"] = created
+            entry_user["last_seen"] = max(entry_user["last_seen"], created)
             path = self._path_only(m.group("request"))
             entry_user["paths"][path] = entry_user["paths"].get(path, 0) + 1
 

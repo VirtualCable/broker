@@ -88,7 +88,7 @@ class PoolsUsageSummary(UsageByPool):
 
         logger.debug("Pools %s", pools)
         # Remove unique users, and keep only counts...
-        for _i, pn in pools.items():
+        for pn in pools.values():
             pn["users"] = len(pn["users"])
 
         return pools.values(), total_time, total_count or 1, len(unique_users)

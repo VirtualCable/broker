@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -49,13 +48,16 @@ from . import on
 from .service import OpenNebulaLiveService
 
 # Not imported at runtime, just for type checking
+if typing.TYPE_CHECKING:
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
 
 class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     # : What kind of services we offer, this are classes inherited from Service
-    offers = [OpenNebulaLiveService]
+    offers: typing.ClassVar[list[type["Service"]]] = [OpenNebulaLiveService]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
@@ -90,7 +92,9 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     ssl = gui.CheckBoxField(
         label=_("Use SSL"),
         order=3,
-        tooltip=_("If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"),
+        tooltip=_(
+            "If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"
+        ),
     )
     username = gui.TextField(
         length=32,

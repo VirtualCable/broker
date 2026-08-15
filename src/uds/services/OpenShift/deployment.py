@@ -67,7 +67,7 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
     can_cache_ip = False  # We cannot cache IP on Openshift
 
     # Custom queue
-    _create_queue = [
+    _create_queue: typing.ClassVar[list[types.services.Operation]] = [
         types.services.Operation.INITIALIZE,  # Used in base class to remove duplicates
         types.services.Operation.CREATE,  # Creating already starts the vm
         # Starts the vm. If we include this, we will force to wait for the vm to be running
@@ -76,13 +76,13 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
         # types.services.Operation.START,
         types.services.Operation.FINISH,
     ]
-    _create_queue_l1_cache = [
+    _create_queue_l1_cache: typing.ClassVar[list[types.services.Operation]] = [
         types.services.Operation.INITIALIZE,
         types.services.Operation.CREATE,
         # types.services.Operation.START,
         types.services.Operation.FINISH,
     ]
-    _create_queue_l2_cache = [
+    _create_queue_l2_cache: typing.ClassVar[list[types.services.Operation]] = [
         types.services.Operation.INITIALIZE,
         types.services.Operation.CREATE,
         types.services.Operation.WAIT,

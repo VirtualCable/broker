@@ -78,7 +78,7 @@ class CountersPoolAssigned(StatsReport):
         for pool_uuid in self.pools.value:
             try:
                 pool = ServicePool.objects.get(uuid=pool_uuid)
-            except Exception:  # nosec:  If not found, simple ignore it and go for next
+            except Exception:  # ruff: ignore[S112]
                 continue
 
             hours = [0] * 24
