@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -35,6 +34,7 @@ from contextlib import _GeneratorContextManager
 
 from unittest import mock
 
+from uds.core.exceptions.services_generics import FatalError
 from uds.services.OpenShift.provider import OpenshiftProvider
 from uds.services.OpenShift.service_fixed import OpenshiftServiceFixed
 
@@ -109,11 +109,20 @@ class TestOpenshiftServiceFixed(UDSTransactionTestCase):
         Test get_and_assign logic for fixed service.
         """
         service, _, provider_ctx = self._create_service_fixed_with_provider()
-        vmid = service.get_and_assign()
-        self.assertIn(vmid, ["vm-3", "vm-4", "vm-5"])
+        # Assign all machines
+        assigned_vms: set[str] = set()
+        for _ in range(3):
+            vmid = service.get_and_assign()
+            self.assertIn(vmid, ["vm-3", "vm-4", "vm-5"])
+            assigned_vms.add(vmid)
+        self.assertEqual(assigned_vms, {"vm-3", "vm-4", "vm-5"})
         # Should not assign the same again
         with service._assigned_access() as assigned:
-            self.assertIn(vmid, assigned)
+            self.assertEqual(assigned, assigned_vms)
+        # No machines left, so get_and_assign should raise a FatalError
+        with self.assertRaises(FatalError) as ctx:
+            service.get_and_assign()
+        self.assertIn("already assigned", str(ctx.exception))
         provider_ctx.__exit__(None, None, None)
 
     def test_remove_and_free(self) -> None:

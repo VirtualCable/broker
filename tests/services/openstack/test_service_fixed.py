@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -36,6 +35,7 @@ from unittest import mock
 
 from uds import models
 from uds.core import types
+from uds.core.exceptions.services_generics import FatalError
 
 from ...utils.test import UDSTransactionTestCase
 from . import fixtures
@@ -66,13 +66,13 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
 
                 # Now should not return the first from service.machines.value
                 assignables = {i.id for i in service.enumerate_assignables()}
-                self.assertEqual(assignables, set(set(service.machines.value[1:])), f"legacy={prov.legacy}")
+                self.assertEqual(assignables, set(service.machines.value[1:]), f"legacy={prov.legacy}")
 
                 # Restore servers_list and assignables
                 fixtures.SERVERS_LIST[:] = prev_servers_list
                 assignables = {str(i.id) for i in service.enumerate_assignables()}
 
-                to_assign = list(assignables)[0]
+                to_assign = next(iter(assignables))
 
                 # Assign one, and test it's not available anymore
                 # First time, it will run the queue, so we should receive a RUNNING
@@ -84,7 +84,7 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
                 # Now it's not on available list for any new user nor user service
                 self.assertEqual(
                     {i.id for i in service.enumerate_assignables()} ^ assignables,
-                    {list(assignables)[0]},
+                    {next(iter(assignables))},
                 )
 
                 # If called again, should return types.states.TaskState.ERROR beause it's already assigned
@@ -108,5 +108,7 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
                 # And get_server should have been called remaining times
                 self.assertEqual(api.get_server_info.call_count, remaining)
 
-                # And a new try, should raise an exception
-                self.assertRaises(Exception, service.get_and_assign)
+                # And a new try, should raise a FatalError (no machine left)
+                with self.assertRaises(FatalError) as ctx:
+                    service.get_and_assign()
+                self.assertIn("already assigned", str(ctx.exception))

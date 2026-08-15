@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -37,6 +36,7 @@ from unittest import mock
 
 from uds.core import types
 from uds.core import ui
+from uds.core.exceptions.services_generics import FatalError
 
 from ...utils.test import UDSTransactionTestCase
 from . import fixtures
@@ -110,7 +110,16 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
 
             # Now two machies should be assigned
             with service._assigned_access() as assigned_machines:
-                self.assertEqual(assigned_machines, set([vmid, vmid2]))
+                self.assertEqual(assigned_machines, {vmid, vmid2})
+
+            # Assign the last machine
+            vmid3: str = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])[2]
+            self.assertEqual(service.get_and_assign(), vmid3)
+
+            # No machines left, so get_and_assign should raise a FatalError
+            with self.assertRaises(FatalError) as ctx:
+                service.get_and_assign()
+            self.assertIn("already assigned", str(ctx.exception))
 
     def test_service_methods_2(self) -> None:
         with fixtures.patched_provider() as provider:
@@ -129,7 +138,7 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             # Fist, assign a machine
             vmid = service.get_and_assign()
             with service._assigned_access() as assigned_machines:
-                self.assertEqual(assigned_machines, set([vmid]))
+                self.assertEqual(assigned_machines, {vmid})
 
             # And now free it
             self.assertEqual(service.remove_and_free(vmid), types.states.State.FINISHED)

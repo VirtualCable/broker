@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -36,6 +35,7 @@ import typing
 from unittest import mock
 
 from uds.core import ui
+from uds.core.exceptions.services_generics import FatalError
 from uds.services.Xen.xen import types as xen_types
 
 from ...utils.test import UDSTransactionTestCase
@@ -118,6 +118,24 @@ class TestXenFixedService(UDSTransactionTestCase):
                     service.assign_from_assignables(vmid, mock.MagicMock(), userservice_instance),
                     userservice_instance.error.return_value,
                 )
+
+    def test_get_and_assign(self) -> None:
+        with fixtures.patched_provider() as provider:
+            service = fixtures.create_service_fixed(provider=provider)
+
+            # Assign all machines
+            machines = typing.cast(list[str], fixtures.SERVICE_FIXED_VALUES_DICT["machines"])
+            assigned_vms: set[str] = set()
+            for _ in machines:
+                vmid = service.get_and_assign()
+                self.assertIn(vmid, machines)
+                assigned_vms.add(vmid)
+            self.assertEqual(assigned_vms, set(machines))
+
+            # No machines left, so get_and_assign should raise a FatalError
+            with self.assertRaises(FatalError) as ctx:
+                service.get_and_assign()
+            self.assertIn("already assigned", str(ctx.exception))
 
     def test_remove_and_free(self) -> None:
         with fixtures.patched_provider() as provider:

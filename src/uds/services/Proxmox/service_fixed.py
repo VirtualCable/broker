@@ -35,6 +35,7 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
+from uds.core import exceptions
 from uds.core import services
 from uds.core import types
 from uds.core.services.generics.fixed.service import FixedService
@@ -110,7 +111,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
         # The dispatcher (gui_callback) resolves the ticket and merges the
         # prov_uuid into the callback params, so the secret context never
         # travels in the query string.
-        self.pool.set_cb_ticket('prov_uuid', self.provider().get_uuid())
+        self.pool.set_cb_ticket("prov_uuid", self.provider().get_uuid())
 
         self.pool.set_choices(
             [gui.choice_item("", _("None"))] + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
@@ -208,20 +209,22 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                             break
                         except Exception:  # Notifies on log, but skipt it
                             self.provider().do_log(
-                                types.log.LogLevel.WARNING, f"Machine {found_vmid} not accesible"
+                                types.log.LogLevel.WARNING, f"Machine {checking_vmid} not accessible"
                             )
                             logger.warning(
                                 "The service has machines that cannot be checked on proxmox (connection error or machine has been deleted): %s",
-                                found_vmid,
+                                checking_vmid,
                             )
 
                 if found_vmid:
                     assigned_vms.add(found_vmid)
         except Exception:
-            raise Exception("No machine available")
+            raise exceptions.services.generics.FatalError("No machine available for assignment")
 
         if not found_vmid:
-            raise Exception("All machines from list already assigned.")
+            raise exceptions.services.generics.FatalError(
+                "All machines from the assignables list are already assigned"
+            )
 
         return found_vmid
 
