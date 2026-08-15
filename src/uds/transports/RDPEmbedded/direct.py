@@ -67,7 +67,6 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     forced_password = BaseRDPEmbeddedTransport.forced_password
     force_no_domain = BaseRDPEmbeddedTransport.force_no_domain
     forced_domain = BaseRDPEmbeddedTransport.forced_domain
-    use_sso = BaseRDPEmbeddedTransport.use_sso
 
     allow_drives = BaseRDPEmbeddedTransport.allow_drives
     enforce_drives = BaseRDPEmbeddedTransport.enforce_drives

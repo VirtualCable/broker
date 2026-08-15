@@ -253,9 +253,7 @@ def get_services_info_dict(
                         continue
                     if t.label not in ltrans or ltrans[t.label].priority > t.priority:
                         ltrans[t.label] = t
-                    if transports_in_all_pools_by_label is None:
-                        temporary_transport_set_by_label.add(t.label)
-                    elif t.label in transports_in_all_pools_by_label:  # For subsequent, reduce...
+                    if transports_in_all_pools_by_label is None or t.label in transports_in_all_pools_by_label:
                         temporary_transport_set_by_label.add(t.label)
 
                 transports_in_all_pools_by_label = temporary_transport_set_by_label

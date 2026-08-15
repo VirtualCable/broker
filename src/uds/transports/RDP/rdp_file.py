@@ -344,4 +344,4 @@ class RDPFile:
         if self.redir_drives != "false":  # Only "all drives" is supported
             parameters.append(("drivestoredirect", "s:*"))
 
-        return "rdp://" + "&".join((urllib.parse.quote(i[0]) + "=" + i[1] for i in parameters))
+        return "rdp://" + "&".join(urllib.parse.quote(i[0]) + "=" + i[1] for i in parameters)

@@ -109,8 +109,8 @@ class XenClient:  # pylint: disable=too-many-public-methods
         self._original_host = self._host = host
         self._host_backup = host_backup or ""
         self._port = str(port)
-        self._use_ssl = bool(use_ssl)
-        self._verify_ssl = bool(verify_ssl)
+        self._use_ssl = use_ssl
+        self._verify_ssl = verify_ssl
         self._timeout = timeout
         self._protocol = "http" + ("s" if self._use_ssl else "") + "://"
         self._url = ""
@@ -521,7 +521,7 @@ class XenClient:  # pylint: disable=too-many-public-methods
         if memory:
             logger.debug("Setting up memory to %s MB", memory)
             # Convert memory to MB
-            memory_mb = str(int(memory) * 1024 * 1024)
+            memory_mb = str(int(memory) * 1024 * 1024)  # pyrefly: ignore[unnecessary-type-conversion]
             self.VM.set_memory_limits(vm_opaque_ref, memory_mb, memory_mb, memory_mb, memory_mb)
 
     @cached(prefix="xen_folders", timeout=consts.cache.LONG_CACHE_TIMEOUT, key_helper=cache_key_helper)
@@ -565,7 +565,7 @@ class XenClient:  # pylint: disable=too-many-public-methods
     def get_first_ip(
         self,
         vm_opaque_ref: str,
-        ip_version: typing.Literal["4"] | typing.Literal["6"] | None = None,
+        ip_version: typing.Literal["4", "6"] | None = None,
     ) -> str:
         """Returns the first IP of the machine, or '' if not found"""
         guest_metric_opaque_ref = self.VM.get_guest_metrics(vm_opaque_ref)

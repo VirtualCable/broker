@@ -14,7 +14,8 @@ docstring-code-line-length = "dynamic"
 # PLC0414 is a nonsense. Reexports are done by import alias as same name as imported
 # TRY002 is for create your own exception class, but we want to use the base one for now
 # S110 is try/except/pass, for now keep as is
-ignore = ["I001", "BLE001", "B023", "B017", "PLC0414", "TRY002", "S110"]
+# DTZ006 Is datetime without tz, but this is buggy beceuse we use "make_aware" from django... 
+ignore = ["I001", "BLE001", "B023", "B017", "PLC0414", "TRY002", "S110", "DTZ006"]
 # "I001" for sort order fix
 # Use with a LOT OF CARE, some dependencies can break if reordered
 # Should not , but does :)
@@ -22,11 +23,13 @@ fixable = [
     "F541",
     "F841",
     "UP006",
+    "UP008",
     "UP037",
     "UP032",
     "UP045",
     "SIM102",
     "SIM103",
+    "SIM114",
     "SIM210",
     "S110",
     "F401",

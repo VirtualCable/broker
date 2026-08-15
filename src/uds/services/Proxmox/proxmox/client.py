@@ -523,9 +523,7 @@ class ProxmoxClient:
                         ip_address = ip["ip-address"]
                         if ip_address.startswith("127.") or ip_address.startswith("fe80:") or ip_address == "::1":
                             continue
-                        if (ip_version == "4") and ip.get("ip-address-type") != "ipv4":
-                            continue
-                        elif ip_version == "6" and ip.get("ip-address-type") != "ipv6":
+                        if (ip_version == "4") and ip.get("ip-address-type") != "ipv4" or ip_version == "6" and ip.get("ip-address-type") != "ipv6":
                             continue
                         found_ips.append(ip_address)
             if found_ips:

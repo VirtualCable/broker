@@ -55,7 +55,7 @@ class XenFailure(XenAPI.Failure, XenFault):
 
     def __init__(self, details: list[typing.Any] | None = None):
         details = [] if details is None else details
-        super(XenFailure, self).__init__(details)
+        super().__init__(details)
 
     def is_valid_handle(self) -> bool:
         return typing.cast(typing.Any, self.details[0]) == XenFailure.ex_handle_invalid
@@ -114,7 +114,7 @@ class XenRetryableError(XenException, exceptions.services.generics.RetryableErro
 
 
 @contextlib.contextmanager
-def translator() -> typing.Generator[None, None, None]:
+def translator() -> collections.abc.Generator[None, None, None]:
     try:
         yield
     except XenException:

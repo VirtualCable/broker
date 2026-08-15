@@ -250,34 +250,33 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
     @typing.override
     def get_and_assign(self) -> str:
         found_vmid: str | None = None
-        with self.provider().get_connection() as api:
-            with self._assigned_access() as assigned_vms:
-                try:
-                    for checking_vmid in self.sorted_assignables_list():
-                        if checking_vmid not in assigned_vms:  # Not assigned
-                            # Check that the machine exists...
-                            try:
-                                api.get_vm_info(checking_vmid)  # Will raise an exception if not exists
-                                found_vmid = checking_vmid
-                                break
-                            except Exception:  # Notifies on log, but skipt it
-                                self.provider().do_log(
-                                    types.log.LogLevel.WARNING, f"Machine {found_vmid} not accesible"
-                                )
-                                logger.warning(
-                                    "The service has machines that cannot be checked on xen (connection error or machine has been deleted): %s",
-                                    found_vmid,
-                                )
+        with self.provider().get_connection() as api, self._assigned_access() as assigned_vms:
+            try:
+                for checking_vmid in self.sorted_assignables_list():
+                    if checking_vmid not in assigned_vms:  # Not assigned
+                        # Check that the machine exists...
+                        try:
+                            api.get_vm_info(checking_vmid)  # Will raise an exception if not exists
+                            found_vmid = checking_vmid
+                            break
+                        except Exception:  # Notifies on log, but skipt it
+                            self.provider().do_log(
+                                types.log.LogLevel.WARNING, f"Machine {found_vmid} not accesible"
+                            )
+                            logger.warning(
+                                "The service has machines that cannot be checked on xen (connection error or machine has been deleted): %s",
+                                found_vmid,
+                            )
 
-                    if found_vmid:
-                        assigned_vms.add(str(found_vmid))
-                except Exception:  #
-                    raise Exception("No machine available")
+                if found_vmid:
+                    assigned_vms.add(found_vmid)
+            except Exception:
+                raise Exception("No machine available")
 
         if not found_vmid:
             raise Exception("All machines from list already assigned.")
 
-        return str(found_vmid)
+        return found_vmid
 
     @typing.override
     def get_mac(self, vmid: str) -> str:

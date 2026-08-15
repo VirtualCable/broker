@@ -53,11 +53,10 @@ class LoginForm(forms.Form):
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         # If an specified login is passed in, retrieve it & remove it from kwargs dict
         tag = kwargs.get("tag", None)
-        if "tag" in kwargs:
-            del kwargs["tag"]
+        kwargs.pop("tag", None)  # Remove it from kwargs so it doesn't get passed to the parent init
 
         # Parent init
-        super(LoginForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         choices: list[tuple[str, str]] = []
 
