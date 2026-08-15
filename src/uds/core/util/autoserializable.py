@@ -437,7 +437,7 @@ class ListField(_SerializableField[list[T]], list[T]):
 
     def __init__(
         self,
-        default: list[T] | collections.abc.Callable[[], list[T]] = lambda: [],
+        default: list[T] | collections.abc.Callable[[], list[T]] = list,
         cast: collections.abc.Callable[[typing.Any], T] | None = None,
     ):
         super().__init__(_ObservableList, default)

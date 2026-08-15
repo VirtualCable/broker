@@ -189,12 +189,12 @@ class GlobalRequestMiddlewareTest(test.WEBTestCase):
                         req.headers = {consts.auth.X_FORWARDED_FOR_HEADER: f"{client_ip},{proxy}"}
 
                     request._fill_ips(req)  # pylint: disable=protected-access
-                    self.assertEqual(req.ip, client_ip, "Failed for {}".format(req.META))
-                    self.assertEqual(req.ip_proxy, client_ip, "Failed for {}".format(req.META))
+                    self.assertEqual(req.ip, client_ip, f"Failed for {req.META}")
+                    self.assertEqual(req.ip_proxy, client_ip, f"Failed for {req.META}")
                     self.assertEqual(
                         req.ip_version,
                         4 if "." in client_ip else 6,
-                        "Failed for {}".format(req.META),
+                        f"Failed for {req.META}",
                     )
 
     def test_detect_ips_proxy_chained(self) -> None:
@@ -211,7 +211,7 @@ class GlobalRequestMiddlewareTest(test.WEBTestCase):
                     "2001:db8:85a3:8d3:1319:8a2e:370:7350",
                 ]:
                     for with_nginx in [True, False]:
-                        x_forwarded_for = "{}, {}".format(client_ip, first_proxy)
+                        x_forwarded_for = f"{client_ip}, {first_proxy}"
                         if with_nginx is False:
                             req.META = {
                                 "REMOTE_ADDR": client_ip,
@@ -220,7 +220,7 @@ class GlobalRequestMiddlewareTest(test.WEBTestCase):
                         else:  # Without nginx, remote addres is not included
                             req.META = {}
                             req.headers = {
-                                consts.auth.X_FORWARDED_FOR_HEADER: "{}, {}".format(x_forwarded_for, second_proxy),
+                                consts.auth.X_FORWARDED_FOR_HEADER: f"{x_forwarded_for}, {second_proxy}",
                             }
 
                         request._fill_ips(req)

@@ -300,7 +300,7 @@ class UsageSummaryByUsersPoolBenchmark(UDSTransactionTestCase):
         self.assertEqual(len(data), size)
         for row in data:
             self.assertEqual(row["sessions"], 1)
-            self.assertEqual(row["hours"], "{:.2f}".format(5 / 3600))
+            self.assertEqual(row["hours"], f"{5 / 3600:.2f}")
 
 
 # --------------------------------------------------------------------------- #

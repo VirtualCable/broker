@@ -46,7 +46,7 @@ class TestEnvironment(UDSTransactionTestCase):
         env: environment.Environment,
         expected_key: "str|None",
         is_persistent: bool,
-        recreate_fnc: typing.Optional[typing.Callable[[], environment.Environment]] = None,
+        recreate_fnc: typing.Callable[[], environment.Environment] | None = None,
     ) -> None:
         self.assertIsInstance(env, environment.Environment)
         self.assertIsInstance(env.cache, Cache)

@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import datetime
 import uuid as uuid_type
+import typing
 
 from django.conf import settings
 
@@ -59,11 +60,13 @@ class CryptoManagerTest(UDSTestCase):
     manager = crypto.CryptoManager.manager()
     _oldUDSK: bytes
 
+    @typing.override
     def setUp(self) -> None:
         # Override UDSK
         crypto.UDSK = b"1234567890123456"  # type: ignore  # UDSK is final,
         return super().setUp()
 
+    @typing.override
     def tearDown(self) -> None:
         crypto.UDSK = UDSK  # type: ignore  # UDSK is final,
         return super().tearDown()
@@ -80,7 +83,7 @@ class CryptoManagerTest(UDSTestCase):
         self.assertEqual(
             decryptStr,
             testStr,
-            "Decrypted test string failed!: {} vs {}".format(decryptStr, testStr),
+            f"Decrypted test string failed!: {decryptStr} vs {testStr}",
         )
 
     def test_xor(self) -> None:
@@ -144,7 +147,7 @@ class CryptoManagerTest(UDSTestCase):
             (1.1, "dfdae060-00a9-5e8d-9a28-3b77b8af18eb"),
             ("Test String", "dce56818-2231-5d0f-abd3-73b3b8c1c7ee"),
             (
-                datetime.datetime(2014, 9, 15, 17, 2, 12),
+                datetime.datetime(2014, 9, 15, 17, 2, 12),  # ruff: ignore[DTZ001]
                 "a42521d7-2b2f-5767-992c-482aef05b25c",
             ),
         ):

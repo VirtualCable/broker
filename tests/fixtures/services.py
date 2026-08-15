@@ -118,7 +118,7 @@ def create_db_osmanager(
 def create_db_servicepool_group(
     image: models.Image | None = None,
 ) -> models.ServicePoolGroup:
-    service_pool_group: "models.ServicePoolGroup" = models.ServicePoolGroup.objects.create(
+    service_pool_group: models.ServicePoolGroup = models.ServicePoolGroup.objects.create(
         name="Service pool group %d" % (glob["service_pool_group_id"]),
         comments=f"Comment for service pool group {glob['service_pool_group_id']}",
         image=image,
@@ -136,7 +136,7 @@ def create_db_servicepool(
     servicePoolGroup: models.ServicePoolGroup | None = None,
 ) -> models.ServicePool:
 
-    service_pool: "models.ServicePool" = service.deployedServices.create(
+    service_pool: models.ServicePool = service.deployedServices.create(
         name="Service pool %d" % (glob["service_pool_id"]),
         short_name="pool%d" % (glob["service_pool_id"]),
         comments="Comment for service pool %d" % (glob["service_pool_id"]),
@@ -159,7 +159,7 @@ def create_db_servicepool(
 def create_db_publication(
     service_pool: models.ServicePool,
 ) -> models.ServicePoolPublication:
-    publication: "models.ServicePoolPublication" = service_pool.publications.create(
+    publication: models.ServicePoolPublication = service_pool.publications.create(
         publish_date=timezone.localtime(),
         state=types.states.State.USABLE,
         state_date=timezone.localtime(),
@@ -176,7 +176,7 @@ def create_db_transport(transport_instance: "Transport|None" = None, **kwargs: t
     if transport_instance is None:
         transport_instance = TestTransport(environment.Environment.testing_environment(), None)
 
-    transport: "models.Transport" = models.Transport.objects.create(
+    transport: models.Transport = models.Transport.objects.create(
         name="Transport %d" % (glob["transport_id"]),
         comments="Comment for Transport %d" % (glob["transport_id"]),
         data_type=transport_instance.type_type,
@@ -192,7 +192,7 @@ def create_db_userservice(
     publication: models.ServicePoolPublication,
     user: "models.User|None" = None,
 ) -> models.UserService:
-    user_service: "models.UserService" = servicepool.userServices.create(
+    user_service: models.UserService = servicepool.userServices.create(
         friendly_name="user-service-{}".format(glob["user_service_id"]),
         publication=publication,
         unique_id=helpers.random_mac(),
@@ -215,7 +215,7 @@ def create_db_metapool(
     transport_grouping: int = types.pools.TransportSelectionPolicy.AUTO,
     ha_policy: int = types.pools.HighAvailabilityPolicy.ENABLED,
 ) -> models.MetaPool:
-    meta_pool: "models.MetaPool" = models.MetaPool.objects.create(
+    meta_pool: models.MetaPool = models.MetaPool.objects.create(
         name="Meta pool %d" % (glob["meta_pool_id"]),
         short_name="meta%d" % (glob["meta_pool_id"]),
         comments="Comment for meta pool %d" % (glob["meta_pool_id"]),
@@ -249,10 +249,10 @@ def create_db_one_assigned_userservice(
     Creates several testing OS Managers
     """
 
-    osmanager_db: "models.OSManager | None" = None if type_ == "unmanaged" else create_db_osmanager(osmanager=osmanager)
-    transport: "models.Transport" = create_db_transport(transport_instance=transport_instance)
-    service_pool: "models.ServicePool" = create_db_servicepool(service, osmanager_db, groups, [transport])
-    publication: "models.ServicePoolPublication" = create_db_publication(service_pool)
+    osmanager_db: models.OSManager | None = None if type_ == "unmanaged" else create_db_osmanager(osmanager=osmanager)
+    transport: models.Transport = create_db_transport(transport_instance=transport_instance)
+    service_pool: models.ServicePool = create_db_servicepool(service, osmanager_db, groups, [transport])
+    publication: models.ServicePoolPublication = create_db_publication(service_pool)
 
     return create_db_userservice(service_pool, publication, user)
 

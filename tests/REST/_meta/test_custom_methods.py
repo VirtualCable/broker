@@ -207,7 +207,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         root = dispatcher.Dispatcher.root_node
 
         def collect(node: "types.rest.HandlerNode") -> "list[tuple[str, type]]":
-            res: "list[tuple[str, type]]" = []
+            res: list[tuple[str, type]] = []
             if node.handler and issubclass(node.handler, ModelHandler):
                 if getattr(node.handler, "CUSTOM_METHODS", None):
                     res.append((node.full_path(), node.handler))
@@ -222,7 +222,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             "Test setup: at least one ModelHandler with CUSTOM_METHODS expected.",
         )
 
-        offenders: "list[str]" = []
+        offenders: list[str] = []
         for path_label, cls in nodes:
             base = "/" + path_label.lstrip("/")
             paths = cls.api_paths(base, tags=[], security="")

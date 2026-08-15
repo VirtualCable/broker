@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import os.path
 import random
+import typing
 
 from django.urls import reverse
 
@@ -45,6 +46,7 @@ class DownloadsManagerTest(WEBTestCase):
     filePath: str = ""
     manager: DownloadsManager
 
+    @typing.override
     @classmethod
     def setUpClass(cls) -> None:
         from uds.core.managers import downloads_manager
@@ -66,7 +68,7 @@ class DownloadsManagerTest(WEBTestCase):
             filename, mimetype, known_uuid = v
             self.manager.register(
                 filename,
-                "This is the test file {}".format(filename),
+                f"This is the test file {filename}",
                 self.filePath,
                 mimetype=mimetype,
                 legacy=random.choice([True, False]),
@@ -77,7 +79,7 @@ class DownloadsManagerTest(WEBTestCase):
             self.assertIn(
                 known_uuid,
                 downloadables,
-                "The File {} was not found in downloadables!".format(filename),
+                f"The File {filename} was not found in downloadables!",
             )
 
             # Downloadables are allowed by admin or staff

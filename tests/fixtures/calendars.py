@@ -34,7 +34,7 @@ import typing
 from uds import models
 
 # fixtures for calendars and calendar rules
-CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, typing.Union[str, int, None]]]] = {
+CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] = {
     "calendars": [
         {
             "modified": "2015-09-18T00:04:31.792",

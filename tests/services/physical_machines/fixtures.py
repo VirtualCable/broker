@@ -117,7 +117,7 @@ def create_provider(**kwargs: typing.Any) -> provider.PhysicalMachinesProvider:
 
 
 def create_service_single(
-    prov: typing.Optional[provider.PhysicalMachinesProvider] = None, **kwargs: typing.Any
+    prov: provider.PhysicalMachinesProvider | None = None, **kwargs: typing.Any
 ) -> service_single.IPSingleMachineService:
     """
     Create a service
@@ -150,7 +150,7 @@ def create_service_single(
 
 
 def create_service_multi(
-    prov: typing.Optional[provider.PhysicalMachinesProvider] = None, **kwargs: typing.Any
+    prov: provider.PhysicalMachinesProvider | None = None, **kwargs: typing.Any
 ) -> service_multi.IPMachinesService:
     """
     Create a service
@@ -188,7 +188,7 @@ def create_service_multi(
 
 
 def create_userservice_single(
-    service: typing.Optional[service_single.IPSingleMachineService] = None, **kwargs: typing.Any
+    service: service_single.IPSingleMachineService | None = None, **kwargs: typing.Any
 ) -> deployment_single.IPMachineUserService:
     """
     Create a user service
@@ -208,7 +208,7 @@ def create_userservice_single(
 
 
 def create_userservice_multi(
-    service: typing.Optional[service_single.IPSingleMachineService] = None, **kwargs: typing.Any
+    service: service_single.IPSingleMachineService | None = None, **kwargs: typing.Any
 ) -> deployment_multi.IPMachinesUserService:
     """
     Create a user service

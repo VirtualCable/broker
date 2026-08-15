@@ -45,7 +45,7 @@ def login(
     username: str,
     password: str,
     expectedResponseCode: int = 200,
-    errorMessage: typing.Optional[str] = None,
+    errorMessage: str | None = None,
 ) -> collections.abc.Mapping[str, typing.Any]:
     response = client.post(
         "/uds/rest/auth/login",
@@ -60,7 +60,7 @@ def login(
     caller.assertEqual(
         response.status_code,
         expectedResponseCode,
-        "Login from {}".format(errorMessage or caller.__class__.__name__),
+        f"Login from {errorMessage or caller.__class__.__name__}",
     )
 
     if response.status_code == 200:

@@ -75,10 +75,10 @@ class ServiceCacheUpdaterTest(UDSTestCase):
 
     def set_cache(
         self,
-        initial: typing.Optional[int] = None,
-        cache: typing.Optional[int] = None,
-        cache2: typing.Optional[int] = None,
-        max: typing.Optional[int] = None,
+        initial: int | None = None,
+        cache: int | None = None,
+        cache2: int | None = None,
+        max: int | None = None,
     ) -> None:
         self.servicepool.initial_srvs = self.servicepool.initial_srvs if initial is None else initial
         self.servicepool.cache_l1_srvs = self.servicepool.cache_l1_srvs if cache is None else cache

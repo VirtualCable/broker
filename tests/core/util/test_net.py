@@ -60,34 +60,34 @@ class NetTest(UDSTestCase):
             self.assertEqual(
                 len(multiple_net),
                 1,
-                "Incorrect number of network returned from {0}".format(n[0]),
+                f"Incorrect number of network returned from {n[0]}",
             )
             self.assertEqual(
                 multiple_net[0][0],
                 n[1],
-                "Incorrect network start value for {0}".format(n[0]),
+                f"Incorrect network start value for {n[0]}",
             )
             self.assertEqual(
                 multiple_net[0][1],
                 n[2],
-                "Incorrect network end value for {0}".format(n[0]),
+                f"Incorrect network end value for {n[0]}",
             )
 
             single_net: net.NetworkType = net.network_from_str(n[0])
             self.assertEqual(
                 len(single_net),
                 3,
-                "Incorrect number of network returned from {0}".format(n[0]),
+                f"Incorrect number of network returned from {n[0]}",
             )
             self.assertEqual(
                 single_net[0],
                 n[1],
-                "Incorrect network start value for {0}".format(n[0]),
+                f"Incorrect network start value for {n[0]}",
             )
             self.assertEqual(
                 single_net[1],
                 n[2],
-                "Incorrect network end value for {0}".format(n[0]),
+                f"Incorrect network end value for {n[0]}",
             )
 
         for n1 in ("192.168.0", "192.168.0.5-192.168.0.3", "no net"):
@@ -97,7 +97,7 @@ class NetTest(UDSTestCase):
         self.assertEqual(net.ip_to_long("192.168.0.5").ip, 3232235525)
         self.assertEqual(net.long_to_ip(3232235525, 4), "192.168.0.5")
         for n2 in range(0, 255):
-            self.assertTrue(net.contains("192.168.0.0/24", "192.168.0.{}".format(n2)))
+            self.assertTrue(net.contains("192.168.0.0/24", f"192.168.0.{n2}"))
 
         for n3 in range(4294):
             self.assertTrue(net.contains([net.NetworkType(0, 4294967295, 4)], n3 * 1000))
@@ -141,34 +141,34 @@ class NetTest(UDSTestCase):
             self.assertEqual(
                 len(multiple_net),
                 1,
-                "Incorrect number of network returned from {0}".format(n[0]),
+                f"Incorrect number of network returned from {n[0]}",
             )
             self.assertEqual(
                 multiple_net[0][0],
                 n[1],
-                "Incorrect network start value for {0}".format(n[0]),
+                f"Incorrect network start value for {n[0]}",
             )
             self.assertEqual(
                 multiple_net[0][1],
                 n[2],
-                "Incorrect network end value for {0}".format(n[0]),
+                f"Incorrect network end value for {n[0]}",
             )
 
             single_net: net.NetworkType = net.network_from_str(n[0], version=(6 if n[0] == "*" else 0))
             self.assertEqual(
                 len(single_net),
                 3,
-                "Incorrect number of network returned from {0}".format(n[0]),
+                f"Incorrect number of network returned from {n[0]}",
             )
             self.assertEqual(
                 single_net[0],
                 n[1],
-                "Incorrect network start value for {0}".format(n[0]),
+                f"Incorrect network start value for {n[0]}",
             )
             self.assertEqual(
                 single_net[1],
                 n[2],
-                "Incorrect network end value for {0}".format(n[0]),
+                f"Incorrect network end value for {n[0]}",
             )
 
     def test_ip_to_long(self) -> None:
@@ -191,7 +191,7 @@ class NetTest(UDSTestCase):
             for b in range(0, 256, 17):
                 for ipv6 in range(0, 256, 13):
                     for d in range(0, 256, 11):
-                        ipv4 = "{0}.{1}.{2}.{3}".format(a, b, ipv6, d)
+                        ipv4 = f"{a}.{b}.{ipv6}.{d}"
                         self.assertEqual(net.long_to_ip(net.ip_to_long(ipv4).ip, 4), ipv4)
 
         # iterate some ipv6 addresses

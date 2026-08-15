@@ -29,7 +29,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import random  # nosec: testing only
-import typing
 
 from uds import models
 from uds.core import types
@@ -40,7 +39,7 @@ glob = {"user_id": 0, "group_id": 0}
 
 
 def create_db_authenticator(
-    authenticator: typing.Optional[models.Authenticator] = None,
+    authenticator: models.Authenticator | None = None,
 ) -> models.Authenticator:
     """
     Creates a testing authenticator
@@ -66,7 +65,7 @@ def create_db_users(
     is_staff: bool = False,
     is_admin: bool = False,
     enabled: bool = True,
-    groups: typing.Optional[list[models.Group]] = None,
+    groups: list[models.Group] | None = None,
 ) -> list[models.User]:
     """
     Creates some ramdon users

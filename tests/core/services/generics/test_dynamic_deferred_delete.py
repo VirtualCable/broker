@@ -77,9 +77,9 @@ class DynamicDeferredDeleteTest(UDSTransactionTestCase):
     def patch_for_worker(
         self,
         *,
-        execute_delete_side_effect: typing.Union[None, typing.Callable[..., None], Exception] = None,
-        is_deleted_side_effect: typing.Union[None, typing.Callable[..., bool], Exception] = None,
-        is_running: typing.Union[None, typing.Callable[..., bool]] = None,
+        execute_delete_side_effect: None | typing.Callable[..., None] | Exception = None,
+        is_deleted_side_effect: None | typing.Callable[..., bool] | Exception = None,
+        is_running: None | typing.Callable[..., bool] = None,
         must_stop_before_deletion: bool = False,
         should_try_soft_shutdown: bool = False,
     ) -> collections.abc.Generator[tuple[mock.MagicMock, dict[str, TestDict]], None, None]:

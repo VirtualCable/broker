@@ -42,8 +42,6 @@ from uds.models.calendar_rule import FrequencyInfo
 # FREQ_NAMES, dunits, WEEKDAYS_LIST
 from ...utils.test import UDSTestCase
 
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

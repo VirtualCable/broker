@@ -31,7 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import datetime
 import logging
-import typing
 
 from tests.fixtures import services as services_fixtures
 from tests.utils.test import UDSTestCase
@@ -40,8 +39,6 @@ from uds.core import consts
 from uds.core.util import model
 from uds.models.account_usage import AccountUsage
 
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

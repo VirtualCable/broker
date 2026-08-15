@@ -67,12 +67,12 @@ class LinuxOsManagerSerialTest(UDSTestCase):
     def test_unmarshall_all_versions(self) -> None:
         for v in range(1, len(SERIALIZED_OSMANAGER_DATA) + 1):
             instance = osmanager.LinuxRandomPassManager(environment=Environment.testing_environment())
-            instance.unmarshal(SERIALIZED_OSMANAGER_DATA["v{}".format(v)])
+            instance.unmarshal(SERIALIZED_OSMANAGER_DATA[f"v{v}"])
             self.check(f"v{v}", instance)
 
     def test_marshaling(self) -> None:
         # Unmarshall last version, remarshall and check that is marshalled using new marshalling format
-        LAST_VERSION = "v{}".format(len(SERIALIZED_OSMANAGER_DATA))
+        LAST_VERSION = f"v{len(SERIALIZED_OSMANAGER_DATA)}"
         instance = osmanager.LinuxRandomPassManager(environment=Environment.testing_environment())
         instance.unmarshal(SERIALIZED_OSMANAGER_DATA[LAST_VERSION])
         marshaled_data = instance.marshal()

@@ -37,14 +37,14 @@ glob = {"user_id": 0, "group_id": 0}
 
 
 def createEmailNotifier(
-    host: typing.Optional[str] = None,
+    host: str | None = None,
     port: int = 0,
-    username: typing.Optional[str] = None,
-    password: typing.Optional[str] = None,
-    fromEmail: typing.Optional[str] = None,
-    toEmail: typing.Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
+    fromEmail: str | None = None,
+    toEmail: str | None = None,
     enableHtml: bool = False,
-    security: typing.Optional[str] = None,
+    security: str | None = None,
 ) -> models.Notifier:
     from uds.notifiers.email.notifier import EmailNotifier
 

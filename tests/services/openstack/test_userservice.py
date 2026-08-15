@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
 
 # We use transactions on some related methods (storage access, etc...)
 class TestOpenstackLiveDeployment(UDSTransactionTestCase):
-    _old_servers: typing.List["openstack_types.ServerInfo"]
+    _old_servers: list["openstack_types.ServerInfo"]
 
     def setUp(self) -> None:
         # Sets all vms to running, later restore original values

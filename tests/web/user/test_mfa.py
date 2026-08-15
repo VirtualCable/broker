@@ -63,7 +63,7 @@ class WebMFATest(test.WEBTestCase):
         self.user.save()
 
     def test_redirect_when_not_authenticated(self) -> None:
-        response: "HttpResponse" = self.client.get(reverse("page.mfa"))
+        response: HttpResponse = self.client.get(reverse("page.mfa"))
         self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
 
     def test_redirect_when_already_authorized(self) -> None:
@@ -73,7 +73,7 @@ class WebMFATest(test.WEBTestCase):
         self.client.get(reverse("page.mfa"))
         self.client.post(reverse("page.mfa"), {"code": "123456", "remember": False})
         # Now authorized, accessing MFA should redirect to index
-        response: "HttpResponse" = self.client.get(reverse("page.mfa"))
+        response: HttpResponse = self.client.get(reverse("page.mfa"))
         self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
 
     def test_redirect_when_no_mfa_provider(self) -> None:
@@ -121,7 +121,7 @@ class WebMFATest(test.WEBTestCase):
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
         self.client.get(reverse("page.mfa"))
         max_tries = GlobalConfig.MAX_LOGIN_TRIES.as_int()
-        response: "UDSHttpResponse" = None  # type: ignore[assignment]
+        response: UDSHttpResponse = None  # type: ignore[assignment]
         for _ in range(max_tries):
             response = self.client.post(reverse("page.mfa"), {"code": "wrong"})
 

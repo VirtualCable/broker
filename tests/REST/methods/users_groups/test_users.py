@@ -122,7 +122,7 @@ class UsersTest(rest.test.RESTActorTestCase):
             user = response.json()
             self.assertTrue(
                 rest.assertions.assert_user_is(i, user),
-                "User {} {} is not correct".format(i, models.User.objects.filter(uuid=i.uuid).values()[0]),
+                f"User {i} {models.User.objects.filter(uuid=i.uuid).values()[0]} is not correct",
             )
 
         # invalid user

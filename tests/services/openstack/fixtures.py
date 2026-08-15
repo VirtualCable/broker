@@ -58,9 +58,7 @@ from uds.services.OpenStack import service_fixed
 from uds.services.OpenStack.openstack import client
 from uds.services.OpenStack.openstack import types as openstack_types
 
-AnyOpenStackProvider: typing.TypeAlias = typing.Union[
-    provider.OpenStackProvider, provider_legacy.OpenStackProviderLegacy
-]
+AnyOpenStackProvider: typing.TypeAlias = provider.OpenStackProvider | provider_legacy.OpenStackProviderLegacy
 
 
 DEF_GUEST_IP_ADDRESS: typing.Final[str] = "1.0.0.1"
@@ -498,7 +496,7 @@ def create_publication(service: service.OpenStackLiveService) -> publication.Ope
 
 def create_live_userservice(
     service: service.OpenStackLiveService,
-    publication: typing.Optional[publication.OpenStackLivePublication] = None,
+    publication: publication.OpenStackLivePublication | None = None,
 ) -> deployment.OpenStackLiveUserService:
     """
     Create a linked user service

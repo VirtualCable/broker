@@ -81,7 +81,7 @@ class ServerRegisterTest(rest.test.RESTTestCase):
         """
         Test server rest api registration
         """
-        response: "UDSHttpResponse"
+        response: UDSHttpResponse
 
         for ip, type, os in self.ip_type_os_generator():
             self._data["hostname"] = random_hostname()

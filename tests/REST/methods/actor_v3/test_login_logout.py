@@ -69,10 +69,10 @@ class ActorLoginLogoutTest(test.UDSTestCase):
         for user in users + admins + staffs:
             # Valid
             response = rest.login(self, self.client, auth.uuid, user.name, user.name, 200, "user")
-            self.assertEqual(response["result"], "ok", "Login user {}".format(user.name))
-            self.assertIsNotNone(response["token"], "Login user {}".format(user.name))
-            self.assertIsNotNone(response["version"], "Login user {}".format(user.name))
-            self.assertIsNotNone(response["scrambler"], "Login user {}".format(user.name))
+            self.assertEqual(response["result"], "ok", f"Login user {user.name}")
+            self.assertIsNotNone(response["token"], f"Login user {user.name}")
+            self.assertIsNotNone(response["version"], f"Login user {user.name}")
+            self.assertIsNotNone(response["scrambler"], f"Login user {user.name}")
             self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, response["token"])
             rest.logout(self, self.client)
 

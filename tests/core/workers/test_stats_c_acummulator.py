@@ -121,7 +121,7 @@ class StatsAcummulatorTest(UDSTestCase):
 
         # Last hour NEVER is completed (until next hour appears), so it's not included in hour stats
         # Check that hourly stats are correctly generated
-        stat: "models.StatsCountersAccum"
+        stat: models.StatsCountersAccum
         for stat in hour_stats.order_by("owner_id", "stamp"):
             stamp = stat.stamp  # Already rounded to hour
             d = data[f"{stat.owner_id:03d}{stat.counter_type}"]

@@ -49,8 +49,8 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
         self,
         token: str,
         *,
-        mac: typing.Optional[str] = None,
-        ip: typing.Optional[str] = None,
+        mac: str | None = None,
+        ip: str | None = None,
     ) -> dict[str, typing.Any]:
         response = self.client.post(
             "/uds/rest/actor/v3/unmanaged",
@@ -71,8 +71,8 @@ class ActorUnmanagedTest(rest.test.RESTActorTestCase):
         self,
         token: str,
         *,
-        mac: typing.Optional[str] = None,
-        ip: typing.Optional[str] = None,
+        mac: str | None = None,
+        ip: str | None = None,
         expect_forbidden: bool = False,
     ) -> dict[str, typing.Any]:
         response = self.client.post(

@@ -52,14 +52,13 @@ def assert_user_is(
         ignore_fields.append("id")
 
     # If last_access is present, compare it here, because it's a datetime object
-    if "last_access" in compare_to:
-        if int(user.last_access.timestamp()) != compare_to["last_access"]:
-            logger.info(
-                "User last_access do not match: %s != %s",
-                user.last_access.timestamp(),
-                compare_to["last_access"],
-            )
-            return False
+    if "last_access" in compare_to and int(user.last_access.timestamp()) != compare_to["last_access"]:
+        logger.info(
+            "User last_access do not match: %s != %s",
+            user.last_access.timestamp(),
+            compare_to["last_access"],
+        )
+        return False
 
     if ensure_data(user, compare_to, ignore_keys=ignore_fields):
         # Compare groups
@@ -72,24 +71,22 @@ def assert_user_is(
                 return False
 
         # Compare mfa_data
-        if "mfa_data" in compare_to:
-            if user.mfa_data != compare_to["mfa_data"]:
-                logger.info(
-                    "User mfa_data do not match: %s != %s",
-                    user.mfa_data,
-                    compare_to["mfa_data"],
-                )
-                return False
+        if "mfa_data" in compare_to and user.mfa_data != compare_to["mfa_data"]:
+            logger.info(
+                "User mfa_data do not match: %s != %s",
+                user.mfa_data,
+                compare_to["mfa_data"],
+            )
+            return False
 
         # Compare password
-        if compare_password:
-            if not CryptoManager.manager().check_hash(compare_to["password"], user.password):
-                logger.info(
-                    "User password do not match: %s != %s",
-                    user.password,
-                    compare_to["password"],
-                )
-                return False
+        if compare_password and not CryptoManager.manager().check_hash(compare_to["password"], user.password):
+            logger.info(
+                "User password do not match: %s != %s",
+                user.password,
+                compare_to["password"],
+            )
+            return False
 
         return True
 
@@ -112,14 +109,13 @@ def assert_group_is(
                 logger.info("Group groups do not match: %s != %s", grps, compare_to_groups)
                 return False
 
-        if "type" in compare_to:
-            if group.is_meta != (compare_to["type"] == "meta"):
-                logger.info(
-                    "Group type do not match: %s != %s",
-                    group.is_meta,
-                    compare_to["type"],
-                )
-                return False
+        if "type" in compare_to and group.is_meta != (compare_to["type"] == "meta"):
+            logger.info(
+                "Group type do not match: %s != %s",
+                group.is_meta,
+                compare_to["type"],
+            )
+            return False
 
         if "pools" in compare_to:
             pools = set(i.uuid for i in group.deployedServices.all())
@@ -168,7 +164,4 @@ def assert_servicepool_is(
     if not compare_uuid:
         ignore_fields.append("id")
 
-    if ensure_data(pool, compare_to, ignore_keys=ignore_fields):
-        return True
-
-    return False
+    return bool(ensure_data(pool, compare_to, ignore_keys=ignore_fields))

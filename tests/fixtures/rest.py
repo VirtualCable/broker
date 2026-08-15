@@ -43,8 +43,8 @@ class UserRestStruct(rest.RestStruct):
     is_admin: bool
     staff_member: bool
     groups: list[rest.uuid_type]
-    mfa_data: typing.Optional[str]
-    password: typing.Optional[str]
+    mfa_data: str | None
+    password: str | None
 
 
 # Group REST structure

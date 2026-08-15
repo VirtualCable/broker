@@ -475,7 +475,7 @@ def create_provider(**kwargs: typing.Any) -> provider.XenProvider:
 
 
 def create_service_linked(
-    provider: typing.Optional[provider.XenProvider] = None, **kwargs: typing.Any
+    provider: provider.XenProvider | None = None, **kwargs: typing.Any
 ) -> service.XenLinkedService:
     """
     Create a fixed service
@@ -500,7 +500,7 @@ def create_service_linked(
 
 
 def create_service_fixed(
-    provider: typing.Optional[provider.XenProvider] = None, **kwargs: typing.Any
+    provider: provider.XenProvider | None = None, **kwargs: typing.Any
 ) -> service_fixed.XenFixedService:
     """
     Create a fixed service
@@ -517,7 +517,7 @@ def create_service_fixed(
 
 
 def create_publication(
-    service: typing.Optional[service.XenLinkedService] = None,
+    service: service.XenLinkedService | None = None,
     **kwargs: typing.Any,
 ) -> "publication.XenPublication":
     """
@@ -534,7 +534,7 @@ def create_publication(
 
 
 def create_userservice_fixed(
-    service: typing.Optional[service_fixed.XenFixedService] = None,
+    service: service_fixed.XenFixedService | None = None,
 ) -> deployment_fixed.XenFixedUserService:
     """
     Create a fixed user service, has no publication
@@ -549,7 +549,7 @@ def create_userservice_fixed(
 
 
 def create_userservice_linked(
-    service: typing.Optional[service.XenLinkedService] = None,
+    service: service.XenLinkedService | None = None,
     publication: typing.Optional["publication.XenPublication"] = None,
 ) -> deployment.XenLinkedUserService:
     """

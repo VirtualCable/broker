@@ -58,7 +58,7 @@ def load() -> None:
         pass  # Ignore errors, no vars will be loaded
 
 
-def get_vars(section: str) -> typing.Dict[str, str]:
+def get_vars(section: str) -> dict[str, str]:
     load()  # Ensure vars are loaded
 
     try:

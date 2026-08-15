@@ -39,8 +39,6 @@ from uds import models
 from uds.core.auths import callbacks
 from uds.core.util import config
 
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +48,7 @@ class AuthCallbackTest(UDSTestCase):
     groups: list["models.Group"]
     user: "models.User"
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
 

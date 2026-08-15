@@ -94,7 +94,7 @@ class SuperuserLoginSecurityTest(rest.test.RESTTestCase):
         GlobalConfig.SUPER_USER_PASS.set(DEFAULT_ROOT_PASSWORD)
         super().tearDown()
 
-    def _superuser_login(self, password: str, username: str | None = None) -> "UDSHttpResponse":
+    def _superuser_login(self, password: str, username: str | None = None) -> UDSHttpResponse:
         client = UDSClient()
         return client.post(
             client.compose_rest_url("auth/login"),

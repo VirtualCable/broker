@@ -40,7 +40,7 @@ from . import constants
 logger = logging.getLogger("test")
 
 
-def random_string(size: int = 6, chars: typing.Optional[str] = None) -> str:
+def random_string(size: int = 6, chars: str | None = None) -> str:
     chars = chars or constants.STRING_CHARS
     return "".join(
         random.choice(chars)
@@ -69,7 +69,7 @@ def random_ip() -> str:
     )
 
 
-def random_mac(mac_range: typing.Optional[str] = None) -> str:
+def random_mac(mac_range: str | None = None) -> str:
     if not mac_range:
         return ":".join(random_string(2, "0123456789ABCDEF") for _ in range(6))
     else:  # Mac range is like 00:15:5D:10:00:00-00:15:5D:FF:FF:FF
@@ -100,7 +100,7 @@ def limited_iterator(while_checker: typing.Callable[[], bool], limit: int = 128)
     raise Exception(f"Limit reached: {current}/{limit}: {while_checker()}")
 
 
-def waiter(finish_checker: typing.Callable[[], bool], timeout: int = 64, msg: typing.Optional[str] = None) -> None:
+def waiter(finish_checker: typing.Callable[[], bool], timeout: int = 64, msg: str | None = None) -> None:
     start_time = time.time()
     for _ in limited_iterator(lambda: time.time() - start_time < timeout):
         if finish_checker():

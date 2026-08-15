@@ -98,12 +98,12 @@ class SimpleLdapSerializationTest(UDSTestCase):
         for v in range(1, len(SERIALIZED_AUTH_DATA) + 1):
             with Environment.temporary_environment() as env:
                 instance = authenticator.SimpleLDAPAuthenticator(environment=env)
-                instance.unmarshal(SERIALIZED_AUTH_DATA["v{}".format(v)])
+                instance.unmarshal(SERIALIZED_AUTH_DATA[f"v{v}"])
                 self.check_provider(f"v{v}", instance)
 
     def test_marshaling(self) -> None:
         # Unmarshall last version, remarshall and check that is marshalled using new marshalling format
-        LAST_VERSION = "v{}".format(len(SERIALIZED_AUTH_DATA))
+        LAST_VERSION = f"v{len(SERIALIZED_AUTH_DATA)}"
         with Environment.temporary_environment() as env:
             instance = authenticator.SimpleLDAPAuthenticator(environment=env)
             instance.unmarshal(SERIALIZED_AUTH_DATA[LAST_VERSION])

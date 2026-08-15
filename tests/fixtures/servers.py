@@ -40,9 +40,9 @@ from ..utils import helpers
 
 def create_server(
     type: "types.servers.ServerType" = types.servers.ServerType.SERVER,
-    subtype: typing.Optional[str] = None,
-    version: typing.Optional[str] = None,
-    ip: typing.Optional[str] = None,
+    subtype: str | None = None,
+    version: str | None = None,
+    ip: str | None = None,
     listen_port: int = 0,
     data: typing.Any = None,
 ) -> "models.Server":
@@ -64,10 +64,10 @@ def create_server(
 
 def create_server_group(
     type: "types.servers.ServerType" = types.servers.ServerType.SERVER,
-    subtype: typing.Optional[str] = None,
-    version: typing.Optional[str] = None,
-    ip: typing.Optional[str] = None,
-    host: typing.Optional[str] = None,
+    subtype: str | None = None,
+    version: str | None = None,
+    ip: str | None = None,
+    host: str | None = None,
     port: int = 0,
     listen_port: int = 0,
     num_servers: int = 1,

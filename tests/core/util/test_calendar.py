@@ -29,6 +29,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import datetime
+import typing
 import zoneinfo
 
 from django.utils import timezone
@@ -41,6 +42,7 @@ from ...utils.test import UDSTestCase
 
 
 class CalendarTest(UDSTestCase):
+    @typing.override
     def setUp(self) -> None:
         createCalendars()
 
@@ -55,29 +57,29 @@ class CalendarTest(UDSTestCase):
         # Rule with end
 
         # update 1
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2014, 9, 1, 21, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2014, 9, 1, 21, 0, 0))))  # ruff: ignore[DTZ001]
 
         # update 2
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 20, 59, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 21, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 20, 59, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 21, 0, 0))))  # ruff: ignore[DTZ001]
 
         # update 3
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 0, 0, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 1, 59, 0))))
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 2, 0, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 21, 0, 0))))
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 0, 0, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 1, 59, 0))))  # ruff: ignore[DTZ001]
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 2, 0, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 1, 21, 0, 0))))  # ruff: ignore[DTZ001]
 
         # update 4
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 2, 21, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 2, 21, 0, 0))))  # ruff: ignore[DTZ001]
 
         # Rule without end, but with beginning
 
         # update 5
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2014, 9, 1, 8, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2014, 9, 1, 8, 0, 0))))  # ruff: ignore[DTZ001]
 
         # update 6
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 7, 59, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 8, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 7, 59, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 9, 1, 8, 0, 0))))  # ruff: ignore[DTZ001]
 
         # updates... (total is 366, because previous updates has been cached)
         for day in range(365):
@@ -109,10 +111,10 @@ class CalendarTest(UDSTestCase):
             self.assertFalse(chk.check(timezone.make_aware(datetime.datetime.combine(date, datetime.time(12, 0, 0)))))
 
         # update 31
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 8, 25, 10, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 8, 25, 10, 0, 0))))  # ruff: ignore[DTZ001]
 
         # update 32
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 6, 10, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 10, 6, 10, 0, 0))))  # ruff: ignore[DTZ001]
 
         # Rule without end
 
@@ -200,28 +202,28 @@ class CalendarTest(UDSTestCase):
         timezone.activate(datetime.timezone.utc)
 
         # Minutes
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2014, 12, 31, 23, 59, 59))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 1, 59))))
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 2, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2014, 12, 31, 23, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 1, 59))))  # ruff: ignore[DTZ001]
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 2, 0))))  # ruff: ignore[DTZ001]
 
         # Hours
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 31, 23, 59, 59))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 1, 0, 0, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 1, 1, 59, 59))))
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 1, 2, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 1, 31, 23, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 1, 0, 0, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 1, 1, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 1, 2, 0, 0))))  # ruff: ignore[DTZ001]
 
         # Days
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 28, 23, 59, 59))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 1, 0, 0, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 2, 23, 59, 59))))
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 3, 0, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 2, 28, 23, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 1, 0, 0, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 2, 23, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 3, 0, 0, 0))))  # ruff: ignore[DTZ001]
 
         # Weeks
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 31, 23, 59, 59))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 1, 8, 0, 0))))
-        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 15, 7, 59, 59))))
-        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 15, 8, 0, 0))))
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 3, 31, 23, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 1, 8, 0, 0))))  # ruff: ignore[DTZ001]
+        self.assertTrue(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 15, 7, 59, 59))))  # ruff: ignore[DTZ001]
+        self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 15, 8, 0, 0))))  # ruff: ignore[DTZ001]
 
     def test_check_uses_user_tz_for_day_key_when_db_is_utc(self) -> None:
         """The cache key is the user's wall-clock day, not the database day.

@@ -64,10 +64,11 @@ class ServerManagerManagedServersTest(UDSTestCase):
     user_services: list["models.UserService"]
     manager: "servers.ServerManager"
     registered_servers_group: "models.ServerGroup"
-    assign: collections.abc.Callable[..., typing.Optional[types.servers.ServerCounter]]
+    assign: collections.abc.Callable[..., types.servers.ServerCounter | None]
     all_uuids: list[str]
     server_stats: dict[str, "types.servers.ServerStats"]
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self.user_services = []
@@ -104,13 +105,12 @@ class ServerManagerManagedServersTest(UDSTestCase):
     @contextmanager
     def create_mock_api_requester(
         self,
-        get_stats: typing.Optional[
-            collections.abc.Callable[["models.Server"], typing.Optional["types.servers.ServerStats"]]
-        ] = None,
-    ) -> typing.Iterator[mock.Mock]:
+        get_stats: collections.abc.Callable[["models.Server"], "types.servers.ServerStats | None"]
+        | None = None,
+    ) -> collections.abc.Generator[mock.Mock]:
         with mock.patch("uds.core.managers.servers_api.requester.ServerApiRequester") as mock_server_api_requester:
 
-            def _get_stats() -> typing.Optional[types.servers.ServerStats]:
+            def _get_stats() -> types.servers.ServerStats | None:
                 # Get first argument from call to init on serverApiRequester
                 server = mock_server_api_requester.call_args[0][0]
                 logger.debug("Getting stats for %s", server.host)

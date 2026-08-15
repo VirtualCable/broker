@@ -56,7 +56,7 @@ class PropertiesTest(UDSTestCase):
         Test that properties are stored and retrieved for user services
         """
         for i, us in enumerate(self.user_services):
-            key, value = "key{}".format(i), "value{}".format(i)
+            key, value = f"key{i}", f"value{i}"
 
             # Test as context manager
             with us.properties as p:
@@ -68,7 +68,7 @@ class PropertiesTest(UDSTestCase):
             self.assertEqual(prop.value, value)
 
             # Test as property
-            key, value = "keyx{}".format(i), "valuex{}".format(i)
+            key, value = f"keyx{i}", f"valuex{i}"
             us.properties[key] = value
             self.assertEqual(us.properties[key], value)
 
