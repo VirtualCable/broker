@@ -76,9 +76,8 @@ def auth_required(
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> typing.Any:
             obj = typing.cast("OpenStackClient", args[0])
-            if for_project is True:
-                if obj._projectid is None:
-                    raise Exception("Need a project for method {}".format(func))
+            if for_project is True and obj._projectid is None:
+                raise Exception("Need a project for method {}".format(func))
             obj.ensure_authenticated()
             return func(*args, **kwargs)
 

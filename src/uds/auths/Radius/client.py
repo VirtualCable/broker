@@ -172,12 +172,11 @@ class RadiusClient:
         pkt = typing.cast(pyrad.packet.AuthPacket, self.server.SendPacket(req))
 
         # If verified, do it now
-        if self.use_message_authenticator:
-            if not req.verify_message_authenticator(
-                secret=self.server.secret, original_authenticator=req.authenticator
-            ):
-                logger.error("Invalid message authenticator")
-                raise RadiusAuthenticationError("Invalid message authenticator")
+        if self.use_message_authenticator and not req.verify_message_authenticator(
+            secret=self.server.secret, original_authenticator=req.authenticator
+        ):
+            logger.error("Invalid message authenticator")
+            raise RadiusAuthenticationError("Invalid message authenticator")
 
         return pkt
 

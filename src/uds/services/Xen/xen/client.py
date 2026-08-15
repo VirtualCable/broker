@@ -578,9 +578,8 @@ class XenClient:  # pylint: disable=too-many-public-methods
         #  '0/ipv4/0': '172.27.242.218',
         #  '0/ipv6/1': 'fe80::a496:4ff:feca:404d',
         #  '0/ipv6/0': '2a0c:5a81:2304:8100:a496:4ff:feca:404d'}
-        if ip_version != "6":
-            if "0/ip" in networks:
-                return networks["0/ip"]
+        if ip_version != "6" and "0/ip" in networks:
+            return networks["0/ip"]
 
         for net_name in sorted(networks.keys()):
             if ip_version is None or f"/ipv{ip_version}/" in net_name:

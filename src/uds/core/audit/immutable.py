@@ -377,9 +377,8 @@ class ImmutableLogger:
             )
 
         # Verify genesis TSA token
-        if genesis_provider is not None:
-            if not genesis_provider.verify(expected_seed, token):
-                return False, "Genesis RFC 3161 token verification failed."
+        if genesis_provider is not None and not genesis_provider.verify(expected_seed, token):
+            return False, "Genesis RFC 3161 token verification failed."
 
         # Walk the chain
         expected_previous = bytes(genesis.entry_hash)  # pyrefly: ignore[unnecessary-type-conversion]
@@ -408,12 +407,11 @@ class ImmutableLogger:
 
             # Re-anchor verification
             if entry.anchor:
-                if reanchor_provider is not None:
-                    if not reanchor_provider.verify(
-                        expected_previous,
-                        bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
-                    ):
-                        return False, (f"Re-anchor TSA verification failed at entry #{entry.sequence}")
+                if reanchor_provider is not None and not reanchor_provider.verify(
+                    expected_previous,
+                    bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
+                ):
+                    return False, (f"Re-anchor TSA verification failed at entry #{entry.sequence}")
                 reanchor_count += 1
                 logger.debug("Re-anchor #%d verified OK", entry.sequence)
 
@@ -501,13 +499,12 @@ class ImmutableLogger:
                 return
 
             # Verify re-anchor
-            if entry.anchor:
-                if reanchor_provider and not reanchor_provider.verify(
-                    expected_previous,
-                    bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
-                ):
-                    logger.error("Re-anchor TSA verification failed at entry #%d", entry.sequence)
-                    return
+            if entry.anchor and reanchor_provider and not reanchor_provider.verify(
+                expected_previous,
+                bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
+            ):
+                logger.error("Re-anchor TSA verification failed at entry #%d", entry.sequence)
+                return
 
             expected_previous = entry.entry_hash
             yield entry

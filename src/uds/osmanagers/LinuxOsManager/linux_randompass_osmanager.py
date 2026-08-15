@@ -73,9 +73,8 @@ class LinuxRandomPassManager(LinuxOsManager):
 
     @typing.override
     def initialize(self, values: "gui.ValuesType") -> None:
-        if values is not None:
-            if values["user_account"] == "":
-                raise exceptions.ui.ValidationError(_("Must provide an user account!!!"))
+        if values is not None and values["user_account"] == "":
+            raise exceptions.ui.ValidationError(_("Must provide an user account!!!"))
 
     @typing.override
     def update_credentials(self, userservice: "UserService", username: str, password: str) -> tuple[str, str]:

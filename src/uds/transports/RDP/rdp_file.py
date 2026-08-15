@@ -298,9 +298,8 @@ class RDPFile:
             self.target == types.os.KnownOS.WINDOWS
             or self.target == types.os.KnownOS.LINUX
             or self.target == types.os.KnownOS.MAC_OS
-        ):
-            if self.custom_parameters and self.custom_parameters.strip() != "":
-                res += self.custom_parameters.strip() + "\n"
+        ) and self.custom_parameters and self.custom_parameters.strip() != "":
+            res += self.custom_parameters.strip() + "\n"
 
         return res
 

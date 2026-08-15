@@ -94,11 +94,10 @@ class TestOSManager(osmanagers.OSManager):
         """
         Says if a machine is removable on logout
         """
-        if not userservice.in_use:
-            if (self.on_logout.value == "remove") or (
-                not userservice.is_publication_valid() and self.on_logout.value == "keep"
-            ):
-                return True
+        if not userservice.in_use and ((self.on_logout.value == "remove") or (
+            not userservice.is_publication_valid() and self.on_logout.value == "keep"
+        )):
+            return True
 
         return False
 

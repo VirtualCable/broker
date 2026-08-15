@@ -67,16 +67,15 @@ class DeferredDeletionWorker(Job):
             exec_time = execution_timer()
             try:
                 with exec_time:
-                    if service.must_stop_before_deletion:
-                        if service.is_running(None, vmid):
-                            if service.should_try_soft_shutdown():
-                                service.shutdown(None, vmid)
-                            else:
-                                service.stop(None, vmid)
-                            types.DeletionInfo.create_on_storage(
-                                types.DeferredStorageGroup.STOPPING, vmid, service.db_obj().uuid
-                            )
-                            return
+                    if service.must_stop_before_deletion and service.is_running(None, vmid):
+                        if service.should_try_soft_shutdown():
+                            service.shutdown(None, vmid)
+                        else:
+                            service.stop(None, vmid)
+                        types.DeletionInfo.create_on_storage(
+                            types.DeferredStorageGroup.STOPPING, vmid, service.db_obj().uuid
+                        )
+                        return
 
                     service.execute_delete(vmid)
                 # If this takes too long, we will delay the next check a bit

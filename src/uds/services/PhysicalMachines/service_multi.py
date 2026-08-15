@@ -196,20 +196,19 @@ class IPMachinesService(services.Service):
             # If not locked or lock expired
             if server.locked_until is None or server.locked_until < sql_now():
                 # if port check enabled, check
-                if self.port.value != 0:
-                    if not net.test_connectivity(server.host, self.port.value):
-                        server.lock(datetime.timedelta(minutes=self.ignore_minutes_on_failure.value))
-                        self.provider().do_log(
-                            types.log.LogLevel.WARNING,
-                            f"Host {server.host} does not respond to port {self.port.value}, skipping",
-                        )
-                        logger.warning(
-                            "Static Machine check on %s:%s failed. Will be ignored for %s minutes.",
-                            server.host,
-                            self.port.value,
-                            self.ignore_minutes_on_failure.value,
-                        )
-                        continue
+                if self.port.value != 0 and not net.test_connectivity(server.host, self.port.value):
+                    server.lock(datetime.timedelta(minutes=self.ignore_minutes_on_failure.value))
+                    self.provider().do_log(
+                        types.log.LogLevel.WARNING,
+                        f"Host {server.host} does not respond to port {self.port.value}, skipping",
+                    )
+                    logger.warning(
+                        "Static Machine check on %s:%s failed. Will be ignored for %s minutes.",
+                        server.host,
+                        self.port.value,
+                        self.ignore_minutes_on_failure.value,
+                    )
+                    continue
                 server.lock(self.get_max_lock_time())
                 return server.uuid
         raise exceptions.services.MaxServicesReachedError()

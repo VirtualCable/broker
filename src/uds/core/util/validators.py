@@ -117,11 +117,10 @@ def validate_hostname(
             _("{} is not a valid hostname: maximum host name length exceeded.").format(hostname + field_name)
         )
 
-    if not allow_domain:
-        if "." in hostname:
-            raise exceptions.ui.ValidationError(
-                _("{} is not a valid hostname: (domains not allowed)").format(hostname + field_name)
-            )
+    if not allow_domain and "." in hostname:
+        raise exceptions.ui.ValidationError(
+            _("{} is not a valid hostname: (domains not allowed)").format(hostname + field_name)
+        )
 
     allowed = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 

@@ -408,9 +408,8 @@ class WinDomainOsManager(WindowsOsManager):
             return _("Check error: {}").format(e)
 
         # Group
-        if self.grp.as_str() != "":
-            if self._get_group(ldap_connection) is None:
-                return _('Check Error: group "{}" not found (using "cn" to locate it)').format(self.grp.as_str())
+        if self.grp.as_str() != "" and self._get_group(ldap_connection) is None:
+            return _('Check Error: group "{}" not found (using "cn" to locate it)').format(self.grp.as_str())
 
         return _("Server check was successful")
 

@@ -167,11 +167,10 @@ def weblogin_required(
             if not request.user or not request.authorized:
                 return weblogout(request)
 
-            if role in (consts.Role.ADMIN, consts.Role.STAFF):
-                if request.user.is_staff() is False or (
-                    role == consts.Role.ADMIN and not request.user.is_admin
-                ):
-                    return HttpResponseForbidden(_("Forbidden"))
+            if role in (consts.Role.ADMIN, consts.Role.STAFF) and (request.user.is_staff() is False or (
+                role == consts.Role.ADMIN and not request.user.is_admin
+            )):
+                return HttpResponseForbidden(_("Forbidden"))
 
             return view_func(request, *args, **kwargs)
 

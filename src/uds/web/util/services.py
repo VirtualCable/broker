@@ -423,10 +423,9 @@ def get_services_info_dict(
         and len(services) == 1
         and GlobalConfig.AUTORUN_SERVICE.as_bool(False)
         and services[0]["transports"]
-    ):
-        if request.session.get("autorunDone", "0") == "0":
-            request.session["autorunDone"] = "1"
-            autorun = True
+    ) and request.session.get("autorunDone", "0") == "0":
+        request.session["autorunDone"] = "1"
+        autorun = True
 
     return {
         "services": services,

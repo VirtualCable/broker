@@ -456,13 +456,12 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                     except Exception as e:
                         logger.exception("Got Exception looking for item")
                         raise exceptions.rest.NotFound("Item not found") from e
-                elif number_of_args == 2:
-                    if self._args[1] == consts.rest.LOG:
-                        try:
-                            item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
-                            return self.get_logs(item)
-                        except Exception as e:
-                            raise exceptions.rest.NotFound("Item not found") from e
+                elif number_of_args == 2 and self._args[1] == consts.rest.LOG:
+                    try:
+                        item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
+                        return self.get_logs(item)
+                    except Exception as e:
+                        raise exceptions.rest.NotFound("Item not found") from e
 
                 if self.DETAIL is not None:
                     return self.process_detail()
@@ -482,9 +481,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         logger.debug("method POST for %s, %s", self.__class__.__name__, self._args)
 
         # Special case: /test/type>
-        if len(self._args) == 2:
-            if self._args[0] == "test":
-                return self.test(self._args[1])
+        if len(self._args) == 2 and self._args[0] == "test":
+            return self.test(self._args[1])
 
         # POST on collection (no args) → create new item (Change G)
         if self.is_new():
