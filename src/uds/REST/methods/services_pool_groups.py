@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -64,7 +63,7 @@ class ServicePoolGroupItem(types.rest.BaseRestItem):
 class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
     PATH = "gallery"
     MODEL = ServicePoolGroup
-    FIELDS_TO_SAVE = ["name", "comments", "image_id", "priority"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "image_id", "priority"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Services Pool Groups"))

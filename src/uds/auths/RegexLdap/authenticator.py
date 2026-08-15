@@ -551,7 +551,7 @@ class RegexLdap(auths.Authenticator):
                     == 1
                 ):
                     continue
-            except Exception:  # nosec: Control flow
+            except Exception:  # nosec: Control flow # ruff: ignore[S112]
                 continue
             return types.core.TestResult(
                 False,

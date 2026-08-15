@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -79,7 +78,7 @@ class TransportItem(types.rest.ManagedObjectItem[Transport]):
 
 class Transports(ModelHandler[TransportItem]):
     MODEL = Transport
-    FIELDS_TO_SAVE = [
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = [
         "name",
         "comments",
         "tags",

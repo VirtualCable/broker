@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -72,7 +71,7 @@ class MFAItem(types.rest.BaseRestItem):
 
 class MFA(ModelHandler[MFAItem]):
     MODEL = models.MFA
-    FIELDS_TO_SAVE = ["name", "comments", "tags", "remember_device", "validity"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags", "remember_device", "validity"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Multi Factor Authentication"))

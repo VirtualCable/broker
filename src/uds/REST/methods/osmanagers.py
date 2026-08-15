@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -71,7 +70,7 @@ class OsManagerItem(types.rest.ManagedObjectItem[OSManager]):
 
 class OsManagers(ModelHandler[OsManagerItem]):
     MODEL = OSManager
-    FIELDS_TO_SAVE = ["name", "comments", "tags"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags"]
 
     TABLE = (
         ui_utils.TableBuilder(_("OS Managers"))

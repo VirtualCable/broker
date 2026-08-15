@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -43,6 +42,7 @@ from uds.core.util import ensure
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
 from uds.models import Calendar
+from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
 from .calendarrules import CalendarRules
@@ -69,9 +69,9 @@ class Calendars(ModelHandler[CalendarItem]):
     """
 
     MODEL = Calendar
-    DETAIL = {"rules": CalendarRules}
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"rules": CalendarRules}
 
-    FIELDS_TO_SAVE = ["name", "comments", "tags"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Calendars"))

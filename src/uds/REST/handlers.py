@@ -227,7 +227,7 @@ class Handler(abc.ABC):
         """
         self._odata = types.rest.api.ODataParams.from_dict({k: v for k, v in self._params.items() if k.startswith("$")})
         # Subclasses (ModelHandler, DetailHandler, etc.) define get().
-        return typing.cast("typing.Any", getattr(self, "get"))()  # pyright: ignore[reportUnnecessaryCast]
+        return typing.cast(typing.Any, self).get()
 
     def api_compat(self) -> types.rest.ApiCompat:
         """Return the current API compatibility mode.

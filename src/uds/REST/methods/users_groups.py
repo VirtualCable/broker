@@ -421,7 +421,7 @@ class Groups(DetailHandler[GroupItem]):
             skip_mfa=group.skip_mfa,
         )
         if group.is_meta:
-            val.groups = list(x.uuid for x in group.groups.all().order_by("name"))
+            val.groups = [x.uuid for x in group.groups.all().order_by("name")]
         return val
 
     @typing.override

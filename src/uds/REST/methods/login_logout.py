@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -68,7 +67,7 @@ class Login(Handler):
     PATH = "auth"
     ROLE = consts.Role.ANONYMOUS
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "post": types.rest.api.Operation(
             summary="Authenticate a user",
             description="Authenticates a user against the specified authenticator and returns an auth token",
@@ -82,10 +81,18 @@ class Login(Handler):
                         properties={
                             "username": types.rest.api.SchemaProperty(type="string"),
                             "password": types.rest.api.SchemaProperty(type="string"),
-                            "auth_id": types.rest.api.SchemaProperty(type="string", description="Authenticator UUID"),
-                            "auth": types.rest.api.SchemaProperty(type="string", description="Authenticator name"),
-                            "label": types.rest.api.SchemaProperty(type="string", description="Authenticator label"),
-                            "platform": types.rest.api.SchemaProperty(type="string", description="Platform identifier"),
+                            "auth_id": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator UUID"
+                            ),
+                            "auth": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator name"
+                            ),
+                            "label": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator label"
+                            ),
+                            "platform": types.rest.api.SchemaProperty(
+                                type="string", description="Platform identifier"
+                            ),
                             "locale": types.rest.api.SchemaProperty(type="string", description="Locale code"),
                         },
                     ),
@@ -275,7 +282,7 @@ class Logout(Handler):
     PATH = "auth"
     ROLE = consts.Role.USER  # Must be logged in to logout :)
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "get": types.rest.api.Operation(
             summary="Logout current user",
             description="Invalidates the current authentication token ending the session",
@@ -327,7 +334,7 @@ class Auths(Handler):
     PATH = "auth"
     ROLE = consts.Role.ANONYMOUS
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "get": types.rest.api.Operation(
             summary="List authenticators",
             description="Returns a list of available authenticators",

@@ -58,7 +58,7 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Handler", "Dispatcher"]
+__all__ = ["Dispatcher", "Handler"]
 
 T = typing.TypeVar("T", bound=http.HttpResponse)
 
@@ -101,7 +101,7 @@ class Dispatcher(View):
             for i in trace_back.splitlines():
                 logger.error("* %s", i)
             # Append error exception to message response
-            msg = f"{msg}: {str(exc)}" if exc else msg
+            msg = f"{msg}: {exc!s}" if exc else msg
 
         body = json.dumps({"error": msg}).encode()
 

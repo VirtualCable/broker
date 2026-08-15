@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2017-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -46,6 +45,7 @@ from uds.core.util import ensure
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
 from uds.models import Account
+from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
 from .accountsusage import AccountsUsage
@@ -71,9 +71,9 @@ class Accounts(ModelHandler[AccountItem]):
     """
 
     MODEL = Account
-    DETAIL = {"usage": AccountsUsage}
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"usage": AccountsUsage}
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "clear",
             True,
@@ -88,7 +88,7 @@ class Accounts(ModelHandler[AccountItem]):
         ),
     ]
 
-    FIELDS_TO_SAVE = ["name", "comments", "tags"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Accounts"))

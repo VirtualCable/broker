@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -105,7 +104,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
     Detail handler for Services, whose parent is a Provider
     """
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "servicepools", description="List all service pools that reference this service provider"
         ),
@@ -241,7 +240,9 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
             service.data = service_instance.serialize()
 
             service.save()
-            return Services.service_item(service, permissions.effective_permissions(self._user, service), full=True)
+            return Services.service_item(
+                service, permissions.effective_permissions(self._user, service), full=True
+            )
 
         except models.Service.DoesNotExist:
             raise exceptions.rest.NotFound("Service not found") from None
@@ -253,7 +254,9 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                 ) from e
             raise exceptions.rest.RequestError("Element already exists (duplicate key error)") from e
         except exceptions.ui.ValidationError as e:
-            if not item and service:  # Only remove partially saved element if creating new (if editing, ignore this)
+            if (
+                not item and service
+            ):  # Only remove partially saved element if creating new (if editing, ignore this)
                 self._delete_incomplete_service(service)
             raise exceptions.rest.ValidationError(f"Input error: {e}") from e
         except Exception as e:
@@ -328,8 +331,7 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         :param cls:
         """
         for parent_type in services.factory().providers().values():
-            for service in parent_type.get_provided_services():
-                yield service
+            yield from parent_type.get_provided_services()
 
     @typing.override
     def get_gui(self, parent: "Model", for_type: str) -> list[types.ui.GuiElement]:
@@ -354,7 +356,9 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
                     .add_choice(
                         name="max_services_count_type",
                         choices=[
-                            ui.gui.choice_item(str(types.services.ServicesCountingType.STANDARD.value), _("Standard")),
+                            ui.gui.choice_item(
+                                str(types.services.ServicesCountingType.STANDARD.value), _("Standard")
+                            ),
                             ui.gui.choice_item(
                                 str(types.services.ServicesCountingType.CONSERVATIVE.value), _("Conservative")
                             ),
@@ -392,13 +396,17 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         res: list[ServicePoolResumeItem] = []
         for i in service.deployedServices.all():
             try:
-                self.check_access(i, uds.core.types.permissions.PermissionType.READ)  # Ensures access before listing...
+                self.check_access(
+                    i, uds.core.types.permissions.PermissionType.READ
+                )  # Ensures access before listing...
                 res.append(
                     ServicePoolResumeItem(
                         id=i.uuid,
                         name=i.name,
                         thumb=i.image.thumb64 if i.image is not None else DEFAULT_THUMB_BASE64,
-                        user_services_count=i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+                        user_services_count=i.userServices.exclude(
+                            state__in=(State.REMOVED, State.ERROR)
+                        ).count(),
                         state=_("With errors") if i.is_restrained() else _("Ok"),
                     )
                 )

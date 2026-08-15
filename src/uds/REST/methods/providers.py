@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -53,6 +52,7 @@ from uds.core.util import ui as ui_utils
 from uds.models import Provider
 from uds.models import Service
 from uds.models import UserService
+from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
 from .services import Services as DetailServices
@@ -88,9 +88,12 @@ class ProviderItem(types.rest.ManagedObjectItem[Provider]):
 
 class Providers(ModelHandler[ProviderItem]):
     MODEL = Provider
-    DETAIL = {"services": DetailServices, "usage": ServicesUsage}
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {
+        "services": DetailServices,
+        "usage": ServicesUsage,
+    }
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "allservices",
             False,
@@ -109,7 +112,7 @@ class Providers(ModelHandler[ProviderItem]):
         ),
     ]
 
-    FIELDS_TO_SAVE = ["name", "comments", "tags"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Service providers"))

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -51,7 +50,7 @@ class Config(Handler):
 
     ROLE = consts.Role.ADMIN
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "get": types.rest.api.Operation(
             summary="Get configuration",
             description="Returns the current UDS configuration values",

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -69,7 +68,7 @@ class Networks(ModelHandler[NetworkItem]):
     """
 
     MODEL = Network
-    FIELDS_TO_SAVE = ["name", "net_string", "tags"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "net_string", "tags"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Networks"))

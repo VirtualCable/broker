@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -51,6 +50,7 @@ from uds.models import Image
 from uds.models import MetaPool
 from uds.models import ServicePoolGroup
 from uds.REST.methods.op_calendars import AccessCalendars
+from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
 from .meta_service_pools import MetaAssignedService
@@ -89,14 +89,14 @@ class MetaPools(ModelHandler[MetaPoolItem]):
     """
 
     MODEL = MetaPool
-    DETAIL = {
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {
         "pools": MetaServicesPool,
         "services": MetaAssignedService,
         "groups": Groups,
         "access": AccessCalendars,
     }
 
-    FIELDS_TO_SAVE = [
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = [
         "name",
         "short_name",
         "comments",
@@ -133,7 +133,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         .build()
     )
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         # GET must come first: in NO_COMPAT mode a GET request that hits a
         # POST-only ``fallback_access`` raises GoneError. Declaring both at
         # the same name lets the framework dispatch by HTTP verb.
@@ -181,7 +181,9 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                 pool_group_thumb = item.servicesPoolGroup.image.thumb64
 
         all_pools = item.members.all()
-        userservices_total = sum((i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools))
+        userservices_total = sum(
+            i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools
+        )
         userservices_in_preparation = sum(
             (i.pool.userServices.filter(state=State.PREPARING).count()) for i in all_pools
         )

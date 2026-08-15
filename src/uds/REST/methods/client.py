@@ -148,7 +148,7 @@ class Client(Handler):
 
         try:
             # On debug, the tickets will not be invalidated (but will caduce in their validity time)
-            data: dict[str, typing.Any] = TicketStore.get(ticket, invalidate=False if settings.DEBUG else True)
+            data: dict[str, typing.Any] = TicketStore.get(ticket, invalidate=not settings.DEBUG)
         except TicketStore.DoesNotExist:
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
@@ -187,7 +187,7 @@ class Client(Handler):
             try:
                 log_enabled_since_limit = sql_stamp_seconds() - LOG_ENABLED_DURATION
                 log_enabled_since = self._request.user.properties.get("client_logging", log_enabled_since_limit)
-                is_logging_enabled = False if log_enabled_since <= log_enabled_since_limit else True
+                is_logging_enabled = log_enabled_since > log_enabled_since_limit
             except Exception:
                 is_logging_enabled = False
 

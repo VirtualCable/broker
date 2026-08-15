@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -49,7 +48,7 @@ logger = logging.getLogger(__name__)
 class Cache(Handler):
     ROLE = consts.Role.ADMIN
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "get": types.rest.api.Operation(
             summary="Purge cache",
             description="Purges all UDS caches (default and memory)",

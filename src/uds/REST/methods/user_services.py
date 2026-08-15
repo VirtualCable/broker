@@ -93,7 +93,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     Rest handler for Assigned Services, wich parent is Service
     """
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "reset",
             method=types.rest.CustomMethodMethod.POST,
@@ -360,7 +360,9 @@ class CachedService(AssignedUserService):
     Rest handler for Cached Services, which parent is ServicePool
     """
 
-    CUSTOM_METHODS = []  # Remove custom methods from assigned services
+    CUSTOM_METHODS: typing.ClassVar[
+        list[types.rest.ModelCustomMethod]
+    ] = []  # Remove custom methods from assigned services
 
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
@@ -595,7 +597,7 @@ class Publications(DetailHandler[PublicationItem]):
     Processes the publications detail requests of a Service Pool
     """
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "publish",
             method=types.rest.CustomMethodMethod.POST,

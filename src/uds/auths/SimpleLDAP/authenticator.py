@@ -337,8 +337,7 @@ class SimpleLDAPAuthenticator(auths.Authenticator):
                 limit=10 * LDAP_RESULT_LIMIT,
             ):
                 if self.group_id_attr.as_str() in d:
-                    for k in d[self.group_id_attr.as_str()]:
-                        groups.append(k)
+                    groups.extend(d[self.group_id_attr.as_str()])
             logger.debug("Groups: %s", groups)
             return groups
         except Exception:

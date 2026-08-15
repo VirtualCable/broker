@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -64,7 +63,7 @@ class Images(ModelHandler[ImageItem]):
 
     PATH = "gallery"
     MODEL = Image
-    FIELDS_TO_SAVE = ["name", "data"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "data"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Image Gallery"))

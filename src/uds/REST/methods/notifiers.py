@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -75,7 +74,7 @@ class NotifierItem(types.rest.BaseRestItem):
 class Notifiers(ModelHandler[NotifierItem]):
     PATH = "messaging"
     MODEL = Notifier
-    FIELDS_TO_SAVE = [
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = [
         "name",
         "comments",
         "level",

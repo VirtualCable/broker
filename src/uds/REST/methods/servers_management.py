@@ -81,7 +81,7 @@ class TokenItem(types.rest.BaseRestItem):
 class ServersTokens(ModelHandler[TokenItem]):
     # servers/groups/[id]/servers
     MODEL = models.Server
-    EXCLUDE = {
+    EXCLUDE: typing.ClassVar[dict[str, typing.Any] | None] = {
         "type__in": [
             types.servers.ServerType.ACTOR,
             types.servers.ServerType.UNMANAGED,
@@ -155,7 +155,7 @@ class ServerItem(types.rest.BaseRestItem):
 
 # REST API For servers (except tunnel servers nor actors)
 class ServersServers(DetailHandler[ServerItem]):
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "maintenance",
             method=types.rest.CustomMethodMethod.POST,
@@ -168,7 +168,9 @@ class ServersServers(DetailHandler[ServerItem]):
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "data": types.rest.api.SchemaProperty(type="string", description="CSV content with server entries"),
+                    "data": types.rest.api.SchemaProperty(
+                        type="string", description="CSV content with server entries"
+                    ),
                     "has_header": types.rest.api.SchemaProperty(
                         type="boolean", description="Whether the CSV has a header row"
                     ),
@@ -460,7 +462,7 @@ class ServersServers(DetailHandler[ServerItem]):
                     # Log it has been skipped
                     import_errors.append(f"Line {line_number}: duplicated server, skipping")
             except Exception as e:
-                import_errors.append(f"Error creating server on line {line_number}: {str(e)}")
+                import_errors.append(f"Error creating server on line {line_number}: {e!s}")
                 logger.exception("Error creating server on line %s", line_number)
 
         return import_errors
@@ -484,7 +486,7 @@ class GroupItem(types.rest.BaseRestItem):
 
 
 class ServersGroups(ModelHandler[GroupItem]):
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "stats",
             True,
@@ -492,18 +494,18 @@ class ServersGroups(ModelHandler[GroupItem]):
         ),
     ]
     MODEL = models.ServerGroup
-    FILTER = {
+    FILTER: typing.ClassVar[dict[str, typing.Any] | None] = {
         "type__in": [
             types.servers.ServerType.SERVER,
             types.servers.ServerType.UNMANAGED,
         ]
     }
-    DETAIL = {"servers": ServersServers}
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"servers": ServersServers}
 
     PATH = "servers"
     NAME = "groups"
 
-    FIELDS_TO_SAVE = [
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = [
         "name",
         "comments",
         "type:_",

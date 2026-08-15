@@ -65,7 +65,7 @@ class TunnelServerItem(types.rest.BaseRestItem):
 
 
 class TunnelServers(DetailHandler[TunnelServerItem]):
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "maintenance",
             method=types.rest.CustomMethodMethod.POST,
@@ -162,8 +162,8 @@ class Tunnels(ModelHandler[TunnelItem]):
     PATH = "tunnels"
     NAME = "tunnels"
     MODEL = models.ServerGroup
-    FILTER = {"type": types.servers.ServerType.TUNNEL}
-    CUSTOM_METHODS = [
+    FILTER: typing.ClassVar[dict[str, typing.Any] | None] = {"type": types.servers.ServerType.TUNNEL}
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "tunnels",
             needs_parent=True,
@@ -177,8 +177,8 @@ class Tunnels(ModelHandler[TunnelItem]):
         ),
     ]
 
-    DETAIL = {"servers": TunnelServers}
-    FIELDS_TO_SAVE = ["name", "comments", "host:", "port:0"]
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"servers": TunnelServers}
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "host:", "port:0"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Tunnels"))

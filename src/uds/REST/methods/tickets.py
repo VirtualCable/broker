@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -93,7 +92,7 @@ class Tickets(Handler):
 
     ROLE = consts.Role.ADMIN
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "put": types.rest.api.Operation(
             summary="Create a ticket",
             description="Creates an access ticket for a user to a service pool",
@@ -107,15 +106,21 @@ class Tickets(Handler):
                         properties={
                             "username": types.rest.api.SchemaProperty(type="string"),
                             "password": types.rest.api.SchemaProperty(type="string"),
-                            "auth_id": types.rest.api.SchemaProperty(type="string", description="Authenticator UUID"),
-                            "auth": types.rest.api.SchemaProperty(type="string", description="Authenticator name"),
+                            "auth_id": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator UUID"
+                            ),
+                            "auth": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator name"
+                            ),
                             "groups": types.rest.api.SchemaProperty(
                                 type="array", items=types.rest.api.SchemaProperty(type="string")
                             ),
                             "servicePool": types.rest.api.SchemaProperty(
                                 type="string", description="Service pool UUID"
                             ),
-                            "force": types.rest.api.SchemaProperty(type="string", description="Force group creation"),
+                            "force": types.rest.api.SchemaProperty(
+                                type="string", description="Force group creation"
+                            ),
                         },
                     ),
                 ),

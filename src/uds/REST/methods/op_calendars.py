@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -179,7 +178,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
     Processes the transports detail requests of a Service Pool
     """
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "execute",
             method=types.rest.CustomMethodMethod.POST,

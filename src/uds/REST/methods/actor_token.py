@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2021 Virtual Cable S.L.
 # All rights reserved.
@@ -73,7 +72,7 @@ class ActorTokenItem(types.rest.BaseRestItem):
 
 class ActorTokens(ModelHandler[ActorTokenItem]):
     MODEL = Server
-    FILTER = {"type": types.servers.ServerType.ACTOR}
+    FILTER: typing.ClassVar[dict[str, typing.Any] | None] = {"type": types.servers.ServerType.ACTOR}
 
     TABLE = (
         ui_utils.TableBuilder(_("Actor tokens"))

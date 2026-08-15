@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -70,6 +69,7 @@ from uds.models import Service
 from uds.models import ServicePool
 from uds.models import ServicePoolGroup
 from uds.models import User
+from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 from uds.REST.utils import sanitize_params
 
@@ -139,7 +139,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     """
 
     MODEL = ServicePool
-    DETAIL = {
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {
         "services": AssignedUserService,
         "cache": CachedService,
         "servers": CachedService,  # Alias for cache, but will change in a future release
@@ -151,7 +151,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         "actions": ActionsCalendars,
     }
 
-    FIELDS_TO_SAVE = [
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = [
         "name",
         "short_name",
         "comments",
@@ -176,7 +176,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         "state:_",  # Optional field, defaults to Nothing (to apply default or existing value)
     ]
 
-    EXCLUDED_FIELDS = ["osmanager_id", "service_id"]
+    EXCLUDED_FIELDS: typing.ClassVar[list[str]] = ["osmanager_id", "service_id"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Service Pools"))
@@ -195,7 +195,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         .build()
     )
 
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         # GET must come first: in NO_COMPAT mode a GET request that hits a
         # POST-only ``fallback_access`` raises GoneError. Declaring both at
         # the same name lets the framework dispatch by HTTP verb.
@@ -260,7 +260,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     "level": types.rest.api.SchemaProperty(
                         type="string", description="Log severity level (INFO, WARN, ERROR)"
                     ),
-                    "log_name": types.rest.api.SchemaProperty(type="string", description="Optional log source name"),
+                    "log_name": types.rest.api.SchemaProperty(
+                        type="string", description="Optional log source name"
+                    ),
                 },
             ),
         ),
@@ -419,10 +421,10 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             return val
 
         if hasattr(item, "valid_count"):
-            valid_count = getattr(item, "valid_count")
-            preparing_count = getattr(item, "preparing_count")
-            restrained = getattr(item, "error_count") >= GlobalConfig.RESTRAINT_COUNT.as_int()
-            usage_count = getattr(item, "usage_count")
+            valid_count = getattr(item, "valid_count", 1)
+            preparing_count = getattr(item, "preparing_count", 1)
+            restrained = getattr(item, "error_count", GlobalConfig.RESTRAINT_COUNT.as_int()) >= GlobalConfig.RESTRAINT_COUNT.as_int()
+            usage_count = getattr(item, "usage_count", 0)
         else:
             valid_count = item.userServices.exclude(state__in=State.INFO_STATES).count()
             preparing_count = item.userServices.filter(state=State.PREPARING).count()

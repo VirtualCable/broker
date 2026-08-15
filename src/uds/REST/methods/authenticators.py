@@ -57,6 +57,7 @@ from uds.models import MFA
 from uds.models import Authenticator
 from uds.models import Network
 from uds.models import Tag
+from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 from uds.REST.utils import sanitize_params
 
@@ -114,7 +115,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
 
     MODEL = Authenticator
     # Custom get method "search" that requires authenticator id
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "search",
             True,
@@ -135,8 +136,11 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             description="Retrieve all users in this authenticator that have active services assigned",
         ),
     ]
-    DETAIL = {"users": Users, "groups": Groups}
-    FIELDS_TO_SAVE = [
+    DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {
+        "users": Users,
+        "groups": Groups,
+    }
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = [
         "name",
         "comments",
         "tags",

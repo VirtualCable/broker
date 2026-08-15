@@ -414,7 +414,7 @@ class SAMLAuthenticator(auths.Authenticator):
 
         idp_metadata: str = self.idp_metadata.value
         from_url: bool = False
-        if idp_metadata.startswith("http://") or idp_metadata.startswith("https://"):
+        if idp_metadata.startswith(("http://", "https://")):
             logger.debug("idp Metadata is an URL: %s", idp_metadata)
             try:
                 resp = requests.get(

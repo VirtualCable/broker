@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -110,7 +109,9 @@ class Connection(Handler):
             }
             if info.ip:  # only will be available id doNotCheck is False
                 connection_info.update(
-                    info.transport.get_instance().get_connection_info(info.userservice, self._user, "UNKNOWN").as_dict()
+                    info.transport.get_instance()
+                    .get_connection_info(info.userservice, self._user, "UNKNOWN")
+                    .as_dict()
                 )
             return Connection.result(result=connection_info)
         except ServiceNotReadyError as e:
@@ -122,7 +123,9 @@ class Connection(Handler):
             logger.exception("Exception")
             return Connection.result(error=str(e))
 
-    def script(self, id_service: str, id_transport: str, scrambler: str, hostname: str) -> dict[str, typing.Any]:
+    def script(
+        self, id_service: str, id_transport: str, scrambler: str, hostname: str
+    ) -> dict[str, typing.Any]:
         try:
             info = UserServiceManager.manager().get_user_service_info(
                 self._user, self._request.os, self._request.ip, id_service, id_transport
@@ -162,8 +165,8 @@ class Connection(Handler):
     def get_uds_link(self, id_service: str, id_transport: str) -> dict[str, typing.Any]:
         # Returns the UDS link for the user & transport
         self._request.user = self._user
-        setattr(self._request, "_cryptedpass", self.session["REST"]["password"])
-        setattr(self._request, "_scrambler", self._request.META["HTTP_SCRAMBLER"])
+        typing.cast(typing.Any, self._request)._cryptedpass = self.session["REST"]["password"]
+        typing.cast(typing.Any, self._request)._scrambler = self._request.META["HTTP_SCRAMBLER"]
         link_info = services.enable_service(self._request, service_id=id_service, transport_id=id_transport)
         if link_info["error"]:
             return Connection.result(error=link_info["error"])
