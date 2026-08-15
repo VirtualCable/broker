@@ -29,10 +29,35 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # Unified KEM interface for OpenUDS
 
 import base64
+import importlib
 import typing
 
 # Note, clients must use the same KEM module (kyber512, kyber768, kyber1024)
-from pqcrypto.kem import ml_kem_768 as kyber
+
+
+class _KemModule(typing.Protocol):
+    """
+    Protocol for a pqcrypto KEM module (pqcrypto >= 1.0.0).
+    """
+
+    PUBLIC_KEY_SIZE: int
+    SECRET_KEY_SIZE: int
+
+    def keygen(self) -> tuple[bytes, bytes]: ...
+
+    def encaps(self, public_key: bytes) -> tuple[bytes, bytes]: ...
+
+    def decaps(self, secret_key: bytes, ciphertext: bytes) -> bytes: ...
+
+
+# pqcrypto >= 1.0.0 exposes the KEM submodules dynamically (loaded from the
+# native extension), so a plain ``from pqcrypto.kem import ml_kem_768`` is not
+# statically resolvable by type checkers. Import it through importlib and cast
+# it to the protocol above.
+kyber: _KemModule = typing.cast(
+    _KemModule,
+    importlib.import_module("pqcrypto.kem.ml_kem_768"),
+)
 
 
 def encrypt(kem_key_b64: str) -> tuple[bytes, bytes]:
@@ -45,12 +70,10 @@ def encrypt(kem_key_b64: str) -> tuple[bytes, bytes]:
 
     # Note: this may be already tested in pqcrypto, but we ensure that is correct here
     # just in case a future version does not check it or we switch to another library
-    if len(kem_key) != typing.cast(int, kyber.PUBLIC_KEY_SIZE):  # pyright: ignore[reportUnknownMemberType]
-        raise ValueError(
-            f"KEM key must be {kyber.PUBLIC_KEY_SIZE} bytes"  # pyright: ignore[reportUnknownMemberType]
-        )
+    if len(kem_key) != kyber.PUBLIC_KEY_SIZE:
+        raise ValueError(f"KEM key must be {kyber.PUBLIC_KEY_SIZE} bytes")
 
-    ciphertext, shared_key = kyber.encrypt(kem_key)  # pyright: ignore[reportUnknownMemberType]
+    ciphertext, shared_key = kyber.encaps(kem_key)
 
     return shared_key, ciphertext
 
@@ -65,15 +88,10 @@ def decrypt(kem_private_key_b64: str, ciphertext: bytes) -> bytes:
 
     # Note: this may be already tested in pqcrypto, but we ensure that is correct here
     # just in case a future version does not check it or we switch to another library
-    if len(kem_private_key) != typing.cast(
-        int,
-        kyber.SECRET_KEY_SIZE,  # pyright: ignore[reportUnknownMemberType]
-    ):
-        raise ValueError(
-            f"KEM private key must be {kyber.SECRET_KEY_SIZE} bytes"  # pyright: ignore[reportUnknownMemberType]
-        )
+    if len(kem_private_key) != kyber.SECRET_KEY_SIZE:
+        raise ValueError(f"KEM private key must be {kyber.SECRET_KEY_SIZE} bytes")
 
-    shared_key = kyber.decrypt(kem_private_key, ciphertext)  # pyright: ignore[reportUnknownMemberType]
+    shared_key = kyber.decaps(kem_private_key, ciphertext)
 
     return shared_key
 
@@ -84,7 +102,7 @@ def generate_keypair() -> tuple[str, str]:
 
     Returns a tuple of (public_key_b64: str, private_key_b64: str)
     """
-    public_key, private_key = kyber.generate_keypair()  # pyright: ignore[reportUnknownMemberType]
+    public_key, private_key = kyber.keygen()
 
     public_key_b64 = base64.b64encode(public_key).decode("utf-8")
     private_key_b64 = base64.b64encode(private_key).decode("utf-8")

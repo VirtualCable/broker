@@ -22,7 +22,7 @@ cryptography
 # Will give some time or switch implementation, even
 # to a rust based module if needed :)
 # git+https://github.com/backbone-hq/pqcrypto.git
-pqcrypto
+pqcrypto==1.0.0
 python3-saml
 six
 dnspython
