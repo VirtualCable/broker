@@ -184,6 +184,4 @@ class DeletionInfo:
         out.write(DeletionInfo.csv_header() + "\n")
         for group in DeferredStorageGroup:
             with DeletionInfo.deferred_storage.as_dict(group) as storage_dict:
-                info: tuple[str, DeletionInfo]
-                for info in storage_dict.unlocked_items():
-                    out.write(info[0] + "," + info[1].as_csv() + "\n")
+                out.writelines(f"{key},{info.as_csv()}\n" for key, info in storage_dict.unlocked_items())

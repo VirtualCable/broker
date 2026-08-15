@@ -493,7 +493,7 @@ class gui:
             return gui.as_bool(self.value)
 
         def __repr__(self) -> str:
-            return f"{self.__class__.__name__}: {repr(self._field_info)}"
+            return f"{self.__class__.__name__}: {self._field_info!r}"
 
     class TextField(InputField):
         """
@@ -820,7 +820,11 @@ class gui:
                     pass
                 case str():
                     try:
-                        value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
+                        value = (
+                            datetime.datetime.strptime(value, "%Y-%m-%d")
+                            .replace(tzinfo=timezone.get_current_timezone())
+                            .date()
+                        )
                     except Exception:  # Any problem, fall back
                         value = consts.NEVER.date()
                 case _:
@@ -1221,12 +1225,12 @@ class gui:
             # Note: here we may or maynot have a fills
             fills = self._field_info.fills
             if not isinstance(fills, dict):
-                raise ValueError("Could not set a value without fills")
+                raise TypeError("Could not set a value without fills")
 
             dct = fills.get("cb_ticket")
 
             if isinstance(dct, str):
-                raise ValueError("cb_ticket already coherced to a string, cannot set a value")
+                raise TypeError("cb_ticket already coherced to a string, cannot set a value")
 
             if not isinstance(dct, dict):
                 dct = {}
@@ -1799,18 +1803,21 @@ class UserInterface(metaclass=UserInterfaceType):
                 logger.warning("Field %s has no decoder", field_name)
                 continue
 
-            if field_type != internal_field_type.name:
-                if valids_for_field := VALID_CONVERSIONS.get(internal_field_type):
-                    if field_type not in [v.name for v in valids_for_field]:
-                        # If the field type is not valid for the internal field type, we log a warning
-                        # and do not include this field in the form
-                        logger.warning(
-                            "Field %s has different type than expected: %s != %s. Not included in form",
-                            field_name,
-                            field_type,
-                            internal_field_type.name,
-                        )
-                        continue
+            valids_for_field = VALID_CONVERSIONS.get(internal_field_type)
+            if (
+                field_type != internal_field_type.name
+                and valids_for_field
+                and field_type not in [v.name for v in valids_for_field]
+            ):
+                # If the field type is not valid for the internal field type, we log a warning
+                # and do not include this field in the form
+                logger.warning(
+                    "Field %s has different type than expected: %s != %s. Not included in form",
+                    field_name,
+                    field_type,
+                    internal_field_type.name,
+                )
+                continue
 
             self._gui[field_name].value = FIELD_DECODERS[internal_field_type](field_value)
 
@@ -1914,8 +1921,7 @@ class UserInterface(metaclass=UserInterfaceType):
         return found_errors
 
     def _all_serializable_fields(self) -> collections.abc.Iterable[tuple[str, gui.InputField]]:
-        for k, field in self._gui.items():
-            yield (k, field)
+        yield from self._gui.items()
 
     def _get_fieldname_translations(self) -> dict[str, str]:
         # Dict of translations from old_field_name to field_name

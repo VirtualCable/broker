@@ -47,7 +47,6 @@ from .default_script import get_default_script
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from uds import models
     from uds.core.environment import Environment
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 

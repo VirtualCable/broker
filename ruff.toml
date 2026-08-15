@@ -50,8 +50,14 @@ fixable = [
     "FURB136",
     "TC005",
     "C401",
-    "PIE790"
+    "PIE790",
+    "RUF100",
+    "PLR2044",
 ]
+
+[per-file-ignores]
+# This is an old compat module, so pickle on those old items can still work
+"src/uds/core/util/AutoAttributes.py" = ["N999"]
 
 [lint.isort]
 force-single-line = true

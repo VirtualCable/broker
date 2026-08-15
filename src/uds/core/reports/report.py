@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -41,7 +40,8 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 from weasyprint import CSS  # pyright: ignore[reportUnknownVariableType]
 from weasyprint import HTML  # pyright: ignore[reportUnknownVariableType]
-from weasyprint import default_url_fetcher  # pyright: ignore[reportUnknownVariableType]
+from weasyprint.urls import URLFetcher  # pyright: ignore[reportUnknownVariableType]
+from weasyprint.urls import URLFetcherResponse  # pyright: ignore[reportUnknownVariableType]
 
 from uds.core.ui import UserInterface
 from uds.core.ui import gui
@@ -51,8 +51,37 @@ from . import stock
 logger = logging.getLogger(__name__)
 
 
+class _ReportFetcher(URLFetcher):
+    """
+    URL fetcher for WeasyPrint that resolves ``stock://`` and ``image://``
+    pseudo-URLs, deferring everything else to the default fetcher.
+    """
+
+    def __init__(self, images: dict[str, bytes] | None = None) -> None:
+        super().__init__()  # pyright: ignore[reportUnknownMemberType]
+        self._images = images or {}
+
+    @typing.override
+    def fetch(self, url: str, headers: typing.Any = None) -> URLFetcherResponse:
+        logger.debug("Getting url for weasyprint %s", url)
+        if url.startswith("stock://"):
+            image_path = stock.get_stock_image_path(url[8:])
+            with open(image_path, "rb") as f:
+                image = f.read()
+            return URLFetcherResponse(url, image, {"Content-Type": "image/png"})
+
+        if url.startswith("image://"):
+            img = self._images.get(url[8:]) or b""  # Empty image if not provided
+            logger.debug("Getting image %s? %s", url[8:], bool(img))
+            return URLFetcherResponse(url, img, {"Content-Type": "image/png"})
+
+        return super().fetch(url, headers)  # pyright: ignore[reportUnknownMemberType]
+
+
 class Report(UserInterface, abc.ABC):
-    mime_type: typing.ClassVar[str] = "application/pdf"  # Report returns pdfs by default, but could be anything else
+    mime_type: typing.ClassVar[str] = (
+        "application/pdf"  # Report returns pdfs by default, but could be anything else
+    )
     name: typing.ClassVar[str] = _("Base Report")  # Report name
     group: typing.ClassVar[str] = ""  # So we can "group" reports by kind?
     encoded: typing.ClassVar[bool] = (
@@ -78,7 +107,6 @@ class Report(UserInterface, abc.ABC):
         dict_of_values, you must also take account of values (dict) provided at the
         __init__ method of your class.
         """
-        #
         super().__init__(values)
         self.initialize(values)
 
@@ -151,28 +179,6 @@ class Report(UserInterface, abc.ABC):
         Uses the "report.css" as stylesheet
         """
 
-        # url fetcher for weasyprint
-        def report_fetcher(
-            url: str,
-            timeout: int = 10,
-            ssl_context: typing.Any = None,  # pylint: disable=unused-argument
-        ) -> dict[str, "str|bytes|None"]:
-            logger.debug("Getting url for weasyprint %s", url)
-            if url.startswith("stock://"):
-                image_path = stock.get_stock_image_path(url[8:])
-                with open(image_path, "rb") as f:
-                    image = f.read()
-                return {"string": image, "mime_type": "image/png"}
-
-            if url.startswith("image://"):
-                img: bytes | None = b""  # Empty image
-                if images:
-                    img = images.get(url[8:])
-                    logger.debug("Getting image %s? %s", url[8:], img is not None)
-                return {"string": img, "mime_type": "image/png"}
-
-            return default_url_fetcher(url)
-
         with open(stock.get_stock_css_path("report.css"), "r", encoding="utf-8") as f:
             css = f.read()
 
@@ -187,12 +193,13 @@ class Report(UserInterface, abc.ABC):
             )
         )
 
-        h = HTML(string=html, url_fetcher=report_fetcher)
+        h = HTML(string=html, url_fetcher=_ReportFetcher(images))
         c = CSS(string=css)
 
         return typing.cast(
-            bytes, h.write_pdf(stylesheets=[c])
-        )  # Return a new bytes object  # pyright: ignore[reportUnknownMemberType]
+            bytes,
+            h.write_pdf(stylesheets=[c]),  # pyright: ignore[reportUnknownMemberType]
+        )  # Return a new bytes object
 
     @staticmethod
     def template_as_pdf(

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2018-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -98,7 +97,7 @@ def bar_chart(
     if data.get("allTicks", True):
         axis.set_xticks(ind)
 
-    if "xtickFnc" in data and data["xtickFnc"]:
+    if data.get("xtickFnc"):
         axis.set_xticklabels([data["xtickFnc"](v) for v in axis.get_xticks()])
 
     axis.legend()
@@ -155,8 +154,8 @@ def line_chart(
     if data.get("allTicks", True):
         axis.set_xticks(x)
 
-    if "xtickFnc" in data and data["xtickFnc"]:
-        axis.set_xticklabels([data["xtickFnc"](v) for v in axis.get_xticks()])
+    if xtick_fnc := data.get("xtickFnc"):
+        axis.set_xticklabels([xtick_fnc(v) for v in axis.get_xticks()])
 
     axis.legend()
 
@@ -230,9 +229,9 @@ def surface_chart(
         axis.set_xticks(data["x"])
         axis.set_yticks(data["y"])
 
-    if "xtickFnc" in data and data["xtickFnc"]:
-        axis.set_xticklabels([data["xtickFnc"](v) for v in axis.get_xticks()])
-    if "xtickFnc" in data and data["ytickFnc"]:
-        axis.set_yticklabels([data["ytickFnc"](v) for v in axis.get_yticks()])
+    if xtick_fnc := data.get("xtickFnc"):
+        axis.set_xticklabels([xtick_fnc(v) for v in axis.get_xticks()])
+    if ytick_fnc := data.get("ytickFnc"):
+        axis.set_yticklabels([ytick_fnc(v) for v in axis.get_yticks()])
 
     fig.savefig(output, format="png", transparent=True)

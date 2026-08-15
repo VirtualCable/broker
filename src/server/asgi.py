@@ -15,7 +15,7 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 
 # Import must happen after settings are loaded (channels layer config)
-from server import routing  # noqa: E402
+from server import routing
 
 application = ProtocolTypeRouter(
     {

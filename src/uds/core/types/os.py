@@ -51,7 +51,7 @@ class KnownOS(enum.Enum):
     WINDOWS = ("Windows",)
     MAC_OS = ("MacOsX", "MacOs", "Mac Os X", "macOS")  # Previous was only "Mac"
     ANDROID = ("Android",)
-    IPAD = ("iPad",)  #
+    IPAD = ("iPad",)
     IPHONE = ("iPhone",)  # In fact, these are IOS both, but we can diferentiate them
     WYSE = ("WYSE",)
     UNKNOWN = ("Unknown",)

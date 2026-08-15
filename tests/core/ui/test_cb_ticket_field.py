@@ -37,6 +37,7 @@ Two flows coexist:
   ``fills.cb_ticket``. ``gui_description()`` creates a real ``TicketStore``
   entry and replaces the dict by its uuid. The GUI never sees the dict.
 """
+
 from __future__ import annotations
 
 import pickle
@@ -113,7 +114,7 @@ class CbTicketSetTest(UDSTestCase):
             label="Plain",
             choices=[gui.choice_item("a", "A")],
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             field.set_cb_ticket("prov_uuid", "ignored")
 
     def test_set_cb_ticket_accumulates_keys(self) -> None:
@@ -181,12 +182,12 @@ class CbTicketSetTest(UDSTestCase):
 
         # After gui_description() the fills.cb_ticket is a uuid string,
         # so a subsequent set_cb_ticket must raise.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             field.set_cb_ticket("prov_uuid", "late-overwrite")
 
         # The error message hints at the real reason — that the field
         # is already locked in.
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(TypeError) as ctx:
             field.set_cb_ticket("prov_uuid", "late-overwrite")
         self.assertIn("already coherced", str(ctx.exception).lower())
 

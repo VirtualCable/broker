@@ -68,7 +68,9 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
 
     # Override the counting type to conservative on Fixed Services by default, that
     # is the desired behaviour for fixed services
-    overrided_fields = {"max_services_count_type": types.services.ServicesCountingType.CONSERVATIVE}
+    overrided_fields: typing.ClassVar[dict[str, typing.Any] | None] = {
+        "max_services_count_type": types.services.ServicesCountingType.CONSERVATIVE
+    }
 
     # If machines has an alternate field with it, it will be used instead of "machines" field
     machines_field: typing.ClassVar[str] = "machines"
