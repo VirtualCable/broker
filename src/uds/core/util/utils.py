@@ -29,7 +29,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from Cython import float
 import base64
 import collections.abc
 import contextlib
