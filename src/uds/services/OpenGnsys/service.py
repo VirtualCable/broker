@@ -184,7 +184,7 @@ class OGService(services.Service):
             self.get_relase_url(uuid, token),
         )
 
-    def notify_deadline(self, vmid: str, deadline: typing.Optional[int]) -> None:
+    def notify_deadline(self, vmid: str, deadline: int | None) -> None:
         self.provider().notify_deadline(vmid, deadline)
 
     def power_on(self, vmid: str) -> None:

@@ -284,13 +284,7 @@ class ServicePool(UUIDModel, TaggingMixin):
             return False  # Do not perform any restraint check if we set the globalconfig to 0 (or less)
 
         date = sql_now() - timedelta(seconds=GlobalConfig.RESTRAINT_TIME.as_int())
-        if (
-            self.userServices.filter(state=types.states.State.ERROR, state_date__gt=date).count()
-            >= GlobalConfig.RESTRAINT_COUNT.as_int()
-        ):
-            return True
-
-        return False
+        return self.userServices.filter(state=types.states.State.ERROR, state_date__gt=date).count() >= GlobalConfig.RESTRAINT_COUNT.as_int()
 
     def is_locked(self) -> bool:
         """

@@ -42,8 +42,6 @@ from .provider import OGProvider
 from .service import OGService
 
 # Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

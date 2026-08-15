@@ -170,7 +170,7 @@ def remove_machine(api: "client.OpenNebulaClient", vmid: str) -> None:
         # vm.delete()
         api.remove_machine(vmid)
     except Exception as e:
-        err = "Error removing machine {} on OpenNebula: {}".format(vmid, e)
+        err = f"Error removing machine {vmid} on OpenNebula: {e}"
         logger.exception(err)
         raise Exception(err)
 
@@ -198,7 +198,7 @@ def enumerate_machines(
 def get_network_info(
     api: "client.OpenNebulaClient",
     vmid: str,
-    network_id: typing.Optional[str] = None,
+    network_id: str | None = None,
 ) -> tuple[str, str]:
     """
     Get the MAC and the IP for the network and machine. If network is None, for the first network
@@ -232,7 +232,7 @@ def get_network_info(
 
 def get_console_connection(
     api: "client.OpenNebulaClient", vmid: str
-) -> typing.Optional[core_types.services.ConsoleConnectionInfo]:
+) -> core_types.services.ConsoleConnectionInfo | None:
     """
     If machine is not running or there is not a display, will return NONE
     SPICE connections should check that 'type' is 'SPICE'

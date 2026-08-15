@@ -47,8 +47,6 @@ from uds.REST.utils import sanitize_params
 from ..handlers import Handler
 
 # Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    pass
 
 T = typing.TypeVar("T", bound=models.Model)
 T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)

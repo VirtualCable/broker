@@ -135,7 +135,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
         pool = models.ServicePool.objects.get(uuid=process_uuid(self._params["pool_id"]))
         enabled = self._params["enabled"] not in ("false", False, "0", 0)
         priority = int(self._params["priority"])
-        priority = priority if priority >= 0 else 0
+        priority = max(priority, 0)
 
         if uuid is not None:
             member = parent.members.get(uuid=uuid)
@@ -150,7 +150,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
             parent,
             types.log.LogLevel.INFO,
             ("Added" if uuid is None else "Modified")
-            + " meta pool member {}/{}/{} by {}".format(pool.name, priority, enabled, self._user.pretty_name),
+            + f" meta pool member {pool.name}/{priority}/{enabled} by {self._user.pretty_name}",
             types.log.LogSource.ADMIN,
         )
 
@@ -160,7 +160,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
     def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, models.MetaPool)
         member = parent.members.get(uuid=process_uuid(self._args[0]))
-        log_str = "Removed meta pool member {} by {}".format(member.pool.name, self._user.pretty_name)
+        log_str = f"Removed meta pool member {member.pool.name} by {self._user.pretty_name}"
 
         member.delete()
 
@@ -291,13 +291,9 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
         userservice = self._get_assigned_userservice(parent, item)
 
         if userservice.user:
-            log_str = "Deleted assigned service {} to user {} by {}".format(
-                userservice.friendly_name,
-                userservice.user.pretty_name,
-                self._user.pretty_name,
-            )
+            log_str = f"Deleted assigned service {userservice.friendly_name} to user {userservice.user.pretty_name} by {self._user.pretty_name}"
         else:
-            log_str = "Deleted cached service {} by {}".format(userservice.friendly_name, self._user.pretty_name)
+            log_str = f"Deleted cached service {userservice.friendly_name} by {self._user.pretty_name}"
 
         if userservice.state in (State.USABLE, State.REMOVING):
             userservice.release()
@@ -336,7 +332,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             > 0
         ):
             raise exceptions.rest.RequestError(
-                "There is already another user service assigned to {}".format(user.pretty_name)
+                f"There is already another user service assigned to {user.pretty_name}"
             )
 
         userservice.user = user

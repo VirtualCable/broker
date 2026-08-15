@@ -46,8 +46,6 @@ from uds.core.util.utils import ignore_exceptions
 from . import telegram
 
 # Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +166,7 @@ class TelegramNotifier(messaging.Notifier):
             return  # no access token, no messages
         # Time of last retrieve
         with self.storage.as_dict() as storage:
-            last_check: typing.Optional[datetime.datetime] = storage.get("last_check")
+            last_check: datetime.datetime | None = storage.get("last_check")
             now = sql_now()
 
             # If last check is not set, we will set it to now

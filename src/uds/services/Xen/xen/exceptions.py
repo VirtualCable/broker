@@ -53,7 +53,7 @@ class XenFailure(XenAPI.Failure, XenFault):
     ex_sr_error = "SR_BACKEND_FAILURE_44"
     ex_vm_lacks_feature = "VM_LACKS_FEATUREVM_LACKS_FEATURE"
 
-    def __init__(self, details: typing.Optional[list[typing.Any]] = None):
+    def __init__(self, details: list[typing.Any] | None = None):
         details = [] if details is None else details
         super(XenFailure, self).__init__(details)
 
@@ -82,7 +82,7 @@ class XenFailure(XenAPI.Failure, XenFault):
 
             return err.format(*typing.cast(list[typing.Any], self.details))
         except Exception:
-            return "Unknown exception: {}".format(typing.cast(typing.Any, self.details))
+            return f"Unknown exception: {typing.cast(typing.Any, self.details)}"
 
     @typing.override
     def __str__(self) -> str:

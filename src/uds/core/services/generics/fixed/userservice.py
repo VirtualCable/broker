@@ -168,8 +168,8 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
                     self.service().remove_and_free(self._vmid)
                     self.service().snapshot_recovery(userservice_instance=self)
                     self._vmid = ""
-                except Exception as e:
-                    logger.exception("Exception removing machine: %s", e)
+                except Exception:
+                    logger.exception("Exception removing machine")
             else:
                 logger.debug("Keep on error is enabled, not removing machine")
                 self._queue = [types.services.Operation.FINISH]
@@ -204,7 +204,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
             # This is a retryable error, so we will retry later
             return self.retry_later()
         except Exception as e:
-            logger.exception("Unexpected FixedUserService exception: %s", e)
+            logger.exception("Unexpected FixedUserService exception")
             return self.error(str(e))
 
     @typing.final
@@ -302,7 +302,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
 
     @typing.final
     def assign(self, vmid: str) -> types.states.TaskState:
-        logger.debug("Assigning from VM {}".format(vmid))
+        logger.debug(f"Assigning from VM {vmid}")
         self._vmid = vmid
         self._queue = FixedUserService._assign_queue.copy()  # copy is needed to avoid modifying class var
         return self._execute_queue()
@@ -352,7 +352,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         except exceptions.services.generics.NotFoundError as e:
             return self.error(f"Machine not found ({e})")
         except Exception as e:
-            logger.exception("Unexpected UserService check exception: %s", e)
+            logger.exception("Unexpected UserService check exception")
             return self.error(e)
 
     @typing.final
@@ -360,7 +360,6 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         Does nothing
         """
-        pass
 
     @typing.final
     def op_create(self) -> None:
@@ -390,7 +389,7 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         # If not to be managed by a token, "autologin" user
         if not self.service().get_token():
             userservice = self.db_obj()
-            if userservice:
+            if userservice:  # pyrefly: ignore[redundant-condition]
                 userservice.set_in_use(True)
 
     def op_delete(self) -> None:
@@ -438,7 +437,6 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         Override this method to start the machine if needed
         """
-        pass
 
     def op_start_checker(self) -> types.states.TaskState:
         """
@@ -453,7 +451,6 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
         """
         Override this method to stop the machine if needed
         """
-        pass
 
     def op_stop_checker(self) -> types.states.TaskState:
         """
@@ -466,7 +463,10 @@ class FixedUserService(services.UserService, autoserializable.AutoSerializable, 
 
     # Not abstract methods, defaults to stop machine
     def op_shutdown(self) -> None:
-        """ """
+        """
+        Override this method to shutdown the machine if needed
+        Default implementation is to stop the machine.
+        """
         return self.op_stop()  # Default is to stop the machine
 
     def op_shutdown_checker(self) -> types.states.TaskState:

@@ -61,7 +61,7 @@ def check_result_raw(lst: typing.Any) -> str:
     # Second is Result String if was ok
     # Third is error code if first is False
     if not lst[0]:
-        raise Exception('OpenNebula error {}: "{}"'.format(lst[2], lst[1]))
+        raise Exception(f'OpenNebula error {lst[2]}: "{lst[1]}"')
 
     return str(lst[1])
 
@@ -90,7 +90,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
 
     @property
     def session_string(self) -> str:
-        return "{}:{}".format(self.username, self.password)
+        return f"{self.username}:{self.password}"
 
     @property
     @ensure_connected

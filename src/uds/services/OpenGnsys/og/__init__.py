@@ -73,14 +73,14 @@ def ensure_response_is_valid(response: "requests.Response", error_message: str |
         if "Database error" in err:
             err = "Database error: Please, check OpenGnsys fields length on remotepc table (loginurl and logouturl)"
 
-        error_message = "{}: {}, ({})".format(error_message, err, response.status_code)
+        error_message = f"{error_message}: {err}, ({response.status_code})"
         logger.error("%s: %s", error_message, response.content)
         raise Exception(error_message)
 
     try:
         return json.loads(response.content)
     except Exception:
-        raise Exception("Error communicating with OpenGnsys: {}".format(response.content[:128].decode()))
+        raise Exception(f"Error communicating with OpenGnsys: {response.content[:128].decode()}")
 
 
 class OpenGnsysClient:
@@ -166,7 +166,7 @@ class OpenGnsysClient:
         if self.auth:
             return
 
-        cache_key = "auth{}{}".format(self.endpoint, self.username)
+        cache_key = f"auth{self.endpoint}{self.username}"
         self.auth = self.cache.get(cache_key)
         if self.auth:
             return
@@ -203,7 +203,7 @@ class OpenGnsysClient:
         # Returns a list of available labs on an ou
         # /ous/{ouid}/labs
         # Take into accout that we must exclude the ones with "inremotepc" set to false.
-        error_message = "Getting list of labs from ou {}".format(ou)
+        error_message = f"Getting list of labs from ou {ou}"
         return [
             {"id": lab["id"], "name": lab["name"]}
             for lab in self._get(urls.LABS.format(ou=ou), error_message=error_message)
@@ -215,7 +215,7 @@ class OpenGnsysClient:
         # Returns a list of available labs on an ou
         # /ous/{ouid}/images
         # Take into accout that we must exclude the ones with "inremotepc" set to false.
-        error_message = "Getting list of images from ou {}".format(ou)
+        error_message = f"Getting list of images from ou {ou}"
         return [
             {"id": lab["id"], "name": lab["name"]}
             for lab in self._get(urls.IMAGES.format(ou=ou), error_message=error_message)
@@ -229,7 +229,7 @@ class OpenGnsysClient:
         # invokes /ous/{ouid}}/images/{imageid}/reserve
         # also remember to store "labid"
         # Labid can be "0" that means "all laboratories"
-        error_message = "Reserving image {} in ou {}".format(image, ou)
+        error_message = f"Reserving image {image} in ou {ou}"
         data = {"labid": lab, "maxtime": maxtime}
         res = self._post(urls.RESERVE.format(ou=ou, image=image), data, error_message=error_message)
         return {
@@ -248,7 +248,7 @@ class OpenGnsysClient:
         # This method releases the previous reservation
         # Invoked every time we need to release a reservation (i mean, if a reservation is done, this will be called with the obtained id from that reservation)
         ou, lab, client = vmid.split(".")
-        error_message = "Unreserving client {} in lab {} in ou {}".format(client, lab, ou)
+        error_message = f"Unreserving client {client} in lab {lab} in ou {ou}"
         self._delete(urls.UNRESERVE.format(ou=ou, lab=lab, client=client), error_message=error_message)
 
     @ensure_connected

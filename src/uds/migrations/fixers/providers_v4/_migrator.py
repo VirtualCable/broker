@@ -120,7 +120,7 @@ def migrate(
 
             registered_server_group = ServerGroup.objects.create(
                 name=f"{server_group_prefix} for {record.name}"[:64],
-                comments="Migrated from {}".format(record.name)[:255],
+                comments=f"Migrated from {record.name}"[:255],
                 type=types.servers.ServerType.UNMANAGED,
                 subtype=subtype,
             )

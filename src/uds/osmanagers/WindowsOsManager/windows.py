@@ -68,12 +68,7 @@ class WindowsOsManager(osmanagers.OSManager):
         """
         Says if a machine is removable on logout
         """
-        if not userservice.in_use and (fields.onlogout_field_is_removable(self.on_logout) or (
-            not userservice.is_publication_valid() and fields.onlogout_field_is_keep(self.on_logout)
-        )):
-            return True
-
-        return False
+        return bool(not userservice.in_use and (fields.onlogout_field_is_removable(self.on_logout) or not userservice.is_publication_valid() and fields.onlogout_field_is_keep(self.on_logout)))
 
     @typing.override
     def release(self, userservice: "UserService") -> None:

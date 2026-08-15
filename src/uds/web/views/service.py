@@ -195,9 +195,7 @@ def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_strin
                     log.log(
                         userservice.service_pool,
                         types.log.LogLevel.INFO,
-                        "Removing User Service {} as requested by {} from {}".format(
-                            userservice.friendly_name, request.user.pretty_name, request.ip
-                        ),
+                        f"Removing User Service {userservice.friendly_name} as requested by {request.user.pretty_name} from {request.ip}",
                         types.log.LogSource.WEB,
                     )
                     UserServiceManager.manager().request_logoff(userservice)
@@ -209,9 +207,7 @@ def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_strin
                     log.log(
                         userservice.service_pool,
                         types.log.LogLevel.INFO,
-                        "Reseting User Service {} as requested by {} from {}".format(
-                            userservice.friendly_name, request.user.pretty_name, request.ip
-                        ),
+                        f"Reseting User Service {userservice.friendly_name} as requested by {request.user.pretty_name} from {request.ip}",
                         types.log.LogSource.WEB,
                     )
                     UserServiceManager.manager().reset(userservice)
@@ -219,9 +215,7 @@ def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_strin
                 log.log(
                     userservice.service_pool,
                     types.log.LogLevel.ERROR,
-                    "Unknown action '{}' requested by {} from {}".format(
-                        action_string, request.user.pretty_name, request.ip
-                    ),
+                    f"Unknown action '{action_string}' requested by {request.user.pretty_name} from {request.ip}",
                     types.log.LogSource.WEB,
                 )
 
@@ -293,9 +287,7 @@ def update_transport_ticket(
 
                 # Standard transport tickets (created by enable_service) carry
                 # the owner uuid in ``user``; only the owner may update them.
-                if data.get("user") and data.get("user") != request.user.uuid:
-                    return False
-                return True
+                return not (data.get("user") and data.get("user") != request.user.uuid)
 
             models.TicketStore.update(
                 uuid=ticket_id,

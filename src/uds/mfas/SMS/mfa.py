@@ -322,7 +322,7 @@ class SMSMFA(mfas.MFA):
         return session
 
     @typing.override
-    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> typing.Optional[bool]:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> bool | None:
         return mfas.LoginAllowed.check_action(
             self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
         )
@@ -334,7 +334,7 @@ class SMSMFA(mfas.MFA):
         userid: str,
         username: str,
         identifier: str,
-        validity: typing.Optional[int] = None,
+        validity: int | None = None,
     ) -> "mfas.MFA.RESULT":
         # if ip allowed to skip mfa, return allowed
         if mfas.LoginAllowed.check_ip_allowed(request, self.allow_skip_mfa_from_networks.value):

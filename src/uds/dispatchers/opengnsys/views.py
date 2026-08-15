@@ -29,7 +29,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import collections.abc
 import logging
 
@@ -56,7 +55,7 @@ def opengnsys(
 ) -> HttpResponse:
     logger.debug("Received opengnsys message %s, token %s, uuid %s", msg, token, uuid)
 
-    def _get_userservice() -> typing.Optional[UserService]:
+    def _get_userservice() -> UserService | None:
         try:
             userservice = UserService.objects.get(uuid=process_uuid(uuid), state=types.states.State.USABLE)
             if userservice.properties.get("token") == token:
@@ -106,7 +105,7 @@ def opengnsys(
             logger.debug("Processing logout from OpenGnsys %s", userservice.friendly_name)
             actor_v3.Logout.process_logout(userservice, "OpenGnsys", "")  # Close all sessions
 
-    fnc: typing.Optional[collections.abc.Callable[[], None]] = {
+    fnc: collections.abc.Callable[[], None] | None = {
         "login": login,
         "logout": logout,
         "release": release,

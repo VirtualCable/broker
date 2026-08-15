@@ -146,7 +146,7 @@ class IPAuth(auths.Authenticator):
         return _("All seems to be fine.")
 
     @typing.override
-    def get_javascript(self, request: "types.requests.ExtendedHttpRequest") -> typing.Optional[str]:
+    def get_javascript(self, request: "types.requests.ExtendedHttpRequest") -> str | None:
         # We will authenticate ip here, from request.ip
         # If valid, it will simply submit form with ip submited and a cached generated random password
         ip = self.get_ip(request)

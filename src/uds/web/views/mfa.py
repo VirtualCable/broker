@@ -160,7 +160,7 @@ def mfa(
                         mfa_cookie,
                         max_age=mfa_provider.remember_device * 60 * 60,
                         httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
-                        secure=True if config.GlobalConfig.ENHANCED_SECURITY.as_bool() else False,
+                        secure=bool(config.GlobalConfig.ENHANCED_SECURITY.as_bool()),
                     )
 
                 return response
@@ -218,7 +218,7 @@ def mfa(
     # Redirect to index, but with MFA data
     request.session["mfa"] = {
         "label": label or _("MFA Code"),
-        "validity": validity if validity >= 0 else 0,
+        "validity": max(validity, 0),
         "remember_device": remember_device,
         "html": mfa_html,
     }

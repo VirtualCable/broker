@@ -182,7 +182,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
                             break
                         except Exception:  # Notifies on log, but skipt it
                             self.provider().do_log(
-                                types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
+                                types.log.LogLevel.WARNING, f"Machine {found_vmid} not accesible"
                             )
                             logger.warning(
                                 "The service has machines that cannot be checked on openstack (connection error or machine has been deleted): %s",

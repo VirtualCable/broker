@@ -9,11 +9,30 @@ line-ending = "auto"
 docstring-code-line-length = "dynamic"
 
 [lint]
-ignore = ["I001", "BLE001"]
+# B023 is bogus on ruff 0.16.3 at least
+# B017 is blind exception.. even when you want to :)
+# PLC0414 is a nonsense. Reexports are done by import alias as same name as imported
+# TRY002 is for create your own exception class, but we want to use the base one for now
+# S110 is try/except/pass, for now keep as is
+ignore = ["I001", "BLE001", "B023", "B017", "PLC0414", "TRY002", "S110"]
 # "I001" for sort order fix
 # Use with a LOT OF CARE, some dependencies can break if reordered
 # Should not , but does :)
-fixable = ["F541", "F841", "UP037", "UP006", "SIM102", "S110"]
+fixable = [
+    "F541",
+    "F841",
+    "UP006",
+    "UP037",
+    "UP032",
+    "UP045",
+    "SIM102",
+    "SIM103",
+    "SIM210",
+    "S110",
+    "F401",
+    "FURB136",
+    "TC005"
+]
 
 [lint.isort]
 force-single-line = true

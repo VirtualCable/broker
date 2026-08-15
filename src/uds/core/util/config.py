@@ -207,9 +207,7 @@ class Config:
                     return -1
 
         def as_bool(self, force: bool = False) -> bool:
-            if self.get(force) == "0":
-                return False
-            return True
+            return self.get(force) != "0"
 
         def as_str(self, force: bool = False) -> str:
             return self.get(force)

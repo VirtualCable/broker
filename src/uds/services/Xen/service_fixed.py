@@ -227,7 +227,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                             name="UDS Snapshot",
                         )
                 except Exception as e:
-                    self.do_log(types.log.LogLevel.WARNING, "Could not create SNAPSHOT for this VM. ({})".format(e))
+                    self.do_log(types.log.LogLevel.WARNING, f"Could not create SNAPSHOT for this VM. ({e})")
 
     @typing.override
     def snapshot_recovery(self, userservice_instance: FixedUserService) -> None:
@@ -244,12 +244,12 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                         userservice_instance._task = api.restore_snapshot(snapshots[0].opaque_ref)
                     except Exception as e:
                         self.do_log(
-                            types.log.LogLevel.WARNING, "Could not restore SNAPSHOT for this VM. ({})".format(e)
+                            types.log.LogLevel.WARNING, f"Could not restore SNAPSHOT for this VM. ({e})"
                         )
 
     @typing.override
     def get_and_assign(self) -> str:
-        found_vmid: typing.Optional[str] = None
+        found_vmid: str | None = None
         with self.provider().get_connection() as api:
             with self._assigned_access() as assigned_vms:
                 try:
@@ -262,7 +262,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                                 break
                             except Exception:  # Notifies on log, but skipt it
                                 self.provider().do_log(
-                                    types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
+                                    types.log.LogLevel.WARNING, f"Machine {found_vmid} not accesible"
                                 )
                                 logger.warning(
                                     "The service has machines that cannot be checked on xen (connection error or machine has been deleted): %s",

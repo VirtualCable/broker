@@ -91,7 +91,7 @@ def uds_cookie(
                 cookie,
                 samesite="Lax",
                 httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
-                secure=True if config.GlobalConfig.ENHANCED_SECURITY.as_bool() else False,
+                secure=bool(config.GlobalConfig.ENHANCED_SECURITY.as_bool()),
             )
         request.COOKIES["uds"] = cookie
     else:
@@ -103,7 +103,7 @@ def uds_cookie(
             cookie,
             samesite="Lax",
             httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
-            secure=True if config.GlobalConfig.ENHANCED_SECURITY.as_bool() else False,
+            secure=bool(config.GlobalConfig.ENHANCED_SECURITY.as_bool()),
         )
 
     return cookie

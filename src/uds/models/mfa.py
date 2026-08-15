@@ -61,7 +61,7 @@ class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore
     authenticators: "models.manager.RelatedManager[Authenticator]"
 
     @typing.override
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> "mfas.MFA":
+    def get_instance(self, values: dict[str, str] | None = None) -> "mfas.MFA":
         return typing.cast("mfas.MFA", super().get_instance(values=values))
 
     @typing.override

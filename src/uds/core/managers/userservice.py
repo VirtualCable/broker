@@ -121,10 +121,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         if service_instance.userservices_limit == consts.UNLIMITED:
             return False
 
-        if self.get_existing_user_services(service) >= service_instance.userservices_limit:
-            return True
-
-        return False
+        return self.get_existing_user_services(service) >= service_instance.userservices_limit
 
     def _create_cache_user_service_at_db(self, publication: ServicePoolPublication, cache_level: int) -> UserService:
         """
@@ -733,18 +730,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
         """
         removing = self.count_userservices_in_states_for_provider(service_pool.service.provider, [State.REMOVING])
         service_instance = service_pool.service.get_instance()
-        if (
-            (
-                removing >= service_instance.provider().get_concurrent_removal_limit()
-                and service_instance.provider().get_ignore_limits() is False
-            )
-            or service_pool.service.provider.is_in_maintenance()
-            or service_pool.is_restrained()
-            or not service_instance.is_available()
-        ):
-            return False
-
-        return True
+        return not (removing >= service_instance.provider().get_concurrent_removal_limit() and service_instance.provider().get_ignore_limits() is False or service_pool.service.provider.is_in_maintenance() or service_pool.is_restrained() or not service_instance.is_available())
 
     def can_grow_service_pool(self, service_pool: ServicePool) -> bool:
         """
@@ -754,12 +740,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
             service_pool.service.provider, [State.PREPARING]
         )
         service_instance = service_pool.service.get_instance()
-        if self.maximum_user_services_reached(service_pool.service) or (
-            number_of_preparing >= service_instance.provider().get_concurrent_creation_limit()
-            and service_instance.provider().get_ignore_limits() is False
-        ):
-            return False
-        return True
+        return not (self.maximum_user_services_reached(service_pool.service) or number_of_preparing >= service_instance.provider().get_concurrent_creation_limit() and service_instance.provider().get_ignore_limits() is False)
 
     def is_ready(self, user_service: UserService) -> bool:
         user_service.refresh_from_db()

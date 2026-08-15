@@ -362,7 +362,7 @@ class OAuth2Authenticator(auths.Authenticator):
         logger.debug("Token request: %s %s", response.status_code, response.text)
 
         if not response.ok:
-            raise Exception("Error requesting token: {}".format(response.text))
+            raise Exception(f"Error requesting token: {response.text}")
 
         return oauth2_types.TokenInfo.from_dict(response.json())
 
@@ -393,7 +393,7 @@ class OAuth2Authenticator(auths.Authenticator):
             logger.debug("User info request: %s %s", req.status_code, req.text)
 
             if not req.ok:
-                raise Exception("Error requesting user info: {}".format(req.text))
+                raise Exception(f"Error requesting user info: {req.text}")
 
             userinfo = req.json()
         return userinfo

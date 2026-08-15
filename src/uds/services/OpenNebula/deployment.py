@@ -156,7 +156,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
 
             self.cache.put("ready", "1")
         except Exception as e:
-            self.do_log(types.log.LogLevel.ERROR, "Error on set_ready: {}".format(e))
+            self.do_log(types.log.LogLevel.ERROR, f"Error on set_ready: {e}")
             # Treat as operation done, maybe the machine is ready and we can continue
 
         return types.states.TaskState.FINISHED
@@ -169,12 +169,12 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def get_console_connection(self) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    def get_console_connection(self) -> types.services.ConsoleConnectionInfo | None:
         return self.service().get_console_connection(self._vmid)
 
     def desktop_login(
         self, username: str, password: str, domain: str = ""
-    ) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    ) -> types.services.ConsoleConnectionInfo | None:
         return self.service().desktop_login(self._vmid, username, password, domain)
 
     @typing.override
@@ -286,7 +286,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         if op == Operation.FINISH:
             return types.states.TaskState.FINISHED
 
-        fncs: dict[Operation, typing.Optional[collections.abc.Callable[[], str]]] = {
+        fncs: dict[Operation, collections.abc.Callable[[], str] | None] = {
             Operation.CREATE: self._create,
             Operation.RETRY: self._retry,
             Operation.START: self._start_machine,
@@ -296,10 +296,10 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         }
 
         try:
-            operation_executor: typing.Optional[collections.abc.Callable[[], str]] = fncs.get(op, None)
+            operation_executor: collections.abc.Callable[[], str] | None = fncs.get(op, None)
 
             if operation_executor is None:
-                return self._error("Unknown operation found at execution queue ({0})".format(op))
+                return self._error(f"Unknown operation found at execution queue ({op})")
 
             operation_executor()
 
@@ -424,7 +424,7 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         if op == Operation.FINISH:
             return types.states.TaskState.FINISHED
 
-        fncs: dict[Operation, typing.Optional[collections.abc.Callable[[], types.states.TaskState]]] = {
+        fncs: dict[Operation, collections.abc.Callable[[], types.states.TaskState] | None] = {
             Operation.CREATE: self._create_checker,
             Operation.RETRY: self._retry,
             Operation.WAIT: self._wait,
@@ -434,10 +434,10 @@ class OpenNebulaLiveDeployment(services.UserService, autoserializable.AutoSerial
         }
 
         try:
-            check_fnc: typing.Optional[collections.abc.Callable[[], types.states.TaskState]] = fncs.get(op, None)
+            check_fnc: collections.abc.Callable[[], types.states.TaskState] | None = fncs.get(op, None)
 
             if check_fnc is None:
-                return self._error("Unknown operation found at check queue ({0})".format(op))
+                return self._error(f"Unknown operation found at check queue ({op})")
 
             state = check_fnc()
             if state == types.states.TaskState.FINISHED:

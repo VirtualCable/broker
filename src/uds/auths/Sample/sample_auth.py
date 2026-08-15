@@ -123,7 +123,7 @@ class SampleAuth(auths.Authenticator):
     groups = gui.EditableListField(label=_("Groups"), default=["Gods", "Daemons", "Mortals"])
 
     @typing.override
-    def initialize(self, values: typing.Optional[dict[str, typing.Any]]) -> None:
+    def initialize(self, values: dict[str, typing.Any] | None) -> None:
         """
         Simply check if we have
         at least one group in the list
@@ -240,7 +240,7 @@ class SampleAuth(auths.Authenticator):
                 groups_manager.validate(g)
 
     @typing.override
-    def get_javascript(self, request: "HttpRequest") -> typing.Optional[str]:  # pylint: disable=unused-argument
+    def get_javascript(self, request: "HttpRequest") -> str | None:  # pylint: disable=unused-argument
         """
         If we override this method from the base one, we are telling UDS
         that we want to draw our own authenticator.

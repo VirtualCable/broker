@@ -189,7 +189,7 @@ class OSManager(Module):
         """
         return True
 
-    def max_idle(self) -> typing.Optional[int]:
+    def max_idle(self) -> int | None:
         """
         If os manager request "max idle", this method will return a value different to None so actors will get informed on Connection
         @return Must return None (default if not override), or a "max idle" in seconds
@@ -249,7 +249,7 @@ class OSManager(Module):
         self.on_ready(userservice)
 
     @staticmethod
-    def logged_in(userservice: "models.UserService", username: typing.Optional[str] = None) -> None:
+    def logged_in(userservice: "models.UserService", username: str | None = None) -> None:
         """
         This method:
           - Add log in event to stats
@@ -305,7 +305,7 @@ class OSManager(Module):
             p["logins_counter"] = counter
 
     @staticmethod
-    def logged_out(userservice: "models.UserService", username: typing.Optional[str] = None) -> None:
+    def logged_out(userservice: "models.UserService", username: str | None = None) -> None:
         """
         This method:
           - Add log in event to stats

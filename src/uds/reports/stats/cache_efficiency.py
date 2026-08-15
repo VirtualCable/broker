@@ -105,7 +105,7 @@ class CacheEfficiencyReport(StatsReport):
                     "hits": hits,
                     "misses": misses,
                     "total": total,
-                    "ratio": "{:.1f}".format(ratio),
+                    "ratio": f"{ratio:.1f}",
                     "ratio_value": ratio,
                 }
             )

@@ -153,7 +153,7 @@ class ContentProcessor:
                 return int(obj.timestamp())
 
             case datetime.date():
-                return "{}-{:02d}-{:02d}".format(obj.year, obj.month, obj.day)
+                return f"{obj.year}-{obj.month:02d}-{obj.day:02d}"
 
             case _:
                 # Any class with as_dict method shoud be processed

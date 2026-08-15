@@ -35,8 +35,6 @@ import typing
 
 from django.conf import settings
 
-if typing.TYPE_CHECKING:
-    pass
 
 # UDS Version related
 VERSION: typing.Final[str] = "5.0.0"

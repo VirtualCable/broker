@@ -37,7 +37,7 @@ class Factory(typing.Generic[V], metaclass=singleton.Singleton):
 
         self._objects[type_name.lower()] = type_
 
-    def get_type(self, type_name: str) -> typing.Optional[type[V]]:
+    def get_type(self, type_name: str) -> type[V] | None:
         """
         Returns an object from the factory.
         """

@@ -122,7 +122,7 @@ class SessionDurationReport(StatsReport):
         rows: list[dict[str, typing.Any]] = []
         for (label, _lo, _hi), c in zip(BUCKETS, counts):
             pct = (c * 100.0 / total_sessions) if total_sessions else 0.0
-            rows.append({"bucket": label, "count": c, "pct": "{:.1f}".format(pct)})
+            rows.append({"bucket": label, "count": c, "pct": f"{pct:.1f}"})
 
         return rows, total_sessions, total_seconds
 

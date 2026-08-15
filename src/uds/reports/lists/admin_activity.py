@@ -145,7 +145,7 @@ class AdminActivityReport(ListReport):
                     "user": u["user"],
                     "requests": u["requests"],
                     "errors": u["errors"],
-                    "error_pct": "{:.1f}".format(err_pct),
+                    "error_pct": f"{err_pct:.1f}",
                     "last_seen": u["last_seen"],
                     "top_paths": "; ".join(f"{p} ({c})" for p, c in top_paths),
                 }

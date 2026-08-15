@@ -179,7 +179,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                         name="UDS_Snapshot",
                     )
             except Exception as e:
-                self.do_log(types.log.LogLevel.WARNING, "Could not create SNAPSHOT for this VM. ({})".format(e))
+                self.do_log(types.log.LogLevel.WARNING, f"Could not create SNAPSHOT for this VM. ({e})")
 
     @typing.override
     def snapshot_recovery(self, userservice_instance: FixedUserService) -> None:
@@ -192,7 +192,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                 if snapshot:
                     userservice_instance._store_task(self.provider().api.restore_snapshot(vmid, name=snapshot.name))
             except Exception as e:
-                self.do_log(types.log.LogLevel.WARNING, "Could not restore SNAPSHOT for this VM. ({})".format(e))
+                self.do_log(types.log.LogLevel.WARNING, f"Could not restore SNAPSHOT for this VM. ({e})")
 
     @typing.override
     def get_and_assign(self) -> str:
@@ -208,7 +208,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
                             break
                         except Exception:  # Notifies on log, but skipt it
                             self.provider().do_log(
-                                types.log.LogLevel.WARNING, "Machine {} not accesible".format(found_vmid)
+                                types.log.LogLevel.WARNING, f"Machine {found_vmid} not accesible"
                             )
                             logger.warning(
                                 "The service has machines that cannot be checked on proxmox (connection error or machine has been deleted): %s",

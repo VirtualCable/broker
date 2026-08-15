@@ -263,7 +263,7 @@ class NetworkConfiguration:
     def set_mac_address(self, macaddr: str) -> None:
         self.macaddr = macaddr
         # Replace mac address in netdata
-        self.netdata = re.sub(r"^([^=]+)=([^,]+),", r"\1={},".format(macaddr), self.netdata)
+        self.netdata = re.sub(r"^([^=]+)=([^,]+),", rf"\1={macaddr},", self.netdata)
 
     @staticmethod
     def from_str(net: str, netdata: str) -> "NetworkConfiguration":

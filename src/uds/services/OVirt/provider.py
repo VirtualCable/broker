@@ -151,7 +151,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     macs_range = fields.macs_range_field(default="52:54:00:00:00:00-52:54:00:FF:FF:FF", order=91)
 
     # Own variables
-    _api: typing.Optional[client.Client] = None
+    _api: client.Client | None = None
 
     # oVirt engine, right now, only permits a connection to one server and only one per instance
     # If we want to connect to more than one server, we need keep locked access to api, change api server, etc..

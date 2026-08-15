@@ -78,7 +78,7 @@ def create(api: "client.OpenNebulaClient", from_template_id: str, name: str, dst
         # Now copy cloned images if possible
         imgs = {i.name: i.id for i in api.enum_images()}
 
-        info = api.template_info(template_id).xml
+        info = api.template_info(template_id).xml or ""
         template: typing.Any = minidom.parseString(info).getElementsByTagName("TEMPLATE")[0]  # pyright: ignore
         logger.debug("XML: %s", template.toxml())  # pyright: ignore
 
@@ -96,7 +96,7 @@ def create(api: "client.OpenNebulaClient", from_template_id: str, name: str, dst
                     image_id = imgs[image_name.strip()]
                 except KeyError:
                     raise Exception(
-                        'Image "{}" could not be found!. Check the opennebula template'.format(image_name.strip())
+                        f'Image "{image_name.strip()}" could not be found!. Check the opennebula template'
                     )
             else:
                 from_id = True
@@ -115,7 +115,7 @@ def create(api: "client.OpenNebulaClient", from_template_id: str, name: str, dst
             )  # api.call('image.clone', int(imgId), imgName, int(toDataStore))
             # Now Store id/name
             if from_id is True:
-                node.data = str(new_id)
+                node.data = str(new_id)  # pyrefly: ignore[unnecessary-type-conversion]
             else:
                 node.data = image_name
 
@@ -124,13 +124,13 @@ def create(api: "client.OpenNebulaClient", from_template_id: str, name: str, dst
         api.update_template(template_id, template.toxml())
 
         return template_id
-    except Exception as e:
+    except Exception:
         logger.exception("Creating template on OpenNebula")
         try:
             api.delete_template(template_id)  # Try to remove created template in case of fail
         except Exception:
             pass
-        raise e
+        raise
 
 
 def remove(api: "client.OpenNebulaClient", template_id: str) -> None:
@@ -145,7 +145,7 @@ def remove(api: "client.OpenNebulaClient", template_id: str) -> None:
         try:
             imgs = {i.name: i.id for i in api.enum_images()}
 
-            info = api.template_info(template_id).xml
+            info = api.template_info(template_id).xml or ""
             template: typing.Any = minidom.parseString(info).getElementsByTagName("TEMPLATE")[0]  # pyright: ignore
             logger.debug("XML: %s", template.toxml())
 
@@ -198,7 +198,7 @@ def check_published(api: "client.OpenNebulaClient", template_id: str) -> bool:
     try:
         images = {i.name: i.id for i in api.enum_images()}
 
-        info = api.template_info(template_id).xml
+        info = api.template_info(template_id).xml or ""
         template: typing.Any = minidom.parseString(info).getElementsByTagName("TEMPLATE")[0]  # pyright: ignore
         logger.debug("XML: %s", template.toxml())
 

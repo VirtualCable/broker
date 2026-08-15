@@ -112,7 +112,7 @@ class RDPFile:
 
         if self.redir_smartcards:
             if self.smartcard_params not in (None, ""):
-                params.append("/smartcard:{}".format(self.smartcard_params))
+                params.append(f"/smartcard:{self.smartcard_params}")
             else:
                 params.append("/smartcard")
 
@@ -140,7 +140,7 @@ class RDPFile:
 
         if self.redir_printers:
             if self.printer_params not in (None, ""):
-                params.append("/printer:{}".format(self.printer_params))
+                params.append(f"/printer:{self.printer_params}")
             else:
                 params.append("/printer")
 
@@ -161,10 +161,10 @@ class RDPFile:
                 params.append("/w:#WIDTH#")
                 params.append("/h:#HEIGHT#")
         else:
-            params.append("/w:{}".format(self.width))
-            params.append("/h:{}".format(self.height))
+            params.append(f"/w:{self.width}")
+            params.append(f"/h:{self.height}")
 
-        params.append("/bpp:{}".format(self.bpp))
+        params.append(f"/bpp:{self.bpp}")
 
         if self.smooth_fonts is True:
             params.append("+fonts")
@@ -172,16 +172,16 @@ class RDPFile:
         # RDP Security is A MUST if no username nor password is provided
         # NLA requires USERNAME&PASSWORD previously
         if self.username != "":
-            params.append("/u:{}".format(self.username))
+            params.append(f"/u:{self.username}")
 
         if self.password:
-            params.append("/p:{}".format(self.password))
+            params.append(f"/p:{self.password}")
 
         if self.password == "__NO_PASSWORD__":
             params.append("/p:")  # No password, but /p: is needed to avoid asking for it
 
         if self.domain != "":
-            params.append("/d:{}".format(self.domain))
+            params.append(f"/d:{self.domain}")
 
         if (self.username == "" and self.password == "") and "/sec" not in params:
             params.append("/sec:tls")  # Use TLS security if no credentials are provided
@@ -274,7 +274,7 @@ class RDPFile:
             if self.redir_drives == "true":
                 res += "drivestoredirect:s:{}\n".format(enforced_shares_str or "*")
             else:  # Dynamic
-                res += "drivestoredirect:s:{}DynamicDrives\n".format(enforced_shares_str)
+                res += f"drivestoredirect:s:{enforced_shares_str}DynamicDrives\n"
             res += "devicestoredirect:s:*\n"
 
         if self.redir_usb != "false":
@@ -285,7 +285,7 @@ class RDPFile:
                 # escape { and } characters
                 res += "usbdevicestoredirect:s:{}\n".format(self.redir_usb.replace("{", "{{").replace("}", "}}"))
 
-        res += "enablecredsspsupport:i:{}\n".format(0 if self.enable_credssp_support is False else 1)
+        res += f"enablecredsspsupport:i:{0 if self.enable_credssp_support is False else 1}\n"
 
         # DirectX?
         res += "redirectdirectx:i:1\n"

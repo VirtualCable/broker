@@ -146,7 +146,7 @@ class OGProvider(ServiceProvider):
     )
 
     # Own variables
-    _api: typing.Optional[og.OpenGnsysClient] = None
+    _api: og.OpenGnsysClient | None = None
 
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
@@ -175,7 +175,7 @@ class OGProvider(ServiceProvider):
 
     @property
     def endpoint(self) -> str:
-        return "https://{}:{}/opengnsys/rest".format(self.host.value, self.port.value)
+        return f"https://{self.host.value}:{self.port.value}/opengnsys/rest"
 
     @property
     def api(self) -> og.OpenGnsysClient:
@@ -251,7 +251,7 @@ class OGProvider(ServiceProvider):
     def notify_endpoints(self, vmid: str, login_url: str, logout_url: str, release_url: str) -> None:
         self.api.notify_endpoints(vmid, login_url, logout_url, release_url)
 
-    def notify_deadline(self, machine_id: str, deadline: typing.Optional[int]) -> None:
+    def notify_deadline(self, machine_id: str, deadline: int | None) -> None:
         self.api.notify_deadline(machine_id, deadline)
 
     def status(self, machineid: str) -> typing.Any:
@@ -263,8 +263,6 @@ class OGProvider(ServiceProvider):
         Check if aws provider is reachable
         """
         try:
-            if self.api.version[0:5] < MIN_VERSION:
-                return False
-            return True
+            return not self.api.version[0:5] < MIN_VERSION
         except Exception:
             return False

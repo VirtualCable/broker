@@ -137,7 +137,7 @@ class RadiusAuth(auths.Authenticator):
     )
 
     @typing.override
-    def initialize(self, values: typing.Optional[dict[str, typing.Any]]) -> None:
+    def initialize(self, values: dict[str, typing.Any] | None) -> None:
         pass
 
     def radius_client(self) -> client.RadiusClient:

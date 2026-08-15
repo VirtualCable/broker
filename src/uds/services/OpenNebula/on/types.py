@@ -83,14 +83,14 @@ class StorageType(typing.NamedTuple):
     name: str
     total: int  # In Megabytes
     free: int  # In Megabytes
-    xml: typing.Optional[str]
+    xml: str | None
 
 
 class TemplateType(typing.NamedTuple):
     id: str
     name: str
     memory: int
-    xml: typing.Optional[str]
+    xml: str | None
 
 
 class ImageType(typing.NamedTuple):
@@ -100,7 +100,7 @@ class ImageType(typing.NamedTuple):
     persistent: bool
     running_vms: int
     state: ImageState
-    xml: typing.Optional[str]
+    xml: str | None
 
 
 class VirtualMachineType(typing.NamedTuple):
@@ -108,4 +108,4 @@ class VirtualMachineType(typing.NamedTuple):
     name: str
     memory: int
     state: VmState
-    xml: typing.Optional[str]
+    xml: str | None

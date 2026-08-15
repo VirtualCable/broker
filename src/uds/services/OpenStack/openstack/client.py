@@ -77,7 +77,7 @@ def auth_required(
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> typing.Any:
             obj = typing.cast("OpenStackClient", args[0])
             if for_project is True and obj._projectid is None:
-                raise Exception("Need a project for method {}".format(func))
+                raise Exception(f"Need a project for method {func}")
             obj.ensure_authenticated()
             return func(*args, **kwargs)
 
@@ -433,7 +433,7 @@ class OpenStackClient:  # pylint: disable=too-many-public-methods
             openstack_types.ProjectInfo.from_dict(p)
             for p in OpenStackClient._get_recurring_url_json(
                 self._identity_endpoint,
-                "v3/users/{user_id}/projects".format(user_id=self._userid),
+                f"v3/users/{self._userid}/projects",
                 self._session,
                 headers=self._get_request_headers(),
                 key="projects",

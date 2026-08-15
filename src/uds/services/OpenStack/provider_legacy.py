@@ -51,8 +51,6 @@ from .service import OpenStackLiveService
 from .service_fixed import OpenStackServiceFixed
 
 # Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    pass
 
 
 logger = logging.getLogger(__name__)
@@ -222,7 +220,7 @@ class OpenStackProviderLegacy(ServiceProvider):
             if self.api().test_connection() is False:
                 raise Exception("Check connection credentials, server, etc.")
         except Exception as e:
-            return types.core.TestResult(False, "{}".format(e))
+            return types.core.TestResult(False, f"{e}")
 
         return types.core.TestResult(True)
 

@@ -403,10 +403,7 @@ class VMInfo:
         )
 
     def is_usable(self) -> bool:
-        if self.is_control_domain or self.is_a_template:
-            return False
-
-        return True
+        return not (self.is_control_domain or self.is_a_template)
 
     def supports_suspend(self) -> bool:
         return VMOperations.SUSPEND in self.allowed_operations

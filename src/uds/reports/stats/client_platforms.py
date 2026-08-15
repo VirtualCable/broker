@@ -90,7 +90,7 @@ class ClientPlatformsReport(StatsReport):
             combo.append({"platform": p, "browser": b, "version": v, "count": r["c"]})
 
         def _pct(n: int) -> str:
-            return "{:.1f}".format(n * 100.0 / total) if total else "0.0"
+            return f"{n * 100.0 / total:.1f}" if total else "0.0"
 
         platforms_list = sorted(
             ({"name": k, "count": v, "pct": _pct(v)} for k, v in platforms.items()),

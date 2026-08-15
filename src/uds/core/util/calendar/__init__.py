@@ -97,8 +97,8 @@ class CalendarChecker:
 
             # Relative start, rrule can "spawn" the days, so we get the start at least the ruleDurationMinutes of rule to see if it "matches"
             # This means, we need the previous matching day to be "executed" so we can get the "actives" correctly
-            diff = frequency_in_minutes if frequency_in_minutes > duration_in_minutes else duration_in_minutes
-            _start = (start if start > rule.start else rule.start) - datetime.timedelta(minutes=diff)
+            diff = max(duration_in_minutes, frequency_in_minutes)
+            _start = (max(rule.start, start)) - datetime.timedelta(minutes=diff)
 
             _end = end if r_end is None or end < r_end else r_end
 
@@ -120,9 +120,9 @@ class CalendarChecker:
 
     def _update_events(
         self, check_from: datetime.datetime, start_event: bool = True
-    ) -> typing.Optional[datetime.datetime]:
+    ) -> datetime.datetime | None:
         next_event: datetime.datetime|None = None
-        event: typing.Optional[datetime.datetime] = None
+        event: datetime.datetime | None = None
         for rule in self.calendar.rules.all():
             # logger.debug('RULE: start = {}, checkFrom = {}, end'.format(rule.start.date(), checkFrom.date()))
             if rule.end is not None and rule.end < check_from.date():
@@ -138,7 +138,7 @@ class CalendarChecker:
 
         return next_event
 
-    def check(self, dtime: typing.Optional[datetime.datetime] = None) -> bool:
+    def check(self, dtime: datetime.datetime | None = None) -> bool:
         """
         Checks if the given time is a valid event on calendar
         @param dtime: Datetime object to check
@@ -177,10 +177,10 @@ class CalendarChecker:
 
     def next_event(
         self,
-        check_from: typing.Optional[datetime.datetime] = None,
+        check_from: datetime.datetime | None = None,
         start_event: bool = True,
-        offset: typing.Optional[datetime.timedelta] = None,
-    ) -> typing.Optional[datetime.datetime]:
+        offset: datetime.timedelta | None = None,
+    ) -> datetime.datetime | None:
         """
         Returns next event for this interval
         """
@@ -198,7 +198,7 @@ class CalendarChecker:
             + "event"
             + ("x" if start_event else "_")
         )
-        next_event: typing.Optional[datetime.datetime] = CalendarChecker.cache.get(cache_key, None)
+        next_event: datetime.datetime | None = CalendarChecker.cache.get(cache_key, None)
         if not next_event:
             logger.debug("Regenerating cached next_event")
             next_event = self._update_events(

@@ -234,7 +234,7 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
         idle_timeout = GlobalConfig.ADMIN_IDLE_TIMEOUT.as_int(True)
         auto_reload_interval = GlobalConfig.ADMIN_AUTO_RELOAD_INTERVAL.as_int(True)
         # Fix page size to razonable usable values
-        page_size = 10 if page_size < 10 else 100 if page_size > 100 else page_size
+        page_size = 10 if page_size < 10 else min(page_size, 100)
         config["admin"] = {
             "page_size": page_size,
             "vnc_userservices": vnc_userservices,

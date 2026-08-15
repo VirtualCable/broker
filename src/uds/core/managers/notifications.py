@@ -38,8 +38,6 @@ from django.db import connections
 from uds.core import types
 from uds.core.util import singleton
 
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

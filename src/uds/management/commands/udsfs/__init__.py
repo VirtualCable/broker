@@ -57,7 +57,7 @@ class UDSFS(Operations):
     _own_stats = types.StatType(st_mode=(stat.S_IFDIR | 0o755), st_nlink=2 + len(dispatchers))
 
     def _dispatch(
-        self, path: typing.Optional[str], operation: str, *args: typing.Any, **kwargs: typing.Any
+        self, path: str | None, operation: str, *args: typing.Any, **kwargs: typing.Any
     ) -> typing.Any:
         try:
             if path:
@@ -71,7 +71,7 @@ class UDSFS(Operations):
         raise FuseOSError(errno.ENOENT)
 
     @typing.override
-    def getattr(self, path: typing.Optional[str], fh: typing.Any = None) -> dict[str, int]:
+    def getattr(self, path: str | None, fh: typing.Any = None) -> dict[str, int]:
         # If root folder, return service creation date
         if path == "/":
             return self._own_stats.as_dict()
@@ -99,14 +99,14 @@ class UDSFS(Operations):
         return typing.cast(list[str], self._dispatch(path, "readdir"))
 
     @typing.override
-    def read(self, path: typing.Optional[str], size: int, offset: int, fh: typing.Any) -> bytes:
+    def read(self, path: str | None, size: int, offset: int, fh: typing.Any) -> bytes:
         """
         Reads the content of the "virtual" file
         """
         return typing.cast(bytes, self._dispatch(path, "read", size, offset))
 
     @typing.override
-    def flush(self, path: typing.Optional[str], fh: typing.Any) -> None:
+    def flush(self, path: str | None, fh: typing.Any) -> None:
         """
         Flushes the content of the "virtual" file
         """

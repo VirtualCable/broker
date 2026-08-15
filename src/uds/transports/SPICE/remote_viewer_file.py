@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import typing
 
 TEMPLATE = """[virt-viewer]
 type={type}
@@ -54,8 +53,8 @@ secure-attention=ctrl+alt+end
 class RemoteViewerFile:
     connection_type: str = "spice"
     host: str = ""
-    port: typing.Optional[str] = None
-    tls_port: typing.Optional[str] = None
+    port: str | None = None
+    tls_port: str | None = None
     password: str
     fullscreen: bool = False
     title: str = "OpenUDS"
@@ -94,7 +93,7 @@ class RemoteViewerFile:
     def as_file_ns(self) -> str:
         return self.get("-1")
 
-    def get(self, tls_port: typing.Optional[str] = None) -> str:
+    def get(self, tls_port: str | None = None) -> str:
         if tls_port is None:
             tls_port = self.tls_port
 

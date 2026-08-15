@@ -59,7 +59,7 @@ class Callback(Handler):
             raise exceptions.rest.RequestError("Invalid Request")
 
         if self._args[0] not in gui.callbacks:
-            raise exceptions.rest.NotFound("callback {0} not found".format(self._args[0]))
+            raise exceptions.rest.NotFound(f"callback {self._args[0]} not found")
 
         # Copy so we don't mutate the handler's params on subsequent calls.
         params = dict(self._params)

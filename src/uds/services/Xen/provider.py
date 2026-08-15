@@ -147,7 +147,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
         old_field_name="hostBackup",
     )
 
-    _cached_api: typing.Optional[client.XenClient]
+    _cached_api: client.XenClient | None
     _use_count: int = 0
 
     # XenServer engine, right now, only permits a connection to one server and only one per instance

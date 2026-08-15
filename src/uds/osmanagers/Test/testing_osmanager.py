@@ -94,12 +94,7 @@ class TestOSManager(osmanagers.OSManager):
         """
         Says if a machine is removable on logout
         """
-        if not userservice.in_use and ((self.on_logout.value == "remove") or (
-            not userservice.is_publication_valid() and self.on_logout.value == "keep"
-        )):
-            return True
-
-        return False
+        return bool(not userservice.in_use and (self.on_logout.value == "remove" or not userservice.is_publication_valid() and self.on_logout.value == "keep"))
 
     def get_name(self, userservice: "UserService") -> str:
         """
@@ -136,7 +131,7 @@ class TestOSManager(osmanagers.OSManager):
         return State.RUNNING
 
     @typing.override
-    def max_idle(self) -> typing.Optional[int]:
+    def max_idle(self) -> int | None:
         """
         On production environments, will return no idle for non removable machines
         """

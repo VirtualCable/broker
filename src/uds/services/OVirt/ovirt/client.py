@@ -116,7 +116,7 @@ class Client:
             except Exception as e:
                 self._api = None
                 logger.exception("Exception on ovirt connection at %s", self._host)
-                raise Exception("Error connecting to oVirt: {}".format(e)) from e
+                raise Exception(f"Error connecting to oVirt: {e}") from e
 
         return self._api
 

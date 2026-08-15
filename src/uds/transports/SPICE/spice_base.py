@@ -172,9 +172,7 @@ class BaseSpiceTransport(transports.Transport):
 
             self.cache.put(
                 "cached_message",
-                'Could not reach server "{}" on port "{}" from broker (prob. causes are name resolution & firewall rules)'.format(
-                    con.address, port_to_test
-                ),
+                f'Could not reach server "{con.address}" on port "{port_to_test}" from broker (prob. causes are name resolution & firewall rules)',
                 120,
             )
 

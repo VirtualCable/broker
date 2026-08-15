@@ -85,7 +85,7 @@ class SPICETransport(BaseSpiceTransport):
     ) -> "types.transports.TransportScript":
         try:
             userservice_instance = userservice.get_instance()
-            con: typing.Optional[types.services.ConsoleConnectionInfo] = userservice_instance.get_console_connection()
+            con: types.services.ConsoleConnectionInfo | None = userservice_instance.get_console_connection()
         except Exception:
             logger.exception("Error getting console connection data")
             raise

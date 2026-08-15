@@ -82,7 +82,7 @@ class CaseInsensitiveDict(dict[str, VT]):
     def pop(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> VT:
         return super().pop(CaseInsensitiveDict._k(key), *args, **kwargs)
 
-    def get(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> typing.Optional[VT]:  # type: ignore
+    def get(self, key: str, *args: typing.Any, **kwargs: typing.Any) -> VT | None:  # type: ignore
         return super().get(CaseInsensitiveDict._k(key), *args, **kwargs)
 
     @typing.override
@@ -108,7 +108,7 @@ def package_relative_file(module_name: str, file_name: str) -> str:
     return file_name
 
 
-def timestamp_as_str(stamp: float, format_: typing.Optional[str] = None) -> str:
+def timestamp_as_str(stamp: float, format_: str | None = None) -> str:
     """
     Converts a timestamp to date string using specified format (DJANGO format such us SHORT_DATETIME_FORMAT..)
     """

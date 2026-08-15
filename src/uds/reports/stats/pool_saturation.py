@@ -109,9 +109,9 @@ class PoolSaturationReport(StatsReport):
                     "pool": pool.name,
                     "peak": peak,
                     "peak_at": peak_at if peak_at else "",
-                    "avg": "{:.2f}".format(avg),
+                    "avg": f"{avg:.2f}",
                     "max": max_str,
-                    "pct": "{:.1f}".format(pct),
+                    "pct": f"{pct:.1f}",
                     "pct_value": pct,
                 }
             )

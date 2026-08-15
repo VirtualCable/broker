@@ -38,7 +38,7 @@ from uds.core.util.decorators import cached
 
 
 @cached(prefix="resolver.resolve", timeout=60)  # Cache for 1 hour
-def resolve(hostname: str, rdtype: typing.Optional[str] = None) -> list[str]:
+def resolve(hostname: str, rdtype: str | None = None) -> list[str]:
     """
     Resolves a hostname to a list of ips
     First items are ipv4, then ipv6

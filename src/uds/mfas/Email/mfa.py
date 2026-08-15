@@ -200,7 +200,7 @@ class EmailMFA(mfas.MFA):
         return gettext("Check your mail. You will receive an email with the verification code")
 
     @typing.override
-    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> typing.Optional[bool]:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> bool | None:
         return mfas.LoginAllowed.check_action(
             self.login_without_mfa_policy.value, request, self.login_without_mfa_policy_networks.value
         )

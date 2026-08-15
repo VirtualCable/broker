@@ -71,10 +71,10 @@ class StatsCounters(models.Model):
         since: typing.Union[None, int, datetime.datetime] = None,
         to: typing.Union[None, int, datetime.datetime] = None,
         owner_id: typing.Union[None, int, collections.abc.Iterable[int]] = None,
-        interval: typing.Optional[int] = None,
-        max_intervals: typing.Optional[int] = None,
+        interval: int | None = None,
+        max_intervals: int | None = None,
         use_max: bool = False,
-        limit: typing.Optional[int] = None,
+        limit: int | None = None,
     ) -> typing.Generator[tuple[int, int], None, None]:
         """
         Returns a QuerySet of counters grouped by owner_type and counter_type

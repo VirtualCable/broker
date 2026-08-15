@@ -55,7 +55,7 @@ class User:
     _cached_manager: "AuthenticatorInstance"
     _groups_manager: "GroupsManager"
     _db_user: "models.User"
-    _groups: typing.Optional[list[Group]]
+    _groups: list[Group] | None
 
     def __init__(self, db_user: "models.User") -> None:
         self._cached_manager = db_user.get_manager()

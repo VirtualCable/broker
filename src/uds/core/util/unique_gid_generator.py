@@ -31,7 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
-import typing
 
 from uds.core import consts
 
@@ -43,7 +42,7 @@ logger = logging.getLogger(__name__)
 class UniqueGIDGenerator(UniqueGenerator):
     __slots__ = ()
 
-    def __init__(self, owner: str, basename: typing.Optional[str] = None):
+    def __init__(self, owner: str, basename: str | None = None):
         super().__init__(owner, basename)
 
     def _to_name(self, seq: int) -> str:

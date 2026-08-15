@@ -85,7 +85,7 @@ def get_urlpatterns_from_modules() -> list[typing.Any]:
     return patterns
 
 
-def import_modules(module_name: str, *, package_name: typing.Optional[str] = None) -> None:
+def import_modules(module_name: str, *, package_name: str | None = None) -> None:
     """Dinamycally import children of package
 
     Args:
@@ -121,8 +121,8 @@ def dynamically_load_and_register_packages(
     type_: type[V],
     module_name: str,
     *,
-    package_name: typing.Optional[str] = None,
-    checker: typing.Optional[collections.abc.Callable[[type[V]], bool]] = None,
+    package_name: str | None = None,
+    checker: collections.abc.Callable[[type[V]], bool] | None = None,
 ) -> None:
     """Loads all packages from a given package that are subclasses of the given type
 

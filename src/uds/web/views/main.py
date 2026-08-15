@@ -29,7 +29,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
-import typing
 
 from django.http import HttpRequest, HttpResponse
 from django.middleware import csrf
@@ -42,8 +41,6 @@ from uds.web.util import configjs
 
 logger = logging.getLogger(__name__)
 
-if typing.TYPE_CHECKING:
-    pass
 
 
 @never_cache

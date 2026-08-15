@@ -141,7 +141,7 @@ class CalendarAction(UUIDModel):
 
         def _numeric_value(field: str) -> int:
             v = int(params[field])
-            return v if v >= 0 else 0
+            return max(v, 0)
 
         # Actions related to calendar actions
         def _set_l1_cache() -> None:

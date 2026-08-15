@@ -216,9 +216,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             availableGB = (info.physical_size - info.physical_utilisation) // 1024
             if availableGB < self.min_space_gb.as_int():
                 raise xen_exceptions.XenFatalError(
-                    "Not enough free space available: (Needs at least {} GB and there is only {} GB ".format(
-                        self.min_space_gb.as_int(), availableGB
-                    )
+                    f"Not enough free space available: (Needs at least {self.min_space_gb.as_int()} GB and there is only {availableGB} GB "
                 )
 
     @typing.override
@@ -351,9 +349,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         """
         with self.provider().get_connection() as api:
             vminfo = api.get_vm_info(vmid)
-            if vminfo.power_state.is_running():
-                return True
-            return False
+            return bool(vminfo.power_state.is_running())
 
     @typing.override
     def start(self, caller_instance: typing.Optional["DynamicUserService | DynamicPublication"], vmid: str) -> None:

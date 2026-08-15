@@ -144,7 +144,7 @@ class RadiusOTP(mfas.MFA):
         raise Exception("User not allowed to login")
 
     @typing.override
-    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> typing.Optional[bool]:
+    def allow_login_without_identifier(self, request: "ExtendedHttpRequest") -> bool | None:
         return None
 
     @typing.override
@@ -167,7 +167,7 @@ class RadiusOTP(mfas.MFA):
         userid: str,
         username: str,
         identifier: str,
-        validity: typing.Optional[int] = None,
+        validity: int | None = None,
     ) -> "mfas.MFA.RESULT":
         """
         check if this user must send OTP
@@ -239,7 +239,7 @@ class RadiusOTP(mfas.MFA):
         username: str,
         identifier: str,
         code: str,
-        validity: typing.Optional[int] = None,
+        validity: int | None = None,
     ) -> None:
         """
         Validate the OTP code

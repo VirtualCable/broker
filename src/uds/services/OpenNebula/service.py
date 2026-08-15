@@ -277,7 +277,7 @@ class OpenNebulaLiveService(services.Service):
         """
         self.provider().remove_machine(machine_id)
 
-    def get_network_info(self, machine_id: str, network_id: typing.Optional[str] = None) -> tuple[str, str]:
+    def get_network_info(self, machine_id: str, network_id: str | None = None) -> tuple[str, str]:
         """
         Gets the network info for a machine
         """
@@ -295,12 +295,12 @@ class OpenNebulaLiveService(services.Service):
         """
         return self.lenName.as_int()
 
-    def get_console_connection(self, vmid: str) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().get_console_connection(vmid)
 
     def desktop_login(
         self, vmid: str, username: str, password: str, domain: str
-    ) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    ) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().desktop_login(vmid, username, password, domain)
 
     @typing.override

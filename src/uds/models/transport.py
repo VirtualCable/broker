@@ -91,7 +91,7 @@ class Transport(ManagedObjectModel, TaggingMixin):
         app_label = "uds"
 
     @typing.override
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> "transports.Transport":
+    def get_instance(self, values: dict[str, str] | None = None) -> "transports.Transport":
         return typing.cast("transports.Transport", super().get_instance(values=values))
 
     @typing.override

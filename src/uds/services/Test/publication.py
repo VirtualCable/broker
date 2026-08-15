@@ -42,8 +42,6 @@ from uds.core.util import autoserializable
 logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    pass
 
 
 class TestPublication(services.Publication, autoserializable.AutoSerializable):

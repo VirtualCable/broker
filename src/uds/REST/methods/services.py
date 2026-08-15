@@ -255,12 +255,12 @@ class Services(DetailHandler[ServiceItem]):  # pylint: disable=too-many-public-m
         except exceptions.ui.ValidationError as e:
             if not item and service:  # Only remove partially saved element if creating new (if editing, ignore this)
                 self._delete_incomplete_service(service)
-            raise exceptions.rest.ValidationError("Input error: {0}".format(e)) from e
+            raise exceptions.rest.ValidationError(f"Input error: {e}") from e
         except Exception as e:
             if not item and service:
                 self._delete_incomplete_service(service)
             logger.exception("Saving Service")
-            raise exceptions.rest.RequestError("incorrect invocation to PUT: {0}".format(e)) from e
+            raise exceptions.rest.RequestError(f"incorrect invocation to PUT: {e}") from e
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:

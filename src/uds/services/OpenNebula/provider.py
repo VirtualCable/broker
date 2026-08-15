@@ -49,8 +49,6 @@ from . import on
 from .service import OpenNebulaLiveService
 
 # Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +112,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     timeout = fields.timeout_field(default=10)
 
     # Own variables
-    _api: typing.Optional[on.client.OpenNebulaClient] = None
+    _api: on.client.OpenNebulaClient | None = None
 
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
@@ -266,13 +264,13 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
         """
         on.vm.remove_machine(self.api, machine_id)
 
-    def get_network_info(self, machine_id: str, network_id: typing.Optional[str] = None) -> tuple[str, str]:
+    def get_network_info(self, machine_id: str, network_id: str | None = None) -> tuple[str, str]:
         """
         Changes the mac address of first nic of the machine to the one specified
         """
         return on.vm.get_network_info(self.api, machine_id, network_id)
 
-    def get_console_connection(self, vmid: str) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         console_connection_info = on.vm.get_console_connection(self.api, vmid)
 
         if console_connection_info is None:
@@ -282,7 +280,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
 
     def desktop_login(
         self, vmid: str, username: str, password: str, domain: str
-    ) -> typing.Optional[types.services.ConsoleConnectionInfo]:
+    ) -> types.services.ConsoleConnectionInfo | None:
         """
         Not provided by OpenNebula API right now
         """

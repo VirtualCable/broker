@@ -86,7 +86,7 @@ class ProxmoxClient:
         self._use_api_token = use_api_token
         self._verify_ssl = verify_ssl
         self._timeout = timeout
-        self._url = "https://{}:{}/api2/json/".format(self._host, self._port)
+        self._url = f"https://{self._host}:{self._port}/api2/json/"
 
         self.cache = cache
 
@@ -164,7 +164,7 @@ class ProxmoxClient:
     def ensure_correct(self, response: "requests.Response", *, node: str | None) -> typing.Any:
         if not response.ok:
             logger.debug("Error on request %s: %s", response.status_code, response.content)
-            error_message = "Status code {}".format(response.status_code)
+            error_message = f"Status code {response.status_code}"
             if response.status_code == 595:
                 raise exceptions.ProxmoxNodeUnavailableError(response.content.decode("utf8"))
 
@@ -536,7 +536,7 @@ class ProxmoxClient:
             logger.warning("Error getting guest ip address for machine %s: %s", vmid, e)
             raise exceptions.ProxmoxError(f"No ip address for vm {vmid}: {e}")
 
-        raise exceptions.ProxmoxError("No ip address found for vm {}".format(vmid))
+        raise exceptions.ProxmoxError(f"No ip address found for vm {vmid}")
 
     def delete_vm(self, vmid: int, node: str | None = None, purge: bool = True) -> types.ExecResult:
         node = node or self.get_vm_info(vmid).node

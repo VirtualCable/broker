@@ -237,7 +237,7 @@ class TemplateInfo:
 @dataclasses.dataclass
 class SnapshotInfo:
     id: str
-    name: typing.Optional[str]
+    name: str | None
     description: str
     status: SnapshotStatus
     type: SnapshotType

@@ -111,7 +111,7 @@ class Images(ModelHandler[ImageItem]):
         item = ensure.is_instance(item, Image)
         return ImageItem(
             id=item.uuid,
-            size="{}x{}, {} bytes (thumb {} bytes)".format(item.width, item.height, len(item.data), len(item.thumb)),
+            size=f"{item.width}x{item.height}, {len(item.data)} bytes (thumb {len(item.thumb)} bytes)",
             name=item.name,
             thumb=item.thumb64,
         )

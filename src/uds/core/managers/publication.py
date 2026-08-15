@@ -73,7 +73,7 @@ class PublicationOldMachinesCleaner(DelayedTask):
             if servicepool_publication.state != State.REMOVABLE:
                 logger.info("Already removed")
 
-            current_publication: typing.Optional[ServicePoolPublication] = (
+            current_publication: ServicePoolPublication | None = (
                 servicepool_publication.deployed_service.active_publication()
             )
 
@@ -102,7 +102,7 @@ class PublicationLauncher(DelayedTask):
     @typing.override
     def run(self) -> None:
         logger.debug("Publishing")
-        servicepool_publication: typing.Optional[ServicePoolPublication] = None
+        servicepool_publication: ServicePoolPublication | None = None
         try:
             now = sql_now()
             with transaction.atomic():
@@ -259,7 +259,7 @@ class PublicationManager(metaclass=singleton.Singleton):
         """
         return PublicationManager()  # Singleton pattern will return always the same instance
 
-    def publish(self, servicepool: ServicePool, changelog: typing.Optional[str] = None) -> None:
+    def publish(self, servicepool: ServicePool, changelog: str | None = None) -> None:
         """
         Initiates the publication of a service pool, or raises an exception if this cannot be done
 
@@ -273,7 +273,7 @@ class PublicationManager(metaclass=singleton.Singleton):
         if servicepool.is_in_maintenance():
             raise PublishException(_("Service is in maintenance mode and new publications are not allowed"))
 
-        publication: typing.Optional[ServicePoolPublication] = None
+        publication: ServicePoolPublication | None = None
         try:
             now = sql_now()
             publication = servicepool.publications.create(

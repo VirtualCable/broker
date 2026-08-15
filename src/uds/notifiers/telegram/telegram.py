@@ -51,7 +51,7 @@ class From:
     id: int
     is_bot: bool
     first_name: str
-    last_name: typing.Optional[str]
+    last_name: str | None
     username: str
 
 
@@ -95,7 +95,7 @@ class Telegram:
     def request(
         self,
         method: str,
-        params: typing.Optional[dict[str, typing.Any]] = None,
+        params: dict[str, typing.Any] | None = None,
         *,
         stream: bool = False,
     ) -> dict[str, typing.Any]:

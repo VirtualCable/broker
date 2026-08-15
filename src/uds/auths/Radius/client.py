@@ -112,8 +112,8 @@ class RadiusResult:
     """
 
     pwd: RadiusStates = RadiusStates.INCORRECT
-    reply_message: typing.Optional[bytes] = None
-    state: typing.Optional[bytes] = None
+    reply_message: bytes | None = None
+    state: bytes | None = None
     otp: RadiusStates = RadiusStates.NOT_CHECKED
     otp_needed: RadiusStates = RadiusStates.NOT_CHECKED
 
@@ -276,7 +276,7 @@ class RadiusClient:
         return RadiusResult()
 
     def authenticate_challenge(
-        self, username: str, password: str = "", otp: str = "", state: typing.Optional[bytes] = None
+        self, username: str, password: str = "", otp: str = "", state: bytes | None = None
     ) -> RadiusResult:
         """
         wrapper for above 3 functions: authenticate_only, challenge_only, authenticate_and_challenge

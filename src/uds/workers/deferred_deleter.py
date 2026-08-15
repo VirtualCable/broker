@@ -289,6 +289,8 @@ class DeferredDeletionWorker(Job):
         out.write(types.DeletionInfo.csv_header() + "\n")
         for group in types.DeferredStorageGroup:
             with types.DeletionInfo.deferred_storage.as_dict(group) as storage:
-                for _key, info in typing.cast(dict[str, types.DeletionInfo], storage).items():
-                    out.write(info.as_csv() + "\n")
+                out.writelines(
+                    info.as_csv() + "\n"
+                    for info in typing.cast(dict[str, types.DeletionInfo], storage).values()
+                )
         out.write("\n")

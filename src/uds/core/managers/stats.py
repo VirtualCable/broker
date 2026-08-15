@@ -90,7 +90,7 @@ class StatsManager(metaclass=singleton.Singleton):
         owner_id: int,
         counter_type: types.stats.CounterType,
         value: int,
-        stamp: typing.Optional[datetime.datetime] = None,
+        stamp: datetime.datetime | None = None,
     ) -> bool:
         """
         Adds a new counter stats to database.
@@ -134,9 +134,9 @@ class StatsManager(metaclass=singleton.Singleton):
         owners_ids: typing.Union[collections.abc.Iterable[int], int, None],
         since: datetime.datetime,
         to: datetime.datetime,
-        interval: typing.Optional[int],
-        max_intervals: typing.Optional[int],
-        limit: typing.Optional[int],
+        interval: int | None,
+        max_intervals: int | None,
+        limit: int | None,
         use_max: bool = False,
     ) -> collections.abc.Iterable[tuple[int, int]]:
         """
@@ -176,11 +176,11 @@ class StatsManager(metaclass=singleton.Singleton):
         self,
         interval_type: StatsCountersAccum.IntervalType,
         counter_type: types.stats.CounterType,
-        owner_type: typing.Optional[types.stats.CounterOwnerType] = None,
-        owner_id: typing.Optional[int] = None,
-        since: typing.Optional[typing.Union[datetime.datetime, int]] = None,
-        to: typing.Optional[typing.Union[datetime.datetime, int]] = None,
-        points: typing.Optional[int] = None,
+        owner_type: types.stats.CounterOwnerType | None = None,
+        owner_id: int | None = None,
+        since: typing.Union[datetime.datetime, int] | None = None,
+        to: typing.Union[datetime.datetime, int] | None = None,
+        points: int | None = None,
     ) -> typing.Generator[types.stats.AccumStat, None, None]:
         if to is None:
             to = sql_now()
@@ -265,7 +265,7 @@ class StatsManager(metaclass=singleton.Singleton):
         owner_type: types.stats.EventOwnerType,
         owner_id: int,
         event_type: types.stats.EventType,
-        stamp: typing.Optional[datetime.datetime] = None,
+        stamp: datetime.datetime | None = None,
         **kwargs: str,
     ) -> bool:
         """
@@ -356,8 +356,8 @@ class StatsManager(metaclass=singleton.Singleton):
     def tail_events(
         self,
         *,
-        starting_id: typing.Optional[str] = None,
-        number: typing.Optional[int] = None,
+        starting_id: str | None = None,
+        number: int | None = None,
     ) -> "models.QuerySet[StatsEvents]":
         # If number is not specified, we return five last events
         number = number or 5

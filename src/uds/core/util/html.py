@@ -56,7 +56,7 @@ def uds_link(request: "HttpRequest", ticket: str, scrambler: str) -> str:
 def uds_access_link(
     request: "HttpRequest",  # pylint: disable=unused-argument
     service_id: str,
-    transport_id: typing.Optional[str],
+    transport_id: str | None,
 ) -> str:
     """
     If transport_id (uuid) is None, this will be a meta_link

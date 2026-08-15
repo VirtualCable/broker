@@ -369,7 +369,7 @@ class ProxmoxService(DynamicService):
                     name="UDS_Snapshot",
                 )
         except Exception as e:
-            self.do_log(types.log.LogLevel.WARNING, "Could not create SNAPSHOT for this VM. ({})".format(e))
+            self.do_log(types.log.LogLevel.WARNING, f"Could not create SNAPSHOT for this VM. ({e})")
 
     @typing.override
     def snapshot_recovery(self, userservice_instance: DynamicUserService) -> None:
@@ -381,4 +381,4 @@ class ProxmoxService(DynamicService):
             if snapshot:
                 userservice_instance._store_task(self.provider().api.restore_snapshot(vmid, name=snapshot.name))
         except Exception as e:
-            self.do_log(types.log.LogLevel.WARNING, "Could not restore SNAPSHOT for this VM. ({})".format(e))
+            self.do_log(types.log.LogLevel.WARNING, f"Could not restore SNAPSHOT for this VM. ({e})")

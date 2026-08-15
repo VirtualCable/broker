@@ -118,7 +118,7 @@ class Notifier(ManagedObjectModel, TaggingMixin):
         return kind
 
     @typing.override
-    def get_instance(self, values: typing.Optional[dict[str, str]] = None) -> "NotificationProviderModule":
+    def get_instance(self, values: dict[str, str] | None = None) -> "NotificationProviderModule":
         return typing.cast("NotificationProviderModule", super().get_instance(values=values))
 
     @staticmethod

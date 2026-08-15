@@ -752,9 +752,7 @@ class gui:
             max_v = self._field_info.max_value
             if min_v is not None and self.value < min_v:
                 return False
-            if max_v is not None and self.value > max_v:
-                return False
-            return True
+            return not (max_v is not None and self.value > max_v)
 
     class DateField(InputField):
         """
