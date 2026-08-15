@@ -23,6 +23,8 @@ docstring-code-line-length = "dynamic"
 # returns a real dataclasses.field, so it is exactly the pattern RUF009 recommends.
 # Each call generates its own Field instance (dataclass mutates the Field name when
 # processing the class, so sharing a single precomputed Field across classes is unsafe).
+# N999 is dropped: package dirs named like our real modules (e.g. REST) are
+# legitimately CamelCase, and this rule cannot be scoped per-repo
 ignore = [
     "I001",
     "BLE001",
@@ -32,7 +34,8 @@ ignore = [
     "TRY002",
     "S110",
     "DTZ006",
-    "RUF009"
+    "RUF009",
+    "N999"
 ]
 # "I001" for sort order fix
 # Use with a LOT OF CARE, some dependencies can break if reordered
@@ -59,10 +62,6 @@ fixable = [
     "RUF100",
     "PLR2044",
 ]
-
-[lint.per-file-ignores]
-# This is an old compat module, so pickle on those old items can still work
-"src/uds/core/util/AutoAttributes.py" = ["N999"]
 
 [lint.isort]
 force-single-line = true
