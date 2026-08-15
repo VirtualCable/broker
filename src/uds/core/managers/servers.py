@@ -232,9 +232,9 @@ class ServerManager(metaclass=singleton.Singleton):
             # But users may disconnect (i.e. on machines without actor) and UDS will not notice it.
             # So we have to provide a way to "reset" the server usage, and this is done by
             # Get counter with less usage
-            best_with_counter = sorted(
+            best_with_counter = min(
                 [(s, self.get_unmanaged_usage(s.uuid)) for s in unmanaged_list], key=lambda x: x[1]
-            )[0]
+            )
             # Update counter
             self.increment_unmanaged_usage(best_with_counter[0].uuid)
             best = (
@@ -549,7 +549,7 @@ class ServerManager(metaclass=singleton.Singleton):
         Args:
             server_group: Server group to realize maintenance on
         """
-        for k, _x in server_group.properties.items():
+        for k in server_group.properties:
             if k.startswith(self.BASE_PROPERTY_NAME):
                 uuid = k[len(self.BASE_PROPERTY_NAME) :]
                 try:

@@ -73,8 +73,7 @@ logger = logging.getLogger(__name__)
 def get_groups_from_metagroup(groups: collections.abc.Iterable[Group]) -> collections.abc.Iterable[Group]:
     for g in groups:
         if g.is_meta:
-            for x in g.groups.all():
-                yield x
+            yield from g.groups.all()
         else:
             yield g
 
@@ -82,8 +81,7 @@ def get_groups_from_metagroup(groups: collections.abc.Iterable[Group]) -> collec
 def get_service_pools_for_groups(
     groups: collections.abc.Iterable[Group],
 ) -> collections.abc.Iterable[ServicePool]:
-    for servicepool in ServicePool.get_pools_for_groups(groups, visible_only=False):
-        yield servicepool
+    yield from ServicePool.get_pools_for_groups(groups, visible_only=False)
 
 
 @dataclasses.dataclass
@@ -103,7 +101,7 @@ class UserItem(types.rest.BaseRestItem):
 
 
 class Users(DetailHandler[UserItem]):
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "services_pools", description="Retrieve all service pools in which this user has active assignments"
         ),
@@ -404,7 +402,7 @@ class GroupItem(types.rest.BaseRestItem):
 
 
 class Groups(DetailHandler[GroupItem]):
-    CUSTOM_METHODS = [
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "services_pools", description="Retrieve all service pools that this group has access to"
         ),

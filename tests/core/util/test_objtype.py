@@ -159,5 +159,5 @@ class ObjectTypeTest(UDSTestCase):
         """
         self.assertFalse(objtype.ObjectType.PROVIDER == "PROVIDER")  # pyright: ignore[reportUnnecessaryComparison]
         self.assertFalse(objtype.ObjectType.PROVIDER == "1")  # pyright: ignore[reportUnnecessaryComparison]
-        self.assertFalse(objtype.ObjectType.PROVIDER == None)  # noqa: E711  (intentional)
+        self.assertFalse(objtype.ObjectType.PROVIDER == None)
         self.assertTrue(objtype.ObjectType.PROVIDER == 1.0)

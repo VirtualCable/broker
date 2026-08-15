@@ -74,7 +74,7 @@ class DelayedTaskThread(BaseThread):
 
 
 class TaskManager(metaclass=singleton.Singleton):
-    __slots__ = ("threads", "keep_running")
+    __slots__ = ("keep_running", "threads")
 
     keep_running: bool
     threads: list[BaseThread]
@@ -129,13 +129,9 @@ class TaskManager(metaclass=singleton.Singleton):
 
         self.register_scheduled_tasks()
 
-        n_schedulers: int = GlobalConfig.SCHEDULER_THREADS.as_int()
-        if n_schedulers < 1:
-            n_schedulers = 1  # At least one scheduler
+        n_schedulers: int = max(GlobalConfig.SCHEDULER_THREADS.as_int(), 1)
 
-        n_delayed_tasks: int = GlobalConfig.DELAYED_TASKS_THREADS.as_int()
-        if n_delayed_tasks < 1:
-            n_delayed_tasks = 1  # At least one delayed task
+        n_delayed_tasks: int = max(GlobalConfig.DELAYED_TASKS_THREADS.as_int(), 1)
 
         logger.info("Starting %s schedulers and %s task executors", n_schedulers, n_delayed_tasks)
 

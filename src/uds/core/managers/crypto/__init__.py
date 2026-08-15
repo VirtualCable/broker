@@ -278,7 +278,8 @@ class CryptoManager(metaclass=singleton.Singleton):
                 serialization.load_pem_private_key(rsa_key.encode(), password=None, backend=default_backend()),
             )
         except Exception as e:
-            raise e
+            logger.error("Error loading private key: %s", e)
+            raise
 
     def load_certificate(self, certificate: str | bytes) -> x509.Certificate:
         if isinstance(certificate, str):

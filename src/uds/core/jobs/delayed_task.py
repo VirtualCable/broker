@@ -65,7 +65,7 @@ class DelayedTask(Environmentable):
         """
         Run method, executes your code. Override this on your classes
         """
-        logging.error("Base run of job called for class")
+        logger.error("Base run of job called for class")
         raise NotImplementedError
 
     def register(self, suggested_delay: int, tag: str = "", check: bool = True) -> None:

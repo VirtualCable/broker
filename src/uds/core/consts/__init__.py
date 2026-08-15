@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -70,7 +69,6 @@ BOOL_TRUE_VALUES: typing.Final[set[bool | str | bytes | int]] = {
     b"true",
     b"True",
     b"TRUE",
-    1,
     "1",
     b"1",
     "true",

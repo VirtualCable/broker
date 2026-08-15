@@ -63,12 +63,12 @@ class Environment:
     The environment is composed of a "cache" and a "storage". First are volatile data, while second are persistent data.
     """
 
-    __slots__ = ["_key", "_cache", "_storage", "_id_generators"]
+    __slots__ = ["_cache", "_id_generators", "_key", "_storage"]
 
-    _key: str
     _cache: "Cache"
-    _storage: "Storage"
     _id_generators: dict[str, "UniqueGenerator"]
+    _key: str
+    _storage: "Storage"
 
     def __init__(
         self,
@@ -135,7 +135,7 @@ class Environment:
         """
         self._cache.clear()
         self._storage.clear()
-        for _, v in self._id_generators.items():
+        for v in self._id_generators.values():
             v.release()
 
     @staticmethod
@@ -211,10 +211,10 @@ class Environment:
         """
         return Environment(COMMON_ENV)  # This environment is a global environment for general utility.
 
-    def __enter__(self) -> "Environment":
+    def __enter__(self) -> typing.Self:
         return self
 
-    def __exit__(self, exc_type: typing.Any, exc_value: typing.Any, traceback: typing.Any) -> None:
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> None:
         if self._key == TEST_ENV or (self._key.startswith("#_#") and self._key.endswith("#^#")):
             self.clean_related_data()
 

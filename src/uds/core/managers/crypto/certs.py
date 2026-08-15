@@ -71,7 +71,8 @@ def load_certificates_any_format(data: bytes) -> list[x509.Certificate]:
         try:
             return loader(data)
         except Exception:
-            continue
+            # Note: testing wich one is valid. Error is the fallback case
+            pass
     raise ValueError("Unable to parse certificates (tried PEM, DER, PKCS7)")
 
 
@@ -80,7 +81,8 @@ def load_private_key_any_format(data: bytes) -> typing.Any:
         try:
             return loader(data, password=None, backend=default_backend())
         except Exception:
-            continue
+            # Note: testing wich one is valid. Erro is the fallback case
+            pass
     raise ValueError("Unable to parse private key (tried PEM, DER)")
 
 

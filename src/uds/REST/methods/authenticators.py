@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -341,9 +340,11 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                 iterable = auth.search_groups(term)
 
             return [i.as_dict() for i in itertools.islice(iterable, limit)]
-        except Exception as e:
-            logger.exception("Too many results: %s", e)
-            return [types.auth.SearchResultItem(id=_("Too many results..."), name=_("Refine your query")).as_dict()]
+        except Exception:
+            logger.exception("Too many results")
+            return [
+                types.auth.SearchResultItem(id=_("Too many results..."), name=_("Refine your query")).as_dict()
+            ]
             # self.invalidResponseException('{}'.format(e))
 
     # Custom method "users_with_services" method

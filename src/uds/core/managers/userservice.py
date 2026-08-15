@@ -886,8 +886,8 @@ class UserServiceManager(metaclass=singleton.Singleton):
                 # Make unique will make sure that we do not have same machine twice
                 UserServiceOpChecker.make_unique(userservice, state)
             userservice.save(update_fields=["os_state"])
-        except Exception as e:
-            logger.exception("Unhandled exception on notyfyready: %s", e)
+        except Exception:
+            logger.exception("Unhandled exception on notyfyready")
             userservice.set_state(State.ERROR)
             return
 

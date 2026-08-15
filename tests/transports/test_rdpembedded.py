@@ -38,7 +38,7 @@ from uds.transports.RDPEmbedded.direct import RDPEmbeddedTransport
 
 def _connection_data(
     username: str = "testuser",
-    password: str = "testpassword",  # noqa: S107  (synthetic test credential)
+    password: str = "testpassword",
     domain: str = "TESTDOM",
 ) -> types.connections.ConnectionData:
     return types.connections.ConnectionData(

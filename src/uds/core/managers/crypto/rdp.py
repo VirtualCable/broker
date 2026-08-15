@@ -102,7 +102,7 @@ _RDP_SECURE_SETTINGS: list[tuple[str, str]] = [
 
 def _ensure_signer_key(key: object) -> _PrivateKey:
     if not isinstance(key, (RSAPrivateKey, EllipticCurvePrivateKey)):
-        raise ValueError(
+        raise TypeError(
             f"Unsupported private key type for RDP signing: {type(key).__name__} "
             f"(expected RSA or EC; PKCS7 rejects DSA/DH/Ed25519)"
         )

@@ -44,7 +44,7 @@ class UDSVersion(Handler):
     ROLE = consts.Role.ANONYMOUS
     NAME = "version"
 
-    API_OPERATIONS = {
+    API_OPERATIONS: typing.ClassVar[dict[str, types.rest.api.Operation]] = {
         "get": types.rest.api.Operation(
             summary="Get UDS version",
             description="Returns the current UDS version and build number",

@@ -56,7 +56,7 @@ class JobsFactory(factory.Factory["Job"]):
             # Ensure workers are initialized
             # That is, dynamic load of packages and registration of jobs on manager
             workers.initialize()
-            for name, _type in self.objects().items():
+            for name in self.objects():
                 try:
                     now = sql_now()
                     Scheduler.objects.create(

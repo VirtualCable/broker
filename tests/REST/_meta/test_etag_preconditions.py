@@ -51,13 +51,13 @@ class SetEtagTestCase(unittest.TestCase):
     def test_quotes_hex_digest(self) -> None:
         handler = _make_handler()
         handler.set_etag("abc123")
-        assert handler._headers["ETag"] == '"abc123"'  # noqa: SLF001
+        assert handler._headers["ETag"] == '"abc123"'
 
     def test_each_call_overwrites_previous(self) -> None:
         handler = _make_handler()
         handler.set_etag("first")
         handler.set_etag("second")
-        assert handler._headers["ETag"] == '"second"'  # noqa: SLF001
+        assert handler._headers["ETag"] == '"second"'
 
 
 # --------------------------------------------------------------------- #

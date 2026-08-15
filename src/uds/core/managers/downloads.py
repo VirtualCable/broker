@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -30,9 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import os
-import typing
 
 from wsgiref.util import FileWrapper
 
@@ -94,7 +93,8 @@ class DownloadsManager(metaclass=singleton.Singleton):
             legacy=legacy,
         )
 
-    def downloadables(self) -> typing.Mapping[str, types.downloads.Downloadable]:
+    # Inmutable mapping
+    def downloadables(self) -> collections.abc.Mapping[str, types.downloads.Downloadable]:
         return self._downloadables
 
     def send(self, request: "HttpRequest", _id: str) -> HttpResponse:
@@ -115,7 +115,9 @@ class DownloadsManager(metaclass=singleton.Singleton):
         iterator for chunks of 8KB.
         """
         try:
-            wrapper = FileWrapper(open(filename, "rb"))  # pylint: disable=consider-using-with
+            # Can't use a context manager here: FileWrapper takes ownership of the
+            # file object and closes it when the response is finalized.
+            wrapper = FileWrapper(open(filename, "rb"))  # noqa: SIM115
             response = HttpResponse(wrapper, content_type=mime)
             response["Content-Length"] = os.path.getsize(filename)
             response["Content-Disposition"] = "attachment; filename=" + name

@@ -35,8 +35,7 @@ import pickle  # nosec: pickle is safe here
 import threading
 import time
 import typing
-
-from datetime import timedelta
+import datetime
 from socket import gethostname
 
 from django.db import OperationalError
@@ -72,7 +71,7 @@ class DelayedTaskThread(threading.Thread):
         try:
             self._task_instance.execute()
         except Exception as e:
-            logger.exception("Exception in thread %s: %s", e.__class__, e)
+            logger.exception("Exception in thread %s", e.__class__)
         finally:
             # This is run on a different thread, so we ensure the connection is closed
             connections["default"].close()
@@ -112,7 +111,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
 
     def execute_delayed_task(self) -> None:
         now = sql_now()
-        filt = Q(execution_time__lt=now) | Q(insert_date__gt=now + timedelta(seconds=3))
+        filt = Q(execution_time__lt=now) | Q(insert_date__gt=now + datetime.timedelta(seconds=3))
         # If next execution is before now or last execution is in the future (clock changed on this server, we take that task as executable)
         try:
             with transaction.atomic():  # Encloses
@@ -125,7 +124,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
 
                 logger.debug("Obtained delayed task %s for execution", task)
 
-                if task.insert_date > now + timedelta(seconds=3):
+                if task.insert_date > now + datetime.timedelta(seconds=3):
                     logger.warning(
                         "Executed %s due to insert_date being in the future!, insert_date: %s, now: %s",
                         task.type,
@@ -154,7 +153,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
 
     def _insert(self, instance: DelayedTask, delay: int, tag: str) -> None:
         now = sql_now()
-        exec_time = now + timedelta(seconds=delay)
+        exec_time = now + datetime.timedelta(seconds=delay)
         cls = instance.__class__
 
         # Save "env" from delayed task, set it to None and restore it after save
@@ -163,7 +162,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
         instance_dump = base64.b64encode(pickle.dumps(instance)).decode()
         instance.env = env
 
-        type_name = str(cls.__module__ + "." + cls.__name__)
+        type_name = f"{cls.__module__}.{cls.__name__}"
 
         logger.debug(
             "Inserting delayed task %s with %s bytes (%s)",
@@ -209,7 +208,7 @@ class DelayedTaskRunner(metaclass=singleton.Singleton):
             with transaction.atomic():
                 DBDelayedTask.objects.select_for_update().filter(tag=tag).delete()  # @UndefinedVariable
         except Exception as e:
-            logger.exception("Exception removing a delayed task %s: %s", e.__class__, e)
+            logger.exception("Exception removing a delayed task %s", e.__class__)
 
     def tag_exists(self, tag: str) -> bool:
         if not tag:

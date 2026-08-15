@@ -51,7 +51,7 @@ class RdpTest(cf.CertTestCase):
         dsa_key = dsa.generate_private_key(key_size=2048)
         for label, k in (("ed25519", ed_key), ("dsa", dsa_key)):
             with self.subTest(kind=label):
-                with self.assertRaises(ValueError) as ctx:
+                with self.assertRaises(TypeError) as ctx:
                     rdp._ensure_signer_key(k)
                 self.assertIn("Unsupported private key type", str(ctx.exception))
 

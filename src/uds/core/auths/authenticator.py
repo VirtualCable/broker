@@ -50,7 +50,6 @@ if typing.TYPE_CHECKING:
     from django.http import HttpResponse
 
     from uds import models
-    from uds.core import types
     from uds.core.environment import Environment
     from uds.core.types.requests import ExtendedHttpRequest
 

@@ -91,7 +91,7 @@ def uds_cookie(
                 cookie,
                 samesite="Lax",
                 httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
-                secure=bool(config.GlobalConfig.ENHANCED_SECURITY.as_bool()),
+                secure=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
             )
         request.COOKIES["uds"] = cookie
     else:
@@ -103,7 +103,7 @@ def uds_cookie(
             cookie,
             samesite="Lax",
             httponly=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
-            secure=bool(config.GlobalConfig.ENHANCED_SECURITY.as_bool()),
+            secure=config.GlobalConfig.ENHANCED_SECURITY.as_bool(),
         )
 
     return cookie
@@ -126,7 +126,7 @@ def root_user() -> models.User:
     )
     user.manager = models.Authenticator()
     # Fake overwrite some methods, a bit cheating? maybe? :)
-    user.get_groups = lambda: []  # type: ignore
+    user.get_groups = list  # type: ignore
     user.update_last_access = lambda: None  # type: ignore
     # Override logout method to do nothing for this user
     user.logout = lambda request: types.auth.SUCCESS_AUTH  # type: ignore
@@ -452,8 +452,8 @@ def get_webpassword(request: HttpRequest) -> str:
     """
     if hasattr(request, "_cryptedpass") and hasattr(request, "_scrambler"):
         return CryptoManager.manager().symmetric_decrypt(
-            getattr(request, "_cryptedpass"),
-            getattr(request, "_scrambler"),
+            typing.cast(typing.Any, request)._cryptedpass,
+            typing.cast(typing.Any, request)._scrambler,
         )
     passkey = base64.b64decode(request.session.get(consts.auth.SESSION_PASS_KEY, ""))
     return CryptoManager.manager().symmetric_decrypt(passkey, uds_cookie(request))  # recover as original unicode string

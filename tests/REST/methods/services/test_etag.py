@@ -90,7 +90,7 @@ class ProviderEtagIntegrationTest(rest.test.RESTTestCase):
         # Clean up the dedicated provider so other tests aren't affected.
         try:
             self.client.rest_delete(self.test_provider_url)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         super().tearDown()
 

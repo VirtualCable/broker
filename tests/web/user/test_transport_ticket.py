@@ -49,7 +49,7 @@ class TransportTicketUpdateTest(test.WEBTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         stored = models.TicketStore.objects.get(uuid=ticket_id)
-        data = pickle.loads(stored.data)  # noqa: S301  # server-generated ticket data
+        data = pickle.loads(stored.data)  # server-generated ticket data
         self.assertNotIn("username", data)
         self.assertNotIn("domain", data)
         self.assertEqual(data["user"], self.owner.uuid)
@@ -62,6 +62,6 @@ class TransportTicketUpdateTest(test.WEBTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         stored = models.TicketStore.objects.get(uuid=ticket_id)
-        data = pickle.loads(stored.data)  # noqa: S301  # server-generated ticket data
+        data = pickle.loads(stored.data)  # server-generated ticket data
         self.assertEqual(data.get("username"), "attacker-user")
         self.assertEqual(data.get("domain"), "EVIL")

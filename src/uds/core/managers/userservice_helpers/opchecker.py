@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -299,9 +298,9 @@ class UserServiceOpChecker(DelayedTask):
     @typing.override
     def run(self) -> None:
         logger.debug("Checking user service finished %s", self._svrId)
-        userservice: UserService|None = None
+        userservice: UserService | None = None
         try:
-            userservice = typing.cast(UserService, UserService.objects.get(pk=self._svrId))  # pyright: ignore reportUnnecessaryCast
+            userservice = UserService.objects.get(pk=self._svrId)
             if userservice.state != self._state:
                 logger.debug("Task overrided by another task (state of item changed)")
                 # This item is no longer valid, returning will not check it again (no checkLater called)
@@ -314,7 +313,7 @@ class UserServiceOpChecker(DelayedTask):
             logger.error("User service not found (erased from database?) %s : %s", e.__class__, e)
         except Exception as e:
             # Exception caught, mark service as errored
-            logger.exception("Error %s, %s :", e.__class__, e)
+            logger.exception("Error %s", e.__class__)
             if userservice:
                 log.log(userservice, types.log.LogLevel.ERROR, f"Exception: {e}", types.log.LogSource.INTERNAL)
                 try:

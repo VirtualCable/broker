@@ -64,8 +64,13 @@ class MessageProcessorThread(BaseThread):
     def providers(self) -> list[tuple[int, NotificationProviderModule]]:
         # If _cached_providers is invalid or _cached_time is older than CACHE_TIMEOUT,
         # we need to refresh it
-        if self._cached_providers is None or time.time() - self._cached_stamp > consts.cache.SHORT_CACHE_TIMEOUT:
-            self._cached_providers = [(p.level, p.get_instance()) for p in Notifier.objects.filter(enabled=True)]
+        if (
+            self._cached_providers is None
+            or time.time() - self._cached_stamp > consts.cache.SHORT_CACHE_TIMEOUT
+        ):
+            self._cached_providers = [
+                (p.level, p.get_instance()) for p in Notifier.objects.filter(enabled=True)
+            ]
             self._cached_stamp = time.time()
         return self._cached_providers
 
@@ -147,11 +152,10 @@ class MessageProcessorThread(BaseThread):
                                 n.message,
                             )
                         except Exception:
-                            logger.error(
+                            logger.exception(
                                 "Error sending notification %s to %s",
                                 n,
                                 p.type_name,
-                                exc_info=True,
                             )
                             continue
 

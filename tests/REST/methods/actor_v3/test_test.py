@@ -59,7 +59,6 @@ class ActorTestTest(rest.test.RESTActorTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["error"], "invalid token")
 
-        #
         def _success() -> typing.Any:
             return self.client.post(
                 "/uds/rest/actor/v3/test",

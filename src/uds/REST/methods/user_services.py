@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -624,7 +623,7 @@ class Publications(DetailHandler[PublicationItem]):
         :param parent: Parent service pool
         """
         parent = ensure.is_instance(parent, models.ServicePool)
-        change_log = self._params["changelog"] if "changelog" in self._params else None
+        change_log = self._params.get("changelog")
 
         if permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT) is False:
             logger.debug("Management Permission failed for user %s", self._user)

@@ -19,6 +19,10 @@ docstring-code-line-length = "dynamic"
 # TRY002 is for create your own exception class, but we want to use the base one for now
 # S110 is try/except/pass, for now keep as is
 # DTZ006 Is datetime without tz, but this is buggy beceuse we use "make_aware" from django...
+# RUF009 is a false positive here: types.rest.NotRequired.field() is a helper that
+# returns a real dataclasses.field, so it is exactly the pattern RUF009 recommends.
+# Each call generates its own Field instance (dataclass mutates the Field name when
+# processing the class, so sharing a single precomputed Field across classes is unsafe).
 ignore = [
     "I001",
     "BLE001",
@@ -27,7 +31,8 @@ ignore = [
     "PLC0414",
     "TRY002",
     "S110",
-    "DTZ006"
+    "DTZ006",
+    "RUF009"
 ]
 # "I001" for sort order fix
 # Use with a LOT OF CARE, some dependencies can break if reordered

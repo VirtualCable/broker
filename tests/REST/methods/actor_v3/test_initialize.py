@@ -272,7 +272,6 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         # But token is rotated on every initialize
         self.assertNotEqual(result["token"], result2["token"])
         self.assertEqual(result2["own_token"], result2["token"])
-        #
         failure("invalid token", mac=USERSERVICE_MAC, expect_forbidden=True)
 
     def test_initialize_unmanaged_by_ip(self) -> None:
@@ -348,5 +347,4 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         # But token is rotated on every initialize
         self.assertNotEqual(result["token"], result2["token"])
         self.assertEqual(result2["own_token"], result2["token"])
-        #
         failure("invalid token", mac=USERSERVICE_IP, expect_forbidden=True)

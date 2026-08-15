@@ -60,4 +60,4 @@ class Job(Environmentable):
         """
         You must provide your own "run" method to do whatever you need
         """
-        logging.debug("Base run of job called for class %s", self.__class__)
+        logger.debug("Base run of job called for class %s", self.__class__)
