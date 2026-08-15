@@ -102,7 +102,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
         # Name is generated on op_initialize by DynamicPublication
         task = self.service().clone_vm(self._name, self.generate_annotation())
         self._vmid = str(task.vmid)
-        self._task = ",".join((task.exec_result.node, task.exec_result.upid))
+        self._task = f"{task.exec_result.node},{task.exec_result.upid}"
 
     @typing.override
     def op_create_checker(self) -> types.states.TaskState:
@@ -127,7 +127,7 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
         time.sleep(0.5)
         # Mark vm as template
         task = self.service().provider().api.convert_vm_to_template(int(self._vmid))
-        self._task = ",".join((task.node, task.upid))
+        self._task = f"{task.node},{task.upid}"
 
     @typing.override
     def op_create_completed_checker(self) -> types.states.TaskState:

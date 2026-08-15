@@ -137,7 +137,7 @@ class Service(Module):
     # :    overrided_fields = {
     # :        'max_services_count_type': ServicesCountingType.STANDARD,
     # : Note that overrided_fields will made the field not to be shown on service edition, so it will be "fixed" to the value provided
-    overrided_fields: dict[str, typing.Any] | None = None
+    overrided_fields: typing.ClassVar[dict[str, typing.Any] | None] = None
 
     # : If this item "has overrided fields", on deployed service edition, defined keys will overwrite defined ones
     # : That is, this Dicionary will OVERWRITE fields ON ServicePool (normally cache related ones) dictionary from a REST api save invocation!!

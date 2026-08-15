@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -70,7 +69,9 @@ class IPSingleMachineService(services.Service):
     services_type_provided = types.services.ServiceType.VDI
 
     # Does not really mind. But do not show the field on admin form
-    overrided_fields = {"max_services_count_type": types.services.ServicesCountingType.STANDARD}
+    overrided_fields: typing.ClassVar[dict[str, typing.Any] | None] = {
+        "max_services_count_type": types.services.ServicesCountingType.STANDARD
+    }
 
     # Gui
     host = gui.TextField(
@@ -97,10 +98,10 @@ class IPSingleMachineService(services.Service):
         host, mac = self.get_host_mac()
 
         if not net.is_valid_host(host):
-            raise exceptions.ui.ValidationError(gettext('Invalid server used: "{}"'.format(self.host.value)))
+            raise exceptions.ui.ValidationError(gettext('Invalid server used: "{}"').format(self.host.value))
 
         if mac and not net.is_valid_mac(mac):
-            raise exceptions.ui.ValidationError(gettext('Invalid MAC address used: "{}"'.format(mac)))
+            raise exceptions.ui.ValidationError(gettext('Invalid MAC address used: "{}"').format(mac))
 
     def get_unassigned_host(self) -> tuple[str, str] | None:
         return self.get_host_mac()

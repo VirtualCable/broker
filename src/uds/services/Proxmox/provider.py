@@ -51,6 +51,8 @@ from .service_fixed import ProxmoxServiceFixed
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core import environment
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,7 @@ class ProxmoxProvider(services.ServiceProvider):
     type_description = _("Proxmox platform service provider")
     icon_file = "provider.png"
 
-    offers = [ProxmoxService, ProxmoxServiceFixed]
+    offers: typing.ClassVar[list[type["Service"]]] = [ProxmoxService, ProxmoxServiceFixed]
 
     host = gui.TextField(
         length=64,

@@ -420,7 +420,7 @@ class VMConfiguration:
     @staticmethod
     def from_dict(dictionary: collections.abc.MutableMapping[str, typing.Any]) -> "VMConfiguration":
         nets: list[NetworkConfiguration] = []
-        for k in dictionary.keys():
+        for k in dictionary:
             if k[:3] == "net":
                 nets.append(NetworkConfiguration.from_str(k, dictionary[k]))
 

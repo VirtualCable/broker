@@ -126,7 +126,9 @@ class ProxmoxClient:
             )
 
             def _update_session(ticket: str, csrf: str) -> None:
-                session = typing.cast("requests.Session", self._session)
+                session = self._session
+                if not session:
+                    return  # Nothing to update
                 self._ticket = ticket
                 self._csrf = csrf
                 session.headers.update({"CSRFPreventionToken": self._csrf})
@@ -520,8 +522,8 @@ class ProxmoxClient:
             for iface in ifaces_list:
                 if iface["name"] != "lo" and "ip-addresses" in iface:
                     for ip in iface["ip-addresses"]:
-                        ip_address = ip["ip-address"]
-                        if ip_address.startswith("127.") or ip_address.startswith("fe80:") or ip_address == "::1":
+                        ip_address = typing.cast(str, ip["ip-address"])
+                        if ip_address.startswith(("127.", "fe80:")) or ip_address == "::1":
                             continue
                         if (ip_version == "4") and ip.get("ip-address-type") != "ipv4" or ip_version == "6" and ip.get("ip-address-type") != "ipv6":
                             continue

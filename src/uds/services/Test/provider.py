@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -47,6 +46,8 @@ from .service import TestServiceNoCache
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core import environment
+    from uds.core.services import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class TestProvider(services.ServiceProvider):
     """
 
     # : What kind of services we offer, this are classes inherited from Service
-    offers = [TestServiceNoCache, TestServiceCache]
+    offers: typing.ClassVar[list[type["Service"]]] = [TestServiceNoCache, TestServiceCache]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)

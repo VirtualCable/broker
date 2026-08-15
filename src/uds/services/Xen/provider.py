@@ -29,6 +29,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import contextlib
+import collections.abc
 import logging
 import typing
 
@@ -56,6 +57,7 @@ logger = logging.getLogger(__name__)
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds.core import environment
+    from uds.core.services import Service
 
 
 class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
@@ -77,7 +79,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     """
 
     # : What kind of services we offer, this are classes inherited from Service
-    offers = [XenLinkedService, XenFixedService]
+    offers: typing.ClassVar[list[type["Service"]]] = [XenLinkedService, XenFixedService]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
@@ -174,7 +176,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
         return self._cached_api
 
     @contextlib.contextmanager
-    def get_connection(self) -> typing.Iterator[client.XenClient]:
+    def get_connection(self) -> collections.abc.Generator[client.XenClient]:
         """
         Context manager for XenServer API
         """

@@ -217,14 +217,13 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
 
                 if found_vmid:
                     assigned_vms.add(found_vmid)
-        except Exception as e:  #
-            logger.debug("Error getting machine: %s", e)
+        except Exception:
             raise Exception("No machine available")
 
         if not found_vmid:
             raise Exception("All machines from list already assigned.")
 
-        return str(found_vmid)
+        return found_vmid
 
     @typing.override
     def get_mac(self, vmid: str) -> str:

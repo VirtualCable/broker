@@ -86,7 +86,6 @@ class XenPublication(DynamicPublication, autoserializable.AutoSerializable):
             self._set_queue([types.services.Operation.ERROR])
         else:  # Running
             self._set_queue([types.services.Operation.CREATE, types.services.Operation.FINISH])
-        self._queue
 
         self.mark_for_upgrade()  # Force upgrade asap
 

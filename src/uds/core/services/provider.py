@@ -85,7 +85,7 @@ class ServiceProvider(module.Module):
     # : Services that we offers. Here is a list of service types (python types) that
     # : this class will provide. This types are the python clases, derived from
     # : Service, that are childs of this provider
-    offers: list[type["Service"]] = []
+    offers: typing.ClassVar[list[type["Service"]]] = []
 
     # : Name of type, used at administration interface to identify this
     # : provider (i.e. Xen server, oVirt Server, ...)
