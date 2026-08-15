@@ -120,7 +120,6 @@ class WorkerDelayTest(UDSTestCase):
             m.as_int.return_value = 1234
             # Actually, let's just check the mock on the right object
             # Use the correct import path
-            ...
 
         # Simpler: just check it's an int
         from uds.workers.publication_cleaner import PublicationInfoItemsCleaner

@@ -57,7 +57,7 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
                 api.is_available.assert_called()
 
                 # assignables should be same as service.macines
-                assignables = set(i.id for i in service.enumerate_assignables())
+                assignables = {i.id for i in service.enumerate_assignables()}
                 self.assertEqual(assignables, set(service.machines.value), f"legacy={prov.legacy}")
 
                 # Remove one machine from fixtures servers_list (from the first one on service.machine.value)
@@ -65,12 +65,12 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
                 fixtures.SERVERS_LIST[:] = [i for i in fixtures.SERVERS_LIST if i.id != service.machines.value[0]]
 
                 # Now should not return the first from service.machines.value
-                assignables = set(i.id for i in service.enumerate_assignables())
+                assignables = {i.id for i in service.enumerate_assignables()}
                 self.assertEqual(assignables, set(set(service.machines.value[1:])), f"legacy={prov.legacy}")
 
                 # Restore servers_list and assignables
                 fixtures.SERVERS_LIST[:] = prev_servers_list
-                assignables = set(str(i.id) for i in service.enumerate_assignables())
+                assignables = {str(i.id) for i in service.enumerate_assignables()}
 
                 to_assign = list(assignables)[0]
 
@@ -83,7 +83,7 @@ class TestOpenstackFixedService(UDSTransactionTestCase):
 
                 # Now it's not on available list for any new user nor user service
                 self.assertEqual(
-                    set(i.id for i in service.enumerate_assignables()) ^ assignables,
+                    {i.id for i in service.enumerate_assignables()} ^ assignables,
                     {list(assignables)[0]},
                 )
 

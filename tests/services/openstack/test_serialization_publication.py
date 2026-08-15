@@ -99,6 +99,6 @@ class OpenStackPublicationSerializationTest(UDSTestCase):
             instance = publication.OpenStackLivePublication(environment=env, service=None)  # type: ignore
 
             self.assertTrue(
-                EXPECTED_OWN_FIELDS <= set(f[0] for f in instance._autoserializable_fields()),
-                "Missing fields: " + str(EXPECTED_OWN_FIELDS - set(f[0] for f in instance._autoserializable_fields())),
+                EXPECTED_OWN_FIELDS <= {f[0] for f in instance._autoserializable_fields()},
+                "Missing fields: " + str(EXPECTED_OWN_FIELDS - {f[0] for f in instance._autoserializable_fields()}),
             )

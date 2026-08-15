@@ -69,7 +69,7 @@ class TestOpenshiftPublicationSerialization(UDSTransactionTestCase):
         Test that autoserializable fields match the expected set.
         """
         publication = fixtures.create_publication()
-        fields = set(f[0] for f in publication._autoserializable_fields())
+        fields = {f[0] for f in publication._autoserializable_fields()}
         self.assertSetEqual(fields, self.EXPECTED_FIELDS)
 
     def test_pickle_serialization(self) -> None:

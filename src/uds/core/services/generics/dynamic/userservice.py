@@ -927,7 +927,6 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         """
         return types.states.TaskState.RUNNING
 
-    @typing.final
     def op_nop_checker(self) -> types.states.TaskState:
         """
         This method is called to check if the service is doing nothing

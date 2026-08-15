@@ -63,7 +63,7 @@ def assert_user_is(
     if ensure_data(user, compare_to, ignore_keys=ignore_fields):
         # Compare groups
         if "groups" in compare_to:
-            groups = set(i.uuid for i in user.groups.all() if i.is_meta is False)
+            groups = {i.uuid for i in user.groups.all() if i.is_meta is False}
             compare_to_groups = set(compare_to["groups"])
             # Ensure groups are PART compare_to_groups
             if groups - compare_to_groups != set():
@@ -103,7 +103,7 @@ def assert_group_is(
 
     if ensure_data(group, compare_to, ignore_keys=ignore_fields):
         if group.is_meta:
-            grps = set(i.uuid for i in group.groups.all())
+            grps = {i.uuid for i in group.groups.all()}
             compare_to_groups = set(compare_to["groups"])
             if grps != compare_to_groups:
                 logger.info("Group groups do not match: %s != %s", grps, compare_to_groups)
@@ -118,7 +118,7 @@ def assert_group_is(
             return False
 
         if "pools" in compare_to:
-            pools = set(i.uuid for i in group.deployedServices.all())
+            pools = {i.uuid for i in group.deployedServices.all()}
             compare_to_pools = set(compare_to["pools"])
             if pools != compare_to_pools:
                 logger.info("Group pools do not match: %s != %s", pools, compare_to_pools)

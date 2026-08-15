@@ -160,4 +160,4 @@ class OpenNebulaDeploymentSerializationTest(UDSTransactionTestCase):
         with Environment.temporary_environment() as env:
             instance = deployment.OpenNebulaLiveDeployment(environment=env, service=None)  # type: ignore
 
-            self.assertSetEqual(set(f[0] for f in instance._autoserializable_fields()), EXPECTED_FIELDS)
+            self.assertSetEqual({f[0] for f in instance._autoserializable_fields()}, EXPECTED_FIELDS)

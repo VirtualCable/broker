@@ -133,7 +133,7 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         Returns:
             State.ERROR, so we can do "return self._error(reason)"
         """
-        self._error_debug_info = self._debug(f"{repr(reason)}  {getattr(reason, '__backtrace__', '')}")
+        self._error_debug_info = self._debug(f"{reason!r}  {getattr(reason, '__backtrace__', '')}")
         reason = str(reason)
         logger.error(reason)
 
@@ -141,8 +141,8 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
             try:
                 self.service().delete(self, self._vmid)
                 self._vmid = ""
-            except Exception as e:
-                logger.exception("Exception removing machine: %s", e)
+            except Exception:
+                logger.exception("Exception removing machine")
 
         self._queue = [Operation.ERROR]
         self._reason = reason
@@ -223,7 +223,9 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
     @typing.final
     @typing.override
     def publish(self) -> types.states.TaskState:
-        """ """
+        """
+        Publishes the publication (redundant :) )
+        """
         self._queue[:] = self._publish_queue.copy()
         self._debug("publish")
         return self._execute_queue()
@@ -353,7 +355,6 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         This method is called when the service creation is completed
         """
-        pass
 
     @must_have_vmid
     def op_start(self) -> None:
@@ -366,7 +367,6 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         This method is called when the service start is completed
         """
-        pass
 
     @must_have_vmid
     def op_stop(self) -> None:
@@ -379,7 +379,6 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         This method is called when the service stop is completed
         """
-        pass
 
     @must_have_vmid
     def op_shutdown(self) -> None:
@@ -392,7 +391,6 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         This method is called when the service shutdown is completed
         """
-        pass
 
     def op_delete(self) -> None:
         """
@@ -405,14 +403,12 @@ class DynamicPublication(services.Publication, autoserializable.AutoSerializable
         """
         This method is called when the service removal is completed
         """
-        pass
 
     def op_nop(self) -> None:
         """
         This method is called when the service is doing nothing
         This does nothing, as it's a NOP operation
         """
-        pass
 
     def op_destroy_validator(self) -> None:
         """

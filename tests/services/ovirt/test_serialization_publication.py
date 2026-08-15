@@ -102,4 +102,4 @@ class OvirtPublicationSerializationTest(UDSTestCase):
         # If some field is added or removed, this tests will warn us about it to fix the rest of the related tests
         with Environment.temporary_environment() as env:
             instance = Publication(environment=env, service=None)  # type: ignore
-            self.assertSetEqual(set(f[0] for f in instance._autoserializable_fields()), EXPECTED_FIELDS)
+            self.assertSetEqual({f[0] for f in instance._autoserializable_fields()}, EXPECTED_FIELDS)

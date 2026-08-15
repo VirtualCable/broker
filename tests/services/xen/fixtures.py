@@ -160,7 +160,7 @@ DEF_TASK_INFO: typing.Final[xen_types.TaskInfo] = xen_types.TaskInfo(
     error_info=[],
 )
 
-DEF_FOLDERS: list[str] = list(set(vm.folder for vm in DEF_VMS_INFO))
+DEF_FOLDERS: list[str] = list({vm.folder for vm in DEF_VMS_INFO})
 
 POOL_NAME = DEF_POOL_NAME
 GENERAL_OPAQUE_REF = DEF_GENERAL_OPAQUE_REF
@@ -190,7 +190,7 @@ def clean() -> None:
     SRS_INFO[:] = DEF_SRS_INFO
     NETWORKS_INFO[:] = DEF_NETWORKS_INFO
     VMS_INFO[:] = DEF_VMS_INFO
-    DEF_FOLDERS[:] = list(set(vm.folder for vm in DEF_VMS_INFO))
+    DEF_FOLDERS[:] = list({vm.folder for vm in DEF_VMS_INFO})
 
 
 T = typing.TypeVar("T")

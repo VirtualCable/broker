@@ -75,5 +75,5 @@ class OpenGnsysPublicationSerializationTest(UDSTestCase):
         with Environment.temporary_environment() as env:
             instance = publication.OpenGnsysPublication(environment=env, service=None)  # type: ignore
 
-            instance_fields = set(f[0] for f in instance._autoserializable_fields())
+            instance_fields = {f[0] for f in instance._autoserializable_fields()}
             self.assertSetEqual(instance_fields, EXPECTED_FIELDS)

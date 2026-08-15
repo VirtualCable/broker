@@ -168,6 +168,6 @@ class ProxmoxDeploymentSerializationTest(UDSTransactionTestCase):
             instance = Deployment(environment=env, service=fake.fake_service())
 
             self.assertTrue(
-                EXPECTED_OWN_FIELDS <= set(f[0] for f in instance._autoserializable_fields()),
-                "Missing fields: " + str(EXPECTED_OWN_FIELDS - set(f[0] for f in instance._autoserializable_fields())),
+                EXPECTED_OWN_FIELDS <= {f[0] for f in instance._autoserializable_fields()},
+                "Missing fields: " + str(EXPECTED_OWN_FIELDS - {f[0] for f in instance._autoserializable_fields()}),
             )

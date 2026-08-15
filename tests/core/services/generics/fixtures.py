@@ -49,22 +49,27 @@ from uds.core.types.states import TaskState
 
 if typing.TYPE_CHECKING:
     from uds import models
+    from uds.core.services import Service
 
 
 # Testing Fixed Service and related
 class FixedTestingUserService(fixed_userservice.FixedUserService):
     mock: "mock.Mock" = mock.MagicMock()
 
+    @typing.override
     def op_start(self) -> None:
         self.mock.op_start()
 
+    @typing.override
     def op_stop(self) -> None:
         self.mock.op_stop()
 
+    @typing.override
     def op_start_checker(self) -> types.states.TaskState:
         self.mock.op_start_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_stop_checker(self) -> types.states.TaskState:
         self.mock.op_stop_checker()
         return types.states.TaskState.FINISHED
@@ -86,6 +91,7 @@ class FixedTestingUserService(fixed_userservice.FixedUserService):
 
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def db_obj(self) -> typing.Any:
         self.mock.db_obj()
         return None
@@ -108,6 +114,7 @@ class FixedTestingService(fixed_service.FixedService):
 
     mock: "mock.Mock" = mock.MagicMock()
 
+    @typing.override
     def snapshot_creation(self, userservice_instance: fixed_userservice.FixedUserService) -> None:
         self.mock.snapshot_creation(userservice_instance)
         if not self.first_process_called:
@@ -119,13 +126,16 @@ class FixedTestingService(fixed_service.FixedService):
             userservice_instance._queue.insert(0, types.services.Operation.NOP)
             self.first_process_called = True
 
+    @typing.override
     def snapshot_recovery(self, userservice_instance: fixed_userservice.FixedUserService) -> None:
         self.mock.snapshot_recovery(userservice_instance)
 
+    @typing.override
     def get_name(self, vmid: str) -> str:
         self.mock.get_machine_name(vmid)
         return f"Machine {vmid}"
 
+    @typing.override
     def get_and_assign(self) -> str:
         self.mock.get_and_assign_machine()
         if self.available_machines_number <= 0:
@@ -134,23 +144,28 @@ class FixedTestingService(fixed_service.FixedService):
         self.assigned_machine = "assigned"
         return self.assigned_machine
 
+    @typing.override
     def remove_and_free(self, vmid: str) -> types.states.TaskState:
         self.mock.remove_and_free_machine(vmid)
         self.assigned_machine = ""
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def is_ready(self, vmid: str) -> bool:
         self.mock.is_ready(vmid)
         return True
 
+    @typing.override
     def get_mac(self, vmid: str) -> str:
         self.mock.get_first_network_mac(vmid)
         return consts.NULL_MAC
 
+    @typing.override
     def get_ip(self, vmid: str) -> str:
         self.mock.get_guest_ip_address(vmid)
         return "10.0.0.10"
 
+    @typing.override
     def enumerate_assignables(self) -> collections.abc.Iterable[types.ui.ChoiceItem]:
         """
         Returns a list of tuples with the id and the name of the assignables
@@ -162,6 +177,7 @@ class FixedTestingService(fixed_service.FixedService):
             ui.gui.choice_item("3", "Machine 3"),
         ]
 
+    @typing.override
     def assign_from_assignables(
         self, assignable_id: str, user: "models.User", userservice_instance: "services.UserService"
     ) -> types.states.TaskState:
@@ -177,7 +193,7 @@ class FixedTestingProvider(services.provider.ServiceProvider):
     type_type = "FixedProvider"
     type_description = "Fixed Provider description"
 
-    offers = [FixedTestingService]
+    offers: typing.ClassVar[list[type["Service"]]] = [FixedTestingService]
 
 
 def create_fixed_provider() -> FixedTestingProvider:
@@ -271,13 +287,16 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     _create_queue_l1_cache = ALL_TESTEABLE_OPERATIONS.copy()
     _create_queue_l2_cache = ALL_TESTEABLE_OPERATIONS.copy()
 
+    @typing.override
     def db_obj(self) -> typing.Any:
         self.mock.db_obj()
         return None
 
+    @typing.override
     def op_initialize(self) -> None:
         self.mock.initialize()
 
+    @typing.override
     def op_create(self) -> None:
         """
         This method is called when the service is created
@@ -285,6 +304,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
         self._vmid = "vmid"  # Set a vmid for testing purposes
         self.mock.create()
 
+    @typing.override
     def op_create_completed(self) -> None:
         """
         This method is called when the service creation is completed
@@ -294,6 +314,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     # Default opstart will call service start_machine, so will check there
     # def op_start(self) -> None:
 
+    @typing.override
     def op_start_completed(self) -> None:
         """
         This method is called when the service start is completed
@@ -303,6 +324,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     # Default opstop will call service stop_machine, so will check there
     # def op_stop(self) -> None:
 
+    @typing.override
     def op_stop_completed(self) -> None:
         """
         This method is called when the service stop is completed
@@ -312,6 +334,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     # Default opshutdown will call service shutdown_machine, so will check there
     # def op_shutdown(self) -> None:
 
+    @typing.override
     def op_shutdown_completed(self) -> None:
         """
         This method is called when the service shutdown is completed
@@ -319,9 +342,11 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
         self.mock.shutdown_completed()
 
     # Default calls shutdown, but we want to check here
+    @typing.override
     def op_suspend(self) -> None:
         self.mock.suspend()
 
+    @typing.override
     def op_suspend_completed(self) -> None:
         """
         This method is called when the service suspension is completed
@@ -331,6 +356,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     # Default opreset will call service reset_machine, so will check there
     # def op_reset(self) -> None:
 
+    @typing.override
     def op_reset_completed(self) -> None:
         """
         This method is called when the service reset is completed
@@ -340,18 +366,23 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     # Default opremove will call service remove_machine, so will check there
     # def op_delete(self) -> None:
 
+    @typing.override
     def op_delete_completed(self) -> None:
         self.mock.remove_completed()
 
+    @typing.override
     def op_wait(self) -> None:
         self.mock.wait()
 
+    @typing.override
     def op_nop(self) -> None:
         self.mock.nop()
 
+    @typing.override
     def op_destroy_validator(self) -> None:
         self.mock.destroy_validator()
 
+    @typing.override
     def op_custom(self, operation: types.services.Operation) -> None:
         """
         This method is called when the service is doing a custom operation
@@ -360,22 +391,27 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
 
     # ERROR, FINISH and UNKNOWN are not here, as they are final states not needing to be executed
 
+    @typing.override
     def op_initialize_checker(self) -> types.states.TaskState:
         self.mock.initialize_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         self.mock.create_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_create_completed_checker(self) -> types.states.TaskState:
         self.mock.create_completed_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_start_completed_checker(self) -> types.states.TaskState:
         self.mock.start_completed_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_stop_completed_checker(self) -> types.states.TaskState:
         self.mock.stop_completed_checker()
         return types.states.TaskState.FINISHED
@@ -383,42 +419,52 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
     # Use default op_shutdown_checker, as it will check for several parameters
     # def op_shutdown_checker(self) -> types.states.TaskState:
 
+    @typing.override
     def op_shutdown_completed_checker(self) -> types.states.TaskState:
         self.mock.shutdown_completed_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_suspend_checker(self) -> types.states.TaskState:
         self.mock.suspend_checker()
         return self.op_shutdown_checker()
 
+    @typing.override
     def op_suspend_completed_checker(self) -> types.states.TaskState:
         self.mock.suspend_completed_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_reset_checker(self) -> types.states.TaskState:
         self.mock.reset_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_reset_completed_checker(self) -> types.states.TaskState:
         self.mock.reset_completed_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_delete_checker(self) -> types.states.TaskState:
         self.mock.remove_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_delete_completed_checker(self) -> types.states.TaskState:
         self.mock.remove_completed_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_wait_checker(self) -> types.states.TaskState:
         self.mock.wait_checker()
         return types.states.TaskState.FINISHED  # Ensure we finish right now for wait
 
-    def op_nop_checker(self) -> types.states.TaskState:  # type: ignore  # overriding a final method
+    @typing.override
+    def op_nop_checker(self) -> types.states.TaskState:
         self.mock.nop_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_destroy_validator_checker(self) -> types.states.TaskState:
         """
         This method is called to check if the userservice has an vmid to stop destroying it if needed
@@ -426,6 +472,7 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
         self.mock.destroy_validator_checker()
         return types.states.TaskState.FINISHED  # If we are here, we have a vmid
 
+    @typing.override
     def op_custom_checker(self, operation: types.services.Operation) -> types.states.TaskState:
         self.mock.custom_checker(operation)
         return types.states.TaskState.FINISHED
@@ -436,15 +483,18 @@ class DynamicTestingUserServiceQueue(dynamic_userservice.DynamicUserService):
 class DynamicTestingUserService(dynamic_userservice.DynamicUserService):
     mock: "mock.Mock" = mock.MagicMock()
 
+    @typing.override
     def db_obj(self) -> typing.Any:
         self.mock.db_obj()
         return None
 
+    @typing.override
     def op_create(self) -> None:
         self._vmid = "vmid"  # Set a vmid for testing purposes
         typing.cast("DynamicTestingService", self.service()).machine_running_flag = False
 
     # Exception raiser for tests
+    @typing.override
     def op_custom(self, operation: types.services.Operation) -> None:
         if operation == types.services.Operation.CUSTOM_1:
             raise Exception("CUSTOM_1")
@@ -452,6 +502,7 @@ class DynamicTestingUserService(dynamic_userservice.DynamicUserService):
         if operation == types.services.Operation.CUSTOM_3:
             self.retry_later()  # In this case, will not return it, but should work fine
 
+    @typing.override
     def op_custom_checker(self, operation: types.services.Operation) -> types.states.TaskState:
         if operation == types.services.Operation.CUSTOM_1:
             raise Exception("CUSTOM_1")
@@ -477,6 +528,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
 
     machine_running_flag: bool = True
 
+    @typing.override
     def get_ip(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -485,6 +537,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.get_ip(caller_instance, vmid)
         return "1.2.3.4"
 
+    @typing.override
     def get_mac(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -495,6 +548,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.get_mac(caller_instance, vmid)
         return "02:04:06:08:0A:0C"
 
+    @typing.override
     def is_running(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -503,6 +557,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.is_running(caller_instance, vmid)
         return self.machine_running_flag
 
+    @typing.override
     def start(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -511,6 +566,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.start(caller_instance, vmid)
         self.machine_running_flag = True
 
+    @typing.override
     def stop(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -519,6 +575,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.stop(caller_instance, vmid)
         self.machine_running_flag = False
 
+    @typing.override
     def shutdown(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -527,6 +584,7 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.shutdown(caller_instance, vmid)
         self.machine_running_flag = False
 
+    @typing.override
     def delete(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -536,9 +594,11 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.remove(caller_instance, vmid)
         self.machine_running_flag = False
 
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         self.mock.execute_delete(vmid)
 
+    @typing.override
     def reset(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -547,27 +607,22 @@ class DynamicTestingService(dynamic_service.DynamicService):
         self.mock.reset(caller_instance, vmid)
         super().reset(caller_instance, vmid)  # Call parent reset, that in order invokes stop
 
-    def suspend(
-        self,
-        caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
-        vmid: str,
-    ) -> None:
-        self.mock.suspend(caller_instance, vmid)
-        self.machine_running_flag = False
-
 
 class DynamicTestingPublication(dynamic_publication.DynamicPublication):
     mock: "mock.Mock" = mock.MagicMock()
 
+    @typing.override
     def op_create(self) -> None:
         self.mock.op_create()
 
     # Exception raiser for tests
+    @typing.override
     def op_custom(self, operation: types.services.Operation) -> None:
         self.mock.custom(operation)
         if operation == types.services.Operation.CUSTOM_3:
             self.retry_later()  # In this case, will not return it, but should work fine
 
+    @typing.override
     def op_custom_checker(self, operation: types.services.Operation) -> types.states.TaskState:
         self.mock.custom_checker(operation)
         # custom 2 will be for testing retry_later
@@ -583,77 +638,98 @@ class DynamicTestingPublicationQueue(dynamic_publication.DynamicPublication):
     _publish_queue = PUB_TESTEABLE_OPERATIONS.copy()
     _destroy_queue = PUB_TESTEABLE_OPERATIONS.copy()
 
+    @typing.override
     def op_initialize(self) -> None:
         self.mock.initialize()
 
+    @typing.override
     def op_create(self) -> None:
         self._vmid = "vmid"  # Set a vmid for testing purposes
         self.mock.create()
 
+    @typing.override
     def op_create_completed(self) -> None:
         self.mock.create_completed()
 
+    @typing.override
     def op_start_completed(self) -> None:
         self.mock.start_completed()
 
+    @typing.override
     def op_stop_completed(self) -> None:
         self.mock.stop_completed()
 
+    @typing.override
     def op_shutdown_completed(self) -> None:
         self.mock.shutdown_completed()
 
+    @typing.override
     def op_delete_completed(self) -> None:
         self.mock.remove_completed()
 
+    @typing.override
     def op_nop(self) -> None:
         self.mock.nop()
 
+    @typing.override
     def op_destroy_validator(self) -> None:
         self.mock.destroy_validator()
 
+    @typing.override
     def op_custom(self, operation: types.services.Operation) -> None:
         self.mock.custom(operation)
 
+    @typing.override
     def op_initialize_checker(self) -> types.states.TaskState:
         self.mock.initialize_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_create_checker(self) -> types.states.TaskState:
         self.mock.create_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_create_completed_checker(self) -> types.states.TaskState:
         self.mock.create_completed_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_start_completed_checker(self) -> types.states.TaskState:
         self.mock.start_completed_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_stop_completed_checker(self) -> types.states.TaskState:
         self.mock.stop_completed_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_shutdown_completed_checker(self) -> types.states.TaskState:
         self.mock.shutdown_completed_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_delete_checker(self) -> types.states.TaskState:
         self.mock.remove_checker()
         return types.states.TaskState.FINISHED
 
+    @typing.override
     def op_delete_completed_checker(self) -> types.states.TaskState:
         self.mock.remove_completed_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_nop_checker(self) -> types.states.TaskState:
         self.mock.nop_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_destroy_validator_checker(self) -> types.states.TaskState:
         self.mock.destroy_validator_checker()
         return TaskState.FINISHED
 
+    @typing.override
     def op_custom_checker(self, operation: types.services.Operation) -> types.states.TaskState:
         self.mock.custom_checker(operation)
         return TaskState.FINISHED
@@ -668,19 +744,22 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
 
     mock: "mock.Mock" = mock.MagicMock()  # Remember, shared between instances
 
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         self.mock.execute_delete(vmid)
 
+    @typing.override
     def is_deleted(self, vmid: str) -> bool:
         self.mock.is_deleted(vmid)
         return True
 
+    @typing.override
     def notify_deleted(self, vmid: str) -> None:
         super().notify_deleted(vmid)  # to update delete_running flag
         self.mock.notify_deleted(vmid)
-        return
 
     # Not used, but needed to be implemented due to bein abstract
+    @typing.override
     def get_ip(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -688,6 +767,7 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
     ) -> str:
         return ""
 
+    @typing.override
     def get_mac(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -697,6 +777,7 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
     ) -> str:
         return ""
 
+    @typing.override
     def is_running(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -705,6 +786,7 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
         self.mock.is_running(vmid)
         raise Exception("Intended exception")
 
+    @typing.override
     def start(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -712,6 +794,7 @@ class DynamicTestingServiceForDeferredDeletion(dynamic_service.DynamicService):
     ) -> None:
         self.mock.start(vmid)
 
+    @typing.override
     def stop(
         self,
         caller_instance: dynamic_userservice.DynamicUserService | dynamic_publication.DynamicPublication | None,
@@ -725,7 +808,10 @@ class DynamicTestingProvider(services.provider.ServiceProvider):
     type_type = "DynamicProvider"
     type_description = "Dynamic Provider description"
 
-    offers = [DynamicTestingService, DynamicTestingServiceForDeferredDeletion]
+    offers: typing.ClassVar[list[type["Service"]]] = [
+        DynamicTestingService,
+        DynamicTestingServiceForDeferredDeletion,
+    ]
 
 
 def create_dynamic_provider() -> DynamicTestingProvider:
