@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -102,7 +101,9 @@ class CalendarChecker:
 
             _end = end if r_end is None or end < r_end else r_end
 
-            for val in typing.cast(list[datetime.datetime], rr.between(_start, _end, inc=True)):
+            for val in typing.cast(
+                list[datetime.datetime], typing.cast(typing.Any, rr.between(_start, _end, inc=True))
+            ):
                 if val.date() != data_date:
                     diff = int((start - val).total_seconds() / 60)
                     pos = 0
@@ -112,8 +113,7 @@ class CalendarChecker:
                 else:
                     pos = val.hour * 60 + val.minute
                     posdur = pos + duration_in_minutes
-                if posdur > 60 * 24:
-                    posdur = 60 * 24
+                posdur = min(posdur, 60 * 24)
                 data[pos:posdur] = True
 
         return data
@@ -121,7 +121,7 @@ class CalendarChecker:
     def _update_events(
         self, check_from: datetime.datetime, start_event: bool = True
     ) -> datetime.datetime | None:
-        next_event: datetime.datetime|None = None
+        next_event: datetime.datetime | None = None
         event: datetime.datetime | None = None
         for rule in self.calendar.rules.all():
             # logger.debug('RULE: start = {}, checkFrom = {}, end'.format(rule.start.date(), checkFrom.date()))
@@ -129,9 +129,13 @@ class CalendarChecker:
                 continue
             # logger.debug('Rule in check interval...')
             if start_event:
-                event = typing.cast(datetime.datetime | None, rule.as_rrule().after(check_from))  # At start
+                event = typing.cast(
+                    datetime.datetime | None, typing.cast(typing.Any, rule.as_rrule().after(check_from))
+                )  # At start
             else:
-                event = typing.cast(datetime.datetime | None, rule.as_rrule_end().after(check_from))  # At end
+                event = typing.cast(
+                    datetime.datetime | None, typing.cast(typing.Any, rule.as_rrule_end().after(check_from))
+                )  # At end
 
             if event and (next_event is None or next_event > event):
                 next_event = event

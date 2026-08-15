@@ -107,7 +107,9 @@ class WinDomainOsManager(WindowsOsManager):
     remove_on_exit = gui.CheckBoxField(
         label=_("Machine clean"),
         order=8,
-        tooltip=_("If checked, UDS will try to remove the machine from the domain USING the provided credentials"),
+        tooltip=_(
+            "If checked, UDS will try to remove the machine from the domain USING the provided credentials"
+        ),
         tab=types.ui.Tab.ADVANCED,
         default=True,
     )
@@ -158,7 +160,7 @@ class WinDomainOsManager(WindowsOsManager):
 
             # Fix ou based on domain if needed
             if self.domain.as_str() and self.ou.as_str():
-                lpath = "dc=" + ",dc=".join((s.lower() for s in self.domain.as_str().split(".")))
+                lpath = "dc=" + ",dc=".join(s.lower() for s in self.domain.as_str().split("."))
                 if lpath not in self.ou.as_str().lower():  # If not in ou, add it
                     self.ou.value = self.ou.as_str() + "," + lpath
 
@@ -183,16 +185,15 @@ class WinDomainOsManager(WindowsOsManager):
         def key(server: typing.Any) -> int:
             return server.priority * 10000 + server.weight
 
-        for server in reversed(
-            sorted(
-                iter(
-                    typing.cast(
-                        collections.abc.Iterable[typing.Any],
-                        dns.resolver.resolve("_ldap._tcp." + self.domain.as_str(), "SRV"),
-                    )
-                ),
-                key=key,
-            )
+        for server in sorted(
+            iter(
+                typing.cast(
+                    collections.abc.Iterable[typing.Any],
+                    dns.resolver.resolve("_ldap._tcp." + self.domain.as_str(), "SRV"),
+                )
+            ),
+            key=key,
+            reverse=True,
         ):
             yield (str(server.target)[:-1], server.port)
 
@@ -397,7 +398,9 @@ class WinDomainOsManager(WindowsOsManager):
         except ldaputil.LDAPError as e:
             return _("Check error: {}").format(e)
         except dns.resolver.NXDOMAIN:
-            return _("Could not find server parameters (_ldap._tcp.{0} can't be resolved)").format(self.domain.as_str())
+            return _("Could not find server parameters (_ldap._tcp.{0} can't be resolved)").format(
+                self.domain.as_str()
+            )
         except Exception as e:
             logger.exception("Exception ")
             return str(e)

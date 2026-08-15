@@ -138,7 +138,7 @@ def process_regex_field(field: str, attributes: collections.abc.Mapping[str, str
                     attrs_list = attr_name.split("+")
                     # Check all attributes are present, and has only one value
                     attrs_values = [ensure.as_list(attributes.get(a, [""])) for a in attrs_list]
-                    if not all([len(v) <= 1 for v in attrs_values]):
+                    if not all(len(v) <= 1 for v in attrs_values):
                         logger.warning("Attribute %s do not has exactly one value, skipping %s", attr_name, line)
                         return val
 

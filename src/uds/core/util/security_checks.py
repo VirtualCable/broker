@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
@@ -64,7 +63,9 @@ def _check_default_superuser_credentials() -> _CheckResult:
     stored = GlobalConfig.SUPER_USER_PASS.get(True)
     # Both the raw comparison (legacy unhashed storage) and the hash check
     # (modern installs store an Argon2 hash of the password) are needed.
-    if stored == DEFAULT_SUPERUSER_PASSWORD or CryptoManager.manager().check_hash(DEFAULT_SUPERUSER_PASSWORD, stored):
+    if stored == DEFAULT_SUPERUSER_PASSWORD or CryptoManager.manager().check_hash(
+        DEFAULT_SUPERUSER_PASSWORD, stored
+    ):
         return (
             types.security.SecurityCheckSeverity.CRITICAL,
             False,
@@ -121,8 +122,10 @@ def _check_ip_forwarders_wildcard() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.HIGH,
             False,
-            "Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client can spoof X-Forwarded-For."
-            " Restrict it to the actual proxy addresses.",
+            (
+                "Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client can spoof X-Forwarded-For."
+                " Restrict it to the actual proxy addresses."
+            ),
         )
     return (
         types.security.SecurityCheckSeverity.HIGH,
@@ -174,8 +177,10 @@ def _check_saml_assertions_signed() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             False,
-            f"SAML assertions are not required to be signed on: {', '.join(unsigned)}."
-            " Unsigned assertions can be forged against a misconfigured IdP.",
+            (
+                f"SAML assertions are not required to be signed on: {', '.join(unsigned)}."
+                " Unsigned assertions can be forged against a misconfigured IdP."
+            ),
         )
     if found:
         return (
@@ -205,15 +210,19 @@ def _check_old_token_used_by_actor() -> _CheckResult:
         .values("owner_id"),
     )
 
-    affected_pools = ServicePool.objects.filter(userServices__in=legacy_actor_services).distinct().order_by("name")
+    affected_pools = (
+        ServicePool.objects.filter(userServices__in=legacy_actor_services).distinct().order_by("name")
+    )
 
     if affected_pools:
         affected = ", ".join(pool.name for pool in affected_pools)
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             False,
-            f"Service pools with actors still using the legacy uuid token flow: {affected}."
-            " Re-initialize affected actors to rotate them to the new token.",
+            (
+                f"Service pools with actors still using the legacy uuid token flow: {affected}."
+                " Re-initialize affected actors to rotate them to the new token."
+            ),
         )
     return (
         types.security.SecurityCheckSeverity.MEDIUM,
@@ -255,7 +264,9 @@ def run_security_checks() -> list[types.security.SecurityCheckResult]:
                 )
             )
             continue
-        results.append(types.security.SecurityCheckResult(id=check_id, severity=severity, ok=ok, message=message))
+        results.append(
+            types.security.SecurityCheckResult(id=check_id, severity=severity, ok=ok, message=message)
+        )
 
     return results
 

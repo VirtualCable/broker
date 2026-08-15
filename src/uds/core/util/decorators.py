@@ -47,7 +47,9 @@ logger = logging.getLogger(__name__)
 
 # FT = typing.TypeVar('FT', bound=collections.abc.Callable[..., typing.Any])
 P = typing.ParamSpec("P")
-R = typing.TypeVar("R", bound=typing.Any, covariant=True)  # R is covariant, so we can return a subclass of R
+R_co = typing.TypeVar(
+    "R_co", bound=typing.Any, covariant=True
+)  # R is covariant, so we can return a subclass of R
 
 
 @dataclasses.dataclass
@@ -81,13 +83,13 @@ def classproperty(func: collections.abc.Callable[..., typing.Any]) -> ClassPrope
     return ClassPropertyDescriptor(func)
 
 
-def deprecated(func: collections.abc.Callable[P, R]) -> collections.abc.Callable[P, R]:
+def deprecated(func: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
     """This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
     when the function is used."""
 
     @functools.wraps(func)
-    def new_func(*args: P.args, **kwargs: P.kwargs) -> R:
+    def new_func(*args: P.args, **kwargs: P.kwargs) -> R_co:
         try:
             caller = inspect.stack()[1]
             logger.warning(
@@ -153,12 +155,12 @@ HAS_CONNECT = typing.TypeVar("HAS_CONNECT", bound=_HasConnect)
 
 
 def ensure_connected(
-    func: collections.abc.Callable[typing.Concatenate[HAS_CONNECT, P], R],
-) -> collections.abc.Callable[typing.Concatenate[HAS_CONNECT, P], R]:
+    func: collections.abc.Callable[typing.Concatenate[HAS_CONNECT, P], R_co],
+) -> collections.abc.Callable[typing.Concatenate[HAS_CONNECT, P], R_co]:
     """This decorator calls "connect" method of the class of the wrapped object"""
 
     @functools.wraps(func)
-    def connect_and_execute(obj: HAS_CONNECT, /, *args: P.args, **kwargs: P.kwargs) -> R:
+    def connect_and_execute(obj: HAS_CONNECT, /, *args: P.args, **kwargs: P.kwargs) -> R_co:
         # self = typing.cast(_HasConnect, args[0])
         obj.connect()
         return func(obj, *args, **kwargs)
@@ -188,7 +190,7 @@ def cached(
     args: collections.abc.Iterable[int] | int | None = None,
     kwargs: collections.abc.Iterable[str] | str | None = None,
     key_helper: collections.abc.Callable[[typing.Any], str] | None = None,
-) -> collections.abc.Callable[[collections.abc.Callable[P, R]], collections.abc.Callable[P, R]]:
+) -> collections.abc.Callable[[collections.abc.Callable[P, R_co]], collections.abc.Callable[P, R_co]]:
     """
     Decorator that gives us a "quick & clean" caching feature on the database.
 
@@ -226,7 +228,7 @@ def cached(
         nonlocal hits, misses, exec_time
         hits = misses = exec_time = 0
 
-    def allow_cache_decorator(fnc: collections.abc.Callable[P, R]) -> collections.abc.Callable[P, R]:
+    def allow_cache_decorator(fnc: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
         # If no caching args and no caching kwargs, we will cache the whole call
         # If no parameters provided, try to infer them from function signature
         try:
@@ -251,14 +253,14 @@ def cached(
             # Not inspectable, no caching possible, return original function
 
             # Ensure compat with methods of cached functions
-            setattr(fnc, "cache_info", cache_info)
-            setattr(fnc, "cache_clear", cache_clear)
+            fnc.cache_info = cache_info  # type: ignore[attr-defined]
+            fnc.cache_clear = cache_clear  # type: ignore[attr-defined]
             return fnc
 
         key_helper_fnc: collections.abc.Callable[[typing.Any], str] = key_helper or (lambda x: fnc.__name__)
 
         @functools.wraps(fnc)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
             nonlocal hits, misses, exec_time
 
             cache_key: str = prefix or fnc.__name__
@@ -290,10 +292,8 @@ def cached(
 
             data: typing.Any = None
             # If misses is 0, we are starting, so we will not try to get from cache
-            if not kwargs.get("force", False) and effective_timeout > 0 and misses > 0:
-                if "force" in kwargs:
-                    # Remove force key
-                    del kwargs["force"]
+            force = kwargs.pop("force", False)
+            if not force and effective_timeout > 0 and misses > 0:
                 data = cache.get(cache_key, default=consts.cache.CACHE_NOT_FOUND)
                 if data is not consts.cache.CACHE_NOT_FOUND:
                     hits += 1
@@ -320,8 +320,8 @@ def cached(
             return data
 
         # Same as lru_cache
-        setattr(wrapper, "cache_info", cache_info)
-        setattr(wrapper, "cache_clear", cache_clear)
+        wrapper.cache_info = cache_info  # type: ignore[attr-defined]
+        wrapper.cache_clear = cache_clear  # type: ignore[attr-defined]
 
         return wrapper
 
@@ -344,7 +344,7 @@ def blocker(
     request_attr: str | None = None,
     max_failures: int | None = None,
     ignore_block_config: bool = False,
-) -> collections.abc.Callable[[collections.abc.Callable[P, R]], collections.abc.Callable[P, R]]:
+) -> collections.abc.Callable[[collections.abc.Callable[P, R_co]], collections.abc.Callable[P, R_co]]:
     """
     Decorator that will block the actor if it has more than ALLOWED_FAILS failures in BLOCK_ACTOR_TIME seconds
     GlobalConfig.BLOCK_ACTOR_FAILURES.getBool() --> If true, block actor after ALLOWED_FAILS failures
@@ -367,9 +367,9 @@ def blocker(
 
     max_failures = max_failures or consts.system.ALLOWED_FAILS
 
-    def decorator(f: collections.abc.Callable[P, R]) -> collections.abc.Callable[P, R]:
+    def decorator(f: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
         @functools.wraps(f)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
             if not GlobalConfig.BLOCK_ACTOR_FAILURES.as_bool(True) and not ignore_block_config:
                 try:
                     return f(*args, **kwargs)
@@ -414,7 +414,7 @@ def blocker(
 
 def profiler(
     log_file: str | None = None,
-) -> collections.abc.Callable[[collections.abc.Callable[P, R]], collections.abc.Callable[P, R]]:
+) -> collections.abc.Callable[[collections.abc.Callable[P, R_co]], collections.abc.Callable[P, R_co]]:
     """
     Decorator that will profile the wrapped function and log the results to the provided file
 
@@ -425,10 +425,10 @@ def profiler(
         Decorator
     """
 
-    def decorator(f: collections.abc.Callable[P, R]) -> collections.abc.Callable[P, R]:
+    def decorator(f: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
 
         @functools.wraps(f)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
             nonlocal log_file  # use outer log_file
             import cProfile
             import pstats
@@ -455,12 +455,12 @@ def retry_on_exception(
     wait_seconds: float = 2,
     retryable_exceptions: list[type[Exception]] | None = None,
     do_log: bool = False,
-) -> collections.abc.Callable[[collections.abc.Callable[P, R]], collections.abc.Callable[P, R]]:
+) -> collections.abc.Callable[[collections.abc.Callable[P, R_co]], collections.abc.Callable[P, R_co]]:
     to_retry = retryable_exceptions or [Exception]
 
-    def decorator(fnc: collections.abc.Callable[P, R]) -> collections.abc.Callable[P, R]:
+    def decorator(fnc: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
         @functools.wraps(fnc)
-        def wrapper(*args: typing.Any, **kwargs: typing.Any) -> R:
+        def wrapper(*args: typing.Any, **kwargs: typing.Any) -> R_co:
             for i in range(retries):
                 try:
                     return fnc(*args, **kwargs)
@@ -469,11 +469,11 @@ def retry_on_exception(
                         logger.error("Exception raised in function %s: %s", fnc.__name__, e)
 
                     if not any(isinstance(e, exception_type) for exception_type in to_retry):
-                        raise e
+                        raise
 
                     # if this is the last retry, raise the exception
                     if i == retries - 1:
-                        raise e
+                        raise
 
                     time.sleep(wait_seconds * (2 ** min(i, 4)))  # Exponential backoff until 16x
 

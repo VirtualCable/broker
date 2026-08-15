@@ -29,46 +29,52 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from uds.core.util.model import sql_now
+
 import calendar
 import datetime
 
 
+def today() -> datetime.date:
+    return sql_now()
+
+
 # Some helpers
 def start_of_year() -> datetime.date:
-    return datetime.date(datetime.date.today().year, 1, 1)
+    return datetime.date(today().year, 1, 1)
 
 
 def end_of_year() -> datetime.date:
-    return datetime.date(datetime.date.today().year, 12, 31)
+    return datetime.date(today().year, 12, 31)
 
 
 def start_of_month() -> datetime.date:
-    return datetime.date(datetime.date.today().year, datetime.date.today().month, 1)
+    _today = today()
+    return datetime.date(_today.year, _today.month, 1)
 
 
 def end_of_month() -> datetime.date:
+    _today = today()
     return datetime.date(
-        datetime.date.today().year,
-        datetime.date.today().month,
-        calendar.monthrange(datetime.date.today().year, datetime.date.today().month)[1],
+        _today.year,
+        _today.month,
+        calendar.monthrange(_today.year, _today.month)[1],
     )
 
 
 def start_of_week() -> datetime.date:
-    return datetime.date.today() - datetime.timedelta(days=datetime.date.today().weekday())
+    _today = today()
+    return _today - datetime.timedelta(days=_today.weekday())
 
 
 def end_of_week() -> datetime.date:
-    return datetime.date.today() + datetime.timedelta(days=6 - datetime.date.today().weekday())
+    _today = today()
+    return _today + datetime.timedelta(days=6 - _today.weekday())
 
 
 def yesterday() -> datetime.date:
-    return datetime.date.today() - datetime.timedelta(days=1)
-
-
-def today() -> datetime.date:
-    return datetime.date.today()
+    return today() - datetime.timedelta(days=1)
 
 
 def tomorrow() -> datetime.date:
-    return datetime.date.today() + datetime.timedelta(days=1)
+    return today() + datetime.timedelta(days=1)

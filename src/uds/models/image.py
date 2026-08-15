@@ -175,12 +175,11 @@ class Image(UUIDModel):
             self.width, self.height, self.data = Image.prepare_for_db(data)
 
             # Setup thumbnail
-            with io.BytesIO(self.data) as input:
-                with PIL.Image.open(input) as img:
-                    img.thumbnail(Image.THUMBNAIL_SIZE, PIL.Image.LANCZOS)  # pyrefly: ignore[missing-attribute]  # LANCZOS is THERE :)
-                    with io.BytesIO() as output:
-                        img.save(output, format="PNG")
-                        self.thumb = output.getvalue()
+            with io.BytesIO(self.data) as input, PIL.Image.open(input) as img:
+                img.thumbnail(Image.THUMBNAIL_SIZE, PIL.Image.LANCZOS)  # pyrefly: ignore[missing-attribute]  # LANCZOS is THERE :)
+                with io.BytesIO() as output:
+                    img.save(output, format="PNG")
+                    self.thumb = output.getvalue()
         else:
             self.data = consts.images.DEFAULT_IMAGE
             self.thumb = consts.images.DEFAULT_THUMB

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -55,7 +54,9 @@ class Properties(models.Model):
         """
 
         app_label = "uds"
-        constraints = [models.UniqueConstraint(fields=["owner_id", "owner_type", "key"], name="unique_property")]
+        constraints: typing.ClassVar[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["owner_id", "owner_type", "key"], name="unique_property")
+        ]
 
     def __str__(self) -> str:
         return f"{self.owner_id}.{self.owner_type}.{self.key}  = {self.value}"

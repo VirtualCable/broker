@@ -59,7 +59,6 @@ if typing.TYPE_CHECKING:
     from uds.models import (
         CalendarAccess,
         CalendarAction,
-        Group,
         MetaPoolMember,
         ServicePoolPublication,
         ServicePoolPublicationChangelog,

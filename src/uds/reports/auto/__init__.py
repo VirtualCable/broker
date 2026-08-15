@@ -58,11 +58,11 @@ REPORT_AUTOMODEL: typing.Final[collections.abc.Mapping[str, type[ReportAutoModel
 
 class ReportAutoType(UserInterfaceType):
     def __new__(
-        mcs: type["UserInterfaceType"],
+        cls: type["UserInterfaceType"],
         classname: str,
         bases: tuple[type, ...],
         namespace: dict[str, typing.Any],
-    ) -> "ReportAutoType":
+    ) -> type["ReportAutoType"]:
         # Add gui for elements...
         order = 1
 
@@ -87,8 +87,8 @@ class ReportAutoType(UserInterfaceType):
                 order += 1
 
         return typing.cast(
-            "ReportAutoType",
-            super().__new__(mcs, classname, bases, namespace),  # pyright: ignore
+            type["ReportAutoType"],
+            super().__new__(cls, classname, bases, namespace),  # pyright: ignore
         )
 
 

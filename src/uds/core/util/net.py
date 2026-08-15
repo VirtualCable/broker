@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012 Virtual Cable S.L.
 # All rights reserved.
@@ -67,7 +66,9 @@ RE3ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.\*\
 RERANGEIPV4: typing.Final[re.Pattern[str]] = re.compile(
     r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})-([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
 )
-RESINGLEIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$")
+RESINGLEIPV4: typing.Final[re.Pattern[str]] = re.compile(
+    r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
+)
 
 
 def ip_to_long(ip: str) -> IpType:
@@ -349,9 +350,9 @@ def recover_ips(remote_addr: str, xff: str) -> "types.net.IpInfo":
         types.net.IpInfo(ip, ip_proxy, ip_version)
     """
     # Local imports to avoid circular dependencies
-    from uds.core.auths.auth import is_trusted_ip_forwarder  # noqa: PLC0415
-    from uds.core.types import net as types_net  # noqa: PLC0415
-    from uds.core.util.config import GlobalConfig  # noqa: PLC0415
+    from uds.core.auths.auth import is_trusted_ip_forwarder
+    from uds.core.types import net as types_net
+    from uds.core.util.config import GlobalConfig
 
     behind_proxy = GlobalConfig.BEHIND_PROXY.as_bool(False)
 

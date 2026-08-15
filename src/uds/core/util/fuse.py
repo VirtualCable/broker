@@ -89,7 +89,7 @@ if not _libfuse_path:
                     reg.KEY_READ | reg.KEY_WOW64_32KEY,  # pyright: ignore
                 )
                 val = str(reg.QueryValueEx(key, valname)[0])  # pyright: ignore
-            except WindowsError:  # type: ignore
+            except OSError:  # type: ignore
                 pass
             finally:
                 if key is not None:
@@ -109,7 +109,7 @@ if not _libfuse_path:
         _libfuse_path = find_library("fuse")
 
 if not _libfuse_path:
-    raise EnvironmentError("Unable to find libfuse")
+    raise OSError("Unable to find libfuse")
 
 _libfuse = ctypes.CDLL(_libfuse_path)
 
@@ -704,7 +704,7 @@ def set_st_attrs(st: c_stat, attrs: collections.abc.Mapping[str, int]) -> None:
             if timespec is None:
                 continue
 
-            timespec.tv_sec, timespec.tv_nsec = divmod(int(val), 10**9)
+            timespec.tv_sec, timespec.tv_nsec = divmod(val, 10**9)
         elif hasattr(st, key):
             setattr(st, key, val)
 
@@ -833,7 +833,9 @@ class FUSE:
                 yield f"{key}={value}"
 
     @staticmethod
-    def _wrapper(func: collections.abc.Callable[..., typing.Any], *args: typing.Any, **kwargs: typing.Any) -> int:
+    def _wrapper(
+        func: collections.abc.Callable[..., typing.Any], *args: typing.Any, **kwargs: typing.Any
+    ) -> int:
         "Decorator for the methods that follow"
 
         try:
@@ -854,19 +856,17 @@ class FUSE:
                         e.errno,
                     )
                     return -e.errno
-                logger.error(
+                logger.exception(
                     "FUSE operation %s raised an OSError with negative errno %s, returning errno.EINVAL.",
                     func.__name__,
                     e.errno,
-                    exc_info=True,
                 )
                 return -errno.EINVAL
 
             except Exception:
-                logger.error(
+                logger.exception(
                     "Uncaught exception from FUSE operation %s, returning errno.EINVAL.",
                     func.__name__,
-                    exc_info=True,
                 )
                 return -errno.EINVAL
 

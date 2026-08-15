@@ -139,7 +139,7 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         db_table = "uds__user_service"
         ordering = ("creation_date",)
         app_label = "uds"
-        indexes = [
+        indexes: typing.ClassVar[list[models.Index]] = [
             models.Index(fields=["deployed_service", "cache_level", "state"]),
         ]
 
@@ -640,7 +640,6 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         Notifies preconnect to userservice.
         TODO: Currently not used
         """
-        pass
 
     def log_ip(self, ip: str | None = None) -> None:
         self.properties["ip"] = ip

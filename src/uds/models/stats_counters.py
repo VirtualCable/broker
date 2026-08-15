@@ -31,7 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 from collections import defaultdict
-import typing
 import collections.abc
 import datetime
 import logging
@@ -75,7 +74,7 @@ class StatsCounters(models.Model):
         max_intervals: int | None = None,
         use_max: bool = False,
         limit: int | None = None,
-    ) -> typing.Generator[tuple[int, int], None, None]:
+    ) -> collections.abc.Generator[tuple[int, int], None, None]:
         """
         Returns a QuerySet of counters grouped by owner_type and counter_type
         """
@@ -123,7 +122,7 @@ class StatsCounters(models.Model):
         if max_intervals > 0:
             count = len(values)
             max_intervals = max(min(max_intervals, count), 2)
-            interval = int(to - since) // max_intervals
+            interval = (to - since) // max_intervals
 
         # If interval is 0, we return the values as they are
         if interval == 0:
@@ -139,8 +138,7 @@ class StatsCounters(models.Model):
             else:
                 result[group_by_stamp] = (result[group_by_stamp] * (counter - 1) + i[1]) // counter
 
-        for k, v in result.items():
-            yield (k, v)
+        yield from result.items()
 
         # if interval > 0:
         #     q = q.extra(  # type: ignore # nosec: SQL injection is not possible here

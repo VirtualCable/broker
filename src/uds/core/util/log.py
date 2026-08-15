@@ -90,7 +90,7 @@ def log_use(
     servicepool_name = "unknown" if servicepool_name is None else servicepool_name
 
     use_logger.info(
-        "|".join(
+        "|".join(  # ruff: ignore[FLY002]
             [
                 type_,
                 service_unique_id,

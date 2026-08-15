@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -95,7 +94,7 @@ class ObjectType(enum.Enum):
                 return objtype
         raise ValueError(f"Invalid model type: {model}")
 
-    def __eq__(self, __o: object) -> bool:
+    def __eq__(self, __o: object, /) -> bool:
         """Compares with another ObjType, and includes int comparison
 
         Args:

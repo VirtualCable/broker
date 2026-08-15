@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -30,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import typing
 import logging
 
 from django.db import models
@@ -59,7 +59,9 @@ class UniqueId(models.Model):
 
         ordering = ("-seq",)
         app_label = "uds"
-        constraints = [models.UniqueConstraint(fields=["basename", "seq"], name="u_uid_base_seq")]
+        constraints: typing.ClassVar[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["basename", "seq"], name="u_uid_base_seq")
+        ]
 
     def __str__(self) -> str:
         return f"{self.owner} {self.basename}.{self.seq}, assigned is {self.assigned}"

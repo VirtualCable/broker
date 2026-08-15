@@ -71,7 +71,7 @@ class UUIDModel(models.Model):
         models.Model.save(self, *args, **kwargs)
 
     @classmethod
-    def null(cls: type[T]) -> "T":
+    def null(cls: type[typing.Self]) -> typing.Self:
         """
         Returns a null MFA
         """

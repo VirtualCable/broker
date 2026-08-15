@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 class UniqueGenerator:
-    __slots__ = ("_owner", "_basename")
+    __slots__ = ("_basename", "_owner")
 
     # owner is the owner of the UniqueID
     _owner: str

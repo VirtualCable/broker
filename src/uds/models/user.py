@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -87,7 +86,9 @@ class User(UUIDModel, properties.PropertiesMixin):
 
         ordering = ("name",)
         app_label = "uds"
-        constraints = [models.UniqueConstraint(fields=["manager", "name"], name="u_usr_manager_name")]
+        constraints: typing.ClassVar[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["manager", "name"], name="u_usr_manager_name")
+        ]
 
     # For properties
     @typing.override
@@ -221,7 +222,9 @@ class User(UUIDModel, properties.PropertiesMixin):
                 number_belongs_meta=Count("groups", filter=Q(groups__id__in=grps))
             )  # g.groups.filter(id__in=grps).count()
         ):
-            number_of_groups_belonging_in_meta: int = typing.cast(typing.Any, g).number_belongs_meta  # Anotated field
+            number_of_groups_belonging_in_meta: int = typing.cast(
+                typing.Any, g
+            ).number_belongs_meta  # Anotated field
 
             logger.debug("gn = %s", number_of_groups_belonging_in_meta)
             logger.debug("groups count: %s", typing.cast(typing.Any, g).number_groups)  # Anotated field

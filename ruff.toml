@@ -1,5 +1,5 @@
 line-length = 120
-extend-exclude = ["samples", "src/uds/transports/*/scripts"]
+extend-exclude = ["samples", "src/uds/transports/*/scripts", "src/uds/migrations"]
 
 [format]
 quote-style = "double"

@@ -23,7 +23,7 @@ def migrate(apps: typing.Any, schema_editor: typing.Any) -> None:
                 owner_id=prop.user_service.uuid, owner_type="userservice", key=prop.name, value=prop.value
             )
     except Exception:
-        logger.error("Error migrating properties", exc_info=True)
+        logger.exception("Error migrating properties")
 
 
 def rollback(apps: typing.Any, schema_editor: typing.Any) -> None:

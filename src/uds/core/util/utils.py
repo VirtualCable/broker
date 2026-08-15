@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -30,7 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from Cython import float
 import base64
+import collections.abc
 import contextlib
 import datetime
 import logging
@@ -116,7 +117,7 @@ def timestamp_as_str(stamp: float, format_: str | None = None) -> str:
     return filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(stamp)), format_)
 
 
-def seconds_to_time_string(seconds: int) -> str:
+def seconds_to_time_string(seconds: float) -> str:
     seconds = int(seconds)
     minutes = seconds // 60
     seconds %= 60
@@ -151,11 +152,9 @@ def load_icon(icon_filename: str) -> bytes:
         logger.error("Error reading icon file  %s: %s", icon_filename, e)
         # blank png bytes
         data = base64.b64decode(
-            (
-                b"iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAY0lEQVR42u3QAREAAAQEMJKL"
-                b"/nI4W4R1KlOPtQABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAg"
-                b"AABAgQIECBAgAABAgQIECBAgAABAgQIEHDfAvLdn4FABR1mAAAAAElFTkSuQmCC"
-            )
+            b"iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAY0lEQVR42u3QAREAAAQEMJKL"
+            b"/nI4W4R1KlOPtQABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAg"
+            b"AABAgQIECBAgAABAgQIECBAgAABAgQIEHDfAvLdn4FABR1mAAAAAElFTkSuQmCC"
         )
 
     return data
@@ -169,7 +168,7 @@ def load_icon_b64(iconFilename: str) -> str:
 
 
 @contextlib.contextmanager
-def ignore_exceptions(log: bool = False) -> typing.Iterator[None]:
+def ignore_exceptions(log: bool = False) -> collections.abc.Generator[None]:
     """
     Ignores exceptions
     """
@@ -211,12 +210,12 @@ class ExecutionTimer:
         self._delay_threshold = delay_threshold
         self._max_delay_rate = max_delay_rate
 
-    def __enter__(self) -> "ExecutionTimer":
+    def __enter__(self) -> typing.Self:
         self._start = self._end = timezone.localtime()
         self._running = True
         return self
 
-    def __exit__(self, exc_type: typing.Any, exc_value: typing.Any, traceback: typing.Any) -> None:
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> None:
         self._running = False
         self._end = timezone.localtime()
 

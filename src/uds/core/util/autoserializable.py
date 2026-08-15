@@ -473,7 +473,7 @@ class DictField(_SerializableField[dict[T, V]], dict[T, V]):
 
     def __init__(
         self,
-        default: dict[T, V] | collections.abc.Callable[[], dict[T, V]] = lambda: {},
+        default: dict[T, V] | collections.abc.Callable[[], dict[T, V]] = dict,
         cast: collections.abc.Callable[[T, V], tuple[T, V]] | None = None,
     ):
         super().__init__(_ObservableDict, default)
@@ -764,7 +764,7 @@ class AutoSerializable(Serializable, metaclass=_FieldNameSetter):
     def is_dirty(self) -> bool:
         return self._dirty or super().is_dirty()
 
-    def __eq__(self, other: typing.Any) -> bool:
+    def __eq__(self, other: object, /) -> bool:
         """
         Basic equality check, checks if all _SerializableFields are equal
 

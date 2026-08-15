@@ -1,4 +1,4 @@
-#
+
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
 #

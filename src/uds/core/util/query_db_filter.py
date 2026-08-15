@@ -67,13 +67,9 @@ logger = logging.getLogger(__name__)
 class FieldName(str):
     """Marker class to distinguish field names from string literals."""
 
-    pass
-
 
 class AnnotatedField(str):
     """Represents an annotated field name from a function."""
-
-    pass
 
 
 _UNARY_FUNCTIONS: typing.Final[dict[str, collections.abc.Callable[[F], typing.Any]]] = {
@@ -96,7 +92,7 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
         self.annotations: dict[str, typing.Any] = {}
 
     @lark.visitors.v_args(inline=True)
-    def value(self, arg: lark.Token | str | int | float) -> typing.Any:
+    def value(self, arg: lark.Token | str | float) -> typing.Any:
         if isinstance(arg, lark.Token):
             match arg.type:
                 case "ESCAPED_STRING":
@@ -142,7 +138,7 @@ class DjangoQueryTransformer(lark.Transformer[typing.Any, Q | AnnotatedField]):
         elif isinstance(left, F):
             field_name = left.name
         else:
-            raise ValueError("Left side of binary expression must be a field name or annotated field")
+            raise TypeError("Left side of binary expression must be a field name or annotated field")
 
         logger.debug("Binary expr: field=%s, op=%s, value=%s", field_name, op, right)
 
@@ -277,7 +273,7 @@ def exec_query(query: str, qs: QuerySet[T]) -> QuerySet[T]:
         q_obj = transformer.transform(tree)
 
         if not isinstance(q_obj, Q):
-            raise ValueError("Query must result in a filterable expression")
+            raise TypeError("Query must result in a filterable expression")
 
         if transformer.annotations:
             qs = qs.annotate(**transformer.annotations)

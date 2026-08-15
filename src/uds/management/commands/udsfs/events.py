@@ -148,7 +148,7 @@ class EventFS(types.UDSFSInterface):
 
     @staticmethod
     def last_years() -> list[str]:
-        return [str(x) for x in range(datetime.datetime.now().year - 4, datetime.datetime.now().year + 1)]
+        return list(map(str, range(timezone.now().year - 4, timezone.now().year + 1)))
 
     @staticmethod
     def number_of_days(year: int, month: int) -> int:

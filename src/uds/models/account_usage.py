@@ -28,7 +28,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import typing
 import logging
 
 from django.db import models
@@ -40,9 +39,6 @@ from .account import Account
 from .user_service import UserService
 from ..core.consts import NEVER
 
-# Not imported at runtime, just for type checking
-if typing.TYPE_CHECKING:
-    from uds.models import UserService, Account
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +88,7 @@ class AccountUsage(UUIDModel):
 
         start = self.start
         end = self.end
-        if start < self.account.time_mark:
-            start = self.account.time_mark
+        start = max(start, self.account.time_mark)
         if end < start:
             return 0
 

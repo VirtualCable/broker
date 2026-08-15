@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -31,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+import typing
 
 from django.db import models
 
@@ -59,7 +59,9 @@ class Config(models.Model):
         """
 
         db_table = "uds_configuration"
-        constraints = [models.UniqueConstraint(fields=["section", "key"], name="u_cfg_section_key")]
+        constraints: typing.ClassVar[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["section", "key"], name="u_cfg_section_key")
+        ]
 
         app_label = "uds"
 

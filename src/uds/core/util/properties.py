@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import collections.abc
 import logging
+import types
 import typing
 
 from django.db import transaction
@@ -82,13 +83,13 @@ class PropertyAccessor:
             pass  # Ignore if not exists
 
     def __contains__(self, key: str) -> bool:
-        return bool(self._filter().filter(key=key).exists())
+        return self._filter().filter(key=key).exists()
 
     def __iter__(self) -> collections.abc.Iterator[str]:
         return iter(self._filter().values_list("key", flat=True))
 
     def __len__(self) -> int:
-        return int(self._filter().count())
+        return self._filter().count()
 
     def get(self, key: str, default: typing.Any = None) -> typing.Any:
         try:
@@ -123,12 +124,17 @@ class PropertyAccessor:
         except KeyError:
             return default
 
-    def __enter__(self) -> "PropertyAccessor":
+    def __enter__(self) -> typing.Self:
         self.transaction = transaction.atomic()
         self.transaction.__enter__()
         return self
 
-    def __exit__(self, exc_type: typing.Any, exc_value: typing.Any, traceback: typing.Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
+    ) -> None:
         if self.transaction:
             self.transaction.__exit__(exc_type, exc_value, traceback)
 

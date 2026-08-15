@@ -33,7 +33,7 @@ import datetime
 import logging
 import typing
 
-from django.utils import formats
+from django.utils import formats, timezone
 from django.utils.translation import get_language
 
 from uds.core import consts
@@ -68,9 +68,11 @@ def parse_date(string_date: str) -> datetime.date:
     if get_language() == "fr":
         date_format = "%d/%m/%Y"
     else:
-        date_format = formats.get_format("SHORT_DATE_FORMAT").replace("Y", "%Y").replace("m", "%m").replace("d", "%d")  # pylint: disable=maybe-no-member
+        date_format = (
+            formats.get_format("SHORT_DATE_FORMAT").replace("Y", "%Y").replace("m", "%m").replace("d", "%d")
+        )  # pylint: disable=maybe-no-member
 
-    return datetime.datetime.strptime(string_date, date_format).date()
+    return timezone.make_aware(datetime.datetime.strptime(string_date, date_format)).date()  # ruff: ignore[DTZ007]
 
 
 def date_to_literal(date: datetime.datetime) -> str:

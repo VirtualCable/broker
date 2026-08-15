@@ -39,7 +39,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
-import typing
 
 from uds.core import reports
 from uds.core.util import modfinder

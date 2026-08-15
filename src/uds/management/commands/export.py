@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -257,7 +256,7 @@ class Command(BaseCommand):
     help = "Export entities from UDS to be imported in another UDS instance"
 
     verbose: bool = True
-    filter_args: list[tuple[str, str]] = []
+    filter_args: typing.ClassVar[list[tuple[str, str]]] = []
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
@@ -336,7 +335,7 @@ class Command(BaseCommand):
         if self.verbose:
             self.stderr.write(f"Exported to {options['output']}")
 
-    def apply_filter(self, model: type[ModelType]) -> typing.Iterator[ModelType]:
+    def apply_filter(self, model: type[ModelType]) -> collections.abc.Iterator[ModelType]:
         """
         Applies a filter to a model
         """
@@ -348,8 +347,13 @@ class Command(BaseCommand):
         # Generate "OR" filter with all kwargs
         if self.filter_args:
             return typing.cast(
-                "typing.Iterator[ModelType]",
-                model.objects.filter(reduce(operator.or_, (Q(**{k: v}) for k, v in self.filter_args))),
+                "collections.abc.Iterator[ModelType]",
+                model.objects.filter(
+                    reduce(
+                        operator.or_,  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                        (Q(**{k: v}) for k, v in self.filter_args),
+                    )
+                ),
             )
         return model.objects.all().iterator()
 
@@ -357,9 +361,7 @@ class Command(BaseCommand):
         """
         Outputs the count of an iterable
         """
-        count = 0
-        for v in iterable:
-            count += 1
+        for count, v in enumerate(iterable, start=1):
             if self.verbose:
                 self.stderr.write(f"{message} {count}", ending="\r")
             yield v
@@ -371,7 +373,9 @@ class Command(BaseCommand):
         """
         Exports all providers to a list of dicts
         """
-        return "# Providers\n" + yaml.safe_dump([provider_exporter(p) for p in self.apply_filter(models.Provider)])
+        return "# Providers\n" + yaml.safe_dump(
+            [provider_exporter(p) for p in self.apply_filter(models.Provider)]
+        )
 
     def export_services(self) -> str:
         # First, locate providers for services with the filter
@@ -465,7 +469,10 @@ class Command(BaseCommand):
         Exports all networks to a list of dicts
         """
         return "# Networks\n" + yaml.safe_dump(
-            [network_exporter(n) for n in self.output_count("Saving networks", self.apply_filter(models.Network))]
+            [
+                network_exporter(n)
+                for n in self.output_count("Saving networks", self.apply_filter(models.Network))
+            ]
         )
 
     def export_transports(self) -> str:
@@ -489,7 +496,10 @@ class Command(BaseCommand):
         Exports all osmanagers to a list of dicts
         """
         return "# OSManagers\n" + yaml.safe_dump(
-            [osmanager_exporter(o) for o in self.output_count("Saving osmanagers", self.apply_filter(models.OSManager))]
+            [
+                osmanager_exporter(o)
+                for o in self.output_count("Saving osmanagers", self.apply_filter(models.OSManager))
+            ]
         )
 
     def remove_reduntant_entities(self, entities: list[str]) -> list[str]:

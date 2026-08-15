@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -31,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+import typing
 
 from django.db import models
 
@@ -71,7 +71,9 @@ class UserServiceSession(models.Model):  # pylint: disable=too-many-public-metho
 
         db_table = "uds__user_service_session"
         app_label = "uds"
-        constraints = [models.UniqueConstraint(fields=["session_id", "user_service"], name="u_session_userservice")]
+        constraints: typing.Final[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["session_id", "user_service"], name="u_session_userservice")
+        ]
 
     def __str__(self) -> str:
         return f"Session {self.session_id} ({self.start} to {self.end})"

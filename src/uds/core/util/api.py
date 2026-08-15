@@ -48,22 +48,20 @@ def get_generic_types(
         filter(
             lambda x: issubclass(x, types.rest.BaseRestItem),  # pyright: ignore[reportUnnecessaryIsInstance]
             itertools.chain.from_iterable(
-                map(
-                    lambda x: [
-                        # Filter out non resolvable forward references of the ARGS, protect against failures
-                        typing.cast(type[typing.Any], _resolve_forwardref(xx))
-                        for xx in typing.get_args(x)
-                        if _resolve_forwardref(xx) is not None
-                    ],
-                    [
-                        # Filter out non resolvable forward references of the TYPE, protect against failures
-                        typing.cast(type[typing.Any], _resolve_forwardref(base))
-                        for base in filter(
-                            lambda x: _resolve_forwardref(x) is not None,
-                            [base for base in getattr(cls, "__orig_bases__", [])],
-                        )
-                    ],
-                )
+                [
+                    # Filter out non resolvable forward references of the ARGS, protect against failures
+                    typing.cast(type[typing.Any], _resolve_forwardref(xx))
+                    for xx in typing.get_args(x)
+                    if _resolve_forwardref(xx) is not None
+                ]
+                for x in [
+                    # Filter out non resolvable forward references of the TYPE, protect against failures
+                    typing.cast(type[typing.Any], _resolve_forwardref(base))
+                    for base in filter(
+                        lambda x: _resolve_forwardref(x) is not None,
+                        [base for base in getattr(cls, "__orig_bases__", [])],
+                    )
+                ]
             ),
         )
     )
@@ -171,7 +169,9 @@ _OPENAPI_TYPE_MAP: typing.Final[dict[typing.Any, OpenApiType]] = {
 }
 
 
-def python_type_to_openapi(py_type: typing.Any, description: str | None = None) -> "types.rest.api.SchemaProperty":
+def python_type_to_openapi(
+    py_type: typing.Any, description: str | None = None
+) -> "types.rest.api.SchemaProperty":
     """
     Convert a Python type to an OpenAPI 3.1 schema property.
     """
@@ -201,7 +201,8 @@ def python_type_to_openapi(py_type: typing.Any, description: str | None = None) 
         one_of: list[SchemaProperty] = [
             python_type_to_openapi(arg)
             for arg in args
-            if arg is not None and typing.get_origin(arg) is not typing.cast(typing.Any, collections.abc.Callable)
+            if arg is not None
+            and typing.get_origin(arg) is not typing.cast(typing.Any, collections.abc.Callable)
         ]
         # Remove repeated
         one_of = list({item.type: item for item in one_of}.values())
@@ -220,7 +221,9 @@ def python_type_to_openapi(py_type: typing.Any, description: str | None = None) 
     # Literal[...] → enum
     elif origin is typing.Literal:
         literal_type = typing.cast(type[typing.Any], type(args[0]) if args else str)
-        return schema_prop(type=_OPENAPI_TYPE_MAP.get(literal_type, OpenApiType.STRING).value.type, enum=list(args))
+        return schema_prop(
+            type=_OPENAPI_TYPE_MAP.get(literal_type, OpenApiType.STRING).value.type, enum=list(args)
+        )
 
     # Enum classes
     # First, IntEnum --> int

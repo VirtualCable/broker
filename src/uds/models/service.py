@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -102,7 +101,9 @@ class Service(ManagedObjectModel, TaggingMixin):
 
         ordering = ("name",)
         app_label = "uds"
-        constraints = [models.UniqueConstraint(fields=["provider", "name"], name="u_srv_provider_name")]
+        constraints: typing.ClassVar[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["provider", "name"], name="u_srv_provider_name")
+        ]
 
     @typing.override
     def get_environment(self) -> Environment:

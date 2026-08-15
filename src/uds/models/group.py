@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -89,7 +88,9 @@ class Group(UUIDModel):
 
         ordering = ("name",)
         app_label = "uds"
-        constraints = [models.UniqueConstraint(fields=["manager", "name"], name="u_grp_manager_name")]
+        constraints: typing.ClassVar[list[models.UniqueConstraint]] = [
+            models.UniqueConstraint(fields=["manager", "name"], name="u_grp_manager_name")
+        ]
 
     @property
     def pretty_name(self) -> str:

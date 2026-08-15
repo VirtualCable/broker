@@ -61,7 +61,7 @@ class ImmutableLog(models.Model):
 
     class Meta:
         app_label = "uds"
-        ordering = ["sequence"]
+        ordering: typing.ClassVar[list[str]] = ["sequence"]
         get_latest_by = "sequence"
         db_table = "uds_immutable_log"
         verbose_name = "Immutable Log Entry"

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -33,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import enum
 import datetime
 import logging
+import typing
 
 from django.db import models
 from django.utils import timezone
@@ -97,7 +97,7 @@ class StatsCountersAccum(models.Model):
         Meta class to declare db table
         """
 
-        indexes = [
+        indexes: typing.ClassVar[list[models.Index]] = [
             models.Index(
                 fields=[
                     "stamp",
@@ -140,7 +140,7 @@ class StatsCountersAccum(models.Model):
         )
 
         # Assign values depending on interval type
-        model: type[StatsCountersAccum] | type[StatsCounters]
+        model: type[StatsCountersAccum | StatsCounters]
         # If base interval (that menas an inteval that must be readed from stats_c),
         # we will use StatsCounters to create the accum
         # Else, we will use StatsCountersAccum to create the accum from previous interval
@@ -151,7 +151,7 @@ class StatsCountersAccum(models.Model):
         interval = interval_type.seconds()
 
         # Get last stamp in table for this interval_type
-        start_record: StatsCounters|StatsCountersAccum|None = (
+        start_record: StatsCounters | StatsCountersAccum | None = (
             StatsCountersAccum.objects.filter(interval_type=interval_type).order_by("stamp").last()
         )
 

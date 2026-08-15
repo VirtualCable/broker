@@ -69,7 +69,7 @@ class FrequencyInfo(enum.Enum):
 
     @staticmethod
     def as_choices() -> tuple[tuple[str, str], ...]:
-        return tuple((str(f.name), str(f.value.title)) for f in FrequencyInfo)
+        return tuple((f.name, f.value.title) for f in FrequencyInfo)
 
     @staticmethod
     def from_str(value: str) -> "FrequencyInfo":
@@ -80,7 +80,7 @@ class FrequencyInfo(enum.Enum):
 
     @staticmethod
     def literals_dict() -> dict[str, str]:
-        return {str(f.name): str(f.value.title) for f in FrequencyInfo}
+        return {f.name: f.value.title for f in FrequencyInfo}
 
 
 @dataclasses.dataclass
@@ -100,7 +100,7 @@ class DurationInfo(enum.Enum):
 
     @staticmethod
     def as_choices() -> tuple[tuple[str, str], ...]:
-        return tuple((str(f.name), str(f.value.title)) for f in DurationInfo)
+        return tuple((f.name, f.value.title) for f in DurationInfo)
 
     @staticmethod
     def from_str(value: str) -> "DurationInfo":
@@ -150,7 +150,7 @@ class CalendarRule(UUIDModel):
             self.interval = 1
 
         end = datetime.datetime.combine(
-            self.end if self.end else datetime.datetime.max.date(),
+            self.end if self.end else datetime.datetime.max.replace(tzinfo=datetime.timezone.utc).date(),
             datetime.datetime.max.time(),
         )
         end = timezone.make_aware(end)

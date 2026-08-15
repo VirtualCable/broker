@@ -65,7 +65,7 @@ def _get_serv_pool_ids(service: "Service") -> tuple[int, ...]:
 
 
 def _get_prov_serv_pool_ids(provider: "Provider") -> tuple[int, ...]:
-    res: tuple[int, ...] = tuple()
+    res: tuple[int, ...] = ()
     for i in provider.services.all():
         res += _get_serv_pool_ids(i)
     return res
@@ -136,15 +136,16 @@ def add_counter(
     """
     type_ = type(obj)
     if type_ not in VALID_MODEL_FOR_COUNTER_TYPE_DICT.get(counter_type, ()):  # pylint: disable
-        logger.error(
+        logger.exception(
             "Type %s does not accepts counter of type %s",
             type_,
             value,
-            exc_info=True,
         )
         return False
 
-    return StatsManager.manager().add_counter(OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp)
+    return StatsManager.manager().add_counter(
+        OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp
+    )
 
 
 def enumerate_counters(

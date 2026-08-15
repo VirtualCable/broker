@@ -48,7 +48,7 @@ class Command(BaseCommand):
     help = "Executes the stats collector acummulator, that updates the stats counters accum table with the current stats counters"
 
     verbose: bool = True
-    filter_args: list[tuple[str, str]] = []
+    filter_args: typing.ClassVar[list[tuple[str, str]]] = []
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)

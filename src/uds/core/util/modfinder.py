@@ -70,11 +70,10 @@ def get_urlpatterns_from_modules() -> list[typing.Any]:
                 module_fullname = f"{module_name}.{name}.urls"
                 try:
                     mod = importlib.import_module(module_fullname)
-                    urlpatterns: list[typing.Any] = getattr(mod, "urlpatterns")
+                    urlpatterns: list[typing.Any] = getattr(mod, "urlpatterns", [])
                     logger.debug("Loaded mod %s, url %s", mod, urlpatterns)
                     # Append patters from mod
-                    for up in urlpatterns:
-                        patterns.append(up)
+                    patterns.extend(urlpatterns)
                 except Exception as e:
                     logger.error("No patterns found in %s (%s)", module_fullname, e)
         except Exception:
@@ -109,7 +108,7 @@ def import_modules(module_name: str, *, package_name: str | None = None) -> None
             importlib.import_module("." + name, module_name)  # import module
         except Exception as e:
             if settings.DEBUG:
-                logger.exception("***** Error importing module %s.%s: %s *****", module_name, name, e)
+                logger.exception("***** Error importing module %s.%s*****", module_name, name)
             logger.error("   - Error importing module %s.%s: %s", module_name, name, e)
     logger.info("* Done importing modules from %s", package_path)
 
@@ -163,8 +162,9 @@ def dynamically_load_and_register_packages(
                 adder(cls)
             except Exception as e:
                 if settings.DEBUG:
-                    logger.exception("***** Error registering %s.%s: %s *****", cls.__module__, cls.__name__, e)
-                logger.error("   - Error registering %s.%s: %s", cls.__module__, cls.__name__, e)
+                    logger.exception("***** Error registering %s.%s *****", cls.__module__, cls.__name__)
+                else:
+                    logger.error("   - Error registering %s.%s: %s", cls.__module__, cls.__name__, e)
 
     logger.info("* Start registering %s", module_name)
     _process(type_.__subclasses__())

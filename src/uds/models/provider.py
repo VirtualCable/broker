@@ -92,8 +92,7 @@ class Provider(ManagedObjectModel, TaggingMixin):
 
     @staticmethod
     def type_filter(type_: str) -> collections.abc.Iterable["Provider"]:
-        for i in Provider.objects.filter(data_type=type):
-            yield i
+        yield from Provider.objects.filter(data_type=type)
 
     def __str__(self) -> str:
         return f"Provider {self.name} of type {self.data_type} (id:{self.id})"

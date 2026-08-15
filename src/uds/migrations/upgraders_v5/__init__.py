@@ -61,4 +61,3 @@ def noop_reverse(apps: "Apps", schema_editor: "BaseDatabaseSchemaEditor") -> Non
     The conversion is forward-compatible (old unmarshal still exists in v5),
     so no data-invalidating reverse is needed.
     """
-    pass

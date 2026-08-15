@@ -45,7 +45,7 @@ from .tag import TaggingMixin
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from uds.models import Group, Network, User, MFA
+    from uds.models import Group, User, MFA
     from django.db.models.manager import RelatedManager
 
 

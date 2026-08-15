@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -82,12 +81,14 @@ def become_daemon(
         sys.stderr.write(f"fork #2 failed: ({e.errno}) {e.strerror}")
         os._exit(1)  # pylint: disable=protected-access
 
-    si = open("/dev/null", "r", encoding="utf-8")  # pylint: disable=consider-using-with
-    so = open(out_log, "a+", 1, encoding="utf-8")  # pylint: disable=consider-using-with
-    se = open(err_log, "a+", 1, encoding="utf-8")  # pylint: disable=consider-using-with
-    os.dup2(si.fileno(), sys.stdin.fileno())
-    os.dup2(so.fileno(), sys.stdout.fileno())
-    os.dup2(se.fileno(), sys.stderr.fileno())
+    with (
+        open("/dev/null", "r", encoding="utf-8") as si,
+        open(out_log, "a+", 1, encoding="utf-8") as so,
+        open(err_log, "a+", 1, encoding="utf-8") as se,
+    ):
+        os.dup2(si.fileno(), sys.stdin.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
     # Set custom file descriptors so that they get proper buffering.
     sys.stdout, sys.stderr = so, se
 
@@ -141,7 +142,8 @@ class Command(BaseCommand):
 
         pid: int = 0
         try:
-            pid = int(open(pid_file_path(), "r", encoding="utf8").readline())
+            with open(pid_file_path(), "r", encoding="utf8") as f:
+                pid = int(f.readline())
         except Exception:
             pid = 0
 

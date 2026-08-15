@@ -68,7 +68,7 @@ def list_ifaces() -> collections.abc.Iterator[types.net.Iface]:
                 fcntl.ioctl(
                     s.fileno(),
                     0x8915,  # SIOCGIFADDR
-                    struct.pack(str("256s"), ifnameBytes[:15]),
+                    struct.pack("256s", ifnameBytes[:15]),
                 )[20:24]
             )
 
@@ -90,7 +90,7 @@ def list_ifaces() -> collections.abc.Iterator[types.net.Iface]:
             raise OSError(f"Unknown arquitecture {platform.architecture()[0]}")
 
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        names = array.array(str("B"), b"\0" * space)
+        names = array.array("B", b"\0" * space)
         outbytes = struct.unpack(
             "iL",
             fcntl.ioctl(

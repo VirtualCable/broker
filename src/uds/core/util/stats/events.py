@@ -155,7 +155,7 @@ class EventTupleType:
         return f"{self.stamp} {self.event_type.event_name} {self.fld1} {self.fld2} {self.fld3} {self.fld4}"
 
 
-EventClass = typing.Union[Provider, Service, ServicePool, Authenticator]
+EventClass: typing.TypeAlias = Provider | Service | ServicePool | Authenticator
 
 
 def add_event(obj: EventClass, event_type: types.stats.EventType, **kwargs: typing.Any) -> bool:
@@ -180,7 +180,7 @@ def get_events(
     to: "datetime.datetime|int|None" = None,
     limit: int = 0,
     all: bool = False,
-) -> typing.Generator[EventTupleType, None, None]:
+) -> collections.abc.Generator[EventTupleType, None, None]:
     """
     Get events
 
@@ -221,7 +221,7 @@ def get_events(
 
 
 # tail the events table
-def tail_events(wait_time: int = 2) -> typing.Generator[EventTupleType, None, None]:
+def tail_events(wait_time: int = 2) -> collections.abc.Generator[EventTupleType, None, None]:
     starting_id = None
     while True:
         for i in StatsManager.manager().tail_events(starting_id=starting_id):
