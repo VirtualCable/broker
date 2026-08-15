@@ -71,7 +71,14 @@ class CalendarChecker:
         data = bitarray.bitarray(60 * 24)  # Granurality is minute
         data.setall(False)
 
-        data_date = dtime.date()
+        # Convert ``dtime`` to the user's tz once and reuse the conversion
+        # for the cache key AND the minute index below.  Without this,
+        # the cache key and the lookup use different time zones when the
+        # DB tz and Django tz disagree (e.g. UTC vs Europe/Madrid):
+        # the bitarray would be built for the Madrid day but indexed with
+        # the UTC hour, returning wrong minutes.
+        local_dtime = dtime.astimezone(timezone.get_current_timezone())
+        data_date = local_dtime.date()
 
         start = datetime.datetime.combine(data_date, datetime.datetime.min.time())
         start = timezone.make_aware(start)
@@ -118,9 +125,7 @@ class CalendarChecker:
 
         return data
 
-    def _update_events(
-        self, check_from: datetime.datetime, start_event: bool = True
-    ) -> datetime.datetime | None:
+    def _update_events(self, check_from: datetime.datetime, start_event: bool = True) -> datetime.datetime | None:
         next_event: datetime.datetime | None = None
         event: datetime.datetime | None = None
         for rule in self.calendar.rules.all():
@@ -150,12 +155,20 @@ class CalendarChecker:
         if dtime is None:
             dtime = sql_now()
 
-        # memcached access
+        # Convert ``dtime`` to the operator's tz once.  Both the cache
+        # key (which day) and the minute index below (which minute of
+        # that day) must use the same tz; otherwise a DB in UTC and
+        # Django in, say, Europe/Madrid would build a Madrid-day
+        # bitarray but index it with the UTC hour, returning wrong
+        # minutes around midnight.
+        local_dtime = dtime.astimezone(timezone.get_current_timezone())
+
+        # memcache access
         memcache_storage = caches["memory"]
 
         # First, try to get data from cache if it is valid
         cache_key = CalendarChecker._gen_cache_key(
-            str(self.calendar.modified) + str(dtime.date()) + (self.calendar.uuid or "") + "checker"
+            str(self.calendar.modified) + str(local_dtime.date()) + (self.calendar.uuid or "") + "checker"
         )
         # First, check "local memory cache", and if not found, from DB cache
         cached = memcache_storage.get(cache_key)
@@ -177,7 +190,7 @@ class CalendarChecker:
             CalendarChecker.cache.put(cache_key, state_on_minute.tobytes(), ONE_DAY)
             memcache_storage.set(cache_key, state_on_minute.tobytes(), ONE_DAY)
 
-        return bool(state_on_minute[dtime.hour * 60 + dtime.minute])
+        return bool(state_on_minute[local_dtime.hour * 60 + local_dtime.minute])
 
     def next_event(
         self,
