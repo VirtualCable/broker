@@ -24,35 +24,40 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """
-Author: Adolfo Gómez, dkmaster at dkmon dot com
+Helpers for checking that modules are registered in their factories.
+
+Generic: contains no knowledge about OSS vs enterprise modules, so it can be
+safely used from both the OSS and the enterprise test suites.
 """
 
-import logging
+import collections.abc
 import typing
 
-from tests.utils.factories import check_registered
-from tests.utils.test import UDSTestCase
-from uds.core.mfas.mfafactory import MFAsFactory
+from uds.core import module
+from uds.core.util import factory
 
-logger = logging.getLogger(__name__)
-
-
-MUST_HAVE: typing.Final[list[str]] = [
-    "emailmfa",
-    "radiusotp",
-    "smshttpmfa",
-    "samplemfa",
-    "totp_mfa",
-]
+T = typing.TypeVar("T", bound=module.Module)
 
 
-class TestMFAs(UDSTestCase):
+def check_registered(
+    factory_instance: factory.ModuleFactory[T],
+    names: collections.abc.Iterable[str],
+    *,
+    what: str = "module",
+) -> None:
     """
-    Test known mfas are registered correctly
+    Assert that every name in ``names`` is registered in ``factory_instance``.
+
+    Fails listing the missing ones, so new modules must be registered here
+    when created.
+
+    Args:
+        factory_instance: The factory to check against.
+        names: Iterable of module names that must be registered.
+        what: Human-readable name of the module type, used in the error message
+              (e.g. "provider", "authenticator").
     """
-
-    def test_mfas_loads_correctly(self) -> None:
-        from uds import mfas as mfas  # ensure mfas are registered
-
-        check_registered(MFAsFactory(), MUST_HAVE, what="mfa")
+    missing = [name for name in names if not factory_instance.has(name)]
+    assert not missing, f"{what} not registered: {', '.join(missing)}"

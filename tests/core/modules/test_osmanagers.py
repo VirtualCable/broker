@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.osmanagers.osmfactory import OSManagersFactory
 
@@ -42,19 +43,17 @@ MUST_HAVE: typing.Final[list[str]] = [
     "linuxadmanager",
     "linuxmanager",
     "windomainmanager",
-    "winrandompasswordmanager",
     "windowsmanager",
+    "winrandompasswordmanager",
 ]
 
 
 class TestOsManagers(UDSTestCase):
     """
-    Test known transports are registered correctly
+    Test known osmanagers are registered correctly
     """
 
     def test_osmanagers_loads_correctly(self) -> None:
-        from uds import osmanagers as osmanagers  # ensure transports are registered
+        from uds import osmanagers as osmanagers  # ensure osmanagers are registered
 
-        factory = OSManagersFactory()
-        for osmanager in MUST_HAVE:
-            self.assertTrue(factory.has(osmanager), f"OsManager {osmanager} not found")
+        check_registered(OSManagersFactory(), MUST_HAVE, what="osmanager")

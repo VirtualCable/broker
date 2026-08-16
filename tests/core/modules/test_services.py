@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.services.provider_factory import ServiceProviderFactory
 
@@ -38,11 +39,12 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    "ovirtplatform",
     "opengnsysplatform",
     "opennebulaplatform",
+    "openshiftprovider",
     "openstackplatform",
     "openstackplatformnew",
+    "ovirtplatform",
     "physicalmachinesserviceprovider",
     "proxmoxplatform",
     "xenplatform",
@@ -51,12 +53,10 @@ MUST_HAVE: typing.Final[list[str]] = [
 
 class TestServices(UDSTestCase):
     """
-    Test known transports are registered correctly
+    Test known service providers are registered correctly
     """
 
     def test_providers_loads_correctly(self) -> None:
-        from uds import services as services  # pyright: ignore  # ensure transports are registered
+        from uds import services as services  # pyright: ignore  # ensure providers are registered
 
-        factory = ServiceProviderFactory()
-        for provider in MUST_HAVE:
-            self.assertTrue(factory.has(provider), f"Provider {provider} not found")
+        check_registered(ServiceProviderFactory(), MUST_HAVE, what="provider")

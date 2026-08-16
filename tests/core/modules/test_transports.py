@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.transports.transport_factory import TransportsFactory
 
@@ -40,16 +41,15 @@ logger = logging.getLogger(__name__)
 MUST_HAVE: typing.Final[list[str]] = [
     "html5rdptransport",
     "html5sshtransport",
-    # 'nicedcvtunneltransport',
-    # 'tsnomachinetransport',
+    "rdpembeddedtransport",
     "rdptransport",
-    "tsrdptransport",
-    # 'trdstransport',
     "spicetransport",
+    "trdpembeddedtransport",
+    "tsrdptransport",
     "tsspicetransport",
+    "tx2gotransport",
     "urltransport",
     "x2gotransport",
-    "tx2gotransport",
 ]
 
 
@@ -59,9 +59,6 @@ class TestTransports(UDSTestCase):
     """
 
     def test_transports_loads_correctly(self) -> None:
-        from uds import transports as transports  # Not used, juet to load all transports
+        from uds import transports as transports  # Not used, just to load all transports
 
-        factory = TransportsFactory()
-
-        for transport in MUST_HAVE:
-            self.assertTrue(factory.has(transport), f"Transport {transport} not found")
+        check_registered(TransportsFactory(), MUST_HAVE, what="transport")

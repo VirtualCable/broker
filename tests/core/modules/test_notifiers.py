@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.messaging.msgfactory import NotifierFactory
 
@@ -45,12 +46,10 @@ MUST_HAVE: typing.Final[list[str]] = [
 
 class TestNotifiers(UDSTestCase):
     """
-    Test known transports are registered correctly
+    Test known notifiers are registered correctly
     """
 
     def test_notifiers_loads_correctly(self) -> None:
-        from uds import notifiers as notifiers
+        from uds import notifiers as notifiers  # ensure notifiers are registered
 
-        factory = NotifierFactory()
-        for notifier in MUST_HAVE:
-            self.assertTrue(factory.has(notifier), f"Notifier {notifier} not found")
+        check_registered(NotifierFactory(), MUST_HAVE, what="notifier")

@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.auths.authfactory import AuthsFactory
 
@@ -38,25 +39,24 @@ logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [
-    "ipauth",
     "internaldbauth",
+    "ipauth",
     "oauth2authenticator",
     "radiusauthenticator",
     "regexldapauthenticator",
     "saml20authenticator",
     "sampleauthenticator",
     "simpleldapauthenticator",
+    "x509certificateauthenticator",
 ]
 
 
 class TestAuthenticators(UDSTestCase):
     """
-    Test known transports are registered correctly
+    Test known authenticators are registered correctly
     """
 
     def test_authenticators_loads_correctly(self) -> None:
-        from uds import auths as auths  # ensure transports are registered
+        from uds import auths as auths  # ensure authenticators are registered
 
-        factory = AuthsFactory()
-        for auth in MUST_HAVE:
-            self.assertTrue(factory.has(auth), f"Authenticator {auth} not found")
+        check_registered(AuthsFactory(), MUST_HAVE, what="authenticator")
