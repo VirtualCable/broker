@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -27,11 +26,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Simple "testing" provider.
-
-This package provides a simple test provider, suitable for automated tests.
+Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
-
 # Make this visible to loaders
 
-from .provider import TestProvider as TestProvider
+from .transport import TestTransport as TestTransport

@@ -42,6 +42,26 @@ from uds.core.transports import Transport
 
 from ..utils import helpers
 
+
+def ensure_test_modules_registered() -> None:
+    """
+    Registers the test-only modules in their factories.
+
+    These modules live under ``tests/fixtures/modules`` (not under ``src``), so
+    they are not auto-registered by the modfinder. Tests that use them must
+    invoke this (idempotent) helper before creating/deserializing instances.
+    """
+    from tests.fixtures.modules.osmanager import TestOSManager
+    from tests.fixtures.modules.service.provider import TestProvider
+    from tests.fixtures.modules.transport import TestTransport
+
+    from uds.core import osmanagers, services, transports
+
+    services.factory().insert(TestProvider)
+    osmanagers.factory().insert(TestOSManager)
+    transports.factory().insert(TestTransport)
+
+
 # Counters so we can reinvoke the same method and generate new data
 glob = {
     "provider_id": 1,
@@ -56,7 +76,9 @@ glob = {
 
 
 def create_db_provider() -> models.Provider:
-    from uds.services.Test.provider import TestProvider
+    from tests.fixtures.modules.service.provider import TestProvider
+
+    ensure_test_modules_registered()
 
     provider = models.Provider()
     provider.name = "Testing provider {}".format(glob["provider_id"])
@@ -70,8 +92,8 @@ def create_db_provider() -> models.Provider:
 
 
 def create_db_service(provider: models.Provider, use_caching_version: bool = True) -> models.Service:
-    from uds.services.Test.service import TestServiceCache
-    from uds.services.Test.service import TestServiceNoCache
+    from tests.fixtures.modules.service.service import TestServiceCache
+    from tests.fixtures.modules.service.service import TestServiceNoCache
 
     service = provider.services.create(
         name="Service {}".format(glob["service_id"]),
@@ -93,8 +115,10 @@ def create_db_service(provider: models.Provider, use_caching_version: bool = Tru
 def create_db_osmanager(
     osmanager: OSManager | None = None,
 ) -> models.OSManager:
+    ensure_test_modules_registered()
+
     if osmanager is None:
-        from uds.osmanagers.Test import TestOSManager
+        from tests.fixtures.modules.osmanager import TestOSManager
 
         osmanager = TestOSManager(
             environment.Environment.testing_environment(),
@@ -119,7 +143,7 @@ def create_db_servicepool_group(
     image: models.Image | None = None,
 ) -> models.ServicePoolGroup:
     service_pool_group: models.ServicePoolGroup = models.ServicePoolGroup.objects.create(
-        name="Service pool group %d" % (glob["service_pool_group_id"]),
+        name=f"Service pool group {glob['service_pool_group_id']}",
         comments=f"Comment for service pool group {glob['service_pool_group_id']}",
         image=image,
     )
@@ -137,9 +161,9 @@ def create_db_servicepool(
 ) -> models.ServicePool:
 
     service_pool: models.ServicePool = service.deployedServices.create(
-        name="Service pool %d" % (glob["service_pool_id"]),
-        short_name="pool%d" % (glob["service_pool_id"]),
-        comments="Comment for service pool %d" % (glob["service_pool_id"]),
+        name=f"Service pool {glob['service_pool_id']}",
+        short_name=f"pool{glob['service_pool_id']}",
+        comments=f"Comment for service pool {glob['service_pool_id']}",
         osmanager=osmanager,
     )
     glob["service_pool_id"] += 1
@@ -171,14 +195,16 @@ def create_db_publication(
 
 
 def create_db_transport(transport_instance: "Transport|None" = None, **kwargs: typing.Any) -> models.Transport:
-    from uds.transports.Test import TestTransport
+    from tests.fixtures.modules.transport import TestTransport
+
+    ensure_test_modules_registered()
 
     if transport_instance is None:
         transport_instance = TestTransport(environment.Environment.testing_environment(), None)
 
     transport: models.Transport = models.Transport.objects.create(
-        name="Transport %d" % (glob["transport_id"]),
-        comments="Comment for Transport %d" % (glob["transport_id"]),
+        name=f"Transport {glob['transport_id']}",
+        comments=f"Comment for Transport {glob['transport_id']}",
         data_type=transport_instance.type_type,
         data=transport_instance.serialize(),
         **kwargs,
@@ -216,9 +242,9 @@ def create_db_metapool(
     ha_policy: int = types.pools.HighAvailabilityPolicy.ENABLED,
 ) -> models.MetaPool:
     meta_pool: models.MetaPool = models.MetaPool.objects.create(
-        name="Meta pool %d" % (glob["meta_pool_id"]),
-        short_name="meta%d" % (glob["meta_pool_id"]),
-        comments="Comment for meta pool %d" % (glob["meta_pool_id"]),
+        name=f"Meta pool {glob['meta_pool_id']}",
+        short_name=f"meta{glob['meta_pool_id']}",
+        comments=f"Comment for meta pool {glob['meta_pool_id']}",
         policy=round_policy,
         transport_grouping=transport_grouping,
         ha_policy=ha_policy,
@@ -238,7 +264,7 @@ def create_db_one_assigned_userservice(
     provider: "models.Provider",
     user: "models.User",
     groups: collections.abc.Iterable["models.Group"],
-    type_: typing.Literal["managed"] | typing.Literal["unmanaged"],
+    type_: typing.Literal["managed", "unmanaged"],
     osmanager: OSManager | None = None,
     transport_instance: "Transport | None" = None,
 ) -> "models.UserService":

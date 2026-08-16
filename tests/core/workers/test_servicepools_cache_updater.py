@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -35,9 +34,9 @@ import typing
 from uds.core import types
 from uds.core.environment import Environment
 from uds.core.types.states import State
-from uds.services.Test.provider import TestProvider
-from uds.services.Test.service import TestServiceCache
-from uds.services.Test.service import TestServiceNoCache
+from tests.fixtures.modules.service.provider import TestProvider
+from tests.fixtures.modules.service.service import TestServiceCache
+from tests.fixtures.modules.service.service import TestServiceNoCache
 from uds.workers.servicepools_cache_updater import ServiceCacheUpdater
 
 from ...fixtures import services as services_fixtures
@@ -52,7 +51,10 @@ logger = logging.getLogger(__name__)
 class ServiceCacheUpdaterTest(UDSTestCase):
     servicepool: "models.ServicePool"
 
+    @typing.override
     def setUp(self) -> None:
+        services_fixtures.ensure_test_modules_registered()
+
         # Default values for max
         TestProvider.concurrent_creation_limit = 1000
         TestProvider.concurrent_removal_limit = 1000
