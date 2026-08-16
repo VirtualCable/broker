@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Virtual Cable S.L.
+# Copyright (c) 2015-2023 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -26,37 +26,26 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Helpers for checking that modules are registered in their factories.
-
-Generic: contains no knowledge about OSS vs enterprise modules, so it can be
-safely used from both the OSS and the enterprise test suites.
+Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import collections.abc
 import typing
 
 from uds.core.util import factory
 
-T = typing.TypeVar("T")
+if typing.TYPE_CHECKING:
+    from .report import Report as Report
 
 
-def check_registered(
-    factory_instance: factory.Factory[T],
-    names: collections.abc.Iterable[str],
-    *,
-    what: str = "module",
-) -> None:
+class ReportsFactory(factory.Factory["Report"]):
     """
-    Assert that every name in ``names`` is registered in ``factory_instance``.
+    Factory for UDS reports.
 
-    Fails listing the missing ones, so new modules must be registered here
-    when created.
-
-    Args:
-        factory_instance: The factory to check against.
-        names: Iterable of module names that must be registered.
-        what: Human-readable name of the module type, used in the error message
-              (e.g. "provider", "authenticator").
+    Reports are registered by their uuid.
     """
-    missing = [name for name in names if not factory_instance.has(name)]
-    assert not missing, f"{what} not registered: {', '.join(missing)}"
+
+    def insert(self, type_: type["Report"]) -> None:
+        """
+        Inserts a report into the factory, using its uuid as the key.
+        """
+        super().register(type_.get_uuid(), type_)

@@ -31,12 +31,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
+from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
-from uds import reports
+from uds.core.reports.reports_factory import ReportsFactory
 
 logger = logging.getLogger(__name__)
 
-# UUid of the reports
+# Uuid of the reports
 # Here we only want to ensure the code has no errors, so we only check that they load correctly
 MUST_HAVE: typing.Final[list[str]] = [
     "a5a43bc0-d543-11ea-af8f-af01fa65994e",
@@ -88,7 +89,6 @@ class TestReports(UDSTestCase):
     """
 
     def test_reports_loads_correctly(self) -> None:
-        # Reports loaded at top level
+        from uds import reports as reports  # pyright: ignore  # ensure reports are registered
 
-        for i in reports.available_reports:
-            self.assertIn(i.uuid, MUST_HAVE)
+        check_registered(ReportsFactory(), MUST_HAVE, what="report")

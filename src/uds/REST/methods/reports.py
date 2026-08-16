@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -37,10 +36,10 @@ import typing
 
 from django.utils.translation import gettext_lazy as _
 
-from uds import reports
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
+from uds.core.reports.reports_factory import ReportsFactory
 from uds.core.util import ui as ui_utils
 from uds.core.util.rest.tools import match_args
 from uds.REST import model
@@ -100,7 +99,7 @@ class Reports(model.BaseModelHandler[ReportItem]):
     def _locate_report(self, uuid: str, values: dict[str, typing.Any] | None = None) -> "Report":
         found = None
         logger.debug("Looking for report %s", uuid)
-        for i in reports.available_reports:
+        for i in ReportsFactory().values():
             if i.get_uuid() == uuid:
                 found = i(values)
                 break
@@ -170,7 +169,7 @@ class Reports(model.BaseModelHandler[ReportItem]):
 
     # Returns the list of
     def get_items(self, *args: typing.Any, **kwargs: typing.Any) -> collections.abc.Generator[ReportItem, None, None]:
-        for i in reports.available_reports:
+        for i in ReportsFactory().values():
             yield ReportItem(
                 id=i.get_uuid(),
                 mime_type=i.mime_type,

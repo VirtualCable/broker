@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -33,3 +32,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # Make this visible to loaders
 
 from .report import Report as Report
+from .reports_factory import ReportsFactory
+
+
+def factory() -> ReportsFactory:
+    """
+    Returns factory for register/access to reports
+    """
+    return ReportsFactory()

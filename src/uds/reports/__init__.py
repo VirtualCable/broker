@@ -45,27 +45,17 @@ from uds.core.util import modfinder
 
 logger = logging.getLogger(__name__)
 
-available_reports: list[type["reports.Report"]] = []
-
 
 def __load_modules() -> None:
     """
     This imports all packages that are descendant of this package, and, after that,
     """
-    already_seen: set[str] = set()
-
-    def _add_report_class(cls: type[reports.Report]) -> None:
-        already_seen.add(cls.uuid)
-        available_reports.append(cls)
-
-    def _checker(cls: type[reports.Report]) -> bool:
-        return bool(cls.uuid) and cls.uuid not in already_seen
-
+    # Report classes are registered in the factory, that takes care of duplicates (by uuid)
     modfinder.dynamically_load_and_register_packages(
-        _add_report_class,
+        reports.factory().insert,
         reports.Report,
         __name__,
-        checker=_checker,
+        checker=lambda cls: bool(cls.uuid),
     )
 
 
