@@ -93,3 +93,6 @@ test-vars.ini
 .ruff_cache
 AGENTS.md
 /strix*
+# Added by code-review-graph
+.code-review-graph/
+opencode.jsonc
