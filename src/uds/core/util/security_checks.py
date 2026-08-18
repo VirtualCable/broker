@@ -41,6 +41,7 @@ import logging
 import typing
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 from uds.core import types
 from uds.core import consts
@@ -69,12 +70,12 @@ def _check_default_superuser_credentials() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.CRITICAL,
             False,
-            "Default superuser credentials are still active. Change the root password immediately.",
+            _("Default superuser credentials are still active. Change the root password immediately."),
         )
     return (
         types.security.SecurityCheckSeverity.CRITICAL,
         True,
-        "Superuser password is not the shipped default.",
+        _("Superuser password is not the shipped default."),
     )
 
 
@@ -83,12 +84,14 @@ def _check_superuser_web_access() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             False,
-            "Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if not needed in production.",
+            _(
+                "Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if not needed in production."
+            ),
         )
     return (
         types.security.SecurityCheckSeverity.MEDIUM,
         True,
-        "Root web/API access is disabled.",
+        _("Root web/API access is disabled."),
     )
 
 
@@ -102,12 +105,14 @@ def _check_trusted_sources_wildcard() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             False,
-            f"{', '.join(wildcards)} set to wildcard (*): IP-based gating for tunnels, actors and admin operations is disabled.",
+            _(
+                "{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and admin operations is disabled."
+            ).format(wildcards=", ".join(wildcards)),
         )
     return (
         types.security.SecurityCheckSeverity.MEDIUM,
         True,
-        "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards.",
+        _("TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."),
     )
 
 
@@ -116,13 +121,15 @@ def _check_ip_forwarders_wildcard() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.INFO,
             True,
-            "Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is not exploitable until BEHIND_PROXY is enabled.",
+            _(
+                "Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is not exploitable until BEHIND_PROXY is enabled."
+            ),
         )
     if GlobalConfig.ALLOWED_IP_FORWARDERS.get(True).strip() == "*":
         return (
             types.security.SecurityCheckSeverity.HIGH,
             False,
-            (
+            _(
                 "Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client can spoof X-Forwarded-For."
                 " Restrict it to the actual proxy addresses."
             ),
@@ -130,7 +137,7 @@ def _check_ip_forwarders_wildcard() -> _CheckResult:
     return (
         types.security.SecurityCheckSeverity.HIGH,
         True,
-        "Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete addresses.",
+        _("Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete addresses."),
     )
 
 
@@ -147,12 +154,12 @@ def _check_security_cookies_and_headers() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.LOW,
             False,
-            f"Security cookies/headers are disabled: {missing}.",
+            _("Security cookies/headers are disabled: {missing}.").format(missing=missing),
         )
     return (
         types.security.SecurityCheckSeverity.LOW,
         True,
-        "Session/security cookies and enhanced security are enabled.",
+        _("Session/security cookies and enhanced security are enabled."),
     )
 
 
@@ -177,21 +184,21 @@ def _check_saml_assertions_signed() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             False,
-            (
-                f"SAML assertions are not required to be signed on: {', '.join(unsigned)}."
+            _(
+                "SAML assertions are not required to be signed on: {unsigned}."
                 " Unsigned assertions can be forged against a misconfigured IdP."
-            ),
+            ).format(unsigned=", ".join(unsigned)),
         )
     if found:
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             True,
-            "All SAML authenticators require signed assertions or messages.",
+            _("All SAML authenticators require signed assertions or messages."),
         )
     return (
         types.security.SecurityCheckSeverity.MEDIUM,
         True,
-        "No SAML authenticators configured.",
+        _("No SAML authenticators configured."),
     )
 
 
@@ -219,15 +226,15 @@ def _check_old_token_used_by_actor() -> _CheckResult:
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
             False,
-            (
-                f"Service pools with actors still using the legacy uuid token flow: {affected}."
+            _(
+                "Service pools with actors still using the legacy uuid token flow: {affected}."
                 " Re-initialize affected actors to rotate them to the new token."
-            ),
+            ).format(affected=affected),
         )
     return (
         types.security.SecurityCheckSeverity.MEDIUM,
         True,
-        "No user services are using the legacy uuid actor token flow.",
+        _("No user services are using the legacy uuid actor token flow."),
     )
 
 
@@ -260,7 +267,7 @@ def run_security_checks() -> list[types.security.SecurityCheckResult]:
                     id=check_id,
                     severity=types.security.SecurityCheckSeverity.INFO,
                     ok=False,
-                    message=f"Check could not be evaluated: {e}",
+                    message=_("Check could not be evaluated: {error}").format(error=e),
                 )
             )
             continue
