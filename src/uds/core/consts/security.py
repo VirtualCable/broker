@@ -28,48 +28,28 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security self-assessment types used by ``uds.core.security.checks`` and
-exposed by the REST ``/system/security_check`` endpoint.
+Constants used by the security self-assessment checks and related code.
 """
 
-import dataclasses
-import enum
+import hashlib
 import typing
 
+# Shipped default of ``GlobalConfig.SUPER_USER_PASS`` (see uds.core.util.config).
+# Detects installations where the root password has never been rotated.
+DEFAULT_SUPERUSER_PASSWORD: typing.Final[str] = "udsmam0"
 
-class SecurityCheckSeverity(str, enum.Enum):
-    """
-    Severity of a security check result, from most to least important.
-    """
+# Shipped default of ``settings.SECRET_KEY`` (``src/server/settings.py.sample:183``).
+# OSS installs that copied the sample verbatim are running with this key, which
+# means any attacker who read the public source can forge session tokens.
+DEFAULT_SECRET_KEY: typing.Final[str] = "s5ky!7b5f#s35!e38xv%e-+iey6yi-#630x)kk3kk5_j8rie2*"
 
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INFO = "info"
+# SHA256 of the shipped default of ``settings.RSA_KEY`` (``settings.py.sample:188``).
+# We hash because the key is a multi-line PEM literal that is awkward to keep as a
+# constant; comparing fingerprints is enough to flag an install that never
+# rotated the key.
+DEFAULT_RSA_KEY_SHA256: typing.Final[str] = "f8a73d4bb154a710bf235ac1fbbd6bf5b93774284358478f622492b941b19528"
 
 
-@dataclasses.dataclass(frozen=True)
-class SecurityCheckResult:
-    """
-    Result of a single security check.
-
-    - ``id``: stable machine-readable identifier of the check.
-    - ``severity``: importance of the check when it fails.
-    - ``ok``: ``True`` when the check passes, ``False`` when the checked
-      condition is a security concern.
-    - ``message``: human readable detail, suitable for operator notification.
-    """
-
-    id: str
-    severity: SecurityCheckSeverity
-    ok: bool
-    message: str
-
-    def as_dict(self) -> dict[str, typing.Any]:
-        return {
-            "id": self.id,
-            "severity": self.severity.value,
-            "ok": self.ok,
-            "message": self.message,
-        }
+def rsa_key_fingerprint(key: str) -> str:
+    """Returns the SHA256 fingerprint of an RSA key PEM for comparison purposes."""
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()

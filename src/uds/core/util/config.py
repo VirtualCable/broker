@@ -40,6 +40,7 @@ from django.db.models import signals
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
+from uds.core import consts
 from uds.core.managers.crypto import CryptoManager
 from uds.models.config import Config as DBConfig
 
@@ -449,7 +450,10 @@ class GlobalConfig:
     )
     # Superuser password (do not need to be at database!!!)
     SUPER_USER_PASS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
-        "rootPass", "udsmam0", type=Config.FieldType.PASSWORD, help=_("Superuser password")
+        "rootPass",
+        consts.security.DEFAULT_SUPERUSER_PASSWORD,
+        type=Config.FieldType.PASSWORD,
+        help=_("Superuser password"),
     )
     SUPER_USER_ALLOW_WEBACCESS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "allowRootWebAccess",

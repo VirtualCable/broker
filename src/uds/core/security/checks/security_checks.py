@@ -28,48 +28,18 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security self-assessment types used by ``uds.core.security.checks`` and
-exposed by the REST ``/system/security_check`` endpoint.
+Public re-exports of the security-check API under the historical import path
+``uds.core.security.checks.security_checks``, used by ``/system/security_check``
+and the corresponding tests.
+
+The actual implementation lives in :mod:`uds.core.security.checks.runner`.
 """
 
-import dataclasses
-import enum
-import typing
+from uds.core import consts
 
+from .factory import CheckFn as CheckFn
+from .factory import CheckResult as CheckResult
+from .runner import build_report as build_report
+from .runner import run_security_checks as run_security_checks
 
-class SecurityCheckSeverity(str, enum.Enum):
-    """
-    Severity of a security check result, from most to least important.
-    """
-
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INFO = "info"
-
-
-@dataclasses.dataclass(frozen=True)
-class SecurityCheckResult:
-    """
-    Result of a single security check.
-
-    - ``id``: stable machine-readable identifier of the check.
-    - ``severity``: importance of the check when it fails.
-    - ``ok``: ``True`` when the check passes, ``False`` when the checked
-      condition is a security concern.
-    - ``message``: human readable detail, suitable for operator notification.
-    """
-
-    id: str
-    severity: SecurityCheckSeverity
-    ok: bool
-    message: str
-
-    def as_dict(self) -> dict[str, typing.Any]:
-        return {
-            "id": self.id,
-            "severity": self.severity.value,
-            "ok": self.ok,
-            "message": self.message,
-        }
+DEFAULT_SUPERUSER_PASSWORD = consts.security.DEFAULT_SUPERUSER_PASSWORD

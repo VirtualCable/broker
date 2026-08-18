@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -45,7 +44,7 @@ from uds.core import exceptions
 from uds.core import types
 from uds.core.types.states import State
 from uds.core.util import permissions
-from uds.core.util import security_checks
+from uds.core.security.checks import security_checks
 from uds.core.util.cache import Cache
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_now

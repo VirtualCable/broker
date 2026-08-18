@@ -28,48 +28,43 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security self-assessment types used by ``uds.core.security.checks`` and
-exposed by the REST ``/system/security_check`` endpoint.
+Security self-assessment checks for the OpenUDS broker.
+
+Each check evaluates a single security-relevant configuration condition and
+returns its severity, whether it passes and a human readable detail.
+
+Checks are grouped by data source:
+
+- :mod:`uds.core.security.checks.settings`      -- ``django.conf.settings``
+- :mod:`uds.core.security.checks.global_config` -- admin-editable global config
+- :mod:`uds.core.security.checks.models`        -- live database state
+- :mod:`uds.core.security.checks.logs`          -- runtime log/state (planned)
+
+Every group exposes a :func:`register_checks` that plugs its callables into the
+shared :class:`SecurityChecksFactory` returned by :func:`factory`. The runner
+(:func:`runner.run_security_checks`) walks whatever the factory currently holds;
+new checks only need to register, no edits to the runner.
+
+Checks only *notify*: they never modify any configuration value.
 """
 
-import dataclasses
-import enum
 import typing
 
+from uds.core import consts
 
-class SecurityCheckSeverity(str, enum.Enum):
-    """
-    Severity of a security check result, from most to least important.
-    """
-
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INFO = "info"
+from . import global_config as global_config
+from . import logs as logs
+from . import models as models
+from . import settings as settings
+from .factory import CheckFn as CheckFn
+from .factory import SecurityChecksFactory as SecurityChecksFactory
 
 
-@dataclasses.dataclass(frozen=True)
-class SecurityCheckResult:
-    """
-    Result of a single security check.
+def factory() -> SecurityChecksFactory:
+    """Returns the singleton :class:`SecurityChecksFactory`."""
+    return SecurityChecksFactory()
 
-    - ``id``: stable machine-readable identifier of the check.
-    - ``severity``: importance of the check when it fails.
-    - ``ok``: ``True`` when the check passes, ``False`` when the checked
-      condition is a security concern.
-    - ``message``: human readable detail, suitable for operator notification.
-    """
 
-    id: str
-    severity: SecurityCheckSeverity
-    ok: bool
-    message: str
-
-    def as_dict(self) -> dict[str, typing.Any]:
-        return {
-            "id": self.id,
-            "severity": self.severity.value,
-            "ok": self.ok,
-            "message": self.message,
-        }
+# Re-export so callers can import the constant from the package root without
+# reaching into ``uds.core.consts.security`` directly.
+DEFAULT_SUPERUSER_PASSWORD: typing.Final[str] = consts.security.DEFAULT_SUPERUSER_PASSWORD

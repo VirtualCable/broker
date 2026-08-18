@@ -28,48 +28,10 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security self-assessment types used by ``uds.core.security.checks`` and
-exposed by the REST ``/system/security_check`` endpoint.
+Security self-assessment for the OpenUDS broker.
+
+Individual checks are grouped by data source under
+``uds.core.security.checks`` (settings, global_config, models, logs, ...)
+and are registered into a single :class:`SecurityChecksFactory` exposed by
+``uds.core.security.checks.factory``.
 """
-
-import dataclasses
-import enum
-import typing
-
-
-class SecurityCheckSeverity(str, enum.Enum):
-    """
-    Severity of a security check result, from most to least important.
-    """
-
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INFO = "info"
-
-
-@dataclasses.dataclass(frozen=True)
-class SecurityCheckResult:
-    """
-    Result of a single security check.
-
-    - ``id``: stable machine-readable identifier of the check.
-    - ``severity``: importance of the check when it fails.
-    - ``ok``: ``True`` when the check passes, ``False`` when the checked
-      condition is a security concern.
-    - ``message``: human readable detail, suitable for operator notification.
-    """
-
-    id: str
-    severity: SecurityCheckSeverity
-    ok: bool
-    message: str
-
-    def as_dict(self) -> dict[str, typing.Any]:
-        return {
-            "id": self.id,
-            "severity": self.severity.value,
-            "ok": self.ok,
-            "message": self.message,
-        }
