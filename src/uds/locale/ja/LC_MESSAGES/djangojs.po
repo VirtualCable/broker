@@ -31,12 +31,13 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:27+0200\n"
+"POT-Creation-Date: 2026-08-18 17:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Japanese (http://app.transifex.com/openuds/openuds/language/"
@@ -2006,7 +2007,7 @@ msgstr "プールごとの同時セッション数のピーク"
 #: static/admin/translations-fakejs.js:638
 #, javascript-format
 msgid "Pool saturation (% of capacity)"
-msgstr ""
+msgstr "Pool saturation (% of capacity)"
 
 #: static/admin/translations-fakejs.js:639
 msgid "Cache hits / misses per pool"

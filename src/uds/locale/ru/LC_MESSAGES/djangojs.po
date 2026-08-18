@@ -31,6 +31,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2022
 # Alexander <ag@kub.tel>, 2020
 # Alexey Shabalin <a.shabalin@gmail.com>, 2019
@@ -46,7 +47,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:27+0200\n"
+"POT-Creation-Date: 2026-08-18 17:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Александр Бурматов, 2022\n"
 "Language-Team: Russian (http://app.transifex.com/openuds/openuds/language/"
@@ -2020,7 +2021,7 @@ msgstr "Максимальное количество одновременных
 #: static/admin/translations-fakejs.js:638
 #, javascript-format
 msgid "Pool saturation (% of capacity)"
-msgstr ""
+msgstr "Pool saturation (% of capacity)"
 
 #: static/admin/translations-fakejs.js:639
 msgid "Cache hits / misses per pool"

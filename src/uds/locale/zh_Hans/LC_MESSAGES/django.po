@@ -39,7 +39,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:27+0200\n"
+"POT-Creation-Date: 2026-08-18 17:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/"
@@ -913,7 +913,7 @@ msgstr "删除服务时出错"
 #: REST/methods/services.py:288
 #, python-brace-format
 msgid "Services of {0}"
-msgstr ""
+msgstr "{0} 的服务"
 
 #: REST/methods/services.py:292
 msgid "Services Pools"
@@ -8423,7 +8423,7 @@ msgstr "用户工作"
 #: templates/uds/reports/stats/cache-efficiency.html:19
 #, python-format
 msgid "Hit ratio %%"
-msgstr ""
+msgstr "命中率 %%"
 
 #: templates/uds/reports/stats/client-platforms.html:4
 msgid "Client platforms"
@@ -8448,7 +8448,7 @@ msgstr "每个池的并发会话峰值"
 #: templates/uds/reports/stats/pool-saturation.html:20
 #, python-format
 msgid "Saturation %%"
-msgstr ""
+msgstr "饱和度 %%"
 
 #: templates/uds/reports/stats/pools-performance.html:13
 #: templates/uds/reports/stats/pools-usage-day.html:13

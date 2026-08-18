@@ -40,7 +40,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:27+0200\n"
+"POT-Creation-Date: 2026-08-18 17:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Abdel Baaddi <abaaddi@virtualcable.es>, 2017-2018\n"
 "Language-Team: Arabic (http://app.transifex.com/openuds/openuds/language/"
@@ -445,7 +445,7 @@ msgstr "لم يتم العثور على عضو مجموعة البيانات ا�
 #: REST/methods/meta_service_pools.py:121
 #, python-brace-format
 msgid "Members of {0}"
-msgstr ""
+msgstr "أعضاء {0}"
 
 #: REST/methods/meta_service_pools.py:125 REST/methods/notifiers.py:90
 #: REST/methods/notifiers.py:134 REST/methods/users_groups.py:197
@@ -919,7 +919,7 @@ msgstr "خطأ في حذف الخدمة"
 #: REST/methods/services.py:288
 #, python-brace-format
 msgid "Services of {0}"
-msgstr ""
+msgstr "خدمات {0}"
 
 #: REST/methods/services.py:292
 msgid "Services Pools"

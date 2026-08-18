@@ -49,7 +49,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:27+0200\n"
+"POT-Creation-Date: 2026-08-18 17:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Víctor Alonso <valonso@virtualcable.net>, 2019\n"
 "Language-Team: Italian (http://app.transifex.com/openuds/openuds/language/"
@@ -472,7 +472,7 @@ msgstr "Servizio utente non trovato: {}"
 #: REST/methods/meta_service_pools.py:259
 #, python-brace-format
 msgid "Assigned services to {0}"
-msgstr ""
+msgstr "Servizi assegnati a {0}"
 
 #: REST/methods/meta_service_pools.py:260 REST/methods/user_services.py:247
 #: REST/methods/user_services.py:388

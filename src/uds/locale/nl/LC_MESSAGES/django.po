@@ -39,7 +39,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:27+0200\n"
+"POT-Creation-Date: 2026-08-18 17:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Dutch (http://app.transifex.com/openuds/openuds/language/"
@@ -8951,7 +8951,7 @@ msgstr "Gebruiker aan het werk"
 #: templates/uds/reports/stats/cache-efficiency.html:19
 #, python-format
 msgid "Hit ratio %%"
-msgstr ""
+msgstr "Trefkans %%"
 
 #: templates/uds/reports/stats/client-platforms.html:4
 msgid "Client platforms"
