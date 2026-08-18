@@ -34,11 +34,12 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:04+0200\n"
+"POT-Creation-Date: 2026-08-18 17:27+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/"
@@ -127,7 +128,6 @@ msgid "Elapsed timemark"
 msgstr "经过时间标记"
 
 #: REST/methods/accountsusage.py:145
-#| msgid "Page not found"
 msgid "Account usage not found: {}"
 msgstr "未找到账户使用情况：{}"
 
@@ -266,12 +266,10 @@ msgid "None"
 msgstr "没有"
 
 #: REST/methods/authenticators.py:317 REST/methods/authenticators.py:373
-#| msgid "Invalid value for {}"
 msgid "Invalid type: {}"
 msgstr "无效类型：{}"
 
 #: REST/methods/authenticators.py:339
-#| msgid "Operation not supported"
 msgid "Search not supported"
 msgstr "搜索功能不支持。"
 
@@ -305,7 +303,6 @@ msgid "Frequency"
 msgstr "频率"
 
 #: REST/methods/calendarrules.py:128
-#| msgid "Intervals:"
 msgid "Interval"
 msgstr "间隔"
 
@@ -314,7 +311,6 @@ msgid "Duration"
 msgstr "持续时间"
 
 #: REST/methods/calendarrules.py:172 REST/methods/calendarrules.py:189
-#| msgid "Username not found"
 msgid "Calendar rule not found: {}"
 msgstr "未找到日历规则：{}"
 
@@ -403,9 +399,6 @@ msgid "Service pool load balancing policy"
 msgstr "服务池负载均衡策略"
 
 #: REST/methods/meta_pools.py:246
-#| msgid ""
-#| "Service pool High Availability policy. If enabled and a pool fails, it "
-#| "will be restarted in another pool. Enable with care!."
 msgid ""
 "Service pool High Availability policy. If enabled and a pool fails, it will "
 "be restarted in another pool. Enable with care!"
@@ -444,13 +437,11 @@ msgid "Transport selection policy"
 msgstr "运输选择政策"
 
 #: REST/methods/meta_service_pools.py:115
-#| msgid "Method not found in {}: {}"
 msgid "Meta pool member not found: {}"
 msgstr "未找到元池成员：{}"
 
 #: REST/methods/meta_service_pools.py:121
 #, python-brace-format
-#| msgid "Servers of {0}"
 msgid "Members of {0}"
 msgstr "{0} 的成员"
 
@@ -461,13 +452,11 @@ msgid "Enabled"
 msgstr "启用"
 
 #: REST/methods/meta_service_pools.py:209
-#| msgid "User service not found"
 msgid "User service not found: {}"
 msgstr "未找到用户服务：{}"
 
 #: REST/methods/meta_service_pools.py:259
 #, python-brace-format
-#| msgid "Assigned services"
 msgid "Assigned services to {0}"
 msgstr "分配给 {0} 的服务"
 
@@ -550,7 +539,6 @@ msgid "Item is not removable"
 msgstr "物品不可拆卸"
 
 #: REST/methods/meta_service_pools.py:314
-#| msgid "Invalid request received"
 msgid "Invalid item specified"
 msgstr "指定的项目无效"
 
@@ -559,7 +547,6 @@ msgid "Multi Factor Authentication"
 msgstr "多因素身份验证"
 
 #: REST/methods/mfas.py:110
-#| msgid "Method not found in {}: {}"
 msgid "MFA type not found: {}"
 msgstr "未找到 MFA 类型：{}"
 
@@ -602,9 +589,6 @@ msgid "Network range"
 msgstr "网络范围"
 
 #: REST/methods/networks.py:99
-#| msgid ""
-#| "Network range. Accepts most network definitions formats (range, subnet, "
-#| "host, etc..."
 msgid ""
 "Network range. Accepts most network definitions formats (range, subnet, "
 "host, etc...)"
@@ -620,7 +604,6 @@ msgid "Level"
 msgstr "等级"
 
 #: REST/methods/notifiers.py:112
-#| msgid "Method not found in {}: {}"
 msgid "Notifier type not found: {}"
 msgstr "未找到通知器类型：{}"
 
@@ -633,7 +616,6 @@ msgid "If checked, this notifier will be used"
 msgstr "如果选中，将使用此通知程序"
 
 #: REST/methods/op_calendars.py:107
-#| msgid "Access limited by calendar"
 msgid "Access calendars"
 msgstr "访问日历"
 
@@ -642,7 +624,6 @@ msgid "Calendar"
 msgstr "日历"
 
 #: REST/methods/op_calendars.py:126
-#| msgid "Method not found in {}: {}"
 msgid "Calendar not found: {}"
 msgstr "未找到日历：{}"
 
@@ -679,7 +660,6 @@ msgid "Last execution"
 msgstr "上次执行"
 
 #: REST/methods/op_calendars.py:246
-#| msgid "Invalid value for {}"
 msgid "Invalid action: {}"
 msgstr "无效操作：{}"
 
@@ -696,7 +676,6 @@ msgid "Can't delete an OS Manager with services pools associated"
 msgstr "无法删除与关联的服务池的OS Manager"
 
 #: REST/methods/osmanagers.py:154
-#| msgid "Method not found in {}: {}"
 msgid "OS Manager type not found: {}"
 msgstr "未找到操作系统管理器类型：{}"
 
@@ -768,7 +747,6 @@ msgid "Registered Servers"
 msgstr "注册服务器"
 
 #: REST/methods/servers_management.py:97
-#| msgid "MFA"
 msgid "MAC"
 msgstr "苹果"
 
@@ -857,7 +835,6 @@ msgid "Server to include on group"
 msgstr "要包含在组中的服务器"
 
 #: REST/methods/servers_management.py:297
-#| msgid "Invalid MAC address used: \"{}\""
 msgid "Invalid MAC address"
 msgstr "无效的 MAC 地址"
 
@@ -909,7 +886,6 @@ msgid "Weight of memory load on server load calculation. Value between 0 and 1"
 msgstr "内存负载在服务器负载计算中的权重。取值范围为 0 到 1。"
 
 #: REST/methods/servers_management.py:586
-#| msgid "Users list"
 msgid "Users weight"
 msgstr "用户权重"
 
@@ -918,7 +894,6 @@ msgid "Weight of users load on server load calculation. Value between 0 and 1"
 msgstr "用户负载对服务器负载计算的权重。取值范围为 0 到 1。"
 
 #: REST/methods/servers_management.py:592
-#| msgid "Unexpected error"
 msgid "Max expected users"
 msgstr "预计最大用户数"
 
@@ -932,22 +907,19 @@ msgid "Service not found"
 msgstr "无法提供服务"
 
 #: REST/methods/services.py:280
-#| msgid "Preparing service"
 msgid "Error deleting service"
 msgstr "删除服务时出错"
 
 #: REST/methods/services.py:288
 #, python-brace-format
-#| msgid "Services of {}"
 msgid "Services of {0}"
-msgstr "30号服务"
+msgstr ""
 
 #: REST/methods/services.py:292
 msgid "Services Pools"
 msgstr "服务池"
 
 #: REST/methods/services.py:296
-#| msgid "Service counting method"
 msgid "Counting method"
 msgstr "计数方法"
 
@@ -964,7 +936,6 @@ msgid "Kind of service counting for calculating if MAX is reached"
 msgstr "用于计算是否达到 MAX 的服务计数"
 
 #: REST/methods/services.py:390
-#| msgid "Error testing connection"
 msgid "Error getting logs"
 msgstr "获取日志时出错"
 
@@ -1025,12 +996,10 @@ msgid "OS Manager used as base of this service pool"
 msgstr "OS Manager用作此服务池的基础"
 
 #: REST/methods/services_pools.py:502
-#| msgid "Publish date"
 msgid "Publish on save"
 msgstr "发布并保存"
 
 #: REST/methods/services_pools.py:504
-#| msgid "If active, the user will be allowed to reset the service"
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
@@ -1083,7 +1052,6 @@ msgid "Services to keep in L2 cache"
 msgstr "要保留在L2缓存中的服务"
 
 #: REST/methods/services_pools.py:561
-#| msgid "Services kept in cache of level2 for improved service generation"
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr "为了改进服务分配，服务会保留在二级缓存中。"
 
@@ -1102,7 +1070,6 @@ msgid "Show transports"
 msgstr "显示运输"
 
 #: REST/methods/services_pools.py:576
-#| msgid "If active, transport will be visible for users"
 msgid "If active, transports will be shown to users"
 msgstr "如果启用，运输信息将显示给用户。"
 
@@ -1111,10 +1078,6 @@ msgid "Allow removal by users"
 msgstr "允许用户删除"
 
 #: REST/methods/services_pools.py:584
-#| msgid ""
-#| "If active, the user will be allowed to remove the service \"manually\". "
-#| "Be careful with this, because the user will have the \"power\" to delete "
-#| "it's own service"
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
@@ -1150,7 +1113,6 @@ msgid "Account"
 msgstr "帐户"
 
 #: REST/methods/services_pools.py:606
-#| msgid "Account associated to this service pool"
 msgid "Account used for this service pool"
 msgstr "用于此服务池的帐户"
 
@@ -1193,7 +1155,6 @@ msgid "User service not found"
 msgstr "找不到用户服务"
 
 #: REST/methods/services_usage.py:173
-#| msgid "Base name for this user services"
 msgid "Error getting user service"
 msgstr "获取用户服务时出错"
 
@@ -1202,7 +1163,6 @@ msgid "Devices"
 msgstr "设备"
 
 #: REST/methods/transports.py:119
-#| msgid "Transport not found"
 msgid "Transport type not found: {}"
 msgstr "未找到传输类型：{}"
 
@@ -1232,7 +1192,6 @@ msgstr "标签只能包含字母、数字、“:”和“-”"
 
 #: REST/methods/tunnels_management.py:127
 #: REST/methods/tunnels_management.py:266
-#| msgid "Tunnel server to use"
 msgid "Tunnel server not found"
 msgstr "未找到隧道服务器"
 
@@ -1276,12 +1235,10 @@ msgid "Cannot delete a tunnel server group with transports attached"
 msgstr "无法删除附加了传输的隧道服务器组"
 
 #: REST/methods/tunnels_management.py:269
-#| msgid "No user assigned to service"
 msgid "Error assigning server"
 msgstr "分配服务器时出错"
 
 #: REST/methods/user_services.py:246
-#| msgid "Assigned services"
 msgid "Assigned Services"
 msgstr "指定服务"
 
@@ -1295,17 +1252,14 @@ msgid "Status date"
 msgstr "状态日期"
 
 #: REST/methods/user_services.py:279 REST/methods/user_services.py:417
-#| msgid "Base name for this user services"
 msgid "Error getting user service logs"
 msgstr "获取用户服务日志时出错"
 
 #: REST/methods/user_services.py:292
-#| msgid "Base name for this user services"
 msgid "Error deleting user service"
 msgstr "删除用户服务时出错"
 
 #: REST/methods/user_services.py:387
-#| msgid "Cached services"
 msgid "Cached Services"
 msgstr "缓存服务"
 
@@ -1326,7 +1280,6 @@ msgid "Assigned transports"
 msgstr "分配的运输"
 
 #: REST/methods/user_services.py:632
-#| msgid "Account associated to this service pool"
 msgid "Access denied to publish service pool"
 msgstr "拒绝发布服务池的访问权限"
 
@@ -1405,7 +1358,6 @@ msgid "User not found"
 msgstr "未找到用户"
 
 #: REST/methods/users_groups.py:213
-#| msgid "Error testing connection"
 msgid "Error getting user"
 msgstr "获取用户时出错"
 
@@ -1454,7 +1406,6 @@ msgid "UDS Meta Group"
 msgstr "UDS Meta Group"
 
 #: REST/methods/users_groups.py:485
-#| msgid "Group not found"
 msgid "Group type not found"
 msgstr "未找到组类型"
 
@@ -1471,7 +1422,6 @@ msgid "Error deleting group"
 msgstr "删除组时出错"
 
 #: REST/model/base.py:171
-#| msgid "Operation not supported"
 msgid "Testing not supported"
 msgstr "不支持测试"
 
@@ -1700,7 +1650,6 @@ msgid "Error testing connection"
 msgstr "错误测试连接"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:564
-#| msgid "Connection params seem correct, test was succesfully executed"
 msgid "Connection params seem correct, test was successfully executed"
 msgstr "连接参数似乎正确，测试已成功执行。"
 
@@ -1808,7 +1757,6 @@ msgid "Domain used for external users (empty means no external users)"
 msgstr "用于外部用户的域（空表示没有外部用户）"
 
 #: auths/AzureAD_enterprise/authenticator.py:183
-#| msgid "Allowed Devices"
 msgid "Allowed Tenants"
 msgstr "允许的租户"
 
@@ -1881,7 +1829,6 @@ msgid "Attribute from where to extract the MFA code"
 msgstr "从哪里提取 MFA 代码的属性"
 
 #: auths/EDirectory_enterprise/authenticator.py:126
-#| msgid "Active Directory"
 msgid "eDirectory"
 msgstr "电子目录"
 
@@ -2536,7 +2483,6 @@ msgid "No attributes returned from IdP"
 msgstr "没有从 IdP 返回的属性"
 
 #: auths/Sample/sample_auth.py:84
-#| msgid "SimpleLDAP"
 msgid "Sample"
 msgstr "样本"
 
@@ -2626,17 +2572,14 @@ msgid "Can't locate any group with the membership attribute specified"
 msgstr "找不到指定了成员资格属性的任何组"
 
 #: auths/X509Certificate/authenticator.py:79
-#| msgid "Certificate"
 msgid "X509 Certificate"
 msgstr "X509证书"
 
 #: auths/X509Certificate/authenticator.py:81
-#| msgid "Use Message Authenticator"
 msgid "X509 Client Certificate Authenticator"
 msgstr "X509客户端证书验证器"
 
 #: auths/X509Certificate/authenticator.py:89
-#| msgid "Certificate"
 msgid "CA Certificate"
 msgstr "CA证书"
 
@@ -2647,7 +2590,6 @@ msgid ""
 msgstr "用于验证客户端证书的 PEM 编码证书颁发机构证书。"
 
 #: auths/X509Certificate/authenticator.py:96
-#| msgid "Issuer"
 msgid "Trusted Issuer"
 msgstr "可信发卡机构"
 
@@ -2677,7 +2619,6 @@ msgstr "OCSP 响应程序 URL 用于证书吊销检查（尚未实现）。"
 
 #: auths/X509Certificate/authenticator.py:127
 #: auths/X509Certificate/authenticator.py:135
-#| msgid "Action"
 msgid "Revocation"
 msgstr "撤销"
 
@@ -2692,7 +2633,6 @@ msgid ""
 msgstr "用于证书吊销检查的 CRL 分发点 URL（尚未实现）。"
 
 #: auths/X509Certificate/authenticator.py:141
-#| msgid "Remote"
 msgid "Remote URL"
 msgstr "远程 URL"
 
@@ -2711,7 +2651,6 @@ msgid "Bridge"
 msgstr "桥"
 
 #: auths/X509Certificate/authenticator.py:153
-#| msgid "Secret"
 msgid "Shared Secret"
 msgstr "共享秘密"
 
@@ -2722,7 +2661,6 @@ msgid ""
 msgstr "与客户端证书认证桥接服务共享的 HMAC 密钥用于加密/签名。"
 
 #: auths/X509Certificate/authenticator.py:166
-#| msgid "Certificate is empty"
 msgid "CA Certificate is required"
 msgstr "需要加州注册会计师证书"
 
@@ -2737,12 +2675,10 @@ msgid "The provided certificate does not have Basic Constraints extension"
 msgstr "提供的证书没有基本约束扩展"
 
 #: auths/X509Certificate/authenticator.py:180
-#| msgid "Invalid certificate"
 msgid "Invalid PEM-encoded certificate: {}"
 msgstr "无效的 PEM 编码证书：{}"
 
 #: auths/X509Certificate/authenticator.py:193
-#| msgid "Group name is required"
 msgid "Shared Secret is required"
 msgstr "需要共享密钥"
 
@@ -2779,7 +2715,6 @@ msgid "Anonymous"
 msgstr "匿名的"
 
 #: core/consts/__init__.py:150
-#| msgid "Unknown error"
 msgid "Unknown role"
 msgstr "未知角色"
 
@@ -3671,7 +3606,6 @@ msgid "Time in seconds of inactivity before auto reloading admin pages"
 msgstr "自动重新加载管理页面前的非活动时间（秒）。"
 
 #: core/util/config.py:768
-#| msgid "Delay in seconds between checks for commands"
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr "后台管理页面自动重新加载之间的时间间隔（秒）"
 
@@ -3709,12 +3643,10 @@ msgid "Enable or disable add favorite services feature"
 msgstr "启用或禁用添加收藏服务功能"
 
 #: core/util/config.py:827
-#| msgid "Allow Smartcards"
 msgid "Allow animated backgrounds"
 msgstr "允许动态背景"
 
 #: core/util/config.py:833
-#| msgid "Multi Factor Authentication"
 msgid "Allow biometric authentication"
 msgstr "允许生物特征认证"
 
@@ -3769,12 +3701,10 @@ msgstr ""
 "60。"
 
 #: core/util/fields.py:161
-#| msgid "Tunnel wait time"
 msgid "Startup wait time"
 msgstr "启动等待时间"
 
 #: core/util/fields.py:166
-#| msgid "Timeout in seconds to wait for the publication to be visible"
 msgid ""
 "Time, in seconds, to wait for first tunnel connection to be established."
 msgstr "等待建立第一个隧道连接所需的时间（以秒为单位）。"
@@ -3941,7 +3871,6 @@ msgid "Yes, try to put it back to cache"
 msgstr "是的，尝试将其放回缓存"
 
 #: core/util/fields.py:496
-#| msgid "Yes, try to put it back to cache"
 msgid "Yes, try to put it back to cache and recover snapshot"
 msgstr "是的，尝试将其放回缓存并恢复快照。"
 
@@ -4015,7 +3944,8 @@ msgstr "已禁用根 Web/API 访问。"
 msgid ""
 "{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
 "admin operations is disabled."
-msgstr "{wildcards} 设置为通配符 (*): 已禁用基于 IP 的隧道、参与者和管理操作的门控。"
+msgstr ""
+"{wildcards} 设置为通配符 (*): 已禁用基于 IP 的隧道、参与者和管理操作的门控。"
 
 #: core/util/security_checks.py:115
 msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
@@ -4057,14 +3987,14 @@ msgstr "会话/安全 cookie 和增强安全功能已启用。"
 msgid ""
 "SAML assertions are not required to be signed on: {unsigned}. Unsigned "
 "assertions can be forged against a misconfigured IdP."
-msgstr "SAML 断言无需签名：{unsigned}。未签名的断言可能针对配置错误的 IdP 被伪造。"
+msgstr ""
+"SAML 断言无需签名：{unsigned}。未签名的断言可能针对配置错误的 IdP 被伪造。"
 
 #: core/util/security_checks.py:196
 msgid "All SAML authenticators require signed assertions or messages."
 msgstr "所有SAML身份验证器都需要签名断言或消息。"
 
 #: core/util/security_checks.py:201
-#| msgid "SAML Authenticator"
 msgid "No SAML authenticators configured."
 msgstr "未配置SAML身份验证器。"
 
@@ -4091,7 +4021,6 @@ msgid "Associated Image"
 msgstr "相关图像"
 
 #: core/util/ui.py:381
-#| msgid "Select a project"
 msgid "Select an image"
 msgstr "选择一张图片"
 
@@ -4171,12 +4100,10 @@ msgid "{} is not a valid MAC address"
 msgstr "{} 不是有效的 MAC 地址"
 
 #: core/util/validators.py:411
-#| msgid "{} is not a valid MAC range"
 msgid "{} is not a valid MAC range: start must be lower than end"
 msgstr "{} 不是有效的 MAC 地址范围：起始地址必须小于结束地址。"
 
 #: core/util/validators.py:416
-#| msgid "{} is not a valid MAC range"
 msgid "{} is not a valid MAC range: start must be greater than 0"
 msgstr "{} 不是有效的 MAC 地址范围：起始值必须大于 0。"
 
@@ -4785,64 +4712,50 @@ msgid "You have been unsubscribed from notifications"
 msgstr "您已取消订阅通知"
 
 #: osmanagers/LinuxOsManager/__init__.py:54
-#| msgid ""
-#| "UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= "
-#| "3.9)</b>"
 msgid "UDS Actor for Debian 12 / Ubuntu based Linux machines"
 msgstr "适用于基于 Debian 12 / Ubuntu 的 Linux 机器的 UDS Actor"
 
 #: osmanagers/LinuxOsManager/__init__.py:61
-#| msgid ""
-#| "UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= "
-#| "3.9)</b>"
 msgid "UDS Actor for Debian 13 / Ubuntu based Linux machines"
 msgstr "适用于基于 Debian 13 / Ubuntu 的 Linux 机器的 UDS Actor"
 
 #: osmanagers/LinuxOsManager/__init__.py:68
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Debian 12 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
 msgstr ""
-"适用于基于 Debian 12 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机器"
-"。"
+"适用于基于 Debian 12 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机"
+"器。"
 
 #: osmanagers/LinuxOsManager/__init__.py:75
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Debian 13 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
 msgstr ""
-"适用于基于 Debian 13 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机器"
-"。"
+"适用于基于 Debian 13 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机"
+"器。"
 
 #: osmanagers/LinuxOsManager/__init__.py:82
-#| msgid "UDS Actor for windows machines"
 msgid "UDS Actor for Fedora / RHEL based Linux machines"
 msgstr "适用于基于 Fedora / RHEL 的 Linux 机器的 UDS Actor"
 
 #: osmanagers/LinuxOsManager/__init__.py:89
-#| msgid "UDS Actor for windows machines"
 msgid "UDS Actor for openSUSE / SLES based Linux machines"
 msgstr "适用于基于 openSUSE / SLES 的 Linux 机器的 UDS Actor"
 
 #: osmanagers/LinuxOsManager/__init__.py:96
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Fedora / RHEL based Linux machines. Used ONLY for static "
 "machines."
-msgstr "适用于基于 Fedora/RHEL 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
+msgstr ""
+"适用于基于 Fedora/RHEL 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
 
 #: osmanagers/LinuxOsManager/__init__.py:103
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for openSUSE / SLES based Linux machines. Used ONLY for static "
 "machines."
-msgstr "适用于基于 openSUSE / SLES 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
+msgstr ""
+"适用于基于 openSUSE / SLES 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:54
 msgid "Linux Active Directory OS Manager"
@@ -5264,7 +5177,6 @@ msgstr "报告服务商"
 #: reports/lists/admin_activity.py:61 reports/lists/admin_activity.py:166
 #: templates/uds/reports/lists/admin-activity.html:4
 #: templates/uds/reports/lists/admin-activity.html:6
-#| msgid "System Administrator"
 msgid "Administrators activity"
 msgstr "管理员活动"
 
@@ -5288,7 +5200,6 @@ msgid "finish date for report"
 msgstr "完成报告日期"
 
 #: reports/lists/admin_activity.py:83
-#| msgid "Token endpoint"
 msgid "Top endpoints per user"
 msgstr "用户数量最多的端点"
 
@@ -5297,37 +5208,31 @@ msgid "Number of most-used endpoints to show per user"
 msgstr "每个用户显示的最常用端点数量"
 
 #: reports/lists/admin_activity.py:167
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of admin activity"
 msgstr "UDS 管理活动报告"
 
 #: reports/lists/admin_activity.py:188
 #: templates/uds/reports/lists/admin-activity.html:16
-#| msgid "Request"
 msgid "Requests"
 msgstr "请求"
 
 #: reports/lists/admin_activity.py:189
 #: templates/uds/reports/lists/admin-activity.html:17
 #: templates/uds/reports/stats/userservice-errors.html:18
-#| msgid "Error"
 msgid "Errors"
 msgstr "错误"
 
 #: reports/lists/admin_activity.py:190
-#| msgid "Error"
 msgid "Error %"
 msgstr "错误 ％"
 
 #: reports/lists/admin_activity.py:191
 #: templates/uds/reports/lists/admin-activity.html:19
-#| msgid "Last execution"
 msgid "Last seen"
 msgstr "最后一次出现"
 
 #: reports/lists/admin_activity.py:192
 #: templates/uds/reports/lists/admin-activity.html:20
-#| msgid "Token endpoint"
 msgid "Top endpoints"
 msgstr "顶级端点"
 
@@ -5367,7 +5272,6 @@ msgid ""
 msgstr "每个身份验证器的身份验证失败尝试次数（包括 MFA 失败次数）"
 
 #: reports/lists/failed_logins.py:71
-#| msgid "Authenticator for report"
 msgid "Authenticator to filter (or all)"
 msgstr "身份验证器用于筛选（或全部）"
 
@@ -5376,7 +5280,6 @@ msgid "ALL AUTHENTICATORS"
 msgstr "所有验证器"
 
 #: reports/lists/failed_logins.py:194
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of failed logins"
 msgstr "UDS 报告登录失败"
 
@@ -5388,7 +5291,6 @@ msgstr "信息"
 #: reports/lists/inactive_users.py:49
 #: templates/uds/reports/lists/inactive-users.html:4
 #: templates/uds/reports/lists/inactive-users.html:6
-#| msgid "Inactive"
 msgid "Inactive users"
 msgstr "不活跃用户"
 
@@ -5397,13 +5299,11 @@ msgid "Lists users that have not accessed UDS in N days"
 msgstr "列出 N 天内未访问 UDS 的用户"
 
 #: reports/lists/inactive_users.py:56
-#| msgid "Authenticator from where to list users"
 msgid "Authenticator from where to list users (or all)"
 msgstr "从哪里列出用户（或所有用户）的身份验证器"
 
 #: reports/lists/inactive_users.py:62 reports/lists/inactive_users.py:188
 #: templates/uds/reports/lists/inactive-users.html:19
-#| msgid "Inactive"
 msgid "Inactive days"
 msgstr "非活跃日"
 
@@ -5424,7 +5324,6 @@ msgid "Inactive users (>{} days)"
 msgstr "非活跃用户（&gt;{} 天）"
 
 #: reports/lists/inactive_users.py:148
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of inactive users"
 msgstr "UDS 报告中不活跃用户"
 
@@ -5523,7 +5422,6 @@ msgid "ALL POOLS"
 msgstr "所有池"
 
 #: reports/stats/cache_efficiency.py:127
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of cache efficiency"
 msgstr "UDS 缓存效率报告"
 
@@ -5558,7 +5456,6 @@ msgid "Breakdown of client platforms, browsers and versions seen on web logins"
 msgstr "网络登录时看到的客户端平台、浏览器和版本细分"
 
 #: reports/stats/client_platforms.py:123
-#| msgid "Report of user access to platform by date"
 msgid "UDS Report of client platforms"
 msgstr "客户平台的UDS报告"
 
@@ -5579,7 +5476,6 @@ msgstr "浏览器"
 #: templates/uds/reports/stats/client-platforms.html:38
 #: templates/uds/reports/stats/client-platforms.html:60
 #: templates/uds/reports/stats/session-duration.html:18
-#| msgid "Account"
 msgid "Count"
 msgstr "数数"
 
@@ -5593,7 +5489,6 @@ msgid "Peak number of concurrent user sessions per pool over a period"
 msgstr "一段时间内每个用户池的并发用户会话峰值"
 
 #: reports/stats/peak_concurrency.py:157
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of peak concurrent sessions"
 msgstr "UDS 报告峰值并发会话数"
 
@@ -5623,7 +5518,6 @@ msgstr "会议"
 #: reports/stats/pool_saturation.py:49 reports/stats/pool_saturation.py:132
 #: templates/uds/reports/stats/pool-saturation.html:4
 #: templates/uds/reports/stats/pool-saturation.html:6
-#| msgid "Duration"
 msgid "Pool saturation"
 msgstr "池饱和度"
 
@@ -5636,7 +5530,6 @@ msgid "Unlimited"
 msgstr "无限"
 
 #: reports/stats/pool_saturation.py:133
-#| msgid "UDS Report Summary of pools usage"
 msgid "UDS Report of pool saturation"
 msgstr "UDS泳池饱和度报告"
 
@@ -5649,12 +5542,10 @@ msgstr "平均"
 
 #: reports/stats/pool_saturation.py:157
 #: templates/uds/reports/stats/pool-saturation.html:19
-#| msgid "Mac"
 msgid "Max"
 msgstr "最大限度"
 
 #: reports/stats/pool_saturation.py:158
-#| msgid "Duration"
 msgid "Saturation %"
 msgstr "饱和度%"
 
@@ -5783,7 +5674,6 @@ msgstr "平均时间（秒）"
 #: reports/stats/session_duration.py:60 reports/stats/session_duration.py:143
 #: templates/uds/reports/stats/session-duration.html:4
 #: templates/uds/reports/stats/session-duration.html:6
-#| msgid "Session duration"
 msgid "Session duration histogram"
 msgstr "会话持续时间直方图"
 
@@ -5792,7 +5682,6 @@ msgid "Distribution of session durations across selected pools"
 msgstr "所选泳池的会话时长分布"
 
 #: reports/stats/session_duration.py:144
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of session durations"
 msgstr "UDS 会话时长报告"
 
@@ -5820,7 +5709,6 @@ msgid "Top N"
 msgstr "顶级N"
 
 #: reports/stats/top_users.py:71
-#| msgid "Number of intervals"
 msgid "Number of users to show"
 msgstr "显示的用户数量"
 
@@ -5829,7 +5717,6 @@ msgid "Sort by"
 msgstr "排序方式"
 
 #: reports/stats/top_users.py:78
-#| msgid "Starting date"
 msgid "Sorting criterion"
 msgstr "排序标准"
 
@@ -5842,17 +5729,14 @@ msgid "Total time"
 msgstr "总时间"
 
 #: reports/stats/top_users.py:149
-#| msgid "Pools usage by users"
 msgid "Top users by usage"
 msgstr "使用率最高的用户"
 
 #: reports/stats/top_users.py:150
-#| msgid "Date for report"
 msgid "UDS Top users report"
 msgstr "UDS顶级用户报告"
 
 #: reports/stats/top_users.py:173 templates/uds/reports/stats/top-users.html:17
-#| msgid "Pools usage on a day"
 msgid "Pools used"
 msgstr "使用的泳池"
 
@@ -5863,7 +5747,6 @@ msgstr "平均每次会话时长"
 #: reports/stats/tunnel_usage.py:55 reports/stats/tunnel_usage.py:141
 #: templates/uds/reports/stats/tunnel-usage.html:4
 #: templates/uds/reports/stats/tunnel-usage.html:6
-#| msgid "Tunnels"
 msgid "Tunnel usage"
 msgstr "隧道使用情况"
 
@@ -5872,7 +5755,6 @@ msgid "Tunnel sessions opened/closed, durations and bytes per pool"
 msgstr "隧道会话的打开/关闭情况、持续时间和每个池的字节数"
 
 #: reports/stats/tunnel_usage.py:142
-#| msgid "UDS Report of users usage"
 msgid "UDS Report of tunnel usage"
 msgstr "UDS隧道使用情况报告"
 
@@ -5905,7 +5787,6 @@ msgstr "接收到的字节数"
 #: reports/stats/usage_by_group.py:59
 #: templates/uds/reports/stats/usage-by-group.html:4
 #: templates/uds/reports/stats/usage-by-group.html:6
-#| msgid "Assigned groups"
 msgid "Usage by group"
 msgstr "按组使用"
 
@@ -5918,28 +5799,23 @@ msgid "Authenticator whose groups will be used to aggregate"
 msgstr "身份验证器，其分组将用于聚合"
 
 #: reports/stats/usage_by_group.py:167
-#| msgid "Cached services"
 msgid "(unmatched users)"
 msgstr "（未匹配用户）"
 
 #: reports/stats/usage_by_group.py:190
-#| msgid "Usages of {0}"
 msgid "Usage by group of {}"
 msgstr "分组使用 {}"
 
 #: reports/stats/usage_by_group.py:191
-#| msgid "UDS Report of users usage"
 msgid "UDS Report of usage by group"
 msgstr "UDS 各组使用情况报告"
 
 #: reports/stats/usage_by_group.py:214
 #: templates/uds/reports/stats/usage-by-group.html:17
-#| msgid "Distinct Users"
 msgid "Distinct users"
 msgstr "不同用户"
 
 #: reports/stats/usage_by_group.py:216
-#| msgid "Server Version"
 msgid "Average per session"
 msgstr "每次会话平均"
 
@@ -6020,7 +5896,6 @@ msgstr "UDS报告供用户访问"
 #: reports/stats/userservice_errors.py:125
 #: templates/uds/reports/stats/userservice-errors.html:4
 #: templates/uds/reports/stats/userservice-errors.html:6
-#| msgid "User services"
 msgid "User services in error"
 msgstr "用户服务出错"
 
@@ -6029,24 +5904,20 @@ msgid "User services that transitioned to error state per pool over a period"
 msgstr "在一段时间内，每个服务池进入错误状态的用户服务数量"
 
 #: reports/stats/userservice_errors.py:126
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of user services in error"
 msgstr "UDS 用户服务报告错误"
 
 #: reports/stats/userservice_errors.py:147
 #: templates/uds/reports/stats/userservice-errors.html:36
-#| msgid "User services"
 msgid "User service"
 msgstr "用户服务"
 
 #: reports/stats/userservice_errors.py:150
-#| msgid "State"
 msgid "OS State"
 msgstr "操作系统状态"
 
 #: reports/stats/userservice_errors.py:151
 #: templates/uds/reports/stats/userservice-errors.html:40
-#| msgid "Status date"
 msgid "State date"
 msgstr "州日期"
 
@@ -6273,7 +6144,6 @@ msgid "Security groups for the instances from this service"
 msgstr "此服务中实例的安全组"
 
 #: services/AWS_enterprise/service.py:133
-#| msgid "Fixed Instances Pool"
 msgid "IAM Instance Profile"
 msgstr "IAM实例配置文件"
 
@@ -6370,13 +6240,11 @@ msgstr "此服务提供对基于Azure VM的VDI的访问"
 
 #: services/Azure_enterprise/service.py:61
 #: services/Azure_enterprise/service_fixed.py:89
-#| msgid "Resource Group"
 msgid "Resource group"
 msgstr "资源组"
 
 #: services/Azure_enterprise/service.py:62
 #: services/Azure_enterprise/service_fixed.py:90
-#| msgid "Resource group container of this VDI service"
 msgid "Resource group for this service"
 msgstr "此服务的资源组"
 
@@ -6389,7 +6257,6 @@ msgid "Size for machines created from this service."
 msgstr "从此服务创建的计算机的大小。"
 
 #: services/Azure_enterprise/service.py:97
-#| msgid "Region for this service"
 msgid "Network for this service"
 msgstr "此服务的网络"
 
@@ -6454,7 +6321,6 @@ msgid "Stop Machine (and deallocates it)"
 msgstr "停止机器（并释放它）"
 
 #: services/Google_enterprise/provider.py:41
-#| msgid "Project ID for Google Cloud"
 msgid "Google Cloud"
 msgstr "Google Cloud"
 
@@ -6556,7 +6422,6 @@ msgid "Google Services based on fixed instances."
 msgstr "基于固定实例的 Google 服务。"
 
 #: services/HyperV_enterprise/provider.py:43
-#| msgid "HyperV Clone"
 msgid "HyperV"
 msgstr "HyperV"
 
@@ -6708,7 +6573,6 @@ msgid ""
 msgstr "基于固定机器的 HyperV 服务。需要在机器上安装 qemu 代理。"
 
 #: services/HyperV_enterprise/service_gen2.py:51
-#| msgid "HyperV Clone"
 msgid "HyperV Clone Generation 2"
 msgstr "Hyper-V 克隆第二代"
 
@@ -6783,12 +6647,10 @@ msgid ""
 msgstr "此服务提供对 Morpheus 上一组固定选定实例的访问"
 
 #: services/Morpheus_enterprise/service_linked.py:32
-#| msgid "Instance clone"
 msgid "Instance linked clone"
 msgstr "实例链接克隆"
 
 #: services/Morpheus_enterprise/service_linked.py:35
-#| msgid "This service provides access to cloned instances on Morpheus"
 msgid "This service provides access to linked-cloned instances on Morpheus"
 msgstr "此服务提供对 Morpheus 上链接克隆实例的访问"
 
@@ -6799,7 +6661,6 @@ msgid ""
 msgstr "用于实例的模板。发布时将创建快照，并将其用作链接克隆的基础磁盘。"
 
 #: services/NutanixPrism_enterprise/provider.py:32
-#| msgid "Prism Central Service"
 msgid "Prism Central"
 msgstr "棱镜中心"
 
@@ -6910,7 +6771,6 @@ msgid ""
 msgstr "基于固定机器的 Prism Central 服务。需要在机器上安装 qemu 代理。"
 
 #: services/Nutanix_enterprise/provider.py:49
-#| msgid "Nutanix Acropolis Service"
 msgid "Nutanix Acropolis"
 msgstr "Nutanix Acropolis"
 
@@ -7046,8 +6906,8 @@ msgid ""
 "or \"admin@internal\")"
 msgstr ""
 "拥有 oVirt 有效权限的用户。如果使用 AAA，请使用“user@domain”；如果使用 "
-"Keycloak，请使用“user@domain@provider”。例如，“admin@ovirt@internalsso”或“"
-"admin@internal”。"
+"Keycloak，请使用“user@domain@provider”。例"
+"如，“admin@ovirt@internalsso”或“admin@internal”。"
 
 #: services/OVirt/provider.py:144
 msgid "Password of the user of oVirt"
@@ -7130,7 +6990,6 @@ msgid "All Labs"
 msgstr "所有实验室"
 
 #: services/OpenGnsys/provider.py:84
-#| msgid "OpenGnsys Host"
 msgid "OpenGnsys"
 msgstr "OpenGNSYS"
 
@@ -7238,7 +7097,6 @@ msgstr ""
 "OpenGnsys 开机。"
 
 #: services/OpenNebula/provider.py:64
-#| msgid "OpenNebula Host"
 msgid "OpenNebula"
 msgstr "OpenNebula"
 
@@ -7317,12 +7175,10 @@ msgid "Size of numeric part for the names of these machines"
 msgstr "这些机器名称的数字部分的大小"
 
 #: services/OpenShift/provider.py:66
-#| msgid "Testing Provider"
 msgid "Openshift Provider"
 msgstr "Openshift 提供商"
 
 #: services/OpenShift/provider.py:68
-#| msgid "Nutanix based VM provider"
 msgid "Openshift based VMs provider"
 msgstr "基于 OpenShift 的虚拟机提供商"
 
@@ -7347,17 +7203,14 @@ msgid "Openshift API URL, e.g. https://api.crc.testing:6443"
 msgstr "OpenShift API URL，例如 https://api.crc.testing:6443"
 
 #: services/OpenShift/provider.py:94
-#| msgid "User with valid privileges on XenServer"
 msgid "User with valid privileges on Openshift Server"
 msgstr "拥有 OpenShift 服务器有效权限的用户"
 
 #: services/OpenShift/provider.py:102
-#| msgid "Password of the user of XenServer"
 msgid "Password of the user of Openshift Server"
 msgstr "Openshift 服务器用户的密码"
 
 #: services/OpenShift/provider.py:109
-#| msgid "Name"
 msgid "Namespace"
 msgstr "命名空间"
 
@@ -7366,34 +7219,26 @@ msgid "Openshift namespace to use (default: \"default\")"
 msgstr "要使用的 OpenShift 命名空间（默认值：\"default\")"
 
 #: services/OpenShift/service.py:58
-#| msgid "HyperV Clone"
 msgid "VM clone"
 msgstr "虚拟机克隆"
 
 #: services/OpenShift/service.py:60
-#| msgid "This service provides access to cloned instances on Morpheus"
 msgid "This service provides access to cloned VMs on Openshift"
 msgstr "此服务提供对 OpenShift 上克隆虚拟机的访问。"
 
 #: services/OpenShift/service.py:80
-#| msgid "Base Template"
 msgid "Template VM"
 msgstr "模板虚拟机"
 
 #: services/OpenShift/service.py:81
-#| msgid "Template to use for instances"
 msgid "Template to use for VMs"
 msgstr "用于虚拟机的模板"
 
 #: services/OpenShift/service_fixed.py:61
-#| msgid "Fixed Machines Pool"
 msgid "Fixed VMs Pool"
 msgstr "固定虚拟机池"
 
 #: services/OpenShift/service_fixed.py:63
-#| msgid ""
-#| "This service provides access to a fixed group of selected instances on "
-#| "Morpheus"
 msgid ""
 "This service provides access to a fixed group of selected VMs on Openshift"
 msgstr "此服务提供对 OpenShift 上一组选定虚拟机的访问权限。"
@@ -7410,7 +7255,6 @@ msgstr ""
 "Openstack不支持Identity API 3.2或更新版本。此OpenStack服务器与UDS不兼容。"
 
 #: services/OpenStack/provider.py:89
-#| msgid "OpenStack Host"
 msgid "OpenStack"
 msgstr "OpenStack"
 
@@ -7499,7 +7343,6 @@ msgid "Error: {}"
 msgstr "错误： {}"
 
 #: services/OpenStack/provider_legacy.py:90
-#| msgid "OpenStack Host"
 msgid "OpenStack LEGACY"
 msgstr "OpenStack 遗留系统"
 
@@ -7716,7 +7559,6 @@ msgid " (bound to {})"
 msgstr "（势必 {}）"
 
 #: services/Proxmox/provider.py:70
-#| msgid "Proxmox Clone"
 msgid "Proxmox"
 msgstr "普罗克斯莫克斯"
 
@@ -7848,7 +7690,6 @@ msgid "Resource Pool containing base machines"
 msgstr "包含基本机器的资源池"
 
 #: services/RDS_enterprise/provider.py:50
-#| msgid "RDP"
 msgid "RDS"
 msgstr "RDS"
 
@@ -8091,7 +7932,6 @@ msgid "RDS Platform Full session desktop service"
 msgstr "RDS 平台全会话桌面服务"
 
 #: services/ScaleComputing_enterprise/provider.py:38
-#| msgid "Scale Clone"
 msgid "Scale"
 msgstr "规模"
 
@@ -8170,7 +8010,6 @@ msgid "Select your vCloud version"
 msgstr "选择您的vCloud版本"
 
 #: services/VCloud_enterprise/provider.py:92
-#| msgid "VCloud Director Platform Provider"
 msgid "VCloud Director"
 msgstr "VCloud Director"
 
@@ -8252,7 +8091,6 @@ msgid "Remote"
 msgstr "偏僻的"
 
 #: services/Vmware_enterprise/provider.py:42
-#| msgid "VMWare VCenter Platform Provider"
 msgid "VMWare VCenter"
 msgstr "VMware vCenter"
 
@@ -8533,12 +8371,10 @@ msgstr "从"
 
 #: templates/uds/reports/lists/admin-activity.html:18
 #, python-format
-#| msgid "Error"
 msgid "Error %%"
 msgstr "错误 ％％"
 
 #: templates/uds/reports/lists/failed-logins.html:13
-#| msgid "Summary of pools usage"
 msgid "Summary by user"
 msgstr "用户汇总"
 
@@ -8547,12 +8383,10 @@ msgid "Attempts"
 msgstr "尝试"
 
 #: templates/uds/reports/lists/failed-logins.html:20
-#| msgid "IP"
 msgid "IPs"
 msgstr "IP地址"
 
 #: templates/uds/reports/lists/failed-logins.html:21
-#| msgid "Last access"
 msgid "Last attempt"
 msgstr "最后一次尝试"
 
@@ -8563,12 +8397,10 @@ msgid "Detail"
 msgstr "细节"
 
 #: templates/uds/reports/lists/inactive-users.html:11
-#| msgid "Load threshold"
 msgid "Threshold"
 msgstr "临界点"
 
 #: templates/uds/reports/lists/inactive-users.html:11
-#| msgid "{} days"
 msgid "days"
 msgstr "天"
 
@@ -8591,24 +8423,21 @@ msgstr "用户工作"
 #: templates/uds/reports/stats/cache-efficiency.html:19
 #, python-format
 msgid "Hit ratio %%"
-msgstr "命中率%"
+msgstr ""
 
 #: templates/uds/reports/stats/client-platforms.html:4
 msgid "Client platforms"
 msgstr "客户端平台"
 
 #: templates/uds/reports/stats/client-platforms.html:11
-#| msgid "Total Accesses"
 msgid "Total events"
 msgstr "总事件数"
 
 #: templates/uds/reports/stats/client-platforms.html:13
-#| msgid "RDS Platform Session"
 msgid "Platforms"
 msgstr "平台"
 
 #: templates/uds/reports/stats/client-platforms.html:33
-#| msgid "Users"
 msgid "Browsers"
 msgstr "浏览器"
 
@@ -8618,9 +8447,8 @@ msgstr "每个池的并发会话峰值"
 
 #: templates/uds/reports/stats/pool-saturation.html:20
 #, python-format
-#| msgid "Duration"
 msgid "Saturation %%"
-msgstr "饱和度%"
+msgstr ""
 
 #: templates/uds/reports/stats/pools-performance.html:13
 #: templates/uds/reports/stats/pools-usage-day.html:13
@@ -8675,7 +8503,6 @@ msgid "Total accesses"
 msgstr "总访问量"
 
 #: templates/uds/reports/stats/session-duration.html:13
-#| msgid "Seconds"
 msgid "Avg seconds"
 msgstr "平均秒数"
 
@@ -8793,13 +8620,11 @@ msgstr "最佳体验"
 
 #: transports/HTML5RDP/html5rdp.py:108
 #: transports/HTML5RDS_enterprise/html5rds.py:111
-#| msgid ""
-#| "If checked, the wallpaper and themes will be shown on machine (better "
-#| "user experience, more bandwidth)"
 msgid ""
 "If checked, wallpaper, desktop composition and font smoothing will be "
 "enabled (better user experience, more bandwidth)"
-msgstr "选中后，将启用壁纸、桌面合成和字体平滑功能（更好的用户体验，更高的带宽）。"
+msgstr ""
+"选中后，将启用壁纸、桌面合成和字体平滑功能（更好的用户体验，更高的带宽）。"
 
 #: transports/HTML5RDP/html5rdp.py:115
 #: transports/HTML5RDS_enterprise/html5rds.py:118
@@ -8876,25 +8701,19 @@ msgstr "启用文件共享"
 
 #: transports/HTML5RDP/html5rdp.py:147
 #: transports/HTML5RDS_enterprise/html5rds.py:156
-#| msgid "Enable clipboard"
 msgid "Allow clipboard"
 msgstr "允许剪贴板"
 
 #: transports/HTML5RDP/html5rdp.py:149
 #: transports/HTML5RDS_enterprise/html5rds.py:158
-#| msgid "If checked, USB redirection will be allowed."
 msgid "If checked, clipboard redirection will be enabled"
 msgstr "选中此项，将启用剪贴板重定向。"
 
 #: transports/HTML5RDP/html5rdp.py:155 transports/RDPEmbedded/common.py:220
-#| msgid "Enable webcam"
 msgid "Enable Webcam"
 msgstr "启用摄像头"
 
 #: transports/HTML5RDP/html5rdp.py:158
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session "
 "(if client browser supports it)"
@@ -8989,7 +8808,6 @@ msgstr "覆盖UDS窗口并将其替换为连接。"
 
 #: transports/HTML5RDP/html5rdp.py:234
 #: transports/HTML5RDS_enterprise/html5rds.py:190
-#| msgid "Authenticator"
 msgid "NLA authentication"
 msgstr "NLA 身份验证"
 
@@ -9021,7 +8839,6 @@ msgstr "将此端口用作 RDP 端口。默认为 3389。"
 
 #: transports/HTML5RDP/html5rdp.py:255
 #: transports/HTML5RDS_enterprise/html5rds.py:211
-#| msgid "Session duration"
 msgid "Session Quality"
 msgstr "会话质量"
 
@@ -9033,25 +8850,21 @@ msgstr "会话质量。数值越高，质量越好，但需要更多带宽。"
 
 #: transports/HTML5RDP/html5rdp.py:260
 #: transports/HTML5RDS_enterprise/html5rds.py:218
-#| msgid "Pools Performance"
 msgid "Ultra Performance"
 msgstr "超高性能"
 
 #: transports/HTML5RDP/html5rdp.py:261
 #: transports/HTML5RDS_enterprise/html5rds.py:219
-#| msgid "Pools Performance"
 msgid "Performance"
 msgstr "表现"
 
 #: transports/HTML5RDP/html5rdp.py:262
 #: transports/HTML5RDS_enterprise/html5rds.py:220
-#| msgid "Balancing"
 msgid "Balanced"
 msgstr "均衡"
 
 #: transports/HTML5RDP/html5rdp.py:263
 #: transports/HTML5RDS_enterprise/html5rds.py:221
-#| msgid "Quality"
 msgid "High Quality"
 msgstr "高质量"
 
@@ -9089,12 +8902,10 @@ msgid "Target FPS for the session. 0 means server default."
 msgstr "设定本次会话的目标帧率。0 表示服务器默认值。"
 
 #: transports/HTML5RDS_enterprise/html5rds.py:249
-#| msgid "Window Size"
 msgid "Window Title"
 msgstr "窗口标题"
 
 #: transports/HTML5RDS_enterprise/html5rds.py:252
-#| msgid "Text of the email. If empty, a default text will be used"
 msgid "Window title for the session. If empty, a default one will be used."
 msgstr "会话窗口标题。如果为空，则使用默认标题。"
 
@@ -9125,13 +8936,11 @@ msgid "Max Upload Size (MB)"
 msgstr "最大上传文件大小（MB）"
 
 #: transports/HTML5SSH/html5ssh.py:90
-#| msgid "Maximum number of allowed services (0 means no limit)"
 msgid ""
 "Maximum size of uploaded files in MB. 0 means no limit (or server default)."
 msgstr "上传文件的最大大小（以 MB 为单位）。0 表示无限制（或服务器默认值）。"
 
 #: transports/HTML5SSH/html5ssh.py:103
-#| msgid "Allow upload only"
 msgid "Allow both upload and download"
 msgstr "允许上传和下载"
 
@@ -9177,14 +8986,10 @@ msgstr ""
 "持活动消息。"
 
 #: transports/HTML5SSH/html5ssh.py:146
-#| msgid "Enable clipboard"
 msgid "Enable Clipboard"
 msgstr "启用剪贴板"
 
 #: transports/HTML5SSH/html5ssh.py:148
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid ""
 "If checked, the clipboard will be redirected to remote session (if client "
 "browser supports it)"
@@ -9199,12 +9004,10 @@ msgid "Always"
 msgstr "总是"
 
 #: transports/HTML5SSH/html5ssh.py:161
-#| msgid "Override Base"
 msgid "Overwrite"
 msgstr "覆盖"
 
 #: transports/HTML5SSH/html5ssh.py:164
-#| msgid "If checked, this transport will allow the use of user printers"
 msgid "If true, the transport will always open in a new window"
 msgstr "如果属实，该运输链接将始终在新窗口中打开。"
 
@@ -9214,7 +9017,6 @@ msgid "Amazon DCV"
 msgstr "亚马逊 DCV"
 
 #: transports/NICEDCV_enterprise/nicedcv.py:40
-#| msgid "NICE DCV Protocol. Direct connection."
 msgid "Amazon DCV Protocol. Direct connection."
 msgstr "亚马逊 DCV 协议。直接连接。"
 
@@ -9239,7 +9041,6 @@ msgid ""
 msgstr "如果选中，则将使用所有客户端监视器进行显示（仅适用于Windows客户端）"
 
 #: transports/NICEDCV_enterprise/nicedcvtunnel.py:44
-#| msgid "NICE DCV Protocol. Tunneled connection."
 msgid "Amazon DCV Protocol. Tunneled connection."
 msgstr "亚马逊 DCV 协议。隧道连接。"
 
@@ -9316,7 +9117,6 @@ msgid ""
 msgstr "如果选中，域部分将始终清空（例如，需要连接到xrdp）"
 
 #: transports/RDP/rdp_base.py:104 transports/RDPEmbedded/common.py:167
-#| msgid "Use SSL"
 msgid "Use SSO"
 msgstr "使用 SSO"
 
@@ -9324,7 +9124,8 @@ msgstr "使用 SSO"
 msgid ""
 "If checked, and user service supports it, will use UDS SSO mechanism. "
 "(Ensure you have enabled UDS SSO)"
-msgstr "如果选中此项且用户服务支持，则将使用 UDS SSO 机制。（请确保已启用 UDS SSO）"
+msgstr ""
+"如果选中此项且用户服务支持，则将使用 UDS SSO 机制。（请确保已启用 UDS SSO）"
 
 #: transports/RDP/rdp_base.py:114 transports/RDS_enterprise/rds_base.py:70
 msgid "Allow Smartcards"
@@ -9592,36 +9393,25 @@ msgstr "RDP协议。隧道连接。"
 
 #: transports/RDPEmbedded/common.py:176
 #: transports/RDSEmbedded_enterprise/common.py:152
-#| msgid "Use SSL"
 msgid "Use NLA"
 msgstr "使用 NLA"
 
 #: transports/RDPEmbedded/common.py:179
 #: transports/RDSEmbedded_enterprise/common.py:156
-#| msgid "If checked, nested virtualization will be enabled for this service"
 msgid ""
 "If checked, Network Level Authentication will be used for RDP connections"
 msgstr "如果选中此项，RDP 连接将使用网络级身份验证。"
 
 #: transports/RDPEmbedded/common.py:208
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid "If checked, the audio will be redirected to the local machine"
 msgstr "如果选中此项，音频将重定向到本地计算机。"
 
 #: transports/RDPEmbedded/common.py:215
-#| msgid ""
-#| "If checked, the microphone will be redirected to remote session (if "
-#| "client browser supports it)"
 msgid ""
 "If checked, the local microphone will be redirected to the remote session"
 msgstr "如果选中此项，本地麦克风将重定向到远程会话。"
 
 #: transports/RDPEmbedded/common.py:223
-#| msgid ""
-#| "If checked, the microphone will be redirected to remote session (if "
-#| "client browser supports it)"
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session"
 msgstr "如果选中此项，本地网络摄像头/摄像机将重定向到远程会话。"
@@ -9639,27 +9429,22 @@ msgid "Embedded RDP Client"
 msgstr "嵌入式 RDP 客户端"
 
 #: transports/RDPEmbedded/direct.py:62
-#| msgid "RDP Protocol. Direct connection."
 msgid "RDP Embedded Client. Direct connection."
 msgstr "RDP嵌入式客户端。直接连接。"
 
 #: transports/RDPEmbedded/tunnel.py:65
-#| msgid "RDP Protocol. Tunneled connection."
 msgid "RDP Embedded Client. Tunneled connection."
 msgstr "RDP嵌入式客户端。隧道连接。"
 
 #: transports/RDSEmbedded_enterprise/common.py:185
-#| msgid "If checked, USB redirection will be allowed."
 msgid "If checked, printer redirection will be enabled"
 msgstr "选中此项，将启用打印机重定向。"
 
 #: transports/RDSEmbedded_enterprise/common.py:203
-#| msgid "Enable Microphone"
 msgid "Enable microphone"
 msgstr "启用麦克风"
 
 #: transports/RDSEmbedded_enterprise/common.py:206
-#| msgid "If checked, sound will be redirected."
 msgid "If checked, microphone will be redirected."
 msgstr "选中此项后，麦克风将被重定向。"
 
@@ -9669,8 +9454,6 @@ msgid "Window state"
 msgstr "窗口状态"
 
 #: transports/RDSEmbedded_enterprise/common.py:224
-#| msgid ""
-#| "UDS Will try to execute the applicaiton with the window in this state"
 msgid "UDS Will try to execute the application with the window in this state"
 msgstr "UDS 将尝试在窗口处于此状态下执行应用程序。"
 
@@ -9690,12 +9473,10 @@ msgid "Embedded RDS Client"
 msgstr "嵌入式 RDS 客户端"
 
 #: transports/RDSEmbedded_enterprise/direct.py:60
-#| msgid "RDS access using RDP for vApps. Direct connection."
 msgid "RDS Embedded Client for vApps. Direct connection."
 msgstr "适用于 vApps 的 RDS 嵌入式客户端。直接连接。"
 
 #: transports/RDSEmbedded_enterprise/tunnel.py:67
-#| msgid "RDS access using RDP for vApps. Tunneled connection."
 msgid "RDS Embedded Client for vApps. Tunneled connection."
 msgstr "适用于 vApps 的 RDS 嵌入式客户端。隧道连接。"
 
@@ -9735,25 +9516,19 @@ msgid "RGS"
 msgstr "RGS"
 
 #: transports/RGS_enterprise/rgs.py:37
-#| msgid "RDP Protocol. Direct connection."
 msgid "HP RGS Protocol. Direct connection."
 msgstr "HP RGS 协议。直接连接。"
 
 #: transports/RGS_enterprise/rgs_base.py:72
-#| msgid "If checked, the credentials used to connect will be emtpy"
 msgid "If checked, the credentials used to connect will be empty"
 msgstr "如果选中此项，则用于连接的凭据将为空。"
 
 #: transports/RGS_enterprise/rgs_base.py:91
-#| msgid ""
-#| "If not empty, this domain will be always used as credential (used as "
-#| "DOMAIN\\user)"
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr "如果此域不为空，则始终将其用作凭据（DOMAIN\\user）。"
 
 #: transports/RGS_enterprise/rgs_base.py:99
-#| msgid "Image Gallery"
 msgid "Image quality"
 msgstr "图像质量"
 
@@ -9798,26 +9573,18 @@ msgid ""
 msgstr "连接时，将发送方的分辨率更改为与接收方的分辨率匹配。"
 
 #: transports/RGS_enterprise/rgs_base.py:153
-#| msgid "Redirection endpoint"
 msgid "Redirect audio"
 msgstr "重定向音频"
 
 #: transports/RGS_enterprise/rgs_base.py:155
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "如果选中，音频将重定向到接收器。"
 
 #: transports/RGS_enterprise/rgs_base.py:160
-#| msgid "Redirection endpoint"
 msgid "Redirect microphone"
 msgstr "重定向麦克风"
 
 #: transports/RGS_enterprise/rgs_base.py:162
-#| msgid ""
-#| "If checked, the name of the subnets will be used instead of the names of "
-#| "networks"
 msgid "If checked, the microphone input will be streamed to the Sender"
 msgstr "如果选中，麦克风输入信号将传输到发送方。"
 
@@ -9826,12 +9593,10 @@ msgid "Redirect USB"
 msgstr "重定向 USB"
 
 #: transports/RGS_enterprise/rgs_base.py:169
-#| msgid "If checked, webcam will be redirected (ONLY Windows)."
 msgid "If checked, USB devices will be redirected to the Sender session"
 msgstr "如果选中此项，USB 设备将被重定向到发送方会话。"
 
 #: transports/RGS_enterprise/rgs_base.py:177
-#| msgid "Report"
 msgid "RGS port"
 msgstr "RGS端口"
 
@@ -9840,19 +9605,14 @@ msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "RGS 发送方监听端口（默认为 42966）"
 
 #: transports/RGS_enterprise/rgstunnel.py:38
-#| msgid "Tunneled"
 msgid "RGS Tunneled"
 msgstr "RGS隧道"
 
 #: transports/RGS_enterprise/rgstunnel.py:40
-#| msgid "RDP Protocol. Tunneled connection."
 msgid "HP RGS Protocol. Tunneled connection."
 msgstr "HP RGS协议。隧道连接。"
 
 #: transports/RGS_enterprise/rgstunnel.py:51
-#| msgid ""
-#| "If enabled, the certificate of tunnel server will be verified "
-#| "(recommended)."
 msgid ""
 "If enabled, the certificate of the tunnel server will be verified "
 "(recommended)."
@@ -10089,27 +9849,22 @@ msgid "macOS client (Apple Silicon)"
 msgstr "macOS 客户端（Apple Silicon）"
 
 #: web/util/udsclients_info.py:32
-#| msgid "Mac OS X client"
 msgid "macOS client (Intel)"
 msgstr "macOS 客户端（Intel）"
 
 #: web/util/udsclients_info.py:38
-#| msgid "Debian based Linux client"
 msgid "Debian 12 / Ubuntu based Linux client"
 msgstr "基于 Debian 12 / Ubuntu 的 Linux 客户端"
 
 #: web/util/udsclients_info.py:44
-#| msgid "Debian based Linux client"
 msgid "Debian 13 / Ubuntu based Linux client"
 msgstr "基于 Debian 13 / Ubuntu 的 Linux 客户端"
 
 #: web/util/udsclients_info.py:50
-#| msgid "Debian based Linux client"
 msgid "Fedora / RHEL based Linux client (RPM)"
 msgstr "基于 Fedora / RHEL 的 Linux 客户端（RPM）"
 
 #: web/util/udsclients_info.py:56
-#| msgid "Debian based Linux client"
 msgid "openSUSE / SLES based Linux client (RPM)"
 msgstr "基于 openSUSE / SLES 的 Linux 客户端（RPM）"
 

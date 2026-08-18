@@ -34,6 +34,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Abdel Baaddi <abaaddi@virtualcable.es>, 2016,2018
 # Adolfo Gómez <dkmaster at dkmon dot com>, 2012
 # Andrés Schumann <aschumann@virtualcable.es>, 2023,2025
@@ -43,7 +44,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:04+0200\n"
+"POT-Creation-Date: 2026-08-18 17:27+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2025\n"
 "Language-Team: French (http://app.transifex.com/openuds/openuds/language/"
@@ -133,7 +134,6 @@ msgid "Elapsed timemark"
 msgstr "Timemark écoulé"
 
 #: REST/methods/accountsusage.py:145
-#| msgid "Page not found"
 msgid "Account usage not found: {}"
 msgstr "Utilisation du compte introuvable : {}"
 
@@ -272,12 +272,10 @@ msgid "None"
 msgstr "Aucun"
 
 #: REST/methods/authenticators.py:317 REST/methods/authenticators.py:373
-#| msgid "Invalid value for {}"
 msgid "Invalid type: {}"
 msgstr "Type invalide : {}"
 
 #: REST/methods/authenticators.py:339
-#| msgid "Operation not supported"
 msgid "Search not supported"
 msgstr "Recherche non prise en charge"
 
@@ -313,7 +311,6 @@ msgid "Frequency"
 msgstr "Fréquence"
 
 #: REST/methods/calendarrules.py:128
-#| msgid "Intervals:"
 msgid "Interval"
 msgstr "Intervalle"
 
@@ -322,7 +319,6 @@ msgid "Duration"
 msgstr "Durée"
 
 #: REST/methods/calendarrules.py:172 REST/methods/calendarrules.py:189
-#| msgid "Username not found"
 msgid "Calendar rule not found: {}"
 msgstr "Règle de calendrier introuvable : {}"
 
@@ -411,9 +407,6 @@ msgid "Service pool load balancing policy"
 msgstr "Politique d'équilibrage de charge du pool de services"
 
 #: REST/methods/meta_pools.py:246
-#| msgid ""
-#| "Service pool High Availability policy. If enabled and a pool fails, it "
-#| "will be restarted in another pool. Enable with care!."
 msgid ""
 "Service pool High Availability policy. If enabled and a pool fails, it will "
 "be restarted in another pool. Enable with care!"
@@ -455,15 +448,13 @@ msgid "Transport selection policy"
 msgstr "Politique de sélection des transports"
 
 #: REST/methods/meta_service_pools.py:115
-#| msgid "Method not found in {}: {}"
 msgid "Meta pool member not found: {}"
 msgstr "Membre du pool de métadonnées introuvable : {}"
 
 #: REST/methods/meta_service_pools.py:121
 #, python-brace-format
-#| msgid "Servers of {0}"
 msgid "Members of {0}"
-msgstr "Membres du n° 30"
+msgstr ""
 
 #: REST/methods/meta_service_pools.py:125 REST/methods/notifiers.py:90
 #: REST/methods/notifiers.py:134 REST/methods/users_groups.py:197
@@ -472,15 +463,13 @@ msgid "Enabled"
 msgstr "Activé"
 
 #: REST/methods/meta_service_pools.py:209
-#| msgid "User service not found"
 msgid "User service not found: {}"
 msgstr "Service utilisateur introuvable : {}"
 
 #: REST/methods/meta_service_pools.py:259
 #, python-brace-format
-#| msgid "Assigned services"
 msgid "Assigned services to {0}"
-msgstr "Services attribués au n° 30"
+msgstr ""
 
 #: REST/methods/meta_service_pools.py:260 REST/methods/user_services.py:247
 #: REST/methods/user_services.py:388
@@ -561,7 +550,6 @@ msgid "Item is not removable"
 msgstr "Point non amovible"
 
 #: REST/methods/meta_service_pools.py:314
-#| msgid "Invalid request received"
 msgid "Invalid item specified"
 msgstr "Article invalide spécifié"
 
@@ -570,7 +558,6 @@ msgid "Multi Factor Authentication"
 msgstr "Authentification multifacteur"
 
 #: REST/methods/mfas.py:110
-#| msgid "Method not found in {}: {}"
 msgid "MFA type not found: {}"
 msgstr "Type d&#39;authentification multifacteur introuvable : {}"
 
@@ -615,9 +602,6 @@ msgid "Network range"
 msgstr "Gamme de réseau"
 
 #: REST/methods/networks.py:99
-#| msgid ""
-#| "Network range. Accepts most network definitions formats (range, subnet, "
-#| "host, etc..."
 msgid ""
 "Network range. Accepts most network definitions formats (range, subnet, "
 "host, etc...)"
@@ -635,7 +619,6 @@ msgid "Level"
 msgstr "Niveau"
 
 #: REST/methods/notifiers.py:112
-#| msgid "Method not found in {}: {}"
 msgid "Notifier type not found: {}"
 msgstr "Type de notificateur introuvable : {}"
 
@@ -648,7 +631,6 @@ msgid "If checked, this notifier will be used"
 msgstr "Si coché, ce notificateur sera utilisé"
 
 #: REST/methods/op_calendars.py:107
-#| msgid "Access limited by calendar"
 msgid "Access calendars"
 msgstr "Accéder aux calendriers"
 
@@ -657,7 +639,6 @@ msgid "Calendar"
 msgstr "Calendrier"
 
 #: REST/methods/op_calendars.py:126
-#| msgid "Method not found in {}: {}"
 msgid "Calendar not found: {}"
 msgstr "Calendrier introuvable : {}"
 
@@ -694,7 +675,6 @@ msgid "Last execution"
 msgstr "Dernière exécution"
 
 #: REST/methods/op_calendars.py:246
-#| msgid "Invalid value for {}"
 msgid "Invalid action: {}"
 msgstr "Action invalide : {}"
 
@@ -711,7 +691,6 @@ msgid "Can't delete an OS Manager with services pools associated"
 msgstr "Impossible de supprimer un OS Manager avec services associés"
 
 #: REST/methods/osmanagers.py:154
-#| msgid "Method not found in {}: {}"
 msgid "OS Manager type not found: {}"
 msgstr "Type de gestionnaire de système d&#39;exploitation introuvable : {}"
 
@@ -783,7 +762,6 @@ msgid "Registered Servers"
 msgstr "Serveurs enregistrés"
 
 #: REST/methods/servers_management.py:97
-#| msgid "MFA"
 msgid "MAC"
 msgstr "MAC"
 
@@ -872,7 +850,6 @@ msgid "Server to include on group"
 msgstr "Serveur à inclure dans le groupe"
 
 #: REST/methods/servers_management.py:297
-#| msgid "Invalid MAC address used: \"{}\""
 msgid "Invalid MAC address"
 msgstr "Adresse MAC invalide"
 
@@ -928,7 +905,6 @@ msgstr ""
 "comprise entre 0 et 1."
 
 #: REST/methods/servers_management.py:586
-#| msgid "Users list"
 msgid "Users weight"
 msgstr "Poids des utilisateurs"
 
@@ -939,7 +915,6 @@ msgstr ""
 "comprise entre 0 et 1."
 
 #: REST/methods/servers_management.py:592
-#| msgid "Unexpected error"
 msgid "Max expected users"
 msgstr "Nombre maximal d&#39;utilisateurs attendus"
 
@@ -955,13 +930,11 @@ msgid "Service not found"
 msgstr "Service introuvable"
 
 #: REST/methods/services.py:280
-#| msgid "Preparing service"
 msgid "Error deleting service"
 msgstr "Erreur lors de la suppression du service"
 
 #: REST/methods/services.py:288
 #, python-brace-format
-#| msgid "Services of {}"
 msgid "Services of {0}"
 msgstr "Services de {0}"
 
@@ -970,7 +943,6 @@ msgid "Services Pools"
 msgstr "Pools de services"
 
 #: REST/methods/services.py:296
-#| msgid "Service counting method"
 msgid "Counting method"
 msgstr "Méthode de comptage"
 
@@ -987,7 +959,6 @@ msgid "Kind of service counting for calculating if MAX is reached"
 msgstr "Type de service pris en compte pour calculer si MAX est atteint"
 
 #: REST/methods/services.py:390
-#| msgid "Error testing connection"
 msgid "Error getting logs"
 msgstr "Erreur lors de la récupération des journaux"
 
@@ -1048,12 +1019,10 @@ msgid "OS Manager used as base of this service pool"
 msgstr "OS Manager utilisé comme base de ce pool de service"
 
 #: REST/methods/services_pools.py:502
-#| msgid "Publish date"
 msgid "Publish on save"
 msgstr "Publier lors de l&#39;enregistrement"
 
 #: REST/methods/services_pools.py:504
-#| msgid "If active, the user will be allowed to reset the service"
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
@@ -1114,7 +1083,6 @@ msgid "Services to keep in L2 cache"
 msgstr "Services á garder en mémoire cache L2"
 
 #: REST/methods/services_pools.py:561
-#| msgid "Services kept in cache of level2 for improved service generation"
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr ""
 "Services conservés en cache au niveau 2 pour une meilleure attribution des "
@@ -1137,7 +1105,6 @@ msgid "Show transports"
 msgstr "Voir les transports"
 
 #: REST/methods/services_pools.py:576
-#| msgid "If active, transport will be visible for users"
 msgid "If active, transports will be shown to users"
 msgstr ""
 "Si elles sont activées, les options de transport seront affichées aux "
@@ -1148,17 +1115,13 @@ msgid "Allow removal by users"
 msgstr "Permettre la supression par utilisateurs"
 
 #: REST/methods/services_pools.py:584
-#| msgid ""
-#| "If active, the user will be allowed to remove the service \"manually\". "
-#| "Be careful with this, because the user will have the \"power\" to delete "
-#| "it's own service"
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
 "own service"
 msgstr ""
-"Si cette option est activée, l&#39;utilisateur pourra supprimer le service « "
-"manuellement ». Attention, car l&#39;utilisateur aura alors le « pouvoir » "
+"Si cette option est activée, l&#39;utilisateur pourra supprimer le service "
+"« manuellement ». Attention, car l&#39;utilisateur aura alors le « pouvoir » "
 "de supprimer son propre service."
 
 #: REST/methods/services_pools.py:590
@@ -1191,7 +1154,6 @@ msgid "Account"
 msgstr "Compte"
 
 #: REST/methods/services_pools.py:606
-#| msgid "Account associated to this service pool"
 msgid "Account used for this service pool"
 msgstr "Compte utilisé pour ce service pool"
 
@@ -1235,7 +1197,6 @@ msgid "User service not found"
 msgstr "Service utilisateur introuvable"
 
 #: REST/methods/services_usage.py:173
-#| msgid "Base name for this user services"
 msgid "Error getting user service"
 msgstr "Erreur lors de la récupération du service utilisateur"
 
@@ -1244,7 +1205,6 @@ msgid "Devices"
 msgstr "Dispositifs de"
 
 #: REST/methods/transports.py:119
-#| msgid "Transport not found"
 msgid "Transport type not found: {}"
 msgstr "Type de transport introuvable : {}"
 
@@ -1282,7 +1242,6 @@ msgstr ""
 
 #: REST/methods/tunnels_management.py:127
 #: REST/methods/tunnels_management.py:266
-#| msgid "Tunnel server to use"
 msgid "Tunnel server not found"
 msgstr "Serveur de tunnel introuvable"
 
@@ -1330,12 +1289,10 @@ msgstr ""
 "attachés"
 
 #: REST/methods/tunnels_management.py:269
-#| msgid "No user assigned to service"
 msgid "Error assigning server"
 msgstr "Erreur lors de l&#39;attribution du serveur"
 
 #: REST/methods/user_services.py:246
-#| msgid "Assigned services"
 msgid "Assigned Services"
 msgstr "Services attribués"
 
@@ -1349,17 +1306,14 @@ msgid "Status date"
 msgstr "Date d'État"
 
 #: REST/methods/user_services.py:279 REST/methods/user_services.py:417
-#| msgid "Base name for this user services"
 msgid "Error getting user service logs"
 msgstr "Erreur lors de la récupération des journaux du service utilisateur"
 
 #: REST/methods/user_services.py:292
-#| msgid "Base name for this user services"
 msgid "Error deleting user service"
 msgstr "Erreur lors de la suppression du service utilisateur"
 
 #: REST/methods/user_services.py:387
-#| msgid "Cached services"
 msgid "Cached Services"
 msgstr "Services mis en cache"
 
@@ -1380,7 +1334,6 @@ msgid "Assigned transports"
 msgstr "Transports assignés"
 
 #: REST/methods/user_services.py:632
-#| msgid "Account associated to this service pool"
 msgid "Access denied to publish service pool"
 msgstr "Accès refusé à la publication du pool de services"
 
@@ -1459,7 +1412,6 @@ msgid "User not found"
 msgstr "Utilisateur non trouvé"
 
 #: REST/methods/users_groups.py:213
-#| msgid "Error testing connection"
 msgid "Error getting user"
 msgstr "Erreur lors de la récupération de l&#39;utilisateur"
 
@@ -1508,7 +1460,6 @@ msgid "UDS Meta Group"
 msgstr "UDS Meta Group"
 
 #: REST/methods/users_groups.py:485
-#| msgid "Group not found"
 msgid "Group type not found"
 msgstr "Type de groupe introuvable"
 
@@ -1525,7 +1476,6 @@ msgid "Error deleting group"
 msgstr "Erreur lors de la suppression du groupe"
 
 #: REST/model/base.py:171
-#| msgid "Operation not supported"
 msgid "Testing not supported"
 msgstr "Tests non pris en charge"
 
@@ -1774,7 +1724,6 @@ msgid "Error testing connection"
 msgstr "Erreur de test de connexion"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:564
-#| msgid "Connection params seem correct, test was succesfully executed"
 msgid "Connection params seem correct, test was successfully executed"
 msgstr ""
 "Les paramètres de connexion semblent corrects, le test a été exécuté avec "
@@ -1891,7 +1840,6 @@ msgstr ""
 "utilisateur externe)"
 
 #: auths/AzureAD_enterprise/authenticator.py:183
-#| msgid "Allowed Devices"
 msgid "Allowed Tenants"
 msgstr "Locataires autorisés"
 
@@ -1971,7 +1919,6 @@ msgid "Attribute from where to extract the MFA code"
 msgstr "Attribut d'où extraire le code MFA"
 
 #: auths/EDirectory_enterprise/authenticator.py:126
-#| msgid "Active Directory"
 msgid "eDirectory"
 msgstr "Annuaire électronique"
 
@@ -2677,7 +2624,6 @@ msgid "No attributes returned from IdP"
 msgstr "Aucun attribut renvoyé par l'IdP"
 
 #: auths/Sample/sample_auth.py:84
-#| msgid "SimpleLDAP"
 msgid "Sample"
 msgstr "Échantillon"
 
@@ -2774,17 +2720,14 @@ msgstr ""
 "Impossible de localiser un groupe avec l'attribut d'appartenance spécifié"
 
 #: auths/X509Certificate/authenticator.py:79
-#| msgid "Certificate"
 msgid "X509 Certificate"
 msgstr "Certificat X509"
 
 #: auths/X509Certificate/authenticator.py:81
-#| msgid "Use Message Authenticator"
 msgid "X509 Client Certificate Authenticator"
 msgstr "Authentificateur de certificat client X509"
 
 #: auths/X509Certificate/authenticator.py:89
-#| msgid "Certificate"
 msgid "CA Certificate"
 msgstr "Certificat CA"
 
@@ -2797,7 +2740,6 @@ msgstr ""
 "valider les certificats clients."
 
 #: auths/X509Certificate/authenticator.py:96
-#| msgid "Issuer"
 msgid "Trusted Issuer"
 msgstr "Émetteur de confiance"
 
@@ -2833,7 +2775,6 @@ msgstr ""
 
 #: auths/X509Certificate/authenticator.py:127
 #: auths/X509Certificate/authenticator.py:135
-#| msgid "Action"
 msgid "Revocation"
 msgstr "Révocation"
 
@@ -2850,7 +2791,6 @@ msgstr ""
 "certificats (pas encore implémenté)."
 
 #: auths/X509Certificate/authenticator.py:141
-#| msgid "Remote"
 msgid "Remote URL"
 msgstr "URL distante"
 
@@ -2870,7 +2810,6 @@ msgid "Bridge"
 msgstr "Pont"
 
 #: auths/X509Certificate/authenticator.py:153
-#| msgid "Secret"
 msgid "Shared Secret"
 msgstr "Secret partagé"
 
@@ -2883,7 +2822,6 @@ msgstr ""
 "certificat client pour le chiffrement/la signature."
 
 #: auths/X509Certificate/authenticator.py:166
-#| msgid "Certificate is empty"
 msgid "CA Certificate is required"
 msgstr "Un certificat CA est requis."
 
@@ -2901,12 +2839,10 @@ msgstr ""
 "Le certificat fourni ne comporte pas d&#39;extension de contraintes de base"
 
 #: auths/X509Certificate/authenticator.py:180
-#| msgid "Invalid certificate"
 msgid "Invalid PEM-encoded certificate: {}"
 msgstr "Certificat encodé PEM invalide : {}"
 
 #: auths/X509Certificate/authenticator.py:193
-#| msgid "Group name is required"
 msgid "Shared Secret is required"
 msgstr "Un secret partagé est requis"
 
@@ -2943,7 +2879,6 @@ msgid "Anonymous"
 msgstr "Anonyme"
 
 #: core/consts/__init__.py:150
-#| msgid "Unknown error"
 msgid "Unknown role"
 msgstr "Rôle inconnu"
 
@@ -3312,8 +3247,8 @@ msgstr "Nous avons besoin d’au moins une machine"
 #: services/Vmware_enterprise/service_fixed.py:123
 msgid "Cannot remove machines with assigned services: {}"
 msgstr ""
-"Impossible de supprimer les machines auxquelles sont attribués les services "
-": {}"
+"Impossible de supprimer les machines auxquelles sont attribués les "
+"services : {}"
 
 #: core/services/service.py:102 core/services/service.py:113
 msgid "Base Service"
@@ -3920,7 +3855,6 @@ msgstr ""
 "pages d&#39;administration"
 
 #: core/util/config.py:768
-#| msgid "Delay in seconds between checks for commands"
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr ""
 "Délai en secondes entre les rechargements automatiques des pages "
@@ -3964,12 +3898,10 @@ msgid "Enable or disable add favorite services feature"
 msgstr "Activer ou désactiver la fonction « Ajouter aux favoris »"
 
 #: core/util/config.py:827
-#| msgid "Allow Smartcards"
 msgid "Allow animated backgrounds"
 msgstr "Autoriser les arrière-plans animés"
 
 #: core/util/config.py:833
-#| msgid "Multi Factor Authentication"
 msgid "Allow biometric authentication"
 msgstr "Autoriser l&#39;authentification biométrique"
 
@@ -4028,12 +3960,10 @@ msgstr ""
 "d'UDS Broker. La valeur par défaut de 60 est recommandée."
 
 #: core/util/fields.py:161
-#| msgid "Tunnel wait time"
 msgid "Startup wait time"
 msgstr "Temps d&#39;attente au démarrage"
 
 #: core/util/fields.py:166
-#| msgid "Timeout in seconds to wait for the publication to be visible"
 msgid ""
 "Time, in seconds, to wait for first tunnel connection to be established."
 msgstr ""
@@ -4213,7 +4143,6 @@ msgid "Yes, try to put it back to cache"
 msgstr "Oui, essayez de le remettre en cache"
 
 #: core/util/fields.py:496
-#| msgid "Yes, try to put it back to cache"
 msgid "Yes, try to put it back to cache and recover snapshot"
 msgstr "Oui, essayez de le remettre en cache et de récupérer l&#39;instantané."
 
@@ -4264,7 +4193,8 @@ msgstr "Aucun serveur LDAP configuré"
 
 #: core/util/ldaputil.py:612
 msgid "Could not connect to any LDAP server ({}). Last error: {}"
-msgstr "Impossible de se connecter à un serveur LDAP ({}). Dernière erreur : {}"
+msgstr ""
+"Impossible de se connecter à un serveur LDAP ({}). Dernière erreur : {}"
 
 #: core/util/security_checks.py:73
 msgid ""
@@ -4359,7 +4289,6 @@ msgstr ""
 "signés."
 
 #: core/util/security_checks.py:201
-#| msgid "SAML Authenticator"
 msgid "No SAML authenticators configured."
 msgstr "Aucun authentificateur SAML n&#39;est configuré."
 
@@ -4389,7 +4318,6 @@ msgid "Associated Image"
 msgstr "Image associée"
 
 #: core/util/ui.py:381
-#| msgid "Select a project"
 msgid "Select an image"
 msgstr "Sélectionnez une image"
 
@@ -4470,14 +4398,12 @@ msgid "{} is not a valid MAC address"
 msgstr "{} n'est pas une adresse MAC valide"
 
 #: core/util/validators.py:411
-#| msgid "{} is not a valid MAC range"
 msgid "{} is not a valid MAC range: start must be lower than end"
 msgstr ""
 "{} ne constitue pas une plage MAC valide : le début doit être inférieur à la "
 "fin"
 
 #: core/util/validators.py:416
-#| msgid "{} is not a valid MAC range"
 msgid "{} is not a valid MAC range: start must be greater than 0"
 msgstr ""
 "{} n&#39;est pas une plage MAC valide : le début doit être supérieur à 0"
@@ -5113,22 +5039,14 @@ msgid "You have been unsubscribed from notifications"
 msgstr "Vous avez été désabonné des notifications"
 
 #: osmanagers/LinuxOsManager/__init__.py:54
-#| msgid ""
-#| "UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= "
-#| "3.9)</b>"
 msgid "UDS Actor for Debian 12 / Ubuntu based Linux machines"
 msgstr "UDS Actor pour les machines Linux basées sur Debian 12 / Ubuntu"
 
 #: osmanagers/LinuxOsManager/__init__.py:61
-#| msgid ""
-#| "UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= "
-#| "3.9)</b>"
 msgid "UDS Actor for Debian 13 / Ubuntu based Linux machines"
 msgstr "UDS Actor pour les machines Linux basées sur Debian 13 / Ubuntu"
 
 #: osmanagers/LinuxOsManager/__init__.py:68
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Debian 12 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
@@ -5137,8 +5055,6 @@ msgstr ""
 "UNIQUEMENT pour les machines statiques."
 
 #: osmanagers/LinuxOsManager/__init__.py:75
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Debian 13 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
@@ -5147,18 +5063,14 @@ msgstr ""
 "UNIQUEMENT pour les machines statiques."
 
 #: osmanagers/LinuxOsManager/__init__.py:82
-#| msgid "UDS Actor for windows machines"
 msgid "UDS Actor for Fedora / RHEL based Linux machines"
 msgstr "Acteur UDS pour machines Linux basées sur Fedora / RHEL"
 
 #: osmanagers/LinuxOsManager/__init__.py:89
-#| msgid "UDS Actor for windows machines"
 msgid "UDS Actor for openSUSE / SLES based Linux machines"
 msgstr "Acteur UDS pour machines Linux basées sur openSUSE / SLES"
 
 #: osmanagers/LinuxOsManager/__init__.py:96
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Fedora / RHEL based Linux machines. Used ONLY for static "
 "machines."
@@ -5167,8 +5079,6 @@ msgstr ""
 "pour les machines statiques."
 
 #: osmanagers/LinuxOsManager/__init__.py:103
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for openSUSE / SLES based Linux machines. Used ONLY for static "
 "machines."
@@ -5626,7 +5536,6 @@ msgstr "Fournisseur de services pour rapport"
 #: reports/lists/admin_activity.py:61 reports/lists/admin_activity.py:166
 #: templates/uds/reports/lists/admin-activity.html:4
 #: templates/uds/reports/lists/admin-activity.html:6
-#| msgid "System Administrator"
 msgid "Administrators activity"
 msgstr "Activité des administrateurs"
 
@@ -5650,7 +5559,6 @@ msgid "finish date for report"
 msgstr "la date fin du rapport"
 
 #: reports/lists/admin_activity.py:83
-#| msgid "Token endpoint"
 msgid "Top endpoints per user"
 msgstr "Principaux points de terminaison par utilisateur"
 
@@ -5660,37 +5568,31 @@ msgstr ""
 "Nombre de points de terminaison les plus utilisés à afficher par utilisateur"
 
 #: reports/lists/admin_activity.py:167
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of admin activity"
 msgstr "Rapport UDS sur l&#39;activité administrative"
 
 #: reports/lists/admin_activity.py:188
 #: templates/uds/reports/lists/admin-activity.html:16
-#| msgid "Request"
 msgid "Requests"
 msgstr "Demandes"
 
 #: reports/lists/admin_activity.py:189
 #: templates/uds/reports/lists/admin-activity.html:17
 #: templates/uds/reports/stats/userservice-errors.html:18
-#| msgid "Error"
 msgid "Errors"
 msgstr "Erreurs"
 
 #: reports/lists/admin_activity.py:190
-#| msgid "Error"
 msgid "Error %"
 msgstr "Erreur %"
 
 #: reports/lists/admin_activity.py:191
 #: templates/uds/reports/lists/admin-activity.html:19
-#| msgid "Last execution"
 msgid "Last seen"
 msgstr "Dernière observation"
 
 #: reports/lists/admin_activity.py:192
 #: templates/uds/reports/lists/admin-activity.html:20
-#| msgid "Token endpoint"
 msgid "Top endpoints"
 msgstr "Points d&#39;extrémité supérieurs"
 
@@ -5732,7 +5634,6 @@ msgstr ""
 "l&#39;authentification multifacteur) par authentificateur"
 
 #: reports/lists/failed_logins.py:71
-#| msgid "Authenticator for report"
 msgid "Authenticator to filter (or all)"
 msgstr "Authentificateur pour filtrer (ou tout)"
 
@@ -5741,7 +5642,6 @@ msgid "ALL AUTHENTICATORS"
 msgstr "TOUS LES AUTHENTIFICATEURS"
 
 #: reports/lists/failed_logins.py:194
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of failed logins"
 msgstr "Rapport UDS des échecs de connexion"
 
@@ -5753,7 +5653,6 @@ msgstr "Message"
 #: reports/lists/inactive_users.py:49
 #: templates/uds/reports/lists/inactive-users.html:4
 #: templates/uds/reports/lists/inactive-users.html:6
-#| msgid "Inactive"
 msgid "Inactive users"
 msgstr "Utilisateurs inactifs"
 
@@ -5762,13 +5661,11 @@ msgid "Lists users that have not accessed UDS in N days"
 msgstr "Liste les utilisateurs qui n&#39;ont pas accédé à UDS depuis N jours."
 
 #: reports/lists/inactive_users.py:56
-#| msgid "Authenticator from where to list users"
 msgid "Authenticator from where to list users (or all)"
 msgstr "Authentificateur à partir duquel lister les utilisateurs (ou tous)"
 
 #: reports/lists/inactive_users.py:62 reports/lists/inactive_users.py:188
 #: templates/uds/reports/lists/inactive-users.html:19
-#| msgid "Inactive"
 msgid "Inactive days"
 msgstr "Jours d&#39;inactivité"
 
@@ -5789,7 +5686,6 @@ msgid "Inactive users (>{} days)"
 msgstr "Utilisateurs inactifs (&gt;{} jours)"
 
 #: reports/lists/inactive_users.py:148
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of inactive users"
 msgstr "Rapport UDS des utilisateurs inactifs"
 
@@ -5890,7 +5786,6 @@ msgid "ALL POOLS"
 msgstr "TOUTES LES POOL"
 
 #: reports/stats/cache_efficiency.py:127
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of cache efficiency"
 msgstr "Rapport UDS sur l&#39;efficacité du cache"
 
@@ -5927,7 +5822,6 @@ msgstr ""
 "observés lors des connexions web"
 
 #: reports/stats/client_platforms.py:123
-#| msgid "Report of user access to platform by date"
 msgid "UDS Report of client platforms"
 msgstr "Rapport UDS sur les plateformes clientes"
 
@@ -5948,7 +5842,6 @@ msgstr "Navigateur"
 #: templates/uds/reports/stats/client-platforms.html:38
 #: templates/uds/reports/stats/client-platforms.html:60
 #: templates/uds/reports/stats/session-duration.html:18
-#| msgid "Account"
 msgid "Count"
 msgstr "Compter"
 
@@ -5963,7 +5856,6 @@ msgstr ""
 "Nombre maximal de sessions utilisateur simultanées par pool sur une période"
 
 #: reports/stats/peak_concurrency.py:157
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of peak concurrent sessions"
 msgstr "Rapport UDS sur les pics de sessions simultanées"
 
@@ -5993,7 +5885,6 @@ msgstr "Sessions"
 #: reports/stats/pool_saturation.py:49 reports/stats/pool_saturation.py:132
 #: templates/uds/reports/stats/pool-saturation.html:4
 #: templates/uds/reports/stats/pool-saturation.html:6
-#| msgid "Duration"
 msgid "Pool saturation"
 msgstr "Saturation de la piscine"
 
@@ -6008,7 +5899,6 @@ msgid "Unlimited"
 msgstr "Illimité"
 
 #: reports/stats/pool_saturation.py:133
-#| msgid "UDS Report Summary of pools usage"
 msgid "UDS Report of pool saturation"
 msgstr "Rapport UDS sur la saturation de la piscine"
 
@@ -6021,12 +5911,10 @@ msgstr "Moyenne"
 
 #: reports/stats/pool_saturation.py:157
 #: templates/uds/reports/stats/pool-saturation.html:19
-#| msgid "Mac"
 msgid "Max"
 msgstr "Max"
 
 #: reports/stats/pool_saturation.py:158
-#| msgid "Duration"
 msgid "Saturation %"
 msgstr "Saturation %"
 
@@ -6159,7 +6047,6 @@ msgstr "Temps moyen (secondes)"
 #: reports/stats/session_duration.py:60 reports/stats/session_duration.py:143
 #: templates/uds/reports/stats/session-duration.html:4
 #: templates/uds/reports/stats/session-duration.html:6
-#| msgid "Session duration"
 msgid "Session duration histogram"
 msgstr "histogramme de la durée des sessions"
 
@@ -6169,7 +6056,6 @@ msgstr ""
 "Répartition des durées de session dans les différents pools sélectionnés"
 
 #: reports/stats/session_duration.py:144
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of session durations"
 msgstr "Rapport UDS sur la durée des sessions"
 
@@ -6197,7 +6083,6 @@ msgid "Top N"
 msgstr "Top N"
 
 #: reports/stats/top_users.py:71
-#| msgid "Number of intervals"
 msgid "Number of users to show"
 msgstr "Nombre d&#39;utilisateurs à afficher"
 
@@ -6206,7 +6091,6 @@ msgid "Sort by"
 msgstr "Trier par"
 
 #: reports/stats/top_users.py:78
-#| msgid "Starting date"
 msgid "Sorting criterion"
 msgstr "Critère de tri"
 
@@ -6219,17 +6103,14 @@ msgid "Total time"
 msgstr "Temps total"
 
 #: reports/stats/top_users.py:149
-#| msgid "Pools usage by users"
 msgid "Top users by usage"
 msgstr "Principaux utilisateurs par utilisation"
 
 #: reports/stats/top_users.py:150
-#| msgid "Date for report"
 msgid "UDS Top users report"
 msgstr "Rapport des principaux utilisateurs d&#39;UDS"
 
 #: reports/stats/top_users.py:173 templates/uds/reports/stats/top-users.html:17
-#| msgid "Pools usage on a day"
 msgid "Pools used"
 msgstr "Piscines utilisées"
 
@@ -6240,7 +6121,6 @@ msgstr "Durée moyenne par séance"
 #: reports/stats/tunnel_usage.py:55 reports/stats/tunnel_usage.py:141
 #: templates/uds/reports/stats/tunnel-usage.html:4
 #: templates/uds/reports/stats/tunnel-usage.html:6
-#| msgid "Tunnels"
 msgid "Tunnel usage"
 msgstr "Utilisation du tunnel"
 
@@ -6249,7 +6129,6 @@ msgid "Tunnel sessions opened/closed, durations and bytes per pool"
 msgstr "Sessions de tunnel ouvertes/fermées, durées et octets par pool"
 
 #: reports/stats/tunnel_usage.py:142
-#| msgid "UDS Report of users usage"
 msgid "UDS Report of tunnel usage"
 msgstr "Rapport UDS sur l&#39;utilisation des tunnels"
 
@@ -6282,7 +6161,6 @@ msgstr "Octets reçus"
 #: reports/stats/usage_by_group.py:59
 #: templates/uds/reports/stats/usage-by-group.html:4
 #: templates/uds/reports/stats/usage-by-group.html:6
-#| msgid "Assigned groups"
 msgid "Usage by group"
 msgstr "Utilisation par groupe"
 
@@ -6294,31 +6172,27 @@ msgstr ""
 
 #: reports/stats/usage_by_group.py:66
 msgid "Authenticator whose groups will be used to aggregate"
-msgstr "Authentificateur dont les groupes seront utilisés pour l&#39;agrégation"
+msgstr ""
+"Authentificateur dont les groupes seront utilisés pour l&#39;agrégation"
 
 #: reports/stats/usage_by_group.py:167
-#| msgid "Cached services"
 msgid "(unmatched users)"
 msgstr "(utilisateurs non appariés)"
 
 #: reports/stats/usage_by_group.py:190
-#| msgid "Usages of {0}"
 msgid "Usage by group of {}"
 msgstr "Utilisation par groupe de {}"
 
 #: reports/stats/usage_by_group.py:191
-#| msgid "UDS Report of users usage"
 msgid "UDS Report of usage by group"
 msgstr "Rapport UDS d&#39;utilisation par groupe"
 
 #: reports/stats/usage_by_group.py:214
 #: templates/uds/reports/stats/usage-by-group.html:17
-#| msgid "Distinct Users"
 msgid "Distinct users"
 msgstr "Utilisateurs distincts"
 
 #: reports/stats/usage_by_group.py:216
-#| msgid "Server Version"
 msgid "Average per session"
 msgstr "Moyenne par session"
 
@@ -6399,7 +6273,6 @@ msgstr "UDS Report pour l'accès des utilisateurs"
 #: reports/stats/userservice_errors.py:125
 #: templates/uds/reports/stats/userservice-errors.html:4
 #: templates/uds/reports/stats/userservice-errors.html:6
-#| msgid "User services"
 msgid "User services in error"
 msgstr "Services utilisateurs en erreur"
 
@@ -6410,24 +6283,20 @@ msgstr ""
 "donnée"
 
 #: reports/stats/userservice_errors.py:126
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of user services in error"
 msgstr "Rapport UDS sur les services utilisateurs en erreur"
 
 #: reports/stats/userservice_errors.py:147
 #: templates/uds/reports/stats/userservice-errors.html:36
-#| msgid "User services"
 msgid "User service"
 msgstr "Service utilisateur"
 
 #: reports/stats/userservice_errors.py:150
-#| msgid "State"
 msgid "OS State"
 msgstr "État OS"
 
 #: reports/stats/userservice_errors.py:151
 #: templates/uds/reports/stats/userservice-errors.html:40
-#| msgid "Status date"
 msgid "State date"
 msgstr "Date de l&#39;État"
 
@@ -6659,7 +6528,6 @@ msgid "Security groups for the instances from this service"
 msgstr "Groupes de sécurité pour les instances de ce service"
 
 #: services/AWS_enterprise/service.py:133
-#| msgid "Fixed Instances Pool"
 msgid "IAM Instance Profile"
 msgstr "Profil d&#39;instance IAM"
 
@@ -6758,13 +6626,11 @@ msgstr "Ce service fournit l’accès aux machines virtuelles Azure selon VDI"
 
 #: services/Azure_enterprise/service.py:61
 #: services/Azure_enterprise/service_fixed.py:89
-#| msgid "Resource Group"
 msgid "Resource group"
 msgstr "Groupe de ressources"
 
 #: services/Azure_enterprise/service.py:62
 #: services/Azure_enterprise/service_fixed.py:90
-#| msgid "Resource group container of this VDI service"
 msgid "Resource group for this service"
 msgstr "Groupe de ressources pour ce service"
 
@@ -6777,7 +6643,6 @@ msgid "Size for machines created from this service."
 msgstr "Taille pour machines créé à partir de ce service."
 
 #: services/Azure_enterprise/service.py:97
-#| msgid "Region for this service"
 msgid "Network for this service"
 msgstr "Réseau pour ce service"
 
@@ -6843,7 +6708,6 @@ msgid "Stop Machine (and deallocates it)"
 msgstr "Arrêter la machine (et la libérer)"
 
 #: services/Google_enterprise/provider.py:41
-#| msgid "Project ID for Google Cloud"
 msgid "Google Cloud"
 msgstr "Google Cloud"
 
@@ -6949,7 +6813,6 @@ msgid "Google Services based on fixed instances."
 msgstr "Services Google basés sur des instances fixes."
 
 #: services/HyperV_enterprise/provider.py:43
-#| msgid "HyperV Clone"
 msgid "HyperV"
 msgstr "HyperV"
 
@@ -7117,7 +6980,6 @@ msgstr ""
 "installé sur les machines."
 
 #: services/HyperV_enterprise/service_gen2.py:51
-#| msgid "HyperV Clone"
 msgid "HyperV Clone Generation 2"
 msgstr "Clone Hyper-V de deuxième génération"
 
@@ -7194,12 +7056,10 @@ msgstr ""
 "Morpheus"
 
 #: services/Morpheus_enterprise/service_linked.py:32
-#| msgid "Instance clone"
 msgid "Instance linked clone"
 msgstr "Instance liée clone"
 
 #: services/Morpheus_enterprise/service_linked.py:35
-#| msgid "This service provides access to cloned instances on Morpheus"
 msgid "This service provides access to linked-cloned instances on Morpheus"
 msgstr ""
 "Ce service permet d&#39;accéder aux instances clonées liées sur Morpheus."
@@ -7213,7 +7073,6 @@ msgstr ""
 "publication et utilisé comme disque de base pour les clones liés."
 
 #: services/NutanixPrism_enterprise/provider.py:32
-#| msgid "Prism Central Service"
 msgid "Prism Central"
 msgstr "Prism Central"
 
@@ -7332,7 +7191,6 @@ msgstr ""
 "installé sur les machines."
 
 #: services/Nutanix_enterprise/provider.py:49
-#| msgid "Nutanix Acropolis Service"
 msgid "Nutanix Acropolis"
 msgstr "Nutanix Acropolis"
 
@@ -7481,9 +7339,10 @@ msgid ""
 "\"user@domain@provider\" if using keycloak. I.e. \"admin@ovirt@internalsso\" "
 "or \"admin@internal\")"
 msgstr ""
-"Utilisateur disposant de privilèges valides sur oVirt. Utilisez « user@domain"
-" » si vous utilisez AAA, ou « user@domain@provider » si vous utilisez "
-"Keycloak. Par exemple : « admin@ovirt@internalsso » ou « admin@internal »."
+"Utilisateur disposant de privilèges valides sur oVirt. Utilisez "
+"« user@domain » si vous utilisez AAA, ou « user@domain@provider » si vous "
+"utilisez Keycloak. Par exemple : « admin@ovirt@internalsso » ou "
+"« admin@internal »."
 
 #: services/OVirt/provider.py:144
 msgid "Password of the user of oVirt"
@@ -7568,7 +7427,6 @@ msgid "All Labs"
 msgstr "Tous les laboratoires"
 
 #: services/OpenGnsys/provider.py:84
-#| msgid "OpenGnsys Host"
 msgid "OpenGnsys"
 msgstr "OpenGnsys"
 
@@ -7688,7 +7546,6 @@ msgstr ""
 "s'allumer via OpenGnsys."
 
 #: services/OpenNebula/provider.py:64
-#| msgid "OpenNebula Host"
 msgid "OpenNebula"
 msgstr "OpenNebula"
 
@@ -7772,12 +7629,10 @@ msgid "Size of numeric part for the names of these machines"
 msgstr "Taille de la partie numérique pour les noms de ces machines"
 
 #: services/OpenShift/provider.py:66
-#| msgid "Testing Provider"
 msgid "Openshift Provider"
 msgstr "Fournisseur Openshift"
 
 #: services/OpenShift/provider.py:68
-#| msgid "Nutanix based VM provider"
 msgid "Openshift based VMs provider"
 msgstr "fournisseur de machines virtuelles basé sur Openshift"
 
@@ -7802,17 +7657,14 @@ msgid "Openshift API URL, e.g. https://api.crc.testing:6443"
 msgstr "URL de l&#39;API Openshift, par exemple : https://api.crc.testing:6443"
 
 #: services/OpenShift/provider.py:94
-#| msgid "User with valid privileges on XenServer"
 msgid "User with valid privileges on Openshift Server"
 msgstr "Utilisateur disposant de privilèges valides sur le serveur Openshift"
 
 #: services/OpenShift/provider.py:102
-#| msgid "Password of the user of XenServer"
 msgid "Password of the user of Openshift Server"
 msgstr "Mot de passe de l&#39;utilisateur du serveur Openshift"
 
 #: services/OpenShift/provider.py:109
-#| msgid "Name"
 msgid "Namespace"
 msgstr "Espace de noms"
 
@@ -7821,36 +7673,28 @@ msgid "Openshift namespace to use (default: \"default\")"
 msgstr "Espace de noms Openshift à utiliser (par défaut : « default »)"
 
 #: services/OpenShift/service.py:58
-#| msgid "HyperV Clone"
 msgid "VM clone"
 msgstr "Clonage de machine virtuelle"
 
 #: services/OpenShift/service.py:60
-#| msgid "This service provides access to cloned instances on Morpheus"
 msgid "This service provides access to cloned VMs on Openshift"
 msgstr ""
 "Ce service permet d&#39;accéder aux machines virtuelles clonées sur "
 "Openshift."
 
 #: services/OpenShift/service.py:80
-#| msgid "Base Template"
 msgid "Template VM"
 msgstr "Machine virtuelle modèle"
 
 #: services/OpenShift/service.py:81
-#| msgid "Template to use for instances"
 msgid "Template to use for VMs"
 msgstr "Modèle à utiliser pour les machines virtuelles"
 
 #: services/OpenShift/service_fixed.py:61
-#| msgid "Fixed Machines Pool"
 msgid "Fixed VMs Pool"
 msgstr "Pool de machines virtuelles fixes"
 
 #: services/OpenShift/service_fixed.py:63
-#| msgid ""
-#| "This service provides access to a fixed group of selected instances on "
-#| "Morpheus"
 msgid ""
 "This service provides access to a fixed group of selected VMs on Openshift"
 msgstr ""
@@ -7870,7 +7714,6 @@ msgstr ""
 "OpenStack n'est pas compatible avec UDS."
 
 #: services/OpenStack/provider.py:89
-#| msgid "OpenStack Host"
 msgid "OpenStack"
 msgstr "OpenStack"
 
@@ -7970,7 +7813,6 @@ msgid "Error: {}"
 msgstr "Erreur: {}"
 
 #: services/OpenStack/provider_legacy.py:90
-#| msgid "OpenStack Host"
 msgid "OpenStack LEGACY"
 msgstr "OpenStack LEGACY"
 
@@ -8201,7 +8043,6 @@ msgid " (bound to {})"
 msgstr "(lié à {})"
 
 #: services/Proxmox/provider.py:70
-#| msgid "Proxmox Clone"
 msgid "Proxmox"
 msgstr "Proxmox"
 
@@ -8338,7 +8179,6 @@ msgid "Resource Pool containing base machines"
 msgstr "Pool de ressources contenant des machines de base"
 
 #: services/RDS_enterprise/provider.py:50
-#| msgid "RDP"
 msgid "RDS"
 msgstr "RDS"
 
@@ -8607,7 +8447,6 @@ msgid "RDS Platform Full session desktop service"
 msgstr "Service de bureau de session complète de la plate-forme RDS"
 
 #: services/ScaleComputing_enterprise/provider.py:38
-#| msgid "Scale Clone"
 msgid "Scale"
 msgstr "Échelle"
 
@@ -8690,7 +8529,6 @@ msgid "Select your vCloud version"
 msgstr "Sélectionnez votre version de vCloud"
 
 #: services/VCloud_enterprise/provider.py:92
-#| msgid "VCloud Director Platform Provider"
 msgid "VCloud Director"
 msgstr "Directeur VCloud"
 
@@ -8779,7 +8617,6 @@ msgid "Remote"
 msgstr "Télécommande"
 
 #: services/Vmware_enterprise/provider.py:42
-#| msgid "VMWare VCenter Platform Provider"
 msgid "VMWare VCenter"
 msgstr "VMware vCenter"
 
@@ -9073,12 +8910,10 @@ msgstr "Depuis"
 
 #: templates/uds/reports/lists/admin-activity.html:18
 #, python-format
-#| msgid "Error"
 msgid "Error %%"
 msgstr "Erreur %%"
 
 #: templates/uds/reports/lists/failed-logins.html:13
-#| msgid "Summary of pools usage"
 msgid "Summary by user"
 msgstr "Résumé par utilisateur"
 
@@ -9087,12 +8922,10 @@ msgid "Attempts"
 msgstr "Tentatives"
 
 #: templates/uds/reports/lists/failed-logins.html:20
-#| msgid "IP"
 msgid "IPs"
 msgstr "Adresses IP"
 
 #: templates/uds/reports/lists/failed-logins.html:21
-#| msgid "Last access"
 msgid "Last attempt"
 msgstr "Dernière tentative"
 
@@ -9103,12 +8936,10 @@ msgid "Detail"
 msgstr "Détail"
 
 #: templates/uds/reports/lists/inactive-users.html:11
-#| msgid "Load threshold"
 msgid "Threshold"
 msgstr "Seuil"
 
 #: templates/uds/reports/lists/inactive-users.html:11
-#| msgid "{} days"
 msgid "days"
 msgstr "jours"
 
@@ -9138,17 +8969,14 @@ msgid "Client platforms"
 msgstr "Plateformes clientes"
 
 #: templates/uds/reports/stats/client-platforms.html:11
-#| msgid "Total Accesses"
 msgid "Total events"
 msgstr "Événements totaux"
 
 #: templates/uds/reports/stats/client-platforms.html:13
-#| msgid "RDS Platform Session"
 msgid "Platforms"
 msgstr "Plateformes"
 
 #: templates/uds/reports/stats/client-platforms.html:33
-#| msgid "Users"
 msgid "Browsers"
 msgstr "Navigateurs"
 
@@ -9158,7 +8986,6 @@ msgstr "Nombre maximal de sessions simultanées par piscine"
 
 #: templates/uds/reports/stats/pool-saturation.html:20
 #, python-format
-#| msgid "Duration"
 msgid "Saturation %%"
 msgstr "Saturation %%"
 
@@ -9215,7 +9042,6 @@ msgid "Total accesses"
 msgstr "Total accès"
 
 #: templates/uds/reports/stats/session-duration.html:13
-#| msgid "Seconds"
 msgid "Avg seconds"
 msgstr "secondes moyennes"
 
@@ -9342,9 +9168,6 @@ msgstr "Meilleure expérience"
 
 #: transports/HTML5RDP/html5rdp.py:108
 #: transports/HTML5RDS_enterprise/html5rds.py:111
-#| msgid ""
-#| "If checked, the wallpaper and themes will be shown on machine (better "
-#| "user experience, more bandwidth)"
 msgid ""
 "If checked, wallpaper, desktop composition and font smoothing will be "
 "enabled (better user experience, more bandwidth)"
@@ -9434,26 +9257,20 @@ msgstr "Activer le partage de fichiers"
 
 #: transports/HTML5RDP/html5rdp.py:147
 #: transports/HTML5RDS_enterprise/html5rds.py:156
-#| msgid "Enable clipboard"
 msgid "Allow clipboard"
 msgstr "Autoriser le presse-papiers"
 
 #: transports/HTML5RDP/html5rdp.py:149
 #: transports/HTML5RDS_enterprise/html5rds.py:158
-#| msgid "If checked, USB redirection will be allowed."
 msgid "If checked, clipboard redirection will be enabled"
 msgstr ""
 "Si cette option est cochée, la redirection du presse-papiers sera activée."
 
 #: transports/HTML5RDP/html5rdp.py:155 transports/RDPEmbedded/common.py:220
-#| msgid "Enable webcam"
 msgid "Enable Webcam"
 msgstr "Activer la webcam"
 
 #: transports/HTML5RDP/html5rdp.py:158
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session "
 "(if client browser supports it)"
@@ -9558,7 +9375,6 @@ msgstr "Remplacez la fenêtre UDS et remplacez-la par la connexion."
 
 #: transports/HTML5RDP/html5rdp.py:234
 #: transports/HTML5RDS_enterprise/html5rds.py:190
-#| msgid "Authenticator"
 msgid "NLA authentication"
 msgstr "Authentification NLA"
 
@@ -9593,7 +9409,6 @@ msgstr "Utilisez ce port comme port RDP. La valeur par défaut est 3389."
 
 #: transports/HTML5RDP/html5rdp.py:255
 #: transports/HTML5RDS_enterprise/html5rds.py:211
-#| msgid "Session duration"
 msgid "Session Quality"
 msgstr "Qualité de la session"
 
@@ -9607,25 +9422,21 @@ msgstr ""
 
 #: transports/HTML5RDP/html5rdp.py:260
 #: transports/HTML5RDS_enterprise/html5rds.py:218
-#| msgid "Pools Performance"
 msgid "Ultra Performance"
 msgstr "Ultra Performance"
 
 #: transports/HTML5RDP/html5rdp.py:261
 #: transports/HTML5RDS_enterprise/html5rds.py:219
-#| msgid "Pools Performance"
 msgid "Performance"
 msgstr "Performance"
 
 #: transports/HTML5RDP/html5rdp.py:262
 #: transports/HTML5RDS_enterprise/html5rds.py:220
-#| msgid "Balancing"
 msgid "Balanced"
 msgstr "Équilibré"
 
 #: transports/HTML5RDP/html5rdp.py:263
 #: transports/HTML5RDS_enterprise/html5rds.py:221
-#| msgid "Quality"
 msgid "High Quality"
 msgstr "Haute qualité"
 
@@ -9667,12 +9478,10 @@ msgstr ""
 "valeur par défaut du serveur."
 
 #: transports/HTML5RDS_enterprise/html5rds.py:249
-#| msgid "Window Size"
 msgid "Window Title"
 msgstr "Titre de la fenêtre"
 
 #: transports/HTML5RDS_enterprise/html5rds.py:252
-#| msgid "Text of the email. If empty, a default text will be used"
 msgid "Window title for the session. If empty, a default one will be used."
 msgstr ""
 "Titre de la fenêtre pour la session. Si ce champ est vide, un titre par "
@@ -9707,7 +9516,6 @@ msgid "Max Upload Size (MB)"
 msgstr "Taille maximale de chargement (Mo)"
 
 #: transports/HTML5SSH/html5ssh.py:90
-#| msgid "Maximum number of allowed services (0 means no limit)"
 msgid ""
 "Maximum size of uploaded files in MB. 0 means no limit (or server default)."
 msgstr ""
@@ -9715,7 +9523,6 @@ msgstr ""
 "(ou valeur par défaut du serveur)."
 
 #: transports/HTML5SSH/html5ssh.py:103
-#| msgid "Allow upload only"
 msgid "Allow both upload and download"
 msgstr "Autoriser le chargement et le téléchargement"
 
@@ -9764,14 +9571,10 @@ msgstr ""
 "n'est pas fourni, aucun message persistant n'est envoyé."
 
 #: transports/HTML5SSH/html5ssh.py:146
-#| msgid "Enable clipboard"
 msgid "Enable Clipboard"
 msgstr "Activer le presse-papiers"
 
 #: transports/HTML5SSH/html5ssh.py:148
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid ""
 "If checked, the clipboard will be redirected to remote session (if client "
 "browser supports it)"
@@ -9788,12 +9591,10 @@ msgid "Always"
 msgstr "Toujours"
 
 #: transports/HTML5SSH/html5ssh.py:161
-#| msgid "Override Base"
 msgid "Overwrite"
 msgstr "Écraser"
 
 #: transports/HTML5SSH/html5ssh.py:164
-#| msgid "If checked, this transport will allow the use of user printers"
 msgid "If true, the transport will always open in a new window"
 msgstr ""
 "Si cela s&#39;avère exact, le transport s&#39;ouvrira toujours dans une "
@@ -9805,7 +9606,6 @@ msgid "Amazon DCV"
 msgstr "Amazon DCV"
 
 #: transports/NICEDCV_enterprise/nicedcv.py:40
-#| msgid "NICE DCV Protocol. Direct connection."
 msgid "Amazon DCV Protocol. Direct connection."
 msgstr "Protocole Amazon DCV. Connexion directe."
 
@@ -9832,7 +9632,6 @@ msgstr ""
 "l'affichage (ne fonctionne que sur les clients Windows)"
 
 #: transports/NICEDCV_enterprise/nicedcvtunnel.py:44
-#| msgid "NICE DCV Protocol. Tunneled connection."
 msgid "Amazon DCV Protocol. Tunneled connection."
 msgstr "Protocole Amazon DCV. Connexion tunnelisée."
 
@@ -9913,7 +9712,6 @@ msgstr ""
 "par exemple est nécessaire)"
 
 #: transports/RDP/rdp_base.py:104 transports/RDPEmbedded/common.py:167
-#| msgid "Use SSL"
 msgid "Use SSO"
 msgstr "Utiliser l&#39;authentification unique (SSO)"
 
@@ -10220,13 +10018,11 @@ msgstr "Protocole RDP. Connexion par tunnel."
 
 #: transports/RDPEmbedded/common.py:176
 #: transports/RDSEmbedded_enterprise/common.py:152
-#| msgid "Use SSL"
 msgid "Use NLA"
 msgstr "Utiliser NLA"
 
 #: transports/RDPEmbedded/common.py:179
 #: transports/RDSEmbedded_enterprise/common.py:156
-#| msgid "If checked, nested virtualization will be enabled for this service"
 msgid ""
 "If checked, Network Level Authentication will be used for RDP connections"
 msgstr ""
@@ -10234,18 +10030,12 @@ msgstr ""
 "utilisée pour les connexions RDP."
 
 #: transports/RDPEmbedded/common.py:208
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid "If checked, the audio will be redirected to the local machine"
 msgstr ""
 "Si cette option est cochée, le flux audio sera redirigé vers la machine "
 "locale."
 
 #: transports/RDPEmbedded/common.py:215
-#| msgid ""
-#| "If checked, the microphone will be redirected to remote session (if "
-#| "client browser supports it)"
 msgid ""
 "If checked, the local microphone will be redirected to the remote session"
 msgstr ""
@@ -10253,9 +10043,6 @@ msgstr ""
 "session distante."
 
 #: transports/RDPEmbedded/common.py:223
-#| msgid ""
-#| "If checked, the microphone will be redirected to remote session (if "
-#| "client browser supports it)"
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session"
 msgstr ""
@@ -10277,28 +10064,23 @@ msgid "Embedded RDP Client"
 msgstr "Client RDP intégré"
 
 #: transports/RDPEmbedded/direct.py:62
-#| msgid "RDP Protocol. Direct connection."
 msgid "RDP Embedded Client. Direct connection."
 msgstr "Client RDP intégré. Connexion directe."
 
 #: transports/RDPEmbedded/tunnel.py:65
-#| msgid "RDP Protocol. Tunneled connection."
 msgid "RDP Embedded Client. Tunneled connection."
 msgstr "Client RDP intégré. Connexion tunnelée."
 
 #: transports/RDSEmbedded_enterprise/common.py:185
-#| msgid "If checked, USB redirection will be allowed."
 msgid "If checked, printer redirection will be enabled"
 msgstr ""
 "Si cette option est cochée, la redirection d&#39;imprimante sera activée."
 
 #: transports/RDSEmbedded_enterprise/common.py:203
-#| msgid "Enable Microphone"
 msgid "Enable microphone"
 msgstr "Activer le microphone"
 
 #: transports/RDSEmbedded_enterprise/common.py:206
-#| msgid "If checked, sound will be redirected."
 msgid "If checked, microphone will be redirected."
 msgstr "Si cette option est activée, le microphone sera redirigé."
 
@@ -10308,8 +10090,6 @@ msgid "Window state"
 msgstr "État de la fenêtre"
 
 #: transports/RDSEmbedded_enterprise/common.py:224
-#| msgid ""
-#| "UDS Will try to execute the applicaiton with the window in this state"
 msgid "UDS Will try to execute the application with the window in this state"
 msgstr ""
 "UDS tentera d&#39;exécuter l&#39;application avec la fenêtre dans cet état."
@@ -10330,12 +10110,10 @@ msgid "Embedded RDS Client"
 msgstr "Client RDS intégré"
 
 #: transports/RDSEmbedded_enterprise/direct.py:60
-#| msgid "RDS access using RDP for vApps. Direct connection."
 msgid "RDS Embedded Client for vApps. Direct connection."
 msgstr "Client RDS intégré pour vApps. Connexion directe."
 
 #: transports/RDSEmbedded_enterprise/tunnel.py:67
-#| msgid "RDS access using RDP for vApps. Tunneled connection."
 msgid "RDS Embedded Client for vApps. Tunneled connection."
 msgstr "Client RDS intégré pour vApps. Connexion tunnelisée."
 
@@ -10379,21 +10157,16 @@ msgid "RGS"
 msgstr "RGS"
 
 #: transports/RGS_enterprise/rgs.py:37
-#| msgid "RDP Protocol. Direct connection."
 msgid "HP RGS Protocol. Direct connection."
 msgstr "Protocole HP RGS. Connexion directe."
 
 #: transports/RGS_enterprise/rgs_base.py:72
-#| msgid "If checked, the credentials used to connect will be emtpy"
 msgid "If checked, the credentials used to connect will be empty"
 msgstr ""
 "Si cette option est cochée, les identifiants utilisés pour la connexion "
 "seront vides."
 
 #: transports/RGS_enterprise/rgs_base.py:91
-#| msgid ""
-#| "If not empty, this domain will be always used as credential (used as "
-#| "DOMAIN\\user)"
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr ""
@@ -10401,7 +10174,6 @@ msgstr ""
 "identifiant (DOMAINE\\utilisateur)."
 
 #: transports/RGS_enterprise/rgs_base.py:99
-#| msgid "Image Gallery"
 msgid "Image quality"
 msgstr "Qualité d&#39;image"
 
@@ -10454,26 +10226,18 @@ msgstr ""
 "celle du récepteur lors de la connexion."
 
 #: transports/RGS_enterprise/rgs_base.py:153
-#| msgid "Redirection endpoint"
 msgid "Redirect audio"
 msgstr "Rediriger l&#39;audio"
 
 #: transports/RGS_enterprise/rgs_base.py:155
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "Si cette option est cochée, le son sera redirigé vers le récepteur."
 
 #: transports/RGS_enterprise/rgs_base.py:160
-#| msgid "Redirection endpoint"
 msgid "Redirect microphone"
 msgstr "Redirection du microphone"
 
 #: transports/RGS_enterprise/rgs_base.py:162
-#| msgid ""
-#| "If checked, the name of the subnets will be used instead of the names of "
-#| "networks"
 msgid "If checked, the microphone input will be streamed to the Sender"
 msgstr ""
 "Si cette option est cochée, le signal d&#39;entrée du microphone sera "
@@ -10484,14 +10248,12 @@ msgid "Redirect USB"
 msgstr "Redirection USB"
 
 #: transports/RGS_enterprise/rgs_base.py:169
-#| msgid "If checked, webcam will be redirected (ONLY Windows)."
 msgid "If checked, USB devices will be redirected to the Sender session"
 msgstr ""
 "Si cette option est cochée, les périphériques USB seront redirigés vers la "
 "session de l&#39;expéditeur."
 
 #: transports/RGS_enterprise/rgs_base.py:177
-#| msgid "Report"
 msgid "RGS port"
 msgstr "Port RGS"
 
@@ -10500,19 +10262,14 @@ msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "Port d&#39;écoute de l&#39;émetteur RGS (par défaut : 42966)"
 
 #: transports/RGS_enterprise/rgstunnel.py:38
-#| msgid "Tunneled"
 msgid "RGS Tunneled"
 msgstr "Tunnel RGS"
 
 #: transports/RGS_enterprise/rgstunnel.py:40
-#| msgid "RDP Protocol. Tunneled connection."
 msgid "HP RGS Protocol. Tunneled connection."
 msgstr "Protocole HP RGS. Connexion tunnelisée."
 
 #: transports/RGS_enterprise/rgstunnel.py:51
-#| msgid ""
-#| "If enabled, the certificate of tunnel server will be verified "
-#| "(recommended)."
 msgid ""
 "If enabled, the certificate of the tunnel server will be verified "
 "(recommended)."
@@ -10763,27 +10520,22 @@ msgid "macOS client (Apple Silicon)"
 msgstr "Client macOS (Apple Silicon)"
 
 #: web/util/udsclients_info.py:32
-#| msgid "Mac OS X client"
 msgid "macOS client (Intel)"
 msgstr "Client macOS (Intel)"
 
 #: web/util/udsclients_info.py:38
-#| msgid "Debian based Linux client"
 msgid "Debian 12 / Ubuntu based Linux client"
 msgstr "Client Linux basé sur Debian 12 / Ubuntu"
 
 #: web/util/udsclients_info.py:44
-#| msgid "Debian based Linux client"
 msgid "Debian 13 / Ubuntu based Linux client"
 msgstr "Client Linux basé sur Debian 13 / Ubuntu"
 
 #: web/util/udsclients_info.py:50
-#| msgid "Debian based Linux client"
 msgid "Fedora / RHEL based Linux client (RPM)"
 msgstr "Client Linux basé sur Fedora/RHEL (RPM)"
 
 #: web/util/udsclients_info.py:56
-#| msgid "Debian based Linux client"
 msgid "openSUSE / SLES based Linux client (RPM)"
 msgstr "Client Linux basé sur openSUSE / SLES (RPM)"
 

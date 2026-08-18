@@ -34,6 +34,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2015
 # Javier <jgonzalez@virtualcable.es>, 2025
 # Lanmedia Comunicaciones <jetxaniz@lanmedia.es>, 2016-2017,2020
@@ -41,7 +42,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:04+0200\n"
+"POT-Creation-Date: 2026-08-18 17:27+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2025\n"
 "Language-Team: Basque (http://app.transifex.com/openuds/openuds/language/"
@@ -130,7 +131,6 @@ msgid "Elapsed timemark"
 msgstr "Denboraldi iraunkorra"
 
 #: REST/methods/accountsusage.py:145
-#| msgid "Page not found"
 msgid "Account usage not found: {}"
 msgstr "Kontuaren erabilera ez da aurkitu: {}"
 
@@ -269,12 +269,10 @@ msgid "None"
 msgstr "Bat ere"
 
 #: REST/methods/authenticators.py:317 REST/methods/authenticators.py:373
-#| msgid "Invalid value for {}"
 msgid "Invalid type: {}"
 msgstr "Mota baliogabea: {}"
 
 #: REST/methods/authenticators.py:339
-#| msgid "Operation not supported"
 msgid "Search not supported"
 msgstr "Bilaketa ez da onartzen"
 
@@ -308,7 +306,6 @@ msgid "Frequency"
 msgstr "Maiztasuna"
 
 #: REST/methods/calendarrules.py:128
-#| msgid "Intervals:"
 msgid "Interval"
 msgstr "Tartea"
 
@@ -317,7 +314,6 @@ msgid "Duration"
 msgstr "Iraupena"
 
 #: REST/methods/calendarrules.py:172 REST/methods/calendarrules.py:189
-#| msgid "Username not found"
 msgid "Calendar rule not found: {}"
 msgstr "Egutegiko araua ez da aurkitu: {}"
 
@@ -406,9 +402,6 @@ msgid "Service pool load balancing policy"
 msgstr "Zerbitzu-taldearen karga orekatzeko politika"
 
 #: REST/methods/meta_pools.py:246
-#| msgid ""
-#| "Service pool High Availability policy. If enabled and a pool fails, it "
-#| "will be restarted in another pool. Enable with care!."
 msgid ""
 "Service pool High Availability policy. If enabled and a pool fails, it will "
 "be restarted in another pool. Enable with care!"
@@ -450,13 +443,11 @@ msgid "Transport selection policy"
 msgstr "Garraioak hautatzeko politika"
 
 #: REST/methods/meta_service_pools.py:115
-#| msgid "Method not found in {}: {}"
 msgid "Meta pool member not found: {}"
 msgstr "Meta multzoko kidea ez da aurkitu: {}"
 
 #: REST/methods/meta_service_pools.py:121
 #, python-brace-format
-#| msgid "Servers of {0}"
 msgid "Members of {0}"
 msgstr "{0}-eko kideak"
 
@@ -467,13 +458,11 @@ msgid "Enabled"
 msgstr "Gaituta"
 
 #: REST/methods/meta_service_pools.py:209
-#| msgid "User service not found"
 msgid "User service not found: {}"
 msgstr "Erabiltzaile zerbitzua ez da aurkitu: {}"
 
 #: REST/methods/meta_service_pools.py:259
 #, python-brace-format
-#| msgid "Assigned services"
 msgid "Assigned services to {0}"
 msgstr "{0}ri esleitutako zerbitzuak"
 
@@ -556,7 +545,6 @@ msgid "Item is not removable"
 msgstr "Elementua ez da ezabagarria"
 
 #: REST/methods/meta_service_pools.py:314
-#| msgid "Invalid request received"
 msgid "Invalid item specified"
 msgstr "Zehaztutako elementu baliogabea"
 
@@ -565,7 +553,6 @@ msgid "Multi Factor Authentication"
 msgstr "Faktore anitzeko autentifikazioa"
 
 #: REST/methods/mfas.py:110
-#| msgid "Method not found in {}: {}"
 msgid "MFA type not found: {}"
 msgstr "MFA mota ez da aurkitu: {}"
 
@@ -610,9 +597,6 @@ msgid "Network range"
 msgstr "Sare eremua"
 
 #: REST/methods/networks.py:99
-#| msgid ""
-#| "Network range. Accepts most network definitions formats (range, subnet, "
-#| "host, etc..."
 msgid ""
 "Network range. Accepts most network definitions formats (range, subnet, "
 "host, etc...)"
@@ -630,7 +614,6 @@ msgid "Level"
 msgstr "Maila"
 
 #: REST/methods/notifiers.py:112
-#| msgid "Method not found in {}: {}"
 msgid "Notifier type not found: {}"
 msgstr "Jakinarazle mota ez da aurkitu: {}"
 
@@ -643,7 +626,6 @@ msgid "If checked, this notifier will be used"
 msgstr "Hautatzen bada, jakinarazle hau erabiliko da"
 
 #: REST/methods/op_calendars.py:107
-#| msgid "Access limited by calendar"
 msgid "Access calendars"
 msgstr "Sartu egutegietara"
 
@@ -652,7 +634,6 @@ msgid "Calendar"
 msgstr "Egutegia"
 
 #: REST/methods/op_calendars.py:126
-#| msgid "Method not found in {}: {}"
 msgid "Calendar not found: {}"
 msgstr "Egutegia ez da aurkitu: {}"
 
@@ -689,7 +670,6 @@ msgid "Last execution"
 msgstr "Azken exekuzioa"
 
 #: REST/methods/op_calendars.py:246
-#| msgid "Invalid value for {}"
 msgid "Invalid action: {}"
 msgstr "Ekintza baliogabea: {}"
 
@@ -707,7 +687,6 @@ msgstr ""
 "Ezinezkoa da OS Manager ezabatzea pool-zerbitzuak erlazionaturik dituenean"
 
 #: REST/methods/osmanagers.py:154
-#| msgid "Method not found in {}: {}"
 msgid "OS Manager type not found: {}"
 msgstr "Ez da aurkitu OS kudeatzaile mota: {}"
 
@@ -779,7 +758,6 @@ msgid "Registered Servers"
 msgstr "Erregistratutako zerbitzariak"
 
 #: REST/methods/servers_management.py:97
-#| msgid "MFA"
 msgid "MAC"
 msgstr "MAC"
 
@@ -868,7 +846,6 @@ msgid "Server to include on group"
 msgstr "Taldean sartzeko zerbitzaria"
 
 #: REST/methods/servers_management.py:297
-#| msgid "Invalid MAC address used: \"{}\""
 msgid "Invalid MAC address"
 msgstr "MAC helbide baliogabea"
 
@@ -923,7 +900,6 @@ msgstr ""
 "balioa."
 
 #: REST/methods/servers_management.py:586
-#| msgid "Users list"
 msgid "Users weight"
 msgstr "Erabiltzaileen pisua"
 
@@ -934,7 +910,6 @@ msgstr ""
 "arteko balioa."
 
 #: REST/methods/servers_management.py:592
-#| msgid "Unexpected error"
 msgid "Max expected users"
 msgstr "Espero diren erabiltzaile maximoak"
 
@@ -948,13 +923,11 @@ msgid "Service not found"
 msgstr "Ez da aurkitu Zerbitzurik"
 
 #: REST/methods/services.py:280
-#| msgid "Preparing service"
 msgid "Error deleting service"
 msgstr "Errorea zerbitzua ezabatzean"
 
 #: REST/methods/services.py:288
 #, python-brace-format
-#| msgid "Services of {}"
 msgid "Services of {0}"
 msgstr "{0}-ren zerbitzuak"
 
@@ -963,7 +936,6 @@ msgid "Services Pools"
 msgstr "Pool-Zerbitzua"
 
 #: REST/methods/services.py:296
-#| msgid "Service counting method"
 msgid "Counting method"
 msgstr "Zenbaketa metodoa"
 
@@ -980,7 +952,6 @@ msgid "Kind of service counting for calculating if MAX is reached"
 msgstr "MAX iristen bada kalkulatzeko zerbitzu mota"
 
 #: REST/methods/services.py:390
-#| msgid "Error testing connection"
 msgid "Error getting logs"
 msgstr "Errorea erregistroak lortzean"
 
@@ -1041,12 +1012,10 @@ msgid "OS Manager used as base of this service pool"
 msgstr "Zerbitzu-pool honen oinarritzat erabilitako OS Manager"
 
 #: REST/methods/services_pools.py:502
-#| msgid "Publish date"
 msgid "Publish on save"
 msgstr "Gordetzean argitaratu"
 
 #: REST/methods/services_pools.py:504
-#| msgid "If active, the user will be allowed to reset the service"
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
@@ -1106,7 +1075,6 @@ msgid "Services to keep in L2 cache"
 msgstr "L2 cache-an edukitzeko zerbitzuak"
 
 #: REST/methods/services_pools.py:561
-#| msgid "Services kept in cache of level2 for improved service generation"
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr ""
 "Zerbitzuak 2. mailako cachean gordeta daude zerbitzuen esleipen hobea "
@@ -1129,7 +1097,6 @@ msgid "Show transports"
 msgstr "Garraioak erakutsi"
 
 #: REST/methods/services_pools.py:576
-#| msgid "If active, transport will be visible for users"
 msgid "If active, transports will be shown to users"
 msgstr "Aktibo badaude, garraioak erabiltzaileei erakutsiko zaizkie"
 
@@ -1138,10 +1105,6 @@ msgid "Allow removal by users"
 msgstr "Baimendu erabiltzaileek kentzea"
 
 #: REST/methods/services_pools.py:584
-#| msgid ""
-#| "If active, the user will be allowed to remove the service \"manually\". "
-#| "Be careful with this, because the user will have the \"power\" to delete "
-#| "it's own service"
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
@@ -1180,7 +1143,6 @@ msgid "Account"
 msgstr "Kontua"
 
 #: REST/methods/services_pools.py:606
-#| msgid "Account associated to this service pool"
 msgid "Account used for this service pool"
 msgstr "Zerbitzu multzo honetarako erabilitako kontua"
 
@@ -1223,7 +1185,6 @@ msgid "User service not found"
 msgstr "Ez da Erabiltzaile-zerbitzurik aurkitu"
 
 #: REST/methods/services_usage.py:173
-#| msgid "Base name for this user services"
 msgid "Error getting user service"
 msgstr "Errorea erabiltzaile-zerbitzua lortzean"
 
@@ -1232,7 +1193,6 @@ msgid "Devices"
 msgstr "Gailuak"
 
 #: REST/methods/transports.py:119
-#| msgid "Transport not found"
 msgid "Transport type not found: {}"
 msgstr "Garraio mota ez da aurkitu: {}"
 
@@ -1269,7 +1229,6 @@ msgstr "Etiketak letrak, zenbakiak, \":\" eta \"-\" bakarrik izan behar ditu"
 
 #: REST/methods/tunnels_management.py:127
 #: REST/methods/tunnels_management.py:266
-#| msgid "Tunnel server to use"
 msgid "Tunnel server not found"
 msgstr "Tuneleko zerbitzaria ez da aurkitu"
 
@@ -1315,12 +1274,10 @@ msgid "Cannot delete a tunnel server group with transports attached"
 msgstr "Ezin da ezabatu garraioak erantsita dituen tunel zerbitzari talde bat"
 
 #: REST/methods/tunnels_management.py:269
-#| msgid "No user assigned to service"
 msgid "Error assigning server"
 msgstr "Errorea zerbitzaria esleitzean"
 
 #: REST/methods/user_services.py:246
-#| msgid "Assigned services"
 msgid "Assigned Services"
 msgstr "Esleitutako zerbitzuak"
 
@@ -1334,17 +1291,14 @@ msgid "Status date"
 msgstr "Egoera data"
 
 #: REST/methods/user_services.py:279 REST/methods/user_services.py:417
-#| msgid "Base name for this user services"
 msgid "Error getting user service logs"
 msgstr "Errorea erabiltzaileen zerbitzuen erregistroak lortzean"
 
 #: REST/methods/user_services.py:292
-#| msgid "Base name for this user services"
 msgid "Error deleting user service"
 msgstr "Errorea erabiltzaile-zerbitzua ezabatzean"
 
 #: REST/methods/user_services.py:387
-#| msgid "Cached services"
 msgid "Cached Services"
 msgstr "Cachean gordetako zerbitzuak"
 
@@ -1365,13 +1319,13 @@ msgid "Assigned transports"
 msgstr "Esleitutako garraioak"
 
 #: REST/methods/user_services.py:632
-#| msgid "Account associated to this service pool"
 msgid "Access denied to publish service pool"
 msgstr "Argitalpen zerbitzu multzorako sarbidea ukatuta"
 
 #: REST/methods/user_services.py:656
 msgid "Access denied to cancel service pool publication"
-msgstr "Zerbitzu multzoaren argitalpena bertan behera ukatzeko sarbidea ukatuta"
+msgstr ""
+"Zerbitzu multzoaren argitalpena bertan behera ukatzeko sarbidea ukatuta"
 
 #: REST/methods/user_services.py:703
 msgid "Publications"
@@ -1444,7 +1398,6 @@ msgid "User not found"
 msgstr "Ez da erabiltzailea aurkitu"
 
 #: REST/methods/users_groups.py:213
-#| msgid "Error testing connection"
 msgid "Error getting user"
 msgstr "Errorea erabiltzailea lortzean"
 
@@ -1493,7 +1446,6 @@ msgid "UDS Meta Group"
 msgstr "UDS Meta-taldea"
 
 #: REST/methods/users_groups.py:485
-#| msgid "Group not found"
 msgid "Group type not found"
 msgstr "Talde mota ez da aurkitu"
 
@@ -1510,7 +1462,6 @@ msgid "Error deleting group"
 msgstr "Taldea ezabatzean errore bat gertatu da."
 
 #: REST/model/base.py:171
-#| msgid "Operation not supported"
 msgid "Testing not supported"
 msgstr "Probak ez dira onartzen"
 
@@ -1756,7 +1707,6 @@ msgid "Error testing connection"
 msgstr "Errorea konexioa probatzean"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:564
-#| msgid "Connection params seem correct, test was succesfully executed"
 msgid "Connection params seem correct, test was successfully executed"
 msgstr "Konexio parametroak zuzenak dirudite, proba arrakastaz exekutatu da"
 
@@ -1868,7 +1818,6 @@ msgstr ""
 "kanpoko erabiltzailerik ez)"
 
 #: auths/AzureAD_enterprise/authenticator.py:183
-#| msgid "Allowed Devices"
 msgid "Allowed Tenants"
 msgstr "Baimendutako maizterrak"
 
@@ -1944,7 +1893,6 @@ msgid "Attribute from where to extract the MFA code"
 msgstr "Atributua nondik atera MFA kodea"
 
 #: auths/EDirectory_enterprise/authenticator.py:126
-#| msgid "Active Directory"
 msgid "eDirectory"
 msgstr "eDirectory"
 
@@ -2640,7 +2588,6 @@ msgid "No attributes returned from IdP"
 msgstr "Ez da atributurik itzuli IdPtik"
 
 #: auths/Sample/sample_auth.py:84
-#| msgid "SimpleLDAP"
 msgid "Sample"
 msgstr "Lagina"
 
@@ -2736,17 +2683,14 @@ msgid "Can't locate any group with the membership attribute specified"
 msgstr "Ezin da edozein taldek aurkitu zehaztutako partaidetza atributuarekin"
 
 #: auths/X509Certificate/authenticator.py:79
-#| msgid "Certificate"
 msgid "X509 Certificate"
 msgstr "X509 Ziurtagiria"
 
 #: auths/X509Certificate/authenticator.py:81
-#| msgid "Use Message Authenticator"
 msgid "X509 Client Certificate Authenticator"
 msgstr "X509 Bezero Ziurtagiri Autentifikatzailea"
 
 #: auths/X509Certificate/authenticator.py:89
-#| msgid "Certificate"
 msgid "CA Certificate"
 msgstr "CA ziurtagiria"
 
@@ -2759,7 +2703,6 @@ msgstr ""
 "agintaritza ziurtagiria."
 
 #: auths/X509Certificate/authenticator.py:96
-#| msgid "Issuer"
 msgid "Trusted Issuer"
 msgstr "Jaulkitzaile fidagarria"
 
@@ -2794,7 +2737,6 @@ msgstr ""
 
 #: auths/X509Certificate/authenticator.py:127
 #: auths/X509Certificate/authenticator.py:135
-#| msgid "Action"
 msgid "Revocation"
 msgstr "Ezeztapena"
 
@@ -2811,7 +2753,6 @@ msgstr ""
 "ez da inplementatu)."
 
 #: auths/X509Certificate/authenticator.py:141
-#| msgid "Remote"
 msgid "Remote URL"
 msgstr "Urruneko URLa"
 
@@ -2831,7 +2772,6 @@ msgid "Bridge"
 msgstr "Zubia"
 
 #: auths/X509Certificate/authenticator.py:153
-#| msgid "Secret"
 msgid "Shared Secret"
 msgstr "Sekretu partekatua"
 
@@ -2844,7 +2784,6 @@ msgstr ""
 "sinatzeko."
 
 #: auths/X509Certificate/authenticator.py:166
-#| msgid "Certificate is empty"
 msgid "CA Certificate is required"
 msgstr "CA ziurtagiria beharrezkoa da"
 
@@ -2861,12 +2800,10 @@ msgid "The provided certificate does not have Basic Constraints extension"
 msgstr "Emandako ziurtagiriak ez du Basic Constraints luzapenik."
 
 #: auths/X509Certificate/authenticator.py:180
-#| msgid "Invalid certificate"
 msgid "Invalid PEM-encoded certificate: {}"
 msgstr "PEM kodeketa duen ziurtagiri baliogabea: {}"
 
 #: auths/X509Certificate/authenticator.py:193
-#| msgid "Group name is required"
 msgid "Shared Secret is required"
 msgstr "Sekretu partekatua beharrezkoa da"
 
@@ -2903,7 +2840,6 @@ msgid "Anonymous"
 msgstr "Anonimoa"
 
 #: core/consts/__init__.py:150
-#| msgid "Unknown error"
 msgid "Unknown role"
 msgstr "Rol ezezaguna"
 
@@ -3853,7 +3789,6 @@ msgstr ""
 "gabeko denbora segundotan"
 
 #: core/util/config.py:768
-#| msgid "Delay in seconds between checks for commands"
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr ""
 "Administrazio-orrialdeen birkargatze automatikoen arteko denbora segundotan"
@@ -3896,12 +3831,10 @@ msgid "Enable or disable add favorite services feature"
 msgstr "Gaitu edo desgaitu gogoko zerbitzuak gehitzeko funtzioa"
 
 #: core/util/config.py:827
-#| msgid "Allow Smartcards"
 msgid "Allow animated backgrounds"
 msgstr "Onartu atzeko plano animatuak"
 
 #: core/util/config.py:833
-#| msgid "Multi Factor Authentication"
 msgid "Allow biometric authentication"
 msgstr "Baimendu autentifikazio biometrikoa"
 
@@ -3960,12 +3893,10 @@ msgstr ""
 "birkargatzeko. 60 balio lehenetsia gomendatzen da."
 
 #: core/util/fields.py:161
-#| msgid "Tunnel wait time"
 msgid "Startup wait time"
 msgstr "Abiarazteko itxaronaldi"
 
 #: core/util/fields.py:166
-#| msgid "Timeout in seconds to wait for the publication to be visible"
 msgid ""
 "Time, in seconds, to wait for first tunnel connection to be established."
 msgstr ""
@@ -4145,7 +4076,6 @@ msgid "Yes, try to put it back to cache"
 msgstr "Bai, saiatu berriro cachean jartzen"
 
 #: core/util/fields.py:496
-#| msgid "Yes, try to put it back to cache"
 msgid "Yes, try to put it back to cache and recover snapshot"
 msgstr "Bai, saiatu berriro cachean sartzen eta berreskuratzen argazkia"
 
@@ -4285,7 +4215,6 @@ msgstr ""
 "dituzte."
 
 #: core/util/security_checks.py:201
-#| msgid "SAML Authenticator"
 msgid "No SAML authenticators configured."
 msgstr "Ez dago SAML autentifikatzailerik konfiguratuta."
 
@@ -4315,7 +4244,6 @@ msgid "Associated Image"
 msgstr "Erlazionaturiko irudia"
 
 #: core/util/ui.py:381
-#| msgid "Select a project"
 msgid "Select an image"
 msgstr "Hautatu irudi bat"
 
@@ -4397,15 +4325,14 @@ msgid "{} is not a valid MAC address"
 msgstr "{} ez da baliozko MAC helbide bat"
 
 #: core/util/validators.py:411
-#| msgid "{} is not a valid MAC range"
 msgid "{} is not a valid MAC range: start must be lower than end"
 msgstr ""
 "{} ez da MAC barruti baliozkoa: hasiera amaiera baino txikiagoa izan behar da"
 
 #: core/util/validators.py:416
-#| msgid "{} is not a valid MAC range"
 msgid "{} is not a valid MAC range: start must be greater than 0"
-msgstr "{} ez da MAC barruti baliozkoa: hasiera 0 baino handiagoa izan behar da"
+msgstr ""
+"{} ez da MAC barruti baliozkoa: hasiera 0 baino handiagoa izan behar da"
 
 #: core/util/validators.py:423
 msgid "{} is not a valid MAC range"
@@ -5033,22 +4960,14 @@ msgid "You have been unsubscribed from notifications"
 msgstr "Jakinarazpenetarako harpidetza kendu zaizu"
 
 #: osmanagers/LinuxOsManager/__init__.py:54
-#| msgid ""
-#| "UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= "
-#| "3.9)</b>"
 msgid "UDS Actor for Debian 12 / Ubuntu based Linux machines"
 msgstr "UDS aktorea Debian 12 / Ubuntu oinarritutako Linux makinetarako"
 
 #: osmanagers/LinuxOsManager/__init__.py:61
-#| msgid ""
-#| "UDS Actor for Debian, Ubuntu, ... Linux machines <b>(Requires python >= "
-#| "3.9)</b>"
 msgid "UDS Actor for Debian 13 / Ubuntu based Linux machines"
 msgstr "UDS aktorea Debian 13 / Ubuntu oinarritutako Linux makinetarako"
 
 #: osmanagers/LinuxOsManager/__init__.py:68
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Debian 12 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
@@ -5057,8 +4976,6 @@ msgstr ""
 "estatikoetarako SOILIK erabiltzen da."
 
 #: osmanagers/LinuxOsManager/__init__.py:75
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Debian 13 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
@@ -5067,18 +4984,14 @@ msgstr ""
 "estatikoetarako SOILIK erabiltzen da."
 
 #: osmanagers/LinuxOsManager/__init__.py:82
-#| msgid "UDS Actor for windows machines"
 msgid "UDS Actor for Fedora / RHEL based Linux machines"
 msgstr "UDS aktorea Fedora / RHEL oinarritutako Linux makinetarako"
 
 #: osmanagers/LinuxOsManager/__init__.py:89
-#| msgid "UDS Actor for windows machines"
 msgid "UDS Actor for openSUSE / SLES based Linux machines"
 msgstr "UDS aktorea openSUSE / SLES oinarritutako Linux makinetarako"
 
 #: osmanagers/LinuxOsManager/__init__.py:96
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for Fedora / RHEL based Linux machines. Used ONLY for static "
 "machines."
@@ -5087,8 +5000,6 @@ msgstr ""
 "estatikoetarako SOILIK erabiltzen da."
 
 #: osmanagers/LinuxOsManager/__init__.py:103
-#| msgid ""
-#| "UDS Actor for Unmanaged windows machines. Used ONLY for static machines."
 msgid ""
 "UDS Actor for openSUSE / SLES based Linux machines. Used ONLY for static "
 "machines."
@@ -5539,7 +5450,6 @@ msgstr "Txostena emateko zerbitzu hornitzailea"
 #: reports/lists/admin_activity.py:61 reports/lists/admin_activity.py:166
 #: templates/uds/reports/lists/admin-activity.html:4
 #: templates/uds/reports/lists/admin-activity.html:6
-#| msgid "System Administrator"
 msgid "Administrators activity"
 msgstr "Administratzaileen jarduera"
 
@@ -5564,7 +5474,6 @@ msgid "finish date for report"
 msgstr "txostena amaitzeko data"
 
 #: reports/lists/admin_activity.py:83
-#| msgid "Token endpoint"
 msgid "Top endpoints per user"
 msgstr "Erabiltzaile bakoitzeko amaiera-puntu nagusiak"
 
@@ -5575,37 +5484,31 @@ msgstr ""
 "kopurua"
 
 #: reports/lists/admin_activity.py:167
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of admin activity"
 msgstr "UDS administrazio-jardueraren txostena"
 
 #: reports/lists/admin_activity.py:188
 #: templates/uds/reports/lists/admin-activity.html:16
-#| msgid "Request"
 msgid "Requests"
 msgstr "Eskaerak"
 
 #: reports/lists/admin_activity.py:189
 #: templates/uds/reports/lists/admin-activity.html:17
 #: templates/uds/reports/stats/userservice-errors.html:18
-#| msgid "Error"
 msgid "Errors"
 msgstr "Erroreak"
 
 #: reports/lists/admin_activity.py:190
-#| msgid "Error"
 msgid "Error %"
 msgstr "Akatsen ehunekoa"
 
 #: reports/lists/admin_activity.py:191
 #: templates/uds/reports/lists/admin-activity.html:19
-#| msgid "Last execution"
 msgid "Last seen"
 msgstr "Azken aldiz ikusia"
 
 #: reports/lists/admin_activity.py:192
 #: templates/uds/reports/lists/admin-activity.html:20
-#| msgid "Token endpoint"
 msgid "Top endpoints"
 msgstr "Amaiera-puntu nagusiak"
 
@@ -5647,7 +5550,6 @@ msgstr ""
 "hutsegiteak barne)"
 
 #: reports/lists/failed_logins.py:71
-#| msgid "Authenticator for report"
 msgid "Authenticator to filter (or all)"
 msgstr "Autentifikatzailea iragazteko (edo guztiak)"
 
@@ -5656,7 +5558,6 @@ msgid "ALL AUTHENTICATORS"
 msgstr "AUTENTIZATZAILE GUZTIAK"
 
 #: reports/lists/failed_logins.py:194
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of failed logins"
 msgstr "Saio-hasiera hutsalen UDS txostena"
 
@@ -5668,7 +5569,6 @@ msgstr "Mezua"
 #: reports/lists/inactive_users.py:49
 #: templates/uds/reports/lists/inactive-users.html:4
 #: templates/uds/reports/lists/inactive-users.html:6
-#| msgid "Inactive"
 msgid "Inactive users"
 msgstr "Erabiltzaile inaktiboak"
 
@@ -5677,19 +5577,18 @@ msgid "Lists users that have not accessed UDS in N days"
 msgstr "N egunetan UDSra sartu ez diren erabiltzaileak zerrendatzen ditu"
 
 #: reports/lists/inactive_users.py:56
-#| msgid "Authenticator from where to list users"
 msgid "Authenticator from where to list users (or all)"
 msgstr "Erabiltzaileak (edo guztiak) zerrendatzeko autentifikatzailea"
 
 #: reports/lists/inactive_users.py:62 reports/lists/inactive_users.py:188
 #: templates/uds/reports/lists/inactive-users.html:19
-#| msgid "Inactive"
 msgid "Inactive days"
 msgstr "Egun inaktiboak"
 
 #: reports/lists/inactive_users.py:67
 msgid "Threshold of days without access to consider a user inactive"
-msgstr "Erabiltzaile bat inaktibotzat jotzeko sarbiderik gabeko egunen atalasea"
+msgstr ""
+"Erabiltzaile bat inaktibotzat jotzeko sarbiderik gabeko egunen atalasea"
 
 #: reports/lists/inactive_users.py:73
 msgid "Include never-accessed"
@@ -5704,7 +5603,6 @@ msgid "Inactive users (>{} days)"
 msgstr "Erabiltzaile inaktiboak (&gt;{} egun)"
 
 #: reports/lists/inactive_users.py:148
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of inactive users"
 msgstr "Erabiltzaile inaktiboen UDS txostena"
 
@@ -5794,7 +5692,8 @@ msgstr "Multzoaren cachearen eraginkortasuna"
 
 #: reports/stats/cache_efficiency.py:49
 msgid "Cache hit/miss ratio per pool over a period"
-msgstr "Denbora-tarte batean multzo bakoitzeko cache-arrakasta/hutsegite ratioa"
+msgstr ""
+"Denbora-tarte batean multzo bakoitzeko cache-arrakasta/hutsegite ratioa"
 
 #: reports/stats/cache_efficiency.py:58 reports/stats/peak_concurrency.py:62
 #: reports/stats/pool_saturation.py:59 reports/stats/pools_performance.py:76
@@ -5805,7 +5704,6 @@ msgid "ALL POOLS"
 msgstr "POOL GUZTIAK"
 
 #: reports/stats/cache_efficiency.py:127
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of cache efficiency"
 msgstr "UDS cachearen eraginkortasunaren txostena"
 
@@ -5842,7 +5740,6 @@ msgstr ""
 "bertsioen banaketa"
 
 #: reports/stats/client_platforms.py:123
-#| msgid "Report of user access to platform by date"
 msgid "UDS Report of client platforms"
 msgstr "Bezero plataformen UDS txostena"
 
@@ -5863,7 +5760,6 @@ msgstr "Nabigatzailea"
 #: templates/uds/reports/stats/client-platforms.html:38
 #: templates/uds/reports/stats/client-platforms.html:60
 #: templates/uds/reports/stats/session-duration.html:18
-#| msgid "Account"
 msgid "Count"
 msgstr "Zenbaketa"
 
@@ -5879,7 +5775,6 @@ msgstr ""
 "tarte batean"
 
 #: reports/stats/peak_concurrency.py:157
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of peak concurrent sessions"
 msgstr "Aldibereko saioen puntako UDS txostena"
 
@@ -5909,7 +5804,6 @@ msgstr "Sesioak"
 #: reports/stats/pool_saturation.py:49 reports/stats/pool_saturation.py:132
 #: templates/uds/reports/stats/pool-saturation.html:4
 #: templates/uds/reports/stats/pool-saturation.html:6
-#| msgid "Duration"
 msgid "Pool saturation"
 msgstr "Igerilekuaren saturazioa"
 
@@ -5924,7 +5818,6 @@ msgid "Unlimited"
 msgstr "Mugagabea"
 
 #: reports/stats/pool_saturation.py:133
-#| msgid "UDS Report Summary of pools usage"
 msgid "UDS Report of pool saturation"
 msgstr "Igerilekuen saturazioaren UDS txostena"
 
@@ -5937,12 +5830,10 @@ msgstr "Batazbeztekoa"
 
 #: reports/stats/pool_saturation.py:157
 #: templates/uds/reports/stats/pool-saturation.html:19
-#| msgid "Mac"
 msgid "Max"
 msgstr "Max"
 
 #: reports/stats/pool_saturation.py:158
-#| msgid "Duration"
 msgid "Saturation %"
 msgstr "Saturazio ehunekoa"
 
@@ -6075,7 +5966,6 @@ msgstr "Batez besteko denbora (segundotan)"
 #: reports/stats/session_duration.py:60 reports/stats/session_duration.py:143
 #: templates/uds/reports/stats/session-duration.html:4
 #: templates/uds/reports/stats/session-duration.html:6
-#| msgid "Session duration"
 msgid "Session duration histogram"
 msgstr "Saioaren iraupenaren histograma"
 
@@ -6084,7 +5974,6 @@ msgid "Distribution of session durations across selected pools"
 msgstr "Saioen iraupenen banaketa hautatutako multzoetan"
 
 #: reports/stats/session_duration.py:144
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of session durations"
 msgstr "Saioen iraupenen UDS txostena"
 
@@ -6112,7 +6001,6 @@ msgid "Top N"
 msgstr "Goiko I"
 
 #: reports/stats/top_users.py:71
-#| msgid "Number of intervals"
 msgid "Number of users to show"
 msgstr "Erakutsi beharreko erabiltzaile kopurua"
 
@@ -6121,7 +6009,6 @@ msgid "Sort by"
 msgstr "Ordenatu honen arabera"
 
 #: reports/stats/top_users.py:78
-#| msgid "Starting date"
 msgid "Sorting criterion"
 msgstr "Ordenazio irizpidea"
 
@@ -6134,17 +6021,14 @@ msgid "Total time"
 msgstr "Denbora osoa"
 
 #: reports/stats/top_users.py:149
-#| msgid "Pools usage by users"
 msgid "Top users by usage"
 msgstr "Erabiltzaile nagusiak erabileraren arabera"
 
 #: reports/stats/top_users.py:150
-#| msgid "Date for report"
 msgid "UDS Top users report"
 msgstr "UDS erabiltzaile nagusien txostena"
 
 #: reports/stats/top_users.py:173 templates/uds/reports/stats/top-users.html:17
-#| msgid "Pools usage on a day"
 msgid "Pools used"
 msgstr "Erabilitako igerilekuak"
 
@@ -6155,7 +6039,6 @@ msgstr "Batez besteko orduak/saioa"
 #: reports/stats/tunnel_usage.py:55 reports/stats/tunnel_usage.py:141
 #: templates/uds/reports/stats/tunnel-usage.html:4
 #: templates/uds/reports/stats/tunnel-usage.html:6
-#| msgid "Tunnels"
 msgid "Tunnel usage"
 msgstr "Tunelaren erabilera"
 
@@ -6164,7 +6047,6 @@ msgid "Tunnel sessions opened/closed, durations and bytes per pool"
 msgstr "Ireki/itxitako tunel saioak, iraupenak eta byteak multzo bakoitzeko"
 
 #: reports/stats/tunnel_usage.py:142
-#| msgid "UDS Report of users usage"
 msgid "UDS Report of tunnel usage"
 msgstr "Tunelaren erabileraren UDS txostena"
 
@@ -6197,7 +6079,6 @@ msgstr "Jasotako byteak"
 #: reports/stats/usage_by_group.py:59
 #: templates/uds/reports/stats/usage-by-group.html:4
 #: templates/uds/reports/stats/usage-by-group.html:6
-#| msgid "Assigned groups"
 msgid "Usage by group"
 msgstr "Taldeka erabilitako erabilera"
 
@@ -6212,28 +6093,23 @@ msgid "Authenticator whose groups will be used to aggregate"
 msgstr "Autentifikatzailea, zeinaren taldeak agregatzeko erabiliko diren"
 
 #: reports/stats/usage_by_group.py:167
-#| msgid "Cached services"
 msgid "(unmatched users)"
 msgstr "(erabiltzaile parekatugabeak)"
 
 #: reports/stats/usage_by_group.py:190
-#| msgid "Usages of {0}"
 msgid "Usage by group of {}"
 msgstr "{} taldearen erabilera"
 
 #: reports/stats/usage_by_group.py:191
-#| msgid "UDS Report of users usage"
 msgid "UDS Report of usage by group"
 msgstr "Taldeka erabilitako UDS txostena"
 
 #: reports/stats/usage_by_group.py:214
 #: templates/uds/reports/stats/usage-by-group.html:17
-#| msgid "Distinct Users"
 msgid "Distinct users"
 msgstr "Erabiltzaile desberdinak"
 
 #: reports/stats/usage_by_group.py:216
-#| msgid "Server Version"
 msgid "Average per session"
 msgstr "Batez beste saio bakoitzeko"
 
@@ -6314,7 +6190,6 @@ msgstr "Erabiltzaileentzako sarbideen UDS txostena"
 #: reports/stats/userservice_errors.py:125
 #: templates/uds/reports/stats/userservice-errors.html:4
 #: templates/uds/reports/stats/userservice-errors.html:6
-#| msgid "User services"
 msgid "User services in error"
 msgstr "Erabiltzaileen zerbitzuak akatsetan"
 
@@ -6325,24 +6200,20 @@ msgstr ""
 "denbora-tarte batean zehar"
 
 #: reports/stats/userservice_errors.py:126
-#| msgid "UDS Report of users in {}"
 msgid "UDS Report of user services in error"
 msgstr "Erabiltzaile zerbitzuen UDS txosten okerra"
 
 #: reports/stats/userservice_errors.py:147
 #: templates/uds/reports/stats/userservice-errors.html:36
-#| msgid "User services"
 msgid "User service"
 msgstr "Erabiltzaileentzako zerbitzua"
 
 #: reports/stats/userservice_errors.py:150
-#| msgid "State"
 msgid "OS State"
 msgstr "Sistema eragilearen egoera"
 
 #: reports/stats/userservice_errors.py:151
 #: templates/uds/reports/stats/userservice-errors.html:40
-#| msgid "Status date"
 msgid "State date"
 msgstr "Estatuko data"
 
@@ -6573,7 +6444,6 @@ msgid "Security groups for the instances from this service"
 msgstr "Zerbitzu honetako instantzien segurtasun taldeak"
 
 #: services/AWS_enterprise/service.py:133
-#| msgid "Fixed Instances Pool"
 msgid "IAM Instance Profile"
 msgstr "IAM instantziaren profila"
 
@@ -6671,13 +6541,11 @@ msgstr "Zerbitzu honek Azure VM oinarritutako VDI sarbidea eskaintzen du"
 
 #: services/Azure_enterprise/service.py:61
 #: services/Azure_enterprise/service_fixed.py:89
-#| msgid "Resource Group"
 msgid "Resource group"
 msgstr "Baliabide taldea"
 
 #: services/Azure_enterprise/service.py:62
 #: services/Azure_enterprise/service_fixed.py:90
-#| msgid "Resource group container of this VDI service"
 msgid "Resource group for this service"
 msgstr "Zerbitzu honetarako baliabide taldea"
 
@@ -6690,7 +6558,6 @@ msgid "Size for machines created from this service."
 msgstr "Zerbitzu honetatik sortutako makinen tamaina."
 
 #: services/Azure_enterprise/service.py:97
-#| msgid "Region for this service"
 msgid "Network for this service"
 msgstr "Zerbitzu honetarako sarea"
 
@@ -6755,7 +6622,6 @@ msgid "Stop Machine (and deallocates it)"
 msgstr "Gelditu Makina (eta desesleitu egiten du)"
 
 #: services/Google_enterprise/provider.py:41
-#| msgid "Project ID for Google Cloud"
 msgid "Google Cloud"
 msgstr "Google Cloud"
 
@@ -6861,7 +6727,6 @@ msgid "Google Services based on fixed instances."
 msgstr "Instantzia finkoetan oinarritutako Google Zerbitzuak."
 
 #: services/HyperV_enterprise/provider.py:43
-#| msgid "HyperV Clone"
 msgid "HyperV"
 msgstr "HiperV"
 
@@ -7023,7 +6888,6 @@ msgstr ""
 "behar du makinetan."
 
 #: services/HyperV_enterprise/service_gen2.py:51
-#| msgid "HyperV Clone"
 msgid "HyperV Clone Generation 2"
 msgstr "HyperV klonaren 2. belaunaldia"
 
@@ -7101,12 +6965,10 @@ msgstr ""
 "sarbidea ematen du."
 
 #: services/Morpheus_enterprise/service_linked.py:32
-#| msgid "Instance clone"
 msgid "Instance linked clone"
 msgstr "Instantzia lotutako klon bat"
 
 #: services/Morpheus_enterprise/service_linked.py:35
-#| msgid "This service provides access to cloned instances on Morpheus"
 msgid "This service provides access to linked-cloned instances on Morpheus"
 msgstr ""
 "Zerbitzu honek Morpheus-en lotutako klonatutako instantzietarako sarbidea "
@@ -7121,7 +6983,6 @@ msgstr ""
 "da eta lotutako klonentzako oinarrizko disko gisa erabiliko da."
 
 #: services/NutanixPrism_enterprise/provider.py:32
-#| msgid "Prism Central Service"
 msgid "Prism Central"
 msgstr "Prisma Zentrala"
 
@@ -7238,7 +7099,6 @@ msgstr ""
 "instalatuta behar du makinetan."
 
 #: services/Nutanix_enterprise/provider.py:49
-#| msgid "Nutanix Acropolis Service"
 msgid "Nutanix Acropolis"
 msgstr "Nutanix Akropolia"
 
@@ -7471,7 +7331,6 @@ msgid "All Labs"
 msgstr "Labs guztiak"
 
 #: services/OpenGnsys/provider.py:84
-#| msgid "OpenGnsys Host"
 msgid "OpenGnsys"
 msgstr "OpenGnsys"
 
@@ -7586,7 +7445,6 @@ msgstr ""
 "(sistema eragile batzuetan) OpenGnsys bidez saiatuko dira."
 
 #: services/OpenNebula/provider.py:64
-#| msgid "OpenNebula Host"
 msgid "OpenNebula"
 msgstr "OpenNebula"
 
@@ -7668,12 +7526,10 @@ msgid "Size of numeric part for the names of these machines"
 msgstr "Makina horien izenetarako zati numerikoaren tamaina"
 
 #: services/OpenShift/provider.py:66
-#| msgid "Testing Provider"
 msgid "Openshift Provider"
 msgstr "Openshift hornitzailea"
 
 #: services/OpenShift/provider.py:68
-#| msgid "Nutanix based VM provider"
 msgid "Openshift based VMs provider"
 msgstr "Openshift-en oinarritutako VM hornitzailea"
 
@@ -7698,17 +7554,14 @@ msgid "Openshift API URL, e.g. https://api.crc.testing:6443"
 msgstr "Openshift API URLa, adibidez https://api.crc.testing:6443"
 
 #: services/OpenShift/provider.py:94
-#| msgid "User with valid privileges on XenServer"
 msgid "User with valid privileges on Openshift Server"
 msgstr "Openshift zerbitzarian pribilegio baliodunak dituen erabiltzailea"
 
 #: services/OpenShift/provider.py:102
-#| msgid "Password of the user of XenServer"
 msgid "Password of the user of Openshift Server"
 msgstr "Openshift zerbitzariaren erabiltzailearen pasahitza"
 
 #: services/OpenShift/provider.py:109
-#| msgid "Name"
 msgid "Namespace"
 msgstr "Izen-espazioa"
 
@@ -7717,34 +7570,26 @@ msgid "Openshift namespace to use (default: \"default\")"
 msgstr "Erabili beharreko Openshift izen-espazioa (lehenetsia: \"lehenetsia\")"
 
 #: services/OpenShift/service.py:58
-#| msgid "HyperV Clone"
 msgid "VM clone"
 msgstr "Makina birtualaren klon"
 
 #: services/OpenShift/service.py:60
-#| msgid "This service provides access to cloned instances on Morpheus"
 msgid "This service provides access to cloned VMs on Openshift"
 msgstr "Zerbitzu honek Openshift-en klonatutako VMetarako sarbidea ematen du"
 
 #: services/OpenShift/service.py:80
-#| msgid "Base Template"
 msgid "Template VM"
 msgstr "Txantiloi-makina birtuala"
 
 #: services/OpenShift/service.py:81
-#| msgid "Template to use for instances"
 msgid "Template to use for VMs"
 msgstr "Makina birtualetan erabiltzeko txantiloia"
 
 #: services/OpenShift/service_fixed.py:61
-#| msgid "Fixed Machines Pool"
 msgid "Fixed VMs Pool"
 msgstr "Makina birtualen multzo finkoa"
 
 #: services/OpenShift/service_fixed.py:63
-#| msgid ""
-#| "This service provides access to a fixed group of selected instances on "
-#| "Morpheus"
 msgid ""
 "This service provides access to a fixed group of selected VMs on Openshift"
 msgstr ""
@@ -7764,7 +7609,6 @@ msgstr ""
 "zerbitzaria hau ez da UDS-rekin bateragarria."
 
 #: services/OpenStack/provider.py:89
-#| msgid "OpenStack Host"
 msgid "OpenStack"
 msgstr "OpenStack"
 
@@ -7859,7 +7703,6 @@ msgid "Error: {}"
 msgstr "Errorea: {}"
 
 #: services/OpenStack/provider_legacy.py:90
-#| msgid "OpenStack Host"
 msgid "OpenStack LEGACY"
 msgstr "OpenStack-en ONDAREA"
 
@@ -8088,7 +7931,6 @@ msgid " (bound to {})"
 msgstr "(lotua {})"
 
 #: services/Proxmox/provider.py:70
-#| msgid "Proxmox Clone"
 msgid "Proxmox"
 msgstr "Proxmox"
 
@@ -8224,7 +8066,6 @@ msgid "Resource Pool containing base machines"
 msgstr "Base-makinak dituen baliabide-pool-a"
 
 #: services/RDS_enterprise/provider.py:50
-#| msgid "RDP"
 msgid "RDS"
 msgstr "RDS"
 
@@ -8485,7 +8326,6 @@ msgid "RDS Platform Full session desktop service"
 msgstr "RDS Plataforma Saio osoko mahaigaineko zerbitzua"
 
 #: services/ScaleComputing_enterprise/provider.py:38
-#| msgid "Scale Clone"
 msgid "Scale"
 msgstr "Eskala"
 
@@ -8568,7 +8408,6 @@ msgid "Select your vCloud version"
 msgstr "Hautatu zure vCloud bertsioa"
 
 #: services/VCloud_enterprise/provider.py:92
-#| msgid "VCloud Director Platform Provider"
 msgid "VCloud Director"
 msgstr "VCloud zuzendaria"
 
@@ -8656,7 +8495,6 @@ msgid "Remote"
 msgstr "Urrunekoa"
 
 #: services/Vmware_enterprise/provider.py:42
-#| msgid "VMWare VCenter Platform Provider"
 msgid "VMWare VCenter"
 msgstr "VMWare VCenter"
 
@@ -8950,12 +8788,10 @@ msgstr "-tik"
 
 #: templates/uds/reports/lists/admin-activity.html:18
 #, python-format
-#| msgid "Error"
 msgid "Error %%"
 msgstr "Errorea %%"
 
 #: templates/uds/reports/lists/failed-logins.html:13
-#| msgid "Summary of pools usage"
 msgid "Summary by user"
 msgstr "Erabiltzailearen laburpena"
 
@@ -8964,12 +8800,10 @@ msgid "Attempts"
 msgstr "Saiakerak"
 
 #: templates/uds/reports/lists/failed-logins.html:20
-#| msgid "IP"
 msgid "IPs"
 msgstr "IPak"
 
 #: templates/uds/reports/lists/failed-logins.html:21
-#| msgid "Last access"
 msgid "Last attempt"
 msgstr "Azken saiakera"
 
@@ -8980,12 +8814,10 @@ msgid "Detail"
 msgstr "Xehetasuna"
 
 #: templates/uds/reports/lists/inactive-users.html:11
-#| msgid "Load threshold"
 msgid "Threshold"
 msgstr "Atalasea"
 
 #: templates/uds/reports/lists/inactive-users.html:11
-#| msgid "{} days"
 msgid "days"
 msgstr "egunak"
 
@@ -9015,17 +8847,14 @@ msgid "Client platforms"
 msgstr "Bezero plataformak"
 
 #: templates/uds/reports/stats/client-platforms.html:11
-#| msgid "Total Accesses"
 msgid "Total events"
 msgstr "Gertaera guztiak"
 
 #: templates/uds/reports/stats/client-platforms.html:13
-#| msgid "RDS Platform Session"
 msgid "Platforms"
 msgstr "Plataformak"
 
 #: templates/uds/reports/stats/client-platforms.html:33
-#| msgid "Users"
 msgid "Browsers"
 msgstr "Nabigatzaileak"
 
@@ -9035,7 +8864,6 @@ msgstr "Multzo bakoitzeko aldibereko saio maximoak"
 
 #: templates/uds/reports/stats/pool-saturation.html:20
 #, python-format
-#| msgid "Duration"
 msgid "Saturation %%"
 msgstr "Saturazioa %%"
 
@@ -9092,7 +8920,6 @@ msgid "Total accesses"
 msgstr "Sarbide guztira"
 
 #: templates/uds/reports/stats/session-duration.html:13
-#| msgid "Seconds"
 msgid "Avg seconds"
 msgstr "Batez besteko segundoak"
 
@@ -9215,9 +9042,6 @@ msgstr "Esperientzia onena"
 
 #: transports/HTML5RDP/html5rdp.py:108
 #: transports/HTML5RDS_enterprise/html5rds.py:111
-#| msgid ""
-#| "If checked, the wallpaper and themes will be shown on machine (better "
-#| "user experience, more bandwidth)"
 msgid ""
 "If checked, wallpaper, desktop composition and font smoothing will be "
 "enabled (better user experience, more bandwidth)"
@@ -9307,25 +9131,19 @@ msgstr "Gaitu fitxategiak partekatzea"
 
 #: transports/HTML5RDP/html5rdp.py:147
 #: transports/HTML5RDS_enterprise/html5rds.py:156
-#| msgid "Enable clipboard"
 msgid "Allow clipboard"
 msgstr "Arbela baimendu"
 
 #: transports/HTML5RDP/html5rdp.py:149
 #: transports/HTML5RDS_enterprise/html5rds.py:158
-#| msgid "If checked, USB redirection will be allowed."
 msgid "If checked, clipboard redirection will be enabled"
 msgstr "Markatuta badago, arbelaren birbideratzea gaituta egongo da"
 
 #: transports/HTML5RDP/html5rdp.py:155 transports/RDPEmbedded/common.py:220
-#| msgid "Enable webcam"
 msgid "Enable Webcam"
 msgstr "Gaitu webcam-a"
 
 #: transports/HTML5RDP/html5rdp.py:158
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session "
 "(if client browser supports it)"
@@ -9426,7 +9244,6 @@ msgstr "Gainidatzi UDS leihoa eta ordeztu konexioarekin."
 
 #: transports/HTML5RDP/html5rdp.py:234
 #: transports/HTML5RDS_enterprise/html5rds.py:190
-#| msgid "Authenticator"
 msgid "NLA authentication"
 msgstr "NLA autentifikazioa"
 
@@ -9459,7 +9276,6 @@ msgstr "Erabili ataka hau RDP ataka gisa. 3389 balio lehenetsia."
 
 #: transports/HTML5RDP/html5rdp.py:255
 #: transports/HTML5RDS_enterprise/html5rds.py:211
-#| msgid "Session duration"
 msgid "Session Quality"
 msgstr "Saioaren Kalitatea"
 
@@ -9473,25 +9289,21 @@ msgstr ""
 
 #: transports/HTML5RDP/html5rdp.py:260
 #: transports/HTML5RDS_enterprise/html5rds.py:218
-#| msgid "Pools Performance"
 msgid "Ultra Performance"
 msgstr "Ultra Errendimendua"
 
 #: transports/HTML5RDP/html5rdp.py:261
 #: transports/HTML5RDS_enterprise/html5rds.py:219
-#| msgid "Pools Performance"
 msgid "Performance"
 msgstr "Errendimendua"
 
 #: transports/HTML5RDP/html5rdp.py:262
 #: transports/HTML5RDS_enterprise/html5rds.py:220
-#| msgid "Balancing"
 msgid "Balanced"
 msgstr "Orekatua"
 
 #: transports/HTML5RDP/html5rdp.py:263
 #: transports/HTML5RDS_enterprise/html5rds.py:221
-#| msgid "Quality"
 msgid "High Quality"
 msgstr "Kalitate handikoa"
 
@@ -9533,12 +9345,10 @@ msgstr ""
 "du."
 
 #: transports/HTML5RDS_enterprise/html5rds.py:249
-#| msgid "Window Size"
 msgid "Window Title"
 msgstr "Leihoaren izenburua"
 
 #: transports/HTML5RDS_enterprise/html5rds.py:252
-#| msgid "Text of the email. If empty, a default text will be used"
 msgid "Window title for the session. If empty, a default one will be used."
 msgstr ""
 "Saioaren leihoaren izenburua. Hutsik badago, lehenetsitako bat erabiliko da."
@@ -9572,7 +9382,6 @@ msgid "Max Upload Size (MB)"
 msgstr "Gehienezko igoera-tamaina (MB)"
 
 #: transports/HTML5SSH/html5ssh.py:90
-#| msgid "Maximum number of allowed services (0 means no limit)"
 msgid ""
 "Maximum size of uploaded files in MB. 0 means no limit (or server default)."
 msgstr ""
@@ -9580,7 +9389,6 @@ msgstr ""
 "zerbitzariaren lehenetsia) esan nahi du."
 
 #: transports/HTML5SSH/html5ssh.py:103
-#| msgid "Allow upload only"
 msgid "Allow both upload and download"
 msgstr "Baimendu igoera eta deskarga"
 
@@ -9628,14 +9436,10 @@ msgstr ""
 "segundotan. Ematen ez bada, ez da mezurik bidaliko."
 
 #: transports/HTML5SSH/html5ssh.py:146
-#| msgid "Enable clipboard"
 msgid "Enable Clipboard"
 msgstr "Gaitu arbela"
 
 #: transports/HTML5SSH/html5ssh.py:148
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid ""
 "If checked, the clipboard will be redirected to remote session (if client "
 "browser supports it)"
@@ -9652,12 +9456,10 @@ msgid "Always"
 msgstr "Beti"
 
 #: transports/HTML5SSH/html5ssh.py:161
-#| msgid "Override Base"
 msgid "Overwrite"
 msgstr "Gainidatzi"
 
 #: transports/HTML5SSH/html5ssh.py:164
-#| msgid "If checked, this transport will allow the use of user printers"
 msgid "If true, the transport will always open in a new window"
 msgstr "Egia bada, garraioa beti leiho berri batean irekiko da"
 
@@ -9667,7 +9469,6 @@ msgid "Amazon DCV"
 msgstr "Amazon DCV"
 
 #: transports/NICEDCV_enterprise/nicedcv.py:40
-#| msgid "NICE DCV Protocol. Direct connection."
 msgid "Amazon DCV Protocol. Direct connection."
 msgstr "Amazon DCV protokoloa. Konexio zuzena."
 
@@ -9694,7 +9495,6 @@ msgstr ""
 "(Windows bezeroetan bakarrik funtzionatzen du)."
 
 #: transports/NICEDCV_enterprise/nicedcvtunnel.py:44
-#| msgid "NICE DCV Protocol. Tunneled connection."
 msgid "Amazon DCV Protocol. Tunneled connection."
 msgstr "Amazon DCV protokoloa. Tunel bidezko konexioa."
 
@@ -9776,7 +9576,6 @@ msgstr ""
 "konektatzeko adibidez beharrezkoa da)"
 
 #: transports/RDP/rdp_base.py:104 transports/RDPEmbedded/common.py:167
-#| msgid "Use SSL"
 msgid "Use SSO"
 msgstr "Erabili SSO"
 
@@ -10084,13 +9883,11 @@ msgstr "RDP protokoloa. Tunel bidez egindako konexioa."
 
 #: transports/RDPEmbedded/common.py:176
 #: transports/RDSEmbedded_enterprise/common.py:152
-#| msgid "Use SSL"
 msgid "Use NLA"
 msgstr "Erabili NLA"
 
 #: transports/RDPEmbedded/common.py:179
 #: transports/RDSEmbedded_enterprise/common.py:156
-#| msgid "If checked, nested virtualization will be enabled for this service"
 msgid ""
 "If checked, Network Level Authentication will be used for RDP connections"
 msgstr ""
@@ -10098,24 +9895,15 @@ msgstr ""
 "konexioetarako"
 
 #: transports/RDPEmbedded/common.py:208
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid "If checked, the audio will be redirected to the local machine"
 msgstr "Markatuta badago, audioa tokiko makinara birbideratuko da"
 
 #: transports/RDPEmbedded/common.py:215
-#| msgid ""
-#| "If checked, the microphone will be redirected to remote session (if "
-#| "client browser supports it)"
 msgid ""
 "If checked, the local microphone will be redirected to the remote session"
 msgstr "Markatuta badago, tokiko mikrofonoa urruneko saiora birbideratuko da"
 
 #: transports/RDPEmbedded/common.py:223
-#| msgid ""
-#| "If checked, the microphone will be redirected to remote session (if "
-#| "client browser supports it)"
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session"
 msgstr ""
@@ -10127,34 +9915,30 @@ msgstr "Web kameraren irudiaren kalitatea (1-100). Lehenespenez 80."
 
 #: transports/RDPEmbedded/common.py:243
 msgid "Maximum webcam frames per second (1-60). Defaults to 15."
-msgstr "Webcam-aren fotograma kopuru maximoa segundoko (1-60). Lehenespenez 15."
+msgstr ""
+"Webcam-aren fotograma kopuru maximoa segundoko (1-60). Lehenespenez 15."
 
 #: transports/RDPEmbedded/direct.py:60 transports/RDPEmbedded/tunnel.py:63
 msgid "Embedded RDP Client"
 msgstr "Txertatutako RDP bezeroa"
 
 #: transports/RDPEmbedded/direct.py:62
-#| msgid "RDP Protocol. Direct connection."
 msgid "RDP Embedded Client. Direct connection."
 msgstr "RDP Txertatutako Bezeroa. Konexio zuzena."
 
 #: transports/RDPEmbedded/tunnel.py:65
-#| msgid "RDP Protocol. Tunneled connection."
 msgid "RDP Embedded Client. Tunneled connection."
 msgstr "RDP Txertatutako Bezeroa. Tunel bidezko konexioa."
 
 #: transports/RDSEmbedded_enterprise/common.py:185
-#| msgid "If checked, USB redirection will be allowed."
 msgid "If checked, printer redirection will be enabled"
 msgstr "Markatuta badago, inprimagailuaren birbideratzea gaituta egongo da"
 
 #: transports/RDSEmbedded_enterprise/common.py:203
-#| msgid "Enable Microphone"
 msgid "Enable microphone"
 msgstr "Gaitu mikrofonoa"
 
 #: transports/RDSEmbedded_enterprise/common.py:206
-#| msgid "If checked, sound will be redirected."
 msgid "If checked, microphone will be redirected."
 msgstr "Markatuta badago, mikrofonoa birbideratuko da."
 
@@ -10164,8 +9948,6 @@ msgid "Window state"
 msgstr "Leihoaren egoera"
 
 #: transports/RDSEmbedded_enterprise/common.py:224
-#| msgid ""
-#| "UDS Will try to execute the applicaiton with the window in this state"
 msgid "UDS Will try to execute the application with the window in this state"
 msgstr "UDS-k aplikazioa exekutatzen saiatuko da leihoa egoera honetan duela."
 
@@ -10185,12 +9967,10 @@ msgid "Embedded RDS Client"
 msgstr "Txertatutako RDS bezeroa"
 
 #: transports/RDSEmbedded_enterprise/direct.py:60
-#| msgid "RDS access using RDP for vApps. Direct connection."
 msgid "RDS Embedded Client for vApps. Direct connection."
 msgstr "RDS Txertatutako Bezeroa vApp-etarako. Konexio zuzena."
 
 #: transports/RDSEmbedded_enterprise/tunnel.py:67
-#| msgid "RDS access using RDP for vApps. Tunneled connection."
 msgid "RDS Embedded Client for vApps. Tunneled connection."
 msgstr "RDS Txertatutako Bezeroa vAppetarako. Tunel bidezko konexioa."
 
@@ -10234,28 +10014,22 @@ msgid "RGS"
 msgstr "RGS"
 
 #: transports/RGS_enterprise/rgs.py:37
-#| msgid "RDP Protocol. Direct connection."
 msgid "HP RGS Protocol. Direct connection."
 msgstr "HP RGS protokoloa. Konexio zuzena."
 
 #: transports/RGS_enterprise/rgs_base.py:72
-#| msgid "If checked, the credentials used to connect will be emtpy"
 msgid "If checked, the credentials used to connect will be empty"
 msgstr ""
 "Markatuta badago, konektatzeko erabilitako kredentzialak hutsik egongo dira"
 
 #: transports/RGS_enterprise/rgs_base.py:91
-#| msgid ""
-#| "If not empty, this domain will be always used as credential (used as "
-#| "DOMAIN\\user)"
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr ""
-"Hutsik ez badago, domeinu hau beti erabiliko da kredentzial gisa (DOMAIN\\e"
-"rabiltzailea)"
+"Hutsik ez badago, domeinu hau beti erabiliko da kredentzial gisa "
+"(DOMAIN\\erabiltzailea)"
 
 #: transports/RGS_enterprise/rgs_base.py:99
-#| msgid "Image Gallery"
 msgid "Image quality"
 msgstr "Irudiaren kalitatea"
 
@@ -10307,40 +10081,32 @@ msgstr ""
 "konektatzean"
 
 #: transports/RGS_enterprise/rgs_base.py:153
-#| msgid "Redirection endpoint"
 msgid "Redirect audio"
 msgstr "Birbideratu audioa"
 
 #: transports/RGS_enterprise/rgs_base.py:155
-#| msgid ""
-#| "If checked, the audio will be redirected to remote session (if client "
-#| "browser supports it)"
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "Markatuta badago, audioa hartzailera birbideratuko da."
 
 #: transports/RGS_enterprise/rgs_base.py:160
-#| msgid "Redirection endpoint"
 msgid "Redirect microphone"
 msgstr "Birbideratu mikrofonoa"
 
 #: transports/RGS_enterprise/rgs_base.py:162
-#| msgid ""
-#| "If checked, the name of the subnets will be used instead of the names of "
-#| "networks"
 msgid "If checked, the microphone input will be streamed to the Sender"
-msgstr "Markatuta badago, mikrofonoaren sarrera igorleari erreproduzituko zaio."
+msgstr ""
+"Markatuta badago, mikrofonoaren sarrera igorleari erreproduzituko zaio."
 
 #: transports/RGS_enterprise/rgs_base.py:167
 msgid "Redirect USB"
 msgstr "Birbideratu USBa"
 
 #: transports/RGS_enterprise/rgs_base.py:169
-#| msgid "If checked, webcam will be redirected (ONLY Windows)."
 msgid "If checked, USB devices will be redirected to the Sender session"
-msgstr "Markatuta badago, USB gailuak Bidaltzailearen saiora birbideratuko dira"
+msgstr ""
+"Markatuta badago, USB gailuak Bidaltzailearen saiora birbideratuko dira"
 
 #: transports/RGS_enterprise/rgs_base.py:177
-#| msgid "Report"
 msgid "RGS port"
 msgstr "RGS ataka"
 
@@ -10349,19 +10115,14 @@ msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "RGS bidaltzailearen entzule-ataka (lehenetsia 42966 da)"
 
 #: transports/RGS_enterprise/rgstunnel.py:38
-#| msgid "Tunneled"
 msgid "RGS Tunneled"
 msgstr "RGS tunela"
 
 #: transports/RGS_enterprise/rgstunnel.py:40
-#| msgid "RDP Protocol. Tunneled connection."
 msgid "HP RGS Protocol. Tunneled connection."
 msgstr "HP RGS protokoloa. Tunel bidezko konexioa."
 
 #: transports/RGS_enterprise/rgstunnel.py:51
-#| msgid ""
-#| "If enabled, the certificate of tunnel server will be verified "
-#| "(recommended)."
 msgid ""
 "If enabled, the certificate of the tunnel server will be verified "
 "(recommended)."
@@ -10609,27 +10370,22 @@ msgid "macOS client (Apple Silicon)"
 msgstr "macOS bezeroa (Apple Silicon)"
 
 #: web/util/udsclients_info.py:32
-#| msgid "Mac OS X client"
 msgid "macOS client (Intel)"
 msgstr "macOS bezeroa (Intel)"
 
 #: web/util/udsclients_info.py:38
-#| msgid "Debian based Linux client"
 msgid "Debian 12 / Ubuntu based Linux client"
 msgstr "Debian 12 / Ubuntu oinarritutako Linux bezeroa"
 
 #: web/util/udsclients_info.py:44
-#| msgid "Debian based Linux client"
 msgid "Debian 13 / Ubuntu based Linux client"
 msgstr "Debian 13 / Ubuntu oinarritutako Linux bezeroa"
 
 #: web/util/udsclients_info.py:50
-#| msgid "Debian based Linux client"
 msgid "Fedora / RHEL based Linux client (RPM)"
 msgstr "Fedora / RHEL oinarritutako Linux bezeroa (RPM)"
 
 #: web/util/udsclients_info.py:56
-#| msgid "Debian based Linux client"
 msgid "openSUSE / SLES based Linux client (RPM)"
 msgstr "openSUSE / SLES oinarritutako Linux bezeroa (RPM)"
 
