@@ -35,6 +35,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2018
 # albert clar <albert.clar@uib.cat>, 2017-2018,2020-2021
 # Andrés Schumann <aschumann@virtualcable.es>, 2025
@@ -43,7 +44,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2020,2025\n"
 "Language-Team: Catalan (http://app.transifex.com/openuds/openuds/language/"
@@ -3227,69 +3228,22 @@ msgstr ""
 "els punts finals /actor/ no tenen límit de velocitat per a testimonis "
 "incorrectes."
 
-#: core/security/checks/global_config.py:177
-msgid ""
-"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
-"weakens IP-based logging and blocking. Only acceptable on trusted "
-"deployments."
-msgstr ""
-"HONOR_CLIENT_IP_NOTIFY està activat: els clients poden autoinformar de la "
-"seva IP, cosa que debilita el registre i el bloqueig basats en IP. Només "
-"s&#39;accepta en implementacions de confiança."
-
-#: core/security/checks/global_config.py:184
-msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
-msgstr ""
-"HONOR_CLIENT_IP_NOTIFY està desactivat: la IP detectada pel servidor és "
-"autoritària."
-
-#: core/security/checks/global_config.py:194
-#, python-brace-format
-msgid "SESSION_DURATION_ADMIN={value}s"
-msgstr "SESSION_DURATION_ADMIN= {value} s"
-
-#: core/security/checks/global_config.py:196
-#, python-brace-format
-msgid "SESSION_DURATION_USER={value}s"
-msgstr "SESSION_DURATION_USER= {value} s"
-
-#: core/security/checks/global_config.py:201
-#, python-brace-format
-#| msgid "Session duration histogram"
-msgid "Session durations exceed 12h: {issues}."
-msgstr "La durada de les sessions supera les 12 h: {issues} ."
-
-#: core/security/checks/global_config.py:206
-msgid "Admin and user session durations are within 12h."
-msgstr ""
-"La durada de les sessions d&#39;administrador i d&#39;usuari és de 12 hores."
-
-#: core/security/checks/global_config.py:215
+#: core/security/checks/global_config.py:176
 msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
 msgstr ""
 "EXPERIMENTAL_FEATURES està activat: s&#39;ha exposat una funcionalitat no "
 "compatible."
 
-#: core/security/checks/global_config.py:220
+#: core/security/checks/global_config.py:181
 msgid "EXPERIMENTAL_FEATURES is off."
 msgstr "EXPERIMENTAL_FEATURES està desactivat."
 
-#: core/security/checks/global_config.py:229
-msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
-msgstr ""
-"ENFORCE_ZERO_TRUST està activat: la redirecció de contrasenya està "
-"desactivada."
-
-#: core/security/checks/global_config.py:234
-msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
-msgstr "ENFORCE_ZERO_TRUST està desactivat (redirecció de contrasenya permesa)."
-
-#: core/security/checks/global_config.py:243
+#: core/security/checks/global_config.py:190
 msgid "Immutable audit log is enabled (TSA-signed)."
 msgstr ""
 "El registre d&#39;auditoria immutable està habilitat (signat per la TSA)."
 
-#: core/security/checks/global_config.py:249
+#: core/security/checks/global_config.py:196
 msgid ""
 "IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
 "tamper-evident log (src/uds/models/immutable_log.py)."
@@ -3298,7 +3252,7 @@ msgstr ""
 "esdeveniments d&#39;administrador no s&#39;escriuen al registre de seguretat "
 "(src/uds/models/immutable_log.py)."
 
-#: core/security/checks/logs.py:98
+#: core/security/checks/logs.py:99
 #, python-brace-format
 msgid ""
 "{count} failed login attempts in the last 24h: a brute force may be in "
@@ -3307,33 +3261,34 @@ msgstr ""
 "{count} intents d&#39;inici de sessió fallits en les darreres 24 hores: pot "
 "ser que hi hagi una força bruta en curs."
 
-#: core/security/checks/logs.py:104
+#: core/security/checks/logs.py:105
 #, python-brace-format
 msgid "{count} failed login attempts in the last 24h."
-msgstr "{count} intents d&#39;inici de sessió fallits en les darreres 24 hores."
+msgstr ""
+"{count} intents d&#39;inici de sessió fallits en les darreres 24 hores."
 
-#: core/security/checks/logs.py:109
+#: core/security/checks/logs.py:110
 #, python-brace-format
 msgid "{count} failed login attempts in the last 24h (within normal range)."
 msgstr ""
 "{count} intents d&#39;inici de sessió fallits en les darreres 24 hores (dins "
 "del rang normal)."
 
-#: core/security/checks/logs.py:128
+#: core/security/checks/logs.py:129
 #, python-brace-format
 msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
 msgstr ""
 "Patrons de força bruta detectats per l&#39;adreça IP d&#39;origen en les "
 "darreres 24 hores: {top} ."
 
-#: core/security/checks/logs.py:133
+#: core/security/checks/logs.py:134
 #, python-brace-format
 msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
 msgstr ""
 "Cap IP supera {threshold} intents d&#39;inici de sessió fallits en les "
 "darreres 24 hores."
 
-#: core/security/checks/logs.py:154
+#: core/security/checks/logs.py:155
 #, python-brace-format
 msgid ""
 "{count} account(s) were temporarily blocked in the last 24h: an attacker may "
@@ -3345,11 +3300,12 @@ msgstr ""
 "un client mal configurat ho està tornant a intentar amb credencials "
 "obsoletes."
 
-#: core/security/checks/logs.py:162
+#: core/security/checks/logs.py:163
 msgid "No accounts were temporarily blocked in the last 24h."
-msgstr "No s&#39;ha bloquejat temporalment cap compte en les darreres 24 hores."
+msgstr ""
+"No s&#39;ha bloquejat temporalment cap compte en les darreres 24 hores."
 
-#: core/security/checks/logs.py:181
+#: core/security/checks/logs.py:182
 #, python-brace-format
 msgid ""
 "{count} internal ERROR entries in the last 24h: check uds.log / "
@@ -3359,26 +3315,14 @@ msgstr ""
 "uds.log / services.log / workers.log per detectar proveïdors amb errors o "
 "tempestes 5xx."
 
-#: core/security/checks/logs.py:188
+#: core/security/checks/logs.py:189
 #, python-brace-format
 msgid "{count} internal ERROR entries in the last 24h (within normal range)."
 msgstr ""
 "{count} entrades d&#39;ERROR internes en les darreres 24 hores (dins del "
 "rang normal)."
 
-#: core/security/checks/logs.py:205
-#, python-brace-format
-msgid "{count} bot-denial(s) in the last 24h."
-msgstr "{count} denegació(ns) de bots en les darreres 24 hores."
-
-#: core/security/checks/logs.py:223
-#, python-brace-format
-msgid "{count} broker-visible Forbidden response(s) in the last 24h."
-msgstr ""
-"{count} resposta(es) prohibida(es) visible(s) pel broker en les darreres 24 "
-"hores."
-
-#: core/security/checks/models.py:72
+#: core/security/checks/models.py:69
 #, python-brace-format
 msgid ""
 "SAML assertions are not required to be signed on: {unsigned}. Unsigned "
@@ -3387,16 +3331,16 @@ msgstr ""
 "No cal iniciar sessió per a les assercions SAML: {unsigned}. Les assercions "
 "sense signar es poden falsificar contra un IdP mal configurat."
 
-#: core/security/checks/models.py:80
+#: core/security/checks/models.py:77
 msgid "All SAML authenticators require signed assertions or messages."
 msgstr ""
 "Tots els autenticadors SAML requereixen assercions o missatges signats."
 
-#: core/security/checks/models.py:85
+#: core/security/checks/models.py:82
 msgid "No SAML authenticators configured."
 msgstr "No hi ha cap autenticador SAML configurat."
 
-#: core/security/checks/models.py:114
+#: core/security/checks/models.py:111
 #, python-brace-format
 msgid ""
 "Service pools with actors still using the legacy uuid token flow: "
@@ -3406,17 +3350,16 @@ msgstr ""
 "UUID antic: {affected}. Reinicialitzeu els actors afectats per rotar-los al "
 "token nou."
 
-#: core/security/checks/models.py:121
+#: core/security/checks/models.py:118
 msgid "No user services are using the legacy uuid actor token flow."
 msgstr ""
 "Cap servei d&#39;usuari utilitza el flux de tokens d&#39;actor uuid antic."
 
-#: core/security/checks/models.py:131
-#| msgid "No SAML authenticators configured."
+#: core/security/checks/models.py:128
 msgid "No authenticators configured (nothing to enforce MFA on)."
 msgstr "No hi ha cap autenticador configurat (res per aplicar l&#39;MFA)."
 
-#: core/security/checks/models.py:138
+#: core/security/checks/models.py:135
 #, python-brace-format
 msgid ""
 "No authenticator has MFA configured: {names}. Assign at least one MFA per "
@@ -3425,13 +3368,13 @@ msgstr ""
 "Cap autenticador té configurat l&#39;MFA: {names} . Assigneu com a mínim un "
 "MFA per autenticador."
 
-#: core/security/checks/models.py:145
+#: core/security/checks/models.py:142
 #, python-brace-format
 msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
 msgstr ""
 "Cobertura d&#39;MFA: {with_mfa} / {total} autenticadors tenen MFA assignat."
 
-#: core/security/checks/models.py:191
+#: core/security/checks/models.py:188
 #, python-brace-format
 msgid ""
 "{n} server certificate(s) have expired: {names}. Renew and rotate the "
@@ -3440,59 +3383,40 @@ msgstr ""
 "{n} certificat(s) de servidor han caducat: {names} . Renoveu i roteu els "
 "servidors afectats."
 
-#: core/security/checks/models.py:199
+#: core/security/checks/models.py:196
 #, python-brace-format
 msgid "{n} server certificate(s) expire within 30 days: {names}."
 msgstr "{n} certificat(s) de servidor caduquen en 30 dies: {names} ."
 
-#: core/security/checks/models.py:206
+#: core/security/checks/models.py:203
 msgid "No server certificates expire within the next 30 days."
 msgstr "Cap certificat de servidor caduca en els propers 30 dies."
 
-#: core/security/checks/models.py:223
-#| msgid "No LDAP servers configured"
-msgid "No staff/admin users configured."
-msgstr "No s&#39;han configurat usuaris de personal/administrador."
-
-#: core/security/checks/models.py:232
-#, python-brace-format
-msgid "Staff account hygiene: {details}."
-msgstr "Higiene del compte del personal: {details} ."
-
-#: core/security/checks/models.py:261
-#, python-brace-format
-msgid "Transports reachable from any source: {names}."
-msgstr "Transports accessibles des de qualsevol origen: {names} ."
-
-#: core/security/checks/models.py:266 core/security/checks/models.py:271
-msgid "All transports are restricted by at least one network."
-msgstr "Tots els transports estan restringits per almenys una xarxa."
-
-#: core/security/checks/models.py:288
+#: core/security/checks/models.py:220
 #, python-brace-format
 msgid "{n} service pool(s) are currently restrained: {names}."
 msgstr "Actualment hi ha restringits {n} grups de serveis: {names} ."
 
-#: core/security/checks/models.py:293
+#: core/security/checks/models.py:225
 msgid "No service pools are currently restrained."
 msgstr "Actualment no hi ha cap grup de serveis restringit."
 
-#: core/security/checks/runner.py:94
+#: core/security/checks/runner.py:77
 #, python-brace-format
 msgid "Check could not be evaluated: {error}"
 msgstr "No s&#39;ha pogut avaluar el xec: {error}"
 
-#: core/security/checks/settings.py:59
+#: core/security/checks/settings.py:61
 #, python-brace-format
 msgid "Security cookies/headers are disabled: {missing}."
 msgstr "Les galetes/capçaleres de seguretat estan desactivades: {missing}."
 
-#: core/security/checks/settings.py:64
+#: core/security/checks/settings.py:66
 msgid "Session/security cookies and enhanced security are enabled."
 msgstr ""
 "Les galetes de sessió/seguretat i la seguretat millorada estan habilitades."
 
-#: core/security/checks/settings.py:78
+#: core/security/checks/settings.py:80
 #, python-brace-format
 msgid ""
 "Production debug switches are on: {problems}. Disable both in production."
@@ -3500,11 +3424,11 @@ msgstr ""
 "Els interruptors de depuració de producció estan activats: {problems} . "
 "Desactiveu-los tots dos en producció."
 
-#: core/security/checks/settings.py:85
+#: core/security/checks/settings.py:87
 msgid "DEBUG and PROFILING are both off."
 msgstr "DEBUG i PROFILING estan desactivats."
 
-#: core/security/checks/settings.py:94
+#: core/security/checks/settings.py:96
 msgid ""
 "settings.SECRET_KEY is the shipped sample value: session tokens can be "
 "forged."
@@ -3512,11 +3436,11 @@ msgstr ""
 "settings.SECRET_KEY és el valor de mostra enviat: els tokens de sessió es "
 "poden falsificar."
 
-#: core/security/checks/settings.py:99
+#: core/security/checks/settings.py:101
 msgid "settings.SECRET_KEY has been rotated."
 msgstr "settings.SECRET_KEY s&#39;ha rotat."
 
-#: core/security/checks/settings.py:111
+#: core/security/checks/settings.py:113
 msgid ""
 "settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
 "secrets."
@@ -3524,11 +3448,11 @@ msgstr ""
 "settings.RSA_KEY és el valor de mostra enviat: qualsevol pot desxifrar els "
 "secrets del broker."
 
-#: core/security/checks/settings.py:116
+#: core/security/checks/settings.py:118
 msgid "settings.RSA_KEY has been rotated."
 msgstr "settings.RSA_KEY s&#39;ha rotat."
 
-#: core/security/checks/settings.py:127
+#: core/security/checks/settings.py:129
 msgid ""
 "django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
 "request forgery is not mitigated at the framework level."
@@ -3537,11 +3461,11 @@ msgstr ""
 "falsificació de sol·licituds entre llocs no es mitiga a nivell de marc de "
 "treball."
 
-#: core/security/checks/settings.py:134
+#: core/security/checks/settings.py:136
 msgid "django.middleware.csrf.CsrfViewMiddleware is active."
 msgstr "django.middleware.csrf.CsrfViewMiddleware està actiu."
 
-#: core/security/checks/settings.py:150
+#: core/security/checks/settings.py:152
 msgid ""
 "SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
 "statement with bound values is being written to log/sql.log on disk."
@@ -3550,7 +3474,7 @@ msgstr ""
 "està desactivat: totes les instruccions SQL amb valors vinculats "
 "s&#39;escriuen a log/sql.log al disc."
 
-#: core/security/checks/settings.py:157
+#: core/security/checks/settings.py:159
 msgid ""
 "SQL logger 'django.db.backends' is not writing bound SQL to disk in "
 "production."
@@ -3558,62 +3482,16 @@ msgstr ""
 "El registrador SQL &#39;django.db.backends&#39; no escriu SQL vinculat al "
 "disc en producció."
 
-#: core/security/checks/settings.py:172
+#: core/security/checks/settings.py:174
 msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
 msgstr ""
 "El registrador arrel o &#39;uds&#39; es troba a DEBUG en producció "
 "(registres detallats al disc)."
 
-#: core/security/checks/settings.py:177
+#: core/security/checks/settings.py:179
 msgid "Root and 'uds' loggers are above DEBUG in production."
 msgstr ""
 "Els registradors Root i &#39;uds&#39; estan per sobre de DEBUG en producció."
-
-#: core/security/checks/settings.py:190
-msgid ""
-"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
-"silently fail. Operators will not receive ERROR-level alerts by mail."
-msgstr ""
-"EMAIL_BACKEND no està configurat: les notificacions per correu electrònic i "
-"&#39;mail_admins&#39; fallen silenciosament. Els operadors no rebran alertes "
-"de nivell ERROR per correu."
-
-#: core/security/checks/settings.py:197
-msgid "EMAIL_BACKEND is configured."
-msgstr "EMAIL_BACKEND està configurat."
-
-#: core/security/checks/settings.py:210
-msgid ""
-"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
-"any local user can read or poison the cache unless a SASL/TLS username is "
-"configured."
-msgstr ""
-"CACHES[&#39;memory&#39;] LOCATION= {location!r} és accessible des de fora de "
-"l&#39;amfitrió: qualsevol usuari local pot llegir o enverinar la memòria cau "
-"tret que es configure un nom d&#39;usuari SASL/TLS."
-
-#: core/security/checks/settings.py:218
-msgid "CACHES['memory'] is bound to localhost (or absent)."
-msgstr "CACHES[&#39;memory&#39;] està vinculat a localhost (o absent)."
-
-#: core/security/checks/settings.py:234
-#, python-brace-format
-msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
-msgstr "SECURE_HSTS_SECONDS està definit ( {seconds} s)."
-
-#: core/security/checks/settings.py:241
-msgid ""
-"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
-"0: no HSTS header is emitted on HTTPS responses."
-msgstr ""
-"El broker té HTTPS al davant (SECURE_PROXY_SSL_HEADER) però "
-"SECURE_HSTS_SECONDS és 0: no s&#39;emet cap capçalera HSTS a les respostes "
-"HTTPS."
-
-#: core/security/checks/settings.py:248
-msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
-msgstr ""
-"L&#39;HSTS no està configurat; sembla que el broker no té HTTPS com a front."
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73

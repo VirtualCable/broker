@@ -35,11 +35,12 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Japanese (http://app.transifex.com/openuds/openuds/language/"
@@ -3151,77 +3152,32 @@ msgstr "ログイン時のセキュリティ強化設定値は推奨範囲内で
 
 #: core/security/checks/global_config.py:159
 msgid "Actor failure blocking is enabled (BLOCK_ACTOR_FAILURES)."
-msgstr "アクター障害によるブロックが有効になっています (BLOCK_ACTOR_FAILURES)。"
+msgstr ""
+"アクター障害によるブロックが有効になっています (BLOCK_ACTOR_FAILURES)。"
 
 #: core/security/checks/global_config.py:165
 msgid ""
 "Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints "
 "have no rate limit on bad tokens."
 msgstr ""
-"アクター障害のブロックが無効になっています (BLOCK_ACTOR_FAILURES): /actor/ "
-"エンドポイントには、不正なトークンに対するレート制限がありません。"
+"アクター障害のブロックが無効になっています (BLOCK_ACTOR_FAILURES): /actor/ エ"
+"ンドポイントには、不正なトークンに対するレート制限がありません。"
 
-#: core/security/checks/global_config.py:177
-msgid ""
-"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
-"weakens IP-based logging and blocking. Only acceptable on trusted "
-"deployments."
-msgstr ""
-"HONOR_CLIENT_IP_NOTIFY が有効になっています。クライアントは自身の IP アドレス"
-"を自己申告できるため、IP アドレスに基づくログ記録とブロックが弱まります。信頼"
-"できる環境でのみ有効です。"
-
-#: core/security/checks/global_config.py:184
-msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
-msgstr ""
-"HONOR_CLIENT_IP_NOTIFY は無効です。サーバーが検出した IP アドレスが優先されま"
-"す。"
-
-#: core/security/checks/global_config.py:194
-#, python-brace-format
-msgid "SESSION_DURATION_ADMIN={value}s"
-msgstr "SESSION_DURATION_ADMIN= {value}秒"
-
-#: core/security/checks/global_config.py:196
-#, python-brace-format
-msgid "SESSION_DURATION_USER={value}s"
-msgstr "SESSION_DURATION_USER= {value}秒"
-
-#: core/security/checks/global_config.py:201
-#, python-brace-format
-#| msgid "Session duration histogram"
-msgid "Session durations exceed 12h: {issues}."
-msgstr "セッションの継続時間が12時間を超えています: {issues} 。"
-
-#: core/security/checks/global_config.py:206
-msgid "Admin and user session durations are within 12h."
-msgstr "管理者およびユーザーのセッション期間は12時間以内です。"
-
-#: core/security/checks/global_config.py:215
+#: core/security/checks/global_config.py:176
 msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
 msgstr ""
 "EXPERIMENTAL_FEATURES が有効になっています: サポートされていない機能が公開さ"
 "れます。"
 
-#: core/security/checks/global_config.py:220
+#: core/security/checks/global_config.py:181
 msgid "EXPERIMENTAL_FEATURES is off."
 msgstr "実験的機能は無効になっています。"
 
-#: core/security/checks/global_config.py:229
-msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
-msgstr ""
-"ENFORCE_ZERO_TRUST が有効になっています。パスワードのリダイレクトは無効になっ"
-"ています。"
-
-#: core/security/checks/global_config.py:234
-msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
-msgstr "ENFORCE_ZERO_TRUSTは無効です（パスワードリダイレクトが許可されています）。"
-
-#: core/security/checks/global_config.py:243
+#: core/security/checks/global_config.py:190
 msgid "Immutable audit log is enabled (TSA-signed)."
 msgstr "改ざん不可能な監査ログが有効になっています（TSA署名付き）。"
 
-#: core/security/checks/global_config.py:249
+#: core/security/checks/global_config.py:196
 msgid ""
 "IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
 "tamper-evident log (src/uds/models/immutable_log.py)."
@@ -3229,7 +3185,7 @@ msgstr ""
 "IMMUTABLE_LOG_ENABLED は無効です。ログインと管理者イベントは、改ざん防止ログ "
 "(src/uds/models/immutable_log.py) に書き込まれません。"
 
-#: core/security/checks/logs.py:98
+#: core/security/checks/logs.py:99
 #, python-brace-format
 msgid ""
 "{count} failed login attempts in the last 24h: a brute force may be in "
@@ -3238,46 +3194,46 @@ msgstr ""
 "過去24時間で{count}回のログイン試行が失敗しました。ブルートフォース攻撃が行わ"
 "れている可能性があります。"
 
-#: core/security/checks/logs.py:104
+#: core/security/checks/logs.py:105
 #, python-brace-format
 msgid "{count} failed login attempts in the last 24h."
 msgstr "過去24時間におけるログイン失敗回数は{count} 。"
 
-#: core/security/checks/logs.py:109
+#: core/security/checks/logs.py:110
 #, python-brace-format
 msgid "{count} failed login attempts in the last 24h (within normal range)."
 msgstr "過去24時間におけるログイン失敗回数は{count} （正常範囲内）。"
 
-#: core/security/checks/logs.py:128
+#: core/security/checks/logs.py:129
 #, python-brace-format
 msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
 msgstr ""
 "過去 24 時間で送信元 IP によって検出されたブルートフォース攻撃パターン: "
 "{top} 。"
 
-#: core/security/checks/logs.py:133
+#: core/security/checks/logs.py:134
 #, python-brace-format
 msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
 msgstr ""
-"過去24時間において、 {threshold}回を超えるログイン失敗試行回数を超えるIP"
-"アドレスはありません。"
+"過去24時間において、 {threshold}回を超えるログイン失敗試行回数を超えるIPアド"
+"レスはありません。"
 
-#: core/security/checks/logs.py:154
+#: core/security/checks/logs.py:155
 #, python-brace-format
 msgid ""
 "{count} account(s) were temporarily blocked in the last 24h: an attacker may "
 "be cycling credentials under the per-user lockout, or a misconfigured client "
 "is retrying with stale credentials."
 msgstr ""
-"過去24時間で{count}個のアカウントが一時的にブロックされました。攻撃者が"
-"ユーザーごとのロックアウトを利用して認証情報を繰り返し使用しているか、設定"
-"ミスのあるクライアントが古い認証情報で再試行している可能性があります。"
+"過去24時間で{count}個のアカウントが一時的にブロックされました。攻撃者がユー"
+"ザーごとのロックアウトを利用して認証情報を繰り返し使用しているか、設定ミスの"
+"あるクライアントが古い認証情報で再試行している可能性があります。"
 
-#: core/security/checks/logs.py:162
+#: core/security/checks/logs.py:163
 msgid "No accounts were temporarily blocked in the last 24h."
 msgstr "過去24時間で、一時的にブロックされたアカウントはありませんでした。"
 
-#: core/security/checks/logs.py:181
+#: core/security/checks/logs.py:182
 #, python-brace-format
 msgid ""
 "{count} internal ERROR entries in the last 24h: check uds.log / "
@@ -3287,22 +3243,12 @@ msgstr ""
 "害や 5xx エラーの集中発生については、uds.log / services.log / workers.log を"
 "確認してください。"
 
-#: core/security/checks/logs.py:188
+#: core/security/checks/logs.py:189
 #, python-brace-format
 msgid "{count} internal ERROR entries in the last 24h (within normal range)."
 msgstr "過去24時間における内部エラーの発生件数は{count} （正常範囲内）。"
 
-#: core/security/checks/logs.py:205
-#, python-brace-format
-msgid "{count} bot-denial(s) in the last 24h."
-msgstr "過去24時間における{count}件のボット拒否。"
-
-#: core/security/checks/logs.py:223
-#, python-brace-format
-msgid "{count} broker-visible Forbidden response(s) in the last 24h."
-msgstr "過去24時間で{count}件のブローカー可視の禁止された応答がありました。"
-
-#: core/security/checks/models.py:72
+#: core/security/checks/models.py:69
 #, python-brace-format
 msgid ""
 "SAML assertions are not required to be signed on: {unsigned}. Unsigned "
@@ -3311,17 +3257,17 @@ msgstr ""
 "SAMLアサーションには署名が必須ではありません: {unsigned}。署名されていないア"
 "サーションは、設定が誤っているIdPに対して偽造される可能性があります。"
 
-#: core/security/checks/models.py:80
+#: core/security/checks/models.py:77
 msgid "All SAML authenticators require signed assertions or messages."
 msgstr ""
 "すべてのSAML認証システムは、署名付きアサーションまたはメッセージを必要としま"
 "す。"
 
-#: core/security/checks/models.py:85
+#: core/security/checks/models.py:82
 msgid "No SAML authenticators configured."
 msgstr "SAML認証機能は設定されていません。"
 
-#: core/security/checks/models.py:114
+#: core/security/checks/models.py:111
 #, python-brace-format
 msgid ""
 "Service pools with actors still using the legacy uuid token flow: "
@@ -3330,17 +3276,16 @@ msgstr ""
 "レガシーUUIDトークンフローを使用しているアクターを含むサービスプール："
 "{affected}。影響を受けるアクターを再初期化して、新しいトークンに移行します。"
 
-#: core/security/checks/models.py:121
+#: core/security/checks/models.py:118
 msgid "No user services are using the legacy uuid actor token flow."
 msgstr ""
 "従来のUUIDアクタートークンフローを使用しているユーザーサービスはありません。"
 
-#: core/security/checks/models.py:131
-#| msgid "No SAML authenticators configured."
+#: core/security/checks/models.py:128
 msgid "No authenticators configured (nothing to enforce MFA on)."
 msgstr "認証システムが設定されていません（MFAを適用する対象がありません）。"
 
-#: core/security/checks/models.py:138
+#: core/security/checks/models.py:135
 #, python-brace-format
 msgid ""
 "No authenticator has MFA configured: {names}. Assign at least one MFA per "
@@ -3349,14 +3294,14 @@ msgstr ""
 "認証器にMFAが設定されていません： {names} 。認証器ごとに少なくとも1つのMFAを"
 "設定してください。"
 
-#: core/security/checks/models.py:145
+#: core/security/checks/models.py:142
 #, python-brace-format
 msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
 msgstr ""
 "MFAの適用範囲： {with_mfa} / {total}個の認証デバイスにMFAが割り当てられていま"
 "す。"
 
-#: core/security/checks/models.py:191
+#: core/security/checks/models.py:188
 #, python-brace-format
 msgid ""
 "{n} server certificate(s) have expired: {names}. Renew and rotate the "
@@ -3365,59 +3310,40 @@ msgstr ""
 "{n}個のサーバー証明書の有効期限が切れています： {names} 。該当するサーバーの"
 "証明書を更新し、ローテーションしてください。"
 
-#: core/security/checks/models.py:199
+#: core/security/checks/models.py:196
 #, python-brace-format
 msgid "{n} server certificate(s) expire within 30 days: {names}."
 msgstr "{n}個のサーバー証明書が30日以内に期限切れになります： {names} 。"
 
-#: core/security/checks/models.py:206
+#: core/security/checks/models.py:203
 msgid "No server certificates expire within the next 30 days."
 msgstr "今後30日以内に有効期限が切れるサーバー証明書はありません。"
 
-#: core/security/checks/models.py:223
-#| msgid "No LDAP servers configured"
-msgid "No staff/admin users configured."
-msgstr "スタッフ/管理者ユーザーは設定されていません。"
-
-#: core/security/checks/models.py:232
-#, python-brace-format
-msgid "Staff account hygiene: {details}."
-msgstr "スタッフアカウントの衛生状態: {details} 。"
-
-#: core/security/checks/models.py:261
-#, python-brace-format
-msgid "Transports reachable from any source: {names}."
-msgstr "任意のソースからアクセス可能なトランスポート: {names} 。"
-
-#: core/security/checks/models.py:266 core/security/checks/models.py:271
-msgid "All transports are restricted by at least one network."
-msgstr "すべての輸送は、少なくとも1つのネットワークによって制限されます。"
-
-#: core/security/checks/models.py:288
+#: core/security/checks/models.py:220
 #, python-brace-format
 msgid "{n} service pool(s) are currently restrained: {names}."
 msgstr "現在、 {n}サービスプールが制限されています： {names} 。"
 
-#: core/security/checks/models.py:293
+#: core/security/checks/models.py:225
 msgid "No service pools are currently restrained."
 msgstr "現在、サービスプールに制限はかけられていません。"
 
-#: core/security/checks/runner.py:94
+#: core/security/checks/runner.py:77
 #, python-brace-format
 msgid "Check could not be evaluated: {error}"
 msgstr "チェックを評価できませんでした: {error}"
 
-#: core/security/checks/settings.py:59
+#: core/security/checks/settings.py:61
 #, python-brace-format
 msgid "Security cookies/headers are disabled: {missing}."
 msgstr "セキュリティクッキー/ヘッダーが無効になっています: {missing}。"
 
-#: core/security/checks/settings.py:64
+#: core/security/checks/settings.py:66
 msgid "Session/security cookies and enhanced security are enabled."
 msgstr ""
 "セッション/セキュリティクッキーと強化されたセキュリティが有効になっています。"
 
-#: core/security/checks/settings.py:78
+#: core/security/checks/settings.py:80
 #, python-brace-format
 msgid ""
 "Production debug switches are on: {problems}. Disable both in production."
@@ -3425,11 +3351,11 @@ msgstr ""
 "本番環境のデバッグスイッチが有効になっています: {problems} 。本番環境では両方"
 "とも無効にしてください。"
 
-#: core/security/checks/settings.py:85
+#: core/security/checks/settings.py:87
 msgid "DEBUG and PROFILING are both off."
 msgstr "デバッグとプロファイリングは両方とも無効になっています。"
 
-#: core/security/checks/settings.py:94
+#: core/security/checks/settings.py:96
 msgid ""
 "settings.SECRET_KEY is the shipped sample value: session tokens can be "
 "forged."
@@ -3437,11 +3363,11 @@ msgstr ""
 "settings.SECRET_KEY は出荷時のサンプル値です。セッショントークンは偽造される"
 "可能性があります。"
 
-#: core/security/checks/settings.py:99
+#: core/security/checks/settings.py:101
 msgid "settings.SECRET_KEY has been rotated."
 msgstr "settings.SECRET_KEY が変更されました。"
 
-#: core/security/checks/settings.py:111
+#: core/security/checks/settings.py:113
 msgid ""
 "settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
 "secrets."
@@ -3449,11 +3375,11 @@ msgstr ""
 "settings.RSA_KEY は出荷時のサンプル値です。誰でもブローカーの秘密鍵を復号でき"
 "ます。"
 
-#: core/security/checks/settings.py:116
+#: core/security/checks/settings.py:118
 msgid "settings.RSA_KEY has been rotated."
 msgstr "settings.RSA_KEY がローテーションされました。"
 
-#: core/security/checks/settings.py:127
+#: core/security/checks/settings.py:129
 msgid ""
 "django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
 "request forgery is not mitigated at the framework level."
@@ -3461,20 +3387,20 @@ msgstr ""
 "django.middleware.csrf.CsrfViewMiddleware は MIDDLEWARE に含まれていません。"
 "フレームワークレベルではクロスサイトリクエストフォージェリが軽減されません。"
 
-#: core/security/checks/settings.py:134
+#: core/security/checks/settings.py:136
 msgid "django.middleware.csrf.CsrfViewMiddleware is active."
 msgstr "django.middleware.csrf.CsrfViewMiddleware が有効です。"
 
-#: core/security/checks/settings.py:150
+#: core/security/checks/settings.py:152
 msgid ""
 "SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
 "statement with bound values is being written to log/sql.log on disk."
 msgstr ""
-"SQLロガー「django.db.backends」はDEBUGレベルですが、DEBUGはオフになっています"
-"。バインドされた値を持つすべてのSQLステートメントが、ディスク上のlog/sql.log"
-"に書き込まれています。"
+"SQLロガー「django.db.backends」はDEBUGレベルですが、DEBUGはオフになっていま"
+"す。バインドされた値を持つすべてのSQLステートメントが、ディスク上のlog/"
+"sql.logに書き込まれています。"
 
-#: core/security/checks/settings.py:157
+#: core/security/checks/settings.py:159
 msgid ""
 "SQL logger 'django.db.backends' is not writing bound SQL to disk in "
 "production."
@@ -3482,63 +3408,17 @@ msgstr ""
 "SQLロガー「django.db.backends」が、本番環境でバインドされたSQLをディスクに書"
 "き込んでいません。"
 
-#: core/security/checks/settings.py:172
+#: core/security/checks/settings.py:174
 msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
 msgstr ""
 "ルートまたは「uds」ロガーは、本番環境ではDEBUGレベル（ディスク上に詳細なログ"
 "が出力されます）になっています。"
 
-#: core/security/checks/settings.py:177
+#: core/security/checks/settings.py:179
 msgid "Root and 'uds' loggers are above DEBUG in production."
 msgstr ""
 "本番環境では、rootおよび&#39;uds&#39;ロガーのログレベルはDEBUGより上位になり"
 "ます。"
-
-#: core/security/checks/settings.py:190
-msgid ""
-"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
-"silently fail. Operators will not receive ERROR-level alerts by mail."
-msgstr ""
-"EMAIL_BACKENDが設定されていません。「mail_admins」とメール通知はサイレントに"
-"失敗します。オペレーターはERRORレベルのアラートをメールで受信しません。"
-
-#: core/security/checks/settings.py:197
-msgid "EMAIL_BACKEND is configured."
-msgstr "EMAIL_BACKENDが設定されています。"
-
-#: core/security/checks/settings.py:210
-msgid ""
-"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
-"any local user can read or poison the cache unless a SASL/TLS username is "
-"configured."
-msgstr ""
-"CACHES[&#39;memory&#39;] LOCATION= {location!r}はホスト外部からアクセス可能で"
-"す。SASL/TLS ユーザー名が設定されていない限り、ローカルユーザーはキャッシュを"
-"読み取ったり、キャッシュを汚染したりできます。"
-
-#: core/security/checks/settings.py:218
-msgid "CACHES['memory'] is bound to localhost (or absent)."
-msgstr ""
-"CACHES[&#39;memory&#39;] は localhost にバインドされています (または存在しま"
-"せん)。"
-
-#: core/security/checks/settings.py:234
-#, python-brace-format
-msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
-msgstr "SECURE_HSTS_SECONDS が設定されています ( {seconds}秒)。"
-
-#: core/security/checks/settings.py:241
-msgid ""
-"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
-"0: no HSTS header is emitted on HTTPS responses."
-msgstr ""
-"ブローカーはHTTPSフロントエンド（SECURE_PROXY_SSL_HEADER）ですが、"
-"SECURE_HSTS_SECONDSが0であるため、HTTPSレスポンスにHSTSヘッダーは送信されませ"
-"ん。"
-
-#: core/security/checks/settings.py:248
-msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
-msgstr "HSTSが設定されていません。ブローカーはHTTPSに対応していないようです。"
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73

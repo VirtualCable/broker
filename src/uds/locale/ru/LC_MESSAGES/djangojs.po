@@ -48,9 +48,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
-"Last-Translator: Elena Mishina, 2022-2024,2026\n"
+"Last-Translator: Александр Бурматов, 2022\n"
 "Language-Team: Russian (http://app.transifex.com/openuds/openuds/language/"
 "ru/)\n"
 "Language: ru\n"
@@ -2010,9 +2010,8 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Максимальное количество одновременных сессий в пуле"
 
 #: static/admin/translations-fakejs.js:632
-#, javascript-format
 msgid "Pool saturation (% of capacity)"
-msgstr "Насыщенность бассейна ( % от вместимости)"
+msgstr "Заполненность пула (% от емкости)"
 
 #: static/admin/translations-fakejs.js:633
 msgid "Cache hits / misses per pool"

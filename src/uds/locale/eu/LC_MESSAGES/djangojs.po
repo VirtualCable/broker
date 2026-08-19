@@ -32,6 +32,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2015
 # Javier <jgonzalez@virtualcable.es>, 2025
 # Lanmedia Comunicaciones <jetxaniz@lanmedia.es>, 2016-2017,2020
@@ -44,7 +45,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Víctor Alonso <valonso@virtualcable.net>, 2020\n"
 "Language-Team: Basque (http://app.transifex.com/openuds/openuds/language/"
@@ -2005,9 +2006,8 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Multzo bakoitzeko aldibereko saio maximoak"
 
 #: static/admin/translations-fakejs.js:632
-#, javascript-format
 msgid "Pool saturation (% of capacity)"
-msgstr "Igerilekuaren saturazioa (edukieraren % )"
+msgstr "Igerilekuaren saturazioa (edukieraren %)"
 
 #: static/admin/translations-fakejs.js:633
 msgid "Cache hits / misses per pool"

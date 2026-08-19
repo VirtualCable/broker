@@ -40,7 +40,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/"
@@ -3061,60 +3061,19 @@ msgstr ""
 "Actor 故障阻止功能已禁用（BLOCK_ACTOR_FAILURES）：/actor/ 端点对无效令牌没有"
 "速率限制。"
 
-#: core/security/checks/global_config.py:177
-msgid ""
-"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
-"weakens IP-based logging and blocking. Only acceptable on trusted "
-"deployments."
-msgstr ""
-"HONOR_CLIENT_IP_NOTIFY 已启用：客户端可以自行报告其 IP 地址，这会削弱基于 IP "
-"地址的日志记录和阻止机制。仅在受信任的部署环境中适用。"
-
-#: core/security/checks/global_config.py:184
-msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
-msgstr "HONOR_CLIENT_IP_NOTIFY 已关闭：服务器检测到的 IP 为权威 IP。"
-
-#: core/security/checks/global_config.py:194
-#, python-brace-format
-msgid "SESSION_DURATION_ADMIN={value}s"
-msgstr "SESSION_DURATION_ADMIN= {value} s"
-
-#: core/security/checks/global_config.py:196
-#, python-brace-format
-msgid "SESSION_DURATION_USER={value}s"
-msgstr "SESSION_DURATION_USER= {value} s"
-
-#: core/security/checks/global_config.py:201
-#, python-brace-format
-#| msgid "Session duration histogram"
-msgid "Session durations exceed 12h: {issues}."
-msgstr "会话持续时间超过 12 小时： {issues} 。"
-
-#: core/security/checks/global_config.py:206
-msgid "Admin and user session durations are within 12h."
-msgstr "管理员和用户会话持续时间均在 12 小时以内。"
-
-#: core/security/checks/global_config.py:215
+#: core/security/checks/global_config.py:176
 msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
 msgstr "EXPERIMENTAL_FEATURES 已开启：将公开不支持的功能。"
 
-#: core/security/checks/global_config.py:220
+#: core/security/checks/global_config.py:181
 msgid "EXPERIMENTAL_FEATURES is off."
 msgstr "EXPERIMENTAL_FEATURES 已关闭。"
 
-#: core/security/checks/global_config.py:229
-msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
-msgstr "已启用 ENFORCE_ZERO_TRUST：密码重定向已禁用。"
-
-#: core/security/checks/global_config.py:234
-msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
-msgstr "ENFORCE_ZERO_TRUST 已关闭（允许密码重定向）。"
-
-#: core/security/checks/global_config.py:243
+#: core/security/checks/global_config.py:190
 msgid "Immutable audit log is enabled (TSA-signed)."
 msgstr "已启用不可变审计日志（TSA签名）。"
 
-#: core/security/checks/global_config.py:249
+#: core/security/checks/global_config.py:196
 msgid ""
 "IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
 "tamper-evident log (src/uds/models/immutable_log.py)."
@@ -3122,34 +3081,34 @@ msgstr ""
 "IMMUTABLE_LOG_ENABLED 已关闭：登录和管理事件不会写入防篡改日志（src/uds/"
 "models/immutable_log.py）。"
 
-#: core/security/checks/logs.py:98
+#: core/security/checks/logs.py:99
 #, python-brace-format
 msgid ""
 "{count} failed login attempts in the last 24h: a brute force may be in "
 "progress."
 msgstr "过去 24 小时内有{count}次登录失败尝试：可能正在进行暴力破解。"
 
-#: core/security/checks/logs.py:104
+#: core/security/checks/logs.py:105
 #, python-brace-format
 msgid "{count} failed login attempts in the last 24h."
 msgstr "过去 24 小时内，登录失败次数{count} 。"
 
-#: core/security/checks/logs.py:109
+#: core/security/checks/logs.py:110
 #, python-brace-format
 msgid "{count} failed login attempts in the last 24h (within normal range)."
 msgstr "过去 24 小时内有{count}次登录失败尝试（在正常范围内）。"
 
-#: core/security/checks/logs.py:128
+#: core/security/checks/logs.py:129
 #, python-brace-format
 msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
 msgstr "过去 24 小时内，源 IP 检测到的暴力破解模式： {top} 。"
 
-#: core/security/checks/logs.py:133
+#: core/security/checks/logs.py:134
 #, python-brace-format
 msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
 msgstr "过去 24 小时内，没有 IP 地址的登录失败次数超过{threshold} 。"
 
-#: core/security/checks/logs.py:154
+#: core/security/checks/logs.py:155
 #, python-brace-format
 msgid ""
 "{count} account(s) were temporarily blocked in the last 24h: an attacker may "
@@ -3159,11 +3118,11 @@ msgstr ""
 "在过去 24 小时内， {count}个帐户被暂时阻止：攻击者可能正在利用每个用户的锁定"
 "机制循环使用凭据，或者配置错误的客户端正在使用过期的凭据重试。"
 
-#: core/security/checks/logs.py:162
+#: core/security/checks/logs.py:163
 msgid "No accounts were temporarily blocked in the last 24h."
 msgstr "过去24小时内没有账户被暂时封禁。"
 
-#: core/security/checks/logs.py:181
+#: core/security/checks/logs.py:182
 #, python-brace-format
 msgid ""
 "{count} internal ERROR entries in the last 24h: check uds.log / "
@@ -3172,22 +3131,12 @@ msgstr ""
 "过去 24 小时内出现{count}内部错误条目：检查 uds.log / services.log / "
 "workers.log 中是否存在故障提供程序或 5xx 风暴。"
 
-#: core/security/checks/logs.py:188
+#: core/security/checks/logs.py:189
 #, python-brace-format
 msgid "{count} internal ERROR entries in the last 24h (within normal range)."
 msgstr "过去 24 小时内出现{count}条内部错误记录（在正常范围内）。"
 
-#: core/security/checks/logs.py:205
-#, python-brace-format
-msgid "{count} bot-denial(s) in the last 24h."
-msgstr "过去 24 小时内，机器人拒绝了{count}次请求。"
-
-#: core/security/checks/logs.py:223
-#, python-brace-format
-msgid "{count} broker-visible Forbidden response(s) in the last 24h."
-msgstr "过去 24 小时内，经纪商可见的禁止响应次数为{count} 。"
-
-#: core/security/checks/models.py:72
+#: core/security/checks/models.py:69
 #, python-brace-format
 msgid ""
 "SAML assertions are not required to be signed on: {unsigned}. Unsigned "
@@ -3195,15 +3144,15 @@ msgid ""
 msgstr ""
 "SAML 断言无需签名：{unsigned}。未签名的断言可能针对配置错误的 IdP 被伪造。"
 
-#: core/security/checks/models.py:80
+#: core/security/checks/models.py:77
 msgid "All SAML authenticators require signed assertions or messages."
 msgstr "所有SAML身份验证器都需要签名断言或消息。"
 
-#: core/security/checks/models.py:85
+#: core/security/checks/models.py:82
 msgid "No SAML authenticators configured."
 msgstr "未配置SAML身份验证器。"
 
-#: core/security/checks/models.py:114
+#: core/security/checks/models.py:111
 #, python-brace-format
 msgid ""
 "Service pools with actors still using the legacy uuid token flow: "
@@ -3212,116 +3161,97 @@ msgstr ""
 "仍在使用旧版 uuid 令牌流程的 actor 的服务池：{affected}。重新初始化受影响的 "
 "actor，以将其轮换到新令牌。"
 
-#: core/security/checks/models.py:121
+#: core/security/checks/models.py:118
 msgid "No user services are using the legacy uuid actor token flow."
 msgstr "没有用户服务使用旧版 UUID Actor 令牌流程。"
 
-#: core/security/checks/models.py:131
-#| msgid "No SAML authenticators configured."
+#: core/security/checks/models.py:128
 msgid "No authenticators configured (nothing to enforce MFA on)."
 msgstr "未配置身份验证器（无需强制执行多因素身份验证）。"
 
-#: core/security/checks/models.py:138
+#: core/security/checks/models.py:135
 #, python-brace-format
 msgid ""
 "No authenticator has MFA configured: {names}. Assign at least one MFA per "
 "authenticator."
-msgstr "所有身份验证器均未配置 MFA： {names} 。请为每个身份验证器至少分配一个 MFA。"
+msgstr ""
+"所有身份验证器均未配置 MFA： {names} 。请为每个身份验证器至少分配一个 MFA。"
 
-#: core/security/checks/models.py:145
+#: core/security/checks/models.py:142
 #, python-brace-format
 msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
 msgstr "MFA覆盖范围： {with_mfa} / {total}个身份验证器已分配MFA。"
 
-#: core/security/checks/models.py:191
+#: core/security/checks/models.py:188
 #, python-brace-format
 msgid ""
 "{n} server certificate(s) have expired: {names}. Renew and rotate the "
 "affected servers."
 msgstr "有{n}台服务器证书已过期： {names} 。请续订并轮换受影响的服务器。"
 
-#: core/security/checks/models.py:199
+#: core/security/checks/models.py:196
 #, python-brace-format
 msgid "{n} server certificate(s) expire within 30 days: {names}."
 msgstr "{n}个服务器证书将在 30 天内过期： {names} 。"
 
-#: core/security/checks/models.py:206
+#: core/security/checks/models.py:203
 msgid "No server certificates expire within the next 30 days."
 msgstr "所有服务器证书在未来30天内均不会过期。"
 
-#: core/security/checks/models.py:223
-#| msgid "No LDAP servers configured"
-msgid "No staff/admin users configured."
-msgstr "未配置任何员工/管理员用户。"
-
-#: core/security/checks/models.py:232
-#, python-brace-format
-msgid "Staff account hygiene: {details}."
-msgstr "员工账户卫生： {details} 。"
-
-#: core/security/checks/models.py:261
-#, python-brace-format
-msgid "Transports reachable from any source: {names}."
-msgstr "可从任何源访问的传输方式： {names} 。"
-
-#: core/security/checks/models.py:266 core/security/checks/models.py:271
-msgid "All transports are restricted by at least one network."
-msgstr "所有运输都至少受到一个网络的限制。"
-
-#: core/security/checks/models.py:288
+#: core/security/checks/models.py:220
 #, python-brace-format
 msgid "{n} service pool(s) are currently restrained: {names}."
 msgstr "当前有{n}服务池受到限制： {names} 。"
 
-#: core/security/checks/models.py:293
+#: core/security/checks/models.py:225
 msgid "No service pools are currently restrained."
 msgstr "目前没有任何服务池受到限制。"
 
-#: core/security/checks/runner.py:94
+#: core/security/checks/runner.py:77
 #, python-brace-format
 msgid "Check could not be evaluated: {error}"
 msgstr "检查无法评估：{error}"
 
-#: core/security/checks/settings.py:59
+#: core/security/checks/settings.py:61
 #, python-brace-format
 msgid "Security cookies/headers are disabled: {missing}."
 msgstr "安全 cookie/标头已禁用：{missing}。"
 
-#: core/security/checks/settings.py:64
+#: core/security/checks/settings.py:66
 msgid "Session/security cookies and enhanced security are enabled."
 msgstr "会话/安全 cookie 和增强安全功能已启用。"
 
-#: core/security/checks/settings.py:78
+#: core/security/checks/settings.py:80
 #, python-brace-format
 msgid ""
 "Production debug switches are on: {problems}. Disable both in production."
 msgstr "生产环境的调试开关已开启： {problems} 。请在生产环境中禁用这两个开关。"
 
-#: core/security/checks/settings.py:85
+#: core/security/checks/settings.py:87
 msgid "DEBUG and PROFILING are both off."
 msgstr "调试和性能分析都已关闭。"
 
-#: core/security/checks/settings.py:94
+#: core/security/checks/settings.py:96
 msgid ""
 "settings.SECRET_KEY is the shipped sample value: session tokens can be "
 "forged."
 msgstr "settings.SECRET_KEY 是随附的示例值：会话令牌可以伪造。"
 
-#: core/security/checks/settings.py:99
+#: core/security/checks/settings.py:101
 msgid "settings.SECRET_KEY has been rotated."
 msgstr "settings.SECRET_KEY 已轮换。"
 
-#: core/security/checks/settings.py:111
+#: core/security/checks/settings.py:113
 msgid ""
 "settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
 "secrets."
 msgstr "settings.RSA_KEY 是随附的示例值：任何人都可以解密代理密钥。"
 
-#: core/security/checks/settings.py:116
+#: core/security/checks/settings.py:118
 msgid "settings.RSA_KEY has been rotated."
 msgstr "settings.RSA_KEY 已轮换。"
 
-#: core/security/checks/settings.py:127
+#: core/security/checks/settings.py:129
 msgid ""
 "django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
 "request forgery is not mitigated at the framework level."
@@ -3329,75 +3259,34 @@ msgstr ""
 "django.middleware.csrf.CsrfViewMiddleware 不在 MIDDLEWARE 中：跨站请求伪造在"
 "框架级别没有得到缓解。"
 
-#: core/security/checks/settings.py:134
+#: core/security/checks/settings.py:136
 msgid "django.middleware.csrf.CsrfViewMiddleware is active."
 msgstr "django.middleware.csrf.CsrfViewMiddleware 已激活。"
 
-#: core/security/checks/settings.py:150
+#: core/security/checks/settings.py:152
 msgid ""
 "SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
 "statement with bound values is being written to log/sql.log on disk."
 msgstr ""
-"SQL 日志记录器 &#39;django.db.backends&#39; 处于 DEBUG 状态，而 DEBUG 已关闭"
-"：每个带有绑定值的 SQL 语句都会被写入磁盘上的 log/sql.log。"
+"SQL 日志记录器 &#39;django.db.backends&#39; 处于 DEBUG 状态，而 DEBUG 已关"
+"闭：每个带有绑定值的 SQL 语句都会被写入磁盘上的 log/sql.log。"
 
-#: core/security/checks/settings.py:157
+#: core/security/checks/settings.py:159
 msgid ""
 "SQL logger 'django.db.backends' is not writing bound SQL to disk in "
 "production."
-msgstr "生产环境中，SQL 日志记录器“django.db.backends”没有将绑定的 SQL 写入磁盘。"
+msgstr ""
+"生产环境中，SQL 日志记录器“django.db.backends”没有将绑定的 SQL 写入磁盘。"
 
-#: core/security/checks/settings.py:172
+#: core/security/checks/settings.py:174
 msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
 msgstr ""
 "生产环境中的根日志记录器或“uds”日志记录器处于 DEBUG 级别（磁盘上会记录详细日"
 "志）。"
 
-#: core/security/checks/settings.py:177
+#: core/security/checks/settings.py:179
 msgid "Root and 'uds' loggers are above DEBUG in production."
 msgstr "生产环境中，root 和 &#39;uds&#39; 日志记录器的级别高于 DEBUG。"
-
-#: core/security/checks/settings.py:190
-msgid ""
-"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
-"silently fail. Operators will not receive ERROR-level alerts by mail."
-msgstr ""
-"EMAIL_BACKEND 未配置：&#39;mail_admins&#39; 和电子邮件通知将静默失败。操作员"
-"将不会收到 ERROR 级别的邮件警报。"
-
-#: core/security/checks/settings.py:197
-msgid "EMAIL_BACKEND is configured."
-msgstr "EMAIL_BACKEND 已配置。"
-
-#: core/security/checks/settings.py:210
-msgid ""
-"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
-"any local user can read or poison the cache unless a SASL/TLS username is "
-"configured."
-msgstr ""
-"CACHES[&#39;memory&#39;] LOCATION= {location!r}可从主机外部访问：除非配置了 "
-"SASL/TLS 用户名，否则任何本地用户都可以读取或污染缓存。"
-
-#: core/security/checks/settings.py:218
-msgid "CACHES['memory'] is bound to localhost (or absent)."
-msgstr "CACHES[&#39;memory&#39;] 绑定到 localhost（或不存在）。"
-
-#: core/security/checks/settings.py:234
-#, python-brace-format
-msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
-msgstr "SECURE_HSTS_SECONDS 已设置（ {seconds}秒）。"
-
-#: core/security/checks/settings.py:241
-msgid ""
-"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
-"0: no HSTS header is emitted on HTTPS responses."
-msgstr ""
-"代理服务器采用 HTTPS 前端（SECURE_PROXY_SSL_HEADER），但 SECURE_HSTS_SECONDS "
-"为 0：HTTPS 响应中不发出 HSTS 标头。"
-
-#: core/security/checks/settings.py:248
-msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
-msgstr "HSTS 未配置；代理服务器似乎没有启用 HTTPS 前端。"
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73

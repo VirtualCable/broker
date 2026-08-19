@@ -32,6 +32,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # David Alonso, 2026
 # David Alonso, 2026
 #, fuzzy
@@ -39,7 +40,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: David Alonso, 2026\n"
 "Language-Team: Galician (http://app.transifex.com/openuds/openuds/language/"
