@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 # Translators:
 # Translators:
@@ -32,6 +32,8 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
+#, fuzzy
 # Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2015
 # Javier <jgonzalez@virtualcable.es>, 2025
@@ -40,7 +42,6 @@
 # Pedro Arreitunandia <parreitu@protonmail.com>, 2020
 # Víctor Alonso <valonso@virtualcable.net>, 2020
 # Víctor Alonso <valonso@virtualcable.net>, 2020
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
@@ -48,12 +49,11 @@ msgstr ""
 "POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Víctor Alonso <valonso@virtualcable.net>, 2020\n"
-"Language-Team: Basque (http://app.transifex.com/openuds/openuds/language/"
-"eu/)\n"
-"Language: eu\n"
+"Language-Team: Basque (http://app.transifex.com/openuds/openuds/language/eu/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: eu\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
@@ -165,10 +165,7 @@ msgstr "Beste administratzaile batek aldatu du elementua"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr ""
-"Elementu hau beste administratzaile batek aldatu du zuk editatzen ari "
-"zinela. Kargatu berriro uneko bertsioa lortzeko aldaketak berriro gorde "
-"aurretik."
+msgstr "Elementu hau beste administratzaile batek aldatu du zuk editatzen ari zinela. Kargatu berriro uneko bertsioa lortzeko aldaketak berriro gorde aurretik."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -656,10 +653,7 @@ msgstr "Inportatu zerbitzariak"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr ""
-"Fitxategiaren formatuak \"ostalari izena, ip, mac,...\" izan behar du. "
-"Ostalariaren izena izan ezik eremu guztiak aukerakoak dira. Bereizgailua "
-"konfigura daiteke."
+msgstr "Fitxategiaren formatuak \"ostalari izena, ip, mac,...\" izan behar du. Ostalariaren izena izan ezik eremu guztiak aukerakoak dira. Bereizgailua konfigura daiteke."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1664,9 +1658,7 @@ msgstr "Horrek esan nahi du elementuetarako sarbide mugatua duzula."
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr ""
-"Sarbide pribilegioak handitzeko, jarri harremanetan zure UDS "
-"administratzailearekin."
+msgstr "Sarbide pribilegioak handitzeko, jarri harremanetan zure UDS administratzailearekin."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -2101,8 +2093,7 @@ msgstr "Itxaron zerbitzua abiarazi arte."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr ""
-"Gogoratu zerbitzura sartzeko zure plataformako UDS bezeroa beharko duzula."
+msgstr "Gogoratu zerbitzura sartzeko zure plataformako UDS bezeroa beharko duzula."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2118,8 +2109,7 @@ msgstr "UDS bezeroa ez da abiarazten"
 msgid ""
 "It seems that you don't have UDS Client installed. Please, install it from "
 "here:"
-msgstr ""
-"Badirudi ez duzula UDS Client instalatuta. Mesedez, instala ezazu hemendik:"
+msgstr "Badirudi ez duzula UDS Client instalatuta. Mesedez, instala ezazu hemendik:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
 msgid "UDS Client Download"
@@ -2131,9 +2121,7 @@ msgstr "UDS bezeroa abiarazten...</br> Itxaron mesedez."
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:15
 msgid "Error communicating with your service. Please, retry again."
-msgstr ""
-"Errore bat gertatu da zure zerbitzuarekin komunikatzean. Mesedez, saiatu "
-"berriro."
+msgstr "Errore bat gertatu da zure zerbitzuarekin komunikatzean. Mesedez, saiatu berriro."
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:16
 msgid "Your session has expired. Please, login again"
@@ -2141,9 +2129,7 @@ msgstr "Saioa iraungi egin da. Mesedez, sartu berriro"
 
 #: static/modern/translations-fakejs.js:18
 msgid "We use cookies to authenticate users and remember preferences."
-msgstr ""
-"Cookieak erabiltzen ditugu erabiltzaileak autentifikatzeko eta lehentasunak "
-"gogoratzeko."
+msgstr "Cookieak erabiltzen ditugu erabiltzaileak autentifikatzeko eta lehentasunak gogoratzeko."
 
 #: static/modern/translations-fakejs.js:19
 msgid "If you do not agree, please"
@@ -2193,8 +2179,7 @@ msgstr "Saio biometrikoa"
 
 #: static/modern/translations-fakejs.js:31
 msgid "Would you like to save your credentials for future biometric login?"
-msgstr ""
-"Etorkizunean saio biometrikoetarako zure kredentzialak gorde nahi dituzu?"
+msgstr "Etorkizunean saio biometrikoetarako zure kredentzialak gorde nahi dituzu?"
 
 #: static/modern/translations-fakejs.js:33
 msgid "Could not register biometrics"
@@ -2220,9 +2205,7 @@ msgstr "Zerbitzua mantenimenduan dago"
 
 #: static/modern/translations-fakejs.js:40
 msgid "This service is currently not accessible due to schedule restrictions."
-msgstr ""
-"Antolatutako murrizketak direla eta, une honetan zerbitzua ez dago "
-"eskuragarri."
+msgstr "Antolatutako murrizketak direla eta, une honetan zerbitzua ez dago eskuragarri."
 
 #: static/modern/translations-fakejs.js:41
 msgid "Launcher"
@@ -2234,9 +2217,7 @@ msgstr "Mantentze-lanak ari dira egiten eta zerbitzua ezin da martxan jarri"
 
 #: static/modern/translations-fakejs.js:43
 msgid "This service is currently not accesible due to schedule restrictions."
-msgstr ""
-"Antolatutako murrizketak direla eta, une honetan zerbitzua ez dago "
-"eskuragarri."
+msgstr "Antolatutako murrizketak direla eta, une honetan zerbitzua ez dago eskuragarri."
 
 #: static/modern/translations-fakejs.js:44
 msgid "Service message"
@@ -2296,9 +2277,7 @@ msgstr "Zerbitzua berriro martxan jartzeko, jatorritik egin beharko duzu."
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr ""
-"Zerbitzua automatikoki abiarazten ez bada, seguruenik ez duzu UDS Bezeroa "
-"instalatuta"
+msgstr "Zerbitzua automatikoki abiarazten ez bada, seguruenik ez duzu UDS Bezeroa instalatuta"
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"
@@ -2327,8 +2306,7 @@ msgstr "UDS osagai hauek erabiliz garatu da:"
 
 #: static/modern/translations-fakejs.js:65
 msgid "If you find that we missed any component, please let us know"
-msgstr ""
-"Osagairen bat falta zaigula ikusten baduzu, jar zaitez gurekin harremanetan"
+msgstr "Osagairen bat falta zaigula ikusten baduzu, jar zaitez gurekin harremanetan"
 
 #: static/modern/translations-fakejs.js:66
 msgid "An error has occurred"

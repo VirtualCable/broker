@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 # Translators:
 # Translators:
@@ -32,26 +32,24 @@
 # Translators:
 # Translators:
 # Translators:
+#, fuzzy
 # Translators:
 # Abdel Baaddi <abaaddi@virtualcable.es>, 2016-2018
 # Víctor Alonso <valonso@virtualcable.net>, 2020
 # Víctor Alonso <valonso@virtualcable.net>, 2020
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 04:25+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Víctor Alonso <valonso@virtualcable.net>, 2020\n"
-"Language-Team: Arabic (http://app.transifex.com/openuds/openuds/language/"
-"ar/)\n"
-"Language: ar\n"
+"Language-Team: Arabic (http://app.transifex.com/openuds/openuds/language/ar/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
 #: static/admin/translations-fakejs.js:129
@@ -162,9 +160,7 @@ msgstr "تم تغيير العنصر بواسطة مسؤول آخر"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr ""
-"تم تعديل هذا العنصر بواسطة مسؤول آخر أثناء قيامك بتعديله. أعد تحميله للحصول "
-"على النسخة الحالية قبل حفظ التغييرات مرة أخرى."
+msgstr "تم تعديل هذا العنصر بواسطة مسؤول آخر أثناء قيامك بتعديله. أعد تحميله للحصول على النسخة الحالية قبل حفظ التغييرات مرة أخرى."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -652,9 +648,7 @@ msgstr "خوادم الاستيراد"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr ""
-"يجب أن يكون تنسيق الملف \"hostname,ip,mac,...\". جميع الحقول باستثناء "
-"hostname اختيارية. يمكن تكوين الفاصل."
+msgstr "يجب أن يكون تنسيق الملف \"hostname,ip,mac,...\". جميع الحقول باستثناء hostname اختيارية. يمكن تكوين الفاصل."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1659,8 +1653,7 @@ msgstr "هذا يعني أن لديك تقييد الوصول إلى العنا�
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr ""
-"من أجل زيادة امتيازات الوصول الخاصة بك ، يرجى الاتصال بمسؤول UDS المحلي."
+msgstr "من أجل زيادة امتيازات الوصول الخاصة بك ، يرجى الاتصال بمسؤول UDS المحلي."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -2000,15 +1993,12 @@ msgid "Peak concurrent sessions per pool"
 msgstr "ذروة الجلسات المتزامنة لكل مجموعة"
 
 #: static/admin/translations-fakejs.js:632
-#, javascript-format
 msgid "Pool saturation (% of capacity)"
 msgstr "Pool saturation (% of capacity)"
 
 #: static/admin/translations-fakejs.js:633
 msgid "Cache hits / misses per pool"
-msgstr ""
-"عدد مرات الوصول إلى ذاكرة التخزين المؤقت / عدد مرات عدم الوصول إليها لكل "
-"مجموعة"
+msgstr "عدد مرات الوصول إلى ذاكرة التخزين المؤقت / عدد مرات عدم الوصول إليها لكل مجموعة"
 
 #: static/admin/translations-fakejs.js:634
 msgid "Tunnel sessions per pool"
@@ -2134,8 +2124,7 @@ msgstr "انتهت صلاحية جلسة العمل الخاصة بك. الرج�
 
 #: static/modern/translations-fakejs.js:18
 msgid "We use cookies to authenticate users and remember preferences."
-msgstr ""
-"نحن نستخدم ملفات تعريف الارتباط للتحقق من هوية المستخدمين وتذكر التفضيلات."
+msgstr "نحن نستخدم ملفات تعريف الارتباط للتحقق من هوية المستخدمين وتذكر التفضيلات."
 
 #: static/modern/translations-fakejs.js:19
 msgid "If you do not agree, please"

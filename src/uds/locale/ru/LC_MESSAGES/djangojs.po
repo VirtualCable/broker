@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 # Translators:
 # Translators:
@@ -32,6 +32,8 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
+#, fuzzy
 # Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2022
 # Alexander <ag@kub.tel>, 2020
@@ -43,7 +45,6 @@
 # Víctor Alonso <valonso@virtualcable.net>, 2020
 # Александр Бурматов, 2022
 # Александр Бурматов, 2022
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
@@ -51,15 +52,12 @@ msgstr ""
 "POT-Creation-Date: 2026-08-19 04:25+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Александр Бурматов, 2022\n"
-"Language-Team: Russian (http://app.transifex.com/openuds/openuds/language/"
-"ru/)\n"
-"Language: ru\n"
+"Language-Team: Russian (http://app.transifex.com/openuds/openuds/language/ru/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
-"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
 #: static/admin/translations-fakejs.js:129
@@ -170,10 +168,7 @@ msgstr "Пункт изменен другим администратором."
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr ""
-"Этот элемент был изменен другим администратором во время вашего "
-"редактирования. Перезагрузите его, чтобы получить актуальную версию, прежде "
-"чем снова сохранять изменения."
+msgstr "Этот элемент был изменен другим администратором во время вашего редактирования. Перезагрузите его, чтобы получить актуальную версию, прежде чем снова сохранять изменения."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -661,9 +656,7 @@ msgstr "Импортировать серверы"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr ""
-"Формат файла должен быть \"hostname,ip,mac,...\". Все поля, кроме hostname, "
-"являются необязательными. Разделитель можно настроить."
+msgstr "Формат файла должен быть \"hostname,ip,mac,...\". Все поля, кроме hostname, являются необязательными. Разделитель можно настроить."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1318,8 +1311,7 @@ msgstr "Изображение велико (макс. размер 256КБ)"
 
 #: static/admin/main.js:5484 static/admin/translations-fakejs.js:187
 msgid "Invalid image type (only supports JPEG, PNG, GIF and SVG)"
-msgstr ""
-"Недопустимый тип изображения (поддерживаются только JPEG, PNG, GIF и SVG)"
+msgstr "Недопустимый тип изображения (поддерживаются только JPEG, PNG, GIF и SVG)"
 
 #: static/admin/main.js:5484 static/admin/translations-fakejs.js:189
 msgid "Please, provide a name and a image"
@@ -1859,8 +1851,7 @@ msgstr "Изображение (нажмите, чтобы изменить)"
 
 #: static/admin/translations-fakejs.js:540
 msgid "For optimal results, use \"squared\" images."
-msgstr ""
-"Для получения оптимальных результатов используйте «квадратные» изображения."
+msgstr "Для получения оптимальных результатов используйте «квадратные» изображения."
 
 #: static/admin/translations-fakejs.js:541
 msgid "The image will be resized on upload to"
@@ -2105,9 +2096,7 @@ msgstr "Подождите, пока услуга запустится."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr ""
-"Помните, что для доступа к сервису вам понадобится клиент UDS на вашей "
-"платформе."
+msgstr "Помните, что для доступа к сервису вам понадобится клиент UDS на вашей платформе."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2123,8 +2112,7 @@ msgstr "Клиент UDS не запускается"
 msgid ""
 "It seems that you don't have UDS Client installed. Please, install it from "
 "here:"
-msgstr ""
-"Похоже, у вас не установлен UDS Client. Пожалуйста, установите его отсюда:"
+msgstr "Похоже, у вас не установлен UDS Client. Пожалуйста, установите его отсюда:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
 msgid "UDS Client Download"
@@ -2144,9 +2132,7 @@ msgstr "Время сеанса истекло. Пожалуйста, войди
 
 #: static/modern/translations-fakejs.js:18
 msgid "We use cookies to authenticate users and remember preferences."
-msgstr ""
-"Мы используем файлы cookie для аутентификации пользователей и запоминания "
-"предпочтений."
+msgstr "Мы используем файлы cookie для аутентификации пользователей и запоминания предпочтений."
 
 #: static/modern/translations-fakejs.js:19
 msgid "If you do not agree, please"
@@ -2196,8 +2182,7 @@ msgstr "Вход с использованием биометрии"
 
 #: static/modern/translations-fakejs.js:31
 msgid "Would you like to save your credentials for future biometric login?"
-msgstr ""
-"Сохранить учетные данные для последующего входа с использованием биометрии?"
+msgstr "Сохранить учетные данные для последующего входа с использованием биометрии?"
 
 #: static/modern/translations-fakejs.js:33
 msgid "Could not register biometrics"
@@ -2223,8 +2208,7 @@ msgstr "Сервис находится на техобслуживании"
 
 #: static/modern/translations-fakejs.js:40
 msgid "This service is currently not accessible due to schedule restrictions."
-msgstr ""
-"Эта услуга в настоящее время недоступна из-за ограничений по расписанию."
+msgstr "Эта услуга в настоящее время недоступна из-за ограничений по расписанию."
 
 #: static/modern/translations-fakejs.js:41
 msgid "Launcher"
@@ -2236,8 +2220,7 @@ msgstr "Сервис находится на техобслуживании и �
 
 #: static/modern/translations-fakejs.js:43
 msgid "This service is currently not accesible due to schedule restrictions."
-msgstr ""
-"Эта услуга в настоящее время недоступна из-за ограничений по расписанию."
+msgstr "Эта услуга в настоящее время недоступна из-за ограничений по расписанию."
 
 #: static/modern/translations-fakejs.js:44
 msgid "Service message"
@@ -2297,9 +2280,7 @@ msgstr "Чтобы перезапустить услугу, вам придет�
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr ""
-"Если услуга не запускается автоматически, возможно, у вас не установлен "
-"клиент UDS"
+msgstr "Если услуга не запускается автоматически, возможно, у вас не установлен клиент UDS"
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"
@@ -2328,9 +2309,7 @@ msgstr "UDS был разработан с использованием этих
 
 #: static/modern/translations-fakejs.js:65
 msgid "If you find that we missed any component, please let us know"
-msgstr ""
-"Если вы обнаружили, что мы пропустили какой-либо компонент, пожалуйста, "
-"сообщите нам"
+msgstr "Если вы обнаружили, что мы пропустили какой-либо компонент, пожалуйста, сообщите нам"
 
 #: static/modern/translations-fakejs.js:66
 msgid "An error has occurred"

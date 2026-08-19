@@ -85,7 +85,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Normalize the security configuration to a known baseline
-        GlobalConfig.SUPER_USER_PASS.set(security_checks.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
         GlobalConfig.ADMIN_TRUSTED_SOURCES.set("*")
@@ -98,7 +98,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         # Restore the shipped defaults: config values keep an in-memory copy
         # that outlives the (truncated) test database and would leak into
         # other tests running on the same process.
-        GlobalConfig.SUPER_USER_PASS.set(security_checks.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
         GlobalConfig.ADMIN_TRUSTED_SOURCES.set("*")

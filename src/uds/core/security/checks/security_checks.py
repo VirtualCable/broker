@@ -35,11 +35,7 @@ and the corresponding tests.
 The actual implementation lives in :mod:`uds.core.security.checks.runner`.
 """
 
-from uds.core import consts
-
 from .factory import CheckFn as CheckFn
 from .factory import CheckResult as CheckResult
 from .runner import build_report as build_report
 from .runner import run_security_checks as run_security_checks
-
-DEFAULT_SUPERUSER_PASSWORD = consts.security.DEFAULT_SUPERUSER_PASSWORD

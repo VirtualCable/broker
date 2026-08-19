@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 # Translators:
 # Translators:
@@ -32,27 +32,25 @@
 # Translators:
 # Translators:
 # Translators:
+#, fuzzy
 # Translators:
 # Javier Gomez <jgomez@virtualcable.es>, 2023
 # Javier <jgonzalez@virtualcable.es>, 2025
 # Víctor Alonso <valonso@virtualcable.net>, 2020
 # Víctor Alonso <valonso@virtualcable.net>, 2020
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 04:25+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Víctor Alonso <valonso@virtualcable.net>, 2020\n"
-"Language-Team: Portuguese (http://app.transifex.com/openuds/openuds/language/"
-"pt/)\n"
-"Language: pt\n"
+"Language-Team: Portuguese (http://app.transifex.com/openuds/openuds/language/pt/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % "
-"1000000 == 0 ? 1 : 2;\n"
+"Language: pt\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
 #: static/admin/translations-fakejs.js:129
@@ -163,10 +161,7 @@ msgstr "Item alterado por outro administrador"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr ""
-"Este item foi modificado por outro administrador enquanto você o editava. "
-"Recarregue a página para obter a versão atual antes de salvar suas "
-"alterações novamente."
+msgstr "Este item foi modificado por outro administrador enquanto você o editava. Recarregue a página para obter a versão atual antes de salvar suas alterações novamente."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -654,9 +649,7 @@ msgstr "Importar servidores"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr ""
-"O formato do arquivo deve ser \"hostname,ip,mac,...\". Todos os campos, "
-"exceto hostname, são opcionais. O separador pode ser configurado."
+msgstr "O formato do arquivo deve ser \"hostname,ip,mac,...\". Todos os campos, exceto hostname, são opcionais. O separador pode ser configurado."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1661,9 +1654,7 @@ msgstr "Isso significa que você restringiu o acesso aos elementos."
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr ""
-"Para aumentar seus privilégios de acesso, entre em contato com o "
-"administrador local da UDS."
+msgstr "Para aumentar seus privilégios de acesso, entre em contato com o administrador local da UDS."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -2003,7 +1994,6 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Número máximo de sessões simultâneas por piscina"
 
 #: static/admin/translations-fakejs.js:632
-#, javascript-format
 msgid "Pool saturation (% of capacity)"
 msgstr "Saturação da piscina (% da capacidade)"
 
@@ -2099,9 +2089,7 @@ msgstr "Aguarde até que o serviço seja lançado."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr ""
-"Lembre-se de que você precisará do cliente UDS em sua plataforma para "
-"acessar o serviço."
+msgstr "Lembre-se de que você precisará do cliente UDS em sua plataforma para acessar o serviço."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2117,8 +2105,7 @@ msgstr "Cliente UDS não inicia"
 msgid ""
 "It seems that you don't have UDS Client installed. Please, install it from "
 "here:"
-msgstr ""
-"Parece que você não tem o UDS Client instalado. Por favor, instale-o aqui:"
+msgstr "Parece que você não tem o UDS Client instalado. Por favor, instale-o aqui:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
 msgid "UDS Client Download"
@@ -2214,8 +2201,7 @@ msgstr "O serviço está em manutenção"
 
 #: static/modern/translations-fakejs.js:40
 msgid "This service is currently not accessible due to schedule restrictions."
-msgstr ""
-"Atualmente, este serviço não está acessível devido a restrições de horário."
+msgstr "Atualmente, este serviço não está acessível devido a restrições de horário."
 
 #: static/modern/translations-fakejs.js:41
 msgid "Launcher"
@@ -2227,8 +2213,7 @@ msgstr "O serviço está em manutenção e não pode ser iniciado"
 
 #: static/modern/translations-fakejs.js:43
 msgid "This service is currently not accesible due to schedule restrictions."
-msgstr ""
-"Atualmente, este serviço não é acessível devido a restrições de horário."
+msgstr "Atualmente, este serviço não é acessível devido a restrições de horário."
 
 #: static/modern/translations-fakejs.js:44
 msgid "Service message"
@@ -2288,9 +2273,7 @@ msgstr "Para reiniciar o serviço, você precisará fazê-lo desde a origem."
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr ""
-"Se o serviço não for iniciado automaticamente, provavelmente você não possui "
-"o UDS Client instalado"
+msgstr "Se o serviço não for iniciado automaticamente, provavelmente você não possui o UDS Client instalado"
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"

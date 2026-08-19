@@ -13,12 +13,9 @@ Notes
   expected summary is deterministic (see each test's comments).
 """
 
-from __future__ import annotations
-
 import typing
 
-from uds.core import types
-from uds.core.security.checks import security_checks
+from uds.core import types, consts
 from uds.core.util.config import GlobalConfig
 
 from ....utils import rest
@@ -64,7 +61,7 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
     def tearDown(self) -> None:
         # Restore the shipped default root password: config values keep an
         # in-memory copy that outlives the (truncated) test database.
-        GlobalConfig.SUPER_USER_PASS.set(security_checks.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
         super().tearDown()
 
     def _get_report(self) -> dict[str, typing.Any]:
@@ -88,7 +85,9 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
         self.assertEqual({check["id"] for check in checks}, EXPECTED_CHECK_IDS)
         # Every check carries its severity, state and message
         for check in checks:
-            self.assertIn(check["severity"], [severity.value for severity in types.security.SecurityCheckSeverity])
+            self.assertIn(
+                check["severity"], [severity.value for severity in types.security.SecurityCheckSeverity]
+            )
             self.assertIsInstance(check["ok"], bool)
             self.assertTrue(check["message"])
         # Summary counts only failed checks, per severity
@@ -109,7 +108,9 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
         ]
         with self.settings(DEBUG=False, PROFILING=False, ALLOWED_HOSTS=["testserver"], MIDDLEWARE=middleware):
             body = self._get_report()
-            critical = {check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]}
+            critical = {
+                check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]
+            }
             self.assertEqual(critical, {"default-superuser-credentials"})
 
             # Rotating the root password clears the only critical finding

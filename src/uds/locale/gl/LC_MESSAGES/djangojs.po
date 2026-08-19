@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 # Translators:
 # Translators:
@@ -32,23 +32,22 @@
 # Translators:
 # Translators:
 # Translators:
-# Translators:
-# David Alonso, 2026
-# David Alonso, 2026
 #, fuzzy
+# Translators:
+# David Alonso, 2026
+# David Alonso, 2026
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 04:25+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: David Alonso, 2026\n"
-"Language-Team: Galician (http://app.transifex.com/openuds/openuds/language/"
-"gl/)\n"
-"Language: gl\n"
+"Language-Team: Galician (http://app.transifex.com/openuds/openuds/language/gl/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: gl\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
@@ -160,10 +159,7 @@ msgstr "Elemento modificado por outro administrador"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr ""
-"Outro administrador modificou este elemento mentres o estabas editando. "
-"Cárgao de novo para obter a versión actual antes de gardar os cambios de "
-"novo."
+msgstr "Outro administrador modificou este elemento mentres o estabas editando. Cárgao de novo para obter a versión actual antes de gardar os cambios de novo."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -651,9 +647,7 @@ msgstr "Servidores de importación"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr ""
-"O formato do ficheiro debe ser \"nome do servidor, ip, mac,...\". Todos os "
-"campos agás o nome do servidor son opcionais. Pódese configurar o separador."
+msgstr "O formato do ficheiro debe ser \"nome do servidor, ip, mac,...\". Todos os campos agás o nome do servidor son opcionais. Pódese configurar o separador."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1658,9 +1652,7 @@ msgstr "Isto significa que tes acceso restrinxido aos elementos."
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr ""
-"Para aumentar os seus privilexios de acceso, póñase en contacto co "
-"administrador local de UDS."
+msgstr "Para aumentar os seus privilexios de acceso, póñase en contacto co administrador local de UDS."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -2000,7 +1992,6 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Sesións simultáneas máximas por grupo"
 
 #: static/admin/translations-fakejs.js:632
-#, javascript-format
 msgid "Pool saturation (% of capacity)"
 msgstr "Saturación da piscina (% da capacidade)"
 
@@ -2096,9 +2087,7 @@ msgstr "Agarde ata que se lance o servizo."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr ""
-"Lembra que necesitarás o cliente UDS na túa plataforma para acceder ao "
-"servizo."
+msgstr "Lembra que necesitarás o cliente UDS na túa plataforma para acceder ao servizo."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2184,8 +2173,7 @@ msgstr "Inicio de sesión biométrico"
 
 #: static/modern/translations-fakejs.js:31
 msgid "Would you like to save your credentials for future biometric login?"
-msgstr ""
-"Queres gardar as túas credenciais para futuros inicios de sesión biométricos?"
+msgstr "Queres gardar as túas credenciais para futuros inicios de sesión biométricos?"
 
 #: static/modern/translations-fakejs.js:33
 msgid "Could not register biometrics"
@@ -2211,8 +2199,7 @@ msgstr "O servizo está en mantemento"
 
 #: static/modern/translations-fakejs.js:40
 msgid "This service is currently not accessible due to schedule restrictions."
-msgstr ""
-"Este servizo non está dispoñible actualmente debido a restricións de horario."
+msgstr "Este servizo non está dispoñible actualmente debido a restricións de horario."
 
 #: static/modern/translations-fakejs.js:41
 msgid "Launcher"
@@ -2224,8 +2211,7 @@ msgstr "O servizo está en mantemento e non se pode iniciar"
 
 #: static/modern/translations-fakejs.js:43
 msgid "This service is currently not accesible due to schedule restrictions."
-msgstr ""
-"Este servizo non está dispoñible actualmente debido a restricións de horario."
+msgstr "Este servizo non está dispoñible actualmente debido a restricións de horario."
 
 #: static/modern/translations-fakejs.js:44
 msgid "Service message"
@@ -2285,9 +2271,7 @@ msgstr "Para relanzar o servizo, terás que facelo desde a orixe."
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr ""
-"Se o servizo non se inicia automaticamente, probablemente non teñas "
-"instalado o cliente UDS."
+msgstr "Se o servizo non se inicia automaticamente, probablemente non teñas instalado o cliente UDS."
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"
