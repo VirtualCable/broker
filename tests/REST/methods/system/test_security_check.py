@@ -32,10 +32,7 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "ip-forwarders-wildcard",
         "login-hardening-weak",
         "actor-failure-blocking-disabled",
-        "honor-client-ip-notify",
-        "session-duration-excessive",
         "experimental-features-on",
-        "zero-trust-off",
         "immutable-audit-log-off",
         # A-family (settings.py)
         "security-cookies-and-headers",
@@ -45,24 +42,17 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "csrf-middleware-disabled",
         "sql-logging-enabled",
         "log-level-debug",
-        "no-email-backend",
-        "memcached-unauthenticated",
-        "hsts-not-enforced",
         # D-family (models.py)
         "saml-assertions-signed",
         "old-token-used-by-actor",
         "no-mfa-configured",
         "server-certificates-expiring",
-        "staff-accounts-hygiene",
-        "open-transports",
         "restrained-service-pools",
         # C-family (logs.py)
         "failed-logins-24h",
         "brute-force-by-ip",
         "temporarily-blocked-logins",
         "internal-errors-24h",
-        "bot-denied-requests-24h",
-        "forbidden-http-24h",
     )
 )
 

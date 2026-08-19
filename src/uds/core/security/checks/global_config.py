@@ -168,45 +168,6 @@ def _check_actor_failure_blocking_disabled() -> tuple[types.security.SecurityChe
     )
 
 
-def _check_honor_client_ip_notify() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    if GlobalConfig.HONOR_CLIENT_IP_NOTIFY.as_bool(True):
-        return (
-            types.security.SecurityCheckSeverity.LOW,
-            False,
-            _(
-                "HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which weakens"
-                " IP-based logging and blocking. Only acceptable on trusted deployments."
-            ),
-        )
-    return (
-        types.security.SecurityCheckSeverity.LOW,
-        True,
-        _("HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."),
-    )
-
-
-def _check_session_duration_excessive() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    admin_seconds = GlobalConfig.SESSION_DURATION_ADMIN.as_int()
-    user_seconds = GlobalConfig.SESSION_DURATION_USER.as_int()
-    threshold = 12 * 3600  # 12 hours
-    excessive: list[str] = []
-    if admin_seconds > threshold:
-        excessive.append(_("SESSION_DURATION_ADMIN={value}s").format(value=admin_seconds))
-    if user_seconds > threshold:
-        excessive.append(_("SESSION_DURATION_USER={value}s").format(value=user_seconds))
-    if excessive:
-        return (
-            types.security.SecurityCheckSeverity.LOW,
-            False,
-            _("Session durations exceed 12h: {issues}.").format(issues="; ".join(excessive)),
-        )
-    return (
-        types.security.SecurityCheckSeverity.LOW,
-        True,
-        _("Admin and user session durations are within 12h."),
-    )
-
-
 def _check_experimental_features_on() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
     if GlobalConfig.EXPERIMENTAL_FEATURES.as_bool(True):
         return (
@@ -218,20 +179,6 @@ def _check_experimental_features_on() -> tuple[types.security.SecurityCheckSever
         types.security.SecurityCheckSeverity.LOW,
         True,
         _("EXPERIMENTAL_FEATURES is off."),
-    )
-
-
-def _check_zero_trust_off() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    if GlobalConfig.ENFORCE_ZERO_TRUST.as_bool(True):
-        return (
-            types.security.SecurityCheckSeverity.INFO,
-            True,
-            _("ENFORCE_ZERO_TRUST is on: password redirection is disabled."),
-        )
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("ENFORCE_ZERO_TRUST is off (password redirection allowed)."),
     )
 
 
@@ -260,8 +207,5 @@ def register_checks(factory: SecurityChecksFactory) -> None:
     factory.register_check("ip-forwarders-wildcard", _check_ip_forwarders_wildcard)
     factory.register_check("login-hardening-weak", _check_login_hardening_weak)
     factory.register_check("actor-failure-blocking-disabled", _check_actor_failure_blocking_disabled)
-    factory.register_check("honor-client-ip-notify", _check_honor_client_ip_notify)
-    factory.register_check("session-duration-excessive", _check_session_duration_excessive)
     factory.register_check("experimental-features-on", _check_experimental_features_on)
-    factory.register_check("zero-trust-off", _check_zero_trust_off)
     factory.register_check("immutable-audit-log-off", _check_immutable_audit_log_off)

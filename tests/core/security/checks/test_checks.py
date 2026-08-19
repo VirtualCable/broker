@@ -55,10 +55,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "ip-forwarders-wildcard",
         "login-hardening-weak",
         "actor-failure-blocking-disabled",
-        "honor-client-ip-notify",
-        "session-duration-excessive",
         "experimental-features-on",
-        "zero-trust-off",
         "immutable-audit-log-off",
         # A-family (settings.py)
         "security-cookies-and-headers",
@@ -68,24 +65,17 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "csrf-middleware-disabled",
         "sql-logging-enabled",
         "log-level-debug",
-        "no-email-backend",
-        "memcached-unauthenticated",
-        "hsts-not-enforced",
         # D-family (models.py)
         "saml-assertions-signed",
         "old-token-used-by-actor",
         "no-mfa-configured",
         "server-certificates-expiring",
-        "staff-accounts-hygiene",
-        "open-transports",
         "restrained-service-pools",
         # C-family (logs.py)
         "failed-logins-24h",
         "brute-force-by-ip",
         "temporarily-blocked-logins",
         "internal-errors-24h",
-        "bot-denied-requests-24h",
-        "forbidden-http-24h",
     )
 )
 
@@ -812,113 +802,6 @@ class SecurityChecksTest(UDSTransactionTestCase):
         self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------
-    # Check: no-email-backend (settings)
-    # ------------------------------------------------------------------
-    def test_no_email_backend_detected(self) -> None:
-        # ``EMAIL_BACKEND`` is deprecated in Django 7.0, but still relevant
-        # until the broker migrates to ``MAILERS``. The override raises a
-        # ``RemovedInDjango70Warning``; suppress it locally so the test
-        # captures the check behavior rather than the deprecation signal.
-        import warnings
-
-        from django.utils.deprecation import RemovedInDjango70Warning
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RemovedInDjango70Warning)
-            with self.settings(EMAIL_BACKEND=None):
-                result = self._run_check("no-email-backend")
-        self.assertFalse(result.ok, result.message)
-
-    def test_no_email_backend_passes_when_set(self) -> None:
-        import warnings
-
-        from django.utils.deprecation import RemovedInDjango70Warning
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RemovedInDjango70Warning)
-            with self.settings(EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"):
-                result = self._run_check("no-email-backend")
-        self.assertTrue(result.ok, result.message)
-
-    # ------------------------------------------------------------------
-    # Check: memcached-unauthenticated (settings)
-    # ------------------------------------------------------------------
-    def test_memcached_unauthenticated_detected(self) -> None:
-        caches: dict[str, typing.Any] = {
-            "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
-            "memory": {
-                "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-                "LOCATION": "remote.example.com:11211",
-            },
-        }
-        with self.settings(CACHES=caches):
-            result = self._run_check("memcached-unauthenticated")
-        self.assertFalse(result.ok, result.message)
-
-    def test_memcached_unauthenticated_passes_when_localhost(self) -> None:
-        caches: dict[str, typing.Any] = {
-            "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
-            "memory": {
-                "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-                "LOCATION": "127.0.0.1:11211",
-            },
-        }
-        with self.settings(CACHES=caches):
-            result = self._run_check("memcached-unauthenticated")
-        self.assertTrue(result.ok, result.message)
-
-    # ------------------------------------------------------------------
-    # Check: hsts-not-enforced (settings)
-    # ------------------------------------------------------------------
-    def test_hsts_not_enforced_detected(self) -> None:
-        with self.settings(SECURE_HSTS_SECONDS=0, SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https")):
-            result = self._run_check("hsts-not-enforced")
-        self.assertFalse(result.ok, result.message)
-
-    def test_hsts_not_enforced_passes_when_seconds_set(self) -> None:
-        with self.settings(SECURE_HSTS_SECONDS=31536000):
-            result = self._run_check("hsts-not-enforced")
-        self.assertTrue(result.ok, result.message)
-
-    # ------------------------------------------------------------------
-    # Check: honor-client-ip-notify (global_config)
-    # ------------------------------------------------------------------
-    def test_honor_client_ip_notify_detected(self) -> None:
-        GlobalConfig.HONOR_CLIENT_IP_NOTIFY.set(True)
-        try:
-            result = self._run_check("honor-client-ip-notify")
-            self.assertFalse(result.ok, result.message)
-        finally:
-            GlobalConfig.HONOR_CLIENT_IP_NOTIFY.set(False)
-
-    def test_honor_client_ip_notify_passes_when_off(self) -> None:
-        GlobalConfig.HONOR_CLIENT_IP_NOTIFY.set(False)
-        result = self._run_check("honor-client-ip-notify")
-        self.assertTrue(result.ok, result.message)
-
-    # ------------------------------------------------------------------
-    # Check: session-duration-excessive (global_config)
-    # ------------------------------------------------------------------
-    def test_session_duration_excessive_detected(self) -> None:
-        GlobalConfig.SESSION_DURATION_ADMIN.set(60 * 60 * 24 * 2)  # 2 days
-        try:
-            result = self._run_check("session-duration-excessive")
-            self.assertFalse(result.ok, result.message)
-            self.assertIn("SESSION_DURATION_ADMIN", result.message)
-        finally:
-            GlobalConfig.SESSION_DURATION_ADMIN.set(14400)
-
-    def test_session_duration_excessive_passes_within_threshold(self) -> None:
-        GlobalConfig.SESSION_DURATION_ADMIN.set(3600)  # 1h
-        GlobalConfig.SESSION_DURATION_USER.set(3600)
-        try:
-            result = self._run_check("session-duration-excessive")
-            self.assertTrue(result.ok, result.message)
-        finally:
-            GlobalConfig.SESSION_DURATION_ADMIN.set(14400)
-            GlobalConfig.SESSION_DURATION_USER.set(14400)
-
-    # ------------------------------------------------------------------
     # Check: experimental-features-on (global_config)
     # ------------------------------------------------------------------
     def test_experimental_features_on_detected(self) -> None:
@@ -935,22 +818,6 @@ class SecurityChecksTest(UDSTransactionTestCase):
         self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------
-    # Check: zero-trust-off (global_config)
-    # ------------------------------------------------------------------
-    def test_zero_trust_off_passes_when_off(self) -> None:
-        GlobalConfig.ENFORCE_ZERO_TRUST.set(False)
-        result = self._run_check("zero-trust-off")
-        self.assertTrue(result.ok, result.message)
-
-    def test_zero_trust_off_passes_when_on(self) -> None:
-        GlobalConfig.ENFORCE_ZERO_TRUST.set(True)
-        try:
-            result = self._run_check("zero-trust-off")
-            self.assertTrue(result.ok, result.message)
-        finally:
-            GlobalConfig.ENFORCE_ZERO_TRUST.set(False)
-
-    # ------------------------------------------------------------------
     # Check: immutable-audit-log-off (global_config)
     # ------------------------------------------------------------------
     def test_immutable_audit_log_off_detected(self) -> None:
@@ -965,91 +832,6 @@ class SecurityChecksTest(UDSTransactionTestCase):
             self.assertTrue(result.ok, result.message)
         finally:
             GlobalConfig.IMMUTABLE_LOG_ENABLED.set(False)
-
-    # ------------------------------------------------------------------
-    # Check: bot-denied-requests-24h (logs) — INFO with count
-    # ------------------------------------------------------------------
-    def test_bot_denied_requests_24h_reports_count(self) -> None:
-        from uds.models import Log
-
-        Log.objects.filter(owner_id=0, owner_type=-1).delete()
-        now = timezone.now()
-        for i in range(3):
-            Log.objects.create(
-                owner_id=0,
-                owner_type=-1,
-                created=now - datetime.timedelta(minutes=i + 1),
-                source=types.log.LogSource.INTERNAL,
-                level=types.log.LogLevel.INFO,
-                name="",
-                data=f"Denied Bot crawl{i} from 10.0.0.{i}",
-            )
-        try:
-            result = self._run_check("bot-denied-requests-24h")
-            self.assertTrue(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.INFO)
-            self.assertIn("3", result.message)
-        finally:
-            Log.objects.filter(owner_id=0, owner_type=-1).delete()
-
-    # ------------------------------------------------------------------
-    # Check: forbidden-http-24h (logs) — INFO with count
-    # ------------------------------------------------------------------
-    def test_forbidden_http_24h_reports_count(self) -> None:
-        from uds.models import Log
-
-        Log.objects.filter(owner_id=0, owner_type=-1).delete()
-        now = timezone.now()
-        for i in range(2):
-            Log.objects.create(
-                owner_id=0,
-                owner_type=-1,
-                created=now - datetime.timedelta(minutes=i + 1),
-                source=types.log.LogSource.INTERNAL,
-                level=types.log.LogLevel.WARNING,
-                name="",
-                data=f"Forbidden: /test{i} from 10.0.0.1",
-            )
-        try:
-            result = self._run_check("forbidden-http-24h")
-            self.assertTrue(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.INFO)
-            self.assertIn("2", result.message)
-        finally:
-            Log.objects.filter(owner_id=0, owner_type=-1).delete()
-
-    # ------------------------------------------------------------------
-    # Check: staff-accounts-hygiene (models)
-    # ------------------------------------------------------------------
-    def test_staff_accounts_hygiene_passes_with_no_admins(self) -> None:
-        # The bootstrap fixture may have created a staff user. Either way the
-        # check should produce a structured message without raising.
-        result = self._run_check("staff-accounts-hygiene")
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.LOW)
-
-    # ------------------------------------------------------------------
-    # Check: open-transports (models)
-    # ------------------------------------------------------------------
-    def test_open_transports_passes_with_no_transports(self) -> None:
-        models.Transport.objects.all().delete()
-        result = self._run_check("open-transports")
-        self.assertTrue(result.ok, result.message)
-
-    def test_open_transports_flags_no_networks(self) -> None:
-        # A transport with no associated networks is reachable from anywhere.
-        models.Transport.objects.all().delete()
-        models.Transport.objects.create(
-            name="open-transport",
-            comments="",
-            data_type="dummy",
-            net_filtering=consts.auth.NO_FILTERING,
-        )
-        try:
-            result = self._run_check("open-transports")
-            self.assertTrue(result.ok, result.message)
-            self.assertIn("open-transport", result.message)
-        finally:
-            models.Transport.objects.all().delete()
 
     # ------------------------------------------------------------------
     # Check: restrained-service-pools (models)

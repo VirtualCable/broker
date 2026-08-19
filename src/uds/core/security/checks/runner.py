@@ -42,25 +42,9 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 
-from . import global_config, logs, models, settings
 from .factory import CheckFn, SecurityChecksFactory
 
 logger = logging.getLogger(__name__)
-
-
-# All groups are registered exactly once, when this module is first imported.
-# Subsequent imports are no-ops because the factory ignores duplicate ids.
-_bootstrap_done = False
-
-
-def _bootstrap() -> None:
-    global _bootstrap_done
-    if _bootstrap_done:
-        return
-    fact = SecurityChecksFactory()
-    for group in (settings, global_config, models, logs):
-        group.register_checks(fact)
-    _bootstrap_done = True
 
 
 def _collect_checks() -> list[tuple[str, CheckFn]]:
@@ -69,7 +53,6 @@ def _collect_checks() -> list[tuple[str, CheckFn]]:
     Extracted so tests can monkey-patch the iteration source instead of
     mutating the singleton factory.
     """
-    _bootstrap()
     return list(SecurityChecksFactory().objects().items())
 
 

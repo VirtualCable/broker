@@ -39,6 +39,7 @@ which works on any worker and lets the same ``Log`` table drive the existing
 import datetime
 import re
 import typing
+from collections.abc import Iterator
 
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -46,7 +47,7 @@ from django.utils.translation import gettext as _
 from uds.core import types
 from uds.models import Log
 
-from .factory import CheckFn, SecurityChecksFactory
+from .factory import SecurityChecksFactory
 
 # Thresholds for C1 ``failed-logins-24h`` (in count of records).
 # >50 / 24h is HIGH-fail; >10 is MEDIUM-fail; otherwise pass with the count.
@@ -74,7 +75,7 @@ def _window() -> datetime.datetime:
     return timezone.now() - datetime.timedelta(hours=24)
 
 
-def _failed_login_rows() -> "typing.Iterator[str]":
+def _failed_login_rows() -> Iterator[str]:
     """Yields the ``data`` field of every failed-login log row in the last 24h."""
     qs = (
         Log.objects.filter(
@@ -189,56 +190,9 @@ def _check_internal_errors_24h() -> tuple[types.security.SecurityCheckSeverity, 
     )
 
 
-def _check_bot_denied_requests_24h() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    # ``UDSSecurityMiddleware._process_request`` logs "Denied Bot <ua> from <ip>"
-    # when the user agent looks like a bot. Count those over the last 24h
-    # to flag reconnaissance traffic.
-    count = Log.objects.filter(
-        created__gte=_window(),
-        owner_id=0,
-        owner_type=-1,
-        data__contains="Denied Bot",
-    ).count()
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("{count} bot-denial(s) in the last 24h.").format(count=count),
-    )
-
-
-def _check_forbidden_http_24h() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    # Broker-visible proxy of HTTP 403s: Django's ``django.request`` logger
-    # fires at WARNING on every non-2xx, captured by ``UDSLogHandler`` into
-    # the global syslog. True reverse-proxy 4xx are not visible here;
-    # those belong to the edge.
-    count = Log.objects.filter(
-        created__gte=_window(),
-        owner_id=0,
-        owner_type=-1,
-        data__contains="Forbidden",
-    ).count()
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("{count} broker-visible Forbidden response(s) in the last 24h.").format(count=count),
-    )
-
-
 def register_checks(factory: SecurityChecksFactory) -> None:
     """Registers the runtime-log checks into the shared factory."""
     factory.register_check("failed-logins-24h", _check_failed_logins_24h)
     factory.register_check("brute-force-by-ip", _check_brute_force_by_ip)
     factory.register_check("temporarily-blocked-logins", _check_temporarily_blocked_logins)
     factory.register_check("internal-errors-24h", _check_internal_errors_24h)
-    factory.register_check("bot-denied-requests-24h", _check_bot_denied_requests_24h)
-    factory.register_check("forbidden-http-24h", _check_forbidden_http_24h)
-
-
-_CHECK_FUNCTIONS: typing.Final[tuple[CheckFn, ...]] = (
-    _check_failed_logins_24h,
-    _check_brute_force_by_ip,
-    _check_temporarily_blocked_logins,
-    _check_internal_errors_24h,
-    _check_bot_denied_requests_24h,
-    _check_forbidden_http_24h,
-)

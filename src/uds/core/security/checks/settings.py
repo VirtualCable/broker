@@ -34,6 +34,8 @@ Grouped here because their state is fixed at process start (the settings file)
 and is the same across every request: cookies, headers, enhanced-security flag.
 """
 
+import typing
+
 from django.conf import settings
 from django.utils.translation import gettext as _
 
@@ -139,7 +141,7 @@ def _check_sql_logging_enabled() -> tuple[types.security.SecurityCheckSeverity, 
     # Only flagged in production (DEBUG=False). In dev the SQL log is expected
     # noise; in prod every bound parameter (passwords, personal data) ends up
     # on disk forever, which is a sensitive-data-at-rest leak.
-    loggers = getattr(settings, "LOGGING", {}).get("loggers", {}) or {}
+    loggers: dict[str, dict[str, typing.Any]] = getattr(settings, "LOGGING", {}).get("loggers", {}) or {}
     db_logger = dict(loggers.get("django.db.backends", {}) or {})
     level = str(db_logger.get("level", "")).upper() or "WARNING"
     if level == "DEBUG" and not settings.DEBUG:
@@ -162,7 +164,7 @@ def _check_log_level_debug() -> tuple[types.security.SecurityCheckSeverity, bool
     # If A1 already fires, the root logger is also DEBUG via LOGLEVEL. If
     # A1 does not fire (DEBUG=False in production) but the root/uds logger
     # is still at DEBUG, we are noisier than necessary.
-    root_loggers = getattr(settings, "LOGGING", {}).get("loggers", {}) or {}
+    root_loggers: dict[str, dict[str, typing.Any]] = getattr(settings, "LOGGING", {}).get("loggers", {}) or {}
     root_level = str(root_loggers.get("", {}).get("level", "")).upper()
     uds_level = str(root_loggers.get("uds", {}).get("level", "")).upper()
     if root_level == "DEBUG" or uds_level == "DEBUG":
@@ -178,77 +180,6 @@ def _check_log_level_debug() -> tuple[types.security.SecurityCheckSeverity, bool
     )
 
 
-def _check_no_email_backend() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    # Detects the "no EMAIL_* configured" case: ``mail_admins`` and any
-    # email-based notification silently fail to localhost:25.
-    email_backend = getattr(settings, "EMAIL_BACKEND", None)
-    if email_backend is None or str(email_backend).strip() == "":
-        return (
-            types.security.SecurityCheckSeverity.INFO,
-            False,
-            _(
-                "EMAIL_BACKEND is not configured: 'mail_admins' and email notifications"
-                " silently fail. Operators will not receive ERROR-level alerts by mail."
-            ),
-        )
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("EMAIL_BACKEND is configured."),
-    )
-
-
-def _check_memcached_unauthenticated() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    caches = getattr(settings, "CACHES", {}) or {}
-    mem = dict(caches.get("memory", {}) or {})
-    location = str(mem.get("LOCATION", ""))
-    if "127.0.0.1" not in location and "localhost" not in location and location != "":
-        return (
-            types.security.SecurityCheckSeverity.INFO,
-            False,
-            _(
-                "CACHES['memory'] LOCATION={location!r} is reachable from outside the host:"
-                " any local user can read or poison the cache unless a SASL/TLS"
-                " username is configured."
-            ).format(location=location),
-        )
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("CACHES['memory'] is bound to localhost (or absent)."),
-    )
-
-
-def _check_hsts_not_enforced() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    # HSTS is added by UDSSecurityMiddleware only when request.is_secure()
-    # (i.e. behind HTTPS). If the broker is served behind HTTP only, HSTS
-    # never fires regardless of settings. The settings-level knob we can
-    # observe is SECURE_HSTS_SECONDS: if it's not set AND the broker
-    # appears to be HTTPS-fronted, flag it.
-    hsts_seconds = getattr(settings, "SECURE_HSTS_SECONDS", 0)
-    secure_proxy_header = getattr(settings, "SECURE_PROXY_SSL_HEADER", None)
-    if hsts_seconds:
-        return (
-            types.security.SecurityCheckSeverity.INFO,
-            True,
-            _("SECURE_HSTS_SECONDS is set ({seconds}s).").format(seconds=hsts_seconds),
-        )
-    if secure_proxy_header:
-        return (
-            types.security.SecurityCheckSeverity.INFO,
-            False,
-            _(
-                "Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is 0:"
-                " no HSTS header is emitted on HTTPS responses."
-            ),
-        )
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("HSTS is not configured; broker does not appear to be HTTPS-fronted."),
-    )
-
-
 def register_checks(factory: SecurityChecksFactory) -> None:
     """Registers the settings-derived checks into the shared factory."""
     factory.register_check("security-cookies-and-headers", _check_security_cookies_and_headers)
@@ -258,6 +189,3 @@ def register_checks(factory: SecurityChecksFactory) -> None:
     factory.register_check("csrf-middleware-disabled", _check_csrf_middleware_disabled)
     factory.register_check("sql-logging-enabled", _check_sql_logging_enabled)
     factory.register_check("log-level-debug", _check_log_level_debug)
-    factory.register_check("no-email-backend", _check_no_email_backend)
-    factory.register_check("memcached-unauthenticated", _check_memcached_unauthenticated)
-    factory.register_check("hsts-not-enforced", _check_hsts_not_enforced)

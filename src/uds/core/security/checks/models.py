@@ -35,11 +35,8 @@ Grouped here because they all inspect stored configuration rows
 or the admin-editable global config.
 """
 
-import datetime
 import typing
 
-from django.db.models import Q
-from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from uds import models
@@ -130,7 +127,7 @@ def _check_no_mfa_configured() -> tuple[types.security.SecurityCheckSeverity, bo
             True,
             _("No authenticators configured (nothing to enforce MFA on)."),
         )
-    without_mfa = [a.name for a in authenticators if a.mfa_id is None]
+    without_mfa = [a.name for a in authenticators if a.mfa is None]
     if len(without_mfa) == len(authenticators):
         return (
             types.security.SecurityCheckSeverity.MEDIUM,
@@ -207,71 +204,6 @@ def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckS
     )
 
 
-def _check_staff_accounts_hygiene() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    # Surface the admin surface: total admins, those whose last_access is
-    # older than 90 days (or never), and whether any of them belong to an
-    # authenticator without MFA (overlaps D1; the user-level detail lives
-    # here).
-    now = timezone.now()
-    threshold = now - datetime.timedelta(days=90)
-    staff = models.User.objects.filter(staff_member=True)
-    total = staff.count()
-    if total == 0:
-        return (
-            types.security.SecurityCheckSeverity.LOW,
-            True,
-            _("No staff/admin users configured."),
-        )
-    stale = staff.filter(Q(last_access__lt=threshold) | Q(last_access__isnull=True)).count()
-    details: list[str] = [f"{total} staff user(s)"]
-    if stale:
-        details.append(f"{stale} inactive for >90 days")
-    return (
-        types.security.SecurityCheckSeverity.LOW,
-        True,
-        _("Staff account hygiene: {details}.").format(details=", ".join(details)),
-    )
-
-
-def _check_open_transports() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    # Transports reachable from the "all-nets" network: a Network whose
-    # net_string parses to the full IPv4 space (0.0.0.0/0) or is empty.
-    from uds.core.util import net as util_net
-
-    open_transports: list[str] = []
-    for transport in models.Transport.objects.all():
-        nets = list(transport.networks.all())
-        if not nets:
-            open_transports.append(transport.name)
-            continue
-        for n in nets:
-            try:
-                net_info = util_net.network_from_str_ipv4(n.net_string)
-            except Exception:  # nosec: invalid net_string, treat as open
-                open_transports.append(transport.name)
-                break
-            start, end, _version = net_info
-            if start == 0 and end >= 0xFFFFFFFF:  # 0.0.0.0/0
-                open_transports.append(transport.name)
-                break
-    if open_transports:
-        return (
-            types.security.SecurityCheckSeverity.INFO,
-            True,
-            _("Transports reachable from any source: {names}.").format(names=", ".join(sorted(set(open_transports)))),
-        )
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("All transports are restricted by at least one network."),
-    )
-    return (
-        types.security.SecurityCheckSeverity.INFO,
-        True,
-        _("All transports are restricted by at least one network."),
-    )
-
-
 def _check_restrained_service_pools() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
     from uds.core.types.states import State
 
@@ -300,6 +232,4 @@ def register_checks(factory: SecurityChecksFactory) -> None:
     factory.register_check("old-token-used-by-actor", _check_old_token_used_by_actor)
     factory.register_check("no-mfa-configured", _check_no_mfa_configured)
     factory.register_check("server-certificates-expiring", _check_server_certificates_expiring)
-    factory.register_check("staff-accounts-hygiene", _check_staff_accounts_hygiene)
-    factory.register_check("open-transports", _check_open_transports)
     factory.register_check("restrained-service-pools", _check_restrained_service_pools)

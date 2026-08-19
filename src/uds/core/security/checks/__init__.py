@@ -38,7 +38,7 @@ Checks are grouped by data source:
 - :mod:`uds.core.security.checks.settings`      -- ``django.conf.settings``
 - :mod:`uds.core.security.checks.global_config` -- admin-editable global config
 - :mod:`uds.core.security.checks.models`        -- live database state
-- :mod:`uds.core.security.checks.logs`          -- runtime log/state (planned)
+- :mod:`uds.core.security.checks.logs`          -- runtime log/state
 
 Every group exposes a :func:`register_checks` that plugs its callables into the
 shared :class:`SecurityChecksFactory` returned by :func:`factory`. The runner
@@ -47,10 +47,6 @@ new checks only need to register, no edits to the runner.
 
 Checks only *notify*: they never modify any configuration value.
 """
-
-import typing
-
-from uds.core import consts
 
 from . import global_config as global_config
 from . import logs as logs
@@ -65,6 +61,15 @@ def factory() -> SecurityChecksFactory:
     return SecurityChecksFactory()
 
 
-# Re-export so callers can import the constant from the package root without
-# reaching into ``uds.core.consts.security`` directly.
-DEFAULT_SUPERUSER_PASSWORD: typing.Final[str] = consts.security.DEFAULT_SUPERUSER_PASSWORD
+def _initialize() -> None:
+    """Registers every check group into the singleton factory.
+
+    Called once at import time; re-invoking it is harmless because the
+    factory itself ignores duplicate check ids.
+    """
+    fact = SecurityChecksFactory()
+    for group in (settings, global_config, models, logs):
+        group.register_checks(fact)
+
+
+_initialize()
