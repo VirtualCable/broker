@@ -81,6 +81,13 @@ class WebcamParams:
 
 
 @dataclasses.dataclass
+class SmartcardParams:
+    # Matches uds-client `SmartcardSettings` (crates/js/.../rdp.rs). `emulated` carries a
+    # certificate/key pair the client builds itself, so it is never filled in from here.
+    enabled: bool = True
+
+
+@dataclasses.dataclass
 class RDPOptions:
     # Matches uds-client `JsRdpOptions`
     use_nla: bool | None = None
@@ -94,6 +101,7 @@ class RDPRedirections:
     audio: bool | None = None
     mic: bool | None = None
     webcam: WebcamParams | None = None
+    smartcard: SmartcardParams | None = None
 
 
 @dataclasses.dataclass
@@ -257,6 +265,14 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         length=5,
         default=0,
         tooltip=_("Cap webcam height in pixels, keeping aspect ratio. 0 = original size."),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    enable_smartcard = gui.CheckBoxField(
+        label=_("Enable Smartcard"),
+        order=31,
+        default=False,
+        tooltip=_("If checked, the local smartcard reader will be redirected to the remote session"),
         tab=types.ui.Tab.PARAMETERS,
     )
 
@@ -429,6 +445,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),
                 webcam=webcam,
+                smartcard=SmartcardParams(enabled=True) if self.enable_smartcard.as_bool() else None,
             ),
             tunnel=tunnel,
         )

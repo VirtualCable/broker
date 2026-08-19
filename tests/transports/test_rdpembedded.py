@@ -25,7 +25,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-Author: Janier Rodríguez
+Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import typing
@@ -69,6 +69,7 @@ class RDPEmbeddedTest(UDSTestCase):
         self.assertEqual(data["redirections"]["drives"], [])
         # Webcam disabled by default → key omitted entirely.
         self.assertNotIn("webcam", data["redirections"])
+        self.assertNotIn("smartcard", data["redirections"])
         # No tunnel for the direct transport.
         self.assertNotIn("tunnel", data)
 
@@ -127,6 +128,15 @@ class RDPEmbeddedTest(UDSTestCase):
 
         webcam = self._build(transport)["redirections"]["webcam"]
         self.assertEqual(webcam["size_limit"], (1280, 720))
+
+    def test_smartcard_enabled(self) -> None:
+        transport = self._transport()
+        transport.enable_smartcard.value = True
+
+        smartcard = self._build(transport)["redirections"]["smartcard"]
+        self.assertEqual(smartcard["enabled"], True)
+        # `emulated` belongs to the client, which builds the certificate pair itself.
+        self.assertNotIn("emulated", smartcard)
 
     def test_webcam_quality_fps_bounds(self) -> None:
         """Quality and FPS expose validation bounds to the admin UI."""
