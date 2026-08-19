@@ -42,7 +42,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:38+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2025\n"
 "Language-Team: Basque (http://app.transifex.com/openuds/openuds/language/"
@@ -1482,7 +1482,7 @@ msgstr "AD konexio konpatibilitatea (Windows 2000 edo gerokoak)"
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:148
+#: auths/SAML/saml.py:113 core/consts/__init__.py:149
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -2827,19 +2827,19 @@ msgstr "Oinarrizko autentikatzailea"
 msgid "Group name"
 msgstr "Talde-Izena"
 
-#: core/consts/__init__.py:146
+#: core/consts/__init__.py:147
 msgid "Admin"
 msgstr "Admin"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Staff member"
 msgstr "Langile Kidea"
 
-#: core/consts/__init__.py:149
+#: core/consts/__init__.py:150
 msgid "Anonymous"
 msgstr "Anonimoa"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Unknown role"
 msgstr "Rol ezezaguna"
 
@@ -3096,6 +3096,486 @@ msgstr "of"
 #: core/reports/report.py:192
 msgid "Printed in {now:%Y, %b %d} at {now:%H:%M}"
 msgstr "Inprimatu da {orain:% Y,% b% d} at {orain:% H:% M}"
+
+#: core/security/checks/global_config.py:57
+msgid ""
+"Default superuser credentials are still active. Change the root password "
+"immediately."
+msgstr ""
+"Supererabiltzaile kredentzial lehenetsiak aktibo daude oraindik. Aldatu root "
+"pasahitza berehala."
+
+#: core/security/checks/global_config.py:62
+msgid "Superuser password is not the shipped default."
+msgstr "Supererabiltzailearen pasahitza ez da lehenetsitako balioa."
+
+#: core/security/checks/global_config.py:71
+msgid ""
+"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
+"not needed in production."
+msgstr ""
+"Root web/API sarbidea gaituta dago (SUPER_USER_ALLOW_WEBACCESS). Desgaitu "
+"ekoizpenean beharrezkoa ez bada."
+
+#: core/security/checks/global_config.py:76
+msgid "Root web/API access is disabled."
+msgstr "Root web/API sarbidea desgaituta dago."
+
+#: core/security/checks/global_config.py:91
+#, python-brace-format
+msgid ""
+"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
+"admin operations is disabled."
+msgstr ""
+"{wildcards} karaktere arruntera (*) ezarrita: tunel, aktore eta "
+"administrazio eragiketetarako IP bidezko atea desgaituta dago."
+
+#: core/security/checks/global_config.py:97
+msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
+msgstr "TRUSTED_SOURCES eta ADMIN_TRUSTED_SOURCES ez dira komodinak."
+
+#: core/security/checks/global_config.py:107
+msgid ""
+"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
+"not exploitable until BEHIND_PROXY is enabled."
+msgstr ""
+"Brokerra ez dago proxy baten atzean; ALLOWED_IP_FORWARDERS komodin "
+"lehenetsia ezin da erabili BEHIND_PROXY gaituta egon arte."
+
+#: core/security/checks/global_config.py:115
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
+"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
+msgstr ""
+"Brokerra proxy baten atzean dago eta ALLOWED_IP_FORWARDERS txartel komodina "
+"da: edozein bezerok X-Forwarded-For imita dezake. Mugatu benetako proxy "
+"helbideetara."
+
+#: core/security/checks/global_config.py:122
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
+"addresses."
+msgstr ""
+"Brokerra proxy baten atzean dago eta ALLOWED_IP_FORWARDERS helbide "
+"zehatzetara mugatuta dago."
+
+#: core/security/checks/global_config.py:135
+#, python-brace-format
+msgid "MAX_LOGIN_TRIES={value} (recommended: 1-20)"
+msgstr "MAX_LOGIN_TRIES= {value} (gomendatua: 1-20)"
+
+#: core/security/checks/global_config.py:137
+#, python-brace-format
+msgid "LOGIN_BLOCK={value}s (recommended: >= 30)"
+msgstr "LOGIN_BLOCK= {value} s (gomendatua: &gt;= 30)"
+
+#: core/security/checks/global_config.py:139
+msgid "LOGIN_BLOCK_IP is off (recommended: on)"
+msgstr "LOGIN_BLOCK_IP desaktibatuta dago (gomendatua: piztuta)"
+
+#: core/security/checks/global_config.py:145
+#, python-brace-format
+msgid "Login hardening knobs are weak: {issues}."
+msgstr "Saioa hasteko gogortzeko botoiak ahulak dira: {issues} ."
+
+#: core/security/checks/global_config.py:150
+msgid "Login hardening knobs are within recommended ranges."
+msgstr "Saioa hasteko gogortzeko botoiak gomendatutako tarteetan daude."
+
+#: core/security/checks/global_config.py:159
+msgid "Actor failure blocking is enabled (BLOCK_ACTOR_FAILURES)."
+msgstr "Aktoreen hutsegiteen blokeoa gaituta dago (BLOCK_ACTOR_FAILURES)."
+
+#: core/security/checks/global_config.py:165
+msgid ""
+"Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints "
+"have no rate limit on bad tokens."
+msgstr ""
+"Aktoreen hutsegiteen blokeoa desgaituta dago (BLOCK_ACTOR_FAILURES): /"
+"aktore/ amaiera-puntuek ez dute token akastunentzako tasa-mugarik."
+
+#: core/security/checks/global_config.py:177
+msgid ""
+"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
+"weakens IP-based logging and blocking. Only acceptable on trusted "
+"deployments."
+msgstr ""
+"HONOR_CLIENT_IP_NOTIFY aktibatuta dago: bezeroek beren IP helbidea eurek "
+"jakinarazi dezakete, eta horrek IPan oinarritutako erregistroa eta blokeoa "
+"ahultzen ditu. Inplementazio fidagarrietan bakarrik onargarria."
+
+#: core/security/checks/global_config.py:184
+msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
+msgstr ""
+"HONOR_CLIENT_IP_NOTIFY itzalita dago: zerbitzariak detektatutako IP helbidea "
+"autoritarioa da."
+
+#: core/security/checks/global_config.py:194
+#, python-brace-format
+msgid "SESSION_DURATION_ADMIN={value}s"
+msgstr "SESSION_DURATION_ADMIN= {value} s"
+
+#: core/security/checks/global_config.py:196
+#, python-brace-format
+msgid "SESSION_DURATION_USER={value}s"
+msgstr "SESSION_DURATION_USER= {value} s"
+
+#: core/security/checks/global_config.py:201
+#, python-brace-format
+#| msgid "Session duration histogram"
+msgid "Session durations exceed 12h: {issues}."
+msgstr "Saioen iraupena 12 ordu baino gehiagokoa da: {issues} ."
+
+#: core/security/checks/global_config.py:206
+msgid "Admin and user session durations are within 12h."
+msgstr "Administratzaile eta erabiltzaile saioen iraupena 12 ordukoa da."
+
+#: core/security/checks/global_config.py:215
+msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
+msgstr ""
+"EXPERIMENTAL_FEATURES aktibatuta dago: funtzionalitate bateraezinak agerian "
+"daude."
+
+#: core/security/checks/global_config.py:220
+msgid "EXPERIMENTAL_FEATURES is off."
+msgstr "EXPERIMENTAL_FEATURES desaktibatuta dago."
+
+#: core/security/checks/global_config.py:229
+msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
+msgstr ""
+"ENFORCE_ZERO_TRUST aktibatuta dago: pasahitza birbideratzea desgaituta dago."
+
+#: core/security/checks/global_config.py:234
+msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
+msgstr ""
+"ENFORCE_ZERO_TRUST desaktibatuta dago (pasahitza birbideratzea baimenduta)."
+
+#: core/security/checks/global_config.py:243
+msgid "Immutable audit log is enabled (TSA-signed)."
+msgstr "Aldaezina den auditoria-erregistroa gaituta dago (TSAk sinatutakoa)."
+
+#: core/security/checks/global_config.py:249
+msgid ""
+"IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
+"tamper-evident log (src/uds/models/immutable_log.py)."
+msgstr ""
+"IMMUTABLE_LOG_ENABLED desaktibatuta dago: saio-hasierak eta administratzaile "
+"gertaerak ez dira idazten segurtasun-erregistroan (src/uds/models/"
+"immutable_log.py)."
+
+#: core/security/checks/logs.py:98
+#, python-brace-format
+msgid ""
+"{count} failed login attempts in the last 24h: a brute force may be in "
+"progress."
+msgstr ""
+"{count} saioa hasteko saiakera huts egin azken 24 orduetan: indar gordinaren "
+"erabilera bat martxan egon daiteke."
+
+#: core/security/checks/logs.py:104
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h."
+msgstr "{count} saiakera huts egin dira azken 24 orduetan."
+
+#: core/security/checks/logs.py:109
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h (within normal range)."
+msgstr ""
+"{count} saiakera huts egin dira azken 24 orduetan (tarte normalaren barruan)."
+
+#: core/security/checks/logs.py:128
+#, python-brace-format
+msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
+msgstr ""
+"Azken 24 orduetan iturri IPak detektatutako indar gordineko ereduak: {top} ."
+
+#: core/security/checks/logs.py:133
+#, python-brace-format
+msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
+msgstr ""
+"Azken 24 orduetan ez dago {threshold} saiakera huts baino gehiagoko IP "
+"helbiderik."
+
+#: core/security/checks/logs.py:154
+#, python-brace-format
+msgid ""
+"{count} account(s) were temporarily blocked in the last 24h: an attacker may "
+"be cycling credentials under the per-user lockout, or a misconfigured client "
+"is retrying with stale credentials."
+msgstr ""
+"{count} kontu blokeatu dira aldi baterako azken 24 orduetan: erasotzaile "
+"batek erabiltzaile bakoitzeko blokeoaren pean kredentzialak birziklatzen ari "
+"daiteke, edo gaizki konfiguratutako bezero batek kredentzial zaharkituekin "
+"berriro saiatzen ari da."
+
+#: core/security/checks/logs.py:162
+msgid "No accounts were temporarily blocked in the last 24h."
+msgstr "Ez da konturik aldi baterako blokeatu azken 24 orduetan."
+
+#: core/security/checks/logs.py:181
+#, python-brace-format
+msgid ""
+"{count} internal ERROR entries in the last 24h: check uds.log / "
+"services.log / workers.log for failing providers or 5xx storms."
+msgstr ""
+"{count} barne ERRORE sarrera azken 24 orduetan: egiaztatu uds.log / "
+"services.log / workers.log hornitzaile huts egiten dutenak edo 5xx ekaitzak "
+"dauden ikusteko."
+
+#: core/security/checks/logs.py:188
+#, python-brace-format
+msgid "{count} internal ERROR entries in the last 24h (within normal range)."
+msgstr ""
+"{count} barne ERRORE sarrera azken 24 orduetan (tarte normalaren barruan)."
+
+#: core/security/checks/logs.py:205
+#, python-brace-format
+msgid "{count} bot-denial(s) in the last 24h."
+msgstr "{count} bot-ukapen azken 24 orduetan."
+
+#: core/security/checks/logs.py:223
+#, python-brace-format
+msgid "{count} broker-visible Forbidden response(s) in the last 24h."
+msgstr "{count} agente ikusgai debekatutako erantzun azken 24 orduetan."
+
+#: core/security/checks/models.py:72
+#, python-brace-format
+msgid ""
+"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
+"assertions can be forged against a misconfigured IdP."
+msgstr ""
+"Ez da beharrezkoa SAML baieztapenak sinatuta egotea: {unsigned}. Sinatu "
+"gabeko baieztapenak faltsutu daitezke gaizki konfiguratutako IdP baten aurka."
+
+#: core/security/checks/models.py:80
+msgid "All SAML authenticators require signed assertions or messages."
+msgstr ""
+"SAML autentifikatzaile guztiek sinatutako baieztapenak edo mezuak behar "
+"dituzte."
+
+#: core/security/checks/models.py:85
+msgid "No SAML authenticators configured."
+msgstr "Ez dago SAML autentifikatzailerik konfiguratuta."
+
+#: core/security/checks/models.py:114
+#, python-brace-format
+msgid ""
+"Service pools with actors still using the legacy uuid token flow: "
+"{affected}. Re-initialize affected actors to rotate them to the new token."
+msgstr ""
+"Aktoreek oraindik uuid token-fluxu zaharra erabiltzen duten zerbitzu-"
+"multzoak: {affected}. Berriro hasieratu kaltetutako aktoreak token berrira "
+"biratzeko."
+
+#: core/security/checks/models.py:121
+msgid "No user services are using the legacy uuid actor token flow."
+msgstr ""
+"Ez dago erabiltzaile-zerbitzurik uuid aktorearen token-fluxu zaharra "
+"erabiltzen ari denik."
+
+#: core/security/checks/models.py:131
+#| msgid "No SAML authenticators configured."
+msgid "No authenticators configured (nothing to enforce MFA on)."
+msgstr ""
+"Ez dago autentifikatzailerik konfiguratuta (ez dago ezer MFA betearazteko)."
+
+#: core/security/checks/models.py:138
+#, python-brace-format
+msgid ""
+"No authenticator has MFA configured: {names}. Assign at least one MFA per "
+"authenticator."
+msgstr ""
+"Ez dago MFA konfiguratuta duen autentifikatzailerik: {names} . Esleitu "
+"gutxienez MFA bat autentifikatzaile bakoitzeko."
+
+#: core/security/checks/models.py:145
+#, python-brace-format
+msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
+msgstr ""
+"MFA estaldura: {with_mfa} / {total} autentifikatzailek MFA dute esleituta."
+
+#: core/security/checks/models.py:191
+#, python-brace-format
+msgid ""
+"{n} server certificate(s) have expired: {names}. Renew and rotate the "
+"affected servers."
+msgstr ""
+"{n} zerbitzari-ziurtagiri iraungi dira: {names} . Berritu eta txandakatu "
+"kaltetutako zerbitzariak."
+
+#: core/security/checks/models.py:199
+#, python-brace-format
+msgid "{n} server certificate(s) expire within 30 days: {names}."
+msgstr "{n} zerbitzari-ziurtagiri 30 eguneko epean iraungitzen dira: {names} ."
+
+#: core/security/checks/models.py:206
+msgid "No server certificates expire within the next 30 days."
+msgstr "Ez da zerbitzari-ziurtagiririk iraungiko hurrengo 30 egunetan."
+
+#: core/security/checks/models.py:223
+#| msgid "No LDAP servers configured"
+msgid "No staff/admin users configured."
+msgstr "Ez da langile/administratzaile erabiltzailerik konfiguratu."
+
+#: core/security/checks/models.py:232
+#, python-brace-format
+msgid "Staff account hygiene: {details}."
+msgstr "Langileen kontuaren higienea: {details} ."
+
+#: core/security/checks/models.py:261
+#, python-brace-format
+msgid "Transports reachable from any source: {names}."
+msgstr "Edozein iturritatik eskuragarri dauden garraiobideak: {names} ."
+
+#: core/security/checks/models.py:266 core/security/checks/models.py:271
+msgid "All transports are restricted by at least one network."
+msgstr "Garraio guztiak sare batek mugatuta daude gutxienez."
+
+#: core/security/checks/models.py:288
+#, python-brace-format
+msgid "{n} service pool(s) are currently restrained: {names}."
+msgstr "{n} zerbitzu multzo mugatuta daude une honetan: {names} ."
+
+#: core/security/checks/models.py:293
+msgid "No service pools are currently restrained."
+msgstr "Ez dago zerbitzu multzo mugaturik une honetan."
+
+#: core/security/checks/runner.py:94
+#, python-brace-format
+msgid "Check could not be evaluated: {error}"
+msgstr "Ezin izan da txekea ebaluatu: {error}"
+
+#: core/security/checks/settings.py:59
+#, python-brace-format
+msgid "Security cookies/headers are disabled: {missing}."
+msgstr "Segurtasun cookieak/goiburuak desgaituta daude: {missing}."
+
+#: core/security/checks/settings.py:64
+msgid "Session/security cookies and enhanced security are enabled."
+msgstr "Saio/segurtasun cookieak eta segurtasun hobetua gaituta daude."
+
+#: core/security/checks/settings.py:78
+#, python-brace-format
+msgid ""
+"Production debug switches are on: {problems}. Disable both in production."
+msgstr ""
+"Ekoizpeneko arazketa-etengailuak piztuta daude: {problems} . Desgaitu biak "
+"ekoizpenean."
+
+#: core/security/checks/settings.py:85
+msgid "DEBUG and PROFILING are both off."
+msgstr "DEBUG eta PROFILING desaktibatuta daude."
+
+#: core/security/checks/settings.py:94
+msgid ""
+"settings.SECRET_KEY is the shipped sample value: session tokens can be "
+"forged."
+msgstr ""
+"settings.SECRET_KEY bidalitako lagin-balioa da: saio-tokenak faltsutu "
+"daitezke."
+
+#: core/security/checks/settings.py:99
+msgid "settings.SECRET_KEY has been rotated."
+msgstr "settings.SECRET_KEY biratu da."
+
+#: core/security/checks/settings.py:111
+msgid ""
+"settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
+"secrets."
+msgstr ""
+"settings.RSA_KEY bidalitako lagin-balioa da: edonork deszifra ditzake broker "
+"sekretuak."
+
+#: core/security/checks/settings.py:116
+msgid "settings.RSA_KEY has been rotated."
+msgstr "settings.RSA_KEY biratu da."
+
+#: core/security/checks/settings.py:127
+msgid ""
+"django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
+"request forgery is not mitigated at the framework level."
+msgstr ""
+"django.middleware.csrf.CsrfViewMiddleware ez dago MIDDLEWARE-n: gune arteko "
+"eskaeren faltsutzea ez da arintzen esparru mailan."
+
+#: core/security/checks/settings.py:134
+msgid "django.middleware.csrf.CsrfViewMiddleware is active."
+msgstr "django.middleware.csrf.CsrfViewMiddleware aktibo dago."
+
+#: core/security/checks/settings.py:150
+msgid ""
+"SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
+"statement with bound values is being written to log/sql.log on disk."
+msgstr ""
+"&#39;django.db.backends&#39; SQL erregistroa DEBUG egoeran dago DEBUG "
+"itzalita dagoen bitartean: balio lotuak dituen SQL adierazpen guztiak "
+"diskoan log/sql.log fitxategian idazten ari dira."
+
+#: core/security/checks/settings.py:157
+msgid ""
+"SQL logger 'django.db.backends' is not writing bound SQL to disk in "
+"production."
+msgstr ""
+"&#39;django.db.backends&#39; SQL erregistratzaileak ez du lotutako SQLrik "
+"diskoan idazten ekoizpenean."
+
+#: core/security/checks/settings.py:172
+msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
+msgstr ""
+"Erroko edo &#39;uds&#39; erregistratzailea DEBUG egoeran dago ekoizpenean "
+"(diskoan erregistro zehatzak)."
+
+#: core/security/checks/settings.py:177
+msgid "Root and 'uds' loggers are above DEBUG in production."
+msgstr ""
+"Root eta &#39;uds&#39; erregistratzaileak DEBUG-aren gainetik daude "
+"ekoizpenean."
+
+#: core/security/checks/settings.py:190
+msgid ""
+"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
+"silently fail. Operators will not receive ERROR-level alerts by mail."
+msgstr ""
+"EMAIL_BACKEND ez dago konfiguratuta: &#39;mail_admins&#39; eta posta "
+"elektroniko bidezko jakinarazpenek isilean huts egiten dute. Operadoreek ez "
+"dute ERRORE mailako alertarik jasoko posta elektronikoz."
+
+#: core/security/checks/settings.py:197
+msgid "EMAIL_BACKEND is configured."
+msgstr "EMAIL_BACKEND konfiguratuta dago."
+
+#: core/security/checks/settings.py:210
+msgid ""
+"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
+"any local user can read or poison the cache unless a SASL/TLS username is "
+"configured."
+msgstr ""
+"CACHES[&#39;memory&#39;] LOCATION= {location!r} ostalariaren kanpotik eskura "
+"daiteke: edozein erabiltzaile lokalek katxea irakurri edo pozoitu dezake "
+"SASL/TLS erabiltzaile-izen bat konfiguratuta ez badago."
+
+#: core/security/checks/settings.py:218
+msgid "CACHES['memory'] is bound to localhost (or absent)."
+msgstr "CACHES[&#39;memory&#39;] localhost-era lotuta dago (edo ez dago)."
+
+#: core/security/checks/settings.py:234
+#, python-brace-format
+msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
+msgstr "SECURE_HSTS_SECONDS ezarrita dago ( {seconds} s)."
+
+#: core/security/checks/settings.py:241
+msgid ""
+"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
+"0: no HSTS header is emitted on HTTPS responses."
+msgstr ""
+"Brokerra HTTPS-ren atzetik doa (SECURE_PROXY_SSL_HEADER) baina "
+"SECURE_HSTS_SECONDS 0 da: ez da HSTS goibururik igortzen HTTPS erantzunetan."
+
+#: core/security/checks/settings.py:248
+msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
+msgstr ""
+"HSTS ez dago konfiguratuta; badirudi agenteak ez duela HTTPS-ren atzetik "
+"funtzionatzen."
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73
@@ -3493,11 +3973,11 @@ msgstr "Makina"
 msgid "Config"
 msgstr "Konfig"
 
-#: core/util/config.py:388
+#: core/util/config.py:389
 msgid "Session expire time in hours after publishing"
 msgstr "Saioa argitaratu eta orduetan iraungiko da"
 
-#: core/util/config.py:396
+#: core/util/config.py:397
 msgid ""
 "Delay between cache checks. Reducing this number will increase cache "
 "generation speed but also will load service providers"
@@ -3505,7 +3985,7 @@ msgstr ""
 "Cache-egiaztapenen arteko atzerapena. Kopuru hori murrizteak cachea sortzeko "
 "abiadura handituko du, baina zerbitzu hornitzaileak ere kargatuko ditu"
 
-#: core/util/config.py:405
+#: core/util/config.py:406
 msgid ""
 "Delayed task number of threads PER SERVER, with higher number of threads, "
 "deployed task will complete sooner, but it will give more load to overall "
@@ -3515,7 +3995,7 @@ msgstr ""
 "inplementatutako zeregina lehenago burutuko da, baina karga gehiago emango "
 "dio sistema orokorrari"
 
-#: core/util/config.py:414
+#: core/util/config.py:415
 msgid ""
 "Number of scheduler threads running PER SERVER, with higher number of "
 "threads, deployed task will complete sooner, but it will give more load to "
@@ -3525,7 +4005,7 @@ msgstr ""
 "hari kopuru handiagoarekin, inplementatutako zeregina lehenago burutuko da, "
 "baina karga gehiago emango dio sistema orokorrari"
 
-#: core/util/config.py:423
+#: core/util/config.py:424
 msgid ""
 "Waiting time before removing \"errored\" and \"removed\" publications, "
 "cache, and user assigned machines. Time is in seconds"
@@ -3533,33 +4013,33 @@ msgstr ""
 "\"Erroratutako\" eta \"kendutako\" argitalpenak, cachea eta erabiltzaileak "
 "esleitutako makinak kendu aurretik itxaron denbora. Denbora segundotan dago"
 
-#: core/util/config.py:431
+#: core/util/config.py:432
 msgid "Time to maintaing \"info state\" items before removing it, in seconds"
 msgstr ""
 "Kendu aurretik \"informazio egoera\" elementuak mantentzeko denbora "
 "segundotan"
 
-#: core/util/config.py:438
+#: core/util/config.py:439
 msgid "Number of services to initiate removal per run of service cleaner"
 msgstr ""
 "Zerbitzu-garbigailuaren exekuzio bakoitzeko kentzen hasteko zerbitzu kopurua"
 
-#: core/util/config.py:445
+#: core/util/config.py:446
 msgid ""
 "Removal Check time for cache, publications and deployed services, in seconds"
 msgstr ""
 "Kentzea Egiaztatu cache, argitalpen eta inplementatutako zerbitzuen denbora "
 "segundotan"
 
-#: core/util/config.py:448
+#: core/util/config.py:449
 msgid "Superuser username"
 msgstr "Supererabiltzaile erabiltzaile izena"
 
-#: core/util/config.py:452
+#: core/util/config.py:456
 msgid "Superuser password"
 msgstr "Supererabiltzaile pasahitza"
 
-#: core/util/config.py:459
+#: core/util/config.py:463
 msgid ""
 "Allow root user to access using web interface.\n"
 " Once configured one authenticator,\n"
@@ -3568,11 +4048,11 @@ msgstr ""
 "Baimendu root erabiltzaileari web interfazea erabiliz atzitzeko. Behin "
 "autentifikatzaile bat konfiguratuta, aukera hau desgaitzea gomendatzen da"
 
-#: core/util/config.py:467
+#: core/util/config.py:471
 msgid "Enable enhanced security modules"
 msgstr "Gaitu segurtasun-modulu hobetuak"
 
-#: core/util/config.py:475
+#: core/util/config.py:479
 msgid ""
 "Enforced maximum security mode (Zero-Trust Mode). No password redirection "
 "will be allowed if this mode is set."
@@ -3580,7 +4060,7 @@ msgstr ""
 "Gehieneko segurtasun modua (Zero-Trust modua). Ez da pasahitz "
 "birbideratzerik onartuko modu hau ezarrita badago."
 
-#: core/util/config.py:487
+#: core/util/config.py:491
 msgid ""
 "How long should the user service be unused before os manager considers it "
 "for removal"
@@ -3588,31 +4068,31 @@ msgstr ""
 "Zenbat denbora egon behar du erabiltzaile-zerbitzua erabili gabe OS Manager "
 "kentzeko kontuan hartu arte"
 
-#: core/util/config.py:497
+#: core/util/config.py:501
 msgid "Max logins before blocking an account for a while"
 msgstr "Saio-hasiera gehienez kontu bat blokeatu aurretik"
 
-#: core/util/config.py:504
+#: core/util/config.py:508
 msgid "Block time in second for an user that has too many login failures"
 msgstr ""
 "Blokeatu denbora segundotan saioa hasteko hutsegite gehiegi dituen "
 "erabiltzailearentzat"
 
-#: core/util/config.py:510
+#: core/util/config.py:514
 msgid "Block ip on login failure"
 msgstr "Blokeatu ip saioa hasteko hutsegitean"
 
-#: core/util/config.py:519
+#: core/util/config.py:523
 msgid "Do autorun of service if just one service"
 msgstr "Egin zerbitzua automatikoki zerbitzu bakarra bada"
 
-#: core/util/config.py:525
+#: core/util/config.py:529
 msgid "Redirects login page to the tag used when logged in if active."
 msgstr ""
 "Saioa hasitakoan erabilitako etiketara birbideratzen du saioa hasteko orria "
 "aktibo badago."
 
-#: core/util/config.py:534
+#: core/util/config.py:538
 msgid ""
 "Max time needed to get a service \"fully functional\" before it's considered "
 "\"failed\" and removed"
@@ -3620,7 +4100,7 @@ msgstr ""
 "Zerbitzu bat \"erabat funtzionala\" izateko behar den denbora maximoa "
 "\"porrot egin\" eta kendu aurretik"
 
-#: core/util/config.py:540
+#: core/util/config.py:544
 msgid ""
 "Max time needed to get a service \"fully removed\" before it's considered "
 "\"failed\" and purged"
@@ -3628,27 +4108,27 @@ msgstr ""
 "Zerbitzu bat \"guztiz kentzeko\" behar den denbora maximoa \"porrot egin\" "
 "eta garbitu aurretik"
 
-#: core/util/config.py:547
+#: core/util/config.py:551
 msgid "Maximum logs per every log-capable administration element"
 msgstr ""
 "Gehienezko erregistroak erregistrorako gai den administrazio-elementu "
 "bakoitzeko"
 
-#: core/util/config.py:554
+#: core/util/config.py:558
 msgid ""
 "Maximum logs entries for general UDS logs (0 = unlimited, use with care)"
 msgstr ""
 "Gehienezko erregistro-sarrerak UDS erregistro orokorretarako (0 = mugagabea, "
 "erabili kontu handiz)"
 
-#: core/util/config.py:562
+#: core/util/config.py:566
 msgid ""
 "Time to restrain a user service in case it gives some errors at some point"
 msgstr ""
 "Erabiltzaile-zerbitzu bat mugatzeko garaia uneren batean akatsen bat ematen "
 "badu"
 
-#: core/util/config.py:569
+#: core/util/config.py:573
 msgid ""
 "Number of errors that must occurr in \"restrainTime\" to restrain an user "
 "service"
@@ -3656,44 +4136,44 @@ msgstr ""
 "Erabiltzaile-zerbitzu bat murrizteko \"restrainTime\"n gertatu behar diren "
 "errore kopurua"
 
-#: core/util/config.py:577
+#: core/util/config.py:581
 msgid "Statistics duration, in days"
 msgstr "Estatistikaren iraupena, egunetan"
 
-#: core/util/config.py:584
+#: core/util/config.py:588
 msgid ""
 "Frequency of stats collection in seconds. Default is 1 hours (3600 seconds)"
 msgstr ""
 "Estatistikak biltzeko maiztasuna segundotan. Lehenetsia ordu 1 (3600 "
 "segundo) da"
 
-#: core/util/config.py:591
+#: core/util/config.py:595
 msgid "Maximum number of time to accumulate on one run. Default is 7 (1 week)"
 msgstr ""
 "Korrika batean pilatzeko gehienezko denbora kopurua. Lehenetsia 7 da (aste 1)"
 
-#: core/util/config.py:599
+#: core/util/config.py:603
 msgid "If disallow login showing authenticatiors"
 msgstr "Saio-hasiera autentifikatzaileak erakusten ez badituzu"
 
-#: core/util/config.py:607
+#: core/util/config.py:611
 msgid ""
 "Notify user of existence of a new version of a service on new publication"
 msgstr ""
 "Argitalpen berrian zerbitzu baten bertsio berri bat dagoela jakinaraztea "
 "erabiltzaileari"
 
-#: core/util/config.py:615
+#: core/util/config.py:619
 msgid "Networks or hosts considered \"trusted\" for UDS (Tunnels, etc...)"
 msgstr ""
 "UDSrako \"fidagarritzat\" jotzen diren sareak edo ostalariak (Tunelak, "
 "etab...)"
 
-#: core/util/config.py:622
+#: core/util/config.py:626
 msgid "IPs or networks allowed to forward requests (like proxies)"
 msgstr "Eskaerak birbidaltzeko baimena duten IP edo sareek (proxyak adibidez)"
 
-#: core/util/config.py:630
+#: core/util/config.py:634
 msgid ""
 "Allow clients to notify their own ip (if set), or use always the request "
 "extracted IP"
@@ -3701,11 +4181,11 @@ msgstr ""
 "Eman bezeroei beren ip-a jakinaraztea (konfiguratuta badago), edo erabili "
 "beti ateratako IP eskaera"
 
-#: core/util/config.py:638
+#: core/util/config.py:642
 msgid "If there is a proxy in front of us (i.e. HAProxy, or any NLB)"
 msgstr "Gure aurrean proxy bat badago (hau da, HAProxy edo edozein NLB)"
 
-#: core/util/config.py:647
+#: core/util/config.py:651
 msgid ""
 "If we use new logout mechanics for osmanagers, where only when the logged in "
 "users reaches 0, it is considered \"logged out\""
@@ -3714,150 +4194,150 @@ msgstr ""
 "saioa hasitako erabiltzaileak 0ra iristen direnean soilik, \"saioa "
 "amaitutzat\" jotzen den."
 
-#: core/util/config.py:656
+#: core/util/config.py:660
 msgid "Enable/Disable Actor attack detection ip blocking"
 msgstr "Gaitu/Desgaitu Aktoreen erasoak detektatzeko ip blokeoa"
 
-#: core/util/config.py:664
+#: core/util/config.py:668
 msgid "Max session length for Admin"
 msgstr "Gehienezko saioaren iraupena administratzailearentzat"
 
-#: core/util/config.py:670
+#: core/util/config.py:674
 msgid "Max session length for User"
 msgstr "Erabiltzailearen gehienezko saioaren iraupena"
 
-#: core/util/config.py:677
+#: core/util/config.py:681
 msgid "Page reload Time (legacy)"
 msgstr "Orria birkargatzeko denbora (ondarea)"
 
-#: core/util/config.py:685
+#: core/util/config.py:689
 msgid "Custom message for error when limiting by calendar"
 msgstr "Egutegiaren arabera mugatzerakoan errorearen mezu pertsonalizatua"
 
-#: core/util/config.py:693
+#: core/util/config.py:697
 msgid "If convert username to lowercase on logins"
 msgstr "Saio-hasieran erabiltzaile-izena minuskula bihurtzen baduzu"
 
-#: core/util/config.py:701
+#: core/util/config.py:705
 msgid "Global UDS ID (common for all servers on the same cluster)"
 msgstr "UDS ID globala (komuna kluster bereko zerbitzari guztientzat)"
 
-#: core/util/config.py:709
+#: core/util/config.py:713
 msgid "Site display name"
 msgstr "Gunearen bistaratzeko izena"
 
-#: core/util/config.py:715
+#: core/util/config.py:719
 msgid "Site copyright info"
 msgstr "Gunearen copyright informazioa"
 
-#: core/util/config.py:721
+#: core/util/config.py:725
 msgid "Site copyright link"
 msgstr "Gunearen copyright esteka"
 
-#: core/util/config.py:724
+#: core/util/config.py:728
 msgid "Top navbar logo name"
 msgstr "Goiko nabigazioko logotipoaren izena"
 
-#: core/util/config.py:730
+#: core/util/config.py:734
 msgid "Custom CSS styles applied to the user accesible site"
 msgstr ""
 "CSS estilo pertsonalizatuak erabiltzailearen eskura dagoen guneari aplikatu "
 "zaizkio"
 
-#: core/util/config.py:736
+#: core/util/config.py:740
 msgid "Site information"
 msgstr "Gunearen informazioa"
 
-#: core/util/config.py:742
+#: core/util/config.py:746
 msgid "Show Filter box for user services on Top or bottom of the page"
 msgstr ""
 "Erakutsi iragazki-koadroa erabiltzaile-zerbitzuetarako orriaren goialdean "
 "edo behean"
 
-#: core/util/config.py:748
+#: core/util/config.py:752
 msgid "Minimal User Services needed to show filter"
 msgstr "Erabiltzaile-zerbitzu minimoak behar dira iragazkia erakusteko"
 
-#: core/util/config.py:754
+#: core/util/config.py:758
 msgid "Enable experimental features. USE WITH CAUTION!!"
 msgstr "Gaitu eginbide esperimentalak. KONTUZ ERABILI!!"
 
-#: core/util/config.py:762
+#: core/util/config.py:766
 msgid "Time in seconds of inactivity before auto reloading admin pages"
 msgstr ""
 "Administrazio-orriak automatikoki berriro kargatu aurretik jarduerarik "
 "gabeko denbora segundotan"
 
-#: core/util/config.py:768
+#: core/util/config.py:772
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr ""
 "Administrazio-orrialdeen birkargatze automatikoen arteko denbora segundotan"
 
-#: core/util/config.py:774
+#: core/util/config.py:778
 msgid "Number of items per page in admin tables"
 msgstr "Orrialde bakoitzeko elementu kopurua administrazio-tauletan"
 
-#: core/util/config.py:780
+#: core/util/config.py:784
 msgid "List of trusted hosts/networks allowed to access the admin interface"
 msgstr ""
 "Administratzaile interfazera sartzeko baimendutako ostalari/sare fidagarrien "
 "zerrenda"
 
-#: core/util/config.py:786
+#: core/util/config.py:790
 msgid "Enable VNC menu for user services"
 msgstr "Gaitu VNC menua erabiltzailearen zerbitzuetarako"
 
-#: core/util/config.py:797
+#: core/util/config.py:801
 msgid ""
 "Cookies consent text. If empty, a default multi language text will be used"
 msgstr ""
 "Cookieak baimentzeko testua. Hutsik badago, hizkuntza anitzeko testu "
 "lehenetsi bat erabiliko da"
 
-#: core/util/config.py:803
+#: core/util/config.py:807
 msgid "Enable cookies consent"
 msgstr "Gaitu cookieen baimena"
 
-#: core/util/config.py:809
+#: core/util/config.py:813
 msgid "URL for more info about cookies"
 msgstr "Cookieei buruzko informazio gehiago lortzeko URLa"
 
-#: core/util/config.py:815
+#: core/util/config.py:819
 msgid "URL to leave cookies consent"
 msgstr "Cookieen baimena uzteko URLa"
 
-#: core/util/config.py:821
+#: core/util/config.py:825
 msgid "Enable or disable add favorite services feature"
 msgstr "Gaitu edo desgaitu gogoko zerbitzuak gehitzeko funtzioa"
 
-#: core/util/config.py:827
+#: core/util/config.py:831
 msgid "Allow animated backgrounds"
 msgstr "Onartu atzeko plano animatuak"
 
-#: core/util/config.py:833
+#: core/util/config.py:837
 msgid "Allow biometric authentication"
 msgstr "Baimendu autentifikazio biometrikoa"
 
-#: core/util/config.py:841
+#: core/util/config.py:845
 msgid "TSA Provider URL for timestamping signatures"
 msgstr "TSA hornitzailearen URLa denbora-zigiluetarako sinadurentzat"
 
-#: core/util/config.py:847
+#: core/util/config.py:851
 msgid "TSA Provider Timeout in seconds"
 msgstr "TSA hornitzailearen denbora-muga segundotan"
 
-#: core/util/config.py:853
+#: core/util/config.py:857
 msgid "TSA Provider SSL Verify"
 msgstr "TSA hornitzailearen SSL egiaztapena"
 
-#: core/util/config.py:859
+#: core/util/config.py:863
 msgid ""
 "Enable immutable audit log for critical data (admin events, logins, etc.)"
 msgstr ""
 "Gaitu aldaezina den auditoria-erregistroa datu kritikoetarako "
 "(administratzaile-gertaerak, saio-hasierak, etab.)"
 
-#: core/util/config.py:865
+#: core/util/config.py:869
 msgid ""
 "Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"
 msgstr ""
@@ -4127,117 +4607,6 @@ msgstr "Ez dago LDAP zerbitzaririk konfiguratuta"
 #: core/util/ldaputil.py:612
 msgid "Could not connect to any LDAP server ({}). Last error: {}"
 msgstr "Ezin izan da LDAP zerbitzari batera konektatu ({}). Azken errorea: {}"
-
-#: core/util/security_checks.py:73
-msgid ""
-"Default superuser credentials are still active. Change the root password "
-"immediately."
-msgstr ""
-"Supererabiltzaile kredentzial lehenetsiak aktibo daude oraindik. Aldatu root "
-"pasahitza berehala."
-
-#: core/util/security_checks.py:78
-msgid "Superuser password is not the shipped default."
-msgstr "Supererabiltzailearen pasahitza ez da lehenetsitako balioa."
-
-#: core/util/security_checks.py:88
-msgid ""
-"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
-"not needed in production."
-msgstr ""
-"Root web/API sarbidea gaituta dago (SUPER_USER_ALLOW_WEBACCESS). Desgaitu "
-"ekoizpenean beharrezkoa ez bada."
-
-#: core/util/security_checks.py:94
-msgid "Root web/API access is disabled."
-msgstr "Root web/API sarbidea desgaituta dago."
-
-#: core/util/security_checks.py:109
-#, python-brace-format
-msgid ""
-"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
-"admin operations is disabled."
-msgstr ""
-"{wildcards} karaktere arruntera (*) ezarrita: tunel, aktore eta "
-"administrazio eragiketetarako IP bidezko atea desgaituta dago."
-
-#: core/util/security_checks.py:115
-msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
-msgstr "TRUSTED_SOURCES eta ADMIN_TRUSTED_SOURCES ez dira komodinak."
-
-#: core/util/security_checks.py:125
-msgid ""
-"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
-"not exploitable until BEHIND_PROXY is enabled."
-msgstr ""
-"Brokerra ez dago proxy baten atzean; ALLOWED_IP_FORWARDERS komodin "
-"lehenetsia ezin da erabili BEHIND_PROXY gaituta egon arte."
-
-#: core/util/security_checks.py:133
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
-"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
-msgstr ""
-"Brokerra proxy baten atzean dago eta ALLOWED_IP_FORWARDERS txartel komodina "
-"da: edozein bezerok X-Forwarded-For imita dezake. Mugatu benetako proxy "
-"helbideetara."
-
-#: core/util/security_checks.py:140
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
-"addresses."
-msgstr ""
-"Brokerra proxy baten atzean dago eta ALLOWED_IP_FORWARDERS helbide "
-"zehatzetara mugatuta dago."
-
-#: core/util/security_checks.py:157
-#, python-brace-format
-msgid "Security cookies/headers are disabled: {missing}."
-msgstr "Segurtasun cookieak/goiburuak desgaituta daude: {missing}."
-
-#: core/util/security_checks.py:162
-msgid "Session/security cookies and enhanced security are enabled."
-msgstr "Saio/segurtasun cookieak eta segurtasun hobetua gaituta daude."
-
-#: core/util/security_checks.py:188
-#, python-brace-format
-msgid ""
-"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
-"assertions can be forged against a misconfigured IdP."
-msgstr ""
-"Ez da beharrezkoa SAML baieztapenak sinatuta egotea: {unsigned}. Sinatu "
-"gabeko baieztapenak faltsutu daitezke gaizki konfiguratutako IdP baten aurka."
-
-#: core/util/security_checks.py:196
-msgid "All SAML authenticators require signed assertions or messages."
-msgstr ""
-"SAML autentifikatzaile guztiek sinatutako baieztapenak edo mezuak behar "
-"dituzte."
-
-#: core/util/security_checks.py:201
-msgid "No SAML authenticators configured."
-msgstr "Ez dago SAML autentifikatzailerik konfiguratuta."
-
-#: core/util/security_checks.py:230
-#, python-brace-format
-msgid ""
-"Service pools with actors still using the legacy uuid token flow: "
-"{affected}. Re-initialize affected actors to rotate them to the new token."
-msgstr ""
-"Aktoreek oraindik uuid token-fluxu zaharra erabiltzen duten zerbitzu-"
-"multzoak: {affected}. Berriro hasieratu kaltetutako aktoreak token berrira "
-"biratzeko."
-
-#: core/util/security_checks.py:237
-msgid "No user services are using the legacy uuid actor token flow."
-msgstr ""
-"Ez dago erabiltzaile-zerbitzurik uuid aktorearen token-fluxu zaharra "
-"erabiltzen ari denik."
-
-#: core/util/security_checks.py:270
-#, python-brace-format
-msgid "Check could not be evaluated: {error}"
-msgstr "Ezin izan da txekea ebaluatu: {error}"
 
 #: core/util/ui.py:379
 msgid "Associated Image"
@@ -10341,7 +10710,7 @@ msgstr ""
 msgid "Invalid data"
 msgstr "Datu baliogabeak"
 
-#: web/util/configjs.py:146
+#: web/util/configjs.py:147
 msgid "Access limited by calendar"
 msgstr "Sarbidea egutegian mugatua"
 

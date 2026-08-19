@@ -39,7 +39,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:38+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Japanese (http://app.transifex.com/openuds/openuds/language/"
@@ -1463,7 +1463,7 @@ msgstr "AD接続の互換性（通常はWindows 2000以降）"
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:148
+#: auths/SAML/saml.py:113 core/consts/__init__.py:149
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -2790,19 +2790,19 @@ msgstr "ベース認証子"
 msgid "Group name"
 msgstr "グループ名"
 
-#: core/consts/__init__.py:146
+#: core/consts/__init__.py:147
 msgid "Admin"
 msgstr "管理者"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Staff member"
 msgstr "スタッフ"
 
-#: core/consts/__init__.py:149
+#: core/consts/__init__.py:150
 msgid "Anonymous"
 msgstr "匿名"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Unknown role"
 msgstr "役割不明"
 
@@ -3062,6 +3062,483 @@ msgstr "の"
 #: core/reports/report.py:192
 msgid "Printed in {now:%Y, %b %d} at {now:%H:%M}"
 msgstr "{now:%Y, %b %d} に {now:%H:%M} で印刷"
+
+#: core/security/checks/global_config.py:57
+msgid ""
+"Default superuser credentials are still active. Change the root password "
+"immediately."
+msgstr ""
+"デフォルトのスーパーユーザー認証情報がまだ有効です。rootパスワードを直ちに変"
+"更してください。"
+
+#: core/security/checks/global_config.py:62
+msgid "Superuser password is not the shipped default."
+msgstr "スーパーユーザーのパスワードは、出荷時のデフォルト設定ではありません。"
+
+#: core/security/checks/global_config.py:71
+msgid ""
+"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
+"not needed in production."
+msgstr ""
+"ルート権限でのWeb/APIアクセスが有効になっています"
+"（SUPER_USER_ALLOW_WEBACCESS）。本番環境で不要な場合は無効にしてください。"
+
+#: core/security/checks/global_config.py:76
+msgid "Root web/API access is disabled."
+msgstr "ルート権限でのWeb/APIアクセスは無効になっています。"
+
+#: core/security/checks/global_config.py:91
+#, python-brace-format
+msgid ""
+"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
+"admin operations is disabled."
+msgstr ""
+"{wildcards} をワイルドカード (*) に設定: トンネル、アクター、および管理操作"
+"の IP ベースのゲーティングが無効になっています。"
+
+#: core/security/checks/global_config.py:97
+msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
+msgstr ""
+"TRUSTED_SOURCES と ADMIN_TRUSTED_SOURCES はワイルドカードではありません。"
+
+#: core/security/checks/global_config.py:107
+msgid ""
+"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
+"not exploitable until BEHIND_PROXY is enabled."
+msgstr ""
+"ブローカーはプロキシの背後にありません。デフォルトのワイルドカード"
+"ALLOWED_IP_FORWARDERSは、BEHIND_PROXYが有効になるまで悪用できません。"
+
+#: core/security/checks/global_config.py:115
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
+"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
+msgstr ""
+"ブローカーはプロキシの背後にあり、ALLOWED_IP_FORWARDERSはワイルドカードである"
+"ため、どのクライアントでもX-Forwarded-Forを偽装できます。実際のプロキシアドレ"
+"スのみに制限してください。"
+
+#: core/security/checks/global_config.py:122
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
+"addresses."
+msgstr ""
+"ブローカーはプロキシの背後にあり、ALLOWED_IP_FORWARDERSは特定のIPアドレスに制"
+"限されています。"
+
+#: core/security/checks/global_config.py:135
+#, python-brace-format
+msgid "MAX_LOGIN_TRIES={value} (recommended: 1-20)"
+msgstr "MAX_LOGIN_TRIES= {value} (推奨値: 1～20)"
+
+#: core/security/checks/global_config.py:137
+#, python-brace-format
+msgid "LOGIN_BLOCK={value}s (recommended: >= 30)"
+msgstr "LOGIN_BLOCK= {value} s (推奨: 30以上)"
+
+#: core/security/checks/global_config.py:139
+msgid "LOGIN_BLOCK_IP is off (recommended: on)"
+msgstr "LOGIN_BLOCK_IPはオフです（推奨：オン）"
+
+#: core/security/checks/global_config.py:145
+#, python-brace-format
+msgid "Login hardening knobs are weak: {issues}."
+msgstr "ログインセキュリティ強化の調整機能が弱い: {issues} 。"
+
+#: core/security/checks/global_config.py:150
+msgid "Login hardening knobs are within recommended ranges."
+msgstr "ログイン時のセキュリティ強化設定値は推奨範囲内です。"
+
+#: core/security/checks/global_config.py:159
+msgid "Actor failure blocking is enabled (BLOCK_ACTOR_FAILURES)."
+msgstr "アクター障害によるブロックが有効になっています (BLOCK_ACTOR_FAILURES)。"
+
+#: core/security/checks/global_config.py:165
+msgid ""
+"Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints "
+"have no rate limit on bad tokens."
+msgstr ""
+"アクター障害のブロックが無効になっています (BLOCK_ACTOR_FAILURES): /actor/ "
+"エンドポイントには、不正なトークンに対するレート制限がありません。"
+
+#: core/security/checks/global_config.py:177
+msgid ""
+"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
+"weakens IP-based logging and blocking. Only acceptable on trusted "
+"deployments."
+msgstr ""
+"HONOR_CLIENT_IP_NOTIFY が有効になっています。クライアントは自身の IP アドレス"
+"を自己申告できるため、IP アドレスに基づくログ記録とブロックが弱まります。信頼"
+"できる環境でのみ有効です。"
+
+#: core/security/checks/global_config.py:184
+msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
+msgstr ""
+"HONOR_CLIENT_IP_NOTIFY は無効です。サーバーが検出した IP アドレスが優先されま"
+"す。"
+
+#: core/security/checks/global_config.py:194
+#, python-brace-format
+msgid "SESSION_DURATION_ADMIN={value}s"
+msgstr "SESSION_DURATION_ADMIN= {value}秒"
+
+#: core/security/checks/global_config.py:196
+#, python-brace-format
+msgid "SESSION_DURATION_USER={value}s"
+msgstr "SESSION_DURATION_USER= {value}秒"
+
+#: core/security/checks/global_config.py:201
+#, python-brace-format
+#| msgid "Session duration histogram"
+msgid "Session durations exceed 12h: {issues}."
+msgstr "セッションの継続時間が12時間を超えています: {issues} 。"
+
+#: core/security/checks/global_config.py:206
+msgid "Admin and user session durations are within 12h."
+msgstr "管理者およびユーザーのセッション期間は12時間以内です。"
+
+#: core/security/checks/global_config.py:215
+msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
+msgstr ""
+"EXPERIMENTAL_FEATURES が有効になっています: サポートされていない機能が公開さ"
+"れます。"
+
+#: core/security/checks/global_config.py:220
+msgid "EXPERIMENTAL_FEATURES is off."
+msgstr "実験的機能は無効になっています。"
+
+#: core/security/checks/global_config.py:229
+msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
+msgstr ""
+"ENFORCE_ZERO_TRUST が有効になっています。パスワードのリダイレクトは無効になっ"
+"ています。"
+
+#: core/security/checks/global_config.py:234
+msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
+msgstr "ENFORCE_ZERO_TRUSTは無効です（パスワードリダイレクトが許可されています）。"
+
+#: core/security/checks/global_config.py:243
+msgid "Immutable audit log is enabled (TSA-signed)."
+msgstr "改ざん不可能な監査ログが有効になっています（TSA署名付き）。"
+
+#: core/security/checks/global_config.py:249
+msgid ""
+"IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
+"tamper-evident log (src/uds/models/immutable_log.py)."
+msgstr ""
+"IMMUTABLE_LOG_ENABLED は無効です。ログインと管理者イベントは、改ざん防止ログ "
+"(src/uds/models/immutable_log.py) に書き込まれません。"
+
+#: core/security/checks/logs.py:98
+#, python-brace-format
+msgid ""
+"{count} failed login attempts in the last 24h: a brute force may be in "
+"progress."
+msgstr ""
+"過去24時間で{count}回のログイン試行が失敗しました。ブルートフォース攻撃が行わ"
+"れている可能性があります。"
+
+#: core/security/checks/logs.py:104
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h."
+msgstr "過去24時間におけるログイン失敗回数は{count} 。"
+
+#: core/security/checks/logs.py:109
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h (within normal range)."
+msgstr "過去24時間におけるログイン失敗回数は{count} （正常範囲内）。"
+
+#: core/security/checks/logs.py:128
+#, python-brace-format
+msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
+msgstr ""
+"過去 24 時間で送信元 IP によって検出されたブルートフォース攻撃パターン: "
+"{top} 。"
+
+#: core/security/checks/logs.py:133
+#, python-brace-format
+msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
+msgstr ""
+"過去24時間において、 {threshold}回を超えるログイン失敗試行回数を超えるIP"
+"アドレスはありません。"
+
+#: core/security/checks/logs.py:154
+#, python-brace-format
+msgid ""
+"{count} account(s) were temporarily blocked in the last 24h: an attacker may "
+"be cycling credentials under the per-user lockout, or a misconfigured client "
+"is retrying with stale credentials."
+msgstr ""
+"過去24時間で{count}個のアカウントが一時的にブロックされました。攻撃者が"
+"ユーザーごとのロックアウトを利用して認証情報を繰り返し使用しているか、設定"
+"ミスのあるクライアントが古い認証情報で再試行している可能性があります。"
+
+#: core/security/checks/logs.py:162
+msgid "No accounts were temporarily blocked in the last 24h."
+msgstr "過去24時間で、一時的にブロックされたアカウントはありませんでした。"
+
+#: core/security/checks/logs.py:181
+#, python-brace-format
+msgid ""
+"{count} internal ERROR entries in the last 24h: check uds.log / "
+"services.log / workers.log for failing providers or 5xx storms."
+msgstr ""
+"過去 24 時間で{count}件の内部 ERROR エントリが発生しました。プロバイダーの障"
+"害や 5xx エラーの集中発生については、uds.log / services.log / workers.log を"
+"確認してください。"
+
+#: core/security/checks/logs.py:188
+#, python-brace-format
+msgid "{count} internal ERROR entries in the last 24h (within normal range)."
+msgstr "過去24時間における内部エラーの発生件数は{count} （正常範囲内）。"
+
+#: core/security/checks/logs.py:205
+#, python-brace-format
+msgid "{count} bot-denial(s) in the last 24h."
+msgstr "過去24時間における{count}件のボット拒否。"
+
+#: core/security/checks/logs.py:223
+#, python-brace-format
+msgid "{count} broker-visible Forbidden response(s) in the last 24h."
+msgstr "過去24時間で{count}件のブローカー可視の禁止された応答がありました。"
+
+#: core/security/checks/models.py:72
+#, python-brace-format
+msgid ""
+"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
+"assertions can be forged against a misconfigured IdP."
+msgstr ""
+"SAMLアサーションには署名が必須ではありません: {unsigned}。署名されていないア"
+"サーションは、設定が誤っているIdPに対して偽造される可能性があります。"
+
+#: core/security/checks/models.py:80
+msgid "All SAML authenticators require signed assertions or messages."
+msgstr ""
+"すべてのSAML認証システムは、署名付きアサーションまたはメッセージを必要としま"
+"す。"
+
+#: core/security/checks/models.py:85
+msgid "No SAML authenticators configured."
+msgstr "SAML認証機能は設定されていません。"
+
+#: core/security/checks/models.py:114
+#, python-brace-format
+msgid ""
+"Service pools with actors still using the legacy uuid token flow: "
+"{affected}. Re-initialize affected actors to rotate them to the new token."
+msgstr ""
+"レガシーUUIDトークンフローを使用しているアクターを含むサービスプール："
+"{affected}。影響を受けるアクターを再初期化して、新しいトークンに移行します。"
+
+#: core/security/checks/models.py:121
+msgid "No user services are using the legacy uuid actor token flow."
+msgstr ""
+"従来のUUIDアクタートークンフローを使用しているユーザーサービスはありません。"
+
+#: core/security/checks/models.py:131
+#| msgid "No SAML authenticators configured."
+msgid "No authenticators configured (nothing to enforce MFA on)."
+msgstr "認証システムが設定されていません（MFAを適用する対象がありません）。"
+
+#: core/security/checks/models.py:138
+#, python-brace-format
+msgid ""
+"No authenticator has MFA configured: {names}. Assign at least one MFA per "
+"authenticator."
+msgstr ""
+"認証器にMFAが設定されていません： {names} 。認証器ごとに少なくとも1つのMFAを"
+"設定してください。"
+
+#: core/security/checks/models.py:145
+#, python-brace-format
+msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
+msgstr ""
+"MFAの適用範囲： {with_mfa} / {total}個の認証デバイスにMFAが割り当てられていま"
+"す。"
+
+#: core/security/checks/models.py:191
+#, python-brace-format
+msgid ""
+"{n} server certificate(s) have expired: {names}. Renew and rotate the "
+"affected servers."
+msgstr ""
+"{n}個のサーバー証明書の有効期限が切れています： {names} 。該当するサーバーの"
+"証明書を更新し、ローテーションしてください。"
+
+#: core/security/checks/models.py:199
+#, python-brace-format
+msgid "{n} server certificate(s) expire within 30 days: {names}."
+msgstr "{n}個のサーバー証明書が30日以内に期限切れになります： {names} 。"
+
+#: core/security/checks/models.py:206
+msgid "No server certificates expire within the next 30 days."
+msgstr "今後30日以内に有効期限が切れるサーバー証明書はありません。"
+
+#: core/security/checks/models.py:223
+#| msgid "No LDAP servers configured"
+msgid "No staff/admin users configured."
+msgstr "スタッフ/管理者ユーザーは設定されていません。"
+
+#: core/security/checks/models.py:232
+#, python-brace-format
+msgid "Staff account hygiene: {details}."
+msgstr "スタッフアカウントの衛生状態: {details} 。"
+
+#: core/security/checks/models.py:261
+#, python-brace-format
+msgid "Transports reachable from any source: {names}."
+msgstr "任意のソースからアクセス可能なトランスポート: {names} 。"
+
+#: core/security/checks/models.py:266 core/security/checks/models.py:271
+msgid "All transports are restricted by at least one network."
+msgstr "すべての輸送は、少なくとも1つのネットワークによって制限されます。"
+
+#: core/security/checks/models.py:288
+#, python-brace-format
+msgid "{n} service pool(s) are currently restrained: {names}."
+msgstr "現在、 {n}サービスプールが制限されています： {names} 。"
+
+#: core/security/checks/models.py:293
+msgid "No service pools are currently restrained."
+msgstr "現在、サービスプールに制限はかけられていません。"
+
+#: core/security/checks/runner.py:94
+#, python-brace-format
+msgid "Check could not be evaluated: {error}"
+msgstr "チェックを評価できませんでした: {error}"
+
+#: core/security/checks/settings.py:59
+#, python-brace-format
+msgid "Security cookies/headers are disabled: {missing}."
+msgstr "セキュリティクッキー/ヘッダーが無効になっています: {missing}。"
+
+#: core/security/checks/settings.py:64
+msgid "Session/security cookies and enhanced security are enabled."
+msgstr ""
+"セッション/セキュリティクッキーと強化されたセキュリティが有効になっています。"
+
+#: core/security/checks/settings.py:78
+#, python-brace-format
+msgid ""
+"Production debug switches are on: {problems}. Disable both in production."
+msgstr ""
+"本番環境のデバッグスイッチが有効になっています: {problems} 。本番環境では両方"
+"とも無効にしてください。"
+
+#: core/security/checks/settings.py:85
+msgid "DEBUG and PROFILING are both off."
+msgstr "デバッグとプロファイリングは両方とも無効になっています。"
+
+#: core/security/checks/settings.py:94
+msgid ""
+"settings.SECRET_KEY is the shipped sample value: session tokens can be "
+"forged."
+msgstr ""
+"settings.SECRET_KEY は出荷時のサンプル値です。セッショントークンは偽造される"
+"可能性があります。"
+
+#: core/security/checks/settings.py:99
+msgid "settings.SECRET_KEY has been rotated."
+msgstr "settings.SECRET_KEY が変更されました。"
+
+#: core/security/checks/settings.py:111
+msgid ""
+"settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
+"secrets."
+msgstr ""
+"settings.RSA_KEY は出荷時のサンプル値です。誰でもブローカーの秘密鍵を復号でき"
+"ます。"
+
+#: core/security/checks/settings.py:116
+msgid "settings.RSA_KEY has been rotated."
+msgstr "settings.RSA_KEY がローテーションされました。"
+
+#: core/security/checks/settings.py:127
+msgid ""
+"django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
+"request forgery is not mitigated at the framework level."
+msgstr ""
+"django.middleware.csrf.CsrfViewMiddleware は MIDDLEWARE に含まれていません。"
+"フレームワークレベルではクロスサイトリクエストフォージェリが軽減されません。"
+
+#: core/security/checks/settings.py:134
+msgid "django.middleware.csrf.CsrfViewMiddleware is active."
+msgstr "django.middleware.csrf.CsrfViewMiddleware が有効です。"
+
+#: core/security/checks/settings.py:150
+msgid ""
+"SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
+"statement with bound values is being written to log/sql.log on disk."
+msgstr ""
+"SQLロガー「django.db.backends」はDEBUGレベルですが、DEBUGはオフになっています"
+"。バインドされた値を持つすべてのSQLステートメントが、ディスク上のlog/sql.log"
+"に書き込まれています。"
+
+#: core/security/checks/settings.py:157
+msgid ""
+"SQL logger 'django.db.backends' is not writing bound SQL to disk in "
+"production."
+msgstr ""
+"SQLロガー「django.db.backends」が、本番環境でバインドされたSQLをディスクに書"
+"き込んでいません。"
+
+#: core/security/checks/settings.py:172
+msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
+msgstr ""
+"ルートまたは「uds」ロガーは、本番環境ではDEBUGレベル（ディスク上に詳細なログ"
+"が出力されます）になっています。"
+
+#: core/security/checks/settings.py:177
+msgid "Root and 'uds' loggers are above DEBUG in production."
+msgstr ""
+"本番環境では、rootおよび&#39;uds&#39;ロガーのログレベルはDEBUGより上位になり"
+"ます。"
+
+#: core/security/checks/settings.py:190
+msgid ""
+"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
+"silently fail. Operators will not receive ERROR-level alerts by mail."
+msgstr ""
+"EMAIL_BACKENDが設定されていません。「mail_admins」とメール通知はサイレントに"
+"失敗します。オペレーターはERRORレベルのアラートをメールで受信しません。"
+
+#: core/security/checks/settings.py:197
+msgid "EMAIL_BACKEND is configured."
+msgstr "EMAIL_BACKENDが設定されています。"
+
+#: core/security/checks/settings.py:210
+msgid ""
+"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
+"any local user can read or poison the cache unless a SASL/TLS username is "
+"configured."
+msgstr ""
+"CACHES[&#39;memory&#39;] LOCATION= {location!r}はホスト外部からアクセス可能で"
+"す。SASL/TLS ユーザー名が設定されていない限り、ローカルユーザーはキャッシュを"
+"読み取ったり、キャッシュを汚染したりできます。"
+
+#: core/security/checks/settings.py:218
+msgid "CACHES['memory'] is bound to localhost (or absent)."
+msgstr ""
+"CACHES[&#39;memory&#39;] は localhost にバインドされています (または存在しま"
+"せん)。"
+
+#: core/security/checks/settings.py:234
+#, python-brace-format
+msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
+msgstr "SECURE_HSTS_SECONDS が設定されています ( {seconds}秒)。"
+
+#: core/security/checks/settings.py:241
+msgid ""
+"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
+"0: no HSTS header is emitted on HTTPS responses."
+msgstr ""
+"ブローカーはHTTPSフロントエンド（SECURE_PROXY_SSL_HEADER）ですが、"
+"SECURE_HSTS_SECONDSが0であるため、HTTPSレスポンスにHSTSヘッダーは送信されませ"
+"ん。"
+
+#: core/security/checks/settings.py:248
+msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
+msgstr "HSTSが設定されていません。ブローカーはHTTPSに対応していないようです。"
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73
@@ -3461,11 +3938,11 @@ msgstr "機械"
 msgid "Config"
 msgstr "設定"
 
-#: core/util/config.py:388
+#: core/util/config.py:389
 msgid "Session expire time in hours after publishing"
 msgstr "公開後のセッション有効期限（時間）"
 
-#: core/util/config.py:396
+#: core/util/config.py:397
 msgid ""
 "Delay between cache checks. Reducing this number will increase cache "
 "generation speed but also will load service providers"
@@ -3473,7 +3950,7 @@ msgstr ""
 "キャッシュチェック間の遅延。この数値を減らすとキャッシュ生成速度は向上します"
 "が、サービスプロバイダの負荷も増加します。"
 
-#: core/util/config.py:405
+#: core/util/config.py:406
 msgid ""
 "Delayed task number of threads PER SERVER, with higher number of threads, "
 "deployed task will complete sooner, but it will give more load to overall "
@@ -3482,7 +3959,7 @@ msgstr ""
 "遅延タスクのスレッド数はサーバーごとに異なります。スレッド数が多いほど、デプ"
 "ロイされたタスクは早く完了しますが、システム全体の負荷が大きくなります。"
 
-#: core/util/config.py:414
+#: core/util/config.py:415
 msgid ""
 "Number of scheduler threads running PER SERVER, with higher number of "
 "threads, deployed task will complete sooner, but it will give more load to "
@@ -3491,7 +3968,7 @@ msgstr ""
 "サーバーごとに実行されるスケジューラスレッドの数。スレッド数が多いほど、デプ"
 "ロイされたタスクは早く完了しますが、システム全体の負荷が大きくなります。"
 
-#: core/util/config.py:423
+#: core/util/config.py:424
 msgid ""
 "Waiting time before removing \"errored\" and \"removed\" publications, "
 "cache, and user assigned machines. Time is in seconds"
@@ -3499,29 +3976,29 @@ msgstr ""
 "「エラー」および「削除済み」のパブリケーション、キャッシュ、およびユーザー割"
 "り当てマシンを削除するまでの待機時間。単位は秒です。"
 
-#: core/util/config.py:431
+#: core/util/config.py:432
 msgid "Time to maintaing \"info state\" items before removing it, in seconds"
 msgstr "削除する前に「情報状態」アイテムを維持する時間（秒）"
 
-#: core/util/config.py:438
+#: core/util/config.py:439
 msgid "Number of services to initiate removal per run of service cleaner"
 msgstr "サービスクリーナーの実行ごとに削除を開始するサービスの数"
 
-#: core/util/config.py:445
+#: core/util/config.py:446
 msgid ""
 "Removal Check time for cache, publications and deployed services, in seconds"
 msgstr ""
 "キャッシュ、パブリケーション、デプロイされたサービスの削除チェック時間（秒）"
 
-#: core/util/config.py:448
+#: core/util/config.py:449
 msgid "Superuser username"
 msgstr "スーパーユーザーのユーザー名"
 
-#: core/util/config.py:452
+#: core/util/config.py:456
 msgid "Superuser password"
 msgstr "スーパーユーザーパスワード"
 
-#: core/util/config.py:459
+#: core/util/config.py:463
 msgid ""
 "Allow root user to access using web interface.\n"
 " Once configured one authenticator,\n"
@@ -3530,11 +4007,11 @@ msgstr ""
 "ルートユーザーがWebインターフェースを使用してアクセスできるようにします。認証"
 "コードを1つ設定したら、このオプションを無効にすることをお勧めします。"
 
-#: core/util/config.py:467
+#: core/util/config.py:471
 msgid "Enable enhanced security modules"
 msgstr "強化されたセキュリティモジュールを有効にする"
 
-#: core/util/config.py:475
+#: core/util/config.py:479
 msgid ""
 "Enforced maximum security mode (Zero-Trust Mode). No password redirection "
 "will be allowed if this mode is set."
@@ -3542,7 +4019,7 @@ msgstr ""
 "最大限のセキュリティを強制するモード（ゼロトラストモード）。このモードが設定"
 "されている場合、パスワードのリダイレクトは許可されません。"
 
-#: core/util/config.py:487
+#: core/util/config.py:491
 msgid ""
 "How long should the user service be unused before os manager considers it "
 "for removal"
@@ -3550,29 +4027,29 @@ msgstr ""
 "OS マネージャーが削除を検討するまでに、ユーザー サービスはどのくらいの期間使"
 "用されない必要がありますか。"
 
-#: core/util/config.py:497
+#: core/util/config.py:501
 msgid "Max logins before blocking an account for a while"
 msgstr "アカウントを一時的にブロックするまでの最大ログイン回数"
 
-#: core/util/config.py:504
+#: core/util/config.py:508
 msgid "Block time in second for an user that has too many login failures"
 msgstr "ログイン失敗回数が多すぎるユーザーのブロック時間（秒）"
 
-#: core/util/config.py:510
+#: core/util/config.py:514
 msgid "Block ip on login failure"
 msgstr "ログイン失敗時にIPをブロックする"
 
-#: core/util/config.py:519
+#: core/util/config.py:523
 msgid "Do autorun of service if just one service"
 msgstr "サービスが1つだけの場合はサービスの自動実行を行う"
 
-#: core/util/config.py:525
+#: core/util/config.py:529
 msgid "Redirects login page to the tag used when logged in if active."
 msgstr ""
 "アクティブな場合、ログイン時に使用されたタグにログイン ページをリダイレクトし"
 "ます。"
 
-#: core/util/config.py:534
+#: core/util/config.py:538
 msgid ""
 "Max time needed to get a service \"fully functional\" before it's considered "
 "\"failed\" and removed"
@@ -3580,7 +4057,7 @@ msgstr ""
 "サービスが「失敗」とみなされて削除される前に、サービスが「完全に機能する」よ"
 "うになるまでに必要な最大時間"
 
-#: core/util/config.py:540
+#: core/util/config.py:544
 msgid ""
 "Max time needed to get a service \"fully removed\" before it's considered "
 "\"failed\" and purged"
@@ -3588,22 +4065,22 @@ msgstr ""
 "サービスが「失敗」とみなされて消去される前に、サービスを「完全に削除」するた"
 "めに必要な最大時間"
 
-#: core/util/config.py:547
+#: core/util/config.py:551
 msgid "Maximum logs per every log-capable administration element"
 msgstr "ログ対応管理要素ごとの最大ログ数"
 
-#: core/util/config.py:554
+#: core/util/config.py:558
 msgid ""
 "Maximum logs entries for general UDS logs (0 = unlimited, use with care)"
 msgstr ""
 "一般的な UDS ログの最大ログエントリ数 (0 = 無制限、注意して使用してください)"
 
-#: core/util/config.py:562
+#: core/util/config.py:566
 msgid ""
 "Time to restrain a user service in case it gives some errors at some point"
 msgstr "ある時点でエラーが発生する場合に備えて、ユーザーサービスを制限する時間"
 
-#: core/util/config.py:569
+#: core/util/config.py:573
 msgid ""
 "Number of errors that must occurr in \"restrainTime\" to restrain an user "
 "service"
@@ -3611,38 +4088,38 @@ msgstr ""
 "ユーザーサービスを制限するために「restrainTime」内に発生する必要があるエラー"
 "の数"
 
-#: core/util/config.py:577
+#: core/util/config.py:581
 msgid "Statistics duration, in days"
 msgstr "統計期間（日数）"
 
-#: core/util/config.py:584
+#: core/util/config.py:588
 msgid ""
 "Frequency of stats collection in seconds. Default is 1 hours (3600 seconds)"
 msgstr "統計情報の収集頻度（秒単位）。デフォルトは1時間（3600秒）です。"
 
-#: core/util/config.py:591
+#: core/util/config.py:595
 msgid "Maximum number of time to accumulate on one run. Default is 7 (1 week)"
 msgstr "1回の実行で累積する最大時間数。デフォルトは7（1週間）です。"
 
-#: core/util/config.py:599
+#: core/util/config.py:603
 msgid "If disallow login showing authenticatiors"
 msgstr "認証情報を表示してログインを許可しない場合"
 
-#: core/util/config.py:607
+#: core/util/config.py:611
 msgid ""
 "Notify user of existence of a new version of a service on new publication"
 msgstr "新しい公開時にサービスの新バージョンの存在をユーザーに通知する"
 
-#: core/util/config.py:615
+#: core/util/config.py:619
 msgid "Networks or hosts considered \"trusted\" for UDS (Tunnels, etc...)"
 msgstr ""
 "UDS に対して「信頼できる」と見なされるネットワークまたはホスト (トンネルなど)"
 
-#: core/util/config.py:622
+#: core/util/config.py:626
 msgid "IPs or networks allowed to forward requests (like proxies)"
 msgstr "リクエストの転送が許可されている IP またはネットワーク（プロキシなど）"
 
-#: core/util/config.py:630
+#: core/util/config.py:634
 msgid ""
 "Allow clients to notify their own ip (if set), or use always the request "
 "extracted IP"
@@ -3650,11 +4127,11 @@ msgstr ""
 "クライアントが自身の IP を通知できるようにする（設定されている場合）、または"
 "常に要求から抽出された IP を使用する"
 
-#: core/util/config.py:638
+#: core/util/config.py:642
 msgid "If there is a proxy in front of us (i.e. HAProxy, or any NLB)"
 msgstr "前にプロキシがある場合（つまりHAProxyやNLB）"
 
-#: core/util/config.py:647
+#: core/util/config.py:651
 msgid ""
 "If we use new logout mechanics for osmanagers, where only when the logged in "
 "users reaches 0, it is considered \"logged out\""
@@ -3662,143 +4139,143 @@ msgstr ""
 "osmanagers に新しいログアウトメカニズムを使用すると、ログインしているユーザー"
 "が 0 に達した場合にのみ「ログアウト」とみなされます。"
 
-#: core/util/config.py:656
+#: core/util/config.py:660
 msgid "Enable/Disable Actor attack detection ip blocking"
 msgstr "アクター攻撃検出IPブロックの有効化/無効化"
 
-#: core/util/config.py:664
+#: core/util/config.py:668
 msgid "Max session length for Admin"
 msgstr "管理者の最大セッション時間"
 
-#: core/util/config.py:670
+#: core/util/config.py:674
 msgid "Max session length for User"
 msgstr "ユーザーの最大セッション時間"
 
-#: core/util/config.py:677
+#: core/util/config.py:681
 msgid "Page reload Time (legacy)"
 msgstr "ページの再読み込み時間（レガシー）"
 
-#: core/util/config.py:685
+#: core/util/config.py:689
 msgid "Custom message for error when limiting by calendar"
 msgstr "カレンダーによる制限時のエラーのカスタムメッセージ"
 
-#: core/util/config.py:693
+#: core/util/config.py:697
 msgid "If convert username to lowercase on logins"
 msgstr "ログイン時にユーザー名を小文字に変換する場合"
 
-#: core/util/config.py:701
+#: core/util/config.py:705
 msgid "Global UDS ID (common for all servers on the same cluster)"
 msgstr "グローバル UDS ID (同じクラスタ上のすべてのサーバーに共通)"
 
-#: core/util/config.py:709
+#: core/util/config.py:713
 msgid "Site display name"
 msgstr "サイトの表示名"
 
-#: core/util/config.py:715
+#: core/util/config.py:719
 msgid "Site copyright info"
 msgstr "サイトの著作権情報"
 
-#: core/util/config.py:721
+#: core/util/config.py:725
 msgid "Site copyright link"
 msgstr "サイトの著作権リンク"
 
-#: core/util/config.py:724
+#: core/util/config.py:728
 msgid "Top navbar logo name"
 msgstr "トップナビゲーションバーのロゴ名"
 
-#: core/util/config.py:730
+#: core/util/config.py:734
 msgid "Custom CSS styles applied to the user accesible site"
 msgstr "ユーザーがアクセス可能なサイトに適用されたカスタム CSS スタイル"
 
-#: core/util/config.py:736
+#: core/util/config.py:740
 msgid "Site information"
 msgstr "サイト情報"
 
-#: core/util/config.py:742
+#: core/util/config.py:746
 msgid "Show Filter box for user services on Top or bottom of the page"
 msgstr ""
 "ページの上部または下部にユーザーサービスのフィルターボックスを表示します"
 
-#: core/util/config.py:748
+#: core/util/config.py:752
 msgid "Minimal User Services needed to show filter"
 msgstr "フィルターを表示するために必要な最小限のユーザーサービス"
 
-#: core/util/config.py:754
+#: core/util/config.py:758
 msgid "Enable experimental features. USE WITH CAUTION!!"
 msgstr "実験的な機能を有効にします。注意して使用してください。"
 
-#: core/util/config.py:762
+#: core/util/config.py:766
 msgid "Time in seconds of inactivity before auto reloading admin pages"
 msgstr "管理ページが自動再読み込みされるまでの非アクティブ時間（秒）"
 
-#: core/util/config.py:768
+#: core/util/config.py:772
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr "管理ページの自動再読み込み間隔（秒）"
 
-#: core/util/config.py:774
+#: core/util/config.py:778
 msgid "Number of items per page in admin tables"
 msgstr "管理テーブル内のページあたりのアイテム数"
 
-#: core/util/config.py:780
+#: core/util/config.py:784
 msgid "List of trusted hosts/networks allowed to access the admin interface"
 msgstr ""
 "管理インターフェースへのアクセスが許可されている信頼できるホスト/ネットワーク"
 "のリスト"
 
-#: core/util/config.py:786
+#: core/util/config.py:790
 msgid "Enable VNC menu for user services"
 msgstr "ユーザーサービス用のVNCメニューを有効にする"
 
-#: core/util/config.py:797
+#: core/util/config.py:801
 msgid ""
 "Cookies consent text. If empty, a default multi language text will be used"
 msgstr ""
 "Cookie同意テキスト。空欄の場合は、デフォルトの多言語テキストが使用されます。"
 
-#: core/util/config.py:803
+#: core/util/config.py:807
 msgid "Enable cookies consent"
 msgstr "クッキーの同意を有効にする"
 
-#: core/util/config.py:809
+#: core/util/config.py:813
 msgid "URL for more info about cookies"
 msgstr "クッキーに関する詳細情報のURL"
 
-#: core/util/config.py:815
+#: core/util/config.py:819
 msgid "URL to leave cookies consent"
 msgstr "クッキー同意を残すためのURL"
 
-#: core/util/config.py:821
+#: core/util/config.py:825
 msgid "Enable or disable add favorite services feature"
 msgstr "お気に入りサービスの追加機能を有効または無効にする"
 
-#: core/util/config.py:827
+#: core/util/config.py:831
 msgid "Allow animated backgrounds"
 msgstr "アニメーション背景を許可する"
 
-#: core/util/config.py:833
+#: core/util/config.py:837
 msgid "Allow biometric authentication"
 msgstr "生体認証を許可する"
 
-#: core/util/config.py:841
+#: core/util/config.py:845
 msgid "TSA Provider URL for timestamping signatures"
 msgstr "署名にタイムスタンプを付けるTSAプロバイダーのURL"
 
-#: core/util/config.py:847
+#: core/util/config.py:851
 msgid "TSA Provider Timeout in seconds"
 msgstr "TSAプロバイダーのタイムアウト時間（秒）"
 
-#: core/util/config.py:853
+#: core/util/config.py:857
 msgid "TSA Provider SSL Verify"
 msgstr "TSAプロバイダーSSL検証"
 
-#: core/util/config.py:859
+#: core/util/config.py:863
 msgid ""
 "Enable immutable audit log for critical data (admin events, logins, etc.)"
 msgstr ""
 "重要なデータ（管理者イベント、ログインなど）について、変更不可能な監査ログを"
 "有効にする。"
 
-#: core/util/config.py:865
+#: core/util/config.py:869
 msgid ""
 "Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"
 msgstr "再アンカーポイント間の最小間隔（秒）（最小120秒、0＝無効）"
@@ -4055,117 +4532,6 @@ msgstr "LDAPサーバーは設定されていません"
 #: core/util/ldaputil.py:612
 msgid "Could not connect to any LDAP server ({}). Last error: {}"
 msgstr "LDAPサーバーに接続できませんでした（{}）。最後のエラー：{}"
-
-#: core/util/security_checks.py:73
-msgid ""
-"Default superuser credentials are still active. Change the root password "
-"immediately."
-msgstr ""
-"デフォルトのスーパーユーザー認証情報がまだ有効です。rootパスワードを直ちに変"
-"更してください。"
-
-#: core/util/security_checks.py:78
-msgid "Superuser password is not the shipped default."
-msgstr "スーパーユーザーのパスワードは、出荷時のデフォルト設定ではありません。"
-
-#: core/util/security_checks.py:88
-msgid ""
-"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
-"not needed in production."
-msgstr ""
-"ルート権限でのWeb/APIアクセスが有効になっています"
-"（SUPER_USER_ALLOW_WEBACCESS）。本番環境で不要な場合は無効にしてください。"
-
-#: core/util/security_checks.py:94
-msgid "Root web/API access is disabled."
-msgstr "ルート権限でのWeb/APIアクセスは無効になっています。"
-
-#: core/util/security_checks.py:109
-#, python-brace-format
-msgid ""
-"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
-"admin operations is disabled."
-msgstr ""
-"{wildcards} をワイルドカード (*) に設定: トンネル、アクター、および管理操作"
-"の IP ベースのゲーティングが無効になっています。"
-
-#: core/util/security_checks.py:115
-msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
-msgstr ""
-"TRUSTED_SOURCES と ADMIN_TRUSTED_SOURCES はワイルドカードではありません。"
-
-#: core/util/security_checks.py:125
-msgid ""
-"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
-"not exploitable until BEHIND_PROXY is enabled."
-msgstr ""
-"ブローカーはプロキシの背後にありません。デフォルトのワイルドカード"
-"ALLOWED_IP_FORWARDERSは、BEHIND_PROXYが有効になるまで悪用できません。"
-
-#: core/util/security_checks.py:133
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
-"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
-msgstr ""
-"ブローカーはプロキシの背後にあり、ALLOWED_IP_FORWARDERSはワイルドカードである"
-"ため、どのクライアントでもX-Forwarded-Forを偽装できます。実際のプロキシアドレ"
-"スのみに制限してください。"
-
-#: core/util/security_checks.py:140
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
-"addresses."
-msgstr ""
-"ブローカーはプロキシの背後にあり、ALLOWED_IP_FORWARDERSは特定のIPアドレスに制"
-"限されています。"
-
-#: core/util/security_checks.py:157
-#, python-brace-format
-msgid "Security cookies/headers are disabled: {missing}."
-msgstr "セキュリティクッキー/ヘッダーが無効になっています: {missing}。"
-
-#: core/util/security_checks.py:162
-msgid "Session/security cookies and enhanced security are enabled."
-msgstr ""
-"セッション/セキュリティクッキーと強化されたセキュリティが有効になっています。"
-
-#: core/util/security_checks.py:188
-#, python-brace-format
-msgid ""
-"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
-"assertions can be forged against a misconfigured IdP."
-msgstr ""
-"SAMLアサーションには署名が必須ではありません: {unsigned}。署名されていないア"
-"サーションは、設定が誤っているIdPに対して偽造される可能性があります。"
-
-#: core/util/security_checks.py:196
-msgid "All SAML authenticators require signed assertions or messages."
-msgstr ""
-"すべてのSAML認証システムは、署名付きアサーションまたはメッセージを必要としま"
-"す。"
-
-#: core/util/security_checks.py:201
-msgid "No SAML authenticators configured."
-msgstr "SAML認証機能は設定されていません。"
-
-#: core/util/security_checks.py:230
-#, python-brace-format
-msgid ""
-"Service pools with actors still using the legacy uuid token flow: "
-"{affected}. Re-initialize affected actors to rotate them to the new token."
-msgstr ""
-"レガシーUUIDトークンフローを使用しているアクターを含むサービスプール："
-"{affected}。影響を受けるアクターを再初期化して、新しいトークンに移行します。"
-
-#: core/util/security_checks.py:237
-msgid "No user services are using the legacy uuid actor token flow."
-msgstr ""
-"従来のUUIDアクタートークンフローを使用しているユーザーサービスはありません。"
-
-#: core/util/security_checks.py:270
-#, python-brace-format
-msgid "Check could not be evaluated: {error}"
-msgstr "チェックを評価できませんでした: {error}"
 
 #: core/util/ui.py:379
 msgid "Associated Image"
@@ -10196,7 +10562,7 @@ msgstr "認証エラーが多すぎます。ユーザーは一時的にブロッ
 msgid "Invalid data"
 msgstr "無効なデータ"
 
-#: web/util/configjs.py:146
+#: web/util/configjs.py:147
 msgid "Access limited by calendar"
 msgstr "カレンダーによってアクセスが制限されます"
 

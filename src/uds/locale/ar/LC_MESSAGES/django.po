@@ -35,12 +35,13 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Abdel Baaddi <abaaddi@virtualcable.es>, 2017-2018
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:38+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Abdel Baaddi <abaaddi@virtualcable.es>, 2017-2018\n"
 "Language-Team: Arabic (http://app.transifex.com/openuds/openuds/language/"
@@ -1460,7 +1461,7 @@ msgstr "التوافق للاتصال الإعلاني (عادة windows 2000 و
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:148
+#: auths/SAML/saml.py:113 core/consts/__init__.py:149
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -2779,19 +2780,19 @@ msgstr "قاعدة المصادق "
 msgid "Group name"
 msgstr "اسم المجموعة"
 
-#: core/consts/__init__.py:146
+#: core/consts/__init__.py:147
 msgid "Admin"
 msgstr "مشرف"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Staff member"
 msgstr "موظف"
 
-#: core/consts/__init__.py:149
+#: core/consts/__init__.py:150
 msgid "Anonymous"
 msgstr "مجهول"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Unknown role"
 msgstr "دور غير معروف"
 
@@ -3046,6 +3047,466 @@ msgstr "من"
 #: core/reports/report.py:192
 msgid "Printed in {now:%Y, %b %d} at {now:%H:%M}"
 msgstr "طبع في {now:٪ Y،٪ b٪ d} في {now:٪ H:٪ M}"
+
+#: core/security/checks/global_config.py:57
+msgid ""
+"Default superuser credentials are still active. Change the root password "
+"immediately."
+msgstr ""
+"لا تزال بيانات اعتماد المستخدم المتميز الافتراضية فعّالة. غيّر كلمة مرور "
+"المستخدم المتميز فوراً."
+
+#: core/security/checks/global_config.py:62
+msgid "Superuser password is not the shipped default."
+msgstr "كلمة مرور المستخدم المتميز ليست كلمة المرور الافتراضية المرفقة."
+
+#: core/security/checks/global_config.py:71
+msgid ""
+"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
+"not needed in production."
+msgstr ""
+"تم تفعيل الوصول الجذر إلى الويب/واجهة برمجة التطبيقات "
+"(SUPER_USER_ALLOW_WEBACCESS). قم بتعطيله إذا لم تكن هناك حاجة إليه في بيئة "
+"الإنتاج."
+
+#: core/security/checks/global_config.py:76
+msgid "Root web/API access is disabled."
+msgstr "تم تعطيل الوصول إلى الويب/واجهة برمجة التطبيقات الجذرية."
+
+#: core/security/checks/global_config.py:91
+#, python-brace-format
+msgid ""
+"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
+"admin operations is disabled."
+msgstr ""
+"تم تعيين {wildcards} إلى حرف بدل (*): تم تعطيل البوابات المستندة إلى IP "
+"للأنفاق والجهات الفاعلة وعمليات الإدارة."
+
+#: core/security/checks/global_config.py:97
+msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
+msgstr "TRUSTED_SOURCES و ADMIN_TRUSTED_SOURCES ليست أحرفًا عامة."
+
+#: core/security/checks/global_config.py:107
+msgid ""
+"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
+"not exploitable until BEHIND_PROXY is enabled."
+msgstr ""
+"الوسيط ليس خلف وكيل؛ لا يمكن استغلال رمز البدل الافتراضي "
+"ALLOWED_IP_FORWARDERS حتى يتم تمكين BEHIND_PROXY."
+
+#: core/security/checks/global_config.py:115
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
+"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
+msgstr ""
+"الوسيط موجود خلف خادم وكيل، وALLOWED_IP_FORWARDERS عبارة عن رمز عام: يمكن "
+"لأي عميل انتحال X-Forwarded-For. لذا، يجب تقييده بعناوين الوكيل الفعلية."
+
+#: core/security/checks/global_config.py:122
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
+"addresses."
+msgstr "الوسيط موجود خلف وكيل، و ALLOWED_IP_FORWARDERS مقيد بعناوين محددة."
+
+#: core/security/checks/global_config.py:135
+#, python-brace-format
+msgid "MAX_LOGIN_TRIES={value} (recommended: 1-20)"
+msgstr "MAX_LOGIN_TRIES= {value} (موصى به: 1-20)"
+
+#: core/security/checks/global_config.py:137
+#, python-brace-format
+msgid "LOGIN_BLOCK={value}s (recommended: >= 30)"
+msgstr "LOGIN_BLOCK= {value} s (موصى به: &gt;= 30)"
+
+#: core/security/checks/global_config.py:139
+msgid "LOGIN_BLOCK_IP is off (recommended: on)"
+msgstr "تم إيقاف تشغيل LOGIN_BLOCK_IP (يوصى بتشغيله)"
+
+#: core/security/checks/global_config.py:145
+#, python-brace-format
+msgid "Login hardening knobs are weak: {issues}."
+msgstr "أدوات تشديد أمان تسجيل الدخول ضعيفة: {issues} ."
+
+#: core/security/checks/global_config.py:150
+msgid "Login hardening knobs are within recommended ranges."
+msgstr "تقع مقابض تشديد أمان تسجيل الدخول ضمن النطاقات الموصى بها."
+
+#: core/security/checks/global_config.py:159
+msgid "Actor failure blocking is enabled (BLOCK_ACTOR_FAILURES)."
+msgstr "تم تمكين حظر فشل الممثل (BLOCK_ACTOR_FAILURES)."
+
+#: core/security/checks/global_config.py:165
+msgid ""
+"Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints "
+"have no rate limit on bad tokens."
+msgstr ""
+"تم تعطيل حظر فشل الممثل (BLOCK_ACTOR_FAILURES): لا يوجد حد لمعدل نقاط "
+"النهاية /actor/ على الرموز غير الصالحة."
+
+#: core/security/checks/global_config.py:177
+msgid ""
+"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
+"weakens IP-based logging and blocking. Only acceptable on trusted "
+"deployments."
+msgstr ""
+"تفعيل خاصية HONOR_CLIENT_IP_NOTIFY: يمكن للعملاء الإبلاغ عن عناوين IP الخاصة "
+"بهم بأنفسهم، مما يُضعف عملية تسجيل البيانات وحظرها بناءً على عناوين IP. هذا "
+"الخيار مقبول فقط في عمليات النشر الموثوقة."
+
+#: core/security/checks/global_config.py:184
+msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
+msgstr ""
+"تم إيقاف HONOR_CLIENT_IP_NOTIFY: عنوان IP الذي تم اكتشافه بواسطة الخادم هو "
+"العنوان الموثوق."
+
+#: core/security/checks/global_config.py:194
+#, python-brace-format
+msgid "SESSION_DURATION_ADMIN={value}s"
+msgstr "SESSION_DURATION_ADMIN= {value} ثانية"
+
+#: core/security/checks/global_config.py:196
+#, python-brace-format
+msgid "SESSION_DURATION_USER={value}s"
+msgstr "مدة جلسة المستخدم = {value} ثانية"
+
+#: core/security/checks/global_config.py:201
+#, python-brace-format
+#| msgid "Session duration histogram"
+msgid "Session durations exceed 12h: {issues}."
+msgstr "مدة الجلسات تتجاوز 12 ساعة: {issues} ."
+
+#: core/security/checks/global_config.py:206
+msgid "Admin and user session durations are within 12h."
+msgstr "مدة جلسات المسؤول والمستخدم لا تتجاوز 12 ساعة."
+
+#: core/security/checks/global_config.py:215
+msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
+msgstr "تم تفعيل ميزة EXPERIMENTAL_FEATURES: تم الكشف عن وظائف غير مدعومة."
+
+#: core/security/checks/global_config.py:220
+msgid "EXPERIMENTAL_FEATURES is off."
+msgstr "تم إيقاف تشغيل EXPERIMENTAL_FEATURES."
+
+#: core/security/checks/global_config.py:229
+msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
+msgstr "تم تفعيل خيار ENFORCE_ZERO_TRUST: تم تعطيل إعادة توجيه كلمة المرور."
+
+#: core/security/checks/global_config.py:234
+msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
+msgstr "تم إيقاف تشغيل ENFORCE_ZERO_TRUST (إعادة توجيه كلمة المرور مسموح بها)."
+
+#: core/security/checks/global_config.py:243
+msgid "Immutable audit log is enabled (TSA-signed)."
+msgstr "تم تفعيل سجل التدقيق غير القابل للتغيير (موقع من قبل إدارة أمن النقل)."
+
+#: core/security/checks/global_config.py:249
+msgid ""
+"IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
+"tamper-evident log (src/uds/models/immutable_log.py)."
+msgstr ""
+"تم إيقاف تشغيل IMMUTABLE_LOG_ENABLED: لا يتم كتابة عمليات تسجيل الدخول وأحداث "
+"المسؤول في السجل المقاوم للتلاعب (src/uds/models/immutable_log.py)."
+
+#: core/security/checks/logs.py:98
+#, python-brace-format
+msgid ""
+"{count} failed login attempts in the last 24h: a brute force may be in "
+"progress."
+msgstr ""
+"{count} محاولة تسجيل دخول فاشلة في آخر 24 ساعة: قد يكون هناك هجوم تخمين "
+"كلمات المرور جارياً."
+
+#: core/security/checks/logs.py:104
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h."
+msgstr "{count} محاولة تسجيل دخول فاشلة في آخر 24 ساعة."
+
+#: core/security/checks/logs.py:109
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h (within normal range)."
+msgstr "{count} محاولة تسجيل دخول فاشلة في آخر 24 ساعة (ضمن النطاق الطبيعي)."
+
+#: core/security/checks/logs.py:128
+#, python-brace-format
+msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
+msgstr ""
+"أنماط الهجوم العنيف التي تم اكتشافها بواسطة عنوان IP المصدر في آخر 24 ساعة: "
+"{top} ."
+
+#: core/security/checks/logs.py:133
+#, python-brace-format
+msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
+msgstr ""
+"لا يوجد عنوان IP يتجاوز {threshold} محاولة تسجيل دخول فاشلة في آخر 24 ساعة."
+
+#: core/security/checks/logs.py:154
+#, python-brace-format
+msgid ""
+"{count} account(s) were temporarily blocked in the last 24h: an attacker may "
+"be cycling credentials under the per-user lockout, or a misconfigured client "
+"is retrying with stale credentials."
+msgstr ""
+"تم حظر {count} حسابًا مؤقتًا في آخر 24 ساعة: قد يقوم مهاجم بتغيير بيانات "
+"الاعتماد بشكل متكرر في ظل قفل المستخدم، أو أن عميلًا تم تكوينه بشكل خاطئ يحاول "
+"إعادة الاتصال ببيانات اعتماد قديمة."
+
+#: core/security/checks/logs.py:162
+msgid "No accounts were temporarily blocked in the last 24h."
+msgstr "لم يتم حظر أي حسابات مؤقتاً خلال الـ 24 ساعة الماضية."
+
+#: core/security/checks/logs.py:181
+#, python-brace-format
+msgid ""
+"{count} internal ERROR entries in the last 24h: check uds.log / "
+"services.log / workers.log for failing providers or 5xx storms."
+msgstr ""
+"{count} إدخالات خطأ داخلية في آخر 24 ساعة: تحقق من uds.log / services.log / "
+"workers.log بحثًا عن مقدمي الخدمات الفاشلين أو عواصف 5xx."
+
+#: core/security/checks/logs.py:188
+#, python-brace-format
+msgid "{count} internal ERROR entries in the last 24h (within normal range)."
+msgstr "{count} إدخالات الأخطاء الداخلية في آخر 24 ساعة (ضمن النطاق الطبيعي)."
+
+#: core/security/checks/logs.py:205
+#, python-brace-format
+msgid "{count} bot-denial(s) in the last 24h."
+msgstr "{count} عملية رفض بوت في آخر 24 ساعة."
+
+#: core/security/checks/logs.py:223
+#, python-brace-format
+msgid "{count} broker-visible Forbidden response(s) in the last 24h."
+msgstr "{count} استجابة محظورة مرئية للوسيط في آخر 24 ساعة."
+
+#: core/security/checks/models.py:72
+#, python-brace-format
+msgid ""
+"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
+"assertions can be forged against a misconfigured IdP."
+msgstr ""
+"لا يُشترط توقيع تأكيدات SAML: {unsigned}. يمكن تزوير التأكيدات غير الموقعة ضد "
+"موفر هوية مُهيأ بشكل خاطئ."
+
+#: core/security/checks/models.py:80
+msgid "All SAML authenticators require signed assertions or messages."
+msgstr "تتطلب جميع أدوات المصادقة SAML تأكيدات أو رسائل موقعة."
+
+#: core/security/checks/models.py:85
+msgid "No SAML authenticators configured."
+msgstr "لم يتم تكوين أي مصادقات SAML."
+
+#: core/security/checks/models.py:114
+#, python-brace-format
+msgid ""
+"Service pools with actors still using the legacy uuid token flow: "
+"{affected}. Re-initialize affected actors to rotate them to the new token."
+msgstr ""
+"مجموعات الخدمات التي لا تزال تستخدم تدفق رمز uuid القديم مع الجهات الفاعلة: "
+"{affected}. أعد تهيئة الجهات الفاعلة المتأثرة لتحويلها إلى الرمز الجديد."
+
+#: core/security/checks/models.py:121
+msgid "No user services are using the legacy uuid actor token flow."
+msgstr "لا تستخدم أي من خدمات المستخدم آلية تدفق رمز الممثل uuid القديمة."
+
+#: core/security/checks/models.py:131
+#| msgid "No SAML authenticators configured."
+msgid "No authenticators configured (nothing to enforce MFA on)."
+msgstr ""
+"لم يتم تكوين أي مصادقات (لا يوجد شيء لفرض المصادقة متعددة العوامل عليه)."
+
+#: core/security/checks/models.py:138
+#, python-brace-format
+msgid ""
+"No authenticator has MFA configured: {names}. Assign at least one MFA per "
+"authenticator."
+msgstr ""
+"لم يتم تكوين المصادقة متعددة العوامل لأي من أجهزة المصادقة: {names} . قم "
+"بتعيين مصادقة متعددة العوامل واحدة على الأقل لكل جهاز مصادقة."
+
+#: core/security/checks/models.py:145
+#, python-brace-format
+msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
+msgstr ""
+"تغطية المصادقة متعددة العوامل: تم تعيين المصادقة متعددة العوامل {with_mfa} / "
+"{total} ."
+
+#: core/security/checks/models.py:191
+#, python-brace-format
+msgid ""
+"{n} server certificate(s) have expired: {names}. Renew and rotate the "
+"affected servers."
+msgstr ""
+"انتهت صلاحية شهادات الخادم {n} : {names} . جدد الشهادات وقم بتدوير الخوادم "
+"المتأثرة."
+
+#: core/security/checks/models.py:199
+#, python-brace-format
+msgid "{n} server certificate(s) expire within 30 days: {names}."
+msgstr "تنتهي صلاحية شهادات الخادم {n} خلال 30 يومًا: {names} ."
+
+#: core/security/checks/models.py:206
+msgid "No server certificates expire within the next 30 days."
+msgstr "لا تنتهي صلاحية أي شهادات خادم خلال الثلاثين يومًا القادمة."
+
+#: core/security/checks/models.py:223
+#| msgid "No LDAP servers configured"
+msgid "No staff/admin users configured."
+msgstr "لم يتم تكوين أي مستخدمين من الموظفين/المسؤولين."
+
+#: core/security/checks/models.py:232
+#, python-brace-format
+msgid "Staff account hygiene: {details}."
+msgstr "نظافة حسابات الموظفين: {details} ."
+
+#: core/security/checks/models.py:261
+#, python-brace-format
+msgid "Transports reachable from any source: {names}."
+msgstr "وسائل النقل التي يمكن الوصول إليها من أي مصدر: {names} ."
+
+#: core/security/checks/models.py:266 core/security/checks/models.py:271
+msgid "All transports are restricted by at least one network."
+msgstr "جميع وسائل النقل مقيدة بشبكة واحدة على الأقل."
+
+#: core/security/checks/models.py:288
+#, python-brace-format
+msgid "{n} service pool(s) are currently restrained: {names}."
+msgstr "{n} مجموعة خدمات مقيدة حاليًا: {names} ."
+
+#: core/security/checks/models.py:293
+msgid "No service pools are currently restrained."
+msgstr "لا توجد حاليًا أي قيود على أحواض الخدمة."
+
+#: core/security/checks/runner.py:94
+#, python-brace-format
+msgid "Check could not be evaluated: {error}"
+msgstr "تعذر تقييم الفحص: {error}"
+
+#: core/security/checks/settings.py:59
+#, python-brace-format
+msgid "Security cookies/headers are disabled: {missing}."
+msgstr "تم تعطيل ملفات تعريف الارتباط/الرؤوس الأمنية: {missing}."
+
+#: core/security/checks/settings.py:64
+msgid "Session/security cookies and enhanced security are enabled."
+msgstr "تم تفعيل ملفات تعريف الارتباط الخاصة بالجلسة/الأمان والأمان المحسن."
+
+#: core/security/checks/settings.py:78
+#, python-brace-format
+msgid ""
+"Production debug switches are on: {problems}. Disable both in production."
+msgstr ""
+"مفاتيح تصحيح الأخطاء في بيئة الإنتاج مُفعّلة: {problems} . قم بتعطيل كليهما في "
+"بيئة الإنتاج."
+
+#: core/security/checks/settings.py:85
+msgid "DEBUG and PROFILING are both off."
+msgstr "تم إيقاف كل من وضع التصحيح ووضع التحليل."
+
+#: core/security/checks/settings.py:94
+msgid ""
+"settings.SECRET_KEY is the shipped sample value: session tokens can be "
+"forged."
+msgstr ""
+"settings.SECRET_KEY هي القيمة النموذجية المرفقة: يمكن تزوير رموز الجلسة."
+
+#: core/security/checks/settings.py:99
+msgid "settings.SECRET_KEY has been rotated."
+msgstr "تم تدوير ملف settings.SECRET_KEY."
+
+#: core/security/checks/settings.py:111
+msgid ""
+"settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
+"secrets."
+msgstr ""
+"settings.RSA_KEY هي القيمة النموذجية المرفقة: يمكن لأي شخص فك تشفير أسرار "
+"الوسيط."
+
+#: core/security/checks/settings.py:116
+msgid "settings.RSA_KEY has been rotated."
+msgstr "تم تدوير ملف settings.RSA_KEY."
+
+#: core/security/checks/settings.py:127
+msgid ""
+"django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
+"request forgery is not mitigated at the framework level."
+msgstr ""
+"django.middleware.csrf.CsrfViewMiddleware ليس ضمن MIDDLWARE: لا يتم التخفيف "
+"من هجمات تزوير الطلبات عبر المواقع على مستوى الإطار."
+
+#: core/security/checks/settings.py:134
+msgid "django.middleware.csrf.CsrfViewMiddleware is active."
+msgstr "django.middleware.csrf.CsrfViewMiddleware نشط."
+
+#: core/security/checks/settings.py:150
+msgid ""
+"SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
+"statement with bound values is being written to log/sql.log on disk."
+msgstr ""
+"يتم تشغيل مسجل SQL &#39;django.db.backends&#39; في وضع DEBUG بينما يكون وضع "
+"DEBUG متوقفًا: يتم كتابة كل عبارة SQL ذات قيم مرتبطة إلى log/sql.log على "
+"القرص."
+
+#: core/security/checks/settings.py:157
+msgid ""
+"SQL logger 'django.db.backends' is not writing bound SQL to disk in "
+"production."
+msgstr ""
+"لا يقوم مسجل SQL &#39;django.db.backends&#39; بكتابة SQL المرتبط إلى القرص في "
+"بيئة الإنتاج."
+
+#: core/security/checks/settings.py:172
+msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
+msgstr ""
+"يكون مسجل الجذر أو \"uds\" في وضع التصحيح في بيئة الإنتاج (سجلات مفصلة على "
+"القرص)."
+
+#: core/security/checks/settings.py:177
+msgid "Root and 'uds' loggers are above DEBUG in production."
+msgstr "يتم وضع سجلات الجذر و&#39;uds&#39; فوق مستوى DEBUG في بيئة الإنتاج."
+
+#: core/security/checks/settings.py:190
+msgid ""
+"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
+"silently fail. Operators will not receive ERROR-level alerts by mail."
+msgstr ""
+"لم يتم تكوين EMAIL_BACKEND: تفشل إشعارات البريد الإلكتروني الخاصة بـ "
+"&#39;mail_admins&#39; دون إشعار. لن يتلقى المشغلون تنبيهات مستوى الخطأ عبر "
+"البريد الإلكتروني."
+
+#: core/security/checks/settings.py:197
+msgid "EMAIL_BACKEND is configured."
+msgstr "تم تكوين EMAIL_BACKEND."
+
+#: core/security/checks/settings.py:210
+msgid ""
+"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
+"any local user can read or poison the cache unless a SASL/TLS username is "
+"configured."
+msgstr ""
+"يمكن الوصول إلى CACHES[&#39;memory&#39;] LOCATION= {location!r} من خارج "
+"المضيف: يمكن لأي مستخدم محلي قراءة ذاكرة التخزين المؤقت أو تسميمها ما لم يتم "
+"تكوين اسم مستخدم SASL/TLS."
+
+#: core/security/checks/settings.py:218
+msgid "CACHES['memory'] is bound to localhost (or absent)."
+msgstr "يتم ربط CACHES[&#39;memory&#39;] بـ localhost (أو غير موجود)."
+
+#: core/security/checks/settings.py:234
+#, python-brace-format
+msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
+msgstr "تم تعيين SECURE_HSTS_SECONDS ( {seconds} s)."
+
+#: core/security/checks/settings.py:241
+msgid ""
+"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
+"0: no HSTS header is emitted on HTTPS responses."
+msgstr ""
+"الوسيط هو HTTPS-fronted (SECURE_PROXY_SSL_HEADER) ولكن SECURE_HSTS_SECONDS "
+"هو 0: لا يتم إصدار رأس HSTS في استجابات HTTPS."
+
+#: core/security/checks/settings.py:248
+msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
+msgstr "لم يتم تكوين HSTS؛ ويبدو أن الوسيط لا يستخدم HTTPS كواجهة أمامية."
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73
@@ -3440,11 +3901,11 @@ msgstr "آلة"
 msgid "Config"
 msgstr "التكوين"
 
-#: core/util/config.py:388
+#: core/util/config.py:389
 msgid "Session expire time in hours after publishing"
 msgstr "تنتهي مدة الجلسة بعد ساعات من النشر"
 
-#: core/util/config.py:396
+#: core/util/config.py:397
 msgid ""
 "Delay between cache checks. Reducing this number will increase cache "
 "generation speed but also will load service providers"
@@ -3452,7 +3913,7 @@ msgstr ""
 "التأخير بين عمليات فحص ذاكرة التخزين المؤقت. سيؤدي تقليل هذا العدد إلى زيادة "
 "سرعة إنشاء ذاكرة التخزين المؤقت ولكنه سيؤدي أيضًا إلى تحميل موفري الخدمة"
 
-#: core/util/config.py:405
+#: core/util/config.py:406
 msgid ""
 "Delayed task number of threads PER SERVER, with higher number of threads, "
 "deployed task will complete sooner, but it will give more load to overall "
@@ -3462,7 +3923,7 @@ msgstr ""
 "ستكتمل المهمة المنشورة في وقت أقرب، ولكنها ستوفر المزيد من التحميل على "
 "النظام ككل"
 
-#: core/util/config.py:414
+#: core/util/config.py:415
 msgid ""
 "Number of scheduler threads running PER SERVER, with higher number of "
 "threads, deployed task will complete sooner, but it will give more load to "
@@ -3472,7 +3933,7 @@ msgstr ""
 "سلاسل الرسائل، ستكتمل المهمة المنشورة في وقت أقرب، ولكنها ستوفر المزيد من "
 "التحميل على النظام ككل"
 
-#: core/util/config.py:423
+#: core/util/config.py:424
 msgid ""
 "Waiting time before removing \"errored\" and \"removed\" publications, "
 "cache, and user assigned machines. Time is in seconds"
@@ -3480,30 +3941,30 @@ msgstr ""
 "وقت الانتظار قبل إزالة المنشورات \"الخاطئة\" و\"المزالة\"، وذاكرة التخزين "
 "المؤقت، والأجهزة المخصصة للمستخدم. الوقت بالثواني"
 
-#: core/util/config.py:431
+#: core/util/config.py:432
 msgid "Time to maintaing \"info state\" items before removing it, in seconds"
 msgstr "الوقت اللازم لصيانة عناصر \"حالة المعلومات\" قبل إزالتها، بالثواني"
 
-#: core/util/config.py:438
+#: core/util/config.py:439
 msgid "Number of services to initiate removal per run of service cleaner"
 msgstr "عدد الخدمات لبدء الإزالة لكل تشغيل لمنظف الخدمة"
 
-#: core/util/config.py:445
+#: core/util/config.py:446
 msgid ""
 "Removal Check time for cache, publications and deployed services, in seconds"
 msgstr ""
 "إزالة التحقق من الوقت لذاكرة التخزين المؤقت والمنشورات والخدمات المنشورة، في "
 "ثوان"
 
-#: core/util/config.py:448
+#: core/util/config.py:449
 msgid "Superuser username"
 msgstr "اسم المستخدم المتميز"
 
-#: core/util/config.py:452
+#: core/util/config.py:456
 msgid "Superuser password"
 msgstr "كلمة مرور المستخدم الخارق"
 
-#: core/util/config.py:459
+#: core/util/config.py:463
 msgid ""
 "Allow root user to access using web interface.\n"
 " Once configured one authenticator,\n"
@@ -3512,11 +3973,11 @@ msgstr ""
 "السماح للمستخدم الجذر بالوصول باستخدام واجهة الويب. بمجرد تكوين أداة مصادقة "
 "واحدة، يوصى بتعطيل هذا الخيار"
 
-#: core/util/config.py:467
+#: core/util/config.py:471
 msgid "Enable enhanced security modules"
 msgstr "تمكين وحدات الأمان المحسنة"
 
-#: core/util/config.py:475
+#: core/util/config.py:479
 msgid ""
 "Enforced maximum security mode (Zero-Trust Mode). No password redirection "
 "will be allowed if this mode is set."
@@ -3524,7 +3985,7 @@ msgstr ""
 "فرض وضع الأمان الأقصى (وضع الثقة المعدومة). لن يُسمح بإعادة توجيه كلمة المرور "
 "إذا تم ضبط هذا الوضع."
 
-#: core/util/config.py:487
+#: core/util/config.py:491
 msgid ""
 "How long should the user service be unused before os manager considers it "
 "for removal"
@@ -3532,30 +3993,30 @@ msgstr ""
 "ما هي المدة التي يجب أن تظل فيها خدمة المستخدم غير مستخدمة قبل أن يفكر مدير "
 "نظام التشغيل في إزالتها؟"
 
-#: core/util/config.py:497
+#: core/util/config.py:501
 msgid "Max logins before blocking an account for a while"
 msgstr "الحد الأقصى لعدد مرات تسجيل الدخول قبل حظر الحساب لفترة من الوقت"
 
-#: core/util/config.py:504
+#: core/util/config.py:508
 msgid "Block time in second for an user that has too many login failures"
 msgstr ""
 "حظر الوقت بالثانية للمستخدم الذي لديه عدد كبير جدًا من حالات فشل تسجيل الدخول"
 
-#: core/util/config.py:510
+#: core/util/config.py:514
 msgid "Block ip on login failure"
 msgstr "حظر IP عند فشل تسجيل الدخول"
 
-#: core/util/config.py:519
+#: core/util/config.py:523
 msgid "Do autorun of service if just one service"
 msgstr "قم بالتشغيل التلقائي للخدمة إذا كانت هناك خدمة واحدة فقط"
 
-#: core/util/config.py:525
+#: core/util/config.py:529
 msgid "Redirects login page to the tag used when logged in if active."
 msgstr ""
 "يعيد توجيه صفحة تسجيل الدخول إلى العلامة المستخدمة عند تسجيل الدخول إذا كانت "
 "نشطة."
 
-#: core/util/config.py:534
+#: core/util/config.py:538
 msgid ""
 "Max time needed to get a service \"fully functional\" before it's considered "
 "\"failed\" and removed"
@@ -3563,7 +4024,7 @@ msgstr ""
 "الحد الأقصى من الوقت اللازم للحصول على الخدمة \"تعمل بكامل طاقتها\" قبل "
 "اعتبارها \"فاشلة\" وإزالتها"
 
-#: core/util/config.py:540
+#: core/util/config.py:544
 msgid ""
 "Max time needed to get a service \"fully removed\" before it's considered "
 "\"failed\" and purged"
@@ -3571,60 +4032,60 @@ msgstr ""
 "الحد الأقصى من الوقت اللازم لإزالة الخدمة بالكامل قبل اعتبارها \"فاشلة\" "
 "وإزالتها"
 
-#: core/util/config.py:547
+#: core/util/config.py:551
 msgid "Maximum logs per every log-capable administration element"
 msgstr "الحد الأقصى من السجلات لكل عنصر إدارة قادر على التسجيل"
 
-#: core/util/config.py:554
+#: core/util/config.py:558
 msgid ""
 "Maximum logs entries for general UDS logs (0 = unlimited, use with care)"
 msgstr ""
 "الحد الأقصى لإدخالات السجلات لسجلات UDS العامة (0 = غير محدود، استخدم بعناية)"
 
-#: core/util/config.py:562
+#: core/util/config.py:566
 msgid ""
 "Time to restrain a user service in case it gives some errors at some point"
 msgstr "حان الوقت لتقييد خدمة المستخدم في حالة حدوث بعض الأخطاء في مرحلة ما"
 
-#: core/util/config.py:569
+#: core/util/config.py:573
 msgid ""
 "Number of errors that must occurr in \"restrainTime\" to restrain an user "
 "service"
 msgstr "عدد الأخطاء التي يجب أن تحدث في \"restrainTime\" لتقييد خدمة المستخدم"
 
-#: core/util/config.py:577
+#: core/util/config.py:581
 msgid "Statistics duration, in days"
 msgstr "مدة الإحصائيات، بالأيام"
 
-#: core/util/config.py:584
+#: core/util/config.py:588
 msgid ""
 "Frequency of stats collection in seconds. Default is 1 hours (3600 seconds)"
 msgstr "تردد جمع الإحصائيات بالثواني. الافتراضي هو 1 ساعة (3600 ثانية)"
 
-#: core/util/config.py:591
+#: core/util/config.py:595
 msgid "Maximum number of time to accumulate on one run. Default is 7 (1 week)"
 msgstr "أقصى عدد من الوقت للتراكم في تشغيل واحد. الافتراضي هو 7 (أسبوع واحد)"
 
-#: core/util/config.py:599
+#: core/util/config.py:603
 msgid "If disallow login showing authenticatiors"
 msgstr "في حالة عدم السماح بتسجيل الدخول بإظهار المصادقين"
 
-#: core/util/config.py:607
+#: core/util/config.py:611
 msgid ""
 "Notify user of existence of a new version of a service on new publication"
 msgstr "إعلام المستخدم بوجود إصدار جديد من الخدمة عند النشر الجديد"
 
-#: core/util/config.py:615
+#: core/util/config.py:619
 msgid "Networks or hosts considered \"trusted\" for UDS (Tunnels, etc...)"
 msgstr ""
 "الشبكات أو المضيفين الذين يعتبرون \"موثوقين\" لـ UDS (الأنفاق، وما إلى "
 "ذلك ...)"
 
-#: core/util/config.py:622
+#: core/util/config.py:626
 msgid "IPs or networks allowed to forward requests (like proxies)"
 msgstr "عناوين IP أو الشبكات المسموح لها بإعادة توجيه الطلبات (مثل الوكلاء)"
 
-#: core/util/config.py:630
+#: core/util/config.py:634
 msgid ""
 "Allow clients to notify their own ip (if set), or use always the request "
 "extracted IP"
@@ -3632,11 +4093,11 @@ msgstr ""
 "السماح للعملاء بإخطار عنوان IP الخاص بهم (في حالة تعيينه)، أو استخدام عنوان "
 "IP المستخرج للطلب دائمًا"
 
-#: core/util/config.py:638
+#: core/util/config.py:642
 msgid "If there is a proxy in front of us (i.e. HAProxy, or any NLB)"
 msgstr "إذا كان هناك وكيل أمامنا (أي HAProxy أو أي NLB)"
 
-#: core/util/config.py:647
+#: core/util/config.py:651
 msgid ""
 "If we use new logout mechanics for osmanagers, where only when the logged in "
 "users reaches 0, it is considered \"logged out\""
@@ -3644,141 +4105,141 @@ msgstr ""
 "إذا استخدمنا آليات تسجيل خروج جديدة لمديري osmanagers، حيث فقط عندما يصل "
 "المستخدمون الذين قاموا بتسجيل الدخول إلى 0، فسيتم اعتبار ذلك \"مسجل خروج\""
 
-#: core/util/config.py:656
+#: core/util/config.py:660
 msgid "Enable/Disable Actor attack detection ip blocking"
 msgstr "تمكين/تعطيل حظر IP الخاص باكتشاف هجوم الممثل"
 
-#: core/util/config.py:664
+#: core/util/config.py:668
 msgid "Max session length for Admin"
 msgstr "الحد الأقصى لطول الجلسة للمشرف"
 
-#: core/util/config.py:670
+#: core/util/config.py:674
 msgid "Max session length for User"
 msgstr "الحد الأقصى لطول الجلسة للمستخدم"
 
-#: core/util/config.py:677
+#: core/util/config.py:681
 msgid "Page reload Time (legacy)"
 msgstr "وقت إعادة تحميل الصفحة (القديم)"
 
-#: core/util/config.py:685
+#: core/util/config.py:689
 msgid "Custom message for error when limiting by calendar"
 msgstr "رسالة مخصصة للخطأ عند التقييد بالتقويم"
 
-#: core/util/config.py:693
+#: core/util/config.py:697
 msgid "If convert username to lowercase on logins"
 msgstr "إذا قمت بتحويل اسم المستخدم إلى أحرف صغيرة عند تسجيل الدخول"
 
-#: core/util/config.py:701
+#: core/util/config.py:705
 msgid "Global UDS ID (common for all servers on the same cluster)"
 msgstr "معرف UDS العالمي (مشترك لجميع الخوادم الموجودة في نفس المجموعة)"
 
-#: core/util/config.py:709
+#: core/util/config.py:713
 msgid "Site display name"
 msgstr "اسم عرض الموقع"
 
-#: core/util/config.py:715
+#: core/util/config.py:719
 msgid "Site copyright info"
 msgstr "معلومات حقوق الطبع والنشر للموقع"
 
-#: core/util/config.py:721
+#: core/util/config.py:725
 msgid "Site copyright link"
 msgstr "رابط حقوق الطبع والنشر للموقع"
 
-#: core/util/config.py:724
+#: core/util/config.py:728
 msgid "Top navbar logo name"
 msgstr "اسم شعار شريط التنقل العلوي"
 
-#: core/util/config.py:730
+#: core/util/config.py:734
 msgid "Custom CSS styles applied to the user accesible site"
 msgstr "يتم تطبيق أنماط CSS المخصصة على الموقع الذي يمكن للمستخدم الوصول إليه"
 
-#: core/util/config.py:736
+#: core/util/config.py:740
 msgid "Site information"
 msgstr "معلومات الموقع"
 
-#: core/util/config.py:742
+#: core/util/config.py:746
 msgid "Show Filter box for user services on Top or bottom of the page"
 msgstr "إظهار مربع التصفية لخدمات المستخدم في أعلى الصفحة أو أسفلها"
 
-#: core/util/config.py:748
+#: core/util/config.py:752
 msgid "Minimal User Services needed to show filter"
 msgstr "الحد الأدنى من خدمات المستخدم اللازمة لإظهار الفلتر"
 
-#: core/util/config.py:754
+#: core/util/config.py:758
 msgid "Enable experimental features. USE WITH CAUTION!!"
 msgstr "تمكين الميزات التجريبية. استخدم بحذر!!"
 
-#: core/util/config.py:762
+#: core/util/config.py:766
 msgid "Time in seconds of inactivity before auto reloading admin pages"
 msgstr "مدة الخمول بالثواني قبل إعادة تحميل صفحات الإدارة تلقائيًا"
 
-#: core/util/config.py:768
+#: core/util/config.py:772
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr "الوقت بالثواني بين عمليات إعادة التحميل التلقائي لصفحات الإدارة"
 
-#: core/util/config.py:774
+#: core/util/config.py:778
 msgid "Number of items per page in admin tables"
 msgstr "عدد العناصر لكل صفحة في جداول الإدارة"
 
-#: core/util/config.py:780
+#: core/util/config.py:784
 msgid "List of trusted hosts/networks allowed to access the admin interface"
 msgstr "قائمة بالمضيفين/الشبكات الموثوقة المسموح لهم بالوصول إلى واجهة الإدارة"
 
-#: core/util/config.py:786
+#: core/util/config.py:790
 msgid "Enable VNC menu for user services"
 msgstr "تمكين قائمة VNC لخدمات المستخدم"
 
-#: core/util/config.py:797
+#: core/util/config.py:801
 msgid ""
 "Cookies consent text. If empty, a default multi language text will be used"
 msgstr ""
 "نص موافقة ملفات تعريف الارتباط. إذا كان فارغًا، فسيتم استخدام نص متعدد اللغات "
 "افتراضيًا"
 
-#: core/util/config.py:803
+#: core/util/config.py:807
 msgid "Enable cookies consent"
 msgstr "تمكين الموافقة على ملفات تعريف الارتباط"
 
-#: core/util/config.py:809
+#: core/util/config.py:813
 msgid "URL for more info about cookies"
 msgstr "رابط للحصول على مزيد من المعلومات حول ملفات تعريف الارتباط"
 
-#: core/util/config.py:815
+#: core/util/config.py:819
 msgid "URL to leave cookies consent"
 msgstr "رابط لترك موافقة ملفات تعريف الارتباط"
 
-#: core/util/config.py:821
+#: core/util/config.py:825
 msgid "Enable or disable add favorite services feature"
 msgstr "تفعيل أو تعطيل ميزة إضافة الخدمات المفضلة"
 
-#: core/util/config.py:827
+#: core/util/config.py:831
 msgid "Allow animated backgrounds"
 msgstr "السماح بالخلفيات المتحركة"
 
-#: core/util/config.py:833
+#: core/util/config.py:837
 msgid "Allow biometric authentication"
 msgstr "السماح بالمصادقة البيومترية"
 
-#: core/util/config.py:841
+#: core/util/config.py:845
 msgid "TSA Provider URL for timestamping signatures"
 msgstr "رابط مزود خدمة إدارة أمن النقل (TSA) لختم التوقيعات زمنيًا"
 
-#: core/util/config.py:847
+#: core/util/config.py:851
 msgid "TSA Provider Timeout in seconds"
 msgstr "مهلة مزود خدمة إدارة أمن النقل بالثواني"
 
-#: core/util/config.py:853
+#: core/util/config.py:857
 msgid "TSA Provider SSL Verify"
 msgstr "التحقق من شهادة SSL لمزود خدمة TSA"
 
-#: core/util/config.py:859
+#: core/util/config.py:863
 msgid ""
 "Enable immutable audit log for critical data (admin events, logins, etc.)"
 msgstr ""
 "قم بتمكين سجل التدقيق غير القابل للتغيير للبيانات الهامة (أحداث المسؤول، "
 "عمليات تسجيل الدخول، إلخ)."
 
-#: core/util/config.py:865
+#: core/util/config.py:869
 msgid ""
 "Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"
 msgstr ""
@@ -4036,110 +4497,6 @@ msgstr "لم يتم تكوين أي خوادم LDAP"
 #: core/util/ldaputil.py:612
 msgid "Could not connect to any LDAP server ({}). Last error: {}"
 msgstr "تعذر الاتصال بأي خادم LDAP ({}). آخر خطأ: {}"
-
-#: core/util/security_checks.py:73
-msgid ""
-"Default superuser credentials are still active. Change the root password "
-"immediately."
-msgstr ""
-"لا تزال بيانات اعتماد المستخدم المتميز الافتراضية فعّالة. غيّر كلمة مرور "
-"المستخدم المتميز فوراً."
-
-#: core/util/security_checks.py:78
-msgid "Superuser password is not the shipped default."
-msgstr "كلمة مرور المستخدم المتميز ليست كلمة المرور الافتراضية المرفقة."
-
-#: core/util/security_checks.py:88
-msgid ""
-"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
-"not needed in production."
-msgstr ""
-"تم تفعيل الوصول الجذر إلى الويب/واجهة برمجة التطبيقات "
-"(SUPER_USER_ALLOW_WEBACCESS). قم بتعطيله إذا لم تكن هناك حاجة إليه في بيئة "
-"الإنتاج."
-
-#: core/util/security_checks.py:94
-msgid "Root web/API access is disabled."
-msgstr "تم تعطيل الوصول إلى الويب/واجهة برمجة التطبيقات الجذرية."
-
-#: core/util/security_checks.py:109
-#, python-brace-format
-msgid ""
-"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
-"admin operations is disabled."
-msgstr ""
-"تم تعيين {wildcards} إلى حرف بدل (*): تم تعطيل البوابات المستندة إلى IP "
-"للأنفاق والجهات الفاعلة وعمليات الإدارة."
-
-#: core/util/security_checks.py:115
-msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
-msgstr "TRUSTED_SOURCES و ADMIN_TRUSTED_SOURCES ليست أحرفًا عامة."
-
-#: core/util/security_checks.py:125
-msgid ""
-"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
-"not exploitable until BEHIND_PROXY is enabled."
-msgstr ""
-"الوسيط ليس خلف وكيل؛ لا يمكن استغلال رمز البدل الافتراضي "
-"ALLOWED_IP_FORWARDERS حتى يتم تمكين BEHIND_PROXY."
-
-#: core/util/security_checks.py:133
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
-"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
-msgstr ""
-"الوسيط موجود خلف خادم وكيل، وALLOWED_IP_FORWARDERS عبارة عن رمز عام: يمكن "
-"لأي عميل انتحال X-Forwarded-For. لذا، يجب تقييده بعناوين الوكيل الفعلية."
-
-#: core/util/security_checks.py:140
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
-"addresses."
-msgstr "الوسيط موجود خلف وكيل، و ALLOWED_IP_FORWARDERS مقيد بعناوين محددة."
-
-#: core/util/security_checks.py:157
-#, python-brace-format
-msgid "Security cookies/headers are disabled: {missing}."
-msgstr "تم تعطيل ملفات تعريف الارتباط/الرؤوس الأمنية: {missing}."
-
-#: core/util/security_checks.py:162
-msgid "Session/security cookies and enhanced security are enabled."
-msgstr "تم تفعيل ملفات تعريف الارتباط الخاصة بالجلسة/الأمان والأمان المحسن."
-
-#: core/util/security_checks.py:188
-#, python-brace-format
-msgid ""
-"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
-"assertions can be forged against a misconfigured IdP."
-msgstr ""
-"لا يُشترط توقيع تأكيدات SAML: {unsigned}. يمكن تزوير التأكيدات غير الموقعة ضد "
-"موفر هوية مُهيأ بشكل خاطئ."
-
-#: core/util/security_checks.py:196
-msgid "All SAML authenticators require signed assertions or messages."
-msgstr "تتطلب جميع أدوات المصادقة SAML تأكيدات أو رسائل موقعة."
-
-#: core/util/security_checks.py:201
-msgid "No SAML authenticators configured."
-msgstr "لم يتم تكوين أي مصادقات SAML."
-
-#: core/util/security_checks.py:230
-#, python-brace-format
-msgid ""
-"Service pools with actors still using the legacy uuid token flow: "
-"{affected}. Re-initialize affected actors to rotate them to the new token."
-msgstr ""
-"مجموعات الخدمات التي لا تزال تستخدم تدفق رمز uuid القديم مع الجهات الفاعلة: "
-"{affected}. أعد تهيئة الجهات الفاعلة المتأثرة لتحويلها إلى الرمز الجديد."
-
-#: core/util/security_checks.py:237
-msgid "No user services are using the legacy uuid actor token flow."
-msgstr "لا تستخدم أي من خدمات المستخدم آلية تدفق رمز الممثل uuid القديمة."
-
-#: core/util/security_checks.py:270
-#, python-brace-format
-msgid "Check could not be evaluated: {error}"
-msgstr "تعذر تقييم الفحص: {error}"
 
 #: core/util/ui.py:379
 msgid "Associated Image"
@@ -10132,7 +10489,7 @@ msgstr "أخطاء مصادقة كثيرة. تم حظر المستخدم مؤق�
 msgid "Invalid data"
 msgstr "بيانات غير صالحة"
 
-#: web/util/configjs.py:146
+#: web/util/configjs.py:147
 msgid "Access limited by calendar"
 msgstr "وصول محدود بسبب الجدول الزمني."
 

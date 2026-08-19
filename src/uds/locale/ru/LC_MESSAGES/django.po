@@ -35,6 +35,7 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 # Adolfo Gómez <dkmaster@dkmon.com>, 2022
 # Alexander <ag@kub.tel>, 2020
 # Alexey Shabalin <a.shabalin@gmail.com>, 2019
@@ -48,9 +49,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 17:38+0200\n"
+"POT-Creation-Date: 2026-08-19 03:12+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
-"Last-Translator: Александр Бурматов, 2022\n"
+"Last-Translator: Elena Mishina, 2022-2026\n"
 "Language-Team: Russian (http://app.transifex.com/openuds/openuds/language/"
 "ru/)\n"
 "Language: ru\n"
@@ -414,8 +415,9 @@ msgid ""
 "Service pool High Availability policy. If enabled and a pool fails, it will "
 "be restarted in another pool. Enable with care!"
 msgstr ""
-"Политика высокой доступности пула служб. Если она включена и пул выходит из "
-"строя, он будет перезапущен в другом пуле. Включайте с осторожностью!"
+"Политика высокой доступности пула сервисов. Если параметр включен и пул "
+"выйдет из строя, он будет перезапущен в другом пуле. Используйте с "
+"осторожностью!"
 
 #: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:190
 #: REST/methods/services_pools.py:520
@@ -561,7 +563,7 @@ msgstr "Многофакторная аутентификация"
 
 #: REST/methods/mfas.py:110
 msgid "MFA type not found: {}"
-msgstr "Тип MFA не найден: {}"
+msgstr "Тип МФА не найден: {}"
 
 #: REST/methods/mfas.py:128
 msgid "Device Caching"
@@ -608,8 +610,8 @@ msgid ""
 "Network range. Accepts most network definitions formats (range, subnet, "
 "host, etc...)"
 msgstr ""
-"Диапазон сети. Поддерживает большинство форматов определения сети (диапазон, "
-"подсеть, хост и т. д.)."
+"Сетевой диапазон. Поддерживаются большинство форматов задания сети "
+"(диапазон, подсеть, хост и т. д.)."
 
 #: REST/methods/notifiers.py:86
 msgid "Notifiers"
@@ -634,7 +636,7 @@ msgstr "Если этот флажок установлен, этот уведо
 
 #: REST/methods/op_calendars.py:107
 msgid "Access calendars"
-msgstr "Доступ к календарям"
+msgstr "Доступ по календарю"
 
 #: REST/methods/op_calendars.py:109 REST/methods/op_calendars.py:227
 msgid "Calendar"
@@ -884,31 +886,33 @@ msgstr "Стандартный"
 
 #: REST/methods/servers_management.py:571
 msgid "Load calculation weights"
-msgstr "Веса для расчета нагрузки"
+msgstr "Весовые коэффициенты расчета нагрузки"
 
 #: REST/methods/servers_management.py:574
 msgid "CPU weight"
-msgstr "вес процессора"
+msgstr "Весовой коэффициент ЦП"
 
 #: REST/methods/servers_management.py:575
 msgid "Weight of CPU load on server load calculation. Value between 0 and 1"
-msgstr "Расчет нагрузки на ЦП сервера. Значение от 0 до 1."
+msgstr "Вес нагрузки ЦП при расчете нагрузки на сервер. Значение от 0 до 1"
 
 #: REST/methods/servers_management.py:580
 msgid "Memory weight"
-msgstr "Вес памяти"
+msgstr "Весовой коэффициент памяти"
 
 #: REST/methods/servers_management.py:581
 msgid "Weight of memory load on server load calculation. Value between 0 and 1"
-msgstr "Расчет нагрузки на память сервера. Значение от 0 до 1."
+msgstr "Вес нагрузки памяти при расчете нагрузки на сервер. Значение от 0 до 1"
 
 #: REST/methods/servers_management.py:586
 msgid "Users weight"
-msgstr "Вес пользователей"
+msgstr "Весовой коэффициент пользователей"
 
 #: REST/methods/servers_management.py:587
 msgid "Weight of users load on server load calculation. Value between 0 and 1"
-msgstr "Расчет нагрузки пользователей на сервер. Значение от 0 до 1."
+msgstr ""
+"Вес нагрузки пользователей при расчете нагрузки на сервер. Значение от 0 до "
+"1."
 
 #: REST/methods/servers_management.py:592
 msgid "Max expected users"
@@ -917,8 +921,8 @@ msgstr "Максимальное ожидаемое количество пол�
 #: REST/methods/servers_management.py:593
 msgid "Max expected users to consider in load calculation"
 msgstr ""
-"Максимальное количество ожидаемых пользователей, которое следует учитывать "
-"при расчете нагрузки."
+"Максимальное ожидаемое количество пользователей, учитываемое при расчете "
+"нагрузки"
 
 #: REST/methods/services.py:277 REST/methods/services.py:387
 #: core/types/errors.py:116 dispatchers/wyse_enterprise/views.py:297
@@ -927,7 +931,7 @@ msgstr "Сервис не найден"
 
 #: REST/methods/services.py:280
 msgid "Error deleting service"
-msgstr "Ошибка при удалении службы."
+msgstr "Ошибка удаления службы"
 
 #: REST/methods/services.py:288
 #, python-brace-format
@@ -956,7 +960,7 @@ msgstr "Тип подсчета услуг для расчета достиже�
 
 #: REST/methods/services.py:390
 msgid "Error getting logs"
-msgstr "Ошибка при получении логов."
+msgstr "Ошибка получения журналов"
 
 #: REST/methods/services.py:410 REST/methods/users_groups.py:337
 #: REST/methods/users_groups.py:584
@@ -1016,7 +1020,7 @@ msgstr " ОС менеджер используется как базовый в
 
 #: REST/methods/services_pools.py:502
 msgid "Publish on save"
-msgstr "Опубликовать в сохранении"
+msgstr "Публиковать при сохранении"
 
 #: REST/methods/services_pools.py:504
 msgid ""
@@ -1024,7 +1028,7 @@ msgid ""
 "pools)"
 msgstr ""
 "Если сервис активен, он будет опубликован при сохранении (только для новых "
-"пулов сервисов)."
+"пулов сервисов)"
 
 #: REST/methods/services_pools.py:512
 msgid "If active, transport will be visible for users"
@@ -1101,8 +1105,8 @@ msgstr "Показать транспорты"
 #: REST/methods/services_pools.py:576
 msgid "If active, transports will be shown to users"
 msgstr ""
-"Если функция активна, информация о транспорте будет отображаться "
-"пользователям."
+"Если параметр включен, пользователям будет отображаться информация о "
+"транспорте"
 
 #: REST/methods/services_pools.py:582
 msgid "Allow removal by users"
@@ -1114,9 +1118,9 @@ msgid ""
 "careful with this, because the user will have the \"power\" to delete its "
 "own service"
 msgstr ""
-"Если услуга активна, пользователь сможет удалить её «вручную». Будьте "
-"осторожны, поскольку пользователь получит «право» на удаление собственной "
-"услуги."
+"Если параметр включен, пользователю будет разрешено «вручную» удалить "
+"сервис. Используйте с осторожностью: пользователь сможет удалить свой "
+"собственный сервис."
 
 #: REST/methods/services_pools.py:590
 msgid "Allow reset by users"
@@ -1238,7 +1242,7 @@ msgstr "Сервер туннеля не найден"
 
 #: REST/methods/tunnels_management.py:130
 msgid "Error deleting tunnel server"
-msgstr "Ошибка при удалении туннельного сервера."
+msgstr "Ошибка удаления туннельного сервера"
 
 #: REST/methods/tunnels_management.py:184
 msgid "Tunnels"
@@ -1324,11 +1328,11 @@ msgstr "Привязанные транспорты"
 
 #: REST/methods/user_services.py:632
 msgid "Access denied to publish service pool"
-msgstr "Доступ к публикации пула сервисов запрещен."
+msgstr "Отказано в доступе для публикации в сервисном пуле"
 
 #: REST/methods/user_services.py:656
 msgid "Access denied to cancel service pool publication"
-msgstr "Доступ запрещен для отмены публикации в сервисном пуле."
+msgstr "Отказано в доступе для отмены публикации в сервисном пуле"
 
 #: REST/methods/user_services.py:703
 msgid "Publications"
@@ -1402,7 +1406,7 @@ msgstr "Пользователь не найден"
 
 #: REST/methods/users_groups.py:213
 msgid "Error getting user"
-msgstr "Ошибка при получении пользователя."
+msgstr "Ошибка получения пользователя"
 
 #: REST/methods/users_groups.py:230
 msgid "Username cannot be empty"
@@ -1414,11 +1418,11 @@ msgstr "Пользователь уже существует (ошибка ду�
 
 #: REST/methods/users_groups.py:282
 msgid "Error saving user"
-msgstr "Ошибка сохранения пользователя."
+msgstr "Ошибка сохранения пользователя"
 
 #: REST/methods/users_groups.py:316
 msgid "Error removing user"
-msgstr "Ошибка при удалении пользователя."
+msgstr "Ошибка удаления пользователя"
 
 #: REST/methods/users_groups.py:443 REST/methods/users_groups.py:546
 #: REST/methods/users_groups.py:565
@@ -1485,7 +1489,7 @@ msgstr "Совместимость AD подключения (обычно Windo
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:148
+#: auths/SAML/saml.py:113 core/consts/__init__.py:149
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -2832,19 +2836,19 @@ msgstr "Базовый аутентификатор"
 msgid "Group name"
 msgstr "Имя группы"
 
-#: core/consts/__init__.py:146
+#: core/consts/__init__.py:147
 msgid "Admin"
 msgstr "Администратор"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Staff member"
 msgstr "Штатный сотрудник"
 
-#: core/consts/__init__.py:149
+#: core/consts/__init__.py:150
 msgid "Anonymous"
 msgstr "Аноним"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Unknown role"
 msgstr "Неизвестная роль"
 
@@ -3108,6 +3112,500 @@ msgstr "из"
 #: core/reports/report.py:192
 msgid "Printed in {now:%Y, %b %d} at {now:%H:%M}"
 msgstr "Напечатано {now:%Y, %b } в {now:%H:%M}"
+
+#: core/security/checks/global_config.py:57
+msgid ""
+"Default superuser credentials are still active. Change the root password "
+"immediately."
+msgstr ""
+"Учетные данные суперпользователя по умолчанию по-прежнему активны. "
+"Немедленно смените пароль root."
+
+#: core/security/checks/global_config.py:62
+msgid "Superuser password is not the shipped default."
+msgstr ""
+"Пароль суперпользователя не является стандартным, установленным по умолчанию."
+
+#: core/security/checks/global_config.py:71
+msgid ""
+"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
+"not needed in production."
+msgstr ""
+"Доступ к веб-интерфейсу/API с правами root разрешен "
+"(SUPER_USER_ALLOW_WEBACCESS). Отключите его, если он не требуется в рабочей "
+"среде."
+
+#: core/security/checks/global_config.py:76
+msgid "Root web/API access is disabled."
+msgstr "Доступ к веб-интерфейсу/API с правами root отключен."
+
+#: core/security/checks/global_config.py:91
+#, python-brace-format
+msgid ""
+"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
+"admin operations is disabled."
+msgstr ""
+"{wildcards} установлено значение подстановочного знака (*): IP-контроль для "
+"туннелей, акторов и административных операций отключен."
+
+#: core/security/checks/global_config.py:97
+msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
+msgstr ""
+"TRUSTED_SOURCES и ADMIN_TRUSTED_SOURCES не являются подстановочными "
+"символами."
+
+#: core/security/checks/global_config.py:107
+msgid ""
+"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
+"not exploitable until BEHIND_PROXY is enabled."
+msgstr ""
+"Брокер не находится за прокси-сервером; использование подстановочного знака "
+"ALLOWED_IP_FORWARDERS по умолчанию невозможно до тех пор, пока не будет "
+"включена опция BEHIND_PROXY."
+
+#: core/security/checks/global_config.py:115
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
+"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
+msgstr ""
+"Брокер находится за прокси-сервером, а ALLOWED_IP_FORWARDERS — это "
+"подстановочный знак: любой клиент может подделать X-Forwarded-For. "
+"Ограничьте его использованием только фактическими адресами прокси-сервера."
+
+#: core/security/checks/global_config.py:122
+msgid ""
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
+"addresses."
+msgstr ""
+"Брокер находится за прокси-сервером, и параметр ALLOWED_IP_FORWARDERS "
+"ограничен конкретными адресами."
+
+#: core/security/checks/global_config.py:135
+#, python-brace-format
+msgid "MAX_LOGIN_TRIES={value} (recommended: 1-20)"
+msgstr "MAX_LOGIN_TRIES = {value} (рекомендуется: 1-20)"
+
+#: core/security/checks/global_config.py:137
+#, python-brace-format
+msgid "LOGIN_BLOCK={value}s (recommended: >= 30)"
+msgstr "LOGIN_BLOCK= {value} s (рекомендуется: &gt;= 30)"
+
+#: core/security/checks/global_config.py:139
+msgid "LOGIN_BLOCK_IP is off (recommended: on)"
+msgstr "Параметр LOGIN_BLOCK_IP отключен (рекомендуется включить)."
+
+#: core/security/checks/global_config.py:145
+#, python-brace-format
+msgid "Login hardening knobs are weak: {issues}."
+msgstr "Параметры усиления безопасности входа в систему слабые: {issues} ."
+
+#: core/security/checks/global_config.py:150
+msgid "Login hardening knobs are within recommended ranges."
+msgstr ""
+"Значения параметров повышения безопасности входа в систему находятся в "
+"пределах рекомендуемых диапазонов."
+
+#: core/security/checks/global_config.py:159
+msgid "Actor failure blocking is enabled (BLOCK_ACTOR_FAILURES)."
+msgstr "Блокировка при сбоях акторов включена (BLOCK_ACTOR_FAILURES)."
+
+#: core/security/checks/global_config.py:165
+msgid ""
+"Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints "
+"have no rate limit on bad tokens."
+msgstr ""
+"Блокировка сбоев акторов отключена (BLOCK_ACTOR_FAILURES): для конечных "
+"точек /actor/ нет ограничений на количество некорректных токенов."
+
+#: core/security/checks/global_config.py:177
+msgid ""
+"HONOR_CLIENT_IP_NOTIFY is on: clients can self-report their IP, which "
+"weakens IP-based logging and blocking. Only acceptable on trusted "
+"deployments."
+msgstr ""
+"Параметр HONOR_CLIENT_IP_NOTIFY включен: клиенты могут самостоятельно "
+"сообщать свой IP-адрес, что ослабляет защиту от регистрации и блокировки на "
+"основе IP-адресов. Допустимо только в доверенных развертываниях."
+
+#: core/security/checks/global_config.py:184
+msgid "HONOR_CLIENT_IP_NOTIFY is off: server-detected IP is authoritative."
+msgstr ""
+"Параметр HONOR_CLIENT_IP_NOTIFY отключен: IP-адрес, обнаруженный сервером, "
+"является авторитетным."
+
+#: core/security/checks/global_config.py:194
+#, python-brace-format
+msgid "SESSION_DURATION_ADMIN={value}s"
+msgstr "SESSION_DURATION_ADMIN= {value} s"
+
+#: core/security/checks/global_config.py:196
+#, python-brace-format
+msgid "SESSION_DURATION_USER={value}s"
+msgstr "SESSION_DURATION_USER= {value} s"
+
+#: core/security/checks/global_config.py:201
+#, python-brace-format
+#| msgid "Session duration histogram"
+msgid "Session durations exceed 12h: {issues}."
+msgstr "Продолжительность сеансов превышает 12 часов: {issues} ."
+
+#: core/security/checks/global_config.py:206
+msgid "Admin and user session durations are within 12h."
+msgstr ""
+"Продолжительность сеансов администратора и пользователя не превышает 12 "
+"часов."
+
+#: core/security/checks/global_config.py:215
+msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
+msgstr ""
+"Параметр EXPERIMENTAL_FEATURES включен: отображается неподдерживаемая "
+"функциональность."
+
+#: core/security/checks/global_config.py:220
+msgid "EXPERIMENTAL_FEATURES is off."
+msgstr "Параметр EXPERIMENTAL_FEATURES отключен."
+
+#: core/security/checks/global_config.py:229
+msgid "ENFORCE_ZERO_TRUST is on: password redirection is disabled."
+msgstr "Параметр ENFORCE_ZERO_TRUST включен: переадресация паролей отключена."
+
+#: core/security/checks/global_config.py:234
+msgid "ENFORCE_ZERO_TRUST is off (password redirection allowed)."
+msgstr "Параметр ENFORCE_ZERO_TRUST отключен (переадресация паролей разрешена)."
+
+#: core/security/checks/global_config.py:243
+msgid "Immutable audit log is enabled (TSA-signed)."
+msgstr "Включен неизменяемый журнал аудита (подписанный TSA)."
+
+#: core/security/checks/global_config.py:249
+msgid ""
+"IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
+"tamper-evident log (src/uds/models/immutable_log.py)."
+msgstr ""
+"Параметр IMMUTABLE_LOG_ENABLED отключен: данные о входе в систему и событиях "
+"администрирования не записываются в защищенный от несанкционированного "
+"доступа журнал (src/uds/models/immutable_log.py)."
+
+#: core/security/checks/logs.py:98
+#, python-brace-format
+msgid ""
+"{count} failed login attempts in the last 24h: a brute force may be in "
+"progress."
+msgstr ""
+"{count} неудачных попыток входа в систему за последние 24 часа: возможно, "
+"ведется атака методом перебора паролей."
+
+#: core/security/checks/logs.py:104
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h."
+msgstr "{count} неудачных попыток входа в систему за последние 24 часа."
+
+#: core/security/checks/logs.py:109
+#, python-brace-format
+msgid "{count} failed login attempts in the last 24h (within normal range)."
+msgstr ""
+"{count} неудачных попыток входа в систему за последние 24 часа (в пределах "
+"нормы)."
+
+#: core/security/checks/logs.py:128
+#, python-brace-format
+msgid "Brute-force patterns detected by source IP in the last 24h: {top}."
+msgstr ""
+"Обнаруженные методом перебора шаблоны по IP-адресу источника за последние 24 "
+"часа: {top} ."
+
+#: core/security/checks/logs.py:133
+#, python-brace-format
+msgid "No IP exceeds {threshold} failed login attempts in the last 24h."
+msgstr ""
+"За последние 24 часа ни один IP-адрес не превысил {threshold} неудачных "
+"попыток входа в систему."
+
+#: core/security/checks/logs.py:154
+#, python-brace-format
+msgid ""
+"{count} account(s) were temporarily blocked in the last 24h: an attacker may "
+"be cycling credentials under the per-user lockout, or a misconfigured client "
+"is retrying with stale credentials."
+msgstr ""
+"За последние 24 часа было временно заблокировано {count} учетных записей: "
+"возможно, злоумышленник использует одни и те же учетные данные в рамках "
+"блокировки для каждого пользователя, или же неправильно настроенный клиент "
+"пытается использовать устаревшие учетные данные."
+
+#: core/security/checks/logs.py:162
+msgid "No accounts were temporarily blocked in the last 24h."
+msgstr "За последние 24 часа временная блокировка аккаунтов не производилась."
+
+#: core/security/checks/logs.py:181
+#, python-brace-format
+msgid ""
+"{count} internal ERROR entries in the last 24h: check uds.log / "
+"services.log / workers.log for failing providers or 5xx storms."
+msgstr ""
+"{count} внутренних записей об ошибках за последние 24 часа: проверьте "
+"uds.log / services.log / workers.log на наличие сбоев у поставщиков услуг "
+"или штормов 5xx."
+
+#: core/security/checks/logs.py:188
+#, python-brace-format
+msgid "{count} internal ERROR entries in the last 24h (within normal range)."
+msgstr "{count} внутренних ошибок за последние 24 часа (в пределах нормы)."
+
+#: core/security/checks/logs.py:205
+#, python-brace-format
+msgid "{count} bot-denial(s) in the last 24h."
+msgstr "{count} отказов ботов за последние 24 часа."
+
+#: core/security/checks/logs.py:223
+#, python-brace-format
+msgid "{count} broker-visible Forbidden response(s) in the last 24h."
+msgstr "{count} broker-visible Запрещенные ответы за последние 24 часа."
+
+#: core/security/checks/models.py:72
+#, python-brace-format
+msgid ""
+"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
+"assertions can be forged against a misconfigured IdP."
+msgstr ""
+"Утверждения SAML не обязательно должны быть подписаны: {unsigned}. "
+"Неподписанные утверждения могут быть подделаны в отношении неправильно "
+"настроенного поставщика идентификации."
+
+#: core/security/checks/models.py:80
+msgid "All SAML authenticators require signed assertions or messages."
+msgstr ""
+"Все аутентификаторы SAML требуют наличия подписанных утверждений или "
+"сообщений."
+
+#: core/security/checks/models.py:85
+msgid "No SAML authenticators configured."
+msgstr "Аутентификаторы SAML не настроены."
+
+#: core/security/checks/models.py:114
+#, python-brace-format
+msgid ""
+"Service pools with actors still using the legacy uuid token flow: "
+"{affected}. Re-initialize affected actors to rotate them to the new token."
+msgstr ""
+"Пулы сервисов с акторами, которые все еще используют устаревший поток "
+"токенов UUID: {affected}. Переинициализируйте затронутые акторы, чтобы "
+"перевести их на новый токен."
+
+#: core/security/checks/models.py:121
+msgid "No user services are using the legacy uuid actor token flow."
+msgstr ""
+"Ни одна из пользовательских служб не использует устаревший поток токенов "
+"акторов UUID."
+
+#: core/security/checks/models.py:131
+#| msgid "No SAML authenticators configured."
+msgid "No authenticators configured (nothing to enforce MFA on)."
+msgstr ""
+"Аутентификаторы не настроены (нет ничего, для чего можно было бы применять "
+"многофакторную аутентификацию)."
+
+#: core/security/checks/models.py:138
+#, python-brace-format
+msgid ""
+"No authenticator has MFA configured: {names}. Assign at least one MFA per "
+"authenticator."
+msgstr ""
+"Ни один аутентификатор не имеет настроенной многофакторной аутентификации "
+"(MFA): {names} . Назначьте как минимум одну MFA каждому аутентификатору."
+
+#: core/security/checks/models.py:145
+#, python-brace-format
+msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
+msgstr "Покрытие MFA: {with_mfa} / {total} аутентификаторам назначена MFA."
+
+#: core/security/checks/models.py:191
+#, python-brace-format
+msgid ""
+"{n} server certificate(s) have expired: {names}. Renew and rotate the "
+"affected servers."
+msgstr ""
+"Срок действия сертификатов сервера {n} истек: {names} . Обновите и выполните "
+"ротацию затронутых серверов."
+
+#: core/security/checks/models.py:199
+#, python-brace-format
+msgid "{n} server certificate(s) expire within 30 days: {names}."
+msgstr ""
+"Срок действия сертификатов сервера {n} истекает в течение 30 дней: {names} ."
+
+#: core/security/checks/models.py:206
+msgid "No server certificates expire within the next 30 days."
+msgstr ""
+"Срок действия серверных сертификатов не истекает в течение следующих 30 дней."
+
+#: core/security/checks/models.py:223
+#| msgid "No LDAP servers configured"
+msgid "No staff/admin users configured."
+msgstr "Административные пользователи не настроены."
+
+#: core/security/checks/models.py:232
+#, python-brace-format
+msgid "Staff account hygiene: {details}."
+msgstr "Состояние личных кабинетов сотрудников: {details} ."
+
+#: core/security/checks/models.py:261
+#, python-brace-format
+msgid "Transports reachable from any source: {names}."
+msgstr "Транспорты, доступные из любого источника: {names} ."
+
+#: core/security/checks/models.py:266 core/security/checks/models.py:271
+msgid "All transports are restricted by at least one network."
+msgstr "Все виды транспорта ограничены как минимум одной транспортной сетью."
+
+#: core/security/checks/models.py:288
+#, python-brace-format
+msgid "{n} service pool(s) are currently restrained: {names}."
+msgstr ""
+"В настоящее время ограничено использование пула(ов) сервисов {n} : {names} ."
+
+#: core/security/checks/models.py:293
+msgid "No service pools are currently restrained."
+msgstr ""
+"В настоящее время ограничения на использование сервисных пулов отсутствуют."
+
+#: core/security/checks/runner.py:94
+#, python-brace-format
+msgid "Check could not be evaluated: {error}"
+msgstr "Проверка не удалась: {error}"
+
+#: core/security/checks/settings.py:59
+#, python-brace-format
+msgid "Security cookies/headers are disabled: {missing}."
+msgstr "Файлы cookie/заголовки безопасности отключены: {missing}."
+
+#: core/security/checks/settings.py:64
+msgid "Session/security cookies and enhanced security are enabled."
+msgstr ""
+"Включены сессионные/безопасные файлы cookie и расширенные меры безопасности."
+
+#: core/security/checks/settings.py:78
+#, python-brace-format
+msgid ""
+"Production debug switches are on: {problems}. Disable both in production."
+msgstr ""
+"В производственной среде включены отладочные переключатели: {problems} . "
+"Отключите оба в производственной среде."
+
+#: core/security/checks/settings.py:85
+msgid "DEBUG and PROFILING are both off."
+msgstr "Функции DEBUG и PROFILING отключены."
+
+#: core/security/checks/settings.py:94
+msgid ""
+"settings.SECRET_KEY is the shipped sample value: session tokens can be "
+"forged."
+msgstr ""
+"settings.SECRET_KEY — это стандартное значение, используемое в поставке: "
+"токены сессии могут быть подделаны."
+
+#: core/security/checks/settings.py:99
+msgid "settings.SECRET_KEY has been rotated."
+msgstr "Параметр settings.SECRET_KEY был поменян."
+
+#: core/security/checks/settings.py:111
+msgid ""
+"settings.RSA_KEY is the shipped sample value: anyone can decrypt broker "
+"secrets."
+msgstr ""
+"settings.RSA_KEY — это стандартное значение, поставляемое с завода: любой "
+"может расшифровать секреты брокера."
+
+#: core/security/checks/settings.py:116
+msgid "settings.RSA_KEY has been rotated."
+msgstr "Параметр settings.RSA_KEY был поменян местами."
+
+#: core/security/checks/settings.py:127
+msgid ""
+"django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
+"request forgery is not mitigated at the framework level."
+msgstr ""
+"django.middleware.csrf.CsrfViewMiddleware не входит в состав MIDDLEWARE: "
+"защита от межсайтовой подделки запросов не обеспечивается на уровне "
+"фреймворка."
+
+#: core/security/checks/settings.py:134
+msgid "django.middleware.csrf.CsrfViewMiddleware is active."
+msgstr "django.middleware.csrf.CsrfViewMiddleware активен."
+
+#: core/security/checks/settings.py:150
+msgid ""
+"SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
+"statement with bound values is being written to log/sql.log on disk."
+msgstr ""
+"SQL-логгер &#39;django.db.backends&#39; находится в режиме DEBUG, хотя режим "
+"DEBUG отключен: каждое SQL-запрос с привязанными значениями записывается в "
+"файл log/sql.log на диске."
+
+#: core/security/checks/settings.py:157
+msgid ""
+"SQL logger 'django.db.backends' is not writing bound SQL to disk in "
+"production."
+msgstr ""
+"В производственной среде SQL-логгер &#39;django.db.backends&#39; не "
+"записывает привязанные SQL-запросы на диск."
+
+#: core/security/checks/settings.py:172
+msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
+msgstr ""
+"В производственной среде логгер root или &#39;uds&#39; находится в режиме "
+"DEBUG (подробные логи сохраняются на диске)."
+
+#: core/security/checks/settings.py:177
+msgid "Root and 'uds' loggers are above DEBUG in production."
+msgstr ""
+"В производственной среде логгеры root и &#39;uds&#39; работают в режиме выше "
+"DEBUG."
+
+#: core/security/checks/settings.py:190
+msgid ""
+"EMAIL_BACKEND is not configured: 'mail_admins' and email notifications "
+"silently fail. Operators will not receive ERROR-level alerts by mail."
+msgstr ""
+"Параметр EMAIL_BACKEND не настроен: &#39;mail_admins&#39; и уведомления по "
+"электронной почте молча завершаются с ошибкой. Операторы не будут получать "
+"оповещения об ошибках по почте."
+
+#: core/security/checks/settings.py:197
+msgid "EMAIL_BACKEND is configured."
+msgstr "Параметр EMAIL_BACKEND настроен."
+
+#: core/security/checks/settings.py:210
+msgid ""
+"CACHES['memory'] LOCATION={location!r} is reachable from outside the host: "
+"any local user can read or poison the cache unless a SASL/TLS username is "
+"configured."
+msgstr ""
+"CACHES[&#39;memory&#39;] LOCATION= {location!r} доступен извне хоста: любой "
+"локальный пользователь может читать или изменять содержимое кэша, если не "
+"указано имя пользователя SASL/TLS."
+
+#: core/security/checks/settings.py:218
+msgid "CACHES['memory'] is bound to localhost (or absent)."
+msgstr "CACHES[&#39;memory&#39;] привязан к localhost (или отсутствует)."
+
+#: core/security/checks/settings.py:234
+#, python-brace-format
+msgid "SECURE_HSTS_SECONDS is set ({seconds}s)."
+msgstr "Параметр SECURE_HSTS_SECONDS установлен ( {seconds} s)."
+
+#: core/security/checks/settings.py:241
+msgid ""
+"Broker is HTTPS-fronted (SECURE_PROXY_SSL_HEADER) but SECURE_HSTS_SECONDS is "
+"0: no HSTS header is emitted on HTTPS responses."
+msgstr ""
+"Брокер использует HTTPS-заголовок (SECURE_PROXY_SSL_HEADER), но "
+"SECURE_HSTS_SECONDS равен 0: заголовок HSTS не отправляется в HTTPS-ответах."
+
+#: core/security/checks/settings.py:248
+msgid "HSTS is not configured; broker does not appear to be HTTPS-fronted."
+msgstr ""
+"HSTS не настроен; брокер, по всей видимости, не использует HTTPS-протокол."
 
 #: core/services/generics/dynamic/service.py:70
 #: services/NutanixPrism_enterprise/service.py:73
@@ -3510,11 +4008,11 @@ msgstr "Машина"
 msgid "Config"
 msgstr "Конфигурация"
 
-#: core/util/config.py:388
+#: core/util/config.py:389
 msgid "Session expire time in hours after publishing"
 msgstr "Время истечения сеанса в часах после публикации"
 
-#: core/util/config.py:396
+#: core/util/config.py:397
 msgid ""
 "Delay between cache checks. Reducing this number will increase cache "
 "generation speed but also will load service providers"
@@ -3522,7 +4020,7 @@ msgstr ""
 "Задержка между проверками кэша. Уменьшение этого числа увеличит скорость "
 "генерации кэша, но также увеличит нагрузку на поставщиков услуг."
 
-#: core/util/config.py:405
+#: core/util/config.py:406
 msgid ""
 "Delayed task number of threads PER SERVER, with higher number of threads, "
 "deployed task will complete sooner, but it will give more load to overall "
@@ -3532,7 +4030,7 @@ msgstr ""
 "потоков развернутая задача завершится раньше, но создаст большую нагрузку на "
 "систему в целом."
 
-#: core/util/config.py:414
+#: core/util/config.py:415
 msgid ""
 "Number of scheduler threads running PER SERVER, with higher number of "
 "threads, deployed task will complete sooner, but it will give more load to "
@@ -3542,7 +4040,7 @@ msgstr ""
 "количестве потоков развернутая задача завершится раньше, но это приведет к "
 "большей нагрузке на всю систему."
 
-#: core/util/config.py:423
+#: core/util/config.py:424
 msgid ""
 "Waiting time before removing \"errored\" and \"removed\" publications, "
 "cache, and user assigned machines. Time is in seconds"
@@ -3550,33 +4048,33 @@ msgstr ""
 "Время ожидания перед удалением «ошибочных» и «удаленных» публикаций, кэша и "
 "компьютеров, назначенных пользователем. Время в секундах"
 
-#: core/util/config.py:431
+#: core/util/config.py:432
 msgid "Time to maintaing \"info state\" items before removing it, in seconds"
 msgstr ""
 "Время поддержания элемента «информационного состояния» перед его удалением, "
 "в секундах"
 
-#: core/util/config.py:438
+#: core/util/config.py:439
 msgid "Number of services to initiate removal per run of service cleaner"
 msgstr ""
 "Количество служб, которые необходимо инициировать удаление за один запуск "
 "службы очистки"
 
-#: core/util/config.py:445
+#: core/util/config.py:446
 msgid ""
 "Removal Check time for cache, publications and deployed services, in seconds"
 msgstr ""
 "Время проверки удаления кэша, публикаций и развернутых сервисов, в секундах"
 
-#: core/util/config.py:448
+#: core/util/config.py:449
 msgid "Superuser username"
 msgstr "Имя суперпользователя"
 
-#: core/util/config.py:452
+#: core/util/config.py:456
 msgid "Superuser password"
 msgstr "Пароль суперпользователя"
 
-#: core/util/config.py:459
+#: core/util/config.py:463
 msgid ""
 "Allow root user to access using web interface.\n"
 " Once configured one authenticator,\n"
@@ -3585,11 +4083,11 @@ msgstr ""
 "Разрешить пользователю root доступ через веб-интерфейс. После настройки "
 "одного аутентификатора рекомендуется отключить эту опцию."
 
-#: core/util/config.py:467
+#: core/util/config.py:471
 msgid "Enable enhanced security modules"
 msgstr "Включить расширенные модули безопасности"
 
-#: core/util/config.py:475
+#: core/util/config.py:479
 msgid ""
 "Enforced maximum security mode (Zero-Trust Mode). No password redirection "
 "will be allowed if this mode is set."
@@ -3597,7 +4095,7 @@ msgstr ""
 "Принудительный режим максимальной безопасности (режим нулевого доверия). "
 "Если этот режим установлен, перенаправление пароля не будет разрешено."
 
-#: core/util/config.py:487
+#: core/util/config.py:491
 msgid ""
 "How long should the user service be unused before os manager considers it "
 "for removal"
@@ -3605,33 +4103,33 @@ msgstr ""
 "Как долго пользовательская служба должна оставаться неиспользуемой, прежде "
 "чем менеджер ОС рассмотрит возможность ее удаления"
 
-#: core/util/config.py:497
+#: core/util/config.py:501
 msgid "Max logins before blocking an account for a while"
 msgstr ""
 "Максимальное количество входов в систему перед блокировкой аккаунта на "
 "некоторое время"
 
-#: core/util/config.py:504
+#: core/util/config.py:508
 msgid "Block time in second for an user that has too many login failures"
 msgstr ""
 "Время блокировки в секундах для пользователя, у которого слишком много "
 "неудачных попыток входа в систему."
 
-#: core/util/config.py:510
+#: core/util/config.py:514
 msgid "Block ip on login failure"
 msgstr "Блокировать IP при неудачном входе в систему"
 
-#: core/util/config.py:519
+#: core/util/config.py:523
 msgid "Do autorun of service if just one service"
 msgstr "Сделать автозапуск службы, если только одна служба"
 
-#: core/util/config.py:525
+#: core/util/config.py:529
 msgid "Redirects login page to the tag used when logged in if active."
 msgstr ""
 "Перенаправляет страницу входа на тег, используемый при входе в систему, если "
 "он активен."
 
-#: core/util/config.py:534
+#: core/util/config.py:538
 msgid ""
 "Max time needed to get a service \"fully functional\" before it's considered "
 "\"failed\" and removed"
@@ -3639,7 +4137,7 @@ msgstr ""
 "Максимальное время, необходимое для того, чтобы услуга стала «полностью "
 "функциональной», прежде чем она будет признана «неудавшейся» и удалена."
 
-#: core/util/config.py:540
+#: core/util/config.py:544
 msgid ""
 "Max time needed to get a service \"fully removed\" before it's considered "
 "\"failed\" and purged"
@@ -3647,27 +4145,27 @@ msgstr ""
 "Максимальное время, необходимое для «полного удаления» службы, прежде чем "
 "она будет признана «неудавшейся» и удалена."
 
-#: core/util/config.py:547
+#: core/util/config.py:551
 msgid "Maximum logs per every log-capable administration element"
 msgstr ""
 "Максимальное количество журналов для каждого элемента администрирования, "
 "поддерживающего журналирование."
 
-#: core/util/config.py:554
+#: core/util/config.py:558
 msgid ""
 "Maximum logs entries for general UDS logs (0 = unlimited, use with care)"
 msgstr ""
 "Максимальное количество записей в общих журналах UDS (0 = неограниченно, "
 "используйте с осторожностью)"
 
-#: core/util/config.py:562
+#: core/util/config.py:566
 msgid ""
 "Time to restrain a user service in case it gives some errors at some point"
 msgstr ""
 "Пришло время ограничить работу пользовательской службы на случай, если в "
 "какой-то момент она выдаст ошибки."
 
-#: core/util/config.py:569
+#: core/util/config.py:573
 msgid ""
 "Number of errors that must occurr in \"restrainTime\" to restrain an user "
 "service"
@@ -3675,43 +4173,43 @@ msgstr ""
 "Количество ошибок, которые должны произойти за «restrainTime», чтобы "
 "ограничить работу пользовательской службы."
 
-#: core/util/config.py:577
+#: core/util/config.py:581
 msgid "Statistics duration, in days"
 msgstr "Продолжительность хранения статистики, в днях"
 
-#: core/util/config.py:584
+#: core/util/config.py:588
 msgid ""
 "Frequency of stats collection in seconds. Default is 1 hours (3600 seconds)"
 msgstr "Частота сбора статистики в секундах. По умолчанию 1 час (3600 секунд)"
 
-#: core/util/config.py:591
+#: core/util/config.py:595
 msgid "Maximum number of time to accumulate on one run. Default is 7 (1 week)"
 msgstr ""
 "Максимальное количество времени, которое можно накопить за один прогон. По "
 "умолчанию 7 (1 неделя)"
 
-#: core/util/config.py:599
+#: core/util/config.py:603
 msgid "If disallow login showing authenticatiors"
 msgstr "Не отображать список аутентификаторов на странице входа в систему"
 
-#: core/util/config.py:607
+#: core/util/config.py:611
 msgid ""
 "Notify user of existence of a new version of a service on new publication"
 msgstr ""
 "Уведомлять пользователя о существовании новой версии сервиса при новой "
 "публикации"
 
-#: core/util/config.py:615
+#: core/util/config.py:619
 msgid "Networks or hosts considered \"trusted\" for UDS (Tunnels, etc...)"
 msgstr "Сети или хосты, считающиеся «доверенными» для UDS (туннели и т. д.)"
 
-#: core/util/config.py:622
+#: core/util/config.py:626
 msgid "IPs or networks allowed to forward requests (like proxies)"
 msgstr ""
 "IP-адреса или сети, которым разрешено пересылать запросы (например, прокси-"
 "серверы)"
 
-#: core/util/config.py:630
+#: core/util/config.py:634
 msgid ""
 "Allow clients to notify their own ip (if set), or use always the request "
 "extracted IP"
@@ -3719,11 +4217,11 @@ msgstr ""
 "Разрешить клиентам сообщать свой собственный IP-адрес (если он установлен) "
 "или всегда использовать IP-адрес, извлеченный из запроса."
 
-#: core/util/config.py:638
+#: core/util/config.py:642
 msgid "If there is a proxy in front of us (i.e. HAProxy, or any NLB)"
 msgstr "Если перед нами прокси (т.е. HAProxy, или любой NLB)"
 
-#: core/util/config.py:647
+#: core/util/config.py:651
 msgid ""
 "If we use new logout mechanics for osmanagers, where only when the logged in "
 "users reaches 0, it is considered \"logged out\""
@@ -3732,156 +4230,156 @@ msgstr ""
 "«выполнен выход» только в том случае, когда число авторизованных "
 "пользователей становится равным 0"
 
-#: core/util/config.py:656
+#: core/util/config.py:660
 msgid "Enable/Disable Actor attack detection ip blocking"
 msgstr "Включить/отключить блокировку IP-адресов при обнаружении атак субъекта"
 
-#: core/util/config.py:664
+#: core/util/config.py:668
 msgid "Max session length for Admin"
 msgstr "Максимальная продолжительность сеанса для администратора"
 
-#: core/util/config.py:670
+#: core/util/config.py:674
 msgid "Max session length for User"
 msgstr "Максимальная продолжительность сеанса для пользователя"
 
-#: core/util/config.py:677
+#: core/util/config.py:681
 msgid "Page reload Time (legacy)"
 msgstr "Время перезагрузки страницы (устаревшее)"
 
-#: core/util/config.py:685
+#: core/util/config.py:689
 msgid "Custom message for error when limiting by calendar"
 msgstr ""
 "Пользовательское сообщение об ошибке, если доступ ограничен правилами "
 "календаря"
 
-#: core/util/config.py:693
+#: core/util/config.py:697
 msgid "If convert username to lowercase on logins"
 msgstr "Преобразовать имя пользователя в нижний регистр при входе в систему"
 
-#: core/util/config.py:701
+#: core/util/config.py:705
 msgid "Global UDS ID (common for all servers on the same cluster)"
 msgstr ""
 "Глобальный идентификатор UDS (общий для всех серверов в одном кластере)"
 
-#: core/util/config.py:709
+#: core/util/config.py:713
 msgid "Site display name"
 msgstr "Отображаемое имя сайта"
 
-#: core/util/config.py:715
+#: core/util/config.py:719
 msgid "Site copyright info"
 msgstr "Информация об авторских правах на сайте"
 
-#: core/util/config.py:721
+#: core/util/config.py:725
 msgid "Site copyright link"
 msgstr "Веб-адрес, на который будет вести ссылка с копирайта"
 
-#: core/util/config.py:724
+#: core/util/config.py:728
 msgid "Top navbar logo name"
 msgstr ""
 "Текст, который отображается рядом с логотипом на верхней панели навигации"
 
-#: core/util/config.py:730
+#: core/util/config.py:734
 msgid "Custom CSS styles applied to the user accesible site"
 msgstr ""
 "Пользовательские стили CSS, применяемые к сайту, доступному пользователю."
 
-#: core/util/config.py:736
+#: core/util/config.py:740
 msgid "Site information"
 msgstr "Информация о сайте"
 
-#: core/util/config.py:742
+#: core/util/config.py:746
 msgid "Show Filter box for user services on Top or bottom of the page"
 msgstr ""
 "Показывать поле фильтра для пользовательских служб вверху или внизу страницы"
 
-#: core/util/config.py:748
+#: core/util/config.py:752
 msgid "Minimal User Services needed to show filter"
 msgstr ""
 "Минимальное количество пользовательских служб, необходимых для отображения "
 "фильтра"
 
-#: core/util/config.py:754
+#: core/util/config.py:758
 msgid "Enable experimental features. USE WITH CAUTION!!"
 msgstr "Включить экспериментальные функции. ИСПОЛЬЗУЙТЕ С ОСТОРОЖНОСТЬЮ!!"
 
-#: core/util/config.py:762
+#: core/util/config.py:766
 msgid "Time in seconds of inactivity before auto reloading admin pages"
 msgstr ""
 "Время в секундах бездействия до автоматической перезагрузки страниц "
 "административной панели."
 
-#: core/util/config.py:768
+#: core/util/config.py:772
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr ""
 "Время в секундах между автоматическими перезагрузками страниц "
 "административной панели."
 
-#: core/util/config.py:774
+#: core/util/config.py:778
 msgid "Number of items per page in admin tables"
 msgstr "Количество элементов на странице в таблицах администратора"
 
-#: core/util/config.py:780
+#: core/util/config.py:784
 msgid "List of trusted hosts/networks allowed to access the admin interface"
 msgstr ""
 "Список доверенных хостов/сетей, которым разрешен доступ к интерфейсу "
 "администратора"
 
-#: core/util/config.py:786
+#: core/util/config.py:790
 msgid "Enable VNC menu for user services"
 msgstr "Включить меню VNC для пользовательских сервисов"
 
-#: core/util/config.py:797
+#: core/util/config.py:801
 msgid ""
 "Cookies consent text. If empty, a default multi language text will be used"
 msgstr ""
 "Текст согласия на использование файлов cookie. Если оставить пустым, будет "
 "использован многоязычный текст по умолчанию"
 
-#: core/util/config.py:803
+#: core/util/config.py:807
 msgid "Enable cookies consent"
 msgstr "Включить согласие на использование файлов cookie"
 
-#: core/util/config.py:809
+#: core/util/config.py:813
 msgid "URL for more info about cookies"
 msgstr "URL для получения дополнительной информации о файлах cookie"
 
-#: core/util/config.py:815
+#: core/util/config.py:819
 msgid "URL to leave cookies consent"
 msgstr "URL для оставления согласия на использование файлов cookie"
 
-#: core/util/config.py:821
+#: core/util/config.py:825
 msgid "Enable or disable add favorite services feature"
 msgstr "Включить или отключить функцию добавления избранных сервисов"
 
-#: core/util/config.py:827
+#: core/util/config.py:831
 msgid "Allow animated backgrounds"
 msgstr "Разрешить анимированные фоны"
 
-#: core/util/config.py:833
+#: core/util/config.py:837
 msgid "Allow biometric authentication"
 msgstr "Разрешить биометрическую аутентификацию"
 
-#: core/util/config.py:841
+#: core/util/config.py:845
 msgid "TSA Provider URL for timestamping signatures"
 msgstr ""
 "URL-адрес поставщика услуг TSA для проставления временных меток на подписях."
 
-#: core/util/config.py:847
+#: core/util/config.py:851
 msgid "TSA Provider Timeout in seconds"
 msgstr "Время ожидания ответа от поставщика услуг TSA истекает в секундах"
 
-#: core/util/config.py:853
+#: core/util/config.py:857
 msgid "TSA Provider SSL Verify"
 msgstr "Проверка SSL-сертификатов поставщика TSA"
 
-#: core/util/config.py:859
+#: core/util/config.py:863
 msgid ""
 "Enable immutable audit log for critical data (admin events, logins, etc.)"
 msgstr ""
 "Включите неизменяемый журнал аудита для критически важных данных (события "
 "администратора, входы в систему и т. д.)."
 
-#: core/util/config.py:865
+#: core/util/config.py:869
 msgid ""
 "Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"
 msgstr ""
@@ -4149,124 +4647,6 @@ msgstr "Серверы LDAP не настроены"
 msgid "Could not connect to any LDAP server ({}). Last error: {}"
 msgstr ""
 "Не удалось подключиться ни к одному LDAP-серверу ({}). Последняя ошибка: {}"
-
-#: core/util/security_checks.py:73
-msgid ""
-"Default superuser credentials are still active. Change the root password "
-"immediately."
-msgstr ""
-"Учетные данные суперпользователя по умолчанию по-прежнему активны. "
-"Немедленно смените пароль root."
-
-#: core/util/security_checks.py:78
-msgid "Superuser password is not the shipped default."
-msgstr ""
-"Пароль суперпользователя не является стандартным, установленным по умолчанию."
-
-#: core/util/security_checks.py:88
-msgid ""
-"Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
-"not needed in production."
-msgstr ""
-"Доступ к веб-интерфейсу/API с правами root разрешен "
-"(SUPER_USER_ALLOW_WEBACCESS). Отключите его, если он не требуется в рабочей "
-"среде."
-
-#: core/util/security_checks.py:94
-msgid "Root web/API access is disabled."
-msgstr "Доступ к веб-интерфейсу/API с правами root отключен."
-
-#: core/util/security_checks.py:109
-#, python-brace-format
-msgid ""
-"{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
-"admin operations is disabled."
-msgstr ""
-"{wildcards} установлено значение подстановочного знака (*): IP-контроль для "
-"туннелей, акторов и административных операций отключен."
-
-#: core/util/security_checks.py:115
-msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
-msgstr ""
-"TRUSTED_SOURCES и ADMIN_TRUSTED_SOURCES не являются подстановочными "
-"символами."
-
-#: core/util/security_checks.py:125
-msgid ""
-"Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
-"not exploitable until BEHIND_PROXY is enabled."
-msgstr ""
-"Брокер не находится за прокси-сервером; использование подстановочного знака "
-"ALLOWED_IP_FORWARDERS по умолчанию невозможно до тех пор, пока не будет "
-"включена опция BEHIND_PROXY."
-
-#: core/util/security_checks.py:133
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
-"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
-msgstr ""
-"Брокер находится за прокси-сервером, а ALLOWED_IP_FORWARDERS — это "
-"подстановочный знак: любой клиент может подделать X-Forwarded-For. "
-"Ограничьте его использованием только фактическими адресами прокси-сервера."
-
-#: core/util/security_checks.py:140
-msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
-"addresses."
-msgstr ""
-"Брокер находится за прокси-сервером, и параметр ALLOWED_IP_FORWARDERS "
-"ограничен конкретными адресами."
-
-#: core/util/security_checks.py:157
-#, python-brace-format
-msgid "Security cookies/headers are disabled: {missing}."
-msgstr "Файлы cookie/заголовки безопасности отключены: {missing}."
-
-#: core/util/security_checks.py:162
-msgid "Session/security cookies and enhanced security are enabled."
-msgstr ""
-"Включены сессионные/безопасные файлы cookie и расширенные меры безопасности."
-
-#: core/util/security_checks.py:188
-#, python-brace-format
-msgid ""
-"SAML assertions are not required to be signed on: {unsigned}. Unsigned "
-"assertions can be forged against a misconfigured IdP."
-msgstr ""
-"Утверждения SAML не обязательно должны быть подписаны: {unsigned}. "
-"Неподписанные утверждения могут быть подделаны в отношении неправильно "
-"настроенного поставщика идентификации."
-
-#: core/util/security_checks.py:196
-msgid "All SAML authenticators require signed assertions or messages."
-msgstr ""
-"Все аутентификаторы SAML требуют наличия подписанных утверждений или "
-"сообщений."
-
-#: core/util/security_checks.py:201
-msgid "No SAML authenticators configured."
-msgstr "Аутентификаторы SAML не настроены."
-
-#: core/util/security_checks.py:230
-#, python-brace-format
-msgid ""
-"Service pools with actors still using the legacy uuid token flow: "
-"{affected}. Re-initialize affected actors to rotate them to the new token."
-msgstr ""
-"Пулы сервисов с акторами, которые все еще используют устаревший поток "
-"токенов UUID: {affected}. Переинициализируйте затронутые акторы, чтобы "
-"перевести их на новый токен."
-
-#: core/util/security_checks.py:237
-msgid "No user services are using the legacy uuid actor token flow."
-msgstr ""
-"Ни одна из пользовательских служб не использует устаревший поток токенов "
-"акторов UUID."
-
-#: core/util/security_checks.py:270
-#, python-brace-format
-msgid "Check could not be evaluated: {error}"
-msgstr "Проверка не удалась: {error}"
 
 #: core/util/ui.py:379
 msgid "Associated Image"
@@ -10440,7 +10820,7 @@ msgstr ""
 msgid "Invalid data"
 msgstr "Неверные данные"
 
-#: web/util/configjs.py:146
+#: web/util/configjs.py:147
 msgid "Access limited by calendar"
 msgstr "Доступ ограничен календарем"
 
