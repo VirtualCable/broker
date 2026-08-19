@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
 # Translators:
 # Translators:
@@ -41,14 +41,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 04:25+0200\n"
+"POT-Creation-Date: 2026-08-19 16:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
-"Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/zh/)\n"
+"Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/"
+"zh/)\n"
+"Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: REST/methods/accounts.py:94
@@ -403,7 +404,9 @@ msgstr "服务池负载均衡策略"
 msgid ""
 "Service pool High Availability policy. If enabled and a pool fails, it will "
 "be restarted in another pool. Enable with care!"
-msgstr "服务池高可用性策略。如果启用此策略，当某个服务池发生故障时，它将在另一个服务池中重新启动。请谨慎启用！"
+msgstr ""
+"服务池高可用性策略。如果启用此策略，当某个服务池发生故障时，它将在另一个服务"
+"池中重新启动。请谨慎启用！"
 
 #: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:190
 #: REST/methods/services_pools.py:520
@@ -485,8 +488,7 @@ msgstr "创立日期"
 msgid "Pool"
 msgstr "池"
 
-#: REST/methods/meta_service_pools.py:263
-#: REST/methods/servers_management.py:96
+#: REST/methods/meta_service_pools.py:263 REST/methods/servers_management.py:96
 #: REST/methods/servers_management.py:255 REST/methods/services_usage.py:155
 #: REST/methods/user_services.py:254 REST/methods/user_services.py:391
 #: auths/IP/authenticator.py:52 auths/IP/authenticator.py:61
@@ -555,8 +557,7 @@ msgid "Device Caching"
 msgstr "设备缓存"
 
 #: REST/methods/mfas.py:129
-msgid ""
-"Time in hours to cache device so MFA is not required again. User based."
+msgid "Time in hours to cache device so MFA is not required again. User based."
 msgstr "缓存设备的时间（以小时为单位），因此不再需要 MFA。基于用户。"
 
 #: REST/methods/mfas.py:135
@@ -883,8 +884,7 @@ msgid "Memory weight"
 msgstr "记忆重量"
 
 #: REST/methods/servers_management.py:581
-msgid ""
-"Weight of memory load on server load calculation. Value between 0 and 1"
+msgid "Weight of memory load on server load calculation. Value between 0 and 1"
 msgstr "内存负载在服务器负载计算中的权重。取值范围为 0 到 1。"
 
 #: REST/methods/servers_management.py:586
@@ -1084,7 +1084,9 @@ msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
 "own service"
-msgstr "如果启用此功能，用户可以“手动”移除服务。请谨慎操作，因为用户将拥有删除自身服务的“权限”。"
+msgstr ""
+"如果启用此功能，用户可以“手动”移除服务。请谨慎操作，因为用户将拥有删除自身服"
+"务的“权限”。"
 
 #: REST/methods/services_pools.py:590
 msgid "Allow reset by users"
@@ -1100,8 +1102,8 @@ msgstr "忽略未使用的"
 
 #: REST/methods/services_pools.py:598
 msgid ""
-"If the option is enabled, UDS will not attempt to detect and remove the user"
-" services assigned but not in use."
+"If the option is enabled, UDS will not attempt to detect and remove the user "
+"services assigned but not in use."
 msgstr "如果启用该选项，UDS将不会尝试检测并删除已分配但未使用的用户服务。"
 
 #: REST/methods/services_pools.py:605
@@ -1178,8 +1180,8 @@ msgstr "允许的设备"
 
 #: REST/methods/transports.py:152
 msgid ""
-"If empty, any kind of device compatible with this transport will be allowed."
-" Else, only devices compatible with selected values will be allowed"
+"If empty, any kind of device compatible with this transport will be allowed. "
+"Else, only devices compatible with selected values will be allowed"
 msgstr "如果为空，将允许任何与此传输兼容的设备。否则，只允许与所选值兼容的设备"
 
 #: REST/methods/transports.py:158
@@ -1223,8 +1225,7 @@ msgstr "主办"
 
 #: REST/methods/tunnels_management.py:210
 msgid ""
-"Hostname or IP address of the server where the tunnel is visible by the "
-"users"
+"Hostname or IP address of the server where the tunnel is visible by the users"
 msgstr "用户可见隧道的服务器的主机名或 IP 地址"
 
 #: REST/methods/tunnels_management.py:216
@@ -1334,7 +1335,7 @@ msgstr "{0}的用户"
 #: transports/NICEDCV_enterprise/nicedcv_base.py:48
 #: transports/NoMachine_enterprise/nomachine_base.py:63
 #: transports/PCoIP_enterprise/pcoip.py:60 transports/RDP/rdp_base.py:74
-#: transports/RDPEmbedded/common.py:143
+#: transports/RDPEmbedded/common.py:151
 #: transports/RDSEmbedded_enterprise/common.py:123
 #: transports/RGS_enterprise/rgs_base.py:76 transports/SPICE/spice_base.py:71
 #: transports/X2GO/x2go_base.py:69 web/forms/login_form.py:44
@@ -1460,8 +1461,8 @@ msgstr "用户"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:83
 msgid ""
-"Username with read privileges on the base selected (use USER@DOMAIN.DOM form"
-" for this)"
+"Username with read privileges on the base selected (use USER@DOMAIN.DOM form "
+"for this)"
 msgstr "在所选基础上具有读取权限的用户名（使用USER@DOMAIN.DOM表单）"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:90
@@ -1479,9 +1480,8 @@ msgstr "在所选基础上具有读取权限的用户名（使用USER@DOMAIN.DOM
 #: services/NutanixPrism_enterprise/provider.py:63
 #: services/Nutanix_enterprise/provider.py:80 services/OVirt/provider.py:142
 #: services/OpenGnsys/provider.py:122 services/OpenNebula/provider.py:109
-#: services/OpenShift/provider.py:101
-#: services/OpenStack/provider_legacy.py:154 services/Proxmox/provider.py:112
-#: services/RDS_enterprise/provider.py:126
+#: services/OpenShift/provider.py:101 services/OpenStack/provider_legacy.py:154
+#: services/Proxmox/provider.py:112 services/RDS_enterprise/provider.py:126
 #: services/ScaleComputing_enterprise/provider.py:76
 #: services/VCloud_enterprise/provider.py:62
 #: services/Vmware_enterprise/provider.py:71 services/Xen/provider.py:130
@@ -1490,7 +1490,7 @@ msgstr "在所选基础上具有读取权限的用户名（使用USER@DOMAIN.DOM
 #: transports/NICEDCV_enterprise/nicedcv_base.py:55
 #: transports/NoMachine_enterprise/nomachine_base.py:70
 #: transports/PCoIP_enterprise/pcoip.py:67 transports/RDP/rdp_base.py:81
-#: transports/RDPEmbedded/common.py:149
+#: transports/RDPEmbedded/common.py:157
 #: transports/RDSEmbedded_enterprise/common.py:129
 #: transports/RGS_enterprise/rgs_base.py:82 transports/SPICE/spice_base.py:78
 #: web/forms/login_form.py:46 web/forms/login_form.py:47
@@ -1521,7 +1521,8 @@ msgstr "默认域"
 msgid ""
 "Domain used for users without domain (if empty, will use the domain of the "
 "user) if compat mode is not \"Windows NT\""
-msgstr "用于没有域的用户的域（如果为空，将使用用户的域）如果兼容模式不是“Windows NT”"
+msgstr ""
+"用于没有域的用户的域（如果为空，将使用用户的域）如果兼容模式不是“Windows NT”"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:123
 msgid "Backup servers"
@@ -1529,18 +1530,19 @@ msgstr "备份服务器"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:127
 msgid ""
-"If not empty, this list of domain=backup1,backup2,... will be used as backup"
-" servers for the domains.If domain is not specified, the backup servers will"
-" be used for all domains."
-msgstr "如果不为空，则此域=备份1，备份2，...列表将用作域的备份服务器。如果没有指定域，则所有域都将使用备份服务器。"
+"If not empty, this list of domain=backup1,backup2,... will be used as backup "
+"servers for the domains.If domain is not specified, the backup servers will "
+"be used for all domains."
+msgstr ""
+"如果不为空，则此域=备份1，备份2，...列表将用作域的备份服务器。如果没有指定"
+"域，则所有域都将使用备份服务器。"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:139
 #: auths/EDirectory_enterprise/authenticator.py:64
 #: auths/RegexLdap/authenticator.py:83 auths/SimpleLDAP/authenticator.py:77
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:134
 #: osmanagers/WindowsOsManager/windows_domain.py:127
-#: services/OpenNebula/provider.py:93
-#: services/OpenStack/provider_legacy.py:121
+#: services/OpenNebula/provider.py:93 services/OpenStack/provider_legacy.py:121
 msgid "Use SSL"
 msgstr "使用SSL"
 
@@ -1557,8 +1559,8 @@ msgstr "验证 SSL"
 #: auths/ActiveDirectory_enterprise/authenticator.py:149
 #: auths/EDirectory_enterprise/authenticator.py:101 core/util/fields.py:229
 msgid ""
-"If checked, SSL verification will be enforced. If not, SSL verification will"
-" be disabled"
+"If checked, SSL verification will be enforced. If not, SSL verification will "
+"be disabled"
 msgstr "如果选中，将强制执行 SSL 验证。否则，SSL 验证将被禁用"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:158
@@ -1590,8 +1592,8 @@ msgstr "忽略域"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:187
 msgid ""
-"If not empty, this list of domains will be ignored when searching for users."
-" Comma separated values."
+"If not empty, this list of domains will be ignored when searching for users. "
+"Comma separated values."
 msgstr "如果不为空，则在搜索用户时将忽略此域列表。逗号分隔值。"
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:196
@@ -1702,17 +1704,18 @@ msgstr "回调网址（由UDS填写，仅在必要时修复此问题！）"
 #: auths/AzureAD_enterprise/authenticator.py:137
 #: services/AWS_enterprise/provider.py:65
 #: services/Azure_enterprise/provider.py:91
-#: services/Google_enterprise/provider.py:95
-#: services/OpenStack/provider.py:198
+#: services/Google_enterprise/provider.py:95 services/OpenStack/provider.py:198
 #: services/OpenStack/provider_legacy.py:166
 msgid "Proxy"
 msgstr "代理"
 
 #: auths/AzureAD_enterprise/authenticator.py:140
 msgid ""
-"Proxy used for connection to azure for HTTPS connections (use "
-"PROTOCOL://host:port, i.e. https://10.10.0.1:8080)"
-msgstr "用于连接到Azure的HTTPS连接的代理（使用PROTOCOL：// host：port，即https://10.10.0.1:8080）"
+"Proxy used for connection to azure for HTTPS connections (use PROTOCOL://"
+"host:port, i.e. https://10.10.0.1:8080)"
+msgstr ""
+"用于连接到Azure的HTTPS连接的代理（使用PROTOCOL：// host：port，即https://"
+"10.10.0.1:8080）"
 
 #: auths/AzureAD_enterprise/authenticator.py:148
 msgid "Enable School Data Sync Integration"
@@ -1862,8 +1865,7 @@ msgstr "Ldap用户标识属性似乎不正确（该属性找不到用户）"
 
 #: auths/EDirectory_enterprise/authenticator.py:484
 msgid ""
-"Ldap group attribute seems to be incorrect (no group found by that "
-"attribute)"
+"Ldap group attribute seems to be incorrect (no group found by that attribute)"
 msgstr "LDAP 组属性似乎不正确（该属性未找到组）"
 
 #: auths/EDirectory_enterprise/authenticator.py:507
@@ -1885,9 +1887,11 @@ msgstr "接受代理"
 
 #: auths/IP/authenticator.py:71 auths/InternalDB/authenticator.py:97
 msgid ""
-"If checked, requests via proxy will get FORWARDED ip address (take care with"
-" this bein checked, can take internal IP addresses from internet)"
-msgstr "如果选中，通过代理的请求将获得FORWARDED IP地址（请注意这个bein检查，可以从Internet获取内部IP地址）"
+"If checked, requests via proxy will get FORWARDED ip address (take care with "
+"this bein checked, can take internal IP addresses from internet)"
+msgstr ""
+"如果选中，通过代理的请求将获得FORWARDED IP地址（请注意这个bein检查，可以从"
+"Internet获取内部IP地址）"
 
 #: auths/IP/authenticator.py:80
 msgid "Allowed only from this networks"
@@ -1963,8 +1967,7 @@ msgstr "范围"
 msgid "Scope for OAuth2."
 msgstr "OAuth2 的范围。"
 
-#: auths/OAuth2/authenticator.py:110
-#: auths/X509Certificate/authenticator.py:113
+#: auths/OAuth2/authenticator.py:110 auths/X509Certificate/authenticator.py:113
 msgid "Common Groups"
 msgstr "常见群体"
 
@@ -2184,8 +2187,7 @@ msgstr "正则表达式LDAP身份验证器"
 
 #: auths/RegexLdap/authenticator.py:529
 msgid ""
-"Ldap user id attr is probably wrong (can't find any user with that "
-"attribute)"
+"Ldap user id attr is probably wrong (can't find any user with that attribute)"
 msgstr "Ldap 用户 ID 属性可能是错误的（找不到具有该属性的任何用户）"
 
 #: auths/RegexLdap/authenticator.py:558
@@ -2241,8 +2243,7 @@ msgid "Entity ID"
 msgstr "实体ID"
 
 #: auths/SAML/saml.py:156
-msgid ""
-"ID of the SP. If left blank, this will be autogenerated from server URL"
+msgid "ID of the SP. If left blank, this will be autogenerated from server URL"
 msgstr "SP的ID。如果留空，则会从服务器URL自动生成"
 
 #: auths/SAML/saml.py:164
@@ -2597,9 +2598,11 @@ msgstr "可信发卡机构"
 #: auths/X509Certificate/authenticator.py:99
 msgid ""
 "Expected Issuer DN of client certificates. Leave empty to accept any "
-"certificate signed by the configured CA. The comparison strips spaces and is"
-" case-sensitive."
-msgstr "客户端证书的预期颁发者 DN。留空则接受由已配置的 CA 签名的任何证书。比较时会去除空格，并且区分大小写。"
+"certificate signed by the configured CA. The comparison strips spaces and is "
+"case-sensitive."
+msgstr ""
+"客户端证书的预期颁发者 DN。留空则接受由已配置的 CA 签名的任何证书。比较时会去"
+"除空格，并且区分大小写。"
 
 #: auths/X509Certificate/authenticator.py:115
 msgid ""
@@ -2613,8 +2616,7 @@ msgstr "OCSP URL"
 
 #: auths/X509Certificate/authenticator.py:125
 msgid ""
-"OCSP responder URL for certificate revocation checking (not yet "
-"implemented)."
+"OCSP responder URL for certificate revocation checking (not yet implemented)."
 msgstr "OCSP 响应程序 URL 用于证书吊销检查（尚未实现）。"
 
 #: auths/X509Certificate/authenticator.py:127
@@ -2641,7 +2643,9 @@ msgid ""
 "URL of the client-cert-auth bridge service. E.g.: \"cert-auth.example.com\" "
 "or \"https://cert-auth.example.com\". The /cert_auth/ path will be appended "
 "automatically."
-msgstr "客户端证书认证桥接服务的 URL。例如：“cert-auth.example.com”或“https://cert-auth.example.com”。/cert_auth/ 路径将自动添加。"
+msgstr ""
+"客户端证书认证桥接服务的 URL。例如：“cert-auth.example.com”或“https://cert-"
+"auth.example.com”。/cert_auth/ 路径将自动添加。"
 
 #: auths/X509Certificate/authenticator.py:149
 #: auths/X509Certificate/authenticator.py:157
@@ -2654,8 +2658,8 @@ msgstr "共享秘密"
 
 #: auths/X509Certificate/authenticator.py:155
 msgid ""
-"HMAC key shared with the client-cert-auth bridge service for "
-"encryption/signing."
+"HMAC key shared with the client-cert-auth bridge service for encryption/"
+"signing."
 msgstr "与客户端证书认证桥接服务共享的 HMAC 密钥用于加密/签名。"
 
 #: auths/X509Certificate/authenticator.py:166
@@ -2981,7 +2985,9 @@ msgstr "超级用户密码并非默认密码。"
 msgid ""
 "Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if "
 "not needed in production."
-msgstr "已启用 root 用户 Web/API 访问权限 (SUPER_USER_ALLOW_WEBACCESS)。如果生产环境中不需要，请禁用此功能。"
+msgstr ""
+"已启用 root 用户 Web/API 访问权限 (SUPER_USER_ALLOW_WEBACCESS)。如果生产环境"
+"中不需要，请禁用此功能。"
 
 #: core/security/checks/global_config.py:76
 msgid "Root web/API access is disabled."
@@ -2992,7 +2998,8 @@ msgstr "已禁用根 Web/API 访问。"
 msgid ""
 "{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and "
 "admin operations is disabled."
-msgstr "{wildcards} 设置为通配符 (*): 已禁用基于 IP 的隧道、参与者和管理操作的门控。"
+msgstr ""
+"{wildcards} 设置为通配符 (*): 已禁用基于 IP 的隧道、参与者和管理操作的门控。"
 
 #: core/security/checks/global_config.py:97
 msgid "TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."
@@ -3002,18 +3009,22 @@ msgstr "TRUSTED_SOURCES 和 ADMIN_TRUSTED_SOURCES 不是通配符。"
 msgid ""
 "Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is "
 "not exploitable until BEHIND_PROXY is enabled."
-msgstr "代理服务器不在代理服务器之后；默认的通配符 ALLOWED_IP_FORWARDERS 在启用 BEHIND_PROXY 之前无法利用。"
+msgstr ""
+"代理服务器不在代理服务器之后；默认的通配符 ALLOWED_IP_FORWARDERS 在启用 "
+"BEHIND_PROXY 之前无法利用。"
 
 #: core/security/checks/global_config.py:115
 msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client"
-" can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
-msgstr "代理服务器位于代理服务器之后，而 ALLOWED_IP_FORWARDERS 是一个通配符：任何客户端都可以伪造 X-Forwarded-For 请求。请将其限制为实际的代理服务器地址。"
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client "
+"can spoof X-Forwarded-For. Restrict it to the actual proxy addresses."
+msgstr ""
+"代理服务器位于代理服务器之后，而 ALLOWED_IP_FORWARDERS 是一个通配符：任何客户"
+"端都可以伪造 X-Forwarded-For 请求。请将其限制为实际的代理服务器地址。"
 
 #: core/security/checks/global_config.py:122
 msgid ""
-"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete"
-" addresses."
+"Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete "
+"addresses."
 msgstr "代理位于代理服务器之后，并且 ALLOWED_IP_FORWARDERS 仅限于特定地址。"
 
 #: core/security/checks/global_config.py:135
@@ -3045,9 +3056,11 @@ msgstr "已启用 Actor 故障阻止（BLOCK_ACTOR_FAILURES）。"
 
 #: core/security/checks/global_config.py:165
 msgid ""
-"Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints"
-" have no rate limit on bad tokens."
-msgstr "Actor 故障阻止功能已禁用（BLOCK_ACTOR_FAILURES）：/actor/ 端点对无效令牌没有速率限制。"
+"Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints "
+"have no rate limit on bad tokens."
+msgstr ""
+"Actor 故障阻止功能已禁用（BLOCK_ACTOR_FAILURES）：/actor/ 端点对无效令牌没有"
+"速率限制。"
 
 #: core/security/checks/global_config.py:176
 msgid "EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."
@@ -3063,9 +3076,11 @@ msgstr "已启用不可变审计日志（TSA签名）。"
 
 #: core/security/checks/global_config.py:196
 msgid ""
-"IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the"
-" tamper-evident log (src/uds/models/immutable_log.py)."
-msgstr "IMMUTABLE_LOG_ENABLED 已关闭：登录和管理事件不会写入防篡改日志（src/uds/models/immutable_log.py）。"
+"IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to the "
+"tamper-evident log (src/uds/models/immutable_log.py)."
+msgstr ""
+"IMMUTABLE_LOG_ENABLED 已关闭：登录和管理事件不会写入防篡改日志（src/uds/"
+"models/immutable_log.py）。"
 
 #: core/security/checks/logs.py:99
 #, python-brace-format
@@ -3097,10 +3112,12 @@ msgstr "过去 24 小时内，没有 IP 地址的登录失败次数超过{thresh
 #: core/security/checks/logs.py:155
 #, python-brace-format
 msgid ""
-"{count} account(s) were temporarily blocked in the last 24h: an attacker may"
-" be cycling credentials under the per-user lockout, or a misconfigured "
-"client is retrying with stale credentials."
-msgstr "在过去 24 小时内， {count}个帐户被暂时阻止：攻击者可能正在利用每个用户的锁定机制循环使用凭据，或者配置错误的客户端正在使用过期的凭据重试。"
+"{count} account(s) were temporarily blocked in the last 24h: an attacker may "
+"be cycling credentials under the per-user lockout, or a misconfigured client "
+"is retrying with stale credentials."
+msgstr ""
+"在过去 24 小时内， {count}个帐户被暂时阻止：攻击者可能正在利用每个用户的锁定"
+"机制循环使用凭据，或者配置错误的客户端正在使用过期的凭据重试。"
 
 #: core/security/checks/logs.py:163
 msgid "No accounts were temporarily blocked in the last 24h."
@@ -3109,9 +3126,11 @@ msgstr "过去24小时内没有账户被暂时封禁。"
 #: core/security/checks/logs.py:182
 #, python-brace-format
 msgid ""
-"{count} internal ERROR entries in the last 24h: check uds.log / services.log"
-" / workers.log for failing providers or 5xx storms."
-msgstr "过去 24 小时内出现{count}内部错误条目：检查 uds.log / services.log / workers.log 中是否存在故障提供程序或 5xx 风暴。"
+"{count} internal ERROR entries in the last 24h: check uds.log / "
+"services.log / workers.log for failing providers or 5xx storms."
+msgstr ""
+"过去 24 小时内出现{count}内部错误条目：检查 uds.log / services.log / "
+"workers.log 中是否存在故障提供程序或 5xx 风暴。"
 
 #: core/security/checks/logs.py:189
 #, python-brace-format
@@ -3123,7 +3142,8 @@ msgstr "过去 24 小时内出现{count}条内部错误记录（在正常范围�
 msgid ""
 "SAML assertions are not required to be signed on: {unsigned}. Unsigned "
 "assertions can be forged against a misconfigured IdP."
-msgstr "SAML 断言无需签名：{unsigned}。未签名的断言可能针对配置错误的 IdP 被伪造。"
+msgstr ""
+"SAML 断言无需签名：{unsigned}。未签名的断言可能针对配置错误的 IdP 被伪造。"
 
 #: core/security/checks/models.py:77
 msgid "All SAML authenticators require signed assertions or messages."
@@ -3138,7 +3158,9 @@ msgstr "未配置SAML身份验证器。"
 msgid ""
 "Service pools with actors still using the legacy uuid token flow: "
 "{affected}. Re-initialize affected actors to rotate them to the new token."
-msgstr "仍在使用旧版 uuid 令牌流程的 actor 的服务池：{affected}。重新初始化受影响的 actor，以将其轮换到新令牌。"
+msgstr ""
+"仍在使用旧版 uuid 令牌流程的 actor 的服务池：{affected}。重新初始化受影响的 "
+"actor，以将其轮换到新令牌。"
 
 #: core/security/checks/models.py:118
 msgid "No user services are using the legacy uuid actor token flow."
@@ -3153,7 +3175,8 @@ msgstr "未配置身份验证器（无需强制执行多因素身份验证）。
 msgid ""
 "No authenticator has MFA configured: {names}. Assign at least one MFA per "
 "authenticator."
-msgstr "所有身份验证器均未配置 MFA： {names} 。请为每个身份验证器至少分配一个 MFA。"
+msgstr ""
+"所有身份验证器均未配置 MFA： {names} 。请为每个身份验证器至少分配一个 MFA。"
 
 #: core/security/checks/models.py:142
 #, python-brace-format
@@ -3233,7 +3256,9 @@ msgstr "settings.RSA_KEY 已轮换。"
 msgid ""
 "django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site "
 "request forgery is not mitigated at the framework level."
-msgstr "django.middleware.csrf.CsrfViewMiddleware 不在 MIDDLEWARE 中：跨站请求伪造在框架级别没有得到缓解。"
+msgstr ""
+"django.middleware.csrf.CsrfViewMiddleware 不在 MIDDLEWARE 中：跨站请求伪造在"
+"框架级别没有得到缓解。"
 
 #: core/security/checks/settings.py:136
 msgid "django.middleware.csrf.CsrfViewMiddleware is active."
@@ -3243,17 +3268,22 @@ msgstr "django.middleware.csrf.CsrfViewMiddleware 已激活。"
 msgid ""
 "SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL "
 "statement with bound values is being written to log/sql.log on disk."
-msgstr "SQL 日志记录器 &#39;django.db.backends&#39; 处于 DEBUG 状态，而 DEBUG 已关闭：每个带有绑定值的 SQL 语句都会被写入磁盘上的 log/sql.log。"
+msgstr ""
+"SQL 日志记录器 &#39;django.db.backends&#39; 处于 DEBUG 状态，而 DEBUG 已关"
+"闭：每个带有绑定值的 SQL 语句都会被写入磁盘上的 log/sql.log。"
 
 #: core/security/checks/settings.py:159
 msgid ""
 "SQL logger 'django.db.backends' is not writing bound SQL to disk in "
 "production."
-msgstr "生产环境中，SQL 日志记录器“django.db.backends”没有将绑定的 SQL 写入磁盘。"
+msgstr ""
+"生产环境中，SQL 日志记录器“django.db.backends”没有将绑定的 SQL 写入磁盘。"
 
 #: core/security/checks/settings.py:174
 msgid "Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."
-msgstr "生产环境中的根日志记录器或“uds”日志记录器处于 DEBUG 级别（磁盘上会记录详细日志）。"
+msgstr ""
+"生产环境中的根日志记录器或“uds”日志记录器处于 DEBUG 级别（磁盘上会记录详细日"
+"志）。"
 
 #: core/security/checks/settings.py:179
 msgid "Root and 'uds' loggers are above DEBUG in production."
@@ -3290,8 +3320,8 @@ msgstr "服务令牌"
 #: core/services/generics/fixed/service.py:95
 #: services/PhysicalMachines/service_multi.py:87
 msgid ""
-"Service token that will be used by actors to communicate with service. Leave"
-" empty for persistent assignation."
+"Service token that will be used by actors to communicate with service. Leave "
+"empty for persistent assignation."
 msgstr "参与者将用于与服务进行通信的服务令牌。留空以进行永久分配。"
 
 #: core/services/generics/fixed/service.py:102
@@ -3321,7 +3351,9 @@ msgstr "使用快照"
 msgid ""
 "If active, UDS will try to create an snapshot (if one already does not "
 "exists) before accessing a machine, and restore it after usage."
-msgstr "如果处于活动状态，UDS 将在访问计算机之前尝试创建快照（如果快照不存在），并在使用后将其恢复。"
+msgstr ""
+"如果处于活动状态，UDS 将在访问计算机之前尝试创建快照（如果快照不存在），并在"
+"使用后将其恢复。"
 
 #: core/services/generics/fixed/service.py:133
 msgid "Snapshot type"
@@ -3513,7 +3545,9 @@ msgid ""
 "Type of network filtering. Use \"Disabled\" to disable origin check, "
 "\"Allow\" to only enable for selected networks or \"Deny\" to deny from "
 "selected networks"
-msgstr "网络过滤的类型。使用“禁用”禁用来源检查，“允许”仅针对选定的网络启用或“拒绝”拒绝选定的网络"
+msgstr ""
+"网络过滤的类型。使用“禁用”禁用来源检查，“允许”仅针对选定的网络启用或“拒绝”拒"
+"绝选定的网络"
 
 #: core/types/servers.py:70 core/types/ui.py:47
 msgid "Tunnel"
@@ -3649,27 +3683,34 @@ msgstr "会话在发布后的过期时间（以小时为单位）"
 msgid ""
 "Delay between cache checks. Reducing this number will increase cache "
 "generation speed but also will load service providers"
-msgstr "缓存检查之间的延迟。减少此数量将提高缓存生成速度，但也会增加服务提供商的负载"
+msgstr ""
+"缓存检查之间的延迟。减少此数量将提高缓存生成速度，但也会增加服务提供商的负载"
 
 #: core/util/config.py:406
 msgid ""
 "Delayed task number of threads PER SERVER, with higher number of threads, "
 "deployed task will complete sooner, but it will give more load to overall "
 "system"
-msgstr "每个服务器的延迟任务线程数，线程数越高，部署的任务将更快完成，但会给整个系统带来更多负载"
+msgstr ""
+"每个服务器的延迟任务线程数，线程数越高，部署的任务将更快完成，但会给整个系统"
+"带来更多负载"
 
 #: core/util/config.py:415
 msgid ""
 "Number of scheduler threads running PER SERVER, with higher number of "
 "threads, deployed task will complete sooner, but it will give more load to "
 "overall system"
-msgstr "每个服务器运行的调度程序线程数，线程数越高，部署的任务将更快完成，但会给整个系统带来更多负载"
+msgstr ""
+"每个服务器运行的调度程序线程数，线程数越高，部署的任务将更快完成，但会给整个"
+"系统带来更多负载"
 
 #: core/util/config.py:424
 msgid ""
 "Waiting time before removing \"errored\" and \"removed\" publications, "
 "cache, and user assigned machines. Time is in seconds"
-msgstr "删除“错误的”和“已删除的”出版物、缓存和用户分配的计算机之前的等待时间。时间以秒为单位"
+msgstr ""
+"删除“错误的”和“已删除的”出版物、缓存和用户分配的计算机之前的等待时间。时间以"
+"秒为单位"
 
 #: core/util/config.py:432
 msgid "Time to maintaing \"info state\" items before removing it, in seconds"
@@ -3697,7 +3738,8 @@ msgid ""
 "Allow root user to access using web interface.\n"
 " Once configured one authenticator,\n"
 "it's recommended to disable this option"
-msgstr "允许 root 用户使用 Web 界面进行访问。一旦配置了一个身份验证器，建议禁用此选项"
+msgstr ""
+"允许 root 用户使用 Web 界面进行访问。一旦配置了一个身份验证器，建议禁用此选项"
 
 #: core/util/config.py:471
 msgid "Enable enhanced security modules"
@@ -3737,8 +3779,8 @@ msgstr "如果处于活动状态，则将登录页面重定向到登录时使用
 
 #: core/util/config.py:538
 msgid ""
-"Max time needed to get a service \"fully functional\" before it's considered"
-" \"failed\" and removed"
+"Max time needed to get a service \"fully functional\" before it's considered "
+"\"failed\" and removed"
 msgstr "在服务被视为“失败”并删除之前获得“功能齐全”所需的最长时间"
 
 #: core/util/config.py:544
@@ -3809,9 +3851,11 @@ msgstr "如果我们前面有一个代理（即HAProxy，或任何NLB）"
 
 #: core/util/config.py:651
 msgid ""
-"If we use new logout mechanics for osmanagers, where only when the logged in"
-" users reaches 0, it is considered \"logged out\""
-msgstr "如果我们为 osmanagers 使用新的注销机制，只有当登录用户达到 0 时，才被视为“注销”"
+"If we use new logout mechanics for osmanagers, where only when the logged in "
+"users reaches 0, it is considered \"logged out\""
+msgstr ""
+"如果我们为 osmanagers 使用新的注销机制，只有当登录用户达到 0 时，才被视为“注"
+"销”"
 
 #: core/util/config.py:660
 msgid "Enable/Disable Actor attack detection ip blocking"
@@ -3972,7 +4016,9 @@ msgstr "机票有效期"
 msgid ""
 "Allowed time, in seconds, for HTML5 client to reload data from UDS Broker. "
 "The default value of 60 is recommended."
-msgstr "HTML5客户端从UDS Broker重新加载数据的允许时间（以秒为单位）。建议使用默认值60。"
+msgstr ""
+"HTML5客户端从UDS Broker重新加载数据的允许时间（以秒为单位）。建议使用默认值"
+"60。"
 
 #: core/util/fields.py:161
 msgid "Startup wait time"
@@ -4044,7 +4090,8 @@ msgstr "先尝试软关机"
 msgid ""
 "If active, UDS will try to shutdown (soft) the machine. May delay around 2 "
 "minutes the power off of hanged machines."
-msgstr "如果激活，UDS 将尝试关闭（软）机器。挂起的机器的关机可能会延迟约 2 分钟。"
+msgstr ""
+"如果激活，UDS 将尝试关闭（软）机器。挂起的机器的关机可能会延迟约 2 分钟。"
 
 #: core/util/fields.py:363
 msgid "Reset type"
@@ -4153,8 +4200,8 @@ msgstr "用户名Attr"
 
 #: core/util/fields.py:513
 msgid ""
-"Attributes that contains the user name attributes or attribute patterns (one"
-" for each line)"
+"Attributes that contains the user name attributes or attribute patterns (one "
+"for each line)"
 msgstr "包含用户名属性或属性模式的属性（每行一个）"
 
 #: core/util/fields.py:526
@@ -4163,8 +4210,8 @@ msgstr "集团名称Attr"
 
 #: core/util/fields.py:530
 msgid ""
-"Attribute that contains the group name attributes or attribute patterns (one"
-" for each line)"
+"Attribute that contains the group name attributes or attribute patterns (one "
+"for each line)"
 msgstr "包含组名属性或属性模式的属性（每行一个）"
 
 #: core/util/fields.py:543
@@ -4408,7 +4455,9 @@ msgstr "SMTP 主机"
 msgid ""
 "SMTP Server hostname or IP address. If you are using a  non-standard port, "
 "add it after a colon, for example: smtp.gmail.com:587"
-msgstr "SMTP 服务器主机名或 IP 地址。如果您使用的是非标准端口，请在冒号后添加，例如：smtp.gmail.com:587"
+msgstr ""
+"SMTP 服务器主机名或 IP 地址。如果您使用的是非标准端口，请在冒号后添加，例如："
+"smtp.gmail.com:587"
 
 #: mfas/Email/mfa.py:73 mfas/Email/mfa.py:86 mfas/Email/mfa.py:95
 #: mfas/Email/mfa.py:104 notifiers/email/notifier.py:77
@@ -4499,9 +4548,10 @@ msgstr "已尝试从 {ip} 登录。要继续，请提供验证码 {code}"
 #: mfas/Email/mfa.py:227
 #, python-brace-format
 msgid ""
-"<p>A login attemt has been made from <b>{ip}</b>.</p><p>To continue, provide"
-" the verification code <b>{code}</b></p>"
-msgstr "<p>已从<b>{ip}</b>尝试登录。</p><p>要继续，请提供验证码<b>{code}</b></p>"
+"<p>A login attemt has been made from <b>{ip}</b>.</p><p>To continue, provide "
+"the verification code <b>{code}</b></p>"
+msgstr ""
+"<p>已从<b>{ip}</b>尝试登录。</p><p>要继续，请提供验证码<b>{code}</b></p>"
 
 #: mfas/Radius/mfa.py:61 mfas/Radius/mfa.py:63
 msgid "Radius OTP Challenge"
@@ -4513,10 +4563,12 @@ msgstr "所有用户必须发送 OTP"
 
 #: mfas/Radius/mfa.py:93
 msgid ""
-"If unchecked, an authentication step is needed in order to know if this user"
-" must enter OTP. If checked, all users must enter OTP, so authentication "
-"step is skipped."
-msgstr "如果未选中，则需要进行身份验证步骤以了解此用户是否必须输入 OTP。如果选中，所有用户都必须输入 OTP，因此跳过验证步骤。"
+"If unchecked, an authentication step is needed in order to know if this user "
+"must enter OTP. If checked, all users must enter OTP, so authentication step "
+"is skipped."
+msgstr ""
+"如果未选中，则需要进行身份验证步骤以了解此用户是否必须输入 OTP。如果选中，所"
+"有用户都必须输入 OTP，因此跳过验证步骤。"
 
 #: mfas/Radius/mfa.py:112
 msgid "Send only username (without domain) to radius server"
@@ -4525,8 +4577,11 @@ msgstr "仅发送用户名（不带域名）到 radius 服务器"
 #: mfas/Radius/mfa.py:116
 msgid ""
 "If unchecked, username will be sent as is to radius server. \n"
-"If checked, domain part will be removed from username before sending it to radius server."
-msgstr "如果不选中，用户名将按原样发送到 radius 服务器。如果选中，将在将用户名发送到 radius 服务器之前删除其域部分。"
+"If checked, domain part will be removed from username before sending it to "
+"radius server."
+msgstr ""
+"如果不选中，用户名将按原样发送到 radius 服务器。如果选中，将在将用户名发送到 "
+"radius 服务器之前删除其域部分。"
 
 #: mfas/Radius/mfa.py:152
 msgid "OTP Code"
@@ -4564,7 +4619,10 @@ msgid ""
 "* {username} - the username\n"
 "* {justUsername} - the username without @....\n"
 "* {realName} - the real name of the user"
-msgstr "短信发送的 URL 模式。它可以包含以下变量：* {code} - 要发送的代码* {phone/+phone} - 电话号码* {username} - 用户名* {justUsername} - 不带 @ 的用户名....* {realName} - 用户的真实姓名"
+msgstr ""
+"短信发送的 URL 模式。它可以包含以下变量：* {code} - 要发送的代码* {phone/"
+"+phone} - 电话号码* {username} - 用户名* {justUsername} - 不带 @ 的用户"
+"名....* {realName} - 用户的真实姓名"
 
 #: mfas/SMS/mfa.py:119 mfas/SMS/mfa.py:131 mfas/SMS/mfa.py:145
 #: mfas/SMS/mfa.py:165 mfas/SMS/mfa.py:184 mfas/SMS/mfa.py:199
@@ -4602,7 +4660,10 @@ msgid ""
 "* {justUsername} - the username without @....\n"
 "* {realName} - the real name of the user\n"
 "Headers are in the form of \"Header: Value\". (without the quotes)"
-msgstr "SMS 请求的标头。它可以包含以下变量：* {code} - 要发送的代码* {phone/+phone} - 电话号码* {username} - 用户名* {justUsername} - 不带 @ 的用户名....* {realName} - 用户的真实姓名标头的格式为“标头：值”。（不带引号）"
+msgstr ""
+"SMS 请求的标头。它可以包含以下变量：* {code} - 要发送的代码* {phone/+phone} "
+"- 电话号码* {username} - 用户名* {justUsername} - 不带 @ 的用户名....* "
+"{realName} - 用户的真实姓名标头的格式为“标头：值”。（不带引号）"
 
 #: mfas/SMS/mfa.py:172
 msgid "Parameters for SMS POST/PUT sending"
@@ -4610,13 +4671,17 @@ msgstr "SMS POST/PUT 发送参数"
 
 #: mfas/SMS/mfa.py:175
 msgid ""
-"Parameters for SMS sending via POST/PUT. It can contain the following variables:\n"
+"Parameters for SMS sending via POST/PUT. It can contain the following "
+"variables:\n"
 "* {code} - the code to send\n"
 "* {phone/+phone} - the phone number\n"
 "* {username} - the username\n"
 "* {justUsername} - the username without @....\n"
 "* {realName} - the real name of the user"
-msgstr "通过 POST/PUT 发送短信的参数。它可以包含以下变量：* {code} - 要发送的代码* {phone/+phone} - 电话号码* {username} - 用户名* {justUsername} - 不带 @ 的用户名....* {realName} - 用户的真实姓名"
+msgstr ""
+"通过 POST/PUT 发送短信的参数。它可以包含以下变量：* {code} - 要发送的代码* "
+"{phone/+phone} - 电话号码* {username} - 用户名* {justUsername} - 不带 @ 的用"
+"户名....* {realName} - 用户的真实姓名"
 
 #: mfas/SMS/mfa.py:189
 msgid "SMS encoding"
@@ -4664,9 +4729,10 @@ msgstr "短信回复 OK 正则表达式"
 
 #: mfas/SMS/mfa.py:239
 msgid ""
-"Regex for SMS response OK. If empty, the response is considered OK if status"
-" code is 200."
-msgstr "SMS 响应的正则表达式 OK。如果为空，则如果状态码为 200，则认为响应正常。"
+"Regex for SMS response OK. If empty, the response is considered OK if status "
+"code is 200."
+msgstr ""
+"SMS 响应的正则表达式 OK。如果为空，则如果状态码为 200，则认为响应正常。"
 
 #: mfas/SMS/mfa.py:241
 msgid "HTTP Response"
@@ -4756,7 +4822,8 @@ msgstr "输入您的验证码"
 msgid ""
 "Please, use your Authenticator to add your account. (i.e. Google "
 "Authenticator, Authy, ...)"
-msgstr "请使用您的身份验证器添加您的帐户。（例如 Google Authenticator、Authy 等）"
+msgstr ""
+"请使用您的身份验证器添加您的帐户。（例如 Google Authenticator、Authy 等）"
 
 #: mfas/TOTP/mfa.py:205
 msgid "Code is already used. Wait a minute and try again."
@@ -4841,8 +4908,8 @@ msgstr "电报"
 
 #: notifiers/telegram/notifier.py:86
 msgid ""
-"Secret key used to validate subscribtion requests (using /join or /subscribe"
-" commands)"
+"Secret key used to validate subscribtion requests (using /join or /subscribe "
+"commands)"
 msgstr "用于验证订阅请求的密钥（使用 /join 或 /subscribe 命令）"
 
 #: notifiers/telegram/notifier.py:97
@@ -4877,13 +4944,17 @@ msgstr "适用于基于 Debian 13 / Ubuntu 的 Linux 机器的 UDS Actor"
 msgid ""
 "UDS Actor for Debian 12 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
-msgstr "适用于基于 Debian 12 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
+msgstr ""
+"适用于基于 Debian 12 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机"
+"器。"
 
 #: osmanagers/LinuxOsManager/__init__.py:75
 msgid ""
 "UDS Actor for Debian 13 / Ubuntu based Linux machines. Used ONLY for static "
 "machines."
-msgstr "适用于基于 Debian 13 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
+msgstr ""
+"适用于基于 Debian 13 / Ubuntu 的 Linux 系统的 UDS Actor。仅用于静态部署的机"
+"器。"
 
 #: osmanagers/LinuxOsManager/__init__.py:82
 msgid "UDS Actor for Fedora / RHEL based Linux machines"
@@ -4897,13 +4968,15 @@ msgstr "适用于基于 openSUSE / SLES 的 Linux 机器的 UDS Actor"
 msgid ""
 "UDS Actor for Fedora / RHEL based Linux machines. Used ONLY for static "
 "machines."
-msgstr "适用于基于 Fedora/RHEL 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
+msgstr ""
+"适用于基于 Fedora/RHEL 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
 
 #: osmanagers/LinuxOsManager/__init__.py:103
 msgid ""
 "UDS Actor for openSUSE / SLES based Linux machines. Used ONLY for static "
 "machines."
-msgstr "适用于基于 openSUSE / SLES 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
+msgstr ""
+"适用于基于 openSUSE / SLES 的 Linux 系统的 UDS Actor。仅用于静态部署的机器。"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:54
 msgid "Linux Active Directory OS Manager"
@@ -4915,12 +4988,11 @@ msgstr "Os Manager 使用活动目录控制 Linux 虚拟机"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:61
 #: osmanagers/WindowsOsManager/windows_domain.py:73
-#: services/OpenStack/provider.py:139
-#: services/OpenStack/provider_legacy.py:138
+#: services/OpenStack/provider.py:139 services/OpenStack/provider_legacy.py:138
 #: transports/HTML5RDP/html5rdp.py:98
 #: transports/HTML5RDS_enterprise/html5rds.py:98
 #: transports/PCoIP_enterprise/pcoip.py:74 transports/RDP/rdp_base.py:97
-#: transports/RDPEmbedded/common.py:161
+#: transports/RDPEmbedded/common.py:169
 #: transports/RDSEmbedded_enterprise/common.py:143
 #: transports/RDS_enterprise/rds_base.py:61
 #: transports/RGS_enterprise/rgs_base.py:88
@@ -4954,7 +5026,9 @@ msgstr "OU"
 msgid ""
 "Organizational unit where to add machines in domain (not used if IPA is "
 "selected). i.e.: ou=My Machines,dc=mydomain,dc=local"
-msgstr "在域中添加计算机的组织单位（如果选择 IPA，则不使用）。即： ou=我的机器，dc=mydomain，dc=本地"
+msgstr ""
+"在域中添加计算机的组织单位（如果选择 IPA，则不使用）。即： ou=我的机器，"
+"dc=mydomain，dc=本地"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:89
 msgid "Client software"
@@ -5014,7 +5088,8 @@ msgstr "机器清洁"
 msgid ""
 "If checked, UDS will try to remove the machine from the domain USING the "
 "provided credentials. (Not used if IPA is selected)"
-msgstr "如果选中，UDS 将尝试使用提供的凭据从域中删除计算机。 （如果选择IPA则不使用）"
+msgstr ""
+"如果选中，UDS 将尝试使用提供的凭据从域中删除计算机。 （如果选择IPA则不使用）"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:136
 msgid "If checked, a ssl connection to Active Directory will be used"
@@ -5058,9 +5133,11 @@ msgstr "最大闲置时间"
 
 #: osmanagers/LinuxOsManager/linux_osmanager.py:69
 msgid ""
-"Maximum idle time (in seconds) before session is automatically closed to the"
-" user (<= 0 means no max idle time)."
-msgstr "会话自动关闭给用户之前的最大空闲时间（以秒为单位）（&lt;= 0表示没有最大空闲时间）。"
+"Maximum idle time (in seconds) before session is automatically closed to the "
+"user (<= 0 means no max idle time)."
+msgstr ""
+"会话自动关闭给用户之前的最大空闲时间（以秒为单位）（&lt;= 0表示没有最大空闲时"
+"间）。"
 
 #: osmanagers/LinuxOsManager/linux_osmanager.py:75
 #: osmanagers/WindowsOsManager/windows.py:55
@@ -5137,9 +5214,11 @@ msgstr "Os Manager可以控制没有域的Windows机器。"
 
 #: osmanagers/WindowsOsManager/windows.py:49
 msgid ""
-"Maximum idle time (in seconds) before session is automatically closed to the"
-" user (<= 0 means no max. idle time)"
-msgstr "会话自动关闭给用户之前的最大空闲时间（以秒为单位）（&lt;= 0表示没有最大空闲时间）"
+"Maximum idle time (in seconds) before session is automatically closed to the "
+"user (<= 0 means no max. idle time)"
+msgstr ""
+"会话自动关闭给用户之前的最大空闲时间（以秒为单位）（&lt;= 0表示没有最大空闲时"
+"间）"
 
 #: osmanagers/WindowsOsManager/windows_domain.py:65
 msgid "Windows Domain OS Manager"
@@ -5153,7 +5232,9 @@ msgstr "Os Manager用于控制带域的Windows机器。"
 msgid ""
 "Organizational unit where to add machines in domain (check it before using "
 "it). i.e.: ou=My Machines,dc=mydomain,dc=local"
-msgstr "组织单位在域中添加计算机的位置（在使用之前检查它）。即：ou =我的机器，dc = mydomain，dc = local"
+msgstr ""
+"组织单位在域中添加计算机的位置（在使用之前检查它）。即：ou =我的机器，dc = "
+"mydomain，dc = local"
 
 #: osmanagers/WindowsOsManager/windows_domain.py:102
 msgid "Machine Group"
@@ -5423,8 +5504,7 @@ msgstr "所有验证器"
 msgid "UDS Report of failed logins"
 msgstr "UDS 报告登录失败"
 
-#: reports/lists/failed_logins.py:218
-#: templates/uds/reports/lists/audit.html:16
+#: reports/lists/failed_logins.py:218 templates/uds/reports/lists/audit.html:16
 #: templates/uds/reports/lists/failed-logins.html:45
 msgid "Message"
 msgstr "信息"
@@ -5593,8 +5673,7 @@ msgid "Client platforms breakdown"
 msgstr "客户平台细分"
 
 #: reports/stats/client_platforms.py:48
-msgid ""
-"Breakdown of client platforms, browsers and versions seen on web logins"
+msgid "Breakdown of client platforms, browsers and versions seen on web logins"
 msgstr "网络登录时看到的客户端平台、浏览器和版本细分"
 
 #: reports/stats/client_platforms.py:123
@@ -5675,8 +5754,7 @@ msgstr "无限"
 msgid "UDS Report of pool saturation"
 msgstr "UDS泳池饱和度报告"
 
-#: reports/stats/pool_saturation.py:156
-#: reports/stats/pool_users_summary.py:170
+#: reports/stats/pool_saturation.py:156 reports/stats/pool_users_summary.py:170
 #: templates/uds/reports/stats/pool-saturation.html:18
 #: templates/uds/reports/stats/pool-users-summary.html:17
 #: templates/uds/reports/stats/usage-by-group.html:19
@@ -5879,13 +5957,11 @@ msgstr "使用率最高的用户"
 msgid "UDS Top users report"
 msgstr "UDS顶级用户报告"
 
-#: reports/stats/top_users.py:173
-#: templates/uds/reports/stats/top-users.html:17
+#: reports/stats/top_users.py:173 templates/uds/reports/stats/top-users.html:17
 msgid "Pools used"
 msgstr "使用的泳池"
 
-#: reports/stats/top_users.py:175
-#: templates/uds/reports/stats/top-users.html:19
+#: reports/stats/top_users.py:175 templates/uds/reports/stats/top-users.html:19
 msgid "Average hours/session"
 msgstr "平均每次会话时长"
 
@@ -6092,12 +6168,13 @@ msgstr "从在 AWS IAM 上为 UDS Enteprise 创建的用户获取 - 密钥"
 
 #: services/AWS_enterprise/provider.py:68
 #: services/Azure_enterprise/provider.py:94
-#: services/Google_enterprise/provider.py:98
-#: services/OpenStack/provider.py:201
+#: services/Google_enterprise/provider.py:98 services/OpenStack/provider.py:201
 msgid ""
-"Proxy used on server connections for HTTPS connections (use "
-"PROTOCOL://host:port, i.e. http://10.10.0.1:8080)"
-msgstr "用于 HTTPS 连接的服务器连接上的代理（使用 PROTOCOL://host:port，即 http://10.10.0.1:8080）"
+"Proxy used on server connections for HTTPS connections (use PROTOCOL://"
+"host:port, i.e. http://10.10.0.1:8080)"
+msgstr ""
+"用于 HTTPS 连接的服务器连接上的代理（使用 PROTOCOL://host:port，即 http://"
+"10.10.0.1:8080）"
 
 #: services/AWS_enterprise/provider.py:77
 msgid "Default region"
@@ -6266,8 +6343,8 @@ msgstr "来自此服务的实例的 VPC"
 #: services/AWS_enterprise/service.py:138
 #: services/Azure_enterprise/service.py:96
 #: services/HyperV_enterprise/service.py:98
-#: services/Nutanix_enterprise/service.py:109
-#: services/OpenStack/service.py:155 services/Xen/service.py:134
+#: services/Nutanix_enterprise/service.py:109 services/OpenStack/service.py:155
+#: services/Xen/service.py:134
 msgid "Network"
 msgstr "网络"
 
@@ -6293,8 +6370,7 @@ msgstr "IAM实例配置文件"
 
 #: services/AWS_enterprise/service.py:135
 msgid ""
-"Name or ARN of the IAM instance profile to associate with launched "
-"instances."
+"Name or ARN of the IAM instance profile to associate with launched instances."
 msgstr "要与已启动实例关联的 IAM 实例配置文件的名称或 ARN。"
 
 #: services/AWS_enterprise/service_fixed.py:61
@@ -6445,7 +6521,9 @@ msgstr "加速网络"
 msgid ""
 "Activate this option to use accelerated networking on vm. Ensure that your "
 "machine and machine size supports this option before activating."
-msgstr "激活此选项以在vm上使用加速网络。在激活之前，请确保您的机器和机器尺寸支持此选项。"
+msgstr ""
+"激活此选项以在vm上使用加速网络。在激活之前，请确保您的机器和机器尺寸支持此选"
+"项。"
 
 #: services/Azure_enterprise/service.py:172
 msgid "You must select a network for the service"
@@ -6652,8 +6730,7 @@ msgstr "数据存储放置增量和出版物的位置"
 
 #: services/HyperV_enterprise/service.py:101
 msgid ""
-"If more than 1 interface is found in machine, use one on this network as "
-"main"
+"If more than 1 interface is found in machine, use one on this network as main"
 msgstr "如果在计算机中找到多个接口，请在此网络上使用一个作为主要接口"
 
 #: services/HyperV_enterprise/service.py:109
@@ -6677,7 +6754,9 @@ msgstr "预留存储空间"
 msgid ""
 "Minimal free space in GB for any storage unit to be used (if less, will be "
 "ignored)"
-msgstr "任何存储单元可使用的最小可用空间（以 GB 为单位）（如果少于这个数字，将被忽略）"
+msgstr ""
+"任何存储单元可使用的最小可用空间（以 GB 为单位）（如果少于这个数字，将被忽"
+"略）"
 
 #: services/HyperV_enterprise/service.py:132
 msgid "Use Full Clones"
@@ -6968,7 +7047,9 @@ msgstr "API密钥"
 msgid ""
 "Nutanix API Key to use. Username/password must be empty to use this option. "
 "Only valid for v4.0 and later"
-msgstr "要使用的 Nutanix API 密钥。使用此选项时，用户名/密码必须为空。仅适用于 v4.0 及更高版本。"
+msgstr ""
+"要使用的 Nutanix API 密钥。使用此选项时，用户名/密码必须为空。仅适用于 v4.0 "
+"及更高版本。"
 
 #: services/Nutanix_enterprise/provider.py:127
 msgid "When using API Key, username and password must be empty"
@@ -7042,9 +7123,12 @@ msgstr "oVirt 服务器端口"
 #: services/OVirt/provider.py:133
 msgid ""
 "User with valid privileges on oVirt. Use \"user@domain\" if using AAA, or "
-"\"user@domain@provider\" if using keycloak. I.e. \"admin@ovirt@internalsso\""
-" or \"admin@internal\")"
-msgstr "拥有 oVirt 有效权限的用户。如果使用 AAA，请使用“user@domain”；如果使用 Keycloak，请使用“user@domain@provider”。例如，“admin@ovirt@internalsso”或“admin@internal”。"
+"\"user@domain@provider\" if using keycloak. I.e. \"admin@ovirt@internalsso\" "
+"or \"admin@internal\")"
+msgstr ""
+"拥有 oVirt 有效权限的用户。如果使用 AAA，请使用“user@domain”；如果使用 "
+"Keycloak，请使用“user@domain@provider”。例"
+"如，“admin@ovirt@internalsso”或“admin@internal”。"
 
 #: services/OVirt/provider.py:144
 msgid "Password of the user of oVirt"
@@ -7227,9 +7311,11 @@ msgstr "不可用时开始"
 
 #: services/OpenGnsys/service.py:140
 msgid ""
-"If active, machines that are not available on user connect (on some OS) will"
-" try to power on through OpenGnsys."
-msgstr "如果处于活动状态，用户连接上不可用的机器（在某些操作系统上）将尝试通过 OpenGnsys 开机。"
+"If active, machines that are not available on user connect (on some OS) will "
+"try to power on through OpenGnsys."
+msgstr ""
+"如果处于活动状态，用户连接上不可用的机器（在某些操作系统上）将尝试通过 "
+"OpenGnsys 开机。"
 
 #: services/OpenNebula/provider.py:64
 msgid "OpenNebula"
@@ -7247,11 +7333,10 @@ msgstr "OpenNebula主持人"
 msgid "OpenNebula Port (default is 2633 for non ssl connection)"
 msgstr "OpenNebula端口（非ssl连接的默认值为2633）"
 
-#: services/OpenNebula/provider.py:96
-#: services/OpenStack/provider_legacy.py:124
+#: services/OpenNebula/provider.py:96 services/OpenStack/provider_legacy.py:124
 msgid ""
-"If checked, the connection will be forced to be ssl (will not work if server"
-" is not providing ssl)"
+"If checked, the connection will be forced to be ssl (will not work if server "
+"is not providing ssl)"
 msgstr "如果选中，则连接将被强制为ssl（如果服务器未提供ssl，则无法工作）"
 
 #: services/OpenNebula/provider.py:103
@@ -7298,18 +7383,15 @@ msgstr "基本模板"
 msgid "Service base template"
 msgstr "服务基础模板"
 
-#: services/OpenNebula/service.py:119
-#: services/VCloud_enterprise/service.py:100
+#: services/OpenNebula/service.py:119 services/VCloud_enterprise/service.py:100
 msgid "Machine Names"
 msgstr "机器名称"
 
-#: services/OpenNebula/service.py:122
-#: services/VCloud_enterprise/service.py:103
+#: services/OpenNebula/service.py:122 services/VCloud_enterprise/service.py:103
 msgid "Base name for clones from this machine"
 msgstr "来自此计算机的克隆的基本名称"
 
-#: services/OpenNebula/service.py:132
-#: services/VCloud_enterprise/service.py:113
+#: services/OpenNebula/service.py:132 services/VCloud_enterprise/service.py:113
 msgid "Size of numeric part for the names of these machines"
 msgstr "这些机器名称的数字部分的大小"
 
@@ -7329,7 +7411,9 @@ msgstr "集群 OAuth URL"
 msgid ""
 "Openshift OAuth URL, e.g. https://oauth-openshift.apps-crc.testing or "
 "https://console-openshift.apps-crc.testing"
-msgstr "OpenShift OAuth URL，例如 https://oauth-openshift.apps-crc.testing 或 https://console-openshift.apps-crc.testing"
+msgstr ""
+"OpenShift OAuth URL，例如 https://oauth-openshift.apps-crc.testing 或 "
+"https://console-openshift.apps-crc.testing"
 
 #: services/OpenShift/provider.py:85
 msgid "API URL"
@@ -7388,7 +7472,8 @@ msgstr "授权错误"
 msgid ""
 "Openstack does not support identity API 3.2 or newer. This OpenStack server "
 "is not compatible with UDS."
-msgstr "Openstack不支持Identity API 3.2或更新版本。此OpenStack服务器与UDS不兼容。"
+msgstr ""
+"Openstack不支持Identity API 3.2或更新版本。此OpenStack服务器与UDS不兼容。"
 
 #: services/OpenStack/provider.py:89
 msgid "OpenStack"
@@ -7404,9 +7489,10 @@ msgstr "身份端点"
 
 #: services/OpenStack/provider.py:113
 msgid ""
-"OpenStack identity endpoint API Access (for example, "
-"https://10.0.0.1/identity). Do not include /v3."
-msgstr "OpenStack 身份端点 API 访问（例如，https://10.0.0.1/identity）。不包括 /v3。"
+"OpenStack identity endpoint API Access (for example, https://10.0.0.1/"
+"identity). Do not include /v3."
+msgstr ""
+"OpenStack 身份端点 API 访问（例如，https://10.0.0.1/identity）。不包括 /v3。"
 
 #: services/OpenStack/provider.py:119
 msgid "Authentication method"
@@ -7416,18 +7502,15 @@ msgstr "身份验证方法"
 msgid "Authentication method to be used"
 msgstr "要使用的身份验证方法"
 
-#: services/OpenStack/provider.py:130
-#: services/OpenStack/provider_legacy.py:129
+#: services/OpenStack/provider.py:130 services/OpenStack/provider_legacy.py:129
 msgid "Access interface"
 msgstr "访问界面"
 
-#: services/OpenStack/provider.py:132
-#: services/OpenStack/provider_legacy.py:131
+#: services/OpenStack/provider.py:132 services/OpenStack/provider_legacy.py:131
 msgid "Access interface to be used"
 msgstr "要使用的访问接口"
 
-#: services/OpenStack/provider.py:141
-#: services/OpenStack/provider_legacy.py:140
+#: services/OpenStack/provider.py:141 services/OpenStack/provider_legacy.py:140
 msgid "Domain name (default is Default)"
 msgstr "域名（默认为默认）"
 
@@ -7437,8 +7520,8 @@ msgstr "用户名/应用程序凭证 ID"
 
 #: services/OpenStack/provider.py:149
 msgid ""
-"User with valid privileges on OpenStack/Application Credential ID with valid"
-" privileges"
+"User with valid privileges on OpenStack/Application Credential ID with valid "
+"privileges"
 msgstr "在 OpenStack/应用程序上具有有效权限的用户 具有有效权限的凭证 ID"
 
 #: services/OpenStack/provider.py:155
@@ -7488,7 +7571,8 @@ msgstr "OpenStack 遗留系统"
 msgid ""
 "OpenStack LEGACY platform service provider (for older Openstack Releases, "
 "previous to OCATA)"
-msgstr "OpenStack LEGACY平台服务提供商（适用于旧版Openstack版本，OCATA之前版本）"
+msgstr ""
+"OpenStack LEGACY平台服务提供商（适用于旧版Openstack版本，OCATA之前版本）"
 
 #: services/OpenStack/provider_legacy.py:111
 msgid "OpenStack Host"
@@ -7508,9 +7592,11 @@ msgstr "OpenStack用户的密码"
 
 #: services/OpenStack/provider_legacy.py:169
 msgid ""
-"Proxy used for connection to azure for HTTPS connections (use "
-"PROTOCOL://host:port, i.e. http://10.10.0.1:8080)"
-msgstr "用于 HTTPS 连接的 azure 连接的代理（使用 PROTOCOL://host:port，即 http://10.10.0.1:8080）"
+"Proxy used for connection to azure for HTTPS connections (use PROTOCOL://"
+"host:port, i.e. http://10.10.0.1:8080)"
+msgstr ""
+"用于 HTTPS 连接的 azure 连接的代理（使用 PROTOCOL://host:port，即 http://"
+"10.10.0.1:8080）"
 
 #: services/OpenStack/service.py:71
 msgid "OpenStack Live Volume"
@@ -7614,8 +7700,7 @@ msgstr "检查端口"
 
 #: services/PhysicalMachines/service_multi.py:103
 msgid ""
-"If non zero, only hosts responding to connection on that port will be "
-"served."
+"If non zero, only hosts responding to connection on that port will be served."
 msgstr "如果非零，则仅响应该端口上的连接的主机。"
 
 #: services/PhysicalMachines/service_multi.py:109
@@ -7634,7 +7719,8 @@ msgstr "最大会话持续时间"
 msgid ""
 "Max session duration before UDS releases a presumed locked machine (hours). "
 "0 signifies \"never\"."
-msgstr "UDS 释放假定锁定的计算机之前的最大会话持续时间（小时）。 0 表示“从不”。"
+msgstr ""
+"UDS 释放假定锁定的计算机之前的最大会话持续时间（小时）。 0 表示“从不”。"
 
 #: services/PhysicalMachines/service_multi.py:131
 msgid "Lock machine by external access"
@@ -7661,9 +7747,10 @@ msgstr "静态单IP"
 
 #: services/PhysicalMachines/service_single.py:59
 msgid ""
-"This service provides access to POWERED-ON Machine by IP. (You can configure"
-" WOL to power on the machine)"
-msgstr "此服务提供通过 IP 访问已启动的机器的功能。（您可以配置 WOL 来启动机器）"
+"This service provides access to POWERED-ON Machine by IP. (You can configure "
+"WOL to power on the machine)"
+msgstr ""
+"此服务提供通过 IP 访问已启动的机器的功能。（您可以配置 WOL 来启动机器）"
 
 #: services/PhysicalMachines/service_single.py:79
 msgid "Host IP/FQDN"
@@ -7671,9 +7758,10 @@ msgstr "主机 IP/FQDN"
 
 #: services/PhysicalMachines/service_single.py:82
 msgid ""
-"IP or FQDN of the server to connect to. Can include MAC address separated by"
-" \";\" after the IP/Hostname"
-msgstr "要连接的服务器的 IP 或 FQDN。可以在 IP/主机名后包含用“;”分隔的 MAC 地址"
+"IP or FQDN of the server to connect to. Can include MAC address separated by "
+"\";\" after the IP/Hostname"
+msgstr ""
+"要连接的服务器的 IP 或 FQDN。可以在 IP/主机名后包含用“;”分隔的 MAC 地址"
 
 #: services/PhysicalMachines/service_single.py:101
 msgid "Invalid server used: \"{}\""
@@ -7715,10 +7803,13 @@ msgstr "使用 API 令牌"
 msgid ""
 "Use API Token and secret instead of password. (username must contain the "
 "Token ID, the password will be the secret)"
-msgstr "使用 API Token 和 secret 代替密码。（用户名必须包含 Token ID，密码将是 secret）"
+msgstr ""
+"使用 API Token 和 secret 代替密码。（用户名必须包含 Token ID，密码将是 "
+"secret）"
 
 #: services/Proxmox/provider.py:106
-msgid "User with valid privileges on Proxmox, (use \"user@authenticator\" form)"
+msgid ""
+"User with valid privileges on Proxmox, (use \"user@authenticator\" form)"
 msgstr "在Proxmox上具有有效特权的用户（使用“ user @ authenticator”表格）"
 
 #: services/Proxmox/provider.py:114
@@ -7843,7 +7934,9 @@ msgstr "用户在AD上自动创建"
 msgid ""
 "If active, uds will mirror the user on your active director. WARNING!! "
 "Existing coincident users may be deleted!."
-msgstr "如果处于活动状态，uds会将用户镜像到您的活动控制器上。警告！！现有的重合用户可能会被删除！。"
+msgstr ""
+"如果处于活动状态，uds会将用户镜像到您的活动控制器上。警告！！现有的重合用户可"
+"能会被删除！。"
 
 #: services/RDS_enterprise/provider.py:81
 #: services/RDS_enterprise/provider.py:90
@@ -7880,8 +7973,7 @@ msgstr "UDS将在其中创建用户的AD Server分支"
 
 #: services/RDS_enterprise/provider.py:117
 msgid ""
-"Username with privileges to create/delete accounts. Use USER@DOMAIN.XXX "
-"form."
+"Username with privileges to create/delete accounts. Use USER@DOMAIN.XXX form."
 msgstr "具有创建/删除帐户特权的用户名。使用USER@DOMAIN.XXX表单。"
 
 #: services/RDS_enterprise/provider.py:127
@@ -7896,7 +7988,9 @@ msgstr "创建用户的前缀"
 msgid ""
 "User will be created on AD with the format \"PREFIX...\", where ... will be "
 "the original UDS own username. Max 4 characters"
-msgstr "将在AD上以“ PREFIX ...”格式创建用户，其中...将是原始UDS自己的用户名。最多4个字符"
+msgstr ""
+"将在AD上以“ PREFIX ...”格式创建用户，其中...将是原始UDS自己的用户名。最多4个"
+"字符"
 
 #: services/RDS_enterprise/provider.py:147
 msgid "AD Domain"
@@ -7906,7 +8000,8 @@ msgstr "广告域"
 msgid ""
 "Domain for newly created users (i.e. example.com, example.local). If empty, "
 "will be deduced from username"
-msgstr "新创建用户的域（例如example.com，example.local）。如果为空，将从用户名中推导"
+msgstr ""
+"新创建用户的域（例如example.com，example.local）。如果为空，将从用户名中推导"
 
 #: services/RDS_enterprise/provider.py:158
 msgid "AD Group"
@@ -7929,7 +8024,9 @@ msgid ""
 "Load threshold, in percent (0-100), for assigning users to servers.0 means "
 "server with lower load is preferred, any other value means that server will "
 "be used until it reaches that load."
-msgstr "负载阈值，以百分比 (0-100) 表示，用于将用户分配给服务器。0 表示优先使用负载较低的服务器，任何其他值都表示将使用该服务器直到达到该负载。"
+msgstr ""
+"负载阈值，以百分比 (0-100) 表示，用于将用户分配给服务器。0 表示优先使用负载较"
+"低的服务器，任何其他值都表示将使用该服务器直到达到该负载。"
 
 #: services/RDS_enterprise/provider.py:190
 msgid "Last activity period"
@@ -7939,7 +8036,9 @@ msgstr "最后活动期间"
 msgid ""
 "Period, in minutes, after which a server is considered inactive if no "
 "communication is received. (0 means no limit)"
-msgstr "以分钟为单位的时间段，在此时间段之后，如果未收到任何通信，则服务器将被视为不活动。（0 表示无限制）"
+msgstr ""
+"以分钟为单位的时间段，在此时间段之后，如果未收到任何通信，则服务器将被视为不"
+"活动。（0 表示无限制）"
 
 #: services/RDS_enterprise/provider.py:209
 msgid "AD User Management: you must provide the AD server host."
@@ -8037,7 +8136,9 @@ msgstr "等待产生的进程"
 msgid ""
 "If active, RDS Actor will wait until the application and all spawned "
 "processes finished before considering app logged out"
-msgstr "如果处于活动状态，RDS Actor将等到应用程序和所有生成的进程完成后再考虑应用程序注销"
+msgstr ""
+"如果处于活动状态，RDS Actor将等到应用程序和所有生成的进程完成后再考虑应用程序"
+"注销"
 
 #: services/RDS_enterprise/service.py:123
 msgid "A valid application path is required"
@@ -8097,8 +8198,8 @@ msgstr "规模计算固定机"
 
 #: services/ScaleComputing_enterprise/service_fixed.py:60
 msgid ""
-"Scale Computing Services based on fixed machines. Needs qemu agent installed"
-" on machines."
+"Scale Computing Services based on fixed machines. Needs qemu agent installed "
+"on machines."
 msgstr "基于固定机器扩展计算服务。需要在机器上安装 qemu 代理。"
 
 #: services/ScaleComputing_enterprise/service_fixed.py:106
@@ -8198,8 +8299,8 @@ msgstr "仅允许具有1个VM的vApp模板"
 
 #: services/Vmware_enterprise/helpers.py:98
 msgid ""
-"VMWare services needs that vCenter contains at least one folder, one network"
-" and one datastore."
+"VMWare services needs that vCenter contains at least one folder, one network "
+"and one datastore."
 msgstr "VMWare服务需要vCenter至少包含一个文件夹，一个网络和一个数据存储。"
 
 #: services/Vmware_enterprise/helpers.py:112
@@ -8285,7 +8386,8 @@ msgstr "包含基本机器的资源池"
 msgid ""
 "Main network used by the machine. The first interface found in base machine "
 "in this network, will be switched to publication network"
-msgstr "机器使用的主网络。在本网络的base机器中找到的第一个接口，将切换到发布网络"
+msgstr ""
+"机器使用的主网络。在本网络的base机器中找到的第一个接口，将切换到发布网络"
 
 #: services/Vmware_enterprise/service.py:126
 msgid "Pub. Network"
@@ -8666,7 +8768,7 @@ msgstr "使用HTML5客户端的RDP协议"
 #: transports/HTML5RDS_enterprise/html5rds.py:72
 #: transports/NICEDCV_enterprise/nicedcv_base.py:41
 #: transports/NoMachine_enterprise/nomachine_base.py:56
-#: transports/RDP/rdp_base.py:67 transports/RDPEmbedded/common.py:137
+#: transports/RDP/rdp_base.py:67 transports/RDPEmbedded/common.py:145
 #: transports/RDSEmbedded_enterprise/common.py:117
 #: transports/RDS_enterprise/rds_base.py:45
 #: transports/RGS_enterprise/rgs_base.py:70
@@ -8677,7 +8779,7 @@ msgstr "空的信誉"
 #: transports/HTML5RDS_enterprise/html5rds.py:74
 #: transports/NICEDCV_enterprise/nicedcv_base.py:43
 #: transports/NoMachine_enterprise/nomachine_base.py:58
-#: transports/RDP/rdp_base.py:69 transports/RDPEmbedded/common.py:139
+#: transports/RDP/rdp_base.py:69 transports/RDPEmbedded/common.py:147
 #: transports/RDSEmbedded_enterprise/common.py:119
 #: transports/RDS_enterprise/rds_base.py:47 transports/SPICE/spice_base.py:65
 msgid "If checked, the credentials used to connect will be emtpy"
@@ -8688,7 +8790,7 @@ msgstr "如果选中，则用于连接的凭据将为emtpy"
 #: transports/NICEDCV_enterprise/nicedcv_base.py:50
 #: transports/NoMachine_enterprise/nomachine_base.py:65
 #: transports/PCoIP_enterprise/pcoip.py:62 transports/RDP/rdp_base.py:76
-#: transports/RDPEmbedded/common.py:145
+#: transports/RDPEmbedded/common.py:153
 #: transports/RDSEmbedded_enterprise/common.py:125
 #: transports/RGS_enterprise/rgs_base.py:78 transports/SPICE/spice_base.py:72
 #: transports/X2GO/x2go_base.py:70
@@ -8700,7 +8802,7 @@ msgstr "如果不为空，则此用户名将始终用作凭据"
 #: transports/NICEDCV_enterprise/nicedcv_base.py:57
 #: transports/NoMachine_enterprise/nomachine_base.py:72
 #: transports/PCoIP_enterprise/pcoip.py:69 transports/RDP/rdp_base.py:83
-#: transports/RDPEmbedded/common.py:151
+#: transports/RDPEmbedded/common.py:159
 #: transports/RDSEmbedded_enterprise/common.py:131
 #: transports/RGS_enterprise/rgs_base.py:84 transports/SPICE/spice_base.py:79
 msgid "If not empty, this password will be always used as credential"
@@ -8708,7 +8810,7 @@ msgstr "如果不为空，则此密码将始终用作凭证"
 
 #: transports/HTML5RDP/html5rdp.py:92
 #: transports/HTML5RDS_enterprise/html5rds.py:90 transports/RDP/rdp_base.py:88
-#: transports/RDPEmbedded/common.py:155
+#: transports/RDPEmbedded/common.py:163
 #: transports/RDSEmbedded_enterprise/common.py:135
 #: transports/RDS_enterprise/rds_base.py:52
 msgid "Without Domain"
@@ -8723,8 +8825,8 @@ msgid ""
 msgstr "如果选中，则域部分将始终清空（例如，需要连接到xrdp）"
 
 #: transports/HTML5RDP/html5rdp.py:100
-#: transports/HTML5RDS_enterprise/html5rds.py:101
-#: transports/RDP/rdp_base.py:99 transports/RDPEmbedded/common.py:163
+#: transports/HTML5RDS_enterprise/html5rds.py:101 transports/RDP/rdp_base.py:99
+#: transports/RDPEmbedded/common.py:171
 #: transports/RDSEmbedded_enterprise/common.py:146
 #: transports/RDS_enterprise/rds_base.py:64
 msgid ""
@@ -8742,11 +8844,12 @@ msgstr "最佳体验"
 msgid ""
 "If checked, wallpaper, desktop composition and font smoothing will be "
 "enabled (better user experience, more bandwidth)"
-msgstr "选中后，将启用壁纸、桌面合成和字体平滑功能（更好的用户体验，更高的带宽）。"
+msgstr ""
+"选中后，将启用壁纸、桌面合成和字体平滑功能（更好的用户体验，更高的带宽）。"
 
 #: transports/HTML5RDP/html5rdp.py:115
 #: transports/HTML5RDS_enterprise/html5rds.py:118
-#: transports/RDPEmbedded/common.py:205
+#: transports/RDPEmbedded/common.py:213
 msgid "Enable Audio"
 msgstr "启用音频"
 
@@ -8759,7 +8862,7 @@ msgstr "如果选中，音频将被重定向到远程会话（如果客户端浏
 
 #: transports/HTML5RDP/html5rdp.py:122
 #: transports/HTML5RDS_enterprise/html5rds.py:127
-#: transports/RDPEmbedded/common.py:212
+#: transports/RDPEmbedded/common.py:220
 msgid "Enable Microphone"
 msgstr "启用麦克风"
 
@@ -8827,15 +8930,17 @@ msgstr "允许剪贴板"
 msgid "If checked, clipboard redirection will be enabled"
 msgstr "选中此项，将启用剪贴板重定向。"
 
-#: transports/HTML5RDP/html5rdp.py:155 transports/RDPEmbedded/common.py:220
+#: transports/HTML5RDP/html5rdp.py:155 transports/RDPEmbedded/common.py:228
 msgid "Enable Webcam"
 msgstr "启用摄像头"
 
 #: transports/HTML5RDP/html5rdp.py:158
 msgid ""
-"If checked, the local webcam/camera will be redirected to the remote session"
-" (if client browser supports it)"
-msgstr "如果选中此项，本地网络摄像头/摄像机将重定向到远程会话（如果客户端浏览器支持此功能）。"
+"If checked, the local webcam/camera will be redirected to the remote session "
+"(if client browser supports it)"
+msgstr ""
+"如果选中此项，本地网络摄像头/摄像机将重定向到远程会话（如果客户端浏览器支持此"
+"功能）。"
 
 #: transports/HTML5RDP/html5rdp.py:165
 msgid "Webcam codec"
@@ -8861,7 +8966,7 @@ msgstr "MJPEG"
 msgid "H264"
 msgstr "H264"
 
-#: transports/HTML5RDP/html5rdp.py:178 transports/RDPEmbedded/common.py:227
+#: transports/HTML5RDP/html5rdp.py:178 transports/RDPEmbedded/common.py:235
 msgid "Webcam quality"
 msgstr "网络摄像头质量"
 
@@ -8869,7 +8974,7 @@ msgstr "网络摄像头质量"
 msgid "Webcam image quality (1-100). Only applies to MJPEG. Defaults to 80."
 msgstr "网络摄像头图像质量（1-100）。仅适用于 MJPEG 格式。默认值为 80。"
 
-#: transports/HTML5RDP/html5rdp.py:186 transports/RDPEmbedded/common.py:237
+#: transports/HTML5RDP/html5rdp.py:186 transports/RDPEmbedded/common.py:245
 msgid "Webcam FPS"
 msgstr "网络摄像头帧率"
 
@@ -8877,19 +8982,19 @@ msgstr "网络摄像头帧率"
 msgid "Maximum webcam frames per second. Defaults to 15."
 msgstr "网络摄像头每秒最大帧数。默认值为 15。"
 
-#: transports/HTML5RDP/html5rdp.py:194 transports/RDPEmbedded/common.py:247
+#: transports/HTML5RDP/html5rdp.py:194 transports/RDPEmbedded/common.py:255
 msgid "Webcam max width"
 msgstr "网络摄像头最大宽度"
 
-#: transports/HTML5RDP/html5rdp.py:197 transports/RDPEmbedded/common.py:251
+#: transports/HTML5RDP/html5rdp.py:197 transports/RDPEmbedded/common.py:259
 msgid "Cap webcam width in pixels, keeping aspect ratio. 0 = original size."
 msgstr "限制摄像头宽度（以像素为单位），保持宽高比。0 = 原始尺寸。"
 
-#: transports/HTML5RDP/html5rdp.py:202 transports/RDPEmbedded/common.py:255
+#: transports/HTML5RDP/html5rdp.py:202 transports/RDPEmbedded/common.py:263
 msgid "Webcam max height"
 msgstr "网络摄像头最大高度"
 
-#: transports/HTML5RDP/html5rdp.py:205 transports/RDPEmbedded/common.py:259
+#: transports/HTML5RDP/html5rdp.py:205 transports/RDPEmbedded/common.py:267
 msgid "Cap webcam height in pixels, keeping aspect ratio. 0 = original size."
 msgstr "限制摄像头高度（以像素为单位），保持宽高比。0 = 原始尺寸。"
 
@@ -8933,11 +9038,13 @@ msgid ""
 "If checked, Network Level Authentication will be used. Requires valid "
 "credentials or the connection will fail. Uncheck to disable NLA (useful for "
 "credential providers or xrdp)."
-msgstr "选中此项将使用网络级身份验证 (NLA)。需要有效的凭据，否则连接将失败。取消选中此项可禁用 NLA（适用于凭据提供程序或 XRDP）。"
+msgstr ""
+"选中此项将使用网络级身份验证 (NLA)。需要有效的凭据，否则连接将失败。取消选中"
+"此项可禁用 NLA（适用于凭据提供程序或 XRDP）。"
 
 #: transports/HTML5RDP/html5rdp.py:247
 #: transports/HTML5RDS_enterprise/html5rds.py:203
-#: transports/RDP/rdp_base.py:210 transports/RDPEmbedded/common.py:266
+#: transports/RDP/rdp_base.py:210 transports/RDPEmbedded/common.py:282
 #: transports/RDSEmbedded_enterprise/common.py:213
 #: transports/RDS_enterprise/rds_base.py:148
 msgid "RDP Port"
@@ -8945,7 +9052,7 @@ msgstr "RDP 端口"
 
 #: transports/HTML5RDP/html5rdp.py:248
 #: transports/HTML5RDS_enterprise/html5rds.py:204
-#: transports/RDP/rdp_base.py:211 transports/RDPEmbedded/common.py:267
+#: transports/RDP/rdp_base.py:211 transports/RDPEmbedded/common.py:283
 #: transports/RDSEmbedded_enterprise/common.py:214
 #: transports/RDS_enterprise/rds_base.py:149
 msgid "Use this port as RDP port. Defaults to 3389."
@@ -8959,8 +9066,7 @@ msgstr "会话质量"
 #: transports/HTML5RDP/html5rdp.py:257
 #: transports/HTML5RDS_enterprise/html5rds.py:214
 msgid ""
-"Quality of the session. Higher values mean better quality but more "
-"bandwidth."
+"Quality of the session. Higher values mean better quality but more bandwidth."
 msgstr "会话质量。数值越高，质量越好，但需要更多带宽。"
 
 #: transports/HTML5RDP/html5rdp.py:260
@@ -8996,8 +9102,8 @@ msgstr "允许质量切换"
 #: transports/HTML5RDP/html5rdp.py:273
 #: transports/HTML5RDS_enterprise/html5rds.py:232
 msgid ""
-"If checked, users can change the image quality from the side menu during the"
-" session"
+"If checked, users can change the image quality from the side menu during the "
+"session"
 msgstr "如果选中，用户可以在会话期间通过侧边菜单更改图像质量。"
 
 #: transports/HTML5RDS_enterprise/html5rds.py:58
@@ -9084,7 +9190,9 @@ msgstr "SSH 主机密钥"
 msgid ""
 "Host key of the SSH server. If not provided, no verification of host "
 "identity is done. (as the line in known_hosts file)"
-msgstr "SSH 服务器的主机密钥。如果未提供，则不会验证主机身份。 （如known_hosts 文件中的行）"
+msgstr ""
+"SSH 服务器的主机密钥。如果未提供，则不会验证主机身份。 （如known_hosts 文件中"
+"的行）"
 
 #: transports/HTML5SSH/html5ssh.py:134
 msgid "Server Keep Alive"
@@ -9092,9 +9200,11 @@ msgstr "服务器保持活动"
 
 #: transports/HTML5SSH/html5ssh.py:138
 msgid ""
-"Time in seconds between keep alive messages sent to server. If not provided,"
-" no keep alive messages are sent."
-msgstr "发送到服务器的保持活动消息之间的时间（以秒为单位）。如果未提供，则不会发送保持活动消息。"
+"Time in seconds between keep alive messages sent to server. If not provided, "
+"no keep alive messages are sent."
+msgstr ""
+"发送到服务器的保持活动消息之间的时间（以秒为单位）。如果未提供，则不会发送保"
+"持活动消息。"
 
 #: transports/HTML5SSH/html5ssh.py:146
 msgid "Enable Clipboard"
@@ -9220,22 +9330,23 @@ msgstr "RDP"
 msgid "RDP Protocol. Direct connection."
 msgstr "RDP协议。直接连接。"
 
-#: transports/RDP/rdp_base.py:91 transports/RDPEmbedded/common.py:157
+#: transports/RDP/rdp_base.py:91 transports/RDPEmbedded/common.py:165
 #: transports/RDSEmbedded_enterprise/common.py:138
 msgid ""
 "If checked, the domain part will always be emptied (to connect to xrdp for "
 "example is needed)"
 msgstr "如果选中，域部分将始终清空（例如，需要连接到xrdp）"
 
-#: transports/RDP/rdp_base.py:104 transports/RDPEmbedded/common.py:167
+#: transports/RDP/rdp_base.py:104 transports/RDPEmbedded/common.py:175
 msgid "Use SSO"
 msgstr "使用 SSO"
 
-#: transports/RDP/rdp_base.py:107 transports/RDPEmbedded/common.py:171
+#: transports/RDP/rdp_base.py:107 transports/RDPEmbedded/common.py:179
 msgid ""
 "If checked, and user service supports it, will use UDS SSO mechanism. "
 "(Ensure you have enabled UDS SSO)"
-msgstr "如果选中此项且用户服务支持，则将使用 UDS SSO 机制。（请确保已启用 UDS SSO）"
+msgstr ""
+"如果选中此项且用户服务支持，则将使用 UDS SSO 机制。（请确保已启用 UDS SSO）"
 
 #: transports/RDP/rdp_base.py:114 transports/RDS_enterprise/rds_base.py:70
 msgid "Allow Smartcards"
@@ -9255,31 +9366,32 @@ msgstr "允许打印机"
 msgid "If checked, this transport will allow the use of user printers"
 msgstr "如果选中，则此传输将允许使用用户打印机"
 
-#: transports/RDP/rdp_base.py:128 transports/RDPEmbedded/common.py:184
+#: transports/RDP/rdp_base.py:128 transports/RDPEmbedded/common.py:192
 #: transports/RDSEmbedded_enterprise/common.py:162
 #: transports/RDS_enterprise/rds_base.py:84
 msgid "Local drives policy"
 msgstr "本地驱动器策略"
 
-#: transports/RDP/rdp_base.py:130 transports/RDPEmbedded/common.py:186
+#: transports/RDP/rdp_base.py:130 transports/RDPEmbedded/common.py:194
 #: transports/RDSEmbedded_enterprise/common.py:164
 #: transports/RDS_enterprise/rds_base.py:86
 msgid "Local drives redirection policy"
 msgstr "本地驱动器重定向策略"
 
-#: transports/RDP/rdp_base.py:141 transports/RDPEmbedded/common.py:196
+#: transports/RDP/rdp_base.py:141 transports/RDPEmbedded/common.py:204
 #: transports/RDSEmbedded_enterprise/common.py:174
 #: transports/RDS_enterprise/rds_base.py:97
 msgid "Force drives"
 msgstr "强制驱动"
 
-#: transports/RDP/rdp_base.py:144 transports/RDPEmbedded/common.py:199
+#: transports/RDP/rdp_base.py:144 transports/RDPEmbedded/common.py:207
 #: transports/RDSEmbedded_enterprise/common.py:177
 #: transports/RDS_enterprise/rds_base.py:100
 msgid ""
 "Use comma separated values, for example \"C:,D:\". If drives policy is "
 "disallowed, this will be ignored"
-msgstr "使用逗号分隔的值，例如“ C：，D：”。如果不允许使用驱动器策略，则将忽略该策略"
+msgstr ""
+"使用逗号分隔的值，例如“ C：，D：”。如果不允许使用驱动器策略，则将忽略该策略"
 
 #: transports/RDP/rdp_base.py:151 transports/RDS_enterprise/rds_base.py:107
 msgid "Allow Serials"
@@ -9337,11 +9449,11 @@ msgstr "Credssp支持"
 msgid "If checked, will enable Credentials Provider Support)"
 msgstr "如果选中，将启用凭据提供程序支持）"
 
-#: transports/RDP/rdp_base.py:219 transports/RDPEmbedded/common.py:274
+#: transports/RDP/rdp_base.py:219 transports/RDPEmbedded/common.py:290
 msgid "Screen Size"
 msgstr "屏幕尺寸"
 
-#: transports/RDP/rdp_base.py:221 transports/RDPEmbedded/common.py:276
+#: transports/RDP/rdp_base.py:221 transports/RDPEmbedded/common.py:292
 msgid "Screen size for this transport"
 msgstr "此运输的屏幕尺寸"
 
@@ -9412,7 +9524,8 @@ msgstr "使用 RDP 文件进行连接"
 msgid ""
 "If marked, an RDP file will be used for connections with Thincast or "
 "xfreerdp on Linux."
-msgstr "如果选中，则 RDP 文件将用于通过 Linux 上的 Thincast 或 xfreerdp 进行连接。"
+msgstr ""
+"如果选中，则 RDP 文件将用于通过 Linux 上的 Thincast 或 xfreerdp 进行连接。"
 
 #: transports/RDP/rdp_base.py:323 transports/RDS_enterprise/rds_base.py:224
 msgid "Printer string"
@@ -9427,8 +9540,7 @@ msgid "Smartcard string"
 msgstr "智能卡字符串"
 
 #: transports/RDP/rdp_base.py:333 transports/RDS_enterprise/rds_base.py:237
-msgid ""
-"If smartcard is checked, the smartcard string used with xfreerdp client"
+msgid "If smartcard is checked, the smartcard string used with xfreerdp client"
 msgstr "如果选中智能卡，则智能卡字符串与xfreerdp客户端一起使用"
 
 #: transports/RDP/rdp_base.py:339 transports/RDP/rdp_base.py:368
@@ -9439,9 +9551,11 @@ msgstr "自定义参数"
 
 #: transports/RDP/rdp_base.py:342 transports/RDS_enterprise/rds_base.py:247
 msgid ""
-"If not empty, extra parameter to include for Linux Client (for example "
-"/usb:id,dev:054c:0268, or aything compatible with your xfreerdp client)"
-msgstr "如果不为空，则为Linux客户端包含额外参数（例如/usb：id，dev：054c：0268，或者与xfreerdp客户端兼容的东西）"
+"If not empty, extra parameter to include for Linux Client (for example /"
+"usb:id,dev:054c:0268, or aything compatible with your xfreerdp client)"
+msgstr ""
+"如果不为空，则为Linux客户端包含额外参数（例如/usb：id，dev：054c：0268，或者"
+"与xfreerdp客户端兼容的东西）"
 
 #: transports/RDP/rdp_base.py:350
 msgid "Allow Microsoft Rdp Client"
@@ -9464,7 +9578,9 @@ msgid ""
 "If not empty, extra parameter to include for Mac OS X Freerdp Client (for "
 "example /usb:id,dev:054c:0268, or aything compatible with your xfreerdp "
 "client)"
-msgstr "如果不为空，则为 Mac OS X Freerdp 客户端包含的额外参数（例如 /usb:id,dev:054c:0268，或与您的 xfreerdp 客户端兼容的任何内容）"
+msgstr ""
+"如果不为空，则为 Mac OS X Freerdp 客户端包含的额外参数（例如 /"
+"usb:id,dev:054c:0268，或与您的 xfreerdp 客户端兼容的任何内容）"
 
 #: transports/RDP/rdp_base.py:381 transports/RDS_enterprise/rds_base.py:257
 msgid "If not empty, extra parameters to include for Windows Client"
@@ -9496,38 +9612,51 @@ msgstr "Mac OS X：“允许 Microsoft Rdp 客户端”需要启用“使用 RDP
 msgid "RDP Protocol. Tunneled connection."
 msgstr "RDP协议。隧道连接。"
 
-#: transports/RDPEmbedded/common.py:176
+#: transports/RDPEmbedded/common.py:184
 #: transports/RDSEmbedded_enterprise/common.py:152
 msgid "Use NLA"
 msgstr "使用 NLA"
 
-#: transports/RDPEmbedded/common.py:179
+#: transports/RDPEmbedded/common.py:187
 #: transports/RDSEmbedded_enterprise/common.py:156
 msgid ""
 "If checked, Network Level Authentication will be used for RDP connections"
 msgstr "如果选中此项，RDP 连接将使用网络级身份验证。"
 
-#: transports/RDPEmbedded/common.py:208
+#: transports/RDPEmbedded/common.py:216
 msgid "If checked, the audio will be redirected to the local machine"
 msgstr "如果选中此项，音频将重定向到本地计算机。"
 
-#: transports/RDPEmbedded/common.py:215
+#: transports/RDPEmbedded/common.py:223
 msgid ""
 "If checked, the local microphone will be redirected to the remote session"
 msgstr "如果选中此项，本地麦克风将重定向到远程会话。"
 
-#: transports/RDPEmbedded/common.py:223
+#: transports/RDPEmbedded/common.py:231
 msgid ""
 "If checked, the local webcam/camera will be redirected to the remote session"
 msgstr "如果选中此项，本地网络摄像头/摄像机将重定向到远程会话。"
 
-#: transports/RDPEmbedded/common.py:233
+#: transports/RDPEmbedded/common.py:241
 msgid "Webcam image quality (1-100). Defaults to 80."
 msgstr "网络摄像头图像质量（1-100）。默认值为80。"
 
-#: transports/RDPEmbedded/common.py:243
+#: transports/RDPEmbedded/common.py:251
 msgid "Maximum webcam frames per second (1-60). Defaults to 15."
 msgstr "网络摄像头每秒最大帧数（1-60帧）。默认值为15帧。"
+
+#: transports/RDPEmbedded/common.py:272
+#| msgid "Allow Smartcards"
+msgid "Enable Smartcard"
+msgstr "启用智能卡"
+
+#: transports/RDPEmbedded/common.py:275
+#| msgid ""
+#| "If checked, the local microphone will be redirected to the remote session"
+msgid ""
+"If checked, the local smartcard reader will be redirected to the remote "
+"session"
+msgstr "如果选中此项，本地智能卡读卡器将被重定向到远程会话。"
 
 #: transports/RDPEmbedded/direct.py:60 transports/RDPEmbedded/tunnel.py:63
 msgid "Embedded RDP Client"
@@ -9656,8 +9785,7 @@ msgid "Min. adjustable quality"
 msgstr "最小可调质量"
 
 #: transports/RGS_enterprise/rgs_base.py:125
-msgid ""
-"Lowest image quality allowed when adjusting to keep a stable frame rate"
+msgid "Lowest image quality allowed when adjusting to keep a stable frame rate"
 msgstr "调整图像质量以保持稳定的帧速率时允许的最低图像质量"
 
 #: transports/RGS_enterprise/rgs_base.py:132
@@ -9738,9 +9866,11 @@ msgstr "空凭据"
 
 #: transports/SPICE/spice_base.py:89
 msgid ""
-"Server certificate (public), can be found on your ovirt engine, probably at "
-"/etc/pki/ovirt-engine/certs/ca.der (Use the contents of this file)."
-msgstr "服务器证书（公共）可以在您的ovirt引擎上找到，可能在/etc/pki/ovirt-engine/certs/ca.der（使用此文件的内容）。"
+"Server certificate (public), can be found on your ovirt engine, probably at /"
+"etc/pki/ovirt-engine/certs/ca.der (Use the contents of this file)."
+msgstr ""
+"服务器证书（公共）可以在您的ovirt引擎上找到，可能在/etc/pki/ovirt-engine/"
+"certs/ca.der（使用此文件的内容）。"
 
 #: transports/SPICE/spice_base.py:96
 msgid "Fullscreen Mode"
@@ -9790,7 +9920,9 @@ msgstr "覆盖代理"
 msgid ""
 "If not empty, this proxy will be used to connect to the service instead of "
 "the one provided by the hypervisor. Format: http://host:port"
-msgstr "如果不为空，则此代理将用于连接服务，而不是管理程序提供的代理。格式：http://主机:端口"
+msgstr ""
+"如果不为空，则此代理将用于连接服务，而不是管理程序提供的代理。格式：http://主"
+"机:端口"
 
 #: transports/SPICE/spicetunnel.py:64
 msgid "SPICE Protocol. Tunneled connection."
@@ -9856,7 +9988,9 @@ msgstr "VAPP"
 msgid ""
 "If UDS vAPP is selected as \"Desktop\", the FULL PATH of the app to be "
 "executed. If UDS vAPP is not selected, this field will be ignored."
-msgstr "如果选择UDS vAPP作为“桌面”，则要执行的应用程序的FULL PATH。如果未选择UDS vAPP，则将忽略此字段。"
+msgstr ""
+"如果选择UDS vAPP作为“桌面”，则要执行的应用程序的FULL PATH。如果未选择UDS "
+"vAPP，则将忽略此字段。"
 
 #: transports/X2GO/x2go_base.py:124
 msgid "If checked, sound will be available"
@@ -9868,8 +10002,8 @@ msgstr "重定向主文件夹"
 
 #: transports/X2GO/x2go_base.py:132
 msgid ""
-"If checked, user home folder will be redirected. (On linux, also redirects "
-"/media)"
+"If checked, user home folder will be redirected. (On linux, also redirects /"
+"media)"
 msgstr "如果选中，将重定向用户主文件夹。 （在linux上，也重定向/媒体）"
 
 #: transports/X2GO/x2go_base.py:138

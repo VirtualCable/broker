@@ -1,7 +1,8 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
+# Translators:
 # Translators:
 # Translators:
 # Translators:
@@ -34,19 +35,19 @@
 # Translators:
 # Translators:
 #, fuzzy
-# Translators:
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 04:25+0200\n"
+"POT-Creation-Date: 2026-08-19 16:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
-"Language-Team: Dutch (http://app.transifex.com/openuds/openuds/language/nl/)\n"
+"Language-Team: Dutch (http://app.transifex.com/openuds/openuds/language/"
+"nl/)\n"
+"Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: nl\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
@@ -158,7 +159,10 @@ msgstr "Item gewijzigd door een andere beheerder"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr "Dit item is door een andere beheerder gewijzigd terwijl u het aan het bewerken was. Herlaad het om de huidige versie te krijgen voordat u uw wijzigingen opnieuw opslaat."
+msgstr ""
+"Dit item is door een andere beheerder gewijzigd terwijl u het aan het "
+"bewerken was. Herlaad het om de huidige versie te krijgen voordat u uw "
+"wijzigingen opnieuw opslaat."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -646,7 +650,9 @@ msgstr "Importeer servers"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr "Het bestandsformaat moet zijn: \"hostnaam,ip,mac,...\". Alle velden behalve de hostnaam zijn optioneel. Een scheidingsteken kan worden geconfigureerd."
+msgstr ""
+"Het bestandsformaat moet zijn: \"hostnaam,ip,mac,...\". Alle velden behalve "
+"de hostnaam zijn optioneel. Een scheidingsteken kan worden geconfigureerd."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1651,7 +1657,9 @@ msgstr "Dit betekent dat je beperkte toegang hebt tot bepaalde elementen."
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr "Om uw toegangsrechten te verhogen, kunt u contact opnemen met uw lokale UDS-beheerder."
+msgstr ""
+"Om uw toegangsrechten te verhogen, kunt u contact opnemen met uw lokale UDS-"
+"beheerder."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -1991,8 +1999,9 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Hoogste aantal gelijktijdige sessies per pool"
 
 #: static/admin/translations-fakejs.js:632
+#| msgid "Pool saturation (% of capacity)"
 msgid "Pool saturation (% of capacity)"
-msgstr "Bezettingsgraad van het zwembad (% van de capaciteit)"
+msgstr "Zwembadverzadiging (% van capaciteit)"
 
 #: static/admin/translations-fakejs.js:633
 msgid "Cache hits / misses per pool"
@@ -2086,7 +2095,9 @@ msgstr "Wacht alstublieft tot de dienst is gelanceerd."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr "Vergeet niet dat u de UDS-client op uw platform nodig hebt om toegang te krijgen tot de service."
+msgstr ""
+"Vergeet niet dat u de UDS-client op uw platform nodig hebt om toegang te "
+"krijgen tot de service."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2102,7 +2113,8 @@ msgstr "UDS-client start niet op"
 msgid ""
 "It seems that you don't have UDS Client installed. Please, install it from "
 "here:"
-msgstr "Het lijkt erop dat UDS Client niet is geïnstalleerd. Installeer het hier:"
+msgstr ""
+"Het lijkt erop dat UDS Client niet is geïnstalleerd. Installeer het hier:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
 msgid "UDS Client Download"
@@ -2114,7 +2126,9 @@ msgstr "UDS Client wordt gelanceerd...</br> Even geduld alstublieft."
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:15
 msgid "Error communicating with your service. Please, retry again."
-msgstr "Er is een fout opgetreden bij de communicatie met uw service. Probeer het opnieuw."
+msgstr ""
+"Er is een fout opgetreden bij de communicatie met uw service. Probeer het "
+"opnieuw."
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:16
 msgid "Your session has expired. Please, login again"
@@ -2122,7 +2136,9 @@ msgstr "Je sessie is verlopen. Log opnieuw in."
 
 #: static/modern/translations-fakejs.js:18
 msgid "We use cookies to authenticate users and remember preferences."
-msgstr "We gebruiken cookies om gebruikers te authenticeren en voorkeuren te onthouden."
+msgstr ""
+"We gebruiken cookies om gebruikers te authenticeren en voorkeuren te "
+"onthouden."
 
 #: static/modern/translations-fakejs.js:19
 msgid "If you do not agree, please"
@@ -2198,7 +2214,8 @@ msgstr "De dienst is in onderhoud."
 
 #: static/modern/translations-fakejs.js:40
 msgid "This service is currently not accessible due to schedule restrictions."
-msgstr "Deze dienst is momenteel niet beschikbaar vanwege planningsbeperkingen."
+msgstr ""
+"Deze dienst is momenteel niet beschikbaar vanwege planningsbeperkingen."
 
 #: static/modern/translations-fakejs.js:41
 msgid "Launcher"
@@ -2210,7 +2227,8 @@ msgstr "De service is in onderhoud en kan niet worden gestart."
 
 #: static/modern/translations-fakejs.js:43
 msgid "This service is currently not accesible due to schedule restrictions."
-msgstr "Deze dienst is momenteel niet beschikbaar vanwege planningsbeperkingen."
+msgstr ""
+"Deze dienst is momenteel niet beschikbaar vanwege planningsbeperkingen."
 
 #: static/modern/translations-fakejs.js:44
 msgid "Service message"
@@ -2264,13 +2282,17 @@ msgstr "Let op: het opnieuw laden van deze pagina werkt niet."
 
 #: static/modern/translations-fakejs.js:57
 msgid "To relaunch service, you will have to do it from origin."
-msgstr "Om de service opnieuw te starten, moet u dit vanuit de oorspronkelijke server doen."
+msgstr ""
+"Om de service opnieuw te starten, moet u dit vanuit de oorspronkelijke "
+"server doen."
 
 #: static/modern/translations-fakejs.js:58
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr "Als de service niet automatisch start, is de UDS-client waarschijnlijk niet geïnstalleerd."
+msgstr ""
+"Als de service niet automatisch start, is de UDS-client waarschijnlijk niet "
+"geïnstalleerd."
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"
@@ -2299,7 +2321,9 @@ msgstr "UDS is ontwikkeld met behulp van de volgende componenten:"
 
 #: static/modern/translations-fakejs.js:65
 msgid "If you find that we missed any component, please let us know"
-msgstr "Mocht u merken dat we een onderdeel over het hoofd hebben gezien, laat het ons dan weten."
+msgstr ""
+"Mocht u merken dat we een onderdeel over het hoofd hebben gezien, laat het "
+"ons dan weten."
 
 #: static/modern/translations-fakejs.js:66
 msgid "An error has occurred"

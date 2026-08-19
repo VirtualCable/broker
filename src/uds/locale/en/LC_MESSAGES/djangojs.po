@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
 # Translators:
 # Translators:
@@ -32,7 +32,6 @@
 # Translators:
 # Translators:
 # Translators:
-#, fuzzy
 # Translators:
 # , 2014
 # blafuente <blafuente@virtualcable.es>, 2014
@@ -42,14 +41,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 16:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
-"Language-Team: English (http://app.transifex.com/openuds/openuds/language/en/)\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: English (http://app.transifex.com/openuds/openuds/language/"
+"en/)\n"
 "Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
@@ -161,7 +161,9 @@ msgstr "Item changed by another administrator"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr "This item was modified by another administrator while you were editing it. Reload it to get the current version before saving your changes again."
+msgstr ""
+"This item was modified by another administrator while you were editing it. "
+"Reload it to get the current version before saving your changes again."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -649,7 +651,9 @@ msgstr "Import Servers"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr "Format of file must be \"hostname,ip,mac,...\". All fields except hostname are optional. Separator can be configured."
+msgstr ""
+"Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
+"are optional. Separator can be configured."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1654,7 +1658,9 @@ msgstr "This means that you have restricted access to elements."
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr "In order to increase your access privileges, please contact your local UDS administrator."
+msgstr ""
+"In order to increase your access privileges, please contact your local UDS "
+"administrator."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -1994,6 +2000,7 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Peak concurrent sessions per pool"
 
 #: static/admin/translations-fakejs.js:632
+#, javascript-format
 msgid "Pool saturation (% of capacity)"
 msgstr "Pool saturation (% of capacity)"
 
@@ -2089,7 +2096,9 @@ msgstr "Please wait until the service is launched."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr "Remember that you will need the UDS client on your platform to access the service."
+msgstr ""
+"Remember that you will need the UDS client on your platform to access the "
+"service."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2105,7 +2114,9 @@ msgstr "UDS Client not launching"
 msgid ""
 "It seems that you don't have UDS Client installed. Please, install it from "
 "here:"
-msgstr "It seems that you don't have UDS Client installed. Please, install it from here:"
+msgstr ""
+"It seems that you don't have UDS Client installed. Please, install it from "
+"here:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
 msgid "UDS Client Download"
@@ -2273,7 +2284,9 @@ msgstr "To relaunch service, you will have to do it from origin."
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr "If the service does not launchs automatically, probably you dont have the UDS Client installed"
+msgstr ""
+"If the service does not launchs automatically, probably you dont have the "
+"UDS Client installed"
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"

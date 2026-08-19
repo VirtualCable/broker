@@ -1,7 +1,8 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
+# Translators:
 # Translators:
 # Translators:
 # Translators:
@@ -33,19 +34,19 @@
 # Translators:
 # Translators:
 #, fuzzy
-# Translators:
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 16:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
-"Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/zh/)\n"
+"Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/"
+"zh/)\n"
+"Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
@@ -157,7 +158,9 @@ msgstr "项目已被其他管理员更改"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr "在您编辑期间，此项目已被其他管理员修改。请重新加载以获取最新版本，然后再保存您的更改。"
+msgstr ""
+"在您编辑期间，此项目已被其他管理员修改。请重新加载以获取最新版本，然后再保存"
+"您的更改。"
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -645,7 +648,9 @@ msgstr "导入服务器"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr "文件的格式必须是“hostname,ip,mac,...”。除 hostname 之外的所有字段都是可选的。可以配置分隔符。"
+msgstr ""
+"文件的格式必须是“hostname,ip,mac,...”。除 hostname 之外的所有字段都是可选的。"
+"可以配置分隔符。"
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"

@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
 # Translators:
 # Translators:
@@ -32,7 +32,6 @@
 # Translators:
 # Translators:
 # Translators:
-#, fuzzy
 # Translators:
 # Abdel Baaddi <abaaddi@virtualcable.es>, 2016,2018
 # Adolfo Gómez <dkmaster at dkmon dot com>, 2012
@@ -41,19 +40,22 @@
 # Javier <jgonzalez@virtualcable.es>, 2025
 # Víctor Alonso <valonso@virtualcable.net>, 2020
 # Víctor Alonso <valonso@virtualcable.net>, 2020
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 03:12+0200\n"
+"POT-Creation-Date: 2026-08-19 16:38+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Víctor Alonso <valonso@virtualcable.net>, 2020\n"
-"Language-Team: French (http://app.transifex.com/openuds/openuds/language/fr/)\n"
+"Language-Team: French (http://app.transifex.com/openuds/openuds/language/"
+"fr/)\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: fr\n"
-"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % "
+"1000000 == 0 ? 1 : 2;\n"
 
 #: static/admin/main.js:359 static/admin/main.js:5484
 #: static/admin/translations-fakejs.js:129
@@ -164,7 +166,10 @@ msgstr "Élément modifié par un autre administrateur"
 msgid ""
 "This item was modified by another administrator while you were editing it. "
 "Reload it to get the current version before saving your changes again."
-msgstr "Cet élément a été modifié par un autre administrateur pendant que vous le modifiiez. Rechargez-le pour obtenir la version actuelle avant d&#39;enregistrer à nouveau vos modifications."
+msgstr ""
+"Cet élément a été modifié par un autre administrateur pendant que vous le "
+"modifiiez. Rechargez-le pour obtenir la version actuelle avant "
+"d&#39;enregistrer à nouveau vos modifications."
 
 #: static/admin/main.js:1128 static/admin/translations-fakejs.js:6
 msgid "Error saving element"
@@ -652,7 +657,10 @@ msgstr "Importer des serveurs"
 msgid ""
 "Format of file must be \"hostname,ip,mac,...\". All fields except hostname "
 "are optional. Separator can be configured."
-msgstr "Le format du fichier doit être « nom d'hôte, IP, MAC, ... ». Tous les champs, à l'exception du nom d'hôte, sont facultatifs. Le séparateur peut être configuré."
+msgstr ""
+"Le format du fichier doit être « nom d'hôte, IP, MAC, ... ». Tous les "
+"champs, à l'exception du nom d'hôte, sont facultatifs. Le séparateur peut "
+"être configuré."
 
 #: static/admin/main.js:4457 static/admin/translations-fakejs.js:228
 msgid "Remove server from server group"
@@ -1027,7 +1035,8 @@ msgstr "Le pool de services est verrouillé"
 
 #: static/admin/main.js:4968 static/admin/translations-fakejs.js:81
 msgid "Service pool is locked, no changes allowed"
-msgstr "Le pool de services est verrouillé, aucune modification n'est autorisée"
+msgstr ""
+"Le pool de services est verrouillé, aucune modification n'est autorisée"
 
 #: static/admin/main.js:4968 static/admin/translations-fakejs.js:82
 #: static/admin/translations-fakejs.js:159
@@ -1307,7 +1316,9 @@ msgstr "L'image est trop grande (taille de téléchargement max. est de 256Kb)"
 
 #: static/admin/main.js:5484 static/admin/translations-fakejs.js:187
 msgid "Invalid image type (only supports JPEG, PNG, GIF and SVG)"
-msgstr "Type d&#39;image invalide (seuls les formats JPEG, PNG, GIF et SVG sont pris en charge)"
+msgstr ""
+"Type d&#39;image invalide (seuls les formats JPEG, PNG, GIF et SVG sont pris "
+"en charge)"
 
 #: static/admin/main.js:5484 static/admin/translations-fakejs.js:189
 msgid "Please, provide a name and a image"
@@ -1349,7 +1360,8 @@ msgstr "Configuration sauvegardée"
 
 #: static/admin/main.js:5484 static/admin/translations-fakejs.js:178
 msgid "Delete servers token - USE WITH EXTREME CAUTION!!!"
-msgstr "Supprimer le jeton des serveurs - À UTILISER AVEC UNE EXTRÊME PRUDENCE !!!"
+msgstr ""
+"Supprimer le jeton des serveurs - À UTILISER AVEC UNE EXTRÊME PRUDENCE !!!"
 
 #: static/admin/main.js:7056 static/admin/translations-fakejs.js:58
 msgid "Cache flushed"
@@ -1657,7 +1669,9 @@ msgstr "Cela signifie que vous avez un accès restreint aux éléments."
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
-msgstr "Pour augmenter vos privilèges d'accès, veuillez contacter votre administrateur UDS local."
+msgstr ""
+"Pour augmenter vos privilèges d'accès, veuillez contacter votre "
+"administrateur UDS local."
 
 #: static/admin/translations-fakejs.js:444
 msgid "Thank you."
@@ -2092,7 +2106,9 @@ msgstr "Veuillez attendre le lancement du service."
 msgid ""
 "Remember that you will need the UDS client on your platform to access the "
 "service."
-msgstr "N'oubliez pas que vous aurez besoin du client UDS sur votre plateforme pour accéder au service."
+msgstr ""
+"N'oubliez pas que vous aurez besoin du client UDS sur votre plateforme pour "
+"accéder au service."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2108,7 +2124,9 @@ msgstr "Le client UDS ne se lance pas"
 msgid ""
 "It seems that you don't have UDS Client installed. Please, install it from "
 "here:"
-msgstr "Il semble que vous n'ayez pas installé le client UDS. Veuillez l'installer à partir d'ici :"
+msgstr ""
+"Il semble que vous n'ayez pas installé le client UDS. Veuillez l'installer à "
+"partir d'ici :"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
 msgid "UDS Client Download"
@@ -2128,7 +2146,9 @@ msgstr "Votre session a expiré. Veuillez vous reconnecter"
 
 #: static/modern/translations-fakejs.js:18
 msgid "We use cookies to authenticate users and remember preferences."
-msgstr "Nous utilisons des cookies pour authentifier les utilisateurs et mémoriser les préférences."
+msgstr ""
+"Nous utilisons des cookies pour authentifier les utilisateurs et mémoriser "
+"les préférences."
 
 #: static/modern/translations-fakejs.js:19
 msgid "If you do not agree, please"
@@ -2178,7 +2198,9 @@ msgstr "Connexion biométrique"
 
 #: static/modern/translations-fakejs.js:31
 msgid "Would you like to save your credentials for future biometric login?"
-msgstr "Souhaitez-vous enregistrer vos identifiants pour une future connexion biométrique ?"
+msgstr ""
+"Souhaitez-vous enregistrer vos identifiants pour une future connexion "
+"biométrique ?"
 
 #: static/modern/translations-fakejs.js:33
 msgid "Could not register biometrics"
@@ -2204,7 +2226,9 @@ msgstr "Le service est en maintenance"
 
 #: static/modern/translations-fakejs.js:40
 msgid "This service is currently not accessible due to schedule restrictions."
-msgstr "Ce service n'est actuellement pas accessible en raison de contraintes d'horaire."
+msgstr ""
+"Ce service n'est actuellement pas accessible en raison de contraintes "
+"d'horaire."
 
 #: static/modern/translations-fakejs.js:41
 msgid "Launcher"
@@ -2216,7 +2240,9 @@ msgstr "Le service est en maintenance et ne peut pas être lancé"
 
 #: static/modern/translations-fakejs.js:43
 msgid "This service is currently not accesible due to schedule restrictions."
-msgstr "Ce service n'est actuellement pas accessible en raison de contraintes d'horaire."
+msgstr ""
+"Ce service n'est actuellement pas accessible en raison de contraintes "
+"d'horaire."
 
 #: static/modern/translations-fakejs.js:44
 msgid "Service message"
@@ -2276,7 +2302,9 @@ msgstr "Pour relancer le service, vous devrez le faire depuis l'origine."
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Client installed"
-msgstr "Si le service ne se lance pas automatiquement, vous n'avez probablement pas installé le client UDS"
+msgstr ""
+"Si le service ne se lance pas automatiquement, vous n'avez probablement pas "
+"installé le client UDS"
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"
@@ -2305,7 +2333,9 @@ msgstr "UDS a été développé en utilisant ces composants:"
 
 #: static/modern/translations-fakejs.js:65
 msgid "If you find that we missed any component, please let us know"
-msgstr "Si vous constatez que nous avons oublié un composant, veuillez nous le faire savoir."
+msgstr ""
+"Si vous constatez que nous avons oublié un composant, veuillez nous le faire "
+"savoir."
 
 #: static/modern/translations-fakejs.js:66
 msgid "An error has occurred"
