@@ -35,6 +35,7 @@ import typing
 
 from django import template
 from django.conf import settings
+from django.middleware import csrf
 from django.utils.translation import gettext, get_language
 from django.urls import reverse
 from django.templatetags.static import static
@@ -179,6 +180,14 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
         "enable_favorite_services": GlobalConfig.ENABLE_FAVORITE_SERVICES.as_bool(),
         "allow_animated_backgrounds": GlobalConfig.ALLOW_ANIMATED_BACKGROUNDS.as_bool(),
         "allow_biometric_auth": GlobalConfig.ALLOW_BIOMETRIC_AUTH.as_bool(),
+        # CSRF token for the modern UI. The endpoint that serves this file
+        # (uds.web.views.main.js) is ``@never_cache``, so the Angular app
+        # always re-fetches it and gets a fresh token per session. The token
+        # here is the unmasked one (same value ``{% csrf_token %}`` would
+        # render in a template); the masked value lives in the ``csrftoken``
+        # cookie set by CsrfViewMiddleware on every response.
+        "csrf_token": csrf.get_token(request),
+        "csrf_field": consts.auth.CSRF_FIELD,
     }
 
     info: dict[str, typing.Any] | None = None

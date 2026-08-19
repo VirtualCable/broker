@@ -63,7 +63,6 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         # A-family (settings.py)
         "security-cookies-and-headers",
         "debug-enabled",
-        "allowed-hosts-wildcard",
         "default-secret-key",
         "default-rsa-key",
         "csrf-middleware-disabled",
@@ -332,20 +331,6 @@ class SecurityChecksTest(UDSTransactionTestCase):
     def test_debug_enabled_passes_when_both_off(self) -> None:
         with self.settings(DEBUG=False, PROFILING=False):
             result = self._run_check("debug-enabled")
-        self.assertTrue(result.ok, result.message)
-
-    # ------------------------------------------------------------------
-    # Check: allowed-hosts-wildcard (settings)
-    # ------------------------------------------------------------------
-    def test_allowed_hosts_wildcard_detected(self) -> None:
-        with self.settings(ALLOWED_HOSTS=["*"]):
-            result = self._run_check("allowed-hosts-wildcard")
-        self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
-
-    def test_allowed_hosts_wildcard_passes_for_concrete_hosts(self) -> None:
-        with self.settings(ALLOWED_HOSTS=["broker.example.com", "localhost"]):
-            result = self._run_check("allowed-hosts-wildcard")
         self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------

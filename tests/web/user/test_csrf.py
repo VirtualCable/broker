@@ -37,6 +37,7 @@ caught a missing/invalid CSRF setup.
 
 Run with CSRF middleware enabled (it is, in ``src/server/settings.py:333``).
 """
+
 import typing
 
 from django.test import Client
@@ -87,27 +88,40 @@ class CsrfServerTest(UDSTransactionTestCase):
             self.fail("Index did not set a CSRF cookie")
         return token
 
-    def test_index_seeds_csrf_cookie_and_embeds_token(self) -> None:
-        import re
-
+    def test_index_seeds_csrf_cookie(self) -> None:
         response = self.csrf_client.get(reverse("page.index"))
         self.assertEqual(response.status_code, 200)
         # The CSRF middleware sets the ``csrftoken`` cookie on the response.
         self.assertIn("CSRF_COOKIE", response.wsgi_request.META)  # type: ignore[attr-defined]
         self.assertTrue(response.wsgi_request.META["CSRF_COOKIE"])  # type: ignore[index]
-        # The modern template embeds the (unmasked) token in a JS global so
-        # the form-based language picker can submit it natively. The cookie
-        # value and the form value are different (Django masks the secret for
-        # the cookie) — we just check the structure, not the literal value.
+        # The token itself now lives in ``/uds/utility/uds.js`` (see
+        # ``test_uds_js_includes_csrf_token``); the HTML template no longer
+        # embeds it directly.
+
+    def test_uds_js_includes_csrf_token(self) -> None:
+        import json
+        import re
+
+        response = self.csrf_client.get("/uds/utility/uds.js")
+        self.assertEqual(response.status_code, 200)
+        # The CSRF cookie is also re-issued on this endpoint.
+        self.assertIn("CSRF_COOKIE", response.wsgi_request.META)  # type: ignore[attr-defined]
+        self.assertTrue(response.wsgi_request.META["CSRF_COOKIE"])  # type: ignore[index]
+
+        # Body shape: ``var udsData = {"config": {..., "csrf_token": "...", "csrf_field": "..."}, ...};``
         body = response.content.decode("utf-8")
-        self.assertIn("csrfToken:", body)
-        self.assertIn("csrfField:", body)
-        self.assertIn(consts.auth.CSRF_FIELD, body)
-        # A non-empty token must have been rendered.
-        m = re.search(r"csrfToken:\s*'([^']+)'", body)
+        m = re.search(r"var udsData\s*=\s*(\{.+\});", body)
         if not m:
-            self.fail("csrfToken missing from rendered template")
-        self.assertGreater(len(m.group(1)), 20)
+            self.fail("uds.js did not contain ``var udsData = {...};``")
+        data = json.loads(m.group(1))
+        self.assertIn("config", data)
+        config = data["config"]
+        self.assertIn("csrf_token", config)
+        self.assertIn("csrf_field", config)
+        self.assertEqual(config["csrf_field"], consts.auth.CSRF_FIELD)
+        # The unmasked token must be non-empty (Django uses 32+ chars of base64).
+        self.assertIsInstance(config["csrf_token"], str)
+        self.assertGreater(len(config["csrf_token"]), 20)
 
     def test_login_post_with_csrf_token_works(self) -> None:
         # The ``login`` view at ``web/views/auth.py:331`` is NOT decorated with

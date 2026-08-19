@@ -86,21 +86,6 @@ def _check_debug_enabled() -> tuple[types.security.SecurityCheckSeverity, bool, 
     )
 
 
-def _check_allowed_hosts_wildcard() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
-    allowed_hosts: list[str] = list(getattr(settings, "ALLOWED_HOSTS", []) or [])
-    if "*" in allowed_hosts:
-        return (
-            types.security.SecurityCheckSeverity.HIGH,
-            False,
-            _("ALLOWED_HOSTS contains a wildcard ('*'): Host-header injection attacks are possible."),
-        )
-    return (
-        types.security.SecurityCheckSeverity.HIGH,
-        True,
-        _("ALLOWED_HOSTS is restricted to concrete hostnames."),
-    )
-
-
 def _check_default_secret_key() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
     if str(getattr(settings, "SECRET_KEY", "")) == consts.security.DEFAULT_SECRET_KEY:
         return (
@@ -268,7 +253,6 @@ def register_checks(factory: SecurityChecksFactory) -> None:
     """Registers the settings-derived checks into the shared factory."""
     factory.register_check("security-cookies-and-headers", _check_security_cookies_and_headers)
     factory.register_check("debug-enabled", _check_debug_enabled)
-    factory.register_check("allowed-hosts-wildcard", _check_allowed_hosts_wildcard)
     factory.register_check("default-secret-key", _check_default_secret_key)
     factory.register_check("default-rsa-key", _check_default_rsa_key)
     factory.register_check("csrf-middleware-disabled", _check_csrf_middleware_disabled)

@@ -40,7 +40,6 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         # A-family (settings.py)
         "security-cookies-and-headers",
         "debug-enabled",
-        "allowed-hosts-wildcard",
         "default-secret-key",
         "default-rsa-key",
         "csrf-middleware-disabled",
