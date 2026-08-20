@@ -3046,6 +3046,10 @@ components:
           description: Enable Microphone.If checked, the local microphone will be
             redirected to the remote session
           type: boolean
+        enable_smartcard:
+          description: Enable Smartcard.If checked, the local smartcard reader will
+            be redirected to the remote session
+          type: boolean
         enable_webcam:
           description: Enable Webcam.If checked, the local webcam/camera will be redirected
             to the remote session
@@ -4689,6 +4693,10 @@ components:
         enable_microphone:
           description: Enable Microphone.If checked, the local microphone will be
             redirected to the remote session
+          type: boolean
+        enable_smartcard:
+          description: Enable Smartcard.If checked, the local smartcard reader will
+            be redirected to the remote session
           type: boolean
         enable_webcam:
           description: Enable Webcam.If checked, the local webcam/camera will be redirected
