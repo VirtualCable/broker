@@ -2602,7 +2602,6 @@ components:
           LinuxADManager: '#/components/schemas/LinuxADManager'
           LinuxManager: '#/components/schemas/LinuxManager'
           RDSManager: '#/components/schemas/RDSManager'
-          TestOsManager: '#/components/schemas/TestOsManager'
           WinDomainManager: '#/components/schemas/WinDomainManager'
           WinRandomPasswordManager: '#/components/schemas/WinRandomPasswordManager'
           WindowsManager: '#/components/schemas/WindowsManager'
@@ -2612,7 +2611,6 @@ components:
       - $ref: '#/components/schemas/LinRandomPasswordManager'
       - $ref: '#/components/schemas/LinuxManager'
       - $ref: '#/components/schemas/RDSManager'
-      - $ref: '#/components/schemas/TestOsManager'
       - $ref: '#/components/schemas/WinDomainManager'
       - $ref: '#/components/schemas/WinRandomPasswordManager'
       - $ref: '#/components/schemas/WindowsManager'
@@ -2832,7 +2830,6 @@ components:
           ProxmoxPlatform: '#/components/schemas/ProxmoxPlatform'
           RDSProvider: '#/components/schemas/RDSProvider'
           ScalePlatform: '#/components/schemas/ScalePlatform'
-          TestProvider: '#/components/schemas/TestProvider'
           VCloudServiceProvider: '#/components/schemas/VCloudServiceProvider'
           VmwareVCServiceProvider: '#/components/schemas/VmwareVCServiceProvider'
           XenPlatform: '#/components/schemas/XenPlatform'
@@ -2860,7 +2857,6 @@ components:
       - $ref: '#/components/schemas/ProxmoxPlatform'
       - $ref: '#/components/schemas/RDSProvider'
       - $ref: '#/components/schemas/ScalePlatform'
-      - $ref: '#/components/schemas/TestProvider'
       - $ref: '#/components/schemas/VCloudServiceProvider'
       - $ref: '#/components/schemas/VmwareVCServiceProvider'
       - $ref: '#/components/schemas/XenPlatform'
@@ -3551,6 +3547,10 @@ components:
           description: Redirect USB.If checked, USB devices will be redirected to
             the Sender session
           type: boolean
+        window_mode:
+          description: Window mode.How the RGS Receiver window is shown when the session
+            starts
+          type: string
       required:
       - image_quality
       - adjustable_quality
@@ -3634,6 +3634,10 @@ components:
           description: Force SSL certificate verification.If enabled, the certificate
             of the tunnel server will be verified (recommended).
           type: boolean
+        window_mode:
+          description: Window mode.How the RGS Receiver window is shown when the session
+            starts
+          type: string
       required:
       - tunnel
       - startup_time
@@ -4294,8 +4298,6 @@ components:
           RemoteSessionService: '#/components/schemas/RemoteSessionService'
           ScaleFixedService: '#/components/schemas/ScaleFixedService'
           ScaleService: '#/components/schemas/ScaleService'
-          TestService1: '#/components/schemas/TestService1'
-          TestService2: '#/components/schemas/TestService2'
           VCFixedMachinesService: '#/components/schemas/VCFixedMachinesService'
           VCFullCloneService: '#/components/schemas/VCFullCloneService'
           VCLinkedCloneService: '#/components/schemas/VCLinkedCloneService'
@@ -4341,8 +4343,6 @@ components:
       - $ref: '#/components/schemas/RemoteSessionService'
       - $ref: '#/components/schemas/ScaleService'
       - $ref: '#/components/schemas/ScaleFixedService'
-      - $ref: '#/components/schemas/TestService2'
-      - $ref: '#/components/schemas/TestService1'
       - $ref: '#/components/schemas/VCloudVapp'
       - $ref: '#/components/schemas/VCLinkedCloneService'
       - $ref: '#/components/schemas/VCFullCloneService'
@@ -5328,62 +5328,6 @@ components:
       - fields
       - row_style
       type: object
-    TestOsManager:
-      properties:
-        idle:
-          description: Max.Idle time.Maximum idle time (in seconds) before session
-            is automatically closed to the user (<= 0 means no max. idle time)
-          type: number
-        on_logout:
-          description: Logout Action.What to do when user logs out from service
-          type: string
-      required:
-      - idle
-      type: object
-    TestProvider:
-      description: '
-
-        This class represents the simple Test provider.
-
-
-        This is only intended for testing purposes, and is not a good example of
-
-        a provider.
-
-
-        '
-      type: object
-    TestService1:
-      description: '
-
-        A simple testging service WITH cache and publication OFC
-
-        '
-      type: object
-    TestService2:
-      description: '
-
-        Basic testing service without cache and no publication OFC
-
-        '
-      type: object
-    TestTransport:
-      description: '
-
-        Simpe testing transport. Currently a copy of URLCustomTransport
-
-        '
-      properties:
-        force_new_window:
-          description: Force new HTML Window.If checked, every connection will try
-            to open its own window instead of reusing the "global" one.
-          type: boolean
-        test_url:
-          description: URL Pattern.URL Pattern to open (i.e. https://_IP_/test?user=_USER_
-          type: string
-      required:
-      - test_url
-      type: object
     TokenItem:
       properties:
         hostname:
@@ -5513,7 +5457,6 @@ components:
           TSRDPTransport: '#/components/schemas/TSRDPTransport'
           TSSPICETransport: '#/components/schemas/TSSPICETransport'
           TX2GOTransport: '#/components/schemas/TX2GOTransport'
-          TestTransport: '#/components/schemas/TestTransport'
           URLTransport: '#/components/schemas/URLTransport'
           X2GOTransport: '#/components/schemas/X2GOTransport'
         propertyName: type
@@ -5523,8 +5466,8 @@ components:
       - $ref: '#/components/schemas/HTML5SSHTransport'
       - $ref: '#/components/schemas/NICEDCVTransport'
       - $ref: '#/components/schemas/NICEDCVTunnelTransport'
-      - $ref: '#/components/schemas/NoMachineTransport'
       - $ref: '#/components/schemas/TSNoMachineTransport'
+      - $ref: '#/components/schemas/NoMachineTransport'
       - $ref: '#/components/schemas/PCoIPTransport'
       - $ref: '#/components/schemas/RDPTransport'
       - $ref: '#/components/schemas/TSRDPTransport'
@@ -5538,7 +5481,6 @@ components:
       - $ref: '#/components/schemas/RGSTunnelTransport'
       - $ref: '#/components/schemas/SPICETransport'
       - $ref: '#/components/schemas/TSSPICETransport'
-      - $ref: '#/components/schemas/TestTransport'
       - $ref: '#/components/schemas/URLTransport'
       - $ref: '#/components/schemas/X2GOTransport'
       - $ref: '#/components/schemas/TX2GOTransport'
