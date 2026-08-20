@@ -38143,9 +38143,6 @@
                         "$ref": "#/components/schemas/RDSManager"
                     },
                     {
-                        "$ref": "#/components/schemas/TestOsManager"
-                    },
-                    {
                         "$ref": "#/components/schemas/WinDomainManager"
                     },
                     {
@@ -38162,7 +38159,6 @@
                         "LinRandomPasswordManager": "#/components/schemas/LinRandomPasswordManager",
                         "LinuxManager": "#/components/schemas/LinuxManager",
                         "RDSManager": "#/components/schemas/RDSManager",
-                        "TestOsManager": "#/components/schemas/TestOsManager",
                         "WinDomainManager": "#/components/schemas/WinDomainManager",
                         "WinRandomPasswordManager": "#/components/schemas/WinRandomPasswordManager",
                         "WindowsManager": "#/components/schemas/WindowsManager"
@@ -38348,22 +38344,6 @@
                     "max_session"
                 ]
             },
-            "TestOsManager": {
-                "type": "object",
-                "properties": {
-                    "on_logout": {
-                        "description": "Logout Action.What to do when user logs out from service",
-                        "type": "string"
-                    },
-                    "idle": {
-                        "description": "Max.Idle time.Maximum idle time (in seconds) before session is automatically closed to the user (<= 0 means no max. idle time)",
-                        "type": "number"
-                    }
-                },
-                "required": [
-                    "idle"
-                ]
-            },
             "WinDomainManager": {
                 "type": "object",
                 "properties": {
@@ -38528,9 +38508,6 @@
                         "$ref": "#/components/schemas/ScalePlatform"
                     },
                     {
-                        "$ref": "#/components/schemas/TestProvider"
-                    },
-                    {
                         "$ref": "#/components/schemas/VCloudServiceProvider"
                     },
                     {
@@ -38560,7 +38537,6 @@
                         "ProxmoxPlatform": "#/components/schemas/ProxmoxPlatform",
                         "RDSProvider": "#/components/schemas/RDSProvider",
                         "ScalePlatform": "#/components/schemas/ScalePlatform",
-                        "TestProvider": "#/components/schemas/TestProvider",
                         "VCloudServiceProvider": "#/components/schemas/VCloudServiceProvider",
                         "VmwareVCServiceProvider": "#/components/schemas/VmwareVCServiceProvider",
                         "XenPlatform": "#/components/schemas/XenPlatform"
@@ -39510,10 +39486,6 @@
                     "timeout"
                 ]
             },
-            "TestProvider": {
-                "type": "object",
-                "description": "\nThis class represents the simple Test provider.\n\nThis is only intended for testing purposes, and is not a good example of\na provider.\n\n"
-            },
             "VCloudServiceProvider": {
                 "type": "object",
                 "properties": {
@@ -39778,12 +39750,6 @@
                         "$ref": "#/components/schemas/ScaleFixedService"
                     },
                     {
-                        "$ref": "#/components/schemas/TestService2"
-                    },
-                    {
-                        "$ref": "#/components/schemas/TestService1"
-                    },
-                    {
                         "$ref": "#/components/schemas/VCloudVapp"
                     },
                     {
@@ -39836,8 +39802,6 @@
                         "RemoteSessionService": "#/components/schemas/RemoteSessionService",
                         "ScaleService": "#/components/schemas/ScaleService",
                         "ScaleFixedService": "#/components/schemas/ScaleFixedService",
-                        "TestService2": "#/components/schemas/TestService2",
-                        "TestService1": "#/components/schemas/TestService1",
                         "VCloudVapp": "#/components/schemas/VCloudVapp",
                         "VCLinkedCloneService": "#/components/schemas/VCLinkedCloneService",
                         "VCFullCloneService": "#/components/schemas/VCFullCloneService",
@@ -41280,14 +41244,6 @@
                 ],
                 "description": "\nScale fixed machines service.\n"
             },
-            "TestService2": {
-                "type": "object",
-                "description": "\nBasic testing service without cache and no publication OFC\n"
-            },
-            "TestService1": {
-                "type": "object",
-                "description": "\nA simple testging service WITH cache and publication OFC\n"
-            },
             "VCloudVapp": {
                 "type": "object",
                 "properties": {
@@ -42392,10 +42348,10 @@
                         "$ref": "#/components/schemas/NICEDCVTunnelTransport"
                     },
                     {
-                        "$ref": "#/components/schemas/NoMachineTransport"
+                        "$ref": "#/components/schemas/TSNoMachineTransport"
                     },
                     {
-                        "$ref": "#/components/schemas/TSNoMachineTransport"
+                        "$ref": "#/components/schemas/NoMachineTransport"
                     },
                     {
                         "$ref": "#/components/schemas/PCoIPTransport"
@@ -42437,9 +42393,6 @@
                         "$ref": "#/components/schemas/TSSPICETransport"
                     },
                     {
-                        "$ref": "#/components/schemas/TestTransport"
-                    },
-                    {
                         "$ref": "#/components/schemas/URLTransport"
                     },
                     {
@@ -42457,8 +42410,8 @@
                         "HTML5SSHTransport": "#/components/schemas/HTML5SSHTransport",
                         "NICEDCVTransport": "#/components/schemas/NICEDCVTransport",
                         "NICEDCVTunnelTransport": "#/components/schemas/NICEDCVTunnelTransport",
-                        "NoMachineTransport": "#/components/schemas/NoMachineTransport",
                         "TSNoMachineTransport": "#/components/schemas/TSNoMachineTransport",
+                        "NoMachineTransport": "#/components/schemas/NoMachineTransport",
                         "PCoIPTransport": "#/components/schemas/PCoIPTransport",
                         "RDPTransport": "#/components/schemas/RDPTransport",
                         "TSRDPTransport": "#/components/schemas/TSRDPTransport",
@@ -42472,7 +42425,6 @@
                         "RGSTunnelTransport": "#/components/schemas/RGSTunnelTransport",
                         "SPICETransport": "#/components/schemas/SPICETransport",
                         "TSSPICETransport": "#/components/schemas/TSSPICETransport",
-                        "TestTransport": "#/components/schemas/TestTransport",
                         "URLTransport": "#/components/schemas/URLTransport",
                         "X2GOTransport": "#/components/schemas/X2GOTransport",
                         "TX2GOTransport": "#/components/schemas/TX2GOTransport"
@@ -42817,36 +42769,6 @@
                 ],
                 "description": "\nProvides access via NICE to service.\nThis transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password\n"
             },
-            "NoMachineTransport": {
-                "type": "object",
-                "properties": {
-                    "force_empty_creds": {
-                        "description": "Empty creds.If checked, the credentials used to connect will be emtpy",
-                        "type": "boolean"
-                    },
-                    "forced_username": {
-                        "description": "Username.If not empty, this username will be always used as credential",
-                        "type": "string"
-                    },
-                    "forced_password": {
-                        "description": "Password.If not empty, this password will be always used as credential",
-                        "type": "string"
-                    },
-                    "listen_port": {
-                        "description": "Listening port.Listening port of NX (Defaults to 4000 for NX, 22 for SSH)",
-                        "type": "number"
-                    },
-                    "window_size": {
-                        "description": "Window Size.Window size on connection",
-                        "type": "string"
-                    },
-                    "use_multimedia_on_udp": {
-                        "description": "Use UDP traffic for multimedia.If checked, the multimedia will use UDP traffic instead of TCP",
-                        "type": "boolean"
-                    }
-                },
-                "description": "\nProvides access via NX to service.\nThis transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password\n"
-            },
             "TSNoMachineTransport": {
                 "type": "object",
                 "properties": {
@@ -42887,6 +42809,36 @@
                     "tunnel",
                     "startup_time"
                 ],
+                "description": "\nProvides access via NX to service.\nThis transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password\n"
+            },
+            "NoMachineTransport": {
+                "type": "object",
+                "properties": {
+                    "force_empty_creds": {
+                        "description": "Empty creds.If checked, the credentials used to connect will be emtpy",
+                        "type": "boolean"
+                    },
+                    "forced_username": {
+                        "description": "Username.If not empty, this username will be always used as credential",
+                        "type": "string"
+                    },
+                    "forced_password": {
+                        "description": "Password.If not empty, this password will be always used as credential",
+                        "type": "string"
+                    },
+                    "listen_port": {
+                        "description": "Listening port.Listening port of NX (Defaults to 4000 for NX, 22 for SSH)",
+                        "type": "number"
+                    },
+                    "window_size": {
+                        "description": "Window Size.Window size on connection",
+                        "type": "string"
+                    },
+                    "use_multimedia_on_udp": {
+                        "description": "Use UDP traffic for multimedia.If checked, the multimedia will use UDP traffic instead of TCP",
+                        "type": "boolean"
+                    }
+                },
                 "description": "\nProvides access via NX to service.\nThis transport can use an domain. If username processed by authenticator contains '@', it will split it and left-@-part will be username, and right password\n"
             },
             "PCoIPTransport": {
@@ -43242,10 +43194,6 @@
                         "description": "Domain.If not empty, this domain will be always used as credential (used as DOMAIN\\user)",
                         "type": "string"
                     },
-                    "use_sso": {
-                        "description": "Use SSO.If checked, and user service supports it, will use UDS SSO mechanism. (Ensure you have enabled UDS SSO)",
-                        "type": "boolean"
-                    },
                     "allow_drives": {
                         "description": "Local drives policy.Local drives redirection policy",
                         "type": "string"
@@ -43256,6 +43204,10 @@
                     },
                     "use_nla": {
                         "description": "Use NLA.If checked, Network Level Authentication will be used for RDP connections",
+                        "type": "boolean"
+                    },
+                    "use_sso": {
+                        "description": "Use SSO.If checked, and user service supports it, will use UDS SSO mechanism. (Ensure you have enabled UDS SSO)",
                         "type": "boolean"
                     },
                     "rdp_port": {
@@ -43289,6 +43241,10 @@
                     "webcam_max_height": {
                         "description": "Webcam max height.Cap webcam height in pixels, keeping aspect ratio. 0 = original size.",
                         "type": "number"
+                    },
+                    "enable_smartcard": {
+                        "description": "Enable Smartcard.If checked, the local smartcard reader will be redirected to the remote session",
+                        "type": "boolean"
                     },
                     "screen_size": {
                         "description": "Screen Size.Screen size for this transport",
@@ -43323,10 +43279,6 @@
                         "description": "Domain.If not empty, this domain will be always used as credential (used as DOMAIN\\user)",
                         "type": "string"
                     },
-                    "use_sso": {
-                        "description": "Use SSO.If checked, and user service supports it, will use UDS SSO mechanism. (Ensure you have enabled UDS SSO)",
-                        "type": "boolean"
-                    },
                     "allow_drives": {
                         "description": "Local drives policy.Local drives redirection policy",
                         "type": "string"
@@ -43337,6 +43289,10 @@
                     },
                     "use_nla": {
                         "description": "Use NLA.If checked, Network Level Authentication will be used for RDP connections",
+                        "type": "boolean"
+                    },
+                    "use_sso": {
+                        "description": "Use SSO.If checked, and user service supports it, will use UDS SSO mechanism. (Ensure you have enabled UDS SSO)",
                         "type": "boolean"
                     },
                     "rdp_port": {
@@ -43370,6 +43326,10 @@
                     "webcam_max_height": {
                         "description": "Webcam max height.Cap webcam height in pixels, keeping aspect ratio. 0 = original size.",
                         "type": "number"
+                    },
+                    "enable_smartcard": {
+                        "description": "Enable Smartcard.If checked, the local smartcard reader will be redirected to the remote session",
+                        "type": "boolean"
                     },
                     "screen_size": {
                         "description": "Screen Size.Screen size for this transport",
@@ -43806,6 +43766,10 @@
                         "description": "Redirect USB.If checked, USB devices will be redirected to the Sender session",
                         "type": "boolean"
                     },
+                    "window_mode": {
+                        "description": "Window mode.How the RGS Receiver window is shown when the session starts",
+                        "type": "string"
+                    },
                     "port": {
                         "description": "RGS port.RGS Sender listener port (defaults to 42966)",
                         "type": "number"
@@ -43886,6 +43850,10 @@
                     "redirect_usb": {
                         "description": "Redirect USB.If checked, USB devices will be redirected to the Sender session",
                         "type": "boolean"
+                    },
+                    "window_mode": {
+                        "description": "Window mode.How the RGS Receiver window is shown when the session starts",
+                        "type": "string"
                     },
                     "port": {
                         "description": "RGS port.RGS Sender listener port (defaults to 42966)",
@@ -43986,23 +43954,6 @@
                     "startup_time"
                 ],
                 "description": "\nProvides access via SPICE to service.\n"
-            },
-            "TestTransport": {
-                "type": "object",
-                "properties": {
-                    "test_url": {
-                        "description": "URL Pattern.URL Pattern to open (i.e. https://_IP_/test?user=_USER_",
-                        "type": "string"
-                    },
-                    "force_new_window": {
-                        "description": "Force new HTML Window.If checked, every connection will try to open its own window instead of reusing the \"global\" one.",
-                        "type": "boolean"
-                    }
-                },
-                "required": [
-                    "test_url"
-                ],
-                "description": "\nSimpe testing transport. Currently a copy of URLCustomTransport\n"
             },
             "URLTransport": {
                 "type": "object",
