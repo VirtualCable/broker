@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -33,10 +32,12 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import datetime
 import uuid as uuid_type
 import typing
+import base64
 
 from django.conf import settings
 
 from uds.core import types
+from uds.core import consts
 from uds.core.managers import crypto
 from uds.core.types.crypto import TunnelMaterial
 
@@ -117,6 +118,52 @@ class CryptoManagerTest(UDSTestCase):
                 self.assertIsInstance(sym, bytes, "Returned xor string is not bytes")
                 symd = self.manager.symmetric_decrypt(sym, s2)
                 self.assertEqual(symd, s1)
+
+    def test_encrypt_password_roundtrip(self) -> None:
+        password = "sup3r-s3cret-p@ss"
+        encrypted = self.manager.encrypt_password(password)
+        self.assertIsInstance(encrypted, str)
+        self.assertEqual(self.manager.decrypt_password(encrypted), password)
+
+    def test_encrypt_password_empty(self) -> None:
+        # An empty password still yields a full secure payload (3 magic + 16
+        # IV + 16 ciphertext = 35 bytes), so the ``> 20`` length guard in
+        # ``decrypt_password`` always holds for the new format.
+        encrypted = self.manager.encrypt_password("")
+        data = base64.b64decode(encrypted)
+        self.assertGreater(len(data), 20)
+        self.assertEqual(self.manager.decrypt_password(encrypted), "")
+
+    def test_encrypt_password_random_iv(self) -> None:
+        # The same password must never produce the same stored value, so a
+        # leaked value cannot be correlated across components.
+        password = "same-password-for-every-component"
+        first = self.manager.encrypt_password(password)
+        second = self.manager.encrypt_password(password)
+        self.assertNotEqual(first, second)
+        self.assertEqual(self.manager.decrypt_password(first), password)
+        self.assertEqual(self.manager.decrypt_password(second), password)
+
+    def test_encrypt_password_new_format(self) -> None:
+        # New format is base64(MAGIC + IV(16) + ciphertext): it must start
+        # with the magic marker and be well over 20 bytes once decoded.
+        encrypted = self.manager.encrypt_password("any-password")
+        data = base64.b64decode(encrypted)
+        self.assertTrue(data.startswith(consts.security.PASSWORD_ENCRYPTION_MAGIC))
+        self.assertGreater(len(data), 20)
+
+    def test_decrypt_password_legacy_compat(self) -> None:
+        # Values stored with the legacy format (fixed IV, no magic) must keep
+        # loading through the new decoder. Built with the current overridden
+        # UDSK so the key matches the one decrypt_password will use.
+        legacy = self.manager.aes256_cbc_encrypt(b"legacy-password", crypto.UDSK, True).decode()
+        self.assertEqual(self.manager.decrypt_password(legacy), "legacy-password")
+
+    def test_decrypt_password_plaintext_passthrough(self) -> None:
+        # Passwords migrated from plaintext storage (never encrypted) must be
+        # returned unchanged.
+        plaintext = "Migrated p@ssword!"
+        self.assertEqual(self.manager.decrypt_password(plaintext), plaintext)
 
     def test_certs(self) -> None:
         # Right now, only tests that these methods do not fails

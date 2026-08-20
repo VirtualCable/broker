@@ -1943,15 +1943,21 @@ class UserInterface(metaclass=UserInterfaceType):
         return field_name in self._gui
 
 
-def password_compat_field_decoder(value: str) -> str:
+def password_encoder(field: gui.InputField) -> str:
     """
-    Compatibility function to decode text fields converted to password fields
+    Encodes a password field for storage using a per-value random IV, so the
+    same password never produces the same stored value across components.
     """
-    try:
-        value = CryptoManager.manager().aes256_cbc_decrypt(value.encode("utf8"), UDSK, True).decode()
-    except Exception:
-        pass
-    return value
+    return CryptoManager.manager().encrypt_password(field.value)
+
+
+def password_field_decoder(value: str) -> str:
+    """
+    Decodes a stored password field. Handles the secure (magic-prefixed)
+    format, legacy CBC ciphertexts and plaintext passwords migrated from
+    older versions (returned unchanged).
+    """
+    return CryptoManager.manager().decrypt_password(value)
 
 
 # Dictionaries used to encode/decode fields to be stored on database
@@ -1961,9 +1967,7 @@ FIELDS_ENCODERS: typing.Final[
     types.ui.FieldType.TEXT: lambda x: x.value,
     types.ui.FieldType.TEXT_AUTOCOMPLETE: lambda x: x.value,
     types.ui.FieldType.NUMERIC: lambda x: str(gui.as_int(x.value)),
-    types.ui.FieldType.PASSWORD: lambda x: (
-        CryptoManager.manager().aes256_cbc_encrypt(x.value.encode("utf8"), UDSK, True).decode()
-    ),
+    types.ui.FieldType.PASSWORD: password_encoder,
     types.ui.FieldType.HIDDEN: (lambda x: None if not x.is_serializable() else x.value),
     types.ui.FieldType.CHOICE: lambda x: x.value,
     types.ui.FieldType.MULTICHOICE: lambda x: base64.b64encode(serializer.serialize(x.value)).decode(),
@@ -1980,7 +1984,7 @@ FIELD_DECODERS: typing.Final[
     types.ui.FieldType.TEXT: lambda x: x,
     types.ui.FieldType.TEXT_AUTOCOMPLETE: lambda x: x,
     types.ui.FieldType.NUMERIC: int,
-    types.ui.FieldType.PASSWORD: password_compat_field_decoder,
+    types.ui.FieldType.PASSWORD: password_field_decoder,
     types.ui.FieldType.HIDDEN: lambda x: x,
     types.ui.FieldType.CHOICE: lambda x: x,
     types.ui.FieldType.MULTICHOICE: lambda x: serializer.deserialize(base64.b64decode(x.encode())),

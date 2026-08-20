@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -38,6 +37,9 @@ from unittest import mock
 
 from uds.core import consts
 from uds.core import types
+from uds.core.managers.crypto import CryptoManager
+from uds.core.managers.crypto import UDSK
+from uds.core.ui.user_interface import FIELD_DECODERS
 from uds.core.ui.user_interface import UserInterface
 
 # We use commit/rollback
@@ -219,3 +221,22 @@ class UserinterfaceTest(UDSTestCase):
 
             # And strField should be loaded from str_field
             # self.assertEqual(ui.strField.value, ui2.str_field.value)
+
+    def test_legacy_password_loads_via_production_decoder(self) -> None:
+        """
+        Regression: values stored with the current (pre-magic) password format
+        must keep loading once the secure (magic-prefixed) format lands.
+
+        The value is built with the existing legacy path and decoded through
+        the production decoder used by ``deserialize_fields``.
+        """
+        legacy = CryptoManager.manager().aes256_cbc_encrypt(b"legacy-password", UDSK, True).decode()
+        self.assertEqual(FIELD_DECODERS[types.ui.FieldType.PASSWORD](legacy), "legacy-password")
+
+    def test_plaintext_migrated_password_passthrough(self) -> None:
+        """
+        Passwords migrated from plaintext storage (never encrypted) must keep
+        loading: the decoder fails to decrypt them and returns them unchanged.
+        """
+        plaintext = "Migrated p@ssword!"
+        self.assertEqual(FIELD_DECODERS[types.ui.FieldType.PASSWORD](plaintext), plaintext)

@@ -49,6 +49,20 @@ DEFAULT_SECRET_KEY: typing.Final[str] = "s5ky!7b5f#s35!e38xv%e-+iey6yi-#630x)kk3
 # rotated the key.
 DEFAULT_RSA_KEY_SHA256: typing.Final[str] = "f8a73d4bb154a710bf235ac1fbbd6bf5b93774284358478f622492b941b19528"
 
+# Fixed IV used to encrypt/decrypt values with the legacy (pre-5.x) CBC scheme.
+# Kept so old stored data keeps loading; new writes use a per-value random IV.
+COMPAT_CBC_INIT_VECTOR: typing.Final[bytes] = b"udsinitvectoruds"
+
+# Magic prefix of the secure password format stored by
+# ``CryptoManager.encrypt_password``:
+#   base64( MAGIC(3) + IV(16) + AES-CBC ciphertext )
+# ``decrypt_password`` uses it (plus a minimum length check) to tell the new
+# format apart from legacy ciphertexts and from plaintext passwords migrated
+# from older versions. A legacy ciphertext is AES output (pseudorandom), so the
+# probability of it starting with these 3 bytes is negligible (2^-24); short
+# passwords produce 16-byte ciphertexts that never pass the >20 bytes check.
+PASSWORD_ENCRYPTION_MAGIC: typing.Final[bytes] = b"UPW"
+
 
 def rsa_key_fingerprint(key: str) -> str:
     """Returns the SHA256 fingerprint of an RSA key PEM for comparison purposes."""

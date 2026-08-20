@@ -63,7 +63,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from django.conf import settings
 from django.utils import timezone
 
-from uds.core import types
+from uds.core import types, consts
 from uds.core.util import singleton
 
 from . import certs
@@ -87,9 +87,7 @@ if typing.TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 # Note the REAL BIG importance of the SECRET_KEY. if lost, all encripted stored data (almost all fields) will be lost...
-UDSK: typing.Final[bytes] = settings.SECRET_KEY[
-    8:24
-].encode()  # UDS key, new, for AES256, so it's 16 bytes length
+UDSK: typing.Final[bytes] = settings.SECRET_KEY[8:24].encode()  # UDS key, new, for AES256, so it's 16 bytes length
 
 
 class CryptoManager(metaclass=singleton.Singleton):
@@ -99,9 +97,7 @@ class CryptoManager(metaclass=singleton.Singleton):
     def __init__(self) -> None:
         self._rsa = typing.cast(
             "RSAPrivateKey",
-            serialization.load_pem_private_key(
-                settings.RSA_KEY.encode(), password=None, backend=default_backend()
-            ),
+            serialization.load_pem_private_key(settings.RSA_KEY.encode(), password=None, backend=default_backend()),
         )
         self._namespace = uuid.UUID("627a37a5-e8db-431a-b783-73f7d20b4934")
 
@@ -166,11 +162,13 @@ class CryptoManager(metaclass=singleton.Singleton):
             return "decript error"
         return decrypted.decode()
 
-    def aes256_cbc_encrypt(self, text: bytes, key: bytes, base64: bool = False) -> bytes:
+    def aes256_cbc_encrypt(
+        self, text: bytes, key: bytes, base64: bool = False, init_vector: bytes | None = None
+    ) -> bytes:
         # First, match key to 16 bytes. If key is over 16, create a new one based on key of 16 bytes length
         cipher = Cipher(
             algorithms.AES(CryptoManager.ensure_aes_key(key, 16)),
-            modes.CBC(b"udsinitvectoruds"),
+            modes.CBC(init_vector or consts.security.COMPAT_CBC_INIT_VECTOR),
             backend=default_backend(),
         )
         rnd_string = secrets.token_bytes(16)  # Same as block size of CBC (that is 16 here)
@@ -189,13 +187,15 @@ class CryptoManager(metaclass=singleton.Singleton):
         salt = salt.encode() if isinstance(salt, str) else salt
         return hashlib.pbkdf2_hmac("sha256", password, salt, 100000, dklen=length)
 
-    def aes256_cbc_decrypt(self, text: bytes, key: bytes, base64: bool = False) -> bytes:
+    def aes256_cbc_decrypt(
+        self, text: bytes, key: bytes, base64: bool = False, init_vector: bytes | None = None
+    ) -> bytes:
         if base64:
             text = codecs.decode(text, "base64")
 
         cipher = Cipher(
             algorithms.AES(CryptoManager.ensure_aes_key(key, 16)),
-            modes.CBC(b"udsinitvectoruds"),
+            modes.CBC(init_vector or consts.security.COMPAT_CBC_INIT_VECTOR),
             backend=default_backend(),
         )
         decryptor = cipher.decryptor()
@@ -212,9 +212,7 @@ class CryptoManager(metaclass=singleton.Singleton):
         aesgcm = aead.AESGCM(key)
         return aesgcm.encrypt(nonce, plaintext, aad)
 
-    def aes256_gcm_decrypt(
-        self, key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes | None = None
-    ) -> bytes:
+    def aes256_gcm_decrypt(self, key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes | None = None) -> bytes:
         if len(key) != 32:
             raise ValueError("AES-256-GCM key must be 32 bytes")
         if len(nonce) != 12:
@@ -268,6 +266,59 @@ class CryptoManager(metaclass=singleton.Singleton):
             return self.aes256_cbc_decrypt(encrypted_text, key).decode("utf-8")
         except Exception:  # Error decoding crypted element, return empty one
             return ""
+
+    def encrypt_password(self, value: str) -> str:
+        """
+        Encrypts a password with a fresh random IV so the same password never
+        produces the same stored value across components.
+
+        Returns the value as a base64 string of::
+
+            PASSWORD_ENCRYPTION_MAGIC + IV(16) + AES-CBC ciphertext
+
+        ``decrypt_password`` is the counterpart; it also reads legacy values
+        and plaintext passwords migrated from older versions.
+        """
+        iv = secrets.token_bytes(16)
+        ciphertext = self.aes256_cbc_encrypt(value.encode("utf-8"), UDSK, init_vector=iv)
+        return base64.b64encode(consts.security.PASSWORD_ENCRYPTION_MAGIC + iv + ciphertext).decode("ascii")
+
+    def decrypt_password(self, value: str) -> str:
+        """
+        Decrypts a value produced by ``encrypt_password``, transparently
+        handling the two legacy layouts:
+
+        * Legacy CBC ciphertexts (fixed ``COMPAT_CBC_INIT_VECTOR``).
+        * Plaintext passwords migrated from older versions, returned unchanged
+          (they fail to decrypt).
+
+        The secure format is detected by its magic prefix plus a minimum
+        length: it is always at least 35 bytes (3 magic + 16 IV + 16
+        ciphertext), while legacy ciphertexts of short passwords are exactly
+        16 bytes and never pass the ``> 20`` check. A legacy value that
+        coincidentally matches both hints falls back to the legacy path below.
+        """
+        try:
+            data = base64.b64decode(value)
+        except Exception:
+            data = b""
+
+        magic = consts.security.PASSWORD_ENCRYPTION_MAGIC
+        if data.startswith(magic) and len(data) > 20:
+            # Secure format: magic + random IV + ciphertext.
+            # On any failure (e.g. coincidental match), fall back to legacy.
+            try:
+                iv = data[len(magic) : len(magic) + 16]
+                ciphertext = data[len(magic) + 16 :]
+                return self.aes256_cbc_decrypt(ciphertext, UDSK, init_vector=iv).decode("utf-8")
+            except Exception:
+                pass
+
+        # Legacy encrypted value or plaintext migrated password.
+        try:
+            return self.aes256_cbc_decrypt(data, UDSK).decode("utf-8")
+        except Exception:
+            return value
 
     def load_private_key(
         self, rsa_key: str
@@ -387,11 +438,7 @@ class CryptoManager(metaclass=singleton.Singleton):
         return base64.b64encode(aesgcm.encrypt(bytes(nonce), plaintext.encode("utf-8"), None)).decode()
 
     def random_string(self, length: int = 40, digits: bool = True, punctuation: bool = False) -> str:
-        base = (
-            string.ascii_letters
-            + (string.digits if digits else "")
-            + (string.punctuation if punctuation else "")
-        )
+        base = string.ascii_letters + (string.digits if digits else "") + (string.punctuation if punctuation else "")
         return "".join(secrets.choice(base) for _ in range(length))
 
     def random_bytes(self, length: int = 32) -> bytes:
