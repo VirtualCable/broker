@@ -96,17 +96,32 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
             self.assertEqual(body[severity.value], expected)
 
     def test_admin_report_reflects_configuration_state(self) -> None:
-        self.login()
         # Isolate this test from the other CRITICAL/HIGH findings the test
         # settings trigger (DEBUG=True, PROFILING=True, ALLOWED_HOSTS=['*'],
-        # CSRF middleware commented out). The superuser-credentials check is
-        # the one we want to exercise here.
+        # CSRF middleware commented out, and the shipped sample SECRET_KEY /
+        # RSA_KEY when running off a pristine settings.py). The
+        # superuser-credentials check is the one we want to exercise here.
+        # The session + request middleware are kept so REST login/auth tokens
+        # (which are Django sessions) work inside the overridden settings.
         middleware: list[str] = [
             "django.middleware.security.SecurityMiddleware",
+            "django.contrib.sessions.middleware.SessionMiddleware",
             "django.middleware.csrf.CsrfViewMiddleware",
             "django.middleware.common.CommonMiddleware",
+            "uds.middleware.request.GlobalRequestMiddleware",
         ]
-        with self.settings(DEBUG=False, PROFILING=False, ALLOWED_HOSTS=["testserver"], MIDDLEWARE=middleware):
+        with self.settings(
+            DEBUG=False,
+            PROFILING=False,
+            ALLOWED_HOSTS=["testserver"],
+            MIDDLEWARE=middleware,
+            SECRET_KEY="a-rotated-not-default-secret-key",
+            RSA_KEY="a-rotated-not-default-rsa-key",
+        ):
+            # Login inside the settings override: the auth token is a Django
+            # session signed with the active SECRET_KEY, so it must be issued
+            # and validated under the same settings block.
+            self.login()
             body = self._get_report()
             critical = {
                 check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]
