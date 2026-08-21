@@ -4,6 +4,7 @@
 #
 """
 Author: dkmaster
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 
 Unit tests for ``uds.core.util.ldaputil`` focused on the bits that aren't
 covered by ``test_ldaputil_helpers.py``:
