@@ -45,6 +45,7 @@ from django.utils.translation import gettext as _
 
 from ldap3 import ALL
 from ldap3 import ALL_ATTRIBUTES
+from ldap3 import ALL_OPERATIONAL_ATTRIBUTES
 from ldap3 import BASE
 from ldap3 import LEVEL
 from ldap3 import MODIFY_ADD as LDAP_MODIFY_ADD
@@ -478,7 +479,14 @@ def modify(
 
 
 def get_root_dse(con: Connection) -> "LDAPResultType | None":
-    con.search("", "(objectClass=*)", search_scope=SCOPE_BASE)
+    # Everything worth reading on the root DSE (naming contexts, supported controls)
+    # is an operational attribute, and those are never returned unless asked for
+    con.search(
+        "",
+        "(objectClass=*)",
+        search_scope=SCOPE_BASE,
+        attributes=[ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES],
+    )
     if con.entries:
         entry = typing.cast(typing.Any, con.entries[0])
         dct: dict[str, typing.Any] = {attr: entry[attr].values for attr in entry.entry_attributes}
