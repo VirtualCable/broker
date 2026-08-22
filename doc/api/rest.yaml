@@ -24387,6 +24387,95 @@ paths:
       summary: Retrieve Cache item logs by UUID
       tags:
       - Servicespools
+  /servicespools/{uuid}/cacheRecommendations:
+    get:
+      deprecated: true
+      description: Cache sizing recommendations for this service pool based on predicted
+        usage patterns
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Cache sizing recommendations for this service pool based on predicted
+        usage patterns (ServicePool)
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/cache_recommendations:
+    get:
+      description: Cache sizing recommendations for this service pool based on predicted
+        usage patterns
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Cache sizing recommendations for this service pool based on predicted
+        usage patterns (ServicePool)
+      tags:
+      - Servicespools
   /servicespools/{uuid}/changelog:
     get:
       description: Retrieve a list of all Changelog items
@@ -25192,6 +25281,50 @@ paths:
       security:
       - udsApiAuthBearer: []
       summary: Update the fallback access policy for a service pool (ServicePool)
+      tags:
+      - Servicespools
+  /servicespools/{uuid}/forecast:
+    get:
+      description: Forecast future usage for this service pool based on historical
+        weekly patterns
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Forecast future usage for this service pool based on historical weekly
+        patterns (ServicePool)
       tags:
       - Servicespools
   /servicespools/{uuid}/groups:

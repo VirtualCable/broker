@@ -24904,6 +24904,211 @@
                 ]
             }
         },
+        "/servicespools/{uuid}/forecast": {
+            "get": {
+                "summary": "Forecast future usage for this service pool based on historical weekly patterns (ServicePool)",
+                "description": "Forecast future usage for this service pool based on historical weekly patterns",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuthBearer": []
+                    }
+                ]
+            }
+        },
+        "/servicespools/{uuid}/cache_recommendations": {
+            "get": {
+                "summary": "Cache sizing recommendations for this service pool based on predicted usage patterns (ServicePool)",
+                "description": "Cache sizing recommendations for this service pool based on predicted usage patterns",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuthBearer": []
+                    }
+                ]
+            }
+        },
+        "/servicespools/{uuid}/cacheRecommendations": {
+            "get": {
+                "summary": "Cache sizing recommendations for this service pool based on predicted usage patterns (ServicePool)",
+                "description": "Cache sizing recommendations for this service pool based on predicted usage patterns",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servicespools"
+                ],
+                "security": [
+                    {
+                        "udsApiAuthBearer": []
+                    }
+                ]
+            }
+        },
         "/servicespools/gui": {
             "get": {
                 "summary": "Retrieve GUI representation of ServicePool items",
