@@ -287,6 +287,13 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             ),
             required_permission=types.permissions.PermissionType.READ,
         ),
+        types.rest.ModelCustomMethod(
+            "cache_recommendations",
+            True,
+            method=types.rest.CustomMethodMethod.GET,
+            description="Cache sizing recommendations for this service pool based on predicted usage patterns",
+            required_permission=types.permissions.PermissionType.READ,
+        ),
     ]
 
     # Rest api related information to complete the auto-generated API
@@ -903,4 +910,50 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 }
                 for p in points
             ],
+        }
+
+    def cache_recommendations(self, item: "Model") -> typing.Any:
+        item = ensure.is_instance(item, ServicePool)
+
+        inuse_profile = predictor.get_profile(item.id, types.stats.CounterType.INUSE)
+        cached_profile = predictor.get_profile(item.id, types.stats.CounterType.CACHED)
+
+        recommendations = predictor.cache_recommendations(
+            inuse_profile,
+            cached_profile,
+            cache_l1_srvs=item.cache_l1_srvs,
+            cache_l2_srvs=item.cache_l2_srvs,
+            initial_srvs=item.initial_srvs,
+            max_srvs=item.max_srvs,
+        )
+
+        verdicts = [r.verdict for r in recommendations]
+        return {
+            "confidence": round(predictor.confidence(inuse_profile), 3),
+            "has_data": inuse_profile.total_samples > 0,
+            "current_config": {
+                "initial_srvs": item.initial_srvs,
+                "cache_l1_srvs": item.cache_l1_srvs,
+                "cache_l2_srvs": item.cache_l2_srvs,
+                "max_srvs": item.max_srvs,
+            },
+            "slots": [
+                {
+                    "hour": r.hour,
+                    "verdict": r.verdict,
+                    "inuse_p50": r.inuse_p50,
+                    "inuse_p90": r.inuse_p90,
+                    "cached_mean": r.cached_mean,
+                    "action": r.action,
+                    "priority": r.priority,
+                }
+                for r in recommendations
+            ],
+            "summary": {
+                "starved_hours": verdicts.count("STARVED"),
+                "excess_hours": verdicts.count("EXCESS"),
+                "saturated_hours": verdicts.count("SATURATED"),
+                "ok_hours": verdicts.count("OK"),
+                "no_data_hours": verdicts.count("NO_DATA"),
+            },
         }

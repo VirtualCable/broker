@@ -465,3 +465,43 @@ class ServicePoolTest(rest.test.RESTTestCase):
 
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json()["counter"], "cached")
+
+    # --- cache_recommendations custom method ---
+
+    def test_get_cache_recommendations_empty_pool(self) -> None:
+        """GET cache_recommendations on a pool with no stats returns all NO_DATA."""
+        Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
+        pool = self._create_pool_for_fallback_tests()
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/cache_recommendations")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body["has_data"], False)
+        self.assertEqual(len(body["slots"]), 24)
+        self.assertTrue(all(s["verdict"] == "NO_DATA" for s in body["slots"]))
+        self.assertIn("current_config", body)
+        self.assertEqual(body["summary"]["no_data_hours"], 24)
+
+    def test_get_cache_recommendations_with_data(self) -> None:
+        """GET cache_recommendations on a pool with stats returns verdicts."""
+        Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
+        pool = self._create_pool_for_fallback_tests()
+        self._create_forecast_data(pool, hours=24)
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/cache_recommendations")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body["has_data"], True)
+        self.assertEqual(len(body["slots"]), 24)
+        self.assertIn("summary", body)
+        summary = body["summary"]
+        self.assertEqual(
+            summary["starved_hours"]
+            + summary["excess_hours"]
+            + summary["saturated_hours"]
+            + summary["ok_hours"]
+            + summary["no_data_hours"],
+            24,
+        )

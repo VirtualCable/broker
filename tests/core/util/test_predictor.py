@@ -144,6 +144,91 @@ class PredictorPureTest(UDSTestCase):
         self.assertEqual(predictor.detect_anomaly(profile, recent), 0.0)
 
 
+class PredictorCacheRecommendationsTest(UDSTestCase):
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        timezone.activate(datetime.timezone.utc)
+
+    def _profile_with_value(
+        self, value: float, counter: types.stats.CounterType = types.stats.CounterType.INUSE
+    ) -> predictor.Profile:
+        """Builds a profile where every (dow, hour) cell has the same value."""
+        samples = [
+            predictor.Sample(
+                when=_utc(2026, 1, 5) + datetime.timedelta(days=d, hours=h),
+                mean=value,
+                max=value,
+                count=6,
+            )
+            for d in range(14)
+            for h in range(24)
+        ]
+        return predictor.build_profile(samples, owner_id=1, counter_type=counter)
+
+    def test_no_data_when_empty_profiles(self) -> None:
+        inuse = predictor.build_profile([], owner_id=1, counter_type=types.stats.CounterType.INUSE)
+        cached = predictor.build_profile([], owner_id=1, counter_type=types.stats.CounterType.CACHED)
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=10, cache_l2_srvs=5, initial_srvs=1, max_srvs=20
+        )
+        self.assertEqual(len(recs), 24)
+        self.assertTrue(all(r.verdict == "NO_DATA" for r in recs))
+
+    def test_starved_when_inuse_exceeds_cache_l1(self) -> None:
+        inuse = self._profile_with_value(15.0)  # p50=15 >= cache_l1=10
+        cached = self._profile_with_value(2.0, types.stats.CounterType.CACHED)
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=10, cache_l2_srvs=5, initial_srvs=1, max_srvs=50
+        )
+        self.assertTrue(all(r.verdict == "STARVED" for r in recs))
+        self.assertTrue(all(r.priority == "high" for r in recs))
+
+    def test_saturated_when_inuse_hits_max(self) -> None:
+        inuse = self._profile_with_value(50.0)  # p90=50 >= max_srvs=50
+        cached = self._profile_with_value(0.0, types.stats.CounterType.CACHED)
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=10, cache_l2_srvs=5, initial_srvs=1, max_srvs=50
+        )
+        self.assertTrue(all(r.verdict == "SATURATED" for r in recs))
+
+    def test_excess_when_inuse_below_cache_and_cached_present(self) -> None:
+        inuse = self._profile_with_value(2.0)  # p90=2 < cache_l1=10
+        cached = self._profile_with_value(8.0, types.stats.CounterType.CACHED)
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=10, cache_l2_srvs=5, initial_srvs=1, max_srvs=50
+        )
+        self.assertTrue(all(r.verdict == "EXCESS" for r in recs))
+        self.assertTrue(all(r.priority == "medium" for r in recs))
+
+    def test_ok_when_inuse_within_bounds(self) -> None:
+        inuse = self._profile_with_value(5.0)  # p50=5 < cache_l1=10, p90=5 < 10
+        cached = self._profile_with_value(0.0, types.stats.CounterType.CACHED)  # no cache present
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=10, cache_l2_srvs=5, initial_srvs=1, max_srvs=50
+        )
+        self.assertTrue(all(r.verdict == "OK" for r in recs))
+        self.assertTrue(all(r.priority == "low" for r in recs))
+
+    def test_no_cache_l1_means_ok_or_no_data(self) -> None:
+        inuse = self._profile_with_value(5.0)
+        cached = self._profile_with_value(0.0, types.stats.CounterType.CACHED)
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=0, cache_l2_srvs=0, initial_srvs=1, max_srvs=50
+        )
+        # With cache_l1=0, no EXCESS/STARVED; either OK or SATURATED
+        self.assertTrue(all(r.verdict in ("OK", "SATURATED", "NO_DATA") for r in recs))
+
+    def test_returns_24_slots(self) -> None:
+        inuse = self._profile_with_value(5.0)
+        cached = self._profile_with_value(3.0, types.stats.CounterType.CACHED)
+        recs = predictor.cache_recommendations(
+            inuse, cached, cache_l1_srvs=10, cache_l2_srvs=5, initial_srvs=1, max_srvs=50
+        )
+        self.assertEqual(len(recs), 24)
+        self.assertEqual([r.hour for r in recs], list(range(24)))
+
+
 class PredictorLoadSamplesTest(UDSTestCase):
     @typing.override
     def setUp(self) -> None:

@@ -323,3 +323,136 @@ def get_profile(
     if profile.total_samples > 0:
         cache.put(key, profile, validity=consts.predictions.PROFILE_CACHE_TIMEOUT)
     return profile
+
+
+@dataclasses.dataclass
+class CacheSlotRecommendation:
+    """Cache recommendation for a single hour-of-day slot (aggregated across all weekdays)."""
+
+    hour: int
+    verdict: str  # OK, EXCESS, STARVED, SATURATED, NO_DATA
+    inuse_p50: float
+    inuse_p90: float
+    cached_mean: float
+    action: str
+    priority: str  # high, medium, low
+
+
+def _aggregate_hour_cells(profile: Profile, hour: int) -> tuple[float, float, float]:
+    """Returns (max_p50, max_p90, mean) across all weekdays for a given hour.
+
+    Uses worst-case (max) for p50/p90 so recommendations are conservative,
+    and mean for the typical value.
+    """
+    p50s: list[float] = []
+    p90s: list[float] = []
+    means: list[float] = []
+    for dow in range(7):
+        cell = profile.cells.get((dow, hour))
+        if cell is not None and cell.n > 0:
+            p50s.append(cell.p50)
+            p90s.append(cell.p90)
+            means.append(cell.mean)
+    if not p50s:
+        return 0.0, 0.0, 0.0
+    return max(p50s), max(p90s), sum(means) / len(means)
+
+
+def cache_recommendations(
+    inuse_profile: Profile,
+    cached_profile: Profile,
+    *,
+    cache_l1_srvs: int,
+    cache_l2_srvs: int,
+    initial_srvs: int,
+    max_srvs: int,
+) -> list[CacheSlotRecommendation]:
+    """Builds per-hour cache recommendations from usage profiles.
+
+    For each hour of the day (0-23), aggregates INUSE and CACHED stats
+    across all weekdays (worst-case for percentiles) and compares against
+    the pool's current cache configuration.
+
+    Verdicts:
+        SATURATED — p90(INUSE) reaches max_srvs (the pool's hard ceiling).
+        STARVED   — p75(INUSE) >= cache_l1_srvs (cache gets fully consumed).
+        EXCESS    — p90(INUSE) < cache_l1_srvs and CACHED mean > 0 (waste).
+        OK        — usage is within configured bounds.
+        NO_DATA   — no historical data for this hour.
+    """
+    recommendations: list[CacheSlotRecommendation] = []
+    for hour in range(24):
+        inuse_p50, inuse_p90, _inuse_mean = _aggregate_hour_cells(inuse_profile, hour)
+        _, _, cached_mean = _aggregate_hour_cells(cached_profile, hour)
+
+        if inuse_p90 == 0.0 and cached_mean == 0.0:
+            recommendations.append(
+                CacheSlotRecommendation(
+                    hour=hour,
+                    verdict="NO_DATA",
+                    inuse_p50=0.0,
+                    inuse_p90=0.0,
+                    cached_mean=0.0,
+                    action="No data available for this hour",
+                    priority="low",
+                )
+            )
+            continue
+
+        if max_srvs > 0 and inuse_p90 >= max_srvs:
+            recommendations.append(
+                CacheSlotRecommendation(
+                    hour=hour,
+                    verdict="SATURATED",
+                    inuse_p50=round(inuse_p50, 2),
+                    inuse_p90=round(inuse_p90, 2),
+                    cached_mean=round(cached_mean, 2),
+                    action=f"INUSE p90 ({inuse_p90:.0f}) hits max_srvs ({max_srvs}). "
+                    f"Consider increasing max_srvs or redistributing load.",
+                    priority="high",
+                )
+            )
+            continue
+
+        if cache_l1_srvs > 0 and inuse_p50 >= cache_l1_srvs:
+            recommendations.append(
+                CacheSlotRecommendation(
+                    hour=hour,
+                    verdict="STARVED",
+                    inuse_p50=round(inuse_p50, 2),
+                    inuse_p90=round(inuse_p90, 2),
+                    cached_mean=round(cached_mean, 2),
+                    action=f"INUSE p50 ({inuse_p50:.0f}) >= cache_l1 ({cache_l1_srvs}). "
+                    f"Consider raising cache_l1_srvs to at least {int(inuse_p90) + 1}.",
+                    priority="high",
+                )
+            )
+            continue
+
+        if cache_l1_srvs > 0 and inuse_p90 < cache_l1_srvs and cached_mean > 0:
+            recommendations.append(
+                CacheSlotRecommendation(
+                    hour=hour,
+                    verdict="EXCESS",
+                    inuse_p50=round(inuse_p50, 2),
+                    inuse_p90=round(inuse_p90, 2),
+                    cached_mean=round(cached_mean, 2),
+                    action=f"INUSE p90 ({inuse_p90:.0f}) < cache_l1 ({cache_l1_srvs}) "
+                    f"with cached mean {cached_mean:.1f}. Consider lowering cache_l1_srvs.",
+                    priority="medium",
+                )
+            )
+            continue
+
+        recommendations.append(
+            CacheSlotRecommendation(
+                hour=hour,
+                verdict="OK",
+                inuse_p50=round(inuse_p50, 2),
+                inuse_p90=round(inuse_p90, 2),
+                cached_mean=round(cached_mean, 2),
+                action="Usage within configured bounds",
+                priority="low",
+            )
+        )
+    return recommendations
