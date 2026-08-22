@@ -1,0 +1,249 @@
+#
+# Copyright (c) 2026 Virtual Cable S.L.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright notice,
+#      this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#      may be used to endorse or promote products derived from this software
+#      without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+"""
+Author: Adolfo Gómez, dkmaster at dkmon dot com
+"""
+
+import datetime
+import typing
+
+from django.utils import timezone
+
+from uds.core import consts
+from uds.core import types
+from uds.core.util.cache import Cache
+from uds.core.util.stats import predictor
+from uds.models import StatsCountersAccum
+
+from ...utils.test import UDSTestCase
+
+
+def _utc(year: int, month: int, day: int, hour: int = 0) -> datetime.datetime:
+    return datetime.datetime(year, month, day, hour, tzinfo=datetime.timezone.utc)
+
+
+class PredictorPureTest(UDSTestCase):
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        timezone.activate(datetime.timezone.utc)
+
+    def _profile_value_equals_hour(self, weeks: int = 2) -> predictor.Profile:
+        """Builds a profile where each sample value equals its local hour."""
+        samples: list[predictor.Sample] = []
+        for day in range(weeks * 7):
+            base = _utc(2026, 1, 5) + datetime.timedelta(days=day)
+            for hour in range(24):
+                when = base + datetime.timedelta(hours=hour)
+                samples.append(predictor.Sample(when=when, mean=float(hour), max=float(hour), count=6))
+        return predictor.build_profile(samples, owner_id=1, counter_type=types.stats.CounterType.INUSE)
+
+    def test_percentiles_empty(self) -> None:
+        self.assertEqual(predictor._percentiles([]), (0.0, 0.0, 0.0))
+
+    def test_percentiles_single(self) -> None:
+        self.assertEqual(predictor._percentiles([5.0]), (5.0, 5.0, 5.0))
+
+    def test_percentiles_ordered(self) -> None:
+        p50, p75, p90 = predictor._percentiles([float(i) for i in range(1, 101)])
+        self.assertLessEqual(p50, p75)
+        self.assertLessEqual(p75, p90)
+        self.assertLessEqual(p90, 100.0)
+
+    def test_build_profile_basic(self) -> None:
+        profile = self._profile_value_equals_hour(weeks=2)
+        cell = profile.cells.get((0, 10))
+        self.assertIsNotNone(cell)
+        assert cell is not None
+        self.assertAlmostEqual(cell.mean, 10.0)
+        self.assertEqual(cell.n, 2)
+        self.assertEqual(profile.hourly[10].n, 14)
+        self.assertEqual(profile.total_samples, 2 * 7 * 24)
+
+    def test_build_profile_cell_max(self) -> None:
+        profile = self._profile_value_equals_hour(weeks=2)
+        cell = profile.cells.get((0, 5))
+        assert cell is not None
+        self.assertAlmostEqual(cell.max, 5.0)
+
+    def test_cell_for_fallback_hourly(self) -> None:
+        samples = [predictor.Sample(when=_utc(2026, 1, 5, 10), mean=10.0, max=10.0, count=6)]
+        profile = predictor.build_profile(samples, owner_id=1, counter_type=types.stats.CounterType.INUSE)
+        self.assertIsNone(profile.cells.get((2, 10)))
+        self.assertIsNotNone(profile.hourly.get(10))
+        cell = profile.cell_for(_utc(2026, 1, 7, 10))
+        self.assertIsNotNone(cell)
+
+    def test_cell_for_none_when_no_data(self) -> None:
+        samples = [predictor.Sample(when=_utc(2026, 1, 5, 10), mean=10.0, max=10.0, count=6)]
+        profile = predictor.build_profile(samples, owner_id=1, counter_type=types.stats.CounterType.INUSE)
+        self.assertIsNone(profile.cell_for(_utc(2026, 1, 6, 3)))
+
+    def test_confidence_empty(self) -> None:
+        profile = predictor.build_profile([], owner_id=1, counter_type=types.stats.CounterType.INUSE)
+        self.assertEqual(predictor.confidence(profile), 0.0)
+
+    def test_confidence_grows_with_history(self) -> None:
+        low = predictor.confidence(self._profile_value_equals_hour(weeks=2))
+        high = predictor.confidence(self._profile_value_equals_hour(weeks=9))
+        self.assertGreater(high, low)
+        self.assertAlmostEqual(high, 1.0)
+
+    def test_forecast_returns_points(self) -> None:
+        profile = self._profile_value_equals_hour(weeks=2)
+        points = predictor.forecast(profile, _utc(2026, 1, 5, 0), 24)
+        self.assertEqual(len(points), 24)
+        self.assertEqual(points[0].when, _utc(2026, 1, 5, 0))
+        for point, expected_hour in zip(points, range(24), strict=True):
+            assert point.cell is not None
+            self.assertAlmostEqual(point.cell.mean, float(expected_hour))
+
+    def test_forecast_zero_hours(self) -> None:
+        profile = self._profile_value_equals_hour(weeks=2)
+        self.assertEqual(predictor.forecast(profile, _utc(2026, 1, 5, 0), 0), [])
+
+    def test_detect_anomaly_matching(self) -> None:
+        profile = self._profile_value_equals_hour(weeks=2)
+        recent = [predictor.Sample(when=_utc(2026, 1, 19, 10), mean=10.0, max=10.0, count=6)]
+        self.assertLess(predictor.detect_anomaly(profile, recent), consts.predictions.ANOMALY_THRESHOLD)
+
+    def test_detect_anomaly_broken(self) -> None:
+        profile = self._profile_value_equals_hour(weeks=2)
+        recent = [predictor.Sample(when=_utc(2026, 1, 19, 10), mean=100.0, max=100.0, count=6)]
+        self.assertGreaterEqual(predictor.detect_anomaly(profile, recent), consts.predictions.ANOMALY_THRESHOLD)
+
+    def test_detect_anomaly_no_matching_cell(self) -> None:
+        samples = [predictor.Sample(when=_utc(2026, 1, 5, 10), mean=10.0, max=10.0, count=6)]
+        profile = predictor.build_profile(samples, owner_id=1, counter_type=types.stats.CounterType.INUSE)
+        recent = [predictor.Sample(when=_utc(2026, 1, 6, 3), mean=5.0, max=5.0, count=6)]
+        self.assertEqual(predictor.detect_anomaly(profile, recent), 0.0)
+
+
+class PredictorLoadSamplesTest(UDSTestCase):
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        timezone.activate(datetime.timezone.utc)
+
+    def _create_hourly_accum(self, pool_id: int, counter: types.stats.CounterType, hours: int) -> None:
+        records = [
+            StatsCountersAccum(
+                owner_type=types.stats.CounterOwnerType.SERVICEPOOL,
+                owner_id=pool_id,
+                counter_type=counter,
+                interval_type=StatsCountersAccum.IntervalType.HOUR,
+                stamp=int((_utc(2026, 1, 5, 0) + datetime.timedelta(hours=i + 1)).timestamp()),
+                v_count=6,
+                v_sum=6 * i,
+                v_max=i,
+                v_min=0,
+            )
+            for i in range(hours)
+        ]
+        StatsCountersAccum.objects.bulk_create(records)
+
+    def test_load_samples_returns_mean_and_max(self) -> None:
+        self._create_hourly_accum(1, types.stats.CounterType.INUSE, 24)
+        samples = predictor.load_samples(
+            1, types.stats.CounterType.INUSE, since=_utc(2026, 1, 5, 0), to=_utc(2026, 1, 6, 0)
+        )
+        self.assertEqual(len(samples), 24)
+        self.assertAlmostEqual(samples[0].mean, 0.0)
+        self.assertAlmostEqual(samples[1].mean, 1.0)
+        self.assertEqual(samples[1].max, 1)
+
+    def test_load_samples_skips_dummy_rows(self) -> None:
+        StatsCountersAccum.objects.create(
+            owner_type=types.stats.CounterOwnerType.SERVICEPOOL,
+            owner_id=1,
+            counter_type=types.stats.CounterType.INUSE,
+            interval_type=StatsCountersAccum.IntervalType.HOUR,
+            stamp=int(_utc(2026, 1, 5, 1).timestamp()),
+            v_count=0,
+            v_sum=0,
+            v_max=0,
+            v_min=0,
+        )
+        self.assertEqual(
+            len(
+                predictor.load_samples(
+                    1, types.stats.CounterType.INUSE, since=_utc(2026, 1, 5, 0), to=_utc(2026, 1, 6, 0)
+                )
+            ),
+            0,
+        )
+
+    def test_load_samples_respects_time_window(self) -> None:
+        self._create_hourly_accum(1, types.stats.CounterType.INUSE, 24)
+        samples = predictor.load_samples(
+            1,
+            types.stats.CounterType.INUSE,
+            since=_utc(2026, 1, 5, 5),
+            to=_utc(2026, 1, 5, 10),
+        )
+        self.assertEqual(len(samples), 5)
+
+
+class PredictorGetProfileTest(UDSTestCase):
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        timezone.activate(datetime.timezone.utc)
+        Cache.delete(consts.predictions.PROFILE_CACHE_OWNER)
+
+    @typing.override
+    def tearDown(self) -> None:
+        Cache.delete(consts.predictions.PROFILE_CACHE_OWNER)
+        super().tearDown()
+
+    def test_get_profile_empty_not_cached(self) -> None:
+        profile = predictor.get_profile(9999, types.stats.CounterType.INUSE)
+        self.assertEqual(profile.total_samples, 0)
+        self.assertEqual(predictor.confidence(profile), 0.0)
+
+    def test_get_profile_caches_and_reuses(self) -> None:
+        now = timezone.now()
+        records = [
+            StatsCountersAccum(
+                owner_type=types.stats.CounterOwnerType.SERVICEPOOL,
+                owner_id=1,
+                counter_type=types.stats.CounterType.INUSE,
+                interval_type=StatsCountersAccum.IntervalType.HOUR,
+                stamp=int((now - datetime.timedelta(hours=24 - i)).replace(minute=0, second=0).timestamp()),
+                v_count=6,
+                v_sum=6 * 5,
+                v_max=5,
+                v_min=0,
+            )
+            for i in range(24)
+        ]
+        StatsCountersAccum.objects.bulk_create(records)
+        profile = predictor.get_profile(1, types.stats.CounterType.INUSE)
+        self.assertGreater(profile.total_samples, 0)
+        cached = Cache(consts.predictions.PROFILE_CACHE_OWNER).get("1-3")
+        self.assertIsInstance(cached, predictor.Profile)
