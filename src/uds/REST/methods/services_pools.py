@@ -62,6 +62,7 @@ from uds.core.util import ui as ui_utils
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_now
+from uds.core.util.stats import predictor
 from uds.models import Account
 from uds.models import Image
 from uds.models import OSManager
@@ -265,6 +266,26 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     ),
                 },
             ),
+        ),
+        types.rest.ModelCustomMethod(
+            "forecast",
+            True,
+            method=types.rest.CustomMethodMethod.GET,
+            description="Forecast future usage for this service pool based on historical weekly patterns",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "counter": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Counter type to forecast (inuse, assigned, cached). Default: inuse",
+                    ),
+                    "hours": types.rest.api.SchemaProperty(
+                        type="integer",
+                        description="Number of hours to forecast from now. Default: 72",
+                    ),
+                },
+            ),
+            required_permission=types.permissions.PermissionType.READ,
         ),
     ]
 
@@ -849,3 +870,37 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             source=types.log.LogSource.REST,
             log_name=self._params.get("log_name", None),
         )
+
+    def forecast(self, item: "Model") -> typing.Any:
+        item = ensure.is_instance(item, ServicePool)
+
+        counter_map: dict[str, types.stats.CounterType] = {
+            "inuse": types.stats.CounterType.INUSE,
+            "assigned": types.stats.CounterType.ASSIGNED,
+            "cached": types.stats.CounterType.CACHED,
+        }
+        counter_name = str(self._params.get("counter", "inuse")).lower()
+        counter = counter_map.get(counter_name, types.stats.CounterType.INUSE)
+        hours = int(self._params.get("hours", 72))
+        hours = max(1, min(hours, 24 * 7))  # Cap to one week
+
+        profile = predictor.get_profile(item.id, counter)
+        points = predictor.forecast(profile, sql_now().replace(minute=0, second=0, microsecond=0), hours)
+
+        return {
+            "counter": counter_name,
+            "confidence": round(predictor.confidence(profile), 3),
+            "has_data": profile.total_samples > 0,
+            "samples": profile.total_samples,
+            "points": [
+                {
+                    "stamp": int(p.when.timestamp()),
+                    "has_data": p.cell is not None,
+                    "p50": round(p.cell.p50, 2) if p.cell else 0.0,
+                    "p75": round(p.cell.p75, 2) if p.cell else 0.0,
+                    "p90": round(p.cell.p90, 2) if p.cell else 0.0,
+                    "max": round(p.cell.max, 2) if p.cell else 0.0,
+                }
+                for p in points
+            ],
+        }

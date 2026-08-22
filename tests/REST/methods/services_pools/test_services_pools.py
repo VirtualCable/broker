@@ -28,10 +28,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import datetime
 import logging
 import typing
 
+from django.utils import timezone
+
 from uds import models
+from uds.core import types
+from uds.core.consts import predictions as pred_consts
+from uds.core.util.cache import Cache
 from uds.core.types.states import State
 
 from tests.fixtures import services as services_fixtures
@@ -380,3 +386,82 @@ class ServicePoolTest(rest.test.RESTTestCase):
 
         pool.refresh_from_db()
         self.assertEqual(pool.fallbackAccess, State.ALLOW)
+
+    # --- forecast custom method ---
+
+    def _create_forecast_data(self, pool: models.ServicePool, hours: int = 24) -> None:
+        """Seed StatsCountersAccum HOUR rows for the pool so forecast has data."""
+        now = timezone.now()
+        records = [
+            models.StatsCountersAccum(
+                owner_type=types.stats.CounterOwnerType.SERVICEPOOL,
+                owner_id=pool.id,
+                counter_type=types.stats.CounterType.INUSE,
+                interval_type=models.StatsCountersAccum.IntervalType.HOUR,
+                stamp=int((now - datetime.timedelta(hours=hours - i)).replace(minute=0, second=0).timestamp()),
+                v_count=6,
+                v_sum=6 * 5,
+                v_max=5,
+                v_min=0,
+            )
+            for i in range(hours)
+        ]
+        models.StatsCountersAccum.objects.bulk_create(records)
+
+    def test_get_forecast_empty_pool(self) -> None:
+        """GET forecast on a pool with no stats returns has_data=False."""
+        Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
+        pool = self._create_pool_for_fallback_tests()
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/forecast")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body["has_data"], False)
+        self.assertEqual(body["samples"], 0)
+        self.assertEqual(body["counter"], "inuse")
+        self.assertEqual(len(body["points"]), 72)  # default hours
+
+    def test_get_forecast_with_data(self) -> None:
+        """GET forecast on a pool with stats returns predicted points."""
+        Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
+        pool = self._create_pool_for_fallback_tests()
+        self._create_forecast_data(pool, hours=24)
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/forecast")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body["has_data"], True)
+        self.assertGreater(body["samples"], 0)
+        self.assertEqual(len(body["points"]), 72)
+        # Points should have the expected keys
+        point = body["points"][0]
+        self.assertIn("stamp", point)
+        self.assertIn("p50", point)
+        self.assertIn("p75", point)
+        self.assertIn("p90", point)
+        self.assertIn("max", point)
+        self.assertIn("has_data", point)
+
+    def test_get_forecast_custom_hours(self) -> None:
+        """GET forecast with ?hours=24 returns 24 points."""
+        Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
+        pool = self._create_pool_for_fallback_tests()
+        self._create_forecast_data(pool, hours=24)
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/forecast?hours=24")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(len(response.json()["points"]), 24)
+
+    def test_get_forecast_counter_param(self) -> None:
+        """GET forecast with ?counter=cached uses CACHED counter."""
+        Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
+        pool = self._create_pool_for_fallback_tests()
+        self._create_forecast_data(pool, hours=24)
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/forecast?counter=cached")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["counter"], "cached")
