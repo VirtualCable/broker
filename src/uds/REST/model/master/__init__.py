@@ -423,7 +423,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             case []:  # Same as overview, but with all data
                 return [i.as_dict() for i in self.get_items(sumarize=False)]
             case [consts.rest.OVERVIEW]:
-                return [i.as_dict() for i in self.get_items()]
+                # Explicit: get_items() defaults to sumarize=False, so relying on the
+                # default here silently served the full item and get_item_summary()
+                # was never reached.
+                return [i.as_dict() for i in self.get_items(sumarize=True)]
             case [consts.rest.OVERVIEW, *_fails]:
                 raise exceptions.rest.RequestError("Invalid overview request") from None
             case [consts.rest.TABLEINFO]:
