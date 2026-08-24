@@ -41,7 +41,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 16:38+0200\n"
+"POT-Creation-Date: 2026-08-24 13:28+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Chinese (http://app.transifex.com/openuds/openuds/language/"
@@ -64,7 +64,7 @@ msgstr "帐号"
 #: REST/methods/osmanagers.py:77 REST/methods/providers.py:119
 #: REST/methods/reports.py:86 REST/methods/servers_management.py:519
 #: REST/methods/services.py:289 REST/methods/services_pool_groups.py:72
-#: REST/methods/services_pools.py:183 REST/methods/transports.py:94
+#: REST/methods/services_pools.py:184 REST/methods/transports.py:94
 #: REST/methods/tunnels_management.py:185 REST/methods/user_services.py:471
 #: REST/methods/user_services.py:552 REST/methods/users_groups.py:194
 #: core/types/rest/stock/fields.py:94
@@ -91,7 +91,7 @@ msgstr "时间标记"
 #: REST/methods/accounts.py:98 REST/methods/authenticators.py:164
 #: REST/methods/calendars.py:84 REST/methods/meta_pools.py:132
 #: REST/methods/mfas.py:81 REST/methods/servers_management.py:525
-#: REST/methods/services_pools.py:192 REST/methods/transports.py:99
+#: REST/methods/services_pools.py:193 REST/methods/transports.py:99
 #: REST/methods/tunnels_management.py:190
 msgid "tags"
 msgstr "标签"
@@ -236,8 +236,8 @@ msgid "MFA"
 msgstr "外交部"
 
 #: REST/methods/authenticators.py:224 REST/methods/meta_pools.py:129
-#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:188
-#: REST/methods/services_pools.py:511 core/consts/calendar.py:190
+#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:539 core/consts/calendar.py:190
 msgid "Visible"
 msgstr "可见"
 
@@ -368,11 +368,11 @@ msgstr "政策"
 msgid "HA Policy"
 msgstr "医管局政策"
 
-#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:185
+#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:186
 msgid "User services"
 msgstr "用户服务"
 
-#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:186
+#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:187
 msgid "In Preparation"
 msgstr "在筹备"
 
@@ -380,15 +380,15 @@ msgstr "在筹备"
 msgid "Pool Group"
 msgstr "池组"
 
-#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:435
+#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:463
 msgid "Default"
 msgstr "默认"
 
-#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:475
+#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:503
 msgid "Short name"
 msgstr "简称"
 
-#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:476
+#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:504
 msgid "Short name for user service visualization"
 msgstr "用户服务可视化的简称"
 
@@ -408,12 +408,12 @@ msgstr ""
 "服务池高可用性策略。如果启用此策略，当某个服务池发生故障时，它将在另一个服务"
 "池中重新启动。请谨慎启用！"
 
-#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:190
-#: REST/methods/services_pools.py:520
+#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:548
 msgid "Pool group"
 msgstr "池组"
 
-#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:521
+#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:549
 msgid "Pool group for this pool (for pool classify on display)"
 msgstr "此池的池组（用于显示池分类）"
 
@@ -421,11 +421,11 @@ msgstr "此池的池组（用于显示池分类）"
 msgid "If active, metapool will be visible for users"
 msgstr "如果处于活动状态，则元数将对用户可见"
 
-#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:525
+#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:553
 msgid "Calendar access denied text"
 msgstr "日历访问被拒绝的文本"
 
-#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:526
+#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:554
 msgid ""
 "Custom message to be shown to users if access is limited by calendar rules."
 msgstr "如果访问受日历规则限制，则向用户显示的自定义消息。"
@@ -955,131 +955,131 @@ msgstr "好"
 msgid "Services Pool Groups"
 msgstr "服务池组"
 
-#: REST/methods/services_pools.py:182 REST/methods/transports.py:97
+#: REST/methods/services_pools.py:183 REST/methods/transports.py:97
 #: REST/methods/transports.py:134
 msgid "Service Pools"
 msgstr "服务池"
 
-#: REST/methods/services_pools.py:184 REST/methods/users_groups.py:197
+#: REST/methods/services_pools.py:185 REST/methods/users_groups.py:197
 #: REST/methods/users_groups.py:455
 msgid "Status"
 msgstr "状态"
 
-#: REST/methods/services_pools.py:187
+#: REST/methods/services_pools.py:188
 msgid "Usage"
 msgstr "用法"
 
-#: REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:190
 msgid "Shows transports"
 msgstr "显示运输"
 
-#: REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:192
 msgid "Parent service"
 msgstr "家长服务"
 
-#: REST/methods/services_pools.py:463
+#: REST/methods/services_pools.py:491
 msgid "Create at least a service before creating a new service pool"
 msgstr "在创建新服务池之前至少创建一个服务"
 
-#: REST/methods/services_pools.py:486
+#: REST/methods/services_pools.py:514
 msgid "Base service"
 msgstr "基本服务"
 
-#: REST/methods/services_pools.py:487
+#: REST/methods/services_pools.py:515
 msgid "Service used as base of this service pool"
 msgstr "用作此服务池基础的服务"
 
-#: REST/methods/services_pools.py:494
+#: REST/methods/services_pools.py:522
 msgid "OS Manager"
 msgstr "OS经理"
 
-#: REST/methods/services_pools.py:495
+#: REST/methods/services_pools.py:523
 msgid "OS Manager used as base of this service pool"
 msgstr "OS Manager用作此服务池的基础"
 
-#: REST/methods/services_pools.py:502
+#: REST/methods/services_pools.py:530
 msgid "Publish on save"
 msgstr "发布并保存"
 
-#: REST/methods/services_pools.py:504
+#: REST/methods/services_pools.py:532
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
 msgstr "如果启用，服务将在保存时发布（仅适用于新的服务池）。"
 
-#: REST/methods/services_pools.py:512
+#: REST/methods/services_pools.py:540
 msgid "If active, transport will be visible for users"
 msgstr "如果处于活动状态，则用户可以看到传输"
 
-#: REST/methods/services_pools.py:530
+#: REST/methods/services_pools.py:558
 msgid "Custom launch message text"
 msgstr "自定义启动消息文本"
 
-#: REST/methods/services_pools.py:532
+#: REST/methods/services_pools.py:560
 msgid ""
 "Custom message to be shown to users, if active, when trying to start a "
 "service from this pool."
 msgstr "尝试从该池启动服务时，如果处于活动状态，则向用户显示的自定义消息。"
 
-#: REST/methods/services_pools.py:538
+#: REST/methods/services_pools.py:566
 msgid "Enable custom launch message"
 msgstr "启用自定义启动消息"
 
-#: REST/methods/services_pools.py:539
+#: REST/methods/services_pools.py:567
 msgid "If active, the custom launch message will be shown to users"
 msgstr "如果激活，自定义启动消息将显示给用户"
 
-#: REST/methods/services_pools.py:541
+#: REST/methods/services_pools.py:569
 msgid "Availability"
 msgstr "可用性"
 
-#: REST/methods/services_pools.py:546
+#: REST/methods/services_pools.py:574
 msgid "Initial available services"
 msgstr "初始可用服务"
 
-#: REST/methods/services_pools.py:547
+#: REST/methods/services_pools.py:575
 msgid "Services created initially for this service pool"
 msgstr "最初为此服务池创建的服务"
 
-#: REST/methods/services_pools.py:553
+#: REST/methods/services_pools.py:581
 msgid "Services to keep in cache"
 msgstr "保留在缓存中的服务"
 
-#: REST/methods/services_pools.py:554
+#: REST/methods/services_pools.py:582
 msgid "Services kept in cache for improved user service assignation"
 msgstr "保留在缓存中的服务用于改进用户服务分配"
 
-#: REST/methods/services_pools.py:560
+#: REST/methods/services_pools.py:588
 msgid "Services to keep in L2 cache"
 msgstr "要保留在L2缓存中的服务"
 
-#: REST/methods/services_pools.py:561
+#: REST/methods/services_pools.py:589
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr "为了改进服务分配，服务会保留在二级缓存中。"
 
-#: REST/methods/services_pools.py:567
+#: REST/methods/services_pools.py:595
 msgid "Maximum number of services to provide"
 msgstr "要提供的最大服务数"
 
-#: REST/methods/services_pools.py:569
+#: REST/methods/services_pools.py:597
 msgid ""
 "Maximum number of service (assigned and L1 cache) that can be created for "
 "this service"
 msgstr "可以为此服务创建的最大服务数（已分配和L1缓存）"
 
-#: REST/methods/services_pools.py:575
+#: REST/methods/services_pools.py:603
 msgid "Show transports"
 msgstr "显示运输"
 
-#: REST/methods/services_pools.py:576
+#: REST/methods/services_pools.py:604
 msgid "If active, transports will be shown to users"
 msgstr "如果启用，运输信息将显示给用户。"
 
-#: REST/methods/services_pools.py:582
+#: REST/methods/services_pools.py:610
 msgid "Allow removal by users"
 msgstr "允许用户删除"
 
-#: REST/methods/services_pools.py:584
+#: REST/methods/services_pools.py:612
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
@@ -1088,25 +1088,25 @@ msgstr ""
 "如果启用此功能，用户可以“手动”移除服务。请谨慎操作，因为用户将拥有删除自身服"
 "务的“权限”。"
 
-#: REST/methods/services_pools.py:590
+#: REST/methods/services_pools.py:618
 msgid "Allow reset by users"
 msgstr "允许用户重置"
 
-#: REST/methods/services_pools.py:591
+#: REST/methods/services_pools.py:619
 msgid "If active, the user will be allowed to reset the service"
 msgstr "如果处于活动状态，则允许用户重置服务"
 
-#: REST/methods/services_pools.py:596
+#: REST/methods/services_pools.py:624
 msgid "Ignores unused"
 msgstr "忽略未使用的"
 
-#: REST/methods/services_pools.py:598
+#: REST/methods/services_pools.py:626
 msgid ""
 "If the option is enabled, UDS will not attempt to detect and remove the user "
 "services assigned but not in use."
 msgstr "如果启用该选项，UDS将不会尝试检测并删除已分配但未使用的用户服务。"
 
-#: REST/methods/services_pools.py:605
+#: REST/methods/services_pools.py:633
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:68
 #: osmanagers/LinuxOsManager/linux_randompass_osmanager.py:63
 #: osmanagers/WindowsOsManager/windows_domain.py:80
@@ -1114,23 +1114,23 @@ msgstr "如果启用该选项，UDS将不会尝试检测并删除已分配但未
 msgid "Account"
 msgstr "帐户"
 
-#: REST/methods/services_pools.py:606
+#: REST/methods/services_pools.py:634
 msgid "Account used for this service pool"
 msgstr "用于此服务池的帐户"
 
-#: REST/methods/services_pools.py:617
+#: REST/methods/services_pools.py:645
 msgid "Name too long"
 msgstr "名字太长"
 
-#: REST/methods/services_pools.py:620
+#: REST/methods/services_pools.py:648
 msgid "Short name too long"
 msgstr "短名太长"
 
-#: REST/methods/services_pools.py:627
+#: REST/methods/services_pools.py:655
 msgid "Base service does not exist anymore"
 msgstr "基本服务不再存在"
 
-#: REST/methods/services_pools.py:644 REST/methods/services_pools.py:675
+#: REST/methods/services_pools.py:672 REST/methods/services_pools.py:703
 msgid "This service requires an OS Manager"
 msgstr "此服务需要OS Manager"
 
@@ -1337,7 +1337,7 @@ msgstr "{0}的用户"
 #: transports/PCoIP_enterprise/pcoip.py:60 transports/RDP/rdp_base.py:74
 #: transports/RDPEmbedded/common.py:151
 #: transports/RDSEmbedded_enterprise/common.py:123
-#: transports/RGS_enterprise/rgs_base.py:76 transports/SPICE/spice_base.py:71
+#: transports/RGS_enterprise/rgs_base.py:77 transports/SPICE/spice_base.py:71
 #: transports/X2GO/x2go_base.py:69 web/forms/login_form.py:44
 msgid "Username"
 msgstr "用户名"
@@ -1444,7 +1444,7 @@ msgstr "AD连接的兼容性（通常是Windows 2000及更高版本）"
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:149
+#: auths/SAML/saml.py:113 core/consts/__init__.py:150
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -1492,7 +1492,7 @@ msgstr "在所选基础上具有读取权限的用户名（使用USER@DOMAIN.DOM
 #: transports/PCoIP_enterprise/pcoip.py:67 transports/RDP/rdp_base.py:81
 #: transports/RDPEmbedded/common.py:157
 #: transports/RDSEmbedded_enterprise/common.py:129
-#: transports/RGS_enterprise/rgs_base.py:82 transports/SPICE/spice_base.py:78
+#: transports/RGS_enterprise/rgs_base.py:83 transports/SPICE/spice_base.py:78
 #: web/forms/login_form.py:46 web/forms/login_form.py:47
 msgid "Password"
 msgstr "密码"
@@ -2704,19 +2704,19 @@ msgstr "基础认证者"
 msgid "Group name"
 msgstr "团队名字"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Admin"
 msgstr "管理员"
 
-#: core/consts/__init__.py:148
+#: core/consts/__init__.py:149
 msgid "Staff member"
 msgstr "工作人员"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Anonymous"
 msgstr "匿名的"
 
-#: core/consts/__init__.py:151
+#: core/consts/__init__.py:152
 msgid "Unknown role"
 msgstr "未知角色"
 
@@ -4786,50 +4786,50 @@ msgstr "示例无用字段"
 msgid "This is a useless field, for sample and testing pourposes"
 msgstr "这是一个无用的领域，用于样品和测试用途"
 
-#: mfas/TOTP/mfa.py:64
+#: mfas/TOTP/mfa.py:65
 msgid "TOTP Based MFA"
 msgstr "基于 TOTP 的 MFA"
 
-#: mfas/TOTP/mfa.py:66
+#: mfas/TOTP/mfa.py:67
 msgid "TOTP Based MFA (Google Authenticator, etc)"
 msgstr "基于 TOTP 的 MFA（Google 身份验证器等）"
 
-#: mfas/TOTP/mfa.py:71
+#: mfas/TOTP/mfa.py:72
 msgid "Issuer"
 msgstr "发行人"
 
-#: mfas/TOTP/mfa.py:74
+#: mfas/TOTP/mfa.py:75
 msgid "Issuer for OTP. Once it's created it can't be changed"
 msgstr "OTP 的发行者。一旦创建就无法更改"
 
-#: mfas/TOTP/mfa.py:81
+#: mfas/TOTP/mfa.py:82
 msgid "Valid Window"
 msgstr "有效窗口"
 
-#: mfas/TOTP/mfa.py:86
+#: mfas/TOTP/mfa.py:87
 msgid "Number of valid codes before and after the current one"
 msgstr "当前码前后有效码数"
 
-#: mfas/TOTP/mfa.py:115
+#: mfas/TOTP/mfa.py:116
 msgid "Authentication Code"
 msgstr "验证码"
 
-#: mfas/TOTP/mfa.py:155
+#: mfas/TOTP/mfa.py:156
 msgid "Enter your authentication code"
 msgstr "输入您的验证码"
 
-#: mfas/TOTP/mfa.py:172
+#: mfas/TOTP/mfa.py:173
 msgid ""
 "Please, use your Authenticator to add your account. (i.e. Google "
 "Authenticator, Authy, ...)"
 msgstr ""
 "请使用您的身份验证器添加您的帐户。（例如 Google Authenticator、Authy 等）"
 
-#: mfas/TOTP/mfa.py:205
+#: mfas/TOTP/mfa.py:209
 msgid "Code is already used. Wait a minute and try again."
 msgstr "代码已被使用。请稍等，然后重试。"
 
-#: mfas/TOTP/mfa.py:214
+#: mfas/TOTP/mfa.py:231
 msgid "Invalid code"
 msgstr "无效的代码"
 
@@ -4995,7 +4995,7 @@ msgstr "Os Manager 使用活动目录控制 Linux 虚拟机"
 #: transports/RDPEmbedded/common.py:169
 #: transports/RDSEmbedded_enterprise/common.py:143
 #: transports/RDS_enterprise/rds_base.py:61
-#: transports/RGS_enterprise/rgs_base.py:88
+#: transports/RGS_enterprise/rgs_base.py:89
 msgid "Domain"
 msgstr "域"
 
@@ -6798,7 +6798,9 @@ msgid "HyperV Clone Generation 2"
 msgstr "Hyper-V 克隆第二代"
 
 #: services/Morpheus_enterprise/provider.py:39
-msgid "HPE Morpheus Provider"
+#, fuzzy
+#| msgid "HPE Morpheus Provider"
+msgid "HPE Morpheus"
 msgstr "HPE Morpheus 提供商"
 
 #: services/Morpheus_enterprise/provider.py:41
@@ -8520,62 +8522,6 @@ msgstr "文件夹"
 msgid "Folder containing base machines"
 msgstr "包含基础机器的文件夹"
 
-#: temp_for_locales.py:164
-msgid "Spanish"
-msgstr "西班牙语"
-
-#: temp_for_locales.py:165
-msgid "English"
-msgstr "英语"
-
-#: temp_for_locales.py:166
-msgid "French"
-msgstr "法国"
-
-#: temp_for_locales.py:167
-msgid "German"
-msgstr "德语"
-
-#: temp_for_locales.py:168
-msgid "Portuguese"
-msgstr "葡萄牙语"
-
-#: temp_for_locales.py:169
-msgid "Italian"
-msgstr "意大利"
-
-#: temp_for_locales.py:170
-msgid "Dutch"
-msgstr "荷兰语"
-
-#: temp_for_locales.py:171
-msgid "Japanese"
-msgstr "日本人"
-
-#: temp_for_locales.py:172
-msgid "Arabic"
-msgstr "阿拉伯"
-
-#: temp_for_locales.py:173
-msgid "Russian"
-msgstr "俄语"
-
-#: temp_for_locales.py:174
-msgid "Catalan"
-msgstr "加泰罗尼亚"
-
-#: temp_for_locales.py:175
-msgid "Basque"
-msgstr "巴斯克"
-
-#: temp_for_locales.py:176
-msgid "Galician"
-msgstr "加利西亚语"
-
-#: temp_for_locales.py:177
-msgid "Chinese"
-msgstr "中文"
-
 #: templates/uds/reports/lists/admin-activity.html:11
 #: templates/uds/reports/lists/failed-logins.html:11
 #: templates/uds/reports/stats/cache-efficiency.html:11
@@ -8771,7 +8717,7 @@ msgstr "使用HTML5客户端的RDP协议"
 #: transports/RDP/rdp_base.py:67 transports/RDPEmbedded/common.py:145
 #: transports/RDSEmbedded_enterprise/common.py:117
 #: transports/RDS_enterprise/rds_base.py:45
-#: transports/RGS_enterprise/rgs_base.py:70
+#: transports/RGS_enterprise/rgs_base.py:71
 msgid "Empty creds"
 msgstr "空的信誉"
 
@@ -8792,7 +8738,7 @@ msgstr "如果选中，则用于连接的凭据将为emtpy"
 #: transports/PCoIP_enterprise/pcoip.py:62 transports/RDP/rdp_base.py:76
 #: transports/RDPEmbedded/common.py:153
 #: transports/RDSEmbedded_enterprise/common.py:125
-#: transports/RGS_enterprise/rgs_base.py:78 transports/SPICE/spice_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:79 transports/SPICE/spice_base.py:72
 #: transports/X2GO/x2go_base.py:70
 msgid "If not empty, this username will be always used as credential"
 msgstr "如果不为空，则此用户名将始终用作凭据"
@@ -8804,7 +8750,7 @@ msgstr "如果不为空，则此用户名将始终用作凭据"
 #: transports/PCoIP_enterprise/pcoip.py:69 transports/RDP/rdp_base.py:83
 #: transports/RDPEmbedded/common.py:159
 #: transports/RDSEmbedded_enterprise/common.py:131
-#: transports/RGS_enterprise/rgs_base.py:84 transports/SPICE/spice_base.py:79
+#: transports/RGS_enterprise/rgs_base.py:85 transports/SPICE/spice_base.py:79
 msgid "If not empty, this password will be always used as credential"
 msgstr "如果不为空，则此密码将始终用作凭证"
 
@@ -9242,6 +9188,7 @@ msgid "Amazon DCV Protocol. Direct connection."
 msgstr "亚马逊 DCV 协议。直接连接。"
 
 #: transports/NICEDCV_enterprise/nicedcv_base.py:63
+#: transports/RGS_enterprise/rgs_base.py:183
 msgid "Full screen"
 msgstr "全屏"
 
@@ -9646,13 +9593,10 @@ msgid "Maximum webcam frames per second (1-60). Defaults to 15."
 msgstr "网络摄像头每秒最大帧数（1-60帧）。默认值为15帧。"
 
 #: transports/RDPEmbedded/common.py:272
-#| msgid "Allow Smartcards"
 msgid "Enable Smartcard"
 msgstr "启用智能卡"
 
 #: transports/RDPEmbedded/common.py:275
-#| msgid ""
-#| "If checked, the local microphone will be redirected to the remote session"
 msgid ""
 "If checked, the local smartcard reader will be redirected to the remote "
 "session"
@@ -9753,88 +9697,108 @@ msgstr "RGS"
 msgid "HP RGS Protocol. Direct connection."
 msgstr "HP RGS 协议。直接连接。"
 
-#: transports/RGS_enterprise/rgs_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:73
 msgid "If checked, the credentials used to connect will be empty"
 msgstr "如果选中此项，则用于连接的凭据将为空。"
 
-#: transports/RGS_enterprise/rgs_base.py:91
+#: transports/RGS_enterprise/rgs_base.py:92
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr "如果此域不为空，则始终将其用作凭据（DOMAIN\\user）。"
 
-#: transports/RGS_enterprise/rgs_base.py:99
+#: transports/RGS_enterprise/rgs_base.py:100
 msgid "Image quality"
 msgstr "图像质量"
 
-#: transports/RGS_enterprise/rgs_base.py:104
+#: transports/RGS_enterprise/rgs_base.py:105
 msgid "Quality of the image codec (0-100)"
 msgstr "图像编解码器质量（0-100）"
 
-#: transports/RGS_enterprise/rgs_base.py:109
+#: transports/RGS_enterprise/rgs_base.py:110
 msgid "Adjustable quality"
 msgstr "可调节质量"
 
-#: transports/RGS_enterprise/rgs_base.py:112
+#: transports/RGS_enterprise/rgs_base.py:113
 msgid ""
 "If checked, the image quality will be automatically adjusted based on "
 "bandwidth"
 msgstr "选中此项后，图像质量将根据带宽自动调整。"
 
-#: transports/RGS_enterprise/rgs_base.py:119
+#: transports/RGS_enterprise/rgs_base.py:120
 msgid "Min. adjustable quality"
 msgstr "最小可调质量"
 
-#: transports/RGS_enterprise/rgs_base.py:125
+#: transports/RGS_enterprise/rgs_base.py:126
 msgid "Lowest image quality allowed when adjusting to keep a stable frame rate"
 msgstr "调整图像质量以保持稳定的帧速率时允许的最低图像质量"
 
-#: transports/RGS_enterprise/rgs_base.py:132
+#: transports/RGS_enterprise/rgs_base.py:133
 msgid "Adjustable frame rate"
 msgstr "可调节帧速率"
 
-#: transports/RGS_enterprise/rgs_base.py:138
+#: transports/RGS_enterprise/rgs_base.py:139
 msgid "Frame rate threshold (fps) at which the image quality starts to adapt"
 msgstr "帧速率阈值（fps），超过该阈值时图像质量开始适应"
 
-#: transports/RGS_enterprise/rgs_base.py:144
+#: transports/RGS_enterprise/rgs_base.py:145
 msgid "Match local resolution"
 msgstr "匹配本地分辨率"
 
-#: transports/RGS_enterprise/rgs_base.py:147
+#: transports/RGS_enterprise/rgs_base.py:148
 msgid ""
 "Change the Sender's resolution to match the Receiver's resolution when "
 "connecting"
 msgstr "连接时，将发送方的分辨率更改为与接收方的分辨率匹配。"
 
-#: transports/RGS_enterprise/rgs_base.py:153
+#: transports/RGS_enterprise/rgs_base.py:154
 msgid "Redirect audio"
 msgstr "重定向音频"
 
-#: transports/RGS_enterprise/rgs_base.py:155
+#: transports/RGS_enterprise/rgs_base.py:156
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "如果选中，音频将重定向到接收器。"
 
-#: transports/RGS_enterprise/rgs_base.py:160
+#: transports/RGS_enterprise/rgs_base.py:161
 msgid "Redirect microphone"
 msgstr "重定向麦克风"
 
-#: transports/RGS_enterprise/rgs_base.py:162
+#: transports/RGS_enterprise/rgs_base.py:163
 msgid "If checked, the microphone input will be streamed to the Sender"
 msgstr "如果选中，麦克风输入信号将传输到发送方。"
 
-#: transports/RGS_enterprise/rgs_base.py:167
+#: transports/RGS_enterprise/rgs_base.py:168
 msgid "Redirect USB"
 msgstr "重定向 USB"
 
-#: transports/RGS_enterprise/rgs_base.py:169
+#: transports/RGS_enterprise/rgs_base.py:170
 msgid "If checked, USB devices will be redirected to the Sender session"
 msgstr "如果选中此项，USB 设备将被重定向到发送方会话。"
 
-#: transports/RGS_enterprise/rgs_base.py:177
+#: transports/RGS_enterprise/rgs_base.py:176
+#, fuzzy
+#| msgid "Window Size"
+msgid "Window mode"
+msgstr "窗口大小"
+
+#: transports/RGS_enterprise/rgs_base.py:178
+msgid "How the RGS Receiver window is shown when the session starts"
+msgstr ""
+
+#: transports/RGS_enterprise/rgs_base.py:181
+#, fuzzy
+#| msgid "Window Size"
+msgid "Windowed"
+msgstr "窗口大小"
+
+#: transports/RGS_enterprise/rgs_base.py:182
+msgid "Borderless"
+msgstr ""
+
+#: transports/RGS_enterprise/rgs_base.py:191
 msgid "RGS port"
 msgstr "RGS端口"
 
-#: transports/RGS_enterprise/rgs_base.py:180
+#: transports/RGS_enterprise/rgs_base.py:194
 msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "RGS 发送方监听端口（默认为 42966）"
 

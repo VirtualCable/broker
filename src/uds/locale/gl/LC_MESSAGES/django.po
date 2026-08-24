@@ -45,7 +45,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 16:38+0200\n"
+"POT-Creation-Date: 2026-08-24 13:28+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier Medina, 2026\n"
 "Language-Team: Galician (http://app.transifex.com/openuds/openuds/language/"
@@ -68,7 +68,7 @@ msgstr "Contas"
 #: REST/methods/osmanagers.py:77 REST/methods/providers.py:119
 #: REST/methods/reports.py:86 REST/methods/servers_management.py:519
 #: REST/methods/services.py:289 REST/methods/services_pool_groups.py:72
-#: REST/methods/services_pools.py:183 REST/methods/transports.py:94
+#: REST/methods/services_pools.py:184 REST/methods/transports.py:94
 #: REST/methods/tunnels_management.py:185 REST/methods/user_services.py:471
 #: REST/methods/user_services.py:552 REST/methods/users_groups.py:194
 #: core/types/rest/stock/fields.py:94
@@ -95,7 +95,7 @@ msgstr "Marca de tempo"
 #: REST/methods/accounts.py:98 REST/methods/authenticators.py:164
 #: REST/methods/calendars.py:84 REST/methods/meta_pools.py:132
 #: REST/methods/mfas.py:81 REST/methods/servers_management.py:525
-#: REST/methods/services_pools.py:192 REST/methods/transports.py:99
+#: REST/methods/services_pools.py:193 REST/methods/transports.py:99
 #: REST/methods/tunnels_management.py:190
 msgid "tags"
 msgstr "etiquetas"
@@ -240,8 +240,8 @@ msgid "MFA"
 msgstr "Máster en Belas Artes"
 
 #: REST/methods/authenticators.py:224 REST/methods/meta_pools.py:129
-#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:188
-#: REST/methods/services_pools.py:511 core/consts/calendar.py:190
+#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:539 core/consts/calendar.py:190
 msgid "Visible"
 msgstr "Visible"
 
@@ -372,11 +372,11 @@ msgstr "Política"
 msgid "HA Policy"
 msgstr "Política de alta dispoñibilidade"
 
-#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:185
+#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:186
 msgid "User services"
 msgstr "Servizos ao usuario"
 
-#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:186
+#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:187
 msgid "In Preparation"
 msgstr "En preparación"
 
@@ -384,15 +384,15 @@ msgstr "En preparación"
 msgid "Pool Group"
 msgstr "Grupo de Pools"
 
-#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:435
+#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:463
 msgid "Default"
 msgstr "Predeterminado"
 
-#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:475
+#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:503
 msgid "Short name"
 msgstr "Nome curto"
 
-#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:476
+#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:504
 msgid "Short name for user service visualization"
 msgstr "Nome abreviado para a visualización do servizo de usuario"
 
@@ -412,12 +412,12 @@ msgstr ""
 "Política de alta dispoñibilidade do grupo de servizos. Se está activada e un "
 "grupo falla, reiniciarase noutro grupo. Habilita con coidado!"
 
-#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:190
-#: REST/methods/services_pools.py:520
+#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:548
 msgid "Pool group"
 msgstr "Grupo de Pool"
 
-#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:521
+#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:549
 msgid "Pool group for this pool (for pool classify on display)"
 msgstr ""
 "Grupo de Pool para esta pool (para a clasificación de pool en visualización)"
@@ -426,11 +426,11 @@ msgstr ""
 msgid "If active, metapool will be visible for users"
 msgstr "Se está activo, o metapool será visible para os usuarios"
 
-#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:525
+#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:553
 msgid "Calendar access denied text"
 msgstr "Texto de acceso denegado ao calendario"
 
-#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:526
+#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:554
 msgid ""
 "Custom message to be shown to users if access is limited by calendar rules."
 msgstr ""
@@ -969,53 +969,53 @@ msgstr "De acordo"
 msgid "Services Pool Groups"
 msgstr "Servizos Pool Groups"
 
-#: REST/methods/services_pools.py:182 REST/methods/transports.py:97
+#: REST/methods/services_pools.py:183 REST/methods/transports.py:97
 #: REST/methods/transports.py:134
 msgid "Service Pools"
 msgstr "Pools de servizos"
 
-#: REST/methods/services_pools.py:184 REST/methods/users_groups.py:197
+#: REST/methods/services_pools.py:185 REST/methods/users_groups.py:197
 #: REST/methods/users_groups.py:455
 msgid "Status"
 msgstr "Estado"
 
-#: REST/methods/services_pools.py:187
+#: REST/methods/services_pools.py:188
 msgid "Usage"
 msgstr "Uso"
 
-#: REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:190
 msgid "Shows transports"
 msgstr "Mostra transportes"
 
-#: REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:192
 msgid "Parent service"
 msgstr "Servizo para pais"
 
-#: REST/methods/services_pools.py:463
+#: REST/methods/services_pools.py:491
 msgid "Create at least a service before creating a new service pool"
 msgstr "Crear polo menos un servizo antes de crear un novo pool de servizos"
 
-#: REST/methods/services_pools.py:486
+#: REST/methods/services_pools.py:514
 msgid "Base service"
 msgstr "Servizo base"
 
-#: REST/methods/services_pools.py:487
+#: REST/methods/services_pools.py:515
 msgid "Service used as base of this service pool"
 msgstr "Servizo empregado como base deste pool de servizos"
 
-#: REST/methods/services_pools.py:494
+#: REST/methods/services_pools.py:522
 msgid "OS Manager"
 msgstr "OS Manager"
 
-#: REST/methods/services_pools.py:495
+#: REST/methods/services_pools.py:523
 msgid "OS Manager used as base of this service pool"
 msgstr "OS Manager usado como base deste pool de servizos"
 
-#: REST/methods/services_pools.py:502
+#: REST/methods/services_pools.py:530
 msgid "Publish on save"
 msgstr "Publicar ao gardar"
 
-#: REST/methods/services_pools.py:504
+#: REST/methods/services_pools.py:532
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
@@ -1023,15 +1023,15 @@ msgstr ""
 "Se está activo, o servizo publicarase ao gardalo (só para novos grupos de "
 "servizos)"
 
-#: REST/methods/services_pools.py:512
+#: REST/methods/services_pools.py:540
 msgid "If active, transport will be visible for users"
 msgstr "Se está activo, o transporte será visible para os usuarios"
 
-#: REST/methods/services_pools.py:530
+#: REST/methods/services_pools.py:558
 msgid "Custom launch message text"
 msgstr "Texto da mensaxe de lanzamento personalizada"
 
-#: REST/methods/services_pools.py:532
+#: REST/methods/services_pools.py:560
 msgid ""
 "Custom message to be shown to users, if active, when trying to start a "
 "service from this pool."
@@ -1039,50 +1039,50 @@ msgstr ""
 "Mensaxe personalizada que se lles mostrará aos usuarios, se están activos, "
 "ao tentar iniciar un servizo desde este pool."
 
-#: REST/methods/services_pools.py:538
+#: REST/methods/services_pools.py:566
 msgid "Enable custom launch message"
 msgstr "Activar a mensaxe de inicio personalizada"
 
-#: REST/methods/services_pools.py:539
+#: REST/methods/services_pools.py:567
 msgid "If active, the custom launch message will be shown to users"
 msgstr ""
 "Se está activo, a mensaxe de inicio personalizada mostrarase aos usuarios"
 
-#: REST/methods/services_pools.py:541
+#: REST/methods/services_pools.py:569
 msgid "Availability"
 msgstr "Dispoñibilidade"
 
-#: REST/methods/services_pools.py:546
+#: REST/methods/services_pools.py:574
 msgid "Initial available services"
 msgstr "Servizos dispoñibles iniciais"
 
-#: REST/methods/services_pools.py:547
+#: REST/methods/services_pools.py:575
 msgid "Services created initially for this service pool"
 msgstr "Servizos creados inicialmente para este pool de servizos"
 
-#: REST/methods/services_pools.py:553
+#: REST/methods/services_pools.py:581
 msgid "Services to keep in cache"
 msgstr "Servizos para gardar na caché"
 
-#: REST/methods/services_pools.py:554
+#: REST/methods/services_pools.py:582
 msgid "Services kept in cache for improved user service assignation"
 msgstr ""
 "Servizos gardados na caché para unha mellor asignación de servizos ao usuario"
 
-#: REST/methods/services_pools.py:560
+#: REST/methods/services_pools.py:588
 msgid "Services to keep in L2 cache"
 msgstr "Servizos para gardar na caché L2"
 
-#: REST/methods/services_pools.py:561
+#: REST/methods/services_pools.py:589
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr ""
 "Servizos gardados na caché de nivel 2 para unha mellor asignación de servizos"
 
-#: REST/methods/services_pools.py:567
+#: REST/methods/services_pools.py:595
 msgid "Maximum number of services to provide"
 msgstr "Número máximo de servizos a prestar"
 
-#: REST/methods/services_pools.py:569
+#: REST/methods/services_pools.py:597
 msgid ""
 "Maximum number of service (assigned and L1 cache) that can be created for "
 "this service"
@@ -1090,19 +1090,19 @@ msgstr ""
 "Número máximo de servizos (asignados e caché L1) que se poden crear para "
 "este servizo"
 
-#: REST/methods/services_pools.py:575
+#: REST/methods/services_pools.py:603
 msgid "Show transports"
 msgstr "Mostrar transportes"
 
-#: REST/methods/services_pools.py:576
+#: REST/methods/services_pools.py:604
 msgid "If active, transports will be shown to users"
 msgstr "Se está activo, os transportes mostraranse aos usuarios"
 
-#: REST/methods/services_pools.py:582
+#: REST/methods/services_pools.py:610
 msgid "Allow removal by users"
 msgstr "Permitir a eliminación por parte dos usuarios"
 
-#: REST/methods/services_pools.py:584
+#: REST/methods/services_pools.py:612
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
@@ -1112,19 +1112,19 @@ msgstr ""
 "coidado con isto, porque o usuario terá o \"poder\" de eliminar o seu propio "
 "servizo."
 
-#: REST/methods/services_pools.py:590
+#: REST/methods/services_pools.py:618
 msgid "Allow reset by users"
 msgstr "Permitir o restablecemento polos usuarios"
 
-#: REST/methods/services_pools.py:591
+#: REST/methods/services_pools.py:619
 msgid "If active, the user will be allowed to reset the service"
 msgstr "Se está activo, o usuario poderá restablecer o servizo"
 
-#: REST/methods/services_pools.py:596
+#: REST/methods/services_pools.py:624
 msgid "Ignores unused"
 msgstr "Ignora os non utilizados"
 
-#: REST/methods/services_pools.py:598
+#: REST/methods/services_pools.py:626
 msgid ""
 "If the option is enabled, UDS will not attempt to detect and remove the user "
 "services assigned but not in use."
@@ -1132,7 +1132,7 @@ msgstr ""
 "Se a opción está activada, o UDS non tentará detectar nin eliminar os "
 "servizos de usuario asignados pero que non estean en uso."
 
-#: REST/methods/services_pools.py:605
+#: REST/methods/services_pools.py:633
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:68
 #: osmanagers/LinuxOsManager/linux_randompass_osmanager.py:63
 #: osmanagers/WindowsOsManager/windows_domain.py:80
@@ -1140,23 +1140,23 @@ msgstr ""
 msgid "Account"
 msgstr "Conta"
 
-#: REST/methods/services_pools.py:606
+#: REST/methods/services_pools.py:634
 msgid "Account used for this service pool"
 msgstr "Conta usada para este grupo de servizos"
 
-#: REST/methods/services_pools.py:617
+#: REST/methods/services_pools.py:645
 msgid "Name too long"
 msgstr "Nome demasiado longo"
 
-#: REST/methods/services_pools.py:620
+#: REST/methods/services_pools.py:648
 msgid "Short name too long"
 msgstr "Nome curto demasiado longo"
 
-#: REST/methods/services_pools.py:627
+#: REST/methods/services_pools.py:655
 msgid "Base service does not exist anymore"
 msgstr "O servizo base xa non existe"
 
-#: REST/methods/services_pools.py:644 REST/methods/services_pools.py:675
+#: REST/methods/services_pools.py:672 REST/methods/services_pools.py:703
 msgid "This service requires an OS Manager"
 msgstr "Este servizo require un OS Manager"
 
@@ -1374,7 +1374,7 @@ msgstr "Usuarios de {0}"
 #: transports/PCoIP_enterprise/pcoip.py:60 transports/RDP/rdp_base.py:74
 #: transports/RDPEmbedded/common.py:151
 #: transports/RDSEmbedded_enterprise/common.py:123
-#: transports/RGS_enterprise/rgs_base.py:76 transports/SPICE/spice_base.py:71
+#: transports/RGS_enterprise/rgs_base.py:77 transports/SPICE/spice_base.py:71
 #: transports/X2GO/x2go_base.py:69 web/forms/login_form.py:44
 msgid "Username"
 msgstr "Nome de usuario"
@@ -1481,7 +1481,7 @@ msgstr "Compatibilidade da conexión AD (normalmente Windows 2000 e posterior)"
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:149
+#: auths/SAML/saml.py:113 core/consts/__init__.py:150
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -1531,7 +1531,7 @@ msgstr ""
 #: transports/PCoIP_enterprise/pcoip.py:67 transports/RDP/rdp_base.py:81
 #: transports/RDPEmbedded/common.py:157
 #: transports/RDSEmbedded_enterprise/common.py:129
-#: transports/RGS_enterprise/rgs_base.py:82 transports/SPICE/spice_base.py:78
+#: transports/RGS_enterprise/rgs_base.py:83 transports/SPICE/spice_base.py:78
 #: web/forms/login_form.py:46 web/forms/login_form.py:47
 msgid "Password"
 msgstr "Contrasinal"
@@ -2837,19 +2837,19 @@ msgstr "Autenticador base"
 msgid "Group name"
 msgstr "Nome do grupo"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Admin"
 msgstr "Administrador"
 
-#: core/consts/__init__.py:148
+#: core/consts/__init__.py:149
 msgid "Staff member"
 msgstr "Membro do persoal"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Anonymous"
 msgstr "Anónimo"
 
-#: core/consts/__init__.py:151
+#: core/consts/__init__.py:152
 msgid "Unknown role"
 msgstr "Rol descoñecido"
 
@@ -5080,39 +5080,39 @@ msgstr "Campo inútil de mostra"
 msgid "This is a useless field, for sample and testing pourposes"
 msgstr "Este é un campo inútil, para fins de mostras e probas"
 
-#: mfas/TOTP/mfa.py:64
+#: mfas/TOTP/mfa.py:65
 msgid "TOTP Based MFA"
 msgstr "MFA baseado en TOTP"
 
-#: mfas/TOTP/mfa.py:66
+#: mfas/TOTP/mfa.py:67
 msgid "TOTP Based MFA (Google Authenticator, etc)"
 msgstr "MFA baseado en TOTP (Google Authenticator, etc.)"
 
-#: mfas/TOTP/mfa.py:71
+#: mfas/TOTP/mfa.py:72
 msgid "Issuer"
 msgstr "Emisor"
 
-#: mfas/TOTP/mfa.py:74
+#: mfas/TOTP/mfa.py:75
 msgid "Issuer for OTP. Once it's created it can't be changed"
 msgstr "Emisor para OTP. Unha vez creado, non se pode cambiar."
 
-#: mfas/TOTP/mfa.py:81
+#: mfas/TOTP/mfa.py:82
 msgid "Valid Window"
 msgstr "Xanela válida"
 
-#: mfas/TOTP/mfa.py:86
+#: mfas/TOTP/mfa.py:87
 msgid "Number of valid codes before and after the current one"
 msgstr "Número de códigos válidos antes e despois do actual"
 
-#: mfas/TOTP/mfa.py:115
+#: mfas/TOTP/mfa.py:116
 msgid "Authentication Code"
 msgstr "Código de autenticación"
 
-#: mfas/TOTP/mfa.py:155
+#: mfas/TOTP/mfa.py:156
 msgid "Enter your authentication code"
 msgstr "Introduza o seu código de autenticación"
 
-#: mfas/TOTP/mfa.py:172
+#: mfas/TOTP/mfa.py:173
 msgid ""
 "Please, use your Authenticator to add your account. (i.e. Google "
 "Authenticator, Authy, ...)"
@@ -5120,11 +5120,11 @@ msgstr ""
 "Por favor, usa o teu Autenticador para engadir a túa conta. (por exemplo, "
 "Google Authenticator, Authy, ...)"
 
-#: mfas/TOTP/mfa.py:205
+#: mfas/TOTP/mfa.py:209
 msgid "Code is already used. Wait a minute and try again."
 msgstr "O código xa está usado. Agarde un minuto e inténteo de novo."
 
-#: mfas/TOTP/mfa.py:214
+#: mfas/TOTP/mfa.py:231
 msgid "Invalid code"
 msgstr "Código non válido"
 
@@ -5294,7 +5294,7 @@ msgstr "OS Manager para controlar máquinas virtuais Linux con Active Directory"
 #: transports/RDPEmbedded/common.py:169
 #: transports/RDSEmbedded_enterprise/common.py:143
 #: transports/RDS_enterprise/rds_base.py:61
-#: transports/RGS_enterprise/rgs_base.py:88
+#: transports/RGS_enterprise/rgs_base.py:89
 msgid "Domain"
 msgstr "Dominio"
 
@@ -7161,7 +7161,9 @@ msgid "HyperV Clone Generation 2"
 msgstr "Clon de HyperV de segunda xeración"
 
 #: services/Morpheus_enterprise/provider.py:39
-msgid "HPE Morpheus Provider"
+#, fuzzy
+#| msgid "HPE Morpheus Provider"
+msgid "HPE Morpheus"
 msgstr "Provedor HPE Morpheus"
 
 #: services/Morpheus_enterprise/provider.py:41
@@ -8988,62 +8990,6 @@ msgstr "Cartafol"
 msgid "Folder containing base machines"
 msgstr "Cartafol que contén máquinas base"
 
-#: temp_for_locales.py:164
-msgid "Spanish"
-msgstr "Español"
-
-#: temp_for_locales.py:165
-msgid "English"
-msgstr "Inglés"
-
-#: temp_for_locales.py:166
-msgid "French"
-msgstr "Francés"
-
-#: temp_for_locales.py:167
-msgid "German"
-msgstr "Alemán"
-
-#: temp_for_locales.py:168
-msgid "Portuguese"
-msgstr "Portugués"
-
-#: temp_for_locales.py:169
-msgid "Italian"
-msgstr "Italiano"
-
-#: temp_for_locales.py:170
-msgid "Dutch"
-msgstr "Holandés"
-
-#: temp_for_locales.py:171
-msgid "Japanese"
-msgstr "Xaponés"
-
-#: temp_for_locales.py:172
-msgid "Arabic"
-msgstr "Árabe"
-
-#: temp_for_locales.py:173
-msgid "Russian"
-msgstr "Ruso"
-
-#: temp_for_locales.py:174
-msgid "Catalan"
-msgstr "Catalán"
-
-#: temp_for_locales.py:175
-msgid "Basque"
-msgstr "Éuscaro"
-
-#: temp_for_locales.py:176
-msgid "Galician"
-msgstr "Galego"
-
-#: temp_for_locales.py:177
-msgid "Chinese"
-msgstr "Chinés"
-
 #: templates/uds/reports/lists/admin-activity.html:11
 #: templates/uds/reports/lists/failed-logins.html:11
 #: templates/uds/reports/stats/cache-efficiency.html:11
@@ -9239,7 +9185,7 @@ msgstr "Protocolo RDP usando un cliente HTML5"
 #: transports/RDP/rdp_base.py:67 transports/RDPEmbedded/common.py:145
 #: transports/RDSEmbedded_enterprise/common.py:117
 #: transports/RDS_enterprise/rds_base.py:45
-#: transports/RGS_enterprise/rgs_base.py:70
+#: transports/RGS_enterprise/rgs_base.py:71
 msgid "Empty creds"
 msgstr "Créditos baleiros"
 
@@ -9261,7 +9207,7 @@ msgstr ""
 #: transports/PCoIP_enterprise/pcoip.py:62 transports/RDP/rdp_base.py:76
 #: transports/RDPEmbedded/common.py:153
 #: transports/RDSEmbedded_enterprise/common.py:125
-#: transports/RGS_enterprise/rgs_base.py:78 transports/SPICE/spice_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:79 transports/SPICE/spice_base.py:72
 #: transports/X2GO/x2go_base.py:70
 msgid "If not empty, this username will be always used as credential"
 msgstr ""
@@ -9274,7 +9220,7 @@ msgstr ""
 #: transports/PCoIP_enterprise/pcoip.py:69 transports/RDP/rdp_base.py:83
 #: transports/RDPEmbedded/common.py:159
 #: transports/RDSEmbedded_enterprise/common.py:131
-#: transports/RGS_enterprise/rgs_base.py:84 transports/SPICE/spice_base.py:79
+#: transports/RGS_enterprise/rgs_base.py:85 transports/SPICE/spice_base.py:79
 msgid "If not empty, this password will be always used as credential"
 msgstr "Se non está baleiro, este contrasinal usarase sempre como credencial"
 
@@ -9745,6 +9691,7 @@ msgid "Amazon DCV Protocol. Direct connection."
 msgstr "Protocolo DCV de Amazon. Conexión directa."
 
 #: transports/NICEDCV_enterprise/nicedcv_base.py:63
+#: transports/RGS_enterprise/rgs_base.py:183
 msgid "Full screen"
 msgstr "Pantalla completa"
 
@@ -10190,13 +10137,10 @@ msgstr ""
 "predeterminado é 15."
 
 #: transports/RDPEmbedded/common.py:272
-#| msgid "Allow Smartcards"
 msgid "Enable Smartcard"
 msgstr "Activar a tarxeta intelixente"
 
 #: transports/RDPEmbedded/common.py:275
-#| msgid ""
-#| "If checked, the local microphone will be redirected to the remote session"
 msgid ""
 "If checked, the local smartcard reader will be redirected to the remote "
 "session"
@@ -10303,31 +10247,31 @@ msgstr "RGS"
 msgid "HP RGS Protocol. Direct connection."
 msgstr "Protocolo HP RGS. Conexión directa."
 
-#: transports/RGS_enterprise/rgs_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:73
 msgid "If checked, the credentials used to connect will be empty"
 msgstr ""
 "Se está marcado, as credenciais empregadas para conectar estarán baleiras"
 
-#: transports/RGS_enterprise/rgs_base.py:91
+#: transports/RGS_enterprise/rgs_base.py:92
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr ""
 "Se non está baleiro, este dominio usarase sempre como credencial "
 "(DOMINIO\\usuario)"
 
-#: transports/RGS_enterprise/rgs_base.py:99
+#: transports/RGS_enterprise/rgs_base.py:100
 msgid "Image quality"
 msgstr "Calidade da imaxe"
 
-#: transports/RGS_enterprise/rgs_base.py:104
+#: transports/RGS_enterprise/rgs_base.py:105
 msgid "Quality of the image codec (0-100)"
 msgstr "Calidade do códec de imaxe (0-100)"
 
-#: transports/RGS_enterprise/rgs_base.py:109
+#: transports/RGS_enterprise/rgs_base.py:110
 msgid "Adjustable quality"
 msgstr "Calidade axustable"
 
-#: transports/RGS_enterprise/rgs_base.py:112
+#: transports/RGS_enterprise/rgs_base.py:113
 msgid ""
 "If checked, the image quality will be automatically adjusted based on "
 "bandwidth"
@@ -10335,31 +10279,31 @@ msgstr ""
 "Se está marcado, a calidade da imaxe axustarase automaticamente en función "
 "do ancho de banda"
 
-#: transports/RGS_enterprise/rgs_base.py:119
+#: transports/RGS_enterprise/rgs_base.py:120
 msgid "Min. adjustable quality"
 msgstr "Calidade mínima axustable"
 
-#: transports/RGS_enterprise/rgs_base.py:125
+#: transports/RGS_enterprise/rgs_base.py:126
 msgid "Lowest image quality allowed when adjusting to keep a stable frame rate"
 msgstr ""
 "Calidade de imaxe máis baixa permitida ao axustar para manter unha taxa de "
 "fotogramas estable"
 
-#: transports/RGS_enterprise/rgs_base.py:132
+#: transports/RGS_enterprise/rgs_base.py:133
 msgid "Adjustable frame rate"
 msgstr "taxa de fotogramas axustable"
 
-#: transports/RGS_enterprise/rgs_base.py:138
+#: transports/RGS_enterprise/rgs_base.py:139
 msgid "Frame rate threshold (fps) at which the image quality starts to adapt"
 msgstr ""
 "Limiar de taxa de fotogramas (fps) no que a calidade da imaxe comeza a "
 "adaptarse"
 
-#: transports/RGS_enterprise/rgs_base.py:144
+#: transports/RGS_enterprise/rgs_base.py:145
 msgid "Match local resolution"
 msgstr "Coincidir coa resolución local"
 
-#: transports/RGS_enterprise/rgs_base.py:147
+#: transports/RGS_enterprise/rgs_base.py:148
 msgid ""
 "Change the Sender's resolution to match the Receiver's resolution when "
 "connecting"
@@ -10367,36 +10311,56 @@ msgstr ""
 "Cambia a resolución do emisor para que coincida coa resolución do receptor "
 "ao conectar"
 
-#: transports/RGS_enterprise/rgs_base.py:153
+#: transports/RGS_enterprise/rgs_base.py:154
 msgid "Redirect audio"
 msgstr "Redireccionar audio"
 
-#: transports/RGS_enterprise/rgs_base.py:155
+#: transports/RGS_enterprise/rgs_base.py:156
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "Se está marcado, o audio será redirixido ao receptor"
 
-#: transports/RGS_enterprise/rgs_base.py:160
+#: transports/RGS_enterprise/rgs_base.py:161
 msgid "Redirect microphone"
 msgstr "Redireccionamento do micrófono"
 
-#: transports/RGS_enterprise/rgs_base.py:162
+#: transports/RGS_enterprise/rgs_base.py:163
 msgid "If checked, the microphone input will be streamed to the Sender"
 msgstr "Se está marcado, a entrada do micrófono transmitirase ao emisor"
 
-#: transports/RGS_enterprise/rgs_base.py:167
+#: transports/RGS_enterprise/rgs_base.py:168
 msgid "Redirect USB"
 msgstr "Redireccionar USB"
 
-#: transports/RGS_enterprise/rgs_base.py:169
+#: transports/RGS_enterprise/rgs_base.py:170
 msgid "If checked, USB devices will be redirected to the Sender session"
 msgstr ""
 "Se está marcado, os dispositivos USB serán redirixidos á sesión do remitente"
 
-#: transports/RGS_enterprise/rgs_base.py:177
+#: transports/RGS_enterprise/rgs_base.py:176
+#, fuzzy
+#| msgid "Window Size"
+msgid "Window mode"
+msgstr "Tamaño da xanela"
+
+#: transports/RGS_enterprise/rgs_base.py:178
+msgid "How the RGS Receiver window is shown when the session starts"
+msgstr ""
+
+#: transports/RGS_enterprise/rgs_base.py:181
+#, fuzzy
+#| msgid "Window Size"
+msgid "Windowed"
+msgstr "Tamaño da xanela"
+
+#: transports/RGS_enterprise/rgs_base.py:182
+msgid "Borderless"
+msgstr ""
+
+#: transports/RGS_enterprise/rgs_base.py:191
 msgid "RGS port"
 msgstr "Porto RGS"
 
-#: transports/RGS_enterprise/rgs_base.py:180
+#: transports/RGS_enterprise/rgs_base.py:194
 msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "Porto de escoita do remitente RGS (predeterminado: 42966)"
 

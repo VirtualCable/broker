@@ -41,7 +41,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 16:38+0200\n"
+"POT-Creation-Date: 2026-08-24 13:28+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Dutch (http://app.transifex.com/openuds/openuds/language/"
@@ -64,7 +64,7 @@ msgstr "Rekeningen"
 #: REST/methods/osmanagers.py:77 REST/methods/providers.py:119
 #: REST/methods/reports.py:86 REST/methods/servers_management.py:519
 #: REST/methods/services.py:289 REST/methods/services_pool_groups.py:72
-#: REST/methods/services_pools.py:183 REST/methods/transports.py:94
+#: REST/methods/services_pools.py:184 REST/methods/transports.py:94
 #: REST/methods/tunnels_management.py:185 REST/methods/user_services.py:471
 #: REST/methods/user_services.py:552 REST/methods/users_groups.py:194
 #: core/types/rest/stock/fields.py:94
@@ -91,7 +91,7 @@ msgstr "Tijdstempel"
 #: REST/methods/accounts.py:98 REST/methods/authenticators.py:164
 #: REST/methods/calendars.py:84 REST/methods/meta_pools.py:132
 #: REST/methods/mfas.py:81 REST/methods/servers_management.py:525
-#: REST/methods/services_pools.py:192 REST/methods/transports.py:99
+#: REST/methods/services_pools.py:193 REST/methods/transports.py:99
 #: REST/methods/tunnels_management.py:190
 msgid "tags"
 msgstr "tags"
@@ -236,8 +236,8 @@ msgid "MFA"
 msgstr "MFA"
 
 #: REST/methods/authenticators.py:224 REST/methods/meta_pools.py:129
-#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:188
-#: REST/methods/services_pools.py:511 core/consts/calendar.py:190
+#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:539 core/consts/calendar.py:190
 msgid "Visible"
 msgstr "Zichtbaar"
 
@@ -368,11 +368,11 @@ msgstr "Beleid"
 msgid "HA Policy"
 msgstr "HA-beleid"
 
-#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:185
+#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:186
 msgid "User services"
 msgstr "Gebruikersservices"
 
-#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:186
+#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:187
 msgid "In Preparation"
 msgstr "In voorbereiding"
 
@@ -380,15 +380,15 @@ msgstr "In voorbereiding"
 msgid "Pool Group"
 msgstr "Zwembadgroep"
 
-#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:435
+#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:463
 msgid "Default"
 msgstr "Standaard"
 
-#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:475
+#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:503
 msgid "Short name"
 msgstr "Korte naam"
 
-#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:476
+#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:504
 msgid "Short name for user service visualization"
 msgstr "Korte naam voor visualisatie van gebruikersservices"
 
@@ -409,12 +409,12 @@ msgstr ""
 "pool opnieuw opgestart in een andere pool als deze uitvalt. Schakel dit "
 "beleid met zorg in!"
 
-#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:190
-#: REST/methods/services_pools.py:520
+#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:548
 msgid "Pool group"
 msgstr "Zwembadgroep"
 
-#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:521
+#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:549
 msgid "Pool group for this pool (for pool classify on display)"
 msgstr ""
 "Zwembadgroep voor dit zwembad (voor zwembadclassificatie op het scherm)"
@@ -423,11 +423,11 @@ msgstr ""
 msgid "If active, metapool will be visible for users"
 msgstr "Indien actief, is Metapool zichtbaar voor gebruikers."
 
-#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:525
+#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:553
 msgid "Calendar access denied text"
 msgstr "Toegang tot de agenda geweigerd (tekst)"
 
-#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:526
+#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:554
 msgid ""
 "Custom message to be shown to users if access is limited by calendar rules."
 msgstr ""
@@ -974,55 +974,55 @@ msgstr "OK"
 msgid "Services Pool Groups"
 msgstr "Dienstenpoolgroepen"
 
-#: REST/methods/services_pools.py:182 REST/methods/transports.py:97
+#: REST/methods/services_pools.py:183 REST/methods/transports.py:97
 #: REST/methods/transports.py:134
 msgid "Service Pools"
 msgstr "Servicepools"
 
-#: REST/methods/services_pools.py:184 REST/methods/users_groups.py:197
+#: REST/methods/services_pools.py:185 REST/methods/users_groups.py:197
 #: REST/methods/users_groups.py:455
 msgid "Status"
 msgstr "Status"
 
-#: REST/methods/services_pools.py:187
+#: REST/methods/services_pools.py:188
 msgid "Usage"
 msgstr "Gebruik"
 
-#: REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:190
 msgid "Shows transports"
 msgstr "Toont transportmiddelen"
 
-#: REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:192
 msgid "Parent service"
 msgstr "Ouderservice"
 
-#: REST/methods/services_pools.py:463
+#: REST/methods/services_pools.py:491
 msgid "Create at least a service before creating a new service pool"
 msgstr ""
 "Maak eerst minimaal één service aan voordat u een nieuwe servicepool "
 "aanmaakt."
 
-#: REST/methods/services_pools.py:486
+#: REST/methods/services_pools.py:514
 msgid "Base service"
 msgstr "Basisservice"
 
-#: REST/methods/services_pools.py:487
+#: REST/methods/services_pools.py:515
 msgid "Service used as base of this service pool"
 msgstr "De service die als basis voor deze servicepool wordt gebruikt"
 
-#: REST/methods/services_pools.py:494
+#: REST/methods/services_pools.py:522
 msgid "OS Manager"
 msgstr "OS Manager"
 
-#: REST/methods/services_pools.py:495
+#: REST/methods/services_pools.py:523
 msgid "OS Manager used as base of this service pool"
 msgstr "OS Manager wordt gebruikt als basis voor deze servicepool."
 
-#: REST/methods/services_pools.py:502
+#: REST/methods/services_pools.py:530
 msgid "Publish on save"
 msgstr "Publiceren bij opslaan"
 
-#: REST/methods/services_pools.py:504
+#: REST/methods/services_pools.py:532
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
@@ -1030,15 +1030,15 @@ msgstr ""
 "Indien actief, wordt de service gepubliceerd wanneer deze wordt opgeslagen "
 "(alleen voor nieuwe servicepools)."
 
-#: REST/methods/services_pools.py:512
+#: REST/methods/services_pools.py:540
 msgid "If active, transport will be visible for users"
 msgstr "Indien actief, is het transport zichtbaar voor gebruikers."
 
-#: REST/methods/services_pools.py:530
+#: REST/methods/services_pools.py:558
 msgid "Custom launch message text"
 msgstr "Aangepaste tekst voor het opstartbericht"
 
-#: REST/methods/services_pools.py:532
+#: REST/methods/services_pools.py:560
 msgid ""
 "Custom message to be shown to users, if active, when trying to start a "
 "service from this pool."
@@ -1046,53 +1046,53 @@ msgstr ""
 "Een aangepast bericht dat aan gebruikers wordt getoond (indien actief) "
 "wanneer zij een service uit deze pool proberen te starten."
 
-#: REST/methods/services_pools.py:538
+#: REST/methods/services_pools.py:566
 msgid "Enable custom launch message"
 msgstr "Schakel een aangepast opstartbericht in."
 
-#: REST/methods/services_pools.py:539
+#: REST/methods/services_pools.py:567
 msgid "If active, the custom launch message will be shown to users"
 msgstr ""
 "Indien geactiveerd, wordt het aangepaste opstartbericht aan gebruikers "
 "getoond."
 
-#: REST/methods/services_pools.py:541
+#: REST/methods/services_pools.py:569
 msgid "Availability"
 msgstr "Beschikbaarheid"
 
-#: REST/methods/services_pools.py:546
+#: REST/methods/services_pools.py:574
 msgid "Initial available services"
 msgstr "Initieel beschikbare diensten"
 
-#: REST/methods/services_pools.py:547
+#: REST/methods/services_pools.py:575
 msgid "Services created initially for this service pool"
 msgstr "Services die oorspronkelijk voor deze servicepool zijn gemaakt."
 
-#: REST/methods/services_pools.py:553
+#: REST/methods/services_pools.py:581
 msgid "Services to keep in cache"
 msgstr "Services die in de cache bewaard moeten worden"
 
-#: REST/methods/services_pools.py:554
+#: REST/methods/services_pools.py:582
 msgid "Services kept in cache for improved user service assignation"
 msgstr ""
 "Services worden in de cache bewaard voor een betere toewijzing van services "
 "aan de gebruiker."
 
-#: REST/methods/services_pools.py:560
+#: REST/methods/services_pools.py:588
 msgid "Services to keep in L2 cache"
 msgstr "Services die in de L2-cache bewaard moeten worden"
 
-#: REST/methods/services_pools.py:561
+#: REST/methods/services_pools.py:589
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr ""
 "Services worden in de cache van niveau 2 bewaard voor een betere "
 "servicetoewijzing."
 
-#: REST/methods/services_pools.py:567
+#: REST/methods/services_pools.py:595
 msgid "Maximum number of services to provide"
 msgstr "Maximaal aantal te leveren diensten"
 
-#: REST/methods/services_pools.py:569
+#: REST/methods/services_pools.py:597
 msgid ""
 "Maximum number of service (assigned and L1 cache) that can be created for "
 "this service"
@@ -1100,19 +1100,19 @@ msgstr ""
 "Maximaal aantal services (toegewezen en L1-cache) dat voor deze service kan "
 "worden aangemaakt."
 
-#: REST/methods/services_pools.py:575
+#: REST/methods/services_pools.py:603
 msgid "Show transports"
 msgstr "Toon transportmiddelen"
 
-#: REST/methods/services_pools.py:576
+#: REST/methods/services_pools.py:604
 msgid "If active, transports will be shown to users"
 msgstr "Indien actief, worden transportmogelijkheden aan gebruikers getoond."
 
-#: REST/methods/services_pools.py:582
+#: REST/methods/services_pools.py:610
 msgid "Allow removal by users"
 msgstr "Gebruikers toestaan om te verwijderen"
 
-#: REST/methods/services_pools.py:584
+#: REST/methods/services_pools.py:612
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
@@ -1122,19 +1122,19 @@ msgstr ""
 "hier voorzichtig mee, want de gebruiker krijgt dan de \"macht\" om zijn "
 "eigen service te verwijderen."
 
-#: REST/methods/services_pools.py:590
+#: REST/methods/services_pools.py:618
 msgid "Allow reset by users"
 msgstr "Gebruikers toestaan hun instellingen te resetten"
 
-#: REST/methods/services_pools.py:591
+#: REST/methods/services_pools.py:619
 msgid "If active, the user will be allowed to reset the service"
 msgstr "Indien actief, kan de gebruiker de service resetten."
 
-#: REST/methods/services_pools.py:596
+#: REST/methods/services_pools.py:624
 msgid "Ignores unused"
 msgstr "Negeert ongebruikte"
 
-#: REST/methods/services_pools.py:598
+#: REST/methods/services_pools.py:626
 msgid ""
 "If the option is enabled, UDS will not attempt to detect and remove the user "
 "services assigned but not in use."
@@ -1142,7 +1142,7 @@ msgstr ""
 "Als deze optie is ingeschakeld, zal UDS niet proberen de toegewezen maar "
 "niet-gebruikte gebruikersservices te detecteren en te verwijderen."
 
-#: REST/methods/services_pools.py:605
+#: REST/methods/services_pools.py:633
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:68
 #: osmanagers/LinuxOsManager/linux_randompass_osmanager.py:63
 #: osmanagers/WindowsOsManager/windows_domain.py:80
@@ -1150,23 +1150,23 @@ msgstr ""
 msgid "Account"
 msgstr "Rekening"
 
-#: REST/methods/services_pools.py:606
+#: REST/methods/services_pools.py:634
 msgid "Account used for this service pool"
 msgstr "Account gebruikt voor deze servicepool"
 
-#: REST/methods/services_pools.py:617
+#: REST/methods/services_pools.py:645
 msgid "Name too long"
 msgstr "Naam te lang"
 
-#: REST/methods/services_pools.py:620
+#: REST/methods/services_pools.py:648
 msgid "Short name too long"
 msgstr "Korte naam te lang"
 
-#: REST/methods/services_pools.py:627
+#: REST/methods/services_pools.py:655
 msgid "Base service does not exist anymore"
 msgstr "De basisservice bestaat niet meer."
 
-#: REST/methods/services_pools.py:644 REST/methods/services_pools.py:675
+#: REST/methods/services_pools.py:672 REST/methods/services_pools.py:703
 msgid "This service requires an OS Manager"
 msgstr "Deze service vereist een besturingssysteembeheerder."
 
@@ -1384,7 +1384,7 @@ msgstr "Gebruikers van {0}"
 #: transports/PCoIP_enterprise/pcoip.py:60 transports/RDP/rdp_base.py:74
 #: transports/RDPEmbedded/common.py:151
 #: transports/RDSEmbedded_enterprise/common.py:123
-#: transports/RGS_enterprise/rgs_base.py:76 transports/SPICE/spice_base.py:71
+#: transports/RGS_enterprise/rgs_base.py:77 transports/SPICE/spice_base.py:71
 #: transports/X2GO/x2go_base.py:69 web/forms/login_form.py:44
 msgid "Username"
 msgstr "Gebruikersnaam"
@@ -1491,7 +1491,7 @@ msgstr "Compatibiliteit van de AD-verbinding (meestal Windows 2000 en later)"
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:149
+#: auths/SAML/saml.py:113 core/consts/__init__.py:150
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -1541,7 +1541,7 @@ msgstr ""
 #: transports/PCoIP_enterprise/pcoip.py:67 transports/RDP/rdp_base.py:81
 #: transports/RDPEmbedded/common.py:157
 #: transports/RDSEmbedded_enterprise/common.py:129
-#: transports/RGS_enterprise/rgs_base.py:82 transports/SPICE/spice_base.py:78
+#: transports/RGS_enterprise/rgs_base.py:83 transports/SPICE/spice_base.py:78
 #: web/forms/login_form.py:46 web/forms/login_form.py:47
 msgid "Password"
 msgstr "Wachtwoord"
@@ -2845,19 +2845,19 @@ msgstr "Basisauthenticator"
 msgid "Group name"
 msgstr "Groepsnaam"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Admin"
 msgstr "Beheerder"
 
-#: core/consts/__init__.py:148
+#: core/consts/__init__.py:149
 msgid "Staff member"
 msgstr "Medewerker"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Anonymous"
 msgstr "Anoniem"
 
-#: core/consts/__init__.py:151
+#: core/consts/__init__.py:152
 msgid "Unknown role"
 msgstr "Onbekende rol"
 
@@ -5124,40 +5124,40 @@ msgstr "Voorbeeld nutteloos veld"
 msgid "This is a useless field, for sample and testing pourposes"
 msgstr "Dit is een nutteloos veld, alleen voor steekproef- en testdoeleinden."
 
-#: mfas/TOTP/mfa.py:64
+#: mfas/TOTP/mfa.py:65
 msgid "TOTP Based MFA"
 msgstr "TOTP-gebaseerde MFA"
 
-#: mfas/TOTP/mfa.py:66
+#: mfas/TOTP/mfa.py:67
 msgid "TOTP Based MFA (Google Authenticator, etc)"
 msgstr "MFA op basis van TOTP (Google Authenticator, enz.)"
 
-#: mfas/TOTP/mfa.py:71
+#: mfas/TOTP/mfa.py:72
 msgid "Issuer"
 msgstr "Uitgever"
 
-#: mfas/TOTP/mfa.py:74
+#: mfas/TOTP/mfa.py:75
 msgid "Issuer for OTP. Once it's created it can't be changed"
 msgstr ""
 "Uitgever voor OTP. Eenmaal aangemaakt, kan deze niet meer worden gewijzigd."
 
-#: mfas/TOTP/mfa.py:81
+#: mfas/TOTP/mfa.py:82
 msgid "Valid Window"
 msgstr "Geldig venster"
 
-#: mfas/TOTP/mfa.py:86
+#: mfas/TOTP/mfa.py:87
 msgid "Number of valid codes before and after the current one"
 msgstr "Aantal geldige codes vóór en na de huidige"
 
-#: mfas/TOTP/mfa.py:115
+#: mfas/TOTP/mfa.py:116
 msgid "Authentication Code"
 msgstr "Authenticatiecode"
 
-#: mfas/TOTP/mfa.py:155
+#: mfas/TOTP/mfa.py:156
 msgid "Enter your authentication code"
 msgstr "Voer uw authenticatiecode in"
 
-#: mfas/TOTP/mfa.py:172
+#: mfas/TOTP/mfa.py:173
 msgid ""
 "Please, use your Authenticator to add your account. (i.e. Google "
 "Authenticator, Authy, ...)"
@@ -5165,11 +5165,11 @@ msgstr ""
 "Gebruik je authenticatie-app om je account toe te voegen. (bijv. Google "
 "Authenticator, Authy, ...)"
 
-#: mfas/TOTP/mfa.py:205
+#: mfas/TOTP/mfa.py:209
 msgid "Code is already used. Wait a minute and try again."
 msgstr "De code is al in gebruik. Wacht even en probeer het opnieuw."
 
-#: mfas/TOTP/mfa.py:214
+#: mfas/TOTP/mfa.py:231
 msgid "Invalid code"
 msgstr "Ongeldige code"
 
@@ -5340,7 +5340,7 @@ msgstr ""
 #: transports/RDPEmbedded/common.py:169
 #: transports/RDSEmbedded_enterprise/common.py:143
 #: transports/RDS_enterprise/rds_base.py:61
-#: transports/RGS_enterprise/rgs_base.py:88
+#: transports/RGS_enterprise/rgs_base.py:89
 msgid "Domain"
 msgstr "Domein"
 
@@ -7231,7 +7231,9 @@ msgid "HyperV Clone Generation 2"
 msgstr "HyperV-kloon generatie 2"
 
 #: services/Morpheus_enterprise/provider.py:39
-msgid "HPE Morpheus Provider"
+#, fuzzy
+#| msgid "HPE Morpheus Provider"
+msgid "HPE Morpheus"
 msgstr "HPE Morpheus-provider"
 
 #: services/Morpheus_enterprise/provider.py:41
@@ -9080,62 +9082,6 @@ msgstr "Map"
 msgid "Folder containing base machines"
 msgstr "Map met basismachines"
 
-#: temp_for_locales.py:164
-msgid "Spanish"
-msgstr "Spaans"
-
-#: temp_for_locales.py:165
-msgid "English"
-msgstr "Engels"
-
-#: temp_for_locales.py:166
-msgid "French"
-msgstr "Frans"
-
-#: temp_for_locales.py:167
-msgid "German"
-msgstr "Duits"
-
-#: temp_for_locales.py:168
-msgid "Portuguese"
-msgstr "Portugees"
-
-#: temp_for_locales.py:169
-msgid "Italian"
-msgstr "Italiaans"
-
-#: temp_for_locales.py:170
-msgid "Dutch"
-msgstr "Nederlands"
-
-#: temp_for_locales.py:171
-msgid "Japanese"
-msgstr "Japanse"
-
-#: temp_for_locales.py:172
-msgid "Arabic"
-msgstr "Arabisch"
-
-#: temp_for_locales.py:173
-msgid "Russian"
-msgstr "Russisch"
-
-#: temp_for_locales.py:174
-msgid "Catalan"
-msgstr "Catalaans"
-
-#: temp_for_locales.py:175
-msgid "Basque"
-msgstr "baskisch"
-
-#: temp_for_locales.py:176
-msgid "Galician"
-msgstr "Galicisch"
-
-#: temp_for_locales.py:177
-msgid "Chinese"
-msgstr "Chinese"
-
 #: templates/uds/reports/lists/admin-activity.html:11
 #: templates/uds/reports/lists/failed-logins.html:11
 #: templates/uds/reports/stats/cache-efficiency.html:11
@@ -9331,7 +9277,7 @@ msgstr "RDP-protocol met HTML5-client"
 #: transports/RDP/rdp_base.py:67 transports/RDPEmbedded/common.py:145
 #: transports/RDSEmbedded_enterprise/common.py:117
 #: transports/RDS_enterprise/rds_base.py:45
-#: transports/RGS_enterprise/rgs_base.py:70
+#: transports/RGS_enterprise/rgs_base.py:71
 msgid "Empty creds"
 msgstr "Lege inloggegevens"
 
@@ -9352,7 +9298,7 @@ msgstr "Indien aangevinkt, zullen de inloggegevens leeg zijn."
 #: transports/PCoIP_enterprise/pcoip.py:62 transports/RDP/rdp_base.py:76
 #: transports/RDPEmbedded/common.py:153
 #: transports/RDSEmbedded_enterprise/common.py:125
-#: transports/RGS_enterprise/rgs_base.py:78 transports/SPICE/spice_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:79 transports/SPICE/spice_base.py:72
 #: transports/X2GO/x2go_base.py:70
 msgid "If not empty, this username will be always used as credential"
 msgstr ""
@@ -9365,7 +9311,7 @@ msgstr ""
 #: transports/PCoIP_enterprise/pcoip.py:69 transports/RDP/rdp_base.py:83
 #: transports/RDPEmbedded/common.py:159
 #: transports/RDSEmbedded_enterprise/common.py:131
-#: transports/RGS_enterprise/rgs_base.py:84 transports/SPICE/spice_base.py:79
+#: transports/RGS_enterprise/rgs_base.py:85 transports/SPICE/spice_base.py:79
 msgid "If not empty, this password will be always used as credential"
 msgstr ""
 "Indien niet leeg, wordt dit wachtwoord altijd als inloggegeven gebruikt."
@@ -9842,6 +9788,7 @@ msgid "Amazon DCV Protocol. Direct connection."
 msgstr "Amazon DCV-protocol. Directe verbinding."
 
 #: transports/NICEDCV_enterprise/nicedcv_base.py:63
+#: transports/RGS_enterprise/rgs_base.py:183
 msgid "Full screen"
 msgstr "Volledig scherm"
 
@@ -10299,13 +10246,10 @@ msgstr ""
 "Maximaal aantal frames per seconde van de webcam (1-60). Standaardwaarde: 15."
 
 #: transports/RDPEmbedded/common.py:272
-#| msgid "Allow Smartcards"
 msgid "Enable Smartcard"
 msgstr "Smartcard inschakelen"
 
 #: transports/RDPEmbedded/common.py:275
-#| msgid ""
-#| "If checked, the local microphone will be redirected to the remote session"
 msgid ""
 "If checked, the local smartcard reader will be redirected to the remote "
 "session"
@@ -10416,30 +10360,30 @@ msgstr "RGS"
 msgid "HP RGS Protocol. Direct connection."
 msgstr "HP RGS-protocol. Directe verbinding."
 
-#: transports/RGS_enterprise/rgs_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:73
 msgid "If checked, the credentials used to connect will be empty"
 msgstr "Indien aangevinkt, zijn de inloggegevens leeg."
 
-#: transports/RGS_enterprise/rgs_base.py:91
+#: transports/RGS_enterprise/rgs_base.py:92
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr ""
 "Indien niet leeg, wordt dit domein altijd gebruikt als inloggegevens "
 "(DOMEIN\\gebruiker)."
 
-#: transports/RGS_enterprise/rgs_base.py:99
+#: transports/RGS_enterprise/rgs_base.py:100
 msgid "Image quality"
 msgstr "Beeldkwaliteit"
 
-#: transports/RGS_enterprise/rgs_base.py:104
+#: transports/RGS_enterprise/rgs_base.py:105
 msgid "Quality of the image codec (0-100)"
 msgstr "Kwaliteit van de beeldcodec (0-100)"
 
-#: transports/RGS_enterprise/rgs_base.py:109
+#: transports/RGS_enterprise/rgs_base.py:110
 msgid "Adjustable quality"
 msgstr "Verstelbare kwaliteit"
 
-#: transports/RGS_enterprise/rgs_base.py:112
+#: transports/RGS_enterprise/rgs_base.py:113
 msgid ""
 "If checked, the image quality will be automatically adjusted based on "
 "bandwidth"
@@ -10447,31 +10391,31 @@ msgstr ""
 "Indien aangevinkt, wordt de beeldkwaliteit automatisch aangepast op basis "
 "van de bandbreedte."
 
-#: transports/RGS_enterprise/rgs_base.py:119
+#: transports/RGS_enterprise/rgs_base.py:120
 msgid "Min. adjustable quality"
 msgstr "Minimale instelbare kwaliteit"
 
-#: transports/RGS_enterprise/rgs_base.py:125
+#: transports/RGS_enterprise/rgs_base.py:126
 msgid "Lowest image quality allowed when adjusting to keep a stable frame rate"
 msgstr ""
 "Laagste toegestane beeldkwaliteit bij het aanpassen om een stabiele "
 "framesnelheid te behouden."
 
-#: transports/RGS_enterprise/rgs_base.py:132
+#: transports/RGS_enterprise/rgs_base.py:133
 msgid "Adjustable frame rate"
 msgstr "Instelbare framesnelheid"
 
-#: transports/RGS_enterprise/rgs_base.py:138
+#: transports/RGS_enterprise/rgs_base.py:139
 msgid "Frame rate threshold (fps) at which the image quality starts to adapt"
 msgstr ""
 "De framesnelheiddrempel (fps) waarbij de beeldkwaliteit zich begint aan te "
 "passen."
 
-#: transports/RGS_enterprise/rgs_base.py:144
+#: transports/RGS_enterprise/rgs_base.py:145
 msgid "Match local resolution"
 msgstr "Stem de lokale resolutie af."
 
-#: transports/RGS_enterprise/rgs_base.py:147
+#: transports/RGS_enterprise/rgs_base.py:148
 msgid ""
 "Change the Sender's resolution to match the Receiver's resolution when "
 "connecting"
@@ -10479,37 +10423,57 @@ msgstr ""
 "Wijzig de schermresolutie van de zender naar de schermresolutie van de "
 "ontvanger bij het verbinden."
 
-#: transports/RGS_enterprise/rgs_base.py:153
+#: transports/RGS_enterprise/rgs_base.py:154
 msgid "Redirect audio"
 msgstr "Audio omleiden"
 
-#: transports/RGS_enterprise/rgs_base.py:155
+#: transports/RGS_enterprise/rgs_base.py:156
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "Indien aangevinkt, wordt het geluid doorgestuurd naar de ontvanger."
 
-#: transports/RGS_enterprise/rgs_base.py:160
+#: transports/RGS_enterprise/rgs_base.py:161
 msgid "Redirect microphone"
 msgstr "Microfoon omleiden"
 
-#: transports/RGS_enterprise/rgs_base.py:162
+#: transports/RGS_enterprise/rgs_base.py:163
 msgid "If checked, the microphone input will be streamed to the Sender"
 msgstr "Indien aangevinkt, wordt de microfooningang naar de zender gestreamd."
 
-#: transports/RGS_enterprise/rgs_base.py:167
+#: transports/RGS_enterprise/rgs_base.py:168
 msgid "Redirect USB"
 msgstr "USB-omleiding"
 
-#: transports/RGS_enterprise/rgs_base.py:169
+#: transports/RGS_enterprise/rgs_base.py:170
 msgid "If checked, USB devices will be redirected to the Sender session"
 msgstr ""
 "Indien aangevinkt, worden USB-apparaten doorgestuurd naar de sessie van de "
 "afzender."
 
-#: transports/RGS_enterprise/rgs_base.py:177
+#: transports/RGS_enterprise/rgs_base.py:176
+#, fuzzy
+#| msgid "Window Size"
+msgid "Window mode"
+msgstr "Venstergrootte"
+
+#: transports/RGS_enterprise/rgs_base.py:178
+msgid "How the RGS Receiver window is shown when the session starts"
+msgstr ""
+
+#: transports/RGS_enterprise/rgs_base.py:181
+#, fuzzy
+#| msgid "Window Size"
+msgid "Windowed"
+msgstr "Venstergrootte"
+
+#: transports/RGS_enterprise/rgs_base.py:182
+msgid "Borderless"
+msgstr ""
+
+#: transports/RGS_enterprise/rgs_base.py:191
 msgid "RGS port"
 msgstr "RGS-haven"
 
-#: transports/RGS_enterprise/rgs_base.py:180
+#: transports/RGS_enterprise/rgs_base.py:194
 msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "RGS Sender-luisterpoort (standaard 42966)"
 
