@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import datetime
@@ -146,6 +147,34 @@ class ServicePoolTest(rest.test.RESTTestCase):
 
         edited = next(p for p in self.client.rest_get(url).json() if p["id"] == pool.uuid)
         self.assertEqual(edited["comments"], pool.comments)
+
+    def test_overview_carries_the_columns_the_table_paints(self) -> None:
+        # The pools table paints counts, usage and pool group, and all of them live
+        # in the tail of get_item. No summary may cut that tail off here.
+        overview = self.client.rest_get("servicespools/overview")
+        self.assertEqual(overview.status_code, 200, overview.content)
+
+        for pool in typing.cast(list[dict[str, typing.Any]], overview.json()):
+            for field in (
+                "user_services_count",
+                "user_services_in_preparation",
+                "usage",
+                "pool_group_name",
+                "restrained",
+                "permission",
+                "info",
+            ):
+                self.assertIn(field, pool)
+
+    def test_overview_ignores_a_summarize_request(self) -> None:
+        # Nobody may shorten this payload through a query param: the admin table
+        # needs the whole item. Kept as a test because a "summarize" flag lived
+        # here, misspelled and unreachable, from 2018 until it was removed.
+        plain = self.client.rest_get("servicespools/overview").json()
+        for param in ("summarize=true", "sumarize=true", "summary=true"):
+            response = self.client.rest_get(f"servicespools/overview?{param}")
+            self.assertEqual(response.status_code, 200, response.content)
+            self.assertEqual(response.json(), plain, param)
 
     # ------------------------------------------------------------------
     # CRUD smoke extension (Phase 1 — Safety net)

@@ -404,7 +404,6 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     @typing.override
     def get_item(self, item: "Model") -> ServicePoolItem:
         item = ensure.is_instance(item, ServicePool)
-        summary = "summarize" in self._params
         # if item does not have an associated service, hide it (the case, for example, for a removed service)
         # Access from dict will raise an exception, and item will be skipped
 
@@ -445,9 +444,6 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             display_custom_message=item.display_custom_message,
             osmanager_id=item.osmanager.uuid if item.osmanager else None,
         )
-        if summary:
-            return val
-
         if hasattr(item, "valid_count"):
             valid_count = getattr(item, "valid_count", 1)
             preparing_count = getattr(item, "preparing_count", 1)
