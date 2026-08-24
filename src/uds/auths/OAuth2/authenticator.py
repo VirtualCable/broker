@@ -68,9 +68,9 @@ class OAuth2Authenticator(auths.Authenticator):
     This class represents an OAuth2 Authenticator.
     """
 
-    type_name = _("OAuth2")
+    type_name = _("OAuth2 / OpenID Connect")
     type_type = "OAuth2Authenticator"
-    type_description = _("OAuth2 Authenticator")
+    type_description = _("OAuth2 / OpenID Connect Authenticator")
     icon_file = "oauth2.png"
 
     authorization_endpoint = gui.TextField(
@@ -187,22 +187,22 @@ class OAuth2Authenticator(auths.Authenticator):
         auth_utils.validate_regex_field(self.username_attr)
         auth_utils.validate_regex_field(self.username_attr)
 
-        if self.response_type.value in (
-            oauth2_types.ResponseType.CODE,
-            oauth2_types.ResponseType.PKCE,
-            oauth2_types.ResponseType.OPENID_CODE,
+        # Only "code" response types need the token endpoint. The info endpoint
+        # is optional when the token response already carries the user info.
+        if (
+            self.response_type.value
+            in (
+                oauth2_types.ResponseType.CODE,
+                oauth2_types.ResponseType.PKCE,
+                oauth2_types.ResponseType.OPENID_CODE,
+            )
+            and self.token_endpoint.value.strip() == ""
         ):
-            if self.common_groups.value.strip() == "":
-                raise exceptions.ui.ValidationError(gettext('Common groups is required for "code" response types'))
-            if self.token_endpoint.value.strip() == "":
-                raise exceptions.ui.ValidationError(gettext('Token endpoint is required for "code" response types'))
-            # infoEndpoint will not be necesary if the response of tokenEndpoint contains the user info
+            raise exceptions.ui.ValidationError(gettext('Token endpoint is required for "code" response types'))
 
         if self.response_type.value == "openid+token_id" and self.public_key.value.strip() == "":
             # Ensure we have a public key
-            raise exceptions.ui.ValidationError(
-                gettext('Public key is required for "openid+token_id" response type')
-            )
+            raise exceptions.ui.ValidationError(gettext('Public key is required for "openid+token_id" response type'))
 
         if self.redirection_endpoint.value.strip() == "" and self.db_obj() and "_request" in values:
             request: HttpRequest = values["_request"]
@@ -417,8 +417,8 @@ class OAuth2Authenticator(auths.Authenticator):
 
         # Get groups
         groups = auth_utils.process_regex_field(self.groupname_attr.value, userinfo)
-        # Append common groups
-        groups.extend(self.common_groups.value.split(","))
+        # Append common groups, ignoring empty/blank entries (optional field)
+        groups.extend(i.strip() for i in self.common_groups.value.split(",") if i.strip())
 
         # store groups for this username at storage, so we can check it at a later stage
         self.storage.save_pickled(username, [realname, groups])
