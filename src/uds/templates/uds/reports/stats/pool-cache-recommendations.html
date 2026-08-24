@@ -1,0 +1,121 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Cache recommendations per pool' %}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Cache recommendations per pool' %}">
+        <meta name="keywords" content="uds,report,cache,recommendations,prediction,pools">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p style="font-size: 0.8em;">
+            {% blocktrans %}Recommendations are built from the weekly usage pattern of the last {{ training_weeks }} weeks.{% endblocktrans %}
+            {% blocktrans %}Statistics are kept for {{ stats_duration }} days: raise the "statsDuration" setting to get predictions from a longer history.{% endblocktrans %}
+            {% trans 'The report only proposes changes: no cache size is applied automatically.' %}
+        </p>
+
+        {% for p in pools %}
+        <h2 style="font-size: 1em;">{{ p.pool }}</h2>
+        <p style="font-size: 0.8em;">
+            {% trans 'Initial' %}: {{ p.initial_srvs }} &middot;
+            {% trans 'Cache L1' %}: {{ p.cache_l1_srvs }} &middot;
+            {% trans 'Cache L2' %}: {{ p.cache_l2_srvs }} &middot;
+            {% trans 'Max' %}: {{ p.max_srvs }} &middot;
+            {% trans 'Confidence' %}: {{ p.confidence }}
+            {% if not p.has_data %}({% trans 'no historical data yet' %}){% elif p.low_confidence %}({% trans 'low confidence: too little history' %}){% endif %}
+        </p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 12%">{% trans 'Band' %}</th>
+                    <th style="width: 13%">{% trans 'Hours' %}</th>
+                    <th style="width: 12%">{% trans 'Verdict' %}</th>
+                    <th style="width: 9%">{% trans 'INUSE p50' %}</th>
+                    <th style="width: 9%">{% trans 'INUSE p90' %}</th>
+                    <th style="width: 10%">{% trans 'Cached mean' %}</th>
+                    <th style="width: 10%">{% trans 'Current L1' %}</th>
+                    <th style="width: 10%">{% trans 'Suggested L1' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for b in p.bands %}
+                <tr>
+                    <td>{{ b.band }}</td>
+                    <td>{{ b.hours }}</td>
+                    <td>{{ b.verdict }}</td>
+                    <td>{{ b.inuse_p50 }}</td>
+                    <td>{{ b.inuse_p90 }}</td>
+                    <td>{{ b.cached_mean }}</td>
+                    <td>{{ b.current_cache_l1 }}</td>
+                    <td>{{ b.suggested_cache_l1 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="8" style="font-size: 0.9em; font-style: italic;">{{ b.reason }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        {% if p.calendar_actions %}
+        <p style="font-size: 0.8em;">{% trans 'Suggested calendar actions (review before creating them)' %}:</p>
+        <ul style="font-size: 0.8em;">
+        {% for a in p.calendar_actions %}
+            <li>{{ a.action }} &rarr; {% trans 'size' %} {{ a.size }} ({{ a.hours }})</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+
+        <p style="font-size: 0.8em;">{% trans 'Hourly detail' %}:</p>
+        <table style="width: 100%; font-size: 0.7em;">
+            <thead>
+                <tr>
+                    <th style="width: 8%">{% trans 'Hour' %}</th>
+                    <th style="width: 12%">{% trans 'Verdict' %}</th>
+                    <th style="width: 10%">{% trans 'INUSE p50' %}</th>
+                    <th style="width: 10%">{% trans 'INUSE p90' %}</th>
+                    <th style="width: 10%">{% trans 'Cached mean' %}</th>
+                    <th style="width: 50%">{% trans 'Suggested action' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in p.slots %}
+                <tr>
+                    <td>{{ s.hour }}</td>
+                    <td>{{ s.verdict }}</td>
+                    <td>{{ s.inuse_p50 }}</td>
+                    <td>{{ s.inuse_p90 }}</td>
+                    <td>{{ s.cached_mean }}</td>
+                    <td>{{ s.action }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% empty %}
+        <p>{% trans 'No active pools selected.' %}</p>
+        {% endfor %}
+
+        {% if cross_pool %}
+        <h2 style="font-size: 1em;">{% trans 'Cross-pool summary' %}</h2>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 10%">{% trans 'Hour' %}</th>
+                    <th style="width: 35%">{% trans 'Pools running out of cache' %}</th>
+                    <th style="width: 35%">{% trans 'Pools with spare cache' %}</th>
+                    <th style="width: 20%">{% trans 'Services that could be lent' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in cross_pool %}
+                <tr>
+                    <td>{{ c.hour }}</td>
+                    <td>{{ c.hungry }}</td>
+                    <td>{{ c.surplus }}</td>
+                    <td>{{ c.lendable }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </body>
+</html>

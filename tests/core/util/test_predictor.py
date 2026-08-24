@@ -30,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import datetime
+import math
 import typing
 
 from django.utils import timezone
@@ -332,3 +333,138 @@ class PredictorGetProfileTest(UDSTestCase):
         self.assertGreater(profile.total_samples, 0)
         cached = Cache(consts.predictions.PROFILE_CACHE_OWNER).get("1-3")
         self.assertIsInstance(cached, predictor.Profile)
+
+
+class PredictorBandRecommendationsTest(UDSTestCase):
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        timezone.activate(datetime.timezone.utc)
+
+    def _slot(self, hour: int, verdict: str, *, p50: float = 0.0, p90: float = 0.0) -> predictor.CacheSlotRecommendation:
+        return predictor.CacheSlotRecommendation(
+            hour=hour,
+            verdict=verdict,
+            inuse_p50=p50,
+            inuse_p90=p90,
+            cached_mean=0.0,
+            action=f"action for {hour}",
+            priority="low",
+        )
+
+    def test_worst_verdict_wins_in_band(self) -> None:
+        slots = [self._slot(h, "OK") for h in range(24)]
+        slots[8] = self._slot(8, "STARVED", p50=12.0, p90=18.0)
+        bands = predictor.band_recommendations(slots, cache_l1_srvs=10, max_srvs=50)
+        morning = next(b for b in bands if b.band == "morning")
+        self.assertEqual(morning.verdict, "STARVED")
+        self.assertEqual(morning.reason, "action for 8")
+
+    def test_starved_band_suggests_peak_plus_headroom(self) -> None:
+        slots = [self._slot(h, "STARVED", p50=12.0, p90=18.0) for h in range(24)]
+        bands = predictor.band_recommendations(slots, cache_l1_srvs=10, max_srvs=50)
+        self.assertTrue(
+            all(b.suggested_cache_l1 == 18 + consts.predictions.CACHE_HEADROOM for b in bands)
+        )
+
+    def test_suggestion_never_above_max_srvs(self) -> None:
+        slots = [self._slot(h, "STARVED", p50=40.0, p90=40.0) for h in range(24)]
+        bands = predictor.band_recommendations(slots, cache_l1_srvs=10, max_srvs=20)
+        self.assertTrue(all(b.suggested_cache_l1 == 20 for b in bands))
+
+    def test_excess_band_lowers_cache(self) -> None:
+        slots = [self._slot(h, "EXCESS", p50=2.0, p90=3.0) for h in range(24)]
+        bands = predictor.band_recommendations(slots, cache_l1_srvs=10, max_srvs=50)
+        self.assertTrue(all(b.suggested_cache_l1 == 3 for b in bands))
+
+    def test_ok_and_saturated_keep_current_size(self) -> None:
+        for verdict in ("OK", "SATURATED", "NO_DATA"):
+            slots = [self._slot(h, verdict, p50=1.0, p90=2.0) for h in range(24)]
+            bands = predictor.band_recommendations(slots, cache_l1_srvs=7, max_srvs=50)
+            self.assertTrue(all(b.suggested_cache_l1 == 7 for b in bands), verdict)
+
+    def test_all_hours_belong_to_exactly_one_band(self) -> None:
+        slots = [self._slot(h, "OK") for h in range(24)]
+        bands = predictor.band_recommendations(slots, cache_l1_srvs=1, max_srvs=10)
+        hours = [hour for band in bands for hour in band.hours]
+        self.assertEqual(sorted(hours), list(range(24)))
+        self.assertEqual(len(bands), len(consts.predictions.DAY_BANDS))
+
+
+class PredictorCrossPoolTest(UDSTestCase):
+    def _usage(self, name: str, verdict: str, *, l1: int, suggested: int) -> predictor.PoolHourUsage:
+        return predictor.PoolHourUsage(
+            pool_name=name,
+            verdict=verdict,
+            inuse_p90=10.0,
+            cache_l1_srvs=l1,
+            suggested_cache_l1=suggested,
+        )
+
+    def test_pairs_hungry_with_surplus(self) -> None:
+        notes = predictor.cross_pool_notes(
+            {
+                8: [
+                    self._usage("hungry", "STARVED", l1=5, suggested=12),
+                    self._usage("spare", "EXCESS", l1=10, suggested=3),
+                ]
+            }
+        )
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes[0].hour, 8)
+        self.assertEqual([p.pool_name for p in notes[0].hungry], ["hungry"])
+        self.assertEqual(notes[0].lendable, 7)
+
+    def test_ignores_hours_without_both_sides(self) -> None:
+        notes = predictor.cross_pool_notes(
+            {
+                8: [self._usage("hungry", "STARVED", l1=5, suggested=12)],
+                9: [self._usage("spare", "EXCESS", l1=10, suggested=3)],
+            }
+        )
+        self.assertEqual(notes, [])
+
+
+class PredictorAnnualComponentTest(UDSTestCase):
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        timezone.activate(datetime.timezone.utc)
+
+    def _yearly_samples(self, days: int, *, amplitude: float = 10.0) -> list[predictor.Sample]:
+        """One sample per day following a yearly sine wave around a mean of 20."""
+        start = _utc(2025, 1, 1)
+        samples: list[predictor.Sample] = []
+        for day in range(days):
+            when = start + datetime.timedelta(days=day)
+            value = 20.0 + amplitude * math.sin(2.0 * math.pi * day / 365.25)
+            samples.append(predictor.Sample(when=when, mean=value, max=value, count=6))
+        return samples
+
+    def test_no_fit_without_enough_history(self) -> None:
+        samples = self._yearly_samples(consts.predictions.MIN_DAYS_FOR_ANNUAL_FIT - 10)
+        self.assertIsNone(predictor.fit_annual_component(samples))
+
+    def test_no_fit_without_samples(self) -> None:
+        self.assertIsNone(predictor.fit_annual_component([]))
+
+    def test_fit_recovers_the_yearly_wave(self) -> None:
+        samples = self._yearly_samples(400)
+        component = predictor.fit_annual_component(samples)
+        self.assertIsNotNone(component)
+        assert component is not None
+        peak = _utc(2025, 1, 1) + datetime.timedelta(days=91)
+        trough = _utc(2025, 1, 1) + datetime.timedelta(days=274)
+        self.assertGreater(component.value_at(peak), component.value_at(trough))
+        self.assertAlmostEqual(component.value_at(peak), 30.0, delta=1.5)
+        self.assertGreater(component.factor_at(peak), 1.0)
+        self.assertLess(component.factor_at(trough), 1.0)
+
+    def test_factor_is_clamped(self) -> None:
+        samples = self._yearly_samples(400, amplitude=1000.0)
+        component = predictor.fit_annual_component(samples)
+        assert component is not None
+        factors = [
+            component.factor_at(_utc(2025, 1, 1) + datetime.timedelta(days=d)) for d in range(0, 365, 7)
+        ]
+        self.assertTrue(all(consts.predictions.ANNUAL_FACTOR_MIN <= f <= consts.predictions.ANNUAL_FACTOR_MAX for f in factors))
