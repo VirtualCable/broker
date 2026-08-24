@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import typing
 
+from uds.core import types
 from uds.core.types.states import State
 from uds import models
 
@@ -83,6 +84,48 @@ class MetaPoolTest(rest.test.RESTTestCase):
         response = self.client.rest_delete(f"metapools/{pool.uuid}")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(self._pool_count_in_db(), before - 1)
+
+    # ------------------------------------------------------------------
+    # policy field: single choice, not multichoice
+    # ------------------------------------------------------------------
+    def test_policy_gui_field_is_single_choice(self) -> None:
+        """``policy`` maps to a SmallIntegerField, so the GUI must send a scalar.
+
+        Declared as a multichoice the admin sends a list and the create blows up
+        with ``Field 'policy' expected a number but got [0, 1, 2]``. ``ha_policy``,
+        the twin field right below it, is the reference: both are single choices.
+        """
+        response = self.client.rest_get("metapools/gui")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        fields = {f["name"]: f for f in response.json()}
+        self.assertEqual(fields["policy"]["gui"]["type"], fields["ha_policy"]["gui"]["type"])
+        self.assertNotEqual(fields["policy"]["gui"]["type"], types.ui.FieldType.MULTICHOICE.value)
+
+    def test_create_meta_pool_persists_scalar_policy(self) -> None:
+        """A create with a scalar ``policy`` reaches the DB as an integer."""
+        policy = types.pools.LoadBalancingPolicy.PRIORITY
+
+        response = self.client.rest_post(
+            "metapools",
+            data={
+                "name": "test_policy_metapool",
+                "short_name": "tpm",
+                "comments": "",
+                "tags": [],
+                "image_id": "-1",
+                "servicesPoolGroup_id": "-1",
+                "visible": True,
+                "policy": str(int(policy)),
+                "ha_policy": str(int(types.pools.HighAvailabilityPolicy.DISABLED)),
+                "calendar_message": "",
+                "transport_grouping": int(types.pools.TransportSelectionPolicy.AUTO),
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        pool = models.MetaPool.objects.get(name="test_policy_metapool")
+        self.assertEqual(pool.policy, policy)
 
     # ------------------------------------------------------------------
     # Custom-method coverage: fallback_access (GET reads, POST writes)
