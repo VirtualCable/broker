@@ -469,7 +469,13 @@ def modify(
 
 
 def get_root_dse(con: Connection) -> "LDAPResultType | None":
-    con.search("", "(objectClass=*)", search_scope=SCOPE_BASE)
+    con.search(
+        "",
+        "(objectClass=*)",
+        search_scope=SCOPE_BASE,
+        attributes=ALL_ATTRIBUTES,
+        get_operational_attributes=True,
+    )
     if con.entries:
         entry = typing.cast(typing.Any, con.entries[0])
         dct: dict[str, typing.Any] = {attr: entry[attr].values for attr in entry.entry_attributes}
