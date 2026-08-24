@@ -40,6 +40,7 @@ stored on StatsCountersAccum mark the END of each interval; the samples
 and profiles exposed here use the interval START as the time reference.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import collections
@@ -47,8 +48,11 @@ import collections.abc
 import dataclasses
 import datetime
 import logging
+import math
 import statistics
+import typing
 
+import numpy as np
 from django.utils import timezone
 
 from uds.core import consts
@@ -456,3 +460,217 @@ def cache_recommendations(
             )
         )
     return recommendations
+
+
+# Verdicts, from the most to the least severe. Used to collapse the hours of a
+# band into a single verdict and to sort the pools of the report.
+VERDICT_SEVERITY: typing.Final[tuple[str, ...]] = ("SATURATED", "STARVED", "EXCESS", "OK", "NO_DATA")
+
+
+@dataclasses.dataclass
+class BandRecommendation:
+    """Cache recommendation for a band of the day (see consts.predictions.DAY_BANDS)."""
+
+    band: str
+    hours: tuple[int, ...]
+    verdict: str
+    inuse_p50: float
+    inuse_p90: float
+    cached_mean: float
+    current_cache_l1: int
+    suggested_cache_l1: int
+    reason: str
+
+
+def worst_verdict(verdicts: collections.abc.Iterable[str]) -> str:
+    """Returns the most severe verdict of the given ones."""
+    present = set(verdicts)
+    for verdict in VERDICT_SEVERITY:
+        if verdict in present:
+            return verdict
+    return "NO_DATA"
+
+
+def _suggested_cache_l1(verdict: str, inuse_p90: float, *, cache_l1_srvs: int, max_srvs: int) -> int:
+    """Returns the L1 cache size suggested for a band, never above the pool ceiling."""
+    if verdict == "STARVED":
+        suggested = int(inuse_p90) + consts.predictions.CACHE_HEADROOM
+    elif verdict == "EXCESS":
+        suggested = int(inuse_p90)
+    else:
+        # SATURATED is a max_srvs problem, and OK/NO_DATA do not call for a change
+        return cache_l1_srvs
+    if max_srvs > 0:
+        suggested = min(suggested, max_srvs)
+    return max(0, suggested)
+
+
+def band_recommendations(
+    slots: collections.abc.Sequence[CacheSlotRecommendation],
+    *,
+    cache_l1_srvs: int,
+    max_srvs: int,
+) -> list[BandRecommendation]:
+    """Collapses the 24 hourly recommendations into the bands of the day.
+
+    Each band takes the worst verdict of its hours and the peak of its
+    percentiles, so a band is never reported as healthier than its worst hour.
+    """
+    by_hour = {slot.hour: slot for slot in slots}
+    bands: list[BandRecommendation] = []
+    for band, hours in consts.predictions.DAY_BANDS:
+        in_band = [by_hour[hour] for hour in hours if hour in by_hour]
+        if not in_band:
+            continue
+        verdict = worst_verdict(slot.verdict for slot in in_band)
+        inuse_p90 = max(slot.inuse_p90 for slot in in_band)
+        driving = next(slot for slot in in_band if slot.verdict == verdict)
+        bands.append(
+            BandRecommendation(
+                band=band,
+                hours=tuple(hours),
+                verdict=verdict,
+                inuse_p50=max(slot.inuse_p50 for slot in in_band),
+                inuse_p90=inuse_p90,
+                cached_mean=round(sum(slot.cached_mean for slot in in_band) / len(in_band), 2),
+                current_cache_l1=cache_l1_srvs,
+                suggested_cache_l1=_suggested_cache_l1(
+                    verdict, inuse_p90, cache_l1_srvs=cache_l1_srvs, max_srvs=max_srvs
+                ),
+                reason=driving.action,
+            )
+        )
+    return bands
+
+
+@dataclasses.dataclass
+class PoolHourUsage:
+    """What a single pool does at a given hour, as seen by the cross-pool analysis."""
+
+    pool_name: str
+    verdict: str
+    inuse_p90: float
+    cache_l1_srvs: int
+    suggested_cache_l1: int
+
+
+@dataclasses.dataclass
+class CrossPoolHourNote:
+    """Pools that could lend cache to each other at a given hour."""
+
+    hour: int
+    hungry: list[PoolHourUsage]
+    surplus: list[PoolHourUsage]
+    lendable: int
+
+
+def cross_pool_notes(
+    usage_by_hour: collections.abc.Mapping[int, collections.abc.Sequence[PoolHourUsage]],
+) -> list[CrossPoolHourNote]:
+    """Pairs pools that waste cache with pools that run out of it, hour by hour.
+
+    Only hours with both kinds of pool are returned: an hour where everybody is
+    hungry is a capacity problem, not something a redistribution can solve.
+    """
+    notes: list[CrossPoolHourNote] = []
+    for hour in sorted(usage_by_hour):
+        pools = usage_by_hour[hour]
+        hungry = [p for p in pools if p.verdict in ("STARVED", "SATURATED")]
+        surplus = [p for p in pools if p.verdict == "EXCESS"]
+        if not hungry or not surplus:
+            continue
+        notes.append(
+            CrossPoolHourNote(
+                hour=hour,
+                hungry=sorted(hungry, key=lambda p: p.inuse_p90, reverse=True),
+                surplus=sorted(surplus, key=lambda p: p.cache_l1_srvs - p.suggested_cache_l1, reverse=True),
+                lendable=sum(max(0, p.cache_l1_srvs - p.suggested_cache_l1) for p in surplus),
+            )
+        )
+    return notes
+
+
+@dataclasses.dataclass
+class AnnualComponent:
+    """Yearly seasonality of a series, as harmonics of the day of the year.
+
+    Fitted by least squares over a constant, a linear trend and
+    ANNUAL_HARMONICS sin/cos pairs. `factor_at()` turns it into a multiplier
+    to apply on top of the weekly profile.
+    """
+
+    intercept: float
+    trend_per_day: float
+    harmonics: list[tuple[float, float]]
+    origin: datetime.datetime
+    baseline: float
+
+    def value_at(self, when: datetime.datetime) -> float:
+        """Returns the fitted value (not a factor) for *when*."""
+        days = (when - self.origin).total_seconds() / 86400.0
+        value = self.intercept + self.trend_per_day * days
+        for order, (sin_coef, cos_coef) in enumerate(self.harmonics, start=1):
+            angle = 2.0 * math.pi * order * days / 365.25
+            value += sin_coef * math.sin(angle) + cos_coef * math.cos(angle)
+        return value
+
+    def factor_at(self, when: datetime.datetime) -> float:
+        """Returns the seasonal multiplier for *when*, clamped to sane bounds."""
+        if self.baseline <= 0.0:
+            return 1.0
+        factor = self.value_at(when) / self.baseline
+        return max(
+            consts.predictions.ANNUAL_FACTOR_MIN,
+            min(consts.predictions.ANNUAL_FACTOR_MAX, factor),
+        )
+
+
+def fit_annual_component(
+    samples: collections.abc.Sequence[Sample],
+    *,
+    harmonics: int = consts.predictions.ANNUAL_HARMONICS,
+) -> AnnualComponent | None:
+    """Fits the yearly seasonality of *samples*, or None when it cannot be fitted.
+
+    Needs at least MIN_DAYS_FOR_ANNUAL_FIT days of history: with a shorter
+    series the harmonics describe the noise instead of the year. Samples are
+    averaged per day before fitting, so the daily and weekly cycles (already
+    covered by the profile) do not leak into the annual term.
+    """
+    if not samples:
+        return None
+    daily: dict[datetime.date, list[float]] = collections.defaultdict(list)
+    for sample in samples:
+        daily[timezone.localtime(sample.when).date()].append(sample.mean)
+    if len(daily) < 2:
+        return None
+
+    days = sorted(daily)
+    span = (days[-1] - days[0]).days
+    if span < consts.predictions.MIN_DAYS_FOR_ANNUAL_FIT:
+        return None
+
+    origin = timezone.make_aware(datetime.datetime.combine(days[0], datetime.time.min))
+    offsets = [float((day - days[0]).days) for day in days]
+    values = [sum(daily[day]) / len(daily[day]) for day in days]
+
+    columns: list[list[float]] = [[1.0] * len(days), offsets]
+    for order in range(1, harmonics + 1):
+        angles = [2.0 * math.pi * order * offset / 365.25 for offset in offsets]
+        columns.append([math.sin(angle) for angle in angles])
+        columns.append([math.cos(angle) for angle in angles])
+
+    design = np.array(columns, dtype=float).T
+    if design.shape[0] <= design.shape[1]:  # More unknowns than equations
+        return None
+    solution, *_ = np.linalg.lstsq(design, np.array(values, dtype=float), rcond=None)
+    coefficients = [float(v) for v in solution]
+
+    baseline = sum(values) / len(values)
+    return AnnualComponent(
+        intercept=coefficients[0],
+        trend_per_day=coefficients[1],
+        harmonics=list(zip(coefficients[2::2], coefficients[3::2])),
+        origin=origin,
+        baseline=baseline,
+    )

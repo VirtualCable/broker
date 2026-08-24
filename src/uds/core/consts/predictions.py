@@ -29,6 +29,7 @@
 Constants for the usage prediction subsystem.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import typing
@@ -53,3 +54,25 @@ CELLS_IN_WEEK: typing.Final[int] = 7 * 24
 # Cache owner and TTL for get_profile() cached profiles
 PROFILE_CACHE_OWNER: typing.Final[str] = "uds.predictor"
 PROFILE_CACHE_TIMEOUT: typing.Final[int] = 30 * 24 * 3600  # 30 days
+
+# Day bands used by the cache recommendations report: (key, hours of the band).
+# Night wraps around midnight, hence the two ranges joined together.
+DAY_BANDS: typing.Final[tuple[tuple[str, tuple[int, ...]], ...]] = (
+    ("morning", tuple(range(6, 14))),
+    ("afternoon", tuple(range(14, 22))),
+    ("night", tuple(range(22, 24)) + tuple(range(0, 6))),
+)
+
+# Extra services added on top of the observed peak when suggesting a bigger L1 cache
+CACHE_HEADROOM: typing.Final[int] = 1
+
+# Minimum span of history (in days) required to fit the annual component.
+# Below this, the harmonic fit overfits the series instead of describing it.
+MIN_DAYS_FOR_ANNUAL_FIT: typing.Final[int] = 180
+
+# Order of the yearly harmonics (sin/cos pairs) of the annual component
+ANNUAL_HARMONICS: typing.Final[int] = 2
+
+# Bounds the annual factor is clamped to, so a bad fit can never wreck a forecast
+ANNUAL_FACTOR_MIN: typing.Final[float] = 0.5
+ANNUAL_FACTOR_MAX: typing.Final[float] = 2.0
