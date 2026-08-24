@@ -103,6 +103,8 @@ class Images(ModelHandler[ImageItem]):
             id=item.uuid,
             name=item.name,
             data=item.data64,
+            thumb=item.thumb64,
+            size=f"{item.width}x{item.height}, {len(item.data)} bytes (thumb {len(item.thumb)} bytes)",
         )
 
     @typing.override
