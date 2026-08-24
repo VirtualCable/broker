@@ -483,7 +483,6 @@ class BandRecommendation:
 
 
 def worst_verdict(verdicts: collections.abc.Iterable[str]) -> str:
-    """Returns the most severe verdict of the given ones."""
     present = set(verdicts)
     for verdict in VERDICT_SEVERITY:
         if verdict in present:
