@@ -63,7 +63,7 @@ def cache_key_helper(self: "OpenshiftProvider") -> str:
 
 class OpenshiftProvider(ServiceProvider):
     offers: typing.ClassVar[list[type["Service"]]] = [OpenshiftService, OpenshiftServiceFixed]
-    type_name = _("Openshift Provider")
+    type_name = _("Openshift")
     type_type = "OpenshiftProvider"
     type_description = _("Openshift based VMs provider")
     icon_file = "provider.png"
