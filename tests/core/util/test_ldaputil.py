@@ -4,6 +4,7 @@
 #
 """
 Author: dkmaster
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 
 Unit tests for ``uds.core.util.ldaputil`` focused on the bits that aren't
 covered by ``test_ldaputil_helpers.py``:
@@ -21,6 +22,8 @@ mapping and lives alongside these tests so the surface stays small.
 import typing
 import unittest
 from unittest import mock
+
+import ldap3
 
 from uds.core.util import ldaputil
 
@@ -441,6 +444,88 @@ class ConnectionBindMessageTest(UDSTestCase):
         self.assertIs(con, fake)
         self.assertTrue(fake.opened)
         self.assertTrue(fake.bound)
+
+
+# ---------------------------------------------------------------------------
+# get_root_dse
+# ---------------------------------------------------------------------------
+
+
+class _RootDseEntry:
+    """Root DSE entry as ldap3 hands it back: attribute names plus values."""
+
+    def __init__(self, attrs: dict[str, list[str]]) -> None:
+        self.entry_dn: str = ""
+        self.entry_attributes: list[str] = list(attrs)
+        self._attrs: dict[str, list[str]] = attrs
+
+    def __getitem__(self, key: str) -> typing.Any:
+        return _AttrValue(self._attrs[key])
+
+
+class _RootDseFakeConn:
+    """Records the positional ``search`` call ``get_root_dse`` makes."""
+
+    def __init__(self, entries: list[_RootDseEntry] | None = None) -> None:
+        self.entries: list[_RootDseEntry] = entries or []
+        self.search_calls: list[dict[str, typing.Any]] = []
+
+    def search(
+        self,
+        search_base: str,
+        search_filter: str,
+        search_scope: typing.Any = None,
+        attributes: typing.Any = None,
+        get_operational_attributes: bool = False,
+        **kwargs: typing.Any,
+    ) -> bool:
+        self.search_calls.append(
+            {
+                "search_base": search_base,
+                "search_filter": search_filter,
+                "search_scope": search_scope,
+                "attributes": attributes,
+                "get_operational_attributes": get_operational_attributes,
+            }
+        )
+        return True
+
+
+class GetRootDseTest(UDSTestCase):
+    def test_asks_for_user_and_operational_attributes(self) -> None:
+        # Active Directory returns an attribute-less entry when the search does not
+        # name what it wants, so the request itself is what this guards.
+        fake: _RootDseFakeConn = _RootDseFakeConn()
+
+        ldaputil.get_root_dse(fake)  # type: ignore[arg-type]
+
+        self.assertEqual(len(fake.search_calls), 1)
+        call = fake.search_calls[0]
+        self.assertEqual(call["search_base"], "")
+        self.assertEqual(call["search_filter"], "(objectClass=*)")
+        self.assertEqual(call["search_scope"], ldaputil.SCOPE_BASE)
+        self.assertEqual(call["attributes"], ldap3.ALL_ATTRIBUTES)
+        self.assertTrue(call["get_operational_attributes"])
+
+    def test_returns_the_attributes_of_the_root_entry(self) -> None:
+        entry: _RootDseEntry = _RootDseEntry(
+            {
+                "namingContexts": ["dc=corp,dc=local", "cn=Configuration,dc=corp,dc=local"],
+                "supportedLDAPVersion": ["3"],
+            }
+        )
+        fake: _RootDseFakeConn = _RootDseFakeConn(entries=[entry])
+
+        result = ldaputil.get_root_dse(fake)  # type: ignore[arg-type]
+
+        self.assertIsNotNone(result)
+        assert result is not None  # for the type checker
+        self.assertEqual(result["namingContexts"], ["dc=corp,dc=local", "cn=Configuration,dc=corp,dc=local"])
+        self.assertEqual(result["supportedLDAPVersion"], ["3"])
+        self.assertEqual(result["dn"], "")
+
+    def test_returns_none_when_the_server_answers_nothing(self) -> None:
+        self.assertIsNone(ldaputil.get_root_dse(_RootDseFakeConn()))  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
