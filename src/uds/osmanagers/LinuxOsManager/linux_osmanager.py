@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinuxOsManager(osmanagers.OSManager):
-    type_name = _("Linux")
+    type_name = _("Linux Basic")
     type_type = "LinuxManager"
     type_description = _("Os Manager to control Linux virtual machines")
     icon_file = "losmanager.png"
