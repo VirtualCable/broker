@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class WindowsOsManager(osmanagers.OSManager):
-    type_name = _("Windows Basic OS Manager")
+    type_name = _("Windows Basic")
     type_type = "WindowsManager"
     type_description = _("Os Manager to control windows machines without domain.")
     icon_file = "wosmanager.png"
