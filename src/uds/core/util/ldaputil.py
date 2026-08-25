@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 # pyright: reportUnknownMemberType=false
 
@@ -310,13 +311,21 @@ def as_dict(
     logger.debug("Filter: %s, attr list: %s", ldap_filter, attributes)
     attr_list = list(attributes) if attributes else ALL_ATTRIBUTES
     try:
-        con.search(
-            search_base=base,
-            search_filter=ldap_filter,
-            search_scope=scope,
-            attributes=attr_list,
-            size_limit=limit,
-        )
+        # ldap3 follows referrals on its own, consuming them before we get to look
+        # at them. Hold that off while the search runs, so they reach the caller.
+        previous_auto_referrals = con.auto_referrals
+        if raise_on_referrals:
+            con.auto_referrals = False
+        try:
+            con.search(
+                search_base=base,
+                search_filter=ldap_filter,
+                search_scope=scope,
+                attributes=attr_list,
+                size_limit=limit,
+            )
+        finally:
+            con.auto_referrals = previous_auto_referrals
         if raise_on_referrals:
             referrals: list[str] = _extract_referrals(con)
             if referrals:

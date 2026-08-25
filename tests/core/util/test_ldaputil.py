@@ -127,6 +127,8 @@ class _SearchFakeConn:
         referrals: list[str] | None = None,
         response: list[dict[str, typing.Any]] | None = None,
     ) -> None:
+        # A real Connection follows referrals unless told otherwise
+        self.auto_referrals: bool = True
         self.entries: list[_StubEntry] = entries or []
         self.response: list[dict[str, typing.Any]] = response or []
         self.result: dict[str, typing.Any] = {"result": 0, "description": "success"}
@@ -145,6 +147,7 @@ class _SearchFakeConn:
     ) -> bool:
         self.search_calls.append(
             {
+                "auto_referrals": self.auto_referrals,
                 "search_base": search_base,
                 "search_filter": search_filter,
                 "search_scope": search_scope,
@@ -191,6 +194,25 @@ class LDAPReferralErrorTest(UDSTestCase):
 
 
 class AsDictReferralsTest(UDSTestCase):
+    def test_referral_chasing_is_held_off_while_the_search_runs(self) -> None:
+        """ldap3 would otherwise follow the referrals before we can report them."""
+        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
+            entries=[],
+            referrals=["ldap://other-dc/dc=corp,dc=local"],
+        )
+        with self.assertRaises(ldaputil.LDAPReferralError):
+            list(ldaputil.as_dict(conn, "dc=corp,dc=local", "(objectClass=user)", raise_on_referrals=True))
+        self.assertFalse(conn.search_calls[0]["auto_referrals"])  # type: ignore[attr-defined]
+        self.assertTrue(conn.auto_referrals)  # type: ignore[attr-defined]
+
+    def test_referral_chasing_is_left_alone_by_default(self) -> None:
+        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
+            entries=[],
+            referrals=["ldap://other-dc/dc=corp,dc=local"],
+        )
+        list(ldaputil.as_dict(conn, "dc=corp,dc=local", "(objectClass=user)"))
+        self.assertTrue(conn.search_calls[0]["auto_referrals"])  # type: ignore[attr-defined]
+
     def test_default_drops_referrals_silently(self) -> None:
         """``raise_on_referrals`` defaults to False for backwards compat."""
         conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
