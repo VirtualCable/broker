@@ -226,7 +226,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             .add_stock_field(types.rest.stock.StockField.NAME)
             .add_stock_field(types.rest.stock.StockField.COMMENTS)
             .set_order(100)
-            .add_multichoice(
+            .add_choice(
                 name="policy",
                 label=gettext("Load balancing policy"),
                 choices=[

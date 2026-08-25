@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 
 
 class WinRandomPassManager(WindowsOsManager):
-    type_name = _("Windows Random Password OS Manager")
+    type_name = _("Windows Random Password")
     type_type = "WinRandomPasswordManager"
     type_description = _("Os Manager to control windows machines, with user password set randomly.")
     icon_file = "wosmanager.png"
