@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
 
 
 class LinuxRandomPassManager(LinuxOsManager):
-    type_name = _("Linux Random Password OS Manager")
+    type_name = _("Linux Random Password")
     type_type = "LinRandomPasswordManager"
     type_description = _("Os Manager to control linux machines, with user password set randomly.")
     icon_file = "losmanager.png"

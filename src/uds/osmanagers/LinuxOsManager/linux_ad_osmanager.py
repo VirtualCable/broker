@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinuxOsADManager(LinuxOsManager):
-    type_name = _("Linux Active Directory OS Manager")
+    type_name = _("Linux Active Directory")
     type_type = "LinuxADManager"
     type_description = _("Os Manager to control Linux virtual machines with active directory")
     icon_file = "losmanager.png"
