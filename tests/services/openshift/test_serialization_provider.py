@@ -63,7 +63,7 @@ class TestOpenshiftProviderSerialization(UDSTransactionTestCase):
         provider2 = OpenshiftProvider(environment=environment.Environment.testing_environment())
         provider2.deserialize(data)
 
-        self.assertEqual(str(provider2.type_name), "Openshift Provider")
+        self.assertEqual(str(provider2.type_name), "Openshift")
         self.assertEqual(str(provider2.type_description), "Openshift based VMs provider")
         self.assertEqual(provider2.cluster_url.value, fixtures.PROVIDER_VALUES_DICT["cluster_url"])
         self.assertEqual(provider2.api_url.value, fixtures.PROVIDER_VALUES_DICT["api_url"])

@@ -57,7 +57,7 @@ VALID_CONFIG_SECTIONS: typing.Final[set[str]] = {"wol"}
 
 class PhysicalMachinesProvider(services.ServiceProvider):
     # What services do we offer?
-    type_name = _("Static IP Machines Provider")
+    type_name = _("Static IP Machines")
     type_type = "PhysicalMachinesServiceProvider"
     type_description = _("Provides connection to machines by IP")
     icon_file = "provider.png"

@@ -32,8 +32,7 @@ import typing
 
 from django.utils import timezone
 
-if typing.TYPE_CHECKING:
-    from uds import models
+from uds import models
 
 logger = logging.getLogger(__name__)
 

@@ -527,3 +527,50 @@ class MetaPoolsCrudSmokeTest(rest.test.RESTTestCase):
 
         get_resp = self.client.rest_get(f"{self.BASE}/{meta_uuid}")
         self.assertEqual(get_resp.status_code, 404)
+
+
+class GalleryImagesCrudSmokeTest(rest.test.RESTTestCase):
+    """Regression for the IMAGE/SIZE columns of the admin gallery table.
+
+    The admin table declares ``.image("thumb", ...)`` for the thumbnail and
+    ``.text_column("size", ...)`` for the size string. ``get_item`` must
+    populate both; otherwise the list endpoint returns rows with empty
+    IMAGE/SIZE cells. See PENDIENTE-UDS §67.5 #13.
+    """
+
+    BASE: typing.ClassVar[str] = "gallery/images"
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+
+    def test_list_returns_thumb_and_size(self) -> None:
+        """GET /gallery/images → list items must carry `thumb` and `size`."""
+        from tests.fixtures.images import small
+
+        # Create an image so the list is non-empty (an empty list trivially
+        # passes — we want to assert on actual item content).
+        create_resp = self.client.rest_post(
+            self.BASE, {"name": "smoke-thumb-size", "data": small}
+        )
+        self.assertEqual(
+            create_resp.status_code,
+            200,
+            f"POST failed: {create_resp.content.decode(errors='replace')}",
+        )
+
+        list_resp = self.client.rest_get(self.BASE)
+        self.assertEqual(list_resp.status_code, 200)
+        items = list_resp.json()
+        names = {i.get("name") for i in items}
+        self.assertIn("smoke-thumb-size", names)
+
+        item = next(i for i in items if i.get("name") == "smoke-thumb-size")
+        # The fields the table renders must be present and non-empty.
+        self.assertTrue(
+            item.get("thumb"), "list item missing non-empty 'thumb' (IMAGE column broken)"
+        )
+        self.assertTrue(
+            item.get("size"), "list item missing non-empty 'size' (SIZE column broken)"
+        )
