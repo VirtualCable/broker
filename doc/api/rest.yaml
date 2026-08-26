@@ -21250,6 +21250,50 @@ paths:
       summary: List Servers items (overview)
       tags:
       - Servers
+  /servers/groups/{uuid}/servers/stats:
+    get:
+      description: Retrieve accumulated resource usage time-series for a server (cpu,
+        memory, users, connections, disk) for charts
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Retrieve accumulated resource usage time-series for a server (cpu,
+        memory, users, connections, disk) for charts (Servers collection)
+      tags:
+      - Servers
   /servers/groups/{uuid}/servers/tableinfo:
     get:
       description: Retrieve table info of Servers items
@@ -21619,6 +21663,50 @@ paths:
       - udsApiAuthBearer: []
       summary: Toggle maintenance mode for a server (enable if disabled, disable if
         enabled) (Servers item)
+      tags:
+      - Servers
+  /servers/groups/{uuid}/servers/{uuid}/stats:
+    get:
+      description: Retrieve accumulated resource usage time-series for a server (cpu,
+        memory, users, connections, disk) for charts
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Retrieve accumulated resource usage time-series for a server (cpu,
+        memory, users, connections, disk) for charts (Servers item)
       tags:
       - Servers
   /servers/groups/{uuid}/stats:

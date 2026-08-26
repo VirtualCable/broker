@@ -23208,6 +23208,142 @@
                 ]
             }
         },
+        "/servers/groups/{uuid}/servers/stats": {
+            "get": {
+                "summary": "Retrieve accumulated resource usage time-series for a server (cpu, memory, users, connections, disk) for charts (Servers collection)",
+                "description": "Retrieve accumulated resource usage time-series for a server (cpu, memory, users, connections, disk) for charts",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servers"
+                ],
+                "security": [
+                    {
+                        "udsApiAuthBearer": []
+                    }
+                ]
+            }
+        },
+        "/servers/groups/{uuid}/servers/{uuid}/stats": {
+            "get": {
+                "summary": "Retrieve accumulated resource usage time-series for a server (cpu, memory, users, connections, disk) for charts (Servers item)",
+                "description": "Retrieve accumulated resource usage time-series for a server (cpu, memory, users, connections, disk) for charts",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The UUID of the item"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "object item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. You do not have permission to access this resource with your current role.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Servers"
+                ],
+                "security": [
+                    {
+                        "udsApiAuthBearer": []
+                    }
+                ]
+            }
+        },
         "/servers/groups/{uuid}/servers/gui": {
             "get": {
                 "summary": "Get GUI representation of Servers items",
