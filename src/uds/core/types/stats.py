@@ -101,6 +101,15 @@ class CounterType(enum.IntEnum):
     AUTH_SERVICES = 6
     CACHED = 7
 
+    # Server stats (see types.servers.ServerStats). Values are:
+    #   CPU, MEMORY, DISK -> usage as percentage (0-100)
+    #   USERS, CONNECTIONS -> absolute counts
+    CPU = 8
+    MEMORY = 9
+    USERS = 10
+    CONNECTIONS = 11
+    DISK = 12
+
     # Unkown counter type
     UNKNOWN = 9999
 
@@ -125,6 +134,7 @@ class CounterOwnerType(enum.IntEnum):
     SERVICE = 1
     SERVICEPOOL = 2
     AUTHENTICATOR = 3
+    SERVER = 4
 
     @staticmethod
     def from_int(value: int) -> "CounterOwnerType":

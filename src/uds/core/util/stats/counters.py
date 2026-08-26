@@ -46,9 +46,14 @@ from uds.models import Service
 from uds.models import ServicePool
 from uds.models import StatsCountersAccum
 
+# Imported from its own submodule to avoid a circular import: ``uds.models``
+# imports ``counters`` (via userservice -> events) before ``Server`` is bound in
+# the package namespace (models/__init__ imports .servers late).
+from uds.models.servers import Server
+
 logger = logging.getLogger(__name__)
 
-CounterClass = typing.TypeVar("CounterClass", Provider, Service, ServicePool, Authenticator)
+CounterClass = typing.TypeVar("CounterClass", Provider, Service, ServicePool, Authenticator, Server)
 
 
 # Helpers
@@ -98,6 +103,13 @@ TYPE_TO_ID_RETRIEVER: typing.Final[
         types.stats.CounterType.AUTH_SERVICES: _get_id,
         types.stats.CounterType.AUTH_USERS_WITH_SERVICES: _get_id,
     },
+    Server: {
+        types.stats.CounterType.CPU: _get_id,
+        types.stats.CounterType.MEMORY: _get_id,
+        types.stats.CounterType.USERS: _get_id,
+        types.stats.CounterType.CONNECTIONS: _get_id,
+        types.stats.CounterType.DISK: _get_id,
+    },
 }
 
 VALID_MODEL_FOR_COUNTER_TYPE_DICT: typing.Final[dict[types.stats.CounterType, tuple[type[Model], ...]]] = {
@@ -109,6 +121,11 @@ VALID_MODEL_FOR_COUNTER_TYPE_DICT: typing.Final[dict[types.stats.CounterType, tu
     types.stats.CounterType.AUTH_SERVICES: (Authenticator,),
     types.stats.CounterType.AUTH_USERS_WITH_SERVICES: (Authenticator,),
     types.stats.CounterType.CACHED: (ServicePool,),
+    types.stats.CounterType.CPU: (Server,),
+    types.stats.CounterType.MEMORY: (Server,),
+    types.stats.CounterType.USERS: (Server,),
+    types.stats.CounterType.CONNECTIONS: (Server,),
+    types.stats.CounterType.DISK: (Server,),
 }
 
 OBJ_TYPE_FROM_MODEL_DICT: typing.Final[dict[type[Model], types.stats.CounterOwnerType]] = {
@@ -116,6 +133,7 @@ OBJ_TYPE_FROM_MODEL_DICT: typing.Final[dict[type[Model], types.stats.CounterOwne
     Service: types.stats.CounterOwnerType.SERVICE,
     Provider: types.stats.CounterOwnerType.PROVIDER,
     Authenticator: types.stats.CounterOwnerType.AUTHENTICATOR,
+    Server: types.stats.CounterOwnerType.SERVER,
 }
 
 

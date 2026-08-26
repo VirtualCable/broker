@@ -118,6 +118,51 @@ class DeployedServiceStatsCollector(Job):
         logger.debug("Done Deployed service stats collector")
 
 
+class ServersStatsCollector(Job):
+    """
+    This Job is responsible for collecting the last known stats of every
+    registered server (cpu, memory, users, connections...) every ten minutes.
+    """
+
+    friendly_name = "Servers Stats"
+
+    @typing.override
+    def next_execution_delay(self) -> int:
+        return 599
+
+    @typing.override
+    def run(self) -> None:
+        logger.debug("Starting servers stats collector")
+        stamp = model.sql_now()
+        for server in models.Server.objects.all():
+            try:
+                stats = server.stats
+                if stats is None:
+                    continue
+                counters.add_counter(server, types.stats.CounterType.CPU, int(stats.cpuused * 100), stamp=stamp)
+                counters.add_counter(
+                    server,
+                    types.stats.CounterType.MEMORY,
+                    int((stats.memused * 100) / (stats.memtotal or 1)),
+                    stamp=stamp,
+                )
+                counters.add_counter(server, types.stats.CounterType.USERS, stats.current_users, stamp=stamp)
+                counters.add_counter(
+                    server, types.stats.CounterType.CONNECTIONS, stats.connections, stamp=stamp
+                )
+                total_used = sum(disk.used for disk in stats.disks)
+                total_size = sum(disk.total for disk in stats.disks)
+                counters.add_counter(
+                    server,
+                    types.stats.CounterType.DISK,
+                    int((total_used * 100) / (total_size or 1)),
+                    stamp=stamp,
+                )
+            except Exception:
+                logger.exception("Getting counters for server %s", server)
+        logger.debug("Done servers stats collector")
+
+
 class StatsCleaner(Job):
     """
     This Job is responsible of housekeeping of stats tables.

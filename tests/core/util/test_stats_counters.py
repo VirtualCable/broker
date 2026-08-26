@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -42,10 +41,10 @@ from ...fixtures.stats_counters import create_stats_counters
 # We use commit/rollback
 from ...utils.test import UDSTestCase
 
-START_DATE = timezone.make_aware(datetime.datetime(2020, 1, 1, 0, 0, 0))
-END_DATE_DAY = timezone.make_aware(datetime.datetime(2020, 1, 2, 0, 0, 0))
-END_DATE_MONTH = timezone.make_aware(datetime.datetime(2020, 2, 1, 0, 0, 0))
-END_DATE_YEAR = timezone.make_aware(datetime.datetime(2021, 1, 1, 0, 0, 0))
+START_DATE = datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+END_DATE_DAY = datetime.datetime(2020, 1, 2, 0, 0, 0, tzinfo=datetime.timezone.utc)
+END_DATE_MONTH = datetime.datetime(2020, 2, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+END_DATE_YEAR = datetime.datetime(2021, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
 
 class StatsCountersTest(UDSTestCase):
@@ -141,3 +140,31 @@ class StatsCountersTest(UDSTestCase):
             )
         )
         self.assertEqual(len(res), NUMBER)
+
+    def test_server_counters_roundtrip(self) -> None:
+        # A registered server stores its stats counters keyed by
+        # CounterOwnerType.SERVER, and they can be retrieved back.
+        server = models.Server.objects.create(
+            register_username="test",
+            register_ip="127.0.0.1",
+            ip="127.0.0.1",
+            hostname="test-server",
+            stamp=timezone.now(),
+        )
+        for counter_type, value in (
+            (counters.types.stats.CounterType.CPU, 42),
+            (counters.types.stats.CounterType.MEMORY, 60),
+            (counters.types.stats.CounterType.USERS, 7),
+            (counters.types.stats.CounterType.CONNECTIONS, 3),
+            (counters.types.stats.CounterType.DISK, 50),
+        ):
+            self.assertTrue(counters.add_counter(server, counter_type, value))
+            values = list(
+                models.StatsCounters.get_grouped(
+                    counters.types.stats.CounterOwnerType.SERVER,
+                    counter_type,
+                    owner_id=server.id,
+                )
+            )
+            self.assertEqual(len(values), 1)
+            self.assertEqual(values[0][1], value)
