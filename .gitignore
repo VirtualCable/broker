@@ -96,3 +96,4 @@ AGENTS.md
 # Added by code-review-graph
 .code-review-graph/
 opencode.jsonc
+local_script*
