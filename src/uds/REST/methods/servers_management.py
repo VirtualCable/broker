@@ -29,12 +29,15 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import codecs
 import collections.abc
 import csv
 import dataclasses
 import datetime
 import io
 import logging
+import pickle  # nosec: pickle is used to cache data, not to load it
+import pickletools
 import typing
 
 from django.db.models import Model
@@ -52,14 +55,88 @@ from uds.core.util import ensure
 from uds.core.util import net
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
+from uds.core.util.cache import Cache
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_now
+from uds.core.util.stats import counters
 from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
 logger = logging.getLogger(__name__)
 
 MB: typing.Final[int] = 1024 * 1024
+
+SINCE: typing.Final[int] = 14  # Days to go back for server stats charts
+USE_MAX: typing.Final[bool] = True
+CACHE_TIME: typing.Final[int] = 60 * 60  # 1 hour
+
+SERVER_COUNTERS: typing.Final[dict[str, types.stats.CounterType]] = {
+    "cpu": types.stats.CounterType.CPU,
+    "memory": types.stats.CounterType.MEMORY,
+    "users": types.stats.CounterType.USERS,
+    "connections": types.stats.CounterType.CONNECTIONS,
+    "disk": types.stats.CounterType.DISK,
+}
+
+cache = Cache("ServersStatsDispatcher")
+
+
+def get_server_counters(
+    server: models.Server,
+    counter_type: types.stats.CounterType,
+    interval: models.StatsCountersAccum.IntervalType = models.StatsCountersAccum.IntervalType.HOUR,
+    since_days: int = SINCE,
+) -> list[dict[str, typing.Any]]:
+    val: list[dict[str, typing.Any]] = []
+    try:
+        cache_key = f"{server.id}-{counter_type}-{interval}-{since_days}"
+        cached_value: bytes | None = cache.get(cache_key)
+        if not cached_value:
+            # Now, aligned to the accumulation interval (hour, or UTC day boundary for DAY buckets)
+            now = sql_now()
+            if interval is models.StatsCountersAccum.IntervalType.HOUR:
+                to = now.replace(minute=0, second=0, microsecond=0)
+            else:  # DAY buckets are aligned to UTC day boundaries (epoch % 86400)
+                epoch = int(now.timestamp())
+                to = datetime.datetime.fromtimestamp(epoch - (epoch % 86400), tz=datetime.timezone.utc)
+            since: datetime.datetime = to - datetime.timedelta(days=since_days)
+            points = since_days * (24 if interval is models.StatsCountersAccum.IntervalType.HOUR else 1)
+
+            stats = counters.enumerate_accumulated_counters(
+                interval_type=interval,
+                counter_type=counter_type,
+                owner_type=types.stats.CounterOwnerType.SERVER,
+                owner_id=server.id,
+                since=since,
+                to=to,
+                points=points,
+            )
+            val = [
+                {
+                    "stamp": x.stamp,
+                    "value": (x.sum / x.count if x.count > 0 else 0) if not USE_MAX else x.max,
+                }
+                for x in stats
+            ]
+
+            if len(val) >= 2:
+                cache.put(
+                    cache_key,
+                    codecs.encode(pickletools.optimize(pickle.dumps(val, protocol=-1)), "zip"),
+                    CACHE_TIME * 2,
+                )
+            else:
+                # Generate as much points as needed with 0 value
+                interval_seconds = interval.seconds()
+                start_stamp = int(since.timestamp())
+                val = [{"stamp": start_stamp + interval_seconds * i, "value": 0} for i in range(points)]
+        else:
+            val = pickle.loads(codecs.decode(cached_value, "zip"))  # nosec: pickle is used to cache data, not to load it
+
+        return val
+    except Exception as e:
+        logger.exception("getServerCounters")
+        raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
 
 
 @dataclasses.dataclass
@@ -168,9 +245,7 @@ class ServersServers(DetailHandler[ServerItem]):
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "data": types.rest.api.SchemaProperty(
-                        type="string", description="CSV content with server entries"
-                    ),
+                    "data": types.rest.api.SchemaProperty(type="string", description="CSV content with server entries"),
                     "has_header": types.rest.api.SchemaProperty(
                         type="boolean", description="Whether the CSV has a header row"
                     ),
@@ -179,6 +254,27 @@ class ServersServers(DetailHandler[ServerItem]):
                     ),
                 },
             ),
+        ),
+        types.rest.ModelCustomMethod(
+            "stats",
+            method=types.rest.CustomMethodMethod.GET,
+            description="Retrieve accumulated resource usage time-series for a server (cpu, memory, users, connections, disk) for charts",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "counter": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Counter to retrieve (all, cpu, memory, users, connections, disk). Default: all",
+                    ),
+                    "interval": types.rest.api.SchemaProperty(
+                        type="string", description="Accumulation interval (hour or day). Default: hour"
+                    ),
+                    "since": types.rest.api.SchemaProperty(
+                        type="integer", description="Number of days to go back. Default: 14"
+                    ),
+                },
+            ),
+            required_permission=types.permissions.PermissionType.READ,
         ),
     ]
 
@@ -466,6 +562,41 @@ class ServersServers(DetailHandler[ServerItem]):
                 logger.exception("Error creating server on line %s", line_number)
 
         return import_errors
+
+    def stats(self, parent: "Model", item: str) -> typing.Any:
+        """
+        Returns accumulated resource usage time-series for a server as chart points.
+
+        Query params (all optional):
+            - counter: all (default), cpu, memory, users, connections or disk
+            - interval: hour or day (default: hour)
+            - since: number of days to go back (default: 14)
+
+        For "all", returns an object with one points list per counter, keyed by
+        counter name. For a single counter, returns just the points list.
+        """
+        parent = ensure.is_instance(parent, models.ServerGroup)
+        server = parent.servers.get(uuid=process_uuid(item))
+
+        counter_name = str(self._params.get("counter", "all") or "all").lower()
+        interval_name = str(self._params.get("interval", "hour")).lower()
+        interval = (
+            models.StatsCountersAccum.IntervalType.DAY
+            if interval_name == "day"
+            else models.StatsCountersAccum.IntervalType.HOUR
+        )
+
+        since_days = int(self._params.get("since", SINCE))
+        since_days = max(1, min(since_days, 365))  # Cap to one year
+
+        if counter_name != "all":
+            counter = SERVER_COUNTERS.get(counter_name, types.stats.CounterType.CPU)
+            return get_server_counters(server, counter, interval=interval, since_days=since_days)
+
+        return {
+            name: get_server_counters(server, counter, interval=interval, since_days=since_days)
+            for name, counter in SERVER_COUNTERS.items()
+        }
 
 
 @dataclasses.dataclass
