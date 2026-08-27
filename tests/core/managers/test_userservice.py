@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+from unittest import mock
 
 from tests.fixtures import services as services_fixtures
 from tests.utils.test import UDSTransactionTestCase
@@ -124,3 +125,20 @@ class TestUserserviceManager(UDSTransactionTestCase):
         self.assertEqual(assigned_info.userservice.src_ip, "1.2.3.4")
         self.assertEqual(assigned_info.userservice.src_hostname, "1.2.3.4")
         self.assertEqual(assigned_info.transport.uuid, service_pool.transports.all()[0].uuid)
+
+    def test_check_user_service_uuid(self) -> None:
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        userservice.token = models.user_service.create_actor_token()
+        userservice.save()
+
+        for actor_answer, expected in (
+            (userservice.token, True),  # Actor registered against a 5.0 server
+            (userservice.uuid, True),  # Actor registered against a 4.0 server, upgraded afterwards
+            ("", True),  # Unmanaged/fixed machine, no check at all
+            (models.user_service.create_actor_token(), False),  # Machine replaced behind our back
+        ):
+            with mock.patch(
+                "uds.core.managers.userservice_helpers.comms._execute_actor_request",
+                return_value=actor_answer,
+            ):
+                self.assertEqual(self.manager.check_user_service_uuid(userservice), expected, actor_answer)
