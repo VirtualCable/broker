@@ -1,0 +1,73 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Server group balancing' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Server group balancing' %}">
+        <meta name="keywords" content="uds,report,servers,balancing,load">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        {% if has_charts %}
+        {% if charted_servers < total_servers %}
+        <p>{% blocktrans %}Charts show the {{ charted_servers }} busiest servers of {{ total_servers }}; the table below lists them all.{% endblocktrans %}</p>
+        {% endif %}
+        <img src="image://graph1" class="center" style="height: 9cm;">
+        {% endif %}
+        <p style="text-align: center">{% trans "Balance by group" %}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th>{% trans 'Group' %}</th>
+                    <th>{% trans 'Servers' %}</th>
+                    <th>{% trans 'Even share %' %}</th>
+                    <th>{% trans 'Min share %' %}</th>
+                    <th>{% trans 'Max share %' %}</th>
+                    <th>{% trans 'Spread' %}</th>
+                    <th>{% trans 'Std deviation' %}</th>
+                    <th>{% trans 'Idle servers' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for g in groups %}
+                <tr>
+                    <td>{{ g.group }}</td>
+                    <td>{{ g.servers }}</td>
+                    <td>{{ g.even_share }}</td>
+                    <td>{{ g.min_share }}</td>
+                    <td>{{ g.max_share }}</td>
+                    <td>{{ g.spread }}</td>
+                    <td>{{ g.stdev }}</td>
+                    <td>{{ g.idle_servers }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p style="text-align: center">{% trans "Detail by server" %}</p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th>{% trans 'Group' %}</th>
+                    <th>{% trans 'Server' %}</th>
+                    <th>{% trans 'User hours' %}</th>
+                    <th>{% trans 'Peak users' %}</th>
+                    <th>{% trans 'Share %' %}</th>
+                    <th>{% trans 'Deviation' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.group }}</td>
+                    <td>{{ d.server }}</td>
+                    <td>{{ d.user_hours }}</td>
+                    <td>{{ d.peak_users }}</td>
+                    <td>{{ d.share }}</td>
+                    <td>{{ d.deviation }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

@@ -1,0 +1,48 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Server groups usage by date' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Server groups usage by date' %}">
+        <meta name="keywords" content="uds,report,servers,usage,connections">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        {% if has_charts %}
+        {% if charted_servers < total_servers %}
+        <p>{% blocktrans %}Charts show the {{ charted_servers }} busiest servers of {{ total_servers }}; the table below lists them all.{% endblocktrans %}</p>
+        {% endif %}
+        <p style="text-align: center">{% trans "Peak users by server" %}</p>
+        <img src="image://graph1" class="center" style="height: 9cm;">
+        <p style="text-align: center">{% trans "Peak connections by server" %}</p>
+        <img src="image://graph2" class="center" style="height: 9cm;">
+        {% endif %}
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 20%">{% trans 'Group' %}</th>
+                    <th style="width: 25%">{% trans 'Server' %}</th>
+                    <th style="width: 11%">{% trans 'Peak users' %}</th>
+                    <th style="width: 11%">{% trans 'Average users' %}</th>
+                    <th style="width: 11%">{% trans 'Peak connections' %}</th>
+                    <th style="width: 11%">{% trans 'Average connections' %}</th>
+                    <th style="width: 11%">{% trans 'Samples' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.group }}</td>
+                    <td>{{ d.server }}</td>
+                    <td>{{ d.peak_users }}</td>
+                    <td>{{ d.avg_users }}</td>
+                    <td>{{ d.peak_connections }}</td>
+                    <td>{{ d.avg_connections }}</td>
+                    <td>{{ d.samples }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
