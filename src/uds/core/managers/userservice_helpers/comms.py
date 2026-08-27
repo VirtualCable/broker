@@ -153,10 +153,16 @@ def check_user_service_uuid(user_service: "UserService") -> bool:
     """
     try:
         uuid = _execute_actor_request(user_service, "uuid")
-        if uuid and uuid != user_service.uuid:  # Empty UUID means "no check this, fixed pool machine"
+        # Actors answer with their own_token: the userservice token on 5.0 servers, the userservice
+        # uuid on 4.0 ones, so actors registered against a 4.0 server keep working after an upgrade
+        if uuid and uuid not in (
+            user_service.token,
+            user_service.uuid,
+        ):  # Empty UUID means "no check this, fixed pool machine"
             logger.info(
-                "Machine %s do not have expected uuid %s, instead has %s",
+                "Machine %s do not have expected token %s (nor uuid %s), instead has %s",
                 user_service.friendly_name,
+                user_service.token,
                 user_service.uuid,
                 uuid,
             )
