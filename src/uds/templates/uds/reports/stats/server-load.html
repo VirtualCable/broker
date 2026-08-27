@@ -1,0 +1,57 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Server resource load' %} {{ beginning }} - {{ ending }}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Server resource load' %}">
+        <meta name="keywords" content="uds,report,servers,cpu,memory,disk,load">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'From' %} {{ beginning }} {% trans 'to' %} {{ ending }}</p>
+        <p>{% trans 'Overload threshold:' %} {{ threshold }}%</p>
+        {% if has_charts %}
+        {% if charted_servers < total_servers %}
+        <p>{% blocktrans %}Charts show the {{ charted_servers }} busiest servers of {{ total_servers }}; the table below lists them all.{% endblocktrans %}</p>
+        {% endif %}
+        <p style="text-align: center">{% trans "Average CPU usage" %}</p>
+        <img src="image://graph1" class="center" style="height: 9cm;">
+        <p style="text-align: center">{% trans "Average memory usage" %}</p>
+        <img src="image://graph2" class="center" style="height: 9cm;">
+        {% endif %}
+        <table style="width: 100%; font-size: 0.7em;">
+            <thead>
+                <tr>
+                    <th>{% trans 'Group' %}</th>
+                    <th>{% trans 'Server' %}</th>
+                    <th>{% trans 'CPU avg' %}</th>
+                    <th>{% trans 'CPU peak' %}</th>
+                    <th>{% trans 'Mem avg' %}</th>
+                    <th>{% trans 'Mem peak' %}</th>
+                    <th>{% trans 'Disk avg' %}</th>
+                    <th>{% trans 'Disk peak' %}</th>
+                    <th>{% trans 'Hours reported' %}</th>
+                    <th>{% trans 'Hours overloaded' %}</th>
+                    <th>{% trans 'Overloaded %' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.group }}</td>
+                    <td>{{ d.server }}</td>
+                    <td>{{ d.cpu_avg }}</td>
+                    <td>{{ d.cpu_peak }}</td>
+                    <td>{{ d.mem_avg }}</td>
+                    <td>{{ d.mem_peak }}</td>
+                    <td>{{ d.disk_avg }}</td>
+                    <td>{{ d.disk_peak }}</td>
+                    <td>{{ d.hours_reported }}</td>
+                    <td>{{ d.hours_overloaded }}</td>
+                    <td>{{ d.pct_overloaded }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

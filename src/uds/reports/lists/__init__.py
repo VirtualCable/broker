@@ -34,4 +34,5 @@ from . import admin_activity as admin_activity
 from . import audit as audit
 from . import failed_logins as failed_logins
 from . import inactive_users as inactive_users
+from . import servers as servers
 from . import users as users

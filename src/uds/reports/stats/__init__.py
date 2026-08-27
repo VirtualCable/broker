@@ -42,6 +42,9 @@ from . import pool_users_summary as pool_users_summary
 from . import pools_performance as pools_performance
 from . import pools_usage_day as pools_usage_day
 from . import pools_usage_summary as pools_usage_summary
+from . import server_balance as server_balance
+from . import server_load as server_load
+from . import server_usage as server_usage
 from . import session_duration as session_duration
 from . import top_users as top_users
 from . import tunnel_usage as tunnel_usage

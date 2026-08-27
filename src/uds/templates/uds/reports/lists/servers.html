@@ -1,0 +1,49 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Servers list' %}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Servers list' %}">
+        <meta name="keywords" content="uds,report,servers,inventory">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p>{% trans 'Generated at' %} {{ now }}</p>
+        <table style="width: 100%; font-size: 0.7em;">
+            <thead>
+                <tr>
+                    <th>{% trans 'Group' %}</th>
+                    <th>{% trans 'Server' %}</th>
+                    <th>{% trans 'IP' %}</th>
+                    <th>{% trans 'Type' %}</th>
+                    <th>{% trans 'Subtype' %}</th>
+                    <th>{% trans 'OS' %}</th>
+                    <th>{% trans 'Version' %}</th>
+                    <th>{% trans 'Maintenance' %}</th>
+                    <th>{% trans 'Last stats' %}</th>
+                    <th>{% trans 'Users' %}</th>
+                    <th>{% trans 'CPU %' %}</th>
+                    <th>{% trans 'Memory %' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in data %}
+                <tr>
+                    <td>{{ d.group }}</td>
+                    <td>{{ d.server }}</td>
+                    <td>{{ d.ip }}</td>
+                    <td>{{ d.type }}</td>
+                    <td>{{ d.subtype }}</td>
+                    <td>{{ d.os }}</td>
+                    <td>{{ d.version }}</td>
+                    <td>{{ d.maintenance }}</td>
+                    <td>{{ d.last_stats }}</td>
+                    <td>{{ d.users }}</td>
+                    <td>{{ d.cpu }}</td>
+                    <td>{{ d.memory }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
