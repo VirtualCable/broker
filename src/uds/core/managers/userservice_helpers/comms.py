@@ -160,11 +160,9 @@ def check_user_service_uuid(user_service: "UserService") -> bool:
             user_service.uuid,
         ):  # Empty UUID means "no check this, fixed pool machine"
             logger.info(
-                "Machine %s do not have expected token %s (nor uuid %s), instead has %s",
+                "Machine %s do not have expected token nor uuid %s",
                 user_service.friendly_name,
-                user_service.token,
                 user_service.uuid,
-                uuid,
             )
             return False
     except exceptions.actor.NoActorComms:
