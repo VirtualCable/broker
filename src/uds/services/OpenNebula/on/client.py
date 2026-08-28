@@ -83,7 +83,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
     cached_version: list[str] | None
 
     def __init__(
-        self, username: str, password: str, endpoint: str, verify_ssl: bool = True
+        self, username: str, password: str, endpoint: str, verify_ssl: bool = False
     ) -> None:
         self.username = username
         self.password = password

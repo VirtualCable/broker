@@ -114,9 +114,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field(default=10)
-    # Unlike every other provider, this one has always verified: ServerProxy got no ssl
-    # context, so Python applied its verifying default. Migrating it off would relax it.
-    verify_ssl = fields.verify_ssl_field(default=True)
+    verify_ssl = fields.verify_ssl_field(default=False)
 
     # Own variables
     _api: on.client.OpenNebulaClient | None = None
