@@ -114,6 +114,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field(default=10)
+    verify_ssl = fields.verify_ssl_field(default=False)
 
     # Own variables
     _api: on.client.OpenNebulaClient | None = None
@@ -138,7 +139,9 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     @property
     def api(self) -> on.client.OpenNebulaClient:
         if self._api is None:
-            self._api = on.client.OpenNebulaClient(self.username.value, self.password.value, self.endpoint)
+            self._api = on.client.OpenNebulaClient(
+                self.username.value, self.password.value, self.endpoint, self.verify_ssl.as_bool()
+            )
 
         return self._api
 

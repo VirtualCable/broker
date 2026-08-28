@@ -243,3 +243,27 @@ class TestProxmoxProvider(UDSTransactionTestCase):
             self.assertEqual(provider.api.create_snapshot(1), fixtures.UPID)
 
             provider.api.restore_snapshot(1, node="node", name="name")
+
+
+class TestProxmoxProviderVerifySsl(UDSTransactionTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        fixtures.clear()
+
+    def test_verify_ssl_defaults_to_disabled(self) -> None:
+        provider = ProxmoxProvider(environment=environment.Environment.testing_environment())
+
+        self.assertFalse(provider.verify_ssl.as_bool())
+
+    def test_verify_ssl_reaches_the_client(self) -> None:
+        for enabled in (False, True):
+            with self.subTest(verify_ssl=enabled):
+                prov = fixtures.create_provider()
+                prov.verify_ssl.value = enabled
+
+                with mock.patch(
+                    "uds.services.Proxmox.provider.client.ProxmoxClient"
+                ) as proxmox_client:
+                    _ = prov.api
+
+                self.assertEqual(proxmox_client.call_args.args[6], enabled)

@@ -35,6 +35,7 @@ import typing
 import xmlrpc.client
 
 from uds.core.util import ensure
+from uds.core.util import security
 from uds.core.util import xml2dict
 
 from . import types
@@ -77,13 +78,17 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
     username: str
     password: str
     endpoint: str
+    verify_ssl: bool
     connection: xmlrpc.client.ServerProxy
     cached_version: list[str] | None
 
-    def __init__(self, username: str, password: str, endpoint: str) -> None:
+    def __init__(
+        self, username: str, password: str, endpoint: str, verify_ssl: bool = False
+    ) -> None:
         self.username = username
         self.password = password
         self.endpoint = endpoint
+        self.verify_ssl = verify_ssl
         # Connection "None" will be treated on ensureConnected, ignore its assignement here
         self.connection = None  # type: ignore
         self.cached_version = None
@@ -105,7 +110,9 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
         if self.connection:
             return
 
-        self.connection = xmlrpc.client.ServerProxy(self.endpoint)
+        self.connection = xmlrpc.client.ServerProxy(
+            self.endpoint, context=security.create_client_sslcontext(self.verify_ssl)
+        )
 
     @ensure_connected
     def enum_storage(self, storage_type: int = 0) -> collections.abc.Iterable[types.StorageType]:

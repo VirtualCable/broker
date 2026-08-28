@@ -111,7 +111,7 @@ class Client:
                     username=self._username,
                     password=self._password,
                     timeout=self._timeout,
-                    insecure=True,
+                    insecure=not self._verify_ssl,
                 )  # , debug=True, log=logger )
             except Exception as e:
                 self._api = None
@@ -128,6 +128,7 @@ class Client:
         password: str,
         timeout: int,
         cache: "Cache",
+        verify_ssl: bool = False,
     ):
         self._host = host
         self._port = port
@@ -135,6 +136,7 @@ class Client:
         self._password = password
         self._timeout = int(timeout)
         self._cache = cache
+        self._verify_ssl = verify_ssl
 
     def test(self) -> bool:
         try:

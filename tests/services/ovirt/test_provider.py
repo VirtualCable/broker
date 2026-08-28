@@ -30,6 +30,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from unittest import mock
+
 from uds.core import environment
 from uds.core import types
 from uds.core import ui
@@ -128,3 +130,21 @@ class TestOVirtProvider(UDSTransactionTestCase):
         """
         with fixtures.patch_provider_api() as _api:
             _provider = fixtures.create_provider()
+
+
+class TestOVirtProviderVerifySsl(UDSTransactionTestCase):
+    def test_verify_ssl_defaults_to_disabled(self) -> None:
+        provider = OVirtProvider(environment=environment.Environment.testing_environment())
+
+        self.assertFalse(provider.verify_ssl.as_bool())
+
+    def test_verify_ssl_drives_sdk_insecure_flag(self) -> None:
+        for enabled in (False, True):
+            with self.subTest(verify_ssl=enabled):
+                provider = fixtures.create_provider()
+                provider.verify_ssl.value = enabled
+
+                with mock.patch("uds.services.OVirt.ovirt.client.ovirtsdk4.Connection") as connection:
+                    _ = provider.api.api
+
+                self.assertEqual(connection.call_args.kwargs["insecure"], not enabled)
