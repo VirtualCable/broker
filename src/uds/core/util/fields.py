@@ -227,7 +227,7 @@ def verify_ssl_field(
         default=default,
         order=order,
         tooltip=_("If checked, SSL verification will be enforced. If not, SSL verification will be disabled"),
-        tab=None if tab is False else None if tab is None else types.ui.Tab.ADVANCED,
+        tab=types.ui.Tab.ADVANCED if tab is None or tab is False else tab,
         old_field_name=old_field_name,
     )
 
