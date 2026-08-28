@@ -148,6 +148,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field(default=10, order=90)
+    verify_ssl = fields.verify_ssl_field(default=False)
     macs_range = fields.macs_range_field(default="52:54:00:00:00:00-52:54:00:FF:FF:FF", order=91)
 
     # Own variables
@@ -170,6 +171,7 @@ class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-publi
                 self.password.value,
                 self.timeout.value,
                 self.cache,
+                self.verify_ssl.as_bool(),
             )
 
         return self._api
