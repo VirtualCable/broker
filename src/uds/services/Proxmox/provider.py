@@ -118,6 +118,7 @@ class ProxmoxProvider(services.ServiceProvider):
     concurrent_creation_limit = fields.concurrent_creation_limit_field()
     concurrent_removal_limit = fields.concurrent_removal_limit_field()
     timeout = fields.timeout_field()
+    verify_ssl = fields.verify_ssl_field(default=False)
 
     start_vmid = gui.NumericField(
         length=3,
@@ -152,7 +153,7 @@ class ProxmoxProvider(services.ServiceProvider):
                 self.password.value,
                 self.use_api_token.value,
                 self.timeout.as_int(),
-                False,
+                self.verify_ssl.as_bool(),
                 self.cache,
             )
 

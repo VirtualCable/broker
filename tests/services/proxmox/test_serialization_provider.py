@@ -78,3 +78,10 @@ class ProxmoxProviderSerializationTest(UDSTestCase):
         # Ensure values are ok
         for field in PROVIDER_FIELDS_DATA:
             self.assertEqual(getattr(provider, field).value, PROVIDER_FIELDS_DATA[field])
+
+    def test_verify_ssl_stays_off_for_already_stored_providers(self) -> None:
+        # Serialized data predates the field, so an upgraded provider must keep not verifying
+        provider = ProxmoxProvider(environment=Environment.testing_environment())
+        provider.deserialize(PROVIDER_SERIALIZE_DATA)
+
+        self.assertFalse(provider.verify_ssl.as_bool())
