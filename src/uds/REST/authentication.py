@@ -20,7 +20,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True)
 class AuthenticationResult:
     """Resolved identity plus temporary compatibility state for ``Handler``."""
 
