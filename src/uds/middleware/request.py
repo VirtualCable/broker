@@ -94,6 +94,16 @@ def _get_user(request: "ExtendedHttpRequest") -> None:
 
     request.user = user
 
+    # The principal mirrors the resolved user so any downstream Django view
+    # (MFA, service views, transport tickets, ...) can read ``request.principal``
+    # without risking ``AttributeError``.  The REST layer will overwrite this
+    # with its own principal during ``Handler.__init__``; here we only seed the
+    # attribute for the web flow.
+    if user is not None:
+        request.principal = types.auth.AuthenticatedPrincipal.user_session(user)
+    else:
+        request.principal = types.auth.AuthenticatedPrincipal.anonymous()
+
 
 def _process_request(request: "ExtendedHttpRequest") -> "HttpResponse | None":
     # Add IP to request, user, ...

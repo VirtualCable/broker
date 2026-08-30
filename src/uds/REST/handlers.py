@@ -44,13 +44,13 @@ from django.db.models import QuerySet
 from uds.core import consts, types, exceptions
 from uds.core.exceptions.rest import PreconditionFailed
 from uds.core.util.config import GlobalConfig
-from uds.core.auths.auth import root_user
 from uds.core.util import net, query_db_filter, query_filter
 
-from uds.models import Authenticator, User, Server
+from uds.models import User
 from uds.core.managers.crypto import CryptoManager
 
 from ..core.exceptions.rest import AccessDenied
+from .authentication import AuthenticationResolver
 
 
 # Not imported at runtime, just for type checking
@@ -94,6 +94,7 @@ class Handler(abc.ABC):
     _session: SessionStore | None
     _auth_token: str | None
     _user: "User"
+    _principal: "types.auth.AuthenticatedPrincipal"
     _odata: "types.rest.api.ODataParams"  # OData parameters, if any
     _sk_token: str | None  # Secret key token, if any
 
@@ -118,96 +119,36 @@ class Handler(abc.ABC):
         self._auth_token = None
         self._sk_token = None
 
-        # ``Authorization: Bearer <token>`` is the unified entry point for
-        # both session tokens (prefix ``ses-``) and secret keys (prefix
-        # ``sk-``).  The prefix is **always** stripped on storage, so the
-        # stored value in ``_auth_token`` / ``_sk_token`` is the bare token
-        # ready to be looked up (session store / Server row).  Prefixes
-        # are defined in ``uds.core.consts.auth``:
-        #   * ``ses-``  → session key (legacy-compatible; today simply the
-        #                  same value that ``X-Auth-Token`` would carry).
-        #   * ``sk-``   → "secret key", a non-expiring token bound to a
-        #                  registered ``Server`` row, validated via
-        #                  ``models.Server.validate_token``.  Consumed only
-        #                  when the handler declares ``SK_TYPE``; otherwise
-        #                  it is captured but ignored (forward compatibility
-        #                  for the future ``Role.SECRET_KEY``).
-        #   * no prefix → legacy, no scheme tag, handled like before.
-        auth_header = self._request.headers.get(consts.auth.AUTHORIZATION_HEADER, "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[len("Bearer ") :]
-            if token.startswith(consts.auth.SECRET_KEY_PREFIX):
-                self._sk_token = token.removeprefix(consts.auth.SECRET_KEY_PREFIX)
-            elif token.startswith(consts.auth.SESSION_KEY_PREFIX):
-                self._auth_token = token.removeprefix(consts.auth.SESSION_KEY_PREFIX)
-            else:
-                self._auth_token = token
+        authentication = AuthenticationResolver.resolve(self._request, self.ROLE, self.SK_TYPE)
+        self._principal = authentication.principal
+        self._request.principal = self._principal
+        self._session = authentication.session
+        self._auth_token = authentication.auth_token
+        self._sk_token = authentication.secret_token
 
-        if self.ROLE.needs_authentication:
-            try:
-                # The legacy ``X-Auth-Token`` header may carry the ``ses-``
-                # scheme tag introduced by the new login response; strip
-                # it so the value matches the bare session key expected
-                # by ``SessionStore``.  Untagged tokens are untouched
-                # (full backward compat).
-                legacy_token = self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
-                self._auth_token = self._auth_token or legacy_token.removeprefix(consts.auth.SESSION_KEY_PREFIX)
-                # If the legacy ``X-Auth-Token`` header was the actual
-                # credential (no Authorization Bearer header in play)
-                # tag the response as deprecated so clients know they
-                # should migrate to ``Authorization: Bearer ses-...``.
-                if self._auth_token and legacy_token and not self._sk_token:
-                    self.add_deprecation_headers(
-                        successor_hint=(
-                            f'use "Authorization: Bearer '
-                            f'{consts.auth.SESSION_KEY_PREFIX}<token>" instead '
-                            f"of the deprecated "
-                            f'"{consts.auth.AUTH_TOKEN_HEADER}" header'
-                        )
-                    )
-                # Warn if _sk_token is present (that means that also has AUTH_TOKEN_HEADER)
-                if self._sk_token is not None:
-                    logger.warning(
-                        "Both secret key and legacy auth token present in request; ignoring secret key for role %s",
-                        self.ROLE,
-                    )
-                self._session = SessionStore(session_key=self._auth_token)
-                if "REST" not in self._session:
-                    raise Exception()  # No valid session, so auth_token is also invalid
-            except Exception:  # Couldn't authenticate
-                self._auth_token = None
-                self._session = None
+        if authentication.legacy_session:
+            self.add_deprecation_headers(
+                successor_hint=(
+                    f'use "Authorization: Bearer {consts.auth.SESSION_KEY_PREFIX}<token>" instead '
+                    f'of the deprecated "{consts.auth.AUTH_TOKEN_HEADER}" header'
+                )
+            )
 
-            if self._auth_token is None:
-                raise AccessDenied()
-
-            try:
-                self._user = self.get_user()
-            except Exception as e:
-                # Maybe the user was deleted, so access is denied
-                raise AccessDenied() from e
-
-            if not self._user.can_access(self.ROLE):
-                raise AccessDenied()
+        if self._principal.user is not None:
+            self._user = self._principal.user
+            # Keep the legacy ``request.user`` attribute in sync so existing
+            # consumers that read ``request.user`` directly keep working.
+            self._request.user = self._principal.user
         else:
-            # No session-bound user in this branch; ``_user`` must exist
-            # because the post-init guard below inspects ``self._user.state``.
-            self._user = User()  # Empty user for non authenticated handlers
-            self._user.state = types.states.State.ACTIVE  # Ensure it's active
-            # Secret key handler, so we need to validate the token.
-            # TEMPORAL (uds-5.x): if no ``sk-`` token was provided, we do NOT
-            # authenticate here.  Legacy clients still send the token in the
-            # body and rely on the operation method doing the lookup; closing
-            # this gap is the responsibility of the final release that
-            # finishes the Bearer migration.
-            if (
-                self.SK_TYPE
-                and self._sk_token
-                and not Server.validate_token(self._sk_token, server_type=self.SK_TYPE)
-            ):
-                raise AccessDenied()
+            # Anonymous / server-credential principals keep the existing
+            # ``request.user`` value untouched. Handlers such as Login/Logout
+            # are instantiated with ``ROLE = ANONYMOUS`` and rely on Django's
+            # default session user (which may already be populated by the
+            # login flow).
+            self._user = User()
+            typing.cast(typing.Any, self._user).state = types.states.State.ACTIVE
 
-        if self._user and self._user.state != types.states.State.ACTIVE:
+        if self._user.state != types.states.State.ACTIVE:
             raise AccessDenied()
 
         self._odata = types.rest.api.ODataParams.from_dict(self.query_params())
@@ -216,7 +157,8 @@ class Handler(abc.ABC):
         """
         Returns the authentication token from the request header
         """
-        return self._request.headers.get(consts.auth.AUTH_TOKEN_HEADER, None)
+        headers = typing.cast(collections.abc.Mapping[str, str], self._request.headers)
+        return headers.get(consts.auth.AUTH_TOKEN_HEADER, None)
 
     def query(self) -> typing.Any:
         """RFC 10008 QUERY — safe GET with OData in the request body.
@@ -346,6 +288,11 @@ class Handler(abc.ABC):
         return self._odata
 
     @property
+    def principal(self) -> "types.auth.AuthenticatedPrincipal":
+        """Return the identity resolved for this REST request."""
+        return self._principal
+
+    @property
     def session(self) -> "SessionStore":
         if self._session is None:
             raise Exception("No session available")
@@ -435,6 +382,12 @@ class Handler(abc.ABC):
             self._session.delete()
         self._session = None
 
+    def get_user(self) -> "User":
+        """Return the user represented by the current REST session."""
+        if self._session is None:
+            raise AccessDenied()
+        return AuthenticationResolver._get_session_user(self._session)
+
     # Session related (from auth token)
     def recover_value(self, key: str) -> typing.Any:
         """
@@ -488,23 +441,6 @@ class Handler(abc.ABC):
         True if user of this REST request is member of staff
         """
         return bool(self.recover_value("staff_member")) and self.is_ip_allowed()
-
-    def get_user(self) -> "User":
-        """
-        If user is staff member, returns his Associated user on auth
-        """
-        # logger.debug('REST : %s', self._session)
-        auth_id = self.recover_value("auth")
-        username = self.recover_value("username")
-        # Maybe it's root user??
-        if (
-            GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.as_bool(True)
-            and username == GlobalConfig.SUPER_USER_LOGIN.get(True)
-            and auth_id == -1
-        ):
-            return root_user()
-
-        return Authenticator.objects.get(pk=auth_id).users.get(name=username)
 
     def get_param(self, *names: str) -> str:
         """
@@ -657,7 +593,8 @@ class Handler(abc.ABC):
             kw: dict[str, typing.Any] = {"tags": tags}
             if security:
                 kw["security"] = security
-            return dataclasses.replace(op, **kw)
+            # Override linter complains
+            return typing.cast(typing.Any, dataclasses.replace(op, **kw))
 
         return {
             path: types.rest.api.PathItem(

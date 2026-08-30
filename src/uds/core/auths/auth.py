@@ -167,9 +167,9 @@ def weblogin_required(
             if not request.user or not request.authorized:
                 return weblogout(request)
 
-            if role in (consts.Role.ADMIN, consts.Role.STAFF) and (request.user.is_staff() is False or (
-                role == consts.Role.ADMIN and not request.user.is_admin
-            )):
+            if role in (consts.Role.ADMIN, consts.Role.STAFF) and (
+                request.user.is_staff() is False or (role == consts.Role.ADMIN and not request.user.is_admin)
+            ):
                 return HttpResponseForbidden(_("Forbidden"))
 
             return view_func(request, *args, **kwargs)
@@ -441,6 +441,7 @@ def weblogin(
         request.os.os.name,
         cookie,
     )
+    request.principal = types.auth.AuthenticatedPrincipal.user_session(user)
     return True
 
 
@@ -494,6 +495,9 @@ def weblogout(
         # Try to delete session
         request.session.flush()
         request.authorized = False
+        # ``request.principal`` is always defined, but its content is now
+        # invalidated: there is no authenticated user left in the session.
+        request.principal = types.auth.AuthenticatedPrincipal.anonymous()
 
     # Rebuild response with updated session
     return HttpResponseRedirect(exit_url or exit_page)

@@ -39,7 +39,7 @@ if typing.TYPE_CHECKING:
     from django.http import HttpRequest
     from django.http.request import QueryDict
 
-    from uds.models import User
+    from uds.models import Server, User
 
 
 class AuthenticationState(enum.IntEnum):
@@ -126,6 +126,71 @@ class LoginResult:
     errstr: str | None = None
     errid: int = 0
     url: str | None = None
+
+
+class PrincipalKind(enum.Enum):
+    """Identity represented by an authenticated request."""
+
+    USER = "USER"
+    REGISTERED_SERVER = "REGISTERED_SERVER"
+    ANONYMOUS = "ANONYMOUS"
+
+
+class CredentialKind(enum.Enum):
+    """Credential used to establish an authenticated identity."""
+
+    SESSION = "SESSION"
+    USER_API_TOKEN = "USER_API_TOKEN"
+    CLIENT_TICKET = "CLIENT_TICKET"
+    REGISTERED_SERVER = "REGISTERED_SERVER"
+    ANONYMOUS = "ANONYMOUS"
+
+
+@dataclasses.dataclass(frozen=True)
+class AuthenticatedPrincipal:
+    """Authenticated identity without bearer secret material."""
+
+    principal_kind: PrincipalKind
+    credential_kind: CredentialKind
+    user: "User | None" = None
+    server: "Server | None" = None
+    credential_id: str | None = None
+
+    @staticmethod
+    def anonymous() -> "AuthenticatedPrincipal":
+        """Return the canonical ``ANONYMOUS`` principal."""
+        return AuthenticatedPrincipal(
+            principal_kind=PrincipalKind.ANONYMOUS,
+            credential_kind=CredentialKind.ANONYMOUS,
+        )
+
+    @staticmethod
+    def user_session(user: "User") -> "AuthenticatedPrincipal":
+        """Return a principal for a user authenticated through a REST or web session."""
+        return AuthenticatedPrincipal(
+            principal_kind=PrincipalKind.USER,
+            credential_kind=CredentialKind.SESSION,
+            user=user,
+        )
+
+    @staticmethod
+    def user_client_ticket(user: "User") -> "AuthenticatedPrincipal":
+        """Return a principal for a user authenticated via a client ticket."""
+        return AuthenticatedPrincipal(
+            principal_kind=PrincipalKind.USER,
+            credential_kind=CredentialKind.CLIENT_TICKET,
+            user=user,
+        )
+
+    @staticmethod
+    def registered_server(server: "Server", credential_id: str | None = None) -> "AuthenticatedPrincipal":
+        """Return a principal for a registered M2M server credential."""
+        return AuthenticatedPrincipal(
+            principal_kind=PrincipalKind.REGISTERED_SERVER,
+            credential_kind=CredentialKind.REGISTERED_SERVER,
+            server=server,
+            credential_id=credential_id,
+        )
 
 
 @dataclasses.dataclass

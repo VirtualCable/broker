@@ -43,9 +43,11 @@ class ExtendedHttpRequest(HttpRequest):
     ip_version: int
     ip_proxy: str
     os: "types.os.DetectedOsInfo"
-    user: typing.Optional["User"]  # type: ignore  # Overrides the user attribute from HttpRequest
+    user: "User | None"  # type: ignore  # Overrides the user attribute from HttpRequest
+    principal: "types.auth.AuthenticatedPrincipal | None"
     authorized: bool
 
 
 class ExtendedHttpRequestWithUser(ExtendedHttpRequest):
+    # Deprecated compatibility narrowing. Prefer request.principal.user.
     user: "User"  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]

@@ -84,9 +84,8 @@ class Connection(Handler):
 
     def service_list(self) -> dict[str, typing.Any]:
         # We look for services for this authenticator groups. User is logged in in just 1 authenticator, so his groups must coincide with those assigned to ds
-        # Ensure user is present on request, used by web views methods
-        self._request.user = self._user
-
+        # ``request.user`` and ``request.principal`` are kept in sync by ``Handler``,
+        # so the downstream web helpers can read either of them.
         return Connection.result(result=self.filter_odata_data(services.get_services_info_dict(self._request)))
 
     def connection(self, id_service: str, id_transport: str, skip: str = "") -> dict[str, typing.Any]:
@@ -109,9 +108,7 @@ class Connection(Handler):
             }
             if info.ip:  # only will be available id doNotCheck is False
                 connection_info.update(
-                    info.transport.get_instance()
-                    .get_connection_info(info.userservice, self._user, "UNKNOWN")
-                    .as_dict()
+                    info.transport.get_instance().get_connection_info(info.userservice, self._user, "UNKNOWN").as_dict()
                 )
             return Connection.result(result=connection_info)
         except ServiceNotReadyError as e:
@@ -123,9 +120,7 @@ class Connection(Handler):
             logger.exception("Exception")
             return Connection.result(error=str(e))
 
-    def script(
-        self, id_service: str, id_transport: str, scrambler: str, hostname: str
-    ) -> dict[str, typing.Any]:
+    def script(self, id_service: str, id_transport: str, scrambler: str, hostname: str) -> dict[str, typing.Any]:
         try:
             info = UserServiceManager.manager().get_user_service_info(
                 self._user, self._request.os, self._request.ip, id_service, id_transport
@@ -163,8 +158,8 @@ class Connection(Handler):
         return {}
 
     def get_uds_link(self, id_service: str, id_transport: str) -> dict[str, typing.Any]:
-        # Returns the UDS link for the user & transport
-        self._request.user = self._user
+        # ``request.user`` and ``request.principal`` are kept in sync by ``Handler``,
+        # so we no longer override ``request.user`` here.
         typing.cast(typing.Any, self._request)._cryptedpass = self.session["REST"]["password"]
         typing.cast(typing.Any, self._request)._scrambler = self._request.META["HTTP_SCRAMBLER"]
         link_info = services.enable_service(self._request, service_id=id_service, transport_id=id_transport)

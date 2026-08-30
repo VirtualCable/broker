@@ -279,6 +279,11 @@ def ticket_auth(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpR
         request.user = (
             usr  # Temporarily store this user as "authenticated" user, next requests will be done using session
         )
+        # ``weblogin`` already populated ``request.principal`` with a USER+SESSION
+        # principal, but the ticket path identifies the user via the ticket,
+        # not via the REST session. Reassign with the ticket credential so
+        # downstream code distinguishes the two flows.
+        request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(usr)
         request.authorized = True  # User is authorized
 
         # Set restricted access (no allow to see other services, logout automatically if user tries to access other service, ...)
