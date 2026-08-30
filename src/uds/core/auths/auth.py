@@ -441,11 +441,7 @@ def weblogin(
         request.os.os.name,
         cookie,
     )
-    request.principal = types.auth.AuthenticatedPrincipal(
-        principal_kind=types.auth.PrincipalKind.USER,
-        credential_kind=types.auth.CredentialKind.SESSION,
-        user=user,
-    )
+    request.principal = types.auth.AuthenticatedPrincipal.user_session(user)
     return True
 
 
@@ -499,6 +495,9 @@ def weblogout(
         # Try to delete session
         request.session.flush()
         request.authorized = False
+        # ``request.principal`` is always defined, but its content is now
+        # invalidated: there is no authenticated user left in the session.
+        request.principal = types.auth.AuthenticatedPrincipal.anonymous()
 
     # Rebuild response with updated session
     return HttpResponseRedirect(exit_url or exit_page)

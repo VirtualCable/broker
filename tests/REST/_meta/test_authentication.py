@@ -91,3 +91,35 @@ class AuthenticationResolverTest(rest.test.RESTTestCase):
 
         self.assertIs(request.principal, handler.principal)
         self.assertEqual(handler.principal.principal_kind, types.auth.PrincipalKind.ANONYMOUS)
+
+    def test_handler_keeps_request_user_in_sync(self) -> None:
+        # With a session principal, ``Handler`` must keep the legacy
+        # ``request.user`` attribute pointing to the same User.
+        from uds.REST import handlers as rest_handlers  # late import to avoid circular issues
+
+        self.login()
+        captured: dict[str, typing.Any] = {}
+
+        original_init = rest_handlers.Handler.__init__
+
+        def capture_init(self: typing.Any, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            original_init(self, *args, **kwargs)
+            captured["user"] = self._user
+            captured["request_user"] = self._request.user
+            captured["principal"] = self._principal
+
+        rest_handlers.Handler.__init__ = capture_init  # type: ignore[assignment,arg-type]
+        try:
+            response = self.client.rest_get("providers/overview")
+        finally:
+            rest_handlers.Handler.__init__ = original_init  # type: ignore[assignment,arg-type]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(captured["user"].name, self.admins[0].name)
+        self.assertEqual(captured["user"].uuid, self.admins[0].uuid)
+        self.assertEqual(captured["request_user"].name, self.admins[0].name)
+        self.assertEqual(captured["request_user"].uuid, self.admins[0].uuid)
+        principal = captured["principal"]
+        self.assertEqual(principal.principal_kind, types.auth.PrincipalKind.USER)
+        self.assertEqual(principal.credential_kind, types.auth.CredentialKind.SESSION)
+        self.assertEqual(principal.user.uuid, self.admins[0].uuid)

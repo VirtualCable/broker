@@ -153,6 +153,7 @@ class Client(Handler):
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
         self._request.user = User.objects.get(uuid=data["user"])
+        self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
 
         try:
             logger.debug(data)
@@ -257,6 +258,7 @@ class Client(Handler):
                 return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
             self._request.user = User.objects.get(uuid=data["user"])
+            self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
 
             try:
                 userservice = models.UserService.objects.get(uuid=data["userservice"])

@@ -136,7 +136,15 @@ class Handler(abc.ABC):
 
         if self._principal.user is not None:
             self._user = self._principal.user
+            # Keep the legacy ``request.user`` attribute in sync so existing
+            # consumers that read ``request.user`` directly keep working.
+            self._request.user = self._principal.user
         else:
+            # Anonymous / server-credential principals keep the existing
+            # ``request.user`` value untouched. Handlers such as Login/Logout
+            # are instantiated with ``ROLE = ANONYMOUS`` and rely on Django's
+            # default session user (which may already be populated by the
+            # login flow).
             self._user = User()
             typing.cast(typing.Any, self._user).state = types.states.State.ACTIVE
 

@@ -53,20 +53,16 @@ class AuthenticationResolver:
                 legacy_token,
             )
 
-        principal = types.auth.AuthenticatedPrincipal(
-            principal_kind=types.auth.PrincipalKind.ANONYMOUS,
-            credential_kind=types.auth.CredentialKind.ANONYMOUS,
-        )
+        principal = types.auth.AuthenticatedPrincipal.anonymous()
         if server_type and secret_token:
             if not Server.validate_token(secret_token, server_type=server_type):
                 raise AccessDenied()
             server = AuthenticationResolver._get_server(secret_token, server_type)
-            principal = types.auth.AuthenticatedPrincipal(
-                principal_kind=types.auth.PrincipalKind.REGISTERED_SERVER,
-                credential_kind=types.auth.CredentialKind.REGISTERED_SERVER,
-                server=server,
-                credential_id=typing.cast(str, typing.cast(typing.Any, server).uuid) if server else None,
-            )
+            if server is not None:
+                principal = types.auth.AuthenticatedPrincipal.registered_server(
+                    server,
+                    credential_id=typing.cast(str, typing.cast(typing.Any, server).uuid),
+                )
 
         return AuthenticationResult(principal=principal, secret_token=secret_token)
 
@@ -125,12 +121,7 @@ class AuthenticationResolver:
         if not user.can_access(role):
             raise AccessDenied()
 
-        principal = types.auth.AuthenticatedPrincipal(
-            principal_kind=types.auth.PrincipalKind.USER,
-            credential_kind=types.auth.CredentialKind.SESSION,
-            user=user,
-            credential_id=None,
-        )
+        principal = types.auth.AuthenticatedPrincipal.user_session(user)
         return AuthenticationResult(
             principal=principal,
             session=session,

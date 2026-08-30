@@ -35,7 +35,7 @@ from unittest import mock
 
 from django.urls import reverse
 
-from uds.core import consts
+from uds.core import consts, types
 from uds.core.util import config
 from uds.middleware import request
 
@@ -68,6 +68,13 @@ class GlobalRequestMiddlewareTest(test.WEBTestCase):
 
         # Ensure user is not set
         self.assertEqual(req.user, None)
+        # The middleware must seed ``request.principal`` so downstream views
+        # never trigger ``AttributeError``.
+        self.assertIsNotNone(req.principal)
+        assert req.principal is not None
+        self.assertEqual(req.principal.principal_kind, types.auth.PrincipalKind.ANONYMOUS)
+        self.assertEqual(req.principal.credential_kind, types.auth.CredentialKind.ANONYMOUS)
+        self.assertIsNone(req.principal.user)
         # And redirects to index
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("page.index"))
@@ -110,6 +117,14 @@ class GlobalRequestMiddlewareTest(test.WEBTestCase):
 
         # Ensure user is correct
         self.assertEqual(req.user.uuid, user.uuid)
+        # The middleware mirrors the user into ``request.principal``.
+        self.assertIsNotNone(req.principal)
+        assert req.principal is not None
+        self.assertEqual(req.principal.principal_kind, types.auth.PrincipalKind.USER)
+        self.assertEqual(req.principal.credential_kind, types.auth.CredentialKind.SESSION)
+        self.assertIsNotNone(req.principal.user)
+        assert req.principal.user is not None
+        self.assertEqual(req.principal.user.uuid, user.uuid)
         # And redirects to index
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("page.index"))
