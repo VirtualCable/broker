@@ -657,7 +657,8 @@ class Handler(abc.ABC):
             kw: dict[str, typing.Any] = {"tags": tags}
             if security:
                 kw["security"] = security
-            return dataclasses.replace(op, **kw)
+            # Override linter complains
+            return typing.cast(typing.Any, dataclasses.replace(op, **kw))
 
         return {
             path: types.rest.api.PathItem(
