@@ -86,11 +86,16 @@ class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-publi
     # allowed_protocols = types.transports.Protocol.generic_vdi(types.transports.Protocol.SPICE)
     # services_type_provided = types.services.ServiceType.VDI
 
-    # Gui remplates, to be "incorporated" by inherited classes if needed
-    token = gui.TextField(
+    # Gui remplates, to be "incorporated" by inherited classes if needed.
+    # ``token`` is stored as a ``PasswordField`` so the admin sees an input
+    # with an eye-toggle and the value is stored encrypted at the field-data
+    # level. ``get_token`` always returns the cleartext for provider
+    # integrations; the encrypted on-disk format is handled transparently by
+    # the field's encoder/decoder.
+    token = gui.PasswordField(
         order=1,
         label=_("Service Token"),
-        length=16,
+        length=64,
         tooltip=_(
             "Service token that will be used by actors to communicate with service. Leave empty for persistent assignation."
         ),
