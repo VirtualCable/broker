@@ -29,18 +29,21 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import random
+import types as stdlib_types
 import typing
 
+from django.contrib.sessions.backends.db import SessionStore
+from django.http import HttpResponse
+from django.test import RequestFactory
 from django.urls import reverse
 
 from uds import models
+from uds.core import types
+from uds.core.auths.auth import weblogin
 from uds.core.util.config import GlobalConfig
 
 from ...fixtures import authenticators as fixtures_authenticators
 from ...utils.web import test
-
-if typing.TYPE_CHECKING:
-    from django.http import HttpResponse
 
 
 class WebLoginLogoutTest(test.WEBTestCase):
@@ -123,6 +126,23 @@ class WebLoginLogoutTest(test.WEBTestCase):
         # And also, taht invalid user is not allowed
         response = self.do_login("invalid", rootpass, auth.uuid)
         self.assertInvalidLogin(response)
+
+    def test_weblogin_populates_authenticated_principal(self) -> None:
+        """A successful web login exposes the session principal on the request."""
+        authenticator = fixtures_authenticators.create_db_authenticator()
+        user = fixtures_authenticators.create_db_users(authenticator, number_of_users=1)[0]
+        request = typing.cast(typing.Any, RequestFactory().get("/uds/page/login"))
+        request.session = SessionStore()
+        request.ip = "127.0.0.1"
+        request.os = stdlib_types.SimpleNamespace(os=stdlib_types.SimpleNamespace(name="test"))
+        response = HttpResponse()
+
+        self.assertTrue(weblogin(request, response, user, "password"))
+        self.assertIsNotNone(request.principal)
+        assert request.principal is not None
+        self.assertEqual(request.principal.principal_kind, types.auth.PrincipalKind.USER)
+        self.assertEqual(request.principal.credential_kind, types.auth.CredentialKind.SESSION)
+        self.assertIs(request.principal.user, user)
 
     def test_login_valid_user_no_group(self) -> None:
         user = fixtures_authenticators.create_db_users(

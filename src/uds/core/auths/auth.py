@@ -167,9 +167,9 @@ def weblogin_required(
             if not request.user or not request.authorized:
                 return weblogout(request)
 
-            if role in (consts.Role.ADMIN, consts.Role.STAFF) and (request.user.is_staff() is False or (
-                role == consts.Role.ADMIN and not request.user.is_admin
-            )):
+            if role in (consts.Role.ADMIN, consts.Role.STAFF) and (
+                request.user.is_staff() is False or (role == consts.Role.ADMIN and not request.user.is_admin)
+            ):
                 return HttpResponseForbidden(_("Forbidden"))
 
             return view_func(request, *args, **kwargs)
@@ -440,6 +440,11 @@ def weblogin(
         get_language() or "",
         request.os.os.name,
         cookie,
+    )
+    request.principal = types.auth.AuthenticatedPrincipal(
+        principal_kind=types.auth.PrincipalKind.USER,
+        credential_kind=types.auth.CredentialKind.SESSION,
+        user=user,
     )
     return True
 

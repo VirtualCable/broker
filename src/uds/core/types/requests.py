@@ -49,4 +49,5 @@ class ExtendedHttpRequest(HttpRequest):
 
 
 class ExtendedHttpRequestWithUser(ExtendedHttpRequest):
+    # Deprecated compatibility narrowing. Prefer request.principal.user.
     user: "User"  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
