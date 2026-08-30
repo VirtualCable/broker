@@ -99,7 +99,11 @@ def service_exporter(service: models.Service) -> dict[str, typing.Any]:
     """
     s = managed_object_exporter(service)
     s["provider"] = service.provider.uuid
-    s["token"] = service.token
+    # ``Service.token`` may be cleartext (legacy) or the encrypted form
+    # stored by the PasswordField. The export is intended for inspection or
+    # round-tripping configuration, not for sharing secrets, so we redact it
+    # entirely.
+    s["token"] = "REDACTED"
     return s
 
 
@@ -373,9 +377,7 @@ class Command(BaseCommand):
         """
         Exports all providers to a list of dicts
         """
-        return "# Providers\n" + yaml.safe_dump(
-            [provider_exporter(p) for p in self.apply_filter(models.Provider)]
-        )
+        return "# Providers\n" + yaml.safe_dump([provider_exporter(p) for p in self.apply_filter(models.Provider)])
 
     def export_services(self) -> str:
         # First, locate providers for services with the filter
@@ -469,10 +471,7 @@ class Command(BaseCommand):
         Exports all networks to a list of dicts
         """
         return "# Networks\n" + yaml.safe_dump(
-            [
-                network_exporter(n)
-                for n in self.output_count("Saving networks", self.apply_filter(models.Network))
-            ]
+            [network_exporter(n) for n in self.output_count("Saving networks", self.apply_filter(models.Network))]
         )
 
     def export_transports(self) -> str:
@@ -496,10 +495,7 @@ class Command(BaseCommand):
         Exports all osmanagers to a list of dicts
         """
         return "# OSManagers\n" + yaml.safe_dump(
-            [
-                osmanager_exporter(o)
-                for o in self.output_count("Saving osmanagers", self.apply_filter(models.OSManager))
-            ]
+            [osmanager_exporter(o) for o in self.output_count("Saving osmanagers", self.apply_filter(models.OSManager))]
         )
 
     def remove_reduntant_entities(self, entities: list[str]) -> list[str]:
