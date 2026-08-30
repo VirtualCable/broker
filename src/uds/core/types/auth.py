@@ -39,7 +39,7 @@ if typing.TYPE_CHECKING:
     from django.http import HttpRequest
     from django.http.request import QueryDict
 
-    from uds.models import User
+    from uds.models import Server, User
 
 
 class AuthenticationState(enum.IntEnum):
@@ -126,6 +126,34 @@ class LoginResult:
     errstr: str | None = None
     errid: int = 0
     url: str | None = None
+
+
+class PrincipalKind(enum.Enum):
+    """Identity represented by an authenticated request."""
+
+    USER = "USER"
+    REGISTERED_SERVER = "REGISTERED_SERVER"
+    ANONYMOUS = "ANONYMOUS"
+
+
+class CredentialKind(enum.Enum):
+    """Credential used to establish an authenticated identity."""
+
+    SESSION = "SESSION"
+    USER_API_TOKEN = "USER_API_TOKEN"
+    REGISTERED_SERVER = "REGISTERED_SERVER"
+    ANONYMOUS = "ANONYMOUS"
+
+
+@dataclasses.dataclass(frozen=True)
+class AuthenticatedPrincipal:
+    """Authenticated identity without bearer secret material."""
+
+    principal_kind: PrincipalKind
+    credential_kind: CredentialKind
+    user: "User | None" = None
+    server: "Server | None" = None
+    credential_id: str | None = None
 
 
 @dataclasses.dataclass

@@ -43,7 +43,8 @@ class ExtendedHttpRequest(HttpRequest):
     ip_version: int
     ip_proxy: str
     os: "types.os.DetectedOsInfo"
-    user: typing.Optional["User"]  # type: ignore  # Overrides the user attribute from HttpRequest
+    user: "User | None"  # type: ignore  # Overrides the user attribute from HttpRequest
+    principal: "types.auth.AuthenticatedPrincipal | None"
     authorized: bool
 
 
