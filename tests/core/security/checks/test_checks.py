@@ -278,7 +278,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
     def test_old_token_with_actor_version_detected(self) -> None:
         # A freshly created user service has the never-rotated (AUTO) token prefix
         userservice = self._create_userservice_with_actor_version("5.0.0")
-        self.assertTrue(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertTrue(userservice.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         result = self._run_check("old-token-used-by-actor")
         self.assertFalse(result.ok, result.message)
@@ -296,9 +296,9 @@ class SecurityChecksTest(UDSTransactionTestCase):
         from uds.models.user_service import create_actor_token
 
         userservice = self._create_userservice_with_actor_version("5.0.0")
-        userservice.token = create_actor_token()
-        userservice.save()
-        self.assertFalse(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        userservice.token_hash = models.user_service.hash_actor_token(create_actor_token())
+        userservice.save(update_fields=["token_hash"])
+        self.assertFalse(userservice.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         result = self._run_check("old-token-used-by-actor")
         self.assertTrue(result.ok, result.message)

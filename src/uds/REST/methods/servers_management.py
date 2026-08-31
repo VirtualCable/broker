@@ -193,7 +193,7 @@ class ServersTokens(ModelHandler[TokenItem]):
             hostname=item.hostname,
             listen_port=item.listen_port,
             mac=item.mac,
-            token=item.token,
+            token=item.properties.get("token_hint", "REDACTED"),
             type=types.servers.ServerType(item.type).as_str(),
             os=item.os_type,
         )

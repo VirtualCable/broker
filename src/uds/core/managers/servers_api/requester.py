@@ -31,7 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import collections.abc
 import contextlib
 import datetime
-import hashlib
 import logging
 import os
 import tempfile
@@ -79,7 +78,7 @@ class ServerApiRequester:
     hash: str
 
     def __init__(self, server: "models.Server") -> None:
-        self.hash = hashlib.sha256((server.token).encode()).hexdigest()
+        self.hash = typing.cast(str, server.token_hash)
         self.server = server
         self.cache = cache.Cache("serverapi:" + server.uuid)
 

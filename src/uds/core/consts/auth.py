@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2023 Virtual Cable S.L.
 # All rights reserved.
@@ -71,7 +70,7 @@ AUTHORIZATION_HEADER: typing.Final[str] = "Authorization"
 SECRET_KEY_PREFIX: typing.Final[str] = "sk-"
 SESSION_KEY_PREFIX: typing.Final[str] = "ses-"
 USER_SERVICE_TOKEN_PREFIX: typing.Final[str] = "ust-"
-AUTO_TOKEN_PREFIX_NOT_USED: typing.Final[str] = "ust-n0t0"
+INVALID_TOKEN_PREFIX: typing.Final[str] = "invalid-"
 
 X_FORWARDED_FOR_HEADER: typing.Final[str] = "X-Forwarded-For"
 

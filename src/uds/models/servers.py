@@ -32,6 +32,7 @@ import datetime
 import secrets
 import typing
 import collections.abc
+import uuid
 
 from django.db import models
 from django.db.models import Q
@@ -172,6 +173,37 @@ def _create_token() -> str:
     return secrets.token_urlsafe(36)
 
 
+def _hash_token(raw_token: str) -> str:
+    """Return the SHA-256 hex digest of a raw token.
+
+    Tokens are generated with ``secrets.token_urlsafe(36)`` so they already
+    carry around 216 bits of entropy from a CSPRNG, which makes brute force
+    and dictionary attacks infeasible. No salt or per-installation pepper
+    is needed.
+    """
+    import hashlib
+
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+def _token_hint(raw_token: str) -> str:
+    """Return a non-secret visual hint of ``raw_token``.
+
+    The hint is the first four and last four characters joined by an
+    ellipsis. It is metadata only: the hint must never be accepted as a
+    credential. Used by the admin UI to identify a registered server
+    without exposing the bearer secret.
+    """
+    if len(raw_token) <= 8:
+        return "*" * len(raw_token)
+    return f"{raw_token[:4]}...{raw_token[-4:]}"
+
+
+def invalid_token() -> str:
+    """Return a unique non-credential value for servers without a token."""
+    return f"{consts.auth.INVALID_TOKEN_PREFIX}{uuid.uuid4()}"
+
+
 class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     """
     UDS Registered Servers
@@ -200,8 +232,12 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
     # Port where server listens for connections (if it listens)
     listen_port = models.IntegerField(default=consts.net.SERVER_DEFAULT_LISTEN_PORT)
 
-    # Token identifies de Registered Server (for API use, it's like the "secret" on other systems)
-    token = models.CharField(max_length=48, db_index=True, unique=True, default=_create_token)
+    # Persistent identifier for the registered server. Always the SHA-256
+    # hex digest of the raw bearer secret; the raw value is never stored
+    # nor reconstructable from this column. ``token_hash`` is 64 hex
+    # characters, indexed and unique. Servers without an API credential use
+    # a unique ``invalid-<uuid4>`` marker instead of a fake bearer token.
+    token_hash = models.CharField(max_length=64, db_index=True, unique=True, default=invalid_token)
     # Simple info field of when the registered server was created or revalidated
     stamp = models.DateTimeField()
 
@@ -380,6 +416,16 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         return _create_token()  # Return global function
 
     @staticmethod
+    def hash_token(raw_token: str) -> str:
+        """Return the digest stored for a raw server bearer token."""
+        return _hash_token(raw_token)
+
+    @staticmethod
+    def token_hint(raw_token: str) -> str:
+        """Return the non-secret display hint for a raw server token."""
+        return _token_hint(raw_token)
+
+    @staticmethod
     def validate_token(
         token: str,
         *,
@@ -399,12 +445,16 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         Note:
             This allows to keep Tunnels, Servers, Actors.. etc on same table, and validate tokens for each kind
         """
-        # Ensure token is valid for a kind
+        # ``token`` is always the raw bearer secret coming from the client.
+        # The stored value is the SHA-256 hex digest (``token_hash``), so we
+        # hash the incoming value before looking it up. The lookup is indexed
+        # and unique.
         try:
+            digest = _hash_token(token)
             if isinstance(server_type, types.servers.ServerType):
-                tt = Server.objects.get(token=token, type=server_type.value)
+                tt = Server.objects.get(token_hash=digest, type=server_type.value)
             else:
-                tt = Server.objects.get(token=token, type__in=[st.value for st in server_type])
+                tt = Server.objects.get(token_hash=digest, type__in=[st.value for st in server_type])
             # We could check the request ip here
             if request and request.ip != tt.ip:
                 raise Exception("Invalid ip")
@@ -448,7 +498,7 @@ class Server(UUIDModel, TaggingMixin, properties.PropertiesMixin):
         return f"https://{pre}{self.ip}{post}:{self.listen_port}/{self.server_type.path()}/v1/{path}"
 
     def __str__(self) -> str:
-        return f"<RegisterdServer {self.token} of type {self.server_type.name} created on {self.stamp} by {self.register_username} from {self.ip}/{self.hostname}>"
+        return f"<RegisterdServer {self.token_hash[:8]} of type {self.server_type.name} created on {self.stamp} by {self.register_username} from {self.ip}/{self.hostname}>"
 
 
 properties.PropertiesMixin.setup_signals(Server)

@@ -46,8 +46,8 @@ def create_server(
     listen_port: int = 0,
     data: typing.Any = None,
 ) -> "models.Server":
-    # Token is created by default on record creation
-    return models.Server.objects.create(
+    raw_token = models.Server.create_token()
+    server = models.Server.objects.create(
         register_username=helpers.random_string(),
         register_ip=ip or "127.0.0.1",
         ip=ip or "127.0.0.1",
@@ -59,7 +59,15 @@ def create_server(
         os_type=types.os.KnownOS.WINDOWS.os_name(),
         version=version or "4.0.0",
         data=data or {},
+        token_hash=models.Server.hash_token(raw_token),
     )
+    typing.cast(typing.Any, server).raw_token = raw_token
+    return server
+
+
+def raw_token(server: "models.Server") -> str:
+    """Return the raw token retained by the test fixture, not by the model."""
+    return typing.cast(str, typing.cast(typing.Any, server).raw_token)
 
 
 def create_server_group(

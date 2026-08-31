@@ -99,7 +99,7 @@ class ServerRegisterTest(rest.test.RESTTestCase):
             # This is the server token, should exist on self._database
             token = response.json()["result"]
 
-            server = models.Server.objects.get(token=token)
+            server = models.Server.objects.get(token_hash=models.Server.hash_token(token))
             self.assertEqual(server.ip, self._data["ip"])
             self.assertEqual(server.listen_port, self._data["port"])
             self.assertEqual(server.type, self._data["type"])
@@ -125,10 +125,13 @@ class ServerRegisterTest(rest.test.RESTTestCase):
                 content_type="application/json",
             )
 
-            token2 = response.json()["result"]  # Same as token
-            self.assertEqual(token, token2)
+            token2 = response.json()["result"]  # Re-registration rotates the token
+            self.assertNotEqual(token, token2)
+            self.assertFalse(models.Server.validate_token(token, server_type=types.servers.ServerType(type)))
+            self.assertTrue(models.Server.validate_token(token2, server_type=types.servers.ServerType(type)))
 
-            server = models.Server.objects.get(token=token)
+            server = models.Server.objects.get(token_hash=models.Server.hash_token(token2))
+            self.assertEqual(server.properties.get("token_hint"), models.Server.token_hint(token2))
 
             self.assertEqual(server.hostname, self._data["hostname"])
             self.assertEqual(server.type, self._data2["type"])

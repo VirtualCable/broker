@@ -71,6 +71,7 @@ class TicketTest(rest.test.RESTTestCase):
         )
 
         # Create a ticket server
+        raw_token = models.Server.create_token()
         server = models.Server.objects.create(
             register_username="tester",
             register_ip="127.0.0.1",
@@ -79,9 +80,10 @@ class TicketTest(rest.test.RESTTestCase):
             type=types.servers.ServerType.TUNNEL.value,
             stamp=sql_now(),
             subtype="",
+            token_hash=models.Server.hash_token(raw_token),
         )
         server.groups.add(sg)
-        self.server_token = server.token
+        self.server_token = raw_token
 
         # Create a userservice
         userservice = self.user_services[0]

@@ -8,7 +8,7 @@ import uds.core.types.servers
 import uds.core.types.os
 import uds.core.util.model
 
-from .fixers import properties_v4, transports_v4, providers_v4
+from uds.migrations.fixers import properties_v4, transports_v4, providers_v4
 
 ACTOR_TYPE: typing.Final[int] = uds.core.types.servers.ServerType.ACTOR.value
 
@@ -38,7 +38,7 @@ def migrate_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
                 register_ip=token.ip_from,
                 ip=token.ip,
                 hostname=token.hostname,
-                token=token.token,
+                token=token.token,  # type: ignore[call-arg]  # Historical Server model has the token field here.
                 stamp=token.stamp,
                 type=ACTOR_TYPE,
                 os_type=uds.core.types.os.KnownOS.UNKNOWN.os_name(),
@@ -75,7 +75,7 @@ def rollback_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
             ip_from=server.register_ip,
             ip=server.ip,
             hostname=server.hostname,
-            token=server.token,
+            token=server.token,  # type: ignore[call-arg]  # Historical Server model has the token field here.
             stamp=server.stamp,
             mac=server.data.get("mac", ""),
             pre_command=server.data.get("pre_command", ""),

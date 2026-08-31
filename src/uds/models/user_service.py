@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -32,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 import typing
+import uuid
 
 from django.db import models
 from django.db.models import signals
@@ -56,13 +56,19 @@ logger = logging.getLogger(__name__)
 
 
 def _create_default_token() -> str:
-    prefix = consts.auth.AUTO_TOKEN_PREFIX_NOT_USED
-    return prefix + CryptoManager.manager().random_string(consts.ticket.TICKET_LENGTH - len(prefix))
+    return f"{consts.auth.INVALID_TOKEN_PREFIX}{uuid.uuid4()}"
 
 
 def create_actor_token() -> str:
     prefix = consts.auth.USER_SERVICE_TOKEN_PREFIX
     return prefix + CryptoManager.manager().random_string(consts.ticket.TICKET_LENGTH - len(prefix))
+
+
+def hash_actor_token(raw_token: str) -> str:
+    """Return the SHA-256 digest stored for an actor assignment token."""
+    import hashlib
+
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -117,8 +123,8 @@ class UserService(UUIDModel, properties.PropertiesMixin):
         max_length=consts.system.MAX_IPV6_LENGTH, default=""
     )  # Source IP of the user connecting to the service. Max length is 45 chars (ipv6)
 
-    token = models.CharField(
-        max_length=consts.ticket.TICKET_LENGTH,
+    token_hash = models.CharField(
+        max_length=64,
         default=_create_default_token,
         unique=True,
         db_index=True,

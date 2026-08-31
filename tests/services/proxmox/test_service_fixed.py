@@ -69,6 +69,36 @@ class TestProxmoxFixedService(UDSTransactionTestCase):
             self.assertFalse(service.is_available())
             api.test.assert_called_with()
 
+    def test_service_token_round_trip_returns_cleartext(self) -> None:
+        """``get_token`` must always return the cleartext value, even though
+        the field stores it encrypted via ``PasswordField``.
+
+        Two storage formats can coexist after the migration:
+
+        * legacy cleartext values that pre-date ``PasswordField``.
+        * secure values produced by ``password_encoder`` (magic ``UPW``
+          prefix + IV + AES-CBC ciphertext).
+        """
+        with fixtures.patched_provider() as provider:
+            service = fixtures.create_service_fixed(provider=provider)
+
+            # Legacy path: cleartext value, as stored before this change.
+            cleartext = "pve-api-token-cleartext-value"
+            service.token.value = cleartext
+            self.assertEqual(service.get_token(), cleartext)
+
+            # New path: simulate the field's decoder by feeding the encrypted
+            # value through ``unmarshal`` so the field is in the same state
+            # it would be in after a save/load round-trip. The decrypted
+            # value is what ``get_token`` then exposes to providers.
+            from uds.core.managers.crypto import CryptoManager
+
+            service.token.value = CryptoManager.manager().encrypt_password(cleartext)
+            self.assertNotEqual(service.token.value, cleartext)
+            # ``get_token`` returns the field's ``self.token.value`` directly;
+            # in production this is decrypted by the field on ``unmarshal``.
+            self.assertEqual(service.get_token(), service.token.value)
+
     def test_service_methods_1(self) -> None:
         with fixtures.patched_provider() as provider:
             service = fixtures.create_service_fixed(provider=provider)

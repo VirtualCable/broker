@@ -56,7 +56,7 @@ class AuthenticationResolverTest(rest.test.RESTTestCase):
             hostname="server.example.test",
             type=types.servers.ServerType.TUNNEL.value,
             stamp=sql_now(),
-            token=raw_token,
+            token_hash=models.Server.hash_token(raw_token),
         )
 
         result = AuthenticationResolver.resolve(

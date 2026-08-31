@@ -69,7 +69,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "login",
                 "userservice_uuid": self.user_service_managed.uuid,
                 "username": "local_user_name",
@@ -96,7 +96,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "login",
                 "username": "local_user_name",
                 "ticket": ticket_uuid,
@@ -110,7 +110,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "login",
                 "userservice_uuid": "invalid uuid",
                 "username": "local_user_name",
@@ -132,7 +132,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "logout",
                 "userservice_uuid": self.user_service_managed.uuid,
                 "username": "local_user_name",
@@ -146,7 +146,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "login",
                 "userservice_uuid": "invalid uuid",
                 "username": "local_user_name",
@@ -161,7 +161,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "logout",
                 "user_service": self.user_service_managed.uuid,
                 "username": "local_user_name",
@@ -176,7 +176,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "login",
                 "userservice_uuid": self.user_service_managed.uuid,
                 "username": "local_user_name",
@@ -191,7 +191,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "logout",
                 "userservice_uuid": self.user_service_managed.uuid,
                 "username": "local_user_name",

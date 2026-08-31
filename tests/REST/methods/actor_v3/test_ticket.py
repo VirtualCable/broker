@@ -29,17 +29,12 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
-import typing
 
 from uds import models
 
 from ....fixtures import servers as servers_fixtures
 from ....fixtures import services as services_fixtures
 from ....utils import rest
-
-if typing.TYPE_CHECKING:
-    from uds import models
-
 
 logger = logging.getLogger(__name__)
 

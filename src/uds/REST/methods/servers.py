@@ -116,9 +116,13 @@ class ServerRegisterBase(Handler):
             server_token.subtype = subtype  # Optional
             server_token.version = version
             server_token.data = data
+            raw_token = models.Server.create_token()
+            server_token.token_hash = models.Server.hash_token(raw_token)
             server_token.save()
+            server_token.properties["token_hint"] = models.Server.token_hint(raw_token)
         except Exception:
             try:
+                raw_token = models.Server.create_token()
                 server_token = models.Server.objects.create(
                     register_username=self._user.pretty_name,
                     register_ip=self._request.ip.split("%")[0],  # Ensure we do not store zone if IPv6 and present
@@ -134,10 +138,12 @@ class ServerRegisterBase(Handler):
                     mac=mac,
                     data=data,
                     version=version,
+                    token_hash=models.Server.hash_token(raw_token),
                 )
+                server_token.properties["token_hint"] = models.Server.token_hint(raw_token)
             except Exception as e:
                 return rest_result("error", error=str(e))
-        return rest_result(result=server_token.token)
+        return rest_result(result=raw_token)
 
 
 class ServerRegister(ServerRegisterBase):
@@ -176,7 +182,7 @@ class ServerTest(Handler):
     def post(self) -> collections.abc.MutableMapping[str, typing.Any]:
         # Test if a token is valid
         try:
-            models.Server.objects.get(token=self._params["token"])
+            models.Server.objects.get(token_hash=models.Server.hash_token(self._params["token"]))
             return rest_result(True)
         except Exception as e:
             return rest_result("error", error=str(e))
@@ -214,9 +220,11 @@ class ServerEvent(Handler):
         from uds.core.managers.servers import ServerManager
 
         try:
-            server = models.Server.objects.get(token=self._params["token"])
+            server = models.Server.objects.get(token_hash=models.Server.hash_token(self._params["token"]))
         except models.Server.DoesNotExist:
-            logger.error("Token error from %s (%s is an invalid token)", self._request.ip, sanitize_params(self._params)["token"])
+            logger.error(
+                "Token error from %s (%s is an invalid token)", self._request.ip, sanitize_params(self._params)["token"]
+            )
             raise rest_exceptions.BlockAccess() from None  # Block access if token is not valid
         except KeyError:
             raise rest_exceptions.RequestError("Token not present") from None  # Invalid request if token is not present

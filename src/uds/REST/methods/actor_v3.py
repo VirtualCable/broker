@@ -56,7 +56,7 @@ from uds.models import Service
 from uds.models import TicketStore
 from uds.models import UserService
 from uds.models.service import ServiceTokenAlias
-from uds.models.user_service import create_actor_token
+from uds.models.user_service import create_actor_token, hash_actor_token
 from uds.REST.utils import rest_result, sanitize_params
 
 from ..handlers import Handler
@@ -168,7 +168,9 @@ class ActorV3Action(Handler):
         Looks for an userservice by token or uuid (for backward compat) and, if not found, raises a exceptions.rest.BlockAccess request
         """
         try:
-            return UserService.objects.get(Q(token=self._params["token"]) | Q(uuid=self._params["token"]))
+            return UserService.objects.get(
+                Q(token_hash=hash_actor_token(self._params["token"])) | Q(uuid=self._params["token"])
+            )
         except UserService.DoesNotExist:
             logger.error("User service not found (params: %s)", sanitize_params(self._params))
             raise exceptions.rest.BlockAccess() from None
@@ -258,7 +260,7 @@ class Test(ActorV3Action):
                 Service.objects.get(token=self._params["token"])
             else:
                 Server.objects.get(
-                    token=self._params["token"], type=types.servers.ServerType.ACTOR
+                    token_hash=Server.hash_token(self._params["token"]), type=types.servers.ServerType.ACTOR
                 )  # Not assigned, because only needs check
             clear_failed_ip_counter(self._request)
         except Exception as e:
@@ -328,6 +330,8 @@ class Register(ActorV3Action):
                 "custom": self._params.get("custom", ""),
             }
 
+        raw_token = Server.create_token()
+
         if actor_token:
             # Update parameters
             # type is already set
@@ -341,8 +345,10 @@ class Register(ActorV3Action):
             actor_token.data = data
             actor_token.stamp = sql_now()
             actor_token.os_type = self._params.get("os", types.os.KnownOS.UNKNOWN.os_name())[:31]
+            actor_token.token_hash = Server.hash_token(raw_token)
             # Mac is already set, as type was used to locate it
             actor_token.save()
+            actor_token.properties["token_hint"] = Server.token_hint(raw_token)
             logger.info("Registered actor %s", sanitize_params(self._params))
             found = True
 
@@ -357,15 +363,16 @@ class Register(ActorV3Action):
                 "hostname": self._params["hostname"],
                 "log_level": self._params["log_level"],
                 "data": data,
-                # 'token': Server.create_token(),  # Not needed, defaults to create_token
+                "token_hash": Server.hash_token(raw_token),
                 "stamp": sql_now(),
                 "os_type": self._params.get("os", types.os.KnownOS.UNKNOWN.os_name()),
                 "mac": self._params["mac"],
             }
 
             actor_token = Server.objects.create(**kwargs)
+            actor_token.properties["token_hint"] = Server.token_hint(raw_token)
 
-        return ActorV3Action.actor_result(actor_token.token)  # type: ignore  # actorToken is always assigned
+        return ActorV3Action.actor_result(raw_token)  # type: ignore  # actorToken is always assigned
 
 
 class Initialize(ActorV3Action):
@@ -504,10 +511,11 @@ class Initialize(ActorV3Action):
             if osmanager:
                 os_data = osmanager.actor_data(userservice).as_dict()
 
-            userservice.token = create_actor_token()
-            userservice.save(update_fields=["token"])
+            actor_token_raw = create_actor_token()
+            userservice.token_hash = hash_actor_token(actor_token_raw)
+            userservice.save(update_fields=["token_hash"])
 
-            return _initialization_result(userservice.token, userservice.unique_id, os_data, alias_token)
+            return _initialization_result(actor_token_raw, userservice.unique_id, os_data, alias_token)
         except Service.DoesNotExist:
             raise exceptions.rest.BlockAccess() from None
 
@@ -807,7 +815,7 @@ class Ticket(ActorV3Action):
                     try:
                         # Simple check that token exists
                         Server.objects.get(
-                            token=self._params["token"], type=types.servers.ServerType.ACTOR
+                            token_hash=Server.hash_token(self._params["token"]), type=types.servers.ServerType.ACTOR
                         )  # Not assigned, because only needs check
                     except Server.DoesNotExist:
                         logger.error("Actor token not found (params: %s)", sanitize_params(self._params))
