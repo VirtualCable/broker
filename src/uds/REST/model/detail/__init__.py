@@ -115,6 +115,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         self._parent = parent_handler
         self._request = parent_handler._request
         self._path = path
+        self._operation = parent_handler._operation
         self._params = params
         self._args = list(args)
         self._parent_item = parent_item
@@ -136,9 +137,11 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :param check: Method name to check (camel or snake case)
         :param parent: Parent Model element
         :param arg: Optional argument to pass to the custom method
-        :param http_method: The HTTP method of the incoming request (GET or POST).
-            In COMPAT mode, POST custom methods also match via GET (legacy).
-            In NO_COMPAT mode, only the declared method matches.
+        :param http_method: The HTTP method of the incoming request.
+            Verbs matching the declared verb dispatch immediately.
+            In COMPAT mode, ``POST`` is also reachable as ``GET`` (legacy
+            bridge) and ``DELETE`` is reachable as ``POST`` (and vice-versa).
+            Any other verb (PUT, QUERY, ...) is rejected.
         """
         is_compat = self.api_compat() == types.rest.ApiCompat.COMPAT
 
@@ -159,27 +162,43 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
                         f'camelCase form "{check}" is removed; use snake_case "{snake_case_name}"'
                     )
 
-            # HTTP-method check after name match
-            if to_check.method != http_method:
-                if (
-                    to_check.method == types.rest.CustomMethodMethod.POST
-                    and http_method == types.rest.CustomMethodMethod.GET
-                ):
-                    if is_compat:
-                        # COMPAT: allow GET on POST method with deprecation headers
-                        self.add_deprecation_headers(f"use POST {self._path}/{check}")
-                    else:
-                        # NO_COMPAT: this endpoint is gone
-                        raise exceptions.rest.GoneError(f"This endpoint is deprecated. Use POST {self._path}/{check}")
-                else:
-                    continue
+            # Exact HTTP-method match → dispatch immediately.
+            if to_check.method == http_method:
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                if operation:
+                    self.check_access(parent, to_check.required_permission, root=True)
+                    if not arg:
+                        return operation(parent)
+                    return operation(parent, arg)
+                return consts.rest.NOT_FOUND
 
-            operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
-            if operation:
-                self.check_access(parent, to_check.required_permission, root=True)
-                if not arg:
-                    return operation(parent)
-                return operation(parent, arg)
+            # Legacy bridge: pre-v5 clients used GET for nearly every verb,
+            # including POST-only custom methods. v5 introduced the proper
+            # verb split; this bridge keeps pre-v5 clients working while we
+            # emit the deprecation hint. The bridge is intentionally limited
+            # to ``GET → POST``: no other verb pair took that historical
+            # shortcut, and PUT/QUERY/DELETE must not be silently dispatched
+            # as POST. The bridge will be removed in v7.
+            legacy_bridge = (
+                to_check.method == types.rest.CustomMethodMethod.POST
+                and http_method == types.rest.CustomMethodMethod.GET
+            )
+            if legacy_bridge:
+                if is_compat:
+                    self.add_deprecation_headers(f"use POST {self._path}/{check}")
+                else:
+                    raise exceptions.rest.GoneError(f"This endpoint is deprecated. Use POST {self._path}/{check}")
+                # Dispatch the legacy GET verb under this POST entry.
+                operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
+                if operation:
+                    self.check_access(parent, to_check.required_permission, root=True)
+                    if not arg:
+                        return operation(parent)
+                    return operation(parent, arg)
+                return consts.rest.NOT_FOUND
+
+            # Different verb, not part of the bridge → continue scanning.
+            continue
 
         return consts.rest.NOT_FOUND
 
@@ -266,15 +285,19 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         Process the "PUT" operation, making the correspondent checks.
         Evaluates if it is a new element or a "modify" operation (based on if it has parameter),
-        and invokes "save_item" with parent & item (that can be None for a new Item)
+        and invokes "save_item" with parent & item (that can be None for a New Item)
         """
-        logger.debug("Detail args for PUT: %s, %s", self._args, sanitize_params(self._params))
+        logger.debug("Detail args for PUT: %s", sanitize_params(self._params))
 
         parent: models.Model = self._parent_item
 
         # if has custom methods, look for if this request matches any of them
         if len(self._args) > 1:
-            r = self._check_is_custom_method(self._args[1], parent)
+            r = self._check_is_custom_method(
+                self._args[1],
+                parent,
+                http_method=types.rest.CustomMethodMethod.PUT,
+            )
             if r is not consts.rest.NOT_FOUND:
                 return r
 
@@ -339,17 +362,37 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     def delete(self) -> typing.Any:
         """
         Process the "DELETE" operation, making the correspondent checks.
-        Extracts the item id and invokes delete_item with parent item and item id (uuid)
+
+        Tries the DELETE custom method dispatch first (POST/DELETE on the
+        same URL use different verbs but share the dispatcher). Falls back
+        to deleting the addressed item when no custom method matched.
         """
         logger.debug("Detail args for DELETE: %s", self._args)
 
-        parent = self._parent_item
+        parent: models.Model = self._parent_item
+
+        # Custom methods at _args[0] (e.g. DELETE /collection/{id}/detail/method)
+        if len(self._args) >= 1:
+            r = self._check_is_custom_method(self._args[0], parent, http_method=types.rest.CustomMethodMethod.DELETE)
+            if r is not consts.rest.NOT_FOUND:
+                return r
+
+        # Custom methods at _args[1] with _args[0] as arg
+        # (e.g. DELETE /collection/{id}/detail/{item_id}/method)
+        if len(self._args) > 1:
+            r = self._check_is_custom_method(
+                self._args[1],
+                parent,
+                self._args[0],
+                http_method=types.rest.CustomMethodMethod.DELETE,
+            )
+            if r is not consts.rest.NOT_FOUND:
+                return r
 
         if len(self._args) != 1:
             raise exceptions.rest.RequestError("Invalid DELETE request") from None
 
         self.delete_item(parent, process_uuid(self._args[0]))
-
         return consts.OK
 
     def fallback_get(self) -> typing.Any:

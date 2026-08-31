@@ -32,6 +32,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 import collections.abc
+import hashlib
+import secrets
 
 from django.db import models
 from django.db.models import Count, Q, signals
@@ -51,6 +53,25 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+USER_API_TOKEN_PREFIX: typing.Final[str] = "uat-"
+
+
+def create_api_token() -> str:
+    """Create a user API token whose raw value is shown only once."""
+    return f"{USER_API_TOKEN_PREFIX}{secrets.token_urlsafe(36)}"
+
+
+def hash_api_token(token: str) -> str:
+    """Return the SHA-256 digest stored for a user API token."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def api_token_hint(token: str) -> str:
+    """Return a non-secret visual hint for a user API token."""
+    if len(token) <= 8:
+        return "*" * len(token)
+    return f"{token[:4]}...{token[-4:]}"
+
 
 # pylint: disable=no-member
 class User(UUIDModel, properties.PropertiesMixin):
@@ -66,6 +87,9 @@ class User(UUIDModel, properties.PropertiesMixin):
     password = models.CharField(
         max_length=128, default=""
     )  # Only used on "internal" sources or sources that "needs password"
+    # Optional SHA-256 digest for the user's non-interactive REST/MCP token.
+    # The raw token is returned only when it is created or rotated.
+    token_hash = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
     mfa_data = models.CharField(max_length=128, default="")  # Only used on "internal" sources
     staff_member = models.BooleanField(default=False)  # Staff members can login to admin
     is_admin = models.BooleanField(default=False)  # is true, this is a super-admin
@@ -222,9 +246,7 @@ class User(UUIDModel, properties.PropertiesMixin):
                 number_belongs_meta=Count("groups", filter=Q(groups__id__in=grps))
             )  # g.groups.filter(id__in=grps).count()
         ):
-            number_of_groups_belonging_in_meta: int = typing.cast(
-                typing.Any, g
-            ).number_belongs_meta  # Anotated field
+            number_of_groups_belonging_in_meta: int = typing.cast(typing.Any, g).number_belongs_meta  # Anotated field
 
             logger.debug("gn = %s", number_of_groups_belonging_in_meta)
             logger.debug("groups count: %s", typing.cast(typing.Any, g).number_groups)  # Anotated field

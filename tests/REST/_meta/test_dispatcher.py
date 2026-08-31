@@ -48,9 +48,31 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import json
 import logging
 import typing
+import collections.abc
+
+from asgiref.sync import async_to_sync
+from django.http import StreamingHttpResponse
 
 from tests.utils import rest
 from tests.utils.test import REST_PATH
+from uds.REST import Handler, Dispatcher
+
+
+class AsyncStreamHandler(Handler):
+    """Test handler that returns already-framed asynchronous response chunks."""
+
+    NAME = "test-async-stream"
+
+    async def post(self) -> collections.abc.AsyncIterator[bytes]:
+        """Yield chunks that must remain unmodified by the dispatcher."""
+        yield b"chunk-1\n"
+        yield b"chunk-2\n"
+
+
+async def collect_async_chunks(source: collections.abc.AsyncIterable[bytes]) -> bytes:
+    """Collect an async response stream for assertions in the sync test case."""
+    return b"".join([chunk async for chunk in source])
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +103,7 @@ class DispatcherContractTest(rest.test.RESTTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.login()
+        Dispatcher.register_handler(AsyncStreamHandler)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -213,6 +236,22 @@ class DispatcherContractTest(rest.test.RESTTestCase):
         self.assertEqual(response.get("Cache-Control"), "no-cache, no-store, must-revalidate")
         self.assertEqual(response.get("Pragma"), "no-cache")
         self.assertEqual(response.get("Expires"), "0")
+
+    def test_async_generator_returns_streaming_response(self) -> None:
+        """Async generator results are streamed without synchronous serialization."""
+        response = self.client.rest_post("test-async-stream", data=json.dumps({}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.streaming)
+        self.assertEqual(
+            async_to_sync(collect_async_chunks)(
+                typing.cast(
+                    collections.abc.AsyncIterable[bytes],
+                    typing.cast(StreamingHttpResponse, response).streaming_content,
+                )
+            ),
+            b"chunk-1\nchunk-2\n",
+        )
 
     def test_cache_control_header_always_no_store(self) -> None:
         """The Cache-Control header always reports no-store (security policy).

@@ -94,6 +94,7 @@ class CustomMethodMethod(str, enum.Enum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
+    DELETE = "DELETE"
     QUERY = "QUERY"
 
 

@@ -66,8 +66,22 @@ T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)
 
 
 def _is_get_on_post(cm: types.rest.ModelCustomMethod, http_method: types.rest.CustomMethodMethod) -> bool:
-    """True when a GET request hits a POST-declared custom method."""
+    """True when a GET request hits a POST-declared custom method.
+
+    This is the pre-v5 legacy bridge: clients issued GET for nearly every
+    verb (create, modify, delete, ...). v5 introduced the proper verb
+    split; this bridge exists so those pre-v5 clients keep working while
+    we keep the deprecation hint active. The bridge is intentionally
+    limited to ``GET → POST``: no other verb pair took that historical
+    shortcut and a PUT/QUERY/etc. must not be silently dispatched as POST.
+    The bridge will be removed in v7.
+    """
     return cm.method == types.rest.CustomMethodMethod.POST and http_method == types.rest.CustomMethodMethod.GET
+
+
+def _preferred_verb(cm: types.rest.ModelCustomMethod) -> str:
+    """Return the canonical verb for ``cm`` as a string for deprecation hints."""
+    return cm.method.value
 
 
 def _handle_camel_case_url(
@@ -233,7 +247,18 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             handler_type = self.DETAIL[self._args[1]]
             args = list(self._args[2:])
             path = self._path + "/" + "/".join(args[:2])
-            detail_handler = handler_type(self, path, self._params, *args, parent_item=item, user=self._user)
+            detail_handler = handler_type(
+                self,
+                path,
+                self._params,
+                *args,
+                user=self._user,
+                parent_item=item,
+            )
+            # DetailHandler does not invoke Handler.__init__, so ``_operation``
+            # is not propagated from the parent. Custom methods that need to
+            # branch on the HTTP verb (POST vs DELETE, etc.) read it back here.
+            detail_handler._operation = self._operation
             method = getattr(detail_handler, self._operation)
 
             return method()
@@ -342,10 +367,12 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 if cm.method != http_method:
                     if _is_get_on_post(cm, http_method):
                         if is_compat:
-                            self.add_deprecation_headers(f"use POST {self._path}/<id>/{camel_case_name}")
+                            self.add_deprecation_headers(
+                                f"use {_preferred_verb(cm)} {self._path}/<id>/{camel_case_name}"
+                            )
                         else:
                             raise exceptions.rest.GoneError(
-                                f"This endpoint is deprecated. Use POST {self._path}/<id>/{camel_case_name}"
+                                f"This endpoint is deprecated. Use {_preferred_verb(cm)} {self._path}/<id>/{camel_case_name}"
                             )
                     else:
                         continue
@@ -377,10 +404,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 if cm.method != http_method:
                     if _is_get_on_post(cm, http_method):
                         if is_compat:
-                            self.add_deprecation_headers(f"use POST {self._path}/{camel_case_name}")
+                            self.add_deprecation_headers(f"use {_preferred_verb(cm)} {self._path}/{camel_case_name}")
                         else:
                             raise exceptions.rest.GoneError(
-                                f"This endpoint is deprecated. Use POST {self._path}/{camel_case_name}"
+                                f"This endpoint is deprecated. Use {_preferred_verb(cm)} {self._path}/{camel_case_name}"
                             )
                     else:
                         continue
