@@ -38,7 +38,7 @@ def migrate_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
                 register_ip=token.ip_from,
                 ip=token.ip,
                 hostname=token.hostname,
-                token=token.token,
+                token=token.token,  # type: ignore[call-arg]  # Historical Server model has the token field here.
                 stamp=token.stamp,
                 type=ACTOR_TYPE,
                 os_type=uds.core.types.os.KnownOS.UNKNOWN.os_name(),
@@ -75,7 +75,7 @@ def rollback_old_data(apps: typing.Any, schema_editor: typing.Any) -> None:
             ip_from=server.register_ip,
             ip=server.ip,
             hostname=server.hostname,
-            token=server.token,
+            token=server.token,  # type: ignore[call-arg]  # Historical Server model has the token field here.
             stamp=server.stamp,
             mac=server.data.get("mac", ""),
             pre_command=server.data.get("pre_command", ""),
