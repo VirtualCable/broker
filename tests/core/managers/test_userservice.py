@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -128,11 +127,12 @@ class TestUserserviceManager(UDSTransactionTestCase):
 
     def test_check_user_service_uuid(self) -> None:
         userservice = services_fixtures.create_db_assigned_userservices()[0]
-        userservice.token = models.user_service.create_actor_token()
-        userservice.save()
+        actor_token = models.user_service.create_actor_token()
+        userservice.token_hash = models.user_service.hash_actor_token(actor_token)
+        userservice.save(update_fields=["token_hash"])
 
         for actor_answer, expected in (
-            (userservice.token, True),  # Actor registered against a 5.0 server
+            (actor_token, True),  # Actor registered against a 5.0 server
             (userservice.uuid, True),  # Actor registered against a 4.0 server, upgraded afterwards
             ("", True),  # Unmanaged/fixed machine, no check at all
             (models.user_service.create_actor_token(), False),  # Machine replaced behind our back

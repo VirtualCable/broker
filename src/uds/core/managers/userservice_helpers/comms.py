@@ -38,6 +38,7 @@ import typing
 from uds.core import exceptions
 from uds.core import types
 from uds.core.util.security import secure_requests_session
+from uds.models.user_service import hash_actor_token
 
 if typing.TYPE_CHECKING:
     from uds.models import UserService
@@ -155,10 +156,7 @@ def check_user_service_uuid(user_service: "UserService") -> bool:
         uuid = _execute_actor_request(user_service, "uuid")
         # Actors answer with their own_token: the userservice token on 5.0 servers, the userservice
         # uuid on 4.0 ones, so actors registered against a 4.0 server keep working after an upgrade
-        if uuid and uuid not in (
-            user_service.token,
-            user_service.uuid,
-        ):  # Empty UUID means "no check this, fixed pool machine"
+        if uuid and uuid != user_service.uuid and hash_actor_token(uuid) != user_service.token_hash:
             logger.info(
                 "Machine %s do not have expected token nor uuid %s",
                 user_service.friendly_name,

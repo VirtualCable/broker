@@ -37,6 +37,7 @@ or the admin-editable global config.
 
 import typing
 
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from uds import models
@@ -85,17 +86,18 @@ def _check_saml_assertions_signed() -> tuple[types.security.SecurityCheckSeverit
 
 def _check_old_token_used_by_actor() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
     # A user service is considered "still using the legacy flow" when its token
-    # has never been rotated (AUTO_TOKEN_PREFIX_NOT_USED) AND the actor has
+    # has never been rotated (INVALID_TOKEN_PREFIX) AND the actor has
     # actually reported a version (i.e. an actor connected to it), which means it
     # is still authenticating with the old uuid-based token.
     legacy_actor_services = models.UserService.objects.filter(
-        token__startswith=consts.auth.AUTO_TOKEN_PREFIX_NOT_USED,
         uuid__in=models.Properties.objects.filter(
             owner_type="userservice",
             key="actor_version",
         )
         .exclude(value="0.0.0")
         .values("owner_id"),
+    ).filter(
+        Q(token_hash__startswith=consts.auth.INVALID_TOKEN_PREFIX)
     )
 
     affected_pools = (
@@ -167,7 +169,9 @@ def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckS
         try:
             cert = _x509.load_pem_x509_certificate(cert_pem.encode("utf-8"))
         except Exception:
-            expired.append(f"{server.hostname or server.register_username or server.token[:8]} (unparseable)")
+            expired.append(
+                f"{server.hostname or server.register_username or server.properties.get('token_hint', server.uuid[:8])} (unparseable)"
+            )
             continue
         try:
             expires_at = cert.not_valid_after_utc  # type: ignore[attr-defined]
@@ -175,7 +179,7 @@ def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckS
             expires_at = cert.not_valid_after
             if expires_at.tzinfo is None:
                 expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
-        label = server.hostname or server.register_username or server.token[:8]
+        label = server.hostname or server.register_username or server.properties.get("token_hint", server.uuid[:8])
         if expires_at < now:
             expired.append(f"{label} (expired {expires_at.date()})")
         elif expires_at < horizon:

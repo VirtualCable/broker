@@ -49,7 +49,7 @@ class ServerTestTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "servers/test",
             data={
-                "token": server.token,
+                "token": servers_fixtures.raw_token(server),
             },
         )
         self.assertEqual(response.status_code, 200)

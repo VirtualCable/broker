@@ -95,7 +95,7 @@ class ServerEventsPingTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "ping",
                 "stats": stats.as_dict(),
             },
@@ -124,7 +124,7 @@ class ServerEventsPingTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": self.server.token,
+                "token": servers_fixtures.raw_token(self.server),
                 "type": "ping",
             },
         )

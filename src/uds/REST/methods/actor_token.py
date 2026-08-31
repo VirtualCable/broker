@@ -45,6 +45,7 @@ from uds.core.types import permissions
 from uds.core.util import ensure
 from uds.core.util import ui as ui_utils
 from uds.core.util.log import LogLevel
+from uds.core.util.model import process_uuid
 from uds.models import Server
 from uds.REST.model import ModelHandler
 
@@ -98,7 +99,7 @@ class ActorTokens(ModelHandler[ActorTokenItem]):
         else:
             log_level = LogLevel(item.log_level).name
         return ActorTokenItem(
-            id=item.token,
+            id=item.uuid,
             name=str(_("Token isued by {} from {}")).format(item.register_username, item.hostname or item.ip),
             stamp=item.stamp,
             username=item.register_username,
@@ -126,7 +127,7 @@ class ActorTokens(ModelHandler[ActorTokenItem]):
         )  # Must have write permissions to delete
 
         try:
-            self.MODEL.objects.get(token=self._args[0]).delete()
+            self.MODEL.objects.get(uuid=process_uuid(self._args[0])).delete()
         except self.MODEL.DoesNotExist:
             raise NotFound("Element do not exists") from None
 

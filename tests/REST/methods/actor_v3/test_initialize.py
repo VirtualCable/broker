@@ -48,7 +48,7 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
     def invoke_success(
         self,
-        type_: typing.Literal["managed"] | typing.Literal["unmanaged"],
+        type_: typing.Literal["managed", "unmanaged"],
         token: str,
         *,
         mac: str | None = None,
@@ -71,7 +71,7 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
     def invoke_failure(
         self,
-        type_: typing.Literal["managed"] | typing.Literal["unmanaged"],
+        type_: typing.Literal["managed", "unmanaged"],
         token: str,
         *,
         mac: str | None = None,
@@ -114,10 +114,10 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
         user_service.refresh_from_db()
 
-        self.assertEqual(result["token"], user_service.token)
+        self.assertEqual(models.user_service.hash_actor_token(result["token"]), user_service.token_hash)
         self.assertEqual(result["own_token"], result["token"])
-        self.assertTrue(user_service.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
-        self.assertFalse(user_service.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertTrue(result["token"].startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(user_service.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         # Ensure unique_id detected is ours
         self.assertEqual(result["unique_id"], unique_id)
@@ -167,10 +167,10 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
 
         user_service.refresh_from_db()
 
-        self.assertEqual(result["token"], user_service.token)
+        self.assertEqual(models.user_service.hash_actor_token(result["token"]), user_service.token_hash)
         self.assertEqual(result["own_token"], result["token"])
-        self.assertTrue(user_service.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
-        self.assertFalse(user_service.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertTrue(result["token"].startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(user_service.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         # Ensure unique_id detected is ours
         self.assertEqual(result["unique_id"], unique_id)
@@ -256,9 +256,9 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         self.assertEqual(result["own_token"], result["token"])
 
         userservice.refresh_from_db()
-        self.assertEqual(result["token"], userservice.token)
-        self.assertTrue(userservice.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
-        self.assertFalse(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertEqual(models.user_service.hash_actor_token(result["token"]), userservice.token_hash)
+        self.assertTrue(result["token"].startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(userservice.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         # Now, invoke with alias, result should have same master_token but rotated token
         result2 = success(
@@ -331,9 +331,9 @@ class ActorInitializeTest(rest.test.RESTActorTestCase):
         self.assertEqual(result["own_token"], result["token"])
 
         userservice.refresh_from_db()
-        self.assertEqual(result["token"], userservice.token)
-        self.assertTrue(userservice.token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
-        self.assertFalse(userservice.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertEqual(models.user_service.hash_actor_token(result["token"]), userservice.token_hash)
+        self.assertTrue(result["token"].startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(userservice.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         # Now, invoke with alias, result should have same master_token but rotated token
         result2 = success(

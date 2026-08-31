@@ -149,6 +149,8 @@ class AuthenticationResolver:
     def _get_server(token: str, server_type: types.servers.ServerType) -> Server | None:
         """Load the validated server for principal metadata."""
         try:
-            return typing.cast(typing.Any, Server).objects.get(token=token, type=server_type.value)
+            return typing.cast(typing.Any, Server).objects.get(
+                token_hash=Server.hash_token(token), type=server_type.value
+            )
         except typing.cast(typing.Any, Server).DoesNotExist:
             return None

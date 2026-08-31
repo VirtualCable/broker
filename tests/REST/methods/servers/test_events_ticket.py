@@ -54,7 +54,7 @@ class ServerEventsTicketTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "/servers/event",
             data={
-                "token": server.token,
+                "token": servers_fixtures.raw_token(server),
                 "type": "ticket",
                 "ticket": ticket_id,
             },

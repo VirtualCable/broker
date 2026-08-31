@@ -59,7 +59,7 @@ class TunnelTicket(Handler):
 
     The tunnel-server authenticates via the ``Authorization: Bearer sk-<token>``
     header.  ``Handler.__init__`` captures it into ``self._sk_token`` (already
-    stripped of the ``sk-`` prefix and validated against ``Server.token``).
+    stripped of the ``sk-`` prefix and validated against ``Server.token_hash``).
     The body is parsed as a ``TunnelTicketRequest`` whose ``command`` selects
     the action (``start`` or ``stop``) and whose ``kem_kyber_key`` carries the
     post-quantum KEM public key used to encrypt the response.

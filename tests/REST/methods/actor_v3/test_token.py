@@ -30,7 +30,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 
+from uds import models
 from uds.core import consts
+from uds.models.user_service import create_actor_token
 
 from ....utils import rest
 
@@ -44,31 +46,30 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
 
     def test_default_token_has_prefix(self) -> None:
         """
-        Test that default token generator produces a 48-char token with AUTO_TOKEN_PREFIX_NOT_USED
+        Test that the default token is an explicit invalid marker.
         """
         user_service = self.user_service_managed
 
-        self.assertEqual(len(user_service.token), consts.ticket.TICKET_LENGTH)
-        self.assertTrue(user_service.token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertTrue(user_service.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
     def test_actor_token_has_prefix(self) -> None:
         """
         Test that actor token generator produces a 48-char token with USER_SERVICE_TOKEN_PREFIX
         """
-        from uds.models.user_service import create_actor_token
-
         token = create_actor_token()
 
         self.assertEqual(len(token), consts.ticket.TICKET_LENGTH)
         self.assertTrue(token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
-        self.assertFalse(token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertFalse(token.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
     def test_dual_lookup_by_token(self) -> None:
         """
         Test that actor_v3 can lookup userservice by token
         """
         userservice = self.user_service_managed
-        actor_token = userservice.token
+        actor_token = create_actor_token()
+        userservice.token_hash = models.user_service.hash_actor_token(actor_token)
+        userservice.save(update_fields=["token_hash"])
 
         response = self.client.post(
             "/uds/rest/actor/v3/version",
@@ -122,9 +123,9 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
         Test that initialize rotates the token and returns the new one
         """
         user_service = self.user_service_managed
-        old_token = user_service.token
+        old_token = user_service.token_hash
 
-        self.assertTrue(old_token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertTrue(old_token.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
         actor_token = self.login_and_register()
         unique_id = user_service.get_unique_id()
@@ -145,20 +146,20 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
         result = data["result"]
 
         user_service.refresh_from_db()
-        new_token = user_service.token
+        new_token = user_service.token_hash
 
         self.assertNotEqual(old_token, new_token)
-        self.assertEqual(result["token"], new_token)
-        self.assertEqual(result["own_token"], new_token)
-        self.assertTrue(new_token.startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
-        self.assertFalse(new_token.startswith(consts.auth.AUTO_TOKEN_PREFIX_NOT_USED))
+        self.assertEqual(models.user_service.hash_actor_token(result["token"]), new_token)
+        self.assertEqual(result["own_token"], result["token"])
+        self.assertTrue(result["token"].startswith(consts.auth.USER_SERVICE_TOKEN_PREFIX))
+        self.assertFalse(new_token.startswith(consts.auth.INVALID_TOKEN_PREFIX))
 
     def test_old_token_invalid_after_rotation(self) -> None:
         """
         Test that after initialize, the old token no longer works
         """
         user_service = self.user_service_managed
-        old_token = user_service.token
+        old_token = user_service.token_hash
 
         actor_token = self.login_and_register()
         unique_id = user_service.get_unique_id()

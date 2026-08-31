@@ -63,7 +63,7 @@ class ServerEventsLogTest(rest.test.RESTTestCase):
             response = self.client.rest_post(
                 "/servers/event",
                 data={
-                    "token": server.token,
+                    "token": servers_fixtures.raw_token(server),
                     "type": "log",
                     "level": "info",
                     "message": "test message",
@@ -77,7 +77,7 @@ class ServerEventsLogTest(rest.test.RESTTestCase):
             response = self.client.rest_post(
                 "servers/event",
                 data={
-                    "token": server.token,
+                    "token": servers_fixtures.raw_token(server),
                     "userservice_uuid": userService.uuid,
                     "type": "log",
                     "level": "info",
@@ -93,7 +93,7 @@ class ServerEventsLogTest(rest.test.RESTTestCase):
     def test_event_log_fail(self) -> None:
         server = servers_fixtures.create_server()
         data = {
-            "token": server.token,
+            "token": servers_fixtures.raw_token(server),
             "type": "log",
             "level": "info",
             "message": "test",
