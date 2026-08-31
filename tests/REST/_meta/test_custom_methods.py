@@ -97,18 +97,18 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         self.assertFalse(cm.needs_parent)
 
     def test_custom_method_method_enum_members(self) -> None:
-        """CustomMethodMethod exposes only the four declared HTTP verbs.
+        """CustomMethodMethod exposes only the declared HTTP verbs.
 
         Adding a new verb (e.g. PATCH) is an explicit conscious decision.
         """
-        expected = {"GET", "POST", "PUT", "QUERY"}
+        expected = {"GET", "POST", "PUT", "DELETE", "QUERY"}
         actual = {member.name for member in types.rest.CustomMethodMethod}
         self.assertEqual(actual, expected)
 
     # ------------------------------------------------------------------
     # T2 - audit: all unsafe custom methods use POST, safe ones use GET
     # ------------------------------------------------------------------
-    # Known POST custom methods (unsafe / state-mutating).
+    # Known state-mutating custom methods grouped by HTTP verb.
     # If you add a new unsafe custom method, add it here.
     # The key includes the HTTP method so a single ``name`` may appear
     # twice when handlers expose both a GET (read) and a POST (write)
@@ -133,6 +133,12 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             ("Users", "clean_related", "POST"),
             ("Users", "add_to_group", "POST"),
             ("Users", "enable_client_logging", "POST"),
+            ("Users", "token", "POST"),
+        }
+    )
+    _DELETE_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str, str]]] = frozenset(
+        {
+            ("Users", "token", "DELETE"),
         }
     )
 
@@ -155,12 +161,15 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
                 if key in self._POST_CUSTOM_METHODS:
                     if cm.method != types.rest.CustomMethodMethod.POST:
                         offenders.append(f"{cls_name}.{cm.name}: expected POST, got {cm.method!r}")
+                elif key in self._DELETE_CUSTOM_METHODS:
+                    if cm.method != types.rest.CustomMethodMethod.DELETE:
+                        offenders.append(f"{cls_name}.{cm.name}: expected DELETE, got {cm.method!r}")
                 else:
-                    # Not in POST set → must be GET
+                    # Not in unsafe set → must be GET
                     if cm.method != types.rest.CustomMethodMethod.GET:
                         offenders.append(
                             f"{cls_name}.{cm.name}: unexpected method {cm.method!r}; "
-                            "if unsafe, add to _POST_CUSTOM_METHODS"
+                            "if unsafe, add to _POST_CUSTOM_METHODS or _DELETE_CUSTOM_METHODS"
                         )
 
         self.assertEqual(
@@ -208,9 +217,12 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
 
         def collect(node: "types.rest.HandlerNode") -> "list[tuple[str, type]]":
             res: list[tuple[str, type]] = []
-            if node.handler and issubclass(node.handler, ModelHandler):
-                if getattr(node.handler, "CUSTOM_METHODS", None):
-                    res.append((node.full_path(), node.handler))
+            if (
+                node.handler
+                and issubclass(node.handler, ModelHandler)
+                and getattr(node.handler, "CUSTOM_METHODS", None)
+            ):
+                res.append((node.full_path(), node.handler))
             for child in node.children.values():
                 res.extend(collect(child))
             return res

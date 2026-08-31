@@ -57,6 +57,7 @@ from uds.models import Group
 from uds.models import ServicePool
 from uds.models import User
 from uds.models import UserService
+from uds.models.user import api_token_hint, create_api_token, hash_api_token
 from uds.REST.model import DetailHandler
 
 from .user_services import AssignedUserService
@@ -131,6 +132,18 @@ class Users(DetailHandler[UserItem]):
             method=types.rest.CustomMethodMethod.POST,
             description="Enable or disable client-side logging for this user (toggles on each invocation)",
         ),
+        types.rest.ModelCustomMethod(
+            "token",
+            method=types.rest.CustomMethodMethod.POST,
+            description="Issue a new REST/MCP API token for this user, returning the raw value only once",
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+        ),
+        types.rest.ModelCustomMethod(
+            "token",
+            method=types.rest.CustomMethodMethod.DELETE,
+            description="Revoke this user's REST/MCP API token if one is active",
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+        ),
     ]
 
     @staticmethod
@@ -170,8 +183,7 @@ class Users(DetailHandler[UserItem]):
 
         # Extract authenticator
         return [
-            self.as_user_item(i)
-            for i in self.odata_filter(parent.users.prefetch_related("groups", "groups__manager"))
+            self.as_user_item(i) for i in self.odata_filter(parent.users.prefetch_related("groups", "groups__manager"))
         ]
 
     @typing.override
@@ -331,9 +343,7 @@ class Users(DetailHandler[UserItem]):
                     "id": i.uuid,
                     "name": i.name,
                     "thumb": i.image.thumb64 if i.image is not None else consts.images.DEFAULT_THUMB_BASE64,
-                    "user_services_count": i.userServices.exclude(
-                        state__in=(State.REMOVED, State.ERROR)
-                    ).count(),
+                    "user_services_count": i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
                     "state": _("With errors") if i.is_restrained() else _("Ok"),
                 }
             )
@@ -386,6 +396,46 @@ class Users(DetailHandler[UserItem]):
             props["client_logging"] = sql_stamp_seconds()
 
         return {"status": "ok"}
+
+    def _manage_token(self, parent: "Model", item: str) -> dict[str, str | None]:
+        """Shared dispatcher for the single ``token`` custom method (POST/DELETE)."""
+        parent = ensure.is_instance(parent, Authenticator)
+        try:
+            user = parent.users.get(uuid=process_uuid(item))
+        except User.DoesNotExist:
+            raise exceptions.rest.NotFound(_("User not found")) from None
+
+        if self._operation == "post":
+            if user.token_hash is not None:
+                raise exceptions.rest.RequestError(_("User already has an API token"))
+            raw_token = create_api_token()
+            user.token_hash = hash_api_token(raw_token)
+            user.save(update_fields=["token_hash"])
+            hint = api_token_hint(raw_token)
+            with user.properties as props:
+                props["token_hint"] = hint
+            user.log(
+                f"API token issued by {self._user.pretty_name}",
+                types.log.LogLevel.INFO,
+                types.log.LogSource.REST,
+            )
+            return {"user_uuid": user.uuid, "token": raw_token, "token_hint": hint}
+
+        # DELETE
+        user.token_hash = None
+        user.save(update_fields=["token_hash"])
+        with user.properties as props:
+            props.pop("token_hint", None)
+        user.log(
+            f"API token revoked by {self._user.pretty_name}",
+            types.log.LogLevel.INFO,
+            types.log.LogSource.REST,
+        )
+        return {"user_uuid": user.uuid, "token": None, "token_hint": None}
+
+    def token(self, parent: "Model", item: str) -> dict[str, str | None]:
+        """Create (POST) or revoke (DELETE) this user's REST/MCP API token."""
+        return self._manage_token(parent, item)
 
 
 @dataclasses.dataclass
@@ -457,9 +507,7 @@ class Groups(DetailHandler[GroupItem]):
         ).build()
 
     @typing.override
-    def enum_types(
-        self, parent: "Model", for_type: str | None
-    ) -> collections.abc.Iterable[types.rest.TypeInfo]:
+    def enum_types(self, parent: "Model", for_type: str | None) -> collections.abc.Iterable[types.rest.TypeInfo]:
         ensure.is_instance(parent, Authenticator)  # Just ensures type
         types_dict: dict[str, dict[str, str]] = {
             "group": {"name": _("Group"), "description": _("UDS Group")},
@@ -532,9 +580,7 @@ class Groups(DetailHandler[GroupItem]):
 
             if is_meta:
                 # Do not allow to add meta groups to meta groups
-                group.groups.set(
-                    i for i in parent.groups.filter(uuid__in=self._params["groups"]) if i.is_meta is False
-                )
+                group.groups.set(i for i in parent.groups.filter(uuid__in=self._params["groups"]) if i.is_meta is False)
 
             if pools:
                 # Update pools
@@ -578,9 +624,7 @@ class Groups(DetailHandler[GroupItem]):
                     "id": i.uuid,
                     "name": i.name,
                     "thumb": i.image.thumb64 if i.image is not None else consts.images.DEFAULT_THUMB_BASE64,
-                    "user_services_count": i.userServices.exclude(
-                        state__in=(State.REMOVED, State.ERROR)
-                    ).count(),
+                    "user_services_count": i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
                     "state": _("With errors") if i.is_restrained() else _("Ok"),
                 }
             )

@@ -12,6 +12,7 @@ from uds.core.auths.auth import root_user
 from uds.core.exceptions.rest import AccessDenied
 from uds.core.util.config import GlobalConfig
 from uds.models import Authenticator, Server, User
+from uds.models.user import hash_api_token
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
@@ -41,7 +42,7 @@ class AuthenticationResolver:
         server_type: types.servers.ServerType | None,
     ) -> AuthenticationResult:
         """Resolve request credentials for a handler's current requirements."""
-        auth_token, secret_token = AuthenticationResolver._extract_bearer(request)
+        auth_token, secret_token, user_api_token = AuthenticationResolver._extract_bearer(request)
         headers = typing.cast(collections.abc.Mapping[str, str], request.headers)
         legacy_token = headers.get(consts.auth.AUTH_TOKEN_HEADER, "")
 
@@ -51,6 +52,7 @@ class AuthenticationResolver:
                 auth_token,
                 secret_token,
                 legacy_token,
+                user_api_token,
             )
 
         principal = types.auth.AuthenticatedPrincipal.anonymous()
@@ -67,21 +69,24 @@ class AuthenticationResolver:
         return AuthenticationResult(principal=principal, secret_token=secret_token)
 
     @staticmethod
-    def _extract_bearer(request: "ExtendedHttpRequest") -> tuple[str | None, str | None]:
-        """Extract bare session and registered-server credentials."""
+    def _extract_bearer(request: "ExtendedHttpRequest") -> tuple[str | None, str | None, str | None]:
+        """Extract session, registered-server, and user API credentials."""
         auth_token: str | None = None
         secret_token: str | None = None
+        user_api_token: str | None = None
         headers = typing.cast(collections.abc.Mapping[str, str], request.headers)
         auth_header = headers.get(consts.auth.AUTHORIZATION_HEADER, "")
         if auth_header.startswith("Bearer "):
             token = auth_header[len("Bearer ") :]
             if token.startswith(consts.auth.SECRET_KEY_PREFIX):
                 secret_token = token.removeprefix(consts.auth.SECRET_KEY_PREFIX)
+            elif token.startswith(consts.auth.USER_API_TOKEN_PREFIX):
+                user_api_token = token
             elif token.startswith(consts.auth.SESSION_KEY_PREFIX):
                 auth_token = token.removeprefix(consts.auth.SESSION_KEY_PREFIX)
             else:
                 auth_token = token
-        return auth_token, secret_token
+        return auth_token, secret_token, user_api_token
 
     @staticmethod
     def _resolve_user_session(
@@ -89,8 +94,21 @@ class AuthenticationResolver:
         auth_token: str | None,
         secret_token: str | None,
         legacy_token: str,
+        user_api_token: str | None,
     ) -> AuthenticationResult:
         """Resolve the session path used by authenticated handlers."""
+        if user_api_token is not None:
+            try:
+                user = User.objects.select_related("manager").get(token_hash=hash_api_token(user_api_token))
+            except User.DoesNotExist:
+                raise AccessDenied() from None
+            if not user.can_access(role):
+                raise AccessDenied()
+            return AuthenticationResult(
+                principal=types.auth.AuthenticatedPrincipal.user_api_token(user),
+                auth_token=user_api_token,
+            )
+
         legacy_session = False
         auth_token = auth_token or legacy_token.removeprefix(consts.auth.SESSION_KEY_PREFIX)
         legacy_session = bool(auth_token and legacy_token and not secret_token)
