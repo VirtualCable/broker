@@ -8,7 +8,7 @@ import uds.core.types.servers
 import uds.core.types.os
 import uds.core.util.model
 
-from .fixers import properties_v4, transports_v4, providers_v4
+from uds.migrations.fixers import properties_v4, transports_v4, providers_v4
 
 ACTOR_TYPE: typing.Final[int] = uds.core.types.servers.ServerType.ACTOR.value
 
