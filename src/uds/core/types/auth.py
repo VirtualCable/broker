@@ -183,6 +183,15 @@ class AuthenticatedPrincipal:
         )
 
     @staticmethod
+    def user_api_token(user: "User") -> "AuthenticatedPrincipal":
+        """Return a principal for a user authenticated via an API token."""
+        return AuthenticatedPrincipal(
+            principal_kind=PrincipalKind.USER,
+            credential_kind=CredentialKind.USER_API_TOKEN,
+            user=user,
+        )
+
+    @staticmethod
     def registered_server(server: "Server", credential_id: str | None = None) -> "AuthenticatedPrincipal":
         """Return a principal for a registered M2M server credential."""
         return AuthenticatedPrincipal(

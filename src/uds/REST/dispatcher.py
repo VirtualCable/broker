@@ -226,8 +226,21 @@ class Dispatcher(View):
 
             # If response is an HttpResponse object, return it directly
             if not isinstance(response, http.HttpResponse):
-                # If it is a generator, produce an streamed incremental response
-                if isinstance(response, collections.abc.Generator):
+                # Async iterators already contain their transport framing (for
+                # example MCP JSON-RPC events), so pass them through unchanged.
+                # Django consumes them asynchronously under ASGI. Legacy
+                # synchronous generators keep their processor behavior.
+                if isinstance(response, collections.abc.AsyncIterator):
+                    response = typing.cast(
+                        "http.HttpResponse",
+                        http.StreamingHttpResponse(
+                            typing.cast(collections.abc.AsyncIterator[bytes], response),
+                            content_type="application/json",
+                        ),
+                    )
+                # If it is a synchronous generator, produce a streamed
+                # incremental response.
+                elif isinstance(response, collections.abc.Generator):
                     response = typing.cast(
                         "http.HttpResponse",
                         http.StreamingHttpResponse(

@@ -37,6 +37,7 @@ import typing
 from django.utils import timezone
 
 from uds import models
+from uds.models.user import hash_api_token
 
 from ....fixtures import rest as rest_fixtures
 from ....utils import rest
@@ -51,6 +52,7 @@ class UsersTest(rest.test.RESTActorTestCase):
     Test users group rest api
     """
 
+    @typing.override
     def setUp(self) -> None:
         timezone.activate(datetime.timezone.utc)
         super().setUp()
@@ -73,16 +75,16 @@ class UsersTest(rest.test.RESTActorTestCase):
             self.assertTrue(rest.assertions.assert_user_is(self.auth.users.get(name=user["name"]), user))
 
     def test_users_overview_groups(self) -> None:
-        url = f'authenticators/{self.auth.uuid}/users'
+        url = f"authenticators/{self.auth.uuid}/users"
 
-        response = self.client.rest_get(f'{url}/overview')
+        response = self.client.rest_get(f"{url}/overview")
         self.assertEqual(response.status_code, 200)
         for user in response.json():
-            db_user = self.auth.users.get(name=user['name'])
+            db_user = self.auth.users.get(name=user["name"])
             self.assertEqual(
-                set(user['groups']),
+                set(user["groups"]),
                 {g.uuid for g in db_user.get_groups()},
-                f'Groups of user {user["name"]} do not match',
+                f"Groups of user {user['name']} do not match",
             )
 
     def test_users_tableinfo(self) -> None:
@@ -104,11 +106,8 @@ class UsersTest(rest.test.RESTActorTestCase):
             functools.reduce(
                 lambda x, y: x and y,  # pyright: ignore
                 typing.cast(
-                    typing.Iterable[bool],
-                    map(
-                        lambda f: next(iter(f.keys())) in MUST_HAVE_FIELDS,
-                        fields,
-                    ),
+                    collections.abc.Iterable[bool],
+                    (next(iter(field.keys())) in MUST_HAVE_FIELDS for field in fields),
                 ),
             )
         )
@@ -128,6 +127,47 @@ class UsersTest(rest.test.RESTActorTestCase):
         # invalid user
         response = self.client.rest_get(f"{url}/invalid")
         self.assertEqual(response.status_code, 400)
+
+    def test_user_api_token_lifecycle(self) -> None:
+        """Admins can create and revoke user API tokens via the same ``token`` endpoint."""
+        user = self.users[0]
+        token_url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/token"
+
+        created = self.client.rest_post(token_url)
+        self.assertEqual(created.status_code, 200, created.content)
+        created_data = created.json()
+        self.assertTrue(created_data["token"].startswith("uat-"))
+        self.assertEqual(created_data["token_hint"], user.properties["token_hint"])
+        self.assertNotIn("token_hash", created_data)
+        user.refresh_from_db()
+        self.assertEqual(user.token_hash, hash_api_token(created_data["token"]))
+
+        self.client.uds_headers["Authorization"] = f"Bearer {created_data['token']}"
+        authenticated = self.client.rest_get("providers/overview")
+        self.assertEqual(authenticated.status_code, 200, authenticated.content)
+
+        listed = self.client.rest_get(f"authenticators/{self.auth.uuid}/user_tokens")
+        self.assertEqual(listed.status_code, 200, listed.content)
+        self.assertEqual(len(listed.json()), 1)
+        self.assertEqual(listed.json()[0]["user_uuid"], user.uuid)
+        self.assertEqual(listed.json()[0]["username"], user.name)
+        self.assertEqual(listed.json()[0]["authenticator_uuid"], self.auth.uuid)
+        self.assertEqual(listed.json()[0]["token_hint"], created_data["token_hint"])
+        self.assertNotIn("token", listed.json()[0])
+        self.assertNotIn("token_hash", listed.json()[0])
+
+        replaced = self.client.rest_post(token_url)
+        self.assertEqual(replaced.status_code, 400, replaced.content)
+
+        deleted = self.client.rest_delete(token_url)
+        self.assertEqual(deleted.status_code, 200, deleted.content)
+        self.assertIsNone(deleted.json()["token"])
+        user.refresh_from_db()
+        self.assertIsNone(user.token_hash)
+        self.assertNotIn("token_hint", user.properties)
+
+        revoked_access = self.client.rest_get("providers/overview")
+        self.assertEqual(revoked_access.status_code, 403, revoked_access.content)
 
     def test_users_log(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users/"
