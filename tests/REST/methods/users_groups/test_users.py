@@ -171,8 +171,8 @@ class UsersTest(rest.test.RESTActorTestCase):
         revoked_access = self.client.rest_get("providers/overview")
         self.assertEqual(revoked_access.status_code, 403, revoked_access.content)
 
-    def test_user_token_hint_skips_the_prefix(self) -> None:
-        """The prefix is the same on every token, so the hint must show the random part."""
+    def test_user_token_hint_keeps_the_prefix_and_four_real_characters(self) -> None:
+        """The prefix identifies the token as a user one, but must not eat the four cut characters."""
         user = self.users[0]
         token_url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/token"
 
@@ -180,8 +180,8 @@ class UsersTest(rest.test.RESTActorTestCase):
         self.assertEqual(created.status_code, 200, created.content)
         raw_token, hint = created.json()["token"], created.json()["token_hint"]
 
-        self.assertFalse(hint.startswith("uat-"))
-        self.assertEqual(hint, f"{raw_token[4:8]}...{raw_token[-4:]}")
+        self.assertTrue(hint.startswith("uat-"))
+        self.assertEqual(hint, f"uat-{raw_token[4:8]}...{raw_token[-4:]}")
 
     def test_user_token_only_for_admins(self) -> None:
         """Staff never issues nor revokes tokens, not even holding every permission."""
