@@ -37,6 +37,8 @@ import typing
 from django.utils import timezone
 
 from uds import models
+from uds.core import types
+from uds.core.util import objtype
 from uds.models.user import hash_api_token
 
 from ....fixtures import rest as rest_fixtures
@@ -44,7 +46,7 @@ from ....utils import rest
 
 logger = logging.getLogger(__name__)
 
-MUST_HAVE_FIELDS: typing.Final = {"name", "role", "real_name", "comments", "state", "last_access"}
+MUST_HAVE_FIELDS: typing.Final = {"name", "role", "real_name", "comments", "state", "last_access", "token"}
 
 
 class UsersTest(rest.test.RESTActorTestCase):
@@ -168,6 +170,82 @@ class UsersTest(rest.test.RESTActorTestCase):
 
         revoked_access = self.client.rest_get("providers/overview")
         self.assertEqual(revoked_access.status_code, 403, revoked_access.content)
+
+    def test_user_token_hint_keeps_the_prefix_and_four_real_characters(self) -> None:
+        """The prefix identifies the token as a user one, but must not eat the four cut characters."""
+        user = self.users[0]
+        token_url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/token"
+
+        created = self.client.rest_post(token_url)
+        self.assertEqual(created.status_code, 200, created.content)
+        raw_token, hint = created.json()["token"], created.json()["token_hint"]
+
+        self.assertTrue(hint.startswith("uat-"))
+        self.assertEqual(hint, f"uat-{raw_token[4:8]}...{raw_token[-4:]}")
+
+    def test_user_token_only_for_admins(self) -> None:
+        """Staff never issues nor revokes tokens, not even holding every permission."""
+        user = self.users[0]
+        token_url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/token"
+
+        staff = self.staffs[0]
+        # The endpoint checks permissions on the type (root=True), so an object permission would not reach it
+        models.Permissions.add_permission(
+            user=staff,
+            object_type=objtype.ObjectType.from_model(self.auth),
+            permission=types.permissions.PermissionType.ALL,
+        )
+        self.login(user=staff)
+        self.assertEqual(self.client.rest_get(f"authenticators/{self.auth.uuid}/users/overview").status_code, 200)
+        self.assertEqual(self.client.rest_post(token_url).status_code, 403)
+        self.assertEqual(self.client.rest_delete(token_url).status_code, 403)
+        user.refresh_from_db()
+        self.assertIsNone(user.token_hash)
+
+        self.login(as_admin=True)
+        self.assertEqual(self.client.rest_post(token_url).status_code, 200)
+
+    def test_users_token_column(self) -> None:
+        """The list shows the hint of whoever has a token, and never the hash."""
+        url = f"authenticators/{self.auth.uuid}/users"
+        with_token, without_token = self.users[0], self.users[1]
+
+        created = self.client.rest_post(f"{url}/{with_token.uuid}/token")
+        self.assertEqual(created.status_code, 200, created.content)
+        hint = created.json()["token_hint"]
+
+        listed = {i["name"]: i for i in self.client.rest_get(f"{url}/overview").json()}
+        self.assertEqual(listed[with_token.name]["token"], hint)
+        self.assertEqual(listed[without_token.name]["token"], "")
+        self.assertNotIn("token_hash", listed[with_token.name])
+
+        single = self.client.rest_get(f"{url}/{with_token.uuid}").json()
+        self.assertEqual(single["token"], hint)
+
+    def test_users_token_column_is_sortable(self) -> None:
+        """The hint lives in a property, so sorting by it needs the annotated subquery."""
+        url = f"authenticators/{self.auth.uuid}/users"
+        first, second = self.users[0], self.users[1]
+        hints: dict[str, str] = {}
+        for user in (first, second):
+            created = self.client.rest_post(f"{url}/{user.uuid}/token")
+            self.assertEqual(created.status_code, 200, created.content)
+            hints[user.name] = created.json()["token_hint"]
+
+        listed = self.client.rest_get(f"{url}/overview?$orderby=token")
+        listed_descending = self.client.rest_get(f"{url}/overview?$orderby=-token")
+        self.assertEqual(listed.status_code, 200, listed.content)
+        self.assertEqual(listed_descending.status_code, 200, listed_descending.content)
+
+        ascending = [i["name"] for i in listed.json() if i["token"]]
+        descending = [i["name"] for i in listed_descending.json() if i["token"]]
+
+        self.assertEqual(ascending, sorted(hints, key=lambda name: hints[name]))
+        self.assertEqual(descending, list(reversed(ascending)))
+
+        # Whoever has no token must stay together at one end, not interleaved
+        full_ascending = [i["token"] for i in listed.json()]
+        self.assertEqual(full_ascending, sorted(full_ascending, key=lambda hint: (hint != "", hint)))
 
     def test_users_log(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users/"
