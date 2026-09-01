@@ -25,8 +25,12 @@ that future iterations can plug the SDK without breaking clients.
 import logging
 import typing
 
+import mcp.types
+from asgiref.sync import async_to_sync
+
 from uds.core import consts
 from uds.REST import Handler
+from uds.mcp import MCPServerCore, build_catalog
 
 
 logger = logging.getLogger(__name__)
@@ -63,7 +67,7 @@ class MCP(Handler):
     # path at the REST root, which is what we want for a global MCP
     # endpoint that does not belong to any specific collection.
 
-    ROLE: typing.ClassVar[consts.Role] = consts.Role.ANONYMOUS
+    ROLE: typing.ClassVar[consts.Role] = consts.Role.USER
 
     def post(self) -> _JsonObject:
         """Process a single JSON-RPC request and return the JSON-RPC response.
@@ -89,6 +93,15 @@ class MCP(Handler):
         if method == "ping":
             return {"jsonrpc": "2.0", "id": request_id, "result": {}}
 
+        if method == "resources/list":
+            result = async_to_sync(self._mcp_server().list_resources)(None, None)
+            return self._model_response(request_id, result)
+
+        if method == "resources/read":
+            read_params = mcp.types.ReadResourceRequestParams.model_validate(params.get("params") or {})
+            result = async_to_sync(self._mcp_server().read_resource)(None, read_params)
+            return self._model_response(request_id, result)
+
         return self._jsonrpc_error(
             request_id,
             -32601,
@@ -98,6 +111,15 @@ class MCP(Handler):
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    def _mcp_server(self) -> MCPServerCore:
+        """Build the catalog-backed MCP core for the current request."""
+        return MCPServerCore(build_catalog(), request=self._request)
+
+    @staticmethod
+    def _model_response(request_id: typing.Any, result: typing.Any) -> _JsonObject:
+        """Convert an MCP SDK result model into a JSON-RPC response."""
+        return {"jsonrpc": "2.0", "id": request_id, "result": result.model_dump(by_alias=True, exclude_none=True)}
+
     @staticmethod
     def _initialize(
         message: _JsonObject,

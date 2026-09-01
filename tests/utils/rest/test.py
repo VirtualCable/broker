@@ -28,10 +28,13 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import typing
+
 from uds import models
 from uds.core import consts
 from uds.core import types
 from uds.core.util import log
+from uds.models.user import api_token_hint, create_api_token, hash_api_token
 
 from ...fixtures import authenticators as authenticators_fixtures
 from ...fixtures import services as services_fixtures
@@ -63,6 +66,7 @@ class RESTTestCase(test.UDSTransactionTestCase):
 
     auth_token: str = ""
 
+    @typing.override
     def setUp(self) -> None:
         # Set up data for REST Test cases
         # First, the authenticator related
@@ -134,6 +138,20 @@ class RESTTestCase(test.UDSTransactionTestCase):
         # Insert token into headers
         self.client.add_header(consts.auth.AUTH_TOKEN_HEADER, response["token"])
         self.auth_token = response["token"]
+
+    def login_with_api_token(self, user: models.User | None = None, as_admin: bool = True) -> str:
+        """Authenticate the test client through a persisted user API token."""
+        user = user or (self.admins[0] if as_admin else self.staffs[0])
+        raw_token = create_api_token()
+        user.token_hash = hash_api_token(raw_token)
+        user.save(update_fields=["token_hash"])
+        with user.properties as props:
+            props["token_hint"] = api_token_hint(raw_token)
+
+        self.client.uds_headers.pop(consts.auth.AUTH_TOKEN_HEADER, None)
+        self.client.add_header(consts.auth.AUTHORIZATION_HEADER, f"Bearer {raw_token}")
+        self.auth_token = raw_token
+        return raw_token
 
 
 class RESTActorTestCase(RESTTestCase):

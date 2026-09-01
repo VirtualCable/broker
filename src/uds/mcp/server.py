@@ -2,19 +2,23 @@
 
 import json
 import typing
+import collections.abc
 
 import mcp.types
 from mcp.server.lowlevel import Server
 
 from .catalog import Catalog
 from .redaction import redact
+from .rest_proxy import RestProxy
 
 
 class MCPServerCore:
     """Expose catalog entries through the low-level MCP server API."""
 
-    def __init__(self, catalog: Catalog) -> None:
+    def __init__(self, catalog: Catalog, request: typing.Any = None, proxy: RestProxy | None = None) -> None:
         self.catalog = catalog
+        self.request = request
+        self.proxy = proxy or RestProxy()
         self.server = Server(
             "UDS",
             on_list_tools=self.list_tools,
@@ -91,10 +95,18 @@ class MCPServerCore:
     ) -> mcp.types.ReadResourceResult:
         """Read a catalog resource and redact its contents."""
         resource = self.catalog.get_resource(params.uri)
-        if resource is None or resource.reader is None:
+        if resource is None or (resource.reader is None and resource.target is None):
             raise ValueError(f"Unknown MCP resource: {params.uri}")
 
-        content = await resource.reader(params.uri)
+        if resource.target is not None:
+            if self.request is None:
+                raise RuntimeError("MCP resource target requires an HTTP request")
+            content = await self.proxy.execute(resource.target, self.request, {})
+        else:
+            reader = typing.cast(
+                collections.abc.Callable[[str], collections.abc.Awaitable[typing.Any]], resource.reader
+            )
+            content = await reader(params.uri)
         return mcp.types.ReadResourceResult(
             contents=typing.cast(
                 list[mcp.types.TextResourceContents | mcp.types.BlobResourceContents],
@@ -102,7 +114,7 @@ class MCPServerCore:
                     mcp.types.TextResourceContents(
                         uri=params.uri,
                         mime_type="text/plain",
-                        text=str(redact(content)),
+                        text=json.dumps(redact(content), default=str),
                     )
                 ],
             )

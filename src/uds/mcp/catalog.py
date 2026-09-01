@@ -4,11 +4,13 @@ import dataclasses
 import typing
 import collections.abc
 
+from .rest_proxy import RestTarget
+
 
 ToolExecutor: typing.TypeAlias = collections.abc.Callable[
     [dict[str, typing.Any]], collections.abc.Awaitable[typing.Any]
 ]
-ResourceReader: typing.TypeAlias = collections.abc.Callable[[str], collections.abc.Awaitable[str]]
+ResourceReader: typing.TypeAlias = collections.abc.Callable[[str], collections.abc.Awaitable[typing.Any]]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -40,6 +42,7 @@ class ResourceDefinition:
     required_permission: str | None = None
     sensitive_fields: tuple[str, ...] = ()
     reader: ResourceReader | None = dataclasses.field(default=None, repr=False, compare=False)
+    target: RestTarget | None = dataclasses.field(default=None, repr=False, compare=False)
 
 
 class Catalog:
