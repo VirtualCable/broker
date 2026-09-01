@@ -39,6 +39,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db import transaction
 from django.db.models import Model
+from django.db.models import OuterRef
+from django.db.models import Subquery
 from django.utils.translation import gettext as _
 
 from uds.core import consts
@@ -54,6 +56,7 @@ from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_stamp_seconds
 from uds.models import Authenticator
 from uds.models import Group
+from uds.models import Properties
 from uds.models import ServicePool
 from uds.models import User
 from uds.models import UserService
@@ -98,6 +101,7 @@ class UserItem(types.rest.BaseRestItem):
     mfa_data: str
     role: str
     parent: str | None
+    token: str
     groups: list[str] | types.rest.NotRequired = types.rest.NotRequired.field()
 
 
@@ -147,7 +151,7 @@ class Users(DetailHandler[UserItem]):
     ]
 
     @staticmethod
-    def as_user_item(user: "User") -> UserItem:
+    def as_user_item(user: "User", token_hint: str = "") -> UserItem:
         return UserItem(
             id=user.uuid,
             name=user.name,
@@ -159,6 +163,7 @@ class Users(DetailHandler[UserItem]):
             last_access=user.last_access,
             mfa_data=user.mfa_data,
             parent=user.parent,
+            token=token_hint,
             groups=[i.uuid for i in user.get_groups()],
             role=user.get_role().as_str(),
         )
@@ -168,6 +173,13 @@ class Users(DetailHandler[UserItem]):
         if field_info := self.get_sort_field_info("role"):
             descending = "-" if field_info[1] else ""
             return qs.order_by(f"{descending}is_admin", f"{descending}staff_member")
+
+        if field_info := self.get_sort_field_info("token"):
+            descending = "-" if field_info[1] else ""
+            token_hint = Properties.objects.filter(
+                owner_id=OuterRef("uuid"), owner_type="user", key="token_hint"
+            ).values("value")[:1]
+            return qs.annotate(token_hint=Subquery(token_hint)).order_by(f"{descending}token_hint")
 
         return super().apply_sort(qs)
 
@@ -181,17 +193,20 @@ class Users(DetailHandler[UserItem]):
     def get_items(self, parent: "Model") -> types.rest.ItemsResult[UserItem]:
         parent = ensure.is_instance(parent, Authenticator)
 
-        # Extract authenticator
-        return [
-            self.as_user_item(i) for i in self.odata_filter(parent.users.prefetch_related("groups", "groups__manager"))
-        ]
+        users = self.odata_filter(parent.users.prefetch_related("groups", "groups__manager"))
+        hints = dict(
+            Properties.objects.filter(
+                owner_id__in=[i.uuid for i in users], owner_type="user", key="token_hint"
+            ).values_list("owner_id", "value")
+        )
+        return [self.as_user_item(i, hints.get(i.uuid, "")) for i in users]
 
     @typing.override
     def get_item(self, parent: "Model", item: str) -> UserItem:
         parent = ensure.is_instance(parent, Authenticator)
 
         db_usr = parent.users.get(uuid__iexact=process_uuid(item))
-        user_item = self.as_user_item(db_usr)
+        user_item = self.as_user_item(db_usr, db_usr.properties.get("token_hint", ""))
         auth_usr = AUser(db_usr)
         user_item.groups = [g.db_obj().uuid for g in auth_usr.groups()]
         return user_item
@@ -209,6 +224,7 @@ class Users(DetailHandler[UserItem]):
                 name="state", title=_("Status"), dct={State.ACTIVE: _("Enabled"), State.INACTIVE: _("Disabled")}
             )
             .datetime_column(name="last_access", title=_("Last access"))
+            .text_column(name="token", title=_("API token"))
             .row_style(prefix="row-state-", field="state")
         ).build()
 
@@ -399,6 +415,9 @@ class Users(DetailHandler[UserItem]):
 
     def _manage_token(self, parent: "Model", item: str) -> dict[str, str | None]:
         """Shared dispatcher for the single ``token`` custom method (POST/DELETE)."""
+        if not self._user.is_admin:
+            raise exceptions.rest.AccessDenied()
+
         parent = ensure.is_instance(parent, Authenticator)
         try:
             user = parent.users.get(uuid=process_uuid(item))
