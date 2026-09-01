@@ -30,7 +30,7 @@ from asgiref.sync import async_to_sync
 
 from uds.core import consts
 from uds.REST import Handler
-from uds.mcp import MCPServerCore, build_catalog
+from uds.mcp import MCPServerCore, default_catalog_for_request
 
 
 logger = logging.getLogger(__name__)
@@ -102,6 +102,18 @@ class MCP(Handler):
             result = async_to_sync(self._mcp_server().read_resource)(None, read_params)
             return self._model_response(request_id, result)
 
+        if method == "tools/list":
+            result = async_to_sync(self._mcp_server().list_tools)(None, None)
+            return self._model_response(request_id, result)
+
+        if method == "tools/call":
+            call_params = mcp.types.CallToolRequestParams.model_validate(params.get("params") or {})
+            try:
+                result = async_to_sync(self._mcp_server().call_tool)(None, call_params)
+            except ValueError as exc:
+                return self._jsonrpc_error(call_params.name, -32602, str(exc))
+            return self._model_response(request_id, result)
+
         return self._jsonrpc_error(
             request_id,
             -32601,
@@ -113,7 +125,7 @@ class MCP(Handler):
     # ------------------------------------------------------------------
     def _mcp_server(self) -> MCPServerCore:
         """Build the catalog-backed MCP core for the current request."""
-        return MCPServerCore(build_catalog(), request=self._request)
+        return MCPServerCore(default_catalog_for_request(self._request), request=self._request)
 
     @staticmethod
     def _model_response(request_id: typing.Any, result: typing.Any) -> _JsonObject:

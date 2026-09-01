@@ -53,12 +53,12 @@ class MCPRPCTest(rest.test.RESTTestCase):
 
     def test_unknown_method_returns_method_not_found(self) -> None:
         """Unknown methods produce ``-32601`` and include the bad method."""
-        response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 7, "method": "tools/list"})
+        response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 7, "method": "foo/bar"})
 
         self.assertEqual(response["jsonrpc"], "2.0")
         self.assertEqual(response["id"], 7)
         self.assertEqual(response["error"]["code"], -32601)
-        self.assertIn("tools/list", response["error"]["message"])
+        self.assertIn("foo/bar", response["error"]["message"])
 
     def test_resources_list_returns_curated_catalog(self) -> None:
         """``resources/list`` exposes only the curated read-only resources."""

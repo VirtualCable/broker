@@ -18,7 +18,9 @@ class MCPServerCore:
     def __init__(self, catalog: Catalog, request: typing.Any = None, proxy: RestProxy | None = None) -> None:
         self.catalog = catalog
         self.request = request
-        self.proxy = proxy or RestProxy()
+        self.proxy = proxy or RestProxy(request=request)
+        if proxy is not None and request is not None:
+            self.proxy.request = request
         self.server = Server(
             "UDS",
             on_list_tools=self.list_tools,
@@ -63,6 +65,9 @@ class MCPServerCore:
         if tool is None or tool.executor is None:
             raise ValueError(f"Unknown MCP tool: {params.name}")
 
+        # The caller (``MCPHandler``) is responsible for binding the live
+        # HTTP request before invoking us. The proxy helpers will fail
+        # cleanly with a request-related error if it is missing.
         result = await tool.executor(params.arguments or {})
         safe_result = redact(result)
         return mcp.types.CallToolResult(
