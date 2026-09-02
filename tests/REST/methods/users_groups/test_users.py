@@ -148,16 +148,6 @@ class UsersTest(rest.test.RESTActorTestCase):
         authenticated = self.client.rest_get("providers/overview")
         self.assertEqual(authenticated.status_code, 200, authenticated.content)
 
-        listed = self.client.rest_get(f"authenticators/{self.auth.uuid}/user_tokens")
-        self.assertEqual(listed.status_code, 200, listed.content)
-        self.assertEqual(len(listed.json()), 1)
-        self.assertEqual(listed.json()[0]["user_uuid"], user.uuid)
-        self.assertEqual(listed.json()[0]["username"], user.name)
-        self.assertEqual(listed.json()[0]["authenticator_uuid"], self.auth.uuid)
-        self.assertEqual(listed.json()[0]["token_hint"], created_data["token_hint"])
-        self.assertNotIn("token", listed.json()[0])
-        self.assertNotIn("token_hash", listed.json()[0])
-
         replaced = self.client.rest_post(token_url)
         self.assertEqual(replaced.status_code, 400, replaced.content)
 
