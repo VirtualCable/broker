@@ -130,7 +130,7 @@ class ConnectWithPoolTest(UDSTestCase):
             restore_conn()
         self.assertIsInstance(con, _DummyConn)
         self.assertEqual(calls, [("h1", 389)])
-        self.assertEqual(cache.get("ldap.preferred"), [("h1", 389)])
+        self.assertEqual(cache.get(ldaputil.preferred_cache_key([("h1", 389)])), [("h1", 389)])
 
     def test_skips_bad_then_picks_next(self) -> None:
         cache = _DummyCache()
@@ -169,11 +169,18 @@ class ConnectWithPoolTest(UDSTestCase):
         finally:
             restore_conn()
         self.assertTrue(cache.get("ldap.bad.h1:389"))
-        self.assertEqual(cache.get("ldap.preferred"), [("h2", 389)])
+        self.assertEqual(
+            cache.get(ldaputil.preferred_cache_key([("h1", 389), ("h2", 389)])),
+            [("h2", 389)],
+        )
 
     def test_preferred_first(self) -> None:
         cache = _DummyCache()
-        cache.put("ldap.preferred", [("h3", 389)], validity=3600)
+        cache.put(
+            ldaputil.preferred_cache_key([("h1", 389), ("h2", 389), ("h3", 389)]),
+            [("h3", 389)],
+            validity=3600,
+        )
         restore_conn, calls = self._patch_connection(
             behavior={
                 ("h3", 389): lambda: _DummyConn(),
@@ -193,6 +200,76 @@ class ConnectWithPoolTest(UDSTestCase):
         # Preferred (h3) is tried first; if it succeeds no further host is
         # probed.
         self.assertEqual(calls, [("h3", 389)])
+
+    def test_preferred_not_shared_between_pools(self) -> None:
+        """A DC learned by one authenticator must not be tried by another.
+
+        Authenticator A binds to a DC found through SRV discovery.
+        Authenticator B, with an entirely different host list, then tries
+        that same DC first -- sending B's bind credentials to a server B
+        never had configured.
+        """
+        cache = _DummyCache()
+        restore_conn, calls = self._patch_connection(
+            behavior={
+                ("h3", 389): lambda: _DummyConn(),
+                ("h1", 389): lambda: _DummyConn(),
+            },
+        )
+        try:
+            # Pool A: succeeds on h3, which becomes A's preferred host.
+            ldaputil.connect_with_pool(user="u", password="p", hosts=[("h3", 389)], cache=cache, probe=False)
+            calls.clear()
+            # Pool B: a disjoint host list. h3 must not leak into it.
+            ldaputil.connect_with_pool(user="other", password="other", hosts=[("h1", 389)], cache=cache, probe=False)
+        finally:
+            restore_conn()
+        self.assertEqual(calls, [("h1", 389)])
+
+    def test_bind_failure_does_not_mark_host_bad(self) -> None:
+        """Wrong credentials are not a broken DC.
+
+        ``mark_bad`` puts the host in a shared, exponentially growing
+        cooldown (up to 8h) that every other LDAP/AD authenticator honours.
+        A mistyped password must not take a healthy DC out of the pool.
+        """
+        cache = _DummyCache()
+        restore_conn, _ = self._patch_connection(
+            behavior={
+                ("h1", 389): lambda: (_ for _ in ()).throw(
+                    ldaputil.BindError("Could not bind to LDAP server: h1: data 52e")
+                ),
+                ("h2", 389): lambda: _DummyConn(),
+            },
+        )
+        try:
+            ldaputil.connect_with_pool(
+                user="u",
+                password="wrong",
+                hosts=[("h1", 389), ("h2", 389)],
+                cache=cache,
+                probe=False,
+            )
+        finally:
+            restore_conn()
+        self.assertIsNone(cache.get(f"ldap.bad.{ldaputil.BAD_COOLDOWN_OWNER}:h1:389"))
+        self.assertFalse(cache.get("ldap.bad.h1:389", default=False))
+
+    def test_bind_failure_still_reported_when_no_host_works(self) -> None:
+        cache = _DummyCache()
+        restore_conn, _ = self._patch_connection(
+            behavior={
+                ("h1", 389): lambda: (_ for _ in ()).throw(
+                    ldaputil.BindError("Could not bind to LDAP server: h1: data 52e")
+                ),
+            },
+        )
+        try:
+            with self.assertRaises(ldaputil.LDAPError) as ctx:
+                ldaputil.connect_with_pool(user="u", password="wrong", hosts=[("h1", 389)], cache=cache, probe=False)
+        finally:
+            restore_conn()
+        self.assertIn("data 52e", str(ctx.exception))
 
     def test_all_fail_raises(self) -> None:
         cache = _DummyCache()
