@@ -1,177 +1,171 @@
 """Generic list-tool factory for the MCP catalog.
 
-Mirrors the static-analysis approach used by ``genapi`` so the same
-data source that emits the OpenAPI spec can also emit MCP tools and
-resources. The factory walks the REST handler graph, finds the
-collection-shaped handlers, and produces a paginated ``list_<name>``
-tool per handler, with a consistent OData input shape.
-
-The goal is to add MCP support for an entire REST collection without
-writing a new entry by hand. The first implementation only covers the
-shapes we already have in the curated catalog: a single ``ModelHandler``
-that exposes ``get_items()`` and a Django model.
+Built on top of the :mod:`uds.REST.inventory` walker so the same source
+of truth feeds ``genapi``, the MCP catalog and the downloadable skill.
+The factory reads the inventory and produces a paginated ``list_*`` tool
+per collection handler (master and detail), with a consistent OData input
+shape. Detail collections additionally require the parent ``uuid``
+argument so the tool can scope the query to a concrete parent item.
 """
 
 import collections.abc
 import typing
 
-from uds.REST.methods.services_pools import ServicesPools
+from uds.REST.inventory import HandlerInventoryEntry, collection_handlers
+from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
 
 from .catalog import ToolDefinition
-from .rest_proxy import ODataArgs, RestTarget, RestProxy
+from .rest_proxy import RestTarget, RestProxy
 
 
 # Tools which already have a custom MCP executor do not need a generated
 # entry. The exclusion is by exact tool name to keep the surface
 # predictable and to avoid duplicates.
-_GENERATED_TOOL_EXCLUSIONS: typing.Final[frozenset[str]] = frozenset(
-    {
-        # ``list_service_pools`` is generated explicitly in the curated
-        # catalog so we keep the curated version (with custom access
-        # description) instead of the generic default.
-        "list_service_pools",
-    }
-)
-
-
 def _humanize(token: str) -> str:
     """Convert a snake_case token to ``Title Case`` for tool titles."""
     parts = token.replace("_", " ").split()
     return " ".join(p.capitalize() for p in parts)
 
 
-def pluralize(token: str) -> str:
-    """Return the English plural of a snake_case noun.
+def _derive_tool_name(entry: HandlerInventoryEntry) -> str:
+    """Return a stable, unique tool name for the inventory entry.
 
-    The implementation is intentionally simple and matches the
-    naming conventions used by UDS REST collections. It is not a
-    general-purpose inflector; if a name is irregular, add it to the
-    handler's own ``display_plural`` annotation instead of relying on
-    this heuristic.
+    The name is derived from the entry's full path so master and detail
+    collections never collide (``authenticators/{uuid}/users`` becomes
+    ``list_authenticators_users``, ``providers`` becomes ``list_providers``).
     """
-    if not token:
-        return token
-    # Irregular cases.
-    irregular: dict[str, str] = {}
-    if token in irregular:
-        return irregular[token]
-    if token.endswith("y") and len(token) > 1 and token[-2] not in "aeiou":
-        return token[:-1] + "ies"
-    if token.endswith("s"):
-        return token
-    if token.endswith(("sh", "ch", "x")):
-        return token + "es"
-    return token + "s"
+    parts = [p for p in entry.path.split("/") if p not in ("{uuid}", "")]
+    return "list_" + "_".join(parts)
 
 
-def _generate_list_tool(
-    handler: type[ModelHandler[typing.Any]],
-) -> ToolDefinition | None:
+def _list_input_schema(
+    parent_desc: str | None = None,
+) -> dict[str, typing.Any]:
+    """Return the shared OData input schema for generated list tools.
+
+    ``parent_desc`` adds the ``parent_uuid`` argument used to scope a
+    detail collection to its parent item.
+    """
+    properties: dict[str, typing.Any] = {
+        "filter": {
+            "type": "string",
+            "description": "OData $filter expression applied to the collection.",
+        },
+        "orderby": {
+            "type": "string",
+            "description": "OData $orderby expression applied to the collection.",
+        },
+        "top": {
+            "type": "integer",
+            "description": "Maximum number of items to return. Defaults to the REST collection cap.",
+            "minimum": 1,
+        },
+        "skip": {
+            "type": "integer",
+            "description": "Number of items to skip before returning the page.",
+            "minimum": 0,
+        },
+        "select": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "OData $select projection: list of property names to include.",
+        },
+    }
+    if parent_desc is not None:
+        properties["parent_uuid"] = {
+            "type": "string",
+            "description": parent_desc,
+        }
+    return {
+        "type": "object",
+        "properties": properties,
+        "additionalProperties": False,
+    }
+
+
+def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
     """Build a paginated list tool for a REST collection handler.
 
-    Returns ``None`` when the handler does not match the list pattern.
+    Returns ``None`` when the inventory entry does not match the list
+    pattern (for example, a handler that does not expose ``get_items``).
+    Detail entries produce a tool whose target carries the parent target so
+    the proxy can resolve the parent item and scope the query to it.
     """
-    if not hasattr(handler, "get_items"):
+    if not entry.exposes_get_items:
         return None
-    name = handler.__name__.lower()
-    if not name.endswith("s"):
-        name = pluralize(name)
-    if not name.startswith("list_"):
-        tool_name = f"list_{name}"
-    else:
-        tool_name = name
-    if tool_name in _GENERATED_TOOL_EXCLUSIONS:
-        return None
+    tool_name = _derive_tool_name(entry)
 
-    path = getattr(handler, "PATH", None) or getattr(handler, "NAME", None) or handler.__name__.lower()
+    handler: type[ModelHandler[typing.Any] | DetailHandler[typing.Any]] = typing.cast(
+        "type[ModelHandler[typing.Any] | DetailHandler[typing.Any]]", entry.handler
+    )
+    path = entry.path
+
+    if entry.parent is not None:
+        parent_handler: type[ModelHandler[typing.Any]] = typing.cast(
+            "type[ModelHandler[typing.Any]]", entry.parent.handler
+        )
+        target = RestTarget(
+            handler,
+            path,
+            parent=RestTarget(parent_handler, entry.parent.path),
+        )
+        parent_desc = (
+            f"UUID of the parent {entry.parent.name} item this collection belongs to (e.g. {entry.parent.path})."
+        )
+    else:
+        target = RestTarget(handler, path)
+        parent_desc = None
 
     async def executor(
         arguments: dict[str, typing.Any],
     ) -> list[typing.Any]:
         proxy = RestProxy()
-        args = ODataArgs(
-            filter=typing.cast("str | None", arguments.get("filter")),
-            orderby=typing.cast("str | None", arguments.get("orderby")),
-            top=typing.cast("int | None", arguments.get("top")),
-            skip=typing.cast("int | None", arguments.get("skip")),
-            select=tuple(typing.cast("list[str]", arguments.get("select", []) or [])),
-        )
-        return await proxy.execute_collection(RestTarget(handler, path), None, args)
+        return await proxy.execute_collection(target, None, arguments)
 
     # Expose the handler class and the resolved REST path so callers
     # that want to bind a live request (like ``default_catalog_for_request``)
     # can rebuild the same ``RestTarget`` without parsing the tool name.
     executor._uds_handler_class = handler  # type: ignore[attr-defined]
     executor._uds_handler_path = path  # type: ignore[attr-defined]
+    if entry.parent is not None:
+        executor._uds_parent_class = parent_handler  # type: ignore[attr-defined]
+        executor._uds_parent_path = entry.parent.path  # type: ignore[attr-defined]
 
-    schema = _list_input_schema()
+    schema = _list_input_schema(parent_desc)
+    title_base = tool_name.removeprefix("list_")
     return ToolDefinition(
         name=tool_name,
-        title=f"List {_humanize(name.removeprefix('list_').removesuffix('s'))}s",
+        title=f"List {_humanize(title_base)}",
         description=(
-            f"List items exposed by the ``{handler.__name__}`` REST collection with "
+            f"List items exposed by the ``{entry.handler.__name__}`` REST collection with "
             "optional OData-style filtering, ordering, pagination and projection."
+            + (
+                " The collection is scoped to the given parent item; the parent "
+                f"is a ``{entry.parent.handler.__name__ if entry.parent else ''}``."
+                if entry.parent is not None
+                else ""
+            )
         ),
         input_schema=schema,
-        access=(f"Available to authenticated UDS users with permission to read {handler.__name__} items."),
-        returns=(f"An array of items from the ``{handler.__name__}`` REST collection, each as a dictionary."),
+        access=(f"Available to authenticated UDS users with permission to read {entry.handler.__name__} items."),
+        returns=(f"An array of items from the ``{entry.handler.__name__}`` REST collection, each as a dictionary."),
         required_permission="READ",
         executor=executor,
     )
 
 
-def _list_input_schema() -> dict[str, typing.Any]:
-    """Return the shared OData input schema for generated list tools."""
-    return {
-        "type": "object",
-        "properties": {
-            "filter": {
-                "type": "string",
-                "description": "OData $filter expression applied to the collection.",
-            },
-            "orderby": {
-                "type": "string",
-                "description": "OData $orderby expression applied to the collection.",
-            },
-            "top": {
-                "type": "integer",
-                "description": "Maximum number of items to return. Defaults to the REST collection cap.",
-                "minimum": 1,
-            },
-            "skip": {
-                "type": "integer",
-                "description": "Number of items to skip before returning the page.",
-                "minimum": 0,
-            },
-            "select": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "OData $select projection: list of property names to include.",
-            },
-        },
-        "additionalProperties": False,
-    }
-
-
 def generated_list_tools() -> collections.abc.Iterable[ToolDefinition]:
-    """Yield list tools for every collection-shaped REST handler in the catalog.
+    """Yield a ``list_*`` tool for every collection-shaped REST handler.
 
-    Handlers that are listed in :data:`_GENERATED_TOOL_EXCLUSIONS` are
-    skipped so curated entries always win. The iteration is deterministic
-    by handler class name, which makes the generated catalog stable.
+    The iteration is driven by :func:`collection_handlers` so any handler
+    registered after the catalog loads is still picked up. Tool names are
+    derived from the handler's full path, so master and detail collections
+    never collide.
     """
     seen: set[str] = set()
-    candidates: list[type[ModelHandler[typing.Any]]] = []
-    for cls_any in ModelHandler.__subclasses__():  # type: ignore[var-annotated]
-        cls: type[ModelHandler[typing.Any]] = typing.cast("type[ModelHandler[typing.Any]]", cls_any)
-        if cls is ServicesPools:
-            continue
-        if hasattr(cls, "get_items"):
-            candidates.append(cls)
-    candidates.sort(key=lambda c: c.__name__)
-    for cls in candidates:
-        tool = _generate_list_tool(cls)  # type: ignore[arg-type]
+    for entry in collection_handlers():
+        tool = _generate_list_tool(entry)
         if tool is None or tool.name in seen:
             continue
         seen.add(tool.name)

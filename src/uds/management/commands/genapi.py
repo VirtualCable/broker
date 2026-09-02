@@ -40,9 +40,8 @@ from django.core.management.base import BaseCommand
 
 from uds.core import consts
 from uds.core import types
-from uds.REST import dispatcher
+from uds.REST.inventory import HandlerInventoryEntry, walk_rest_handlers
 from uds.REST.model import base as model_base
-from uds.REST.model.master import ModelHandler
 
 logger = logging.getLogger(__name__)
 
@@ -52,39 +51,30 @@ DEFAULT_OUTPUT: typing.Final[str] = f"{tempfile.gettempdir()}/uds-api"
 
 
 def _generate_api() -> types.rest.api.OpenAPI:
-    root_node = dispatcher.Dispatcher.root_node
-
     comps = model_base.BaseModelHandler.common_components()
     paths = model_base.BaseModelHandler.common_paths()
 
-    def process_node(node: types.rest.HandlerNode, path: str | None = None) -> None:
+    # The inventory walker mirrors the tree traversal the dispatcher uses:
+    # every registered handler at its tree path, plus each detail handler
+    # simulated at ``{path}/{uuid}/{name}``. It already produces the same
+    # ``(handler, path)`` pairs this generator used to discover by hand.
+    def process_entry(entry: HandlerInventoryEntry) -> None:
         nonlocal comps
 
-        if handler := node.handler:
-            full_path = path or ("/" + node.full_path().lstrip("/"))
-            tags = [full_path.split("/")[1].capitalize()] if len(full_path.split("/")) > 1 else []
-            # Prefer the bearer scheme for new integrations.  Legacy
-            # ``X-Auth-Token`` clients keep working because the server
-            # still accepts it; the deprecation note lives in the
-            # security scheme description above.
-            security = BEARER_SECURITY_NAME if handler.ROLE != consts.Role.ANONYMOUS else ""
+        full_path = entry.full_path
+        tags = [full_path.split("/")[1].capitalize()] if len(full_path.split("/")) > 1 else []
+        # Prefer the bearer scheme for new integrations.  Legacy
+        # ``X-Auth-Token`` clients keep working because the server
+        # still accepts it; the deprecation note lives in the
+        # security scheme description above.
+        security = BEARER_SECURITY_NAME if entry.handler.ROLE != consts.Role.ANONYMOUS else ""
 
-            components = handler.api_components()
-            comps = comps.union(components)
-            paths.update(handler.api_paths(full_path, tags, security))
+        components = entry.handler.api_components()
+        comps = comps.union(components)
+        paths.update(entry.handler.api_paths(full_path, tags, security))
 
-            if issubclass(handler, ModelHandler) and handler.DETAIL:
-                for name, detail_cls in handler.DETAIL.items():
-                    # Details are always under /{path}/{uuid}/{detail_name}
-                    detail_path = f"{full_path}/{{uuid}}/{name}"
-                    # We process detail_cls as a "node" but it's not in the tree as a node
-                    # So we simulate it
-                    process_node(types.rest.HandlerNode(name, detail_cls, node, {}), path=detail_path)
-
-        for child in node.children.values():
-            process_node(child)
-
-    process_node(root_node)
+    for entry in walk_rest_handlers():
+        process_entry(entry)
 
     # Ensure all paths with {uuid} declare the uuid parameter in every operation
     UUID_PARAM = types.rest.api.Parameter(

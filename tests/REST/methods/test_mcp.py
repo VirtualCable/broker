@@ -122,3 +122,48 @@ class MCPRPCTest(rest.test.RESTTestCase):
         response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 9})
         self.assertEqual(response["error"]["code"], -32600)
         self.assertEqual(response["id"], 9)
+
+    def test_tools_list_exposes_master_and_detail_collections(self) -> None:
+        """``tools/list`` includes master and parent-scoped detail tools."""
+        response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 20, "method": "tools/list"})
+        tools = {tool["name"]: tool for tool in response["result"]["tools"]}
+        self.assertIn("list_authenticators", tools)
+        detail = tools.get("list_authenticators_users")
+        self.assertIsNotNone(detail, "detail collection tool missing")
+        self.assertIn("parent_uuid", detail["inputSchema"]["properties"])
+
+    def test_tools_call_detail_collection_lists_parent_users(self) -> None:
+        """``tools/call`` on a detail tool lists the parent's items."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 21,
+                "method": "tools/call",
+                "params": {
+                    "name": "list_authenticators_users",
+                    "arguments": {"parent_uuid": self.auth.uuid},
+                },
+            }
+        )
+        self.assertNotIn("error", response)
+        result = response["result"]
+        # The detail collection returns the authenticator's users.
+        content = json.loads(result["content"][0]["text"])
+        self.assertIsInstance(content, list)
+        self.assertTrue(content, "expected at least one user in the authenticator")
+
+    def test_tools_call_detail_unknown_parent_errors(self) -> None:
+        """A bogus parent uuid surfaces as a JSON-RPC error, not a crash."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 22,
+                "method": "tools/call",
+                "params": {
+                    "name": "list_authenticators_users",
+                    "arguments": {"parent_uuid": "00000000-0000-0000-0000-000000000000"},
+                },
+            }
+        )
+        self.assertIn("error", response)
+        self.assertIn("Parent item not found", response["error"]["message"])

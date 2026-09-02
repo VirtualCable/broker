@@ -7,6 +7,8 @@ from asgiref.sync import sync_to_async
 
 from uds.REST.handlers import Handler
 from uds.core import types
+from uds.core.exceptions import rest as rest_exceptions
+from uds.core.util import permissions
 
 
 _ODATA_KEYS: typing.Final[tuple[str, ...]] = (
@@ -84,12 +86,20 @@ def odata_params_from(raw: typing.Any) -> dict[str, typing.Any]:
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class RestTarget:
-    """Identify an existing REST handler operation without an HTTP request."""
+    """Identify an existing REST handler operation without an HTTP request.
+
+    When ``parent`` is set, ``handler`` is a ``DetailHandler`` and the
+    collection is scoped under the parent collection instance identified by
+    its ``{uuid}`` argument. The parent target is used to resolve the parent
+    model object and to preserve the same permission checks the REST
+    dispatcher performs.
+    """
 
     handler: type[Handler]
     path: str
-    method: types.rest.CustomMethodMethod = types.rest.CustomMethodMethod.GET
+    method: types.rest.CustomMethodMethod = types.rest.CustomMethodMethod.QUERY
     args: tuple[str, ...] = ()
+    parent: "RestTarget | None" = None
 
 
 class RestProxy:
@@ -111,7 +121,7 @@ class RestProxy:
         complete handler lifecycle is kept in one thread-sensitive sync
         boundary because Django ORM access is synchronous.
         """
-        return await sync_to_async(self._execute_sync, thread_sensitive=True)(target, request, params)
+        return await sync_to_async(self._execute_sync, thread_sensitive=True)(target, request, params, None)
 
     async def execute_collection(
         self,
@@ -123,19 +133,76 @@ class RestProxy:
 
         Translates the structured MCP arguments into OData ``$...``
         parameters and dispatches ``Handler.query()`` so the existing
-        OData validation, permissions and filters are reused.
+        OData validation, permissions and filters are reused. Detail
+        collections additionally require the parent ``uuid`` in the
+        arguments (``parent_uuid``).
         """
         params = odata_params_from(arguments)
-        return await sync_to_async(self._execute_sync, thread_sensitive=True)(target, request, params)
+        parent_uuid: str | None = None
+        if isinstance(arguments, dict):
+            raw = typing.cast("dict[str, typing.Any]", arguments)
+            parent_uuid = raw.get("parent_uuid")
+            if parent_uuid is not None:
+                parent_uuid = str(parent_uuid)
+        return await sync_to_async(self._execute_sync, thread_sensitive=True)(target, request, params, parent_uuid)
 
-    @staticmethod
+    @classmethod
     def _execute_sync(
+        cls,
         target: RestTarget,
         request: typing.Any,
         params: dict[str, typing.Any],
+        parent_uuid: str | None,
     ) -> typing.Any:
         """Instantiate and invoke one existing REST handler operation."""
+        if target.parent is not None:
+            return cls._execute_detail_sync(target, request, params, parent_uuid)
+
         method = target.method.value.lower()
         handler = target.handler(request, target.path, method, params, *target.args)
         operation = getattr(handler, method)
+        return operation()
+
+    @staticmethod
+    def _execute_detail_sync(
+        target: RestTarget,
+        request: typing.Any,
+        params: dict[str, typing.Any],
+        parent_uuid: str | None,
+    ) -> typing.Any:
+        """Execute a ``DetailHandler`` collection scoped to a parent item.
+
+        Mirrors ``ModelHandler.process_detail``: resolve the parent model
+        object from its ``{uuid}``, check the parent access level, then
+        instantiate the detail handler with that parent so its
+        ``get_items``/``query`` run against the parent's queryset.
+        """
+        from uds.REST.model.master import ModelHandler
+
+        parent_target = typing.cast("RestTarget", target.parent)
+        parent_handler: ModelHandler[typing.Any] = typing.cast("type[ModelHandler[typing.Any]]", parent_target.handler)(
+            request, parent_target.path, "get", {}, parent_uuid or ""
+        )
+
+        try:
+            parent_item = parent_handler.MODEL.objects.get(uuid__iexact=parent_uuid or "")
+        except Exception as e:
+            raise rest_exceptions.NotFound("Parent item not found") from e
+
+        if permissions.has_access(parent_handler._user, parent_item, types.permissions.PermissionType.READ) is False:
+            raise rest_exceptions.AccessDenied()
+
+        method = target.method.value.lower()
+        path = target.path.replace("{uuid}", parent_uuid or "")
+        detail_cls: type[typing.Any] = typing.cast("type[typing.Any]", target.handler)
+        detail = detail_cls(
+            parent_handler,
+            path,
+            params,
+            *target.args,
+            user=parent_handler._user,
+            parent_item=parent_item,
+        )
+        detail._operation = method
+        operation = getattr(detail, method)
         return operation()

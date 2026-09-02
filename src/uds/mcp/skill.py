@@ -1,14 +1,14 @@
 """Skill bundle generator for UDS MCP clients.
 
-The MCP surface described in ``uds.mcp.default_catalog`` can be packaged as a
-downloadable skill so an external agent (CLI, IDE assistant, browser plugin)
-can connect to the UDS REST/MCP endpoint without hand-writing the
-configuration.
+The MCP surface described in ``uds.mcp.default_catalog`` is packaged as a
+downloadable skill so an external agent (CLI, IDE assistant, browser
+plugin) can connect to the UDS REST/MCP endpoint without hand-writing
+the configuration.
 
 The generator writes an in-memory ``.tar.gz`` containing:
 
 - ``SKILL.md`` — human and machine readable description derived from the
-  curated catalog.
+  curated catalog and the inventory walker.
 - ``mcp_config.json`` — entry-point configuration for MCP-aware clients.
 - ``README.md`` — static installation instructions.
 
@@ -103,7 +103,7 @@ class SkillBuilder:
     # File renderers
     # ------------------------------------------------------------------
     def _render_skill_markdown(self) -> str:
-        """Render ``SKILL.md`` from the curated catalog."""
+        """Render ``SKILL.md`` from the catalog and the inventory."""
         lines: list[str] = [
             f"# UDS MCP skill {_SKILL_VERSION}",
             "",
@@ -114,6 +114,10 @@ class SkillBuilder:
             "## What you can access",
             "",
         ]
+        # Curated resources come from the catalog; the rest of the
+        # inventory is summarised in the list below. We rely on the
+        # catalog as the only source of curated entries so the operator
+        # always has the last word.
         for resource in self._catalog.resources():
             lines.append(f"### `{resource.uri}` — {resource.title}")
             lines.append("")
@@ -127,11 +131,25 @@ class SkillBuilder:
         if tools:
             lines.append("## Tools")
             lines.append("")
+            lines.append(
+                "Every list tool accepts OData-style arguments: `filter`, "
+                "`orderby`, `top`, `skip` and `select`. Tools that list items "
+                "belonging to a parent object (for example the users of an "
+                "authenticator) additionally require `parent_uuid` — the UUID "
+                "of the parent item the collection is scoped to."
+            )
+            lines.append("")
             for tool in tools:
+                properties = (tool.input_schema or {}).get("properties", {})
+                requires_parent = "parent_uuid" in properties
                 lines.append(f"### `{tool.name}` — {tool.title}")
                 lines.append("")
                 lines.append(tool.description)
                 lines.append("")
+                if requires_parent:
+                    parent_desc = properties["parent_uuid"].get("description", "UUID of the parent item")
+                    lines.append(f"- Requires `parent_uuid`: {parent_desc}")
+                    lines.append("")
         else:
             lines.append("## Tools")
             lines.append("")

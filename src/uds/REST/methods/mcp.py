@@ -29,6 +29,7 @@ import mcp.types
 from asgiref.sync import async_to_sync
 
 from uds.core import consts
+from uds.core.exceptions import rest as rest_exceptions
 from uds.REST import Handler
 from uds.mcp import MCPServerCore, default_catalog_for_request
 
@@ -110,6 +111,11 @@ class MCP(Handler):
             call_params = mcp.types.CallToolRequestParams.model_validate(params.get("params") or {})
             try:
                 result = async_to_sync(self._mcp_server().call_tool)(None, call_params)
+            except rest_exceptions.HandlerError as exc:
+                # REST-domain errors (item not found, access denied, invalid
+                # request) surface as JSON-RPC errors with a readable message
+                # instead of leaking as a transport-level failure.
+                return self._jsonrpc_error(call_params.name, -32602, str(exc) or exc.__class__.__name__)
             except ValueError as exc:
                 return self._jsonrpc_error(call_params.name, -32602, str(exc))
             return self._model_response(request_id, result)
@@ -173,19 +179,6 @@ class MCP(Handler):
         code: int,
         message: str,
     ) -> _JsonObject:
-        """Build a JSON-RPC error envelope."""
-        return {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {"code": code, "message": message},
-        }
-
-    @staticmethod
-    def _error_response(
-        request_id: typing.Any,
-        code: int,
-        message: str,
-    ) -> dict[str, typing.Any]:
         """Build a JSON-RPC error envelope."""
         return {
             "jsonrpc": "2.0",
