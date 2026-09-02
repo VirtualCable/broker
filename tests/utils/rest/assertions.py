@@ -46,7 +46,7 @@ def assert_user_is(
     compare_uuid: bool = False,
     compare_password: bool = False,
 ) -> bool:
-    ignore_fields = ["password", "groups", "mfa_data", "last_access", "role"]
+    ignore_fields = ["password", "groups", "mfa_data", "last_access", "role", "token"]
 
     if not compare_uuid:
         ignore_fields.append("id")

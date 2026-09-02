@@ -68,9 +68,12 @@ def hash_api_token(token: str) -> str:
 
 def api_token_hint(token: str) -> str:
     """Return a non-secret visual hint for a user API token."""
-    if len(token) <= 8:
-        return "*" * len(token)
-    return f"{token[:4]}...{token[-4:]}"
+    # The prefix stays so the hint is recognizable, but it is not part of the four
+    # identifying characters: cutting it blind would spend them all on the prefix.
+    raw = token.removeprefix(USER_API_TOKEN_PREFIX)
+    if len(raw) <= 8:
+        return f"{USER_API_TOKEN_PREFIX}{'*' * len(raw)}"
+    return f"{USER_API_TOKEN_PREFIX}{raw[:4]}...{raw[-4:]}"
 
 
 # pylint: disable=no-member
