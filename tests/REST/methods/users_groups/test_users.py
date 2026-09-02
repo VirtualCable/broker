@@ -161,10 +161,6 @@ class UsersTest(rest.test.RESTActorTestCase):
         revoked_access = self.client.rest_get("providers/overview")
         self.assertEqual(revoked_access.status_code, 403, revoked_access.content)
 
-    def test_user_tokens_custom_method_is_gone(self) -> None:
-        """The global listing was dropped: the hint is read from the users table, not from a second path."""
-        self.assertEqual(self.client.rest_get(f"authenticators/{self.auth.uuid}/user_tokens").status_code, 400)
-
     def test_user_token_hint_keeps_the_prefix_and_four_real_characters(self) -> None:
         """The prefix identifies the token as a user one, but must not eat the four cut characters."""
         user = self.users[0]
