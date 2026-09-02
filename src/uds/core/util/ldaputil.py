@@ -31,6 +31,7 @@ Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 # pyright: reportUnknownMemberType=false
 
 import collections.abc
+import hashlib
 import logging
 import ssl
 import typing
@@ -98,6 +99,15 @@ class LDAPError(Exception):
 
 class AlreadyExistsError(LDAPError):
     pass
+
+
+class BindError(LDAPError):
+    """The server answered but rejected the credentials.
+
+    Split out from a plain :class:`LDAPError` because a rejected bind says
+    nothing about the health of the server: callers that keep per-host
+    backoff must not penalise a DC for a wrong password.
+    """
 
 
 ALREADY_EXISTS = AlreadyExistsError
@@ -278,7 +288,7 @@ def connection(
             except Exception:
                 inner_msg = ""
             prefix = _("Could not bind to LDAP server: {host}").format(host=host)
-            raise LDAPError(f"{prefix}: {inner_msg}" if inner_msg else prefix)
+            raise BindError(f"{prefix}: {inner_msg}" if inner_msg else prefix)
 
         logger.debug("Connection was successful")
         return conn
@@ -508,6 +518,17 @@ BAD_COOLDOWN_MAX: typing.Final[int] = 28800  # 8h cap (matches daily DC cycle)
 BAD_COOLDOWN_OWNER: typing.Final[str] = "ldap"  # namespace inside the global backoff cache
 
 
+def preferred_cache_key(hosts: collections.abc.Sequence[tuple[str, int]]) -> str:
+    """Cache key holding the preferred DC for *this* pool of servers.
+
+    Keyed by the pool itself: a DC learned while serving one authenticator
+    must never be tried on behalf of another, whose configured servers and
+    bind credentials are unrelated to it.
+    """
+    pool: str = "|".join(sorted(f"{h.lower().rstrip('.')}:{p}" for h, p in hosts))
+    return f"ldap.preferred.{hashlib.sha256(pool.encode()).hexdigest()[:16]}"
+
+
 def connect_with_pool(
     user: str,
     password: str,
@@ -555,21 +576,23 @@ def connect_with_pool(
         max_time=BAD_COOLDOWN_MAX,
     )
 
+    preferred_key: str = preferred_cache_key(host_list)
+
     def _preferred() -> list[tuple[str, int]]:
         """Returns the cached preferred host(s), in priority order.
 
         Storage format is just the list — the cache serialises it.
         """
-        return ldap_cache.get("ldap.preferred", default=[])
+        return ldap_cache.get(preferred_key, default=[])
 
     def _set_preferred(hosts: list[tuple[str, int]]) -> None:
         """Store the hosts as the new preferred list (priority order)."""
-        ldap_cache.put("ldap.preferred", hosts or [], 3600)
+        ldap_cache.put(preferred_key, hosts or [], 3600)
 
     # Order: preferred first (tried in priority order), then the rest in
-    # the order the caller supplied. Duplicates collapse, but we never drop
-    # a preferred entry even if it isn't in ``host_list`` — better to probe
-    # it (and let ``is_bad`` skip it if it's down) than to ignore it.
+    # the order the caller supplied. Duplicates collapse. The preferred
+    # entry always belongs to this same pool, since the key is derived
+    # from ``host_list``.
     ordered: list[tuple[str, int]] = []
     seen: set[tuple[str, int]] = set()
     for h, p in (*_preferred(), *host_list):
@@ -599,6 +622,13 @@ def connect_with_pool(
                 verify_ssl=verify_ssl,
                 certificate_data=certificate_data,
             )
+        except BindError as e:
+            # The DC answered, it just refused these credentials. Marking it
+            # bad would drop a healthy DC into a cooldown that grows to 8h
+            # and that every other LDAP/AD authenticator honours.
+            last_error = str(e)
+            logger.debug("Bind rejected by %s:%s: %s", h, p, e)
+            continue
         except LDAPError as e:
             last_error = str(e)
             logger.debug("LDAPError connecting to %s:%s: %s", h, p, e)
