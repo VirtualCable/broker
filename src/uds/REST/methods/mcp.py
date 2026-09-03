@@ -102,6 +102,17 @@ def _accepts_json(accept_header: str) -> bool:
     return False
 
 
+def _log_escaped(value: str) -> str:
+    """JSON-escape a value so embedded control characters cannot forge log lines.
+
+    The audit line is plain text consumed by syslog; an MCP argument (for
+    example an OData ``$filter`` supplied by the client) can contain
+    newlines, so the client-controlled fragments are escaped before being
+    embedded instead of trusting them raw.
+    """
+    return json.dumps(value, ensure_ascii=False)[1:-1]
+
+
 class MCP(Handler):
     """Expose the UDS Model Context Protocol surface over REST.
 
@@ -124,7 +135,12 @@ class MCP(Handler):
     # path at the REST root, which is what we want for a global MCP
     # endpoint that does not belong to any specific collection.
 
-    ROLE: typing.ClassVar[consts.Role] = consts.Role.USER
+    # Staff and above only. The MCP surface exposes the platform inventory
+    # and every generated ``list_*`` tool resolves against STAFF REST
+    # handlers, so letting non-staff identities reach it would only grant
+    # them surface enumeration with no data. Matching the admin surface
+    # also means the same ``ADMIN_TRUSTED_SOURCES`` policy applies.
+    ROLE: typing.ClassVar[consts.Role] = consts.Role.STAFF
 
     def post(self) -> _JsonObject | http.HttpResponse:
         """Process a single JSON-RPC message and return its JSON-RPC response.
@@ -169,7 +185,12 @@ class MCP(Handler):
 
         if "id" not in params:
             # A message without ``id`` is a notification: no response is
-            # allowed, acknowledge with 202 and an empty body.
+            # allowed, acknowledge with 202 and an empty body. Notifications
+            # still consume rate budget (a fire-and-forget channel must not
+            # bypass the limit); once the budget is spent they are dropped
+            # silently, still as a 202.
+            limit = self._rate_limit()
+            allow_request(self._rate_limit_key(), limit)
             return http.HttpResponse(status=202)
 
         method_obj: typing.Any = params.get("method")
@@ -289,14 +310,18 @@ class MCP(Handler):
         Follows the same shape as the REST operation log: ip, user,
         operation and outcome. Tool arguments are part of ``operation``
         and are already non-secret by schema (OData filters and UUIDs);
-        the whole line is truncated to the log entry limit.
+        the whole line is truncated to the log entry limit. The
+        client-controlled fragments are JSON-escaped so embedded control
+        characters cannot forge or split log lines.
         """
         username = self._user.pretty_name
         level = LogLevel.ERROR if outcome.startswith("error") else LogLevel.INFO
         log(
             None,  # None owner goes to SYSLOG (global log), like REST operations
             level,
-            f"{self._request.ip} [{username}]: mcp {operation} -> {outcome}"[:4096],
+            f"{self._request.ip} [{_log_escaped(username)}]: mcp {_log_escaped(operation)} -> {_log_escaped(outcome)}"[
+                :4096
+            ],
             source=LogSource.REST,
         )
 

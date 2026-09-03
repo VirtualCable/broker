@@ -8,6 +8,7 @@ REDACTED = "REDACTED"
 
 SENSITIVE_FIELDS: typing.Final[frozenset[str]] = frozenset(
     {
+        # Existing names, kept as the baseline.
         "password",
         "passwd",
         "token",
@@ -18,6 +19,29 @@ SENSITIVE_FIELDS: typing.Final[frozenset[str]] = frozenset(
         "refresh_token",
         "api_key",
         "credential",
+        # Wider secret-name coverage so every key an item can realistically
+        # carry is caught (denylist; see plan: allowlists per curated tool).
+        "pwd",
+        "pass",
+        "passphrase",
+        "secret_key",
+        "client_secret",
+        "api_secret",
+        "access_key",
+        "auth_key",
+        "credentials",
+        "private",
+        "cookie",
+        "cookies",
+        "sessionid",
+        "csrf",
+        "csrfmiddlewaretoken",
+        "cert",
+        "certificate",
+        "otp",
+        "seed",
+        "user_token",
+        "service_token",
     }
 )
 

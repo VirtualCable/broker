@@ -42,7 +42,7 @@ def _curated_resource(entry: HandlerInventoryEntry) -> ResourceDefinition | None
             name="version",
             title="UDS version",
             description="The running UDS version and build information.",
-            access="Available to an authenticated UDS user.",
+            access="Available to authenticated staff through the MCP endpoint (STAFF).",
             returns="The UDS version and build metadata.",
             target=RestTarget(UDSVersion, "version"),
         )

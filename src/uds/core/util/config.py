@@ -489,7 +489,11 @@ class GlobalConfig:
     )
     MCP_RATE_LIMIT: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "MCP Rate Limit",
-        "240",
+        # High by design: the only identities that can reach the endpoint
+        # are staff/admins (the MCP surface requires STAFF), and agent
+        # sessions paginate through many tools. Notifications consume the
+        # same budget, so it must be generous.
+        "600",
         type=Config.FieldType.NUMERIC,
         help=_("Maximum MCP requests per user and minute. 0 means unlimited"),
     )

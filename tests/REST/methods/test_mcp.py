@@ -8,6 +8,7 @@ import json
 import typing
 from unittest import mock
 
+from uds.core.exceptions import rest as rest_exceptions
 from uds.core.util.config import GlobalConfig
 from uds.mcp import redact
 
@@ -58,6 +59,27 @@ class MCPRPCTest(rest.test.RESTTestCase):
         self.assertEqual(third["id"], 3)
         self.assertEqual(third["error"]["code"], -32000)
         self.assertIn("Too many MCP requests", third["error"]["message"])
+
+    def test_endpoint_requires_staff(self) -> None:
+        """A non-staff identity cannot reach the MCP surface at all."""
+        self.login_with_api_token(user=self.plain_users[0])
+        response = self.client.rest_post(
+            "mcp", data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"}).encode("utf-8")
+        )
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test_notifications_consume_rate_budget(self) -> None:
+        """Fire-and-forget traffic does not bypass the per-user rate limit."""
+        GlobalConfig.MCP_RATE_LIMIT.set("2")
+        for _ in range(2):
+            response = self.client.rest_post(
+                "mcp", data=json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}).encode("utf-8")
+            )
+            self.assertEqual(response.status_code, 202, response.content)
+        # The notifications spent the budget: the next request is refused.
+        third = self._post_jsonrpc({"jsonrpc": "2.0", "id": 9, "method": "ping"})
+        self.assertIn("error", third)
+        self.assertEqual(third["error"]["code"], -32000)
 
     def test_tool_calls_are_audited(self) -> None:
         """Successful and failed tool calls are recorded in the audit log."""
@@ -319,16 +341,22 @@ class MCPRPCTest(rest.test.RESTTestCase):
         self.assertIn("list_nonexistent", response["error"]["message"])
 
     def test_tools_call_access_denied_is_server_error(self) -> None:
-        """A user without the handler role gets ``-32000``, not invalid params."""
-        self.login_with_api_token(user=self.plain_users[0])
-        response = self._post_jsonrpc(
-            {
-                "jsonrpc": "2.0",
-                "id": 25,
-                "method": "tools/call",
-                "params": {"name": "list_authenticators", "arguments": {}},
-            }
-        )
+        """A permission error inside a tool is ``-32000``, not invalid params.
+
+        Non-staff identities are rejected at the HTTP boundary (403) before
+        any JSON-RPC, so the envelope is exercised by forcing the core to
+        deny an operation for an authenticated staff user.
+        """
+        denied = mock.AsyncMock(side_effect=rest_exceptions.AccessDenied())
+        with mock.patch("uds.REST.methods.mcp.MCPServerCore.call_tool", new=denied):
+            response = self._post_jsonrpc(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 25,
+                    "method": "tools/call",
+                    "params": {"name": "list_authenticators", "arguments": {}},
+                }
+            )
         self.assertIn("error", response)
         self.assertEqual(response["id"], 25)
         self.assertEqual(response["error"]["code"], -32000)
@@ -452,16 +480,22 @@ class MCPRestEquivalenceTest(rest.test.RESTTestCase):
         self.assertLessEqual(len(mcp_items), 2)
 
     def test_resources_read_access_denied_is_jsonrpc_error(self) -> None:
-        """A permission error stays a JSON-RPC envelope instead of a REST 403."""
-        self.login_with_api_token(user=self.plain_users[0])
-        response = self._post_jsonrpc(
-            {
-                "jsonrpc": "2.0",
-                "id": 27,
-                "method": "resources/read",
-                "params": {"uri": "uds://system/overview"},
-            }
-        )
+        """A permission error stays a JSON-RPC envelope instead of a REST 403.
+
+        Non-staff identities never reach JSON-RPC (HTTP 403 at the door), so
+        the envelope is exercised by forcing the core to deny a read for an
+        authenticated staff user.
+        """
+        denied = mock.AsyncMock(side_effect=rest_exceptions.AccessDenied())
+        with mock.patch("uds.REST.methods.mcp.MCPServerCore.read_resource", new=denied):
+            response = self._post_jsonrpc(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 27,
+                    "method": "resources/read",
+                    "params": {"uri": "uds://system/overview"},
+                }
+            )
         self.assertIn("error", response)
         self.assertEqual(response["id"], 27)
         self.assertEqual(response["error"]["code"], -32000)
