@@ -2,12 +2,16 @@
 
 The skill bundle is regenerated on every request from the curated
 catalog so the source of truth is the broker itself, not a manually
-curated artifact. Only ``ROLE.STAFF`` and above may download the bundle
-to limit exposure of the MCP endpoint metadata.
+curated artifact. The bundle is **server-specific**: the absolute URL of
+the MCP endpoint is derived from the live request, so the downloaded
+configuration is ready to use. Only ``ROLE.STAFF`` and above may
+download the bundle to limit exposure of the MCP endpoint metadata.
 """
 
 import logging
 import typing
+
+from django.urls import reverse
 
 from uds.core import consts, types
 from uds.REST import Handler
@@ -48,7 +52,7 @@ class Skill(Handler):
         if len(args) != 1 or args[0] != "mcp":
             raise rest_exceptions.NotFound(f"Unknown skill: {args}")
 
-        builder = SkillBuilder()
+        builder = SkillBuilder(mcp_url=self._mcp_endpoint_url())
         bundle = builder.build()
         logger.debug(
             "Built MCP skill bundle: %s (%d bytes, sha256=%s)",
@@ -57,3 +61,13 @@ class Skill(Handler):
             bundle.sha256,
         )
         return bundle.to_download_envelope()
+
+    def _mcp_endpoint_url(self) -> str:
+        """Return the absolute URL of the MCP endpoint for this broker.
+
+        ``build_absolute_uri`` derives scheme and host from the request,
+        honouring Django's proxy settings (``SECURE_PROXY_SSL_HEADER``,
+        ``USE_X_FORWARDED_HOST``), so the bundled URL matches whatever
+        the client actually used to reach this broker.
+        """
+        return self._request.build_absolute_uri(reverse("REST", args=("mcp",)))

@@ -13,13 +13,15 @@ This module provides a thin handler that:
 * recognises the JSON-RPC envelope (``jsonrpc``, ``id``, ``method``,
   ``params``);
 * responds to ``initialize`` with the server's identity and capabilities;
-* returns the standard JSON-RPC ``-32601 Method not found`` for unknown
-  methods, instead of a generic HTTP 400.
-
-The real MCP method handlers (``tools/list``, ``tools/call``,
-``resources/list``, ``resources/read``) are wired in a follow-up once the
-catalog lives in ``uds.mcp``. This file keeps the HTTP contract stable so
-that future iterations can plug the SDK without breaking clients.
+* dispatches ``tools/list``, ``tools/call``, ``resources/list`` and
+  ``resources/read`` to :class:`uds.mcp.MCPServerCore`, backed by the
+  process-wide catalog built from the REST handler inventory;
+* negotiates the MCP protocol version in ``initialize`` and acknowledges
+  JSON-RPC notifications (messages without ``id``) with an empty
+  ``202 Accepted``, as the Streamable HTTP transport prescribes;
+* translates domain errors into JSON-RPC error envelopes that echo the
+  request ``id``, and returns the standard ``-32601 Method not found``
+  for unknown methods, instead of a generic HTTP 400.
 """
 
 import logging
@@ -27,22 +29,45 @@ import typing
 
 import mcp.types
 from asgiref.sync import async_to_sync
+from django import http
 
 from uds.core import consts
 from uds.core.exceptions import rest as rest_exceptions
 from uds.REST import Handler
-from uds.mcp import MCPServerCore, default_catalog_for_request
+from uds.mcp import MCPServerCore, get_catalog
 
 
 logger = logging.getLogger(__name__)
 
-# Protocol version reported to clients during the ``initialize`` handshake.
-# Matches the MCP 2026-07-28 revision we target.
-_MCP_PROTOCOL_VERSION: typing.Final[str] = "2026-07-28"
+# Latest protocol version we speak, taken from the SDK so the two never
+# drift apart.
+_MCP_PROTOCOL_VERSION: typing.Final[str] = mcp.types.LATEST_PROTOCOL_VERSION
+
+# Protocol revisions the server can speak. The surface we implement
+# (initialize/ping/tools/resources over JSON-RPC) is identical in both;
+# clients asking for anything else get the latest and decide whether to
+# keep going, as the MCP specification prescribes.
+_SUPPORTED_PROTOCOL_VERSIONS: typing.Final[frozenset[str]] = frozenset(
+    {
+        _MCP_PROTOCOL_VERSION,
+        "2025-06-18",
+    }
+)
 
 # Server identity reported during the ``initialize`` handshake.
 _MCP_SERVER_NAME: typing.Final[str] = "UDS"
 _MCP_SERVER_VERSION: typing.Final[str] = "0.1.0"
+
+# JSON-RPC 2.0 error codes used by this endpoint.
+_JSONRPC_INVALID_REQUEST: typing.Final[int] = -32600
+_JSONRPC_METHOD_NOT_FOUND: typing.Final[int] = -32601
+_JSONRPC_INVALID_PARAMS: typing.Final[int] = -32602
+
+# Server-defined error codes reserved by the MCP specification.
+# ``-32000`` is the generic server error slot; ``-32002`` means
+# "Resource not found" for ``resources/read``.
+_MCP_SERVER_ERROR: typing.Final[int] = -32000
+_MCP_RESOURCE_NOT_FOUND: typing.Final[int] = -32002
 
 # After ``self._params`` the structure is opaque to pyright; cast helpers
 # keep the rest of the module clean of repeated ``cast()`` calls.
@@ -70,22 +95,42 @@ class MCP(Handler):
 
     ROLE: typing.ClassVar[consts.Role] = consts.Role.USER
 
-    def post(self) -> _JsonObject:
-        """Process a single JSON-RPC request and return the JSON-RPC response.
+    def post(self) -> _JsonObject | http.HttpResponse:
+        """Process a single JSON-RPC message and return its JSON-RPC response.
 
         The REST dispatcher has already decoded the JSON body into
         ``self._params`` by the time we get here, so we never have to
         read or parse ``self._request.body`` again. If the body could
         not be parsed, the dispatcher returns 400 before invoking us,
         which is the right behaviour.
+
+        JSON-RPC notifications (a message without ``id``, such as
+        ``notifications/initialized``) get no response body: per the
+        MCP Streamable HTTP transport they are acknowledged with an
+        empty ``202 Accepted``. Domain errors raised while serving a
+        JSON-RPC request are always translated into a JSON-RPC error
+        envelope echoing the request ``id``; they never leak as plain
+        REST error responses.
         """
+        # The ``_params`` annotation says dict, but the dispatcher stores
+        # whatever the JSON body decoded to, so the runtime check matters.
+        if not isinstance(self._params, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+            # JSON-RPC batches and other non-object bodies are not
+            # supported; answer at the protocol level instead of crashing.
+            return self._jsonrpc_error(None, _JSONRPC_INVALID_REQUEST, "JSON-RPC body must be a single object")
+
         params: _JsonObject = self._params
+
+        if "id" not in params:
+            # A message without ``id`` is a notification: no response is
+            # allowed, acknowledge with 202 and an empty body.
+            return http.HttpResponse(status=202)
 
         method_obj: typing.Any = params.get("method")
         request_id: typing.Any = params.get("id")
 
         if not isinstance(method_obj, str):
-            return self._jsonrpc_error(request_id, -32600, "Missing JSON-RPC method")
+            return self._jsonrpc_error(request_id, _JSONRPC_INVALID_REQUEST, "Missing JSON-RPC method")
         method = method_obj
 
         if method == "initialize":
@@ -95,16 +140,33 @@ class MCP(Handler):
             return {"jsonrpc": "2.0", "id": request_id, "result": {}}
 
         if method == "resources/list":
-            result = async_to_sync(self._mcp_server().list_resources)(None, None)
+            try:
+                list_params = mcp.types.PaginatedRequestParams.model_validate(params.get("params") or {})
+                result = async_to_sync(self._mcp_server().list_resources)(None, list_params)
+            except ValueError as exc:
+                return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
             return self._model_response(request_id, result)
 
         if method == "resources/read":
-            read_params = mcp.types.ReadResourceRequestParams.model_validate(params.get("params") or {})
-            result = async_to_sync(self._mcp_server().read_resource)(None, read_params)
+            try:
+                read_params = mcp.types.ReadResourceRequestParams.model_validate(params.get("params") or {})
+            except ValueError as exc:
+                return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
+            try:
+                result = async_to_sync(self._mcp_server().read_resource)(None, read_params)
+            except rest_exceptions.HandlerError as exc:
+                code, message = self._map_handler_error(exc, not_found_code=_MCP_RESOURCE_NOT_FOUND)
+                return self._jsonrpc_error(request_id, code, message)
+            except ValueError as exc:
+                return self._jsonrpc_error(request_id, _MCP_RESOURCE_NOT_FOUND, str(exc))
             return self._model_response(request_id, result)
 
         if method == "tools/list":
-            result = async_to_sync(self._mcp_server().list_tools)(None, None)
+            try:
+                list_params = mcp.types.PaginatedRequestParams.model_validate(params.get("params") or {})
+                result = async_to_sync(self._mcp_server().list_tools)(None, list_params)
+            except ValueError as exc:
+                return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
             return self._model_response(request_id, result)
 
         if method == "tools/call":
@@ -112,17 +174,17 @@ class MCP(Handler):
             try:
                 result = async_to_sync(self._mcp_server().call_tool)(None, call_params)
             except rest_exceptions.HandlerError as exc:
-                # REST-domain errors (item not found, access denied, invalid
-                # request) surface as JSON-RPC errors with a readable message
-                # instead of leaking as a transport-level failure.
-                return self._jsonrpc_error(call_params.name, -32602, str(exc) or exc.__class__.__name__)
+                code, message = self._map_handler_error(exc, not_found_code=_JSONRPC_INVALID_PARAMS)
+                return self._jsonrpc_error(request_id, code, message)
             except ValueError as exc:
-                return self._jsonrpc_error(call_params.name, -32602, str(exc))
+                # Unknown tool names are an ``invalid params`` error per
+                # the MCP ``tools/call`` contract.
+                return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
             return self._model_response(request_id, result)
 
         return self._jsonrpc_error(
             request_id,
-            -32601,
+            _JSONRPC_METHOD_NOT_FOUND,
             f"Method not implemented: {method}",
         )
 
@@ -130,8 +192,35 @@ class MCP(Handler):
     # Internal helpers
     # ------------------------------------------------------------------
     def _mcp_server(self) -> MCPServerCore:
-        """Build the catalog-backed MCP core for the current request."""
-        return MCPServerCore(default_catalog_for_request(self._request), request=self._request)
+        """Build the catalog-backed MCP core for the current request.
+
+        The catalog itself is process-wide (the REST tree does not
+        change at runtime); only the live HTTP request is per-call.
+        """
+        return MCPServerCore(get_catalog(), request=self._request)
+
+    @staticmethod
+    def _map_handler_error(
+        exc: rest_exceptions.HandlerError,
+        *,
+        not_found_code: int,
+    ) -> tuple[int, str]:
+        """Return the JSON-RPC error code and message for a REST error.
+
+        Permission problems are server errors, not bad arguments, so
+        ``AccessDenied`` maps to the MCP server error slot. Argument
+        validation failures (``RequestError``) and unknown items
+        (``NotFound``) map to ``invalid params`` for tools; callers pass
+        the code a ``NotFound`` should produce in their method context
+        (``-32002`` "Resource not found" for ``resources/read``).
+        """
+        if isinstance(exc, rest_exceptions.AccessDenied):
+            return _MCP_SERVER_ERROR, "Access denied"
+        if isinstance(exc, rest_exceptions.NotFound):
+            return not_found_code, str(exc) or "Not found"
+        if isinstance(exc, rest_exceptions.RequestError):
+            return _JSONRPC_INVALID_PARAMS, str(exc) or "Invalid arguments"
+        return _MCP_SERVER_ERROR, str(exc) or exc.__class__.__name__
 
     @staticmethod
     def _model_response(request_id: typing.Any, result: typing.Any) -> _JsonObject:
@@ -143,33 +232,38 @@ class MCP(Handler):
         message: _JsonObject,
         request_id: typing.Any,
     ) -> _JsonObject:
-        """Respond to the JSON-RPC ``initialize`` handshake."""
+        """Respond to the JSON-RPC ``initialize`` handshake.
+
+        Negotiates the protocol version per the MCP specification: if the
+        client requests a revision we support, we answer with that exact
+        revision; otherwise we answer with our latest and let the client
+        decide whether to continue.
+        """
         raw_params: typing.Any = message.get("params") or {}
-        client_protocol: str | None = None
+        requested_protocol: str | None = None
         if isinstance(raw_params, dict):
             params_dict: dict[str, typing.Any] = typing.cast(dict[str, typing.Any], raw_params)
             raw_protocol: typing.Any = params_dict.get("protocolVersion")
             if isinstance(raw_protocol, str):
-                client_protocol = raw_protocol
+                requested_protocol = raw_protocol
+
+        negotiated = (
+            requested_protocol
+            if requested_protocol is not None and requested_protocol in _SUPPORTED_PROTOCOL_VERSIONS
+            else _MCP_PROTOCOL_VERSION
+        )
 
         return {
             "jsonrpc": "2.0",
             "id": request_id,
             "result": {
-                "protocolVersion": _MCP_PROTOCOL_VERSION,
+                "protocolVersion": negotiated,
                 "serverInfo": {"name": _MCP_SERVER_NAME, "version": _MCP_SERVER_VERSION},
                 "capabilities": {
-                    # Tools and resources become available once the
-                    # MCP catalog is wired in a follow-up commit.
                     "tools": {},
                     "resources": {},
                 },
-                # Echo the negotiated protocol when the client asks for a
-                # known one; otherwise stick to the protocol version we
-                # speak. The MCP spec expects clients to handle either.
-                "instructions": (
-                    f"Negotiated MCP protocol {client_protocol}" if client_protocol else "UDS MCP server ready"
-                ),
+                "instructions": f"UDS MCP server ready (protocol {negotiated})",
             },
         }
 

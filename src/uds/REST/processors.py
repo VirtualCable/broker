@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -49,11 +48,17 @@ from .utils import to_incremental_json
 logger = logging.getLogger(__name__)
 
 
-def _sanitize_params(params: collections.abc.Mapping[str, typing.Any] | None) -> dict[str, typing.Any]:
-    """Return a copy of the parameters without credential fields, safe for logging."""
-    if not params:
+def _sanitize_params(params: typing.Any) -> dict[str, typing.Any]:
+    """Return a copy of the parameters without credential fields, safe for logging.
+
+    ``params`` is whatever the request body decoded to. Callers type it as
+    a mapping, but nothing enforces that at runtime (a JSON array body is
+    a list), so guard instead of crashing the request from debug logging.
+    """
+    if not isinstance(params, collections.abc.Mapping):
         return {}
-    return {k: v for k, v in params.items() if k not in ("password", "passwd", "token", "secret", "scrambler")}
+    typed_params = typing.cast("collections.abc.Mapping[str, typing.Any]", params)
+    return {k: v for k, v in typed_params.items() if k not in ("password", "passwd", "token", "secret", "scrambler")}
 
 
 if typing.TYPE_CHECKING:

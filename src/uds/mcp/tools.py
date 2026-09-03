@@ -3,9 +3,11 @@
 Built on top of the :mod:`uds.REST.inventory` walker so the same source
 of truth feeds ``genapi``, the MCP catalog and the downloadable skill.
 The factory reads the inventory and produces a paginated ``list_*`` tool
-per collection handler (master and detail), with a consistent OData input
-shape. Detail collections additionally require the parent ``uuid``
-argument so the tool can scope the query to a concrete parent item.
+per model collection handler (``ModelHandler`` and ``DetailHandler``
+descendants only; plain ``Handler`` collections are not published), with
+a consistent OData input shape. Detail collections additionally require
+the parent ``uuid`` argument so the tool can scope the query to a
+concrete parent item.
 """
 
 import collections.abc
@@ -16,12 +18,9 @@ from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
 
 from .catalog import ToolDefinition
-from .rest_proxy import RestTarget, RestProxy
+from .rest_proxy import RestProxy, RestTarget
 
 
-# Tools which already have a custom MCP executor do not need a generated
-# entry. The exclusion is by exact tool name to keep the surface
-# predictable and to avoid duplicates.
 def _humanize(token: str) -> str:
     """Convert a snake_case token to ``Title Case`` for tool titles."""
     parts = token.replace("_", " ").split()
@@ -119,18 +118,9 @@ def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
 
     async def executor(
         arguments: dict[str, typing.Any],
+        request: typing.Any = None,
     ) -> list[typing.Any]:
-        proxy = RestProxy()
-        return await proxy.execute_collection(target, None, arguments)
-
-    # Expose the handler class and the resolved REST path so callers
-    # that want to bind a live request (like ``default_catalog_for_request``)
-    # can rebuild the same ``RestTarget`` without parsing the tool name.
-    executor._uds_handler_class = handler  # type: ignore[attr-defined]
-    executor._uds_handler_path = path  # type: ignore[attr-defined]
-    if entry.parent is not None:
-        executor._uds_parent_class = parent_handler  # type: ignore[attr-defined]
-        executor._uds_parent_path = entry.parent.path  # type: ignore[attr-defined]
+        return await RestProxy().execute_collection(target, request, arguments)
 
     schema = _list_input_schema(parent_desc)
     title_base = tool_name.removeprefix("list_")
@@ -156,15 +146,22 @@ def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
 
 
 def generated_list_tools() -> collections.abc.Iterable[ToolDefinition]:
-    """Yield a ``list_*`` tool for every collection-shaped REST handler.
+    """Yield a ``list_*`` tool for every model-shaped REST collection handler.
 
-    The iteration is driven by :func:`collection_handlers` so any handler
-    registered after the catalog loads is still picked up. Tool names are
-    derived from the handler's full path, so master and detail collections
-    never collide.
+    Only ``ModelHandler`` and ``DetailHandler`` descendants are published;
+    plain ``Handler`` collections are excluded so the MCP surface stays
+    within the model CRUD/OData contract. Tool names are derived from the
+    handler's full path, so master and detail collections never collide.
     """
     seen: set[str] = set()
     for entry in collection_handlers():
+        if not issubclass(entry.handler, ModelHandler | DetailHandler):
+            # Plain ``Handler`` collections (e.g. reports) are outside the
+            # model CRUD/OData contract the generated tools rely on, so
+            # they are never auto-published. Surfaces like reports will be
+            # exposed later through hand-curated, purpose-specific tools
+            # in the curated catalog, not through generic list tools.
+            continue
         tool = _generate_list_tool(entry)
         if tool is None or tool.name in seen:
             continue

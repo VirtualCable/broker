@@ -5,12 +5,19 @@ downloadable skill so an external agent (CLI, IDE assistant, browser
 plugin) can connect to the UDS REST/MCP endpoint without hand-writing
 the configuration.
 
+The bundle is **server-specific**: the REST handler passes the absolute
+URL of this broker's MCP endpoint, so ``mcp_config.json`` and the
+instructions ship ready to use. The only value the user must supply is
+the API token, referenced through the ``UDS_TOKEN`` environment
+variable (the raw token is never stored server-side, so it cannot be
+baked into the bundle).
+
 The generator writes an in-memory ``.tar.gz`` containing:
 
 - ``SKILL.md`` — human and machine readable description derived from the
   curated catalog and the inventory walker.
 - ``mcp_config.json`` — entry-point configuration for MCP-aware clients.
-- ``README.md`` — static installation instructions.
+- ``README.md`` — installation instructions.
 
 The bundle is built on demand by :class:`SkillHandler` in the REST layer.
 This module keeps the bundling logic out of the request handler so the
@@ -37,6 +44,10 @@ _SKILL_NAME: typing.Final[str] = "uds-mcp"
 _SKILL_VERSION: typing.Final[str] = "0.1.0"
 _SKILL_MIME: typing.Final[str] = "application/gzip"
 
+# Environment variable the client resolves to obtain the ``uat-...`` API
+# token. Kept short on purpose: it is the only value the user configures.
+_TOKEN_ENV: typing.Final[str] = "UDS_TOKEN"
+
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class SkillBundle:
@@ -53,8 +64,9 @@ class SkillBundle:
 
         The frontend uses this to either trigger a download via
         ``data:`` URIs or a manual file-save flow. The envelope is
-        deliberately compact: the bundle is generated server-side and
-        cached, so it does not need to be fetched on every UI render.
+        deliberately compact; the bundle is regenerated from the live
+        catalog on every request, so it always matches the running
+        broker.
         """
         import base64
 
@@ -69,9 +81,10 @@ class SkillBundle:
 
 
 class SkillBuilder:
-    """Build an MCP skill bundle from the current UDS catalog."""
+    """Build a server-specific MCP skill bundle from the current UDS catalog."""
 
-    def __init__(self, catalog: Catalog | None = None) -> None:
+    def __init__(self, mcp_url: str, catalog: Catalog | None = None) -> None:
+        self._mcp_url = mcp_url.rstrip("/")
         self._catalog: Catalog = catalog or build_catalog()
 
     def build(self) -> SkillBundle:
@@ -110,6 +123,9 @@ class SkillBuilder:
             "UDS exposes a Model Context Protocol surface backed by its",
             "existing REST API. The bundle describes what the agent can do",
             "and how to connect.",
+            "",
+            f"- Endpoint: `{self._mcp_url}`",
+            f"- Authentication: `Authorization: Bearer ${{{_TOKEN_ENV}}}`",
             "",
             "## What you can access",
             "",
@@ -170,9 +186,9 @@ class SkillBuilder:
             "mcpServers": {
                 "uds": {
                     "type": "http",
-                    "url": "<set UDDS_MCP_URL>/uds/rest/mcp",
+                    "url": self._mcp_url,
                     "headers": {
-                        "Authorization": "Bearer ${UDDS_MCP_TOKEN}",
+                        "Authorization": f"Bearer ${{{_TOKEN_ENV}}}",
                     },
                 },
             },
@@ -188,24 +204,24 @@ class SkillBuilder:
         """Render ``README.md`` with installation instructions."""
         return (
             "# UDS MCP skill\n\n"
+            f"This bundle is preconfigured for `{self._mcp_url}`.\n"
+            "No server URL needs to be edited.\n\n"
             "## Install\n\n"
             "1. Save `mcp_config.json` into your MCP-aware client's skills\n"
             "   directory.\n"
-            "2. Export the environment variables referenced by the config:\n"
-            "   - `UDDS_MCP_URL` — base URL of the UDS REST API\n"
-            "     (for example `https://uds.example.com`).\n"
-            "   - `UDDS_MCP_TOKEN` — a `uat-...` user API token issued by the\n"
-            "     administrator.\n"
+            f"2. Export the `{_TOKEN_ENV}` environment variable with a\n"
+            "   `uat-...` user API token issued by the administrator:\n\n"
+            f"       export {_TOKEN_ENV}=uat-...\n\n"
             "3. Restart the client so it picks up the new skill.\n\n"
             "## Authentication\n\n"
-            "The client must send `Authorization: Bearer <uat-token>` on\n"
+            f"The client sends `Authorization: Bearer ${{{_TOKEN_ENV}}}` on\n"
             "every request. The token is mapped to the same UDS user that\n"
             "would log in interactively, so the usual REST permissions\n"
             "apply on every call.\n\n"
             "## Update\n\n"
-            f"Download the bundle matching UDS `{_SKILL_VERSION}` again\n"
-            "and replace the previous files. The bundle is regenerated on\n"
-            "every request, so a single source of truth is the broker\n"
+            f"Download the bundle matching skill version `{_SKILL_VERSION}`\n"
+            "again and replace the previous files. The bundle is regenerated\n"
+            "on every request, so a single source of truth is the broker\n"
             "itself.\n"
         )
 

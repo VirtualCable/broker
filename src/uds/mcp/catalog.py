@@ -8,7 +8,7 @@ from .rest_proxy import RestTarget
 
 
 ToolExecutor: typing.TypeAlias = collections.abc.Callable[
-    [dict[str, typing.Any]], collections.abc.Awaitable[typing.Any]
+    [dict[str, typing.Any], typing.Any], collections.abc.Awaitable[typing.Any]
 ]
 ResourceReader: typing.TypeAlias = collections.abc.Callable[[str], collections.abc.Awaitable[typing.Any]]
 

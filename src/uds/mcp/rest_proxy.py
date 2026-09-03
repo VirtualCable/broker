@@ -11,14 +11,15 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.core.util import permissions
 
 
+# ``$``-prefixed keys forwarded verbatim to the REST handler. Keep this
+# in sync with what ``ODataParams.from_dict`` actually consumes; unsupported
+# keys would be silently ignored downstream.
 _ODATA_KEYS: typing.Final[tuple[str, ...]] = (
     "$filter",
     "$orderby",
     "$top",
     "$skip",
     "$select",
-    "$expand",
-    "$count",
 )
 
 

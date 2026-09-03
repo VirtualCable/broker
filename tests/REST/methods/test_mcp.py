@@ -46,6 +46,52 @@ class MCPRPCTest(rest.test.RESTTestCase):
         self.assertEqual(result["capabilities"], {"tools": {}, "resources": {}})
         self.assertIn("instructions", result)
 
+    def test_initialize_negotiates_supported_version(self) -> None:
+        """A supported client version is echoed back verbatim."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "initialize",
+                "params": {"protocolVersion": "2025-06-18", "capabilities": {}},
+            }
+        )
+        self.assertEqual(response["result"]["protocolVersion"], "2025-06-18")
+
+    def test_initialize_falls_back_to_latest_version(self) -> None:
+        """An unknown client version gets our latest supported revision."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "initialize",
+                "params": {"protocolVersion": "2000-01-01", "capabilities": {}},
+            }
+        )
+        self.assertEqual(response["result"]["protocolVersion"], "2026-07-28")
+
+    def test_notification_gets_202_without_body(self) -> None:
+        """JSON-RPC notifications (no ``id``) are acknowledged, not answered."""
+        response = self.client.rest_post(
+            "mcp",
+            data=json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}).encode("utf-8"),
+        )
+        self.assertEqual(response.status_code, 202, response.content)
+        self.assertEqual(response.content, b"")
+
+    def test_non_object_body_is_rejected_by_rest_layer(self) -> None:
+        """A JSON array body (JSON-RPC batch) dies at the REST layer as 400.
+
+        Like malformed JSON, a non-object body never reaches the MCP
+        handler: the REST processors contract requires JSON object bodies.
+        The MCP-level dict guard stays as defense in depth.
+        """
+        response = self.client.rest_post("mcp", data=json.dumps([{"jsonrpc": "2.0", "id": 1}]).encode("utf-8"))
+        self.assertEqual(response.status_code, 400, response.content)
+        body = typing.cast(_JsonRpcObject, json.loads(response.content))
+        # REST-level error, not JSON-RPC: no ``jsonrpc`` field.
+        self.assertNotIn("jsonrpc", body)
+
     def test_ping_returns_empty_object(self) -> None:
         """``ping`` echoes the JSON-RPC envelope with an empty result."""
         response = self._post_jsonrpc({"jsonrpc": "2.0", "id": "abc", "method": "ping"})
@@ -126,11 +172,20 @@ class MCPRPCTest(rest.test.RESTTestCase):
     def test_tools_list_exposes_master_and_detail_collections(self) -> None:
         """``tools/list`` includes master and parent-scoped detail tools."""
         response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 20, "method": "tools/list"})
-        tools = {tool["name"]: tool for tool in response["result"]["tools"]}
+        tools: dict[str, dict[str, typing.Any]] = {
+            tool["name"]: tool for tool in typing.cast("list[dict[str, typing.Any]]", response["result"]["tools"])
+        }
         self.assertIn("list_authenticators", tools)
         detail = tools.get("list_authenticators_users")
         self.assertIsNotNone(detail, "detail collection tool missing")
-        self.assertIn("parent_uuid", detail["inputSchema"]["properties"])
+        if detail is not None:
+            self.assertIn("parent_uuid", detail["inputSchema"]["properties"])
+
+    def test_tools_list_only_publishes_model_collections(self) -> None:
+        """Plain ``Handler`` collections (e.g. reports) are not published."""
+        response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 23, "method": "tools/list"})
+        tools = {tool["name"] for tool in typing.cast("list[dict[str, typing.Any]]", response["result"]["tools"])}
+        self.assertNotIn("list_reports", tools)
 
     def test_tools_call_detail_collection_lists_parent_users(self) -> None:
         """``tools/call`` on a detail tool lists the parent's items."""
@@ -166,4 +221,112 @@ class MCPRPCTest(rest.test.RESTTestCase):
             }
         )
         self.assertIn("error", response)
+        self.assertEqual(response["id"], 22, "error responses must echo the request id")
+        self.assertEqual(response["error"]["code"], -32602)
         self.assertIn("Parent item not found", response["error"]["message"])
+
+    def test_tools_call_unknown_tool_is_invalid_params(self) -> None:
+        """An unknown tool name is an ``invalid params`` error echoing the id."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 24,
+                "method": "tools/call",
+                "params": {"name": "list_nonexistent", "arguments": {}},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["id"], 24)
+        self.assertEqual(response["error"]["code"], -32602)
+        self.assertIn("list_nonexistent", response["error"]["message"])
+
+    def test_tools_call_access_denied_is_server_error(self) -> None:
+        """A user without the handler role gets ``-32000``, not invalid params."""
+        self.login_with_api_token(user=self.plain_users[0])
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 25,
+                "method": "tools/call",
+                "params": {"name": "list_authenticators", "arguments": {}},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["id"], 25)
+        self.assertEqual(response["error"]["code"], -32000)
+        self.assertEqual(response["error"]["message"], "Access denied")
+
+    def test_tools_list_invalid_cursor_is_invalid_params(self) -> None:
+        """A malformed pagination cursor surfaces as ``-32602``."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 28,
+                "method": "tools/list",
+                "params": {"cursor": "%%% not base64 %%%"},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["id"], 28)
+        self.assertEqual(response["error"]["code"], -32602)
+        self.assertIn("cursor", response["error"]["message"].lower())
+
+    def test_tools_call_rejects_argument_of_wrong_type(self) -> None:
+        """Arguments are validated against the published input schema."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 29,
+                "method": "tools/call",
+                "params": {"name": "list_authenticators", "arguments": {"top": "abc"}},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["id"], 29)
+        self.assertEqual(response["error"]["code"], -32602)
+        self.assertIn("top", response["error"]["message"])
+
+    def test_tools_call_rejects_unknown_argument(self) -> None:
+        """Arguments not present in the schema are rejected up front."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 30,
+                "method": "tools/call",
+                "params": {"name": "list_authenticators", "arguments": {"bogus": 1}},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["error"]["code"], -32602)
+        self.assertIn("bogus", response["error"]["message"])
+
+    def test_resources_read_unknown_uri_is_resource_not_found(self) -> None:
+        """An unknown resource URI returns ``-32002`` inside a JSON-RPC envelope."""
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 26,
+                "method": "resources/read",
+                "params": {"uri": "uds://nonexistent"},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["id"], 26)
+        self.assertEqual(response["error"]["code"], -32002)
+        self.assertIn("uds://nonexistent", response["error"]["message"])
+
+    def test_resources_read_access_denied_is_jsonrpc_error(self) -> None:
+        """A permission error stays a JSON-RPC envelope instead of a REST 403."""
+        self.login_with_api_token(user=self.plain_users[0])
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 27,
+                "method": "resources/read",
+                "params": {"uri": "uds://system/overview"},
+            }
+        )
+        self.assertIn("error", response)
+        self.assertEqual(response["id"], 27)
+        self.assertEqual(response["error"]["code"], -32000)
+        self.assertEqual(response["error"]["message"], "Access denied")
