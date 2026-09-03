@@ -139,6 +139,27 @@ def get_server_counters(
         raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
 
 
+def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
+    """Return providers whose 'server_group' field references the given UUID."""
+    usages: list[dict[str, str]] = []
+    for provider in models.Provider.objects.all():
+        try:
+            instance = provider.get_instance()
+        except Exception:
+            logger.warning(
+                "Cannot inspect provider %s while scanning server_group usages",
+                provider.uuid,
+                exc_info=True,
+            )
+            continue
+        field = getattr(instance, "server_group", None)
+        if field is None:
+            continue
+        if getattr(field, "value", None) == uuid:
+            usages.append({"uuid": provider.uuid, "name": provider.name, "type": provider.data_type})
+    return usages
+
+
 @dataclasses.dataclass
 class TokenItem(types.rest.BaseRestItem):
     id: str
@@ -623,6 +644,11 @@ class ServersGroups(ModelHandler[GroupItem]):
             True,
             description="Retrieve aggregate server statistics including counts by state, type, and resource usage",
         ),
+        types.rest.ModelCustomMethod(
+            "usages",
+            True,
+            description="List providers whose 'server_group' field points to this server group",
+        ),
     ]
     MODEL = models.ServerGroup
     FILTER: typing.ClassVar[dict[str, typing.Any] | None] = {
@@ -807,6 +833,16 @@ class ServersGroups(ModelHandler[GroupItem]):
             self.MODEL(), permissions.PermissionType.ALL, root=True
         )  # Must have write permissions to delete
 
+        usages = _providers_using_server_group(item.uuid)
+        if usages:
+            provider_names = ", ".join(u["name"] for u in usages)
+            logger.warning(
+                "Deleting ServerGroup %s (%s) still referenced by providers: %s",
+                item.uuid,
+                item.name,
+                provider_names,
+            )
+
         try:
             if item.type == types.servers.ServerType.UNMANAGED:
                 # Unmanaged has to remove ALSO the servers
@@ -836,3 +872,7 @@ class ServersGroups(ModelHandler[GroupItem]):
             }
             for s in ServerManager.manager().get_server_stats(item.servers.all())
         ]
+
+    def usages(self, item: "Model") -> list[dict[str, str]]:
+        item = ensure.is_instance(item, models.ServerGroup)
+        return _providers_using_server_group(item.uuid)
