@@ -14,7 +14,7 @@ def close_all_db_connections():
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: pytest.ExitCode) -> None:
-    """Al final de toda la suite, cerrar conexiones y forzar GC."""
+    """At the end of the test session, close connections and force GC."""
     try:
         from django.db import connections
 
@@ -25,4 +25,4 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: pytest.ExitCode) -
                 pass
     except ImportError:
         pass
-    gc.collect()
+    gc.collect()  # Force garbage collection to clean up any lingering objects
