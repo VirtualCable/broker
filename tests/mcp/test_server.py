@@ -1,5 +1,6 @@
 """Tests for the low-level MCP server adapter."""
 
+import json
 import unittest
 import typing
 from unittest import mock
@@ -54,6 +55,27 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result.structured_content, {"name": "service", "token": "REDACTED"})
         self.assertNotIn("secret", typing.cast(mcp.types.TextContent, result.content[0]).text)
+
+    async def test_call_tool_wraps_non_object_results_for_structured_content(self) -> None:
+        """``structuredContent`` must be a JSON object, so lists travel wrapped.
+
+        The official client validates the shape strictly (the field is
+        untyped on our side), and every ``list_*`` tool returns an item
+        list: it must arrive as ``{"items": [...]}`` while the text
+        payload keeps the raw list.
+        """
+        catalog = Catalog()
+
+        async def list_items(_arguments: dict[str, object], _request: typing.Any = None) -> list[dict[str, object]]:
+            return [{"id": 1}, {"id": 2}]
+
+        catalog.add_tool(ToolDefinition("listed", "Listed", "List items", {}, "users", "items", executor=list_items))
+        core = MCPServerCore(catalog)
+
+        result = await core.call_tool(None, mcp.types.CallToolRequestParams(name="listed"))
+
+        self.assertEqual(result.structured_content, {"items": [{"id": 1}, {"id": 2}]})
+        self.assertEqual(json.loads(typing.cast(mcp.types.TextContent, result.content[0]).text), [{"id": 1}, {"id": 2}])
 
     async def test_call_tool_forwards_request_to_executor(self) -> None:
         """The live HTTP request bound to the core reaches the executor."""

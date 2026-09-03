@@ -48,13 +48,20 @@ logger = logging.getLogger(__name__)
 _MCP_PROTOCOL_VERSION: typing.Final[str] = mcp.types.LATEST_PROTOCOL_VERSION
 
 # Protocol revisions the server can speak. The surface we implement
-# (initialize/ping/tools/resources over JSON-RPC) is identical in both;
-# clients asking for anything else get the latest and decide whether to
-# keep going, as the MCP specification prescribes.
+# (initialize/ping/tools/resources over JSON-RPC) is identical in all of
+# them, so the set mirrors the revisions the official SDK client accepts
+# at handshake time (``mcp.client.session.HANDSHAKE_PROTOCOL_VERSIONS``)
+# plus the latest spec revision exported by the package. A real client
+# asking for any of these gets its exact version echoed back; anything
+# else gets our latest and decides whether to keep going, as the MCP
+# specification prescribes.
 _SUPPORTED_PROTOCOL_VERSIONS: typing.Final[frozenset[str]] = frozenset(
     {
         _MCP_PROTOCOL_VERSION,
+        "2025-11-25",
         "2025-06-18",
+        "2025-03-26",
+        "2024-11-05",
     }
 )
 
@@ -78,6 +85,23 @@ _MCP_RESOURCE_NOT_FOUND: typing.Final[int] = -32002
 _JsonObject = dict[str, typing.Any]
 
 
+def _accepts_json(accept_header: str) -> bool:
+    """Return whether an ``Accept`` header value admits ``application/json``.
+
+    Implements the small part of RFC 9110 needed here: wildcard ranges
+    (``*/*``, ``application/*``) count as accepting JSON, and media type
+    parameters (``;q=...``) are ignored. The MCP Streamable HTTP transport
+    mandates that clients accept both ``application/json`` and
+    ``text/event-stream``; anything that rules out JSON cannot consume our
+    responses, so the caller answers ``406 Not Acceptable``.
+    """
+    for media_range in accept_header.split(","):
+        media_type = media_range.split(";", 1)[0].strip().lower()
+        if media_type in ("application/json", "application/*", "*/*"):
+            return True
+    return False
+
+
 class MCP(Handler):
     """Expose the UDS Model Context Protocol surface over REST.
 
@@ -85,11 +109,14 @@ class MCP(Handler):
     by the REST dispatcher because it inherits from :class:`Handler` and is
     placed under ``uds.REST.methods``.
 
-    The MCP transport is intentionally out of scope here: the HTTP layer
-    delivers a fully-formed JSON-RPC request and we answer with a fully-
-    formed JSON-RPC response. SSE streaming, session negotiation, and the
-    Streamable HTTP transport will be added in a follow-up once the
-    catalogue is wired in.
+    Verb contract, pinned by ``tests/mcp/test_live_client.py``: this handler
+    intentionally defines **only** ``post``. A GET (the Streamable HTTP
+    server-to-client SSE stream, which we do not offer) and a DELETE (session
+    termination, which we do not support because we are stateless) must always
+    fail with ``405 Method Not Allowed`` plus an ``Allow`` header listing
+    ``POST``. The dispatcher produces exactly that when the method is not
+    defined; the pinning test guards it against future dispatcher-wide
+    GET-to-POST compatibility bridges.
     """
 
     # Mount under ``/uds/rest/mcp`` using the default NAME (class name in
@@ -117,8 +144,19 @@ class MCP(Handler):
         request are always translated into a JSON-RPC error envelope
         echoing the request ``id``; they never leak as plain REST error
         responses.
+
+        Content negotiation follows the Streamable HTTP transport as
+        well: we only ever answer ``application/json``, so a client
+        whose ``Accept`` header explicitly rules out JSON gets the
+        standard ``406 Not Acceptable``. An absent ``Accept`` header is
+        accepted (HTTP treats it as "accepts anything"), which keeps
+        plain ``curl`` calls and the test client working.
         """
         self._ensure_enabled()
+
+        accept = self._request.headers.get("Accept")
+        if accept is not None and not _accepts_json(accept):
+            return http.HttpResponse(status=406)
 
         # The ``_params`` annotation says dict, but the dispatcher stores
         # whatever the JSON body decoded to, so the runtime check matters.

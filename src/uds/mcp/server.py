@@ -120,9 +120,23 @@ class MCPServerCore:
         # cleanly with a request-related error if it is missing.
         result = await tool.executor(params.arguments or {}, self.request)
         safe_result = redact(_json_safe(result))
+        # ``structuredContent`` must be a JSON object per the MCP schema,
+        # and the official client validates it strictly. The ``list_*``
+        # tools return item lists, so non-object results travel wrapped;
+        # the plain-JSON text payload keeps the raw shape for humans (and
+        # for the REST/MCP equivalence tests).
+        structured: dict[str, typing.Any]
+        if isinstance(safe_result, dict):
+            # ``isinstance`` narrows ``Any`` to ``dict[Unknown, Unknown]``;
+            # the cast keeps pyright informed about the key type.
+            structured = typing.cast(dict[str, typing.Any], safe_result)
+        elif isinstance(safe_result, list):
+            structured = {"items": safe_result}
+        else:
+            structured = {"value": safe_result}
         return mcp.types.CallToolResult(
             content=[mcp.types.TextContent(text=json.dumps(safe_result, default=str))],
-            structured_content=safe_result,
+            structured_content=structured,
         )
 
     async def list_resources(

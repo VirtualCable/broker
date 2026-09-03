@@ -119,6 +119,23 @@ class MCPRPCTest(rest.test.RESTTestCase):
         )
         self.assertEqual(response["result"]["protocolVersion"], "2025-06-18")
 
+    def test_initialize_echoes_current_sdk_handshake_version(self) -> None:
+        """The revision today's official SDK client handshakes with is echoed.
+
+        The client asks for ``2025-11-25`` and disconnects if the server
+        answers anything else (it only accepts its own handshake set), so
+        this pin keeps the broker compatible with real clients.
+        """
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 5,
+                "method": "initialize",
+                "params": {"protocolVersion": "2025-11-25", "capabilities": {}},
+            }
+        )
+        self.assertEqual(response["result"]["protocolVersion"], "2025-11-25")
+
     def test_initialize_falls_back_to_latest_version(self) -> None:
         """An unknown client version gets our latest supported revision."""
         response = self._post_jsonrpc(
