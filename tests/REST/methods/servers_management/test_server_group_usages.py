@@ -211,3 +211,66 @@ class ServerGroupUsagesTest(rest.test.RESTTestCase):
             self.assertEqual(response.status_code, 200, response.content)
         finally:
             logging.getLogger(logger_name).setLevel(before)
+
+
+class ServerGroupConstantContractTest(rest.test.RESTTestCase):
+    """Contract guard: the constant in ``servers_management.py`` must list
+    exactly the providers/services that carry a server-group field.
+
+    Walks every registered Provider and Service class, finds any field
+    whose label matches the label produced by ``fields.server_group_field()``,
+    and asserts the resulting set of type_types is exactly the one
+    declared in ``_SERVER_GROUP_FIELD_USAGES``. This catches drift: if a
+    new provider adds a server-group field, this test fails until the
+    constant is updated, and vice versa.
+    """
+
+    @staticmethod
+    def _server_group_label() -> str:
+        from uds.core.util import fields
+
+        # The canonical field; its label is the contract that ties the
+        # helper to the actual classes via introspection (no getattr on
+        # instances — see AGENTS.md).
+        canonical = fields.server_group_field()
+        return str(canonical.label)
+
+    @classmethod
+    def _type_types_with_server_group(cls) -> set[str]:
+        from uds.core import services as core_services
+        from uds.core.ui import gui
+
+        label = cls._server_group_label()
+        found: set[str] = set()
+
+        for provider_cls in core_services.factory().providers().values():
+            for value in vars(provider_cls).values():
+                if isinstance(value, gui.ChoiceField) and str(value.label) == label:
+                    found.add(provider_cls.type_type)
+                    break
+
+        for provider_cls in core_services.factory().providers().values():
+            for service_cls in provider_cls.get_provided_services():
+                for value in vars(service_cls).values():
+                    if isinstance(value, gui.ChoiceField) and str(value.label) == label:
+                        found.add(service_cls.type_type)
+                        break
+
+        return found
+
+    def test_constant_matches_every_registered_class_with_server_group_label(self) -> None:
+        from uds.REST.methods.servers_management import _SERVER_GROUP_FIELD_USAGES
+
+        declared = {t for _, t in _SERVER_GROUP_FIELD_USAGES}
+        found = self._type_types_with_server_group()
+
+        self.assertEqual(
+            declared,
+            found,
+            (
+                f"Mismatch between declared usages and registered classes. "
+                f"Declared: {sorted(declared)}. "
+                f"Found via label scan: {sorted(found)}. "
+                f"Add or remove the matching entry in _SERVER_GROUP_FIELD_USAGES."
+            ),
+        )
