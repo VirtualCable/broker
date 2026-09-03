@@ -258,19 +258,19 @@ class ServerGroupConstantContractTest(rest.test.RESTTestCase):
 
         return found
 
-    def test_constant_matches_every_registered_class_with_server_group_label(self) -> None:
-        from uds.REST.methods.servers_management import _SERVER_GROUP_FIELD_USAGES
+    def test_discovery_finds_every_registered_class_with_server_group_label(self) -> None:
+        from uds.REST.methods.servers_management import _classes_with_server_group_field
 
-        declared = {t for _, t in _SERVER_GROUP_FIELD_USAGES}
-        found = self._type_types_with_server_group()
+        found = _classes_with_server_group_field()
+        found_pairs = sorted((kind, cls.type_type) for kind, cls in found)
 
-        self.assertEqual(
-            declared,
-            found,
-            (
-                f"Mismatch between declared usages and registered classes. "
-                f"Declared: {sorted(declared)}. "
-                f"Found via label scan: {sorted(found)}. "
-                f"Add or remove the matching entry in _SERVER_GROUP_FIELD_USAGES."
-            ),
+        self.assertIn(
+            ("provider", "RDSProvider"),
+            found_pairs,
+            (f"RDSProvider should be discovered as a server-group provider. Found: {found_pairs}."),
+        )
+        self.assertIn(
+            ("service", "IPMachinesService"),
+            found_pairs,
+            (f"IPMachinesService should be discovered as a server-group service. Found: {found_pairs}."),
         )

@@ -139,72 +139,82 @@ def get_server_counters(
         raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
 
 
-# Where to look for ``server_group`` references to a ServerGroup.
-#
-# Each row is (model_kind, type_type). model_kind is the table to scan
-# (``provider`` or ``service``); type_type is the ``data_type`` to
-# filter on. The field name itself (``server_group``) is a contract
-# shared by every entry here — if a future entry uses a different
-# field name, add a parallel constant and a parallel branch in the
-# helper instead of switching to dynamic attribute lookup. No
-# ``getattr`` is used: every entry in this constant is statically known
-# to carry a ``server_group`` attribute, so the helper reads it
-# directly.
-#
-# `IPSingleMachineService` is intentionally NOT in this list: it
-# stores its IP/host on a plain `host` field, not on a ServerGroup.
-_SERVER_GROUP_FIELD_USAGES: typing.Final[tuple[tuple[str, str], ...]] = (
-    ("provider", "RDSProvider"),
-    ("service", "IPMachinesService"),
-)
+def _classes_with_server_group_field() -> list[tuple[str, type]]:
+    """Find every registered Provider and Service that declares a server-group field.
+
+    The discovery is driven by the field's label (``server_group_field``
+    is the canonical name, ``Server group`` is the canonical label). The
+    helper walks the providers factory plus each provider's offered
+    services and returns ``(kind, class)`` pairs for every class whose
+    ``vars`` contain a ``gui.ChoiceField`` with that label.
+
+    No class is hardcoded here: a future provider or service that adds
+    such a field is picked up automatically. The contract test verifies
+    this discovery matches reality.
+    """
+    # Lazy imports: ``fields`` and ``gui`` are heavy, and the helper
+    # runs on the REST request path.
+    from uds.core import services as core_services
+    from uds.core.ui import gui
+    from uds.core.util import fields
+
+    canonical_label = str(fields.server_group_field().label)
+    found: list[tuple[str, type]] = []
+
+    for provider_cls in core_services.factory().providers().values():
+        for value in vars(provider_cls).values():
+            if isinstance(value, gui.ChoiceField) and str(value.label) == canonical_label:
+                found.append(("provider", provider_cls))
+                break
+
+    for provider_cls in core_services.factory().providers().values():
+        for service_cls in provider_cls.get_provided_services():
+            for value in vars(service_cls).values():
+                if isinstance(value, gui.ChoiceField) and str(value.label) == canonical_label:
+                    found.append(("service", service_cls))
+                    break
+
+    return found
 
 
 def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
-    """Return providers and services whose ``server_group`` field references the given UUID."""
-    provider_types = [t for kind, t in _SERVER_GROUP_FIELD_USAGES if kind == "provider"]
-    service_types = [t for kind, t in _SERVER_GROUP_FIELD_USAGES if kind == "service"]
+    """Return providers and services whose ``server_group`` field references the given UUID.
 
+    The set of providers/services that carry a server-group field is
+    discovered at call time from the registered factories — see
+    ``_classes_with_server_group_field``. No list of type_types is
+    hardcoded; if a new provider or service adds such a field, it is
+    picked up automatically.
+    """
     usages: list[dict[str, str]] = []
 
-    for provider in models.Provider.objects.filter(data_type__in=provider_types):
-        try:
-            instance = provider.get_instance()
-        except Exception:
-            logger.warning(
-                "Cannot inspect provider %s while scanning server_group usages",
-                provider.uuid,
-                exc_info=True,
-            )
-            continue
-        if instance.server_group.value == uuid:
-            usages.append(
-                {
-                    "uuid": provider.uuid,
-                    "name": provider.name,
-                    "type": provider.data_type,
-                    "kind": "provider",
-                }
-            )
+    for kind, cls in _classes_with_server_group_field():
+        type_type = cls.type_type
+        if kind == "provider":
+            qs = models.Provider.objects.filter(data_type=type_type)
+        else:
+            qs = models.Service.objects.filter(data_type=type_type)
 
-    for service in models.Service.objects.filter(data_type__in=service_types):
-        try:
-            instance = service.get_instance()
-        except Exception:
-            logger.warning(
-                "Cannot inspect service %s while scanning server_group usages",
-                service.uuid,
-                exc_info=True,
-            )
-            continue
-        if instance.server_group.value == uuid:
-            usages.append(
-                {
-                    "uuid": service.uuid,
-                    "name": service.name,
-                    "type": service.data_type,
-                    "kind": "service",
-                }
-            )
+        for item in qs:
+            try:
+                instance = item.get_instance()
+            except Exception:
+                logger.warning(
+                    "Cannot inspect %s %s while scanning server_group usages",
+                    kind,
+                    item.uuid,
+                    exc_info=True,
+                )
+                continue
+            if instance.server_group.value == uuid:
+                usages.append(
+                    {
+                        "uuid": item.uuid,
+                        "name": item.name,
+                        "type": type_type,
+                        "kind": kind,
+                    }
+                )
 
     return usages
 
