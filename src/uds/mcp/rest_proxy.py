@@ -22,6 +22,12 @@ _ODATA_KEYS: typing.Final[tuple[str, ...]] = (
     "$select",
 )
 
+# MCP-side page caps. The REST API itself is unlimited by default; MCP
+# responses are consumed by LLM clients, so a missing ``$top`` gets a
+# default page size and absurd values are clamped to a maximum.
+_DEFAULT_TOP: typing.Final[int] = 100
+_MAX_TOP: typing.Final[int] = 500
+
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class ODataArgs:
@@ -137,8 +143,19 @@ class RestProxy:
         OData validation, permissions and filters are reused. Detail
         collections additionally require the parent ``uuid`` in the
         arguments (``parent_uuid``).
+
+        A missing ``$top`` defaults to ``_DEFAULT_TOP`` and larger values
+        are clamped to ``_MAX_TOP``: MCP responses go to LLM clients, so
+        every page is bounded even when the REST collection is not.
         """
         params = odata_params_from(arguments)
+        params.setdefault("$top", _DEFAULT_TOP)
+        try:
+            params["$top"] = min(int(typing.cast(int, params["$top"])), _MAX_TOP)
+        except (TypeError, ValueError):
+            # Non-numeric ``$top``: let ODataParams reject it with a clean
+            # ``invalid params`` error instead of failing here.
+            pass
         parent_uuid: str | None = None
         if isinstance(arguments, dict):
             raw = typing.cast("dict[str, typing.Any]", arguments)

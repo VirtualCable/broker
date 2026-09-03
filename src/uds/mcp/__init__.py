@@ -2,6 +2,7 @@
 
 from .catalog import Catalog, ResourceDefinition, ToolDefinition
 from .default_catalog import build_catalog, get_catalog
+from .limits import allow_request
 from .redaction import REDACTED, SENSITIVE_FIELDS, redact
 from .rest_proxy import RestProxy, RestTarget
 from .server import MCPServerCore
@@ -17,6 +18,7 @@ __all__ = [
     "RestProxy",
     "RestTarget",
     "ToolDefinition",
+    "allow_request",
     "build_catalog",
     "generated_list_tools",
     "get_catalog",

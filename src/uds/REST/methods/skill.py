@@ -14,6 +14,7 @@ import typing
 from django.urls import reverse
 
 from uds.core import consts, types
+from uds.core.util.config import GlobalConfig
 from uds.REST import Handler
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mcp.skill import SkillBuilder
@@ -48,6 +49,15 @@ class Skill(Handler):
         Only the canonical MCP skill is supported in phase 1, so any
         other ``<name>`` produces a 404-like error.
         """
+        if not GlobalConfig.MCP_ENABLED.as_bool():
+            # Same gate as the MCP endpoint; disabled is indistinguishable
+            # from non-existent.
+            raise rest_exceptions.NotFound("Not found")
+
+        if self.is_ip_allowed() is False:
+            # Same origin policy as the admin interface and the MCP endpoint.
+            raise rest_exceptions.AccessDenied()
+
         args = self._args
         if len(args) != 1 or args[0] != "mcp":
             raise rest_exceptions.NotFound(f"Unknown skill: {args}")

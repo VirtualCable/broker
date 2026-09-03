@@ -479,6 +479,20 @@ class GlobalConfig:
             "Enforced maximum security mode (Zero-Trust Mode). No password redirection will be allowed if this mode is set."
         ),
     )
+    # MCP (Model Context Protocol) integration. Disabled by default: the
+    # endpoint must be explicitly enabled by the administrator.
+    MCP_ENABLED: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "MCP Enabled",
+        "0",
+        type=Config.FieldType.BOOLEAN,
+        help=_("Enable the MCP (Model Context Protocol) endpoint (/uds/rest/mcp) and its skill bundle download"),
+    )
+    MCP_RATE_LIMIT: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "MCP Rate Limit",
+        "240",
+        type=Config.FieldType.NUMERIC,
+        help=_("Maximum MCP requests per user and minute. 0 means unlimited"),
+    )
     # Time an admi session can be idle before being "logged out"
     # ADMIN_IDLE_TIME: Config.Value = Config.section(Config.SectionType.SECURITY).value('adminIdleTime', '14400', type=Config.FieldType.NUMERIC_FIELD)  # Defaults to 4 hous
     # Time betwen checks of unused services by os managers

@@ -7,6 +7,8 @@ import collections.abc
 
 import mcp.types
 
+from uds.REST.processors import ContentProcessor
+
 from .catalog import Catalog
 from .redaction import redact
 from .rest_proxy import RestProxy
@@ -16,6 +18,17 @@ from .validation import validate_arguments
 # ``resources/list`` in a single page. Clients follow the opaque
 # ``nextCursor`` to fetch the remaining pages.
 _PAGE_SIZE: typing.Final[int] = 50
+
+
+def _json_safe(value: typing.Any) -> typing.Any:
+    """Normalize a handler result the same way REST renders it.
+
+    REST handlers return ``BaseRestItem`` dataclasses, lazy translations,
+    bytes and similar types; the REST processors know how to render them
+    all. Routing MCP results through the very same normalisation keeps
+    tool output and REST output equivalent.
+    """
+    return ContentProcessor.process_for_render(value, lambda d: d)
 
 
 def _encode_cursor(item_name: str) -> str:
@@ -106,7 +119,7 @@ class MCPServerCore:
         # HTTP request before invoking us. The proxy helpers will fail
         # cleanly with a request-related error if it is missing.
         result = await tool.executor(params.arguments or {}, self.request)
-        safe_result = redact(result)
+        safe_result = redact(_json_safe(result))
         return mcp.types.CallToolResult(
             content=[mcp.types.TextContent(text=json.dumps(safe_result, default=str))],
             structured_content=safe_result,
@@ -160,7 +173,7 @@ class MCPServerCore:
                     mcp.types.TextResourceContents(
                         uri=params.uri,
                         mime_type="text/plain",
-                        text=json.dumps(redact(content), default=str),
+                        text=json.dumps(redact(_json_safe(content)), default=str),
                     )
                 ],
             )

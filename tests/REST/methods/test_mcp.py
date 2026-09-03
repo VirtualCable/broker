@@ -1,12 +1,15 @@
 """Functional tests for the JSON-RPC endpoint exposed at ``/uds/rest/mcp``.
 
-The handler currently only implements the ``initialize`` and ``ping`` MCP
-methods. These tests pin the JSON-RPC contract (envelope, error codes,
-version) so the follow-up wiring of the catalogue does not regress them.
+The tests pin the JSON-RPC contract (envelope, error codes, version) so
+the MCP surface does not regress them.
 """
 
 import json
 import typing
+from unittest import mock
+
+from uds.core.util.config import GlobalConfig
+from uds.mcp import redact
 
 from tests.utils import rest
 
@@ -20,12 +23,70 @@ class MCPRPCTest(rest.test.RESTTestCase):
     @typing.override
     def setUp(self) -> None:
         super().setUp()
+        GlobalConfig.MCP_ENABLED.set(True)
         self.login_with_api_token()
 
     def _post_jsonrpc(self, body: dict[str, object]) -> _JsonRpcObject:
         response = self.client.rest_post("mcp", data=json.dumps(body).encode("utf-8"))
         self.assertEqual(response.status_code, 200, response.content)
         return typing.cast(_JsonRpcObject, json.loads(response.content))
+
+    def test_endpoint_denies_untrusted_sources(self) -> None:
+        """MCP inherits the admin trusted-host policy."""
+        GlobalConfig.ADMIN_TRUSTED_SOURCES.set("10.0.0.0/8")
+        response = self.client.rest_post(
+            "mcp", data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"}).encode("utf-8")
+        )
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test_endpoint_disabled_by_default(self) -> None:
+        """Without the config gate enabled the endpoint does not exist."""
+        GlobalConfig.MCP_ENABLED.set(False)
+        response = self.client.rest_post(
+            "mcp", data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"}).encode("utf-8")
+        )
+        self.assertEqual(response.status_code, 404, response.content)
+
+    def test_rate_limit_returns_jsonrpc_error(self) -> None:
+        """Requests beyond the per-user limit get a rate-limit JSON-RPC error."""
+        GlobalConfig.MCP_RATE_LIMIT.set("2")
+        for request_id in (1, 2):
+            response = self._post_jsonrpc({"jsonrpc": "2.0", "id": request_id, "method": "ping"})
+            self.assertNotIn("error", response)
+        third = self._post_jsonrpc({"jsonrpc": "2.0", "id": 3, "method": "ping"})
+        self.assertIn("error", third)
+        self.assertEqual(third["id"], 3)
+        self.assertEqual(third["error"]["code"], -32000)
+        self.assertIn("Too many MCP requests", third["error"]["message"])
+
+    def test_tool_calls_are_audited(self) -> None:
+        """Successful and failed tool calls are recorded in the audit log."""
+        with mock.patch("uds.REST.methods.mcp.MCP._audit") as audit:
+            ok = self._post_jsonrpc(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 40,
+                    "method": "tools/call",
+                    "params": {"name": "list_authenticators", "arguments": {}},
+                }
+            )
+            self.assertNotIn("error", ok)
+            failing = self._post_jsonrpc(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 41,
+                    "method": "tools/call",
+                    "params": {"name": "list_nonexistent", "arguments": {}},
+                }
+            )
+            self.assertIn("error", failing)
+
+        calls = [typing.cast(str, args[0]) for args, _kwargs in audit.call_args_list]
+        self.assertTrue(any(c.startswith("tools/call list_authenticators") for c in calls))
+        self.assertTrue(any(c.startswith("tools/call list_nonexistent") for c in calls))
+        outcomes = [args[1] for args, _kwargs in audit.call_args_list]
+        self.assertIn("ok", outcomes)
+        self.assertIn("error -32602", outcomes)
 
     def test_initialize_returns_protocol_version_and_capabilities(self) -> None:
         """``initialize`` returns the protocol version and empty capabilities."""
@@ -314,6 +375,64 @@ class MCPRPCTest(rest.test.RESTTestCase):
         self.assertEqual(response["id"], 26)
         self.assertEqual(response["error"]["code"], -32002)
         self.assertIn("uds://nonexistent", response["error"]["message"])
+
+
+class MCPRestEquivalenceTest(rest.test.RESTTestCase):
+    """The result of a read tool must match its REST endpoint twin.
+
+    Equivalence is asserted modulo MCP redaction: the REST payload is
+    passed through the same ``redact()`` the MCP core applies, so both
+    sides are compared on equal terms.
+    """
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        GlobalConfig.MCP_ENABLED.set(True)
+        self.login_with_api_token()
+
+    def _post_jsonrpc(self, body: dict[str, object]) -> _JsonRpcObject:
+        response = self.client.rest_post("mcp", data=json.dumps(body).encode("utf-8"))
+        self.assertEqual(response.status_code, 200, response.content)
+        return typing.cast(_JsonRpcObject, json.loads(response.content))
+
+    def _rest_list(self, path: str, query: dict[str, str] | None = None) -> list[typing.Any]:
+        response = self.client.rest_get(path, data=query or {})
+        self.assertEqual(response.status_code, 200, response.content)
+        return typing.cast("list[typing.Any]", response.json())
+
+    def _mcp_list(self, tool: str, arguments: dict[str, typing.Any]) -> list[typing.Any]:
+        response = self._post_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {"name": tool, "arguments": arguments},
+            }
+        )
+        self.assertNotIn("error", response)
+        return typing.cast("list[typing.Any]", json.loads(response["result"]["content"][0]["text"]))
+
+    def test_master_collections_match_rest(self) -> None:
+        for tool, path in (("list_authenticators", "authenticators"), ("list_providers", "providers")):
+            with self.subTest(tool=tool):
+                self.assertEqual(
+                    self._mcp_list(tool, {}),
+                    redact(self._rest_list(path)),
+                )
+
+    def test_detail_collection_matches_rest(self) -> None:
+        rest_items = redact(self._rest_list(f"authenticators/{self.auth.uuid}/users"))
+        mcp_items = self._mcp_list("list_authenticators_users", {"parent_uuid": self.auth.uuid})
+        self.assertEqual(mcp_items, rest_items)
+
+    def test_odata_arguments_match_rest_query(self) -> None:
+        query = {"$filter": "contains(name, 'user')", "$top": "2", "$orderby": "name"}
+        arguments = {"filter": "contains(name, 'user')", "top": 2, "orderby": "name"}
+        rest_items = redact(self._rest_list(f"authenticators/{self.auth.uuid}/users", query))
+        mcp_items = self._mcp_list("list_authenticators_users", {"parent_uuid": self.auth.uuid, **arguments})
+        self.assertEqual(mcp_items, rest_items)
+        self.assertLessEqual(len(mcp_items), 2)
 
     def test_resources_read_access_denied_is_jsonrpc_error(self) -> None:
         """A permission error stays a JSON-RPC envelope instead of a REST 403."""

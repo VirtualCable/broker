@@ -9,7 +9,7 @@ _LIST_SCHEMA: typing.Final[dict[str, typing.Any]] = {
     "type": "object",
     "properties": {
         "filter": {"type": "string"},
-        "top": {"type": "integer", "minimum": 1},
+        "top": {"type": "integer", "minimum": 1, "maximum": 500},
         "skip": {"type": "integer", "minimum": 0},
         "select": {"type": "array", "items": {"type": "string"}},
         "parent_uuid": {"type": "string"},
@@ -48,6 +48,11 @@ class ValidateArgumentsTest(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             validate_arguments(_LIST_SCHEMA, {"top": 0})
         self.assertIn(">= 1", str(ctx.exception))
+
+    def test_maximum_is_enforced(self) -> None:
+        with self.assertRaises(ValueError) as ctx:
+            validate_arguments(_LIST_SCHEMA, {"top": 501})
+        self.assertIn("<= 500", str(ctx.exception))
 
     def test_array_item_type_is_enforced(self) -> None:
         with self.assertRaises(ValueError) as ctx:

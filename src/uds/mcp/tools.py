@@ -57,8 +57,9 @@ def _list_input_schema(
         },
         "top": {
             "type": "integer",
-            "description": "Maximum number of items to return. Defaults to the REST collection cap.",
+            "description": "Maximum number of items to return. Defaults to 100, hard capped at 500.",
             "minimum": 1,
+            "maximum": 500,
         },
         "skip": {
             "type": "integer",

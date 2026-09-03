@@ -68,6 +68,21 @@ def _curated_resources(catalog: Catalog) -> None:
         catalog.add_resource(curated)
 
 
+def _curated_tools(catalog: Catalog) -> None:
+    """Register hand-curated, purpose-specific MCP tools.
+
+    This is the registration point for capabilities that need more than
+    the generic ``list_*`` generator: surfaces that are not
+    ``ModelHandler`` collections (reports being the canonical candidate)
+    or crafted answers for support and diagnostics. Curated tools land
+    here with their own name, description and executor — concrete, fast,
+    high-value answers instead of a generic listing.
+
+    Nothing is registered yet by design: reports and similar surfaces
+    are deliberately left out until their tools are defined.
+    """
+
+
 def build_catalog() -> Catalog:
     """Build the read-only MCP catalog from the REST handler inventory.
 
@@ -78,6 +93,7 @@ def build_catalog() -> Catalog:
     catalog = Catalog()
 
     _curated_resources(catalog)
+    _curated_tools(catalog)
 
     # Generic list tools for every model collection handler (master and
     # detail). The generator derives names from the handler's full path,

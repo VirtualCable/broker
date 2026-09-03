@@ -38,6 +38,10 @@ def _check_property(name: str, value: typing.Any, schema: dict[str, typing.Any])
     if minimum is not None and isinstance(value, (int, float)) and not isinstance(value, bool) and value < minimum:
         return f"argument '{name}' must be >= {minimum}"
 
+    maximum = schema.get("maximum")
+    if maximum is not None and isinstance(value, (int, float)) and not isinstance(value, bool) and value > maximum:
+        return f"argument '{name}' must be <= {maximum}"
+
     items_schema: typing.Any = schema.get("items")
     if isinstance(items_schema, dict) and isinstance(value, list):
         typed_items_schema = typing.cast("dict[str, typing.Any]", items_schema)

@@ -6,6 +6,8 @@ import json
 import tarfile
 import typing
 
+from uds.core.util.config import GlobalConfig
+
 from tests.utils import rest
 
 
@@ -15,6 +17,7 @@ class SkillDownloadTest(rest.test.RESTTestCase):
     @typing.override
     def setUp(self) -> None:
         super().setUp()
+        GlobalConfig.MCP_ENABLED.set(True)
         self.login_with_api_token()
 
     def _bundle_files(self) -> dict[str, bytes]:
@@ -41,6 +44,18 @@ class SkillDownloadTest(rest.test.RESTTestCase):
         self.assertIn("uds-mcp/SKILL.md", files)
         self.assertIn("uds-mcp/mcp_config.json", files)
         self.assertIn("uds-mcp/README.md", files)
+
+    def test_skill_endpoint_disabled_with_mcp(self) -> None:
+        """The skill download shares the MCP config gate."""
+        GlobalConfig.MCP_ENABLED.set(False)
+        response = self.client.rest_get("skill/mcp")
+        self.assertEqual(response.status_code, 404, response.content)
+
+    def test_skill_endpoint_denies_untrusted_sources(self) -> None:
+        """The skill download shares the admin trusted-host policy."""
+        GlobalConfig.ADMIN_TRUSTED_SOURCES.set("10.0.0.0/8")
+        response = self.client.rest_get("skill/mcp")
+        self.assertEqual(response.status_code, 403, response.content)
 
     def test_bundle_is_server_specific(self) -> None:
         """The bundled config carries this server's absolute MCP endpoint."""

@@ -24,6 +24,7 @@ This module provides a thin handler that:
   for unknown methods, instead of a generic HTTP 400.
 """
 
+import json
 import logging
 import typing
 
@@ -33,8 +34,11 @@ from django import http
 
 from uds.core import consts
 from uds.core.exceptions import rest as rest_exceptions
+from uds.core.util.config import GlobalConfig
+from uds.core.util.log import LogLevel, LogSource, log
 from uds.REST import Handler
 from uds.mcp import MCPServerCore, get_catalog
+from uds.mcp.limits import allow_request
 
 
 logger = logging.getLogger(__name__)
@@ -104,14 +108,18 @@ class MCP(Handler):
         not be parsed, the dispatcher returns 400 before invoking us,
         which is the right behaviour.
 
-        JSON-RPC notifications (a message without ``id``, such as
-        ``notifications/initialized``) get no response body: per the
-        MCP Streamable HTTP transport they are acknowledged with an
-        empty ``202 Accepted``. Domain errors raised while serving a
-        JSON-RPC request are always translated into a JSON-RPC error
-        envelope echoing the request ``id``; they never leak as plain
-        REST error responses.
+        The endpoint is gated by ``GlobalConfig.MCP_ENABLED`` and rate
+        limited per user (``GlobalConfig.MCP_RATE_LIMIT``). JSON-RPC
+        notifications (a message without ``id``, such as
+        ``notifications/initialized``) get no response body: per the MCP
+        Streamable HTTP transport they are acknowledged with an empty
+        ``202 Accepted``. Domain errors raised while serving a JSON-RPC
+        request are always translated into a JSON-RPC error envelope
+        echoing the request ``id``; they never leak as plain REST error
+        responses.
         """
+        self._ensure_enabled()
+
         # The ``_params`` annotation says dict, but the dispatcher stores
         # whatever the JSON body decoded to, so the runtime check matters.
         if not isinstance(self._params, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -136,6 +144,14 @@ class MCP(Handler):
         if method == "initialize":
             return self._initialize(params, request_id)
 
+        # Every post-handshake method is subject to the per-user rate
+        # limit; ``initialize`` is not, so handshakes always succeed.
+        limit = self._rate_limit()
+        if not allow_request(self._rate_limit_key(), limit):
+            return self._jsonrpc_error(
+                request_id, _MCP_SERVER_ERROR, f"Too many MCP requests (limit {limit} per minute); retry later"
+            )
+
         if method == "ping":
             return {"jsonrpc": "2.0", "id": request_id, "result": {}}
 
@@ -152,13 +168,17 @@ class MCP(Handler):
                 read_params = mcp.types.ReadResourceRequestParams.model_validate(params.get("params") or {})
             except ValueError as exc:
                 return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
+            operation = f"resources/read {read_params.uri}"
             try:
                 result = async_to_sync(self._mcp_server().read_resource)(None, read_params)
             except rest_exceptions.HandlerError as exc:
                 code, message = self._map_handler_error(exc, not_found_code=_MCP_RESOURCE_NOT_FOUND)
+                self._audit(operation, f"error {code}")
                 return self._jsonrpc_error(request_id, code, message)
             except ValueError as exc:
+                self._audit(operation, "error -32002")
                 return self._jsonrpc_error(request_id, _MCP_RESOURCE_NOT_FOUND, str(exc))
+            self._audit(operation, "ok")
             return self._model_response(request_id, result)
 
         if method == "tools/list":
@@ -170,16 +190,24 @@ class MCP(Handler):
             return self._model_response(request_id, result)
 
         if method == "tools/call":
-            call_params = mcp.types.CallToolRequestParams.model_validate(params.get("params") or {})
+            try:
+                call_params = mcp.types.CallToolRequestParams.model_validate(params.get("params") or {})
+            except ValueError as exc:
+                return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
+            arguments = call_params.arguments or {}
+            operation = f"tools/call {call_params.name}({json.dumps(arguments, default=str)})"
             try:
                 result = async_to_sync(self._mcp_server().call_tool)(None, call_params)
             except rest_exceptions.HandlerError as exc:
                 code, message = self._map_handler_error(exc, not_found_code=_JSONRPC_INVALID_PARAMS)
+                self._audit(operation, f"error {code}")
                 return self._jsonrpc_error(request_id, code, message)
             except ValueError as exc:
-                # Unknown tool names are an ``invalid params`` error per
-                # the MCP ``tools/call`` contract.
+                # Unknown tool names and invalid arguments are an
+                # ``invalid params`` error per the MCP ``tools/call`` contract.
+                self._audit(operation, "error -32602")
                 return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
+            self._audit(operation, "ok")
             return self._model_response(request_id, result)
 
         return self._jsonrpc_error(
@@ -191,6 +219,49 @@ class MCP(Handler):
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    def _ensure_enabled(self) -> None:
+        """Raise ``NotFound`` when the MCP surface is disabled by config.
+
+        The response is indistinguishable from a non-existent endpoint,
+        so disabled brokers do not leak that the feature exists.
+        """
+        if not GlobalConfig.MCP_ENABLED.as_bool():
+            raise rest_exceptions.NotFound("Not found")
+
+        if self.is_ip_allowed() is False:
+            # The MCP surface works with staff/admin identities, so it is
+            # subject to the same origin policy as the admin interface
+            # (``ADMIN_TRUSTED_SOURCES``). Default ``*`` keeps it open.
+            raise rest_exceptions.AccessDenied()
+
+    def _rate_limit(self) -> int:
+        """Return the configured MCP requests-per-minute for a user."""
+        try:
+            return int(GlobalConfig.MCP_RATE_LIMIT.get(True) or 0)
+        except ValueError:
+            return 0
+
+    def _rate_limit_key(self) -> str:
+        """Return the rate-limit bucket key for the authenticated user."""
+        return f"user-{self._user.uuid}"
+
+    def _audit(self, operation: str, outcome: str) -> None:
+        """Record an MCP operation in the global (syslog) audit log.
+
+        Follows the same shape as the REST operation log: ip, user,
+        operation and outcome. Tool arguments are part of ``operation``
+        and are already non-secret by schema (OData filters and UUIDs);
+        the whole line is truncated to the log entry limit.
+        """
+        username = self._user.pretty_name
+        level = LogLevel.ERROR if outcome.startswith("error") else LogLevel.INFO
+        log(
+            None,  # None owner goes to SYSLOG (global log), like REST operations
+            level,
+            f"{self._request.ip} [{username}]: mcp {operation} -> {outcome}"[:4096],
+            source=LogSource.REST,
+        )
+
     def _mcp_server(self) -> MCPServerCore:
         """Build the catalog-backed MCP core for the current request.
 
