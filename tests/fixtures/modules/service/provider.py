@@ -39,7 +39,6 @@ from django.utils.translation import gettext_noop as _
 
 from uds.core import services
 from uds.core import types
-from uds.core.util import fields
 
 from .service import TestServiceCache
 from .service import TestServiceNoCache
@@ -82,11 +81,6 @@ class TestProvider(services.ServiceProvider):
 
     # Mas removing concurrent services
     concurrent_removal_limit = 1000  # a lot, this in fact will not make anything
-
-    # Used by tests for ServerGroup usages scan
-    server_group = fields.server_group_field(
-        [types.servers.ServerType.SERVER, types.servers.ServerType.UNMANAGED],
-    )
 
     # Simple data for testing pourposes
     @dataclasses.dataclass

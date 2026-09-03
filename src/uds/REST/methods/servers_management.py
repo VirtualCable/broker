@@ -139,10 +139,34 @@ def get_server_counters(
         raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
 
 
+# Where to look for ``server_group`` references to a ServerGroup.
+#
+# Each row is (model_kind, type_type). model_kind is the table to scan
+# (``provider`` or ``service``); type_type is the ``data_type`` to
+# filter on. The field name itself (``server_group``) is a contract
+# shared by every entry here — if a future entry uses a different
+# field name, add a parallel constant and a parallel branch in the
+# helper instead of switching to dynamic attribute lookup. No
+# ``getattr`` is used: every entry in this constant is statically known
+# to carry a ``server_group`` attribute, so the helper reads it
+# directly.
+#
+# `IPSingleMachineService` is intentionally NOT in this list: it
+# stores its IP/host on a plain `host` field, not on a ServerGroup.
+_SERVER_GROUP_FIELD_USAGES: typing.Final[tuple[tuple[str, str], ...]] = (
+    ("provider", "RDSProvider"),
+    ("service", "IPMachinesService"),
+)
+
+
 def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
-    """Return providers whose 'server_group' field references the given UUID."""
+    """Return providers and services whose ``server_group`` field references the given UUID."""
+    provider_types = [t for kind, t in _SERVER_GROUP_FIELD_USAGES if kind == "provider"]
+    service_types = [t for kind, t in _SERVER_GROUP_FIELD_USAGES if kind == "service"]
+
     usages: list[dict[str, str]] = []
-    for provider in models.Provider.objects.all():
+
+    for provider in models.Provider.objects.filter(data_type__in=provider_types):
         try:
             instance = provider.get_instance()
         except Exception:
@@ -152,11 +176,36 @@ def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
                 exc_info=True,
             )
             continue
-        field = getattr(instance, "server_group", None)
-        if field is None:
+        if instance.server_group.value == uuid:
+            usages.append(
+                {
+                    "uuid": provider.uuid,
+                    "name": provider.name,
+                    "type": provider.data_type,
+                    "kind": "provider",
+                }
+            )
+
+    for service in models.Service.objects.filter(data_type__in=service_types):
+        try:
+            instance = service.get_instance()
+        except Exception:
+            logger.warning(
+                "Cannot inspect service %s while scanning server_group usages",
+                service.uuid,
+                exc_info=True,
+            )
             continue
-        if getattr(field, "value", None) == uuid:
-            usages.append({"uuid": provider.uuid, "name": provider.name, "type": provider.data_type})
+        if instance.server_group.value == uuid:
+            usages.append(
+                {
+                    "uuid": service.uuid,
+                    "name": service.name,
+                    "type": service.data_type,
+                    "kind": "service",
+                }
+            )
+
     return usages
 
 
