@@ -20,6 +20,7 @@ from uds.REST.methods.system import System
 from uds.REST.methods.version import UDSVersion
 
 from .catalog import Catalog, ResourceDefinition
+from .curated import register_curated_tools
 from .rest_proxy import RestTarget
 from .tools import generated_list_tools
 
@@ -72,15 +73,15 @@ def _curated_tools(catalog: Catalog) -> None:
     """Register hand-curated, purpose-specific MCP tools.
 
     This is the registration point for capabilities that need more than
-    the generic ``list_*`` generator: surfaces that are not
-    ``ModelHandler`` collections (reports being the canonical candidate)
-    or crafted answers for support and diagnostics. Curated tools land
-    here with their own name, description and executor — concrete, fast,
-    high-value answers instead of a generic listing.
+    the generic ``list_*`` generator: GET custom methods chosen by hand
+    (fallback access policies, forecasting, cache recommendations, server
+    statistics, authenticator search), the unified per-object logs tool,
+    and the admin-only global log tool. See :mod:`uds.mcp.curated`.
 
-    Nothing is registered yet by design: reports and similar surfaces
-    are deliberately left out until their tools are defined.
+    Surfaces deliberately left out until their tools are defined (reports
+    being the canonical candidate) are tracked in the implementation plan.
     """
+    register_curated_tools(catalog)
 
 
 def build_catalog() -> Catalog:
