@@ -39,8 +39,6 @@ endpoint) and the contract test verifies that what the discovery finds
 matches what the openuds factory actually exposes.
 """
 
-import logging
-
 from uds import models
 from uds.REST.methods.servers_management import _providers_using_server_group
 from uds.core import environment
@@ -136,34 +134,30 @@ class ServerGroupUsagesTest(rest.test.RESTTestCase):
         self.assertEqual(body[0]["uuid"], service.uuid)
         self.assertEqual(body[0]["kind"], "service")
 
-    def test_delete_logs_warning_when_group_in_use(self) -> None:
+    def test_delete_blocks_when_group_in_use(self) -> None:
         self.login()
         group = servers_fixtures.create_server_group(num_servers=0)
         provider = _make_ipmachines_provider()
         service = _make_ipmachines_service(provider)
         _attach_service_to_group(service, group.uuid)
 
-        with self.assertLogs("uds.REST.methods.servers_management", level="WARNING") as logs:
-            response = self.client.rest_delete(f"servers/groups/{group.uuid}")
-            self.assertEqual(response.status_code, 200, response.content)
+        response = self.client.rest_delete(f"servers/groups/{group.uuid}")
+        self.assertEqual(response.status_code, 400, response.content)
+        body = response.content.decode()
+        self.assertIn("Cannot delete ServerGroup", body)
+        self.assertIn(group.uuid, body)
+        self.assertIn(group.name, body)
+        self.assertIn(service.name, body)
+        # Group must still exist
+        self.assertTrue(models.ServerGroup.objects.filter(uuid=group.uuid).exists())
 
-        joined = "\n".join(logs.output)
-        self.assertIn(group.uuid, joined)
-        self.assertIn(group.name, joined)
-        self.assertIn(service.name, joined)
-
-    def test_delete_silently_when_group_unused(self) -> None:
+    def test_delete_succeeds_when_group_unused(self) -> None:
         self.login()
         group = servers_fixtures.create_server_group(num_servers=0)
 
-        logger_name = "uds.REST.methods.servers_management"
-        before = logging.getLogger(logger_name).getEffectiveLevel()
-        logging.getLogger(logger_name).setLevel(logging.ERROR)
-        try:
-            response = self.client.rest_delete(f"servers/groups/{group.uuid}")
-            self.assertEqual(response.status_code, 200, response.content)
-        finally:
-            logging.getLogger(logger_name).setLevel(before)
+        response = self.client.rest_delete(f"servers/groups/{group.uuid}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(models.ServerGroup.objects.filter(uuid=group.uuid).exists())
 
 
 class ServerGroupDiscoveryTest(rest.test.RESTTestCase):

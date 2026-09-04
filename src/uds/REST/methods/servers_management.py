@@ -894,12 +894,17 @@ class ServersGroups(ModelHandler[GroupItem]):
 
         usages = _providers_using_server_group(item.uuid)
         if usages:
-            provider_names = ", ".join(u["name"] for u in usages)
-            logger.warning(
-                "Deleting ServerGroup %s (%s) still referenced by providers: %s",
-                item.uuid,
-                item.name,
-                provider_names,
+            reference_list = ", ".join(f"{u['name']} ({u['kind']}/{u['type']})" for u in usages)
+            raise exceptions.rest.RequestError(
+                _(
+                    'Cannot delete ServerGroup "{name}" ({uuid}): it is still '
+                    "referenced by {references}. Remove or reassign the references "
+                    "before deleting the group."
+                ).format(
+                    name=item.name,
+                    uuid=item.uuid,
+                    references=reference_list,
+                )
             )
 
         try:
