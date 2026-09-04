@@ -139,6 +139,86 @@ def get_server_counters(
         raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
 
 
+def _classes_with_server_group_field() -> list[tuple[str, type]]:
+    """Find every registered Provider and Service that declares a server-group field.
+
+    The discovery is driven by the field's label (``server_group_field``
+    is the canonical name, ``Server group`` is the canonical label). The
+    helper walks the providers factory plus each provider's offered
+    services and returns ``(kind, class)`` pairs for every class whose
+    ``vars`` contain a ``gui.ChoiceField`` with that label.
+
+    No class is hardcoded here: a future provider or service that adds
+    such a field is picked up automatically. The contract test verifies
+    this discovery matches reality.
+    """
+    # Lazy imports: ``fields`` and ``gui`` are heavy, and the helper
+    # runs on the REST request path.
+    from uds.core import services as core_services
+    from uds.core.ui import gui
+    from uds.core.util import fields
+
+    canonical_label = str(fields.server_group_field().label)
+    found: list[tuple[str, type]] = []
+
+    for provider_cls in core_services.factory().providers().values():
+        for value in vars(provider_cls).values():
+            if isinstance(value, gui.ChoiceField) and str(value.label) == canonical_label:
+                found.append(("provider", provider_cls))
+                break
+
+    for provider_cls in core_services.factory().providers().values():
+        for service_cls in provider_cls.get_provided_services():
+            for value in vars(service_cls).values():
+                if isinstance(value, gui.ChoiceField) and str(value.label) == canonical_label:
+                    found.append(("service", service_cls))
+                    break
+
+    return found
+
+
+def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
+    """Return providers and services whose ``server_group`` field references the given UUID.
+
+    The set of providers/services that carry a server-group field is
+    discovered at call time from the registered factories — see
+    ``_classes_with_server_group_field``. No list of type_types is
+    hardcoded; if a new provider or service adds such a field, it is
+    picked up automatically.
+    """
+    usages: list[dict[str, str]] = []
+
+    for kind, cls in _classes_with_server_group_field():
+        type_type = cls.type_type
+        if kind == "provider":
+            qs = models.Provider.objects.filter(data_type=type_type)
+        else:
+            qs = models.Service.objects.filter(data_type=type_type)
+
+        for item in qs:
+            try:
+                instance = item.get_instance()
+            except Exception:
+                logger.warning(
+                    "Cannot inspect %s %s while scanning server_group usages",
+                    kind,
+                    item.uuid,
+                    exc_info=True,
+                )
+                continue
+            if instance.server_group.value == uuid:
+                usages.append(
+                    {
+                        "uuid": item.uuid,
+                        "name": item.name,
+                        "type": type_type,
+                        "kind": kind,
+                    }
+                )
+
+    return usages
+
+
 @dataclasses.dataclass
 class TokenItem(types.rest.BaseRestItem):
     id: str
@@ -623,6 +703,11 @@ class ServersGroups(ModelHandler[GroupItem]):
             True,
             description="Retrieve aggregate server statistics including counts by state, type, and resource usage",
         ),
+        types.rest.ModelCustomMethod(
+            "usages",
+            True,
+            description="List providers whose 'server_group' field points to this server group",
+        ),
     ]
     MODEL = models.ServerGroup
     FILTER: typing.ClassVar[dict[str, typing.Any] | None] = {
@@ -807,6 +892,21 @@ class ServersGroups(ModelHandler[GroupItem]):
             self.MODEL(), permissions.PermissionType.ALL, root=True
         )  # Must have write permissions to delete
 
+        usages = _providers_using_server_group(item.uuid)
+        if usages:
+            reference_list = ", ".join(f"{u['name']} ({u['kind']}/{u['type']})" for u in usages)
+            raise exceptions.rest.RequestError(
+                _(
+                    'Cannot delete ServerGroup "{name}" ({uuid}): it is still '
+                    "referenced by {references}. Remove or reassign the references "
+                    "before deleting the group."
+                ).format(
+                    name=item.name,
+                    uuid=item.uuid,
+                    references=reference_list,
+                )
+            )
+
         try:
             if item.type == types.servers.ServerType.UNMANAGED:
                 # Unmanaged has to remove ALSO the servers
@@ -836,3 +936,7 @@ class ServersGroups(ModelHandler[GroupItem]):
             }
             for s in ServerManager.manager().get_server_stats(item.servers.all())
         ]
+
+    def usages(self, item: "Model") -> list[dict[str, str]]:
+        item = ensure.is_instance(item, models.ServerGroup)
+        return _providers_using_server_group(item.uuid)
