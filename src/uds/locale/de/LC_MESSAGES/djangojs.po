@@ -2097,11 +2097,11 @@ msgstr "Bitte warten Sie, bis der Dienst gestartet wird."
 #: static/modern/translations-fakejs.js:6
 #: static/modern/translations-fakejs.js:14
 msgid ""
-"Remember that you will need the UDS client on your platform to access the "
+"Remember that you will need the UDS launcher on your platform to access the "
 "service."
 msgstr ""
-"Denken Sie daran, dass Sie den UDS-Client auf Ihrer Plattform benötigen, um "
-"auf den Dienst zuzugreifen."
+"Denken Sie daran, dass Sie den UDS-Launcher auf Ihrer Plattform benötigen, "
+"um auf den Dienst zuzugreifen."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2110,24 +2110,24 @@ msgid "Service ready"
 msgstr "Servicebereit"
 
 #: static/modern/main.js:5 static/modern/translations-fakejs.js:8
-msgid "UDS Client not launching"
-msgstr "UDS Client startet nicht not"
+msgid "UDS Launcher not launching"
+msgstr "UDS Launcher startet nicht not"
 
 #: static/modern/main.js:7 static/modern/translations-fakejs.js:9
 msgid ""
-"It seems that you don't have UDS Client installed. Please, install it from "
-"here:"
+"It seems that you don't have UDS Launcher installed. Please, install it from"
+" here:"
 msgstr ""
-"Anscheinend ist der UDS-Client bei Ihnen nicht installiert. Bitte "
+"Anscheinend ist der UDS-Launcher bei Ihnen nicht installiert. Bitte "
 "installieren Sie ihn hier:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
-msgid "UDS Client Download"
-msgstr "UDS-Client-Download"
+msgid "UDS Launcher Download"
+msgstr "UDS-Launcher-Download"
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:12
-msgid "Launching UDS Client...</br>Please wait."
-msgstr "UDS-Client wird gestartet...</br> Bitte warten."
+msgid "Launching UDS Launcher...</br>Please wait."
+msgstr "UDS-Launcher wird gestartet...</br> Bitte warten."
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:15
 msgid "Error communicating with your service. Please, retry again."
@@ -2270,12 +2270,12 @@ msgstr "Sind Sie sicher?"
 #: static/modern/translations-fakejs.js:52
 #: static/modern/translations-fakejs.js:80
 #: static/modern/translations-fakejs.js:82
-msgid "UDS Client"
-msgstr "UDS-Client"
+msgid "UDS Launcher"
+msgstr "UDS-Launcher"
 
 #: static/modern/translations-fakejs.js:53
-msgid "Download UDS client for your platform"
-msgstr "Laden Sie den UDS-Client für Ihre Plattform herunter"
+msgid "Download UDS launcher for your platform"
+msgstr "Laden Sie den UDS-Launcher für Ihre Plattform herunter"
 
 #: static/modern/translations-fakejs.js:54
 msgid "UDS Service launcher"
@@ -2296,9 +2296,9 @@ msgstr "Um den Dienst neu zu starten, müssen Sie dies von Anfang an tun."
 #: static/modern/translations-fakejs.js:58
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
-"UDS Client installed"
+"UDS Launcher installed"
 msgstr ""
-"Wenn der Dienst nicht automatisch gestartet wird, ist der UDS-Client "
+"Wenn der Dienst nicht automatisch gestartet wird, ist der UDS-Launcher "
 "wahrscheinlich nicht installiert"
 
 #: static/modern/translations-fakejs.js:59
@@ -2306,8 +2306,8 @@ msgid "You can obtain it from the"
 msgstr "Sie erhalten es bei der"
 
 #: static/modern/translations-fakejs.js:60
-msgid "UDS Client download page"
-msgstr "UDS Client Download-Seite"
+msgid "UDS Launcher download page"
+msgstr "UDS Launcher Download-Seite"
 
 #: static/modern/translations-fakejs.js:61
 #: static/modern/translations-fakejs.js:77

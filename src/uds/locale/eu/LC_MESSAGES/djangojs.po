@@ -2101,10 +2101,10 @@ msgstr "Itxaron zerbitzua abiarazi arte."
 #: static/modern/translations-fakejs.js:6
 #: static/modern/translations-fakejs.js:14
 msgid ""
-"Remember that you will need the UDS client on your platform to access the "
+"Remember that you will need the UDS launcher on your platform to access the "
 "service."
 msgstr ""
-"Gogoratu zerbitzura sartzeko zure plataformako UDS bezeroa beharko duzula."
+"Gogoratu zerbitzura sartzeko zure plataformako UDS Launcher beharko duzula."
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2113,23 +2113,23 @@ msgid "Service ready"
 msgstr "Zerbitzua prest"
 
 #: static/modern/main.js:5 static/modern/translations-fakejs.js:8
-msgid "UDS Client not launching"
-msgstr "UDS bezeroa ez da abiarazten"
+msgid "UDS Launcher not launching"
+msgstr "UDS Launcher ez da abiarazten"
 
 #: static/modern/main.js:7 static/modern/translations-fakejs.js:9
 msgid ""
-"It seems that you don't have UDS Client installed. Please, install it from "
-"here:"
+"It seems that you don't have UDS Launcher installed. Please, install it from"
+" here:"
 msgstr ""
 "Badirudi ez duzula UDS Client instalatuta. Mesedez, instala ezazu hemendik:"
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
-msgid "UDS Client Download"
-msgstr "UDS bezeroaren deskarga"
+msgid "UDS Launcher Download"
+msgstr "UDS Launcher deskarga"
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:12
-msgid "Launching UDS Client...</br>Please wait."
-msgstr "UDS bezeroa abiarazten...</br> Itxaron mesedez."
+msgid "Launching UDS Launcher...</br>Please wait."
+msgstr "UDS Launcher abiarazten...</br> Itxaron mesedez."
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:15
 msgid "Error communicating with your service. Please, retry again."
@@ -2271,12 +2271,12 @@ msgstr "Ziur zaude?"
 #: static/modern/translations-fakejs.js:52
 #: static/modern/translations-fakejs.js:80
 #: static/modern/translations-fakejs.js:82
-msgid "UDS Client"
-msgstr "UDS bezeroa"
+msgid "UDS Launcher"
+msgstr "UDS Launcher"
 
 #: static/modern/translations-fakejs.js:53
-msgid "Download UDS client for your platform"
-msgstr "Deskargatu UDS bezeroa zure plataformarako"
+msgid "Download UDS launcher for your platform"
+msgstr "Deskargatu UDS Launcher zure plataformarako"
 
 #: static/modern/translations-fakejs.js:54
 msgid "UDS Service launcher"
@@ -2297,9 +2297,9 @@ msgstr "Zerbitzua berriro martxan jartzeko, jatorritik egin beharko duzu."
 #: static/modern/translations-fakejs.js:58
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
-"UDS Client installed"
+"UDS Launcher installed"
 msgstr ""
-"Zerbitzua automatikoki abiarazten ez bada, seguruenik ez duzu UDS Bezeroa "
+"Zerbitzua automatikoki abiarazten ez bada, seguruenik ez duzu UDS Launcher "
 "instalatuta"
 
 #: static/modern/translations-fakejs.js:59
@@ -2307,8 +2307,8 @@ msgid "You can obtain it from the"
 msgstr "Hemendik lortu dezakezu:"
 
 #: static/modern/translations-fakejs.js:60
-msgid "UDS Client download page"
-msgstr "UDS Bezeroa deskargatzeko orria"
+msgid "UDS Launcher download page"
+msgstr "UDS Launcher deskargatzeko orria"
 
 #: static/modern/translations-fakejs.js:61
 #: static/modern/translations-fakejs.js:77

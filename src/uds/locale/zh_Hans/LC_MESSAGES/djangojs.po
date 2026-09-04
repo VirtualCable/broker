@@ -2088,9 +2088,9 @@ msgstr "请等待，直到该服务启动。"
 #: static/modern/translations-fakejs.js:6
 #: static/modern/translations-fakejs.js:14
 msgid ""
-"Remember that you will need the UDS client on your platform to access the "
+"Remember that you will need the UDS launcher on your platform to access the "
 "service."
-msgstr "请记住，您需要平台上的 UDS 客户端才能访问该服务。"
+msgstr "请记住，您需要平台上的 UDS Launcher才能访问该服务。"
 
 #: static/modern/main.js:5 static/modern/main.js:10
 #: static/modern/translations-fakejs.js:7
@@ -2099,22 +2099,22 @@ msgid "Service ready"
 msgstr "服务就绪"
 
 #: static/modern/main.js:5 static/modern/translations-fakejs.js:8
-msgid "UDS Client not launching"
-msgstr "UDS 客户端未启动"
+msgid "UDS Launcher not launching"
+msgstr "UDS Launcher未启动"
 
 #: static/modern/main.js:7 static/modern/translations-fakejs.js:9
 msgid ""
-"It seems that you don't have UDS Client installed. Please, install it from "
-"here:"
-msgstr "看来您尚未安装 UDS 客户端。请从此处安装："
+"It seems that you don't have UDS Launcher installed. Please, install it from"
+" here:"
+msgstr "看来您尚未安装 UDS Launcher。请从此处安装："
 
 #: static/modern/main.js:8 static/modern/translations-fakejs.js:10
-msgid "UDS Client Download"
-msgstr "UDS客户端下载"
+msgid "UDS Launcher Download"
+msgstr "UDS Launcher下载"
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:12
-msgid "Launching UDS Client...</br>Please wait."
-msgstr "正在启动UDS客户端...</br>请稍等。"
+msgid "Launching UDS Launcher...</br>Please wait."
+msgstr "正在启动UDS Launcher...</br>请稍等。"
 
 #: static/modern/main.js:10 static/modern/translations-fakejs.js:15
 msgid "Error communicating with your service. Please, retry again."
@@ -2247,12 +2247,12 @@ msgstr "你确定吗？"
 #: static/modern/translations-fakejs.js:52
 #: static/modern/translations-fakejs.js:80
 #: static/modern/translations-fakejs.js:82
-msgid "UDS Client"
-msgstr "UDS客户端"
+msgid "UDS Launcher"
+msgstr "UDS Launcher"
 
 #: static/modern/translations-fakejs.js:53
-msgid "Download UDS client for your platform"
-msgstr "下载适用于您平台的UDS客户端"
+msgid "Download UDS launcher for your platform"
+msgstr "下载适用于您平台的UDS Launcher"
 
 #: static/modern/translations-fakejs.js:54
 msgid "UDS Service launcher"
@@ -2273,16 +2273,16 @@ msgstr "要重新启动服务，您必须从源头开始进行。"
 #: static/modern/translations-fakejs.js:58
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
-"UDS Client installed"
-msgstr "如果该服务没有自动启动，则可能您没有安装UDS客户端"
+"UDS Launcher installed"
+msgstr "如果该服务没有自动启动，则可能您没有安装UDS Launcher"
 
 #: static/modern/translations-fakejs.js:59
 msgid "You can obtain it from the"
 msgstr "您可以从"
 
 #: static/modern/translations-fakejs.js:60
-msgid "UDS Client download page"
-msgstr "UDS客户端下载页面"
+msgid "UDS Launcher download page"
+msgstr "UDS Launcher下载页面"
 
 #: static/modern/translations-fakejs.js:61
 #: static/modern/translations-fakejs.js:77

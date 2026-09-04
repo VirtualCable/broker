@@ -10719,36 +10719,36 @@ msgstr ""
 "completa.)"
 
 #: web/util/udsclients_info.py:20
-msgid "Windows client"
-msgstr "Client Windows"
+msgid "Windows launcher"
+msgstr "Launcher Windows"
 
 #: web/util/udsclients_info.py:26
-msgid "macOS client (Apple Silicon)"
-msgstr "Client de macOS (Apple Silicon)"
+msgid "macOS launcher (Apple Silicon)"
+msgstr "Launcher de macOS (Apple Silicon)"
 
 #: web/util/udsclients_info.py:32
-msgid "macOS client (Intel)"
-msgstr "Client de macOS (Intel)"
+msgid "macOS launcher (Intel)"
+msgstr "Launcher de macOS (Intel)"
 
 #: web/util/udsclients_info.py:38
-msgid "Debian 12 / Ubuntu based Linux client"
-msgstr "Client Linux basat en Debian 12 / Ubuntu"
+msgid "Debian 12 / Ubuntu based Linux launcher"
+msgstr "Launcher Linux basat en Debian 12 / Ubuntu"
 
 #: web/util/udsclients_info.py:44
-msgid "Debian 13 / Ubuntu based Linux client"
-msgstr "Client Linux basat en Debian 13 / Ubuntu"
+msgid "Debian 13 / Ubuntu based Linux launcher"
+msgstr "Launcher Linux basat en Debian 13 / Ubuntu"
 
 #: web/util/udsclients_info.py:50
-msgid "Fedora / RHEL based Linux client (RPM)"
-msgstr "Client Linux basat en Fedora/RHEL (RPM)"
+msgid "Fedora / RHEL based Linux launcher (RPM)"
+msgstr "Launcher Linux basat en Fedora/RHEL (RPM)"
 
 #: web/util/udsclients_info.py:56
-msgid "openSUSE / SLES based Linux client (RPM)"
-msgstr "Client Linux basat en openSUSE / SLES (RPM)"
+msgid "openSUSE / SLES based Linux launcher (RPM)"
+msgstr "Launcher Linux basat en openSUSE / SLES (RPM)"
 
 #: web/util/udsclients_info.py:62
-msgid "Portable AppImage Linux client (x86_64)"
-msgstr "Client portàtil d&#39;AppImage per a Linux (x86_64)"
+msgid "Portable AppImage Linux launcher (x86_64)"
+msgstr "Launcher portàtil d&#39;AppImage per a Linux (x86_64)"
 
 #: web/views/auth.py:211
 msgid "Authenticator does not provide information"
