@@ -132,6 +132,10 @@ listings:
 | `search_authenticator` | Search users or groups of an authenticator by name. |
 | `get_item_logs` | The log trail of one object: a service pool, a user, a service, a meta pool member or an assigned service. |
 | `get_system_logs` | Global (system) log — administrators only (see below). |
+| `get_platform_stats` | Historical usage series of the platform (assigned/inuse/cached/complete), platform-wide or per pool. |
+| `get_security_check` | Security self-assessment findings — administrators only. |
+| `report_failed_logins` | CSV aggregation of failed login attempts over a date range — administrators only. |
+| `report_admin_activity` | CSV summary of administrator activity (requests, errors, top endpoints) — administrators only. |
 
 ### Resources
 
@@ -291,5 +295,5 @@ curl -s -X POST "$UDS" -H "Authorization: Bearer $UDS_TOKEN" \
 ## Status and roadmap
 
 - **Current**: read-only surface (generated listings + curated tools +
-  resources), skill bundle, per-object and system logs.
-- **Planned**: reports as CSV tools.
+  resources), skill bundle, per-object and system logs, platform usage
+  stats, security self-assessment and CSV analytical reports.

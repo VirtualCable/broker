@@ -3,6 +3,7 @@
 import json
 import typing
 import unittest
+from unittest import mock
 
 from django.utils import timezone
 
@@ -12,6 +13,7 @@ from uds.core.util.config import GlobalConfig
 from uds.core.util.log import LogLevel, LogSource, log
 from uds.mcp import get_catalog
 from uds.models.log import Log
+from uds.REST.methods.reports import Reports
 
 from tests.utils import rest
 
@@ -25,6 +27,10 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_server_stats",
     "get_item_logs",
     "get_system_logs",
+    "get_platform_stats",
+    "get_security_check",
+    "report_failed_logins",
+    "report_admin_activity",
 )
 
 _MARKER: typing.Final[str] = "mcp-system-log-marker-for-test"
@@ -105,6 +111,68 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         result = typing.cast("dict[str, typing.Any]", json.loads(self._result_text(body)))
         entries = typing.cast("list[dict[str, typing.Any]]", result["entries"])
         self.assertEqual(str(entries[0]["source"]).lower(), "rest")
+
+    def test_get_platform_stats_global_complete(self) -> None:
+        body = self._call("get_platform_stats", {"counter": "complete"})
+        result = json.loads(self._result_text(body))
+        for series in ("assigned", "inuse", "cached"):
+            self.assertIn(series, result)
+
+    def test_get_platform_stats_for_one_pool(self) -> None:
+        pool = self._a_service_pool()
+        body = self._call("get_platform_stats", {"counter": "assigned", "pool_uuid": pool.uuid})
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_platform_stats_rejects_unknown_counter(self) -> None:
+        body = self._call("get_platform_stats", {"counter": "nope"})
+        self.assertEqual(body["error"]["code"], -32602)
+
+    def test_get_platform_stats_global_is_denied_for_staff(self) -> None:
+        self.login_with_api_token(as_admin=False)
+        body = self._call("get_platform_stats", {"counter": "assigned"})
+        self.assertEqual(body["error"]["code"], -32000)
+
+    def test_get_security_check_as_admin(self) -> None:
+        body = self._call("get_security_check", {})
+        self.assertIsInstance(json.loads(self._result_text(body)), dict)
+
+    def test_report_failed_logins_csv(self) -> None:
+        body = self._call(
+            "report_failed_logins",
+            {"start_date": "2026-01-01", "end_date": "2026-12-31"},
+        )
+        result = typing.cast("dict[str, typing.Any]", json.loads(self._result_text(body)))
+        self.assertEqual(result["mime_type"], "text/csv")
+        self.assertFalse(result["truncated"])
+        self.assertIsInstance(result["data"], str)
+
+    def test_report_admin_activity_csv(self) -> None:
+        body = self._call(
+            "report_admin_activity",
+            {"start_date": "2026-01-01", "end_date": "2026-12-31", "top_paths": 10},
+        )
+        result = typing.cast("dict[str, typing.Any]", json.loads(self._result_text(body)))
+        self.assertEqual(result["mime_type"], "text/csv")
+        self.assertFalse(result["truncated"])
+
+    def test_report_output_is_size_capped_with_hint(self) -> None:
+        class _HugeReport:
+            mime_type = "text/csv"
+            encoded = False
+            filename = "huge.csv"
+
+            def generate_encoded(self) -> str:
+                return "x" * 70000
+
+        with mock.patch.object(Reports, "_locate_report", return_value=_HugeReport()):
+            body = self._call(
+                "report_failed_logins",
+                {"start_date": "2026-01-01", "end_date": "2026-12-31"},
+            )
+        result = typing.cast("dict[str, typing.Any]", json.loads(self._result_text(body)))
+        self.assertTrue(result["truncated"])
+        self.assertLessEqual(len(result["data"]), 65536)
+        self.assertIn("Narrow the date range", result["hint"])
 
     def test_get_system_logs_is_denied_for_staff(self) -> None:
         self.login_with_api_token(as_admin=False)

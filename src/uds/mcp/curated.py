@@ -10,12 +10,16 @@ description:
 * the per-object log modifier (``<uuid>/log``) that ``ModelHandler`` and
   ``DetailHandler`` expose for collections that implement ``get_logs``,
   unified here as a single ``get_item_logs`` tool;
-* the admin-only global log endpoint (``uds.REST.methods.logs``).
+* the admin-only global log endpoint (``uds.REST.methods.logs``);
+* the analytical surfaces that the listings cannot provide: platform-wide
+  usage counters, the security self-assessment and the CSV reports that
+  aggregate data (failed logins, admin activity).
 
 Every executor forwards the live request through :class:`RestProxy`, so the
 REST permission checks of each target handler stay in force: a staff
 identity without read permission on the target item gets an access-denied
-error, and the global log tool only works for administrators.
+error, and the admin-only surfaces (global log, security check, reports,
+platform-wide stats) only work for administrators.
 """
 
 import typing
@@ -29,17 +33,31 @@ from uds.REST.methods.logs import Logs
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.meta_service_pools import MetaServicesPool
 from uds.REST.methods.providers import Providers
+from uds.REST.methods.reports import Reports
 from uds.REST.methods.services import Services
 from uds.REST.methods.services_pools import ServicesPools
 from uds.REST.methods.servers_management import ServersGroups, ServersServers
+from uds.REST.methods.system import System
 from uds.REST.methods.user_services import AssignedUserService
+from uds.reports.lists.admin_activity import AdminActivityReportCSV
+from uds.reports.lists.failed_logins import FailedLoginsReportCSV
 
 from .catalog import Catalog, ToolDefinition
 from .rest_proxy import RestProxy, RestTarget
 
+if typing.TYPE_CHECKING:
+    from uds.core.reports.report import Report
+
 _GET = types.rest.CustomMethodMethod.GET
+_POST = types.rest.CustomMethodMethod.POST
 
 _JsonObject = dict[str, typing.Any]
+
+# Upper bound for the CSV text a report tool may return. Reports are
+# aggregations, but an unhappy configuration (or a very active broker) can
+# still produce big documents; LLM clients pay per token, so the answer is
+# clamped here with an explicit truncation marker.
+_MAX_REPORT_CHARS: typing.Final[int] = 65536
 
 
 def _schema(properties: _JsonObject, required: tuple[str, ...] = ()) -> _JsonObject:
@@ -65,10 +83,12 @@ def _check_required(arguments: _JsonObject, names: tuple[str, ...]) -> None:
 
     The JSON-Schema subset the server validates does not include
     ``required``, so the executor enforces it before touching the proxy.
+    Empty or whitespace-only strings count as missing; other types only
+    need to be present.
     """
     for name in names:
         value = arguments.get(name)
-        if not isinstance(value, str) or not value:
+        if value is None or (isinstance(value, str) and not value.strip()):
             raise ValueError(f"{name} is required")
 
 
@@ -316,6 +336,190 @@ def _system_logs_tool() -> ToolDefinition:
     )
 
 
+def _platform_stats_tool() -> ToolDefinition:
+    """Build the platform-wide usage counters tool (``/system/stats``)."""
+
+    _COUNTERS: typing.Final[tuple[str, ...]] = ("assigned", "inuse", "cached", "complete")
+
+    async def executor(arguments: _JsonObject, request: typing.Any = None) -> typing.Any:
+        counter = str(arguments.get("counter", "")).lower()
+        if counter not in _COUNTERS:
+            raise ValueError(f"counter must be one of {', '.join(_COUNTERS)}")
+        args = ["stats", counter]
+        pool_uuid = arguments.get("pool_uuid")
+        if pool_uuid:
+            args.append(str(pool_uuid))
+        return await RestProxy().execute(RestTarget(System, "system", _GET, args=tuple(args)), request, {})
+
+    return ToolDefinition(
+        name="get_platform_stats",
+        title="Get platform usage stats",
+        description=(
+            "Historical usage series of the platform: assigned, in use, cached or complete "
+            "(the three at once) services. Without ``pool_uuid`` the series cover every pool "
+            "of the platform (administrators only); with it, the series of that single pool "
+            "(available to staff with read permission on it). Use it to decide capacity "
+            "changes; pair with ``get_servicepool_forecast`` for the future side."
+        ),
+        input_schema=_schema(
+            {
+                "counter": _string_property("Which series: assigned, inuse, cached or complete."),
+                "pool_uuid": _uuid_property(
+                    "Optional UUID of a service pool to scope the series to. "
+                    "Omit for platform-wide (administrators only)."
+                ),
+            },
+            ("counter",),
+        ),
+        access=("Platform-wide series: administrators only. Per-pool series: staff with read permission on the pool."),
+        returns="An array of counter samples (or an object with the three series for complete).",
+        required_permission="READ",
+        executor=executor,
+    )
+
+
+def _security_check_tool() -> ToolDefinition:
+    """Build the security self-assessment tool (``/system/security_check``)."""
+
+    async def executor(arguments: _JsonObject, request: typing.Any = None) -> typing.Any:
+        return await RestProxy().execute(RestTarget(System, "system", _GET, args=("security_check",)), request, {})
+
+    return ToolDefinition(
+        name="get_security_check",
+        title="Get security check",
+        description=(
+            "Security self-assessment of this broker: configuration findings that an "
+            "administrator should review (weak settings, insecure defaults, ...). "
+            "Administrators only; staff get an access-denied error."
+        ),
+        input_schema=_schema({}),
+        access="Administrators only.",
+        returns="An object with the security findings and their severity.",
+        required_permission="ALL",
+        executor=executor,
+    )
+
+
+def _report_tool(
+    *,
+    name: str,
+    title: str,
+    description: str,
+    report_cls: "type[Report]",
+    params_schema: _JsonObject,
+    required: tuple[str, ...],
+    argument_to_param: dict[str, str],
+    defaults: dict[str, typing.Any],
+    access: str,
+) -> ToolDefinition:
+    """Build a tool that generates one specific CSV report.
+
+    The report uuid is fixed by the tool (the class is the single source of
+    truth through ``get_uuid``), so the agent never has to discover ids; the
+    arguments are exactly the report's own parameters. The generated CSV
+    text is clamped to ``_MAX_REPORT_CHARS`` with an explicit truncation
+    marker, so answers stay proportionate for an LLM context.
+    """
+    report_uuid = report_cls.get_uuid()
+
+    async def executor(arguments: _JsonObject, request: typing.Any = None) -> typing.Any:
+        _check_required(arguments, required)
+        params: dict[str, typing.Any] = dict(defaults)
+        for argument, param in argument_to_param.items():
+            if arguments.get(argument) is not None:
+                params[param] = arguments[argument]
+        result = await RestProxy().execute(
+            RestTarget(Reports, "reports", _POST, args=(report_uuid,)),
+            request,
+            params,
+        )
+        data = str(typing.cast(_JsonObject, result).get("data", ""))
+        truncated = len(data) > _MAX_REPORT_CHARS
+        return {
+            "mime_type": result.get("mime_type"),
+            "filename": result.get("filename"),
+            "data": data[:_MAX_REPORT_CHARS],
+            "truncated": truncated,
+            **(
+                {
+                    "hint": (
+                        f"The report is bigger than {_MAX_REPORT_CHARS} characters and was cut. "
+                        "Narrow the date range or the scope to get the rest."
+                    )
+                }
+                if truncated
+                else {}
+            ),
+        }
+
+    return ToolDefinition(
+        name=name,
+        title=title,
+        description=description,
+        input_schema=_schema(params_schema, required),
+        access=access,
+        returns="An object with mime_type, filename, the CSV text in data, and truncated when the text was cut.",
+        required_permission="ALL",
+        executor=executor,
+    )
+
+
+def _failed_logins_tool() -> ToolDefinition:
+    """Build the failed logins CSV report tool."""
+
+    return _report_tool(
+        name="report_failed_logins",
+        title="Report: failed logins",
+        description=(
+            "CSV aggregation of failed login attempts over a date range, per user and "
+            "authenticator. Use it to assess brute-force or account-lockout situations; "
+            "raw lines live in ``get_system_logs``, this answer is the counted summary."
+        ),
+        report_cls=FailedLoginsReportCSV,
+        params_schema={
+            "start_date": _string_property("First day of the range, as YYYY-MM-DD."),
+            "end_date": _string_property("Last day of the range, as YYYY-MM-DD (inclusive)."),
+            "authenticator_uuid": _uuid_property(
+                "Optional authenticator to scope the report to. Omit (or pass the special "
+                "value 0-0-0-0) for all authenticators."
+            ),
+        },
+        required=("start_date", "end_date"),
+        argument_to_param={"start_date": "start_date", "end_date": "end_date", "authenticator_uuid": "authenticator"},
+        defaults={"authenticator": "0-0-0-0"},
+        access="Administrators only (the backing reports endpoint requires the admin role).",
+    )
+
+
+def _admin_activity_tool() -> ToolDefinition:
+    """Build the admin activity CSV report tool."""
+
+    return _report_tool(
+        name="report_admin_activity",
+        title="Report: admin activity",
+        description=(
+            "CSV summary of administrator activity over a date range: requests, errors, "
+            "last seen and most used endpoints per admin. Use it to review what "
+            "administrators (and automated agents) actually did."
+        ),
+        report_cls=AdminActivityReportCSV,
+        params_schema={
+            "start_date": _string_property("First day of the range, as YYYY-MM-DD."),
+            "end_date": _string_property("Last day of the range, as YYYY-MM-DD (inclusive)."),
+            "top_paths": {
+                "type": "integer",
+                "description": "Most-used endpoints to list per admin (1-50). Default: 5.",
+                "minimum": 1,
+                "maximum": 50,
+            },
+        },
+        required=("start_date", "end_date", "top_paths"),
+        argument_to_param={"start_date": "start_date", "end_date": "end_date", "top_paths": "top_paths"},
+        defaults={},
+        access="Administrators only (the backing reports endpoint requires the admin role).",
+    )
+
+
 def curated_tools() -> tuple[ToolDefinition, ...]:
     """Return the hand-curated tool set for the default catalog."""
     return (
@@ -403,6 +607,10 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
         _server_stats_tool(),
         _item_logs_tool(),
         _system_logs_tool(),
+        _platform_stats_tool(),
+        _security_check_tool(),
+        _failed_logins_tool(),
+        _admin_activity_tool(),
     )
 
 
