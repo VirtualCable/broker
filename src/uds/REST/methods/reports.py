@@ -130,9 +130,25 @@ class Reports(model.BaseModelHandler[ReportItem]):
             ((consts.rest.GUI, "<report>"), report_gui),
         )
 
-    def put(self) -> typing.Any:
+    def post(self) -> typing.Any:
+        """Generate a report: ``POST /reports/{uuid}``.
+
+        Generation produces a new document (it never modifies the report
+        definition), so POST is the canonical verb; the legacy ``PUT`` is
+        kept for compatibility and answers with deprecation headers.
         """
-        Processes a PUT request
+        logger.debug("method POST for %s, %s", self.__class__.__name__, self._args)
+
+        if len(self._args) != 1:
+            raise exceptions.rest.RequestError("Invalid report uuid!")
+
+        return self._generate(self._args[0])
+
+    def put(self) -> typing.Any:
+        """Legacy ``PUT /reports/{uuid}`` kept in COMPAT mode, deprecated.
+
+        Same behaviour as :meth:`post`, but the response advertises the
+        successor verb through the standard deprecation headers.
         """
         logger.debug(
             "method PUT for %s, %s, %s",
@@ -144,7 +160,12 @@ class Reports(model.BaseModelHandler[ReportItem]):
         if len(self._args) != 1:
             raise exceptions.rest.RequestError("Invalid report uuid!")
 
-        report = self._locate_report(self._args[0], self._params)
+        self.add_deprecation_headers(successor_hint=f"use POST /{self._path}/{self._args[0]} to generate the report")
+        return self._generate(self._args[0])
+
+    def _generate(self, uuid: str) -> dict[str, typing.Any]:
+        """Generate the report identified by ``uuid`` and encode its result."""
+        report = self._locate_report(uuid, self._params)
 
         try:
             logger.debug("Report: %s", report)
