@@ -1,7 +1,6 @@
 """Tests for the REST inventory walker."""
 
 import unittest
-import typing
 
 from uds.REST.inventory import (
     HandlerInventoryEntry,
@@ -30,7 +29,7 @@ class RestWalkerTest(unittest.TestCase):
         self.assertTrue(entries, "expected at least one detail entry named 'users'")
         for entry in entries:
             self.assertIn("{uuid}", entry.path)
-            self.assertIsNotNone(entry.parent)
+            assert entry.parent is not None
             self.assertEqual(entry.parent.name, "authenticators")
 
     def test_accept_filter_drops_entries(self) -> None:
@@ -85,20 +84,17 @@ class InventoryEntryTest(unittest.TestCase):
             api_operations=(),
             description="",
         )
-        detail = typing.cast(
-            HandlerInventoryEntry,
-            HandlerInventoryEntry(
-                handler=ServicesPools,
-                name="users",
-                path="authenticators/{uuid}/users",
-                role=None,
-                is_collection=True,
-                exposes_get_items=True,
-                custom_methods=(),
-                api_operations=(),
-                description="",
-                parent=master,
-            ),
+        detail = HandlerInventoryEntry(
+            handler=ServicesPools,
+            name="users",
+            path="authenticators/{uuid}/users",
+            role=None,
+            is_collection=True,
+            exposes_get_items=True,
+            custom_methods=(),
+            api_operations=(),
+            description="",
+            parent=master,
         )
         self.assertEqual(master.full_path, "/servicespools")
         self.assertFalse(master.is_detail)

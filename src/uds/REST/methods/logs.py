@@ -165,7 +165,7 @@ class Logs(Handler):
         except (TypeError, ValueError):
             requested = _DEFAULT_LIMIT
         self._odata.limit = max(1, min(requested, _MAX_LIMIT))
-        return typing.cast(int, self._odata.limit)
+        return self._odata.limit
 
     def _limit(self) -> int:
         """Return the requested entry limit clamped to the configured bounds."""
