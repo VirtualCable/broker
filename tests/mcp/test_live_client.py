@@ -25,7 +25,6 @@ deterministic.
 import asyncio
 import typing
 
-import httpx
 import httpx2
 from django.test import LiveServerTestCase
 from mcp.client.session import ClientSession
@@ -59,13 +58,13 @@ class McpLiveProtocolTest(rest.test.RESTTestCase, LiveServerTestCase):  # pyrigh
     # ------------------------------------------------------------------
     def test_get_returns_method_not_allowed(self) -> None:
         """GET is the SSE stream we do not offer: 405 + Allow with POST."""
-        response = httpx.get(self.mcp_url, headers=self._headers())
+        response = httpx2.get(self.mcp_url, headers=self._headers())
         self.assertEqual(response.status_code, 405, response.text)
         self.assertIn("POST", response.headers.get("Allow", ""))
 
     def test_delete_returns_method_not_allowed(self) -> None:
         """DELETE would terminate a session; we are stateless: 405."""
-        response = httpx.delete(self.mcp_url, headers=self._headers())
+        response = httpx2.delete(self.mcp_url, headers=self._headers())
         self.assertEqual(response.status_code, 405, response.text)
 
     # ------------------------------------------------------------------
@@ -73,7 +72,7 @@ class McpLiveProtocolTest(rest.test.RESTTestCase, LiveServerTestCase):  # pyrigh
     # ------------------------------------------------------------------
     def test_accept_ruling_out_json_is_not_acceptable(self) -> None:
         """A client that cannot accept JSON gets 406, per the transport."""
-        response = httpx.post(
+        response = httpx2.post(
             self.mcp_url,
             headers=self._headers(Accept="text/plain"),
             json={"jsonrpc": "2.0", "id": 1, "method": "ping"},
@@ -82,7 +81,7 @@ class McpLiveProtocolTest(rest.test.RESTTestCase, LiveServerTestCase):  # pyrigh
 
     def test_standard_mcp_accept_gets_json(self) -> None:
         """The Accept value every MCP client sends works and gets JSON."""
-        response = httpx.post(
+        response = httpx2.post(
             self.mcp_url,
             headers=self._headers(Accept="application/json, text/event-stream"),
             json={"jsonrpc": "2.0", "id": 2, "method": "ping"},

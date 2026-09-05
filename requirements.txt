@@ -1,7 +1,10 @@
 # Broker (and common)
 # Latest versions should work fine with master branch
 Django>=6.1
-mcp>=2,<3
+mcp>=2.1,<3
+# Imported directly by tests/mcp (it is the MCP SDK v2 HTTP stack).
+# Declared explicitly instead of relying on mcp pulling it transitively.
+httpx2>=2.5.0
 channels
 daphne
 # Current "stable" ldap3 version (2.9.1) has a feature
