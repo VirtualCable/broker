@@ -41,7 +41,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 16:38+0200\n"
+"POT-Creation-Date: 2026-09-05 19:27+0200\n"
 "PO-Revision-Date: 2014-03-26 02:14+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Japanese (http://app.transifex.com/openuds/openuds/language/"
@@ -62,11 +62,11 @@ msgstr "アカウント"
 #: REST/methods/meta_service_pools.py:122 REST/methods/mfas.py:78
 #: REST/methods/networks.py:75 REST/methods/notifiers.py:87
 #: REST/methods/osmanagers.py:77 REST/methods/providers.py:119
-#: REST/methods/reports.py:86 REST/methods/servers_management.py:519
+#: REST/methods/reports.py:86 REST/methods/servers_management.py:735
 #: REST/methods/services.py:289 REST/methods/services_pool_groups.py:72
-#: REST/methods/services_pools.py:183 REST/methods/transports.py:94
+#: REST/methods/services_pools.py:184 REST/methods/transports.py:94
 #: REST/methods/tunnels_management.py:185 REST/methods/user_services.py:471
-#: REST/methods/user_services.py:552 REST/methods/users_groups.py:194
+#: REST/methods/user_services.py:552 REST/methods/users_groups.py:221
 #: core/types/rest/stock/fields.py:94
 msgid "Name"
 msgstr "名前"
@@ -76,10 +76,10 @@ msgstr "名前"
 #: REST/methods/meta_pools.py:116 REST/methods/meta_service_pools.py:123
 #: REST/methods/mfas.py:80 REST/methods/notifiers.py:91
 #: REST/methods/osmanagers.py:79 REST/methods/providers.py:121
-#: REST/methods/servers_management.py:520 REST/methods/services.py:291
+#: REST/methods/servers_management.py:736 REST/methods/services.py:291
 #: REST/methods/services_pool_groups.py:73 REST/methods/transports.py:96
 #: REST/methods/tunnels_management.py:186 REST/methods/user_services.py:554
-#: REST/methods/users_groups.py:195 REST/methods/users_groups.py:454
+#: REST/methods/users_groups.py:222 REST/methods/users_groups.py:523
 #: core/types/rest/stock/fields.py:105
 msgid "Comments"
 msgstr "コメント"
@@ -90,8 +90,8 @@ msgstr "タイムマーク"
 
 #: REST/methods/accounts.py:98 REST/methods/authenticators.py:164
 #: REST/methods/calendars.py:84 REST/methods/meta_pools.py:132
-#: REST/methods/mfas.py:81 REST/methods/servers_management.py:525
-#: REST/methods/services_pools.py:192 REST/methods/transports.py:99
+#: REST/methods/mfas.py:81 REST/methods/servers_management.py:741
+#: REST/methods/services_pools.py:193 REST/methods/transports.py:99
 #: REST/methods/tunnels_management.py:190
 msgid "tags"
 msgstr "タグ"
@@ -133,64 +133,68 @@ msgstr "経過時間マーク"
 msgid "Account usage not found: {}"
 msgstr "アカウントの使用状況が見つかりませんでした: {}"
 
-#: REST/methods/actor_token.py:78
+#: REST/methods/actor_token.py:79
 msgid "Actor tokens"
 msgstr "俳優トークン"
 
-#: REST/methods/actor_token.py:79 REST/methods/servers_management.py:101
+#: REST/methods/actor_token.py:80 REST/methods/servers_management.py:258
 #: reports/auto/fields.py:58 reports/lists/audit.py:172
 #: reports/lists/failed_logins.py:214 reports/stats/pools_performance.py:196
-#: reports/stats/pools_performance.py:216 reports/stats/usage_by_pool.py:169
+#: reports/stats/pools_performance.py:216 reports/stats/server_usage.py:150
+#: reports/stats/server_usage.py:164 reports/stats/usage_by_pool.py:169
 #: reports/stats/user_access.py:181 templates/uds/reports/lists/audit.html:14
 #: templates/uds/reports/lists/failed-logins.html:41
 #: templates/uds/reports/stats/authenticator_stats.html:14
 msgid "Date"
 msgstr "日付"
 
-#: REST/methods/actor_token.py:80 REST/methods/servers_management.py:100
+#: REST/methods/actor_token.py:81 REST/methods/servers_management.py:257
 msgid "Issued by"
 msgstr "発行者"
 
-#: REST/methods/actor_token.py:81 reports/stats/usage_by_pool.py:173
+#: REST/methods/actor_token.py:82 reports/stats/usage_by_pool.py:173
 #: templates/uds/reports/stats/usage-by-pool.html:18
 msgid "Origin"
 msgstr "起源"
 
-#: REST/methods/actor_token.py:82 reports/stats/client_platforms.py:144
+#: REST/methods/actor_token.py:83 reports/lists/servers.py:140
+#: reports/stats/client_platforms.py:144
+#: templates/uds/reports/lists/servers.html:21
 #: templates/uds/reports/stats/client-platforms.html:59
 msgid "Version"
 msgstr "バージョン"
 
-#: REST/methods/actor_token.py:83 REST/methods/servers_management.py:95
-#: REST/methods/servers_management.py:222
-#: REST/methods/servers_management.py:249
+#: REST/methods/actor_token.py:84 REST/methods/servers_management.py:252
+#: REST/methods/servers_management.py:398
+#: REST/methods/servers_management.py:425
 #: REST/methods/tunnels_management.py:108
 #: REST/methods/tunnels_management.py:209
 msgid "Hostname"
 msgstr "ホスト名"
 
-#: REST/methods/actor_token.py:84
+#: REST/methods/actor_token.py:85
 msgid "Pre-connect"
 msgstr "事前接続"
 
-#: REST/methods/actor_token.py:85
+#: REST/methods/actor_token.py:86
 msgid "Post-Configure"
 msgstr "設定後"
 
-#: REST/methods/actor_token.py:86
+#: REST/methods/actor_token.py:87
 msgid "Run Once"
 msgstr "一度実行"
 
-#: REST/methods/actor_token.py:87
+#: REST/methods/actor_token.py:88
 msgid "Log level"
 msgstr "ログレベル"
 
-#: REST/methods/actor_token.py:88 REST/methods/servers_management.py:99
+#: REST/methods/actor_token.py:89 REST/methods/servers_management.py:256
+#: reports/lists/servers.py:139 templates/uds/reports/lists/servers.html:20
 #: templates/uds/reports/stats/userservice-errors.html:39
 msgid "OS"
 msgstr "OS"
 
-#: REST/methods/actor_token.py:102 REST/methods/servers_management.py:112
+#: REST/methods/actor_token.py:103 REST/methods/servers_management.py:269
 msgid "Token isued by {} from {}"
 msgstr "{} から {} によって発行されたトークン"
 
@@ -204,9 +208,10 @@ msgstr "ID"
 
 #: REST/methods/authenticators.py:158 REST/methods/mfas.py:79
 #: REST/methods/notifiers.py:88 REST/methods/osmanagers.py:78
-#: REST/methods/providers.py:120 REST/methods/servers_management.py:98
-#: REST/methods/servers_management.py:521 REST/methods/services.py:290
+#: REST/methods/providers.py:120 REST/methods/servers_management.py:255
+#: REST/methods/servers_management.py:737 REST/methods/services.py:290
 #: REST/methods/transports.py:95 REST/methods/user_services.py:553
+#: reports/lists/servers.py:137 templates/uds/reports/lists/servers.html:18
 msgid "Type"
 msgstr "タイプ"
 
@@ -222,9 +227,11 @@ msgstr "優先度"
 msgid "Label"
 msgstr "ラベル"
 
-#: REST/methods/authenticators.py:162 reports/stats/pools_performance.py:198
-#: reports/stats/pools_performance.py:263 reports/stats/user_access.py:242
-#: reports/stats/user_access.py:286
+#: REST/methods/authenticators.py:162 reports/lists/servers.py:144
+#: reports/stats/pools_performance.py:198
+#: reports/stats/pools_performance.py:263 reports/stats/server_usage.py:152
+#: reports/stats/user_access.py:242 reports/stats/user_access.py:286
+#: templates/uds/reports/lists/servers.html:24
 #: templates/uds/reports/stats/authenticator_stats.html:15
 #: templates/uds/reports/stats/pools-performance.html:35
 #: templates/uds/reports/stats/user-access.html:35
@@ -236,8 +243,8 @@ msgid "MFA"
 msgstr "外務省"
 
 #: REST/methods/authenticators.py:224 REST/methods/meta_pools.py:129
-#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:188
-#: REST/methods/services_pools.py:511 core/consts/calendar.py:190
+#: REST/methods/meta_pools.py:264 REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:538 core/consts/calendar.py:190
 msgid "Visible"
 msgstr "見える"
 
@@ -245,7 +252,7 @@ msgstr "見える"
 msgid "Hidden"
 msgstr "隠れた"
 
-#: REST/methods/authenticators.py:226 REST/methods/users_groups.py:197
+#: REST/methods/authenticators.py:226 REST/methods/users_groups.py:224
 #: core/types/pools.py:82 services/Proxmox/service.py:219
 msgid "Disabled"
 msgstr "無効"
@@ -267,7 +274,7 @@ msgstr "MFAプロバイダー"
 msgid "None"
 msgstr "なし"
 
-#: REST/methods/authenticators.py:317 REST/methods/authenticators.py:373
+#: REST/methods/authenticators.py:317 REST/methods/authenticators.py:371
 msgid "Invalid type: {}"
 msgstr "無効な型: {}"
 
@@ -275,15 +282,15 @@ msgstr "無効な型: {}"
 msgid "Search not supported"
 msgstr "検索はサポートされていません"
 
-#: REST/methods/authenticators.py:350
+#: REST/methods/authenticators.py:349
 msgid "Too many results..."
 msgstr "結果が多すぎます..."
 
-#: REST/methods/authenticators.py:350
+#: REST/methods/authenticators.py:349
 msgid "Refine your query"
 msgstr "検索を絞り込む"
 
-#: REST/methods/authenticators.py:399
+#: REST/methods/authenticators.py:397
 msgid "Label must contain only letters, numbers, or symbols: - : ."
 msgstr "ラベルには文字、数字、記号のみを含めることができます: - : ."
 
@@ -368,11 +375,11 @@ msgstr "ポリシー"
 msgid "HA Policy"
 msgstr "HAポリシー"
 
-#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:185
+#: REST/methods/meta_pools.py:127 REST/methods/services_pools.py:186
 msgid "User services"
 msgstr "ユーザーサービス"
 
-#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:186
+#: REST/methods/meta_pools.py:128 REST/methods/services_pools.py:187
 msgid "In Preparation"
 msgstr "準備中"
 
@@ -380,15 +387,15 @@ msgstr "準備中"
 msgid "Pool Group"
 msgstr "プールグループ"
 
-#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:435
+#: REST/methods/meta_pools.py:175 REST/methods/services_pools.py:464
 msgid "Default"
 msgstr "デフォルト"
 
-#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:475
+#: REST/methods/meta_pools.py:222 REST/methods/services_pools.py:504
 msgid "Short name"
 msgstr "短縮名"
 
-#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:476
+#: REST/methods/meta_pools.py:223 REST/methods/services_pools.py:505
 msgid "Short name for user service visualization"
 msgstr "ユーザーサービス可視化の短縮名"
 
@@ -408,12 +415,12 @@ msgstr ""
 "サービスプールの高可用性ポリシー。有効にすると、プールに障害が発生した場合、"
 "別のプールで再起動されます。慎重に有効化してください。"
 
-#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:190
-#: REST/methods/services_pools.py:520
+#: REST/methods/meta_pools.py:253 REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:545
 msgid "Pool group"
 msgstr "プールグループ"
 
-#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:521
+#: REST/methods/meta_pools.py:260 REST/methods/services_pools.py:546
 msgid "Pool group for this pool (for pool classify on display)"
 msgstr "このプールのプール グループ (表示上のプール分類用)"
 
@@ -421,11 +428,11 @@ msgstr "このプールのプール グループ (表示上のプール分類用
 msgid "If active, metapool will be visible for users"
 msgstr "アクティブな場合、メタプールはユーザーに表示されます"
 
-#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:525
+#: REST/methods/meta_pools.py:270 REST/methods/services_pools.py:550
 msgid "Calendar access denied text"
 msgstr "カレンダーアクセス拒否テキスト"
 
-#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:526
+#: REST/methods/meta_pools.py:271 REST/methods/services_pools.py:551
 msgid ""
 "Custom message to be shown to users if access is limited by calendar rules."
 msgstr ""
@@ -450,7 +457,7 @@ msgid "Members of {0}"
 msgstr "{0}のメンバー"
 
 #: REST/methods/meta_service_pools.py:125 REST/methods/notifiers.py:90
-#: REST/methods/notifiers.py:134 REST/methods/users_groups.py:197
+#: REST/methods/notifiers.py:134 REST/methods/users_groups.py:224
 #: core/types/pools.py:83 services/Proxmox/service.py:219
 msgid "Enabled"
 msgstr "有効"
@@ -490,12 +497,15 @@ msgstr "作成日"
 msgid "Pool"
 msgstr "プール"
 
-#: REST/methods/meta_service_pools.py:263 REST/methods/servers_management.py:96
-#: REST/methods/servers_management.py:255 REST/methods/services_usage.py:155
+#: REST/methods/meta_service_pools.py:263
+#: REST/methods/servers_management.py:253
+#: REST/methods/servers_management.py:431 REST/methods/services_usage.py:155
 #: REST/methods/user_services.py:254 REST/methods/user_services.py:391
 #: auths/IP/authenticator.py:52 auths/IP/authenticator.py:61
 #: reports/lists/audit.py:174 reports/lists/failed_logins.py:217
+#: reports/lists/servers.py:136
 #: templates/uds/reports/lists/failed-logins.html:44
+#: templates/uds/reports/lists/servers.html:17
 msgid "IP"
 msgstr "IP"
 
@@ -709,15 +719,22 @@ msgstr "サービスのあるプロバイダーを削除できません"
 msgid "Available reports"
 msgstr "利用可能なレポート"
 
-#: REST/methods/reports.py:85 REST/methods/users_groups.py:453
-#: REST/methods/users_groups.py:465
+#: REST/methods/reports.py:85 REST/methods/users_groups.py:522
+#: REST/methods/users_groups.py:532
 #: auths/ActiveDirectory_enterprise/authenticator.py:225
 #: auths/AzureAD_enterprise/authenticator.py:99
 #: auths/EDirectory_enterprise/authenticator.py:136
 #: auths/Radius/authenticator.py:64 auths/RegexLdap/authenticator.py:168
-#: auths/SAML/saml.py:116 auths/SimpleLDAP/authenticator.py:187
+#: auths/SAML/saml.py:115 auths/SimpleLDAP/authenticator.py:187
 #: core/consts/calendar.py:128 core/consts/calendar.py:133
+#: reports/lists/servers.py:134 reports/stats/server_balance.py:188
+#: reports/stats/server_load.py:158 reports/stats/server_usage.py:203
 #: reports/stats/usage_by_group.py:212
+#: templates/uds/reports/lists/servers.html:15
+#: templates/uds/reports/stats/server-balance.html:22
+#: templates/uds/reports/stats/server-balance.html:51
+#: templates/uds/reports/stats/server-load.html:25
+#: templates/uds/reports/stats/server-usage.html:24
 #: templates/uds/reports/stats/usage-by-group.html:15
 msgid "Group"
 msgstr "グループ"
@@ -750,31 +767,31 @@ msgstr "無効なデータです。最大長は 2048 です。"
 msgid "Invalid port. Must be between 1 and 65535"
 msgstr "無効なポートです。1～65535 の範囲で指定してください。"
 
-#: REST/methods/servers_management.py:94
+#: REST/methods/servers_management.py:251
 msgid "Registered Servers"
 msgstr "登録済みサーバー"
 
-#: REST/methods/servers_management.py:97
+#: REST/methods/servers_management.py:254
 msgid "MAC"
 msgstr "マック"
 
-#: REST/methods/servers_management.py:221
+#: REST/methods/servers_management.py:397
 #: REST/methods/tunnels_management.py:107
 #, python-brace-format
 msgid "Servers of {0}"
 msgstr "{0} のサーバー"
 
-#: REST/methods/servers_management.py:223
+#: REST/methods/servers_management.py:399
 #: REST/methods/tunnels_management.py:109
 msgid "Ip"
 msgstr "イプ"
 
-#: REST/methods/servers_management.py:224
+#: REST/methods/servers_management.py:400
 #: REST/methods/tunnels_management.py:110
 msgid "Mac"
 msgstr "マック"
 
-#: REST/methods/servers_management.py:227
+#: REST/methods/servers_management.py:403
 #: REST/methods/tunnels_management.py:188
 #: REST/methods/tunnels_management.py:215
 #: auths/EDirectory_enterprise/authenticator.py:57
@@ -794,7 +811,7 @@ msgstr "マック"
 msgid "Port"
 msgstr "ポート"
 
-#: REST/methods/servers_management.py:232
+#: REST/methods/servers_management.py:408
 #: REST/methods/tunnels_management.py:113 REST/methods/user_services.py:393
 #: REST/methods/user_services.py:473 REST/methods/user_services.py:706
 #: reports/stats/userservice_errors.py:149
@@ -802,112 +819,132 @@ msgstr "ポート"
 msgid "State"
 msgstr "州"
 
-#: REST/methods/servers_management.py:233
-#: REST/methods/tunnels_management.py:114
+#: REST/methods/servers_management.py:409
+#: REST/methods/tunnels_management.py:114 reports/lists/servers.py:141
+#: templates/uds/reports/lists/servers.html:22
 msgid "Maintenance"
 msgstr "メンテナンス"
 
-#: REST/methods/servers_management.py:233
+#: REST/methods/servers_management.py:409
 #: REST/methods/tunnels_management.py:114
 #: transports/RDSEmbedded_enterprise/common.py:228
 #: transports/RDS_enterprise/rds_base.py:187
 msgid "Normal"
 msgstr "普通"
 
-#: REST/methods/servers_management.py:243
-#: REST/methods/servers_management.py:556
+#: REST/methods/servers_management.py:419
+#: REST/methods/servers_management.py:772
 msgid "of type"
 msgstr "タイプの"
 
-#: REST/methods/servers_management.py:250
+#: REST/methods/servers_management.py:426
 msgid "Hostname of the server. It must be resolvable by UDS"
 msgstr "サーバーのホスト名。UDSで解決できる必要があります。"
 
-#: REST/methods/servers_management.py:259
+#: REST/methods/servers_management.py:435
 msgid "Server MAC"
 msgstr "サーバーMAC"
 
-#: REST/methods/servers_management.py:260
+#: REST/methods/servers_management.py:436
 msgid "Optional MAC address of the server"
 msgstr "サーバーのオプションのMACアドレス"
 
-#: REST/methods/servers_management.py:273 auths/OAuth2/authenticator.py:82
+#: REST/methods/servers_management.py:449 auths/OAuth2/authenticator.py:82
 #: auths/OAuth2/authenticator.py:90 auths/OAuth2/authenticator.py:98
 #: auths/OAuth2/authenticator.py:106 auths/OAuth2/authenticator.py:114
-#: core/types/servers.py:72
+#: core/types/servers.py:72 reports/lists/servers.py:135
+#: reports/stats/server_balance.py:142 reports/stats/server_balance.py:189
+#: reports/stats/server_load.py:159 reports/stats/server_load.py:226
+#: reports/stats/server_usage.py:204
+#: templates/uds/reports/lists/servers.html:16
+#: templates/uds/reports/stats/server-balance.html:52
+#: templates/uds/reports/stats/server-load.html:26
+#: templates/uds/reports/stats/server-usage.html:25
 msgid "Server"
 msgstr "サーバ"
 
-#: REST/methods/servers_management.py:274
+#: REST/methods/servers_management.py:450
 msgid "Server to include on group"
 msgstr "グループに含めるサーバー"
 
-#: REST/methods/servers_management.py:297
+#: REST/methods/servers_management.py:473
 msgid "Invalid MAC address"
 msgstr "無効なMACアドレス"
 
-#: REST/methods/servers_management.py:518
+#: REST/methods/servers_management.py:734
 msgid "Servers Groups"
 msgstr "サーバーグループ"
 
-#: REST/methods/servers_management.py:523
+#: REST/methods/servers_management.py:739 reports/lists/servers.py:138
+#: templates/uds/reports/lists/servers.html:19
 msgid "Subtype"
 msgstr "サブタイプ"
 
-#: REST/methods/servers_management.py:524
+#: REST/methods/servers_management.py:740
 #: REST/methods/tunnels_management.py:189
+#: templates/uds/reports/stats/server-balance.html:23
 msgid "Servers"
 msgstr "サーバー"
 
-#: REST/methods/servers_management.py:544
+#: REST/methods/servers_management.py:760
 msgid "Managed"
 msgstr "管理された"
 
-#: REST/methods/servers_management.py:544
-#: REST/methods/servers_management.py:555 core/types/servers.py:73
+#: REST/methods/servers_management.py:760
+#: REST/methods/servers_management.py:771 core/types/servers.py:73
 msgid "Unmanaged"
 msgstr "管理されていない"
 
-#: REST/methods/servers_management.py:553 REST/methods/services.py:298
+#: REST/methods/servers_management.py:769 REST/methods/services.py:298
 #: REST/methods/services.py:360
 msgid "Standard"
 msgstr "標準"
 
-#: REST/methods/servers_management.py:571
+#: REST/methods/servers_management.py:787
 msgid "Load calculation weights"
 msgstr "負荷計算の重み"
 
-#: REST/methods/servers_management.py:574
+#: REST/methods/servers_management.py:790
 msgid "CPU weight"
 msgstr "CPU重量"
 
-#: REST/methods/servers_management.py:575
+#: REST/methods/servers_management.py:791
 msgid "Weight of CPU load on server load calculation. Value between 0 and 1"
 msgstr "サーバー負荷計算におけるCPU負荷の重み。値は0～1。"
 
-#: REST/methods/servers_management.py:580
+#: REST/methods/servers_management.py:796
 msgid "Memory weight"
 msgstr "メモリ重量"
 
-#: REST/methods/servers_management.py:581
+#: REST/methods/servers_management.py:797
 msgid "Weight of memory load on server load calculation. Value between 0 and 1"
 msgstr "サーバー負荷計算におけるメモリ負荷の重み。値は0～1。"
 
-#: REST/methods/servers_management.py:586
+#: REST/methods/servers_management.py:802
 msgid "Users weight"
 msgstr "ユーザーの体重"
 
-#: REST/methods/servers_management.py:587
+#: REST/methods/servers_management.py:803
 msgid "Weight of users load on server load calculation. Value between 0 and 1"
 msgstr "サーバー負荷計算におけるユーザー負荷の重み。値は0～1。"
 
-#: REST/methods/servers_management.py:592
+#: REST/methods/servers_management.py:808
 msgid "Max expected users"
 msgstr "最大想定ユーザー数"
 
-#: REST/methods/servers_management.py:593
+#: REST/methods/servers_management.py:809
 msgid "Max expected users to consider in load calculation"
 msgstr "負荷計算で考慮する最大想定ユーザー数"
+
+#: REST/methods/servers_management.py:900
+#, python-brace-format
+msgid ""
+"Cannot delete ServerGroup \"{name}\" ({uuid}): it is still referenced by "
+"{references}. Remove or reassign the references before deleting the group."
+msgstr ""
+"ServerGroup \"{name}\" ({uuid}) を削除できません: まだ参照されています "
+"{references}。グループを削除する前に、参照を削除または再割り当てしてください"
+"。"
 
 #: REST/methods/services.py:277 REST/methods/services.py:387
 #: core/types/errors.py:116 dispatchers/wyse_enterprise/views.py:297
@@ -947,13 +984,13 @@ msgstr "MAXに達した場合の計算にカウントされるサービスの種
 msgid "Error getting logs"
 msgstr "ログの取得エラー"
 
-#: REST/methods/services.py:410 REST/methods/users_groups.py:337
-#: REST/methods/users_groups.py:584
+#: REST/methods/services.py:410 REST/methods/users_groups.py:363
+#: REST/methods/users_groups.py:647
 msgid "With errors"
 msgstr "エラーあり"
 
-#: REST/methods/services.py:410 REST/methods/users_groups.py:337
-#: REST/methods/users_groups.py:584
+#: REST/methods/services.py:410 REST/methods/users_groups.py:363
+#: REST/methods/users_groups.py:647
 msgid "Ok"
 msgstr "わかりました"
 
@@ -961,69 +998,69 @@ msgstr "わかりました"
 msgid "Services Pool Groups"
 msgstr "サービスプールグループ"
 
-#: REST/methods/services_pools.py:182 REST/methods/transports.py:97
+#: REST/methods/services_pools.py:183 REST/methods/transports.py:97
 #: REST/methods/transports.py:134
 msgid "Service Pools"
 msgstr "サービスプール"
 
-#: REST/methods/services_pools.py:184 REST/methods/users_groups.py:197
-#: REST/methods/users_groups.py:455
+#: REST/methods/services_pools.py:185 REST/methods/users_groups.py:224
+#: REST/methods/users_groups.py:524
 msgid "Status"
 msgstr "状態"
 
-#: REST/methods/services_pools.py:187
+#: REST/methods/services_pools.py:188
 msgid "Usage"
 msgstr "使用法"
 
-#: REST/methods/services_pools.py:189
+#: REST/methods/services_pools.py:190
 msgid "Shows transports"
 msgstr "輸送手段を表示"
 
-#: REST/methods/services_pools.py:191
+#: REST/methods/services_pools.py:192
 msgid "Parent service"
 msgstr "保護者向けサービス"
 
-#: REST/methods/services_pools.py:463
+#: REST/methods/services_pools.py:492
 msgid "Create at least a service before creating a new service pool"
 msgstr ""
 "新しいサービスプールを作成する前に、少なくとも 1 つのサービスを作成してくださ"
 "い。"
 
-#: REST/methods/services_pools.py:486
+#: REST/methods/services_pools.py:515
 msgid "Base service"
 msgstr "基本サービス"
 
-#: REST/methods/services_pools.py:487
+#: REST/methods/services_pools.py:516
 msgid "Service used as base of this service pool"
 msgstr "このサービスプールのベースとして使用されるサービス"
 
-#: REST/methods/services_pools.py:494
+#: REST/methods/services_pools.py:523
 msgid "OS Manager"
 msgstr "OSマネージャー"
 
-#: REST/methods/services_pools.py:495
+#: REST/methods/services_pools.py:524
 msgid "OS Manager used as base of this service pool"
 msgstr "このサービスプールのベースとして使用される OS マネージャー"
 
-#: REST/methods/services_pools.py:502
+#: REST/methods/services_pools.py:531
 msgid "Publish on save"
 msgstr "保存時に公開"
 
-#: REST/methods/services_pools.py:504
+#: REST/methods/services_pools.py:532
 msgid ""
 "If active, the service will be published when saved (only for new service "
 "pools)"
 msgstr "有効な場合、サービスは保存時に公開されます（新規サービスプールのみ）。"
 
-#: REST/methods/services_pools.py:512
+#: REST/methods/services_pools.py:539
 msgid "If active, transport will be visible for users"
 msgstr "有効にすると、トランスポートがユーザーに表示されます"
 
-#: REST/methods/services_pools.py:530
+#: REST/methods/services_pools.py:555
 msgid "Custom launch message text"
 msgstr "カスタム起動メッセージテキスト"
 
-#: REST/methods/services_pools.py:532
+#: REST/methods/services_pools.py:557
 msgid ""
 "Custom message to be shown to users, if active, when trying to start a "
 "service from this pool."
@@ -1031,67 +1068,67 @@ msgstr ""
 "このプールからサービスを開始しようとしたときに、アクティブな場合にユーザーに"
 "表示されるカスタム メッセージ。"
 
-#: REST/methods/services_pools.py:538
+#: REST/methods/services_pools.py:563
 msgid "Enable custom launch message"
 msgstr "カスタム起動メッセージを有効にする"
 
-#: REST/methods/services_pools.py:539
+#: REST/methods/services_pools.py:564
 msgid "If active, the custom launch message will be shown to users"
 msgstr "有効にすると、カスタム起動メッセージがユーザーに表示されます。"
 
-#: REST/methods/services_pools.py:541
+#: REST/methods/services_pools.py:566
 msgid "Availability"
 msgstr "可用性"
 
-#: REST/methods/services_pools.py:546
+#: REST/methods/services_pools.py:571
 msgid "Initial available services"
 msgstr "初期利用可能なサービス"
 
-#: REST/methods/services_pools.py:547
+#: REST/methods/services_pools.py:572
 msgid "Services created initially for this service pool"
 msgstr "このサービスプール用に最初に作成されたサービス"
 
-#: REST/methods/services_pools.py:553
+#: REST/methods/services_pools.py:578
 msgid "Services to keep in cache"
 msgstr "キャッシュに保存するサービス"
 
-#: REST/methods/services_pools.py:554
+#: REST/methods/services_pools.py:579
 msgid "Services kept in cache for improved user service assignation"
 msgstr "ユーザーサービス割り当てを改善するためにサービスをキャッシュに保存する"
 
-#: REST/methods/services_pools.py:560
+#: REST/methods/services_pools.py:585
 msgid "Services to keep in L2 cache"
 msgstr "L2キャッシュに保持するサービス"
 
-#: REST/methods/services_pools.py:561
+#: REST/methods/services_pools.py:586
 msgid "Services kept in cache of level2 for improved service assignation"
 msgstr ""
 "サービス割り当てを改善するために、レベル2のキャッシュにサービスを保持します。"
 
-#: REST/methods/services_pools.py:567
+#: REST/methods/services_pools.py:592
 msgid "Maximum number of services to provide"
 msgstr "提供するサービスの最大数"
 
-#: REST/methods/services_pools.py:569
+#: REST/methods/services_pools.py:594
 msgid ""
 "Maximum number of service (assigned and L1 cache) that can be created for "
 "this service"
 msgstr ""
 "このサービスに作成できるサービス（割り当て済みおよび L1 キャッシュ）の最大数"
 
-#: REST/methods/services_pools.py:575
+#: REST/methods/services_pools.py:600
 msgid "Show transports"
 msgstr "トランスポートを表示"
 
-#: REST/methods/services_pools.py:576
+#: REST/methods/services_pools.py:601
 msgid "If active, transports will be shown to users"
 msgstr "有効な場合、輸送手段がユーザーに表示されます"
 
-#: REST/methods/services_pools.py:582
+#: REST/methods/services_pools.py:607
 msgid "Allow removal by users"
 msgstr "ユーザーによる削除を許可する"
 
-#: REST/methods/services_pools.py:584
+#: REST/methods/services_pools.py:609
 msgid ""
 "If active, the user will be allowed to remove the service \"manually\". Be "
 "careful with this, because the user will have the \"power\" to delete its "
@@ -1101,19 +1138,19 @@ msgstr ""
 "ユーザーが自分のサービスを削除する「権限」を持つことになるので、注意が必要で"
 "す。"
 
-#: REST/methods/services_pools.py:590
+#: REST/methods/services_pools.py:615
 msgid "Allow reset by users"
 msgstr "ユーザーによるリセットを許可する"
 
-#: REST/methods/services_pools.py:591
+#: REST/methods/services_pools.py:616
 msgid "If active, the user will be allowed to reset the service"
 msgstr "有効にすると、ユーザーはサービスをリセットできるようになります"
 
-#: REST/methods/services_pools.py:596
+#: REST/methods/services_pools.py:621
 msgid "Ignores unused"
 msgstr "未使用を無視"
 
-#: REST/methods/services_pools.py:598
+#: REST/methods/services_pools.py:623
 msgid ""
 "If the option is enabled, UDS will not attempt to detect and remove the user "
 "services assigned but not in use."
@@ -1121,7 +1158,7 @@ msgstr ""
 "このオプションを有効にすると、UDS は割り当てられているが使用されていないユー"
 "ザー サービスを検出して削除しようとしません。"
 
-#: REST/methods/services_pools.py:605
+#: REST/methods/services_pools.py:630
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:68
 #: osmanagers/LinuxOsManager/linux_randompass_osmanager.py:63
 #: osmanagers/WindowsOsManager/windows_domain.py:80
@@ -1129,23 +1166,23 @@ msgstr ""
 msgid "Account"
 msgstr "アカウント"
 
-#: REST/methods/services_pools.py:606
+#: REST/methods/services_pools.py:631
 msgid "Account used for this service pool"
 msgstr "このサービスプールで使用されるアカウント"
 
-#: REST/methods/services_pools.py:617
+#: REST/methods/services_pools.py:642
 msgid "Name too long"
 msgstr "名前が長すぎます"
 
-#: REST/methods/services_pools.py:620
+#: REST/methods/services_pools.py:645
 msgid "Short name too long"
 msgstr "短い名前が長すぎます"
 
-#: REST/methods/services_pools.py:627
+#: REST/methods/services_pools.py:652
 msgid "Base service does not exist anymore"
 msgstr "ベースサービスはもう存在しません"
 
-#: REST/methods/services_pools.py:644 REST/methods/services_pools.py:675
+#: REST/methods/services_pools.py:669 REST/methods/services_pools.py:700
 msgid "This service requires an OS Manager"
 msgstr "このサービスにはOSマネージャーが必要です"
 
@@ -1330,12 +1367,12 @@ msgstr "変更履歴"
 msgid "Comment"
 msgstr "コメント"
 
-#: REST/methods/users_groups.py:191
+#: REST/methods/users_groups.py:218
 #, python-brace-format
 msgid "Users of {0}"
 msgstr "{0} のユーザー"
 
-#: REST/methods/users_groups.py:192
+#: REST/methods/users_groups.py:219
 #: auths/ActiveDirectory_enterprise/authenticator.py:224
 #: auths/EDirectory_enterprise/authenticator.py:134
 #: auths/RegexLdap/authenticator.py:166 auths/SimpleLDAP/authenticator.py:185
@@ -1358,89 +1395,98 @@ msgstr "{0} のユーザー"
 #: transports/PCoIP_enterprise/pcoip.py:60 transports/RDP/rdp_base.py:74
 #: transports/RDPEmbedded/common.py:151
 #: transports/RDSEmbedded_enterprise/common.py:123
-#: transports/RGS_enterprise/rgs_base.py:76 transports/SPICE/spice_base.py:71
+#: transports/RGS_enterprise/rgs_base.py:77 transports/SPICE/spice_base.py:71
 #: transports/X2GO/x2go_base.py:69 web/forms/login_form.py:44
 msgid "Username"
 msgstr "ユーザー名"
 
-#: REST/methods/users_groups.py:193
+#: REST/methods/users_groups.py:220
 msgid "Role"
 msgstr "役割"
 
-#: REST/methods/users_groups.py:199 reports/lists/inactive_users.py:187
+#: REST/methods/users_groups.py:226 reports/lists/inactive_users.py:187
 #: reports/lists/users.py:117
 #: templates/uds/reports/lists/inactive-users.html:18
 msgid "Last access"
 msgstr "最終アクセス"
 
-#: REST/methods/users_groups.py:210 REST/methods/users_groups.py:271
-#: REST/methods/users_groups.py:313
+#: REST/methods/users_groups.py:227
+#| msgid "Use API Token"
+msgid "API token"
+msgstr "APIトークン"
+
+#: REST/methods/users_groups.py:238 REST/methods/users_groups.py:299
+#: REST/methods/users_groups.py:341 REST/methods/users_groups.py:425
 #: auths/AzureAD_enterprise/authenticator.py:439
 #: auths/AzureAD_enterprise/authenticator.py:443
 msgid "User not found"
 msgstr "ユーザーが見つかりません"
 
-#: REST/methods/users_groups.py:213
+#: REST/methods/users_groups.py:241
 msgid "Error getting user"
 msgstr "ユーザー取得エラー"
 
-#: REST/methods/users_groups.py:230
+#: REST/methods/users_groups.py:258
 msgid "Username cannot be empty"
 msgstr "ユーザー名は空欄にできません"
 
-#: REST/methods/users_groups.py:273 REST/methods/users_groups.py:548
+#: REST/methods/users_groups.py:301 REST/methods/users_groups.py:613
 msgid "User already exists (duplicate key error)"
 msgstr "ユーザーが既に存在します（重複キーエラー）"
 
-#: REST/methods/users_groups.py:282
+#: REST/methods/users_groups.py:310
 msgid "Error saving user"
 msgstr "ユーザー保存エラー"
 
-#: REST/methods/users_groups.py:316
+#: REST/methods/users_groups.py:344
 msgid "Error removing user"
 msgstr "ユーザー削除エラー"
 
-#: REST/methods/users_groups.py:443 REST/methods/users_groups.py:546
-#: REST/methods/users_groups.py:565
+#: REST/methods/users_groups.py:429
+msgid "User already has an API token"
+msgstr "ユーザーは既にAPIトークンを所有しています"
+
+#: REST/methods/users_groups.py:512 REST/methods/users_groups.py:611
+#: REST/methods/users_groups.py:630
 #: auths/ActiveDirectory_enterprise/authenticator.py:474
 #: auths/SimpleLDAP/authenticator.py:411
 msgid "Group not found"
 msgstr "グループが見つかりません"
 
-#: REST/methods/users_groups.py:452
+#: REST/methods/users_groups.py:521
 #, python-brace-format
 msgid "Groups of {0}"
 msgstr "{0} のグループ"
 
-#: REST/methods/users_groups.py:456
+#: REST/methods/users_groups.py:525
 msgid "Skip MFA"
 msgstr "MFAをスキップ"
 
-#: REST/methods/users_groups.py:465
+#: REST/methods/users_groups.py:532
 msgid "UDS Group"
 msgstr "UDSグループ"
 
-#: REST/methods/users_groups.py:466
+#: REST/methods/users_groups.py:533
 msgid "Meta group"
 msgstr "メタグループ"
 
-#: REST/methods/users_groups.py:466
+#: REST/methods/users_groups.py:533
 msgid "UDS Meta Group"
 msgstr "UDSメタグループ"
 
-#: REST/methods/users_groups.py:485
+#: REST/methods/users_groups.py:552
 msgid "Group type not found"
 msgstr "グループタイプが見つかりません"
 
-#: REST/methods/users_groups.py:502
+#: REST/methods/users_groups.py:569
 msgid "Group name is required"
 msgstr "グループ名は必須です"
 
-#: REST/methods/users_groups.py:555
+#: REST/methods/users_groups.py:620
 msgid "Error saving group"
 msgstr "グループ保存エラー"
 
-#: REST/methods/users_groups.py:568
+#: REST/methods/users_groups.py:633
 msgid "Error deleting group"
 msgstr "グループ削除エラー"
 
@@ -1465,7 +1511,7 @@ msgstr "AD接続の互換性（通常はWindows 2000以降）"
 #: auths/AzureAD_enterprise/authenticator.py:98
 #: auths/EDirectory_enterprise/authenticator.py:72
 #: auths/Radius/authenticator.py:63 auths/RegexLdap/authenticator.py:89
-#: auths/SAML/saml.py:113 core/consts/__init__.py:149
+#: auths/SAML/saml.py:112 core/consts/__init__.py:150
 #: reports/lists/admin_activity.py:187 reports/lists/audit.py:175
 #: reports/lists/failed_logins.py:216 reports/stats/pool_users_summary.py:167
 #: reports/stats/top_users.py:171 reports/stats/usage_by_pool.py:170
@@ -1514,7 +1560,7 @@ msgstr ""
 #: transports/PCoIP_enterprise/pcoip.py:67 transports/RDP/rdp_base.py:81
 #: transports/RDPEmbedded/common.py:157
 #: transports/RDSEmbedded_enterprise/common.py:129
-#: transports/RGS_enterprise/rgs_base.py:82 transports/SPICE/spice_base.py:78
+#: transports/RGS_enterprise/rgs_base.py:83 transports/SPICE/spice_base.py:78
 #: web/forms/login_form.py:46 web/forms/login_form.py:47
 msgid "Password"
 msgstr "パスワード"
@@ -1592,7 +1638,7 @@ msgstr ""
 
 #: auths/ActiveDirectory_enterprise/authenticator.py:158
 #: auths/EDirectory_enterprise/authenticator.py:109
-#: auths/RegexLdap/authenticator.py:110 auths/SAML/saml.py:135
+#: auths/RegexLdap/authenticator.py:110 auths/SAML/saml.py:134
 #: auths/SimpleLDAP/authenticator.py:104 transports/SPICE/spice_base.py:87
 msgid "Certificate"
 msgstr "証明書"
@@ -1808,7 +1854,7 @@ msgstr ""
 "検索または追加するには、このIDが必要です。"
 
 #: auths/AzureAD_enterprise/authenticator.py:211
-#: auths/OAuth2/authenticator.py:184 auths/SAML/saml.py:392
+#: auths/OAuth2/authenticator.py:184 auths/SAML/saml.py:391
 msgid "This kind of Authenticator does not support white spaces on field NAME"
 msgstr "この種類の認証システムは、フィールドNAMEの空白をサポートしていません。"
 
@@ -1819,7 +1865,7 @@ msgid "Authenticator exception:"
 msgstr "認証例外:"
 
 #: auths/AzureAD_enterprise/authenticator.py:671
-#: auths/AzureAD_enterprise/authenticator.py:686 core/util/ldaputil.py:93
+#: auths/AzureAD_enterprise/authenticator.py:686 core/util/ldaputil.py:95
 msgid "Connection error: "
 msgstr "接続エラー: "
 
@@ -1859,13 +1905,13 @@ msgid "Timeout in seconds of connection to LDAP"
 msgstr "LDAPへの接続のタイムアウト（秒）"
 
 #: auths/EDirectory_enterprise/authenticator.py:118
-#: auths/Radius/authenticator.py:131 auths/SAML/saml.py:214
+#: auths/Radius/authenticator.py:131 auths/SAML/saml.py:213
 #: auths/SimpleLDAP/authenticator.py:168 core/util/fields.py:414
 msgid "MFA attribute"
 msgstr "MFA属性"
 
 #: auths/EDirectory_enterprise/authenticator.py:120
-#: auths/Radius/authenticator.py:133 auths/SAML/saml.py:216
+#: auths/Radius/authenticator.py:133 auths/SAML/saml.py:215
 #: auths/SimpleLDAP/authenticator.py:170 core/util/fields.py:416
 msgid "Attribute from where to extract the MFA code"
 msgstr "MFA コードを抽出する属性"
@@ -1986,12 +2032,13 @@ msgid "All seems fine in the authenticator."
 msgstr "認証システムではすべて正常のようです。"
 
 #: auths/OAuth2/authenticator.py:71
-msgid "OAuth2"
-msgstr "OAuth2"
+msgid "OAuth2 / OpenID Connect"
+msgstr "OAuth2 / OpenID Connect"
 
 #: auths/OAuth2/authenticator.py:73
-msgid "OAuth2 Authenticator"
-msgstr "OAuth2認証子"
+#| msgid "OAuth2 Authenticator"
+msgid "OAuth2 / OpenID Connect Authenticator"
+msgstr "OAuth2 / OpenID Connect認証"
 
 #: auths/OAuth2/authenticator.py:78
 msgid "Authorization endpoint"
@@ -2086,15 +2133,11 @@ msgstr ""
 "OAuth2プロバイダーからログアウトするためのURL。{token}プレースホルダーを許可"
 "します。"
 
-#: auths/OAuth2/authenticator.py:196
-msgid "Common groups is required for \"code\" response types"
-msgstr "「コード」応答タイプには共通グループが必要です"
-
-#: auths/OAuth2/authenticator.py:198
+#: auths/OAuth2/authenticator.py:201
 msgid "Token endpoint is required for \"code\" response types"
 msgstr "「コード」レスポンスタイプにはトークンエンドポイントが必要です"
 
-#: auths/OAuth2/authenticator.py:204
+#: auths/OAuth2/authenticator.py:205
 msgid "Public key is required for \"openid+token_id\" response type"
 msgstr "「openid+token_id」レスポンスタイプには公開鍵が必要です"
 
@@ -2262,207 +2305,207 @@ msgid ""
 msgstr ""
 "LDAP グループ名属性が正しくないようです (その属性でグループが見つかりません)"
 
-#: auths/SAML/saml.py:84
+#: auths/SAML/saml.py:83
 msgid "SAML"
 msgstr "SAML"
 
-#: auths/SAML/saml.py:96
+#: auths/SAML/saml.py:95
 msgid "SAML (v2.0) Authenticator"
 msgstr "SAML (v2.0) 認証子"
 
-#: auths/SAML/saml.py:125
+#: auths/SAML/saml.py:124
 msgid "Private key"
 msgstr "秘密鍵"
 
-#: auths/SAML/saml.py:127
+#: auths/SAML/saml.py:126
 msgid ""
 "Private key used for sign and encription, as generated in base 64 from "
 "openssl"
 msgstr "署名と暗号化に使用される秘密鍵。openssl から base 64 で生成されます。"
 
-#: auths/SAML/saml.py:129 auths/SAML/saml.py:139
+#: auths/SAML/saml.py:128 auths/SAML/saml.py:138
 #: auths/X509Certificate/authenticator.py:92
 #: auths/X509Certificate/authenticator.py:104
 msgid "Certificates"
 msgstr "証明書"
 
-#: auths/SAML/saml.py:137
+#: auths/SAML/saml.py:136
 msgid "Server certificate used in SAML, as generated in base 64 from openssl"
 msgstr "SAML で使用されるサーバー証明書（openssl から base 64 で生成）"
 
-#: auths/SAML/saml.py:145
+#: auths/SAML/saml.py:144
 msgid "IDP Metadata"
 msgstr "IDPメタデータ"
 
-#: auths/SAML/saml.py:147
+#: auths/SAML/saml.py:146
 msgid ""
 "You can enter here the URL or the IDP metadata or the metadata itself (xml)"
 msgstr ""
 "ここでURLまたはIDPメタデータ、あるいはメタデータ自体（xml）を入力できます。"
 
-#: auths/SAML/saml.py:149 auths/SAML/saml.py:157 auths/SAML/saml.py:335
-#: auths/SAML/saml.py:344
+#: auths/SAML/saml.py:148 auths/SAML/saml.py:156 auths/SAML/saml.py:334
+#: auths/SAML/saml.py:343
 msgid "Metadata"
 msgstr "メタデータ"
 
-#: auths/SAML/saml.py:154
+#: auths/SAML/saml.py:153
 msgid "Entity ID"
 msgstr "エンティティID"
 
-#: auths/SAML/saml.py:156
+#: auths/SAML/saml.py:155
 msgid "ID of the SP. If left blank, this will be autogenerated from server URL"
 msgstr "SPのID。空白のままにすると、サーバーURLから自動生成されます。"
 
-#: auths/SAML/saml.py:164
+#: auths/SAML/saml.py:163
 msgid "User name attrs"
 msgstr "ユーザー名属性"
 
-#: auths/SAML/saml.py:166
+#: auths/SAML/saml.py:165
 msgid "Fields from where to extract user name"
 msgstr "ユーザー名を抽出するフィールド"
 
-#: auths/SAML/saml.py:168 auths/SAML/saml.py:179 auths/SAML/saml.py:190
+#: auths/SAML/saml.py:167 auths/SAML/saml.py:178 auths/SAML/saml.py:189
 #: auths/X509Certificate/authenticator.py:107
 #: auths/X509Certificate/authenticator.py:109 core/types/ui.py:52
 msgid "Attributes"
 msgstr "属性"
 
-#: auths/SAML/saml.py:175
+#: auths/SAML/saml.py:174
 msgid "Group name attrs"
 msgstr "グループ名属性"
 
-#: auths/SAML/saml.py:177
+#: auths/SAML/saml.py:176
 msgid "Fields from where to extract the groups"
 msgstr "グループを抽出するフィールド"
 
-#: auths/SAML/saml.py:186
+#: auths/SAML/saml.py:185
 msgid "Real name attrs"
 msgstr "実名属性"
 
-#: auths/SAML/saml.py:188
+#: auths/SAML/saml.py:187
 msgid "Fields from where to extract the real name"
 msgstr "実名を抽出するフィールド"
 
-#: auths/SAML/saml.py:195
+#: auths/SAML/saml.py:194
 msgid "Global logout"
 msgstr "グローバルログアウト"
 
-#: auths/SAML/saml.py:198
+#: auths/SAML/saml.py:197
 msgid "If set, logout from UDS will trigger SAML logout"
 msgstr ""
 "設定されている場合、UDSからのログアウトはSAMLログアウトをトリガーします"
 
-#: auths/SAML/saml.py:204
+#: auths/SAML/saml.py:203
 msgid "ADFS compatibility"
 msgstr "ADFSの互換性"
 
-#: auths/SAML/saml.py:207
+#: auths/SAML/saml.py:206
 msgid "If set, enable lowercase url encoding so ADFS can work correctly"
 msgstr ""
 "設定すると、ADFSが正しく動作するように小文字のURLエンコードが有効になります。"
 
-#: auths/SAML/saml.py:223
+#: auths/SAML/saml.py:222
 msgid "Check SSL certificate"
 msgstr "SSL証明書を確認する"
 
-#: auths/SAML/saml.py:226
+#: auths/SAML/saml.py:225
 msgid "If set, check SSL certificate on requests for IDP Metadata"
 msgstr ""
 "設定されている場合、IDP メタデータのリクエストで SSL 証明書をチェックします"
 
-#: auths/SAML/saml.py:227 auths/SAML/saml.py:236 auths/SAML/saml.py:245
-#: auths/SAML/saml.py:254 auths/SAML/saml.py:263 auths/SAML/saml.py:272
-#: auths/SAML/saml.py:281 auths/SAML/saml.py:290 auths/SAML/saml.py:299
-#: auths/SAML/saml.py:308 auths/SAML/saml.py:317 auths/SAML/saml.py:326
+#: auths/SAML/saml.py:226 auths/SAML/saml.py:235 auths/SAML/saml.py:244
+#: auths/SAML/saml.py:253 auths/SAML/saml.py:262 auths/SAML/saml.py:271
+#: auths/SAML/saml.py:280 auths/SAML/saml.py:289 auths/SAML/saml.py:298
+#: auths/SAML/saml.py:307 auths/SAML/saml.py:316 auths/SAML/saml.py:325
 #: mfas/Email/mfa.py:77 notifiers/email/notifier.py:81
 msgid "Security"
 msgstr "安全"
 
-#: auths/SAML/saml.py:232
+#: auths/SAML/saml.py:231
 msgid "Encripted nameID"
 msgstr "暗号化された名前ID"
 
-#: auths/SAML/saml.py:235
+#: auths/SAML/saml.py:234
 msgid "If set, nameID will be encripted"
 msgstr "設定すると、nameIDが暗号化されます"
 
-#: auths/SAML/saml.py:241
+#: auths/SAML/saml.py:240
 msgid "Authn requests signed"
 msgstr "認証リクエストが署名されました"
 
-#: auths/SAML/saml.py:244
+#: auths/SAML/saml.py:243
 msgid "If set, authn requests will be signed"
 msgstr "設定すると、認証リクエストが署名されます"
 
-#: auths/SAML/saml.py:250
+#: auths/SAML/saml.py:249
 msgid "Logout requests signed"
 msgstr "ログアウトリクエストに署名しました"
 
-#: auths/SAML/saml.py:253
+#: auths/SAML/saml.py:252
 msgid "If set, logout requests will be signed"
 msgstr "設定すると、ログアウトリクエストが署名されます"
 
-#: auths/SAML/saml.py:259
+#: auths/SAML/saml.py:258
 msgid "Logout responses signed"
 msgstr "ログアウト応答が署名されました"
 
-#: auths/SAML/saml.py:262
+#: auths/SAML/saml.py:261
 msgid "If set, logout responses will be signed"
 msgstr "設定すると、ログアウト応答が署名されます"
 
-#: auths/SAML/saml.py:268
+#: auths/SAML/saml.py:267
 msgid "Sign metadata"
 msgstr "メタデータに署名する"
 
-#: auths/SAML/saml.py:271
+#: auths/SAML/saml.py:270
 msgid "If set, metadata will be signed"
 msgstr "設定するとメタデータが署名されます"
 
-#: auths/SAML/saml.py:277
+#: auths/SAML/saml.py:276
 msgid "Want messages signed"
 msgstr "メッセージの署名を希望"
 
-#: auths/SAML/saml.py:280
+#: auths/SAML/saml.py:279
 msgid "If set, messages will be signed"
 msgstr "設定すると、メッセージに署名が付きます"
 
-#: auths/SAML/saml.py:286
+#: auths/SAML/saml.py:285
 msgid "Want assertions signed"
 msgstr "署名されたアサーションを希望"
 
-#: auths/SAML/saml.py:289
+#: auths/SAML/saml.py:288
 msgid "If set, assertions will be signed"
 msgstr "設定されている場合、アサーションは署名されます"
 
-#: auths/SAML/saml.py:295
+#: auths/SAML/saml.py:294
 msgid "Want assertions encrypted"
 msgstr "アサーションを暗号化したい"
 
-#: auths/SAML/saml.py:298
+#: auths/SAML/saml.py:297
 msgid "If set, assertions will be encrypted"
 msgstr "設定すると、アサーションは暗号化されます"
 
-#: auths/SAML/saml.py:304
+#: auths/SAML/saml.py:303
 msgid "Want nameID encrypted"
 msgstr "名前IDを暗号化したい"
 
-#: auths/SAML/saml.py:307
+#: auths/SAML/saml.py:306
 msgid "If set, nameID will be encrypted"
 msgstr "設定されている場合、nameIDは暗号化されます"
 
-#: auths/SAML/saml.py:313
+#: auths/SAML/saml.py:312
 msgid "Requested authn context"
 msgstr "要求された認証コンテキスト"
 
-#: auths/SAML/saml.py:316
+#: auths/SAML/saml.py:315
 msgid "If set, requested authn context will be sent"
 msgstr "設定されている場合、要求された認証コンテキストが送信されます"
 
-#: auths/SAML/saml.py:322
+#: auths/SAML/saml.py:321
 msgid "Allow deprecated signature algorithms"
 msgstr "非推奨の署名アルゴリズムを許可する"
 
-#: auths/SAML/saml.py:325
+#: auths/SAML/saml.py:324
 msgid ""
 "If set, deprecated signature algorithms will be allowed (as SHA1, MD5, "
 "etc...)"
@@ -2470,90 +2513,90 @@ msgstr ""
 "設定されている場合、非推奨の署名アルゴリズム (SHA1、MD5 など) が許可されま"
 "す。"
 
-#: auths/SAML/saml.py:331
+#: auths/SAML/saml.py:330
 msgid "Metadata cache duration"
 msgstr "メタデータキャッシュの期間"
 
-#: auths/SAML/saml.py:334
+#: auths/SAML/saml.py:333
 msgid "Duration of metadata cache in days. 0 means default (ten years)"
 msgstr ""
 "メタデータキャッシュの有効期間（日数）。0 はデフォルト（10 年）を意味します。"
 
-#: auths/SAML/saml.py:340
+#: auths/SAML/saml.py:339
 msgid "Metadata validity duration"
 msgstr "メタデータの有効期間"
 
-#: auths/SAML/saml.py:343
+#: auths/SAML/saml.py:342
 msgid "Duration of metadata validity in days. 0 means default (ten years)"
 msgstr "メタデータの有効期間（日数）。0 はデフォルト（10 年）を意味します。"
 
-#: auths/SAML/saml.py:350
+#: auths/SAML/saml.py:349
 msgid "Organization Name"
 msgstr "組織名"
 
-#: auths/SAML/saml.py:353
+#: auths/SAML/saml.py:352
 msgid "Organization name to use on SAML SP Metadata"
 msgstr "SAML SP メタデータで使用する組織名"
 
-#: auths/SAML/saml.py:354 auths/SAML/saml.py:363 auths/SAML/saml.py:372
+#: auths/SAML/saml.py:353 auths/SAML/saml.py:362 auths/SAML/saml.py:371
 #: services/VCloud_enterprise/provider.py:48
 msgid "Organization"
 msgstr "組織"
 
-#: auths/SAML/saml.py:359
+#: auths/SAML/saml.py:358
 msgid "Organization Display Name"
 msgstr "組織の表示名"
 
-#: auths/SAML/saml.py:362
+#: auths/SAML/saml.py:361
 msgid "Organization Display name to use on SAML SP Metadata"
 msgstr "SAML SP メタデータで使用する組織の表示名"
 
-#: auths/SAML/saml.py:368
+#: auths/SAML/saml.py:367
 msgid "Organization URL"
 msgstr "組織のURL"
 
-#: auths/SAML/saml.py:371
+#: auths/SAML/saml.py:370
 msgid "Organization url to use on SAML SP Metadata"
 msgstr "SAML SP メタデータで使用する組織 URL"
 
-#: auths/SAML/saml.py:405
+#: auths/SAML/saml.py:404
 msgid "Certificate and private key do not match"
 msgstr "証明書と秘密鍵が一致しません"
 
-#: auths/SAML/saml.py:428
+#: auths/SAML/saml.py:427
 #, python-brace-format
 msgid "Can't fetch url {url}: {error}"
 msgstr "URL {url} を取得できません: {error}"
 
-#: auths/SAML/saml.py:437
+#: auths/SAML/saml.py:436
 msgid " (obtained from URL)"
 msgstr " （URLから取得）"
 
-#: auths/SAML/saml.py:438
+#: auths/SAML/saml.py:437
 msgid "XML does not seem valid for IDP Metadata "
 msgstr "XMLはIDPメタデータには有効ではないようです "
 
-#: auths/SAML/saml.py:504
+#: auths/SAML/saml.py:503
 msgid "Can't access idp metadata"
 msgstr "IDPメタデータにアクセスできません"
 
-#: auths/SAML/saml.py:577
+#: auths/SAML/saml.py:576
 msgid "Error validating SP metadata: "
 msgstr "SP メタデータの検証中にエラーが発生しました: "
 
-#: auths/SAML/saml.py:636
+#: auths/SAML/saml.py:635
 msgid "Error processing SLO: "
 msgstr "SLO 処理エラー: "
 
-#: auths/SAML/saml.py:665
+#: auths/SAML/saml.py:664
 msgid "Error processing SAML response: "
 msgstr "SAML 応答の処理中にエラーが発生しました: "
 
-#: auths/SAML/saml.py:692
+#: auths/SAML/saml.py:691
 msgid "SAML response not authenticated"
 msgstr "SAMLレスポンスが認証されていません"
 
-#: auths/SAML/saml.py:722
+#: auths/SAML/saml.py:721
 msgid "No attributes returned from IdP"
 msgstr "IdPから属性が返されません"
 
@@ -2792,19 +2835,19 @@ msgstr "ベース認証子"
 msgid "Group name"
 msgstr "グループ名"
 
-#: core/consts/__init__.py:147
+#: core/consts/__init__.py:148
 msgid "Admin"
 msgstr "管理者"
 
-#: core/consts/__init__.py:148
+#: core/consts/__init__.py:149
 msgid "Staff member"
 msgstr "スタッフ"
 
-#: core/consts/__init__.py:150
+#: core/consts/__init__.py:151
 msgid "Anonymous"
 msgstr "匿名"
 
-#: core/consts/__init__.py:151
+#: core/consts/__init__.py:152
 msgid "Unknown role"
 msgstr "役割不明"
 
@@ -3249,7 +3292,7 @@ msgstr ""
 msgid "{count} internal ERROR entries in the last 24h (within normal range)."
 msgstr "過去24時間における内部エラーの発生件数は{count} （正常範囲内）。"
 
-#: core/security/checks/models.py:69
+#: core/security/checks/models.py:70
 #, python-brace-format
 msgid ""
 "SAML assertions are not required to be signed on: {unsigned}. Unsigned "
@@ -3258,17 +3301,17 @@ msgstr ""
 "SAMLアサーションには署名が必須ではありません: {unsigned}。署名されていないア"
 "サーションは、設定が誤っているIdPに対して偽造される可能性があります。"
 
-#: core/security/checks/models.py:77
+#: core/security/checks/models.py:78
 msgid "All SAML authenticators require signed assertions or messages."
 msgstr ""
 "すべてのSAML認証システムは、署名付きアサーションまたはメッセージを必要としま"
 "す。"
 
-#: core/security/checks/models.py:82
+#: core/security/checks/models.py:83
 msgid "No SAML authenticators configured."
 msgstr "SAML認証機能は設定されていません。"
 
-#: core/security/checks/models.py:111
+#: core/security/checks/models.py:113
 #, python-brace-format
 msgid ""
 "Service pools with actors still using the legacy uuid token flow: "
@@ -3277,16 +3320,16 @@ msgstr ""
 "レガシーUUIDトークンフローを使用しているアクターを含むサービスプール："
 "{affected}。影響を受けるアクターを再初期化して、新しいトークンに移行します。"
 
-#: core/security/checks/models.py:118
+#: core/security/checks/models.py:120
 msgid "No user services are using the legacy uuid actor token flow."
 msgstr ""
 "従来のUUIDアクタートークンフローを使用しているユーザーサービスはありません。"
 
-#: core/security/checks/models.py:128
+#: core/security/checks/models.py:130
 msgid "No authenticators configured (nothing to enforce MFA on)."
 msgstr "認証システムが設定されていません（MFAを適用する対象がありません）。"
 
-#: core/security/checks/models.py:135
+#: core/security/checks/models.py:137
 #, python-brace-format
 msgid ""
 "No authenticator has MFA configured: {names}. Assign at least one MFA per "
@@ -3295,14 +3338,14 @@ msgstr ""
 "認証器にMFAが設定されていません： {names} 。認証器ごとに少なくとも1つのMFAを"
 "設定してください。"
 
-#: core/security/checks/models.py:142
+#: core/security/checks/models.py:144
 #, python-brace-format
 msgid "MFA coverage: {with_mfa}/{total} authenticators have MFA assigned."
 msgstr ""
 "MFAの適用範囲： {with_mfa} / {total}個の認証デバイスにMFAが割り当てられていま"
 "す。"
 
-#: core/security/checks/models.py:188
+#: core/security/checks/models.py:192
 #, python-brace-format
 msgid ""
 "{n} server certificate(s) have expired: {names}. Renew and rotate the "
@@ -3311,21 +3354,21 @@ msgstr ""
 "{n}個のサーバー証明書の有効期限が切れています： {names} 。該当するサーバーの"
 "証明書を更新し、ローテーションしてください。"
 
-#: core/security/checks/models.py:196
+#: core/security/checks/models.py:200
 #, python-brace-format
 msgid "{n} server certificate(s) expire within 30 days: {names}."
 msgstr "{n}個のサーバー証明書が30日以内に期限切れになります： {names} 。"
 
-#: core/security/checks/models.py:203
+#: core/security/checks/models.py:207
 msgid "No server certificates expire within the next 30 days."
 msgstr "今後30日以内に有効期限が切れるサーバー証明書はありません。"
 
-#: core/security/checks/models.py:220
+#: core/security/checks/models.py:224
 #, python-brace-format
 msgid "{n} service pool(s) are currently restrained: {names}."
 msgstr "現在、 {n}サービスプールが制限されています： {names} 。"
 
-#: core/security/checks/models.py:225
+#: core/security/checks/models.py:229
 msgid "No service pools are currently restrained."
 msgstr "現在、サービスプールに制限はかけられていません。"
 
@@ -3446,12 +3489,12 @@ msgstr ""
 "ソフトシャットダウンが有効になっていない場合、キャッシュへのスナップショット"
 "はサポートされません。"
 
-#: core/services/generics/fixed/service.py:92
+#: core/services/generics/fixed/service.py:97
 #: services/PhysicalMachines/service_multi.py:84
 msgid "Service Token"
 msgstr "サービストークン"
 
-#: core/services/generics/fixed/service.py:95
+#: core/services/generics/fixed/service.py:100
 #: services/PhysicalMachines/service_multi.py:87
 msgid ""
 "Service token that will be used by actors to communicate with service. Leave "
@@ -3460,30 +3503,30 @@ msgstr ""
 "アクターがサービスと通信するために使用するサービストークン。永続的な割り当て"
 "の場合は空のままにしてください。"
 
-#: core/services/generics/fixed/service.py:102
+#: core/services/generics/fixed/service.py:107
 #: services/Vmware_enterprise/service_fixed.py:84
 msgid "Machines"
 msgstr "機械"
 
-#: core/services/generics/fixed/service.py:104
+#: core/services/generics/fixed/service.py:109
 #: services/Vmware_enterprise/service_fixed.py:86
 msgid "Machines for this service"
 msgstr "このサービスのための機械"
 
-#: core/services/generics/fixed/service.py:111
+#: core/services/generics/fixed/service.py:116
 msgid "Randomize machine assignation"
 msgstr "マシンの割り当てをランダム化する"
 
-#: core/services/generics/fixed/service.py:114
+#: core/services/generics/fixed/service.py:119
 msgid "If active, UDS will assign machines in a random way, instead of linear"
 msgstr "有効にすると、UDSはマシンを線形ではなくランダムに割り当てる。"
 
-#: core/services/generics/fixed/service.py:122
+#: core/services/generics/fixed/service.py:127
 msgid "Use snapshots"
 msgstr "スナップショットを使用する"
 
-#: core/services/generics/fixed/service.py:126
-#: core/services/generics/fixed/service.py:137
+#: core/services/generics/fixed/service.py:131
+#: core/services/generics/fixed/service.py:142
 msgid ""
 "If active, UDS will try to create an snapshot (if one already does not "
 "exists) before accessing a machine, and restore it after usage."
@@ -3491,23 +3534,23 @@ msgstr ""
 "アクティブな場合、UDS はマシンにアクセスする前にスナップショットを作成しよう"
 "とし (まだ存在しない場合)、使用後にそれを復元します。"
 
-#: core/services/generics/fixed/service.py:133
+#: core/services/generics/fixed/service.py:138
 msgid "Snapshot type"
 msgstr "スナップショットタイプ"
 
-#: core/services/generics/fixed/service.py:141
+#: core/services/generics/fixed/service.py:146
 msgid "No snapshot"
 msgstr "スナップショットなし"
 
-#: core/services/generics/fixed/service.py:142
+#: core/services/generics/fixed/service.py:147
 msgid "Recover snapshot and stop machine"
 msgstr "スナップショットを復元してマシンを停止する"
 
-#: core/services/generics/fixed/service.py:143
+#: core/services/generics/fixed/service.py:148
 msgid "Recover snapshot and start machine"
 msgstr "スナップショットを復元してマシンを起動する"
 
-#: core/services/generics/fixed/service.py:157
+#: core/services/generics/fixed/service.py:162
 #: services/Azure_enterprise/service_fixed.py:127
 #: services/HyperV_enterprise/service_fixed.py:90
 #: services/NutanixPrism_enterprise/service_fixed.py:126
@@ -3516,7 +3559,7 @@ msgstr "スナップショットを復元してマシンを起動する"
 msgid "We need at least a machine"
 msgstr "少なくとも機械は必要だ"
 
-#: core/services/generics/fixed/service.py:165
+#: core/services/generics/fixed/service.py:170
 #: services/Vmware_enterprise/service_fixed.py:123
 msgid "Cannot remove machines with assigned services: {}"
 msgstr "割り当てられたサービスを持つマシンは削除できません: {}"
@@ -3900,7 +3943,19 @@ msgstr ""
 "最大限のセキュリティを強制するモード（ゼロトラストモード）。このモードが設定"
 "されている場合、パスワードのリダイレクトは許可されません。"
 
-#: core/util/config.py:491
+#: core/util/config.py:488
+msgid ""
+"Enable the MCP (Model Context Protocol) endpoint (/uds/rest/mcp) and its "
+"skill bundle download"
+msgstr ""
+"MCP（モデルコンテキストプロトコル）エンドポイント（/uds/rest/mcp）とその"
+"スキルバンドルのダウンロードを有効にする"
+
+#: core/util/config.py:498
+msgid "Maximum MCP requests per user and minute. 0 means unlimited"
+msgstr "ユーザーおよび1分あたりの最大MCPリクエスト数。0は無制限を意味します。"
+
+#: core/util/config.py:509
 msgid ""
 "How long should the user service be unused before os manager considers it "
 "for removal"
@@ -3908,29 +3963,29 @@ msgstr ""
 "OS マネージャーが削除を検討するまでに、ユーザー サービスはどのくらいの期間使"
 "用されない必要がありますか。"
 
-#: core/util/config.py:501
+#: core/util/config.py:519
 msgid "Max logins before blocking an account for a while"
 msgstr "アカウントを一時的にブロックするまでの最大ログイン回数"
 
-#: core/util/config.py:508
+#: core/util/config.py:526
 msgid "Block time in second for an user that has too many login failures"
 msgstr "ログイン失敗回数が多すぎるユーザーのブロック時間（秒）"
 
-#: core/util/config.py:514
+#: core/util/config.py:532
 msgid "Block ip on login failure"
 msgstr "ログイン失敗時にIPをブロックする"
 
-#: core/util/config.py:523
+#: core/util/config.py:541
 msgid "Do autorun of service if just one service"
 msgstr "サービスが1つだけの場合はサービスの自動実行を行う"
 
-#: core/util/config.py:529
+#: core/util/config.py:547
 msgid "Redirects login page to the tag used when logged in if active."
 msgstr ""
 "アクティブな場合、ログイン時に使用されたタグにログイン ページをリダイレクトし"
 "ます。"
 
-#: core/util/config.py:538
+#: core/util/config.py:556
 msgid ""
 "Max time needed to get a service \"fully functional\" before it's considered "
 "\"failed\" and removed"
@@ -3938,7 +3993,7 @@ msgstr ""
 "サービスが「失敗」とみなされて削除される前に、サービスが「完全に機能する」よ"
 "うになるまでに必要な最大時間"
 
-#: core/util/config.py:544
+#: core/util/config.py:562
 msgid ""
 "Max time needed to get a service \"fully removed\" before it's considered "
 "\"failed\" and purged"
@@ -3946,22 +4001,22 @@ msgstr ""
 "サービスが「失敗」とみなされて消去される前に、サービスを「完全に削除」するた"
 "めに必要な最大時間"
 
-#: core/util/config.py:551
+#: core/util/config.py:569
 msgid "Maximum logs per every log-capable administration element"
 msgstr "ログ対応管理要素ごとの最大ログ数"
 
-#: core/util/config.py:558
+#: core/util/config.py:576
 msgid ""
 "Maximum logs entries for general UDS logs (0 = unlimited, use with care)"
 msgstr ""
 "一般的な UDS ログの最大ログエントリ数 (0 = 無制限、注意して使用してください)"
 
-#: core/util/config.py:566
+#: core/util/config.py:584
 msgid ""
 "Time to restrain a user service in case it gives some errors at some point"
 msgstr "ある時点でエラーが発生する場合に備えて、ユーザーサービスを制限する時間"
 
-#: core/util/config.py:573
+#: core/util/config.py:591
 msgid ""
 "Number of errors that must occurr in \"restrainTime\" to restrain an user "
 "service"
@@ -3969,38 +4024,38 @@ msgstr ""
 "ユーザーサービスを制限するために「restrainTime」内に発生する必要があるエラー"
 "の数"
 
-#: core/util/config.py:581
+#: core/util/config.py:599
 msgid "Statistics duration, in days"
 msgstr "統計期間（日数）"
 
-#: core/util/config.py:588
+#: core/util/config.py:606
 msgid ""
 "Frequency of stats collection in seconds. Default is 1 hours (3600 seconds)"
 msgstr "統計情報の収集頻度（秒単位）。デフォルトは1時間（3600秒）です。"
 
-#: core/util/config.py:595
+#: core/util/config.py:613
 msgid "Maximum number of time to accumulate on one run. Default is 7 (1 week)"
 msgstr "1回の実行で累積する最大時間数。デフォルトは7（1週間）です。"
 
-#: core/util/config.py:603
+#: core/util/config.py:621
 msgid "If disallow login showing authenticatiors"
 msgstr "認証情報を表示してログインを許可しない場合"
 
-#: core/util/config.py:611
+#: core/util/config.py:629
 msgid ""
 "Notify user of existence of a new version of a service on new publication"
 msgstr "新しい公開時にサービスの新バージョンの存在をユーザーに通知する"
 
-#: core/util/config.py:619
+#: core/util/config.py:637
 msgid "Networks or hosts considered \"trusted\" for UDS (Tunnels, etc...)"
 msgstr ""
 "UDS に対して「信頼できる」と見なされるネットワークまたはホスト (トンネルなど)"
 
-#: core/util/config.py:626
+#: core/util/config.py:644
 msgid "IPs or networks allowed to forward requests (like proxies)"
 msgstr "リクエストの転送が許可されている IP またはネットワーク（プロキシなど）"
 
-#: core/util/config.py:634
+#: core/util/config.py:652
 msgid ""
 "Allow clients to notify their own ip (if set), or use always the request "
 "extracted IP"
@@ -4008,11 +4063,11 @@ msgstr ""
 "クライアントが自身の IP を通知できるようにする（設定されている場合）、または"
 "常に要求から抽出された IP を使用する"
 
-#: core/util/config.py:642
+#: core/util/config.py:660
 msgid "If there is a proxy in front of us (i.e. HAProxy, or any NLB)"
 msgstr "前にプロキシがある場合（つまりHAProxyやNLB）"
 
-#: core/util/config.py:651
+#: core/util/config.py:669
 msgid ""
 "If we use new logout mechanics for osmanagers, where only when the logged in "
 "users reaches 0, it is considered \"logged out\""
@@ -4020,143 +4075,143 @@ msgstr ""
 "osmanagers に新しいログアウトメカニズムを使用すると、ログインしているユーザー"
 "が 0 に達した場合にのみ「ログアウト」とみなされます。"
 
-#: core/util/config.py:660
+#: core/util/config.py:678
 msgid "Enable/Disable Actor attack detection ip blocking"
 msgstr "アクター攻撃検出IPブロックの有効化/無効化"
 
-#: core/util/config.py:668
+#: core/util/config.py:686
 msgid "Max session length for Admin"
 msgstr "管理者の最大セッション時間"
 
-#: core/util/config.py:674
+#: core/util/config.py:692
 msgid "Max session length for User"
 msgstr "ユーザーの最大セッション時間"
 
-#: core/util/config.py:681
+#: core/util/config.py:699
 msgid "Page reload Time (legacy)"
 msgstr "ページの再読み込み時間（レガシー）"
 
-#: core/util/config.py:689
+#: core/util/config.py:707
 msgid "Custom message for error when limiting by calendar"
 msgstr "カレンダーによる制限時のエラーのカスタムメッセージ"
 
-#: core/util/config.py:697
+#: core/util/config.py:715
 msgid "If convert username to lowercase on logins"
 msgstr "ログイン時にユーザー名を小文字に変換する場合"
 
-#: core/util/config.py:705
+#: core/util/config.py:723
 msgid "Global UDS ID (common for all servers on the same cluster)"
 msgstr "グローバル UDS ID (同じクラスタ上のすべてのサーバーに共通)"
 
-#: core/util/config.py:713
+#: core/util/config.py:731
 msgid "Site display name"
 msgstr "サイトの表示名"
 
-#: core/util/config.py:719
+#: core/util/config.py:737
 msgid "Site copyright info"
 msgstr "サイトの著作権情報"
 
-#: core/util/config.py:725
+#: core/util/config.py:743
 msgid "Site copyright link"
 msgstr "サイトの著作権リンク"
 
-#: core/util/config.py:728
+#: core/util/config.py:746
 msgid "Top navbar logo name"
 msgstr "トップナビゲーションバーのロゴ名"
 
-#: core/util/config.py:734
+#: core/util/config.py:752
 msgid "Custom CSS styles applied to the user accesible site"
 msgstr "ユーザーがアクセス可能なサイトに適用されたカスタム CSS スタイル"
 
-#: core/util/config.py:740
+#: core/util/config.py:758
 msgid "Site information"
 msgstr "サイト情報"
 
-#: core/util/config.py:746
+#: core/util/config.py:764
 msgid "Show Filter box for user services on Top or bottom of the page"
 msgstr ""
 "ページの上部または下部にユーザーサービスのフィルターボックスを表示します"
 
-#: core/util/config.py:752
+#: core/util/config.py:770
 msgid "Minimal User Services needed to show filter"
 msgstr "フィルターを表示するために必要な最小限のユーザーサービス"
 
-#: core/util/config.py:758
+#: core/util/config.py:776
 msgid "Enable experimental features. USE WITH CAUTION!!"
 msgstr "実験的な機能を有効にします。注意して使用してください。"
 
-#: core/util/config.py:766
+#: core/util/config.py:784
 msgid "Time in seconds of inactivity before auto reloading admin pages"
 msgstr "管理ページが自動再読み込みされるまでの非アクティブ時間（秒）"
 
-#: core/util/config.py:772
+#: core/util/config.py:790
 msgid "Time in seconds between auto reloads of admin pages"
 msgstr "管理ページの自動再読み込み間隔（秒）"
 
-#: core/util/config.py:778
+#: core/util/config.py:796
 msgid "Number of items per page in admin tables"
 msgstr "管理テーブル内のページあたりのアイテム数"
 
-#: core/util/config.py:784
+#: core/util/config.py:802
 msgid "List of trusted hosts/networks allowed to access the admin interface"
 msgstr ""
 "管理インターフェースへのアクセスが許可されている信頼できるホスト/ネットワーク"
 "のリスト"
 
-#: core/util/config.py:790
+#: core/util/config.py:808
 msgid "Enable VNC menu for user services"
 msgstr "ユーザーサービス用のVNCメニューを有効にする"
 
-#: core/util/config.py:801
+#: core/util/config.py:819
 msgid ""
 "Cookies consent text. If empty, a default multi language text will be used"
 msgstr ""
 "Cookie同意テキスト。空欄の場合は、デフォルトの多言語テキストが使用されます。"
 
-#: core/util/config.py:807
+#: core/util/config.py:825
 msgid "Enable cookies consent"
 msgstr "クッキーの同意を有効にする"
 
-#: core/util/config.py:813
+#: core/util/config.py:831
 msgid "URL for more info about cookies"
 msgstr "クッキーに関する詳細情報のURL"
 
-#: core/util/config.py:819
+#: core/util/config.py:837
 msgid "URL to leave cookies consent"
 msgstr "クッキー同意を残すためのURL"
 
-#: core/util/config.py:825
+#: core/util/config.py:843
 msgid "Enable or disable add favorite services feature"
 msgstr "お気に入りサービスの追加機能を有効または無効にする"
 
-#: core/util/config.py:831
+#: core/util/config.py:849
 msgid "Allow animated backgrounds"
 msgstr "アニメーション背景を許可する"
 
-#: core/util/config.py:837
+#: core/util/config.py:855
 msgid "Allow biometric authentication"
 msgstr "生体認証を許可する"
 
-#: core/util/config.py:845
+#: core/util/config.py:863
 msgid "TSA Provider URL for timestamping signatures"
 msgstr "署名にタイムスタンプを付けるTSAプロバイダーのURL"
 
-#: core/util/config.py:851
+#: core/util/config.py:869
 msgid "TSA Provider Timeout in seconds"
 msgstr "TSAプロバイダーのタイムアウト時間（秒）"
 
-#: core/util/config.py:857
+#: core/util/config.py:875
 msgid "TSA Provider SSL Verify"
 msgstr "TSAプロバイダーSSL検証"
 
-#: core/util/config.py:863
+#: core/util/config.py:881
 msgid ""
 "Enable immutable audit log for critical data (admin events, logins, etc.)"
 msgstr ""
 "重要なデータ（管理者イベント、ログインなど）について、変更不可能な監査ログを"
 "有効にする。"
 
-#: core/util/config.py:869
+#: core/util/config.py:887
 msgid ""
 "Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"
 msgstr "再アンカーポイント間の最小間隔（秒）（最小120秒、0＝無効）"
@@ -4169,7 +4224,7 @@ msgstr "トンネルサーバー"
 msgid "Tunnel server to use"
 msgstr "使用するトンネルサーバー"
 
-#: core/util/fields.py:118
+#: core/util/fields.py:118 reports/lists/servers.py:55
 msgid "Server group"
 msgstr "サーバーグループ"
 
@@ -4401,16 +4456,16 @@ msgid ""
 "for each line)"
 msgstr "実名属性または属性パターンを含む属性（行ごとに1つ）"
 
-#: core/util/ldaputil.py:279
+#: core/util/ldaputil.py:290
 #, python-brace-format
 msgid "Could not bind to LDAP server: {host}"
 msgstr "LDAPサーバーにバインドできませんでした: {host}"
 
-#: core/util/ldaputil.py:528
+#: core/util/ldaputil.py:564
 msgid "No LDAP servers configured"
 msgstr "LDAPサーバーは設定されていません"
 
-#: core/util/ldaputil.py:612
+#: core/util/ldaputil.py:657
 msgid "Could not connect to any LDAP server ({}). Last error: {}"
 msgstr "LDAPサーバーに接続できませんでした（{}）。最後のエラー：{}"
 
@@ -4977,39 +5032,39 @@ msgstr "役に立たないフィールドのサンプル"
 msgid "This is a useless field, for sample and testing pourposes"
 msgstr "これはサンプルやテストの目的には役に立たないフィールドです"
 
-#: mfas/TOTP/mfa.py:64
+#: mfas/TOTP/mfa.py:65
 msgid "TOTP Based MFA"
 msgstr "TOTPベースのMFA"
 
-#: mfas/TOTP/mfa.py:66
+#: mfas/TOTP/mfa.py:67
 msgid "TOTP Based MFA (Google Authenticator, etc)"
 msgstr "TOTPベースのMFA（Google Authenticatorなど）"
 
-#: mfas/TOTP/mfa.py:71
+#: mfas/TOTP/mfa.py:72
 msgid "Issuer"
 msgstr "発行者"
 
-#: mfas/TOTP/mfa.py:74
+#: mfas/TOTP/mfa.py:75
 msgid "Issuer for OTP. Once it's created it can't be changed"
 msgstr "OTPの発行者。一度作成すると変更できません。"
 
-#: mfas/TOTP/mfa.py:81
+#: mfas/TOTP/mfa.py:82
 msgid "Valid Window"
 msgstr "有効期間"
 
-#: mfas/TOTP/mfa.py:86
+#: mfas/TOTP/mfa.py:87
 msgid "Number of valid codes before and after the current one"
 msgstr "現在のコードの前後の有効なコードの数"
 
-#: mfas/TOTP/mfa.py:115
+#: mfas/TOTP/mfa.py:116
 msgid "Authentication Code"
 msgstr "認証コード"
 
-#: mfas/TOTP/mfa.py:155
+#: mfas/TOTP/mfa.py:156
 msgid "Enter your authentication code"
 msgstr "認証コードを入力してください"
 
-#: mfas/TOTP/mfa.py:172
+#: mfas/TOTP/mfa.py:173
 msgid ""
 "Please, use your Authenticator to add your account. (i.e. Google "
 "Authenticator, Authy, ...)"
@@ -5017,12 +5072,12 @@ msgstr ""
 "アカウントを追加するには、認証システムを使用してください。(例: Google "
 "Authenticator、Authy、...)"
 
-#: mfas/TOTP/mfa.py:205
+#: mfas/TOTP/mfa.py:209
 msgid "Code is already used. Wait a minute and try again."
 msgstr ""
 "コードはすでに使用されています。しばらく待ってからもう一度お試しください。"
 
-#: mfas/TOTP/mfa.py:214
+#: mfas/TOTP/mfa.py:231
 msgid "Invalid code"
 msgstr "無効なコード"
 
@@ -5047,7 +5102,8 @@ msgid "Weekdays"
 msgstr "平日"
 
 #: models/calendar_rule.py:65 reports/lists/inactive_users.py:120
-#: reports/lists/inactive_users.py:121 transports/HTML5SSH/html5ssh.py:160
+#: reports/lists/inactive_users.py:121 reports/lists/servers.py:100
+#: reports/lists/servers.py:172 transports/HTML5SSH/html5ssh.py:160
 msgid "Never"
 msgstr "一度もない"
 
@@ -5175,8 +5231,9 @@ msgstr ""
 "す。"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:54
-msgid "Linux Active Directory OS Manager"
-msgstr "Linux Active Directory OS マネージャー"
+#| msgid "Active Directory"
+msgid "Linux Active Directory"
+msgstr "Linux Active Directory"
 
 #: osmanagers/LinuxOsManager/linux_ad_osmanager.py:56
 msgid "Os Manager to control Linux virtual machines with active directory"
@@ -5191,7 +5248,7 @@ msgstr "アクティブディレクトリでLinux仮想マシンを制御するO
 #: transports/RDPEmbedded/common.py:169
 #: transports/RDSEmbedded_enterprise/common.py:143
 #: transports/RDS_enterprise/rds_base.py:61
-#: transports/RGS_enterprise/rgs_base.py:88
+#: transports/RGS_enterprise/rgs_base.py:89
 msgid "Domain"
 msgstr "ドメイン"
 
@@ -5318,8 +5375,8 @@ msgid "Must provide a password for the account!"
 msgstr "アカウントのパスワードを入力する必要があります。"
 
 #: osmanagers/LinuxOsManager/linux_osmanager.py:53
-msgid "Linux OS Manager"
-msgstr "Linux OS マネージャー"
+msgid "Linux Basic"
+msgstr "Linux Basic"
 
 #: osmanagers/LinuxOsManager/linux_osmanager.py:55
 msgid "Os Manager to control Linux virtual machines"
@@ -5353,8 +5410,9 @@ msgstr ""
 "きにユーザーをログアウトしようとします。"
 
 #: osmanagers/LinuxOsManager/linux_randompass_osmanager.py:55
-msgid "Linux Random Password OS Manager"
-msgstr "Linux ランダムパスワード OS マネージャー"
+#| msgid "Linux Random Password OS Manager"
+msgid "Linux Random Password"
+msgstr "Linuxのランダムパスワード"
 
 #: osmanagers/LinuxOsManager/linux_randompass_osmanager.py:57
 msgid "Os Manager to control linux machines, with user password set randomly."
@@ -5381,8 +5439,9 @@ msgid "RDS UDS Actor (legacy, use UDS RDS Server instead)"
 msgstr "RDS UDS アクター (レガシー、代わりに UDS RDS サーバーを使用)"
 
 #: osmanagers/RDSOsManager_enterprise/rds_osmanager.py:30
-msgid "RDS OS Manager"
-msgstr "RDS OS マネージャー"
+#: services/RDS_enterprise/provider.py:50
+msgid "RDS"
+msgstr "RDS"
 
 #: osmanagers/RDSOsManager_enterprise/rds_osmanager.py:32
 msgid "Os Manager to control RDS provided services"
@@ -5412,8 +5471,9 @@ msgstr ""
 "す。"
 
 #: osmanagers/WindowsOsManager/windows.py:33
-msgid "Windows Basic OS Manager"
-msgstr "Windows 基本 OS マネージャー"
+#| msgid "Windows Basic OS Manager"
+msgid "Windows Basic"
+msgstr "Windows Basic"
 
 #: osmanagers/WindowsOsManager/windows.py:35
 msgid "Os Manager to control windows machines without domain."
@@ -5428,8 +5488,9 @@ msgstr ""
 "（&lt;= 0 は最大アイドル時間がないことを意味します）"
 
 #: osmanagers/WindowsOsManager/windows_domain.py:65
-msgid "Windows Domain OS Manager"
-msgstr "Windows ドメイン OS マネージャー"
+#| msgid "Windows Domain OS Manager"
+msgid "Windows Domain"
+msgstr "Windowsドメイン"
 
 #: osmanagers/WindowsOsManager/windows_domain.py:67
 msgid "Os Manager to control windows machines with domain."
@@ -5521,8 +5582,9 @@ msgid "Unknown error: {0}"
 msgstr "不明なエラー: {0}"
 
 #: osmanagers/WindowsOsManager/windows_random.py:59
-msgid "Windows Random Password OS Manager"
-msgstr "Windows ランダムパスワード OS マネージャー"
+#| msgid "Windows Random Password OS Manager"
+msgid "Windows Random Password"
+msgstr "Windowsのランダムパスワード"
 
 #: osmanagers/WindowsOsManager/windows_random.py:61
 msgid ""
@@ -5773,6 +5835,67 @@ msgstr "ユーザーID"
 #: templates/uds/reports/lists/inactive-users.html:17
 msgid "Real Name"
 msgstr "本名"
+
+#: reports/lists/servers.py:49 reports/lists/servers.py:114
+#: templates/uds/reports/lists/servers.html:4
+#: templates/uds/reports/lists/servers.html:6
+#| msgid "Server Hint"
+msgid "Servers list"
+msgstr "サーバー一覧"
+
+#: reports/lists/servers.py:50
+msgid "Inventory of registered servers, with their last reported stats"
+msgstr "登録済みサーバーの一覧と、最後に報告された統計情報"
+
+#: reports/lists/servers.py:56
+#| msgid "Server group to use"
+msgid "Server group to list (or all)"
+msgstr "表示するサーバーグループ（またはすべて）"
+
+#: reports/lists/servers.py:62
+#| msgid "Tunnel server not found"
+msgid "Only servers not reporting"
+msgstr "レポートしないサーバーのみ"
+
+#: reports/lists/servers.py:63
+msgid "List only servers whose last reported stats are stale or missing"
+msgstr "最後に報告された統計情報が古いか欠落しているサーバーのみを一覧表示します。"
+
+#: reports/lists/servers.py:69 reports/stats/servers_base.py:62
+msgid "ALL SERVER GROUPS"
+msgstr "すべてのサーバーグループ"
+
+#: reports/lists/servers.py:98 services/NutanixPrism_enterprise/service.py:126
+msgid "Yes"
+msgstr "はい"
+
+#: reports/lists/servers.py:98 services/NutanixPrism_enterprise/service.py:127
+msgid "No"
+msgstr "いいえ"
+
+#: reports/lists/servers.py:115
+#| msgid "UDS Server endpoint"
+msgid "UDS Servers list"
+msgstr "UDSサーバー一覧"
+
+#: reports/lists/servers.py:142
+#| msgid "Locked"
+msgid "Locked until"
+msgstr "ロックされるまで"
+
+#: reports/lists/servers.py:143 templates/uds/reports/lists/servers.html:23
+#| msgid "Last access"
+msgid "Last stats"
+msgstr "最新の統計情報"
+
+#: reports/lists/servers.py:145 reports/stats/server_load.py:117
+msgid "CPU %"
+msgstr "CPU %"
+
+#: reports/lists/servers.py:146 reports/stats/server_load.py:120
+#| msgid "Memory (Mb)"
+msgid "Memory %"
+msgstr "メモリ %"
 
 #: reports/lists/users.py:58
 msgid "Authenticator from where to list users"
@@ -6083,6 +6206,9 @@ msgstr "プールの使用状況の概要"
 #: templates/uds/reports/stats/pool-saturation.html:11
 #: templates/uds/reports/stats/pools-usage-summary.html:4
 #: templates/uds/reports/stats/pools-usage-summary.html:6
+#: templates/uds/reports/stats/server-balance.html:11
+#: templates/uds/reports/stats/server-load.html:11
+#: templates/uds/reports/stats/server-usage.html:11
 #: templates/uds/reports/stats/session-duration.html:11
 #: templates/uds/reports/stats/top-users.html:11
 #: templates/uds/reports/stats/tunnel-usage.html:11
@@ -6111,6 +6237,199 @@ msgstr "ユニークユーザー数"
 #: reports/stats/pools_usage_summary.py:154
 msgid "Mean time (seconds)"
 msgstr "平均時間（秒）"
+
+#: reports/stats/server_balance.py:56 reports/stats/server_balance.py:166
+#: templates/uds/reports/stats/server-balance.html:4
+#: templates/uds/reports/stats/server-balance.html:6
+#| msgid "Server group"
+msgid "Server group balancing"
+msgstr "サーバーグループバランシング"
+
+#: reports/stats/server_balance.py:57
+msgid "How evenly users are spread across the servers of each group"
+msgstr "各グループのサーバー間でユーザーがどれだけ均等に分散されているか"
+
+#: reports/stats/server_balance.py:139
+msgid "Share of served users by server"
+msgstr "サーバー別サービス提供ユーザー数の割合"
+
+#: reports/stats/server_balance.py:145 reports/stats/server_balance.py:149
+#: reports/stats/server_balance.py:192
+#| msgid "Shared Secret"
+msgid "Share %"
+msgstr "共有 %"
+
+#: reports/stats/server_balance.py:167
+#| msgid "UDS Report of users usage"
+msgid "UDS Report of server group balancing"
+msgstr "UDSサーバーグループのバランス調整レポート"
+
+#: reports/stats/server_balance.py:190
+#: templates/uds/reports/stats/server-balance.html:53
+#| msgid "{} hours"
+msgid "User hours"
+msgstr "ユーザー時間"
+
+#: reports/stats/server_balance.py:191 reports/stats/server_usage.py:205
+#: templates/uds/reports/stats/server-balance.html:54
+#: templates/uds/reports/stats/server-usage.html:26
+#| msgid "Unique users"
+msgid "Peak users"
+msgstr "ピーク時の利用者"
+
+#: reports/stats/server_balance.py:193
+msgid "Deviation from even share"
+msgstr "均等分配からの逸脱"
+
+#: reports/stats/server_load.py:57 reports/stats/server_load.py:135
+#: templates/uds/reports/stats/server-load.html:4
+#: templates/uds/reports/stats/server-load.html:6
+#| msgid "Server is restrained"
+msgid "Server resource load"
+msgstr "サーバーリソース負荷"
+
+#: reports/stats/server_load.py:58
+msgid "CPU, memory and disk usage of servers, and time spent over a threshold"
+msgstr "サーバーのCPU、メモリ、ディスク使用量、およびしきい値を超えた時間"
+
+#: reports/stats/server_load.py:67
+#| msgid "Load threshold"
+msgid "Overload threshold (%)"
+msgstr "過負荷しきい値（%）"
+
+#: reports/stats/server_load.py:72
+msgid ""
+"An hour counts as overloaded when CPU or memory peak reaches this percentage"
+msgstr ""
+"CPUまたはメモリのピークがこのパーセンテージに達した時点で、1時間が過負荷状態"
+"とみなされます。"
+
+#: reports/stats/server_load.py:117
+#: templates/uds/reports/stats/server-load.html:17
+#| msgid "Average per session"
+msgid "Average CPU usage"
+msgstr "平均CPU使用率"
+
+#: reports/stats/server_load.py:120
+#: templates/uds/reports/stats/server-load.html:19
+#| msgid "Average per session"
+msgid "Average memory usage"
+msgstr "平均メモリ使用量"
+
+#: reports/stats/server_load.py:136
+#| msgid "UDS Report of user services in error"
+msgid "UDS Report of server resource load"
+msgstr "UDSによるサーバーリソース負荷レポート"
+
+#: reports/stats/server_load.py:160
+#| msgid "Average"
+msgid "CPU average %"
+msgstr "CPU平均 %"
+
+#: reports/stats/server_load.py:161
+msgid "CPU peak %"
+msgstr "CPUピーク %"
+
+#: reports/stats/server_load.py:162
+#| msgid "Memory Guaranteed (Mb)"
+msgid "Memory average %"
+msgstr "メモリ平均 %"
+
+#: reports/stats/server_load.py:163
+#| msgid "Memory weight"
+msgid "Memory peak %"
+msgstr "メモリーピーク %"
+
+#: reports/stats/server_load.py:164
+msgid "Disk average %"
+msgstr "ディスク平均 %"
+
+#: reports/stats/server_load.py:165
+msgid "Disk peak %"
+msgstr "ディスクピーク %"
+
+#: reports/stats/server_load.py:166
+#: templates/uds/reports/stats/server-load.html:33
+#| msgid "UDS Top users report"
+msgid "Hours reported"
+msgstr "報告された勤務時間"
+
+#: reports/stats/server_load.py:167
+#: templates/uds/reports/stats/server-load.html:34
+msgid "Hours overloaded"
+msgstr "勤務時間が長すぎる"
+
+#: reports/stats/server_load.py:168
+msgid "Overloaded %"
+msgstr "過負荷 %"
+
+#: reports/stats/server_usage.py:62 reports/stats/server_usage.py:126
+#: reports/stats/server_usage.py:181
+#: templates/uds/reports/stats/server-usage.html:4
+#: templates/uds/reports/stats/server-usage.html:6
+#| msgid "Server group to use"
+msgid "Server groups usage by date"
+msgstr "サーバーグループの使用状況（日付別）"
+
+#: reports/stats/server_usage.py:63
+msgid "Users and connections served by each server of a group over a period"
+msgstr "グループ内の各サーバーが一定期間にわたって処理したユーザー数と接続数"
+
+#: reports/stats/server_usage.py:127 reports/stats/server_usage.py:182
+#| msgid "Server group to use"
+msgid "Server groups usage"
+msgstr "サーバーグループの使用状況"
+
+#: reports/stats/server_usage.py:147
+#: templates/uds/reports/stats/server-usage.html:16
+#| msgid "Top users by usage"
+msgid "Peak users by server"
+msgstr "サーバーごとのピークユーザー数"
+
+#: reports/stats/server_usage.py:161
+#: templates/uds/reports/stats/server-usage.html:18
+#| msgid "Connection error"
+msgid "Peak connections by server"
+msgstr "サーバーごとのピーク接続数"
+
+#: reports/stats/server_usage.py:166
+#| msgid "Connection speed"
+msgid "Connections"
+msgstr "つながり"
+
+#: reports/stats/server_usage.py:206
+#: templates/uds/reports/stats/server-usage.html:27
+#| msgid "Average hours/session"
+msgid "Average users"
+msgstr "平均的なユーザー"
+
+#: reports/stats/server_usage.py:207
+#: templates/uds/reports/stats/server-usage.html:28
+#| msgid "Peak concurrent sessions"
+msgid "Peak connections"
+msgstr "ピーク接続"
+
+#: reports/stats/server_usage.py:208
+#: templates/uds/reports/stats/server-usage.html:29
+#| msgid "Average hours/session"
+msgid "Average connections"
+msgstr "平均接続数"
+
+#: reports/stats/server_usage.py:209
+#: templates/uds/reports/stats/server-usage.html:30
+#| msgid "Sample"
+msgid "Samples"
+msgstr "サンプル"
+
+#: reports/stats/servers_base.py:52
+#| msgid "Server group"
+msgid "Server groups"
+msgstr "サーバーグループ"
+
+#: reports/stats/servers_base.py:53
+#| msgid "Server to include on group"
+msgid "Server groups to include on the report"
+msgstr "レポートに含めるサーバーグループ"
 
 #: reports/stats/session_duration.py:60 reports/stats/session_duration.py:143
 #: templates/uds/reports/stats/session-duration.html:4
@@ -7032,8 +7351,9 @@ msgid "HyperV Clone Generation 2"
 msgstr "Hyper-Vクローン第2世代"
 
 #: services/Morpheus_enterprise/provider.py:39
-msgid "HPE Morpheus Provider"
-msgstr "HPE Morpheus プロバイダー"
+#| msgid "HPE Morpheus Provider"
+msgid "HPE Morpheus"
+msgstr "HPEモルフェウス"
 
 #: services/Morpheus_enterprise/provider.py:41
 msgid "Morpheus based instances provider"
@@ -7068,8 +7388,8 @@ msgstr "接続は正常に動作します"
 
 #: services/Morpheus_enterprise/provider.py:132
 #: services/NutanixPrism_enterprise/provider.py:146
-#: services/Nutanix_enterprise/provider.py:190 services/OVirt/provider.py:247
-#: services/OpenShift/provider.py:156 services/Proxmox/provider.py:266
+#: services/Nutanix_enterprise/provider.py:190 services/OVirt/provider.py:249
+#: services/OpenShift/provider.py:156 services/Proxmox/provider.py:267
 #: services/ScaleComputing_enterprise/provider.py:150
 #: services/Vmware_enterprise/provider.py:185
 msgid "Connection failed. Check connection params"
@@ -7212,14 +7532,6 @@ msgstr "CPUパススルーを有効にする"
 #: services/NutanixPrism_enterprise/service.py:125
 msgid "Leave as is"
 msgstr "そのままにしておく"
-
-#: services/NutanixPrism_enterprise/service.py:126
-msgid "Yes"
-msgstr "はい"
-
-#: services/NutanixPrism_enterprise/service.py:127
-msgid "No"
-msgstr "いいえ"
 
 #: services/NutanixPrism_enterprise/service.py:155
 msgid "Both Cores per VCPU and Number of VCPUS are required"
@@ -7387,7 +7699,7 @@ msgstr ""
 msgid "Password of the user of oVirt"
 msgstr "oVirtユーザーのパスワード"
 
-#: services/OVirt/provider.py:245
+#: services/OVirt/provider.py:247
 msgid "Connection to oVirt server is ok"
 msgstr "oVirtサーバーへの接続は正常です"
 
@@ -7608,17 +7920,17 @@ msgstr "OpenNebulaで有効な権限を持つユーザー"
 msgid "Password of the user of OpenNebula"
 msgstr "OpenNebulaユーザーのパスワード"
 
-#: services/OpenNebula/provider.py:164
+#: services/OpenNebula/provider.py:167
 msgid "OpenNebula version is not supported (required version 4.1 or newer)"
 msgstr ""
 "OpenNebula のバージョンはサポートされていません (バージョン 4.1 以降が必要で"
 "す)"
 
-#: services/OpenNebula/provider.py:167
+#: services/OpenNebula/provider.py:170
 msgid "Error connecting to OpenNebula: {}"
 msgstr "OpenNebula への接続エラー: {}"
 
-#: services/OpenNebula/provider.py:169
+#: services/OpenNebula/provider.py:172
 msgid "Opennebula test connection passed"
 msgstr "Opennebulaのテスト接続に合格しました"
 
@@ -7659,8 +7971,9 @@ msgid "Size of numeric part for the names of these machines"
 msgstr "これらの機械の名前の数字部分のサイズ"
 
 #: services/OpenShift/provider.py:66
-msgid "Openshift Provider"
-msgstr "Openshiftプロバイダー"
+#| msgid "Opens"
+msgid "Openshift"
+msgstr "Openshift"
 
 #: services/OpenShift/provider.py:68
 msgid "Openshift based VMs provider"
@@ -7930,8 +8243,9 @@ msgid "OpenStack Services based on fixed machines."
 msgstr "固定マシンに基づく OpenStack サービス。"
 
 #: services/PhysicalMachines/provider.py:60
-msgid "Static IP Machines Provider"
-msgstr "静的IPマシンプロバイダー"
+#| msgid "Static IP Machines Provider"
+msgid "Static IP Machines"
+msgstr "固定IPアドレスを持つマシン"
 
 #: services/PhysicalMachines/provider.py:62
 msgid "Provides connection to machines by IP"
@@ -8101,15 +8415,15 @@ msgstr ""
 msgid "Password of the user of Proxmox"
 msgstr "Proxmoxユーザーのパスワード"
 
-#: services/Proxmox/provider.py:124
+#: services/Proxmox/provider.py:125
 msgid "Starting VmId"
 msgstr "開始VmId"
 
-#: services/Proxmox/provider.py:129
+#: services/Proxmox/provider.py:130
 msgid "Starting machine id on proxmox"
 msgstr "proxmoxの開始マシンID"
 
-#: services/Proxmox/provider.py:264
+#: services/Proxmox/provider.py:265
 #: services/ScaleComputing_enterprise/provider.py:147
 msgid "Test passed"
 msgstr "テスト合格"
@@ -8197,10 +8511,6 @@ msgstr "リソースプール"
 #: services/Vmware_enterprise/service_fixed.py:78
 msgid "Resource Pool containing base machines"
 msgstr "ベースマシンを含むリソースプール"
-
-#: services/RDS_enterprise/provider.py:50
-msgid "RDS"
-msgstr "RDS"
 
 #: services/RDS_enterprise/provider.py:52
 msgid "Microsoft RDS based provider"
@@ -8743,8 +9053,9 @@ msgstr ""
 "す。"
 
 #: services/Xen/provider.py:86
-msgid "Xenserver/XCP-NG Platforms Provider"
-msgstr "Xenserver/XCP-NG プラットフォームプロバイダー"
+#| msgid "Xenserver/XCP-NG Platforms Provider"
+msgid "Xenserver/XCP-NG Platforms"
+msgstr "XenServer/XCP-NGプラットフォーム"
 
 #: services/Xen/provider.py:90
 msgid "XenServer and XCP-NG platforms service provider"
@@ -8897,6 +9208,9 @@ msgstr "中国語"
 #: templates/uds/reports/stats/client-platforms.html:11
 #: templates/uds/reports/stats/peak-concurrency.html:11
 #: templates/uds/reports/stats/pool-saturation.html:11
+#: templates/uds/reports/stats/server-balance.html:11
+#: templates/uds/reports/stats/server-load.html:11
+#: templates/uds/reports/stats/server-usage.html:11
 #: templates/uds/reports/stats/session-duration.html:11
 #: templates/uds/reports/stats/top-users.html:11
 #: templates/uds/reports/stats/tunnel-usage.html:11
@@ -8939,6 +9253,22 @@ msgstr "しきい値"
 #: templates/uds/reports/lists/inactive-users.html:11
 msgid "days"
 msgstr "日"
+
+#: templates/uds/reports/lists/servers.html:11
+#| msgid "Generates"
+msgid "Generated at"
+msgstr "生成日時"
+
+#: templates/uds/reports/lists/servers.html:25
+#, python-format
+msgid "CPU %%"
+msgstr "CPU %%"
+
+#: templates/uds/reports/lists/servers.html:26
+#, python-format
+#| msgid "Memory (Mb)"
+msgid "Memory %%"
+msgstr "メモリ %%"
 
 #: templates/uds/reports/lists/users.html:15
 msgid "Real name"
@@ -9038,6 +9368,103 @@ msgstr "から"
 msgid "Total accesses"
 msgstr "総アクセス数"
 
+#: templates/uds/reports/stats/server-balance.html:14
+#: templates/uds/reports/stats/server-load.html:15
+#: templates/uds/reports/stats/server-usage.html:14
+#, python-format
+msgid ""
+"Charts show the %(charted_servers)s busiest servers of %(total_servers)s; "
+"the table below lists them all."
+msgstr ""
+"チャートは、 %(charted_servers)s 最もビジーなサーバー %(total_servers)s。以下"
+"の表にそれらすべてを一覧表示します。"
+
+#: templates/uds/reports/stats/server-balance.html:18
+#| msgid "Usage by group"
+msgid "Balance by group"
+msgstr "グループ別バランス"
+
+#: templates/uds/reports/stats/server-balance.html:24
+#, python-format
+#| msgid " shared"
+msgid "Even share %%"
+msgstr "共有する %%"
+
+#: templates/uds/reports/stats/server-balance.html:25
+#, python-format
+#| msgid " shared"
+msgid "Min share %%"
+msgstr "最低シェア %%"
+
+#: templates/uds/reports/stats/server-balance.html:26
+#, python-format
+#| msgid " shared"
+msgid "Max share %%"
+msgstr "最大シェア %%"
+
+#: templates/uds/reports/stats/server-balance.html:27
+msgid "Spread"
+msgstr "広める"
+
+#: templates/uds/reports/stats/server-balance.html:28
+#| msgid "Site information"
+msgid "Std deviation"
+msgstr "標準偏差"
+
+#: templates/uds/reports/stats/server-balance.html:29
+#| msgid "Sound server"
+msgid "Idle servers"
+msgstr "アイドル状態のサーバー"
+
+#: templates/uds/reports/stats/server-balance.html:47
+#| msgid "Tunnel server"
+msgid "Detail by server"
+msgstr "サーバーごとの詳細"
+
+#: templates/uds/reports/stats/server-balance.html:55
+#, python-format
+msgid "Share %%"
+msgstr "共有 %%"
+
+#: templates/uds/reports/stats/server-balance.html:56
+#| msgid "Revocation"
+msgid "Deviation"
+msgstr "偏差"
+
+#: templates/uds/reports/stats/server-load.html:12
+#| msgid "Load threshold"
+msgid "Overload threshold:"
+msgstr "過負荷しきい値:"
+
+#: templates/uds/reports/stats/server-load.html:27
+msgid "CPU avg"
+msgstr "CPU平均"
+
+#: templates/uds/reports/stats/server-load.html:28
+msgid "CPU peak"
+msgstr "CPUピーク"
+
+#: templates/uds/reports/stats/server-load.html:29
+msgid "Mem avg"
+msgstr "メモリ平均"
+
+#: templates/uds/reports/stats/server-load.html:30
+msgid "Mem peak"
+msgstr "メモリピーク"
+
+#: templates/uds/reports/stats/server-load.html:31
+msgid "Disk avg"
+msgstr "ディスク平均"
+
+#: templates/uds/reports/stats/server-load.html:32
+msgid "Disk peak"
+msgstr "ディスクピーク"
+
+#: templates/uds/reports/stats/server-load.html:35
+#, python-format
+msgid "Overloaded %%"
+msgstr "過負荷 %%"
+
 #: templates/uds/reports/stats/session-duration.html:13
 msgid "Avg seconds"
 msgstr "平均秒数"
@@ -9086,7 +9513,7 @@ msgstr "HTML5クライアントを使用したRDPプロトコル"
 #: transports/RDP/rdp_base.py:67 transports/RDPEmbedded/common.py:145
 #: transports/RDSEmbedded_enterprise/common.py:117
 #: transports/RDS_enterprise/rds_base.py:45
-#: transports/RGS_enterprise/rgs_base.py:70
+#: transports/RGS_enterprise/rgs_base.py:71
 msgid "Empty creds"
 msgstr "空のクレジット"
 
@@ -9107,7 +9534,7 @@ msgstr "チェックすると、接続に使用される資格情報は空にな
 #: transports/PCoIP_enterprise/pcoip.py:62 transports/RDP/rdp_base.py:76
 #: transports/RDPEmbedded/common.py:153
 #: transports/RDSEmbedded_enterprise/common.py:125
-#: transports/RGS_enterprise/rgs_base.py:78 transports/SPICE/spice_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:79 transports/SPICE/spice_base.py:72
 #: transports/X2GO/x2go_base.py:70
 msgid "If not empty, this username will be always used as credential"
 msgstr "空でない場合、このユーザー名は常に認証情報として使用されます"
@@ -9119,7 +9546,7 @@ msgstr "空でない場合、このユーザー名は常に認証情報として
 #: transports/PCoIP_enterprise/pcoip.py:69 transports/RDP/rdp_base.py:83
 #: transports/RDPEmbedded/common.py:159
 #: transports/RDSEmbedded_enterprise/common.py:131
-#: transports/RGS_enterprise/rgs_base.py:84 transports/SPICE/spice_base.py:79
+#: transports/RGS_enterprise/rgs_base.py:85 transports/SPICE/spice_base.py:79
 msgid "If not empty, this password will be always used as credential"
 msgstr "空でない場合、このパスワードは常に認証情報として使用されます"
 
@@ -9591,6 +10018,7 @@ msgid "Amazon DCV Protocol. Direct connection."
 msgstr "Amazon DCVプロトコル。直接接続。"
 
 #: transports/NICEDCV_enterprise/nicedcv_base.py:63
+#: transports/RGS_enterprise/rgs_base.py:183
 msgid "Full screen"
 msgstr "全画面表示"
 
@@ -10145,92 +10573,110 @@ msgstr "RGS"
 msgid "HP RGS Protocol. Direct connection."
 msgstr "HP RGSプロトコル。直接接続。"
 
-#: transports/RGS_enterprise/rgs_base.py:72
+#: transports/RGS_enterprise/rgs_base.py:73
 msgid "If checked, the credentials used to connect will be empty"
 msgstr "チェックされている場合、接続に使用する認証情報は空になります。"
 
-#: transports/RGS_enterprise/rgs_base.py:91
+#: transports/RGS_enterprise/rgs_base.py:92
 msgid ""
 "If not empty, this domain will be always used as credential (DOMAIN\\user)"
 msgstr ""
 "空欄でない場合、このドメインは常に認証情報として使用されます（ドメイン\\ユー"
 "ザー名）。"
 
-#: transports/RGS_enterprise/rgs_base.py:99
+#: transports/RGS_enterprise/rgs_base.py:100
 msgid "Image quality"
 msgstr "画質"
 
-#: transports/RGS_enterprise/rgs_base.py:104
+#: transports/RGS_enterprise/rgs_base.py:105
 msgid "Quality of the image codec (0-100)"
 msgstr "画像コーデックの品質（0～100）"
 
-#: transports/RGS_enterprise/rgs_base.py:109
+#: transports/RGS_enterprise/rgs_base.py:110
 msgid "Adjustable quality"
 msgstr "調整可能な品質"
 
-#: transports/RGS_enterprise/rgs_base.py:112
+#: transports/RGS_enterprise/rgs_base.py:113
 msgid ""
 "If checked, the image quality will be automatically adjusted based on "
 "bandwidth"
 msgstr "チェックを入れると、帯域幅に基づいて画質が自動的に調整されます。"
 
-#: transports/RGS_enterprise/rgs_base.py:119
+#: transports/RGS_enterprise/rgs_base.py:120
 msgid "Min. adjustable quality"
 msgstr "最小調整品質"
 
-#: transports/RGS_enterprise/rgs_base.py:125
+#: transports/RGS_enterprise/rgs_base.py:126
 msgid "Lowest image quality allowed when adjusting to keep a stable frame rate"
 msgstr "フレームレートを安定させるために調整する際に許容される最低画質"
 
-#: transports/RGS_enterprise/rgs_base.py:132
+#: transports/RGS_enterprise/rgs_base.py:133
 msgid "Adjustable frame rate"
 msgstr "フレームレートを調整可能"
 
-#: transports/RGS_enterprise/rgs_base.py:138
+#: transports/RGS_enterprise/rgs_base.py:139
 msgid "Frame rate threshold (fps) at which the image quality starts to adapt"
 msgstr "画像品質が適応し始めるフレームレートのしきい値（fps）"
 
-#: transports/RGS_enterprise/rgs_base.py:144
+#: transports/RGS_enterprise/rgs_base.py:145
 msgid "Match local resolution"
 msgstr "ローカル解像度に合わせる"
 
-#: transports/RGS_enterprise/rgs_base.py:147
+#: transports/RGS_enterprise/rgs_base.py:148
 msgid ""
 "Change the Sender's resolution to match the Receiver's resolution when "
 "connecting"
 msgstr "接続時に送信側の解像度を受信側の解像度と一致させてください。"
 
-#: transports/RGS_enterprise/rgs_base.py:153
+#: transports/RGS_enterprise/rgs_base.py:154
 msgid "Redirect audio"
 msgstr "音声のリダイレクト"
 
-#: transports/RGS_enterprise/rgs_base.py:155
+#: transports/RGS_enterprise/rgs_base.py:156
 msgid "If checked, the audio will be redirected to the Receiver"
 msgstr "チェックを入れると、音声は受信機にリダイレクトされます。"
 
-#: transports/RGS_enterprise/rgs_base.py:160
+#: transports/RGS_enterprise/rgs_base.py:161
 msgid "Redirect microphone"
 msgstr "マイクの方向をリダイレクトする"
 
-#: transports/RGS_enterprise/rgs_base.py:162
+#: transports/RGS_enterprise/rgs_base.py:163
 msgid "If checked, the microphone input will be streamed to the Sender"
 msgstr "チェックされている場合、マイク入力は送信機にストリーミングされます。"
 
-#: transports/RGS_enterprise/rgs_base.py:167
+#: transports/RGS_enterprise/rgs_base.py:168
 msgid "Redirect USB"
 msgstr "USBをリダイレクト"
 
-#: transports/RGS_enterprise/rgs_base.py:169
+#: transports/RGS_enterprise/rgs_base.py:170
 msgid "If checked, USB devices will be redirected to the Sender session"
 msgstr ""
 "チェックされている場合、USB デバイスは送信者セッションにリダイレクトされま"
 "す。"
 
-#: transports/RGS_enterprise/rgs_base.py:177
+#: transports/RGS_enterprise/rgs_base.py:176
+#| msgid "Window Size"
+msgid "Window mode"
+msgstr "ウィンドウモード"
+
+#: transports/RGS_enterprise/rgs_base.py:178
+msgid "How the RGS Receiver window is shown when the session starts"
+msgstr "セッション開始時にRGS Receiverウィンドウがどのように表示されるか"
+
+#: transports/RGS_enterprise/rgs_base.py:181
+#| msgid "Window Size"
+msgid "Windowed"
+msgstr "ウィンドウ付き"
+
+#: transports/RGS_enterprise/rgs_base.py:182
+msgid "Borderless"
+msgstr "ボーダーレス"
+
+#: transports/RGS_enterprise/rgs_base.py:191
 msgid "RGS port"
 msgstr "RGSポート"
 
-#: transports/RGS_enterprise/rgs_base.py:180
+#: transports/RGS_enterprise/rgs_base.py:194
 msgid "RGS Sender listener port (defaults to 42966)"
 msgstr "RGS送信リスナーポート（デフォルトは42966）"
 
