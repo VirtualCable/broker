@@ -70,6 +70,8 @@ def master_custom_tool(
     extra_required: tuple[str, ...] = (),
     access: str,
     returns: str,
+    required_permission: str = "READ",
+    sensitive_fields: tuple[str, ...] = (),
 ) -> ToolDefinition:
     """Build a tool around a ``needs_parent`` GET custom method of a master handler.
 
@@ -77,6 +79,18 @@ def master_custom_tool(
     item's uuid), so the executor assembles the :class:`RestTarget` on every
     invocation. Everything in the arguments besides the uuid travels to the
     handler as query parameters, exactly like a direct REST call.
+
+    ``required_permission`` reflects what the backing REST custom method
+    actually requires (READ for most, ALL for service pools' ``stats``,
+    ``actions_list``, ``list_assignables`` and similar). It is exposed through
+    the tool ``_meta`` so clients reading the metadata see an honest answer;
+    enforcement still happens on the REST side, exactly as for any other
+    call routed through :class:`RestProxy`.
+
+    ``sensitive_fields`` is unioned with the global denylist by
+    :func:`uds.mcp.redaction.redact` so a tool whose handler returns
+    personal data (IPs, friendly names, etc.) does not leak it through the
+    MCP response.
     """
 
     async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
@@ -96,6 +110,7 @@ def master_custom_tool(
         input_schema=schema(properties, ("uuid", *extra_required)),
         access=access,
         returns=returns,
-        required_permission="READ",
+        required_permission=required_permission,
+        sensitive_fields=sensitive_fields,
         executor=executor,
     )

@@ -65,4 +65,39 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             access="Available to authenticated UDS users with read permission on the pool.",
             returns="Recommended cache configuration with the current one and per-level verdicts.",
         ),
+        master_custom_tool(
+            name="get_servicepool_actions_list",
+            title="Get service pool calendar actions",
+            description=(
+                "List the calendar actions available for this service pool "
+                "right now (publish, cache levels, transports, groups, advanced "
+                "cleanup actions). The list reflects the pool's current state: "
+                "a locked pool only allows publish. Each entry is a descriptor "
+                "with ``id``, ``description`` and ``params`` (parameters the "
+                "action accepts when scheduled)."
+            ),
+            handler=ServicesPools,
+            path="servicespools",
+            custom_name="actions_list",
+            uuid_property=uuid_property("UUID of the service pool."),
+            access="Available to users with management permission on the pool.",
+            returns="A list of calendar action descriptors (id, description, params) valid for the pool at the moment of the call.",
+            required_permission="ALL",
+        ),
+        master_custom_tool(
+            name="get_servicepool_assignables",
+            title="Get service pool assignables",
+            description=(
+                "Enumerate the assignable services this pool can spawn new "
+                "pools from (raw service-level resources usable to create more "
+                "pools of the same type)."
+            ),
+            handler=ServicesPools,
+            path="servicespools",
+            custom_name="list_assignables",
+            uuid_property=uuid_property("UUID of the service pool."),
+            access="Available to users with management permission on the pool.",
+            returns="A list of assignable service descriptors.",
+            required_permission="ALL",
+        ),
     )

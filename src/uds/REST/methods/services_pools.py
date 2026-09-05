@@ -143,7 +143,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {
         "services": AssignedUserService,
         "cache": CachedService,
-        "servers": CachedService,  # Alias for cache, but will change in a future release
+        # "servers": CachedService,  # Seems dead. Alias kept for compat only; to be removed.
         "groups": Groups,
         "transports": Transports,
         "publications": Publications,
@@ -261,9 +261,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     "level": types.rest.api.SchemaProperty(
                         type="string", description="Log severity level (INFO, WARN, ERROR)"
                     ),
-                    "log_name": types.rest.api.SchemaProperty(
-                        type="string", description="Optional log source name"
-                    ),
+                    "log_name": types.rest.api.SchemaProperty(type="string", description="Optional log source name"),
                 },
             ),
         ),
@@ -451,7 +449,10 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         if hasattr(item, "valid_count"):
             valid_count = getattr(item, "valid_count", 1)
             preparing_count = getattr(item, "preparing_count", 1)
-            restrained = getattr(item, "error_count", GlobalConfig.RESTRAINT_COUNT.as_int()) >= GlobalConfig.RESTRAINT_COUNT.as_int()
+            restrained = (
+                getattr(item, "error_count", GlobalConfig.RESTRAINT_COUNT.as_int())
+                >= GlobalConfig.RESTRAINT_COUNT.as_int()
+            )
             usage_count = getattr(item, "usage_count", 0)
         else:
             valid_count = item.userServices.exclude(state__in=State.INFO_STATES).count()
@@ -528,9 +529,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 default=True,
                 readonly=True,
                 label=gettext("Publish on save"),
-                tooltip=gettext(
-                    "If active, the service will be published when saved (only for new service pools)"
-                ),
+                tooltip=gettext("If active, the service will be published when saved (only for new service pools)"),
             )
             .new_tab(types.ui.Tab.DISPLAY)
             .add_checkbox(
@@ -542,9 +541,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             .add_image_choice()
             .add_image_choice(
                 name="pool_group_id",
-                choices=[
-                    ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()
-                ],
+                choices=[ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()],
                 label=gettext("Pool group"),
                 tooltip=gettext("Pool group for this pool (for pool classify on display)"),
             )

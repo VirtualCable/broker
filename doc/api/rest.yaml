@@ -980,31 +980,58 @@ components:
       type: object
     GroupItem:
       properties:
-        auth_id:
-          type: string
-        auth_name:
-          type: string
         comments:
-          type: string
-        group_name:
           type: string
         id:
           type: string
         name:
           type: string
-        state:
+        permission:
+          enum:
+          - 0
+          - 32
+          - 64
+          - 96
+          type: integer
+        servers_count:
+          format: int64
+          type: integer
+        subtype:
           type: string
+        tags:
+          items:
+            type: string
+          type: array
         type:
           type: string
+        type_name:
+          type: string
+        weights_cpu:
+          format: int64
+          type: integer
+        weights_max_expected_users:
+          format: int64
+          type: integer
+        weights_memory:
+          format: int64
+          type: integer
+        weights_users:
+          format: int64
+          type: integer
       required:
       - id
-      - auth_id
       - name
-      - group_name
       - comments
-      - state
       - type
-      - auth_name
+      - subtype
+      - type_name
+      - tags
+      - servers_count
+      - permission
+      - weights_cpu
+      - weights_memory
+      - weights_users
+      - weights_max_expected_users
       type: object
     GuiElement:
       properties:
@@ -2985,6 +3012,10 @@ components:
           description: Username.User with valid privileges on Proxmox, (use "user@authenticator"
             form)
           type: string
+        verify_ssl:
+          description: Verify SSL.If checked, SSL verification will be enforced. If
+            not, SSL verification will be disabled
+          type: boolean
       required:
       - host
       - port
@@ -5625,6 +5656,8 @@ components:
           type: boolean
         state:
           type: string
+        token:
+          type: string
       required:
       - id
       - name
@@ -5637,6 +5670,7 @@ components:
       - mfa_data
       - role
       - parent
+      - token
       type: object
     UserServiceItem:
       properties:
@@ -6576,6 +6610,10 @@ components:
             if using AAA, or "user@domain@provider" if using keycloak. I.e. "admin@ovirt@internalsso"
             or "admin@internal")
           type: string
+        verify_ssl:
+          description: Verify SSL.If checked, SSL verification will be enforced. If
+            not, SSL verification will be disabled
+          type: boolean
       required:
       - ovirt_version
       - host
@@ -6725,6 +6763,10 @@ components:
         username:
           description: Username.User with valid privileges on OpenNebula
           type: string
+        verify_ssl:
+          description: Verify SSL.If checked, SSL verification will be enforced. If
+            not, SSL verification will be disabled
+          type: boolean
       required:
       - host
       - port
@@ -10713,6 +10755,91 @@ paths:
       summary: Retrieve Users table info
       tags:
       - Authenticators
+  /authenticators/{uuid}/users/token:
+    get:
+      description: Revoke this user's REST/MCP API token if one is active
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Revoke this user's REST/MCP API token if one is active (Users collection)
+      tags:
+      - Authenticators
+    post:
+      description: Issue a new REST/MCP API token for this user, returning the raw
+        value only once
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Issue a new REST/MCP API token for this user, returning the raw value
+        only once (Users collection)
+      tags:
+      - Authenticators
   /authenticators/{uuid}/users/userServices:
     get:
       deprecated: true
@@ -11431,6 +11558,91 @@ paths:
       - udsApiAuthBearer: []
       summary: Retrieve all service pools in which this user has active assignments
         (Users item)
+      tags:
+      - Authenticators
+  /authenticators/{uuid}/users/{uuid}/token:
+    get:
+      description: Revoke this user's REST/MCP API token if one is active
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Revoke this user's REST/MCP API token if one is active (Users item)
+      tags:
+      - Authenticators
+    post:
+      description: Issue a new REST/MCP API token for this user, returning the raw
+        value only once
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: Issue a new REST/MCP API token for this user, returning the raw value
+        only once (Users item)
       tags:
       - Authenticators
   /authenticators/{uuid}/users/{uuid}/userServices:
@@ -21753,6 +21965,50 @@ paths:
         and resource usage (ServerGroup)
       tags:
       - Servers
+  /servers/groups/{uuid}/usages:
+    get:
+      description: List providers whose 'server_group' field points to this server
+        group
+      parameters:
+      - description: The UUID of the item
+        in: path
+        name: uuid
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successfully retrieved object item
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Forbidden. You do not have permission to access this resource
+            with your current role.
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: object item not found
+      security:
+      - udsApiAuthBearer: []
+      summary: List providers whose 'server_group' field points to this server group
+        (ServerGroup)
+      tags:
+      - Servers
   /servers/tokens:
     get:
       description: Retrieve a list of all Server items
@@ -26743,545 +26999,6 @@ paths:
       - udsApiAuthBearer: []
       summary: Start a new publication for a deployed service, optionally with a changelog
         message (Publications item)
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/servers:
-    get:
-      description: Retrieve a list of all Servers items
-      parameters:
-      - description: Filter items by property values (e.g., $filter=property eq value)
-        in: query
-        name: $filter
-        required: false
-        schema:
-          type: string
-      - description: Select properties to be returned
-        in: query
-        name: $select
-        required: false
-        schema:
-          type: string
-      - description: Order items by property values (e.g., $orderby=property desc)
-        in: query
-        name: $orderby
-        required: false
-        schema:
-          type: string
-      - description: Show only the first N items
-        in: query
-        name: $top
-        required: false
-        schema:
-          format: int32
-          minimum: 1
-          type: integer
-      - description: Skip the first N items
-        in: query
-        name: $skip
-        required: false
-        schema:
-          format: int32
-          minimum: 0
-          type: integer
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/UserServiceItem'
-                type: array
-          description: Successfully retrieved all UserServiceItem items
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-      security:
-      - udsApiAuthBearer: []
-      summary: List Servers items
-      tags:
-      - Servicespools
-    post:
-      description: Create a new Servers item
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserServiceItem'
-        description: New UserServiceItem item to create
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserServiceItem'
-          description: Successfully retrieved UserServiceItem item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: UserServiceItem item not found
-      security:
-      - udsApiAuthBearer: []
-      summary: Create a new Servers item
-      tags:
-      - Servicespools
-    put:
-      deprecated: true
-      description: 'Creates a new Servers item. Deprecated: use POST //servicespools/{uuid}/servers
-        instead.'
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserServiceItem'
-        description: New UserServiceItem item to create
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserServiceItem'
-          description: Successfully retrieved UserServiceItem item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: UserServiceItem item not found
-      security:
-      - udsApiAuthBearer: []
-      summary: Creates a new Servers item
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/servers/overview:
-    get:
-      description: Retrieve an overview of Servers items
-      parameters:
-      - description: Filter items by property values (e.g., $filter=property eq value)
-        in: query
-        name: $filter
-        required: false
-        schema:
-          type: string
-      - description: Select properties to be returned
-        in: query
-        name: $select
-        required: false
-        schema:
-          type: string
-      - description: Order items by property values (e.g., $orderby=property desc)
-        in: query
-        name: $orderby
-        required: false
-        schema:
-          type: string
-      - description: Show only the first N items
-        in: query
-        name: $top
-        required: false
-        schema:
-          format: int32
-          minimum: 1
-          type: integer
-      - description: Skip the first N items
-        in: query
-        name: $skip
-        required: false
-        schema:
-          format: int32
-          minimum: 0
-          type: integer
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/UserServiceItem'
-                type: array
-          description: Successfully retrieved all UserServiceItem items
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-      security:
-      - udsApiAuthBearer: []
-      summary: List Servers items (overview)
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/servers/tableinfo:
-    get:
-      description: Retrieve table info of Servers items
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TableInfo'
-          description: Successfully retrieved TableInfo item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: TableInfo item not found
-      security:
-      - udsApiAuthBearer: []
-      summary: Retrieve Servers table info
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/servers/{uuid}:
-    delete:
-      description: Delete a Servers item by UUID
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      - description: Filter items by property values (e.g., $filter=property eq value)
-        in: query
-        name: $filter
-        required: false
-        schema:
-          type: string
-      - description: Select properties to be returned
-        in: query
-        name: $select
-        required: false
-        schema:
-          type: string
-      - description: Order items by property values (e.g., $orderby=property desc)
-        in: query
-        name: $orderby
-        required: false
-        schema:
-          type: string
-      - description: Show only the first N items
-        in: query
-        name: $top
-        required: false
-        schema:
-          format: int32
-          minimum: 1
-          type: integer
-      - description: Skip the first N items
-        in: query
-        name: $skip
-        required: false
-        schema:
-          format: int32
-          minimum: 0
-          type: integer
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserServiceItem'
-          description: Successfully retrieved UserServiceItem item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: UserServiceItem item not found
-      security:
-      - udsApiAuthBearer: []
-      summary: Delete Servers item by UUID
-      tags:
-      - Servicespools
-    get:
-      description: Retrieve a Servers item by UUID
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      - description: Filter items by property values (e.g., $filter=property eq value)
-        in: query
-        name: $filter
-        required: false
-        schema:
-          type: string
-      - description: Select properties to be returned
-        in: query
-        name: $select
-        required: false
-        schema:
-          type: string
-      - description: Order items by property values (e.g., $orderby=property desc)
-        in: query
-        name: $orderby
-        required: false
-        schema:
-          type: string
-      - description: Show only the first N items
-        in: query
-        name: $top
-        required: false
-        schema:
-          format: int32
-          minimum: 1
-          type: integer
-      - description: Skip the first N items
-        in: query
-        name: $skip
-        required: false
-        schema:
-          format: int32
-          minimum: 0
-          type: integer
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserServiceItem'
-          description: Successfully retrieved UserServiceItem item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: UserServiceItem item not found
-      security:
-      - udsApiAuthBearer: []
-      summary: Retrieve Servers item by UUID
-      tags:
-      - Servicespools
-    put:
-      description: Update an existing Servers item by UUID
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      - description: Filter items by property values (e.g., $filter=property eq value)
-        in: query
-        name: $filter
-        required: false
-        schema:
-          type: string
-      - description: Select properties to be returned
-        in: query
-        name: $select
-        required: false
-        schema:
-          type: string
-      - description: Order items by property values (e.g., $orderby=property desc)
-        in: query
-        name: $orderby
-        required: false
-        schema:
-          type: string
-      - description: Show only the first N items
-        in: query
-        name: $top
-        required: false
-        schema:
-          format: int32
-          minimum: 1
-          type: integer
-      - description: Skip the first N items
-        in: query
-        name: $skip
-        required: false
-        schema:
-          format: int32
-          minimum: 0
-          type: integer
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserServiceItem'
-          description: Successfully retrieved UserServiceItem item
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-        '404':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: UserServiceItem item not found
-      security:
-      - udsApiAuthBearer: []
-      summary: Update Servers item by UUID
-      tags:
-      - Servicespools
-  /servicespools/{uuid}/servers/{uuid}/log:
-    get:
-      description: Retrieve logs of a Servers item by UUID
-      parameters:
-      - description: The UUID of the item
-        in: path
-        name: uuid
-        required: true
-        schema:
-          format: uuid
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/LogEntry'
-                type: array
-          description: Successfully retrieved all LogEntry items
-        '403':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                type: object
-          description: Forbidden. You do not have permission to access this resource
-            with your current role.
-      security:
-      - udsApiAuthBearer: []
-      summary: Retrieve Servers item logs by UUID
       tags:
       - Servicespools
   /servicespools/{uuid}/services:

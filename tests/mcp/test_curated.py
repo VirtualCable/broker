@@ -22,6 +22,8 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_metapool_fallback_access",
     "get_servicepool_forecast",
     "get_servicepool_cache_recommendations",
+    "get_servicepool_actions_list",
+    "get_servicepool_assignables",
     "get_server_group_stats",
     "search_authenticator",
     "get_server_stats",
@@ -197,6 +199,27 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         body = self._call("get_servicepool_fallback_access", {"uuid": pool.uuid})
         # The REST custom method answers the policy name ("ALLOW", ...)
         self.assertIsInstance(json.loads(self._result_text(body)), str)
+
+    def test_get_servicepool_actions_list(self) -> None:
+        pool = self._a_service_pool()
+        body = self._call("get_servicepool_actions_list", {"uuid": pool.uuid})
+        actions = json.loads(self._result_text(body))
+        self.assertIsInstance(actions, list)
+        self.assertTrue(actions, "expected at least one calendar action")
+        for action in actions:
+            # CalendarAction is a TypedDict (id, description, params).
+            self.assertIsInstance(action, dict)
+            self.assertIn("id", action)
+            self.assertIn("description", action)
+            self.assertIn("params", action)
+            self.assertIsInstance(action["id"], str)
+
+    def test_get_servicepool_assignables(self) -> None:
+        pool = self._a_service_pool()
+        body = self._call("get_servicepool_assignables", {"uuid": pool.uuid})
+        # Empty list is acceptable (newly created pools may have no
+        # assignables yet); we only assert the call returns cleanly.
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
 
     def test_search_authenticator(self) -> None:
         body = self._call(
