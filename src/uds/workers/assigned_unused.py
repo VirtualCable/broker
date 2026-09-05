@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -47,7 +46,7 @@ from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.models import ServicePool
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class AssignedAndUnused(Job):

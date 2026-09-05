@@ -35,7 +35,7 @@ from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.reports.reports_factory import ReportsFactory
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Uuid of the reports
 # Here we only want to ensure the code has no errors, so we only check that they load correctly

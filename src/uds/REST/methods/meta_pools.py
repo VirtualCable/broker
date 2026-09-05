@@ -57,7 +57,7 @@ from .meta_service_pools import MetaAssignedService
 from .meta_service_pools import MetaServicesPool
 from .user_services import Groups
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -181,9 +181,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                 pool_group_thumb = item.servicesPoolGroup.image.thumb64
 
         all_pools = item.members.all()
-        userservices_total = sum(
-            i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools
-        )
+        userservices_total = sum(i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools)
         userservices_in_preparation = sum(
             (i.pool.userServices.filter(state=State.PREPARING).count()) for i in all_pools
         )

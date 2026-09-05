@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from .ovirt import types as ov_types
 if typing.TYPE_CHECKING:
     from .service_linked import OVirtLinkedService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OVirtPublication(Publication, autoserializable.AutoSerializable):

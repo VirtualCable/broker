@@ -45,7 +45,7 @@ import urllib.request
 
 from .base import StampProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # SHA-256 OID: 2.16.840.1.101.3.4.2.1 (DER encoded)
 _SHA256_OID = bytes(

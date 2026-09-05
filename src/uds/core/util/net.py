@@ -51,7 +51,7 @@ class NetworkType(typing.NamedTuple):
     version: typing.Literal[0, 4, 6]  # 4 or 6
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Test patters for networks IPv4
 RECIDRIPV4: typing.Final[re.Pattern[str]] = re.compile(
@@ -66,9 +66,7 @@ RE3ASTERISKIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.\*\
 RERANGEIPV4: typing.Final[re.Pattern[str]] = re.compile(
     r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})-([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
 )
-RESINGLEIPV4: typing.Final[re.Pattern[str]] = re.compile(
-    r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$"
-)
+RESINGLEIPV4: typing.Final[re.Pattern[str]] = re.compile(r"^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$")
 
 
 def ip_to_long(ip: str) -> IpType:

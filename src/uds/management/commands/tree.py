@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -47,7 +46,7 @@ from uds.core.util import config
 from uds.core.util import log
 from uds.core.util import model
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.db import models as dbmodels

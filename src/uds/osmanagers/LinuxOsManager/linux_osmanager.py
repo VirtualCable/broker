@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from uds.core.util import log
 if typing.TYPE_CHECKING:
     from uds.models.user_service import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class LinuxOsManager(osmanagers.OSManager):
@@ -96,7 +95,14 @@ class LinuxOsManager(osmanagers.OSManager):
         """
         if a machine is removable on logout
         """
-        return bool(not userservice.in_use and (fields.onlogout_field_is_removable(self.on_logout) or not userservice.is_publication_valid() and fields.onlogout_field_is_keep(self.on_logout)))
+        return bool(
+            not userservice.in_use
+            and (
+                fields.onlogout_field_is_removable(self.on_logout)
+                or not userservice.is_publication_valid()
+                and fields.onlogout_field_is_keep(self.on_logout)
+            )
+        )
 
     def get_name(self, service: "UserService") -> str:
         """

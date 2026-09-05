@@ -47,7 +47,7 @@ if typing.TYPE_CHECKING:
 
     from uds import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 AUTH_TOKEN = "X-TOKEN-AUTH"
 

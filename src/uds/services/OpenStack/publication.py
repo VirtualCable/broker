@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from .openstack import types as openstack_types
 if typing.TYPE_CHECKING:
     from .service import OpenStackLiveService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenStackLivePublication(DynamicPublication, autoserializable.AutoSerializable):

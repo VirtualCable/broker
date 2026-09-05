@@ -44,7 +44,7 @@ from django.db import transaction
 
 from uds.models.storage import Storage as DBStorage
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MARK = "_mgb_"
 

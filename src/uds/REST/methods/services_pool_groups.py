@@ -44,7 +44,7 @@ from uds.models import Image
 from uds.models import ServicePoolGroup
 from uds.REST.model import ModelHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Enclosed methods under /item path

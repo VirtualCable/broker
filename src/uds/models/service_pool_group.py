@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -45,7 +44,7 @@ from .image import Image
 if typing.TYPE_CHECKING:
     from .service_pool import ServicePool
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # pylint: disable=no-member

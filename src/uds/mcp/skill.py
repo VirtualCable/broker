@@ -37,7 +37,7 @@ from uds.mcp import Catalog, build_catalog
 from uds.mcp.redaction import REDACTED
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 _SKILL_NAME: typing.Final[str] = "uds-mcp"

@@ -40,7 +40,7 @@ from uds.models import UserService
 from uds.core.util.model import process_uuid
 from uds.core import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 OK = "OK"
 CONTENT_TYPE = "text/plain"

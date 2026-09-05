@@ -78,7 +78,7 @@ except ImportError:
     uuid7 = None
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey

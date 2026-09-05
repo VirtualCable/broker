@@ -40,7 +40,7 @@ from uds.core.util import autoserializable
 if typing.TYPE_CHECKING:
     from .service import OGService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenGnsysPublication(Publication, autoserializable.AutoSerializable):

@@ -41,7 +41,7 @@ from uds.core.util.model import sql_stamp_seconds
 
 from .stats_counters import StatsCounters
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class StatsCountersAccum(models.Model):

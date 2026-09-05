@@ -13,7 +13,7 @@ from uds.core.util.iface import get_first_iface
 from uds.core.util.model import get_my_ip_from_db
 from uds.core.util.model import sql_now
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class UDSClusterNode(typing.NamedTuple):

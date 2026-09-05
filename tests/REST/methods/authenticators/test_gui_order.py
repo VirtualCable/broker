@@ -39,7 +39,7 @@ import typing
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 TEST_AUTH_TYPE: typing.Final[str] = "InternalDBAuth"
 

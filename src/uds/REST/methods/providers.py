@@ -58,7 +58,7 @@ from uds.REST.model import ModelHandler
 from .services import Services as DetailServices
 from .services_usage import ServicesUsage
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.db.models.query import QuerySet

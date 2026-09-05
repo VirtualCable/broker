@@ -36,7 +36,7 @@ from uds.core.util import config
 
 from ..utils import test
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SecurityMiddlewareTest(test.UDSTransactionTestCase):

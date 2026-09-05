@@ -51,7 +51,7 @@ from uds.core.util import validators
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class EmailMFA(mfas.MFA):

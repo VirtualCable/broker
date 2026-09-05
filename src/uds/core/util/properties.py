@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2023 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from uds.models.properties import Properties
 if typing.TYPE_CHECKING:
     from django.db import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class PropertyAccessor:

@@ -51,7 +51,7 @@ from uds.REST.model import DetailHandler
 
 # Not imported at runtime, just for type checking
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 ALLOW = "ALLOW"
 DENY = "DENY"

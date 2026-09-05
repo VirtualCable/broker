@@ -51,7 +51,7 @@ from uds.models import TicketStore
 from uds.models import User
 from uds.REST import Handler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 CLIENT_VERSION: typing.Final[str] = consts.system.VERSION
 LOG_ENABLED_DURATION: typing.Final[int] = 2 * 60 * 60 * 24  # 2 days

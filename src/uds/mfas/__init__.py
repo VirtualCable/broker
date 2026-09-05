@@ -43,7 +43,7 @@ import logging
 
 from uds.core.util import modfinder
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def initialize() -> None:

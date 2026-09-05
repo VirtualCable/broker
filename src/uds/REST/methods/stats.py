@@ -41,7 +41,7 @@ from uds.core import types
 from uds.core.util.stats import counters
 from uds.REST import Handler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Enclosed methods under /cache path

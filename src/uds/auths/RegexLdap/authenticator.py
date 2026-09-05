@@ -58,7 +58,7 @@ except Exception:
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 LDAP_RESULT_LIMIT = 100
 

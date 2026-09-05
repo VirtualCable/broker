@@ -46,7 +46,7 @@ from uds.core.util.model import sql_now
 from uds.models import ServicePool
 from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MAX_STUCK_TIME = 3600 * 24  # At most 1 days "Stuck", not configurable (there is no need to)
 

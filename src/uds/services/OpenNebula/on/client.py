@@ -40,7 +40,7 @@ from uds.core.util import xml2dict
 
 from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 RT = typing.TypeVar("RT")
 
@@ -82,9 +82,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
     connection: xmlrpc.client.ServerProxy
     cached_version: list[str] | None
 
-    def __init__(
-        self, username: str, password: str, endpoint: str, verify_ssl: bool = False
-    ) -> None:
+    def __init__(self, username: str, password: str, endpoint: str, verify_ssl: bool = False) -> None:
         self.username = username
         self.password = password
         self.endpoint = endpoint
@@ -220,9 +218,7 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
         3.- The new template contents. Syntax can be the usual attribute=value or XML.
         4.- Update type. 0 replace the whole template, 1 merge with the existing one
         """
-        result = self.connection.one.template.update(
-            self.session_string, int(template_id), template_data, update_type
-        )
+        result = self.connection.one.template.update(self.session_string, int(template_id), template_data, update_type)
         return check_result_raw(result)
 
     @ensure_connected

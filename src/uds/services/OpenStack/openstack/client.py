@@ -47,7 +47,7 @@ from uds.core.util import security
 
 from . import types as openstack_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Required: Authentication v3
 

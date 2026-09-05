@@ -50,7 +50,7 @@ if typing.TYPE_CHECKING:
     from uds.core import services, types
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServiceTokenAlias(models.Model):

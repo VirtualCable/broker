@@ -35,7 +35,7 @@ from uds import models
 from uds.core import types
 from uds.core.ui.user_interface import gui
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_machines(parameters: typing.Any) -> types.ui.CallbackResultType:

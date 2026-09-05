@@ -44,7 +44,7 @@ from ..utils.web import test
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class GlobalRequestMiddlewareTest(test.WEBTestCase):

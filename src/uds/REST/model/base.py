@@ -51,7 +51,7 @@ from ..handlers import Handler
 T = typing.TypeVar("T", bound=models.Model)
 T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # pylint: disable=unused-argument

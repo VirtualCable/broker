@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from .user import User
 from .group import Group
 from ..core.util.model import sql_now
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from uds.models import User, Group

@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
@@ -92,9 +92,7 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     ssl = gui.CheckBoxField(
         label=_("Use SSL"),
         order=3,
-        tooltip=_(
-            "If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"
-        ),
+        tooltip=_("If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"),
     )
     username = gui.TextField(
         length=32,

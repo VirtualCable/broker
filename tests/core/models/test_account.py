@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -40,7 +39,7 @@ from uds.core.util import model
 from uds.models.account_usage import AccountUsage
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 NUM_USERSERVICES = 8
 

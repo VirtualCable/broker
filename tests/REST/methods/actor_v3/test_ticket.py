@@ -36,7 +36,7 @@ from ....fixtures import servers as servers_fixtures
 from ....fixtures import services as services_fixtures
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ActorTestTicket(rest.test.RESTActorTestCase):

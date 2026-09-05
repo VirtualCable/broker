@@ -41,7 +41,7 @@ from uds.mcp import MCPServerCore, get_catalog
 from uds.mcp.limits import allow_request
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Latest protocol version we speak, taken from the SDK so the two never
 # drift apart.

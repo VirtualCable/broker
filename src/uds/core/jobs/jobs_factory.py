@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -35,7 +34,7 @@ import typing
 
 from uds.core.util import factory
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from .job import Job as Job

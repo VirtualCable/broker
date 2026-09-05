@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from uds.models import Authenticator
 
 from .base import ListReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ListReportUsers(ListReport):

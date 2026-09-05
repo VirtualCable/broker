@@ -27,6 +27,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import logging
 import typing
 
@@ -34,7 +35,7 @@ from django.utils import timezone
 
 from uds import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Data
 small = """iVBORw0KGgoAAAANSUhEUgAAAHEAAAB4CAYAAADFcR0YAAATHklEQVR4Ae3dB3gU5aIG4PSQkJJs

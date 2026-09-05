@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2013-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -45,7 +44,7 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from uds.models import TicketStore, UserService, Server
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 ERROR = "ERROR"
 CONTENT_TYPE = "text/plain"

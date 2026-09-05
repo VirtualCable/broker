@@ -47,7 +47,7 @@ from .publication import OpenGnsysPublication
 if typing.TYPE_CHECKING:
     from .provider import OGProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OGService(services.Service):
@@ -156,7 +156,7 @@ class OGService(services.Service):
         # The dispatcher (gui_callback) resolves the ticket and merges the
         # prov_uuid into the callback params, so the secret context never
         # travels in the query string.
-        self.ou.set_cb_ticket('prov_uuid', self.provider().db_obj().uuid)
+        self.ou.set_cb_ticket("prov_uuid", self.provider().db_obj().uuid)
 
     @typing.override
     def provider(self) -> "OGProvider":

@@ -36,7 +36,7 @@ from uds.core.managers.crypto import CryptoManager
 
 from ..utils import test
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class RedirectMiddlewareTest(test.UDSTransactionTestCase):

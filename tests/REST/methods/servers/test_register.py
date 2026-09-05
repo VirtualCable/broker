@@ -46,7 +46,7 @@ from ....utils import rest
 if typing.TYPE_CHECKING:
     from ...utils.test import UDSHttpResponse
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServerRegisterTest(rest.test.RESTTestCase):

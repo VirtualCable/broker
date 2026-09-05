@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -39,7 +38,7 @@ from uds.core import types
 from uds.core.ui import gui
 from uds.REST import Handler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Enclosed methods under /auth path
 

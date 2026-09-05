@@ -41,7 +41,7 @@ from uds.core.util.cache import Cache as UCache
 from uds.REST import Handler
 from uds.REST.utils import sanitize_params
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Enclosed methods under /cache path

@@ -50,7 +50,7 @@ from uds import models
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Test provider type available in the test environment.
 # Must exist in services.factory().providers()

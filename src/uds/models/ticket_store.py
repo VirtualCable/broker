@@ -47,7 +47,7 @@ from uds.core import consts, types
 if typing.TYPE_CHECKING:
     from .user_service import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TicketStore(UUIDModel):

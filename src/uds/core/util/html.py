@@ -41,7 +41,7 @@ from uds.core import consts
 if typing.TYPE_CHECKING:
     from django.http import HttpRequest  # pylint: disable=ungrouped-imports
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def uds_link(request: "HttpRequest", ticket: str, scrambler: str) -> str:
@@ -68,9 +68,7 @@ def parse_date(string_date: str) -> datetime.date:
     if get_language() == "fr":
         date_format = "%d/%m/%Y"
     else:
-        date_format = (
-            formats.get_format("SHORT_DATE_FORMAT").replace("Y", "%Y").replace("m", "%m").replace("d", "%d")
-        )  # pylint: disable=maybe-no-member
+        date_format = formats.get_format("SHORT_DATE_FORMAT").replace("Y", "%Y").replace("m", "%m").replace("d", "%d")  # pylint: disable=maybe-no-member
 
     return timezone.make_aware(datetime.datetime.strptime(string_date, date_format)).date()  # ruff: ignore[DTZ007]
 

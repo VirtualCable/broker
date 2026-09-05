@@ -42,7 +42,7 @@ from uds.models import Log
 
 from .base import ListReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class EntryUserDict(typing.TypedDict):

@@ -38,7 +38,7 @@ from uds.core import types
 from uds.core.util.model import sql_stamp_seconds
 from tests.fixtures.modules.osmanager.testing_osmanager import TestOSManager
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ActorReadyTest(rest.test.RESTActorTestCase):

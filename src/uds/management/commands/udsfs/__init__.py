@@ -44,7 +44,7 @@ from . import events
 from . import stats
 from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class UDSFS(Operations):
@@ -56,9 +56,7 @@ class UDSFS(Operations):
     # Own stats are the service creation date and 2 hardlinks because of the root folder
     _own_stats = types.StatType(st_mode=(stat.S_IFDIR | 0o755), st_nlink=2 + len(dispatchers))
 
-    def _dispatch(
-        self, path: str | None, operation: str, *args: typing.Any, **kwargs: typing.Any
-    ) -> typing.Any:
+    def _dispatch(self, path: str | None, operation: str, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
         try:
             if path:
                 path_parts = path.split("/")

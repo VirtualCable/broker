@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -53,7 +52,7 @@ if typing.TYPE_CHECKING:
     from .publication import OVirtPublication
     from .service_linked import OVirtLinkedService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MAX_CHECK_COUNT: typing.Final[int] = (
     20  # If in suggested_delay * MAX_CHECK_COUNT we are still in same state, we will resign and return error

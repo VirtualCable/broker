@@ -52,7 +52,7 @@ from uds.models import ServicePoolPublication
 if typing.TYPE_CHECKING:
     from uds.core import services
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 PUBTAG = "pm-"
 

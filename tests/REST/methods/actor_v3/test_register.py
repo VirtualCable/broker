@@ -36,7 +36,7 @@ from uds import models
 from ....utils import constants
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ActorRegisterTest(rest.test.RESTActorTestCase):

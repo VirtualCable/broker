@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from uds.core import types
 from uds.core.auths.auth import root_user
 from uds.models import User
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class BaseUDSWebSocketConsumer(AsyncWebsocketConsumer, abc.ABC):

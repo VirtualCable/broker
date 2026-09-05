@@ -38,7 +38,7 @@ from uds.core.util.config import Config as CfgConfig
 from uds.REST import Handler
 from uds.REST import log
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Enclosed methods under /config path

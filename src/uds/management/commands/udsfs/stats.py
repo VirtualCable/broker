@@ -42,7 +42,7 @@ from uds.core.util.cache import Cache
 
 from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Custom types

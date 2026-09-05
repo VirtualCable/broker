@@ -37,7 +37,7 @@ from uds.core.consts.actor import UNMANAGED
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ActorTestTest(rest.test.RESTActorTestCase):

@@ -56,7 +56,7 @@ from . import model as rest_model
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 __all__ = ["Dispatcher", "Handler"]
 

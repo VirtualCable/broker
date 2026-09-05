@@ -39,7 +39,7 @@ from uds.core.types.requests import ExtendedHttpRequest
 from uds.core.util.model import process_uuid
 from uds.models import Image, Transport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

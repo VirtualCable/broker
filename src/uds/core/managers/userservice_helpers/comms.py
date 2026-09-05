@@ -43,7 +43,7 @@ from uds.models.user_service import hash_actor_token
 if typing.TYPE_CHECKING:
     from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 TIMEOUT = 2
 

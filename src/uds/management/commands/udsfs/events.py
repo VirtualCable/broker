@@ -43,7 +43,7 @@ from uds.models import StatsEvents
 
 from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 LINELEN = 160
 

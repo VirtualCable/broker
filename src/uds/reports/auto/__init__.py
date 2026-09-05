@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from uds.core.ui.user_interface import UserInterfaceType
 
 from . import fields
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 ReportAutoModel: typing.TypeAlias = models.Authenticator | models.ServicePool | models.Service | models.Provider
 

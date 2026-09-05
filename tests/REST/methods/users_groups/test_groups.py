@@ -37,7 +37,7 @@ from uds import models
 from ....fixtures import rest as rest_fixtures
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class GroupsTest(rest.test.RESTActorTestCase):

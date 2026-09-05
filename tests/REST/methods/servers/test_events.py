@@ -40,7 +40,7 @@ from ....utils import rest  # , random_ip_v4, random_ip_v6, random_mac
 # if typing.TYPE_CHECKING:
 #     from ...utils.test import UDSHttpResponse
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServerEventsTest(rest.test.RESTTestCase):

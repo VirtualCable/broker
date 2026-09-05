@@ -55,7 +55,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 INTERFACE_VALUES = [
     gui.choice_item("public", "public"),
@@ -91,9 +91,7 @@ class OpenStackProviderLegacy(ServiceProvider):
     # : Type used internally to identify this provider
     type_type = "openStackPlatform"
     # : Description shown at administration interface for this provider
-    type_description = _(
-        "OpenStack LEGACY platform service provider (for older Openstack Releases, previous to OCATA)"
-    )
+    type_description = _("OpenStack LEGACY platform service provider (for older Openstack Releases, previous to OCATA)")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
@@ -120,9 +118,7 @@ class OpenStackProviderLegacy(ServiceProvider):
     ssl = gui.CheckBoxField(
         label=_("Use SSL"),
         order=4,
-        tooltip=_(
-            "If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"
-        ),
+        tooltip=_("If checked, the connection will be forced to be ssl (will not work if server is not providing ssl)"),
     )
 
     access = gui.ChoiceField(

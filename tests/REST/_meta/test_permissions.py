@@ -59,7 +59,7 @@ from uds import models
 from uds.core.types.permissions import PermissionType
 from uds.core.util import objtype
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Permission gate used by master/__init__.py and by get_items().  An admin
 # always short-circuits to PermissionType.ALL; everyone else needs an

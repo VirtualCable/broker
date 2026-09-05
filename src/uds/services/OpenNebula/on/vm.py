@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from . import types
 if typing.TYPE_CHECKING:
     from . import client
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_machine_state(api: "client.OpenNebulaClient", vmid: str) -> types.VmState:

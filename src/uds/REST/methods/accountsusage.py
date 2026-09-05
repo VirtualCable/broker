@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2017-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -49,7 +48,7 @@ from uds.models import Account
 from uds.models import AccountUsage
 from uds.REST.model import DetailHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass

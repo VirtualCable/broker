@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -42,7 +41,7 @@ from uds.core.util import objtype
 if typing.TYPE_CHECKING:
     from django.db.models import Model
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def clean(obj: "Model") -> None:

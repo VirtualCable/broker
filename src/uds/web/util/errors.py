@@ -44,7 +44,7 @@ if typing.TYPE_CHECKING:
     )  # pylint: disable=ungrouped-imports
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def error_view(request: "HttpRequest", error_code: int) -> HttpResponseRedirect:

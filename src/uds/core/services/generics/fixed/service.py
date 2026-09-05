@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
 
     from .userservice import FixedUserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class FixedService(services.Service, abc.ABC):  # pylint: disable=too-many-public-methods

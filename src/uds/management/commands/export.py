@@ -49,7 +49,7 @@ if typing.TYPE_CHECKING:
 
     from uds.models.uuid_model import UUIDModel
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 ModelType = typing.TypeVar("ModelType", bound="UUIDModel")
 T = typing.TypeVar("T")

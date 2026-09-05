@@ -33,7 +33,7 @@ import stat
 import time
 import typing
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class StatType(typing.NamedTuple):

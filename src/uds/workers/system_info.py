@@ -35,7 +35,7 @@ import typing
 from uds.core.jobs import Job
 from uds.core.util import cluster
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SystemInformation(Job):

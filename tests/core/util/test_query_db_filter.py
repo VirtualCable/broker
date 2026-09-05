@@ -9,7 +9,7 @@ from tests.utils.test import UDSTestCase
 from uds.core.util.query_db_filter import exec_query
 from uds.models import Log
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Pre-filter to isolate test data from fixture/setup logs
 _TEST_MARKER = "_testq_"

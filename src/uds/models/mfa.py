@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ if typing.TYPE_CHECKING:
     from .authenticator import Authenticator
     from uds.core import mfas
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class MFA(ManagedObjectModel, TaggingMixin):  # type: ignore

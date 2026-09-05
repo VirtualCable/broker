@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -34,7 +33,7 @@ import collections.abc
 import logging
 import typing
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 T = typing.TypeVar("T", bound=typing.Any)
 

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -39,7 +38,7 @@ from ...utils.test import UDSTestCase
 from .fixtures import DEFAULTS
 from .fixtures import TestingUserInterface
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class UserinterfaceInternalTest(UDSTestCase):

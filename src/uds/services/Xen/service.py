@@ -53,7 +53,7 @@ if typing.TYPE_CHECKING:
 
     from .provider import XenProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-methods

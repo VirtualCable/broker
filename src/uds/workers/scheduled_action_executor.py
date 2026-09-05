@@ -37,7 +37,7 @@ from uds.core.jobs import Job
 from uds.core.util.model import sql_now
 from uds.models import CalendarAction
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ScheduledAction(Job):

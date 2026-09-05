@@ -71,7 +71,7 @@ from uds.core.util import config
 from uds.core.util.model import sql_now
 from uds.models.immutable_log import ImmutableLog
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 HASH_ALGO = "sha256"
 HASH_SIZE = 32
@@ -499,9 +499,13 @@ class ImmutableLogger:
                 return
 
             # Verify re-anchor
-            if entry.anchor and reanchor_provider and not reanchor_provider.verify(
-                expected_previous,
-                bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
+            if (
+                entry.anchor
+                and reanchor_provider
+                and not reanchor_provider.verify(
+                    expected_previous,
+                    bytes(entry.data),  # pyrefly: ignore[unnecessary-type-conversion]
+                )
             ):
                 logger.error("Re-anchor TSA verification failed at entry #%d", entry.sequence)
                 return

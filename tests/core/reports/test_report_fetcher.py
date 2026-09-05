@@ -43,7 +43,7 @@ from uds.core.reports.report import _ReportFetcher
 
 from ...utils.test import UDSTestCase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 pytestmark = [
     pytest.mark.filterwarnings("ignore::DeprecationWarning"),

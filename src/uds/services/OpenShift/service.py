@@ -46,7 +46,7 @@ from .deployment import OpenshiftUserService
 from .openshift import exceptions as oshift_exceptions
 from .publication import OpenshiftTemplatePublication
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

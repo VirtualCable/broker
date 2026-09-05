@@ -40,7 +40,7 @@ from uds.core.ui import gui
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SampleMFA(mfas.MFA):

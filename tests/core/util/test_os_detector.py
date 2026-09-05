@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -35,7 +34,7 @@ from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.core.util import os_detector
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OsDetectorTest(UDSTestCase):

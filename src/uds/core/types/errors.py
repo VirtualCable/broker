@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -37,7 +36,7 @@ import typing
 
 from django.utils.translation import gettext_lazy as _
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Error(enum.IntEnum):

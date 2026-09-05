@@ -53,7 +53,7 @@ if typing.TYPE_CHECKING:
     from uds.core.environment import Environment
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # MFA flow:
 # 1.- User logs in

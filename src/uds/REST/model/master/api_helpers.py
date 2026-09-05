@@ -44,7 +44,7 @@ from uds.REST.utils import camel_and_snake_case_from
 if typing.TYPE_CHECKING:
     from uds.REST.model.master import ModelHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 T = typing.TypeVar("T", bound=models.Model)
 T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)

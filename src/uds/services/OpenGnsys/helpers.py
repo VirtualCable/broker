@@ -41,7 +41,7 @@ from uds.core.ui import gui
 if typing.TYPE_CHECKING:
     from .provider import OGProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_resources(parameters: typing.Any) -> types.ui.CallbackResultType:

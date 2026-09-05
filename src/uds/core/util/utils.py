@@ -46,7 +46,7 @@ from django.utils import formats
 from django.utils import timezone
 from django.utils.translation import gettext
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 VT = typing.TypeVar("VT")
 

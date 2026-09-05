@@ -45,7 +45,7 @@ from ...utils.test import UDSTestCase
 if typing.TYPE_CHECKING:
     from uds import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServiceCacheUpdaterTest(UDSTestCase):

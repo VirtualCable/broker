@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2016-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -38,7 +37,7 @@ from uds.core.ui import gui
 
 from .openstack import client
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_api(parameters: dict[str, str]) -> tuple[client.OpenStackClient, bool]:

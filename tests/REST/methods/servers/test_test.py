@@ -33,7 +33,7 @@ import logging
 from ....fixtures import servers as servers_fixtures
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServerTestTest(rest.test.RESTTestCase):

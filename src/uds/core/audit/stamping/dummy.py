@@ -38,7 +38,7 @@ import typing
 
 from .base import StampProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DummyStampProvider(StampProvider):

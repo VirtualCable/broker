@@ -35,7 +35,7 @@ from uds import models
 from ....fixtures import servers as servers_fixtures
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):

@@ -44,7 +44,7 @@ from uds.core.util.model import sql_now
 from uds.models import ServicePool
 from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MAX_REMOVING_TIME = 3600 * 24 * 1  # 2 days, in seconds
 

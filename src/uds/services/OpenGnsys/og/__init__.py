@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2017-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from . import fake
 from . import types
 from . import urls
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     import requests

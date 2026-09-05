@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OVirtProvider(services.ServiceProvider):  # pylint: disable=too-many-public-methods

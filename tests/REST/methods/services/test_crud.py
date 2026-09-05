@@ -49,7 +49,7 @@ from uds import models
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ProviderServicesCrudTest(rest.test.RESTTestCase):

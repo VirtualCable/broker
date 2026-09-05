@@ -43,7 +43,7 @@ from uds.core.util import ensure
 from uds.core.util.model import process_uuid
 from uds.REST import Handler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Valid parameters accepted by ticket creation method
 VALID_PARAMS = (
@@ -106,21 +106,15 @@ class Tickets(Handler):
                         properties={
                             "username": types.rest.api.SchemaProperty(type="string"),
                             "password": types.rest.api.SchemaProperty(type="string"),
-                            "auth_id": types.rest.api.SchemaProperty(
-                                type="string", description="Authenticator UUID"
-                            ),
-                            "auth": types.rest.api.SchemaProperty(
-                                type="string", description="Authenticator name"
-                            ),
+                            "auth_id": types.rest.api.SchemaProperty(type="string", description="Authenticator UUID"),
+                            "auth": types.rest.api.SchemaProperty(type="string", description="Authenticator name"),
                             "groups": types.rest.api.SchemaProperty(
                                 type="array", items=types.rest.api.SchemaProperty(type="string")
                             ),
                             "servicePool": types.rest.api.SchemaProperty(
                                 type="string", description="Service pool UUID"
                             ),
-                            "force": types.rest.api.SchemaProperty(
-                                type="string", description="Force group creation"
-                            ),
+                            "force": types.rest.api.SchemaProperty(type="string", description="Force group creation"),
                         },
                     ),
                 ),

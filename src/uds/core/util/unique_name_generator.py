@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -34,7 +33,7 @@ import logging
 
 from .unique_id_generator import UniqueGenerator
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # noinspection PyMethodOverriding

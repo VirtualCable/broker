@@ -38,7 +38,7 @@ if typing.TYPE_CHECKING:
     from . import client
     from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def enumerate_datastores(

@@ -44,7 +44,7 @@ if typing.TYPE_CHECKING:
     from django.http import HttpRequest  # pylint: disable=ungrouped-imports
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def error(request: "HttpRequest", err: str) -> "HttpResponse":

@@ -41,7 +41,7 @@ from uds.core.util import autoserializable
 if typing.TYPE_CHECKING:
     from .service import ProxmoxService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):

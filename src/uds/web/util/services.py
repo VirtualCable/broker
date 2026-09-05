@@ -58,7 +58,7 @@ if typing.TYPE_CHECKING:
     from uds.models import Image, MetaPoolMember
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-arguments

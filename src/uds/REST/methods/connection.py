@@ -44,7 +44,7 @@ from uds.core.util.rest.tools import match_args
 from uds.REST import Handler
 from uds.web.util import services
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Enclosed methods under /connection path

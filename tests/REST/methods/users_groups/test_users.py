@@ -44,7 +44,7 @@ from uds.models.user import hash_api_token
 from ....fixtures import rest as rest_fixtures
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MUST_HAVE_FIELDS: typing.Final = {"name", "role", "real_name", "comments", "state", "last_access", "token"}
 

@@ -41,7 +41,7 @@ if typing.TYPE_CHECKING:
     from django.db.models import Model
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass

@@ -40,7 +40,7 @@ from uds.core.auths import callbacks
 from uds.core.util import config
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class AuthCallbackTest(UDSTestCase):

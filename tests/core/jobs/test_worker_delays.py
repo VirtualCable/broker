@@ -40,7 +40,7 @@ from uds.core.environment import Environment
 
 from ...utils.test import UDSTestCase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class WorkerDelayTest(UDSTestCase):

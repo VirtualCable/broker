@@ -34,7 +34,7 @@ import typing
 
 from uds.core.environment import Environmentable
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Job(Environmentable):

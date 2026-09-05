@@ -35,7 +35,7 @@ import os
 import os.path
 import typing
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # VARS is {SECTION: {VARIABLE: VALUE}}
 config: configparser.ConfigParser = configparser.ConfigParser()

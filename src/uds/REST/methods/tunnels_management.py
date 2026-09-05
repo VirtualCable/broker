@@ -52,7 +52,7 @@ from uds.core.util.model import process_uuid
 from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -38,7 +37,7 @@ from uds.core.util import factory
 if typing.TYPE_CHECKING:
     from .provider import Notifier as Notifier
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class NotifierFactory(factory.ModuleFactory["Notifier"]):

@@ -1,4 +1,3 @@
-
 # Model based on https://github.com/llazzaro/django-scheduler
 #
 # Copyright (c) 2016-2023 Virtual Cable S.L.
@@ -54,7 +53,7 @@ from .authenticator import Authenticator
 # from django.utils.translation import gettext_lazy as _, gettext
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class CalendarAction(UUIDModel):

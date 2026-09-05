@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
     from uds.core import osmanagers, services
     from uds.models import AccountUsage, OSManager, UserServiceSession
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _create_default_token() -> str:

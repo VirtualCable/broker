@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -47,7 +46,7 @@ from uds.services.Xen.xen import client as xen_client
 from uds.services.Xen.xen import exceptions as xen_exceptions
 from uds.services.Xen.xen import types as xen_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TestXenClient(UDSTransactionTestCase):

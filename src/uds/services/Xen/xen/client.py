@@ -42,7 +42,7 @@ from uds.core.util.decorators import cached
 from . import exceptions
 from . import types as xen_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 TAG_TEMPLATE = "uds-template"
 TAG_MACHINE = "uds-machine"
@@ -194,7 +194,7 @@ class XenClient:  # pylint: disable=too-many-public-methods
             # We recalculate here url, because we can "switch host" on any moment
             self._url = self._protocol + self._host + ":" + self._port
 
-            transport: SafeTimeoutTransport|TimeoutTransport|None = None
+            transport: SafeTimeoutTransport | TimeoutTransport | None = None
 
             if self._use_ssl:
                 context = security.create_client_sslcontext(verify=self._verify_ssl)

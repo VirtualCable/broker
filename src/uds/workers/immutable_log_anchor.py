@@ -40,7 +40,7 @@ from uds.core.jobs import Job
 from uds.core.util.config import GlobalConfig
 from uds.models.immutable_log import ImmutableLog
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ImmutableLogAnchorJob(Job):

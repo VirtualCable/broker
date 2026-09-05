@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -54,7 +53,7 @@ from django.utils import timezone
 
 from uds.core import consts
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Disable warnings from urllib for

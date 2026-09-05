@@ -45,7 +45,7 @@ if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
     from uds.web.forms.login_form import LoginForm
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Returns:

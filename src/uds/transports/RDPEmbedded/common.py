@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from uds.models import UserService
 if typing.TYPE_CHECKING:
     from uds import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 READY_CACHE_TIMEOUT = 30
 

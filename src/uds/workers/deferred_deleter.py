@@ -41,7 +41,7 @@ from uds.core.util import utils
 if typing.TYPE_CHECKING:
     from uds.core.services.generics.dynamic.service import DynamicService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def execution_timer() -> "utils.ExecutionTimer":
@@ -290,7 +290,6 @@ class DeferredDeletionWorker(Job):
         for group in types.DeferredStorageGroup:
             with types.DeletionInfo.deferred_storage.as_dict(group) as storage:
                 out.writelines(
-                    info.as_csv() + "\n"
-                    for info in typing.cast(dict[str, types.DeletionInfo], storage).values()
+                    info.as_csv() + "\n" for info in typing.cast(dict[str, types.DeletionInfo], storage).values()
                 )
         out.write("\n")

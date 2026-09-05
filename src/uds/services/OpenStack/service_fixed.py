@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
 
     AnyOpenStackProvider: typing.TypeAlias = OpenStackProvider | OpenStackProviderLegacy
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-methods
@@ -197,9 +197,7 @@ class OpenStackServiceFixed(FixedService):  # pylint: disable=too-many-public-me
             raise exceptions.services.generics.FatalError("No machine available for assignment")
 
         if not found_vmid:
-            raise exceptions.services.generics.FatalError(
-                "All machines from the assignables list are already assigned"
-            )
+            raise exceptions.services.generics.FatalError("All machines from the assignables list are already assigned")
 
         return found_vmid
 

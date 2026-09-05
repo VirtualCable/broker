@@ -49,7 +49,7 @@ from uds.models import StatsEvents
 if typing.TYPE_CHECKING:
     from django.db import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _FLDS_EQUIV: typing.Final[collections.abc.Mapping[str, collections.abc.Iterable[str]]] = {
     "fld1": ("username", "platform", "duration"),

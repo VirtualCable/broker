@@ -37,7 +37,7 @@ from django import forms
 from uds.models import Authenticator
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class LoginForm(forms.Form):

@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
     from .provider import ProxmoxProvider
     from .proxmox import types as prox_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-methods
@@ -222,9 +222,7 @@ class ProxmoxServiceFixed(FixedService):  # pylint: disable=too-many-public-meth
             raise exceptions.services.generics.FatalError("No machine available for assignment")
 
         if not found_vmid:
-            raise exceptions.services.generics.FatalError(
-                "All machines from the assignables list are already assigned"
-            )
+            raise exceptions.services.generics.FatalError("All machines from the assignables list are already assigned")
 
         return found_vmid
 

@@ -51,7 +51,7 @@ from .fixtures import TestingUserInterfaceFieldName
 from .fixtures import TestingUserInterfaceFieldNameOrig
 from .fixtures import TestingUserInterfaceFieldNameSeveral
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def old_serialize_form(ui: "UserInterface") -> bytes:

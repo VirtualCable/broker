@@ -47,7 +47,7 @@ from uds.models import ServicePool
 from uds.models import ServicePoolPublication
 from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # The functionallyty of counters are:
 #    * while we have less items than initial, we need to create cached l1 items

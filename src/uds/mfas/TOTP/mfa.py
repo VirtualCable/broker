@@ -51,7 +51,7 @@ from uds.core.util.model import sql_now
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 TOTP_INTERVAL = 30  # Seconds between codes
 
@@ -213,15 +213,12 @@ class TOTP_MFA(mfas.MFA):
 
         # Validate code
         now = sql_now()
-        if not self.get_totp(userid, username).verify(
-            code, valid_window=self.valid_window.as_int(), for_time=now
-        ):
+        if not self.get_totp(userid, username).verify(code, valid_window=self.valid_window.as_int(), for_time=now):
             # Only rejected codes are traced. The server time and the valid window go with them because a
             # rejection is, most of the time, a clock drift between the client and this server.
             # The code itself is never traced, only its length.
             logger.warning(
-                "TOTP: Invalid code from user [%s] at IP [%s]. Code length [%d], "
-                "valid window [%d], server time [%s]",
+                "TOTP: Invalid code from user [%s] at IP [%s]. Code length [%d], valid window [%d], server time [%s]",
                 userid,
                 request.ip,
                 len(code),

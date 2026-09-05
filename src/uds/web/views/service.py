@@ -57,7 +57,7 @@ if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
     from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @weblogin_required()
@@ -246,7 +246,7 @@ def update_transport_ticket(
 
             # Update username andd password in ticket
             username = data.get("username", None) or None  # None if not present
-            password: str|bytes|None = data.get("password", None) or None  # If password is empty, set it to None
+            password: str | bytes | None = data.get("password", None) or None  # If password is empty, set it to None
             domain = data.get("domain", None) or None  # If empty string, set to None
             if domain and "." in domain:
                 username = f"{username}@{domain}"

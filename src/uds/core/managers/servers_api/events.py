@@ -42,7 +42,7 @@ from uds.core.util import log
 from uds.core.util.model import sql_now
 from uds.REST.utils import rest_result
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def process_log(server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:

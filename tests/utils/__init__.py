@@ -38,7 +38,7 @@ from django.db import models
 
 from uds.core import ui
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 T = typing.TypeVar("T")

@@ -54,7 +54,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 INTERFACE_VALUES: typing.Final[list[types.ui.ChoiceItem]] = [
     gui.choice_item("public", "public"),
@@ -220,13 +220,8 @@ class OpenStackProvider(ServiceProvider):
         if values is not None:
             self.timeout.value = validators.validate_timeout(self.timeout.value)
             # Ensure that the project_id is provided if application credential method, so it's bound to the application credential
-            if (
-                self.auth_method.value == openstack_types.AuthMethod.APPLICATION_CREDENTIAL
-                and self.project_id.value
-            ):
-                raise exceptions.ui.ValidationError(
-                    _("Project Id not allowed when using Application Credential")
-                )
+            if self.auth_method.value == openstack_types.AuthMethod.APPLICATION_CREDENTIAL and self.project_id.value:
+                raise exceptions.ui.ValidationError(_("Project Id not allowed when using Application Credential"))
 
     def api(self, projectid: str | None = None, region: str | None = None) -> client.OpenStackClient:
         projectid = projectid or self.project_id.value or None

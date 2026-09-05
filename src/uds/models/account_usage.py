@@ -40,7 +40,7 @@ from .user_service import UserService
 from ..core.consts import NEVER
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # pylint: disable=no-member  # pylint complais a lot about members of models...

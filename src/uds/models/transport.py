@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -47,7 +46,7 @@ if typing.TYPE_CHECKING:
     from uds.models import Network, ServicePool
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Transport(ManagedObjectModel, TaggingMixin):

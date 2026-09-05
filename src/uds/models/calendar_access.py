@@ -1,4 +1,3 @@
-
 # Model based on https://github.com/llazzaro/django-scheduler
 #
 # Copyright (c) 2016-2023 Virtual Cable S.L.
@@ -43,7 +42,7 @@ from .service_pool import ServicePool
 from .meta_pool import MetaPool
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class CalendarAccess(UUIDModel):

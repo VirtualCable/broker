@@ -42,7 +42,7 @@ from .openshift import exceptions as openshift_exceptions
 if typing.TYPE_CHECKING:
     from .service import OpenshiftService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSerializable):

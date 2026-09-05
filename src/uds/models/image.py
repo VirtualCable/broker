@@ -47,7 +47,7 @@ from .uuid_model import UUIDModel
 from uds.core.util.model import sql_now
 from uds.core import consts
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from uds.models import ServicePool, MetaPool, ServicePoolGroup

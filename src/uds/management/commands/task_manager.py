@@ -44,7 +44,7 @@ from uds.core.managers import task_manager
 from uds.core.util import cluster
 from uds.core.util.config import GlobalConfig
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 PID_FILE = "taskmanager.pid"
 

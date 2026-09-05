@@ -45,7 +45,7 @@ from uds import models
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Test transport type available in tests/fixtures/modules/transport/transport.py
 TEST_TRANSPORT_TYPE: typing.Final[str] = "TestTransport"

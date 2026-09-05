@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from uds.models.calendar_rule import FrequencyInfo
 from ...utils.test import UDSTestCase
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 FREQ_NAMES: typing.Final[list[str]] = [i.name for i in FrequencyInfo]
 DURATION_UNITS: typing.Final[list[str]] = [i.name for i in DurationInfo]

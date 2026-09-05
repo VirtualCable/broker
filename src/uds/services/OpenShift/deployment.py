@@ -42,7 +42,7 @@ if typing.TYPE_CHECKING:
     from .publication import OpenshiftTemplatePublication
     from .service import OpenshiftService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable):

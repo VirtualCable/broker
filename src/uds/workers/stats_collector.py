@@ -41,7 +41,7 @@ from uds.core.util import model
 from uds.core.util.config import GlobalConfig
 from uds.core.util.stats import counters
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DeployedServiceStatsCollector(Job):
@@ -147,9 +147,7 @@ class ServersStatsCollector(Job):
                     stamp=stamp,
                 )
                 counters.add_counter(server, types.stats.CounterType.USERS, stats.current_users, stamp=stamp)
-                counters.add_counter(
-                    server, types.stats.CounterType.CONNECTIONS, stats.connections, stamp=stamp
-                )
+                counters.add_counter(server, types.stats.CounterType.CONNECTIONS, stats.connections, stamp=stamp)
                 total_used = sum(disk.used for disk in stats.disks)
                 total_size = sum(disk.total for disk in stats.disks)
                 counters.add_counter(

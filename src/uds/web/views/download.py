@@ -41,7 +41,7 @@ if typing.TYPE_CHECKING:
         HttpResponse,
     )  # pylint: disable=ungrouped-imports
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def download(request: "HttpRequest", download_id: str) -> "HttpResponse":

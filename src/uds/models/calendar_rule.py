@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2016-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from .calendar import Calendar
 from ..core.util.model import sql_now
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(frozen=True)

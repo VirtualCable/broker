@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -45,7 +44,7 @@ from uds.models import Service
 if typing.TYPE_CHECKING:
     from uds.core.services.generics.dynamic.service import DynamicService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DeferredStorageGroup(enum.StrEnum):

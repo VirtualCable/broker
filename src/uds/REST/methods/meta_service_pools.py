@@ -57,7 +57,7 @@ from uds.REST.model import DetailHandler
 from .user_services import AssignedUserService
 from .user_services import UserServiceItem
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -331,9 +331,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             .count()
             > 0
         ):
-            raise exceptions.rest.RequestError(
-                f"There is already another user service assigned to {user.pretty_name}"
-            )
+            raise exceptions.rest.RequestError(f"There is already another user service assigned to {user.pretty_name}")
 
         userservice.user = user
         userservice.save()

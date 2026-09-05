@@ -85,7 +85,7 @@ from .user_services import Groups
 from .user_services import Publications
 from .user_services import Transports
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.db.models import QuerySet

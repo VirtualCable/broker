@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 USER_API_TOKEN_PREFIX: typing.Final[str] = "uat-"
 

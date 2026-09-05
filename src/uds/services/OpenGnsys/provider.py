@@ -53,7 +53,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MIN_VERSION = "1.1.0"
 
@@ -208,9 +208,9 @@ class OGProvider(ServiceProvider):
             if self.api.version[0:5] < MIN_VERSION:
                 return types.core.TestResult(
                     False,
-                    _(
-                        "OpenGnsys version is not supported (required version 1.1.0 or newer and found {})"
-                    ).format(self.api.version),
+                    _("OpenGnsys version is not supported (required version 1.1.0 or newer and found {})").format(
+                        self.api.version
+                    ),
                 )
         except Exception as e:
             logger.exception("Error")

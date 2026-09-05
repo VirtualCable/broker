@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -52,7 +51,7 @@ if typing.TYPE_CHECKING:
     from uds.models import UserService
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class WinRandomPassManager(WindowsOsManager):

@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
 
     from .provider import XenProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
@@ -244,9 +244,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                         # 0 is most recent snapshot
                         userservice_instance._task = api.restore_snapshot(snapshots[0].opaque_ref)
                     except Exception as e:
-                        self.do_log(
-                            types.log.LogLevel.WARNING, f"Could not restore SNAPSHOT for this VM. ({e})"
-                        )
+                        self.do_log(types.log.LogLevel.WARNING, f"Could not restore SNAPSHOT for this VM. ({e})")
 
     @typing.override
     def get_and_assign(self) -> str:
@@ -275,9 +273,7 @@ class XenFixedService(FixedService):  # pylint: disable=too-many-public-methods
                 raise exceptions.services.generics.FatalError("No machine available for assignment")
 
         if not found_vmid:
-            raise exceptions.services.generics.FatalError(
-                "All machines from the assignables list are already assigned"
-            )
+            raise exceptions.services.generics.FatalError("All machines from the assignables list are already assigned")
 
         return found_vmid
 

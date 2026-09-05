@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def cache_key_helper(self: "OpenshiftProvider") -> str:
@@ -146,9 +146,7 @@ class OpenshiftProvider(ServiceProvider):
 
     @staticmethod
     @typing.override
-    def test(
-        env: "environment.Environment", data: "core_types.core.ValuesType"
-    ) -> "core_types.core.TestResult":
+    def test(env: "environment.Environment", data: "core_types.core.ValuesType") -> "core_types.core.TestResult":
         ov = OpenshiftProvider(env, data)
         if ov.test_connection() is True:
             return core_types.core.TestResult(True, _("Connection works fine"))

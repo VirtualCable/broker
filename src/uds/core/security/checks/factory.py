@@ -44,7 +44,7 @@ import typing
 from uds.core import types
 from uds.core.util import factory
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # A check evaluates a single security-relevant condition and returns a
 # ``CheckResult``: its severity, whether it passes and a human readable detail.

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from .openstack import types as openstack_types
 if typing.TYPE_CHECKING:
     from . import service_fixed
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenStackUserServiceFixed(FixedUserService, autoserializable.AutoSerializable):

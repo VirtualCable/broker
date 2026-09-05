@@ -50,7 +50,7 @@ from uds.REST.model import ModelHandler
 
 from .accountsusage import AccountsUsage
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Enclosed methods under /item path
 

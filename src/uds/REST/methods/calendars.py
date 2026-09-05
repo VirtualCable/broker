@@ -47,7 +47,7 @@ from uds.REST.model import ModelHandler
 
 from .calendarrules import CalendarRules
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass

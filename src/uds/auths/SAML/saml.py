@@ -63,7 +63,7 @@ if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def CACHING_KEY_FNC(auth: "SAMLAuthenticator") -> str:

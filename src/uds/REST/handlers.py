@@ -57,7 +57,7 @@ from .authentication import AuthenticationResolver
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 T = typing.TypeVar("T")
 

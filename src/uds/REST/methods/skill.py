@@ -20,7 +20,7 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.mcp.skill import SkillBuilder
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Skill(Handler):

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from .common import sanitized_name
 if typing.TYPE_CHECKING:
     from . import client
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def enumerate_templates(
@@ -95,9 +94,7 @@ def create(api: "client.OpenNebulaClient", from_template_id: str, name: str, dst
                 try:
                     image_id = imgs[image_name.strip()]
                 except KeyError:
-                    raise Exception(
-                        f'Image "{image_name.strip()}" could not be found!. Check the opennebula template'
-                    )
+                    raise Exception(f'Image "{image_name.strip()}" could not be found!. Check the opennebula template')
             else:
                 from_id = True
                 node = images_ids[0].childNodes[0]

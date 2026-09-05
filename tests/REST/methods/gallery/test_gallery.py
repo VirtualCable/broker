@@ -46,7 +46,7 @@ from uds import models
 from ....fixtures import images as images_fixtures
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class GalleryImagesTest(rest.test.RESTTestCase):

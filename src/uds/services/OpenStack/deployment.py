@@ -43,7 +43,7 @@ if typing.TYPE_CHECKING:
     from .service import OpenStackLiveService
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # How many times we will check for a machine to be ready/stopped/whatever
 # 25 = 25 * 5 = 125 seconds (5 is suggested_delay)

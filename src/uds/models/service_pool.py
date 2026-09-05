@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -66,7 +65,7 @@ if typing.TYPE_CHECKING:
         UserService,
     )
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-public-methods
@@ -283,7 +282,10 @@ class ServicePool(UUIDModel, TaggingMixin):
             return False  # Do not perform any restraint check if we set the globalconfig to 0 (or less)
 
         date = sql_now() - timedelta(seconds=GlobalConfig.RESTRAINT_TIME.as_int())
-        return self.userServices.filter(state=types.states.State.ERROR, state_date__gt=date).count() >= GlobalConfig.RESTRAINT_COUNT.as_int()
+        return (
+            self.userServices.filter(state=types.states.State.ERROR, state_date__gt=date).count()
+            >= GlobalConfig.RESTRAINT_COUNT.as_int()
+        )
 
     def is_locked(self) -> bool:
         """

@@ -44,7 +44,7 @@ from uds import models
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Test authenticator type available (src/uds/auths/InternalDB/authenticator.py)
 TEST_AUTH_TYPE: typing.Final[str] = "InternalDBAuth"

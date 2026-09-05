@@ -65,7 +65,7 @@ from uds.REST import dispatcher
 from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Handlers that, at the time of writing, have not been declared with a

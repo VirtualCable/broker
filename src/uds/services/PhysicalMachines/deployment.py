@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2016 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ if typing.TYPE_CHECKING:
 
     from .service_single import IPSingleMachineService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # This class is used for serialization of old data

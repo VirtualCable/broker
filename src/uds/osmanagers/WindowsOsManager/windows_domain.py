@@ -58,7 +58,7 @@ if typing.TYPE_CHECKING:
     from uds.models import UserService
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class WinDomainOsManager(WindowsOsManager):
@@ -107,9 +107,7 @@ class WinDomainOsManager(WindowsOsManager):
     remove_on_exit = gui.CheckBoxField(
         label=_("Machine clean"),
         order=8,
-        tooltip=_(
-            "If checked, UDS will try to remove the machine from the domain USING the provided credentials"
-        ),
+        tooltip=_("If checked, UDS will try to remove the machine from the domain USING the provided credentials"),
         tab=types.ui.Tab.ADVANCED,
         default=True,
     )
@@ -398,9 +396,7 @@ class WinDomainOsManager(WindowsOsManager):
         except ldaputil.LDAPError as e:
             return _("Check error: {}").format(e)
         except dns.resolver.NXDOMAIN:
-            return _("Could not find server parameters (_ldap._tcp.{0} can't be resolved)").format(
-                self.domain.as_str()
-            )
+            return _("Could not find server parameters (_ldap._tcp.{0} can't be resolved)").format(self.domain.as_str())
         except Exception as e:
             logger.exception("Exception ")
             return str(e)

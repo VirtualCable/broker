@@ -43,7 +43,7 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 
 from . import certs as _certs
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # PKCS7 add_signer rejects DSA/Ed25519
 _PrivateKey = RSAPrivateKey | EllipticCurvePrivateKey

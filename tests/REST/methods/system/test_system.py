@@ -38,7 +38,7 @@ from uds.core.util.stats import counters
 from ....fixtures import stats_counters
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SystemTest(rest.test.RESTTestCase):

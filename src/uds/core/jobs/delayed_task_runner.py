@@ -50,7 +50,7 @@ from uds.models import DelayedTask as DBDelayedTask
 
 from .delayed_task import DelayedTask
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DelayedTaskThread(threading.Thread):

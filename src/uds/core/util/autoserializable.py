@@ -73,7 +73,7 @@ V = typing.TypeVar("V")
 
 DefaultValueType: typing.TypeAlias = T | collections.abc.Callable[[], T] | _Unassigned
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Constants
 

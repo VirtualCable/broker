@@ -43,7 +43,7 @@ from uds.core import types
 from uds.REST.inventory import HandlerInventoryEntry, walk_rest_handlers
 from uds.REST.model import base as model_base
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 SECURITY_NAME: typing.Final[str] = "udsApiAuth"
 BEARER_SECURITY_NAME: typing.Final[str] = "udsApiAuthBearer"

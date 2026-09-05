@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -41,7 +40,7 @@ from uds.core.jobs import Job
 from uds.core.util.cache import Cache
 from uds.models import TicketStore
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class CacheCleaner(Job):

@@ -40,7 +40,7 @@ from uds.core.ui.user_interface import gui
 if typing.TYPE_CHECKING:
     from .provider import ProxmoxProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_provider(parameters: typing.Any) -> "ProxmoxProvider":

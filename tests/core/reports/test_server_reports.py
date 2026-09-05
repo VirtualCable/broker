@@ -53,7 +53,7 @@ from uds.reports.stats.server_usage import ServerUsageReportCSV
 from ...fixtures import servers as fixtures_servers
 from ...utils.test import UDSTransactionTestCase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 pytestmark = [
     pytest.mark.filterwarnings("ignore::UserWarning"),

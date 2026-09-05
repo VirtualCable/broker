@@ -52,7 +52,7 @@ from uds.REST.model import ModelHandler
 if typing.TYPE_CHECKING:
     from django.db.models.query import QuerySet
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Enclosed methods under /osm path
 

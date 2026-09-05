@@ -42,7 +42,7 @@ from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.models import ServicePoolPublication
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class PublicationInfoItemsCleaner(Job):

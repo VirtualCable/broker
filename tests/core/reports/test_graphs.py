@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -39,7 +38,7 @@ from uds.core.reports import graphs
 
 from ...utils.test import UDSTestCase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class GraphsTest(UDSTestCase):

@@ -47,7 +47,7 @@ if typing.TYPE_CHECKING:
     from uds.core import auths
     from uds.models import ServicePool, Permissions
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # pylint: disable=no-member

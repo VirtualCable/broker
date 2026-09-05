@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2015-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -34,7 +33,7 @@ import logging
 
 from uds.core.util import utils
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Default values
 LOGO = "logo-512.png"

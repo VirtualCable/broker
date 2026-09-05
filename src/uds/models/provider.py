@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import ServiceProvider
     from uds.models import Service
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Provider(ManagedObjectModel, TaggingMixin):

@@ -45,7 +45,7 @@ from uds.core.util import validators
 from uds.REST import Handler
 from uds.REST.utils import rest_result, sanitize_params
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # REST API for Server Token Clients interaction

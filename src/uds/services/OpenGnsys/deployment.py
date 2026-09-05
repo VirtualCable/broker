@@ -48,7 +48,7 @@ if typing.TYPE_CHECKING:
     from .publication import OpenGnsysPublication
     from .service import OGService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Operation(enum.IntEnum):
@@ -350,7 +350,7 @@ class OpenGnsysUserService(services.UserService, autoserializable.AutoSerializab
         # On release callback, we will set a property on DB called "from_release"
         # so we can avoid double unreserve
         if dbs and dbs.properties.get("from_release") is None:
-                self.service().unreserve(self._machine_id)
+            self.service().unreserve(self._machine_id)
         return types.states.TaskState.RUNNING
 
     # Check methods

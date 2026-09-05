@@ -42,7 +42,7 @@ from django.test.client import Client  # type: ignore   # Pylance does not know 
 from uds.core.environment import Environment
 from uds.core.managers.crypto import CryptoManager
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 REST_PATH = "/uds/rest/"
 

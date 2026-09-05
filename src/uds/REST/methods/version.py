@@ -37,7 +37,7 @@ from uds.core import types
 
 from ..handlers import Handler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class UDSVersion(Handler):

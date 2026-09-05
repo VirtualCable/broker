@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2020-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -39,7 +38,7 @@ from uds.core import types
 from uds.core.ui import gui
 from uds.core.util import dateutils
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def start_date_field(order: int) -> gui.DateField:
@@ -88,18 +87,14 @@ def intervals_field(order: int) -> gui.ChoiceField:
     )
 
 
-def source_field(
-    order: int, data_source: str, multiple: bool
-) -> gui.ChoiceField | gui.MultiChoiceField | None:
+def source_field(order: int, data_source: str, multiple: bool) -> gui.ChoiceField | gui.MultiChoiceField | None:
     if not data_source:
         return None
 
     data_source = data_source.split(".")[0]
     # logger.debug('SOURCE: %s', data_source)
 
-    field_type: type[gui.ChoiceField | gui.MultiChoiceField] = (
-        gui.ChoiceField if not multiple else gui.MultiChoiceField
-    )
+    field_type: type[gui.ChoiceField | gui.MultiChoiceField] = gui.ChoiceField if not multiple else gui.MultiChoiceField
 
     labels: typing.Any = {
         "ServicePool": (_("Service pool"), _("Service pool for report")),

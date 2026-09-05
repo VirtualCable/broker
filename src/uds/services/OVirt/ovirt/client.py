@@ -50,7 +50,7 @@ from . import types as ov_types
 if typing.TYPE_CHECKING:
     from uds.core.util.cache import Cache
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _lock = threading.Lock()
 USE_LOCK: typing.Final[bool] = False

@@ -5,7 +5,7 @@ import typing
 from uds.core import module
 from uds.core.util import singleton
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 T = typing.TypeVar("T", bound=module.Module)
 V = typing.TypeVar("V")

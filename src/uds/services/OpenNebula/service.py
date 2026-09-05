@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -48,7 +47,7 @@ if typing.TYPE_CHECKING:
     from . import on
     from .provider import OpenNebulaProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenNebulaLiveService(services.Service):

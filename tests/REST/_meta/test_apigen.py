@@ -44,7 +44,7 @@ from uds.REST import dispatcher
 from uds.REST.model import base
 from uds.REST.model.master import ModelHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class MyEnum(enum.Enum):

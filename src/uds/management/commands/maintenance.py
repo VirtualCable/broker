@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -38,7 +37,7 @@ from django.core.management.base import BaseCommand
 from uds import models
 from uds.core.util import unique_mac_generator
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MIN_VERBOSITY: typing.Final[int] = 1  # Minimum verbosity to print freed macs
 

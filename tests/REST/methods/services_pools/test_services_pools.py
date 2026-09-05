@@ -43,7 +43,7 @@ from uds.core.types.states import State
 from tests.fixtures import services as services_fixtures
 from tests.utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServicePoolTest(rest.test.RESTTestCase):

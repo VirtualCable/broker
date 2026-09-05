@@ -43,7 +43,7 @@ from .publication import TestPublication
 if typing.TYPE_CHECKING:
     from .provider import TestProvider
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TestServiceNoCache(services.Service):

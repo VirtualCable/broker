@@ -37,7 +37,7 @@ import typing
 
 import lark
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 _QUERY_GRAMMAR: typing.Final[str] = r"""?start: expr
 

@@ -44,7 +44,7 @@ from uds.core.util import config
 from uds.core.util import log
 from uds.core.util import security
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 FAILURE_CACHE: typing.Final[cache.Cache] = cache.Cache("callback_auth_failure", 5 * 60)  # 5 minutes
 # Groups only A-Z, a-z, 0-9 and _ or - are allowed

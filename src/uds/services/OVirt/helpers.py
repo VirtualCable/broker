@@ -16,7 +16,7 @@ from .ovirt import types as ov_types
 if typing.TYPE_CHECKING:
     from .ovirt import client
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_api(parameters: typing.Any) -> "client.Client":

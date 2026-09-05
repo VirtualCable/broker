@@ -37,7 +37,7 @@ from uds.core.managers.crypto import CryptoManager
 
 from .. import ensure_data
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def assert_user_is(

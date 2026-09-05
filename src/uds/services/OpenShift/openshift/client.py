@@ -43,7 +43,7 @@ from . import consts
 from . import exceptions
 from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def cache_key_helper(obj: "OpenshiftClient") -> str:
@@ -109,9 +109,7 @@ class OpenshiftClient:
                 allow_redirects=False,
             )
             if r.status_code not in (301, 302, 303, 307, 308):
-                raise exceptions.OpenshiftAuthError(
-                    f"Unexpected response status while fetching token: {r.status_code}"
-                )
+                raise exceptions.OpenshiftAuthError(f"Unexpected response status while fetching token: {r.status_code}")
             location = r.headers.get("Location", "")
             logger.debug("Location header: %s", location)
             parsed = urllib.parse.urlparse(location)
@@ -358,10 +356,7 @@ class OpenshiftClient:
         size = response.get("status", {}).get("amount", None)
         if size:
             return size
-        return (
-            response.get("spec", {}).get("pvc", {}).get("resources", {}).get("requests", {}).get("storage")
-            or ""
-        )
+        return response.get("spec", {}).get("pvc", {}).get("resources", {}).get("requests", {}).get("storage") or ""
 
     def get_pvc_size(self, pvc_name: str) -> str:
         """

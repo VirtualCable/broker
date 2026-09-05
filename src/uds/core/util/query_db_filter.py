@@ -55,13 +55,11 @@ from django.db.models.functions import Upper
 from .query_filter import _FUNCTIONS_PARAMS_NUM
 from .query_filter import _QUERY_GRAMMAR
 
-_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar(
-    "db_query_parser"
-)
+_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar("db_query_parser")
 
 _REMOVE_QUOTES_RE: typing.Final[re.Pattern[str]] = re.compile(r"^(['\"])(.*)\1$")
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class FieldName(str):

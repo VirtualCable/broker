@@ -47,7 +47,7 @@ from uds.core import ui
 if typing.TYPE_CHECKING:
     from cryptography.x509 import Certificate
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # ******************************************************
 # Tunnel related common use fields and related functions

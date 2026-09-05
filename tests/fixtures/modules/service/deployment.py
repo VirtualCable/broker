@@ -43,7 +43,7 @@ if typing.TYPE_CHECKING:
     from .service import TestServiceCache
     from .service import TestServiceNoCache
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TestUserService(services.UserService, autoserializable.AutoSerializable):

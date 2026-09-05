@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -47,7 +46,7 @@ from .openstack import client
 from .openstack import types as openstack_types
 from .publication import OpenStackLivePublication
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -236,8 +235,8 @@ class OpenStackLiveService(DynamicService):
         # The dispatcher (gui_callback) resolves the ticket and merges the
         # prov_uuid into the callback params, so the secret context never
         # travels in the query string.
-        self.project.set_cb_ticket('prov_uuid', self.provider().get_uuid())
-        self.availability_zone.set_cb_ticket('prov_uuid', self.provider().get_uuid())
+        self.project.set_cb_ticket("prov_uuid", self.provider().get_uuid())
+        self.availability_zone.set_cb_ticket("prov_uuid", self.provider().get_uuid())
 
     @property
     def api(self) -> "client.OpenStackClient":

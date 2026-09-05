@@ -42,7 +42,7 @@ from uds.core.types.states import State
 from uds.core.util.model import sql_now
 from uds.models import Scheduler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MAX_EXECUTION_MINUTES = 15  # Minutes
 

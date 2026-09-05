@@ -38,7 +38,7 @@ from uds.core.util.log import LogLevel
 from .managed_object_model import ManagedObjectModel
 from .tag import TaggingMixin
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from uds.core.messaging import Notifier as NotificationProviderModule

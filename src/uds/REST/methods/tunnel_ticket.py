@@ -47,7 +47,7 @@ from uds.REST import Handler
 
 from .servers import ServerRegisterBase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Two weeks is max session length for a tunneled connection
 MAX_SESSION_LENGTH = 60 * 60 * 24 * 7 * 2

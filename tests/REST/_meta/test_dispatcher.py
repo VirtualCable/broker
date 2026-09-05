@@ -74,7 +74,7 @@ async def collect_async_chunks(source: collections.abc.AsyncIterable[bytes]) -> 
     return b"".join([chunk async for chunk in source])
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # HTTP methods recognized today by the dispatcher (dispatcher.py:165).
 # Any method outside this list receives 405 Method Not Allowed.

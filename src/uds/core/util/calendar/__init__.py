@@ -44,7 +44,7 @@ from uds.core.util.cache import Cache
 from uds.core.util.model import sql_now
 from uds.models.calendar import Calendar
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 ONE_DAY = 3600 * 24
 

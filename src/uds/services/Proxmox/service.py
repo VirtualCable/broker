@@ -53,7 +53,7 @@ if typing.TYPE_CHECKING:
     from .provider import ProxmoxProvider
     from .proxmox import types as prox_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ProxmoxService(DynamicService):
@@ -201,7 +201,7 @@ class ProxmoxService(DynamicService):
         # The dispatcher (gui_callback) resolves the ticket and merges the
         # prov_uuid into the callback params, so the secret context never
         # travels in the query string.
-        self.machine.set_cb_ticket('prov_uuid', self.provider().db_obj().uuid)
+        self.machine.set_cb_ticket("prov_uuid", self.provider().db_obj().uuid)
 
         # This is not the same case, values is not the "value" of the field, but
         # the list of values shown because this is a "ChoiceField"

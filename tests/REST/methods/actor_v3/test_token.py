@@ -36,7 +36,7 @@ from uds.models.user_service import create_actor_token
 
 from ....utils import rest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ActorTokenTest(rest.test.RESTActorTestCase):

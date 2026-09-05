@@ -42,7 +42,7 @@ from uds.core.util import ui as ui_utils
 from uds.models import Image
 from uds.REST.model import ModelHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Enclosed methods under /item path
 

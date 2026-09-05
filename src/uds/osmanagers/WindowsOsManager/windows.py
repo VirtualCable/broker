@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2018 Virtual Cable S.L.
 # All rights reserved.
@@ -26,7 +25,7 @@ from uds.models import TicketStore
 if typing.TYPE_CHECKING:
     from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class WindowsOsManager(osmanagers.OSManager):
@@ -68,7 +67,14 @@ class WindowsOsManager(osmanagers.OSManager):
         """
         Says if a machine is removable on logout
         """
-        return bool(not userservice.in_use and (fields.onlogout_field_is_removable(self.on_logout) or not userservice.is_publication_valid() and fields.onlogout_field_is_keep(self.on_logout)))
+        return bool(
+            not userservice.in_use
+            and (
+                fields.onlogout_field_is_removable(self.on_logout)
+                or not userservice.is_publication_valid()
+                and fields.onlogout_field_is_keep(self.on_logout)
+            )
+        )
 
     @typing.override
     def release(self, userservice: "UserService") -> None:

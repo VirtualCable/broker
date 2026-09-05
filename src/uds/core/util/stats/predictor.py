@@ -57,7 +57,7 @@ from uds.core.util.cache import Cache
 from uds.core.util.model import sql_now
 from uds.models import StatsCountersAccum
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass

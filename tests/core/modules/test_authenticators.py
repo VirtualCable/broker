@@ -35,7 +35,7 @@ from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.auths.authfactory import AuthsFactory
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [

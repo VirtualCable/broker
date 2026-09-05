@@ -43,7 +43,7 @@ from uds.core.util import autoserializable
 if typing.TYPE_CHECKING:
     from .service import XenLinkedService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class XenPublication(DynamicPublication, autoserializable.AutoSerializable):

@@ -34,7 +34,7 @@ import logging
 from django import forms
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class MFAForm(forms.Form):

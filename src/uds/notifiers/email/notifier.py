@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from uds.core.util import validators
 
 # Not imported at runtime, just for type checking
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class EmailNotifier(messaging.Notifier):

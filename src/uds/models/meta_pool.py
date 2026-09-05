@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2018-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -56,7 +55,7 @@ if typing.TYPE_CHECKING:
     from uds.models import CalendarAccessMeta, User
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class MetaPool(UUIDModel, TaggingMixin):

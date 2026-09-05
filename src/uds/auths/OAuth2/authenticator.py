@@ -60,7 +60,7 @@ if typing.TYPE_CHECKING:
 
     from django.http import HttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OAuth2Authenticator(auths.Authenticator):

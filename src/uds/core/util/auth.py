@@ -38,7 +38,7 @@ from uds.core import exceptions
 from uds.core import ui
 from uds.core.util import ensure
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Characters that should never end up in a user identifier:

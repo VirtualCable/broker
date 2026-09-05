@@ -38,7 +38,7 @@ from uds.core import services
 from uds.core import types
 from uds.core.util import autoserializable
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
 

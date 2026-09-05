@@ -14,7 +14,7 @@ from uds.core.types.rest.api import SchemaProperty
 if typing.TYPE_CHECKING:
     from uds.REST import model
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _resolve_forwardref(
@@ -169,9 +169,7 @@ _OPENAPI_TYPE_MAP: typing.Final[dict[typing.Any, OpenApiType]] = {
 }
 
 
-def python_type_to_openapi(
-    py_type: typing.Any, description: str | None = None
-) -> "types.rest.api.SchemaProperty":
+def python_type_to_openapi(py_type: typing.Any, description: str | None = None) -> "types.rest.api.SchemaProperty":
     """
     Convert a Python type to an OpenAPI 3.1 schema property.
     """
@@ -201,8 +199,7 @@ def python_type_to_openapi(
         one_of: list[SchemaProperty] = [
             python_type_to_openapi(arg)
             for arg in args
-            if arg is not None
-            and typing.get_origin(arg) is not typing.cast(typing.Any, collections.abc.Callable)
+            if arg is not None and typing.get_origin(arg) is not typing.cast(typing.Any, collections.abc.Callable)
         ]
         # Remove repeated
         one_of = list({item.type: item for item in one_of}.values())
@@ -221,9 +218,7 @@ def python_type_to_openapi(
     # Literal[...] → enum
     elif origin is typing.Literal:
         literal_type = typing.cast(type[typing.Any], type(args[0]) if args else str)
-        return schema_prop(
-            type=_OPENAPI_TYPE_MAP.get(literal_type, OpenApiType.STRING).value.type, enum=list(args)
-        )
+        return schema_prop(type=_OPENAPI_TYPE_MAP.get(literal_type, OpenApiType.STRING).value.type, enum=list(args))
 
     # Enum classes
     # First, IntEnum --> int

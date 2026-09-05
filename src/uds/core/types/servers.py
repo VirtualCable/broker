@@ -43,7 +43,7 @@ from uds.core.util import singleton
 
 IP_SUBTYPE: typing.Final[str] = "ip"
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServerType(enum.IntEnum):

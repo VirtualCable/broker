@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2023 Virtual Cable S.L.
 # All rights reserved.
@@ -48,7 +47,7 @@ from ...fixtures import servers as servers_fixtures
 from ...fixtures import services as services_fixtures
 from ...utils.test import UDSTestCase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 NUM_REGISTEREDSERVERS = 8
 NUM_USERSERVICES = NUM_REGISTEREDSERVERS + 1

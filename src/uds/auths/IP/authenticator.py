@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -42,7 +41,7 @@ from uds.core.types.states import State
 from uds.core.ui import gui
 from uds.core.util import net
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from uds.core import environment

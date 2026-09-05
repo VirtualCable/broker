@@ -40,7 +40,7 @@ from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
 from uds.core.util import log
 from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 USERSERVICE_TAG = "cm-"
 

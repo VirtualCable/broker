@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -39,7 +38,7 @@ from django.core.management.base import BaseCommand
 from uds.core.util.config import Config
 from uds.core.util.config import GlobalConfig
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):

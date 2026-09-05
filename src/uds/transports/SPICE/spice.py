@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reservem.
@@ -46,7 +45,7 @@ if typing.TYPE_CHECKING:
     from uds import models
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SPICETransport(BaseSpiceTransport):

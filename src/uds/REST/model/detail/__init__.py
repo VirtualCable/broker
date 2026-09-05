@@ -61,7 +61,7 @@ if typing.TYPE_CHECKING:
     from uds.REST.model.master import ModelHandler
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Details do not have types at all
 # so, right now, we only process details petitions for Handling & tables info

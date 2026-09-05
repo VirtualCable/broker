@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -49,7 +48,7 @@ if typing.TYPE_CHECKING:
     from uds.core import services
     from uds.models import UserService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ServicePoolPublicationChangelog(models.Model):

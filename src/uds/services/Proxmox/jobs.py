@@ -46,7 +46,7 @@ from .proxmox import types as prox_types
 # (and removed from used db), it will not be reused until it has dissapeared from the proxmox server
 MAX_VMID_LIFE_SECS: typing.Final[int] = 365 * 24 * 60 * 60 * 3  # 3 years for "reseting"
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Job will be here for 4.0, but will be removed in a future
 # The idea is allow using old Removal Job for existing installations

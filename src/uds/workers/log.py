@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2023 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from uds.core.util.model import sql_now
 # from uds.core.util.config import GlobalConfig
 MAX_BATCH_SIZE: typing.Final[int] = 32768
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class LogMaintenance(Job):

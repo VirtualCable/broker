@@ -48,7 +48,7 @@ from uds.core.ui import gui
 
 from . import stock
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class _ReportFetcher(URLFetcher):
@@ -79,9 +79,7 @@ class _ReportFetcher(URLFetcher):
 
 
 class Report(UserInterface, abc.ABC):
-    mime_type: typing.ClassVar[str] = (
-        "application/pdf"  # Report returns pdfs by default, but could be anything else
-    )
+    mime_type: typing.ClassVar[str] = "application/pdf"  # Report returns pdfs by default, but could be anything else
     name: typing.ClassVar[str] = _("Base Report")  # Report name
     group: typing.ClassVar[str] = ""  # So we can "group" reports by kind?
     encoded: typing.ClassVar[bool] = (

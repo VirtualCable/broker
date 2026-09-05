@@ -39,7 +39,8 @@ import struct
 from uds.core import consts
 from uds.core import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
+
 
 def list_ifaces() -> collections.abc.Iterator[types.net.Iface]:
     def _get_iface_mac_addr(ifname: str) -> str | None:

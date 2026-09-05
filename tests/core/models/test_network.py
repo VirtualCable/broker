@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -38,7 +37,7 @@ from ...utils.test import UDSTestCase
 NET_IPV4_TEMPLATE = "192.168.{}.0/24"
 NET_IPV6_TEMPLATE = "2001:db8:85a3:8d3:13{:02x}::/64"
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class NetworkModelTest(UDSTestCase):

@@ -35,7 +35,7 @@ import typing
 from django.db import models
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Config(models.Model):

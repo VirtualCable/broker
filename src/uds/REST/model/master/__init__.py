@@ -59,7 +59,7 @@ from uds.REST.utils import sanitize_params
 if typing.TYPE_CHECKING:
     from uds.REST.model.detail import DetailHandler
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 T = typing.TypeVar("T", bound=models.Model)
 T_Item = typing.TypeVar("T_Item", bound=types.rest.BaseRestItem)

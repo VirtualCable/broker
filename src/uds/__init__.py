@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -43,7 +42,7 @@ from django.dispatch import receiver
 from django.apps import AppConfig
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Set default ssl context unverified, as MOST servers that we will connect will be with self signed certificates...

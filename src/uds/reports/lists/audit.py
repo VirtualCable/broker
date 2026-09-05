@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -46,7 +45,7 @@ from uds.models import Log
 
 from .base import ListReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 RESPONSE_CODES: typing.Final[dict[str, str]] = {
     "200": "OK",

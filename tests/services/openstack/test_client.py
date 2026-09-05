@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from uds.core import exceptions
 from uds.services.OpenStack.openstack import client as openstack_client
 from uds.services.OpenStack.openstack import types as openstack_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TestOpenStackClient(UDSTransactionTestCase):

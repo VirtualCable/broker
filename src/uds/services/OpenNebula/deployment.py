@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -50,7 +49,7 @@ if typing.TYPE_CHECKING:
     from .publication import OpenNebulaLivePublication
     from .service import OpenNebulaLiveService
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Operation(enum.IntEnum):

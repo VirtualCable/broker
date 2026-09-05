@@ -44,7 +44,7 @@ from uds.core import consts
 from uds.core.managers.crypto import CryptoManager
 from uds.models.config import Config as DBConfig
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Config:

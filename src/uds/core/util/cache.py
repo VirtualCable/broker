@@ -44,7 +44,7 @@ from uds.models.cache import Cache as DBCache
 
 from .hash import hash_key
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 KeyType: typing.TypeAlias = str | bytes
 

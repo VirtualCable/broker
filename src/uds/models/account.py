@@ -38,7 +38,7 @@ from .tag import TaggingMixin
 from ..core.util.model import sql_now
 from ..core.consts import NEVER
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2023 Virtual Cable S.L.
 # All rights reserved.
@@ -49,7 +48,7 @@ from ...fixtures import servers as servers_fixtures
 from ...fixtures import services as services_fixtures
 from ...utils.test import UDSTestCase
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 NUM_REGISTEREDSERVERS: typing.Final[int] = 8
 NUM_USERSERVICES: typing.Final[int] = NUM_REGISTEREDSERVERS * 2
@@ -105,8 +104,7 @@ class ServerManagerManagedServersTest(UDSTestCase):
     @contextmanager
     def create_mock_api_requester(
         self,
-        get_stats: collections.abc.Callable[["models.Server"], "types.servers.ServerStats | None"]
-        | None = None,
+        get_stats: collections.abc.Callable[["models.Server"], "types.servers.ServerStats | None"] | None = None,
     ) -> collections.abc.Generator[mock.Mock]:
         with mock.patch("uds.core.managers.servers_api.requester.ServerApiRequester") as mock_server_api_requester:
 

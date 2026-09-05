@@ -35,7 +35,7 @@ from tests.utils.factories import check_registered
 from tests.utils.test import UDSTestCase
 from uds.core.transports.transport_factory import TransportsFactory
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 MUST_HAVE: typing.Final[list[str]] = [

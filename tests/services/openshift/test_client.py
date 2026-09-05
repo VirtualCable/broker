@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -39,7 +38,7 @@ from tests.utils.test import UDSTransactionTestCase
 from uds.services.OpenShift.openshift import client as openshift_client
 from uds.services.OpenShift.openshift import exceptions as openshift_exceptions
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 SECURE_SESSION = "uds.services.OpenShift.openshift.client.security.secure_requests_session"
 

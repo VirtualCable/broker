@@ -45,7 +45,7 @@ from . import consts
 from . import exceptions
 from . import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 # caching helper
@@ -525,7 +525,12 @@ class ProxmoxClient:
                         ip_address = typing.cast(str, ip["ip-address"])
                         if ip_address.startswith(("127.", "fe80:")) or ip_address == "::1":
                             continue
-                        if (ip_version == "4") and ip.get("ip-address-type") != "ipv4" or ip_version == "6" and ip.get("ip-address-type") != "ipv6":
+                        if (
+                            (ip_version == "4")
+                            and ip.get("ip-address-type") != "ipv4"
+                            or ip_version == "6"
+                            and ip.get("ip-address-type") != "ipv6"
+                        ):
                             continue
                         found_ips.append(ip_address)
             if found_ips:

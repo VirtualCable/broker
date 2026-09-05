@@ -38,7 +38,7 @@ from uds import models
 from uds.core import types as core_types
 from uds.core.managers.userservice import UserServiceManager
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TestUserserviceManager(UDSTransactionTestCase):

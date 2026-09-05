@@ -34,7 +34,7 @@ import typing
 from uds.core.util.cache import Cache
 from uds.core.util.cache import CacheLike
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 """
 Exponential backoff cache for per-key "bad host / bad resource" tracking.

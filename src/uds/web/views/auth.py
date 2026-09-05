@@ -60,7 +60,7 @@ if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
     from uds import models
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # The callback is now a two stage, so we can use cookies samesite policy to "Lax"
 # 1.- First stage:  SESSION COOKIE IS NOT PRESSENT HERE (Redirect from an external url)

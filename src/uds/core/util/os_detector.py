@@ -37,7 +37,7 @@ import typing
 from uds.core import consts
 from uds.core import types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def detect_os(

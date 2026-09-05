@@ -48,7 +48,7 @@ from uds.models import Provider
 from uds.models import Service
 from uds.models import ServicePool
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # EventTupleType = tuple[datetime.datetime, str, str, str, str, int]
 

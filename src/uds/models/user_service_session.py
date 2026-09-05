@@ -39,7 +39,7 @@ from .user_service import UserService
 from ..core.util.model import sql_now
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _session_id_generator() -> str:

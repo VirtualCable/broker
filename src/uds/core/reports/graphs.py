@@ -43,7 +43,7 @@ from matplotlib.figure import Figure
 # This must be imported to allow 3d projections
 from mpl_toolkits.mplot3d.axes3d import Axes3D as Axes3D
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def bar_chart(

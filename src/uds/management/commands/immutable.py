@@ -53,7 +53,7 @@ from uds.core.util import model
 from uds.core.util.config import GlobalConfig
 from uds.models.immutable_log import ImmutableLog
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # -- filter definitions ---------------------------------------------------
 # Maps --filter argument to set of 't' values in the unpickled dict

@@ -39,8 +39,7 @@ from uds.core import consts, types
 from uds.core.auths import auth
 from uds.web.util import configjs
 
-logger = logging.getLogger(__name__)
-
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @never_cache

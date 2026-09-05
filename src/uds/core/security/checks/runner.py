@@ -44,7 +44,7 @@ from uds.core import types
 
 from .factory import CheckFn, SecurityChecksFactory
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _collect_checks() -> list[tuple[str, CheckFn]]:

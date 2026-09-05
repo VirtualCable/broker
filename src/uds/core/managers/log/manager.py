@@ -43,7 +43,7 @@ from uds.models.log import Log
 if typing.TYPE_CHECKING:
     from django.db.models import Model
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class LogManager(metaclass=singleton.Singleton):

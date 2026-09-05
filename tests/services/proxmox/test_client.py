@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ from uds.services.Proxmox.proxmox import client as prox_client
 from uds.services.Proxmox.proxmox import exceptions as prox_exceptions
 from uds.services.Proxmox.proxmox import types as prox_types
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TestProxmoxClient(UDSTransactionTestCase):

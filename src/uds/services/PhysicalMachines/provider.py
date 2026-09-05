@@ -50,7 +50,7 @@ if typing.TYPE_CHECKING:
     from uds.core.services import Service
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 VALID_CONFIG_SECTIONS: typing.Final[set[str]] = {"wol"}
 
@@ -100,9 +100,7 @@ class PhysicalMachinesProvider(services.ServiceProvider):
 
             for section in config.sections():
                 if section not in VALID_CONFIG_SECTIONS:
-                    raise exceptions.ui.ValidationError(
-                        _("Invalid section in advanced configuration: ") + section
-                    )
+                    raise exceptions.ui.ValidationError(_("Invalid section in advanced configuration: ") + section)
 
             # Sections are valid, check values
             # wol section

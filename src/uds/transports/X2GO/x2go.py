@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2016-2022 Virtual Cable S.L.
 # All rights reservem.
@@ -44,7 +43,7 @@ if typing.TYPE_CHECKING:
     from uds.core import types
     from uds.core.types.requests import ExtendedHttpRequestWithUser
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class X2GOTransport(BaseX2GOTransport):

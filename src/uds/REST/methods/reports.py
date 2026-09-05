@@ -47,7 +47,7 @@ from uds.REST import model
 if typing.TYPE_CHECKING:
     from uds.core.reports.report import Report
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 VALID_PARAMS = (
     "authId",

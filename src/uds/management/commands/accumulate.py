@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -41,7 +40,7 @@ from uds.workers.stats_collector import StatsAccumulator
 if typing.TYPE_CHECKING:
     import argparse
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):

@@ -56,7 +56,7 @@ if typing.TYPE_CHECKING:
     from .groups_manager import GroupsManager
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Authenticator(Module):

@@ -51,7 +51,7 @@ from uds.models import StatsCountersAccum
 # the package namespace (models/__init__ imports .servers late).
 from uds.models.servers import Server
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 CounterClass = typing.TypeVar("CounterClass", Provider, Service, ServicePool, Authenticator, Server)
 
@@ -161,9 +161,7 @@ def add_counter(
         )
         return False
 
-    return StatsManager.manager().add_counter(
-        OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp
-    )
+    return StatsManager.manager().add_counter(OBJ_TYPE_FROM_MODEL_DICT[type(obj)], obj.id, counter_type, value, stamp)
 
 
 def enumerate_counters(

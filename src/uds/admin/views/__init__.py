@@ -38,7 +38,7 @@ from django.shortcuts import render
 from uds.core import consts
 from uds.core.auths.auth import weblogin_required
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.http import HttpRequest

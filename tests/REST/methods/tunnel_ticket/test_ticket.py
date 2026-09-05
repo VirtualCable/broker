@@ -40,7 +40,7 @@ from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.crypto import kem
 from uds.core.util.model import sql_now
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TicketTest(rest.test.RESTTestCase):

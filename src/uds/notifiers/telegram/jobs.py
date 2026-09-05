@@ -39,7 +39,7 @@ from uds.models import Notifier
 
 from . import notifier
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TelegramReceiver(jobs.Job):

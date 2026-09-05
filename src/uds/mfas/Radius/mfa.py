@@ -49,7 +49,7 @@ from uds.core.util import fields
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class RadiusOTP(mfas.MFA):

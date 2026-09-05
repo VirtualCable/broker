@@ -39,7 +39,7 @@ from uds.models import ServerGroup
 
 from .base import ListReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 ALL_GROUPS: typing.Final[str] = "0-0-0-0"
 

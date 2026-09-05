@@ -42,7 +42,7 @@ from .openshift import types as opensh_types
 if typing.TYPE_CHECKING:
     from . import service_fixed
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class OpenshiftUserServiceFixed(FixedUserService, autoserializable.AutoSerializable):

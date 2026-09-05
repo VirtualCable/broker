@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -40,7 +39,7 @@ from django.conf import settings
 
 from uds.core.managers.crypto import CryptoManager
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 CURRENT_SERIALIZER_VERSION: typing.Final[bytes] = getattr(settings, "SERIALIZER_VERSION", "v0").encode()
 
