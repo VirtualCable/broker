@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -32,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import collections.abc
 import logging
+import re
 import typing
 
 from uds.core import consts
@@ -78,7 +78,7 @@ def detect_os(
 
     if res.browser == types.os.KnownBrowser.OTHER:
         # Try to detect browser from User-Agent
-        found: None|typing.Match[str] = None
+        found: None | re.Match[str] = None
 
         browser_type = None
         for browser_type, rules in consts.os.BROWSER_RULES.items():

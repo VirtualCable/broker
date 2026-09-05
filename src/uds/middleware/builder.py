@@ -39,7 +39,7 @@ from django.utils.decorators import sync_and_async_middleware
 
 from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # How often to check the requests cache for stuck objects
 CHECK_SECONDS = 3600 * 24  # Once a day is more than enough

@@ -46,11 +46,13 @@ from uds.models import ServicePool
 
 from .base import StatsReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # several constants as Width height, margins, ..
-WIDTH, HEIGHT, DPI = 19.2, 10.8, 100
-SIZE = (WIDTH, HEIGHT, DPI)
+WIDTH: typing.Final[float] = 19.2
+HEIGHT: typing.Final[float] = 10.8
+DPI: typing.Final[int] = 100
+SIZE: typing.Final[tuple[float, float, int]] = (WIDTH, HEIGHT, DPI)
 
 
 class CountersPoolAssigned(StatsReport):

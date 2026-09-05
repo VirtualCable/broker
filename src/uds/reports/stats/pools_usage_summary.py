@@ -41,7 +41,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .usage_by_pool import UsageByPool
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class PoolsUsageSummary(UsageByPool):

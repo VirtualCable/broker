@@ -40,7 +40,7 @@ from uds.models import ServicePool
 
 from .base import StatsReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class CacheEfficiencyReport(StatsReport):

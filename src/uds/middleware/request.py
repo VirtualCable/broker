@@ -28,6 +28,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import datetime
 import logging
 import typing
@@ -51,7 +52,7 @@ if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # How often to check the requests cache for stuck objects
 CHECK_SECONDS = 3600 * 24  # Once a day is more than enough
@@ -155,4 +156,6 @@ def _process_response(request: "ExtendedHttpRequest", response: "HttpResponse") 
 
 
 # Compatibility with old middleware, so we can use it in settings.py as it was
-GlobalRequestMiddleware = builder.build_middleware(_process_request, _process_response)
+GlobalRequestMiddleware: typing.Final[collections.abc.Callable[..., typing.Any]] = builder.build_middleware(
+    _process_request, _process_response
+)

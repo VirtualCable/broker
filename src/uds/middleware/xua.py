@@ -28,6 +28,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
 
@@ -38,7 +39,7 @@ if typing.TYPE_CHECKING:
 
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _process_response(
@@ -53,4 +54,6 @@ def _process_response(
 # Add a X-UA-Compatible header to the response
 # This header tells to Internet Explorer to render page with latest
 # possible version or to use chrome frame if it is installed. TO BE REMOVED SOON (last version with this will be 4.0.0) (edge does not need it)
-XUACompatibleMiddleware = builder.build_middleware(lambda x: None, _process_response)
+XUACompatibleMiddleware: typing.Final[collections.abc.Callable[..., typing.Any]] = builder.build_middleware(
+    lambda x: None, _process_response
+)

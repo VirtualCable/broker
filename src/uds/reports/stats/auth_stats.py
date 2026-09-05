@@ -46,7 +46,7 @@ if typing.TYPE_CHECKING:
     from uds import models
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 MAX_ELEMENTS = 10000
 BIG_INTERVAL = 3600 * 24 * 30 * 12  # 12 months

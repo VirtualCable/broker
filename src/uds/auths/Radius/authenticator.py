@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2021 Virtual Cable S.L.
 # All rights reserved.
@@ -47,7 +46,7 @@ from . import client
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class RadiusAuth(auths.Authenticator):

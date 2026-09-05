@@ -4,9 +4,10 @@ project-includes = [
     "tests/**/*.py",
 ]
 
-# Exclude scripts from transports transports/*/scripts/*
+# Exclude scripts from transports transports/*/scripts/* and Django auto-generated migrations
 project-excludes = [
     "src/**/transports/**/scripts/**/*.py",
+    "src/uds/migrations/**/*.py",
     "src/uds/core/util/ldaputil_old.py",
 ]
 

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2021 Virtual Cable S.L.
 # All rights reserved.
@@ -44,7 +43,7 @@ import pyrad.packet
 from pyrad.client import Client
 from pyrad.dictionary import Dictionary
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 RADDICT = """ATTRIBUTE   User-Name       1   string
 ATTRIBUTE   User-Password       2   string
@@ -85,8 +84,11 @@ ATTRIBUTE   Framed-AppleTalk-Network 38 integer
 ATTRIBUTE   Framed-AppleTalk-Zone   39  string"""
 
 # For AccessChallenge return values
-NOT_CHECKED, INCORRECT, CORRECT = -1, 0, 1  # for pwd and otp
-NOT_NEEDED, NEEDED = INCORRECT, CORRECT  # for otp_needed
+NOT_CHECKED: typing.Final[int] = -1
+INCORRECT: typing.Final[int] = 0
+CORRECT: typing.Final[int] = 1
+NOT_NEEDED: typing.Final[int] = 0
+NEEDED: typing.Final[int] = 1
 
 STATE_VAR_NAME = "radius_state"
 

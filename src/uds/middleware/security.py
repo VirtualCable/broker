@@ -28,6 +28,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import re
 import typing
@@ -41,7 +42,7 @@ from uds.core.util.config import GlobalConfig
 
 from . import builder
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.http import HttpResponse
@@ -49,7 +50,7 @@ if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
 
 # Simple Bot detection
-bot = re.compile(r"bot|spider", re.IGNORECASE)
+bot: typing.Final[re.Pattern[str]] = re.compile(r"bot|spider", re.IGNORECASE)
 
 
 def _process_request(request: "ExtendedHttpRequest") -> "HttpResponse | None":
@@ -119,4 +120,6 @@ def _process_response(
 
 
 # Compatibility with old middleware, so we can use it in settings.py as it was
-UDSSecurityMiddleware = builder.build_middleware(_process_request, _process_response)
+UDSSecurityMiddleware: typing.Final[collections.abc.Callable[..., typing.Any]] = builder.build_middleware(
+    _process_request, _process_response
+)

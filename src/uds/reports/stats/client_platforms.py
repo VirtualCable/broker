@@ -39,7 +39,7 @@ from uds.core.util import stats
 
 from .base import StatsReport
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ClientPlatformsReport(StatsReport):

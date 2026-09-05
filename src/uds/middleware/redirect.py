@@ -28,6 +28,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import logging
 import typing
 
@@ -37,14 +38,14 @@ from django.urls import reverse
 
 from . import builder
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from django.http import HttpRequest
     from django.http import HttpResponse
 
 
-def _check_redirectable(request: "HttpRequest") -> typing.Optional["HttpResponse"]:
+def _check_redirectable(request: "HttpRequest") -> "HttpResponse | None":
     if request.is_secure() or settings.DEBUG:
         return None
 
@@ -54,4 +55,6 @@ def _check_redirectable(request: "HttpRequest") -> typing.Optional["HttpResponse
 
 
 # Compatibility with old middleware, so we can use it in settings.py as it was
-RedirectMiddleware = builder.build_middleware(_check_redirectable, lambda _, y: y)
+RedirectMiddleware: typing.Final[collections.abc.Callable[..., typing.Any]] = builder.build_middleware(
+    _check_redirectable, lambda _, y: y
+)

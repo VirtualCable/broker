@@ -17,7 +17,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 # Import must happen after settings are loaded (channels layer config)
 from server import routing
 
-application = ProtocolTypeRouter(
+application: ProtocolTypeRouter = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
         "websocket": URLRouter(routing.websocket_urlpatterns),

@@ -25,6 +25,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import collections.abc
 import typing
 import logging
 
@@ -34,7 +35,7 @@ if typing.TYPE_CHECKING:
     from django.http import HttpResponse
     from uds.core.types.requests import ExtendedHttpRequest
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _process_request(request: "ExtendedHttpRequest") -> "HttpResponse | None":
@@ -46,4 +47,6 @@ def _process_response(request: "ExtendedHttpRequest", response: "HttpResponse") 
     return response
 
 
-RequestDebugMiddleware = builder.build_middleware(_process_request, _process_response)
+RequestDebugMiddleware: typing.Final[collections.abc.Callable[..., typing.Any]] = builder.build_middleware(
+    _process_request, _process_response
+)
