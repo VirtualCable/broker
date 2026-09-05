@@ -119,7 +119,7 @@ class MCPServerCore:
         # HTTP request before invoking us. The proxy helpers will fail
         # cleanly with a request-related error if it is missing.
         result = await tool.executor(params.arguments or {}, self.request)
-        safe_result = redact(_json_safe(result))
+        safe_result = redact(_json_safe(result), tool.sensitive_fields)
         # ``structuredContent`` must be a JSON object per the MCP schema,
         # and the official client validates it strictly. The ``list_*``
         # tools return item lists, so non-object results travel wrapped;
@@ -187,7 +187,7 @@ class MCPServerCore:
                     mcp.types.TextResourceContents(
                         uri=params.uri,
                         mime_type="text/plain",
-                        text=json.dumps(redact(_json_safe(content)), default=str),
+                        text=json.dumps(redact(_json_safe(content), resource.sensitive_fields), default=str),
                     )
                 ],
             )

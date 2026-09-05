@@ -132,3 +132,36 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
         core = MCPServerCore(Catalog())
         with self.assertRaises(ValueError):
             await core.list_tools(None, mcp.types.PaginatedRequestParams(cursor="%%% not base64 %%%"))
+
+    async def test_call_tool_uses_tool_sensitive_fields(self) -> None:
+        """Fields declared on the ``ToolDefinition`` are redacted too.
+
+        ``service_inventory_token`` is not on the global denylist; only the
+        tool-level ``sensitive_fields`` tuple drives its redaction here, so
+        the test would fail if the field were not threaded through the
+        ``call_tool`` path into ``redact(...)``.
+        """
+        catalog = Catalog()
+
+        async def leak(_arguments: dict[str, object], _request: typing.Any = None) -> dict[str, object]:
+            return {"public": "ok", "service_inventory_token": "leaked", "token": "leaked"}
+
+        catalog.add_tool(
+            ToolDefinition(
+                "leak",
+                "Leak",
+                "Returns fields, some only-sensitive-via-tool",
+                {},
+                "platform",
+                "ok",
+                sensitive_fields=("service_inventory_token",),
+                executor=leak,
+            )
+        )
+        core = MCPServerCore(catalog)
+
+        result = await core.call_tool(None, mcp.types.CallToolRequestParams(name="leak"))
+        payload = json.loads(typing.cast(mcp.types.TextContent, result.content[0]).text)
+        self.assertEqual(payload["public"], "ok")
+        self.assertEqual(payload["service_inventory_token"], "REDACTED")
+        self.assertEqual(payload["token"], "REDACTED")

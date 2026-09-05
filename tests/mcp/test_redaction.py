@@ -44,3 +44,26 @@ class RedactionTest(unittest.TestCase):
         """Scalar values (non-mapping, non-sequence) are returned untouched."""
         for scalar in ("str", 7, 3.5, True, None):
             self.assertEqual(redact(scalar), scalar)
+
+    def test_extra_keys_are_unioned_with_global_denylist(self) -> None:
+        """Per-call ``extra_keys`` add to (not replace) the global denylist.
+
+        When no curated tool or resource declares fields, the function must
+        behave exactly as before: only the global ``SENSITIVE_FIELDS`` list
+        applies. When one does declare fields, those fields are redacted on
+        top of the global list.
+        """
+        value = {"public": "ok", "service_inventory_token": "leaked", "token": "leaked"}
+        # Extra key catches a field the global denylist would miss.
+        self.assertEqual(
+            redact(value, ("service_inventory_token",)),
+            {"public": "ok", "service_inventory_token": REDACTED, "token": REDACTED},
+        )
+        # Empty / default ``extra_keys`` equals the historical behaviour.
+        self.assertEqual(redact({"token": "x"}), {"token": REDACTED})
+        self.assertEqual(redact({"token": "x"}, ()), {"token": REDACTED})
+        # A non-string entry in ``extra_keys`` is ignored without crashing.
+        self.assertEqual(
+            redact({"service_inventory_token": "y"}, ("service_inventory_token", 42)),
+            {"service_inventory_token": REDACTED},
+        )
