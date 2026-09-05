@@ -1,5 +1,6 @@
 """In-process proxy from MCP capabilities to existing REST handlers."""
 
+import collections.abc
 import dataclasses
 import typing
 
@@ -179,7 +180,14 @@ class RestProxy:
         method = target.method.value.lower()
         handler = target.handler(request, target.path, method, params, *target.args)
         operation = getattr(handler, method)
-        return operation()
+        result: typing.Any = operation()
+        if isinstance(result, collections.abc.Generator):
+            # Generators that touch the ORM (e.g. ``Providers.allservices``)
+            # must be consumed inside this sync thread; the async caller would
+            # otherwise iterate them on the event loop and trip Django's
+            # SynchronousOnlyOperation guard.
+            return list(typing.cast("collections.abc.Iterable[typing.Any]", result))
+        return result
 
     @staticmethod
     def _execute_detail_sync(

@@ -23,7 +23,7 @@ platform-wide stats) only work for administrators.
 
 from ..catalog import Catalog, ToolDefinition
 
-from . import authenticators, logs, reports, servers, servicepools, system
+from . import authenticators, logs, providers, reports, servers, servicepools, system, tunnels
 
 __all__ = ["curated_tools", "register_curated_tools"]
 
@@ -34,6 +34,8 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
         *servicepools.curated_tools(),
         *servers.curated_tools(),
         *authenticators.curated_tools(),
+        *providers.curated_tools(),
+        *tunnels.curated_tools(),
         *logs.curated_tools(),
         *system.curated_tools(),
         *reports.curated_tools(),

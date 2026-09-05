@@ -51,3 +51,28 @@ class GeneratedListToolsTest(unittest.TestCase):
         self.assertTrue(detail_tools, "expected at least one detail list tool")
         for tool in detail_tools:
             self.assertIn("parent_uuid", (tool.input_schema or {}).get("properties", {}))
+
+
+class CatalogToolContractTest(unittest.TestCase):
+    """Every published tool must carry complete metadata and a usable schema.
+
+    Covers the whole catalog (auto-generated and curated) so a tool added
+    anywhere without title/description/access/returns, without an executor,
+    or with a broken input schema turns the suite red immediately.
+    """
+
+    def test_every_tool_has_complete_metadata_and_schema(self) -> None:
+        for tool in build_catalog().tools():
+            with self.subTest(tool=tool.name):
+                self.assertTrue(tool.name)
+                self.assertTrue(tool.title)
+                self.assertTrue(tool.description)
+                self.assertTrue(tool.access)
+                self.assertTrue(tool.returns)
+                self.assertIsNotNone(tool.executor)
+                schema = tool.input_schema or {}
+                self.assertEqual(schema.get("type"), "object")
+                properties = schema.get("properties", {})
+                self.assertIsInstance(properties, dict)
+                for required_name in schema.get("required", []):
+                    self.assertIn(required_name, properties)

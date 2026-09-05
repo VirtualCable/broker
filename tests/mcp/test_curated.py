@@ -1,6 +1,8 @@
 """Tests for the hand-curated MCP tools (``uds.mcp.curated``)."""
 
+import inspect
 import json
+import re
 import typing
 import unittest
 from unittest import mock
@@ -12,10 +14,13 @@ from uds.core.types.log import LogObjectType
 from uds.core.util.config import GlobalConfig
 from uds.core.util.log import LogLevel, LogSource, log
 from uds.mcp import get_catalog
+from uds.mcp.curated import curated_tools
 from uds.models.log import Log
 from uds.REST.methods.reports import Reports
 
 from tests.utils import rest
+
+# pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 
 _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_fallback_access",
@@ -26,6 +31,15 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_assignables",
     "get_server_group_stats",
     "search_authenticator",
+    "get_authenticator_users_with_services",
+    "get_authenticator_user_services_pools",
+    "get_authenticator_user_user_services",
+    "get_authenticator_group_services_pools",
+    "get_authenticator_group_users",
+    "get_provider_allservices",
+    "get_provider_service",
+    "get_provider_service_servicepools",
+    "get_tunnel_group_unassigned_tunnels",
     "get_server_stats",
     "get_item_logs",
     "get_system_logs",
@@ -231,3 +245,178 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
     def test_search_authenticator_requires_type_and_term(self) -> None:
         body = self._call("search_authenticator", {"uuid": self.auth.uuid})
         self.assertEqual(body["error"]["code"], -32602)
+
+    def test_get_authenticator_users_with_services(self) -> None:
+        body = self._call(
+            "get_authenticator_users_with_services",
+            {"uuid": self.auth.uuid},
+        )
+        # Smoke-check the call returns a list; an empty list is acceptable
+        # when the fixtures have no assigned services yet.
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_authenticator_user_services_pools(self) -> None:
+        user = self.users[0]
+        body = self._call(
+            "get_authenticator_user_services_pools",
+            {"uuid": self.auth.uuid, "item_id": user.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_authenticator_user_user_services(self) -> None:
+        user = self.users[0]
+        body = self._call(
+            "get_authenticator_user_user_services",
+            {"uuid": self.auth.uuid, "item_id": user.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_authenticator_group_services_pools(self) -> None:
+        group = self.simple_groups[0]
+        body = self._call(
+            "get_authenticator_group_services_pools",
+            {"uuid": self.auth.uuid, "item_id": group.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_authenticator_group_users(self) -> None:
+        group = self.simple_groups[0]
+        body = self._call(
+            "get_authenticator_group_users",
+            {"uuid": self.auth.uuid, "item_id": group.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_authenticator_user_user_services_rejects_missing_item_id(self) -> None:
+        body = self._call(
+            "get_authenticator_user_user_services",
+            {"uuid": self.auth.uuid},
+        )
+        self.assertEqual(body["error"]["code"], -32602)
+
+    def test_get_provider_allservices(self) -> None:
+        # ``path_args=()`` → the URL is ``providers/allservices`` with no uuid.
+        body = self._call("get_provider_allservices", {})
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_provider_service(self) -> None:
+        service = self.provider.services.first()
+        assert service is not None, "Test fixtures must seed at least one service on the provider"
+        # ``path_args=("item_id",)`` → the URL is ``providers/service/{uuid}``.
+        body = self._call("get_provider_service", {"item_id": service.uuid})
+        payload = json.loads(self._result_text(body))
+        # The REST handler answers a BaseRestItem; at minimum the id round-trips.
+        self.assertEqual(payload.get("id"), service.uuid)
+
+    def test_get_provider_service_servicepools(self) -> None:
+        service = self.provider.services.first()
+        assert service is not None
+        body = self._call(
+            "get_provider_service_servicepools",
+            {"uuid": self.provider.uuid, "item_id": service.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_tunnel_group_unassigned_tunnels(self) -> None:
+        from uds.core import types as core_types
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(type=core_types.servers.ServerType.TUNNEL, num_servers=2)
+        body = self._call(
+            "get_tunnel_group_unassigned_tunnels",
+            {"uuid": group.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_metapool_fallback_access(self) -> None:
+        from tests.fixtures.services import create_db_metapool
+
+        metapool = create_db_metapool([self._a_service_pool()], self.groups)
+        body = self._call("get_metapool_fallback_access", {"uuid": metapool.uuid})
+        # Same contract as the service pool variant: the policy name.
+        self.assertIsInstance(json.loads(self._result_text(body)), str)
+
+    def test_get_servicepool_forecast(self) -> None:
+        pool = self._a_service_pool()
+        body = self._call("get_servicepool_forecast", {"uuid": pool.uuid})
+        result = json.loads(self._result_text(body))
+        # Fresh pools have no samples: the contract still holds (empty forecast).
+        self.assertEqual(result["counter"], "inuse")
+        self.assertFalse(result["has_data"])
+        self.assertIsInstance(result["points"], list)
+
+    def test_get_servicepool_forecast_accepts_counter_and_hours(self) -> None:
+        pool = self._a_service_pool()
+        body = self._call("get_servicepool_forecast", {"uuid": pool.uuid, "counter": "cached", "hours": 24})
+        result = json.loads(self._result_text(body))
+        self.assertEqual(result["counter"], "cached")
+        self.assertLessEqual(len(result["points"]), 24)
+
+    def test_get_servicepool_cache_recommendations(self) -> None:
+        pool = self._a_service_pool()
+        body = self._call("get_servicepool_cache_recommendations", {"uuid": pool.uuid})
+        result = json.loads(self._result_text(body))
+        self.assertIn("current_config", result)
+        self.assertEqual(
+            set(result["current_config"]),
+            {"initial_srvs", "cache_l1_srvs", "cache_l2_srvs", "max_srvs"},
+        )
+        self.assertIsInstance(result["slots"], list)
+
+    def test_get_server_group_stats(self) -> None:
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=2)
+        body = self._call("get_server_group_stats", {"uuid": group.uuid})
+        stats = json.loads(self._result_text(body))
+        self.assertIsInstance(stats, list)
+        self.assertEqual(len(stats), 2)
+        for entry in stats:
+            self.assertIn("server", entry)
+            self.assertIn("stats", entry)
+
+    def test_get_server_stats(self) -> None:
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=1)
+        server = group.servers.first()
+        assert server is not None, "the fixture must attach one server to the group"
+        body = self._call(
+            "get_server_stats",
+            {"group_uuid": group.uuid, "server_uuid": server.uuid},
+        )
+        result = json.loads(self._result_text(body))
+        # counter defaults to "all": one points list per known counter.
+        self.assertIsInstance(result, dict)
+        self.assertEqual(set(result), {"cpu", "memory", "users", "connections", "disk"})
+
+    def test_get_server_stats_single_counter(self) -> None:
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=1)
+        server = group.servers.first()
+        assert server is not None
+        body = self._call(
+            "get_server_stats",
+            {"group_uuid": group.uuid, "server_uuid": server.uuid, "counter": "cpu"},
+        )
+        # Single counter: the bare points list, not the per-counter mapping.
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+
+class CuratedContractTest(unittest.TestCase):
+    """Keep the curated surface wired to its registration list and its tests.
+
+    These guards make the contract explicit: adding (or removing) a curated
+    tool without updating ``_CURATED_NAMES`` or without a functional test
+    that actually exercises it turns the suite red immediately.
+    """
+
+    def test_curated_names_list_matches_curated_tools(self) -> None:
+        self.assertEqual(set(_CURATED_NAMES), {tool.name for tool in curated_tools()})
+
+    def test_every_curated_tool_is_functionally_exercised(self) -> None:
+        source = inspect.getsource(CuratedToolsJsonRpcTest)
+        called: set[str] = set(re.findall(r'self\._call\(\s*"([a-z_0-9]+)"', source))
+        missing = {tool.name for tool in curated_tools()} - called
+        self.assertFalse(missing, f"curated tools without a functional test: {sorted(missing)}")
