@@ -38,6 +38,123 @@ from ...utils.test import UDSTestCase
 logger: logging.Logger = logging.getLogger(__name__)
 
 
+class RecoverIpsTest(UDSTestCase):
+    """
+    Contracts for net.recover_ips, focused on the X-Forwarded-For sanitization:
+    every component of the header MUST be a valid IP, anything else is dropped
+    (an attacker can inject arbitrary data on XFF, and downstream consumers --
+    i.e. custom authenticator javascript -- must never see it).
+    """
+
+    def test_no_xff(self) -> None:
+        info = net.recover_ips("1.2.3.4", "")
+        self.assertEqual(info.ip, "1.2.3.4")
+        self.assertEqual(info.ip_proxy, "1.2.3.4")
+        self.assertEqual(info.ip_version, 4)
+
+    def test_valid_xff_is_reversed(self) -> None:
+        # XFF: CLIENT, NEAR_PROXY (nginx is remote_addr)
+        info = net.recover_ips("10.0.0.1", "203.0.113.7, 10.0.0.2")
+        self.assertEqual(info.ip, "10.0.0.1")
+        self.assertEqual(info.ip_proxy, "10.0.0.2")  # Reversed, nearest proxy first
+
+    def test_invalid_entries_are_dropped(self) -> None:
+        # Attacker injected garbage through XFF must never reach consumers
+        for injected in (
+            "<script>alert(1)</script>",
+            "javascript:alert(1)",
+            "not-an-ip",
+            "1.2.3.4.5",
+            "999.999.999.999",
+            "' OR 1=1 --",
+        ):
+            with self.subTest(injected=injected):
+                info = net.recover_ips("10.0.0.1", f"{injected}, 203.0.113.7, {injected}")
+                self.assertEqual(info.ip, "10.0.0.1")
+                self.assertEqual(info.ip_proxy, "203.0.113.7")
+
+    def test_empty_entries_are_dropped(self) -> None:
+        info = net.recover_ips("10.0.0.1", "203.0.113.7, , 10.0.0.2,")
+        self.assertEqual(info.ip, "10.0.0.1")
+        self.assertEqual(info.ip_proxy, "10.0.0.2")
+
+    def test_all_entries_invalid_falls_back_to_remote_addr(self) -> None:
+        info = net.recover_ips("10.0.0.1", "<script>alert(1)</script>, not-an-ip")
+        self.assertEqual(info.ip, "10.0.0.1")
+        self.assertEqual(info.ip_proxy, "10.0.0.1")
+
+    def test_ipv6_zone_id_is_stripped_but_ip_kept(self) -> None:
+        # Zone id (%eth0) is stripped for validation, but the (valid) ip is kept
+        info = net.recover_ips("10.0.0.1", "fe80::1%eth0")
+        self.assertEqual(info.ip, "10.0.0.1")
+        self.assertEqual(info.ip_proxy, "fe80::1")
+        self.assertEqual(info.ip_version, 4)
+
+    def test_ipv6_remote_addr_and_xff(self) -> None:
+        info = net.recover_ips("2001:db8::1", "2001:db8::2, 2001:db8::3")
+        self.assertEqual(info.ip, "2001:db8::1")
+        self.assertEqual(info.ip_proxy, "2001:db8::3")  # Reversed, nearest proxy first
+        self.assertEqual(info.ip_version, 6)
+
+    def test_mixed_v4_v6_xff_keeps_valid_entries_in_order(self) -> None:
+        info = net.recover_ips(
+            "10.0.0.1",
+            "2001:db8::2, not-an-ip, 10.0.0.2, <script>alert(1)</script>",
+        )
+        self.assertEqual(info.ip, "10.0.0.1")
+        self.assertEqual(info.ip_proxy, "10.0.0.2")  # Reversed: last valid entry first
+        self.assertEqual(info.ip_version, 4)
+
+    def test_invalid_ipv6_entries_are_dropped(self) -> None:
+        for injected in (
+            "2001:db8::zzzz",
+            "2001:db8:::1",
+            "fe80::%eth0",  # Zone id alone is not a valid ip after strip
+            "2001:db8::1:2:3:4:5:6:7:8",  # Too many groups
+        ):
+            with self.subTest(injected=injected):
+                info = net.recover_ips("2001:db8::1", f"{injected}, 2001:db8::2")
+                self.assertEqual(info.ip, "2001:db8::1")
+                self.assertEqual(info.ip_proxy, "2001:db8::2")
+                self.assertEqual(info.ip_version, 6)
+
+    def test_ipv4_mapped_ipv6_from_remote_addr_is_normalized(self) -> None:
+        info = net.recover_ips("::ffff:203.0.113.7", "")
+        self.assertEqual(info.ip, "203.0.113.7")
+        self.assertEqual(info.ip_proxy, "203.0.113.7")
+        self.assertEqual(info.ip_version, 4)
+
+    def test_ipv4_mapped_ipv6_from_xff_is_normalized(self) -> None:
+        # Unix socket: empty remote_addr, all entries in IPv4-mapped form
+        info = net.recover_ips("", "::ffff:203.0.113.7, ::ffff:10.0.0.2")
+        self.assertEqual(info.ip, "10.0.0.2")
+        self.assertEqual(info.ip_proxy, "203.0.113.7")
+        self.assertEqual(info.ip_version, 4)
+
+    def test_empty_remote_addr_with_ipv6_xff(self) -> None:
+        info = net.recover_ips("", "2001:db8::2, 2001:db8::3")
+        self.assertEqual(info.ip, "2001:db8::3")
+        self.assertEqual(info.ip_proxy, "2001:db8::2")
+        self.assertEqual(info.ip_version, 6)
+
+    def test_ipv6_falls_back_to_remote_addr_when_all_xff_invalid(self) -> None:
+        info = net.recover_ips("2001:db8::1", "2001:db8::zzzz, <script>alert(1)</script>")
+        self.assertEqual(info.ip, "2001:db8::1")
+        self.assertEqual(info.ip_proxy, "2001:db8::1")
+        self.assertEqual(info.ip_version, 6)
+
+    def test_empty_remote_addr_uses_first_xff_entry(self) -> None:
+        # Unix socket (nginx -> gunicorn): remote_addr is empty
+        info = net.recover_ips("", "203.0.113.7, 10.0.0.2")
+        self.assertEqual(info.ip, "10.0.0.2")
+        self.assertEqual(info.ip_proxy, "203.0.113.7")
+
+    def test_empty_remote_addr_with_invalid_xff(self) -> None:
+        info = net.recover_ips("", "<script>alert(1)</script>")
+        self.assertEqual(info.ip, "")
+        self.assertEqual(info.ip_proxy, "")
+
+
 class NetTest(UDSTestCase):
     def test_network_from_string_ipv4(self) -> None:
         for n in (
@@ -95,7 +212,7 @@ class NetTest(UDSTestCase):
 
         self.assertEqual(net.ip_to_long("192.168.0.5").ip, 3232235525)
         self.assertEqual(net.long_to_ip(3232235525, 4), "192.168.0.5")
-        for n2 in range(0, 255):
+        for n2 in range(255):
             self.assertTrue(net.contains("192.168.0.0/24", f"192.168.0.{n2}"))
 
         for n3 in range(4294):

@@ -31,6 +31,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import collections.abc
 import datetime
+import html
 import logging
 import typing
 import xml.sax  # nosec: used to parse trusted xml provided only by administrators
@@ -588,7 +589,11 @@ class SAMLAuthenticator(auths.Authenticator):
         wants_html = parameters.get("format") == "html"
 
         content_type = "text/html" if wants_html else "application/samlmetadata+xml"
-        info = "<br/>".join(info.replace("<", "&lt;").splitlines()) if parameters.get("format") == "html" else info
+        info = (
+            "<br/>".join(html.escape(line) for line in info.splitlines())
+            if parameters.get("format") == "html"
+            else info
+        )
         return info, content_type  # 'application/samlmetadata+xml')
 
     def mfa_storage_key(self, username: str) -> str:
@@ -667,19 +672,7 @@ class SAMLAuthenticator(auths.Authenticator):
             logger.debug(
                 "Errors processing SAML response: %s (%s)",
                 errors,
-                auth.  # The above code
-                # seems to be a
-                # comment in Python.
-                # It is not
-                # performing any
-                # action in the code
-                # but is simply
-                # providing a
-                # description or
-                # note about the
-                # purpose of the
-                # code that follows.
-                get_last_error_reason(),
+                auth.get_last_error_reason(),
             )  # pyright: ignore reportUnknownVariableType
             logger.debug("post_data: %s", req["post_data"])
             logger.info("Response XML: %s", auth.get_last_response_xml())  # pyright: ignore reportUnknownVariableType

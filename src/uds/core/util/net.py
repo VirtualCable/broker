@@ -357,7 +357,11 @@ def recover_ips(remote_addr: str, xff: str) -> "types.net.IpInfo":
     ip = remote_addr
 
     # X-FORWARDED-FOR: CLIENT, ..., NEAR_PROXY, NGINX  ->  reversed: NGINX, NEAR_PROXY, ..., CLIENT
-    proxies = list(reversed([i.split("%")[0].strip() for i in xff.split(",")]))
+    # Each component must be a valid IP; invalid entries (e.g. injected via XFF
+    # by an attacker to abuse downstream consumers that interpolate the value
+    # unsafely, such as custom authenticator javascript) are dropped.
+    proxies = [stripped for raw in xff.split(",") if is_valid_ip(stripped := raw.split("%")[0].strip())]
+    proxies.reverse()
 
     # Remote addr is empty when using Unix sockets (nginx -> gunicorn)
     if not ip:

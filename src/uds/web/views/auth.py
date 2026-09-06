@@ -32,6 +32,7 @@ import logging
 import random
 import time
 import typing
+from urllib.parse import urlparse
 
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -61,6 +62,25 @@ if typing.TYPE_CHECKING:
     from uds import models
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def _safe_redirect_url(target: str) -> str:
+    """
+    Validates the redirect target returned by authenticators (OAuth2, SAML, ...)
+    through ``Redirect`` / ``Logout`` exceptions.
+
+    Those targets are authoritative: a SAML logout, for example, is a chain of
+    redirects across the IdP and other service providers, so the destination
+    host must not be second-guessed. The only check is that the target is an
+    absolute http(s) URL, as the standards require. Anything else (relative
+    paths, other schemes, empty values) falls back to ``/``.
+    """
+    parsed = urlparse(target)
+    if parsed.scheme in ("http", "https") and parsed.netloc:
+        return target
+    logger.warning("Rejected invalid redirect target from authenticator: %r", target)
+    return "/"
+
 
 # The callback is now a two stage, so we can use cookies samesite policy to "Lax"
 # 1.- First stage:  SESSION COOKIE IS NOT PRESSENT HERE (Redirect from an external url)
@@ -134,11 +154,11 @@ def auth_callback_stage2(request: "ExtendedHttpRequestWithUser", ticket_id: str)
 
         return response
     except exceptions.auth.Redirect as e:
-        return HttpResponseRedirect(request.build_absolute_uri(str(e)) if e.args and e.args[0] else "/")
+        return HttpResponseRedirect(_safe_redirect_url(str(e)) if e.args and e.args[0] else "/")
     except exceptions.auth.Logout as e:
         return weblogout(
             request,
-            request.build_absolute_uri(str(e)) if e.args and e.args[0] else None,
+            _safe_redirect_url(str(e)) if e.args and e.args[0] else None,
         )
     except Exception as e:
         logger.error("Error authenticating user: %s", e)
