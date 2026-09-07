@@ -335,9 +335,9 @@ class Client(Handler):
                     "requiredVersion": consts.system.VERSION_REQUIRED_CLIENT,  # Compat with old clients, TB removed soon...
                     "required_version": consts.system.VERSION_REQUIRED_CLIENT,
                     "downloadUrl": self._request.build_absolute_uri(
-                        reverse("page.client-download")
+                        reverse("page.launcher-download")
                     ),  # Compat with old clients, TB removed soon...
-                    "client_link": self._request.build_absolute_uri(reverse("page.client-download")),
+                    "client_link": self._request.build_absolute_uri(reverse("page.launcher-download")),
                 }
             )
 
