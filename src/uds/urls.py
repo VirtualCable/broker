@@ -91,6 +91,12 @@ urlpatterns = [
         auth.auth_info,
         name="page.auth.info.compat",
     ),
+    # Old download page, renamed to launcher-download
+    path(
+        r"uds/page/client-download",
+        RedirectView.as_view(pattern_name="page.launcher-download", permanent=False),
+        name="page.client-download.compat",
+    ),
     # Ticket authentication
     re_path(
         r"^tkauth/(?P<ticket_id>[a-zA-Z0-9-]+)$",
@@ -132,11 +138,11 @@ urlpatterns = [
         errors.error,
         name="page.error",
     ),
-    # Download plugins URL  (just a placeholder, calls index with data on url for angular)
+    # Launcher download URL  (just a placeholder, calls index with data on url for angular)
     path(
-        r"uds/page/client-download",
+        r"uds/page/launcher-download",
         main.index,
-        name="page.client-download",
+        name="page.launcher-download",
     ),
     # X509 Certificate authentication (nginx-managed)
     re_path(

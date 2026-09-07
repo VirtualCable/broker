@@ -167,7 +167,7 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
             "gallery_image": reverse("webapi.gallery_image", kwargs={"image_id": "param1"}),
             "transport_icon": reverse("webapi.transport_icon", kwargs={"transport_id": "param1"}),
             "static": static(""),
-            "client_download": reverse("page.client-download"),
+            "launcher_download": reverse("page.launcher-download"),
             "update_transport_ticket": reverse(
                 "webapi.transport.update_transport_ticket",
                 kwargs={"ticket_id": "param1", "scrambler": "param2"},
