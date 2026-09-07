@@ -80,7 +80,9 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
     # Filter out non accesible authenticators (using origin)
     authenticators = [
         a
-        for a in Authenticator.get_by_tag(tag, auth_host if GlobalConfig.DISALLOW_GLOBAL_LOGIN.as_bool(True) else None)
+        for a in Authenticator.get_by_tag(
+            tag, auth_host if GlobalConfig.DISALLOW_GLOBAL_LOGIN.as_bool(True) else None
+        )
         if a.get_instance().is_ip_allowed(request)
     ]
 
@@ -192,6 +194,9 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
 
     info: dict[str, typing.Any] | None = None
     if user and user.is_staff():
+        # Append Staff/Admin only parameters to the config.  This is a security measure to avoid exposing
+        # sensitive information to non-staff users.
+        config["mcp"] = GlobalConfig.MCP_ENABLED.as_bool()
         info = {
             "networks": [n.name for n in Network.get_networks_for_ip(request.ip)],
             "transports": [t.name for t in Transport.objects.all() if t.is_ip_allowed(request.ip)],
