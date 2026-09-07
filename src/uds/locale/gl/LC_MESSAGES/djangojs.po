@@ -41,7 +41,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-07 19:58+0200\n"
+"POT-Creation-Date: 2026-09-08 01:40+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: David Alonso, 2026\n"
 "Language-Team: Galician (http://app.transifex.com/openuds/openuds/language/"
@@ -1767,7 +1767,6 @@ msgid "Peak concurrent sessions per pool"
 msgstr "Sesións simultáneas máximas por grupo"
 
 #: static/admin/translations-fakejs.js:479
-#, javascript-format
 msgid "Pool saturation (% of capacity)"
 msgstr "Saturación da piscina (% da capacidade)"
 
@@ -2220,20 +2219,18 @@ msgid "Statistics"
 msgstr "Estatísticas"
 
 #: static/modern/main.js:2106 static/modern/translations-fakejs.js:9
-#, fuzzy
 #| msgid ""
 #| "It seems that you don't have UDS Client installed. Please, install it "
 #| "from here:"
 msgid ""
 "It seems that you don't have UDS Launcher installed. Please, install it from "
 "here:"
-msgstr "Parece que non tes instalado o cliente UDS. Instálao desde aquí:"
+msgstr "Parece que non tes instalado UDS Launcher. Instálao desde aquí:"
 
 #: static/modern/main.js:2107 static/modern/translations-fakejs.js:10
-#, fuzzy
 #| msgid "UDS Client Download"
 msgid "UDS Launcher Download"
-msgstr "Descarga do cliente UDS"
+msgstr "Descarga do lanzador UDS"
 
 #: static/modern/translations-fakejs.js:3
 msgid "Launching service"
@@ -2250,7 +2247,6 @@ msgstr "Agarde ata que se lance o servizo."
 
 #: static/modern/translations-fakejs.js:6
 #: static/modern/translations-fakejs.js:14
-#, fuzzy
 #| msgid ""
 #| "Remember that you will need the UDS client on your platform to access the "
 #| "service."
@@ -2258,7 +2254,7 @@ msgid ""
 "Remember that you will need the UDS launcher on your platform to access the "
 "service."
 msgstr ""
-"Lembra que necesitarás o cliente UDS na túa plataforma para acceder ao "
+"Lembra que precisarás o lanzador UDS na túa plataforma para acceder ao "
 "servizo."
 
 #: static/modern/translations-fakejs.js:7
@@ -2267,16 +2263,14 @@ msgid "Service ready"
 msgstr "Servizo listo"
 
 #: static/modern/translations-fakejs.js:8
-#, fuzzy
 #| msgid "UDS Client not launching"
 msgid "UDS Launcher not launching"
-msgstr "O cliente UDS non se inicia"
+msgstr "O lanzador UDS non se inicia"
 
 #: static/modern/translations-fakejs.js:12
-#, fuzzy
 #| msgid "Launching UDS Client...</br>Please wait."
 msgid "Launching UDS Launcher...</br>Please wait."
-msgstr "Iniciando o cliente UDS...</br> Por favor, agarde."
+msgstr "Iniciando o iniciador de UDS...</br>Agarde, por favor."
 
 #: static/modern/translations-fakejs.js:15
 msgid "Error communicating with your service. Please, retry again."
@@ -2425,10 +2419,9 @@ msgstr "{{ api.isDarkTheme ? 'Light theme' : 'Dark theme' }}"
 #: static/modern/translations-fakejs.js:60
 #: static/modern/translations-fakejs.js:62
 #: static/modern/translations-fakejs.js:95
-#, fuzzy
 #| msgid "Launcher"
 msgid "UDS Launcher"
-msgstr "Lanzador"
+msgstr "Lanzador UDS"
 
 #: static/modern/translations-fakejs.js:61
 #: static/modern/translations-fakejs.js:63
@@ -2497,7 +2490,6 @@ msgid "To relaunch service, you will have to do it from origin."
 msgstr "Para relanzar o servizo, terás que facelo desde a orixe."
 
 #: static/modern/translations-fakejs.js:90
-#, fuzzy
 #| msgid ""
 #| "If the service does not launchs automatically, probably you dont have the "
 #| "UDS Client installed"
@@ -2506,17 +2498,16 @@ msgid ""
 "UDS Launcher installed"
 msgstr ""
 "Se o servizo non se inicia automaticamente, probablemente non teñas "
-"instalado o cliente UDS."
+"instalado o lanzador de UDS."
 
 #: static/modern/translations-fakejs.js:91
 msgid "You can obtain it from the"
 msgstr "Podes obtelo do"
 
 #: static/modern/translations-fakejs.js:92
-#, fuzzy
 #| msgid "UDS Client download page"
 msgid "UDS Launcher download page"
-msgstr "Páxina de descarga do cliente UDS"
+msgstr "Páxina de descarga do lanzador de UDS"
 
 #: static/modern/translations-fakejs.js:93
 msgid "An error has occurred"
@@ -2527,10 +2518,9 @@ msgid "Return"
 msgstr "Volver"
 
 #: static/modern/translations-fakejs.js:96
-#, fuzzy
 #| msgid "Download UDS client for your platform"
 msgid "Download UDS launcher for your platform"
-msgstr "Descarga o cliente UDS para a túa plataforma"
+msgstr "Descarga o lanzador UDS para a túa plataforma"
 
 #: static/modern/translations-fakejs.js:97
 msgid "Login Verification"
