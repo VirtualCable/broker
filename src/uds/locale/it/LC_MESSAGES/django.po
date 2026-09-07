@@ -9573,8 +9573,8 @@ msgid ""
 "Charts show the %(charted_servers)s busiest servers of %(total_servers)s; "
 "the table below lists them all."
 msgstr ""
-"I grafici mostrano il %(charted_servers) server più occupati di %"
-"(total_servers); la tabella seguente li elenca tutti."
+"I grafici mostrano i %(charted_servers)s server più occupati di %"
+"(total_servers)s; la tabella seguente li elenca tutti."
 
 #: templates/uds/reports/stats/server-balance.html:18
 #| msgid "Usage by group"

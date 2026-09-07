@@ -9056,7 +9056,7 @@ msgid ""
 "Charts show the %(charted_servers)s busiest servers of %(total_servers)s; "
 "the table below lists them all."
 msgstr ""
-"图表显示 %(charted_servers) 最繁忙的服务器 %(total_servers)s；下表列出了所有"
+"图表显示 %(charted_servers)s 最繁忙的服务器 %(total_servers)s；下表列出了所有"
 "服务器。"
 
 #: templates/uds/reports/stats/server-balance.html:18

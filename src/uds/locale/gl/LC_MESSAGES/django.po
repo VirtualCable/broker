@@ -9535,7 +9535,7 @@ msgid ""
 "Charts show the %(charted_servers)s busiest servers of %(total_servers)s; "
 "the table below lists them all."
 msgstr ""
-"Os gráficos mostran o %de (servidores_gráficos) servidores máis activos de %"
+"Os gráficos mostran os %(charted_servers)s servidores máis activos de %"
 "(total_servers)s; a táboa seguinte enuméraos todos."
 
 #: templates/uds/reports/stats/server-balance.html:18

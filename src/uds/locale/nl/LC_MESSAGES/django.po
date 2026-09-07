@@ -9631,8 +9631,8 @@ msgid ""
 "Charts show the %(charted_servers)s busiest servers of %(total_servers)s; "
 "the table below lists them all."
 msgstr ""
-"Grafieken tonen de %(charted_servers)s drukste servers van %(totaal_servers)"
-"s; de tabel hieronder geeft ze allemaal weer."
+"Grafieken tonen de %(charted_servers)s drukste servers van %"
+"(total_servers)s; de tabel hieronder geeft ze allemaal weer."
 
 #: templates/uds/reports/stats/server-balance.html:18
 #| msgid "Usage by group"

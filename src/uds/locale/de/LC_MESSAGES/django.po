@@ -9638,7 +9638,7 @@ msgid ""
 "the table below lists them all."
 msgstr ""
 "Diagramme zeigen die %(charted_servers)s am stärksten frequentierte Server "
-"von %(total_servers); die folgende Tabelle listet sie alle auf."
+"von %(total_servers)s; die folgende Tabelle listet sie alle auf."
 
 #: templates/uds/reports/stats/server-balance.html:18
 #| msgid "Usage by group"
