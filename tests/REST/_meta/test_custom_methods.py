@@ -132,7 +132,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             ("ServersServers", "importcsv", "POST"),
             ("Users", "clean_related", "POST"),
             ("Users", "add_to_group", "POST"),
-            ("Users", "enable_client_logging", "POST"),
+            ("Users", "enable_launcher_logging", "POST"),
             ("Users", "token", "POST"),
         }
     )
@@ -450,12 +450,12 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 200, f"add_to_group with group: {response.status_code}")
         self.assertEqual(response.json(), {"status": "ok"})
 
-    def test_users_enable_client_logging_dispatches(self) -> None:
-        """POST /authenticators/{id}/users/{uid}/enable_client_logging → 200 (detail)."""
+    def test_users_enable_launcher_logging_dispatches(self) -> None:
+        """POST /authenticators/{id}/users/{uid}/enable_launcher_logging → 200 (detail)."""
         user = self.admins[0]
-        url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/enable_client_logging"
+        url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/enable_launcher_logging"
         response = self.client.rest_post(url)
-        self.assertEqual(response.status_code, 200, f"enable_client_logging: {response.status_code}")
+        self.assertEqual(response.status_code, 200, f"enable_launcher_logging: {response.status_code}")
         self.assertEqual(response.json(), {"status": "ok"})
 
     # ------------------------------------------------------------------
@@ -486,12 +486,12 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         # Dispatched correctly (GET→POST in COMPAT) but fails because 'group' param is missing
         self.assertEqual(response.status_code, 400, f"GET add_to_group: {response.status_code}")
 
-    def test_get_enable_client_logging_works_in_compat(self) -> None:
-        """GET /authenticators/{id}/users/{uid}/enable_client_logging → 200 + deprecation."""
+    def test_get_enable_launcher_logging_works_in_compat(self) -> None:
+        """GET /authenticators/{id}/users/{uid}/enable_launcher_logging → 200 + deprecation."""
         user = self.admins[0]
-        url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/enable_client_logging"
+        url = f"authenticators/{self.auth.uuid}/users/{user.uuid}/enable_launcher_logging"
         response = self.client.rest_get(url)
-        self.assertEqual(response.status_code, 200, f"GET enable_client_logging: {response.status_code}")
+        self.assertEqual(response.status_code, 200, f"GET enable_launcher_logging: {response.status_code}")
         self.assertIn("Deprecation", response)
         self.assertIn("Sunset", response)
 
@@ -501,8 +501,8 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
     def test_camelcase_url_emits_deprecation_in_compat(self) -> None:
         """Legacy camelCase URL → 200 + deprecation headers in COMPAT mode.
 
-        `cleanRelated` (camelCase) and `enableClientLogging` (camelCase)
-        are equivalent to `clean_related` / `enable_client_logging`
+        `cleanRelated` (camelCase) and `enableLauncherLogging` (camelCase)
+        are equivalent to `clean_related` / `enable_launcher_logging`
         (snake_case). The server still dispatches correctly but adds
         deprecation headers so clients can migrate.
         """
