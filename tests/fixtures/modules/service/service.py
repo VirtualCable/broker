@@ -34,7 +34,8 @@ import typing
 
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services
+from uds.core import services, types
+from uds.core.util import fields
 
 from .deployment import TestUserService
 from .publication import TestPublication
@@ -115,3 +116,34 @@ class TestServiceCache(services.Service):
 
     def get_basename(self) -> str:
         return self.provider().get_name()
+
+
+class TestServiceWithServerGroup(services.Service):
+    """
+    Testing service whose UI resolves its choices from the database.
+
+    ``server_group_field`` builds its choices with a ``ServerGroup`` query run
+    while the instance is created, so serializing this service reaches the ORM.
+    Used to pin that the MCP surface materializes items off the event loop.
+    """
+
+    type_name = _("Testing Service with server group")
+    type_type = "TestService3"
+    type_description = _("Testing (and dummy) service whose choices come from the database")
+    icon_file = "service.png"
+
+    userservices_limit = 1000
+    uses_cache = False
+    uses_cache_l2 = False
+    needs_osmanager = False
+
+    publication_type = None
+    user_service_type = TestUserService
+
+    server_group = fields.server_group_field(
+        [types.servers.ServerType.SERVER, types.servers.ServerType.UNMANAGED], types.servers.IP_SUBTYPE
+    )
+
+    @typing.override
+    def provider(self) -> "TestProvider":
+        return typing.cast("TestProvider", super().provider())
