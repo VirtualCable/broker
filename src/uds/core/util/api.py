@@ -479,9 +479,10 @@ def gen_odata_parameters() -> list[types.rest.api.Parameter]:
             required=False,
             description=(
                 "When present, sensitive values (module-declared passwords and secrets) "
-                "are replaced with the marker 'REDACTED'. Redacted items carry a "
-                "'redacted': true flag. Read-only: write requests with this parameter "
-                "are rejected, and writing the marker value on a sensitive field fails."
+                "are replaced with the marker 'REDACTED'. Every returned item then carries "
+                "a '_redacted' boolean flag, true when that item contains redacted values. "
+                "Read-only: requests that write items carrying this parameter, or the "
+                "'_redacted' flag itself, are rejected."
             ),
             schema=types.rest.api.Schema(type="string"),
         ),
