@@ -117,3 +117,11 @@ from .mfa import MFA as MFA
 
 # Immutable audit log (blockchain-like hash chain)
 from .immutable_log import ImmutableLog as ImmutableLog
+
+# Proposed change flows (created by users/AI agents, approved by admins)
+from .action_flow import (
+    ActionFlow as ActionFlow,
+    FlowAction as FlowAction,
+    FlowActionStatus as FlowActionStatus,
+    FlowStatus as FlowStatus,
+)
