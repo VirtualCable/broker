@@ -132,9 +132,9 @@ class Users(DetailHandler[UserItem]):
             ),
         ),
         types.rest.ModelCustomMethod(
-            "enable_client_logging",
+            "enable_launcher_logging",
             method=types.rest.CustomMethodMethod.POST,
-            description="Enable or disable client-side logging for this user (toggles on each invocation)",
+            description="Enable or disable Launcher-side logging for this user (toggles on each invocation)",
         ),
         types.rest.ModelCustomMethod(
             "token",
@@ -400,15 +400,17 @@ class Users(DetailHandler[UserItem]):
         user.groups.add(group)
         return {"status": "ok"}
 
-    def enable_client_logging(self, parent: "Model", item: str) -> dict[str, str]:
+    def enable_launcher_logging(self, parent: "Model", item: str) -> dict[str, str]:
         parent = ensure.is_instance(parent, Authenticator)
         user = parent.users.get(uuid=process_uuid(item))
         user.log(
-            f"Client logging enabled by {self._user.pretty_name}",
+            f"Launcher logging enabled by {self._user.pretty_name}",
             types.log.LogLevel.INFO,
             types.log.LogSource.REST,
         )
         with user.properties as props:
+            # The property keeps its old name: it is stored data, and 4.0 and
+            # earlier installations upgrading to 5.0 carry rows written under it.
             props["client_logging"] = sql_stamp_seconds()
 
         return {"status": "ok"}
