@@ -223,12 +223,14 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     def _mark_redacted_items(self, items: types.rest.ItemsResult[T_Item]) -> types.rest.ItemsResult[T_Item]:
         """Flags managed items for redaction when ``$redacted`` was requested."""
         if self._odata.redacted:
+            # Materialize the (possibly lazy) iterator so flags reach the
+            # items before serialization
             result = list(items)
             for item in result:
                 if isinstance(item, types.rest.ManagedObjectItem):
-                    item.redacted = True
+                    item._redacted = True
             return result
-        return list(items)
+        return items
 
     def get(self) -> typing.Any:
         """

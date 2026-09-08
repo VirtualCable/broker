@@ -450,7 +450,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             result = list(items)
             for item in result:
                 if isinstance(item, types.rest.ManagedObjectItem):
-                    item.redacted = True
+                    item._redacted = True
             return result
         return items
 
@@ -498,7 +498,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                         if isinstance(flagged, types.rest.ManagedObjectItem) and self._odata.redacted:
                             # After the etag computation, so it keeps being
                             # computed over the real values
-                            flagged.redacted = True
+                            flagged._redacted = True
                         # Append etag header
                         self.add_header("ETag", etag)
                         return response
