@@ -43,6 +43,9 @@ from .uuid_model import UUIDModel
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+if typing.TYPE_CHECKING:
+    from django.db.models.manager import RelatedManager
+
 
 class ActionFlow(UUIDModel, properties.PropertiesMixin):
     """
@@ -78,7 +81,7 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
     created = models.DateTimeField(default=sql_now, blank=True)
 
     # "fake" declarations for type checking
-    # objects: 'models.manager.Manager["ActionFlow"]'
+    actions: "RelatedManager[FlowAction]"
 
     class Meta:  # pyright: ignore
         """

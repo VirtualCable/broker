@@ -12,25 +12,19 @@ allowed from the MCP async event loop.
 """
 
 import collections.abc
-import datetime
 import typing
 
 from asgiref.sync import sync_to_async
 
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
+from uds.core.types.mcp import FlowStatus
 from uds.core.util import permissions
 
 from ..catalog import Catalog, ToolDefinition
 from . import registry
-from .actions import (
-    MAX_PENDING_PER_USER,
-    ActionStatus,
-    MutabilityError,
-    PendingAction,
-)
 from .base import JsonObject, REDACTED
-from .storage import PendingActionStore
+from .store import FlowStore, MutabilityError, NotActionOwner
 
 JsonDict = dict[str, typing.Any]
 
@@ -51,19 +45,21 @@ def _agent_name(request: typing.Any) -> str:
     return str(meta.get("HTTP_USER_AGENT", "") or "")
 
 
-def _own_pending_action(store: PendingActionStore, user: typing.Any, action_id: str) -> PendingAction:
-    action = store.get(action_id)
+def _own_flow_action(store: FlowStore, user: typing.Any, action_id: str) -> tuple[typing.Any, typing.Any]:
+    """The action with this id and its flow, both owned by ``user``."""
+    action = store.get_action(action_id)
     if action is None:
         raise ValueError(f"No pending action with id {action_id}")
-    if action.owner_uuid != user.uuid:
-        raise rest_exceptions.AccessDenied()
-    return action
+    flow = action.flow
+    if flow.owner is None or str(flow.owner.uuid) != str(user.uuid):
+        raise NotActionOwner(f"Action {action_id} does not belong to user {user.uuid}")
+    return action, flow
 
 
-def action_type_of(action: PendingAction) -> registry.MutableActionType:
-    found = registry.get(action.type_id)
+def action_type_of(action: typing.Any) -> registry.MutableActionType:
+    found = registry.get(action.action_type)
     if found is None:
-        raise MutabilityError(f"Unknown action type {action.type_id}")
+        raise MutabilityError(f"Unknown action type {action.action_type}")
     return found
 
 
@@ -89,6 +85,7 @@ def _propose_sync(
     if not isinstance(values, dict) or not values:
         raise ValueError("values is required and must be a non-empty object")
     values = typing.cast("dict[str, typing.Any]", values)
+    justification = str(arguments.get("justification", "") or "")
 
     target = action_type.resolve_target(target_uuid)
     for_type = action_type.for_type_of(target)
@@ -99,26 +96,27 @@ def _propose_sync(
     if errors:
         raise ValueError("; ".join(errors))
 
-    store = PendingActionStore()
-    if store.count_pending(owner_uuid=str(user.uuid)) >= MAX_PENDING_PER_USER:
-        raise MutabilityError(
-            f"Too many pending proposals (limit {MAX_PENDING_PER_USER}). Cancel some before proposing more."
-        )
-
-    base_values, base_etag = action_type.snapshot_and_fingerprint(target, values)
-    action = PendingAction.create(
-        type_id=action_type.type_id,
-        owner_uuid=str(user.uuid),
+    store = FlowStore()
+    flow = store.create_flow(
+        owner=user,
         agent=_agent_name(request),
+        name=action_type.title,
+        justification=justification,
+    )
+    base_values, base_etag = action_type.snapshot_and_fingerprint(target, values)
+    action = store.add_action(
+        flow,
+        action_type=action_type.type_id,
         target_uuid=target_uuid,
         values=dict(values),
         base_values=base_values,
         base_etag=base_etag,
+        justification=justification,
     )
-    store.save(action)
     return {
-        "id": action.id,
-        "status": action.status.value,
+        "id": action.uuid,
+        "flow_id": flow.uuid,
+        "status": action.status,
         "message": "Proposal queued. It does NOT take effect until an administrator approves it.",
         "proposal": action_type.describe(action),
     }
@@ -153,31 +151,40 @@ def _discovery_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
 
 def _list_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     user = _request_user(request)
-    store = PendingActionStore()
-    status_raw = arguments.get("status")
-    status = ActionStatus(str(status_raw)) if status_raw else None
+    store = FlowStore()
+    status_raw = str(arguments.get("status", "") or "")
     type_filter = arguments.get("action_type")
     action_type = registry.get(str(type_filter)) if type_filter else None
     result: list[JsonDict] = []
-    for action in store.list(status=status, owner_uuid=str(user.uuid)):
-        if action_type is not None and action.type_id != action_type.type_id:
+    for action in store.list_actions(
+        owner_uuid=str(user.uuid),
+        action_type=action_type.type_id if action_type else None,
+    ):
+        # Status filter matches either the action lifecycle or the
+        # decision taken on its flow (cancelled/rejected/expired are
+        # flow-level states).
+        if status_raw and action.status != status_raw and action.flow.status != status_raw:
             continue
         item: JsonDict = {
-            "id": action.id,
-            "type": action.type_id,
+            "id": action.uuid,
+            "flow": {
+                "id": action.flow.uuid,
+                "name": action.flow.name,
+                "status": action.flow.status,
+            },
+            "type": action.action_type,
             "target": action.target_uuid,
-            "status": action.status.value,
+            "status": action.status,
             "created": action.created.isoformat(),
-            "result": action.result,
+            "result": action.properties.get("result"),
         }
-        if action.status == ActionStatus.PENDING:
+        if action.flow.status == FlowStatus.PENDING:
             try:
                 item["proposal"] = action_type_of(action).describe(action)
             except Exception:
                 item["proposal"] = {"changes": {name: REDACTED for name in sorted(action.values)}}
         else:
-            item["decided_by"] = action.decided_by
-            item["decided_at"] = action.decided_at.isoformat() if action.decided_at else None
+            item["decided_by"] = action.flow.properties.get("decided_by")
         result.append(item)
     return {"items": result, "count": len(result)}
 
@@ -192,12 +199,12 @@ def _update_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
         raise ValueError("values is required and must be a non-empty object")
     values = typing.cast("dict[str, typing.Any]", values)
 
-    store = PendingActionStore()
-    action = _own_pending_action(store, user, action_id)
-    if action.status != ActionStatus.PENDING:
-        # Decided proposals are terminal: nobody mutates them, not even
+    store = FlowStore()
+    action, flow = _own_flow_action(store, user, action_id)
+    if flow.status != FlowStatus.PENDING:
+        # Decided flows are terminal: nobody mutates them, not even
         # the owner (a change of mind means proposing a new action).
-        raise ValueError(f"Action {action_id} is {action.status.value}, only pending actions can be updated")
+        raise ValueError(f"Action {action_id} is {flow.status}, only pending actions can be updated")
     action_type = action_type_of(action)
 
     target = action_type.resolve_target(action.target_uuid)
@@ -211,11 +218,11 @@ def _update_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     action.values = dict(values)
     action.base_values = base_values
     action.base_etag = base_etag
-    action.updated = datetime.datetime.now(datetime.UTC)
-    store.save(action)
+    action.save(update_fields=["values", "base_values", "base_etag"])
     return {
-        "id": action.id,
-        "status": action.status.value,
+        "id": action.uuid,
+        "flow_id": flow.uuid,
+        "status": action.status,
         "message": "Proposal updated. It does NOT take effect until an administrator approves it.",
         "proposal": action_type.describe(action),
     }
@@ -226,11 +233,18 @@ def _cancel_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     action_id = str(arguments.get("id", "") or "")
     if not action_id.strip():
         raise ValueError("id is required")
-    store = PendingActionStore()
-    action = _own_pending_action(store, user, action_id)
-    action.cancel(actor_uuid=str(user.uuid))
-    store.save(action)
-    return {"id": action.id, "status": action.status.value, "message": "Proposal cancelled."}
+    store = FlowStore()
+    action, flow = _own_flow_action(store, user, action_id)
+    # Decisions are flow-level: cancelling withdraws the whole proposal
+    store.cancel_flow(flow, actor_uuid=str(user.uuid))
+    action.refresh_from_db()
+    return {
+        "id": action.uuid,
+        "flow_id": flow.uuid,
+        "status": action.status,
+        "flow_status": flow.status,
+        "message": "Proposal cancelled.",
+    }
 
 
 def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
@@ -315,14 +329,18 @@ def _list_tool() -> ToolDefinition:
         description=(
             "The proposals created with this identity, with their state. Approved and rejected "
             "proposals keep their outcome (result), so follow-up sessions can see what happened. "
-            "Secret values are always redacted."
+            "Secret values are always redacted. Each item carries its proposal flow; decisions "
+            "(rejected, cancelled, expired) happen at flow level."
         ),
         input_schema={
             "type": "object",
             "properties": {
                 "status": {
                     "type": "string",
-                    "description": "Optional filter: pending, approved, rejected, cancelled, expired or failed.",
+                    "description": (
+                        "Optional filter, matching the action or its flow: pending, approved, executing, "
+                        "executed, failed, skipped, rejected, cancelled or expired."
+                    ),
                 },
                 "action_type": {
                     "type": "string",

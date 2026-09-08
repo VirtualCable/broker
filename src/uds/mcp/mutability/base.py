@@ -20,9 +20,10 @@ from django.db import models as db_models
 from uds.core import types
 from uds.REST.handlers import Handler
 
-from .actions import PendingAction
-
 JsonObject = dict[str, typing.Any]
+
+if typing.TYPE_CHECKING:
+    from uds.models import FlowAction
 
 SECRET_FIELD_TYPES: typing.Final[frozenset[types.ui.FieldType]] = frozenset(
     {types.ui.FieldType.PASSWORD, types.ui.FieldType.HIDDEN}
@@ -83,7 +84,7 @@ class MutableActionType(abc.ABC):
         """Current whole-item fingerprint (CAS soft-notice base)."""
 
     @abc.abstractmethod
-    async def execute(self, action: PendingAction, request: typing.Any) -> str:
+    async def execute(self, action: "FlowAction", request: typing.Any) -> str:
         """Apply the approved action through the canonical REST machinery.
 
         Runs as the approving administrator (the request owner), so
@@ -142,7 +143,7 @@ class MutableActionType(abc.ABC):
             errors.append(f"unknown fields: {', '.join(unknown)} (accepted: {accepted})")
         return errors
 
-    def describe(self, action: PendingAction) -> JsonObject:
+    def describe(self, action: "FlowAction") -> JsonObject:
         """Representation for the agent (secrets masked).
 
         If the target (or its type) has vanished, every value is masked:
@@ -155,14 +156,14 @@ class MutableActionType(abc.ABC):
         except Exception:
             secrets = set(flat)
         return {
-            "type": action.type_id,
+            "type": action.action_type,
             "target": action.target_uuid,
-            "status": action.status.value,
+            "status": action.status,
             "changes": {name: (REDACTED if name in secrets else flat.get(name)) for name in sorted(flat)},
             "secrets_changed": sorted(set(flat) & secrets),
         }
 
-    def diff(self, action: PendingAction) -> JsonObject:
+    def diff(self, action: "FlowAction") -> JsonObject:
         """Fresh representation for the administrator (CAS checked now).
 
         Secrets are included: visibility is decided by the admin
@@ -178,9 +179,9 @@ class MutableActionType(abc.ABC):
         )
         item_changed = self.fingerprint(target) != action.base_etag
         return {
-            "type": action.type_id,
+            "type": action.action_type,
             "target": action.target_uuid,
-            "status": action.status.value,
+            "status": action.status,
             "proposed": action.values,
             "current": current,
             "stale_fields": stale_fields,

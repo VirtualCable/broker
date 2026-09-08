@@ -19,7 +19,6 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from . import base as mutability_base
-from .actions import PendingAction
 from .etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -143,7 +142,7 @@ class ProviderUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(self.for_type_of(target)))
 
     @typing.override
-    async def execute(self, action: PendingAction, request: typing.Any) -> str:
+    async def execute(self, action: "models.FlowAction", request: typing.Any) -> str:
         provider = typing.cast(models.Provider, self.resolve_target(action.target_uuid))
         await RestProxy().execute(
             RestTarget(

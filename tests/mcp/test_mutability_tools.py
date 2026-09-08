@@ -8,17 +8,17 @@ from unittest import mock
 
 from uds.REST.methods.providers import Providers
 from uds.core import types
+from uds.core.types.mcp import FlowActionStatus
 from uds.core.util import permissions
 from uds.core.util.config import GlobalConfig
 from uds.mcp.default_catalog import get_catalog
 from uds.mcp.mutability import (
-    ActionStatus,
-    PendingAction,
-    PendingActionStore,
+    FlowStore,
     all_types,
     get as registry_get,
 )
 from uds.mcp.mutability.types_providers import ProviderUpdate
+from uds.models import FlowAction
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
 from tests.fixtures.services import create_db_provider
@@ -33,6 +33,18 @@ _MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "update_pending_action",
     "cancel_pending_action",
 )
+
+
+def _action(**kwargs: typing.Any) -> FlowAction:
+    """Build a minimal (unsaved) action for type-level tests."""
+    return FlowAction(
+        action_type=kwargs.get("action_type", "provider.update"),
+        target_uuid=kwargs.get("target_uuid", "target-1"),
+        values=kwargs.get("values", {"name": "new name"}),
+        base_values=kwargs.get("base_values", {"name": "old name"}),
+        base_etag=kwargs.get("base_etag", "abc123"),
+        status=FlowActionStatus.PENDING,
+    )
 
 
 class MutabilityRegistryTest(unittest.TestCase):
@@ -66,7 +78,9 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
             self.assertIn("type", definition)
 
     def test_flatten_values(self) -> None:
-        flat = self.action_type.flatten_values({"name": "n", "instance": {"host": "h", "port": 1}, "tags": ["t"]})
+        flat = self.action_type.flatten_values(
+            {"name": "n", "instance": {"host": "h", "port": 1}, "tags": ["t"]}
+        )
         self.assertEqual(flat, {"name": "n", "tags": ["t"], "instance.host": "h", "instance.port": 1})
 
     def test_validate_values_accepts_known_fields(self) -> None:
@@ -95,10 +109,7 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
     def test_diff_detects_stale_base_and_changed_item(self) -> None:
         values = {"name": "proposed name"}
         base_values, base_etag = self.action_type.snapshot_and_fingerprint(self.provider, values)
-        action = PendingAction.create(
-            type_id="provider.update",
-            owner_uuid="someone",
-            agent="test",
+        action = _action(
             target_uuid=self.provider.uuid,
             values=values,
             base_values=base_values,
@@ -123,10 +134,7 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
             def secret_names(self, for_type: str) -> set[str]:
                 return {"name"}
 
-        action = PendingAction.create(
-            type_id="provider.update",
-            owner_uuid="someone",
-            agent="test",
+        action = _action(
             target_uuid=self.provider.uuid,
             values={"name": "new-secret-value", "comments": "visible"},
             base_values={"name": "old", "comments": "old"},
@@ -138,10 +146,7 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
         self.assertEqual(described["secrets_changed"], ["name"])
 
     def test_execute_builds_canonical_put(self) -> None:
-        action = PendingAction.create(
-            type_id="provider.update",
-            owner_uuid="someone",
-            agent="test",
+        action = _action(
             target_uuid=self.provider.uuid,
             values={"name": "new-name", "instance": {"host": "h"}},
             base_values={"name": "old", "instance.host": "old"},
@@ -176,7 +181,7 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         # Fresh provider: create_db_provider also registers its test module
         # on the factory, so the gui machinery can resolve its data_type.
         self.provider = create_db_provider()
-        self.store = PendingActionStore()
+        self.store = FlowStore()
 
     @typing.override
     def tearDown(self) -> None:
@@ -187,7 +192,12 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "mcp",
             data=json.dumps(
-                {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": arguments}}
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {"name": name, "arguments": arguments},
+                }
             ).encode("utf-8"),
         )
         self.assertEqual(response.status_code, 200, response.content)
@@ -228,16 +238,18 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.assertIn("administrator", result["message"])
         self.assertEqual(result["proposal"]["changes"]["name"], "renamed by agent")
 
-        stored = self.store.get(action_id)
+        stored = self.store.get_action(action_id)
         assert stored is not None
-        self.assertEqual(stored.status, ActionStatus.PENDING)
+        self.assertEqual(stored.status, FlowActionStatus.PENDING)
         self.assertEqual(stored.values, {"name": "renamed by agent"})
+        self.assertEqual(stored.flow.status, "pending")
 
         listing = self._result_json(self._call("list_pending_actions", {}))
         self.assertEqual(listing["count"], 1)
         item = listing["items"][0]
         self.assertEqual(item["id"], action_id)
         self.assertEqual(item["status"], "pending")
+        self.assertEqual(item["flow"]["status"], "pending")
         self.assertEqual(item["proposal"]["changes"]["name"], "renamed by agent")
 
     def test_propose_reports_unknown_fields(self) -> None:
@@ -253,17 +265,21 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
             self._call("update_pending_action", {"id": action_id, "values": {"name": "v2", "comments": "c"}})
         )
         self.assertEqual(updated["proposal"]["changes"]["name"], "v2")
-        stored = self.store.get(action_id)
+        stored = self.store.get_action(action_id)
         assert stored is not None
         self.assertEqual(stored.values, {"name": "v2", "comments": "c"})
         # Re-based CAS: base now matches the untouched current state
         self.assertEqual(stored.base_values, {"name": self.provider.name, "comments": self.provider.comments})
 
         cancelled = self._result_json(self._call("cancel_pending_action", {"id": action_id}))
-        self.assertEqual(cancelled["status"], "cancelled")
-        stored = self.store.get(action_id)
+        # The decision is flow-level: the flow is cancelled, its pending
+        # action is skipped
+        self.assertEqual(cancelled["flow_status"], "cancelled")
+        self.assertEqual(cancelled["status"], "skipped")
+        stored = self.store.get_action(action_id)
         assert stored is not None
-        self.assertEqual(stored.status, ActionStatus.CANCELLED)
+        self.assertEqual(stored.status, FlowActionStatus.SKIPPED)
+        self.assertEqual(stored.flow.status, "cancelled")
 
         # Decided proposals are terminal: no further updates
         body = self._call("update_pending_action", {"id": action_id, "values": {"name": "v3"}})
@@ -285,7 +301,7 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.assertNotIn("error", body, body)
 
     def test_propose_enforces_pending_cap(self) -> None:
-        with mock.patch("uds.mcp.mutability.tools.MAX_PENDING_PER_USER", 2):
+        with mock.patch("uds.core.consts.mcp.MAX_FLOWS_PER_USER", 2):
             self._result_json(self._propose({"name": "one"}))
             self._result_json(self._propose({"name": "two"}))
             body = self._propose({"name": "three"})
