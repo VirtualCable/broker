@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Virtual Cable S.L.
+# Copyright (c) 2025 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -29,32 +29,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from . import auth as auth
-from . import calendar as calendar
-from . import connections as connections
-from . import core as core
-from . import crypto as crypto
-from . import downloads as downloads
-from . import errors as errors
-from . import log as log
-from . import mcp as mcp
-from . import net as net
-from . import os as os
-from . import osmanagers as osmanagers
-from . import permissions as permissions
-from . import plugins as plugins
-from . import pools as pools
-from . import requests as requests
-from . import rest as rest
-from . import security as security
-from . import servers as servers
-from . import services as services
-from . import states as states
-from . import stats as stats
-from . import tickets as tickets
-from . import transports as transports
-from . import ui as ui
+import typing
 
-# Log is not imported here, as it is a special case with lots of dependencies
-# Preferences must be include explicitly, as it is not a "normal use" type
+# Maximum pending flows an user (normally an AI agent acting on their behalf)
+# can have at once. Creating a new flow beyond this limit is refused.
+MAX_FLOWS_PER_USER: typing.Final[int] = 20
+
+# Maximum actions inside a single flow. Keeps proposals small enough to be
+# reviewed (and approved) as a whole.
+MAX_ACTIONS_PER_FLOW: typing.Final[int] = 8
+
+# Days a flow stays valid after creation. Pending flows older than this are
+# expired by the application layer.
+FLOW_TTL_DAYS: typing.Final[int] = 7

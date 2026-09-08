@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Virtual Cable S.L.
+# Copyright (c) 2025 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -29,32 +29,50 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-# pyright: reportUnusedImport=false
-from . import auth as auth
-from . import calendar as calendar
-from . import connections as connections
-from . import core as core
-from . import crypto as crypto
-from . import downloads as downloads
-from . import errors as errors
-from . import log as log
-from . import mcp as mcp
-from . import net as net
-from . import os as os
-from . import osmanagers as osmanagers
-from . import permissions as permissions
-from . import plugins as plugins
-from . import pools as pools
-from . import requests as requests
-from . import rest as rest
-from . import security as security
-from . import servers as servers
-from . import services as services
-from . import states as states
-from . import stats as stats
-from . import tickets as tickets
-from . import transports as transports
-from . import ui as ui
+import enum
 
-# Log is not imported here, as it is a special case with lots of dependencies
-# Preferences must be include explicitly, as it is not a "normal use" type
+
+class FlowStatus(enum.StrEnum):
+    """Status of an ActionFlow (a proposed sequence of changes)."""
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+    EXECUTING = "executing"
+    EXECUTED = "executed"
+    FAILED = "failed"
+
+    @staticmethod
+    def as_choices() -> tuple[tuple[str, str], ...]:
+        return tuple((f.value, f.value.capitalize()) for f in FlowStatus)
+
+    @staticmethod
+    def from_str(value: str) -> "FlowStatus":
+        try:
+            return FlowStatus[value.upper()]
+        except KeyError:
+            return FlowStatus.PENDING
+
+
+class FlowActionStatus(enum.StrEnum):
+    """Status of a single action inside an ActionFlow."""
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    EXECUTING = "executing"
+    EXECUTED = "executed"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+    @staticmethod
+    def as_choices() -> tuple[tuple[str, str], ...]:
+        return tuple((f.value, f.value.capitalize()) for f in FlowActionStatus)
+
+    @staticmethod
+    def from_str(value: str) -> "FlowActionStatus":
+        try:
+            return FlowActionStatus[value.upper()]
+        except KeyError:
+            return FlowActionStatus.PENDING

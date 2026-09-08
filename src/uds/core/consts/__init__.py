@@ -42,6 +42,7 @@ from . import auth as auth
 from . import cache as cache
 from . import calendar as calendar
 from . import images as images
+from . import mcp as mcp
 from . import net as net
 from . import os as os
 from . import predictions as predictions

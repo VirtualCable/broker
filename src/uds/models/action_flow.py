@@ -34,36 +34,14 @@ import typing
 
 from django.db import models
 
+from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import properties
+from uds.core.util.model import sql_now
 
 from .user import User
 from .uuid_model import UUIDModel
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-
-class FlowStatus(models.TextChoices):
-    """Status of an ActionFlow (a proposed sequence of changes)."""
-
-    PENDING = "pending", "Pending"
-    APPROVED = "approved", "Approved"
-    REJECTED = "rejected", "Rejected"
-    CANCELLED = "cancelled", "Cancelled"
-    EXPIRED = "expired", "Expired"
-    EXECUTING = "executing", "Executing"
-    EXECUTED = "executed", "Executed"
-    FAILED = "failed", "Failed"
-
-
-class FlowActionStatus(models.TextChoices):
-    """Status of a single action inside an ActionFlow."""
-
-    PENDING = "pending", "Pending"
-    APPROVED = "approved", "Approved"
-    EXECUTING = "executing", "Executing"
-    EXECUTED = "executed", "Executed"
-    FAILED = "failed", "Failed"
-    SKIPPED = "skipped", "Skipped"
 
 
 class ActionFlow(UUIDModel, properties.PropertiesMixin):
@@ -80,10 +58,14 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
 
     name = models.CharField(max_length=128, default="")
     justification = models.TextField(default="")
-    status = models.CharField(max_length=16, choices=FlowStatus.choices, default=FlowStatus.PENDING, db_index=True)
+    status = models.CharField(
+        max_length=16, choices=FlowStatus.as_choices(), default=FlowStatus.PENDING, db_index=True
+    )
 
     # SET_NULL keeps the flow as audit trail even if the user is removed
-    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="action_flows")
+    owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="action_flows"
+    )
 
     approved_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_action_flows"
@@ -93,7 +75,7 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
     # Pending flows past this date are expired (set by the application layer on creation)
     due_date = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(default=sql_now, blank=True)
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["ActionFlow"]'
@@ -108,7 +90,7 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
 
     @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
-        return str(self.uuid), "actionflow"
+        return self.uuid, "actionflow"
 
     @property
     def owner_display(self) -> str:
@@ -117,7 +99,7 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
         properties if the user no longer exists.
         """
         if self.owner:
-            return str(self.owner.name)
+            return self.owner.name
         return str(self.properties.get("owner_name", ""))
 
     @typing.override
@@ -152,10 +134,13 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     base_etag = models.CharField(max_length=64, default="")
 
     status = models.CharField(
-        max_length=16, choices=FlowActionStatus.choices, default=FlowActionStatus.PENDING, db_index=True
+        max_length=16,
+        choices=FlowActionStatus.as_choices(),
+        default=FlowActionStatus.PENDING,
+        db_index=True,
     )
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(default=sql_now, blank=True)
 
     class Meta:  # pyright: ignore
         """
@@ -170,7 +155,7 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
 
     @typing.override
     def get_owner_id_and_type(self) -> tuple[str, str]:
-        return str(self.uuid), "flowaction"
+        return self.uuid, "flowaction"
 
     @property
     def snap_info(self) -> dict[str, typing.Any]:
