@@ -1667,6 +1667,32 @@ class UserInterface(metaclass=UserInterfaceType):
             for key, val in cls._gui_fields_template.items()
         ]
 
+    # Extra sensitive field names for this class, beyond the automatically
+    # detected ``PasswordField`` ones. Modules may extend this to cover
+    # fields that hold secrets but are not declared as passwords.
+    sensitive_fields: typing.ClassVar[collections.abc.Sequence[str]] = ()
+
+    @classmethod
+    def get_sensitive_fields(cls: type[typing.Self]) -> set[str]:
+        """
+        Returns the names of the fields of this class that hold sensitive data.
+
+        This is every declared field of the class hierarchy that is a
+        ``gui.PasswordField``, plus the names declared by the class itself on
+        :attr:`sensitive_fields`.
+
+        Used, for example, by the MCP interface to redact module-provided
+        data before exposing it.
+        """
+        names: set[str] = set(cls.sensitive_fields)
+        for klass in cls.__mro__:
+            names |= {
+                field_name
+                for field_name, field in klass.__dict__.get("_gui_fields_template", {}).items()
+                if isinstance(field, gui.PasswordField)
+            }
+        return names
+
     def get_fields_as_dict(self) -> gui.ValuesDictType:
         """
         Returns own data needed for user interaction as a dict of key-names ->

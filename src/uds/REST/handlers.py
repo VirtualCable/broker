@@ -153,6 +153,17 @@ class Handler(abc.ABC):
 
         self._odata = types.rest.api.ODataParams.from_dict(self.query_params())
 
+    def _refuse_redacted_write(self) -> None:
+        """Refuses writes that carry redacted data.
+
+        Called from the write operations (put/post): they are rejected when
+        the request asks for ``$redacted``, or when the body itself carries
+        the ``_redacted`` flag of a previously redacted read (echoing
+        redacted data back must never store it).
+        """
+        if self._odata.redacted or self._params.get("_redacted"):
+            raise exceptions.rest.RequestError("Redacted data cannot be written back")
+
     def _get_auth_token_from_header(self) -> str | None:
         """
         Returns the authentication token from the request header
@@ -167,7 +178,9 @@ class Handler(abc.ABC):
         from the JSON body (``self._params``) instead of the query string,
         then delegates to :meth:`get`.
         """
-        self._odata = types.rest.api.ODataParams.from_dict({k: v for k, v in self._params.items() if k.startswith("$")})
+        self._odata = types.rest.api.ODataParams.from_dict(
+            {k: v for k, v in self._params.items() if k.startswith("$")}
+        )
         # Subclasses (ModelHandler, DetailHandler, etc.) define get().
         return typing.cast(typing.Any, self).get()
 
@@ -329,7 +342,9 @@ class Handler(abc.ABC):
         :param staff_member: If is considered as staff member
         """
         # crypt password and convert to base64
-        passwd = codecs.encode(CryptoManager.manager().symmetric_encrypt(password, scrambler), "base64").decode()
+        passwd = codecs.encode(
+            CryptoManager.manager().symmetric_encrypt(password, scrambler), "base64"
+        ).decode()
 
         session["REST"] = {
             "auth": id_auth,

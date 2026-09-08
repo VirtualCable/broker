@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -79,3 +78,9 @@ class _NotFound:
 NOT_FOUND: typing.Final[_NotFound] = _NotFound()
 
 ITEMS_LIMIT: typing.Final[int] = 4400
+
+# Marker value used to replace sensitive data when redaction is requested
+# (``$redacted`` query parameter). Writes receiving this value on a
+# sensitive field are rejected, so a redacted read can never be echoed
+# back over the stored data.
+REDACTED: typing.Final[str] = "REDACTED"
