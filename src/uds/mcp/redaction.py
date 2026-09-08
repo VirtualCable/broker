@@ -1,6 +1,7 @@
 """Defensive redaction for MCP responses and metadata."""
 
 import collections.abc
+import functools
 import typing
 
 
@@ -76,3 +77,40 @@ def redact(value: typing.Any, extra_keys: collections.abc.Iterable[typing.Any] =
     extras = frozenset(key.lower() for key in extra_keys if isinstance(key, str))
     sensitive = SENSITIVE_FIELDS | extras
     return _redact_with(value, sensitive)
+
+
+@functools.lru_cache(maxsize=1)
+def module_sensitive_fields() -> frozenset[str]:
+    """Union of the sensitive field names declared by every registered module.
+
+    Every ``Module`` exposes its own set through
+    ``UserInterface.get_sensitive_fields()`` (its declared
+    ``gui.PasswordField`` names plus any explicit ``sensitive_fields``).
+    MCP redacts with the union of this set and the global
+    :data:`SENSITIVE_FIELDS`, so secrets declared by any module (even with
+    names outside the global denylist) are never exposed, whatever the
+    tool that returns them.
+    """
+    # Imported here to avoid import cycles at module load time
+    from uds.core import auths, mfas, messaging, osmanagers, reports, services, transports
+    from uds.core.ui.user_interface import UserInterface
+
+    names: set[str] = set()
+    factories: tuple[typing.Any, ...] = (
+        services.factory(),
+        transports.factory(),
+        osmanagers.factory(),
+        auths.factory(),
+        mfas.factory(),
+        messaging.factory(),
+        reports.factory(),
+    )
+    for factory in factories:
+        module_types: list[type] = list(factory.objects().values())
+        for module_type in module_types:
+            # Service modules hang from their providers ("offers")
+            if hasattr(module_type, "offers"):
+                module_types.extend(module_type.offers)  # type: ignore[attr-defined]
+            if issubclass(module_type, UserInterface):
+                names |= module_type.get_sensitive_fields()
+    return frozenset(names)

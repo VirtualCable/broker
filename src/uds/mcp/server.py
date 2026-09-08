@@ -12,7 +12,7 @@ from asgiref.sync import sync_to_async
 from uds.REST.processors import ContentProcessor
 
 from .catalog import Catalog
-from .redaction import redact
+from .redaction import module_sensitive_fields, redact
 from .rest_proxy import RestProxy
 from .validation import validate_arguments
 
@@ -124,9 +124,11 @@ class MCPServerCore:
         # ``_json_safe`` materializes lazy REST items (``as_dict()``), which
         # can hit the ORM; it must run off the event loop, same as the
         # ``RestProxy`` does (thread_sensitive keeps the request's DB
-        # connection affinity).
+        # connection affinity). Redaction adds the sensitive fields declared
+        # by the registered modules to the global denylist.
         safe_result = await sync_to_async(
-            lambda: redact(_json_safe(result), tool.sensitive_fields), thread_sensitive=True
+            lambda: redact(_json_safe(result), (*tool.sensitive_fields, *module_sensitive_fields())),
+            thread_sensitive=True,
         )()
         # ``structuredContent`` must be a JSON object per the MCP schema,
         # and the official client validates it strictly. The ``list_*``
@@ -191,7 +193,8 @@ class MCPServerCore:
         # Same as ``call_tool``: materialization may hit the ORM, keep it
         # off the event loop.
         safe_content = await sync_to_async(
-            lambda: redact(_json_safe(content), resource.sensitive_fields), thread_sensitive=True
+            lambda: redact(_json_safe(content), (*resource.sensitive_fields, *module_sensitive_fields())),
+            thread_sensitive=True,
         )()
         return mcp.types.ReadResourceResult(
             contents=typing.cast(

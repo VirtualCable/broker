@@ -72,6 +72,17 @@ class TestTransport(transports.Transport):
         required=True,
     )
 
+    # Secret name outside the global redaction denylist, to ensure module
+    # declared passwords are caught by get_sensitive_fields()
+    pin = gui.PasswordField(
+        label=_("Pin"),
+        order=2,
+        tooltip=_("Pin required by the test transport"),
+        default="",
+        length=16,
+        required=False,
+    )
+
     force_new_window = gui.CheckBoxField(
         label=_("Force new HTML Window"),
         order=91,

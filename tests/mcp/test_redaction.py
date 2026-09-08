@@ -67,3 +67,27 @@ class RedactionTest(unittest.TestCase):
             redact({"service_inventory_token": "y"}, ("service_inventory_token", 42)),
             {"service_inventory_token": REDACTED},
         )
+
+
+class ModuleSensitiveFieldsTest(unittest.TestCase):
+    """The union of module-declared sensitive fields feeds the redaction."""
+
+    def test_module_declared_passwords_are_redacted(self) -> None:
+        """Fields declared as passwords by any module are redacted, even
+        when their name is outside the global denylist (i.e. ``pin`` on the
+        test transport)."""
+        from tests.fixtures.services import ensure_test_modules_registered
+
+        ensure_test_modules_registered()
+
+        from uds.mcp.redaction import module_sensitive_fields
+
+        module_sensitive_fields.cache_clear()  # Other tests may have warmed it earlier
+        fields = module_sensitive_fields()
+        self.assertIn("pin", fields)  # From TestTransport
+
+        value = {"instance": {"test_url": "https://x", "pin": "1234", "name": "kept"}}
+        redacted = redact(value, module_sensitive_fields())
+        self.assertEqual(redacted["instance"]["pin"], REDACTED)
+        self.assertEqual(redacted["instance"]["test_url"], "https://x")
+        self.assertEqual(redacted["instance"]["name"], "kept")
