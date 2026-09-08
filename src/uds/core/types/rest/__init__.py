@@ -195,7 +195,10 @@ class BaseRestItem:
             return str(value)  # pyright: ignore[reportUnknownArgumentType]
 
         dct = self.as_dict()
-        return "".join(get_field(dct, f) for f in set(fields))
+        # sorted(set(...)): the iteration order of a plain set of strings is
+        # randomized per process, so the resulting hash would not be stable
+        # across workers/restarts. Sorting keeps the etag repeatable.
+        return "".join(get_field(dct, f) for f in sorted(set(fields)))
 
     @typing.final
     def etag(self, *fields: str) -> str:
