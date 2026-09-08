@@ -62,6 +62,9 @@ from uds.core.util.stats import counters
 from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
+if typing.TYPE_CHECKING:
+    from uds.core import services
+
 logger = logging.getLogger(__name__)
 
 MB: typing.Final[int] = 1024 * 1024
@@ -139,7 +142,7 @@ def get_server_counters(
         raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
 
 
-def _classes_with_server_group_field() -> list[tuple[str, type]]:
+def _classes_with_server_group_field() -> list[tuple[str, "type[services.ServiceProvider|services.Service]"]]:
     """Find every registered Provider and Service that declares a server-group field.
 
     The discovery is driven by the field's label (``server_group_field``
@@ -158,19 +161,19 @@ def _classes_with_server_group_field() -> list[tuple[str, type]]:
     from uds.core.ui import gui
     from uds.core.util import fields
 
-    canonical_label = str(fields.server_group_field().label)
-    found: list[tuple[str, type]] = []
+    canonical_label = fields.server_group_field().label
+    found: list[tuple[str, type[services.ServiceProvider | services.Service]]] = []
 
     for provider_cls in core_services.factory().providers().values():
         for value in vars(provider_cls).values():
-            if isinstance(value, gui.ChoiceField) and str(value.label) == canonical_label:
+            if isinstance(value, gui.ChoiceField) and value.label == canonical_label:
                 found.append(("provider", provider_cls))
                 break
 
     for provider_cls in core_services.factory().providers().values():
         for service_cls in provider_cls.get_provided_services():
             for value in vars(service_cls).values():
-                if isinstance(value, gui.ChoiceField) and str(value.label) == canonical_label:
+                if isinstance(value, gui.ChoiceField) and value.label == canonical_label:
                     found.append(("service", service_cls))
                     break
 
@@ -206,7 +209,7 @@ def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
                     exc_info=True,
                 )
                 continue
-            if instance.server_group.value == uuid:
+            if typing.cast(typing.Any, instance).server_group.value == uuid:
                 usages.append(
                     {
                         "uuid": item.uuid,
