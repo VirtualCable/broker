@@ -42,6 +42,7 @@ from uds.core import types
 
 from .service import TestServiceCache
 from .service import TestServiceNoCache
+from .service import TestServiceWithServerGroup
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -62,7 +63,11 @@ class TestProvider(services.ServiceProvider):
     """
 
     # : What kind of services we offer, this are classes inherited from Service
-    offers: typing.ClassVar[list[type["Service"]]] = [TestServiceNoCache, TestServiceCache]
+    offers: typing.ClassVar[list[type["Service"]]] = [
+        TestServiceNoCache,
+        TestServiceCache,
+        TestServiceWithServerGroup,
+    ]
     # : Name to show the administrator. This string will be translated BEFORE
     # : sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
