@@ -22,7 +22,9 @@ def _as_dict_without_none(v: typing.Any) -> typing.Any:
         ]
     elif isinstance(v, dict):
         return {
-            k: _as_dict_without_none(val) for k, val in typing.cast(dict[str, typing.Any], v).items() if val is not None
+            k: _as_dict_without_none(val)
+            for k, val in typing.cast(dict[str, typing.Any], v).items()
+            if val is not None
         }
     elif hasattr(v, "as_dict"):
         return v.as_dict()
@@ -214,7 +216,8 @@ class SchemaProperty:
             and self.discriminator == value.discriminator
             and self.enum == value.enum
             and self.properties == value.properties
-            and sorted(self.one_of or [], key=lambda x: x.type) == sorted(value.one_of or [], key=lambda x: x.type)
+            and sorted(self.one_of or [], key=lambda x: x.type)
+            == sorted(value.one_of or [], key=lambda x: x.type)
         )
 
     @staticmethod
@@ -335,7 +338,9 @@ class RelatedSchema:
 # Componentes
 @dataclasses.dataclass
 class Components:
-    schemas: dict[str, Schema | RelatedSchema] = dataclasses.field(default_factory=dict[str, Schema | RelatedSchema])
+    schemas: dict[str, Schema | RelatedSchema] = dataclasses.field(
+        default_factory=dict[str, Schema | RelatedSchema]
+    )
     securitySchemes: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
 
     def as_dict(self) -> dict[str, typing.Any]:
@@ -413,6 +418,7 @@ class ODataParams:
     limit: int | None = None  # $top=... defaults to unlimited right now
     orderby: list[str] = dataclasses.field(default_factory=list[str])  # $orderby=xxx, yyy asc, zzz desc
     select: set[str] = dataclasses.field(default_factory=set[str])  # $select=...
+    redacted: bool = False  # $redacted: replace sensitive values with consts.rest.REDACTED
 
     @staticmethod
     def from_dict(data: dict[str, typing.Any]) -> "ODataParams":
@@ -437,12 +443,20 @@ class ODataParams:
             select = {item.strip() for item in select_fld.split(",") if item}
             start = int(data.get("$skip", 0)) if data.get("$skip") is not None else None
             limit = int(data.get("$top", 0)) if data.get("$top") is not None else None
+            # ``$redacted`` is presence-only and non-repeatable: repeated
+            # params arrive as a list from ``Handler.query_params()``.
+            redacted = data.get("$redacted")
+            if isinstance(redacted, (list, tuple)):
+                raise exceptions.rest.RequestError("Invalid OData query parameters")
             return ODataParams(
                 filter=data.get("$filter"),
                 start=start,
                 limit=limit,
-                orderby=[o.replace(".", "__") for o in order_by],  # Allow order by related fields with dot or __
+                orderby=[
+                    o.replace(".", "__") for o in order_by
+                ],  # Allow order by related fields with dot or __
                 select=select,
+                redacted=redacted is not None,
             )
         except (ValueError, TypeError):
             raise exceptions.rest.RequestError("Invalid OData query parameters")

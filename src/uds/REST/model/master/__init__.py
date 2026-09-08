@@ -404,7 +404,9 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 if cm.method != http_method:
                     if _is_get_on_post(cm, http_method):
                         if is_compat:
-                            self.add_deprecation_headers(f"use {_preferred_verb(cm)} {self._path}/{camel_case_name}")
+                            self.add_deprecation_headers(
+                                f"use {_preferred_verb(cm)} {self._path}/{camel_case_name}"
+                            )
                         else:
                             raise exceptions.rest.GoneError(
                                 f"This endpoint is deprecated. Use {_preferred_verb(cm)} {self._path}/{camel_case_name}"
@@ -437,6 +439,21 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
         return response, response.etag(*fields)  # pyright: ignore[reportUnknownVariableType]
 
+    def _mark_redacted(self, items: types.rest.ItemsResult[T_Item]) -> types.rest.ItemsResult[T_Item]:
+        """Flags managed items for redaction when ``$redacted`` was requested.
+
+        The flag is applied after the etag computation, so concurrency
+        tokens keep being computed over the real values. ``items`` may be a
+        lazy iterator, so it is materialized before being iterated here.
+        """
+        if self._odata.redacted:
+            result = list(items)
+            for item in result:
+                if isinstance(item, types.rest.ManagedObjectItem):
+                    item.redacted = True
+            return result
+        return items
+
     def get(self) -> typing.Any:
         logger.debug("method GET for %s, %s", self.__class__.__name__, self._args)
 
@@ -448,9 +465,9 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         number_of_args = len(self._args)
         match self._args:
             case []:  # Same as overview, but with all data
-                return [i.as_dict() for i in self.get_items(sumarize=False)]
+                return [i.as_dict() for i in self._mark_redacted(self.get_items(sumarize=False))]
             case [consts.rest.OVERVIEW]:
-                return [i.as_dict() for i in self.get_items()]
+                return [i.as_dict() for i in self._mark_redacted(self.get_items())]
             case [consts.rest.OVERVIEW, *_fails]:
                 raise exceptions.rest.RequestError("Invalid overview request") from None
             case [consts.rest.TABLEINFO]:
@@ -477,6 +494,11 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                         item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
                         self.check_access(item, types.permissions.PermissionType.READ)
                         response, etag = self._item_with_etag(item)
+                        flagged = response
+                        if isinstance(flagged, types.rest.ManagedObjectItem) and self._odata.redacted:
+                            # After the etag computation, so it keeps being
+                            # computed over the real values
+                            flagged.redacted = True
                         # Append etag header
                         self.add_header("ETag", etag)
                         return response
@@ -506,6 +528,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         The existing 'test' special case is preserved.
         """
         logger.debug("method POST for %s, %s", self.__class__.__name__, self._args)
+        self._refuse_redacted_write()
 
         # Special case: /test/type>
         if len(self._args) == 2 and self._args[0] == "test":
@@ -611,6 +634,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         * PUT /collection/{uuid}/detail... (>1 arg) — delegate to detail handler.
         """
         logger.debug("method PUT for %s, %s", self.__class__.__name__, self._args)
+        self._refuse_redacted_write()
 
         # if /our_url/ID/DETAIL..., delegate to detail handler
         if len(self._args) > 1:

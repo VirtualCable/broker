@@ -187,7 +187,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
                 if is_compat:
                     self.add_deprecation_headers(f"use POST {self._path}/{check}")
                 else:
-                    raise exceptions.rest.GoneError(f"This endpoint is deprecated. Use POST {self._path}/{check}")
+                    raise exceptions.rest.GoneError(
+                        f"This endpoint is deprecated. Use POST {self._path}/{check}"
+                    )
                 # Dispatch the legacy GET verb under this POST entry.
                 operation = getattr(self, snake_case_name, None) or getattr(self, camel_case_name, None)
                 if operation:
@@ -218,7 +220,16 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             etag = response.etag(*fields)
         return response, etag  # pyright: ignore[reportUnknownVariableType]
 
-    # pylint: disable=too-many-branches,too-many-return-statements
+    def _mark_redacted_items(self, items: types.rest.ItemsResult[T_Item]) -> types.rest.ItemsResult[T_Item]:
+        """Flags managed items for redaction when ``$redacted`` was requested."""
+        if self._odata.redacted:
+            result = list(items)
+            for item in result:
+                if isinstance(item, types.rest.ManagedObjectItem):
+                    item.redacted = True
+            return result
+        return list(items)
+
     def get(self) -> typing.Any:
         """
         Processes GET method for a detail Handler
@@ -236,9 +247,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
 
         match self._args:
             case []:  # same as overview
-                return self.get_items(parent)
+                return self._mark_redacted_items(self.get_items(parent))
             case [consts.rest.OVERVIEW]:
-                return self.get_items(parent)
+                return self._mark_redacted_items(self.get_items(parent))
             case [consts.rest.OVERVIEW, *_fails]:
                 raise exceptions.rest.RequestError("Invalid overview request") from None
             case [consts.rest.TYPES]:
@@ -288,6 +299,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         and invokes "save_item" with parent & item (that can be None for a New Item)
         """
         logger.debug("Detail args for PUT: %s", sanitize_params(self._params))
+        self._refuse_redacted_write()
 
         parent: models.Model = self._parent_item
 
@@ -328,12 +340,15 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Dispatches to POST custom methods when the path matches.
         """
         logger.debug("Detail args for POST: %s, %s", self._args, sanitize_params(self._params))
+        self._refuse_redacted_write()
 
         parent: models.Model = self._parent_item
 
         # Check for custom methods at _args[0] (e.g. POST /collection/{id}/detail/method)
         if len(self._args) >= 1:
-            r = self._check_is_custom_method(self._args[0], parent, http_method=types.rest.CustomMethodMethod.POST)
+            r = self._check_is_custom_method(
+                self._args[0], parent, http_method=types.rest.CustomMethodMethod.POST
+            )
             if r is not consts.rest.NOT_FOUND:
                 return r
 
@@ -373,7 +388,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
 
         # Custom methods at _args[0] (e.g. DELETE /collection/{id}/detail/method)
         if len(self._args) >= 1:
-            r = self._check_is_custom_method(self._args[0], parent, http_method=types.rest.CustomMethodMethod.DELETE)
+            r = self._check_is_custom_method(
+                self._args[0], parent, http_method=types.rest.CustomMethodMethod.DELETE
+            )
             if r is not consts.rest.NOT_FOUND:
                 return r
 
@@ -477,7 +494,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     def get_processed_gui(self, parent: models.Model, for_type: str) -> list[types.ui.GuiElement]:
         return sorted(self.get_gui(parent, for_type), key=lambda f: f.gui.order)
 
-    def enum_types(self, parent: models.Model, for_type: str | None) -> collections.abc.Iterable[types.rest.TypeInfo]:
+    def enum_types(
+        self, parent: models.Model, for_type: str | None
+    ) -> collections.abc.Iterable[types.rest.TypeInfo]:
         """
         The default is that detail element will not have any types (they are "homogeneous")
         but we provided this method, that can be overridden, in case one detail needs it

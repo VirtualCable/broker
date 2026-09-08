@@ -219,6 +219,11 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
     """
 
     item: T_Model
+    # Set (by the handlers) when the request asked for ``$redacted``; makes
+    # ``as_dict()`` replace sensitive instance values with
+    # ``consts.rest.REDACTED`` and include a truthy ``_redacted`` flag.
+    # ``kw_only`` so subclasses adding non-default fields keep working.
+    redacted: bool = dataclasses.field(default=False, kw_only=True)
 
     @typing.override
     def as_dict(self) -> dict[str, typing.Any]:
@@ -235,9 +240,21 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
 
         # Remove the fields that are not needed in the dictionary
         base.pop("item")
+        base.pop("redacted", None)
         item = self.item.get_instance()
         # item.init_gui()  # Defaults & stuff
         fields = item.get_fields_as_dict()
+
+        any_redacted = False
+        if self.redacted:
+            from uds.core.consts.rest import REDACTED  # Avoid circular import
+
+            sensitive = item.get_sensitive_fields()
+            any_redacted = any(field_name in sensitive for field_name in fields)
+            fields = {
+                field_name: (REDACTED if field_name in sensitive else value)
+                for field_name, value in fields.items()
+            }
 
         # TODO: This will be removed in future versions, as it will be overseed by "instance" key
         base.update(fields)  # Add fields to dict
@@ -248,6 +265,11 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
                 "instance": fields,  # Future implementation will insert instance fields into "instance" key
             }
         )
+        if self.redacted:
+            # Fixed (private-named) flag so consumers can tell redacted
+            # responses apart. The underscore avoids any clash with real
+            # item fields.
+            base["_redacted"] = any_redacted
 
         return base
 
@@ -263,6 +285,11 @@ class ManagedObjectItem(BaseRestItem, typing.Generic[T_Model]):
             # item is not an real field, remove it from components description and required
             schema.properties.pop("item", None)
             schema.required.remove("item")
+            # ``redacted`` is internal (set per-request by the handlers) and
+            # only shows up on responses when the request asked for it
+            schema.properties.pop("redacted", None)
+            if "redacted" in schema.required:
+                schema.required.remove("redacted")
 
             # Add the specific fields to the schema
             # Note that 'instance' is incomplete, must be completed with item fields

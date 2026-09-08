@@ -4,8 +4,11 @@ import collections.abc
 import functools
 import typing
 
+from uds.core.consts.rest import REDACTED
 
-REDACTED = "REDACTED"
+# Re-exported for convenience: the marker lives in core so both the REST
+# layer (``$redacted``) and MCP use the exact same value.
+__all__ = ["REDACTED", "SENSITIVE_FIELDS", "module_sensitive_fields", "redact"]
 
 SENSITIVE_FIELDS: typing.Final[frozenset[str]] = frozenset(
     {
