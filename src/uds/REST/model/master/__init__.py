@@ -618,7 +618,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             raise exceptions.rest.RequestError("Element already exists (duplicate key error)") from None
         except (exceptions.rest.SaveException, exceptions.ui.ValidationError) as e:
             raise exceptions.rest.RequestError(str(e)) from e
-        except (exceptions.rest.RequestError, exceptions.rest.ResponseError):
+        except exceptions.rest.HandlerError:
+            # Re-raise UDS REST exceptions. HandlerError is the parent of
+            # RequestError/ResponseError/AccessDenied, so handlers refusing
+            # operations on pre_save get a clean status (e.g. 403)
             raise
         except Exception as e:
             logger.exception("Exception on create")

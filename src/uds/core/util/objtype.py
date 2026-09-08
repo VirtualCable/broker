@@ -77,6 +77,7 @@ class ObjectType(enum.Enum):
     LOG = _ObjTypeInfo(24, models.Log)
     NOTIFICATION = _ObjTypeInfo(25, models.Notification)
     TICKET_STORE = _ObjTypeInfo(26, models.TicketStore)
+    ACTION_FLOW = _ObjTypeInfo(27, models.ActionFlow)
 
     @property
     def model(self) -> type["Model"]:
