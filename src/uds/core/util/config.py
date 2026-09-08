@@ -487,6 +487,15 @@ class GlobalConfig:
         type=Config.FieldType.BOOLEAN,
         help=_("Enable the MCP (Model Context Protocol) endpoint (/uds/rest/mcp) and its skill bundle download"),
     )
+    # Supervised mutability: the AI proposes changes, administrators approve
+    # them from the administration interface. Off by default; the proposal
+    # tools only appear in the catalog when enabled.
+    MCP_MUTATIONS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "MCP Mutations",
+        "0",
+        type=Config.FieldType.BOOLEAN,
+        help=_("Enable the supervised mutability MCP tools (proposals awaiting administrator approval)"),
+    )
     MCP_RATE_LIMIT: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "MCP Rate Limit",
         # High by design: the only identities that can reach the endpoint

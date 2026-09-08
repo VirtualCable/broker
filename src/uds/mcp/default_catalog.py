@@ -18,9 +18,11 @@ from uds.REST.inventory import (
 )
 from uds.REST.methods.system import System
 from uds.REST.methods.version import UDSVersion
+from uds.core.util.config import GlobalConfig
 
 from .catalog import Catalog, ResourceDefinition
 from .curated import register_curated_tools
+from .mutability import register_mutability_tools
 from .rest_proxy import RestTarget
 from .tools import generated_list_tools
 
@@ -84,6 +86,19 @@ def _curated_tools(catalog: Catalog) -> None:
     register_curated_tools(catalog)
 
 
+def _mutability_tools(catalog: Catalog) -> None:
+    """Register the supervised mutability tools when the admin enables them.
+
+    Gated by ``GlobalConfig.MCP_MUTATIONS`` (default off). The proposal
+    tools never apply a change: they queue proposals for administrator
+    approval. The flag is read when the catalog is built (once per
+    process), so toggling it requires a worker restart, like the rest of
+    the MCP surface.
+    """
+    if GlobalConfig.MCP_MUTATIONS.as_bool():
+        register_mutability_tools(catalog)
+
+
 def build_catalog() -> Catalog:
     """Build the read-only MCP catalog from the REST handler inventory.
 
@@ -95,6 +110,7 @@ def build_catalog() -> Catalog:
 
     _curated_resources(catalog)
     _curated_tools(catalog)
+    _mutability_tools(catalog)
 
     # Generic list tools for every model collection handler (master and
     # detail). The generator derives names from the handler's full path,
