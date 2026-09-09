@@ -40,6 +40,11 @@ jobs:
             libmemcached-dev \
             zlib1g-dev \
             gcc
+          # WeasyPrint requires the HarfBuzz subset library (a deprecation
+          # warning today, a hard requirement for future releases).
+          # Package name carries the t64 suffix on Ubuntu 24.04+.
+          sudo apt-get install -y libharfbuzz-subset0t64 || \
+            sudo apt-get install -y libharfbuzz-subset0
 
       - name: Install dependencies
         run: |
