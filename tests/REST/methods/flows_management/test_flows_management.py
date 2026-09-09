@@ -37,7 +37,7 @@ import logging
 import typing
 
 from uds.core import types
-from uds.mcp.mutability import FlowStore
+from uds.mutability import FlowStore
 from uds.models import ActionFlow
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users

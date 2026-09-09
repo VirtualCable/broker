@@ -28,7 +28,13 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
         )
         catalog.add_resource(
             ResourceDefinition(
-                "uds://status", "status", "Status", "Platform status", "platform", "status", reader=read_resource
+                "uds://status",
+                "status",
+                "Status",
+                "Platform status",
+                "platform",
+                "status",
+                reader=read_resource,
             )
         )
         core = MCPServerCore(catalog)
@@ -43,11 +49,15 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
         """Tool results are redacted before being returned as MCP content."""
         catalog = Catalog()
 
-        async def read_credentials(_arguments: dict[str, object], _request: typing.Any = None) -> dict[str, object]:
+        async def read_credentials(
+            _arguments: dict[str, object], _request: typing.Any = None
+        ) -> dict[str, object]:
             return {"name": "service", "token": "secret"}
 
         catalog.add_tool(
-            ToolDefinition("credentials", "Credentials", "Read data", {}, "platform", "data", executor=read_credentials)
+            ToolDefinition(
+                "credentials", "Credentials", "Read data", {}, "platform", "data", executor=read_credentials
+            )
         )
         core = MCPServerCore(catalog)
 
@@ -66,16 +76,22 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
         """
         catalog = Catalog()
 
-        async def list_items(_arguments: dict[str, object], _request: typing.Any = None) -> list[dict[str, object]]:
+        async def list_items(
+            _arguments: dict[str, object], _request: typing.Any = None
+        ) -> list[dict[str, object]]:
             return [{"id": 1}, {"id": 2}]
 
-        catalog.add_tool(ToolDefinition("listed", "Listed", "List items", {}, "users", "items", executor=list_items))
+        catalog.add_tool(
+            ToolDefinition("listed", "Listed", "List items", {}, "users", "items", executor=list_items)
+        )
         core = MCPServerCore(catalog)
 
         result = await core.call_tool(None, mcp.types.CallToolRequestParams(name="listed"))
 
         self.assertEqual(result.structured_content, {"items": [{"id": 1}, {"id": 2}]})
-        self.assertEqual(json.loads(typing.cast(mcp.types.TextContent, result.content[0]).text), [{"id": 1}, {"id": 2}])
+        self.assertEqual(
+            json.loads(typing.cast(mcp.types.TextContent, result.content[0]).text), [{"id": 1}, {"id": 2}]
+        )
 
     async def test_call_tool_forwards_request_to_executor(self) -> None:
         """The live HTTP request bound to the core reaches the executor."""
@@ -86,7 +102,9 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
             seen.append(request)
             return {"ok": True}
 
-        catalog.add_tool(ToolDefinition("echo", "Echo", "Echo request", {}, "platform", "ok", executor=echo_request))
+        catalog.add_tool(
+            ToolDefinition("echo", "Echo", "Echo request", {}, "platform", "ok", executor=echo_request)
+        )
         sentinel = object()
         core = MCPServerCore(catalog, request=sentinel)
 
@@ -123,7 +141,9 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([t.name for t in first.tools], ["a", "b"])
             self.assertIsNotNone(first.next_cursor)
 
-            second = await core.list_tools(None, mcp.types.PaginatedRequestParams(cursor=first.next_cursor or ""))
+            second = await core.list_tools(
+                None, mcp.types.PaginatedRequestParams(cursor=first.next_cursor or "")
+            )
             self.assertEqual([t.name for t in second.tools], ["c", "d"])
             self.assertIsNone(second.next_cursor)
 

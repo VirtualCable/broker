@@ -8,7 +8,7 @@ from unittest import mock
 
 from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
-from uds.mcp.mutability import (
+from uds.mutability import (
     FlowStore,
     InvalidTransition,
     MutabilityError,

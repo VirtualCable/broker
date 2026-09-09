@@ -27,7 +27,9 @@ class GeneratedListToolsTest(unittest.TestCase):
     def test_only_model_handlers_are_published(self) -> None:
         """Plain ``Handler`` collections with ``get_items`` are excluded."""
         non_model = [
-            entry.path for entry in collection_handlers() if not issubclass(entry.handler, ModelHandler | DetailHandler)
+            entry.path
+            for entry in collection_handlers()
+            if not issubclass(entry.handler, ModelHandler | DetailHandler)
         ]
         self.assertTrue(non_model, "expected at least one non-model collection in the inventory")
         catalog = build_catalog()
@@ -46,7 +48,9 @@ class GeneratedListToolsTest(unittest.TestCase):
 
     def test_detail_tools_require_parent_uuid(self) -> None:
         detail_tools = [
-            tool for tool in build_catalog().tools() if "parent_uuid" in (tool.input_schema or {}).get("properties", {})
+            tool
+            for tool in build_catalog().tools()
+            if "parent_uuid" in (tool.input_schema or {}).get("properties", {})
         ]
         self.assertTrue(detail_tools, "expected at least one detail list tool")
         for tool in detail_tools:

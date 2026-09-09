@@ -75,7 +75,12 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         response = self.client.rest_post(
             "mcp",
             data=json.dumps(
-                {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": arguments}}
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {"name": name, "arguments": arguments},
+                }
             ).encode("utf-8"),
         )
         self.assertEqual(response.status_code, 200, response.content)

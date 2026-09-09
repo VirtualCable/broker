@@ -12,12 +12,12 @@ from uds.core.types.mcp import FlowActionStatus
 from uds.core.util import permissions
 from uds.core.util.config import GlobalConfig
 from uds.mcp.default_catalog import get_catalog
-from uds.mcp.mutability import (
+from uds.mutability import (
     FlowStore,
     all_types,
     get as registry_get,
 )
-from uds.mcp.mutability.types_providers import ProviderUpdate
+from uds.mutability.types_providers import ProviderUpdate
 from uds.models import FlowAction
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
@@ -154,7 +154,7 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
         )
         request = mock.MagicMock()
         with (
-            mock.patch("uds.mcp.mutability.types_providers.RestProxy") as proxy_cls,
+            mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls,
             mock.patch.object(self.action_type, "resolve_target", return_value=self.provider),
         ):
             proxy_cls.return_value.execute = mock.AsyncMock()

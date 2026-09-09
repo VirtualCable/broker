@@ -21,10 +21,10 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.core.types.mcp import FlowStatus
 from uds.core.util import permissions
 
-from ..catalog import Catalog, ToolDefinition
-from . import registry
-from .base import JsonObject, REDACTED
-from .store import FlowStore, MutabilityError, NotActionOwner
+from uds.mcp.catalog import Catalog, ToolDefinition
+from uds.mutability import registry
+from uds.mutability.base import JsonObject, REDACTED
+from uds.mutability.store import FlowStore, MutabilityError, NotActionOwner
 
 JsonDict = dict[str, typing.Any]
 
