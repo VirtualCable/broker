@@ -41,6 +41,9 @@ pyrad
 defusedxml
 python-dateutil
 requests
+# WeasyPrint needs the system HarfBuzz subset library:
+#   Debian/Ubuntu: libharfbuzz-subset0 (libharfbuzz-subset0t64 on 24.04+)
+#   Fedora/RHEL: harfbuzz-subset (or -devel)
 WeasyPrint
 webencodings
 xml-marshaller
