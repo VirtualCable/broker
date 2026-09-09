@@ -225,20 +225,15 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         logger.debug("Processing detail %s for with params %s", self._path, sanitize_params(self._params))
         try:
             item: models.Model = self.MODEL.objects.get(uuid__iexact=self._args[0])
-            # If we do not have access to parent to, at least, read...
 
             if self._operation in ("put", "post", "delete"):
                 required_permission = types.permissions.PermissionType.MANAGEMENT
             else:
                 required_permission = types.permissions.PermissionType.READ
 
-            if permissions.has_access(self._user, item, required_permission) is False:
-                logger.debug(
-                    "Permission for user %s does not comply with %s",
-                    self._user,
-                    required_permission,
-                )
-                raise exceptions.rest.AccessDenied()
+            # Via check_access (not has_access directly), so subclasses
+            # can customize the access rule (e.g. ownership-based).
+            self.check_access(item, required_permission)
 
             if not self.DETAIL:
                 raise exceptions.rest.NotFound("Detail not found")

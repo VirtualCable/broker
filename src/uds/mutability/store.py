@@ -52,7 +52,7 @@ class FlowStore:
         justification: str = "",
     ) -> ActionFlow:
         """Create a pending flow, enforcing the per-user pending cap."""
-        if self.count_pending_flows(owner_uuid=str(owner.uuid)) >= consts_mcp.MAX_FLOWS_PER_USER:
+        if self.count_pending_flows(owner_uuid=owner.uuid) >= consts_mcp.MAX_FLOWS_PER_USER:
             raise MutabilityError(
                 f"Too many pending proposals (limit {consts_mcp.MAX_FLOWS_PER_USER}). "
                 "Cancel some before proposing more."
@@ -100,6 +100,27 @@ class FlowStore:
             base_etag=base_etag,
             status=FlowActionStatus.PENDING,
         )
+
+    def rebase_action(
+        self,
+        action: FlowAction,
+        *,
+        values: dict[str, typing.Any],
+        base_values: dict[str, typing.Any],
+        base_etag: str,
+        justification: str = "",
+    ) -> FlowAction:
+        """Replace the payload of a pending action (proposer edit)."""
+        if action.status != FlowActionStatus.PENDING:
+            raise InvalidTransition(
+                f"Action {action.uuid} is {action.status}, only pending actions can be edited"
+            )
+        action.values = values
+        action.base_values = base_values
+        action.base_etag = base_etag
+        action.justification = justification
+        action.save(update_fields=["values", "base_values", "base_etag", "justification"])
+        return action
 
     # -------------------------------------------------------------- queries
 
@@ -166,7 +187,7 @@ class FlowStore:
 
     def cancel_flow(self, flow: ActionFlow, *, actor_uuid: str) -> None:
         """Owner withdraws its own pending flow."""
-        if flow.owner is None or str(flow.owner.uuid) != actor_uuid:
+        if flow.owner is None or flow.owner.uuid != actor_uuid:
             raise NotActionOwner(f"Flow {flow.uuid} does not belong to user {actor_uuid}")
         self._decide_flow(flow, FlowStatus.CANCELLED, decided_by=actor_uuid, note="Cancelled by proposer")
 
