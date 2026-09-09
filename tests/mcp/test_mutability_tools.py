@@ -1,6 +1,7 @@
 """Tests for the supervised mutability MCP tools (phase 2)."""
 
 import asyncio
+import datetime
 import json
 import typing
 import unittest
@@ -8,9 +9,11 @@ from unittest import mock
 
 from uds.REST.methods.providers import Providers
 from uds.core import types
-from uds.core.types.mcp import FlowActionStatus
+from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import permissions
 from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
+from uds.models import ActionFlow
 from uds.mcp.default_catalog import get_catalog
 from uds.mutability import (
     FlowStore,
@@ -207,12 +210,15 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.assertNotIn("error", body, body)
         return typing.cast("dict[str, typing.Any]", json.loads(str(body["result"]["content"][0]["text"])))
 
-    def _propose(self, values: dict[str, typing.Any] | None = None) -> dict[str, typing.Any]:
+    def _propose(
+        self, values: dict[str, typing.Any] | None = None, **extra: typing.Any
+    ) -> dict[str, typing.Any]:
         return self._call(
             "propose_provider_update",
             {
                 "target_uuid": self.provider.uuid,
                 "values": values if values is not None else {"name": "renamed by agent"},
+                **extra,
             },
         )
 
@@ -328,6 +334,76 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.login_with_api_token(user=staff, as_admin=False)
         listing = self._result_json(self._call("list_pending_actions", {}))
         self.assertEqual(listing["count"], 0)
+
+    # ------------------------------------------------------- horizon and ttl
+
+    def _expire_flow(self, flow_uuid: str, *, ago: datetime.timedelta) -> None:
+        """Force the expiry of a flow (due date in the past + lazy pass)."""
+        ActionFlow.objects.filter(uuid=flow_uuid).update(due_date=sql_now() - ago)
+        flow = self.store.get_flow(flow_uuid)
+        assert flow is not None
+        self.assertEqual(flow.status, FlowStatus.EXPIRED)
+
+    def test_propose_honours_expires_in_hours(self) -> None:
+        result = self._result_json(self._propose({"name": "quick"}, expires_in_hours=2))
+        flow = self.store.get_flow(result["flow_id"])
+        assert flow is not None and flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(hours=3))
+        self.assertGreater(remaining, datetime.timedelta(hours=1))
+
+    def test_update_revives_expired_proposal(self) -> None:
+        proposal = self._result_json(self._propose({"name": "v1"}))
+        action_id, flow_id = proposal["id"], proposal["flow_id"]
+        self._expire_flow(flow_id, ago=datetime.timedelta(days=1))
+
+        updated = self._result_json(
+            self._call(
+                "update_pending_action",
+                {"id": action_id, "values": {"name": "v2"}, "expires_in_hours": 5},
+            )
+        )
+        self.assertEqual(updated["status"], "pending")
+        flow = self.store.get_flow(flow_id)
+        assert flow is not None
+        self.assertEqual(flow.status, FlowStatus.PENDING)
+        assert flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(hours=6))
+        # Every skipped action came back with the flow
+        self.assertEqual(
+            list(flow.actions.values_list("status", flat=True)),
+            [FlowActionStatus.PENDING],
+        )
+
+    def test_update_does_not_revive_old_expired_proposals(self) -> None:
+        proposal = self._result_json(self._propose({"name": "v1"}))
+        self._expire_flow(proposal["flow_id"], ago=datetime.timedelta(days=30))
+        body = self._call(
+            "update_pending_action",
+            {"id": proposal["id"], "values": {"name": "v2"}},
+        )
+        self.assertIn("error", body)
+
+    def test_list_respects_visibility_horizon(self) -> None:
+        proposal = self._result_json(self._propose({"name": "ancient"}))
+        # A flow created (and expired) long ago falls out of the horizon
+        ActionFlow.objects.filter(uuid=proposal["flow_id"]).update(
+            created=sql_now() - datetime.timedelta(days=40),
+            due_date=sql_now() - datetime.timedelta(days=33),
+        )
+        listing = self._result_json(self._call("list_pending_actions", {}))
+        self.assertEqual(listing["count"], 0)
+
+        # An explicit wider window brings it back
+        listing = self._result_json(
+            self._call(
+                "list_pending_actions",
+                {"created_after": (sql_now() - datetime.timedelta(days=60)).date().isoformat()},
+            )
+        )
+        self.assertEqual(listing["count"], 1)
+        self.assertEqual(listing["items"][0]["flow"]["status"], FlowStatus.EXPIRED)
 
 
 if __name__ == "__main__":

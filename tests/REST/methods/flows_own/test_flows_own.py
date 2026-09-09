@@ -21,6 +21,7 @@ from uds.core.consts import mcp as consts_mcp
 from uds.core.types import permissions as permissions_types
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import objtype
+from uds.core.util.model import sql_now
 from uds.mutability.store import FlowStore
 
 from tests.fixtures.services import create_db_provider
@@ -45,9 +46,7 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
 
     def test_staff_creates_own_flow(self) -> None:
         self.login(user=self.staffs[0])
-        response = self.client.rest_post(
-            "flows/own", data={"name": "my proposal", "justification": "because"}
-        )
+        response = self.client.rest_post("flows/own", data={"name": "my proposal", "justification": "because"})
         self.assertEqual(response.status_code, 200, response.content)
         body = response.json()
         self.assertEqual(body["status"], FlowStatus.PENDING)
@@ -87,13 +86,105 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
         other = FlowStore().create_flow(owner=self.admins[1], name="secret")
         self.assertEqual(self.client.rest_get(f"flows/own/{other.uuid}").status_code, 404)
 
-    def test_list_only_pending(self) -> None:
+    def test_list_shows_full_own_history(self) -> None:
         self.login(user=self.staffs[0])
         cancelled_id = self.client.rest_post("flows/own", data={"name": "to cancel"}).json()["id"]
         kept_id = self.client.rest_post("flows/own", data={"name": "kept"}).json()["id"]
         self.client.rest_delete(f"flows/own/{cancelled_id}")
-        listed = {i["id"] for i in self.client.rest_get("flows/own").json()}
-        self.assertEqual(listed, {kept_id})
+        listed = {i["id"]: i["status"] for i in self.client.rest_get("flows/own").json()}
+        # Full history: decided flows remain listed with their outcome
+        self.assertEqual(set(listed), {cancelled_id, kept_id})
+        self.assertEqual(listed[cancelled_id], FlowStatus.CANCELLED)
+        self.assertEqual(listed[kept_id], FlowStatus.PENDING)
+
+
+class FlowsOwnTtlTest(rest.test.RESTTestCase):
+    """Proposer-declared expiration windows."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login(user=self.staffs[0])
+
+    def _create(self, **extra: typing.Any) -> typing.Any:
+        response = self.client.rest_post("flows/own", data={"name": "ttl", **extra})
+        self.assertEqual(response.status_code, 200, response.content)
+        return response.json()
+
+    def test_create_honours_expires_in_hours(self) -> None:
+        body = self._create(expires_in_hours=48)
+        flow = models.ActionFlow.objects.get(uuid=body["id"])
+        assert flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(hours=49))
+        self.assertGreater(remaining, datetime.timedelta(hours=47))
+
+    def test_create_clamps_expires_in_hours(self) -> None:
+        body = self._create(expires_in_hours=10**6)
+        flow = models.ActionFlow.objects.get(uuid=body["id"])
+        assert flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(hours=consts_mcp.MAX_TTL_HOURS + 1))
+        self.assertGreater(remaining, datetime.timedelta(hours=consts_mcp.MAX_TTL_HOURS - 1))
+
+    def test_edit_revives_expired_flow(self) -> None:
+        _grant_management(self.staffs[0], self.provider)
+        body = self._create()
+        flow_uuid = body["id"]
+        store = FlowStore()
+        action = store.add_action(
+            models.ActionFlow.objects.get(uuid=flow_uuid),
+            action_type="provider.update",
+            target_uuid=self.provider.uuid,
+            values={"name": "v1"},
+            base_values={"name": "old"},
+            base_etag="etag",
+        )
+        # Force expiry (due date gone -> lazy pass skips the action)
+        models.ActionFlow.objects.filter(uuid=flow_uuid).update(due_date=sql_now() - datetime.timedelta(days=1))
+        store.get_flow(flow_uuid)
+        self.assertEqual(
+            models.ActionFlow.objects.get(uuid=flow_uuid).status,
+            FlowStatus.EXPIRED,
+        )
+
+        response = self.client.rest_put(
+            f"flows/own/{flow_uuid}/actions/{action.uuid}",
+            data={"values": {"name": "v2"}, "expires_in_hours": 5},
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        flow = models.ActionFlow.objects.get(uuid=flow_uuid)
+        self.assertEqual(flow.status, FlowStatus.PENDING)
+        assert flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(hours=6))
+        self.assertGreater(remaining, datetime.timedelta(hours=4))
+        self.assertEqual(action.refresh_from_db() or action.status, FlowActionStatus.PENDING)
+        self.assertEqual(action.values, {"name": "v2"})
+
+    def test_edit_revival_beyond_grace_is_refused(self) -> None:
+        _grant_management(self.staffs[0], self.provider)
+        body = self._create()
+        flow_uuid = body["id"]
+        store = FlowStore()
+        action = store.add_action(
+            models.ActionFlow.objects.get(uuid=flow_uuid),
+            action_type="provider.update",
+            target_uuid=self.provider.uuid,
+            values={"name": "v1"},
+            base_values={"name": "old"},
+            base_etag="etag",
+        )
+        models.ActionFlow.objects.filter(uuid=flow_uuid).update(
+            due_date=sql_now() - datetime.timedelta(days=consts_mcp.REOPEN_GRACE_DAYS + 10)
+        )
+        store.get_flow(flow_uuid)
+
+        response = self.client.rest_put(
+            f"flows/own/{flow_uuid}/actions/{action.uuid}",
+            data={"values": {"name": "v2"}},
+        )
+        self.assertEqual(response.status_code, 400, response.content)
 
 
 class FlowsOwnLifecycleTest(rest.test.RESTTestCase):

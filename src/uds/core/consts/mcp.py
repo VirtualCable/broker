@@ -40,5 +40,22 @@ MAX_FLOWS_PER_USER: typing.Final[int] = 20
 MAX_ACTIONS_PER_FLOW: typing.Final[int] = 8
 
 # Days a flow stays valid after creation. Pending flows older than this are
-# expired by the application layer.
+# expired by the application layer. Used when the proposer does not declare
+# its own expected resolution window.
 FLOW_TTL_DAYS: typing.Final[int] = 7
+
+# Bounds (hours) of the proposer-declared expiration window
+# (``expires_in_hours``): proposals carry the expected time an
+# administrator will need to resolve them, clamped to sane values.
+MIN_TTL_HOURS: typing.Final[int] = 1
+MAX_TTL_HOURS: typing.Final[int] = FLOW_TTL_DAYS * 24  # 30 days
+
+# Days an expired flow can still be reopened (edited back to pending) by
+# its proposer. Past this grace window the proposal is final: a new one
+# must be proposed.
+REOPEN_GRACE_DAYS: typing.Final[int] = 7
+
+# Days of own-flow history the proposal tools surface to the agent.
+# Older flows remain visible to administrators (and in the database),
+# they just disappear from the agent's view to keep its context bounded.
+VISIBILITY_DAYS: typing.Final[int] = 30

@@ -61,6 +61,7 @@ class FlowActionItem(types.rest.BaseRestItem):
     values: dict[str, typing.Any]
     created: datetime.datetime
     permission: int
+    result: str | None
 
 
 class FlowActions(DetailHandler[FlowActionItem]):
@@ -83,6 +84,7 @@ class FlowActions(DetailHandler[FlowActionItem]):
             values=item.values or {},
             created=item.created,
             permission=perm,
+            result=item.properties.get("result"),
         )
 
     @typing.override
@@ -140,6 +142,7 @@ class FlowItem(types.rest.BaseRestItem):
     created: datetime.datetime
     actions_count: int
     permission: int
+    decided_by: str
 
 
 class FlowsManagement(ModelHandler[FlowItem]):
@@ -193,6 +196,7 @@ class FlowsManagement(ModelHandler[FlowItem]):
             created=item.created,
             actions_count=item.actions.count(),
             permission=permissions.effective_permissions(self._user, item),
+            decided_by=item.properties.get("decided_by", ""),
         )
 
     @typing.override

@@ -50,8 +50,13 @@ class FlowStore:
         agent: str = "",
         name: str = "",
         justification: str = "",
+        ttl: datetime.timedelta | None = None,
     ) -> ActionFlow:
-        """Create a pending flow, enforcing the per-user pending cap."""
+        """Create a pending flow, enforcing the per-user pending cap.
+
+        ``ttl`` is the proposer's expected resolution window; it defaults
+        to :data:`consts_mcp.FLOW_TTL_DAYS`.
+        """
         if self.count_pending_flows(owner_uuid=owner.uuid) >= consts_mcp.MAX_FLOWS_PER_USER:
             raise MutabilityError(
                 f"Too many pending proposals (limit {consts_mcp.MAX_FLOWS_PER_USER}). "
@@ -62,7 +67,7 @@ class FlowStore:
             name=name,
             justification=justification,
             status=FlowStatus.PENDING,
-            due_date=sql_now() + datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS),
+            due_date=sql_now() + (ttl or datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS)),
         )
         if agent:
             # Informational: which agent (clientInfo) created the flow
@@ -190,6 +195,30 @@ class FlowStore:
         if flow.owner is None or flow.owner.uuid != actor_uuid:
             raise NotActionOwner(f"Flow {flow.uuid} does not belong to user {actor_uuid}")
         self._decide_flow(flow, FlowStatus.CANCELLED, decided_by=actor_uuid, note="Cancelled by proposer")
+
+    def reopen_flow(self, flow: ActionFlow, *, actor_uuid: str, ttl: datetime.timedelta) -> None:
+        """Proposer revives its own expired flow, within the grace window.
+
+        The whole proposal comes back: skipped actions turn pending again
+        and the expiration moves to ``now + ttl``. Cancelled/rejected (a
+        conscious decision) and flows expired beyond
+        :data:`consts_mcp.REOPEN_GRACE_DAYS` stay final.
+        """
+        if flow.owner is None or str(flow.owner.uuid) != actor_uuid:
+            raise NotActionOwner(f"Flow {flow.uuid} does not belong to user {actor_uuid}")
+        if flow.status != FlowStatus.EXPIRED:
+            raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only expired flows can be reopened")
+        if flow.due_date is None or sql_now() - flow.due_date > datetime.timedelta(
+            days=consts_mcp.REOPEN_GRACE_DAYS
+        ):
+            raise InvalidTransition(
+                f"Flow {flow.uuid} expired more than {consts_mcp.REOPEN_GRACE_DAYS} days ago "
+                "and can no longer be reopened"
+            )
+        flow.status = FlowStatus.PENDING
+        flow.due_date = sql_now() + ttl
+        flow.save(update_fields=["status", "due_date"])
+        flow.actions.filter(status=FlowActionStatus.SKIPPED).update(status=FlowActionStatus.PENDING)
 
     def reject_flow(self, flow: ActionFlow, *, admin: str, reason: str | None = None) -> None:
         """Administrator declines a pending flow."""

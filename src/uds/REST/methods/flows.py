@@ -40,6 +40,7 @@ permissions over ``ActionFlow``; ownership is the access rule).
 """
 
 import collections.abc
+import datetime
 import logging
 import typing
 
@@ -48,6 +49,7 @@ from django.utils.translation import gettext_lazy as _
 
 from uds import mutability
 from uds.core import exceptions, types
+from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowStatus
 from uds.core.util import ensure
 from uds.core.util import permissions
@@ -61,6 +63,24 @@ from uds.REST.model import DetailHandler, ModelHandler
 from .flows_management import FlowActionItem, FlowActions, FlowItem
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def _ttl_from_params(params: dict[str, typing.Any]) -> datetime.timedelta | None:
+    """Proposer-declared expiration window, clamped to sane bounds.
+
+    ``expires_in_hours`` carries the expected time an administrator will
+    need to resolve the proposal; out-of-range values are clamped, not
+    refused (the intent — hurry up / take your time — survives).
+    """
+    raw = params.get("expires_in_hours")
+    if raw in (None, ""):
+        return None
+    try:
+        hours = int(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        raise exceptions.rest.RequestError("expires_in_hours must be an integer number of hours") from None
+    hours = max(consts_mcp.MIN_TTL_HOURS, min(consts_mcp.MAX_TTL_HOURS, hours))
+    return datetime.timedelta(hours=hours)
 
 
 class FlowsOwnActions(FlowActions):
@@ -114,6 +134,15 @@ class FlowsOwnActions(FlowActions):
         store = FlowStore()
         if item:  # Edit: re-base a pending action, keeping type and target
             action = parent.actions.get(uuid=process_uuid(item))
+            if parent.status == FlowStatus.EXPIRED:
+                # Revival: within the grace window, editing an expired
+                # proposal brings the whole flow back to pending
+                store.reopen_flow(
+                    parent,
+                    actor_uuid=str(self._user.uuid),
+                    ttl=_ttl_from_params(self._params) or datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS),
+                )
+                action.refresh_from_db()
             action_type = self._registry_type(action.action_type)
             target = self._require_management(action_type, action.target_uuid)
             values, base_values, base_etag, justification = self._validated_payload(
@@ -155,10 +184,10 @@ class FlowsOwnActions(FlowActions):
 class FlowsOwn(ModelHandler[FlowItem]):
     """Owner API for proposal flows (staff).
 
-    Users see and manage here ONLY their own flows. The list shows the
-    still-pending ones; a single lookup admits any status (so a proposer
-    can inspect the outcome of its own flow); creation appends a fresh
-    pending flow (caps enforced); deletion cancels a pending flow.
+    Users see and manage here ONLY their own flows. The list is the full
+    history (decisions included); a single lookup admits any status;
+    creation appends a fresh pending flow (caps enforced); deletion
+    cancels a pending flow. Mutations only apply while pending.
     """
 
     PATH = "flows"
@@ -207,8 +236,8 @@ class FlowsOwn(ModelHandler[FlowItem]):
     def get_items(
         self, *, sumarize: bool = False, query: models.QuerySet[typing.Any] | None = None
     ) -> collections.abc.Generator[FlowItem, None, None]:
-        """Own flows still pending (the ones the proposer can act on)."""
-        for flow in FlowStore().list_flows(status=FlowStatus.PENDING, owner_uuid=self._user.uuid):
+        """All own flows, decided ones included (full history for the owner)."""
+        for flow in FlowStore().list_flows(owner_uuid=self._user.uuid):
             yield self.get_item(flow)
 
     @typing.override
@@ -226,6 +255,7 @@ class FlowsOwn(ModelHandler[FlowItem]):
             created=item.created,
             actions_count=item.actions.count(),
             permission=types.permissions.PermissionType.ALL,
+            decided_by=item.properties.get("decided_by", ""),
         )
 
     # ------------------------------------------------------------ mutation
@@ -239,6 +269,7 @@ class FlowsOwn(ModelHandler[FlowItem]):
                 owner=self._user,
                 name=str(self._params.get("name", "") or ""),
                 justification=str(self._params.get("justification", "") or ""),
+                ttl=_ttl_from_params(self._params),
             )
         except MutabilityError as e:
             raise exceptions.rest.RequestError(str(e)) from None
