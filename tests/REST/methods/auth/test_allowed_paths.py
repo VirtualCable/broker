@@ -121,12 +121,17 @@ class AllowedPathsDispatchTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
     def test_admin_session_ignores_scopes(self) -> None:
-        """Admin GUI authenticates through sessions: scopes never apply there.
-
-        This is the anti-lockout rule: even if an admin carries path
-        scopes (targeted to its API tokens), its session keeps full access.
-        """
+        """Sessions are never scoped, admin or not: web access is never broken."""
         user = self.admins[1]
+        user.rest_allowed_paths = ["mcp"]
+        client = self._fresh_client()
+        self._login(client, user)
+        response = client.get("/uds/rest/authenticators", content_type="application/json")
+        self.assertEqual(response.status_code, 200, response.content)
+
+    def test_staff_session_ignores_scopes(self) -> None:
+        """Sessions are never scoped: non-admin sessions are unrestricted too."""
+        user = self.staffs[0]
         user.rest_allowed_paths = ["mcp"]
         client = self._fresh_client()
         self._login(client, user)
@@ -142,23 +147,19 @@ class AllowedPathsDispatchTest(rest.test.RESTTestCase):
         response = self.client.get("/uds/rest/authenticators", content_type="application/json")
         self.assertEqual(response.status_code, 403, response.content)
 
-    def test_staff_session_is_scoped(self) -> None:
-        """Only admins are exempt on session logins; staff sessions obey scopes."""
+    def test_staff_api_token_is_scoped(self) -> None:
+        """Non-admin users are scoped through their API tokens too."""
         user = self.staffs[0]
-        client = self._fresh_client()
-        self._login(client, user)
-        response = client.get("/uds/rest/authenticators", content_type="application/json")
-        self.assertEqual(response.status_code, 200, response.content)
         user.rest_allowed_paths = ["mcp"]
-        response = client.get("/uds/rest/authenticators", content_type="application/json")
+        self.login_with_api_token(user=user)
+        response = self.client.get("/uds/rest/authenticators", content_type="application/json")
         self.assertEqual(response.status_code, 403, response.content)
 
     def test_scoped_user_reaches_scoped_path(self) -> None:
         user = self.staffs[0]
         user.rest_allowed_paths = ["authenticators"]
-        client = self._fresh_client()
-        self._login(client, user)
-        response = client.get("/uds/rest/authenticators", content_type="application/json")
+        self.login_with_api_token(user=user)
+        response = self.client.get("/uds/rest/authenticators", content_type="application/json")
         self.assertEqual(response.status_code, 200, response.content)
 
     def test_scope_matches_segment_prefix(self) -> None:
@@ -179,16 +180,15 @@ class AllowedPathsDispatchTest(rest.test.RESTTestCase):
     def test_empty_scopes_remove_previous_restriction(self) -> None:
         user = self.staffs[0]
         user.rest_allowed_paths = ["mcp"]
-        client = self._fresh_client()
-        self._login(client, user)
+        self.login_with_api_token(user=user)
         self.assertEqual(
-            client.get("/uds/rest/authenticators", content_type="application/json").status_code,
+            self.client.get("/uds/rest/authenticators", content_type="application/json").status_code,
             403,
         )
         user.rest_allowed_paths = None
         self.assertEqual(user.rest_allowed_paths, [])
         self.assertEqual(
-            client.get("/uds/rest/authenticators", content_type="application/json").status_code,
+            self.client.get("/uds/rest/authenticators", content_type="application/json").status_code,
             200,
         )
 

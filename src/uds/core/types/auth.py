@@ -196,23 +196,15 @@ class AuthenticatedPrincipal:
     def allows_rest_path(self, path: str) -> bool:
         """Whether this principal may reach the given REST path.
 
-        Encapsulates the REST path scope rules (see User.rest_allowed_paths):
-
-        - Only USER principals can be scoped. Registered servers, tickets
-          and anonymous principals are always unrestricted.
-        - User API tokens are always checked against the user scopes.
-        - Session credentials (the admin GUI path) are only checked for
-          non-admin users, so an admin can never lock itself out of the
-          REST API through its session.
+        Path scopes are a token-only concept: only USER_API_TOKEN
+        principals are checked against the user scopes (see
+        User.rest_allowed_paths). Every other credential kind (sessions,
+        tickets, registered servers, anonymous) is unrestricted, so the
+        web/GUI access can never be broken by a misconfigured scope.
         """
-        if self.principal_kind != PrincipalKind.USER or self.user is None or not self.user.id:
+        if self.credential_kind != CredentialKind.USER_API_TOKEN:
             return True
-        if self.credential_kind == CredentialKind.USER_API_TOKEN:
-            pass  # Always enforced below
-        elif self.credential_kind == CredentialKind.SESSION:
-            if self.user.is_admin:
-                return True
-        else:
+        if self.principal_kind != PrincipalKind.USER or self.user is None or not self.user.id:
             return True
         scopes = self.user.rest_allowed_paths
         return not scopes or rest_path_allowed(path, scopes)
