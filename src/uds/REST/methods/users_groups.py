@@ -157,6 +157,11 @@ class Users(DetailHandler[UserItem]):
 
     @staticmethod
     def as_user_item(user: "User", token_hint: str = "") -> UserItem:
+        if token_hint and user.rest_allowed_paths:
+            # The scopes belong to the user, so a token that cannot leave the MCP
+            # endpoint has to say so where the administrator reads it
+            scope = _("MCP only") if user.rest_allowed_paths == ["mcp"] else _("restricted")
+            token_hint = f"{token_hint} ({scope})"
         return UserItem(
             id=user.uuid,
             name=user.name,
