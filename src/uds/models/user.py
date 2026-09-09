@@ -55,6 +55,10 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 USER_API_TOKEN_PREFIX: typing.Final[str] = "uat-"
 
+# Key of the user property holding the REST path scopes
+# (see User.rest_allowed_paths / User.set_rest_allowed_paths)
+REST_ALLOWED_PATHS_KEY: typing.Final[str] = "allowed_paths"
+
 
 def create_api_token() -> str:
     """Create a user API token whose raw value is shown only once."""
@@ -183,6 +187,34 @@ class User(UUIDModel, properties.PropertiesMixin):
                 favs.discard(favorite)
                 props["favorites"] = list(favs)
 
+    @property
+    def rest_allowed_paths(self) -> list[str]:
+        """REST path scopes for this user.
+
+        Returns the list of REST paths (relative to the REST root) this
+        user is allowed to reach. An empty list means the user is not
+        restricted at all.
+        """
+        value: typing.Any = self.properties.get(REST_ALLOWED_PATHS_KEY)
+        if not isinstance(value, list):
+            return []
+        entries: list[typing.Any] = typing.cast("list[typing.Any]", value)
+        return [str(entry) for entry in entries]
+
+    @rest_allowed_paths.setter
+    def rest_allowed_paths(self, scopes: list[str] | None) -> None:
+        """Set the REST path scopes for this user.
+
+        A non-empty list stores the scopes; None or an empty list removes
+        any previous restriction. Callers are responsible of normalizing
+        the paths before storing them (see sanitize_rest_scopes).
+        """
+        with self.properties as props:
+            if scopes:
+                props[REST_ALLOWED_PATHS_KEY] = list(scopes)
+            else:
+                props.pop(REST_ALLOWED_PATHS_KEY, None)
+
     def is_staff(self) -> bool:
         """
         Return true if this user is admin or staff member
@@ -249,7 +281,9 @@ class User(UUIDModel, properties.PropertiesMixin):
                 number_belongs_meta=Count("groups", filter=Q(groups__id__in=grps))
             )  # g.groups.filter(id__in=grps).count()
         ):
-            number_of_groups_belonging_in_meta: int = typing.cast(typing.Any, g).number_belongs_meta  # Anotated field
+            number_of_groups_belonging_in_meta: int = typing.cast(
+                typing.Any, g
+            ).number_belongs_meta  # Anotated field
 
             logger.debug("gn = %s", number_of_groups_belonging_in_meta)
             logger.debug("groups count: %s", typing.cast(typing.Any, g).number_groups)  # Anotated field
