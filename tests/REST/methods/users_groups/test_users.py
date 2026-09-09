@@ -212,6 +212,22 @@ class UsersTest(rest.test.RESTActorTestCase):
         single = self.client.rest_get(f"{url}/{with_token.uuid}").json()
         self.assertEqual(single["token"], hint)
 
+    def test_users_token_column_marks_the_mcp_scope(self) -> None:
+        """A token that cannot leave the MCP endpoint says so next to the hint."""
+        url = f"authenticators/{self.auth.uuid}/users"
+        scoped, plain = self.users[0], self.users[1]
+
+        created = self.client.rest_post(f"{url}/{scoped.uuid}/token", data={"allowed_paths": ["mcp"]})
+        self.assertEqual(created.status_code, 200, created.content)
+        hint = created.json()["token_hint"]
+
+        plain_created = self.client.rest_post(f"{url}/{plain.uuid}/token")
+        self.assertEqual(plain_created.status_code, 200, plain_created.content)
+
+        listed = {i["name"]: i for i in self.client.rest_get(f"{url}/overview").json()}
+        self.assertEqual(listed[scoped.name]["token"], f"{hint} (MCP only)")
+        self.assertEqual(listed[plain.name]["token"], plain_created.json()["token_hint"])
+
     def test_users_token_column_is_sortable(self) -> None:
         """The hint lives in a property, so sorting by it needs the annotated subquery."""
         url = f"authenticators/{self.auth.uuid}/users"
