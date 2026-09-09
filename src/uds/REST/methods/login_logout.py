@@ -81,10 +81,18 @@ class Login(Handler):
                         properties={
                             "username": types.rest.api.SchemaProperty(type="string"),
                             "password": types.rest.api.SchemaProperty(type="string"),
-                            "auth_id": types.rest.api.SchemaProperty(type="string", description="Authenticator UUID"),
-                            "auth": types.rest.api.SchemaProperty(type="string", description="Authenticator name"),
-                            "label": types.rest.api.SchemaProperty(type="string", description="Authenticator label"),
-                            "platform": types.rest.api.SchemaProperty(type="string", description="Platform identifier"),
+                            "auth_id": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator UUID"
+                            ),
+                            "auth": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator name"
+                            ),
+                            "label": types.rest.api.SchemaProperty(
+                                type="string", description="Authenticator label"
+                            ),
+                            "platform": types.rest.api.SchemaProperty(
+                                type="string", description="Platform identifier"
+                            ),
                             "locale": types.rest.api.SchemaProperty(type="string", description="Locale code"),
                         },
                     ),

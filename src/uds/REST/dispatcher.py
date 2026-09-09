@@ -160,7 +160,9 @@ class Dispatcher(View):
                 "Method not found",
             )
 
-        processor = processors.available_processors_mime_dict.get(content_type, processors.default_processor)(request)
+        processor = processors.available_processors_mime_dict.get(content_type, processors.default_processor)(
+            request
+        )
 
         # Obtain method to be invoked
         http_method: str = request.method.lower() if request.method else ""
@@ -197,6 +199,12 @@ class Dispatcher(View):
                 *args,
             )
             processor.set_odata(handler.odata)
+            # Path scope enforcement. The principal decides (it knows the
+            # credential kind and the user scopes); internal handler
+            # invocations (as the MCP proxy doing canonical REST calls)
+            # bypass the dispatcher and are never re-evaluated.
+            if not handler.principal.allows_rest_path(node_full_path + "/" + "/".join(args)):
+                raise exceptions.rest.AccessDenied("Requested path is not allowed for this user")
             operation: collections.abc.Callable[[], typing.Any] = getattr(handler, http_method)
         except processors.ParametersException as e:
             return Dispatcher.error_response(http.HttpResponseBadRequest, handler, "Invalid parameters", e)

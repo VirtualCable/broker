@@ -62,6 +62,7 @@ from uds.models import User
 from uds.models import UserService
 from uds.models.user import api_token_hint, create_api_token, hash_api_token
 from uds.REST.model import DetailHandler
+from uds.REST.utils import sanitize_rest_scopes
 
 from .user_services import AssignedUserService
 from .user_services import UserServiceItem
@@ -139,7 +140,11 @@ class Users(DetailHandler[UserItem]):
         types.rest.ModelCustomMethod(
             "token",
             method=types.rest.CustomMethodMethod.POST,
-            description="Issue a new REST/MCP API token for this user, returning the raw value only once",
+            description=(
+                "Issue a new REST/MCP API token for this user, returning the raw value only once."
+                " Optional 'allowed_paths' (list of REST paths relative to the REST root, e.g. ['mcp'])"
+                " limits this user to those REST paths; an empty list removes any previous restriction."
+            ),
             required_permission=types.permissions.PermissionType.MANAGEMENT,
         ),
         types.rest.ModelCustomMethod(
@@ -359,7 +364,9 @@ class Users(DetailHandler[UserItem]):
                     "id": i.uuid,
                     "name": i.name,
                     "thumb": i.image.thumb64 if i.image is not None else consts.images.DEFAULT_THUMB_BASE64,
-                    "user_services_count": i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+                    "user_services_count": i.userServices.exclude(
+                        state__in=(State.REMOVED, State.ERROR)
+                    ).count(),
                     "state": _("With errors") if i.is_restrained() else _("Ok"),
                 }
             )
@@ -427,6 +434,13 @@ class Users(DetailHandler[UserItem]):
             raise exceptions.rest.NotFound(_("User not found")) from None
 
         if self._operation == "post":
+            # Optional REST path scopes. The restriction is stored as a user
+            # property (not on the token itself), so it persists across token
+            # re-issues; an explicit empty list removes it. Validated before
+            # touching the token so a bad payload answers with a clean 400.
+            scopes: list[str] | None = None
+            if "allowed_paths" in self._params:
+                scopes = sanitize_rest_scopes(self._params["allowed_paths"])
             if user.token_hash is not None:
                 raise exceptions.rest.RequestError(_("User already has an API token"))
             raw_token = create_api_token()
@@ -435,6 +449,8 @@ class Users(DetailHandler[UserItem]):
             hint = api_token_hint(raw_token)
             with user.properties as props:
                 props["token_hint"] = hint
+            if scopes is not None:
+                user.rest_allowed_paths = scopes
             user.log(
                 f"API token issued by {self._user.pretty_name}",
                 types.log.LogLevel.INFO,
@@ -528,7 +544,9 @@ class Groups(DetailHandler[GroupItem]):
         ).build()
 
     @typing.override
-    def enum_types(self, parent: "Model", for_type: str | None) -> collections.abc.Iterable[types.rest.TypeInfo]:
+    def enum_types(
+        self, parent: "Model", for_type: str | None
+    ) -> collections.abc.Iterable[types.rest.TypeInfo]:
         ensure.is_instance(parent, Authenticator)  # Just ensures type
         types_dict: dict[str, dict[str, str]] = {
             "group": {"name": _("Group"), "description": _("UDS Group")},
@@ -601,7 +619,9 @@ class Groups(DetailHandler[GroupItem]):
 
             if is_meta:
                 # Do not allow to add meta groups to meta groups
-                group.groups.set(i for i in parent.groups.filter(uuid__in=self._params["groups"]) if i.is_meta is False)
+                group.groups.set(
+                    i for i in parent.groups.filter(uuid__in=self._params["groups"]) if i.is_meta is False
+                )
 
             if pools:
                 # Update pools
@@ -645,7 +665,9 @@ class Groups(DetailHandler[GroupItem]):
                     "id": i.uuid,
                     "name": i.name,
                     "thumb": i.image.thumb64 if i.image is not None else consts.images.DEFAULT_THUMB_BASE64,
-                    "user_services_count": i.userServices.exclude(state__in=(State.REMOVED, State.ERROR)).count(),
+                    "user_services_count": i.userServices.exclude(
+                        state__in=(State.REMOVED, State.ERROR)
+                    ).count(),
                     "state": _("With errors") if i.is_restrained() else _("Ok"),
                 }
             )

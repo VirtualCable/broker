@@ -34,7 +34,9 @@ import re
 import collections.abc
 
 from uds.core import consts
+from uds.core import exceptions
 from uds.core.util.model import sql_stamp_seconds
+from uds.core.util.rest_paths import normalize_rest_path
 
 
 def rest_result(result: typing.Any, **kwargs: typing.Any) -> dict[str, typing.Any]:
@@ -103,8 +105,29 @@ def sanitize_params(params: dict[str, typing.Any]) -> dict[str, typing.Any]:
                 res[k] = sanitize_params(typing.cast(dict[str, typing.Any], v))
             case list():
                 res[k] = [
-                    sanitize_params(x) if isinstance(x, dict) else x for x in typing.cast(dict[str, typing.Any], v)
+                    sanitize_params(x) if isinstance(x, dict) else x
+                    for x in typing.cast(dict[str, typing.Any], v)
                 ]
             case _:
                 res[k] = v
     return res
+
+
+def sanitize_rest_scopes(scopes: object) -> list[str]:
+    """Validate an ``allowed_paths`` payload and normalize its entries.
+
+    Raises ``RequestError`` when the payload is not a list of strings.
+    Returns the deduplicated, normalized scope list; an empty payload
+    normalizes to an empty list (meaning "no path restriction").
+    """
+    if not isinstance(scopes, list):
+        raise exceptions.rest.RequestError("allowed_paths must be a list of strings")
+    entries: list[typing.Any] = typing.cast("list[typing.Any]", scopes)
+    if not all(isinstance(entry, str) for entry in entries):
+        raise exceptions.rest.RequestError("allowed_paths must be a list of strings")
+    result: list[str] = []
+    for entry in entries:
+        normalized = normalize_rest_path(str(entry))
+        if normalized and normalized not in result:
+            result.append(normalized)
+    return result
