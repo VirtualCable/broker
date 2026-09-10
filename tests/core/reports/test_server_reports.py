@@ -75,12 +75,17 @@ class _ServerReportsBase(UDSTransactionTestCase):
     start_date: datetime.date
     end_date: datetime.date
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self.group = fixtures_servers.create_server_group(
             type=types.servers.ServerType.SERVER, subtype="rds", num_servers=3
         )
-        end = timezone.now().replace(minute=0, second=0, microsecond=0)
+        # The reports take *local* dates (the GUI user picks them in local
+        # time) and build the window as local midnight..local end of day, so
+        # the seeded span must be derived from the local clock. Using UTC
+        # dates here would clip one hour whenever UTC is past local midnight.
+        end = timezone.localtime(timezone.now()).replace(minute=0, second=0, microsecond=0)
         start = end - datetime.timedelta(hours=HOURS)
         self.start_date = start.date()
         self.end_date = end.date()
