@@ -38,8 +38,10 @@ def _populate() -> None:
     # Import here so the registry module stays free of heavy model imports
     # until it is actually used.
     from .types_providers import ProviderUpdate
+    from .types_services import ServiceUpdate
 
     register(ProviderUpdate())
+    register(ServiceUpdate())
 
 
 _populate()

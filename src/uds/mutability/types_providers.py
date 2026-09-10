@@ -71,7 +71,8 @@ class ProviderUpdate(mutability_base.MutableActionType):
         return typing.cast(models.Provider, target).data_type
 
     @typing.override
-    def field_definitions(self, for_type: str) -> list[JsonObject]:
+    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+        # Provider guis depend only on the subtype; ``target`` is unused.
         defs: list[JsonObject] = []
         for element in self._gui(for_type):
             info = element.gui
@@ -123,7 +124,7 @@ class ProviderUpdate(mutability_base.MutableActionType):
         return snapshot
 
     @typing.override
-    def etag_fields(self, for_type: str) -> list[str]:
+    def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
         return [element.name for element in self._gui(for_type)]
 
     @typing.override

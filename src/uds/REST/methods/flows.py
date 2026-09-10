@@ -104,7 +104,11 @@ class FlowsOwnActions(FlowActions):
         self, action_type: "mutability.registry.MutableActionType", target_uuid: str
     ) -> typing.Any:
         target = action_type.resolve_target(target_uuid)
-        if not permissions.has_access(self._user, target, types.permissions.PermissionType.MANAGEMENT):
+        # Detail types inherit permissions from their parent (see
+        # ``MutableActionType.permission_target``): MANAGEMENT is checked
+        # over the model that really owns the target.
+        owner = action_type.permission_target(target)
+        if not permissions.has_access(self._user, owner, types.permissions.PermissionType.MANAGEMENT):
             raise exceptions.rest.AccessDenied()
         return target
 
@@ -122,7 +126,7 @@ class FlowsOwnActions(FlowActions):
         values = typing.cast("dict[str, typing.Any]", values)
         justification = str(self._params.get("justification", "") or "") or justification_fallback
         for_type = action_type.for_type_of(target)
-        errors = action_type.validate_values(for_type, values)
+        errors = action_type.validate_values(for_type, values, target)
         if errors:
             raise exceptions.rest.RequestError("; ".join(errors))
         base_values, base_etag = action_type.snapshot_and_fingerprint(target, values)
@@ -139,7 +143,7 @@ class FlowsOwnActions(FlowActions):
                 # proposal brings the whole flow back to pending
                 store.reopen_flow(
                     parent,
-                    actor_uuid=str(self._user.uuid),
+                    actor_uuid=self._user.uuid,
                     ttl=_ttl_from_params(self._params) or datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS),
                 )
                 action.refresh_from_db()

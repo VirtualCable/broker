@@ -72,7 +72,7 @@ def _describe_item(action_type: registry.MutableActionType, item: JsonDict) -> J
     changes: JsonDict = dict(typing.cast("JsonDict", item.get("values") or {}))
     try:
         target = action_type.resolve_target(str(item["target_uuid"]))
-        secrets = action_type.secret_names(action_type.for_type_of(target))
+        secrets = action_type.secret_names(action_type.for_type_of(target), target)
     except Exception:
         secrets = set(changes)
     return {
@@ -216,10 +216,14 @@ def _discovery_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
         for_type = action_type.for_type_of(target)
         result["target_uuid"] = target_uuid
         result["for_type"] = for_type
-        fields = action_type.field_definitions(for_type)
+        fields = action_type.field_definitions(for_type, target)
         result["fields"] = fields
         result["current_values"] = action_type.snapshot_values(target, [d["name"] for d in fields])
     elif for_type.strip():
+        if action_type.target_scoped_fields:
+            # Detail types build their gui from the parent item, so a bare
+            # subtype is not enough to enumerate their fields.
+            raise ValueError(f"{type_id} requires target_uuid: its fields depend on the concrete target")
         result["for_type"] = for_type
         result["fields"] = action_type.field_definitions(for_type)
     else:

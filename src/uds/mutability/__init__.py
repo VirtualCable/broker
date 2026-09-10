@@ -4,7 +4,8 @@ The AI proposes mutations; administrators approve them. This package
 holds the shared machinery (the :class:`.store.FlowStore` application
 layer over the ``ActionFlow``/``FlowAction`` models, and the
 :mod:`.etag` fingerprints), the action type :mod:`.registry` and the
-provider :mod:`.types_providers` adapters. The MCP tools live in
+concrete adapters (:mod:`.types_providers`, :mod:`.types_services`).
+The MCP tools live in
 :mod:`uds.mcp.mutability` (proposals, discovery and self-management),
 and the REST owner/management surfaces are built on top.
 """
