@@ -76,7 +76,7 @@ urlpatterns = [
     ),
     # Backwards compatibility with REST API path
     re_path(
-        r"^rest/(?P<arguments>.*)$",
+        r"^rest/(?P<path>.*)$",
         REST.Dispatcher.as_view(),
         name="REST.compat",
     ),
