@@ -44,6 +44,8 @@ from uds.core.util import ui as ui_utils
 from uds.core.util.model import process_uuid
 
 from uds.models import ActionFlow, FlowAction
+from uds.mutability import executor
+from uds.mutability.store import FlowStore, InvalidTransition, StaleProposal
 from uds.REST.model import DetailHandler, ModelHandler
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -161,7 +163,22 @@ class FlowsManagement(ModelHandler[FlowItem]):
     MODEL = ActionFlow
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"actions": FlowActions}
 
-    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = []
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
+        types.rest.ModelCustomMethod(
+            "approve",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Approve a pending flow (CAS checked) and execute its actions in order",
+        ),
+        types.rest.ModelCustomMethod(
+            "reject",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Reject a pending flow; its pending actions are skipped",
+        ),
+    ]
 
     FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "justification"]
 
@@ -206,3 +223,39 @@ class FlowsManagement(ModelHandler[FlowItem]):
     @typing.override
     def validate_save(self, item: models.Model) -> None:
         raise exceptions.rest.AccessDenied("Flows cannot be modified through this API")
+
+    # ------------------------------------------------------ domain actions
+
+    def approve(self, item: models.Model) -> dict[str, typing.Any]:
+        """Approve a pending flow (CAS checked) and execute it.
+
+        The CAS snapshots taken at approval time are stored on every
+        action (``approved_etag``) and each action is re-verified right
+        before running, so the executed state is exactly the approved
+        one. The response carries the execution summary.
+        """
+        flow = ensure.is_instance(item, ActionFlow)
+        store = FlowStore()
+        try:
+            approved_etags = store.approval_etags(flow)
+            store.approve_flow(flow, admin=self._user, approved_etags=approved_etags)
+        except (InvalidTransition, StaleProposal) as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        return executor.execute_flow(flow, self._request)
+
+    def reject(self, item: models.Model) -> dict[str, typing.Any]:
+        """Reject a pending flow; its pending actions are skipped."""
+        flow = ensure.is_instance(item, ActionFlow)
+        try:
+            FlowStore().reject_flow(
+                flow, admin=self._user.name, reason=str(self._params.get("reason", "") or "") or None
+            )
+        except InvalidTransition as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        flow.refresh_from_db()
+        return {
+            "flow": flow.uuid,
+            "status": str(flow.status),
+            "decided_by": flow.properties.get("decided_by", ""),
+            "note": flow.properties.get("decided_note", ""),
+        }

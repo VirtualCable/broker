@@ -24,6 +24,7 @@ from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util.model import sql_now
 from uds.models import ActionFlow, FlowAction, User
+from uds.mutability.base import StalePolicy
 
 
 class MutabilityError(ValueError):
@@ -36,6 +37,10 @@ class InvalidTransition(MutabilityError):
 
 class NotActionOwner(MutabilityError):
     """The actor is not the owner of the flow."""
+
+
+class StaleProposal(MutabilityError):
+    """The target drifted from the proposal base (or cannot be verified)."""
 
 
 class FlowStore:
@@ -224,11 +229,61 @@ class FlowStore:
         """Administrator declines a pending flow."""
         self._decide_flow(flow, FlowStatus.REJECTED, decided_by=admin, note=reason or "Rejected")
 
-    def approve_flow(self, flow: ActionFlow, *, admin: User) -> None:
+    def approval_etags(self, flow: ActionFlow) -> dict[str, str]:
+        """CAS check at approval time: live fingerprint per pending action.
+
+        For every still-pending action the whole-item fingerprint is
+        recomputed now. Comparing it with ``base_etag`` enforces the
+        action type's :class:`~uds.mutability.base.StalePolicy`:
+
+        - ``DENY`` (default): any drift raises :class:`StaleProposal`
+          and the whole approval is refused; the administrator must ask
+          the proposer for a fresh proposal.
+        - ``FORCE``: drift is tolerated; the fresh fingerprint is still
+          recorded (see :meth:`approve_flow`) so execution can detect
+          later changes.
+
+        Unverifiable actions (unknown action type, vanished target)
+        raise :class:`StaleProposal` regardless of the policy: approving
+        what cannot be checked would defeat the whole CAS scheme.
+
+        Returns ``{action_uuid: fingerprint}`` for the pending actions.
+        """
+        from uds.mutability import registry
+
+        etags: dict[str, str] = {}
+        stale: list[str] = []
+        for action in flow.actions.filter(status=FlowActionStatus.PENDING).order_by("order"):
+            action_type = registry.get(action.action_type)
+            if action_type is None:
+                stale.append(f"action {action.uuid}: unknown action type {action.action_type}")
+                continue
+            try:
+                target = action_type.resolve_target(action.target_uuid)
+            except Exception:
+                stale.append(f"action {action.uuid}: target {action.target_uuid} no longer exists")
+                continue
+            fingerprint = action_type.fingerprint(target)
+            etags[action.uuid] = fingerprint
+            if fingerprint != action.base_etag and action_type.stale_policy == StalePolicy.DENY:
+                stale.append(f"action {action.uuid}: target changed since it was proposed")
+        if stale:
+            raise StaleProposal("; ".join(stale))
+        return etags
+
+    def approve_flow(
+        self, flow: ActionFlow, *, admin: User, approved_etags: dict[str, str] | None = None
+    ) -> None:
         """Administrator accepts a pending flow; execution follows.
 
         Every pending action becomes approved, so the executor can run
         them in ``order``. The flow reaches EXECUTED/FAILED afterwards.
+
+        ``approved_etags`` (as returned by :meth:`approval_etags`) is
+        stored on each action: it freezes the state the administrator
+        actually approved, and the executor compares against it before
+        running, so changes landing between approval and execution are
+        detected too.
         """
         if flow.status != FlowStatus.PENDING:
             raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only pending flows can be approved")
@@ -236,6 +291,10 @@ class FlowStore:
         flow.approved_by = admin
         flow.approved_at = sql_now()
         flow.save(update_fields=["status", "approved_by", "approved_at"])
+        for action in flow.actions.filter(status=FlowActionStatus.PENDING):
+            if approved_etags and action.uuid in approved_etags:
+                action.approved_etag = approved_etags[action.uuid]
+                action.save(update_fields=["approved_etag"])
         flow.actions.filter(status=FlowActionStatus.PENDING).update(status=FlowActionStatus.APPROVED)
 
     def mark_action_executing(self, action: FlowAction) -> None:

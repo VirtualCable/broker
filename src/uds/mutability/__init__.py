@@ -10,15 +10,18 @@ The MCP tools live in
 and the REST owner/management surfaces are built on top.
 """
 
+from .base import StalePolicy
 from .etag import item_etag
 from .registry import all_types, get, register
-from .store import FlowStore, InvalidTransition, MutabilityError, NotActionOwner
+from .store import FlowStore, InvalidTransition, MutabilityError, NotActionOwner, StaleProposal
 
 __all__ = [
     "FlowStore",
     "InvalidTransition",
     "MutabilityError",
     "NotActionOwner",
+    "StalePolicy",
+    "StaleProposal",
     "all_types",
     "get",
     "item_etag",

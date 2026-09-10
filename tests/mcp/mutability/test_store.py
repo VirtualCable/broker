@@ -7,51 +7,22 @@ from unittest import mock
 from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.mutability import (
-    FlowStore,
     InvalidTransition,
     MutabilityError,
     NotActionOwner,
+    StaleProposal,
+    StalePolicy,
 )
 from uds.models import ActionFlow, FlowAction
+from uds.mutability.types_providers import ProviderUpdate
 
-from tests.fixtures.authenticators import create_db_authenticator, create_db_users
-from tests.utils.test import UDSTestCase
+from tests.fixtures.services import create_db_provider
+from tests.mcp.mutability._helpers import FlowTestCase
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false, reportUnknownLambdaType=false
 
 
-class _FlowTestCase(UDSTestCase):
-    """Common fixtures: an owner user and a fresh store."""
-
-    @typing.override
-    def setUp(self) -> None:
-        super().setUp()
-        self.authenticator = create_db_authenticator()
-        users = create_db_users(self.authenticator, number_of_users=2)
-        self.owner = users[0]
-        self.other = users[1]
-        self.store = FlowStore()
-
-    def _flow(self, **kwargs: typing.Any) -> ActionFlow:
-        return self.store.create_flow(
-            owner=kwargs.get("owner", self.owner),
-            agent=kwargs.get("agent", "test-agent/1.0"),
-            name=kwargs.get("name", "test flow"),
-            justification=kwargs.get("justification", "because"),
-        )
-
-    def _action(self, flow: ActionFlow, **kwargs: typing.Any) -> FlowAction:
-        return self.store.add_action(
-            flow,
-            action_type=kwargs.get("action_type", "provider.update"),
-            target_uuid=kwargs.get("target_uuid", "target-1"),
-            values=kwargs.get("values", {"name": "new name"}),
-            base_values=kwargs.get("base_values", {"name": "old name"}),
-            base_etag=kwargs.get("base_etag", "abc123"),
-        )
-
-
-class FlowLifecycleTest(_FlowTestCase):
+class FlowLifecycleTest(FlowTestCase):
     """Strict state machine: valid transitions and rejected ones."""
 
     def test_created_is_pending_with_due_date(self) -> None:
@@ -191,7 +162,7 @@ class FlowLifecycleTest(_FlowTestCase):
             self.store.mark_action_result(action, result="again")
 
 
-class FlowStoreTest(_FlowTestCase):
+class FlowStoreTest(FlowTestCase):
     """Model-backed persistence, listing filters and lazy expiry."""
 
     def test_get_flow_and_action(self) -> None:
@@ -275,3 +246,88 @@ class FlowStoreTest(_FlowTestCase):
         loaded = self.store.get_flow(flow.uuid)
         assert loaded is not None
         self.assertEqual(loaded.status, FlowStatus.PENDING)
+
+
+class FlowApprovalCasTest(FlowTestCase):
+    """Approval-time CAS: approval_etags, StalePolicy and approved_etag."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.provider = create_db_provider()
+        self.action_type = ProviderUpdate()
+        self.flow = self._flow()
+
+    def _add_proposal(self) -> FlowAction:
+        values = {"name": "renamed by agent"}
+        base_values, base_etag = self.action_type.snapshot_and_fingerprint(self.provider, values)
+        return self.store.add_action(
+            self.flow,
+            action_type="provider.update",
+            target_uuid=self.provider.uuid,
+            values=values,
+            base_values=base_values,
+            base_etag=base_etag,
+        )
+
+    def test_approval_etags_match_untouched_target(self) -> None:
+        action = self._add_proposal()
+        etags = self.store.approval_etags(self.flow)
+        self.assertEqual(etags, {action.uuid: action.base_etag})
+
+    def test_deny_refuses_approval_on_drift(self) -> None:
+        self._add_proposal()
+        self.provider.name = "changed by a human"
+        self.provider.save()
+        with self.assertRaises(StaleProposal):
+            self.store.approval_etags(self.flow)
+        # Refused approval leaves everything untouched
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.PENDING)
+        first = self.flow.actions.first()
+        assert first is not None
+        self.assertEqual(first.status, FlowActionStatus.PENDING)
+
+    def test_unverifiable_target_refuses_approval(self) -> None:
+        # Target vanished: cannot verify, DENY or FORCE alike
+        self.store.add_action(
+            self.flow,
+            action_type="provider.update",
+            target_uuid="nonexistent-uuid",
+            values={"name": "x"},
+            base_values={"name": "y"},
+            base_etag="e",
+        )
+        with self.assertRaises(StaleProposal):
+            self.store.approval_etags(self.flow)
+
+    def test_force_tolerates_drift_and_freezes_fingerprint(self) -> None:
+        action = self._add_proposal()
+        self.provider.name = "changed by a human"
+        self.provider.save()
+
+        class _ForceProviderUpdate(ProviderUpdate):
+            stale_policy = StalePolicy.FORCE
+
+        # approval_etags resolves types through the registry
+        with mock.patch("uds.mutability.registry.get", return_value=_ForceProviderUpdate()):
+            etags = self.store.approval_etags(self.flow)
+        self.assertIn(action.uuid, etags)
+
+        self.store.approve_flow(self.flow, admin=self.other, approved_etags=etags)
+        action.refresh_from_db()
+        self.assertEqual(action.status, FlowActionStatus.APPROVED)
+        # The frozen fingerprint is the live (drifted) one, not the base
+        self.assertEqual(action.approved_etag, etags[action.uuid])
+        self.assertNotEqual(action.approved_etag, action.base_etag)
+
+    def test_approve_persists_approved_etag(self) -> None:
+        action = self._add_proposal()
+        etags = self.store.approval_etags(self.flow)
+        self.store.approve_flow(self.flow, admin=self.other, approved_etags=etags)
+        action.refresh_from_db()
+        self.assertEqual(action.approved_etag, action.base_etag)
+        self.assertEqual(action.status, FlowActionStatus.APPROVED)
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.APPROVED)
+        self.assertEqual(self.flow.approved_by, self.other)

@@ -117,6 +117,8 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         {
             ("Accounts", "clear", "POST"),
             ("Accounts", "timemark", "POST"),
+            ("FlowsManagement", "approve", "POST"),
+            ("FlowsManagement", "reject", "POST"),
             ("MetaPools", "fallback_access", "POST"),
             ("Providers", "maintenance", "POST"),
             ("ServicesPools", "fallback_access", "POST"),

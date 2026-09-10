@@ -102,19 +102,19 @@ class ServiceUpdateTypeTest(rest.test.RESTTestCase):
         )
         request = mock.MagicMock()
         with (
-            mock.patch("uds.mutability.types_services.sync_to_async") as sta,
+            mock.patch.object(RestProxy, "_execute_sync") as exec_sync,
             mock.patch.object(self.action_type, "resolve_target", return_value=self.service),
         ):
-            sta.return_value = mock.AsyncMock()
+            exec_sync.return_value = None
             asyncio.run(self.action_type.execute(action, request))
-            sta.assert_called_once_with(RestProxy._execute_sync, thread_sensitive=True)
-            target, called_request, params, parent_uuid = sta.return_value.call_args[0]
+            exec_sync.assert_called_once()
+            target, called_request, params, parent_uuid = exec_sync.call_args[0]
             self.assertEqual(target.handler, Services)
             self.assertEqual(target.parent.handler, Providers)
             self.assertEqual(target.method.value, "PUT")
             self.assertEqual(target.args, (self.service.uuid,))
             self.assertEqual(called_request, request)
-            self.assertEqual(parent_uuid, self.service.provider.uuid)
+            self.assertEqual(parent_uuid, str(self.service.provider.uuid))
             # data_type is injected from the target (never mutable)
             self.assertEqual(params["data_type"], self.service.data_type)
             self.assertEqual(params["name"], "new-name")

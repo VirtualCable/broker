@@ -154,7 +154,11 @@ class ServiceUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: typing.Any) -> str:
-        service = typing.cast(models.Service, self.resolve_target(action.target_uuid))
+        # ORM work must stay out of the async context
+        service = typing.cast(
+            models.Service,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
         # ``data_type`` is required by the REST PUT but is not mutable
         # (changing the subtype is a different operation): it is taken
         # from the target itself.

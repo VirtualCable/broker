@@ -136,6 +136,10 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     base_values: typing.Any = models.JSONField(null=True, blank=True, default=None)
     base_etag = models.CharField(max_length=64, default="")
 
+    # Whole-item fingerprint taken at approval time (CAS reference for
+    # execution). Empty when the action has not been approved yet.
+    approved_etag = models.CharField(max_length=64, default="")
+
     status = models.CharField(
         max_length=16,
         choices=FlowActionStatus.as_choices(),

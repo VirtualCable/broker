@@ -10,6 +10,7 @@ import collections.abc
 import typing
 from types import SimpleNamespace as _Namespace
 
+from asgiref.sync import sync_to_async
 from django.db import models as db_models
 
 from uds import models
@@ -144,7 +145,11 @@ class ProviderUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: typing.Any) -> str:
-        provider = typing.cast(models.Provider, self.resolve_target(action.target_uuid))
+        # ORM work must stay out of the async context
+        provider = typing.cast(
+            models.Provider,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
         await RestProxy().execute(
             RestTarget(
                 Providers,
