@@ -121,6 +121,17 @@ class FlowsRestTest(rest.test.RESTTestCase):
         self.assertEqual(item["action_type"], "provider.update")
         self.assertEqual(item["status"], "pending")
 
+    def test_actions_detail_exposes_admin_view_data(self) -> None:
+        items: list[dict[str, typing.Any]] = self.client.rest_get(
+            f"flows/management/{self.flow.uuid}/actions"
+        ).json()
+        # Admin view: live compliance indicator and approval snapshot (empty until approved)
+        self.assertIn("compliance", items[0])
+        self.assertIn("snap_info", items[0])
+        # The fake targets do not exist: unverifiable is never "ok"
+        self.assertEqual(items[0]["compliance"], "conflict")
+        self.assertEqual(items[0]["snap_info"], {})
+
     def test_actions_table_info(self) -> None:
         table = self._get_json(f"flows/management/{self.flow.uuid}/actions/tableinfo")
         self.assertIn("title", table)
@@ -225,7 +236,11 @@ class FlowsPermissionsTest(rest.test.RESTTestCase):
 
 
 class FlowsApproveRejectTest(rest.test.RESTTestCase):
-    """POST /flows/management/{uuid}/approve and /reject."""
+    """Flow lock/approve/reject and the per-action approve/skip methods.
+
+    The flow launches only after every action is approved or skipped;
+    pass 1 (launch gate) revokes actions whose whole target changed.
+    """
 
     @typing.override
     def setUp(self) -> None:
@@ -247,12 +262,86 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
             base_etag=base_etag,
         )
 
+    def _actions_url(self) -> str:
+        return f"flows/management/{self.flow.uuid}/actions"
+
+    def _approve_action(self) -> typing.Any:
+        return self.client.rest_post(f"{self._actions_url()}/{self.action.uuid}/approve", data={})
+
+    def _skip_action(self) -> typing.Any:
+        return self.client.rest_post(f"{self._actions_url()}/{self.action.uuid}/skip", data={})
+
     def _approve(self) -> dict[str, typing.Any]:
         response = self.client.rest_post(f"flows/management/{self.flow.uuid}/approve", data={})
         self.assertEqual(response.status_code, 200, response.content)
         return typing.cast("dict[str, typing.Any]", response.json())
 
+    # ------------------------------------------------- per-action endpoints
+
+    def test_approve_action_freezes_live_state_and_acquires_flow(self) -> None:
+        response = self._approve_action()
+        self.assertEqual(response.status_code, 200, response.content)
+        body = typing.cast("dict[str, typing.Any]", response.json())
+        self.assertEqual(body["status"], FlowActionStatus.APPROVED)
+        self.assertEqual(body["compliance"], "ok")
+        self.assertEqual(body["snap_info"]["current_values"], {"name": self.provider.name})
+        self.assertTrue(body["snap_info"]["approved_by"])
+        self.action.refresh_from_db()
+        # Untouched target: the frozen fingerprint matches the proposal base
+        self.assertEqual(self.action.approved_etag, self.action.base_etag)
+        self.assertEqual(self.action.approved_values, {"name": self.provider.name})
+        # First admin touch acquires the flow
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.LOCKED)
+
+    def test_approve_action_refused_once_flow_is_decided(self) -> None:
+        self.store.reject_flow(self.flow, admin="admin-1")
+        response = self._approve_action()
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_skip_action_marks_and_acquires_flow(self) -> None:
+        response = self._skip_action()
+        self.assertEqual(response.status_code, 200, response.content)
+        body = typing.cast("dict[str, typing.Any]", response.json())
+        self.assertEqual(body["status"], FlowActionStatus.SKIPPED)
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.LOCKED)
+
+    def test_launch_without_approved_actions_refused(self) -> None:
+        self._skip_action()
+        response = self.client.rest_post(f"flows/management/{self.flow.uuid}/approve", data={})
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn("no approved actions", str(response.json()))
+
+    def test_lock_endpoint_acquires_flow(self) -> None:
+        response = self.client.rest_post(f"flows/management/{self.flow.uuid}/lock", data={})
+        self.assertEqual(response.status_code, 200, response.content)
+        body = typing.cast("dict[str, typing.Any]", response.json())
+        self.assertEqual(body["status"], FlowStatus.LOCKED)
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.LOCKED)
+
+    def test_reject_works_on_locked_flow(self) -> None:
+        response = self.client.rest_post(f"flows/management/{self.flow.uuid}/lock", data={})
+        self.assertEqual(response.status_code, 200, response.content)
+        response = self.client.rest_post(f"flows/management/{self.flow.uuid}/reject", data={"reason": "nope"})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.REJECTED)
+        self.action.refresh_from_db()
+        self.assertEqual(self.action.status, FlowActionStatus.SKIPPED)
+
+    # -------------------------------------------------------- flow approval
+
+    def test_approve_requires_all_actions_ready(self) -> None:
+        response = self.client.rest_post(f"flows/management/{self.flow.uuid}/approve", data={})
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn("approved, skipped or executed", str(response.json()))
+        self.flow.refresh_from_db()
+        self.assertEqual(self.flow.status, FlowStatus.PENDING)
+
     def test_approve_executes_flow_in_order(self) -> None:
+        self.assertEqual(self._approve_action().status_code, 200)
         with mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value="provider updated")
             summary = self._approve()
@@ -272,21 +361,31 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
             f'Provider "{self.provider.name}" updated',
         )
 
-    def test_approve_refuses_stale_proposal(self) -> None:
-        # The target drifted after the proposal was made
+    def test_approve_refuses_and_revokes_drifted_actions(self) -> None:
+        self.assertEqual(self._approve_action().status_code, 200)
+        # The target drifted after the action was approved
         self.provider.name = "changed by a human"
         self.provider.save()
 
         response = self.client.rest_post(f"flows/management/{self.flow.uuid}/approve", data={})
         self.assertEqual(response.status_code, 400, response.content)
-        self.assertIn("changed since", str(response.json()))
+        self.assertIn("revoked", str(response.json()))
 
+        # The flow stays locked; only the drifted action is revoked
         self.flow.refresh_from_db()
-        self.assertEqual(self.flow.status, FlowStatus.PENDING)
+        self.assertEqual(self.flow.status, FlowStatus.LOCKED)
         self.action.refresh_from_db()
-        self.assertEqual(self.action.status, FlowActionStatus.PENDING)
+        self.assertEqual(self.action.status, FlowActionStatus.REVOKED)
+
+        # Recovery: approve the revoked action again (fresh freeze) and launch
+        self.assertEqual(self._approve_action().status_code, 200)
+        with mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value="provider updated")
+            summary = self._approve()
+        self.assertEqual(summary["status"], "executed")
 
     def test_approve_twice_refused(self) -> None:
+        self.assertEqual(self._approve_action().status_code, 200)
         with mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value="ok")
             self._approve()
@@ -307,6 +406,8 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
         self.action.refresh_from_db()
         self.assertEqual(self.action.status, FlowActionStatus.SKIPPED)
 
+    # ------------------------------------------------------------ permissions
+
     def test_non_admin_cannot_approve(self) -> None:
         staff = create_db_users(create_db_authenticator(), is_staff=True)[0]
         self.login_with_api_token(user=staff, as_admin=False)
@@ -314,3 +415,11 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 403, response.content)
         self.flow.refresh_from_db()
         self.assertEqual(self.flow.status, FlowStatus.PENDING)
+
+    def test_non_admin_cannot_approve_or_skip_actions(self) -> None:
+        staff = create_db_users(create_db_authenticator(), is_staff=True)[0]
+        self.login_with_api_token(user=staff, as_admin=False)
+        self.assertEqual(self._approve_action().status_code, 403)
+        self.assertEqual(self._skip_action().status_code, 403)
+        self.action.refresh_from_db()
+        self.assertEqual(self.action.status, FlowActionStatus.PENDING)

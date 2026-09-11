@@ -33,16 +33,23 @@ import enum
 
 
 class FlowStatus(enum.StrEnum):
-    """Status of an ActionFlow (a proposed sequence of changes)."""
+    """Status of an ActionFlow (a proposed sequence of changes).
+
+    Lifecycle: ``PENDING`` --lock--> ``LOCKED`` --approve--> ``APPROVED``
+    --> ``EXECUTING`` --> ``EXECUTED`` (a mid-run failure returns the
+    flow to ``LOCKED`` so the administrator can re-approve the failed
+    actions). ``PENDING`` may go straight to ``APPROVED`` (future
+    automations). ``REJECTED``/``CANCELLED``/``EXPIRED`` are terminal.
+    """
 
     PENDING = "pending"
+    LOCKED = "locked"
     APPROVED = "approved"
     REJECTED = "rejected"
     CANCELLED = "cancelled"
     EXPIRED = "expired"
     EXECUTING = "executing"
     EXECUTED = "executed"
-    FAILED = "failed"
 
     @staticmethod
     def as_choices() -> tuple[tuple[str, str], ...]:
@@ -57,7 +64,16 @@ class FlowStatus(enum.StrEnum):
 
 
 class FlowActionStatus(enum.StrEnum):
-    """Status of a single action inside an ActionFlow."""
+    """Status of a single action inside an ActionFlow.
+
+    Lifecycle: ``PENDING`` --approve--> ``APPROVED`` --flow launch-->
+    ``EXECUTING`` --> ``EXECUTED``/``FAILED``. The administrator may
+    also skip an action (``SKIPPED``: it will not run). A CAS drift
+    turns a ``APPROVED``/``EXECUTING`` action into ``REVOKED`` (the only
+    system-initiated transition); ``FAILED`` and ``REVOKED`` are
+    recoverable: the administrator re-approves or skips them from the
+    frontend. Undecided actions of a decided flow are skipped.
+    """
 
     PENDING = "pending"
     APPROVED = "approved"
@@ -65,6 +81,7 @@ class FlowActionStatus(enum.StrEnum):
     EXECUTED = "executed"
     FAILED = "failed"
     SKIPPED = "skipped"
+    REVOKED = "revoked"
 
     @staticmethod
     def as_choices() -> tuple[tuple[str, str], ...]:

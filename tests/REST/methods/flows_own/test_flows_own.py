@@ -76,6 +76,17 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
         self.assertEqual(self.client.rest_get(f"flows/own/{flow_id}").status_code, 200)
         # Once approved (by an admin), the owner can still inspect it
         flow = models.ActionFlow.objects.get(uuid=flow_id)
+        action = FlowStore().add_action(
+            flow,
+            action_type="provider.update",
+            target_uuid="any",
+            values={"name": "x"},
+            base_values={"name": "y"},
+            base_etag="e",
+        )
+        action.status = FlowActionStatus.APPROVED
+        action.approved_etag = "frozen"
+        action.save(update_fields=["status"])
         FlowStore().approve_flow(flow, admin=self.admins[1])
         response = self.client.rest_get(f"flows/own/{flow_id}")
         self.assertEqual(response.status_code, 200, response.content)
@@ -250,6 +261,22 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         self.assertEqual(body["status"], FlowActionStatus.PENDING)
         self.assertEqual(body["order"], 1)
         self.assertEqual(body["target_uuid"], self.provider.uuid)
+
+    def test_actions_listing_hides_admin_view_data(self) -> None:
+        # Owner surface: no compliance indicator, no approval snapshot
+        self._add_action()
+        items = self.client.rest_get(self._actions_url()).json()
+        self.assertEqual(items[0]["compliance"], "")
+        self.assertEqual(items[0]["snap_info"], {})
+
+    def test_owner_has_no_admin_action_methods(self) -> None:
+        # Not exposed on the owner surface: the POST falls through to an
+        # opaque invalid-request refusal (no admin operation leaks here)
+        action_id = self._add_action().json()["result"]["id"]
+        approve = self.client.rest_post(f"{self._actions_url()}/{action_id}/approve", data={})
+        self.assertEqual(approve.status_code, 400, approve.content)
+        skip = self.client.rest_post(f"{self._actions_url()}/{action_id}/skip", data={})
+        self.assertEqual(skip.status_code, 400, skip.content)
 
     def test_add_action_without_management_is_403(self) -> None:
         # A provider this user has no permissions over

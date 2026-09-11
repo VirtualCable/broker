@@ -99,7 +99,7 @@ def _registry_type(type_id: str) -> registry.MutableActionType:
     found = registry.get(type_id)
     if found is None:
         raise ValueError(f"Unknown action type {type_id}")
-    return found
+    return found()
 
 
 def _own_action_index(
@@ -203,10 +203,11 @@ def _propose_sync(
 def _discovery_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     _request_user(request)
     type_id = str(arguments.get("action_type", "") or "provider.update")
-    action_type = registry.get(type_id)
-    if action_type is None:
+    found = registry.get(type_id)
+    if found is None:
         known = ", ".join(t.type_id for t in registry.all_types())
         raise ValueError(f"Unknown action type {type_id} (known: {known})")
+    action_type = found()
 
     target_uuid = str(arguments.get("target_uuid", "") or "")
     for_type = str(arguments.get("for_type", "") or "")
@@ -456,8 +457,8 @@ def _list_tool() -> ToolDefinition:
                 "status": {
                     "type": "string",
                     "description": (
-                        "Optional filter, matching the action or its flow: pending, approved, executing, "
-                        "executed, failed, skipped, rejected, cancelled or expired."
+                        "Optional filter, matching the action or its flow: pending, locked, approved, "
+                        "executing, executed, failed, skipped, revoked, rejected, cancelled or expired."
                     ),
                 },
                 "action_type": {
@@ -551,5 +552,5 @@ def register_mutability_tools(catalog: Catalog) -> None:
     catalog.add_tool(_list_tool())
     catalog.add_tool(_update_tool())
     catalog.add_tool(_cancel_tool())
-    for action_type in registry.all_types():
-        catalog.add_tool(_propose_tool(action_type))
+    for action_type_cls in registry.all_types():
+        catalog.add_tool(_propose_tool(action_type_cls()))

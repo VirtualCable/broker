@@ -61,8 +61,13 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
 
     name = models.CharField(max_length=128, default="")
     justification = models.TextField(default="")
+    # Callable choices (django-stubs does not know them yet): the migration
+    # stores the reference, so enum changes never generate migrations again
     status = models.CharField(
-        max_length=16, choices=FlowStatus.as_choices(), default=FlowStatus.PENDING, db_index=True
+        max_length=16,
+        choices=typing.cast(typing.Any, FlowStatus.as_choices),
+        default=FlowStatus.PENDING,
+        db_index=True,
     )
 
     # SET_NULL keeps the flow as audit trail even if the user is removed
@@ -115,12 +120,11 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     A single proposed change inside an ActionFlow, executed in ``order``.
 
     ``values`` is the proposed payload (same shape as the equivalent REST
-    put) and ``base_values``/``base_etag`` keep the CAS snapshot taken at
-    proposal time. These are kept as columns (not properties) so the CAS
-    data is written transactionally on the same row as the payload.
-
-    ``snap_info`` (display data for the admin diff, cached target name
-    included) lives on Properties, so it survives deletion of the target.
+    put). All the dynamic data — the CAS snapshots (``base_values``,
+    ``base_etag`` taken at proposal time, ``approved_etag``/
+    ``approved_values`` frozen at approval time) and the approval display
+    cache (``snap_info``) — lives on Properties: free, schemaless, and
+    kept out of the row.
     """
 
     flow = models.ForeignKey(ActionFlow, on_delete=models.CASCADE, related_name="actions")
@@ -133,16 +137,10 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     justification = models.TextField(default="")
 
     values: typing.Any = models.JSONField(null=True, blank=True, default=None)
-    base_values: typing.Any = models.JSONField(null=True, blank=True, default=None)
-    base_etag = models.CharField(max_length=64, default="")
-
-    # Whole-item fingerprint taken at approval time (CAS reference for
-    # execution). Empty when the action has not been approved yet.
-    approved_etag = models.CharField(max_length=64, default="")
 
     status = models.CharField(
         max_length=16,
-        choices=FlowActionStatus.as_choices(),
+        choices=typing.cast("typing.Any", FlowActionStatus.as_choices),
         default=FlowActionStatus.PENDING,
         db_index=True,
     )
@@ -165,10 +163,54 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         return self.uuid, "flowaction"
 
     @property
+    def base_values(self) -> dict[str, typing.Any]:
+        """CAS snapshot of the touched fields, taken at proposal time."""
+        return typing.cast("dict[str, typing.Any]", self.properties.get("base_values", {}))
+
+    @base_values.setter
+    def base_values(self, value: dict[str, typing.Any]) -> None:
+        self.properties["base_values"] = value
+
+    @property
+    def base_etag(self) -> str:
+        """Whole-item fingerprint of the target at proposal time."""
+        return str(self.properties.get("base_etag", ""))
+
+    @base_etag.setter
+    def base_etag(self, value: str) -> None:
+        self.properties["base_etag"] = value
+
+    @property
+    def approved_etag(self) -> str:
+        """Whole-item fingerprint frozen when the action was approved.
+
+        Empty when the action has not been approved yet.
+        """
+        return str(self.properties.get("approved_etag", ""))
+
+    @approved_etag.setter
+    def approved_etag(self, value: str) -> None:
+        self.properties["approved_etag"] = value
+
+    @property
+    def approved_values(self) -> dict[str, typing.Any]:
+        """Live values of the touched fields, frozen at approval time.
+
+        CAS reference for the compliance indicator, alongside
+        ``approved_etag``; empty until approved, cleared when the action
+        is skipped.
+        """
+        return typing.cast("dict[str, typing.Any]", self.properties.get("approved_values", {}))
+
+    @approved_values.setter
+    def approved_values(self, value: dict[str, typing.Any]) -> None:
+        self.properties["approved_values"] = value
+
+    @property
     def snap_info(self) -> dict[str, typing.Any]:
         """
         Display data for the admin diff (target name, current values at
-        proposal time, field definitions, ...), stored on Properties.
+        approval time, field definitions, ...), stored on Properties.
         """
         return typing.cast("dict[str, typing.Any]", self.properties.get("snap_info", {}))
 

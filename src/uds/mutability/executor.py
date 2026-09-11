@@ -1,11 +1,25 @@
-"""Execution of approved flows.
+"""Execution of approved flows (second pass of the launch).
 
 Runs every approved action of a flow in strict ``order`` through its
 action type's canonical REST machinery (as the approving administrator),
 recording each outcome on the action. The store owns the state machine:
-this module only drives it, honoring the action types'
-:class:`~uds.mutability.base.StalePolicy` with a final CAS check right
-before each run (the state may change between approval and execution).
+this module only drives it.
+
+The launch is two-pass (see ``FlowStore.verify_flow`` for pass 1, the
+strict whole-item gate): right before each run, pass 2 re-checks ONLY
+the touched fields against the frozen approval (``approved_values``) —
+unrelated changes to the target do not block, touched-field drift does.
+The state may change between approval and execution; this final check
+catches the race (low probability, but reported: the error says which
+action, which field, and the approved vs live values).
+
+A drift caught mid-run revokes the action (REVOKED — the run cannot be
+trusted, so nothing gets executed) and stops the flow like any failure;
+plain execution errors mark the action FAILED. Both are recoverable:
+the flow returns to LOCKED (the administrator's hands), the remaining
+approved actions stay approved and only the failed/revoked ones need
+re-approval or skip. The flow's ``run_note`` property records where the
+run stopped and why.
 
 All flow/bookkeeping work is synchronous (Django ORM); the ``async``
 boundary wraps exactly one ``action_type.execute`` call at a time, so
@@ -35,29 +49,57 @@ def execute_flow(flow: ActionFlow, request: typing.Any) -> JsonObject:
 
     store = FlowStore()
     results: list[JsonObject] = []
+    stop_note: str | None = None
     for action in flow.actions.filter(status=FlowActionStatus.APPROVED).order_by("order"):
         store.mark_action_executing(action)
         try:
-            action_type = registry.get(action.action_type)
-            if action_type is None:
+            found = registry.get(action.action_type)
+            if found is None:
                 raise ValueError(f"unknown action type {action.action_type}")
-            # Final CAS check: the target must still match what was
-            # approved. FORCE types skip it by design (their execute is
-            # an idempotent set of the approved payload).
+            action_type = found()
+            # Pass 2: only the touched fields must still match the frozen
+            # approval. FORCE types skip it by design (their execute is an
+            # idempotent set of the approved payload).
+            stale: str | None = None
             if action_type.stale_policy == StalePolicy.DENY:
-                target = action_type.resolve_target(action.target_uuid)
-                expected = action.approved_etag or action.base_etag
-                if action_type.fingerprint(target) != expected:
-                    raise ValueError("target changed after approval; rejecting stale execution")
+                try:
+                    action_type.resolve_target(action.target_uuid)
+                except Exception:
+                    stale = f"target {action.target_uuid} no longer exists"
+                else:
+                    drifted = action_type.field_drift(action, ref_values=action.approved_values or {})
+                    if drifted:
+                        detail = "; ".join(
+                            f"field {name!r} changed after approval "
+                            f"(approved: {change['approved']!r}, live: {change['live']!r})"
+                            for name, change in sorted(drifted.items())
+                        )
+                        stale = f"execution stopped: {detail}"
+            if stale is not None:
+                # The approved state no longer holds: revoke (never
+                # execute) and stop, like any failure.
+                logger.warning("Action %s (%s) revoked: %s", action.uuid, action.action_type, stale)
+                store.revoke_action(action, reason=stale)
+                results.append(
+                    {"id": action.uuid, "order": action.order, "ok": False, "revoked": True, "error": stale}
+                )
+                stop_note = f"stopped at action {action.order} ({action.uuid}): {stale}"
+                # The store returned the flow to locked; remaining approved
+                # actions keep their approval for the retry
+                break
             summary = asyncio.run(action_type.execute(action, request))
         except Exception as e:
             logger.warning("Action %s (%s) failed: %s", action.uuid, action.action_type, e)
             store.mark_action_result(action, result=str(e), failed=True)
             results.append({"id": action.uuid, "order": action.order, "ok": False, "error": str(e)})
-            # The store has skipped the remaining approved actions already
+            stop_note = f"stopped at action {action.order} ({action.uuid}): {e}"
+            # The store returned the flow to locked; remaining approved
+            # actions keep their approval for the retry
             break
         store.mark_action_result(action, result=summary)
         results.append({"id": action.uuid, "order": action.order, "ok": True, "result": summary})
 
+    if stop_note is not None:
+        flow.properties["run_note"] = stop_note
     flow.refresh_from_db()
     return {"flow": flow.uuid, "status": str(flow.status), "results": results}

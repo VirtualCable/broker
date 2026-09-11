@@ -58,6 +58,25 @@ SECRET_FIELD_TYPES: typing.Final[frozenset[types.ui.FieldType]] = frozenset(
 REDACTED: typing.Final[str] = "(redacted)"
 
 
+def _json_safe(value: typing.Any) -> typing.Any:
+    """Coerce a structure into plain JSON-serializable data.
+
+    Field definitions carry lazy-translation proxies (labels) and the
+    review snapshot may carry datetimes or decimals: the Properties
+    store (a plain JSONField) cannot serialize those, so anything that
+    is not a JSON scalar, list or dict is stringified.
+    """
+    if isinstance(value, dict):
+        source = typing.cast("dict[typing.Any, typing.Any]", value)
+        return {str(k): _json_safe(v) for k, v in source.items()}
+    if isinstance(value, list):
+        items = typing.cast("list[typing.Any]", value)
+        return [_json_safe(v) for v in items]
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    return str(value)
+
+
 class MutableActionType(abc.ABC):
     """One mutable action (e.g. ``provider.update``) in the registry."""
 
@@ -259,6 +278,72 @@ class MutableActionType(abc.ABC):
             self.snapshot_values(target, self.flatten_values(values)),
             self.fingerprint(target),
         )
+
+    def target_display_name(self, target: db_models.Model) -> str:
+        """Human name of the target for the admin review cache.
+
+        Defaults to ``str(target)``; types with a friendlier label (e.g.
+        the provider name) may override it.
+        """
+        return str(target)
+
+    def approval_snapshot(self, action: "FlowAction") -> JsonObject:
+        """Display cache frozen when an administrator approves an action.
+
+        Stored on ``FlowAction.snap_info`` (Properties) so the admin diff
+        survives deletion of the target. ``base_values``/``base_etag`` stay
+        immutable: this is the *live* view at approval time, never the CAS
+        base.
+        """
+        target = self.resolve_target(action.target_uuid)
+        for_type = self.for_type_of(target)
+        flat = self.flatten_values(action.values)
+        return {
+            "target_name": self.target_display_name(target),
+            "for_type": for_type,
+            "current_values": _json_safe(self.snapshot_values(target, list(flat))),
+            "fields": _json_safe(self.field_definitions(for_type, target)),
+        }
+
+    def field_drift(self, action: "FlowAction", *, ref_values: JsonObject) -> JsonObject:
+        """Touched fields whose live value differs from a frozen reference.
+
+        Returns ``{field: {"approved": ..., "live": ...}}``, empty when
+        every field this action modifies still matches ``ref_values``.
+        Only the touched fields are considered: unrelated changes to the
+        target never block execution (second-pass check of the two-pass
+        launch; the first pass is the strict whole-item one in
+        :meth:`FlowStore.verify_flow`).
+        """
+        target = self.resolve_target(action.target_uuid)
+        flat = self.flatten_values(action.values)
+        live = self.snapshot_values(target, list(flat))
+        return {
+            name: {"approved": ref_values.get(name), "live": live[name]}
+            for name in flat
+            if name in live and live[name] != ref_values.get(name)
+        }
+
+    def drift_against(self, action: "FlowAction", *, ref_etag: str, ref_values: JsonObject) -> str:
+        """Compliance of the live target against one reference snapshot.
+
+        Returns ``"ok"`` (item untouched), ``"outdated"`` (the item changed
+        but none of the fields this action touches did) or ``"conflict"``
+        (a touched field changed, or the target cannot be verified). The
+        reference is chosen by the caller (proposal base while pending,
+        the frozen approval once approved/revoked).
+        """
+        try:
+            target = self.resolve_target(action.target_uuid)
+        except Exception:
+            return "conflict"  # unverifiable is never "ok"
+        if self.fingerprint(target) == ref_etag:
+            return "ok"
+        try:
+            drifted = self.field_drift(action, ref_values=ref_values)
+        except Exception:
+            return "conflict"
+        return "conflict" if drifted else "outdated"
 
     def _path(self) -> str:
         return self.type_id.split(".")[0] + "s"

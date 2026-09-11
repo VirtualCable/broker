@@ -87,18 +87,27 @@ class FlowsOwnActions(FlowActions):
     """Owner surface for the actions of its own flows.
 
     Reading is inherited (ownership already enforced on the parent).
-    Creating (POST) and editing (PUT, a re-base of a pending action)
-    run through the action type registry: validation, MANAGEMENT
-    permission over the target, fresh CAS base and the caps.
+    Creating (POST) and editing (PUT, a re-base of a pending action of a
+    pending flow) run through the action type registry: validation,
+    MANAGEMENT permission over the target, fresh CAS base and the caps.
+
+    Approving and skipping actions are admin operations (management
+    surface only): neither the custom methods nor the admin view data
+    (``snap_info`` may hold live secret field values) are exposed here.
     """
+
+    # Not an admin view: no compliance indicator, no review snapshot
+    _ADMIN_VIEW: typing.ClassVar[bool] = False
+    # No admin operations on the owner surface
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = []
 
     @staticmethod
     def _registry_type(type_id: str) -> "mutability.registry.MutableActionType":
-        action_type = registry.get(type_id)
-        if action_type is None:
+        found = registry.get(type_id)
+        if found is None:
             known = ", ".join(t.type_id for t in registry.all_types())
             raise exceptions.rest.RequestError(f"Unknown action type {type_id} (known: {known})")
-        return action_type
+        return found()
 
     def _require_management(
         self, action_type: "mutability.registry.MutableActionType", target_uuid: str

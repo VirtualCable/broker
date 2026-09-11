@@ -15,12 +15,13 @@ class MutabilityRegistryTest(unittest.TestCase):
 
     def test_provider_update_is_registered(self) -> None:
         found = registry_get("provider.update")
-        self.assertIsInstance(found, ProviderUpdate)
+        # The registry stores classes; call sites instantiate per use
+        self.assertIs(found, ProviderUpdate)
         self.assertIn("provider.update", [t.type_id for t in all_types()])
 
     def test_service_update_is_registered(self) -> None:
         found = registry_get("service.update")
-        self.assertIsInstance(found, ServiceUpdate)
+        self.assertIs(found, ServiceUpdate)
         self.assertIn("service.update", [t.type_id for t in all_types()])
 
     def test_unknown_type_returns_none(self) -> None:

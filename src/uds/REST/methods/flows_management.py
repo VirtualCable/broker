@@ -64,17 +64,50 @@ class FlowActionItem(types.rest.BaseRestItem):
     created: datetime.datetime
     permission: int
     result: str | None
+    # Live drift indicator (ok/outdated/conflict); only for admin views
+    compliance: str = ""
+    # Display snapshot frozen at approval time; only for admin views
+    snap_info: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
 
 
 class FlowActions(DetailHandler[FlowActionItem]):
-    """Read-only detail of the actions of a flow.
+    """Detail of the actions of a flow (management surface).
 
     Actions live and die with their flow: neither creation nor edition
-    nor individual removal is allowed here.
+    nor individual removal is allowed here. The admin gets, besides the
+    plain data, the live ``compliance`` indicator and the approval
+    snapshot (``snap_info``), plus the per-action ``approve``/``skip``
+    operations (see the store lifecycle).
     """
 
+    # Admin surface: expose compliance and the approval snapshot
+    _ADMIN_VIEW: typing.ClassVar[bool] = True
+
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
+        types.rest.ModelCustomMethod(
+            "approve",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Approve an action, freezing its live CAS state (also re-approves failed/revoked actions)",
+        ),
+        types.rest.ModelCustomMethod(
+            "skip",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Skip an action: it will not run when the flow is launched",
+        ),
+    ]
+
     @staticmethod
-    def as_dict(item: "FlowAction", perm: int) -> FlowActionItem:
+    def as_dict(item: "FlowAction", perm: int, *, admin_view: bool = False) -> FlowActionItem:
+        compliance = ""
+        snap_info: dict[str, typing.Any] = {}
+        if admin_view:
+            # Pre-execution drift indicator; computed live, never stored
+            compliance = FlowStore().compliance(item)
+            snap_info = dict(item.snap_info)
         return FlowActionItem(
             id=item.uuid,
             order=item.order,
@@ -87,6 +120,8 @@ class FlowActions(DetailHandler[FlowActionItem]):
             created=item.created,
             permission=perm,
             result=item.properties.get("result"),
+            compliance=compliance,
+            snap_info=snap_info,
         )
 
     @typing.override
@@ -99,14 +134,17 @@ class FlowActions(DetailHandler[FlowActionItem]):
         parent = ensure.is_instance(parent, ActionFlow)
         perm = permissions.effective_permissions(self._user, parent)
         return [
-            FlowActions.as_dict(action, perm) for action in self.odata_filter(parent.actions.order_by("order"))
+            FlowActions.as_dict(action, perm, admin_view=self._ADMIN_VIEW)
+            for action in self.odata_filter(parent.actions.order_by("order"))
         ]
 
     @typing.override
     def get_item(self, parent: models.Model, item: str) -> FlowActionItem:
         parent = ensure.is_instance(parent, ActionFlow)
         action = parent.actions.get(uuid=process_uuid(item))
-        return FlowActions.as_dict(action, permissions.effective_permissions(self._user, parent))
+        return FlowActions.as_dict(
+            action, permissions.effective_permissions(self._user, parent), admin_view=self._ADMIN_VIEW
+        )
 
     @typing.override
     def get_table(self, parent: models.Model) -> types.rest.TableInfo:
@@ -117,8 +155,9 @@ class FlowActions(DetailHandler[FlowActionItem]):
             .text_column(name="action_type", title=_("Action"))
             .text_column(name="target_kind", title=_("Target kind"))
             .text_column(name="status", title=_("Status"))
+            .text_column(name="compliance", title=_("Compliance"))
             .datetime_column(name="created", title=_("Created"))
-            .with_filter_fields("action_type", "target_kind", "status")
+            .with_filter_fields("action_type", "target_kind", "status", "compliance")
             .build()
         )
 
@@ -129,6 +168,38 @@ class FlowActions(DetailHandler[FlowActionItem]):
     @typing.override
     def delete_item(self, parent: models.Model, item: str) -> None:
         raise exceptions.rest.RequestError("Flow actions cannot be deleted individually")
+
+    # ------------------------------------------------------ domain actions
+
+    def approve(self, parent: models.Model, item: str) -> FlowActionItem:
+        """Approve an action, freezing its live CAS state.
+
+        The approval snapshot (``snap_info``) and the frozen CAS
+        reference are taken in the same step; failed/revoked actions can
+        be approved again (recovery). Approving a pending flow acquires
+        it (LOCKED).
+        """
+        parent = ensure.is_instance(parent, ActionFlow)
+        action = parent.actions.get(uuid=process_uuid(item))
+        try:
+            action = FlowStore().approve_action(action, admin=self._user)
+        except (InvalidTransition, StaleProposal) as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        return FlowActions.as_dict(
+            action, permissions.effective_permissions(self._user, parent), admin_view=True
+        )
+
+    def skip(self, parent: models.Model, item: str) -> FlowActionItem:
+        """Skip an action: it will not run when the flow is launched."""
+        parent = ensure.is_instance(parent, ActionFlow)
+        action = parent.actions.get(uuid=process_uuid(item))
+        try:
+            action = FlowStore().skip_action(action, admin=self._user)
+        except (InvalidTransition, StaleProposal) as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        return FlowActions.as_dict(
+            action, permissions.effective_permissions(self._user, parent), admin_view=True
+        )
 
 
 @dataclasses.dataclass
@@ -145,6 +216,8 @@ class FlowItem(types.rest.BaseRestItem):
     actions_count: int
     permission: int
     decided_by: str
+    # Worst compliance of the actions (ok/outdated/conflict); admin views
+    compliance: str = ""
 
 
 class FlowsManagement(ModelHandler[FlowItem]):
@@ -165,18 +238,25 @@ class FlowsManagement(ModelHandler[FlowItem]):
 
     CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
+            "lock",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Acquire a pending flow for review: it leaves the agent's view and its owner can no longer edit it",
+        ),
+        types.rest.ModelCustomMethod(
             "approve",
             True,
             method=types.rest.CustomMethodMethod.POST,
             required_permission=types.permissions.PermissionType.MANAGEMENT,
-            description="Approve a pending flow (CAS checked) and execute its actions in order",
+            description="Verify (CAS, whole item) and approve a pending or locked flow, then execute it; drifted actions are revoked and the launch is refused",
         ),
         types.rest.ModelCustomMethod(
             "reject",
             True,
             method=types.rest.CustomMethodMethod.POST,
             required_permission=types.permissions.PermissionType.MANAGEMENT,
-            description="Reject a pending flow; its pending actions are skipped",
+            description="Reject a pending or locked flow; its undecided actions are skipped",
         ),
     ]
 
@@ -214,6 +294,7 @@ class FlowsManagement(ModelHandler[FlowItem]):
             actions_count=item.actions.count(),
             permission=permissions.effective_permissions(self._user, item),
             decided_by=item.properties.get("decided_by", ""),
+            compliance=FlowStore().flow_compliance(item),
         )
 
     @typing.override
@@ -226,19 +307,45 @@ class FlowsManagement(ModelHandler[FlowItem]):
 
     # ------------------------------------------------------ domain actions
 
-    def approve(self, item: models.Model) -> dict[str, typing.Any]:
-        """Approve a pending flow (CAS checked) and execute it.
+    def lock(self, item: models.Model) -> dict[str, typing.Any]:
+        """Acquire a pending flow for review.
 
-        The CAS snapshots taken at approval time are stored on every
-        action (``approved_etag``) and each action is re-verified right
-        before running, so the executed state is exactly the approved
-        one. The response carries the execution summary.
+        The flow leaves the agent's visibility and its owner can no
+        longer edit (nor cancel) it: the review happens on stable data.
+        Locking an already locked flow is a no-op.
+        """
+        flow = ensure.is_instance(item, ActionFlow)
+        try:
+            FlowStore().lock_flow(flow, admin=self._user)
+        except InvalidTransition as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        flow.refresh_from_db()
+        return {"flow": flow.uuid, "status": str(flow.status)}
+
+    def approve(self, item: models.Model) -> dict[str, typing.Any]:
+        """Verify (pass 1) and approve a pending or locked flow, then execute it.
+
+        Every action must be approved or skipped (at least one
+        approved). Each approved action is re-verified against the CAS
+        state frozen when the administrator approved it — the whole
+        item: actions whose target changed at all are revoked, the flow
+        stays as it was and the launch is refused, so the administrator
+        can re-approve or skip them. The response carries the execution
+        summary once the flow is launched; a mid-run failure returns
+        the flow to LOCKED (recoverable).
         """
         flow = ensure.is_instance(item, ActionFlow)
         store = FlowStore()
         try:
-            approved_etags = store.approval_etags(flow)
-            store.approve_flow(flow, admin=self._user, approved_etags=approved_etags)
+            revoked = store.verify_flow(flow)
+            if revoked:
+                detail = ", ".join(f"{a.order} ({a.uuid})" for a in revoked)
+                raise exceptions.rest.RequestError(
+                    "Launch refused: actions "
+                    f"{detail} revoked because their target changed after they were approved; "
+                    "re-approve or skip them and launch again"
+                )
+            store.approve_flow(flow, admin=self._user)
         except (InvalidTransition, StaleProposal) as e:
             raise exceptions.rest.RequestError(str(e)) from None
         return executor.execute_flow(flow, self._request)
