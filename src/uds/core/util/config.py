@@ -70,9 +70,7 @@ class Config:
         NUMERIC = 2
         BOOLEAN = 3
         CHOICE = 4  # Choice fields must set its parameters on global "_config_params" (by calling ".set_params" method)
-        READ = (
-            5  # Only can viewed, but not changed (can be changed througn API, it's just read only to avoid "mistakes")
-        )
+        READ = 5  # Only can viewed, but not changed (can be changed througn API, it's just read only to avoid "mistakes")
         HIDDEN = 6  # Not visible on "admin" config edition
         PASSWORD = 7  # Password field (not encrypted, but "hashed" on database)
 
@@ -88,6 +86,7 @@ class Config:
         SECURITY = "Security"
         CUSTOM = "Custom"
         ADMIN = "Admin"
+        MCP = "MCP"
         WYSE = "WYSE"  # Legacy
         ENTERPRISE = "Enterprise"  # For enterprise pourposes
         OTHER = "Other"
@@ -308,7 +307,9 @@ class Config:
                 yield val
 
     @staticmethod
-    def update(section: "Config.SectionType", key: str, value: str, check_type: bool = False) -> "None|Config.Value":
+    def update(
+        section: "Config.SectionType", key: str, value: str, check_type: bool = False
+    ) -> "None|Config.Value":
         # If cfg value does not exists, simply ignore request
         try:
             cfg: DBConfig = DBConfig.objects.get(section=section, key=key)
@@ -479,24 +480,28 @@ class GlobalConfig:
             "Enforced maximum security mode (Zero-Trust Mode). No password redirection will be allowed if this mode is set."
         ),
     )
-    # MCP (Model Context Protocol) integration. Disabled by default: the
-    # endpoint must be explicitly enabled by the administrator.
-    MCP_ENABLED: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+    # MCP (Model Context Protocol) integration. All MCP related settings
+    # live in their own "MCP" section (moved there from Security on 5.0).
+    # Disabled by default: the endpoint must be explicitly enabled by the
+    # administrator.
+    MCP_ENABLED: Config.Value = Config.section(Config.SectionType.MCP).value(
         "MCP Enabled",
         "0",
         type=Config.FieldType.BOOLEAN,
-        help=_("Enable the MCP (Model Context Protocol) endpoint (/uds/rest/mcp) and its skill bundle download"),
+        help=_(
+            "Enable the MCP (Model Context Protocol) endpoint (/uds/rest/mcp) and its skill bundle download"
+        ),
     )
     # Supervised mutability: the AI proposes changes, administrators approve
     # them from the administration interface. Off by default; the proposal
     # tools only appear in the catalog when enabled.
-    MCP_MUTATIONS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+    MCP_MUTATIONS: Config.Value = Config.section(Config.SectionType.MCP).value(
         "MCP Mutations",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable the supervised mutability MCP tools (proposals awaiting administrator approval)"),
     )
-    MCP_RATE_LIMIT: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+    MCP_RATE_LIMIT: Config.Value = Config.section(Config.SectionType.MCP).value(
         "MCP Rate Limit",
         # High by design: the only identities that can reach the endpoint
         # are staff/admins (the MCP surface requires STAFF), and agent
@@ -505,6 +510,20 @@ class GlobalConfig:
         "600",
         type=Config.FieldType.NUMERIC,
         help=_("Maximum MCP requests per user and minute. 0 means unlimited"),
+    )
+    # Caps of the supervised mutability proposal queue. The flows cap only
+    # counts PENDING flows (decided/executed ones do not consume budget).
+    MCP_MAX_FLOWS_PER_USER: Config.Value = Config.section(Config.SectionType.MCP).value(
+        "Max Pending Flows per User",
+        str(consts.mcp.MAX_FLOWS_PER_USER),
+        type=Config.FieldType.NUMERIC,
+        help=_("Maximum pending (not yet decided) proposal flows a single user can have"),
+    )
+    MCP_MAX_ACTIONS_PER_FLOW: Config.Value = Config.section(Config.SectionType.MCP).value(
+        "Max Actions per Flow",
+        str(consts.mcp.MAX_ACTIONS_PER_FLOW),
+        type=Config.FieldType.NUMERIC,
+        help=_("Maximum actions inside a single proposal flow"),
     )
     # Time an admi session can be idle before being "logged out"
     # ADMIN_IDLE_TIME: Config.Value = Config.section(Config.SectionType.SECURITY).value('adminIdleTime', '14400', type=Config.FieldType.NUMERIC_FIELD)  # Defaults to 4 hous
@@ -562,7 +581,9 @@ class GlobalConfig:
         "maxInitTime",
         "3601",
         type=Config.FieldType.NUMERIC,
-        help=_('Max time needed to get a service "fully functional" before it\'s considered "failed" and removed'),
+        help=_(
+            'Max time needed to get a service "fully functional" before it\'s considered "failed" and removed'
+        ),
     )
     MAX_REMOVAL_TIME: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "maxRemovalTime",
@@ -957,6 +978,10 @@ Config.removed(Config.SectionType.CUSTOM, "Logout URL")  # Removed on 4.0
 Config.removed(Config.SectionType.SECURITY, "Max Audit Logs duration")  # Removed on 4.0
 Config.removed(Config.SectionType.GLOBAL, "checkUnusedDelay")  # Removed on 4.0
 Config.removed(Config.SectionType.GLOBAL, "redirectToHttps")  # Removed on 4.0
+# Moved from Security to the MCP section on 5.0 (old keys cleaned up)
+Config.removed(Config.SectionType.SECURITY, "MCP Enabled")
+Config.removed(Config.SectionType.SECURITY, "MCP Mutations")
+Config.removed(Config.SectionType.SECURITY, "MCP Rate Limit")
 
 # Old saml related data
 Config.removed(Config.SectionType.OTHER, "Global logout on exit")  # Removed on 4.0

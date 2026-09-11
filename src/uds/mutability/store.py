@@ -38,6 +38,7 @@ import typing
 
 from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
+from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.models import ActionFlow, FlowAction, User
 from uds.mutability.base import MutableActionType, StalePolicy
@@ -78,9 +79,10 @@ class FlowStore:
         ``ttl`` is the proposer's expected resolution window; it defaults
         to :data:`consts_mcp.FLOW_TTL_DAYS`.
         """
-        if self.count_pending_flows(owner_uuid=owner.uuid) >= consts_mcp.MAX_FLOWS_PER_USER:
+        if self.count_pending_flows(owner_uuid=owner.uuid) >= GlobalConfig.MCP_MAX_FLOWS_PER_USER.as_int():
             raise MutabilityError(
-                f"Too many pending proposals (limit {consts_mcp.MAX_FLOWS_PER_USER}). "
+                "Too many pending proposals "
+                f"(limit {GlobalConfig.MCP_MAX_FLOWS_PER_USER.as_int()}). "
                 "Cancel some before proposing more."
             )
         flow = ActionFlow.objects.create(
@@ -110,9 +112,9 @@ class FlowStore:
         if flow.status != FlowStatus.PENDING:
             raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only pending flows accept actions")
         last = flow.actions.order_by("-order").values_list("order", flat=True).first()
-        if last is not None and last + 1 > consts_mcp.MAX_ACTIONS_PER_FLOW:
+        if last is not None and last + 1 > GlobalConfig.MCP_MAX_ACTIONS_PER_FLOW.as_int():
             raise MutabilityError(
-                f"Too many actions in this proposal (limit {consts_mcp.MAX_ACTIONS_PER_FLOW})."
+                f"Too many actions in this proposal (limit {GlobalConfig.MCP_MAX_ACTIONS_PER_FLOW.as_int()})."
             )
         action = FlowAction.objects.create(
             flow=flow,

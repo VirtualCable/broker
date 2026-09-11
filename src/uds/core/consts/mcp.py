@@ -31,12 +31,14 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-# Maximum pending flows an user (normally an AI agent acting on their behalf)
-# can have at once. Creating a new flow beyond this limit is refused.
-MAX_FLOWS_PER_USER: typing.Final[int] = 20
+# Default maximum pending flows an user (normally an AI agent acting on
+# their behalf) can have at once. Configurable (GlobalConfig, MCP section,
+# "Max Pending Flows per User"); the cap only counts PENDING flows.
+MAX_FLOWS_PER_USER: typing.Final[int] = 32
 
-# Maximum actions inside a single flow. Keeps proposals small enough to be
-# reviewed (and approved) as a whole.
+# Default maximum actions inside a single flow. Keeps proposals small enough
+# to be reviewed (and approved) as a whole. Configurable (GlobalConfig, MCP
+# section, "Max Actions per Flow").
 MAX_ACTIONS_PER_FLOW: typing.Final[int] = 8
 
 # Days a flow stays valid after creation. Pending flows older than this are

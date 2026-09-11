@@ -6,6 +6,7 @@ from unittest import mock
 
 from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
+from uds.core.util.config import GlobalConfig
 from uds.mutability import (
     InvalidTransition,
     MutabilityError,
@@ -20,6 +21,11 @@ from tests.fixtures.services import create_db_provider
 from tests.mcp.mutability._helpers import FlowTestCase
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false, reportUnknownLambdaType=false
+
+
+def _config_limit(name: str, value: int) -> typing.Any:
+    """Patch a GlobalConfig MCP limit (store reads them at call time)."""
+    return mock.patch.object(GlobalConfig, name, mock.Mock(as_int=mock.Mock(return_value=value)))
 
 
 def _approve_all(flow: ActionFlow) -> None:
@@ -51,7 +57,7 @@ class FlowLifecycleTest(FlowTestCase):
 
     def test_add_action_respects_size_cap(self) -> None:
         flow = self._flow()
-        with mock.patch("uds.core.consts.mcp.MAX_ACTIONS_PER_FLOW", 2):
+        with _config_limit("MCP_MAX_ACTIONS_PER_FLOW", 2):
             self._action(flow, values={"n": 1})
             self._action(flow, values={"n": 2})
             with self.assertRaises(MutabilityError):
@@ -289,7 +295,7 @@ class FlowStoreTest(FlowTestCase):
         self.assertEqual(self.store.count_pending_flows(owner_uuid=self.other.uuid), 0)
 
     def test_create_flow_enforces_cap(self) -> None:
-        with mock.patch("uds.core.consts.mcp.MAX_FLOWS_PER_USER", 2):
+        with _config_limit("MCP_MAX_FLOWS_PER_USER", 2):
             self._flow(name="one")
             self._flow(name="two")
             with self.assertRaises(MutabilityError):

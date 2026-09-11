@@ -158,7 +158,12 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.assertNotIn("error", body, body)
 
     def test_propose_enforces_pending_cap(self) -> None:
-        with mock.patch("uds.core.consts.mcp.MAX_FLOWS_PER_USER", 2):
+        from uds.core.util.config import GlobalConfig
+
+        limit = mock.patch.object(
+            GlobalConfig, "MCP_MAX_FLOWS_PER_USER", mock.Mock(as_int=mock.Mock(return_value=2))
+        )
+        with limit:
             self._result_json(self._propose({"name": "one"}))
             self._result_json(self._propose({"name": "two"}))
             body = self._propose({"name": "three"})
