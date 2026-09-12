@@ -85,7 +85,9 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
         elements = (
             element
             for element in self.handler.get_gui(shim, for_type)
-            if element.name not in self.excluded and element.gui.type != types.ui.FieldType.INFO
+            if element.name not in self.excluded
+            and element.gui.type != types.ui.FieldType.INFO
+            and not element.gui.readonly
         )
         return sorted(elements, key=lambda e: e.gui.order)
 

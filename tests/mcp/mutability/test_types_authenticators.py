@@ -32,9 +32,12 @@ class AuthenticatorUpdateFieldsTest(FlowTestCase):
 
         for name in ("name", "comments", "tags", "priority", "small_name", "state", "net_filtering"):
             self.assertIn(name, by_name)
-        # InternalDB module configuration fields travel as instance fields
-        self.assertIn("unique_by_host", by_name)
-        self.assertTrue(by_name["unique_by_host"]["from_instance"])
+        # InternalDB module fields: unique_by_host/reverse_dns are readonly
+        # in the gui (never mutable); accepts_proxy stays proposable
+        self.assertNotIn("unique_by_host", by_name)
+        self.assertNotIn("reverse_dns", by_name)
+        self.assertIn("accepts_proxy", by_name)
+        self.assertTrue(by_name["accepts_proxy"]["from_instance"])
         # m2m relations and FK references are out of the surface
         self.assertNotIn("networks", by_name)
         self.assertNotIn("mfa_id", by_name)
@@ -47,7 +50,7 @@ class AuthenticatorUpdateFieldsTest(FlowTestCase):
         snapshot = action_type.snapshot_values(authenticator, fields)
         self.assertEqual(snapshot["name"], authenticator.name)
         self.assertEqual(snapshot["state"], authenticator.state)
-        self.assertIn("unique_by_host", snapshot)
+        self.assertNotIn("unique_by_host", snapshot)
 
         base = action_type.fingerprint(authenticator)
         self.assertEqual(base, action_type.fingerprint(authenticator))

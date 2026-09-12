@@ -32,11 +32,14 @@ class OsManagerUpdateFieldsTest(FlowTestCase):
         defs = OsManagerUpdate().field_definitions(TEST_OSMANAGER_TYPE)
         names = [d["name"] for d in defs]
 
-        for name in ("name", "comments", "tags", "on_logout", "idle"):
+        for name in ("name", "comments", "tags", "idle"):
             self.assertIn(name, names)
 
+        # on_logout is readonly in the module gui: never mutable
+        self.assertNotIn("on_logout", names)
+
         by_name = {d["name"]: d for d in defs}
-        self.assertTrue(by_name["on_logout"]["from_instance"])
+        self.assertTrue(by_name["idle"]["from_instance"])
         self.assertFalse(by_name["name"]["from_instance"])
 
     def test_snapshot_and_fingerprint_track_model_and_instance(self) -> None:
@@ -46,7 +49,8 @@ class OsManagerUpdateFieldsTest(FlowTestCase):
         fields = action_type.etag_fields(action_type.for_type_of(osmanager))
         snapshot = action_type.snapshot_values(osmanager, fields)
         self.assertEqual(snapshot["name"], osmanager.name)
-        self.assertIn("on_logout", snapshot)
+        self.assertIn("idle", snapshot)
+        self.assertNotIn("on_logout", snapshot)
 
         base = action_type.fingerprint(osmanager)
         self.assertEqual(base, action_type.fingerprint(osmanager))
@@ -78,7 +82,9 @@ class OsManagerUpdateExecuteTest(FlowTestCase):
         execute_call = proxy_cls.return_value.execute.call_args
         self.assertIs(execute_call[0][0].handler, OsManagers)
         params = execute_call[0][2]
-        for name in ("name", "comments", "tags", "on_logout", "idle"):
+        for name in ("name", "comments", "tags", "idle"):
             self.assertIn(name, params)
+        # Readonly module fields are neither proposable nor sent
+        self.assertNotIn("on_logout", params)
         self.assertEqual(params["idle"], 600)
         self.assertEqual(params["data_type"], TEST_OSMANAGER_TYPE)

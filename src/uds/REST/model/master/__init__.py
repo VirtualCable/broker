@@ -622,6 +622,44 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             logger.exception("Exception on create")
             raise exceptions.rest.RequestError("incorrect invocation to create") from e
 
+    def _check_readonly_params(self, item: models.Model) -> None:
+        """Enforce gui ``readonly`` on update, not just promise it to the UI.
+
+        A parameter whose gui field is flagged readonly and whose value
+        differs from the stored one is rejected; sending the stored value
+        or omitting the field keeps working. Fields that cannot be
+        verified against the item (neither a model column nor an
+        instance value) are not applied by the update path anyway and
+        stay contract-only.
+        """
+        for_type = str(
+            self._params.get("data_type") or self._params.get("type") or getattr(item, "data_type", "")
+        )
+        if not for_type:
+            return
+        try:
+            readonly_names = {element.name for element in self.get_gui(for_type) if element.gui.readonly}
+        except Exception:
+            return  # no gui can be built for this type: nothing to enforce
+        if not readonly_names:
+            return
+        instance_values: dict[str, typing.Any] = (
+            typing.cast(ManagedObjectModel, item).get_instance(None).get_fields_as_dict()
+            if isinstance(item, ManagedObjectModel)
+            else {}
+        )
+        for name in readonly_names & self._params.keys():
+            stored: typing.Any
+            if hasattr(item, name):
+                stored = getattr(item, name)
+            elif name in instance_values:
+                stored = instance_values[name]
+            else:
+                continue  # unverifiable (and unapplied) on update
+            value = self._params[name]
+            if stored != value and str(stored) != str(value):
+                raise exceptions.rest.RequestError(f"'{name}' is read only and cannot be changed")
+
     def put(self) -> typing.Any:
         """
         Processes a PUT request.
@@ -660,6 +698,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
             # Must have 1 arg → update
             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
+            # Read-only gui fields cannot be changed (same value is fine)
+            self._check_readonly_params(item)
             # Calculate etag
             _, etag = self._item_with_etag(item)
             self.check_if_match_header(etag)

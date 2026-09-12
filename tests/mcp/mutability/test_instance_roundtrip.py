@@ -147,8 +147,9 @@ class TransportInstanceRoundtripTest(InstanceRoundtripTest):
 
 class OsManagerInstanceRoundtripTest(InstanceRoundtripTest):
     def test_roundtrip(self) -> None:
-        stored = {"on_logout": "keep", "idle": 4242}
-        osmanager = _db_osmanager_with(stored)
+        # on_logout is readonly in the module gui: not part of the surface
+        stored = {"idle": 4242}
+        osmanager = _db_osmanager_with({"on_logout": "keep", "idle": 4242})
         self._assert_roundtrip(
             OsManagerUpdate(),
             "osmanager.update",
@@ -184,18 +185,18 @@ class NotifierInstanceRoundtripTest(InstanceRoundtripTest):
 
 class AuthenticatorInstanceRoundtripTest(InstanceRoundtripTest):
     def test_roundtrip(self) -> None:
-        stored = {
-            "unique_by_host": True,
-            "reverse_dns": False,
-            "accepts_proxy": True,
-        }
-        authenticator = _db_authenticator_with(stored)
+        # unique_by_host/reverse_dns are readonly in the InternalDB gui;
+        # accepts_proxy is the remaining mutable instance field
+        stored = {"accepts_proxy": True}
+        authenticator = _db_authenticator_with(
+            {"unique_by_host": True, "reverse_dns": False, "accepts_proxy": True}
+        )
         self._assert_roundtrip(
             AuthenticatorUpdate(),
             "authenticator.update",
             "InternalDBAuth",
             authenticator,
             stored,
-            invalid_values={"unique_by_host": "nope"},
+            invalid_values={"accepts_proxy": "nope"},
             proposed_value=("accepts_proxy", False),
         )
