@@ -37,8 +37,13 @@ import logging
 import typing
 from unittest import mock
 
-from uds.core import types
+from asgiref.sync import async_to_sync
+from django.test import TransactionTestCase
+
+from uds.core import consts, types
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
+from uds.core.util import permissions
+from uds.models.user import create_api_token, hash_api_token
 from uds.mutability import FlowStore
 from uds.mutability.types_providers import ProviderUpdate
 from uds.models import ActionFlow
@@ -46,6 +51,7 @@ from uds.models import ActionFlow
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
 from tests.fixtures.services import create_db_provider
 from tests.utils import rest
+from tests.utils.test import UDSAsyncClient
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -423,3 +429,72 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
         self.assertEqual(self._skip_action().status_code, 403)
         self.action.refresh_from_db()
         self.assertEqual(self.action.status, FlowActionStatus.PENDING)
+
+
+class FlowsApproveAsgiTest(TransactionTestCase):
+    """Approve → execute through the real ASGI stack, no mocks.
+
+    Drives ``django.test.AsyncClient`` (which goes through the real
+    ``ASGIHandler``, exactly as a production server would) with
+    ``async_to_sync`` from the sync test method. Regression guard for the
+    plain ``asyncio.run`` inside the sync view: under ASGI the handler
+    thread owns an asgiref ``CurrentThreadExecutor``, and the action's
+    ``sync_to_async(thread_sensitive=True)`` used to submit onto its own
+    thread ("You cannot submit onto CurrentThreadExecutor from its own
+    thread"). The executor now goes through ``async_to_sync``, as the MCP
+    surface does.
+
+    Extends ``TransactionTestCase`` because under ASGI the sync view body
+    runs on the thread-sensitive worker thread, whose DB connection only
+    sees committed data (TestCase's open transaction would hide the
+    fixtures from it).
+    """
+
+    @typing.override
+    def setUp(self) -> None:
+        self.authenticator = create_db_authenticator()
+        self.admin = create_db_users(self.authenticator, number_of_users=1, is_staff=True, is_admin=True)[0]
+        self.raw_token = create_api_token()
+        self.admin.token_hash = hash_api_token(self.raw_token)
+        self.admin.save(update_fields=["token_hash"])
+        self.provider = create_db_provider()
+
+    def test_approve_executes_through_asgi_stack(self) -> None:
+        permissions.add_user_permission(self.admin, self.provider, types.permissions.PermissionType.MANAGEMENT)
+        store = FlowStore()
+        flow = store.create_flow(owner=self.admin, name="asgi rename", justification="asgi path")
+        action_type = ProviderUpdate()
+        values = {
+            "name": "renamed through asgi",
+            "comments": self.provider.comments,
+            "tags": [],
+        }
+        base_values, base_etag = action_type.snapshot_and_fingerprint(self.provider, values)
+        action = store.add_action(
+            flow,
+            action_type="provider.update",
+            target_uuid=self.provider.uuid,
+            values=values,
+            base_values=base_values,
+            base_etag=base_etag,
+        )
+        client = UDSAsyncClient()
+        client.add_header(consts.auth.AUTHORIZATION_HEADER, f"Bearer {self.raw_token}")
+
+        # Freeze (per-action approve) and launch, both through the ASGI stack
+        frozen = async_to_sync(client.rest_post)(
+            f"flows/management/{flow.uuid}/actions/{action.uuid}/approve", data={}
+        )
+        self.assertEqual(frozen.status_code, 200, frozen.content)
+        launched = async_to_sync(client.rest_post)(f"flows/management/{flow.uuid}/approve", data={})
+        self.assertEqual(launched.status_code, 200, launched.content)
+        summary = launched.json()
+
+        # No mocks: the real execution went through the provider REST
+        # machinery and updated (committed) the provider
+        self.assertEqual(summary["status"], FlowStatus.EXECUTED)
+        self.assertTrue(summary["results"][0]["ok"], summary)
+        self.provider.refresh_from_db()
+        self.assertEqual(self.provider.name, "renamed through asgi")
+        flow.refresh_from_db()
+        self.assertEqual(flow.status, FlowStatus.EXECUTED)

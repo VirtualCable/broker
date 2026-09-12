@@ -3,6 +3,9 @@
 import typing
 from unittest import mock
 
+from asgiref.current_thread_executor import CurrentThreadExecutor
+from asgiref.sync import AsyncToSync, sync_to_async
+
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.mutability import StalePolicy
 from uds.mutability.base import JsonObject
@@ -48,6 +51,19 @@ class _FakeActionType:
 def _fake_type(**attrs: typing.Any) -> type[_FakeActionType]:
     """A fresh fake class (own execution log) with attribute overrides."""
     return type("FakeActionType", (_FakeActionType,), {"executed": [], **attrs})
+
+
+class _ThreadSensitiveActionType(_FakeActionType):
+    """Like the real types: does its work through
+    ``sync_to_async(thread_sensitive=True)`` (as ``ProviderUpdate.execute``)."""
+
+    executed: typing.ClassVar[list[str]] = []
+
+    @typing.override
+    async def execute(self, action: FlowAction, request: typing.Any) -> str:
+        marker = await sync_to_async(lambda: "ran", thread_sensitive=True)()
+        self.executed.append(f"{action.target_uuid}:{marker}")
+        return f"updated {action.target_uuid}"
 
 
 class ExecuteFlowTest(FlowTestCase):
@@ -211,6 +227,26 @@ class ExecuteFlowTest(FlowTestCase):
         actions[0].refresh_from_db()
         self.assertEqual(actions[0].status, FlowActionStatus.EXECUTED)
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
+
+    def test_run_survives_current_thread_executor_context(self) -> None:
+        """Regression: under ASGI, Django runs sync REST handlers
+        thread-sensitively, so the handler thread owns an asgiref
+        ``CurrentThreadExecutor``. Running the action coroutine there with
+        plain ``asyncio.run`` used to make its
+        ``sync_to_async(thread_sensitive=True)`` submit onto its own
+        thread ("You cannot submit onto CurrentThreadExecutor from its
+        own thread"); the executor goes through ``async_to_sync`` (as the
+        MCP surface does), which stacks its own executor and pumps it."""
+        flow, _actions = self._flow_with_actions(["p1"])
+        thread_executor = CurrentThreadExecutor(old_executor=None)
+        AsyncToSync.executors.current = thread_executor  # type: ignore[attr-defined]
+        try:
+            with mock.patch("uds.mutability.registry.get", return_value=_ThreadSensitiveActionType):
+                summary = execute_flow(flow, request=object())
+        finally:
+            del AsyncToSync.executors.current  # type: ignore[attr-defined]
+        self.assertEqual(summary["status"], FlowStatus.EXECUTED)
+        self.assertEqual(_ThreadSensitiveActionType.executed, ["p1:ran"])
 
     def test_force_policy_skips_execution_cas(self) -> None:
         flow, _actions = self._flow_with_actions(["p1"], approved_etag="approved-etag")

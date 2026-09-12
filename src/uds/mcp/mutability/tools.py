@@ -383,6 +383,13 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
                     ),
                     "additionalProperties": True,
                 },
+                "justification": {
+                    "type": "string",
+                    "description": (
+                        "Why this change is needed. The administrator reads it to decide, "
+                        "so be specific: reference the ticket, request or reason."
+                    ),
+                },
                 "expires_in_hours": {
                     "type": "integer",
                     "description": (

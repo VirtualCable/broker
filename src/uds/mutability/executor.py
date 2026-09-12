@@ -22,14 +22,21 @@ re-approval or skip. The flow's ``run_note`` property records where the
 run stopped and why.
 
 All flow/bookkeeping work is synchronous (Django ORM); the ``async``
-boundary wraps exactly one ``action_type.execute`` call at a time, so
-types keep using their own ``sync_to_async`` machinery as they do on
-the MCP surface.
+boundary wraps exactly one ``action_type.execute`` call at a time through
+``async_to_sync`` (the same pattern the MCP surface uses): under ASGI the
+REST handler's thread owns an asgiref ``CurrentThreadExecutor`` (Django
+runs sync views thread-sensitively), and plain ``asyncio.run`` there
+would make the action types' ``sync_to_async(thread_sensitive=True)``
+submit onto their own thread ("You cannot submit onto
+CurrentThreadExecutor from its own thread"). ``async_to_sync`` stacks its
+own executor and pumps it, so the sync work runs back on the request
+thread — same connection the request uses.
 """
 
-import asyncio
 import logging
 import typing
+
+from asgiref.sync import async_to_sync
 
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.mutability.base import JsonObject, StalePolicy
@@ -87,7 +94,7 @@ def execute_flow(flow: ActionFlow, request: typing.Any) -> JsonObject:
                 # The store returned the flow to locked; remaining approved
                 # actions keep their approval for the retry
                 break
-            summary = asyncio.run(action_type.execute(action, request))
+            summary = async_to_sync(action_type.execute)(action, request)
         except Exception as e:
             logger.warning("Action %s (%s) failed: %s", action.uuid, action.action_type, e)
             store.mark_action_result(action, result=str(e), failed=True)

@@ -109,6 +109,20 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.assertEqual(item["flow"]["status"], "pending")
         self.assertEqual(item["proposal"]["changes"]["name"], "renamed by agent")
 
+    def test_propose_stores_justification(self) -> None:
+        # The schema accepts it and it lands on both the flow and the
+        # action: it is what the administrator reads to decide.
+        tool = next(t for t in get_catalog().tools() if t.name == "propose_provider_update")
+        self.assertIn("justification", (tool.input_schema or {}).get("properties", {}))
+
+        result = self._result_json(self._propose({"name": "renamed"}, justification="ticket #1234"))
+        flow = self.store.get_flow(result["flow_id"])
+        assert flow is not None
+        action = self.store.get_action(result["id"])
+        assert action is not None
+        self.assertEqual(flow.justification, "ticket #1234")
+        self.assertEqual(action.justification, "ticket #1234")
+
     def test_propose_reports_unknown_fields(self) -> None:
         body = self._propose({"nonexistent_field": 1})
         self.assertIn("error", body)
