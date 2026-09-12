@@ -287,7 +287,7 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
         # parent lookup (the calendar FK needs a query)
         def _resolve() -> tuple[models.CalendarRule, str]:
             rule = typing.cast(models.CalendarRule, self.resolve_target(action.target_uuid))
-            return rule, str(rule.calendar.uuid)
+            return rule, rule.calendar.uuid
 
         rule, calendar_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
         # The rules PUT is form-shaped (all fields required): merge the
