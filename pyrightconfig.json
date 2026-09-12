@@ -16,5 +16,6 @@
     "disableBytesTypePromotions": true,
     "deprecateTypingAliases": true,
     "reportMissingOverride": "error",
+    "reportUnnecessaryIsInstance": "none",
     "stubPath": "../../enterprise/stubs",
 }

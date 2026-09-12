@@ -164,7 +164,7 @@ class FlowsRestTest(rest.test.RESTTestCase):
         response = self.client.rest_delete(f"flows/management/{self.flow.uuid}")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertFalse(ActionFlow.objects.filter(uuid=self.flow.uuid).exists())
-        self.assertEqual(self.store.list_actions(owner_uuid=str(self.owner.uuid)), [])
+        self.assertEqual(self.store.list_actions(owner_uuid=self.owner.uuid), [])
 
     def test_actions_cannot_be_written_or_deleted(self) -> None:
         response = self.client.rest_post(

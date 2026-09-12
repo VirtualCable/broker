@@ -73,7 +73,8 @@ class MCPRPCTest(rest.test.RESTTestCase):
         GlobalConfig.MCP_RATE_LIMIT.set("2")
         for _ in range(2):
             response = self.client.rest_post(
-                "mcp", data=json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}).encode("utf-8")
+                "mcp",
+                data=json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}).encode("utf-8"),
             )
             self.assertEqual(response.status_code, 202, response.content)
         # The notifications spent the budget: the next request is refused.
@@ -273,7 +274,8 @@ class MCPRPCTest(rest.test.RESTTestCase):
         """``tools/list`` includes master and parent-scoped detail tools."""
         response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 20, "method": "tools/list"})
         tools: dict[str, dict[str, typing.Any]] = {
-            tool["name"]: tool for tool in typing.cast("list[dict[str, typing.Any]]", response["result"]["tools"])
+            tool["name"]: tool
+            for tool in typing.cast("list[dict[str, typing.Any]]", response["result"]["tools"])
         }
         self.assertIn("list_authenticators", tools)
         detail = tools.get("list_authenticators_users")
@@ -284,7 +286,9 @@ class MCPRPCTest(rest.test.RESTTestCase):
     def test_tools_list_only_publishes_model_collections(self) -> None:
         """Plain ``Handler`` collections (e.g. reports) are not published."""
         response = self._post_jsonrpc({"jsonrpc": "2.0", "id": 23, "method": "tools/list"})
-        tools = {tool["name"] for tool in typing.cast("list[dict[str, typing.Any]]", response["result"]["tools"])}
+        tools = {
+            tool["name"] for tool in typing.cast("list[dict[str, typing.Any]]", response["result"]["tools"])
+        }
         self.assertNotIn("list_reports", tools)
 
     def test_tools_call_detail_collection_lists_parent_users(self) -> None:
@@ -478,6 +482,34 @@ class MCPRestEquivalenceTest(rest.test.RESTTestCase):
         mcp_items = self._mcp_list("list_authenticators_users", {"parent_uuid": self.auth.uuid, **arguments})
         self.assertEqual(mcp_items, rest_items)
         self.assertLessEqual(len(mcp_items), 2)
+
+    def test_orderby_orders_mcp_items(self) -> None:
+        """``orderby`` reaches the REST queryset sort (name desc here)."""
+        names = [
+            item["name"]
+            for item in self._mcp_list(
+                "list_authenticators_users", {"parent_uuid": self.auth.uuid, "orderby": "name desc"}
+            )
+        ]
+        self.assertTrue(names, "expected users to order")
+        self.assertEqual(names, sorted(names, reverse=True))
+
+    def test_select_argument_projects_mcp_items(self) -> None:
+        """``select`` projects each item to the requested keys (strict OData).
+
+        The HTTP dispatcher applies ``$select`` at render time
+        (``processor.set_odata``); in-process MCP calls never reach that
+        layer, so the proxy projects the result itself. Identity fields are
+        NOT implicitly kept: include ``id`` in the selection when needed.
+        """
+        items = self._mcp_list("list_providers", {"select": ["name"]})
+        self.assertTrue(items)
+        for item in items:
+            self.assertEqual(set(item.keys()), {"name"})
+
+        items = self._mcp_list("list_providers", {"select": ["id", "name"]})
+        for item in items:
+            self.assertEqual(set(item.keys()), {"id", "name"})
 
     def test_resources_read_access_denied_is_jsonrpc_error(self) -> None:
         """A permission error stays a JSON-RPC envelope instead of a REST 403.

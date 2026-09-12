@@ -152,7 +152,7 @@ class RestProxy:
         params = odata_params_from(arguments)
         params.setdefault("$top", _DEFAULT_TOP)
         try:
-            params["$top"] = min(int(typing.cast(int, params["$top"])), _MAX_TOP)
+            params["$top"] = min(int(params["$top"]), _MAX_TOP)
         except (TypeError, ValueError):
             # Non-numeric ``$top``: let ODataParams reject it with a clean
             # ``invalid params`` error instead of failing here.
@@ -163,7 +163,26 @@ class RestProxy:
             parent_uuid = raw.get("parent_uuid")
             if parent_uuid is not None:
                 parent_uuid = str(parent_uuid)
-        return await sync_to_async(self._execute_sync, thread_sensitive=True)(target, request, params, parent_uuid)
+        result = typing.cast(
+            list[typing.Any],
+            await sync_to_async(self._execute_sync, thread_sensitive=True)(
+                target, request, params, parent_uuid
+            ),
+        )
+        # ``$select`` projection. The HTTP dispatcher applies it at render
+        # time (``processor.set_odata`` + ``select_filter``); in-process MCP
+        # calls never reach that layer, so project here. OData semantics are
+        # strict: only the selected keys survive (include ``id`` in the
+        # selection when the identity is needed downstream).
+        if "$select" in params and isinstance(result, list):
+            odata = types.rest.api.ODataParams.from_dict(params)
+            result = [
+                odata.select_filter(typing.cast(dict[str, typing.Any], item))
+                if isinstance(item, dict)
+                else item
+                for item in result
+            ]
+        return result
 
     @classmethod
     def _execute_sync(
@@ -206,16 +225,19 @@ class RestProxy:
         from uds.REST.model.master import ModelHandler
 
         parent_target = typing.cast("RestTarget", target.parent)
-        parent_handler: ModelHandler[typing.Any] = typing.cast("type[ModelHandler[typing.Any]]", parent_target.handler)(
-            request, parent_target.path, "get", {}, parent_uuid or ""
-        )
+        parent_handler: ModelHandler[typing.Any] = typing.cast(
+            "type[ModelHandler[typing.Any]]", parent_target.handler
+        )(request, parent_target.path, "get", {}, parent_uuid or "")
 
         try:
             parent_item = parent_handler.MODEL.objects.get(uuid__iexact=parent_uuid or "")
         except Exception as e:
             raise rest_exceptions.NotFound("Parent item not found") from e
 
-        if permissions.has_access(parent_handler._user, parent_item, types.permissions.PermissionType.READ) is False:
+        if (
+            permissions.has_access(parent_handler._user, parent_item, types.permissions.PermissionType.READ)
+            is False
+        ):
             raise rest_exceptions.AccessDenied()
 
         method = target.method.value.lower()
