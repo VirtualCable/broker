@@ -32,6 +32,8 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_mfa_update",
     "propose_notifier_update",
     "propose_authenticator_update",
+    "propose_user_update",
+    "propose_group_update",
     "list_pending_actions",
     "update_pending_action",
     "cancel_pending_action",
