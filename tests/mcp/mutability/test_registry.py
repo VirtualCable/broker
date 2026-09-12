@@ -6,8 +6,8 @@ from uds.mutability import (
     all_types,
     get as registry_get,
 )
-from uds.mutability.types_providers import ProviderUpdate
-from uds.mutability.types_services import ServiceUpdate
+from uds.mutability.types.providers import ProviderUpdate
+from uds.mutability.types.services import ServiceUpdate
 
 
 class MutabilityRegistryTest(unittest.TestCase):

@@ -45,6 +45,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_system_logs",
     "get_platform_stats",
     "get_security_check",
+    "get_config",
     "report_failed_logins",
     "report_admin_activity",
 )
@@ -156,6 +157,26 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
     def test_get_security_check_as_admin(self) -> None:
         body = self._call("get_security_check", {})
         self.assertIsInstance(json.loads(self._result_text(body)), dict)
+
+    def test_get_config_as_admin(self) -> None:
+        body = self._call("get_config", {})
+        content = json.loads(self._result_text(body))
+        self.assertIsInstance(content, dict)
+
+    def test_get_config_masks_secrets(self) -> None:
+        # Secret values are never exposed with their real content
+        from uds.core.util.config import Config as CfgConfig
+        from uds.models import Config as DBConfig
+
+        DBConfig.objects.create(
+            section="Security",
+            key="Test Secret",
+            value="hashed-content",
+            field_type=int(CfgConfig.FieldType.PASSWORD),
+            help="",
+        )
+        content = json.loads(self._result_text(self._call("get_config", {})))
+        self.assertEqual(content["Security"]["Test Secret"]["value"], "********")
 
     def test_report_failed_logins_csv(self) -> None:
         body = self._call(

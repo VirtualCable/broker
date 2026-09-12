@@ -113,12 +113,10 @@ class FlowsOwnActions(FlowActions):
         self, action_type: "mutability.registry.MutableActionType", target_uuid: str
     ) -> typing.Any:
         target = action_type.resolve_target(target_uuid)
-        # Detail types inherit permissions from their parent (see
-        # ``MutableActionType.permission_target``): MANAGEMENT is checked
-        # over the model that really owns the target.
-        owner = action_type.permission_target(target)
-        if not permissions.has_access(self._user, owner, types.permissions.PermissionType.MANAGEMENT):
-            raise exceptions.rest.AccessDenied()
+        # The MANAGEMENT permission is for the wrapped types (providers,
+        # services, ...); configuration-like targets override the hook
+        # (superuser only). See ``MutableActionType.check_propose_access``.
+        action_type.check_propose_access(self._user, target)
         return target
 
     def _validated_payload(
@@ -181,7 +179,7 @@ class FlowsOwnActions(FlowActions):
             action = store.add_action(
                 parent,
                 action_type=action_type.type_id,
-                target_uuid=target.uuid,
+                target_uuid=action_type.target_uuid_of(target),
                 values=values,
                 base_values=base_values,
                 base_etag=base_etag,

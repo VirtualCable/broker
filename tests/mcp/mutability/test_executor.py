@@ -12,7 +12,7 @@ from uds.mutability.base import JsonObject
 from uds.mutability.executor import execute_flow
 from uds.models import ActionFlow, FlowAction
 
-from tests.mcp.mutability._helpers import FlowTestCase
+from tests.mcp.mutability._helpers import FlowTestCase, make_request
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 
@@ -97,7 +97,7 @@ class ExecuteFlowTest(FlowTestCase):
 
         fake = _fake_type()
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         self.assertEqual(fake.executed, ["p1", "p2"])
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
@@ -117,7 +117,7 @@ class ExecuteFlowTest(FlowTestCase):
         # fields this action touches did
         fake = _fake_type(drifted_fields={})
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         self.assertEqual(fake.executed, ["p1"])
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
@@ -127,7 +127,7 @@ class ExecuteFlowTest(FlowTestCase):
 
         fake = _fake_type(fail_targets=frozenset({"p1"}))
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         self.assertEqual(fake.executed, [])  # first failed, nothing ran
         self.assertEqual(summary["status"], FlowStatus.LOCKED)
@@ -149,7 +149,7 @@ class ExecuteFlowTest(FlowTestCase):
         # A touched field no longer matches the frozen approval
         fake = _fake_type(drifted_fields={"name": {"approved": "old", "live": "changed by someone else"}})
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         self.assertEqual(fake.executed, [])  # revoked before running
         self.assertEqual(summary["status"], FlowStatus.LOCKED)
@@ -172,7 +172,7 @@ class ExecuteFlowTest(FlowTestCase):
 
         fake = _fake_type(vanish_targets=frozenset({"p1"}))
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         self.assertEqual(summary["status"], FlowStatus.LOCKED)
         actions[0].refresh_from_db()
@@ -186,7 +186,7 @@ class ExecuteFlowTest(FlowTestCase):
         # First run: p1 fails, the flow is locked with p2 still approved
         failed = _fake_type(fail_targets=frozenset({"p1"}))
         with mock.patch("uds.mutability.registry.get", return_value=failed):
-            execute_flow(flow, request=object())
+            execute_flow(flow, request=make_request())
         flow.refresh_from_db()
         self.assertEqual(flow.status, FlowStatus.LOCKED)
 
@@ -197,7 +197,7 @@ class ExecuteFlowTest(FlowTestCase):
 
         retried = _fake_type()
         with mock.patch("uds.mutability.registry.get", return_value=retried):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         # p1 (failed -> re-approved) and p2 (kept approved) both run now;
         # an EXECUTED action would not even reach the retry (not APPROVED)
@@ -210,7 +210,7 @@ class ExecuteFlowTest(FlowTestCase):
         # First run: p1 executes, p2 fails -> flow locked, p2 approved
         first_run = _fake_type(fail_targets=frozenset({"p2"}))
         with mock.patch("uds.mutability.registry.get", return_value=first_run):
-            execute_flow(flow, request=object())
+            execute_flow(flow, request=make_request())
         actions[0].refresh_from_db()
         self.assertEqual(actions[0].status, FlowActionStatus.EXECUTED)
 
@@ -220,7 +220,7 @@ class ExecuteFlowTest(FlowTestCase):
         self.store.approve_flow(flow, admin=self.other)
         retried = _fake_type()
         with mock.patch("uds.mutability.registry.get", return_value=retried):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         # p1 stays executed and is NOT repeated; only p2 runs
         self.assertEqual(retried.executed, ["p2"])
@@ -242,7 +242,7 @@ class ExecuteFlowTest(FlowTestCase):
         AsyncToSync.executors.current = thread_executor  # type: ignore[attr-defined]
         try:
             with mock.patch("uds.mutability.registry.get", return_value=_ThreadSensitiveActionType):
-                summary = execute_flow(flow, request=object())
+                summary = execute_flow(flow, request=make_request())
         finally:
             del AsyncToSync.executors.current  # type: ignore[attr-defined]
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
@@ -253,7 +253,7 @@ class ExecuteFlowTest(FlowTestCase):
 
         fake = _fake_type(stale_policy=StalePolicy.FORCE, drifted_fields={"name": {}})
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=object())
+            summary = execute_flow(flow, request=make_request())
 
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
         self.assertEqual(fake.executed, ["p1"])
@@ -262,4 +262,4 @@ class ExecuteFlowTest(FlowTestCase):
         flow = self._flow(name="pending")
         self._action(flow)
         with self.assertRaises(ValueError):
-            execute_flow(flow, request=object())
+            execute_flow(flow, request=make_request())

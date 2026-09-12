@@ -9,6 +9,7 @@ PDF documents are useless for an LLM.
 import typing
 
 from uds.REST.methods.reports import Reports
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.reports.lists.admin_activity import AdminActivityReportCSV
 from uds.reports.lists.failed_logins import FailedLoginsReportCSV
 
@@ -44,7 +45,7 @@ def _report_tool(
     """
     report_uuid = report_cls.get_uuid()
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         check_required(arguments, required)
         params: dict[str, typing.Any] = dict(defaults)
         for argument, param in argument_to_param.items():
@@ -107,7 +108,11 @@ def _failed_logins_tool() -> ToolDefinition:
             ),
         },
         required=("start_date", "end_date"),
-        argument_to_param={"start_date": "start_date", "end_date": "end_date", "authenticator_uuid": "authenticator"},
+        argument_to_param={
+            "start_date": "start_date",
+            "end_date": "end_date",
+            "authenticator_uuid": "authenticator",
+        },
         defaults={"authenticator": "0-0-0-0"},
         access="Administrators only (the backing reports endpoint requires the admin role).",
     )

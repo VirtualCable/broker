@@ -24,10 +24,11 @@ from uds.core import types
 from uds.REST.methods.providers import Providers
 from uds.REST.methods.services import Services
 from uds.core.exceptions import rest as rest_exceptions
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
-from . import base as mutability_base
-from .etag import item_etag
+from .. import base as mutability_base
+from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
 
@@ -153,7 +154,7 @@ class ServiceUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(self.for_type_of(target), target))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: typing.Any) -> str:
+    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context
         service = typing.cast(
             models.Service,

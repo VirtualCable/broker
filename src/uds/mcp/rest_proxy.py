@@ -9,6 +9,7 @@ from asgiref.sync import sync_to_async
 from uds.REST.handlers import Handler
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.core.util import permissions
 
 
@@ -113,13 +114,20 @@ class RestTarget:
 class RestProxy:
     """Invoke existing REST handlers while preserving REST authentication."""
 
-    def __init__(self, request: typing.Any = None) -> None:
-        self.request: typing.Any = request
+    def __init__(self, request: ExtendedHttpRequestWithUser | None = None) -> None:
+        self.request: ExtendedHttpRequestWithUser | None = request
+
+    @staticmethod
+    def _bound(request: ExtendedHttpRequestWithUser | None) -> ExtendedHttpRequestWithUser:
+        """The request is mandatory to execute anything through the proxy."""
+        if request is None:
+            raise ValueError("RestProxy invoked without a bound HTTP request")
+        return request
 
     async def execute(
         self,
         target: RestTarget,
-        request: typing.Any,
+        request: ExtendedHttpRequestWithUser | None,
         params: dict[str, typing.Any],
     ) -> typing.Any:
         """Execute a REST target outside the async event loop.
@@ -129,12 +137,14 @@ class RestProxy:
         complete handler lifecycle is kept in one thread-sensitive sync
         boundary because Django ORM access is synchronous.
         """
-        return await sync_to_async(self._execute_sync, thread_sensitive=True)(target, request, params, None)
+        return await sync_to_async(self._execute_sync, thread_sensitive=True)(
+            target, self._bound(request), params, None
+        )
 
     async def execute_collection(
         self,
         target: RestTarget,
-        request: typing.Any,
+        request: ExtendedHttpRequestWithUser | None,
         arguments: typing.Any,
     ) -> typing.Any:
         """Execute a list tool backed by a REST collection.
@@ -166,7 +176,7 @@ class RestProxy:
         result = typing.cast(
             list[typing.Any],
             await sync_to_async(self._execute_sync, thread_sensitive=True)(
-                target, request, params, parent_uuid
+                target, self._bound(request), params, parent_uuid
             ),
         )
         # ``$select`` projection. The HTTP dispatcher applies it at render
@@ -188,7 +198,7 @@ class RestProxy:
     def _execute_sync(
         cls,
         target: RestTarget,
-        request: typing.Any,
+        request: ExtendedHttpRequestWithUser,
         params: dict[str, typing.Any],
         parent_uuid: str | None,
     ) -> typing.Any:
@@ -211,7 +221,7 @@ class RestProxy:
     @staticmethod
     def _execute_detail_sync(
         target: RestTarget,
-        request: typing.Any,
+        request: ExtendedHttpRequestWithUser,
         params: dict[str, typing.Any],
         parent_uuid: str | None,
     ) -> typing.Any:

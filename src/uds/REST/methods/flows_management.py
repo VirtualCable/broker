@@ -37,7 +37,7 @@ import typing
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from uds.core import exceptions, types
+from uds.core import consts, exceptions, types
 from uds.core.util import ensure
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
@@ -79,6 +79,11 @@ class FlowActions(DetailHandler[FlowActionItem]):
     snapshot (``snap_info``), plus the per-action ``approve``/``skip``
     operations (see the store lifecycle).
     """
+
+    # Admin-only surface: flows administration is not visible to
+    # non-admin users at all (the MANAGEMENT permission governs the
+    # wrapped types on the proposal surface, never this one)
+    ROLE: typing.ClassVar[consts.Role] = consts.Role.ADMIN
 
     # Admin surface: expose compliance and the approval snapshot
     _ADMIN_VIEW: typing.ClassVar[bool] = True
@@ -226,12 +231,16 @@ class FlowsManagement(ModelHandler[FlowItem]):
     Flows are created by their owners (normally through the proposal
     API/MCP), never through this handler: ``pre_save`` and
     ``validate_save`` refuse create/edit with a clean 403, while read
-    and delete remain available to administrators (staff only sees
-    flows it has been granted permission over).
+    and delete remain available to administrators. The surface is
+    admin-only: non-admin users get a clean 403 at the door (the
+    MANAGEMENT permission governs the wrapped types on the proposal
+    surface, never flow administration).
     """
 
     PATH = "flows"
     NAME = "management"
+
+    ROLE: typing.ClassVar[consts.Role] = consts.Role.ADMIN
 
     MODEL = ActionFlow
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"actions": FlowActions}

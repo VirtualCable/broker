@@ -15,7 +15,7 @@ from uds.mutability import (
     StalePolicy,
 )
 from uds.models import ActionFlow, FlowAction
-from uds.mutability.types_providers import ProviderUpdate
+from uds.mutability.types.providers import ProviderUpdate
 
 from tests.fixtures.services import create_db_provider
 from tests.mcp.mutability._helpers import FlowTestCase

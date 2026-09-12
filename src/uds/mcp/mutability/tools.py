@@ -23,7 +23,9 @@ from asgiref.sync import sync_to_async
 from uds.core.consts import mcp as consts_mcp
 from uds.core.exceptions import rest as rest_exceptions
 from uds.core.types.mcp import FlowStatus
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.core.util.model import sql_now
+from uds.models import User
 
 from uds.mcp.catalog import Catalog, ToolDefinition
 from uds.mutability import registry
@@ -31,7 +33,7 @@ from uds.mutability.base import JsonObject, REDACTED
 
 JsonDict = dict[str, typing.Any]
 
-ExecutorSync = collections.abc.Callable[[JsonObject, typing.Any], typing.Any]
+ExecutorSync = collections.abc.Callable[[JsonObject, ExtendedHttpRequestWithUser], typing.Any]
 
 _PROPOSE_MESSAGE: typing.Final[str] = (
     "Proposal queued. It does NOT take effect until an administrator approves it."
@@ -41,15 +43,17 @@ _UPDATE_MESSAGE: typing.Final[str] = (
 )
 
 
-def _request_user(request: typing.Any) -> typing.Any:
+def _request_user(request: ExtendedHttpRequestWithUser) -> User:
     """The UDS user behind the MCP request."""
-    user = getattr(request, "user", None)
-    if user is None or not getattr(user, "uuid", None):
+    user: User | None = getattr(request, "user", None)
+    if user is None or not user.uuid:
         raise rest_exceptions.AccessDenied()
     return user
 
 
-def _flows_rest(request: typing.Any, method: str, params: JsonObject, *args: str) -> typing.Any:
+def _flows_rest(
+    request: ExtendedHttpRequestWithUser, method: str, params: JsonObject, *args: str
+) -> typing.Any:
     """Invoke one ``/flows/own`` operation with the full handler lifecycle.
 
     The handler resolves authentication and permissions from the real
@@ -103,7 +107,7 @@ def _registry_type(type_id: str) -> registry.MutableActionType:
 
 
 def _own_action_index(
-    request: typing.Any, statuses: collections.abc.Container[str]
+    request: ExtendedHttpRequestWithUser, statuses: collections.abc.Container[str]
 ) -> dict[str, tuple[str, JsonDict]]:
     """Index of the caller's actions: id -> (flow_id, item), flow status filtered.
 
@@ -137,9 +141,15 @@ def _parse_date_arg(value: typing.Any, name: str) -> datetime.datetime | None:
 
 
 def _wrap_sync(sync_body: ExecutorSync) -> collections.abc.Callable[..., typing.Any]:
-    """Executor wrapper: run the sync body off the event loop."""
+    """Executor wrapper: run the sync body off the event loop.
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    The HTTP request is mandatory here: the whole surface resolves
+    ownership and permissions through it.
+    """
+
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
+        if request is None:
+            raise rest_exceptions.AccessDenied()
         return await sync_to_async(sync_body, thread_sensitive=True)(arguments, request)
 
     return executor
@@ -148,7 +158,7 @@ def _wrap_sync(sync_body: ExecutorSync) -> collections.abc.Callable[..., typing.
 def _propose_sync(
     action_type: registry.MutableActionType,
     arguments: JsonObject,
-    request: typing.Any,
+    request: ExtendedHttpRequestWithUser,
 ) -> JsonDict:
     _request_user(request)
     target_uuid = str(arguments.get("target_uuid", "") or "")
@@ -200,7 +210,7 @@ def _propose_sync(
     }
 
 
-def _discovery_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
+def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
     _request_user(request)
     type_id = str(arguments.get("action_type", "") or "provider.update")
     found = registry.get(type_id)
@@ -232,7 +242,7 @@ def _discovery_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     return result
 
 
-def _list_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
+def _list_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
     _request_user(request)
     status_raw = str(arguments.get("status", "") or "")
     type_filter = arguments.get("action_type")
@@ -285,7 +295,7 @@ def _list_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     return {"items": result, "count": len(result)}
 
 
-def _update_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
+def _update_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
     _request_user(request)
     action_id = str(arguments.get("id", "") or "")
     if not action_id.strip():
@@ -325,7 +335,7 @@ def _update_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
     }
 
 
-def _cancel_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
+def _cancel_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
     _request_user(request)
     action_id = str(arguments.get("id", "") or "")
     if not action_id.strip():
@@ -360,7 +370,7 @@ def _cancel_sync(arguments: JsonObject, request: typing.Any) -> JsonDict:
 def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
     """Build the proposal tool of one registered action type."""
 
-    def sync_body(arguments: JsonObject, request: typing.Any) -> JsonDict:
+    def sync_body(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
         return _propose_sync(action_type, arguments, request)
 
     return ToolDefinition(

@@ -19,6 +19,10 @@ import typing
 from django.db import models as db_models
 
 from uds.core import types
+from uds.core.exceptions import rest as rest_exceptions
+from uds.core.types.requests import ExtendedHttpRequestWithUser
+from uds.core.util import permissions
+from uds.models import User
 from uds.REST.handlers import Handler
 
 JsonObject = dict[str, typing.Any]
@@ -115,6 +119,14 @@ class MutableActionType(abc.ABC):
     def resolve_target(self, target_uuid: str) -> db_models.Model:
         """Return the target model instance, or raise a REST NotFound."""
 
+    def target_uuid_of(self, target: db_models.Model) -> str:
+        """Identifier of ``target`` for proposals (inverse of resolve).
+
+        Defaults to the model uuid. Types whose target has no uuid
+        (configuration: ``Section.key``) override this.
+        """
+        return typing.cast("str", getattr(target, "uuid", None))
+
     @abc.abstractmethod
     def for_type_of(self, target: db_models.Model) -> str:
         """Return the ``data_type`` (subtype) of the target."""
@@ -153,7 +165,7 @@ class MutableActionType(abc.ABC):
         """Current whole-item fingerprint (CAS soft-notice base)."""
 
     @abc.abstractmethod
-    async def execute(self, action: "FlowAction", request: typing.Any) -> str:
+    async def execute(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         """Apply the approved action through the canonical REST machinery.
 
         Runs as the approving administrator (the request owner), so
@@ -171,6 +183,19 @@ class MutableActionType(abc.ABC):
         parent here; flows check MANAGEMENT over the returned model.
         """
         return target
+
+    def check_propose_access(self, user: User, target: db_models.Model) -> None:
+        """Authorization to *propose* this action over ``target``.
+
+        The MANAGEMENT permission is for the wrapped types (the targets:
+        providers, services, ...), never for the flow itself. Types
+        whose target has no permission model (configuration) override
+        this hook (configuration: superuser only). Raises AccessDenied.
+        """
+        if not permissions.has_access(
+            user, self.permission_target(target), types.permissions.PermissionType.MANAGEMENT
+        ):
+            raise rest_exceptions.AccessDenied()
 
     def secret_names(self, for_type: str, target: db_models.Model | None = None) -> set[str]:
         """Names of the secret fields of one subtype."""

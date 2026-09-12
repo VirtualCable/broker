@@ -7,7 +7,7 @@ from unittest import mock
 from uds.REST.methods.providers import Providers
 from uds.REST.methods.services import Services
 from uds.mcp.rest_proxy import RestProxy
-from uds.mutability.types_services import ServiceUpdate
+from uds.mutability.types.services import ServiceUpdate
 
 from tests.fixtures.services import create_db_provider, create_db_service
 from tests.mcp.mutability._helpers import build_action

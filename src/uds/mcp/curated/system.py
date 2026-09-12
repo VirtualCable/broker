@@ -1,8 +1,10 @@
-"""Platform tools: usage counters and the security self-assessment."""
+"""Platform tools: usage counters, the security self-assessment and the global configuration."""
 
 import typing
 
+from uds.REST.methods.config import Config as ConfigHandler
 from uds.REST.methods.system import System
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from ..catalog import ToolDefinition
 from ..rest_proxy import RestProxy, RestTarget
@@ -16,7 +18,7 @@ _COUNTERS: typing.Final[tuple[str, ...]] = ("assigned", "inuse", "cached", "comp
 def _platform_stats_tool() -> ToolDefinition:
     """Build the platform-wide usage counters tool (``/system/stats``)."""
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         counter = str(arguments.get("counter", "")).lower()
         if counter not in _COUNTERS:
             raise ValueError(f"counter must be one of {', '.join(_COUNTERS)}")
@@ -56,8 +58,10 @@ def _platform_stats_tool() -> ToolDefinition:
 def _security_check_tool() -> ToolDefinition:
     """Build the security self-assessment tool (``/system/security_check``)."""
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
-        return await RestProxy().execute(RestTarget(System, "system", GET, args=("security_check",)), request, {})
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
+        return await RestProxy().execute(
+            RestTarget(System, "system", GET, args=("security_check",)), request, {}
+        )
 
     return ToolDefinition(
         name="get_security_check",
@@ -75,9 +79,33 @@ def _security_check_tool() -> ToolDefinition:
     )
 
 
+def _config_tool() -> ToolDefinition:
+    """Build the global configuration read tool (``GET /config``)."""
+
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
+        return await RestProxy().execute(RestTarget(ConfigHandler, "config", GET), request, {})
+
+    return ToolDefinition(
+        name="get_config",
+        title="Get global configuration",
+        description=(
+            "Current UDS global configuration, grouped by section (Security, UDS, Custom, ...). "
+            "Secret values (passwords, hidden entries) are masked and never travel. "
+            "Administrators only. Use get_security_check to see which settings need attention, "
+            "and the config.update proposal flow to suggest changes."
+        ),
+        input_schema=schema({}),
+        access="Administrators only; staff get an access-denied error.",
+        returns="An object keyed by section, each holding its configuration values (value, type, params, help).",
+        required_permission="ALL",
+        executor=executor,
+    )
+
+
 def curated_tools() -> tuple[ToolDefinition, ...]:
     """Return the platform tools."""
     return (
         _platform_stats_tool(),
         _security_check_tool(),
+        _config_tool(),
     )

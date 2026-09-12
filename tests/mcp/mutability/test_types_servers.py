@@ -7,7 +7,7 @@ from unittest import mock
 from uds.REST.methods.servers_management import ServersGroups, ServersServers
 from uds.core import types
 from uds.mcp.rest_proxy import RestProxy
-from uds.mutability.types_servers import ServerGroupUpdate, ServerUpdate
+from uds.mutability.types.servers import ServerGroupUpdate, ServerUpdate
 
 from tests.fixtures.servers import create_server, create_server_group
 from tests.mcp.mutability._helpers import build_action
@@ -105,7 +105,7 @@ class ServerGroupUpdateTypeTest(rest.test.RESTTestCase):
         )
         request = mock.MagicMock()
         with (
-            mock.patch("uds.mutability.types_servers.RestProxy") as proxy_cls,
+            mock.patch("uds.mutability.types.servers.RestProxy") as proxy_cls,
             mock.patch.object(self.action_type, "resolve_target", return_value=self.group),
         ):
             proxy_cls.return_value.execute = mock.AsyncMock(return_value=None)

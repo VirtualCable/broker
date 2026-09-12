@@ -5,6 +5,7 @@ import typing
 from asgiref.sync import sync_to_async
 
 from uds.REST.methods.servers_management import ServersGroups, ServersServers
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from ..catalog import ToolDefinition
 from ..rest_proxy import RestProxy, RestTarget
@@ -24,7 +25,7 @@ def _server_stats_tool() -> ToolDefinition:
 
     target_parent = RestTarget(ServersGroups, "servers/groups")
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         check_required(arguments, ("group_uuid", "server_uuid"))
         params = {key: value for key, value in arguments.items() if key not in ("group_uuid", "server_uuid")}
         target = RestTarget(
@@ -35,7 +36,7 @@ def _server_stats_tool() -> ToolDefinition:
             parent=target_parent,
         )
         return await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
-            target, request, params, str(arguments["group_uuid"])
+            target, RestProxy._bound(request), params, str(arguments["group_uuid"])
         )
 
     return ToolDefinition(
@@ -53,7 +54,10 @@ def _server_stats_tool() -> ToolDefinition:
                     "type": "string",
                     "description": "Counter to retrieve (all, cpu, memory, users, connections, disk). Default: all.",
                 },
-                "interval": {"type": "string", "description": "Accumulation interval (hour or day). Default: hour."},
+                "interval": {
+                    "type": "string",
+                    "description": "Accumulation interval (hour or day). Default: hour.",
+                },
                 "since": {"type": "integer", "description": "Number of days to go back. Default: 14."},
             },
             ("group_uuid", "server_uuid"),

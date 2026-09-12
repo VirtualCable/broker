@@ -424,3 +424,52 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
             store.create_flow(owner=self.staffs[0], name="filler")
         response = self.client.rest_post("flows/own", data={"name": "one too many"})
         self.assertEqual(response.status_code, 400, response.content)
+
+
+class FlowsOwnConfigUpdateTest(rest.test.RESTTestCase):
+    """``config.update`` proposals: the propose gate is superuser-only.
+
+    Configuration has no permission model: ``MutableActionType
+    .check_propose_access`` is overridden on the type, so staff with
+    MANAGEMENT over anything still cannot propose configuration changes.
+    """
+
+    @staticmethod
+    def _create_config_value(key: str, value: str) -> models.Config:
+        from uds.core.util.config import Config as CfgConfig
+
+        return models.Config.objects.create(
+            section="Security", key=key, value=value, field_type=int(CfgConfig.FieldType.BOOLEAN), help="test"
+        )
+
+    def _payload(self, cfg: models.Config) -> dict[str, typing.Any]:
+        return {
+            "action_type": "config.update",
+            "target_uuid": f"Security.{cfg.key}",
+            "values": {f"Security.{cfg.key}": True},
+            "justification": "security check",
+        }
+
+    def test_staff_cannot_propose_config_changes(self) -> None:
+        cfg = self._create_config_value("Some Setting", "0")
+        self.login(user=self.staffs[0])
+        flow_id = self.client.rest_post("flows/own", data={"name": "cfg"}).json()["id"]
+        response = self.client.rest_post(f"flows/own/{flow_id}/actions", data=self._payload(cfg))
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test_admin_can_propose_config_changes(self) -> None:
+        cfg = self._create_config_value("Some Setting", "0")
+        self.login(user=self.admins[0])
+        flow_id = self.client.rest_post(
+            "flows/own", data={"name": "cfg", "justification": "security check"}
+        ).json()["id"]
+        response = self.client.rest_post(f"flows/own/{flow_id}/actions", data=self._payload(cfg))
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()["result"]
+        self.assertEqual(body["status"], FlowActionStatus.PENDING)
+        # The CAS base is the current value of the key
+        action = models.FlowAction.objects.get(uuid=body["id"])
+        self.assertEqual(
+            action.base_values,
+            {f"Security.{cfg.key}": "0"},
+        )

@@ -28,10 +28,11 @@ from uds import models
 from uds.core import types
 from uds.REST.methods.servers_management import ServersGroups, ServersServers
 from uds.core.exceptions import rest as rest_exceptions
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
-from . import base as mutability_base
-from .etag import item_etag
+from .. import base as mutability_base
+from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
 
@@ -150,7 +151,7 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(for_type))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: typing.Any) -> str:
+    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context
         group = typing.cast(
             models.ServerGroup,
@@ -246,7 +247,7 @@ class ServerUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(for_type, target))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: typing.Any) -> str:
+    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context
         server = typing.cast(
             models.Server,

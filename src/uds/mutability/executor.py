@@ -34,11 +34,11 @@ thread — same connection the request uses.
 """
 
 import logging
-import typing
 
 from asgiref.sync import async_to_sync
 
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mutability.base import JsonObject, StalePolicy
 from uds.mutability.store import FlowStore
 from uds.models import ActionFlow
@@ -46,7 +46,7 @@ from uds.models import ActionFlow
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def execute_flow(flow: ActionFlow, request: typing.Any) -> JsonObject:
+def execute_flow(flow: ActionFlow, request: ExtendedHttpRequestWithUser) -> JsonObject:
     """Run an approved flow synchronously; returns an execution summary."""
     from uds.mutability import registry
 

@@ -3,16 +3,25 @@
 import typing
 
 from uds.core.types.mcp import FlowActionStatus
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.models import ActionFlow, FlowAction
 from uds.mutability import FlowStore
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
 from tests.utils.test import UDSTestCase
 
+
+def make_request() -> ExtendedHttpRequestWithUser:
+    """Bare request stub: executors and the proxy only carry it around
+    in the mocked paths these tests exercise."""
+    return ExtendedHttpRequestWithUser()
+
+
 MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "get_mutable_fields",
     "propose_provider_update",
     "propose_service_update",
+    "propose_config_update",
     "list_pending_actions",
     "update_pending_action",
     "cancel_pending_action",

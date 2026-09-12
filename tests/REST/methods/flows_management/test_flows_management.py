@@ -45,7 +45,7 @@ from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import permissions
 from uds.models.user import create_api_token, hash_api_token
 from uds.mutability import FlowStore
-from uds.mutability.types_providers import ProviderUpdate
+from uds.mutability.types.providers import ProviderUpdate
 from uds.models import ActionFlow
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
@@ -203,15 +203,23 @@ class FlowsPermissionsTest(rest.test.RESTTestCase):
             base_etag="etag",
         )
 
-    def test_staff_without_permission_sees_nothing(self) -> None:
+    def test_staff_is_forbidden_regardless_of_permissions(self) -> None:
+        """The management surface is admin-only: 403 at the door.
+
+        The MANAGEMENT permission governs the wrapped types on the
+        proposal surface, never flow administration.
+        """
+        from uds.core.util import permissions as perm_utils
+
+        # Even with ALL permission granted over the flow: forbidden
+        perm_utils.add_user_permission(self.staff, self.flow, types.permissions.PermissionType.ALL)
         self.login_with_api_token(user=self.staff, as_admin=False)
-        items: list[dict[str, typing.Any]] = self.client.rest_get("flows/management/overview").json()
-        self.assertEqual(items, [])
+
+        response = self.client.rest_get("flows/management/overview")
+        self.assertEqual(response.status_code, 403, response.content)
 
         response = self.client.rest_get(f"flows/management/{self.flow.uuid}")
-        # Opaque 404 (existing framework behavior for single items without
-        # permission: it does not reveal the item exists)
-        self.assertEqual(response.status_code, 404, response.content)
+        self.assertEqual(response.status_code, 403, response.content)
 
         response = self.client.rest_get(f"flows/management/{self.flow.uuid}/actions")
         self.assertEqual(response.status_code, 403, response.content)
@@ -219,11 +227,9 @@ class FlowsPermissionsTest(rest.test.RESTTestCase):
         response = self.client.rest_delete(f"flows/management/{self.flow.uuid}")
         self.assertEqual(response.status_code, 403, response.content)
 
-    def test_staff_with_permission_can_inspect_but_not_edit(self) -> None:
-        from uds.core.util import permissions as perm_utils
-
-        perm_utils.add_user_permission(self.staff, self.flow, types.permissions.PermissionType.ALL)
-        self.login_with_api_token(user=self.staff, as_admin=False)
+    def test_admin_inspects_but_cannot_edit(self) -> None:
+        """Admins see every flow; create/edit stays refused by design."""
+        self.login_with_api_token(user=self.admins[0])
 
         items: list[dict[str, typing.Any]] = self.client.rest_get("flows/management/overview").json()
         self.assertEqual([i["id"] for i in items], [self.flow.uuid])
@@ -232,7 +238,9 @@ class FlowsPermissionsTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         # Still refused to write: the refusal is by design, not by permission
-        response = self.client.rest_put(f"flows/management/{self.flow.uuid}", data={"name": "changed"})
+        response = self.client.rest_put(
+            f"flows/management/{self.flow.uuid}", data={"name": "changed", "justification": "nope"}
+        )
         self.assertEqual(response.status_code, 403, response.content)
 
     def test_staff_cannot_create_flows(self) -> None:
@@ -348,7 +356,7 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
 
     def test_approve_executes_flow_in_order(self) -> None:
         self.assertEqual(self._approve_action().status_code, 200)
-        with mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls:
+        with mock.patch("uds.mutability.types.providers.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value="provider updated")
             summary = self._approve()
 
@@ -385,14 +393,14 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
 
         # Recovery: approve the revoked action again (fresh freeze) and launch
         self.assertEqual(self._approve_action().status_code, 200)
-        with mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls:
+        with mock.patch("uds.mutability.types.providers.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value="provider updated")
             summary = self._approve()
         self.assertEqual(summary["status"], "executed")
 
     def test_approve_twice_refused(self) -> None:
         self.assertEqual(self._approve_action().status_code, 200)
-        with mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls:
+        with mock.patch("uds.mutability.types.providers.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value="ok")
             self._approve()
         response = self.client.rest_post(f"flows/management/{self.flow.uuid}/approve", data={})

@@ -10,6 +10,7 @@ import mcp.types
 from asgiref.sync import sync_to_async
 
 from uds.REST.processors import ContentProcessor
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from .catalog import Catalog
 from .redaction import module_sensitive_fields, redact
@@ -67,9 +68,14 @@ def _paginate[T](
 class MCPServerCore:
     """Expose catalog entries through the MCP protocol result types."""
 
-    def __init__(self, catalog: Catalog, request: typing.Any = None, proxy: RestProxy | None = None) -> None:
+    def __init__(
+        self,
+        catalog: Catalog,
+        request: ExtendedHttpRequestWithUser | None = None,
+        proxy: RestProxy | None = None,
+    ) -> None:
         self.catalog = catalog
-        self.request = request
+        self.request: ExtendedHttpRequestWithUser | None = request
         self.proxy = proxy if proxy is not None else RestProxy(request=request)
         if request is not None:
             self.proxy.request = request
@@ -80,7 +86,9 @@ class MCPServerCore:
         params: mcp.types.PaginatedRequestParams | None,
     ) -> mcp.types.ListToolsResult:
         """Return one page of the MCP tool list generated from the catalog."""
-        tools, next_cursor = _paginate(list(self.catalog.tools()), params.cursor if params else None, lambda t: t.name)
+        tools, next_cursor = _paginate(
+            list(self.catalog.tools()), params.cursor if params else None, lambda t: t.name
+        )
         return mcp.types.ListToolsResult(
             tools=[
                 mcp.types.Tool(

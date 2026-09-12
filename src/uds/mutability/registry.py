@@ -15,6 +15,7 @@ import inspect
 
 from uds.core.util import modfinder
 
+from . import types as types
 from .base import JsonObject, MutableActionType
 
 _REGISTRY: dict[str, type[MutableActionType]] = {}
@@ -54,8 +55,18 @@ def _registrable(cls: type[MutableActionType]) -> bool:
     return not inspect.isabstract(cls) and "type_id" in cls.__dict__
 
 
+def load_package(module_name: str) -> None:
+    """Discover and register the action types of one package (modfinder)."""
+    modfinder.dynamically_load_and_register_packages(
+        register,
+        MutableActionType,
+        module_name=module_name,
+        checker=_registrable,
+    )
+
+
 def _populate() -> None:
-    """Discover and register the action types of the package (once).
+    """Auto-load the concrete action types of ``types/`` (once).
 
     The flag is process-wide on purpose: a test (or anyone) clearing the
     registry must not get it silently re-populated on the next lookup.
@@ -64,12 +75,7 @@ def _populate() -> None:
     if _populated:
         return
     _populated = True
-    modfinder.dynamically_load_and_register_packages(
-        register,
-        MutableActionType,
-        module_name=__name__[: __name__.rfind(".")],
-        checker=_registrable,
-    )
+    load_package(types.__name__)
 
 
 _populate()

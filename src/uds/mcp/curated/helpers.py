@@ -8,6 +8,7 @@ validation and proxy behaviour.
 import typing
 
 from uds.core import types
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.REST.handlers import Handler
 
 from ..catalog import ToolDefinition
@@ -120,7 +121,7 @@ def master_custom_tool(
 
     required = (*path_args, *extra_required)
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         check_required(arguments, required)
         arg_values = tuple(str(arguments[arg_name]) for arg_name in path_args)
         url_args = (custom_name, *arg_values) if method_first else (*arg_values, custom_name)
@@ -188,7 +189,7 @@ def nested_custom_tool(
     path_args = ("uuid", "item_id")
     required = (*path_args, *extra_required)
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         check_required(arguments, required)
         url_args = (
             str(arguments["uuid"]),

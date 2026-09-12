@@ -16,6 +16,7 @@ import typing
 from uds.REST.inventory import HandlerInventoryEntry, collection_handlers
 from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from .catalog import ToolDefinition
 from .rest_proxy import RestProxy, RestTarget
@@ -110,16 +111,14 @@ def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
             path,
             parent=RestTarget(parent_handler, entry.parent.path),
         )
-        parent_desc = (
-            f"UUID of the parent {entry.parent.name} item this collection belongs to (e.g. {entry.parent.path})."
-        )
+        parent_desc = f"UUID of the parent {entry.parent.name} item this collection belongs to (e.g. {entry.parent.path})."
     else:
         target = RestTarget(handler, path)
         parent_desc = None
 
     async def executor(
         arguments: dict[str, typing.Any],
-        request: typing.Any = None,
+        request: ExtendedHttpRequestWithUser | None = None,
     ) -> list[typing.Any]:
         return await RestProxy().execute_collection(target, request, arguments)
 
@@ -139,8 +138,12 @@ def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
             )
         ),
         input_schema=schema,
-        access=(f"Available to authenticated UDS users with permission to read {entry.handler.__name__} items."),
-        returns=(f"An array of items from the ``{entry.handler.__name__}`` REST collection, each as a dictionary."),
+        access=(
+            f"Available to authenticated UDS users with permission to read {entry.handler.__name__} items."
+        ),
+        returns=(
+            f"An array of items from the ``{entry.handler.__name__}`` REST collection, each as a dictionary."
+        ),
         required_permission="READ",
         executor=executor,
     )

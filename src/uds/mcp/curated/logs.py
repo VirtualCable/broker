@@ -5,6 +5,7 @@ import typing
 from asgiref.sync import sync_to_async
 
 from uds.core import consts
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.REST.handlers import Handler
 from uds.REST.methods.authenticators import Authenticators, Users
 from uds.REST.methods.logs import Logs
@@ -32,13 +33,15 @@ def _item_logs_tool() -> ToolDefinition:
     serves each collection.
     """
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         check_required(arguments, ("collection", "uuid"))
         collection = str(arguments["collection"])
         item_id = arguments.get("item_id")
 
         if collection == "service_pool":
-            target = RestTarget(ServicesPools, "servicespools", GET, args=(str(arguments["uuid"]), consts.rest.LOG))
+            target = RestTarget(
+                ServicesPools, "servicespools", GET, args=(str(arguments["uuid"]), consts.rest.LOG)
+            )
             return await RestProxy().execute(target, request, {})
 
         details: dict[str, tuple[type[Handler], str, type[Handler], str]] = {
@@ -68,7 +71,7 @@ def _item_logs_tool() -> ToolDefinition:
             parent=RestTarget(parent_cls, parent_path),
         )
         return await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
-            target, request, {}, str(arguments["uuid"])
+            target, RestProxy._bound(request), {}, str(arguments["uuid"])
         )
 
     return ToolDefinition(
@@ -107,7 +110,7 @@ def _item_logs_tool() -> ToolDefinition:
 def _system_logs_tool() -> ToolDefinition:
     """Build the global (system) log tool on top of the admin REST endpoint."""
 
-    async def executor(arguments: JsonObject, request: typing.Any = None) -> typing.Any:
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         params: dict[str, typing.Any] = {}
         if arguments.get("filter") is not None:
             params["$filter"] = arguments["filter"]
@@ -160,7 +163,11 @@ def _system_logs_tool() -> ToolDefinition:
                 "orderby": string_property(
                     "OData $orderby over log fields, e.g. 'created asc'. Default: newest first."
                 ),
-                "skip": {"type": "integer", "description": "Entries to skip before the page (paging).", "minimum": 0},
+                "skip": {
+                    "type": "integer",
+                    "description": "Entries to skip before the page (paging).",
+                    "minimum": 0,
+                },
             }
         ),
         access="Administrators only (the backing REST endpoint requires the admin role).",

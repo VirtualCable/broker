@@ -7,8 +7,10 @@ import collections.abc
 from .rest_proxy import RestTarget
 
 
+from uds.core.types.requests import ExtendedHttpRequestWithUser
+
 ToolExecutor: typing.TypeAlias = collections.abc.Callable[
-    [dict[str, typing.Any], typing.Any], collections.abc.Awaitable[typing.Any]
+    [dict[str, typing.Any], ExtendedHttpRequestWithUser | None], collections.abc.Awaitable[typing.Any]
 ]
 ResourceReader: typing.TypeAlias = collections.abc.Callable[[str], collections.abc.Awaitable[typing.Any]]
 

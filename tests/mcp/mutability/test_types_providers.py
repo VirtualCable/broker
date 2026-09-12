@@ -5,7 +5,7 @@ import typing
 from unittest import mock
 
 from uds.REST.methods.providers import Providers
-from uds.mutability.types_providers import ProviderUpdate
+from uds.mutability.types.providers import ProviderUpdate
 
 from tests.fixtures.services import create_db_provider
 from tests.mcp.mutability._helpers import build_action
@@ -109,7 +109,7 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
         )
         request = mock.MagicMock()
         with (
-            mock.patch("uds.mutability.types_providers.RestProxy") as proxy_cls,
+            mock.patch("uds.mutability.types.providers.RestProxy") as proxy_cls,
             mock.patch.object(self.action_type, "resolve_target", return_value=self.provider),
         ):
             proxy_cls.return_value.execute = mock.AsyncMock()
