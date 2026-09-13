@@ -53,9 +53,24 @@ class MetaPoolUpdateFieldsTest(FlowTestCase):
         for name in ("image_id", "servicesPoolGroup_id", "members"):
             self.assertNotIn(name, by_name)
 
-        self.assertEqual(by_name["policy"]["choices"], [0, 1, 2])
-        self.assertEqual(by_name["ha_policy"]["choices"], [0, 1])
-        self.assertEqual(by_name["transport_grouping"]["choices"], [0, 1, 2])
+        # Choices come straight from the gui and carry the human labels the
+        # admin sees (option A of the gui coupling: no re-typed enum ids)
+        self.assertEqual([c["value"] for c in by_name["policy"]["choices"]], [0, 1, 2])
+        self.assertEqual([c["value"] for c in by_name["ha_policy"]["choices"]], [0, 1])
+        self.assertEqual(
+            [c["value"] for c in by_name["transport_grouping"]["choices"]],
+            [0, 1, 2],
+        )
+        self.assertTrue(all(c["label"] for c in by_name["policy"]["choices"]))
+
+        # Labels and tooltips match the gui (the source of truth), not the
+        # previously hardcoded text
+        self.assertEqual(by_name["policy"]["label"], "Load balancing policy")
+        self.assertEqual(by_name["transport_grouping"]["label"], "Transport Selection")
+
+        # GUI-provided constraints reach the agent surface
+        self.assertEqual(by_name["short_name"]["length"], 32)
+        self.assertTrue(by_name["name"]["required"])
 
         errors = MetaPoolUpdate().validate_values("metapool", {"visible": "yes"})
         self.assertTrue(any("must be a boolean" in e for e in errors))

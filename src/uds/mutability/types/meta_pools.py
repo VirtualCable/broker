@@ -1,10 +1,12 @@
 """``metapool.update`` / ``metapool.members``: meta pool mutations.
 
-Top level resource with a static gui (no module instance): the mutable
-surface is model columns only. The image and service pool group are
-reference columns and are NOT proposable, but they travel as immutable
-context in every payload (the meta pool PUT is form-shaped and requires
-them).
+Top level resource with a static gui (no module instance). Since the
+gui-coupling trial, ``metapool.update`` derives its mutable surface from
+``MetaPools.get_gui`` itself (the same definitions the admin form uses):
+fields are proposable by default, FK references travelling on the
+form-shaped PUT are annotated ``context`` on the gui and therefore join
+the fingerprint but never the proposable surface. GUI changes propagate
+to the agent automatically.
 
 ``metapool.members`` is the first *relation* action type: it proposes the
 complete desired set of member pools (option A: full desired set, never a
@@ -16,6 +18,7 @@ import collections.abc
 import hashlib
 import json
 import typing
+from types import SimpleNamespace as _Namespace
 
 from asgiref.sync import sync_to_async
 from django.db import models as db_models
@@ -23,7 +26,6 @@ from django.db import models as db_models
 from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
-from uds.core.types.pools import HighAvailabilityPolicy, LoadBalancingPolicy, TransportSelectionPolicy
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.core.util.model import process_uuid
 from uds.mcp.rest_proxy import RestProxy, RestTarget
@@ -32,26 +34,17 @@ from uds.REST.methods.meta_service_pools import MetaServicesPool
 from uds.REST.methods.user_services import Groups as AssignedGroups
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 from ._relations import M2MSetActionType
 
 JsonObject = dict[str, typing.Any]
 
 
-def _def_from_choice(
-    name: str,
-    label: str,
-    tooltip: str,
-    choices: collections.abc.Iterable[tuple[int, str]],
-) -> JsonObject:
-    return {
-        "name": name,
-        "type": "choice",
-        "label": label,
-        "tooltip": tooltip,
-        "secret": False,
-        "choices": [value for value, _title in choices],
-    }
+def _metapool_gui_elements() -> list[types.ui.GuiElement]:
+    """The admin gui of meta pools, ordered as the builder declared it."""
+    shim = typing.cast(typing.Any, _Namespace())
+    return sorted(MetaPools.get_gui(shim, "metapool"), key=lambda element: element.gui.order)
 
 
 class MetaPoolUpdate(mutability_base.MutableActionType):
@@ -85,86 +78,16 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        return [
-            {
-                "name": "name",
-                "type": "text",
-                "label": "Name",
-                "tooltip": "Name of the meta pool",
-                "secret": False,
-            },
-            {
-                "name": "short_name",
-                "type": "text",
-                "label": "Short name",
-                "tooltip": "Short name for user service visualization",
-                "secret": False,
-            },
-            {
-                "name": "comments",
-                "type": "text",
-                "label": "Comments",
-                "tooltip": "Comments of the meta pool",
-                "secret": False,
-            },
-            {
-                "name": "tags",
-                "type": "taglist",
-                "label": "Tags",
-                "tooltip": "Tags of the meta pool (list)",
-                "secret": False,
-            },
-            {
-                "name": "visible",
-                "type": "checkbox",
-                "label": "Visible",
-                "tooltip": "Meta pool visible to users",
-                "secret": False,
-            },
-            _def_from_choice(
-                "policy",
-                "Selection policy",
-                "How the pool is selected for each user",
-                LoadBalancingPolicy.enumerate(),
-            ),
-            _def_from_choice(
-                "ha_policy",
-                "High availability",
-                "Behaviour when a member pool fails",
-                HighAvailabilityPolicy.enumerate(),
-            ),
-            _def_from_choice(
-                "transport_grouping",
-                "Transport grouping",
-                "How transports are shown to the user",
-                TransportSelectionPolicy.enumerate(),
-            ),
-            {
-                "name": "calendar_message",
-                "type": "text",
-                "label": "Calendar access denied text",
-                "tooltip": "Message shown when access is denied by calendar",
-                "secret": False,
-            },
-        ]
+        # Agent view of the admin gui: only proposable fields are part of
+        # the mutable surface (context references and relations stay out,
+        # though context still travels in the fingerprint / PUT payload).
+        return gui_view.agent_definitions(_metapool_gui_elements())
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
-        # Whole-item fingerprint: mutable columns plus the immutable
-        # reference context the PUT requires
-        return [
-            "name",
-            "short_name",
-            "comments",
-            "tags",
-            "image_id",
-            "servicesPoolGroup_id",
-            "visible",
-            "policy",
-            "ha_policy",
-            "calendar_message",
-            "transport_grouping",
-        ]
+        # Whole-item fingerprint: proposable fields plus the immutable
+        # reference context the PUT requires (both come from the gui).
+        return gui_view.fingerprint_names(_metapool_gui_elements())
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:

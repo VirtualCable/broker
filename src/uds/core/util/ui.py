@@ -30,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import copy
+import dataclasses
 import typing
 
 from django.utils.translation import gettext
@@ -130,6 +131,32 @@ class GuiBuilder:
         """
         self.saved_tab = tab
         self.next_tab()
+        return self
+
+    def with_overlay(self, name: str, overlay: types.ui.GuiOverlay) -> typing.Self:
+        """
+        ADDS an overlay annotation to an ALREADY EXISTING field of the gui.
+
+        It never creates a new gui element: it only decorates the element
+        previously added under ``name`` (by one of the add_* methods or
+        add_stock_field) with the provided ``GuiOverlay`` (e.g. a
+        ``FieldMutability``). Names that do not match any added field are
+        ignored on purpose, so a consumer layer can annotate
+        opportunistically without breaking when a subtype gui does not
+        include the field.
+
+        The element is replaced by an annotated copy
+        (``dataclasses.replace``), so annotating never mutates an element
+        that might be shared with the static gui definitions.
+
+        The overlay is pure metadata for consumer layers; it does not
+        affect the widget payload the administration UI receives.
+        Consumers validate it with their own isinstance check and ignore
+        anything else.
+        """
+        for index, field in enumerate(self.fields):
+            if field.name == name:
+                self.fields[index] = dataclasses.replace(field, overlay=overlay)
         return self
 
     def set_order(self, order: int) -> typing.Self:
@@ -458,7 +485,9 @@ class TableBuilder:
         """
         return self._add_field(name, title, types.rest.TableFieldType.ALPHANUMERIC, visible, width)
 
-    def numeric_column(self, name: str, title: str, visible: bool = True, width: str | None = None) -> typing.Self:
+    def numeric_column(
+        self, name: str, title: str, visible: bool = True, width: str | None = None
+    ) -> typing.Self:
         """
         Adds a number field to the table fields.
         """
@@ -470,13 +499,17 @@ class TableBuilder:
         """
         return self._add_field(name, title, types.rest.TableFieldType.BOOLEAN, visible, width)
 
-    def datetime_column(self, name: str, title: str, visible: bool = True, width: str | None = None) -> typing.Self:
+    def datetime_column(
+        self, name: str, title: str, visible: bool = True, width: str | None = None
+    ) -> typing.Self:
         """
         Adds a datetime field to the table fields.
         """
         return self._add_field(name, title, types.rest.TableFieldType.DATETIME, visible, width)
 
-    def datetime_sec(self, name: str, title: str, visible: bool = True, width: str | None = None) -> typing.Self:
+    def datetime_sec(
+        self, name: str, title: str, visible: bool = True, width: str | None = None
+    ) -> typing.Self:
         """
         Adds a datetime with seconds field to the table fields.
         """

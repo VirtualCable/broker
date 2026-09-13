@@ -33,6 +33,7 @@ import collections.abc
 import dataclasses
 import enum
 import typing
+import abc
 
 from django.utils.translation import gettext_noop
 
@@ -192,11 +193,37 @@ class FieldInfo:
         return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}
 
 
+class GuiOverlay(abc.ABC):
+    """Annotation attached to a ``GuiElement`` through its ``overlay`` slot.
+
+    An overlay declares information about a field that is not part of the
+    widget itself: how a consumer layer treats it (mutability for the MCP
+    surface, validation rules, ...). It never influences how the field
+    renders and is not part of the REST GUI payload (``GuiElement.as_dict``
+    does not serialize it).
+
+    Implementations provide ``as_dict``, so any overlay can be inspected or
+    logged in a uniform way regardless of the layer that produced it.
+    """
+
+    @abc.abstractmethod
+    def as_dict(self) -> dict[str, typing.Any]:
+        """Plain dict view of the annotation, omitting unset members."""
+        raise NotImplementedError("Subclasses must implement this method")
+
+
 @dataclasses.dataclass
 class GuiElement:
     name: str
     gui: FieldInfo
     value: typing.Any | None = None
+    # Optional annotation slot (see ``GuiOverlay``). Pure metadata for
+    # consumer layers (e.g. ``uds.core.types.mutability.FieldMutability``):
+    # it is not serialized by ``as_dict`` (the widget / REST GUI payload is
+    # byte-for-byte unchanged) and does not condition how the field
+    # renders. Each consumer only acts on the overlay types it recognizes
+    # and ignores the rest.
+    overlay: GuiOverlay | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
         """Returns a dict with all fields that are not None"""

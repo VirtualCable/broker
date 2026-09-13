@@ -181,7 +181,9 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                 pool_group_thumb = item.servicesPoolGroup.image.thumb64
 
         all_pools = item.members.all()
-        userservices_total = sum(i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools)
+        userservices_total = sum(
+            i.pool.userServices.exclude(state__in=State.INFO_STATES).count() for i in all_pools
+        )
         userservices_in_preparation = sum(
             (i.pool.userServices.filter(state=State.PREPARING).count()) for i in all_pools
         )
@@ -276,6 +278,21 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                     for k, v in types.pools.TransportSelectionPolicy.enumerate()
                 ],
                 tooltip=gettext("Transport selection policy"),
+            )
+            # Mutability overlay: the image and pool group travel on every
+            # payload the meta pool PUT requires but are not proposable
+            # changes (moved through their own dedicated surfaces).
+            .with_overlay(
+                "image_id",
+                types.mutability.FieldMutability.context(
+                    agent_tooltip=gettext("Icon image of the meta pool (reference, not proposable)")
+                ),
+            )
+            .with_overlay(
+                "servicesPoolGroup_id",
+                types.mutability.FieldMutability.context(
+                    agent_tooltip=gettext("Pool group for display classification (reference, not proposable)")
+                ),
             )
             .build()
         )
