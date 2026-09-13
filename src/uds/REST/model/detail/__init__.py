@@ -139,9 +139,10 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :param arg: Optional argument to pass to the custom method
         :param http_method: The HTTP method of the incoming request.
             Verbs matching the declared verb dispatch immediately.
-            In COMPAT mode, ``POST`` is also reachable as ``GET`` (legacy
-            bridge) and ``DELETE`` is reachable as ``POST`` (and vice-versa).
-            Any other verb (PUT, QUERY, ...) is rejected.
+            In COMPAT mode, ``POST``-declared custom methods are also
+            reachable as ``GET`` (legacy bridge). That bridge is the only
+            cross-verb shortcut: PUT, DELETE and QUERY are never dispatched
+            as another verb, so any other verb is rejected.
         """
         is_compat = self.api_compat() == types.rest.ApiCompat.COMPAT
 
