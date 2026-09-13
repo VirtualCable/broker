@@ -29,9 +29,11 @@ from uds.core.util.model import process_uuid
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.meta_service_pools import MetaServicesPool
+from uds.REST.methods.user_services import Groups as AssignedGroups
 
 from .. import base as mutability_base
 from ..etag import item_etag
+from ._relations import M2MSetActionType
 
 JsonObject = dict[str, typing.Any]
 
@@ -474,3 +476,36 @@ def _validate_priority(value: typing.Any, where: str) -> list[str]:
     if value < 0:
         return [f"{where}.priority must be >= 0"]
     return []
+
+
+class MetaPoolGroups(M2MSetActionType):
+    """Proposal: set the complete desired access groups of a meta pool."""
+
+    type_id = "metapool.groups"
+    title = "Propose meta pool groups"
+    description = (
+        "Propose the complete desired set of groups allowed to use a meta pool. The "
+        "'groups' field is the FINAL set, not a delta: groups missing from it lose "
+        "access, new ones gain it. Group uuids come from the groups list tools "
+        "(authenticator groups are also assignable). An empty list removes access "
+        "for every group. The proposal does NOT apply anything: it is queued until "
+        "an administrator approves it."
+    )
+    handler = MetaPools
+    model = models.MetaPool
+    noun = "Meta pool"
+    subtype = "metapool"
+
+    field_name = "groups"
+    field_label = "Allowed groups"
+    field_tooltip = (
+        "Complete desired set of group uuids allowed to use this meta pool. Pairs are "
+        "validated against existing groups; discover the uuids with the groups tools."
+    )
+    item_label = "group"
+    related_model = models.Group
+    include_choices = False
+    relation_manager = "assignedGroups"
+    detail_handler = AssignedGroups
+    detail_path = "meta_pools/{uuid}/groups"
+    parent_collection = "meta_pools"
