@@ -129,6 +129,7 @@ class RestProxy:
         target: RestTarget,
         request: ExtendedHttpRequestWithUser | None,
         params: dict[str, typing.Any],
+        parent_uuid: str | None = None,
     ) -> typing.Any:
         """Execute a REST target outside the async event loop.
 
@@ -136,9 +137,12 @@ class RestProxy:
         ``AuthenticationResolver`` and permission checks remain active. The
         complete handler lifecycle is kept in one thread-sensitive sync
         boundary because Django ORM access is synchronous.
+
+        ``parent_uuid`` scopes a ``DetailHandler`` target to its parent
+        item; it is only meaningful when ``target.parent`` is set.
         """
         return await sync_to_async(self._execute_sync, thread_sensitive=True)(
-            target, self._bound(request), params, None
+            target, self._bound(request), params, parent_uuid
         )
 
     async def execute_collection(
@@ -228,9 +232,10 @@ class RestProxy:
         """Execute a ``DetailHandler`` collection scoped to a parent item.
 
         Mirrors ``ModelHandler.process_detail``: resolve the parent model
-        object from its ``{uuid}``, check the parent access level, then
-        instantiate the detail handler with that parent so its
-        ``get_items``/``query`` run against the parent's queryset.
+        object from its ``{uuid}``, check the parent access level (READ for
+        reads, MANAGEMENT for the write verbs), then instantiate the detail
+        handler with that parent so its ``get_items``/``query`` run against
+        the parent's queryset.
         """
         from uds.REST.model.master import ModelHandler
 
@@ -244,13 +249,19 @@ class RestProxy:
         except Exception as e:
             raise rest_exceptions.NotFound("Parent item not found") from e
 
-        if (
-            permissions.has_access(parent_handler._user, parent_item, types.permissions.PermissionType.READ)
-            is False
-        ):
+        # Same rule as ``process_detail``: writes to a detail collection
+        # need MANAGEMENT over the parent, reads only READ. The REST
+        # ``DetailHandler`` itself never re-checks this (it trusts the
+        # master dispatcher), so the proxy has to enforce it here.
+        method = target.method.value.lower()
+        required_permission = (
+            types.permissions.PermissionType.MANAGEMENT
+            if method in ("put", "post", "delete")
+            else types.permissions.PermissionType.READ
+        )
+        if permissions.has_access(parent_handler._user, parent_item, required_permission) is False:
             raise rest_exceptions.AccessDenied()
 
-        method = target.method.value.lower()
         path = target.path.replace("{uuid}", parent_uuid or "")
         detail_cls: type[typing.Any] = typing.cast("type[typing.Any]", target.handler)
         detail = detail_cls(
