@@ -147,12 +147,9 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
     # If this model has details, which ones
     # Dictionary containing detail routing
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = None
-    # Fields that are going to be saved directly
-    # * If a field is in the form "field:default" and field is not present in the request, default will be used
-    # * If the "default" is the string "None", then the default will be None
-    # * If the "default" is _ (underscore), then the field will be ignored (not saved) if not present in the request
-    # Note that these fields has to be present in the model, and they can be "edited" in the pre_save method
-    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = []
+    # FIELDS_TO_SAVE lives in BaseModelHandler (shared with DetailHandler);
+    # master handlers populate it with the params the create/update paths
+    # save straight into the model.
     # Put removable fields before updating
     EXCLUDED_FIELDS: typing.ClassVar[list[str]] = []
     # Table info needed fields and title
@@ -423,14 +420,16 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
     def _item_with_etag(self, item: models.Model) -> tuple[T_Item, str]:
         response = self.get_item(item)
-        fields: list[str] = self.FIELDS_TO_SAVE.copy()
+        # Save-field names only (not their markers): the etag must track
+        # the values the PUT can change, and inmutables() looks the names
+        # up in the serialized item.
+        fields: list[str] = [name for name, _modifier in self.parse_save_fields(self.FIELDS_TO_SAVE)]
 
         # Append etag header
         if isinstance(response, types.rest.ManagedObjectItem):
             fields = fields + self._get_fields_from_gui(
-                response.item.data_type,  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                typing.cast(types.rest.ManagedObjectItem[typing.Any], response).item.data_type,
             )
-            # Append etag header
 
         return response, response.etag(*fields)  # pyright: ignore[reportUnknownVariableType]
 
@@ -573,12 +572,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             logger.debug("Args: %s", sanitize_params(args))
             self.pre_save(fields=args)
 
-            # If tags is in save fields, treat it "specially"
-            if "tags" in self.FIELDS_TO_SAVE:
-                tags = args["tags"]
-                del args["tags"]
-            else:
-                tags = None
+            # If tags is in save fields, treat it "specially". The key is
+            # already the parsed field name (fields_from_params strips any
+            # marker), so pop it out instead of matching the raw entry.
+            tags = args.pop("tags", None)
 
             item: models.Model = self.MODEL.objects.create(**args)
 
@@ -644,9 +641,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         if not readonly_names:
             return
         instance_values: dict[str, typing.Any] = (
-            typing.cast(ManagedObjectModel, item).get_instance(None).get_fields_as_dict()
-            if isinstance(item, ManagedObjectModel)
-            else {}
+            item.get_instance(None).get_fields_as_dict() if isinstance(item, ManagedObjectModel) else {}
         )
         for name in readonly_names & self._params.keys():
             stored: typing.Any
@@ -689,12 +684,10 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             args = self.fields_from_params(self.FIELDS_TO_SAVE)
             logger.debug("Args: %s", sanitize_params(args))
             self.pre_save(fields=args)
-            # If tags is in save fields, treat it "specially"
-            if "tags" in self.FIELDS_TO_SAVE:
-                tags = args["tags"]
-                del args["tags"]
-            else:
-                tags = None
+            # If tags is in save fields, treat it "specially". The key is
+            # already the parsed field name (fields_from_params strips any
+            # marker), so pop it out instead of matching the raw entry.
+            tags = args.pop("tags", None)
 
             # Must have 1 arg → update
             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())

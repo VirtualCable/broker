@@ -30,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import abc
+import collections.abc
 import logging
 import typing
 
@@ -59,6 +60,43 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
     """
     Base Handler for Master & Detail Handlers
     """
+
+    # Fields that are going to be saved directly, as read by
+    # ``fields_from_params`` (see ``parse_save_fields`` for the marker
+    # syntax). Entry forms:
+    # * "field"              -> required: missing in the request raises,
+    #                           unless the optional ``defaults`` mapping
+    #                           passed to ``fields_from_params`` provides
+    #                           it; the raw param value is used.
+    # * "field:default"      -> optional: when missing, the static
+    #                           ``default`` is used (the literal "_" means
+    #                           "skip the field entirely"); when present,
+    #                           the value is coerced to ``str``.
+    # Note that these fields have to be present in the model, and they
+    # can be "edited" in the pre_save method. Master handlers populate
+    # this; detail handlers may as well (it is interpreted through the
+    # same machinery), and an empty list simply means "nothing is saved
+    # straight from params".
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = []
+
+    @classmethod
+    def parse_save_fields(
+        cls,
+        fields_list: collections.abc.Sequence[str],
+    ) -> collections.abc.Iterator[tuple[str, str | None]]:
+        """Yield ``(name, modifier)`` for every declared save field.
+
+        Single interpretation point for the ``"field:modifier"`` marker
+        of :attr:`FIELDS_TO_SAVE`: the modifier is everything after the
+        first ``:`` (``None`` when the entry is plain; historically
+        ``split(":")[:2]`` silently dropped a second ``:``, no
+        declaration in the tree relies on that). A consumer must never
+        re-split the raw entries itself: that is what previously made the
+        ETag hash ignore ``host:`` / ``port:0`` style fields.
+        """
+        for entry in fields_list:
+            name, separator, modifier = entry.partition(":")
+            yield name, modifier if separator else None
 
     def check_access(
         self,
@@ -99,41 +137,39 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         self, fields_list: list[str], *, defaults: dict[str, typing.Any] | None = None
     ) -> dict[str, typing.Any]:
         """
-        Reads the indicated fields from the parameters received, and if
+        Reads the indicated fields from the parameters received.
 
         Arguments:
-            fields_list: List of fields to read, if a field is optional, it can be
+            fields_list: List of fields to read, in the ``FIELDS_TO_SAVE``
+                declaration language (plain or ``"field:default"`` entries;
+                see the ``FIELDS_TO_SAVE`` comment and ``parse_save_fields``).
+            defaults: Fallback values for plain fields missing from the
+                request (never consulted for ``"field:default"`` entries,
+                whose fallback is the embedded static default).
 
         Note:
-            If a field is optional, it can be indicated with a :default_value, for example:
-                - field1:default_value
-                - field2:None (to indicate that default value is None)
-                - field3:_ (to indicate that if not present, it should be skipped, and it is not required)
+            Marked fields present in the request are coerced to ``str``;
+            plain fields keep the raw param value.
         """
-        args: dict[str, str] = {}
-        default: str | None = None
+        args: dict[str, typing.Any] = {}
         try:
-            for key in fields_list:
-                # if : is in the field, it is an optional field, with an "static" default value
-                if ":" in key:  # optional field? get default if not present
-                    k, default = key.split(":")[:2]
-                    # Convert "None" to None
-                    default = None if default == "None" else default
-                    # If key is not present, and default = _, then it is not required skip it
-                    if default == "_" and k not in self._params:
-                        continue
-                    args[k] = str(self._params.get(k, default))
-                else:  # Required field, with a possible default on defaults dict
-                    if key not in self._params:
-                        if defaults and key in defaults:
-                            args[key] = defaults[key]
+            for name, modifier in self.parse_save_fields(fields_list):
+                if modifier is None:  # Required field, with a possible default on defaults dict
+                    if name not in self._params:
+                        if defaults and name in defaults:
+                            args[name] = defaults[name]
                         else:
-                            raise exceptions.rest.RequestError(f"needed parameter not found in data {key}")
+                            raise exceptions.rest.RequestError(f"needed parameter not found in data {name}")
                     else:
                         # Set the value
-                        args[key] = self._params[key]
-
-                # del self._params[key]
+                        args[name] = self._params[name]
+                else:  # optional field? get default if not present
+                    # Convert "None" to None
+                    default = None if modifier == "None" else modifier
+                    # If key is not present, and default = _, then it is not required: skip it
+                    if default == "_" and name not in self._params:
+                        continue
+                    args[name] = str(self._params.get(name, default))
         except KeyError as e:
             raise exceptions.rest.RequestError(f"needed parameter not found in data {e}")
 
