@@ -2,8 +2,9 @@
 
 Replicates the REST ``PUT /networks/{uuid}``: ``name``, ``tags`` and
 ``net_string`` (the range definition, validated by the handler itself).
-Note the handler's ``FIELDS_TO_SAVE`` does not include ``comments``: the
-stock gui field is cosmetic there, so it is NOT offered as mutable.
+The network model has no ``comments`` column, and its gui does not offer
+the stock comments field either, so the proposable surface is exactly the
+handler's ``FIELDS_TO_SAVE``.
 
 Validation, serialization and execution reuse the very same handler
 machinery.
@@ -24,8 +25,8 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
-from .servers import _defs_from_gui
 
 JsonObject = dict[str, typing.Any]
 
@@ -44,11 +45,6 @@ class NetworkUpdate(mutability_base.MutableActionType):
     )
     handler = Networks
 
-    # The handler only persists these (its FIELDS_TO_SAVE); the stock
-    # comments field of the gui is cosmetic and is excluded
-    _MODEL_FIELDS: typing.ClassVar[frozenset[str]] = frozenset({"name", "net_string", "tags"})
-    _EXCLUDED: typing.ClassVar[frozenset[str]] = frozenset({"comments"})
-
     # ------------------------------------------------------------- hooks
 
     @typing.override
@@ -65,12 +61,13 @@ class NetworkUpdate(mutability_base.MutableActionType):
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
         shim = typing.cast(typing.Any, _Namespace())
-        elements = [
-            element
-            for element in Networks.get_gui(shim, for_type)
-            if element.name not in self._EXCLUDED and element.gui.type != types.ui.FieldType.INFO
-        ]
-        return sorted(_defs_from_gui(elements, self._MODEL_FIELDS), key=lambda f: f["name"])
+        # The gui fields are exactly the handler's own FIELDS_TO_SAVE
+        # columns; they come from the instance and are not proposed
+        columns = frozenset(name for name, _modifier in Networks.parse_save_fields(Networks.FIELDS_TO_SAVE))
+        return gui_view.agent_definitions(
+            sorted(Networks.get_gui(shim, for_type), key=lambda element: element.gui.order),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:

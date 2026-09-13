@@ -28,8 +28,9 @@ class NetworkUpdateRegistryTest(FlowTestCase):
 class NetworkUpdateFieldsTest(FlowTestCase):
     def test_field_definitions_match_what_the_handler_saves(self) -> None:
         names = [d["name"] for d in NetworkUpdate().field_definitions("network")]
-        # The stock comments field of the gui is NOT persisted by the
-        # handler, so it is not offered as mutable
+        # The network model has no comments column and its gui does not
+        # offer the stock comments field either, so the proposable surface
+        # is exactly the handler's FIELDS_TO_SAVE
         self.assertEqual(sorted(names), ["name", "net_string", "tags"])
 
     def test_snapshot_and_fingerprint_track_the_range(self) -> None:

@@ -90,7 +90,6 @@ class Networks(ModelHandler[NetworkItem]):
         return (
             ui_utils.GuiBuilder()
             .add_stock_field(types.rest.stock.StockField.NAME)
-            .add_stock_field(types.rest.stock.StockField.COMMENTS)
             .add_stock_field(types.rest.stock.StockField.TAGS)
             .add_text(
                 name="net_string",

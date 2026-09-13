@@ -102,6 +102,9 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
             .add_stock_field(types.rest.stock.StockField.PRIORITY)
             .new_tab(types.ui.Tab.DISPLAY)
             .add_image_choice()
+            # Mutability overlay: the image is a foreign key to an uploaded
+            # binary, not something the agent surface can propose
+            .with_overlay("image_id", types.mutability.FieldMutability.hidden())
             .build()
         )
 

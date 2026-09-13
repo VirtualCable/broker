@@ -3,7 +3,8 @@ service pool group (the "Pool Groups" shown to users).
 
 Replicates the REST ``PUT /service-pool-groups/{uuid}``: ``name``,
 ``comments`` and ``priority``. The image is a foreign key to an uploaded
-binary, so it is NOT offered as mutable.
+binary, so the handler hides it through the mutability overlay and it is
+NOT offered as mutable.
 
 Validation, serialization and execution reuse the very same handler
 machinery.
@@ -24,8 +25,8 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
-from .servers import _defs_from_gui
 
 JsonObject = dict[str, typing.Any]
 
@@ -43,10 +44,6 @@ class ServicePoolGroupUpdate(mutability_base.MutableActionType):
     )
     handler = ServicesPoolGroups
 
-    # The image (foreign key to an uploaded binary) is not mutable
-    _MODEL_FIELDS: typing.ClassVar[frozenset[str]] = frozenset({"name", "comments", "priority"})
-    _EXCLUDED: typing.ClassVar[frozenset[str]] = frozenset({"image_id"})
-
     # ------------------------------------------------------------- hooks
 
     @typing.override
@@ -63,12 +60,16 @@ class ServicePoolGroupUpdate(mutability_base.MutableActionType):
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
         shim = typing.cast(typing.Any, _Namespace())
-        elements = [
-            element
-            for element in ServicesPoolGroups.get_gui(shim, for_type)
-            if element.name not in self._EXCLUDED and element.gui.type != types.ui.FieldType.INFO
-        ]
-        return sorted(_defs_from_gui(elements, self._MODEL_FIELDS), key=lambda f: f["name"])
+        # The handler hides the image fk (an uploaded binary id the agent
+        # cannot provide) through the mutability overlay; the rest of the
+        # gui are its own FIELDS_TO_SAVE columns
+        columns = frozenset(
+            name for name, _modifier in ServicesPoolGroups.parse_save_fields(ServicesPoolGroups.FIELDS_TO_SAVE)
+        )
+        return gui_view.agent_definitions(
+            sorted(ServicesPoolGroups.get_gui(shim, for_type), key=lambda element: element.gui.order),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:

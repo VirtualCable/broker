@@ -32,49 +32,10 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
-
-
-def _defs_from_gui(
-    elements: list[types.ui.GuiElement], model_fields: collections.abc.Set[str]
-) -> list[JsonObject]:
-    """Field definitions out of gui elements (info fields are not mutable)."""
-    defs: list[JsonObject] = []
-    for element in elements:
-        info = element.gui
-        if info.type == types.ui.FieldType.INFO:
-            continue
-        definition: JsonObject = {
-            "name": element.name,
-            "type": info.type.value,
-            "label": info.label,
-            "tooltip": info.tooltip,
-            "secret": info.type in (types.ui.FieldType.PASSWORD, types.ui.FieldType.HIDDEN),
-            "from_instance": element.name not in model_fields,
-        }
-        if info.required:
-            definition["required"] = True
-        if info.readonly:
-            definition["readonly"] = True
-        if info.default is not None:
-            definition["default"] = info.default() if callable(info.default) else info.default
-        if info.min_value is not None:
-            definition["min"] = info.min_value
-        if info.max_value is not None:
-            definition["max"] = info.max_value
-        if info.length is not None:
-            definition["length"] = info.length
-        if info.pattern != types.ui.FieldPatternType.NONE:
-            definition["pattern"] = str(info.pattern)
-        choices: typing.Any = info.choices
-        if isinstance(choices, (list, tuple)):
-            definition["choices"] = typing.cast("list[typing.Any]", choices)
-        if info.tab:
-            definition["tab"] = str(info.tab)
-        defs.append(definition)
-    return defs
 
 
 class ServerGroupUpdate(mutability_base.MutableActionType):
@@ -90,10 +51,6 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
         "their current values."
     )
     handler = ServersGroups
-
-    # Columns the REST PUT reads from params; the rest of the gui
-    # (weights_*) lands on the group's "weights" property via post_save.
-    _MODEL_FIELDS: typing.ClassVar[frozenset[str]] = frozenset({"name", "comments", "tags"})
 
     @typing.override
     def resolve_target(self, target_uuid: str) -> db_models.Model:
@@ -111,8 +68,15 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
         shim = typing.cast(typing.Any, _Namespace())
-        elements = sorted(ServersGroups.get_gui(shim, for_type), key=lambda f: f.gui.order)
-        return _defs_from_gui(elements, self._MODEL_FIELDS)
+        elements = sorted(ServersGroups.get_gui(shim, for_type), key=lambda element: element.gui.order)
+        # The gui names the handler PUT does NOT read from params (the
+        # weights_* group) are "from instance" for the agent; they reach the
+        # model through post_save. Model columns come from the handler's own
+        # FIELDS_TO_SAVE (markers parsed).
+        columns = frozenset(
+            name for name, _modifier in ServersGroups.parse_save_fields(ServersGroups.FIELDS_TO_SAVE)
+        )
+        return gui_view.agent_definitions(elements, from_instance=lambda name: name not in columns)
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
@@ -216,8 +180,10 @@ class ServerUpdate(mutability_base.MutableActionType):
         if group is None or server.type != types.servers.ServerType.UNMANAGED:
             return []
         shim = typing.cast(typing.Any, _Namespace())
-        elements = sorted(ServersServers.get_gui(shim, group, for_type), key=lambda f: f.gui.order)
-        return _defs_from_gui(elements, set(self._MUTABLE_FIELDS))
+        elements = sorted(ServersServers.get_gui(shim, group, for_type), key=lambda element: element.gui.order)
+        # The detail PUT does not declare FIELDS_TO_SAVE (it is manual), so
+        # the proposable set stays an explicit declaration here
+        return gui_view.agent_definitions(elements, from_instance=lambda name: name not in self._MUTABLE_FIELDS)
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
