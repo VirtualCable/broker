@@ -157,6 +157,11 @@ class Transports(ModelHandler[TransportItem]):
                     label=gettext("Label"),
                     tooltip=gettext("Metapool transport label (only used on metapool transports grouping)"),
                 )
+                # Mutability overlay: the networks and service pools m2m
+                # relations are managed through their own detail surfaces,
+                # never through the transport update proposal
+                .with_overlay("networks", types.mutability.FieldMutability.hidden())
+                .with_overlay("pools", types.mutability.FieldMutability.hidden())
                 .build()
             )
 

@@ -42,8 +42,6 @@ class TransportUpdate(ModuleUpdateActionType):
     # Columns the REST PUT reads from params (FIELDS_TO_SAVE); the rest
     # of the gui are configuration fields of the transport instance
     model_fields = frozenset({"name", "comments", "tags", "priority", "net_filtering", "allowed_oss", "label"})
-    # m2m relations are not mutable: absent on the PUT, untouched by post_save
-    excluded = frozenset({"networks", "pools"})
     # The column stores a CSV of allowed OS ids; the PUT expects a list
     snapshot_adapters: typing.ClassVar[dict[str, collections.abc.Callable[[typing.Any], typing.Any]]] = {
         "allowed_oss": lambda value: [x for x in value.split(",")] if value else [],

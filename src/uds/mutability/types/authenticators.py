@@ -38,5 +38,3 @@ class AuthenticatorUpdate(ModuleUpdateActionType):
     # Columns the REST PUT reads from params (FIELDS_TO_SAVE minus the
     # optional mfa_id FK reference)
     model_fields = frozenset({"name", "comments", "tags", "priority", "small_name", "state", "net_filtering"})
-    # networks is m2m; mfa_id is a FK reference to another resource
-    excluded = frozenset({"networks", "mfa_id"})

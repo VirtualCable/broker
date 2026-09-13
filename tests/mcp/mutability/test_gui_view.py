@@ -7,13 +7,14 @@ representable types, foreign overlays) is pinned here.
 
 import logging
 import typing
-
-import pytest
+import unittest
 
 from uds.core.types import ui as types_ui
 from uds.core.types.mutability import FieldMutability, FieldMutabilityRole
 from uds.core.util import ui as ui_builder
 from uds.mutability import gui_view
+
+JsonObject = dict[str, typing.Any]
 
 
 def _element(
@@ -40,28 +41,33 @@ def _element(
     )
 
 
-class TestOverlayValidation:
+def _definition(element: types_ui.GuiElement, **kwargs: typing.Any) -> JsonObject:
+    """Render an element, asserting it reached the agent surface."""
+    definition = gui_view.agent_definition(element, **kwargs)
+    assert definition is not None
+    return definition
+
+
+class OverlayValidationTest(unittest.TestCase):
     def test_no_overlay_defaults_to_proposable(self) -> None:
         element = _element("name")
-        assert gui_view.role_of(element) is FieldMutabilityRole.PROPOSABLE
-        definition = gui_view.agent_definition(element)
-        assert definition is not None
-        assert definition["name"] == "name"
+        self.assertIs(gui_view.role_of(element), FieldMutabilityRole.PROPOSABLE)
+        self.assertEqual(_definition(element)["name"], "name")
 
     def test_foreign_overlay_is_ignored(self) -> None:
         # The overlay slot is generic: anything that is not a FieldMutability
         # must behave exactly like no overlay at all (never crash).
         element = _element("name", overlay={"role": "hidden"})
-        assert gui_view.mutability_of(element) is None
-        assert gui_view.agent_definition(element) is not None
+        self.assertIsNone(gui_view.mutability_of(element))
+        self.assertIsNotNone(gui_view.agent_definition(element))
 
     def test_field_mutability_overlay_is_recognized(self) -> None:
         element = _element("name", overlay=FieldMutability.hidden())
-        assert gui_view.mutability_of(element) is not None
-        assert gui_view.role_of(element) is FieldMutabilityRole.HIDDEN
+        self.assertIsNotNone(gui_view.mutability_of(element))
+        self.assertIs(gui_view.role_of(element), FieldMutabilityRole.HIDDEN)
 
 
-class TestRoles:
+class RolesTest(unittest.TestCase):
     def test_hidden_and_relation_are_not_proposed(self) -> None:
         hidden = _element("secret_ref", overlay=FieldMutability.hidden())
         relation = _element(
@@ -75,10 +81,10 @@ class TestRoles:
                 relation_manager="members",
             ),
         )
-        assert gui_view.agent_definition(hidden) is None
-        assert gui_view.agent_definition(relation) is None
+        self.assertIsNone(gui_view.agent_definition(hidden))
+        self.assertIsNone(gui_view.agent_definition(relation))
         # ... but they still exist for consumers that read the gui
-        assert gui_view.role_of(relation) is FieldMutabilityRole.RELATION
+        self.assertIs(gui_view.role_of(relation), FieldMutabilityRole.RELATION)
 
     def test_context_travels_in_fingerprint_but_not_in_definitions(self) -> None:
         context = _element(
@@ -88,8 +94,8 @@ class TestRoles:
         )
         normal = _element("name")
         elements = [normal, context]
-        assert [d["name"] for d in gui_view.agent_definitions(elements)] == ["name"]
-        assert gui_view.fingerprint_names(elements) == ["name", "image_id"]
+        self.assertEqual([d["name"] for d in gui_view.agent_definitions(elements)], ["name"])
+        self.assertEqual(gui_view.fingerprint_names(elements), ["name", "image_id"])
 
     def test_agent_tooltip_overrides_human_one(self) -> None:
         element = _element(
@@ -98,33 +104,86 @@ class TestRoles:
             overlay=FieldMutability.context(agent_tooltip="Agent tooltip"),
         )
         # context role: not in the proposable definitions...
-        assert gui_view.agent_definition(element) is None
+        self.assertIsNone(gui_view.agent_definition(element))
         # ... but the override is what the renderer would emit if proposable
         proposable = _element(
             "name",
             tooltip="Human tooltip",
             overlay=FieldMutability.proposable(agent_tooltip="Agent tooltip"),
         )
-        definition = gui_view.agent_definition(proposable)
-        assert definition is not None
-        assert definition["tooltip"] == "Agent tooltip"
+        self.assertEqual(_definition(proposable)["tooltip"], "Agent tooltip")
 
 
-class TestRepresentableTypes:
-    def test_unrepresentable_type_warns_and_is_omitted(self, caplog: pytest.LogCaptureFixture) -> None:
+class RepresentableTypesTest(unittest.TestCase):
+    def test_unrepresentable_type_warns_and_is_omitted(self) -> None:
         element = _element("created", field_type=types_ui.FieldType.DATE)
-        with caplog.at_level(logging.WARNING, logger="uds.mutability.gui_view"):
-            assert gui_view.agent_definition(element) is None
-        assert any("created" in record.getMessage() for record in caplog.records)
+        with self.assertLogs("uds.mutability.gui_view", level=logging.WARNING) as logs:
+            self.assertIsNone(gui_view.agent_definition(element))
+        self.assertTrue(any("created" in message for message in logs.output))
 
-    def test_representable_types_have_no_warning(self, caplog: pytest.LogCaptureFixture) -> None:
-        with caplog.at_level(logging.WARNING, logger="uds.mutability.gui_view"):
+    def test_representable_types_have_no_warning(self) -> None:
+        with self.assertNoLogs("uds.mutability.gui_view", level=logging.WARNING):
             for field_type in gui_view.REPRESENTABLE_FIELD_TYPES:
-                assert gui_view.agent_definition(_element("field", field_type)) is not None
-        assert not caplog.records
+                self.assertIsNotNone(gui_view.agent_definition(_element("field", field_type)))
 
 
-class TestDefinitions:
+class UniversalOmissionsTest(unittest.TestCase):
+    """INFO and readonly are policy omissions: silent, not support gaps."""
+
+    def test_info_field_omitted_without_warning(self) -> None:
+        element = _element("help_text", field_type=types_ui.FieldType.INFO)
+        with self.assertNoLogs("uds.mutability.gui_view", level=logging.WARNING):
+            self.assertIsNone(gui_view.agent_definition(element))
+            self.assertFalse(gui_view.is_proposable(element))
+
+    def test_info_field_out_of_fingerprint(self) -> None:
+        # INFO values never travel in the PUT payload, so the CAS base
+        # must not track them either
+        elements = [_element("name"), _element("help_text", field_type=types_ui.FieldType.INFO)]
+        self.assertEqual(gui_view.fingerprint_names(elements), ["name"])
+
+    def test_readonly_field_omitted_without_warning(self) -> None:
+        element = _element("on_logout")
+        element.gui.readonly = True
+        with self.assertNoLogs("uds.mutability.gui_view", level=logging.WARNING):
+            self.assertIsNone(gui_view.agent_definition(element))
+            self.assertFalse(gui_view.is_proposable(element))
+
+    def test_readonly_field_stays_in_fingerprint(self) -> None:
+        # The merged PUT carries readonly fields (unchanged), so the
+        # fingerprint must track them like the handler ETag does
+        element = _element("on_logout")
+        element.gui.readonly = True
+        self.assertEqual(gui_view.fingerprint_names([_element("name"), element]), ["name", "on_logout"])
+
+    def test_proposable_elements_filters_by_policy(self) -> None:
+        elements = [
+            _element("name"),
+            _element("help_text", field_type=types_ui.FieldType.INFO),
+            _element("on_logout", overlay=FieldMutability.context()),
+            _element("networks", overlay=FieldMutability.hidden()),
+        ]
+        self.assertEqual([e.name for e in gui_view.proposable_elements(elements)], ["name"])
+
+
+class FromInstanceTest(unittest.TestCase):
+    def test_from_instance_marks_definitions(self) -> None:
+        model = _element("name")
+        config = _element("test_url")
+
+        def marker(name: str) -> bool:
+            return name != "name"
+
+        self.assertIs(_definition(model, from_instance=marker)["from_instance"], False)
+        self.assertIs(_definition(config, from_instance=marker)["from_instance"], True)
+
+    def test_without_from_instance_no_key_emitted(self) -> None:
+        # Renderers whose whole surface is model-backed (metapool) must
+        # keep the historical definition shape
+        self.assertNotIn("from_instance", _definition(_element("name")))
+
+
+class DefinitionsTest(unittest.TestCase):
     def test_gui_metadata_flows_into_definition(self) -> None:
         element = _element(
             "short_name",
@@ -135,20 +194,19 @@ class TestDefinitions:
         )
         element.gui.length = 32
         element.gui.required = True
-        definition = gui_view.agent_definition(element)
-        assert definition is not None
-        assert definition["label"] == "Short Name"
-        assert definition["tooltip"] == "32 chars"
-        assert definition["length"] == 32
-        assert definition["required"] is True
-        assert definition["secret"] is False
-        assert "choices" not in definition
+        definition = _definition(element)
+        self.assertEqual(definition["label"], "Short Name")
+        self.assertEqual(definition["tooltip"], "32 chars")
+        self.assertEqual(definition["length"], 32)
+        self.assertIs(definition["required"], True)
+        self.assertIs(definition["secret"], False)
+        self.assertNotIn("choices", definition)
 
     def test_secret_types_are_flagged(self) -> None:
         password = _element("password", field_type=types_ui.FieldType.PASSWORD)
         hidden = _element("hidden_field", field_type=types_ui.FieldType.HIDDEN)
-        assert gui_view.agent_definition(password)["secret"] is True  # type: ignore[index]
-        assert gui_view.agent_definition(hidden)["secret"] is True  # type: ignore[index]
+        self.assertIs(_definition(password)["secret"], True)
+        self.assertIs(_definition(hidden)["secret"], True)
 
     def test_choices_render_as_value_label(self) -> None:
         choices = [
@@ -156,12 +214,13 @@ class TestDefinitions:
             types_ui.ChoiceItem(id=1, text="One"),
         ]
         element = _element("policy", field_type=types_ui.FieldType.CHOICE, choices=choices)
-        definition = gui_view.agent_definition(element)
-        assert definition is not None
-        assert definition["choices"] == [
-            {"value": 0, "label": "Zero"},
-            {"value": 1, "label": "One"},
-        ]
+        self.assertEqual(
+            _definition(element)["choices"],
+            [
+                {"value": 0, "label": "Zero"},
+                {"value": 1, "label": "One"},
+            ],
+        )
 
     def test_callable_choices_are_not_resolved(self) -> None:
         element = _element(
@@ -169,23 +228,21 @@ class TestDefinitions:
             field_type=types_ui.FieldType.IMAGECHOICE,
             choices=lambda: [types_ui.ChoiceItem(id="u", text="Name")],
         )
-        definition = gui_view.agent_definition(element)
-        assert definition is not None
-        assert "choices" not in definition
+        self.assertNotIn("choices", _definition(element))
 
     def test_as_dict_contract_unaffected_by_overlay(self) -> None:
         # The overlay must never reach the REST GUI payload
         element = _element("image_id", overlay=FieldMutability.context())
-        assert set(element.as_dict()) == {"name", "gui", "value"}
+        self.assertEqual(set(element.as_dict()), {"name", "gui", "value"})
 
 
-class TestGuiOverlayContract:
+class GuiOverlayContractTest(unittest.TestCase):
     def test_field_mutability_is_a_gui_overlay(self) -> None:
-        assert isinstance(FieldMutability.hidden(), types_ui.GuiOverlay)
+        self.assertIsInstance(FieldMutability.hidden(), types_ui.GuiOverlay)
 
     def test_overlay_as_dict_is_json_shape(self) -> None:
         data = FieldMutability.context(agent_tooltip="ctx").as_dict()
-        assert data == {"role": "context", "agent_tooltip": "ctx"}
+        self.assertEqual(data, {"role": "context", "agent_tooltip": "ctx"})
 
     def test_builder_with_overlay_annotates_copy(self) -> None:
         # The public path annotates a copy (dataclasses.replace): the
@@ -194,7 +251,7 @@ class TestGuiOverlayContract:
         original = _element("name")
         overlay = FieldMutability.context(agent_tooltip="ctx")
         built = ui_builder.GuiBuilder().add_fields([original]).with_overlay("name", overlay).build()
-        assert built[0].overlay is overlay
-        assert built[0].name == original.name
-        assert built[0].gui is original.gui
-        assert original.overlay is None
+        self.assertIs(built[0].overlay, overlay)
+        self.assertEqual(built[0].name, original.name)
+        self.assertIs(built[0].gui, original.gui)
+        self.assertIsNone(original.overlay)

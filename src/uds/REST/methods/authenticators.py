@@ -237,6 +237,12 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                             + ui.gui.sorted_choices([ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]),
                         )
 
+                    # Mutability overlay: the networks m2m relation and the
+                    # mfa provider reference are not part of the authenticator
+                    # update proposal (managed through their own surfaces)
+                    gui.with_overlay("networks", types.mutability.FieldMutability.hidden())
+                    gui.with_overlay("mfa_id", types.mutability.FieldMutability.hidden())
+
                     return gui.build()
 
             raise Exception()  # Not found

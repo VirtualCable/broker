@@ -50,7 +50,7 @@ class TransportUpdateFieldsTest(FlowTestCase):
         self.assertFalse(by_name["test_url"]["secret"])
         # net_filtering is the stock choice (n/a/d)
         self.assertEqual(
-            [c.id for c in by_name["net_filtering"]["choices"]],
+            [c["value"] for c in by_name["net_filtering"]["choices"]],
             ["n", "a", "d"],
         )
         # Module fields are marked as instance configuration

@@ -4,9 +4,11 @@
 model with a dynamically rendered gui (``transport.update``,
 ``osmanager.update``, ``mfa.update``, ``notifier.update``,
 ``authenticator.update``, ...). The gui is the one the REST handler
-renders for the concrete type: only model columns and module
-configuration fields are mutable; m2m relations and FK references stay
-out of the surface.
+renders for the concrete type, and it is the single source of truth of
+the mutable surface: model columns, module configuration fields and the
+non-mutable elements (m2m relations, FK references) distinguished by
+their ``FieldMutability`` overlay (``hidden``) / readonly flag. GUI
+changes propagate to the agent automatically.
 
 Execution mirrors the handler PUT. Those PUTs are form-shaped (most
 ``FIELDS_TO_SAVE`` entries are required), so the proposal is merged over
@@ -34,8 +36,8 @@ from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.REST.model.master import ModelHandler
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
-from .servers import _defs_from_gui
 
 JsonObject = dict[str, typing.Any]
 
@@ -58,9 +60,6 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
     # Model columns the REST PUT reads from params (the rest of the gui
     # are configuration fields of the module instance)
     model_fields: typing.ClassVar[frozenset[str]] = frozenset({"name", "comments", "tags"})
-    # Gui elements that are not part of the mutable surface (m2m
-    # relations, FK references)
-    excluded: typing.ClassVar[frozenset[str]] = frozenset({"networks", "pools"})
     # Per-field adapters to convert a model column value into the shape
     # the REST PUT expects (e.g. CSV storage -> list)
     snapshot_adapters: typing.ClassVar[dict[str, collections.abc.Callable[[typing.Any], typing.Any]]] = {}
@@ -81,22 +80,26 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
     # --------------------------------------------------- gui & snapshots
 
     def _gui_elements(self, for_type: str) -> list[types.ui.GuiElement]:
+        """The handler gui of the subtype, ordered as the builder declared.
+
+        No filtering here: what reaches the agent (and the fingerprint) is
+        decided by ``gui_view`` from the elements' own annotations (hidden
+        overlay, readonly flag, INFO type).
+        """
         shim = typing.cast(typing.Any, _Namespace())
-        elements = (
-            element
-            for element in self.handler.get_gui(shim, for_type)
-            if element.name not in self.excluded
-            and element.gui.type != types.ui.FieldType.INFO
-            and not element.gui.readonly
-        )
-        return sorted(elements, key=lambda e: e.gui.order)
+        return sorted(self.handler.get_gui(shim, for_type), key=lambda element: element.gui.order)
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        return _defs_from_gui(self._gui_elements(for_type), self.model_fields)
+        return gui_view.agent_definitions(
+            self._gui_elements(for_type),
+            from_instance=lambda name: name not in self.model_fields,
+        )
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
+        # The merged PUT carries exactly the proposable surface (module
+        # PUTs need no context fields), so fingerprint == definitions
         return [d["name"] for d in self.field_definitions(for_type)]
 
     @typing.override
