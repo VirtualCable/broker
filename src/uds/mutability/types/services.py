@@ -28,12 +28,10 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
-
-SECRET = types.ui.FieldType.PASSWORD
-HIDDEN = types.ui.FieldType.HIDDEN
 
 
 class ServiceUpdate(mutability_base.MutableActionType):
@@ -51,9 +49,12 @@ class ServiceUpdate(mutability_base.MutableActionType):
     handler = Services
     target_scoped_fields = True
 
-    # Columns the REST PUT reads from params (everything else in the gui
-    # is a config value of the service instance).
-    _MODEL_FIELDS: typing.ClassVar[frozenset[str]] = frozenset(
+    # Model columns the REST PUT reads from params (its save_item list,
+    # minus ``data_type``, which is not mutable here). Unlike a module
+    # handler, ``Services`` is a detail handler and does not declare those
+    # through ``FIELDS_TO_SAVE``, so the set stays explicit here;
+    # everything else in the gui is a config value of the service instance.
+    _MUTABLE_COLUMNS: typing.ClassVar[frozenset[str]] = frozenset(
         {"name", "comments", "tags", "max_services_count_type"}
     )
 
@@ -79,38 +80,11 @@ class ServiceUpdate(mutability_base.MutableActionType):
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
         service = self._require_target(target)
-        defs: list[JsonObject] = []
-        for element in self._gui(for_type, service):
-            info = element.gui
-            definition: JsonObject = {
-                "name": element.name,
-                "type": info.type.value,
-                "label": info.label,
-                "tooltip": info.tooltip,
-                "secret": info.type in (SECRET, HIDDEN),
-                "from_instance": element.name not in self._MODEL_FIELDS,
-            }
-            if info.required:
-                definition["required"] = True
-            if info.readonly:
-                definition["readonly"] = True
-            if info.default is not None:
-                definition["default"] = info.default() if callable(info.default) else info.default
-            if info.min_value is not None:
-                definition["min"] = info.min_value
-            if info.max_value is not None:
-                definition["max"] = info.max_value
-            if info.length is not None:
-                definition["length"] = info.length
-            if info.pattern != types.ui.FieldPatternType.NONE:
-                definition["pattern"] = str(info.pattern)
-            choices: typing.Any = info.choices
-            if isinstance(choices, (list, tuple)):
-                definition["choices"] = typing.cast("list[typing.Any]", choices)
-            if info.tab:
-                definition["tab"] = str(info.tab)
-            defs.append(definition)
-        return defs
+        columns = self._MUTABLE_COLUMNS
+        return gui_view.agent_definitions(
+            self._gui(for_type, service),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:

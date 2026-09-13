@@ -21,12 +21,10 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
-
-SECRET = types.ui.FieldType.PASSWORD
-HIDDEN = types.ui.FieldType.HIDDEN
 
 
 class ProviderUpdate(mutability_base.MutableActionType):
@@ -75,38 +73,14 @@ class ProviderUpdate(mutability_base.MutableActionType):
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
         # Provider guis depend only on the subtype; ``target`` is unused.
-        defs: list[JsonObject] = []
-        for element in self._gui(for_type):
-            info = element.gui
-            definition: JsonObject = {
-                "name": element.name,
-                "type": info.type.value,
-                "label": info.label,
-                "tooltip": info.tooltip,
-                "secret": info.type in (SECRET, HIDDEN),
-                "from_instance": element.name.startswith("instance."),
-            }
-            if info.required:
-                definition["required"] = True
-            if info.readonly:
-                definition["readonly"] = True
-            if info.default is not None:
-                definition["default"] = info.default() if callable(info.default) else info.default
-            if info.min_value is not None:
-                definition["min"] = info.min_value
-            if info.max_value is not None:
-                definition["max"] = info.max_value
-            if info.length is not None:
-                definition["length"] = info.length
-            if info.pattern != types.ui.FieldPatternType.NONE:
-                definition["pattern"] = str(info.pattern)
-            choices: typing.Any = info.choices
-            if isinstance(choices, (list, tuple)):
-                definition["choices"] = typing.cast("list[typing.Any]", choices)
-            if info.tab:
-                definition["tab"] = str(info.tab)
-            defs.append(definition)
-        return defs
+        # The model columns are the handler's own FIELDS_TO_SAVE; every
+        # other gui element is module-instance configuration (prefixed with
+        # "instance." by add_fields(parent="instance")).
+        columns = frozenset(name for name, _modifier in Providers.parse_save_fields(Providers.FIELDS_TO_SAVE))
+        return gui_view.agent_definitions(
+            self._gui(for_type),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
@@ -127,7 +101,7 @@ class ProviderUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
-        return [element.name for element in self._gui(for_type)]
+        return gui_view.fingerprint_names(self._gui(for_type))
 
     @typing.override
     def fingerprint(self, target: db_models.Model) -> str:

@@ -32,6 +32,13 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
             self.assertIn("secret", definition)
             self.assertIn("type", definition)
 
+    def test_from_instance_follows_the_builder_prefix(self) -> None:
+        # Providers nests its module configuration under "instance."
+        # (add_fields(parent="instance")): exactly those fields resolve to
+        # instance values, the handler FIELDS_TO_SAVE columns do not
+        for definition in self.action_type.field_definitions(self.provider.data_type):
+            self.assertEqual(definition["from_instance"], definition["name"].startswith("instance."))
+
     def test_flatten_values(self) -> None:
         flat = self.action_type.flatten_values(
             {"name": "n", "instance": {"host": "h", "port": 1}, "tags": ["t"]}
