@@ -57,9 +57,6 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
     # Human readable kind for the action summary
     noun: typing.ClassVar[str]
 
-    # Model columns the REST PUT reads from params (the rest of the gui
-    # are configuration fields of the module instance)
-    model_fields: typing.ClassVar[frozenset[str]] = frozenset({"name", "comments", "tags"})
     # Per-field adapters to convert a model column value into the shape
     # the REST PUT expects (e.g. CSV storage -> list)
     snapshot_adapters: typing.ClassVar[dict[str, collections.abc.Callable[[typing.Any], typing.Any]]] = {}
@@ -79,6 +76,17 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
 
     # --------------------------------------------------- gui & snapshots
 
+    @classmethod
+    def params_columns(cls) -> frozenset[str]:
+        """Model columns the handler PUT reads from params.
+
+        This is the handler's own ``FIELDS_TO_SAVE`` (field names, without
+        their ``:default`` optional-marker suffix): the same contract the
+        snapshot honors. A handler gaining a column propagates to the
+        agent surface without any edit here.
+        """
+        return frozenset(name for name, _modifier in cls.handler.parse_save_fields(cls.handler.FIELDS_TO_SAVE))
+
     def _gui_elements(self, for_type: str) -> list[types.ui.GuiElement]:
         """The handler gui of the subtype, ordered as the builder declared.
 
@@ -91,9 +99,10 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+        columns = self.params_columns()
         return gui_view.agent_definitions(
             self._gui_elements(for_type),
-            from_instance=lambda name: name not in self.model_fields,
+            from_instance=lambda name: name not in columns,
         )
 
     @typing.override

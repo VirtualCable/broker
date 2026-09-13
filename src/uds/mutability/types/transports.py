@@ -39,9 +39,6 @@ class TransportUpdate(ModuleUpdateActionType):
     collection = "transports"
     noun = "Transport"
 
-    # Columns the REST PUT reads from params (FIELDS_TO_SAVE); the rest
-    # of the gui are configuration fields of the transport instance
-    model_fields = frozenset({"name", "comments", "tags", "priority", "net_filtering", "allowed_oss", "label"})
     # The column stores a CSV of allowed OS ids; the PUT expects a list
     snapshot_adapters: typing.ClassVar[dict[str, collections.abc.Callable[[typing.Any], typing.Any]]] = {
         "allowed_oss": lambda value: [x for x in value.split(",")] if value else [],

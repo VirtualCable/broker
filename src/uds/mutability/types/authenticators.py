@@ -34,7 +34,3 @@ class AuthenticatorUpdate(ModuleUpdateActionType):
     model = models.Authenticator
     collection = "authenticators"
     noun = "Authenticator"
-
-    # Columns the REST PUT reads from params (FIELDS_TO_SAVE minus the
-    # optional mfa_id FK reference)
-    model_fields = frozenset({"name", "comments", "tags", "priority", "small_name", "state", "net_filtering"})

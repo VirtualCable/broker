@@ -29,7 +29,3 @@ class NotifierUpdate(ModuleUpdateActionType):
     # The handler lives under the messaging path
     collection = "messaging/notifiers"
     noun = "Notifier"
-
-    # level and enabled are model columns (FIELDS_TO_SAVE); the rest of
-    # the gui are configuration fields of the module instance
-    model_fields = frozenset({"name", "comments", "tags", "level", "enabled"})

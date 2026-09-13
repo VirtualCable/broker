@@ -28,7 +28,3 @@ class MFAUpdate(ModuleUpdateActionType):
     model = models.MFA
     collection = "mfa"
     noun = "MFA provider"
-
-    # remember_device and validity are model columns (FIELDS_TO_SAVE);
-    # the rest of the gui are configuration fields of the module instance
-    model_fields = frozenset({"name", "comments", "tags", "remember_device", "validity"})
