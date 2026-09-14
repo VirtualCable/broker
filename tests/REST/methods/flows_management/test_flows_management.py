@@ -143,6 +143,14 @@ class FlowsRestTest(rest.test.RESTTestCase):
         table = self._get_json(f"flows/management/{self.flow.uuid}/actions/tableinfo")
         self.assertIn("title", table)
 
+    def test_flows_table_offers_the_review_columns(self) -> None:
+        table = self._get_json("flows/management/tableinfo")
+        self.assertEqual(
+            [name for field in table["fields"] for name in field],
+            ["name", "justification", "status", "compliance", "owner", "actions_count", "created", "due_date"],
+        )
+        self.assertIn("compliance", table["filter_fields"])
+
     def test_post_create_refused(self) -> None:
         response = self.client.rest_post("flows/management", data={"name": "nope", "justification": "no"})
         self.assertEqual(response.status_code, 403, response.content)
