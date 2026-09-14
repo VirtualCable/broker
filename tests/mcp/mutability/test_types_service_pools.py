@@ -41,6 +41,8 @@ class ServicePoolUpdateRegistryTest(FlowTestCase):
 
 class ServicePoolUpdateFieldsTest(FlowTestCase):
     def test_mutable_fields_and_excluded_references(self) -> None:
+        # The handler gui refuses to build without at least one service
+        create_db_service(create_db_provider())
         defs = ServicePoolUpdate().field_definitions("servicepool")
         names = [d["name"] for d in defs]
 
@@ -63,6 +65,10 @@ class ServicePoolUpdateFieldsTest(FlowTestCase):
             "display_custom_message",
         ):
             self.assertIn(name, names)
+        # The agent view is derived from the handler gui: the taglist is
+        # a taglist, not the text the old hardcoded defs lied about
+        by_name = {d["name"]: d for d in defs}
+        self.assertEqual(by_name["tags"]["type"], "taglist")
 
         # Identity/reference columns are not proposable
         for name in (

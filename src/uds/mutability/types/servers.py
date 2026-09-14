@@ -116,15 +116,21 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context
-        group = typing.cast(
-            models.ServerGroup,
-            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
-        )
-        # ``data_type`` is required by the REST PUT but is not mutable
-        # (changing the type is a different operation): taken from the target.
-        params: JsonObject = dict(action.values)
-        params["data_type"] = self.for_type_of(group)
+        # The PUT is form-shaped (the handler requires the whole save set,
+        # weights included through post_save): merge the proposal over the
+        # CAS-verified current values, so a partial proposal applies
+        # instead of failing on approval.
+        # ALL the ORM work must stay out of the async context.
+        def _build_params() -> tuple[str, JsonObject]:
+            group = typing.cast(models.ServerGroup, self.resolve_target(action.target_uuid))
+            params = self.snapshot_values(group, self.etag_fields(self.for_type_of(group)))
+            params.update(action.values)
+            # ``data_type`` is required by the REST PUT but is not mutable
+            # (changing the type is a different operation): taken from the target.
+            params["data_type"] = self.for_type_of(group)
+            return group.name, params
+
+        group_name, params = await sync_to_async(_build_params, thread_sensitive=True)()
         target = RestTarget(
             ServersGroups,
             "servers/groups",
@@ -132,7 +138,7 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
             args=(action.target_uuid,),
         )
         await RestProxy().execute(target, request, params)
-        return f'Server group "{group.name}" updated'
+        return f'Server group "{group_name}" updated'
 
 
 class ServerUpdate(mutability_base.MutableActionType):

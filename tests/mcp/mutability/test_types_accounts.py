@@ -25,8 +25,15 @@ class AccountUpdateTest(FlowTestCase):
         account = Account.objects.create(name="acc1")
         action_type = AccountUpdate()
 
-        names = [d["name"] for d in action_type.field_definitions("account")]
+        defs = action_type.field_definitions("account")
+        names = [d["name"] for d in defs]
         self.assertEqual(sorted(names), ["comments", "name", "tags"])
+        # Types come straight from the handler gui (tags is a taglist, not
+        # the text the old hardcoded defs lied about)
+        by_name = {d["name"]: d for d in defs}
+        self.assertEqual(by_name["tags"]["type"], "taglist")
+        self.assertEqual(by_name["name"]["type"], "text")
+        self.assertTrue(all(d["from_instance"] is False for d in defs))
 
         snapshot = action_type.snapshot_values(account, ["name", "tags"])
         self.assertEqual(snapshot, {"name": "acc1", "tags": []})
@@ -60,4 +67,6 @@ class AccountUpdateTest(FlowTestCase):
         self.assertIn("updated", summary)
         execute_call = proxy_cls.return_value.execute.call_args
         self.assertIs(execute_call[0][0].handler, Accounts)
-        self.assertEqual(execute_call[0][2], {"comments": "new"})
+        # The PUT is form-shaped: the proposal travels merged over the
+        # current values, never alone
+        self.assertEqual(execute_call[0][2], {"name": "acc1", "comments": "new", "tags": []})

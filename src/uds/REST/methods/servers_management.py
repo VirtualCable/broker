@@ -84,144 +84,6 @@ SERVER_COUNTERS: typing.Final[dict[str, types.stats.CounterType]] = {
 cache = Cache("ServersStatsDispatcher")
 
 
-def get_server_counters(
-    server: models.Server,
-    counter_type: types.stats.CounterType,
-    interval: models.StatsCountersAccum.IntervalType = models.StatsCountersAccum.IntervalType.HOUR,
-    since_days: int = SINCE,
-) -> list[dict[str, typing.Any]]:
-    val: list[dict[str, typing.Any]] = []
-    try:
-        cache_key = f"{server.id}-{counter_type}-{interval}-{since_days}"
-        cached_value: bytes | None = cache.get(cache_key)
-        if not cached_value:
-            # Now, aligned to the accumulation interval (hour, or UTC day boundary for DAY buckets)
-            now = sql_now()
-            if interval is models.StatsCountersAccum.IntervalType.HOUR:
-                to = now.replace(minute=0, second=0, microsecond=0)
-            else:  # DAY buckets are aligned to UTC day boundaries (epoch % 86400)
-                epoch = int(now.timestamp())
-                to = datetime.datetime.fromtimestamp(epoch - (epoch % 86400), tz=datetime.timezone.utc)
-            since: datetime.datetime = to - datetime.timedelta(days=since_days)
-            points = since_days * (24 if interval is models.StatsCountersAccum.IntervalType.HOUR else 1)
-
-            stats = counters.enumerate_accumulated_counters(
-                interval_type=interval,
-                counter_type=counter_type,
-                owner_type=types.stats.CounterOwnerType.SERVER,
-                owner_id=server.id,
-                since=since,
-                to=to,
-                points=points,
-            )
-            val = [
-                {
-                    "stamp": x.stamp,
-                    "value": (x.sum / x.count if x.count > 0 else 0) if not USE_MAX else x.max,
-                }
-                for x in stats
-            ]
-
-            if len(val) >= 2:
-                cache.put(
-                    cache_key,
-                    codecs.encode(pickletools.optimize(pickle.dumps(val, protocol=-1)), "zip"),
-                    CACHE_TIME * 2,
-                )
-            else:
-                # Generate as much points as needed with 0 value
-                interval_seconds = interval.seconds()
-                start_stamp = int(since.timestamp())
-                val = [{"stamp": start_stamp + interval_seconds * i, "value": 0} for i in range(points)]
-        else:
-            val = pickle.loads(codecs.decode(cached_value, "zip"))  # nosec: pickle is used to cache data, not to load it
-
-        return val
-    except Exception as e:
-        logger.exception("getServerCounters")
-        raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
-
-
-def _classes_with_server_group_field() -> list[tuple[str, "type[services.ServiceProvider|services.Service]"]]:
-    """Find every registered Provider and Service that declares a server-group field.
-
-    The discovery is driven by the field's label (``server_group_field``
-    is the canonical name, ``Server group`` is the canonical label). The
-    helper walks the providers factory plus each provider's offered
-    services and returns ``(kind, class)`` pairs for every class whose
-    ``vars`` contain a ``gui.ChoiceField`` with that label.
-
-    No class is hardcoded here: a future provider or service that adds
-    such a field is picked up automatically. The contract test verifies
-    this discovery matches reality.
-    """
-    # Lazy imports: ``fields`` and ``gui`` are heavy, and the helper
-    # runs on the REST request path.
-    from uds.core import services as core_services
-    from uds.core.ui import gui
-    from uds.core.util import fields
-
-    canonical_label = fields.server_group_field().label
-    found: list[tuple[str, type[services.ServiceProvider | services.Service]]] = []
-
-    for provider_cls in core_services.factory().providers().values():
-        for value in vars(provider_cls).values():
-            if isinstance(value, gui.ChoiceField) and value.label == canonical_label:
-                found.append(("provider", provider_cls))
-                break
-
-    for provider_cls in core_services.factory().providers().values():
-        for service_cls in provider_cls.get_provided_services():
-            for value in vars(service_cls).values():
-                if isinstance(value, gui.ChoiceField) and value.label == canonical_label:
-                    found.append(("service", service_cls))
-                    break
-
-    return found
-
-
-def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
-    """Return providers and services whose ``server_group`` field references the given UUID.
-
-    The set of providers/services that carry a server-group field is
-    discovered at call time from the registered factories — see
-    ``_classes_with_server_group_field``. No list of type_types is
-    hardcoded; if a new provider or service adds such a field, it is
-    picked up automatically.
-    """
-    usages: list[dict[str, str]] = []
-
-    for kind, cls in _classes_with_server_group_field():
-        type_type = cls.type_type
-        if kind == "provider":
-            qs = models.Provider.objects.filter(data_type=type_type)
-        else:
-            qs = models.Service.objects.filter(data_type=type_type)
-
-        for item in qs:
-            try:
-                instance = item.get_instance()
-            except Exception:
-                logger.warning(
-                    "Cannot inspect %s %s while scanning server_group usages",
-                    kind,
-                    item.uuid,
-                    exc_info=True,
-                )
-                continue
-            if typing.cast(typing.Any, instance).server_group.value == uuid:
-                usages.append(
-                    {
-                        "uuid": item.uuid,
-                        "name": item.name,
-                        "type": type_type,
-                        "kind": kind,
-                    }
-                )
-
-    return usages
-
-
 @dataclasses.dataclass
 class TokenItem(types.rest.BaseRestItem):
     id: str
@@ -328,7 +190,9 @@ class ServersServers(DetailHandler[ServerItem]):
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
-                    "data": types.rest.api.SchemaProperty(type="string", description="CSV content with server entries"),
+                    "data": types.rest.api.SchemaProperty(
+                        type="string", description="CSV content with server entries"
+                    ),
                     "has_header": types.rest.api.SchemaProperty(
                         type="boolean", description="Whether the CSV has a header row"
                     ),
@@ -943,3 +807,141 @@ class ServersGroups(ModelHandler[GroupItem]):
     def usages(self, item: "Model") -> list[dict[str, str]]:
         item = ensure.is_instance(item, models.ServerGroup)
         return _providers_using_server_group(item.uuid)
+
+
+def get_server_counters(
+    server: models.Server,
+    counter_type: types.stats.CounterType,
+    interval: models.StatsCountersAccum.IntervalType = models.StatsCountersAccum.IntervalType.HOUR,
+    since_days: int = SINCE,
+) -> list[dict[str, typing.Any]]:
+    val: list[dict[str, typing.Any]] = []
+    try:
+        cache_key = f"{server.id}-{counter_type}-{interval}-{since_days}"
+        cached_value: bytes | None = cache.get(cache_key)
+        if not cached_value:
+            # Now, aligned to the accumulation interval (hour, or UTC day boundary for DAY buckets)
+            now = sql_now()
+            if interval is models.StatsCountersAccum.IntervalType.HOUR:
+                to = now.replace(minute=0, second=0, microsecond=0)
+            else:  # DAY buckets are aligned to UTC day boundaries (epoch % 86400)
+                epoch = int(now.timestamp())
+                to = datetime.datetime.fromtimestamp(epoch - (epoch % 86400), tz=datetime.timezone.utc)
+            since: datetime.datetime = to - datetime.timedelta(days=since_days)
+            points = since_days * (24 if interval is models.StatsCountersAccum.IntervalType.HOUR else 1)
+
+            stats = counters.enumerate_accumulated_counters(
+                interval_type=interval,
+                counter_type=counter_type,
+                owner_type=types.stats.CounterOwnerType.SERVER,
+                owner_id=server.id,
+                since=since,
+                to=to,
+                points=points,
+            )
+            val = [
+                {
+                    "stamp": x.stamp,
+                    "value": (x.sum / x.count if x.count > 0 else 0) if not USE_MAX else x.max,
+                }
+                for x in stats
+            ]
+
+            if len(val) >= 2:
+                cache.put(
+                    cache_key,
+                    codecs.encode(pickletools.optimize(pickle.dumps(val, protocol=-1)), "zip"),
+                    CACHE_TIME * 2,
+                )
+            else:
+                # Generate as much points as needed with 0 value
+                interval_seconds = interval.seconds()
+                start_stamp = int(since.timestamp())
+                val = [{"stamp": start_stamp + interval_seconds * i, "value": 0} for i in range(points)]
+        else:
+            val = pickle.loads(codecs.decode(cached_value, "zip"))  # nosec: pickle is used to cache data, not to load it
+
+        return val
+    except Exception as e:
+        logger.exception("getServerCounters")
+        raise exceptions.rest.ResponseError("can't create stats for objects!!!") from e
+
+
+def _classes_with_server_group_field() -> list[tuple[str, "type[services.ServiceProvider|services.Service]"]]:
+    """Find every registered Provider and Service that declares a server-group field.
+
+    The discovery is driven by the field's label (``server_group_field``
+    is the canonical name, ``Server group`` is the canonical label). The
+    helper walks the providers factory plus each provider's offered
+    services and returns ``(kind, class)`` pairs for every class whose
+    ``vars`` contain a ``gui.ChoiceField`` with that label.
+
+    No class is hardcoded here: a future provider or service that adds
+    such a field is picked up automatically. The contract test verifies
+    this discovery matches reality.
+    """
+    # Lazy imports: ``fields`` and ``gui`` are heavy, and the helper
+    # runs on the REST request path.
+    from uds.core import services as core_services
+    from uds.core.ui import gui
+    from uds.core.util import fields
+
+    canonical_label = fields.server_group_field().label
+    found: list[tuple[str, type[services.ServiceProvider | services.Service]]] = []
+
+    for provider_cls in core_services.factory().providers().values():
+        for value in vars(provider_cls).values():
+            if isinstance(value, gui.ChoiceField) and value.label == canonical_label:
+                found.append(("provider", provider_cls))
+                break
+
+    for provider_cls in core_services.factory().providers().values():
+        for service_cls in provider_cls.get_provided_services():
+            for value in vars(service_cls).values():
+                if isinstance(value, gui.ChoiceField) and value.label == canonical_label:
+                    found.append(("service", service_cls))
+                    break
+
+    return found
+
+
+def _providers_using_server_group(uuid: str) -> list[dict[str, str]]:
+    """Return providers and services whose ``server_group`` field references the given UUID.
+
+    The set of providers/services that carry a server-group field is
+    discovered at call time from the registered factories — see
+    ``_classes_with_server_group_field``. No list of type_types is
+    hardcoded; if a new provider or service adds such a field, it is
+    picked up automatically.
+    """
+    usages: list[dict[str, str]] = []
+
+    for kind, cls in _classes_with_server_group_field():
+        type_type = cls.type_type
+        if kind == "provider":
+            qs = models.Provider.objects.filter(data_type=type_type)
+        else:
+            qs = models.Service.objects.filter(data_type=type_type)
+
+        for item in qs:
+            try:
+                instance = item.get_instance()
+            except Exception:
+                logger.warning(
+                    "Cannot inspect %s %s while scanning server_group usages",
+                    kind,
+                    item.uuid,
+                    exc_info=True,
+                )
+                continue
+            if typing.cast(typing.Any, instance).server_group.value == uuid:
+                usages.append(
+                    {
+                        "uuid": item.uuid,
+                        "name": item.name,
+                        "type": type_type,
+                        "kind": kind,
+                    }
+                )
+
+    return usages

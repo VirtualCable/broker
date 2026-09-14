@@ -129,16 +129,22 @@ class ServiceUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context
-        service = typing.cast(
-            models.Service,
-            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
-        )
-        # ``data_type`` is required by the REST PUT but is not mutable
-        # (changing the subtype is a different operation): it is taken
-        # from the target itself.
-        params: JsonObject = dict(action.values)
-        params["data_type"] = service.data_type
+        # The PUT is form-shaped (save_item requires the whole save set and
+        # serializes the instance from the flat params), so a partial
+        # proposal is merged over the CAS-verified current values. The
+        # services gui is flat, so no nesting is needed.
+        # ALL the ORM work must stay out of the async context.
+        def _build_params() -> tuple[str, str, JsonObject]:
+            service = typing.cast(models.Service, self.resolve_target(action.target_uuid))
+            for_type = self.for_type_of(service)
+            params: JsonObject = self.snapshot_values(service, self.etag_fields(for_type, service))
+            params.update(action.values)
+            # ``data_type`` is required by the REST PUT but is not mutable
+            # (changing the subtype is a different operation)
+            params["data_type"] = for_type
+            return service.name, str(service.provider.uuid), params
+
+        service_name, provider_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
         target = RestTarget(
             Services,
             "providers/{uuid}/services",
@@ -149,9 +155,9 @@ class ServiceUpdate(mutability_base.MutableActionType):
         # Detail targets need the parent uuid to resolve (and permission
         # check) the provider, so the sync boundary is invoked directly.
         await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
-            target, request, params, str(service.provider.uuid)
+            target, request, params, provider_uuid
         )
-        return f'Service "{service.name}" updated'
+        return f'Service "{service_name}" updated'
 
     # ------------------------------------------------------------ helpers
 

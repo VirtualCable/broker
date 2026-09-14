@@ -97,7 +97,7 @@ class ServicePoolPublication(UUIDModel):
     # objects: 'models.manager.Manager["ServicePoolPublication"]'
     userServices: "models.manager.RelatedManager[UserService]"
 
-    _cached_instance: typing.Optional["services.Publication"] = None
+    _cached_instance: "services.Publication | None" = None
 
     class Meta(UUIDModel.Meta):  # pylint: disable=too-few-public-methods
         """

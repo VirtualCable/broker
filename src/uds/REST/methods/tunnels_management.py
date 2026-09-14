@@ -178,7 +178,7 @@ class Tunnels(ModelHandler[TunnelItem]):
     ]
 
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"servers": TunnelServers}
-    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "host:", "port:0"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags", "host:", "port:0"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Tunnels"))

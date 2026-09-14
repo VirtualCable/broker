@@ -63,4 +63,9 @@ class ServicePoolGroupUpdateTest(FlowTestCase):
         self.assertIs(execute_call[0][0].handler, ServicesPoolGroups)
         # The collection is "gallery" (the REST path of pool groups)
         self.assertEqual(execute_call[0][0].path, "gallery")
-        self.assertEqual(execute_call[0][2], {"priority": 1})
+        # The PUT is form-shaped (image_id is a required save field, hidden
+        # from the agent): the stored image travels as immutable context
+        self.assertEqual(
+            execute_call[0][2],
+            {"name": "lab", "comments": "", "priority": 1, "image_id": "-1"},
+        )

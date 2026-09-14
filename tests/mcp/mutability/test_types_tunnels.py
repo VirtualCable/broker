@@ -52,11 +52,11 @@ class TunnelUpdateFieldsTest(FlowTestCase):
     def test_mutable_fields_and_excluded_relations(self) -> None:
         defs = TunnelUpdate().field_definitions("tunnel")
         names = [d["name"] for d in defs]
-        self.assertEqual(sorted(names), ["comments", "host", "name", "port"])
-        # Tags: gui field the PUT drops (handler bug); servers: relations
-        for name in ("tags", "servers", "type", "subtype"):
+        self.assertEqual(sorted(names), ["comments", "host", "name", "port", "tags"])
+        # Servers: relations outside the PUT form
+        for name in ("servers", "type", "subtype"):
             self.assertNotIn(name, names)
-        errors = TunnelUpdate().validate_values("tunnel", {"tags": ["a"]})
+        errors = TunnelUpdate().validate_values("tunnel", {"assigned_servers": ["a"]})
         self.assertTrue(any("unknown fields" in e for e in errors))
 
     def test_host_and_port_validated_at_propose_time(self) -> None:
@@ -107,5 +107,12 @@ class TunnelUpdateExecuteTest(FlowTestCase):
         params: dict[str, typing.Any] = execute_call[0][2]
         # The PUT is form-shaped: every saved field travels, proposed values win
         self.assertEqual(
-            params, {"name": tunnel.name, "comments": tunnel.comments, "host": "new.example.com", "port": 8443}
+            params,
+            {
+                "name": tunnel.name,
+                "comments": tunnel.comments,
+                "tags": [],
+                "host": "new.example.com",
+                "port": 8443,
+            },
         )

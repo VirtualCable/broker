@@ -531,6 +531,12 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 label=gettext("Publish on save"),
                 tooltip=gettext("If active, the service will be published when saved (only for new service pools)"),
             )
+            # Mutability overlay: readonly already keeps the field out of the
+            # agent definitions, but it would still take part in the CAS
+            # fingerprint. The field is a create-time-only operation flag
+            # (publishing is an operation, never a proposed change), so it
+            # must not travel in the update payload at all.
+            .with_overlay("publish_on_save", types.mutability.FieldMutability.hidden())
             .new_tab(types.ui.Tab.DISPLAY)
             .add_checkbox(
                 name="visible",
@@ -539,12 +545,19 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 tooltip=gettext("If active, transport will be visible for users"),
             )
             .add_image_choice()
+            # Mutability overlay: the editable image/pool-group pickers are
+            # reference columns the agent cannot meaningfully change (the
+            # base service and OS manager are readonly for the same
+            # reason); the update payload carries the stored values as
+            # immutable context.
+            .with_overlay("image_id", types.mutability.FieldMutability.hidden())
             .add_image_choice(
                 name="pool_group_id",
                 choices=[ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()],
                 label=gettext("Pool group"),
                 tooltip=gettext("Pool group for this pool (for pool classify on display)"),
             )
+            .with_overlay("pool_group_id", types.mutability.FieldMutability.hidden())
             .add_text(
                 name="calendar_message",
                 label=gettext("Calendar access denied text"),

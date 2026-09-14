@@ -89,7 +89,14 @@ class ProviderUpdate(mutability_base.MutableActionType):
         wanted = set(names)
         snapshot: JsonObject = {}
         for name in wanted:
-            if name in instance_values:
+            # The gui nests the module configuration under "instance."
+            # (add_fields(parent="instance")), while the stored field dict
+            # keys are bare: resolve the prefixed names against it
+            if name.startswith("instance."):
+                key = name.removeprefix("instance.")
+                if key in instance_values:
+                    snapshot[name] = instance_values[key]
+            elif name in instance_values:
                 snapshot[name] = instance_values[name]
             elif name == "name":
                 snapshot[name] = provider.name
@@ -120,11 +127,31 @@ class ProviderUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context
-        provider = typing.cast(
-            models.Provider,
-            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
-        )
+        # The PUT is form-shaped (name/comments/tags are all required) and
+        # serializes the whole module instance from the "instance" payload,
+        # so a partial proposal must be merged over the CAS-verified
+        # current values. ALL the ORM work stays out of the async context.
+        def _build_params() -> tuple[str, JsonObject]:
+            provider = typing.cast(models.Provider, self.resolve_target(action.target_uuid))
+            for_type = self.for_type_of(provider)
+            # Flat keyspace: snapshot of the whole fingerprint surface plus
+            # the (flattened) proposal on top
+            flat: JsonObject = self.snapshot_values(provider, self.etag_fields(for_type))
+            flat.update(self.flatten_values(typing.cast(JsonObject, action.values)))
+            params: JsonObject = {}
+            instance: JsonObject = {}
+            for name, value in flat.items():
+                if name.startswith("instance."):
+                    instance[name.removeprefix("instance.")] = value
+                else:
+                    params[name] = value
+            params["instance"] = instance
+            # ``data_type`` is required by the REST PUT but is not mutable
+            # (changing the provider type is a different operation)
+            params["data_type"] = for_type
+            return provider.name, params
+
+        provider_name, params = await sync_to_async(_build_params, thread_sensitive=True)()
         await RestProxy().execute(
             RestTarget(
                 Providers,
@@ -133,9 +160,9 @@ class ProviderUpdate(mutability_base.MutableActionType):
                 args=(action.target_uuid,),
             ),
             request,
-            dict(action.values),
+            params,
         )
-        return f'Provider "{provider.name}" updated'
+        return f'Provider "{provider_name}" updated'
 
     # ------------------------------------------------------------ helpers
 

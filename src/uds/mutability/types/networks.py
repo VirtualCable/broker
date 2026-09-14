@@ -95,11 +95,17 @@ class NetworkUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context
-        network = typing.cast(
-            models.Network,
-            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
-        )
+        # The PUT is form-shaped (every FIELDS_TO_SAVE entry is required):
+        # merge the proposal over the CAS-verified current values, so a
+        # partial proposal applies instead of failing on approval.
+        # ALL the ORM work must stay out of the async context.
+        def _build_params() -> tuple[str, JsonObject]:
+            network = typing.cast(models.Network, self.resolve_target(action.target_uuid))
+            params = self.snapshot_values(network, self.etag_fields("network"))
+            params.update(action.values)
+            return network.name, params
+
+        network_name, params = await sync_to_async(_build_params, thread_sensitive=True)()
         await RestProxy().execute(
             RestTarget(
                 Networks,
@@ -108,6 +114,6 @@ class NetworkUpdate(mutability_base.MutableActionType):
                 args=(action.target_uuid,),
             ),
             request,
-            dict(action.values),
+            params,
         )
-        return f'Network "{network.name}" updated'
+        return f'Network "{network_name}" updated'

@@ -72,4 +72,8 @@ class NetworkUpdateExecuteTest(FlowTestCase):
         from uds.REST.methods.networks import Networks
 
         self.assertIs(execute_call[0][0].handler, Networks)
-        self.assertEqual(execute_call[0][2], {"net_string": "192.168.0.0/16"})
+        # The PUT is form-shaped: every saved field travels, proposed win
+        self.assertEqual(
+            execute_call[0][2],
+            {"name": "net1", "net_string": "192.168.0.0/16", "tags": []},
+        )

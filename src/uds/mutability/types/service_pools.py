@@ -15,6 +15,7 @@ REST layer on update: only the stored value passes.
 
 import collections.abc
 import typing
+from types import SimpleNamespace as _Namespace
 
 from asgiref.sync import sync_to_async
 from django.db import models as db_models
@@ -29,6 +30,7 @@ from uds.REST.methods.user_services import Groups as AssignedGroups
 from uds.REST.methods.user_services import Transports
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 from ._relations import M2MSetActionType
 
@@ -69,120 +71,18 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        return [
-            {
-                "name": "name",
-                "type": "text",
-                "label": "Name",
-                "tooltip": "Name of the service pool",
-                "secret": False,
-            },
-            {
-                "name": "short_name",
-                "type": "text",
-                "label": "Short name",
-                "tooltip": "Short name for user service visualization",
-                "secret": False,
-            },
-            {
-                "name": "comments",
-                "type": "text",
-                "label": "Comments",
-                "tooltip": "Comments of the service pool",
-                "secret": False,
-            },
-            {
-                "name": "tags",
-                "type": "taglist",
-                "label": "Tags",
-                "tooltip": "Tags of the pool (list)",
-                "secret": False,
-            },
-            {
-                "name": "initial_srvs",
-                "type": "numeric",
-                "label": "Initial available services",
-                "tooltip": "Services created initially to speed up first assignment",
-                "secret": False,
-            },
-            {
-                "name": "cache_l1_srvs",
-                "type": "numeric",
-                "label": "Services to keep in cache",
-                "tooltip": "Services kept ready for immediate use",
-                "secret": False,
-            },
-            {
-                "name": "cache_l2_srvs",
-                "type": "numeric",
-                "label": "Services to keep in L2 cache",
-                "tooltip": "Services kept in a suspended-like state",
-                "secret": False,
-            },
-            {
-                "name": "max_srvs",
-                "type": "numeric",
-                "label": "Maximum services",
-                "tooltip": "Maximum number of user services (capped below by cache values on apply)",
-                "secret": False,
-            },
-            {
-                "name": "show_transports",
-                "type": "checkbox",
-                "label": "Shows transports",
-                "tooltip": "Show transports to users",
-                "secret": False,
-            },
-            {
-                "name": "visible",
-                "type": "checkbox",
-                "label": "Visible",
-                "tooltip": "Pool visible to users",
-                "secret": False,
-            },
-            {
-                "name": "allow_users_remove",
-                "type": "checkbox",
-                "label": "Allow removal",
-                "tooltip": "Users may remove their assigned services",
-                "secret": False,
-            },
-            {
-                "name": "allow_users_reset",
-                "type": "checkbox",
-                "label": "Allow reset",
-                "tooltip": "Users may reset their assigned services",
-                "secret": False,
-            },
-            {
-                "name": "ignores_unused",
-                "type": "checkbox",
-                "label": "Ignores unused",
-                "tooltip": "Ignored by the unused service cleanup",
-                "secret": False,
-            },
-            {
-                "name": "calendar_message",
-                "type": "text",
-                "label": "Calendar access denied text",
-                "tooltip": "Message shown when access is denied by calendar",
-                "secret": False,
-            },
-            {
-                "name": "custom_message",
-                "type": "text",
-                "label": "Custom launch message text",
-                "tooltip": "Message shown when the service is launched",
-                "secret": False,
-            },
-            {
-                "name": "display_custom_message",
-                "type": "checkbox",
-                "label": "Enable custom launch message",
-                "tooltip": "Whether the custom launch message is displayed",
-                "secret": False,
-            },
-        ]
+        # Agent view derived from the handler gui. What the gui marks
+        # readonly (base service, os manager, account) or hides through the
+        # mutability overlay (image, pool group, publish_on_save) is not
+        # proposable: those are reference columns, and publishing is an
+        # operation, not a field
+        columns = frozenset(
+            name for name, _modifier in ServicesPools.parse_save_fields(ServicesPools.FIELDS_TO_SAVE)
+        )
+        return gui_view.agent_definitions(
+            self._gui_elements(for_type),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
@@ -256,6 +156,18 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         fields = self.etag_fields("servicepool")
         item_dict: JsonObject = self.snapshot_values(target, fields)
         return item_etag(item_dict, fields)
+
+    # ---------------------------------------------------------- helpers
+
+    def _gui_elements(self, for_type: str) -> list[types.ui.GuiElement]:
+        """The handler gui, ordered as the builder declared.
+
+        ``ServicesPools.get_gui`` is request-independent; binding it to an
+        empty namespace avoids instantiating the full handler (whose
+        ``__init__`` resolves authentication).
+        """
+        shim = typing.cast(typing.Any, _Namespace())
+        return sorted(ServicesPools.get_gui(shim, for_type), key=lambda element: element.gui.order)
 
     # ---------------------------------------------------------- execution
 

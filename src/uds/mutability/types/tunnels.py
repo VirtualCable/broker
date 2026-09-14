@@ -6,14 +6,11 @@ holds the address the *client* sees (``host``/``port``); the child
 servers are informational registrations of the external load balancer
 backends, so membership (``assign`` and friends) is a relation outside
 this proposal and has no functional effect on balancing.
-
-``tags`` is intentionally NOT proposable: the handler's gui shows the
-field but its ``FIELDS_TO_SAVE`` omits it, so the PUT silently drops
-tag edits (pre-existing handler bug, reported but not patched here).
 """
 
 import collections.abc
 import typing
+from types import SimpleNamespace as _Namespace
 
 from asgiref.sync import sync_to_async
 from django.db import models as db_models
@@ -27,6 +24,7 @@ from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.REST.methods.tunnels_management import Tunnels
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -41,9 +39,9 @@ class TunnelUpdate(mutability_base.MutableActionType):
         "Propose changes to an existing tunnel (a tunnel-type server group; the "
         "host and port are the address clients reach through the external load "
         "balancer). The proposal does NOT apply anything: it is queued until an "
-        "administrator approves it. Mutable fields are name, comments, host and "
-        "port. Assigned tunnel servers and transport bindings cannot be changed "
-        "through this proposal."
+        "administrator approves it. Mutable fields are name, comments, tags, "
+        "host and port. Assigned tunnel servers and transport bindings cannot "
+        "be changed through this proposal."
     )
     handler = Tunnels
     model = models.ServerGroup
@@ -65,36 +63,15 @@ class TunnelUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        return [
-            {
-                "name": "name",
-                "type": "text",
-                "label": "Name",
-                "tooltip": "Name of the tunnel (must be unique)",
-                "secret": False,
-            },
-            {
-                "name": "comments",
-                "type": "text",
-                "label": "Comments",
-                "tooltip": "Comments about the tunnel",
-                "secret": False,
-            },
-            {
-                "name": "host",
-                "type": "text",
-                "label": "Hostname",
-                "tooltip": "Hostname or IP address of the server where the tunnel is visible by the users",
-                "secret": False,
-            },
-            {
-                "name": "port",
-                "type": "numeric",
-                "label": "Port",
-                "tooltip": "Port where the tunnel is visible by the users",
-                "secret": False,
-            },
-        ]
+        shim = typing.cast(typing.Any, _Namespace())
+        # Agent view derived from the handler gui; the gui fields are
+        # exactly the handler's own FIELDS_TO_SAVE columns, so any change
+        # there propagates here automatically
+        columns = frozenset(name for name, _modifier in Tunnels.parse_save_fields(Tunnels.FIELDS_TO_SAVE))
+        return gui_view.agent_definitions(
+            sorted(Tunnels.get_gui(shim, for_type), key=lambda element: element.gui.order),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def validate_values(
@@ -120,7 +97,12 @@ class TunnelUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
-        return ["name", "comments", "host", "port"]
+        # The merged PUT carries exactly the fingerprint surface: every gui
+        # field (all of them proposable), so fingerprint == definitions
+        shim = typing.cast(typing.Any, _Namespace())
+        return gui_view.fingerprint_names(
+            sorted(Tunnels.get_gui(shim, for_type), key=lambda element: element.gui.order)
+        )
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
@@ -128,6 +110,7 @@ class TunnelUpdate(mutability_base.MutableActionType):
         columns: JsonObject = {
             "name": group.name,
             "comments": group.comments,
+            "tags": sorted(t.tag for t in group.tags.all()),
             "host": group.host,
             "port": group.port,
         }

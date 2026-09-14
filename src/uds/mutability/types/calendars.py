@@ -18,6 +18,7 @@ machinery.
 import collections.abc
 import datetime
 import typing
+from types import SimpleNamespace as _Namespace
 
 from asgiref.sync import sync_to_async
 from django.db import models as db_models
@@ -33,6 +34,7 @@ from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.models.calendar_rule import DurationInfo, FrequencyInfo
 
 from .. import base as mutability_base
+from .. import gui_view
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -90,29 +92,15 @@ class CalendarUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        return [
-            {
-                "name": "name",
-                "type": "text",
-                "label": "Name",
-                "tooltip": "Name of the calendar",
-                "secret": False,
-            },
-            {
-                "name": "comments",
-                "type": "text",
-                "label": "Comments",
-                "tooltip": "Comments of the calendar",
-                "secret": False,
-            },
-            {
-                "name": "tags",
-                "type": "text",
-                "label": "Tags",
-                "tooltip": "Tags of the calendar (list)",
-                "secret": False,
-            },
-        ]
+        shim = typing.cast(typing.Any, _Namespace())
+        # The gui fields are exactly the handler's own FIELDS_TO_SAVE
+        # columns; the agent view derives from the handler gui, so any
+        # change there propagates here automatically
+        columns = frozenset(name for name, _modifier in Calendars.parse_save_fields(Calendars.FIELDS_TO_SAVE))
+        return gui_view.agent_definitions(
+            sorted(Calendars.get_gui(shim, for_type), key=lambda element: element.gui.order),
+            from_instance=lambda name: name not in columns,
+        )
 
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
@@ -130,7 +118,9 @@ class CalendarUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
-        return ["name", "comments", "tags"]
+        # The merged PUT carries exactly the proposable surface (no context
+        # fields needed), so fingerprint == definitions
+        return [d["name"] for d in self.field_definitions(for_type)]
 
     @typing.override
     def fingerprint(self, target: db_models.Model) -> str:
@@ -140,11 +130,17 @@ class CalendarUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context
-        calendar = typing.cast(
-            models.Calendar,
-            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
-        )
+        # The PUT is form-shaped (every FIELDS_TO_SAVE entry is required):
+        # merge the proposal over the CAS-verified current values, so a
+        # partial proposal applies instead of failing on approval.
+        # ALL the ORM work must stay out of the async context.
+        def _build_params() -> tuple[str, JsonObject]:
+            calendar = typing.cast(models.Calendar, self.resolve_target(action.target_uuid))
+            params = self.snapshot_values(calendar, self.etag_fields("calendar"))
+            params.update(action.values)
+            return calendar.name, params
+
+        calendar_name, params = await sync_to_async(_build_params, thread_sensitive=True)()
         await RestProxy().execute(
             RestTarget(
                 Calendars,
@@ -153,9 +149,9 @@ class CalendarUpdate(mutability_base.MutableActionType):
                 args=(action.target_uuid,),
             ),
             request,
-            dict(action.values),
+            params,
         )
-        return f'Calendar "{calendar.name}" updated'
+        return f'Calendar "{calendar_name}" updated'
 
 
 class CalendarRuleUpdate(mutability_base.MutableActionType):

@@ -97,13 +97,20 @@ class ServicePoolGroupUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context
-        pool_group = typing.cast(
-            models.ServicePoolGroup,
-            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
-        )
-        # The PUT accepts image_id as optional (the handler's pre_save is
-        # None-safe); not sending it keeps the current image untouched
+        # The PUT is form-shaped: image_id is a plain FIELDS_TO_SAVE entry
+        # (required by fields_from_params) but hidden from the agent, and
+        # pre_save indexes it directly. Merge the proposal over the
+        # CAS-verified current values, injecting the stored image as
+        # immutable context ("" convention: "-1" meaning none).
+        # ALL the ORM work must stay out of the async context.
+        def _build_params() -> tuple[str, JsonObject]:
+            pool_group = typing.cast(models.ServicePoolGroup, self.resolve_target(action.target_uuid))
+            params = self.snapshot_values(pool_group, self.etag_fields("service_pool_group"))
+            params["image_id"] = pool_group.image.uuid if pool_group.image else "-1"
+            params.update(action.values)
+            return pool_group.name, params
+
+        pool_group_name, params = await sync_to_async(_build_params, thread_sensitive=True)()
         await RestProxy().execute(
             RestTarget(
                 ServicesPoolGroups,
@@ -112,6 +119,6 @@ class ServicePoolGroupUpdate(mutability_base.MutableActionType):
                 args=(action.target_uuid,),
             ),
             request,
-            dict(action.values),
+            params,
         )
-        return f'Service pool group "{pool_group.name}" updated'
+        return f'Service pool group "{pool_group_name}" updated'

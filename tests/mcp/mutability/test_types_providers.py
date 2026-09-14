@@ -127,4 +127,16 @@ class ProviderUpdateTypeTest(rest.test.RESTTestCase):
                 (target.handler, target.method.value, target.args), (Providers, "PUT", (self.provider.uuid,))
             )
             self.assertEqual(called_request, request)
-            self.assertEqual(params, {"name": "new-name", "instance": {"host": "h"}})
+            # The PUT is form-shaped: the proposal travels merged over the
+            # current top-level values, the instance config stays nested,
+            # and the (never mutable) data_type is injected
+            self.assertEqual(
+                params,
+                {
+                    "name": "new-name",
+                    "comments": self.provider.comments,
+                    "tags": [],
+                    "instance": {"host": "h"},
+                    "data_type": self.provider.data_type,
+                },
+            )

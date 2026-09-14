@@ -69,7 +69,7 @@ class ParseSaveFieldsTestCase(unittest.TestCase):
     def test_real_tunnels_declaration(self) -> None:
         self.assertEqual(
             list(Tunnels.parse_save_fields(Tunnels.FIELDS_TO_SAVE)),
-            [("name", None), ("comments", None), ("host", ""), ("port", "0")],
+            [("name", None), ("comments", None), ("tags", None), ("host", ""), ("port", "0")],
         )
 
 
@@ -117,10 +117,10 @@ class FieldsFromParamsTestCase(unittest.TestCase):
         self.assertEqual(handler.fields_from_params(["mfa_id:_"]), {"mfa_id": "uuid-1"})
 
     def test_mixed_declaration(self) -> None:
-        handler = _handler({"name": "t", "comments": "d", "host": "1.2.3.4"})
+        handler = _handler({"name": "t", "comments": "d", "tags": ["a"], "host": "1.2.3.4"})
         self.assertEqual(
             handler.fields_from_params(Tunnels.FIELDS_TO_SAVE),
-            {"name": "t", "comments": "d", "host": "1.2.3.4", "port": "0"},
+            {"name": "t", "comments": "d", "tags": ["a"], "host": "1.2.3.4", "port": "0"},
         )
 
 
