@@ -35,13 +35,18 @@ import enum
 class FlowStatus(enum.StrEnum):
     """Status of an ActionFlow (a proposed sequence of changes).
 
-    Lifecycle: ``PENDING`` --lock--> ``LOCKED`` --approve--> ``APPROVED``
-    --> ``EXECUTING`` --> ``EXECUTED`` (a mid-run failure returns the
-    flow to ``LOCKED`` so the administrator can re-approve the failed
-    actions). ``PENDING`` may go straight to ``APPROVED`` (future
-    automations). ``REJECTED``/``CANCELLED``/``EXPIRED`` are terminal.
+    Lifecycle: the owner composes in ``DRAFT`` (invisible to
+    administrators) --submit--> ``PENDING`` --lock--> ``LOCKED``
+    --approve--> ``APPROVED`` --> ``EXECUTING`` --> ``EXECUTED`` (a
+    mid-run failure returns the flow to ``LOCKED`` so the administrator
+    can re-approve the failed actions). ``PENDING`` may go straight to
+    ``APPROVED`` (future automations). ``REJECTED``/``CANCELLED`` are
+    terminal decisions; unsubmitted drafts and unresolved pending flows
+    go to ``EXPIRED`` when their due date is gone (terminal: a new
+    proposal is required, expired flows never come back).
     """
 
+    DRAFT = "draft"
     PENDING = "pending"
     LOCKED = "locked"
     APPROVED = "approved"

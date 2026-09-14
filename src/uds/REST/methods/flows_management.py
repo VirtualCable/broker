@@ -38,6 +38,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from uds.core import consts, exceptions, types
+from uds.core.types.mcp import FlowStatus
 from uds.core.util import ensure
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
@@ -243,6 +244,9 @@ class FlowsManagement(ModelHandler[FlowItem]):
     ROLE: typing.ClassVar[consts.Role] = consts.Role.ADMIN
 
     MODEL = ActionFlow
+    # Owners compose in drafts: they are the agent's private space until
+    # submitted, so they do not exist for the administration surface.
+    EXCLUDE: typing.ClassVar[dict[str, typing.Any] | None] = {"status": FlowStatus.DRAFT}
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"actions": FlowActions}
 
     CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
@@ -286,6 +290,24 @@ class FlowsManagement(ModelHandler[FlowItem]):
     REST_API_INFO = types.rest.api.RestApiInfo(
         typed=types.rest.api.RestApiInfoGuiType.SINGLE_TYPE,
     )
+
+    @typing.override
+    def check_access(
+        self,
+        obj: models.Model,
+        permission: types.permissions.PermissionType,
+        root: bool = False,
+    ) -> None:
+        """Admins reach every decided or queued flow; drafts do not exist.
+
+        The generic lookup goes by uuid, so without this guard a draft
+        would be readable (and its actions listable) by direct URL; the
+        opaque 404 keeps the composing space private to its owner.
+        """
+        item = ensure.is_instance(obj, ActionFlow)
+        if item.status == FlowStatus.DRAFT:
+            raise exceptions.rest.NotFound("Item not found") from None
+        super().check_access(obj, permission, root)
 
     @typing.override
     def get_item(self, item: models.Model) -> FlowItem:

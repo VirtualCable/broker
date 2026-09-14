@@ -1,5 +1,5 @@
-"""M2M relation action types: ``metapool.groups``, ``servicepool.groups``,
-``servicepool.transports`` (option A over pure many-to-many sets)."""
+"""M2M relation action types: ``metapool.groups.set``, ``servicepool.groups.set``,
+``servicepool.transports.set`` (option A over pure many-to-many sets)."""
 
 import typing
 from unittest import mock
@@ -43,13 +43,13 @@ def _groups(count: int) -> list[models.Group]:
 class M2MRegistryTest(FlowTestCase):
     def test_all_registered(self) -> None:
         for type_id, cls in (
-            ("metapool.groups", MetaPoolGroups),
-            ("servicepool.groups", ServicePoolGroups),
-            ("servicepool.transports", ServicePoolTransports),
+            ("metapool.groups.set", MetaPoolGroups),
+            ("servicepool.groups.set", ServicePoolGroups),
+            ("servicepool.transports.set", ServicePoolTransports),
         ):
             self.assertIs(registry_get(type_id), cls)
         self.assertTrue(
-            {"metapool.groups", "servicepool.groups", "servicepool.transports"}
+            {"metapool.groups.set", "servicepool.groups.set", "servicepool.transports.set"}
             <= {t.type_id for t in all_types()}
         )
 

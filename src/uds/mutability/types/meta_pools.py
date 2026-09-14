@@ -1,4 +1,4 @@
-"""``metapool.update`` / ``metapool.members``: meta pool mutations.
+"""``metapool.update`` / ``metapool.members.set``: meta pool mutations.
 
 Top level resource with a static gui (no module instance). Since the
 gui-coupling trial, ``metapool.update`` derives its mutable surface from
@@ -8,7 +8,7 @@ form-shaped PUT are annotated ``context`` on the gui and therefore join
 the fingerprint but never the proposable surface. GUI changes propagate
 to the agent automatically.
 
-``metapool.members`` is the first *relation* action type: it proposes the
+``metapool.members.set`` is the first *relation* action type: it proposes the
 complete desired set of member pools (option A: full desired set, never a
 delta), executed on approval as the minimal create/edit/delete diff
 through the canonical ``meta_pools/{uuid}/pools`` detail surface.
@@ -178,7 +178,7 @@ class MetaPoolMembers(mutability_base.MutableActionType):
     sequence through the canonical ``meta_pools/{uuid}/pools`` surface.
     """
 
-    type_id = "metapool.members"
+    type_id = "metapool.members.set"
     title = "Propose meta pool members"
     description = (
         "Propose the complete desired set of member pools of a meta pool. The "
@@ -404,7 +404,7 @@ def _validate_priority(value: typing.Any, where: str) -> list[str]:
 class MetaPoolGroups(M2MSetActionType):
     """Proposal: set the complete desired access groups of a meta pool."""
 
-    type_id = "metapool.groups"
+    type_id = "metapool.groups.set"
     title = "Propose meta pool groups"
     description = (
         "Propose the complete desired set of groups allowed to use a meta pool. The "

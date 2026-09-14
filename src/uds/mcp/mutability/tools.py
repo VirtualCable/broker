@@ -1,10 +1,20 @@
 """MCP tools for the supervised mutability.
 
 One proposal tool per registered ``MutableActionType`` (generated from
-the registry), one discovery tool and the three management tools the
-agent uses to iterate on its own proposals. Nothing here applies a
-change: proposals wait until an administrator approves them from the
+the registry), one discovery tool and the flow lifecycle tools the agent
+uses to compose its own proposals. Nothing here applies a change: a
+submitted flow waits until an administrator approves it from the
 administration interface (phase 3 of doc/plan/mcp-mutability.md).
+
+The lifecycle is flow-centric and mirrors the owner REST surface
+(``/flows/own``): open a draft (``create_flow``), append actions to it
+(``propose_*``), refine an action while it is still a draft
+(``update_flow_action``), then close the draft for review
+(``submit_flow``). A draft is the agent's private space: administrators
+cannot see or lock it until it is submitted, and once submitted neither
+the agent can edit it nor can it be reopened (a change means a new
+flow). ``cancel_flow`` withdraws a flow the owner still controls (a
+draft, or a submitted one the administrator has not locked yet).
 
 The proposal lifecycle tools do NOT touch the models directly: they
 invoke the ``/flows/own`` REST surface (the same one any API client
@@ -35,12 +45,11 @@ JsonDict = dict[str, typing.Any]
 
 ExecutorSync = collections.abc.Callable[[JsonObject, ExtendedHttpRequestWithUser], typing.Any]
 
-_PROPOSE_MESSAGE: typing.Final[str] = (
-    "Proposal queued. It does NOT take effect until an administrator approves it."
+_APPEND_MESSAGE: typing.Final[str] = (
+    "Action added to the draft flow. It does NOT take effect until you submit the flow "
+    "and an administrator approves it."
 )
-_UPDATE_MESSAGE: typing.Final[str] = (
-    "Proposal updated. It does NOT take effect until an administrator approves it."
-)
+_UPDATE_MESSAGE: typing.Final[str] = "Draft action updated. Submit the flow when it is ready for review."
 
 
 def _request_user(request: ExtendedHttpRequestWithUser) -> User:
@@ -106,6 +115,17 @@ def _registry_type(type_id: str) -> registry.MutableActionType:
     return found()
 
 
+def _flow_summary(flow: JsonDict) -> JsonDict:
+    """The compact flow view shared by the lifecycle responses."""
+    return {
+        "id": flow["id"],
+        "name": flow["name"],
+        "status": flow["status"],
+        "actions": flow.get("actions_count"),
+        "due_date": flow["due_date"].isoformat() if flow.get("due_date") else None,
+    }
+
+
 def _own_action_index(
     request: ExtendedHttpRequestWithUser, statuses: collections.abc.Container[str]
 ) -> dict[str, tuple[str, JsonDict]]:
@@ -113,7 +133,7 @@ def _own_action_index(
 
     The index is built from the REST surface, so ownership is already
     enforced there; ``statuses`` selects which flow states are eligible
-    (pending to mutate, expired to revive).
+    (a draft flow's actions can still be refined).
     """
     index: dict[str, tuple[str, JsonDict]] = {}
     for flow_raw in typing.cast("list[typing.Any]", _flows_rest(request, "get", {})):
@@ -155,12 +175,69 @@ def _wrap_sync(sync_body: ExecutorSync) -> collections.abc.Callable[..., typing.
     return executor
 
 
+def _create_flow_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
+    """Open a draft flow: the composing space for one batch of changes."""
+    _request_user(request)
+    flow = typing.cast(
+        "JsonDict",
+        _as_dict(
+            _flows_rest(
+                request,
+                "post",
+                {
+                    "name": str(arguments.get("name", "") or ""),
+                    "justification": str(arguments.get("justification", "") or ""),
+                },
+            )
+        ),
+    )
+    return {
+        "flow_id": flow["id"],
+        "status": flow["status"],
+        "message": "Draft flow opened. Add actions with the propose_* tools, then submit_flow to queue it.",
+        "flow": _flow_summary(flow),
+    }
+
+
+def _submit_flow_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
+    """Close a draft flow and hand it to the administrator for review."""
+    _request_user(request)
+    flow_id = str(arguments.get("flow_id", "") or "")
+    if not flow_id.strip():
+        raise ValueError("flow_id is required")
+    flow = typing.cast(
+        "JsonDict",
+        _as_dict(
+            _flows_rest(
+                request,
+                "post",
+                {"expires_in_hours": arguments.get("expires_in_hours", "")},
+                flow_id,
+                "submit",
+            )
+        ),
+    )
+    return {
+        "flow_id": flow["id"],
+        "status": flow["status"],
+        "message": (
+            "Flow submitted. It does NOT take effect until an administrator approves it. "
+            "It can no longer be edited; cancel it (before the administrator locks it) "
+            "and open a new one to change anything."
+        ),
+        "flow": _flow_summary(flow),
+    }
+
+
 def _propose_sync(
     action_type: registry.MutableActionType,
     arguments: JsonObject,
     request: ExtendedHttpRequestWithUser,
 ) -> JsonDict:
     _request_user(request)
+    flow_id = str(arguments.get("flow_id", "") or "")
+    if not flow_id.strip():
+        raise ValueError("flow_id is required: open a flow with create_flow first")
     target_uuid = str(arguments.get("target_uuid", "") or "")
     if not target_uuid.strip():
         raise ValueError("target_uuid is required")
@@ -170,42 +247,29 @@ def _propose_sync(
     values = typing.cast("dict[str, typing.Any]", values)
     justification = str(arguments.get("justification", "") or "")
 
-    # The flow is created first, then the action is appended through the
-    # detail surface (validation, MANAGEMENT over the target, CAS base
-    # and caps are the REST ones). If the action fails, the fresh flow
-    # is withdrawn: proposals never end up half-created.
-    flow_params: JsonObject = {
-        "name": action_type.title,
-        "justification": justification,
-        "expires_in_hours": arguments.get("expires_in_hours", ""),
-    }
-    flow = typing.cast("JsonDict", _flows_rest(request, "post", flow_params))
-    try:
-        action = _detail_result(
-            _flows_rest(
-                request,
-                "post",
-                {
-                    "action_type": action_type.type_id,
-                    "target_uuid": target_uuid,
-                    "values": values,
-                    "justification": justification,
-                },
-                str(flow["id"]),
-                "actions",
-            )
+    # The action is appended to a draft flow the caller already owns,
+    # through the detail surface (validation, MANAGEMENT over the target,
+    # fresh CAS base and caps are the REST ones). A non-draft or foreign
+    # flow is refused there with a clean error.
+    action = _detail_result(
+        _flows_rest(
+            request,
+            "post",
+            {
+                "action_type": action_type.type_id,
+                "target_uuid": target_uuid,
+                "values": values,
+                "justification": justification,
+            },
+            flow_id,
+            "actions",
         )
-    except Exception:
-        try:
-            _flows_rest(request, "delete", {}, str(flow["id"]))
-        except Exception:
-            pass
-        raise
+    )
     return {
         "id": action["id"],
-        "flow_id": flow["id"],
+        "flow_id": flow_id,
         "status": action["status"],
-        "message": _PROPOSE_MESSAGE,
+        "message": _APPEND_MESSAGE,
         "proposal": _describe_item(action_type, action),
     }
 
@@ -266,8 +330,8 @@ def _list_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> J
             if type_filter and action["action_type"] != str(type_filter):
                 continue
             # Status filter matches either the action lifecycle or the
-            # decision taken on its flow (cancelled/rejected/expired are
-            # flow-level states).
+            # state of its flow (draft, cancelled, rejected, expired are
+            # flow-level; only a draft/locked flow's actions can move).
             if status_raw and action["status"] != status_raw and flow["status"] != status_raw:
                 continue
             item: JsonDict = {
@@ -283,7 +347,10 @@ def _list_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> J
                 "created": action["created"].isoformat(),
                 "result": action.get("result"),
             }
-            if flow["status"] == FlowStatus.PENDING:
+            # Live masked view of the proposal while the owner still
+            # controls it (draft) or the administrator holds it queued
+            # (pending/locked). Decided flows only show the outcome.
+            if flow["status"] in (FlowStatus.DRAFT, FlowStatus.PENDING, FlowStatus.LOCKED):
                 try:
                     item["proposal"] = _describe_item(_registry_type(str(action["action_type"])), action)
                 except Exception:
@@ -305,27 +372,17 @@ def _update_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) ->
         raise ValueError("values is required and must be a non-empty object")
     values = typing.cast("dict[str, typing.Any]", values)
 
-    # Pending flows are edited; expired ones come back to life through
-    # the same PUT (the REST surface reopens them within the grace
-    # window). The index is built from the REST surface, so ownership
-    # is already enforced there.
-    found = _own_action_index(request, (FlowStatus.PENDING, FlowStatus.EXPIRED)).get(action_id)
+    # Only actions of a draft flow can be refined; a submitted (or
+    # locked, or decided) flow is final. The index is built from the REST
+    # surface, so ownership is already enforced there.
+    found = _own_action_index(request, (FlowStatus.DRAFT,)).get(action_id)
     if found is None:
-        raise ValueError(f"No pending action with id {action_id}")
+        raise ValueError(f"No draft action with id {action_id} (actions can only be edited before submitting)")
     flow_id, item = found
 
     # Full replacement of the proposal, re-based on the current state
     # (the REST detail PUT validates and snapshots the new base).
-    action = _detail_result(
-        _flows_rest(
-            request,
-            "put",
-            {"values": values, "expires_in_hours": arguments.get("expires_in_hours", "")},
-            flow_id,
-            "actions",
-            action_id,
-        )
-    )
+    action = _detail_result(_flows_rest(request, "put", {"values": values}, flow_id, "actions", action_id))
     return {
         "id": action_id,
         "flow_id": flow_id,
@@ -337,33 +394,18 @@ def _update_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) ->
 
 def _cancel_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
     _request_user(request)
-    action_id = str(arguments.get("id", "") or "")
-    if not action_id.strip():
-        raise ValueError("id is required")
-
-    found = _own_action_index(request, (FlowStatus.PENDING,)).get(action_id)
-    if found is None:
-        raise ValueError(f"No pending action with id {action_id}")
-    flow_id, item = found
-
+    flow_id = str(arguments.get("flow_id", "") or "")
+    if not flow_id.strip():
+        raise ValueError("flow_id is required")
     # Decisions are flow-level: cancelling withdraws the whole proposal
-    flow = typing.cast("JsonDict", _flows_rest(request, "delete", {}, flow_id))
-    # Pending actions get skipped by the decision; refresh from the surface
-    status = item["status"]
-    try:
-        actions = typing.cast("list[typing.Any]", _flows_rest(request, "get", {}, flow_id, "actions"))
-        normalized = (typing.cast("JsonDict", _as_dict(a)) for a in actions)
-        refreshed = next((ref for ref in normalized if str(ref["id"]) == action_id), None)
-        if refreshed is not None:
-            status = refreshed["status"]
-    except Exception:
-        pass
+    # (a draft the agent is composing, or a submitted flow the
+    # administrator has not locked yet). A locked flow is refused there.
+    flow = typing.cast("JsonDict", _as_dict(_flows_rest(request, "delete", {}, flow_id)))
     return {
-        "id": action_id,
-        "flow_id": flow_id,
-        "status": status,
+        "flow_id": flow["id"],
         "flow_status": flow["status"],
-        "message": "Proposal cancelled.",
+        "message": "Flow cancelled.",
+        "flow": _flow_summary(flow),
     }
 
 
@@ -380,6 +422,13 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
         input_schema={
             "type": "object",
             "properties": {
+                "flow_id": {
+                    "type": "string",
+                    "description": (
+                        "Draft flow to add this action to (from create_flow). "
+                        "A flow can only receive actions while it is still a draft."
+                    ),
+                },
                 "target_uuid": {
                     "type": "string",
                     "description": "UUID of the item to mutate.",
@@ -400,23 +449,82 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
                         "so be specific: reference the ticket, request or reason."
                     ),
                 },
+            },
+            "required": ["flow_id", "target_uuid", "values"],
+            "additionalProperties": False,
+        },
+        access="Staff with MANAGEMENT permission over the target item.",
+        returns="The added action id, its masked description and the draft-flow notice.",
+        required_permission="MANAGEMENT",
+        read_only=False,
+        executor=_wrap_sync(sync_body),
+    )
+
+
+def _create_flow_tool() -> ToolDefinition:
+    """Build the open-a-draft-flow tool."""
+    return ToolDefinition(
+        name="create_flow",
+        title="Open a draft flow",
+        description=(
+            "Open an empty draft flow to compose a batch of changes. Add actions with the "
+            "propose_* tools and finish with submit_flow. A draft is private to you: no "
+            "administrator can see or touch it until you submit it. Unsubmitted drafts are "
+            "auto-discarded after a short window, so submit when the flow is complete."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Short name for the proposal (what this batch of changes is about).",
+                },
+                "justification": {
+                    "type": "string",
+                    "description": "Why the whole flow is needed. The administrator reads it to decide.",
+                },
+            },
+            "required": [],
+            "additionalProperties": False,
+        },
+        access="Staff (the MCP endpoint gate).",
+        returns="The draft flow id and its summary.",
+        read_only=False,
+        executor=_wrap_sync(_create_flow_sync),
+    )
+
+
+def _submit_flow_tool() -> ToolDefinition:
+    """Build the submit-a-flow tool."""
+    return ToolDefinition(
+        name="submit_flow",
+        title="Submit a flow for review",
+        description=(
+            "Close one of your draft flows and queue it for the administrator. From this "
+            "moment the flow is final: it can no longer be edited, and it does nothing until "
+            "an administrator approves it. To change something afterwards, cancel it (if not "
+            "yet locked) and open a new flow."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "flow_id": {"type": "string", "description": "Draft flow to submit."},
                 "expires_in_hours": {
                     "type": "integer",
                     "description": (
                         "Hours you expect an administrator to need to resolve this proposal "
-                        "(1..720, default 7 days). The proposal auto-expires after it, so "
-                        "declare a realistic window."
+                        "(1..720, default 7 days). The flow auto-expires after it, so declare "
+                        "a realistic window. The countdown starts now, at submit."
                     ),
                 },
             },
-            "required": ["target_uuid", "values"],
+            "required": ["flow_id"],
             "additionalProperties": False,
         },
-        access="Staff with MANAGEMENT permission over the target item.",
-        returns="The queued proposal id, its masked description and the approval notice.",
-        required_permission="MANAGEMENT",
+        access="Only the owner of the draft flow.",
+        returns="The submitted flow id, its pending status and the approval notice.",
         read_only=False,
-        executor=_wrap_sync(sync_body),
+        executor=_wrap_sync(_submit_flow_sync),
     )
 
 
@@ -457,16 +565,17 @@ def _discovery_tool() -> ToolDefinition:
 
 
 def _list_tool() -> ToolDefinition:
-    """Build the my-proposals listing tool."""
+    """Build the my-actions listing tool."""
     return ToolDefinition(
-        name="list_pending_actions",
-        title="List my proposals",
+        name="list_flow_actions",
+        title="List my flow actions",
         description=(
-            "The proposals created with this identity, with their state. Approved and rejected "
-            "proposals keep their outcome (result), so follow-up sessions can see what happened. "
-            "Secret values are always redacted. Each item carries its proposal flow; decisions "
-            "(rejected, cancelled, expired) happen at flow level. Only flows created within the "
-            "last 30 days are returned (narrow it or move the window with the date filters)."
+            "The actions created with this identity, grouped by their flow state. Draft actions "
+            "are the ones you can still edit; submitted ones keep their outcome (result), so "
+            "follow-up sessions can see what happened. Secret values are always redacted. Each "
+            "item carries its flow (id and status); decisions (rejected, cancelled, expired) "
+            "happen at flow level. Only flows created within the last 30 days are returned "
+            "(narrow or move the window with the date filters)."
         ),
         input_schema={
             "type": "object",
@@ -474,8 +583,9 @@ def _list_tool() -> ToolDefinition:
                 "status": {
                     "type": "string",
                     "description": (
-                        "Optional filter, matching the action or its flow: pending, locked, approved, "
-                        "executing, executed, failed, skipped, revoked, rejected, cancelled or expired."
+                        "Optional filter, matching the action or its flow: draft, pending, locked, "
+                        "approved, executing, executed, failed, skipped, revoked, rejected, "
+                        "cancelled or expired."
                     ),
                 },
                 "action_type": {
@@ -497,67 +607,64 @@ def _list_tool() -> ToolDefinition:
             "required": [],
             "additionalProperties": False,
         },
-        access="Staff (only the proposals of the calling identity are returned).",
-        returns="The list of proposals with state, masked changes and outcomes.",
+        access="Staff (only the actions of the calling identity are returned).",
+        returns="The list of actions with their flow, state, masked changes and outcomes.",
         read_only=True,
         executor=_wrap_sync(_list_sync),
     )
 
 
 def _update_tool() -> ToolDefinition:
-    """Build the update-my-proposal tool (re-propose with new values)."""
+    """Build the refine-a-draft-action tool."""
     return ToolDefinition(
-        name="update_pending_action",
-        title="Update my proposal",
+        name="update_flow_action",
+        title="Refine a draft action",
         description=(
-            "Replace the values of one of your own pending proposals (iterative refinement), "
-            "or revive one of your EXPIRED proposals (within its grace window): the whole flow "
-            "returns to pending with a fresh expiration. The proposal is re-validated and "
-            "re-based on the current state. It does NOT apply anything."
+            "Replace the values of one of your own draft actions (iterative refinement before "
+            "submitting). Only actions of a draft flow can be edited: once the flow is "
+            "submitted it is final and a change means a new flow. The action is re-validated "
+            "and re-based on the current state. It does NOT apply anything."
         ),
         input_schema={
             "type": "object",
             "properties": {
-                "id": {"type": "string", "description": "Proposal id."},
+                "id": {"type": "string", "description": "Action id (of a draft flow)."},
                 "values": {
                     "type": "object",
                     "description": "New complete set of field values.",
                     "additionalProperties": True,
                 },
-                "expires_in_hours": {
-                    "type": "integer",
-                    "description": (
-                        "Optional new expiration window in hours (1..720, default 7 days). "
-                        "Used when reviving an expired proposal."
-                    ),
-                },
             },
             "required": ["id", "values"],
             "additionalProperties": False,
         },
-        access="Only the owner of the proposal, while it is pending.",
-        returns="The updated proposal id and its masked description.",
+        access="Only the owner, while the flow is still a draft.",
+        returns="The updated action id and its masked description.",
         read_only=False,
         executor=_wrap_sync(_update_sync),
     )
 
 
 def _cancel_tool() -> ToolDefinition:
-    """Build the cancel-my-proposal tool."""
+    """Build the cancel-my-flow tool."""
     return ToolDefinition(
-        name="cancel_pending_action",
-        title="Cancel my proposal",
-        description="Withdraw one of your own pending proposals.",
+        name="cancel_flow",
+        title="Cancel my flow",
+        description=(
+            "Withdraw one of your own flows: a draft you are composing, or a submitted flow "
+            "the administrator has not locked yet. Once a flow is locked (in review) it can "
+            "no longer be cancelled here."
+        ),
         input_schema={
             "type": "object",
             "properties": {
-                "id": {"type": "string", "description": "Proposal id."},
+                "flow_id": {"type": "string", "description": "Flow id to cancel."},
             },
-            "required": ["id"],
+            "required": ["flow_id"],
             "additionalProperties": False,
         },
-        access="Only the owner of the proposal, while it is pending.",
-        returns="The cancelled proposal id and state.",
+        access="Only the owner, while the flow is a draft or pending (not yet locked).",
+        returns="The cancelled flow id and state.",
         read_only=False,
         executor=_wrap_sync(_cancel_sync),
     )
@@ -566,6 +673,8 @@ def _cancel_tool() -> ToolDefinition:
 def register_mutability_tools(catalog: Catalog) -> None:
     """Register the proposal tools of the registry plus the shared ones."""
     catalog.add_tool(_discovery_tool())
+    catalog.add_tool(_create_flow_tool())
+    catalog.add_tool(_submit_flow_tool())
     catalog.add_tool(_list_tool())
     catalog.add_tool(_update_tool())
     catalog.add_tool(_cancel_tool())

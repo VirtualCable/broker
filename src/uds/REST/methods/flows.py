@@ -29,9 +29,11 @@
 Owner surface for proposal flows (``/flows/own``).
 
 Every user (staff level) manages HERE only the flows it has proposed:
-create a flow, append/edit its actions while pending, inspect them and
-cancel the whole flow. Approval and execution remain on the management
-surface (``/flows/management``).
+open a draft flow, append/edit its actions while it is still a draft,
+submit it for review (pending, invisible edits from now on), inspect
+them and cancel the whole flow while undecided. Approval and execution
+remain on the management surface (``/flows/management``), where drafts
+do not exist.
 
 The domain logic (caps, CAS bases, transitions) lives in
 :mod:`uds.mutability`; this handler only exposes it over REST, so the
@@ -50,7 +52,6 @@ from django.utils.translation import gettext_lazy as _
 from uds import mutability
 from uds.core import exceptions, types
 from uds.core.consts import mcp as consts_mcp
-from uds.core.types.mcp import FlowStatus
 from uds.core.util import ensure
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
@@ -88,8 +89,10 @@ class FlowsOwnActions(FlowActions):
 
     Reading is inherited (ownership already enforced on the parent).
     Creating (POST) and editing (PUT, a re-base of a pending action of a
-    pending flow) run through the action type registry: validation,
+    draft flow) run through the action type registry: validation,
     MANAGEMENT permission over the target, fresh CAS base and the caps.
+    Once the flow is submitted (pending) it is final: changes mean a new
+    flow.
 
     Approving and skipping actions are admin operations (management
     surface only): neither the custom methods nor the admin view data
@@ -145,15 +148,6 @@ class FlowsOwnActions(FlowActions):
         store = FlowStore()
         if item:  # Edit: re-base a pending action, keeping type and target
             action = parent.actions.get(uuid=process_uuid(item))
-            if parent.status == FlowStatus.EXPIRED:
-                # Revival: within the grace window, editing an expired
-                # proposal brings the whole flow back to pending
-                store.reopen_flow(
-                    parent,
-                    actor_uuid=self._user.uuid,
-                    ttl=_ttl_from_params(self._params) or datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS),
-                )
-                action.refresh_from_db()
             action_type = self._registry_type(action.action_type)
             target = self._require_management(action_type, action.target_uuid)
             values, base_values, base_etag, justification = self._validated_payload(
@@ -196,9 +190,10 @@ class FlowsOwn(ModelHandler[FlowItem]):
     """Owner API for proposal flows (staff).
 
     Users see and manage here ONLY their own flows. The list is the full
-    history (decisions included); a single lookup admits any status;
-    creation appends a fresh pending flow (caps enforced); deletion
-    cancels a pending flow. Mutations only apply while pending.
+    history (drafts and decisions included); a single lookup admits any
+    status; creation opens a fresh DRAFT flow (caps enforced); ``submit``
+    closes it for review; deletion cancels a draft or pending flow.
+    Mutations (actions) only apply while the flow is a draft.
     """
 
     PATH = "flows"
@@ -207,7 +202,15 @@ class FlowsOwn(ModelHandler[FlowItem]):
     MODEL = ActionFlow
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"actions": FlowsOwnActions}
 
-    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = []
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
+        types.rest.ModelCustomMethod(
+            "submit",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Close a draft flow and queue it for the administrator; from now on it cannot be edited",
+        ),
+    ]
 
     FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "justification"]
 
@@ -273,22 +276,39 @@ class FlowsOwn(ModelHandler[FlowItem]):
 
     @typing.override
     def _perform_create(self) -> dict[str, typing.Any]:
-        """Create a fresh pending flow owned by the requester."""
+        """Open a fresh draft flow owned by the requester."""
         store = FlowStore()
         try:
             flow = store.create_flow(
                 owner=self._user,
                 name=str(self._params.get("name", "") or ""),
                 justification=str(self._params.get("justification", "") or ""),
-                ttl=_ttl_from_params(self._params),
             )
         except MutabilityError as e:
             raise exceptions.rest.RequestError(str(e)) from None
         return dict(self.get_item(flow).as_dict())
 
+    def submit(self, item: models.Model) -> dict[str, typing.Any]:
+        """Close a draft flow and queue it for the administrator.
+
+        The proposal becomes final: actions cannot be added or edited
+        afterwards, and the administrator's review window
+        (``expires_in_hours``) starts counting now.
+        """
+        flow = ensure.is_instance(item, ActionFlow)
+        try:
+            flow = FlowStore().submit_flow(
+                flow,
+                actor_uuid=self._user.uuid,
+                ttl=_ttl_from_params(self._params),
+            )
+        except InvalidTransition as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        return self.get_item(flow).as_dict()
+
     @typing.override
     def delete(self) -> typing.Any:
-        """Cancel one of the owner's pending flows."""
+        """Cancel one of the owner's draft or pending flows."""
         if len(self._args) > 1:  # Detail deletion (actions) → refused there
             return self.process_detail()
         if len(self._args) != 1:

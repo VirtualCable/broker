@@ -89,6 +89,7 @@ class ExecuteFlowTest(FlowTestCase):
             action.status = FlowActionStatus.APPROVED
             action.approved_etag = approved_etag
             action.save(update_fields=["status"])
+        self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
         self.store.approve_flow(flow, admin=self.other)
         return flow, actions
 

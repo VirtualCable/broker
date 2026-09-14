@@ -1,4 +1,4 @@
-"""``metapool.members``: relation action type (option A, full desired set)."""
+"""``metapool.members.set``: relation action type (option A, full desired set)."""
 
 import typing
 from unittest import mock
@@ -37,9 +37,9 @@ def _metapool(pools: list[models.ServicePool]) -> models.MetaPool:
 
 class MetaPoolMembersRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
-        found = registry_get("metapool.members")
+        found = registry_get("metapool.members.set")
         self.assertIs(found, MetaPoolMembers)
-        self.assertIn("metapool.members", [t.type_id for t in all_types()])
+        self.assertIn("metapool.members.set", [t.type_id for t in all_types()])
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):
@@ -158,7 +158,7 @@ class MetaPoolMembersCasTest(FlowTestCase):
         flow = self._flow()
         action = self._action(
             flow,
-            action_type="metapool.members",
+            action_type="metapool.members.set",
             target_uuid=meta_pool.uuid,
             values={"members": [live["members"][0]]},  # keep one, drop the other
             base_values=live,
@@ -175,7 +175,7 @@ class MetaPoolMembersExecuteTest(FlowTestCase):
     def _run(self, meta_pool: models.MetaPool, members: list[dict[str, typing.Any]]) -> mock.Mock:
         action = self._action(
             self._flow(),
-            action_type="metapool.members",
+            action_type="metapool.members.set",
             target_uuid=meta_pool.uuid,
             values={"members": members},
             base_values={},

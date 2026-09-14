@@ -7,6 +7,7 @@ from unittest import mock
 from uds.core.consts import mcp as consts_mcp
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util.config import GlobalConfig
+from uds.core.util.model import sql_now
 from uds.mutability import (
     InvalidTransition,
     MutabilityError,
@@ -39,14 +40,50 @@ def _approve_all(flow: ActionFlow) -> None:
 class FlowLifecycleTest(FlowTestCase):
     """Strict state machine: valid transitions and rejected ones."""
 
-    def test_created_is_pending_with_due_date(self) -> None:
+    def test_created_is_draft_with_short_due_date(self) -> None:
         flow = self._flow()
-        self.assertEqual(flow.status, FlowStatus.PENDING)
+        self.assertEqual(flow.status, FlowStatus.DRAFT)
         self.assertIsNotNone(flow.due_date)
         assert flow.due_date is not None
         remaining = flow.due_date - datetime.datetime.now(datetime.UTC)
-        self.assertAlmostEqual(remaining.total_seconds(), consts_mcp.FLOW_TTL_DAYS * 86400, delta=60)
+        self.assertAlmostEqual(remaining.total_seconds(), consts_mcp.DRAFT_TTL_DAYS * 86400, delta=60)
         self.assertEqual(flow.properties.get("agent"), "test-agent/1.0")
+
+    def test_submit_queues_the_flow_with_the_resolution_window(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        self.store.submit_flow(flow, actor_uuid=self.owner.uuid, ttl=datetime.timedelta(hours=48))
+        flow.refresh_from_db()
+        self.assertEqual(flow.status, FlowStatus.PENDING)
+        assert flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(hours=49))
+        self.assertGreater(remaining, datetime.timedelta(hours=47))
+
+    def test_submit_requires_an_action(self) -> None:
+        flow = self._flow()
+        with self.assertRaises(InvalidTransition):
+            self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+
+    def test_submit_by_other_user_raises(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        with self.assertRaises(NotActionOwner):
+            self.store.submit_flow(flow, actor_uuid=self.other.uuid)
+
+    def test_submit_twice_raises(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+        with self.assertRaises(InvalidTransition):
+            self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+
+    def test_add_action_after_submit_raises(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+        with self.assertRaises(InvalidTransition):
+            self._action(flow)
 
     def test_add_action_orders_sequentially(self) -> None:
         flow = self._flow()
@@ -84,8 +121,9 @@ class FlowLifecycleTest(FlowTestCase):
             self.store.cancel_flow(flow, actor_uuid=self.other.uuid)
 
     def test_reject_records_admin_and_reason(self) -> None:
-        flow = self._flow()
-        action = self._action(flow)
+        flow = self._open_flow()
+        action = flow.actions.first()
+        assert action is not None
         self.store.reject_flow(flow, admin="admin-1", reason="not now")
         self.assertEqual(flow.status, FlowStatus.REJECTED)
         self.assertEqual(flow.properties.get("decided_by"), "admin-1")
@@ -93,15 +131,22 @@ class FlowLifecycleTest(FlowTestCase):
         action.refresh_from_db()
         self.assertEqual(action.status, FlowActionStatus.SKIPPED)
 
-    def test_approve_requires_all_actions_ready(self) -> None:
+    def test_reject_draft_raises(self) -> None:
         flow = self._flow()
-        self._action(flow)  # pending: the approval cycle is not done
+        self._action(flow)
+        with self.assertRaises(InvalidTransition):
+            self.store.reject_flow(flow, admin="admin-1")
+
+    def test_approve_requires_all_actions_ready(self) -> None:
+        flow = self._open_flow()
+        flow.actions.update(status=FlowActionStatus.PENDING)  # approval cycle not done
         with self.assertRaises(InvalidTransition):
             self.store.approve_flow(flow, admin=self.other)
 
     def test_approve_records_admin(self) -> None:
-        flow = self._flow()
-        action = self._action(flow)
+        flow = self._open_flow()
+        action = flow.actions.first()
+        assert action is not None
         _approve_all(flow)
         self.store.approve_flow(flow, admin=self.other)
         self.assertEqual(flow.status, FlowStatus.APPROVED)
@@ -111,14 +156,22 @@ class FlowLifecycleTest(FlowTestCase):
         self.assertEqual(action.status, FlowActionStatus.APPROVED)
 
     def test_approve_flow_from_locked(self) -> None:
-        flow = self._flow()
-        self._action(flow)
+        flow = self._open_flow()
         _approve_all(flow)
         self.store.lock_flow(flow, admin=self.other)
         self.assertEqual(flow.status, FlowStatus.LOCKED)
         self.store.approve_flow(flow, admin=self.other)
         flow.refresh_from_db()
         self.assertEqual(flow.status, FlowStatus.APPROVED)
+
+    def test_draft_cannot_be_locked_or_approved(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        with self.assertRaises(InvalidTransition):
+            self.store.lock_flow(flow, admin=self.other)
+        _approve_all(flow)  # the simulation writes rows, not transitions
+        with self.assertRaises(InvalidTransition):
+            self.store.approve_flow(flow, admin=self.other)
 
     def test_decided_is_terminal(self) -> None:
         def ready(flow: ActionFlow) -> ActionFlow:
@@ -134,8 +187,7 @@ class FlowLifecycleTest(FlowTestCase):
             ),
         )
         for decide in decisions:
-            flow = self._flow()
-            self._action(flow)  # an undecided action; decisions skip it
+            flow = self._open_flow()  # submitted: the actions are undecided yet
             decide(flow)
             with self.assertRaises(InvalidTransition):
                 self.store.approve_flow(flow, admin=self.other)
@@ -151,8 +203,10 @@ class FlowLifecycleTest(FlowTestCase):
     def test_execution_flow_states(self) -> None:
         flow = self._flow()
         first = self._action(flow, values={"n": 1})
-        second = self._action(flow, values={"n": 2})
+        self._action(flow, values={"n": 2})
+        self._submitted(flow)
         _approve_all(flow)
+        second = flow.actions.get(order=2)
         self.store.approve_flow(flow, admin=self.other)
         first.refresh_from_db()
         second.refresh_from_db()
@@ -174,8 +228,10 @@ class FlowLifecycleTest(FlowTestCase):
     def test_failure_returns_flow_to_locked_and_keeps_rest_approved(self) -> None:
         flow = self._flow()
         first = self._action(flow, values={"n": 1})
-        second = self._action(flow, values={"n": 2})
+        self._action(flow, values={"n": 2})
+        self._submitted(flow)
         _approve_all(flow)
+        second = flow.actions.get(order=2)
         self.store.approve_flow(flow, admin=self.other)
         first.refresh_from_db()
 
@@ -193,8 +249,10 @@ class FlowLifecycleTest(FlowTestCase):
         """A partially-run flow relaunches; executed actions never repeat."""
         flow = self._flow()
         first = self._action(flow, values={"n": 1})
-        second = self._action(flow, values={"n": 2})
+        self._action(flow, values={"n": 2})
+        self._submitted(flow)
         _approve_all(flow)
+        second = flow.actions.get(order=2)
         self.store.approve_flow(flow, admin=self.other)
         first.refresh_from_db()
         second.refresh_from_db()
@@ -225,10 +283,11 @@ class FlowLifecycleTest(FlowTestCase):
         self.assertEqual(first.status, FlowActionStatus.EXECUTED)
 
     def test_execution_requires_approved_or_executing(self) -> None:
-        flow = self._flow()
-        action = self._action(flow)
+        flow = self._open_flow()
+        action = flow.actions.first()
+        assert action is not None
         with self.assertRaises(InvalidTransition):
-            self.store.mark_action_executing(action)  # flow still pending
+            self.store.mark_action_executing(action)  # action still pending
         _approve_all(flow)
         self.store.approve_flow(flow, admin=self.other)
         action.refresh_from_db()
@@ -257,9 +316,8 @@ class FlowStoreTest(FlowTestCase):
         self.assertIsNone(self.store.get_action("nonexistent-uuid"))
 
     def test_list_flows_filters_by_status_and_owner(self) -> None:
-        self._flow(name="pending")
-        approved = self._flow(name="approved")
-        self._action(approved)
+        self._open_flow(name="pending")
+        approved = self._open_flow(name="approved")
         _approve_all(approved)
         self.store.approve_flow(approved, admin=self.other)
         self._flow(owner=self.other, name="foreign")
@@ -283,16 +341,22 @@ class FlowStoreTest(FlowTestCase):
         only_b = self.store.list_actions(owner_uuid=self.owner.uuid, action_type="nonexistent.type")
         self.assertEqual(only_b, [])
 
-    def test_count_pending_flows(self) -> None:
+    def test_count_open_flows(self) -> None:
         self.assertGreater(consts_mcp.MAX_FLOWS_PER_USER, 0)
         for i in range(3):
-            flow = self._flow(name=f"flow-{i}")
-            self._action(flow)
+            self._flow(name=f"flow-{i}")
         decided = self._flow(name="decided")
         self.store.cancel_flow(decided, actor_uuid=self.owner.uuid)
 
-        self.assertEqual(self.store.count_pending_flows(owner_uuid=self.owner.uuid), 3)
-        self.assertEqual(self.store.count_pending_flows(owner_uuid=self.other.uuid), 0)
+        # Drafts (being composed) and pending (awaiting review) both count
+        self.assertEqual(self.store.count_open_flows(owner_uuid=self.owner.uuid), 3)
+        self.assertEqual(self.store.count_open_flows(owner_uuid=self.other.uuid), 0)
+
+    def test_count_open_flows_after_submit_stays(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+        self.assertEqual(self.store.count_open_flows(owner_uuid=self.owner.uuid), 1)
 
     def test_create_flow_enforces_cap(self) -> None:
         with _config_limit("MCP_MAX_FLOWS_PER_USER", 2):
@@ -304,7 +368,7 @@ class FlowStoreTest(FlowTestCase):
     def test_lazy_expiry(self) -> None:
         flow = self._flow()
         action = self._action(flow)
-        # Force the due date into the past
+        # Force the draft's due date into the past
         ActionFlow.objects.filter(uuid=flow.uuid).update(
             due_date=datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=1)
         )
@@ -313,17 +377,18 @@ class FlowStoreTest(FlowTestCase):
         loaded = self.store.get_flow(flow.uuid)
         assert loaded is not None
         self.assertEqual(loaded.status, FlowStatus.EXPIRED)
+        self.assertEqual(loaded.properties.get("decided_note"), "Draft abandoned")
         action.refresh_from_db()
         self.assertEqual(action.status, FlowActionStatus.SKIPPED)
 
-        # ... and it is no longer listed as pending
-        self.assertEqual(self.store.list_flows(status=FlowStatus.PENDING), [])
+        # ... and it is no longer listed as open
+        self.assertEqual(self.store.list_flows(status=FlowStatus.DRAFT), [])
 
-    def test_fresh_pending_is_not_expired(self) -> None:
+    def test_fresh_draft_is_not_expired(self) -> None:
         flow = self._flow()
         loaded = self.store.get_flow(flow.uuid)
         assert loaded is not None
-        self.assertEqual(loaded.status, FlowStatus.PENDING)
+        self.assertEqual(loaded.status, FlowStatus.DRAFT)
 
 
 class FlowApproveCasTest(FlowTestCase):
@@ -352,6 +417,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_approve_freezes_live_state_and_snapshots_it(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         approved = self.store.approve_action(action, admin=self.other)
         self.assertEqual(approved.status, FlowActionStatus.APPROVED)
         # Proposal base stays immutable
@@ -366,8 +432,9 @@ class FlowApproveCasTest(FlowTestCase):
         self.assertIn("approved_at", snap)
         self.assertTrue(snap.get("fields"))
 
-    def test_approve_acquires_pending_flow(self) -> None:
+    def test_approve_acquires_submitted_flow(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.assertEqual(self.flow.status, FlowStatus.PENDING)
         self.store.approve_action(action, admin=self.other)
         self.flow.refresh_from_db()
@@ -377,6 +444,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_approve_freezes_the_drifted_state_it_saw(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.provider.name = "changed by a human"
         self.provider.save()
         self.store.approve_action(action, admin=self.other)
@@ -387,6 +455,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_reapprove_refreshes_the_freeze(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.provider.name = "changed later"
         self.provider.save()
@@ -402,6 +471,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_approve_of_executing_action_raises(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.store.approve_flow(self.flow, admin=self.other)
         self.store.mark_action_executing(action)
@@ -410,12 +480,14 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_approve_of_vanished_target_raises(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.provider.delete()
         with self.assertRaises(StaleProposal):
             self.store.approve_action(action, admin=self.other)
 
     def test_revoked_action_is_recovered_by_approve(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.provider.name = "changed by a human"
         self.provider.save()
@@ -431,6 +503,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_skip_marks_and_acquires_flow(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         skipped = self.store.skip_action(action, admin=self.other)
         self.assertEqual(skipped.status, FlowActionStatus.SKIPPED)
         self.flow.refresh_from_db()
@@ -438,6 +511,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_skip_clears_frozen_approval(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.store.skip_action(action, admin=self.other)
         action.refresh_from_db()
@@ -446,6 +520,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_skip_of_executed_action_raises(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.store.approve_flow(self.flow, admin=self.other)
         self.store.mark_action_executing(action)
@@ -457,6 +532,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_lock_flow(self) -> None:
         self._add_proposal()
+        self._submitted(self.flow)
         self.store.lock_flow(self.flow, admin=self.other)
         self.flow.refresh_from_db()
         self.assertEqual(self.flow.status, FlowStatus.LOCKED)
@@ -464,6 +540,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_lock_is_idempotent(self) -> None:
         self._add_proposal()
+        self._submitted(self.flow)
         self.store.lock_flow(self.flow, admin=self.other)
         self.store.lock_flow(self.flow, admin=self.other)
         self.flow.refresh_from_db()
@@ -471,6 +548,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_lock_refuses_flows_past_locked(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.store.approve_flow(self.flow, admin=self.other)
         with self.assertRaises(InvalidTransition):
@@ -478,6 +556,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_owner_cannot_edit_or_cancel_locked_flow(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)  # acquires the flow
         with self.assertRaises(InvalidTransition):
             self.store.rebase_action(action, values={"name": "x"}, base_values={"name": "y"}, base_etag="e")
@@ -489,11 +568,13 @@ class FlowApproveCasTest(FlowTestCase):
     def test_compliance_ok_when_untouched(self) -> None:
         action = self._add_proposal()
         self.assertEqual(self.store.compliance(action), "ok")
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.assertEqual(self.store.compliance(action), "ok")
 
     def test_compliance_conflict_when_touched_field_drifts(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.provider.name = "changed by a human"
         self.provider.save()
         # Pending: compared against the proposal base
@@ -523,6 +604,7 @@ class FlowApproveCasTest(FlowTestCase):
             base_values={"name": self.provider.name},
             base_etag=self.action_type.fingerprint(self.provider),
         )
+        self._submitted(self.flow)
         self.assertEqual(self.store.flow_compliance(self.flow), "ok")
         # An unrelated field changed: outdated for both actions
         self.provider.comments = "annotated by a human"
@@ -542,6 +624,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_verify_flow_ok_when_all_actions_approved_and_fresh(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.assertEqual(self.store.verify_flow(self.flow), [])
         self.store.approve_flow(self.flow, admin=self.other)
@@ -551,6 +634,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_verify_flow_requires_pending_or_locked_flow(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)  # acquires the flow
         self.store.reject_flow(self.flow, admin="admin-1")
         with self.assertRaises(InvalidTransition):
@@ -559,12 +643,14 @@ class FlowApproveCasTest(FlowTestCase):
     def test_verify_flow_requires_all_actions_ready(self) -> None:
         self._add_proposal()  # stays pending
         approved = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(approved, admin=self.other)
         with self.assertRaises(InvalidTransition):
             self.store.verify_flow(self.flow)
 
     def test_verify_flow_requires_at_least_one_approved_action(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.skip_action(action, admin=self.other)
         with self.assertRaises(InvalidTransition):
             self.store.verify_flow(self.flow)
@@ -572,6 +658,7 @@ class FlowApproveCasTest(FlowTestCase):
     def test_verify_is_strict_whole_item(self) -> None:
         """Pass 1 revokes on ANY change, even outside the touched fields."""
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         # Only an unrelated field changed (compliance would be "outdated")
         self.provider.comments = "annotated by a human"
@@ -589,6 +676,7 @@ class FlowApproveCasTest(FlowTestCase):
 
     def test_verify_tolerates_drift_on_force_types(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.provider.name = "changed by a human"
         self.provider.save()
@@ -610,6 +698,7 @@ class FlowApproveCasTest(FlowTestCase):
             base_values={"name": "y"},
             base_etag="e",
         )
+        self._submitted(self.flow)
         # Force-approve a vanished target (the approval would refuse it)
         action.status = FlowActionStatus.APPROVED
         action.approved_etag = "frozen"
@@ -620,18 +709,19 @@ class FlowApproveCasTest(FlowTestCase):
 
     # ---------------------------------------------------------------- rebase
 
-    def test_rebase_refuses_locked_flow(self) -> None:
+    def test_rebase_refuses_submitted_flow(self) -> None:
         action = self._add_proposal()
-        self.store.approve_action(action, admin=self.other)  # flow is locked now
+        self._submitted(self.flow)  # pending: the owner's composing is over
         with self.assertRaises(InvalidTransition):
             self.store.rebase_action(action, values={"name": "x"}, base_values={"name": "y"}, base_etag="e")
 
-    def test_rebase_of_approved_action_refused_even_on_pending_flow(self) -> None:
+    def test_rebase_of_approved_action_refused_even_on_editable_flow(self) -> None:
         action = self._add_proposal()
+        self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
-        # Force the flow back to pending (impossible through the API):
-        # the approved action itself still refuses a rebase
-        self.flow.status = FlowStatus.PENDING
+        # Force the flow back to draft (impossible through the API): the
+        # approved action itself still refuses a rebase
+        self.flow.status = FlowStatus.DRAFT
         self.flow.save(update_fields=["status"])
         with self.assertRaises(InvalidTransition):
             self.store.rebase_action(action, values={"name": "x"}, base_values={"name": "y"}, base_etag="e")

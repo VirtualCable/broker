@@ -512,12 +512,13 @@ class GlobalConfig:
         help=_("Maximum MCP requests per user and minute. 0 means unlimited"),
     )
     # Caps of the supervised mutability proposal queue. The flows cap only
-    # counts PENDING flows (decided/executed ones do not consume budget).
+    # counts open flows (drafts being composed and pending ones awaiting
+    # review; decided/executed ones do not consume budget).
     MCP_MAX_FLOWS_PER_USER: Config.Value = Config.section(Config.SectionType.MCP).value(
         "Max Pending Flows per User",
         str(consts.mcp.MAX_FLOWS_PER_USER),
         type=Config.FieldType.NUMERIC,
-        help=_("Maximum pending (not yet decided) proposal flows a single user can have"),
+        help=_("Maximum draft or pending (not yet decided) proposal flows a single user can have"),
     )
     MCP_MAX_ACTIONS_PER_FLOW: Config.Value = Config.section(Config.SectionType.MCP).value(
         "Max Actions per Flow",

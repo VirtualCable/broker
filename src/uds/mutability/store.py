@@ -72,25 +72,25 @@ class FlowStore:
         agent: str = "",
         name: str = "",
         justification: str = "",
-        ttl: datetime.timedelta | None = None,
     ) -> ActionFlow:
-        """Create a pending flow, enforcing the per-user pending cap.
+        """Open a draft flow, enforcing the per-user open/pending cap.
 
-        ``ttl`` is the proposer's expected resolution window; it defaults
-        to :data:`consts_mcp.FLOW_TTL_DAYS`.
+        Drafts are the owner's composing space: invisible to
+        administrators until :meth:`submit_flow` turns them pending (the
+        resolution window, and with it the expiration, starts there).
         """
-        if self.count_pending_flows(owner_uuid=owner.uuid) >= GlobalConfig.MCP_MAX_FLOWS_PER_USER.as_int():
+        if self.count_open_flows(owner_uuid=owner.uuid) >= GlobalConfig.MCP_MAX_FLOWS_PER_USER.as_int():
             raise MutabilityError(
-                "Too many pending proposals "
+                "Too many open proposals "
                 f"(limit {GlobalConfig.MCP_MAX_FLOWS_PER_USER.as_int()}). "
-                "Cancel some before proposing more."
+                "Submit or discard some before opening more."
             )
         flow = ActionFlow.objects.create(
             owner=owner,
             name=name,
             justification=justification,
-            status=FlowStatus.PENDING,
-            due_date=sql_now() + (ttl or datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS)),
+            status=FlowStatus.DRAFT,
+            due_date=sql_now() + datetime.timedelta(days=consts_mcp.DRAFT_TTL_DAYS),
         )
         if agent:
             # Informational: which agent (clientInfo) created the flow
@@ -108,9 +108,9 @@ class FlowStore:
         base_etag: str,
         justification: str = "",
     ) -> FlowAction:
-        """Append one action to a pending flow, enforcing the size cap."""
-        if flow.status != FlowStatus.PENDING:
-            raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only pending flows accept actions")
+        """Append one action to a draft flow, enforcing the size cap."""
+        if flow.status != FlowStatus.DRAFT:
+            raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only draft flows accept actions")
         last = flow.actions.order_by("-order").values_list("order", flat=True).first()
         if last is not None and last + 1 > GlobalConfig.MCP_MAX_ACTIONS_PER_FLOW.as_int():
             raise MutabilityError(
@@ -140,17 +140,16 @@ class FlowStore:
         base_etag: str,
         justification: str = "",
     ) -> FlowAction:
-        """Replace the payload of a pending action (proposer edit).
+        """Replace the payload of a draft action (proposer refinement).
 
-        Only allowed while the flow is still pending (a locked flow is
-        in the administrator's hands): once the admin touches the flow
-        the agent cannot edit anything. Failed/revoked actions are the
-        administrator's to recover (re-approve or skip), never the
-        proposer's.
+        Only allowed while the flow is still a draft (a submitted flow is
+        the administrator's to review as proposed): once closed, changes
+        mean a new flow. Failed/revoked actions are the administrator's to
+        recover (re-approve or skip), never the proposer's.
         """
-        if action.flow.status != FlowStatus.PENDING:
+        if action.flow.status != FlowStatus.DRAFT:
             raise InvalidTransition(
-                f"Flow {action.flow.uuid} is {action.flow.status}, only actions of pending flows can be edited"
+                f"Flow {action.flow.uuid} is {action.flow.status}, only actions of draft flows can be edited"
             )
         if action.status != FlowActionStatus.PENDING:
             raise InvalidTransition(
@@ -222,14 +221,39 @@ class FlowStore:
             result.append(action)
         return result
 
-    def count_pending_flows(self, *, owner_uuid: str) -> int:
-        """Number of still-pending flows of one user (spam cap)."""
-        return ActionFlow.objects.filter(owner__uuid=owner_uuid, status=FlowStatus.PENDING).count()
+    def count_open_flows(self, *, owner_uuid: str) -> int:
+        """Open (draft or pending) flows of one user (spam cap)."""
+        return ActionFlow.objects.filter(
+            owner__uuid=owner_uuid, status__in=(FlowStatus.DRAFT, FlowStatus.PENDING)
+        ).count()
 
     # ----------------------------------------------------------- transitions
 
+    def submit_flow(
+        self, flow: ActionFlow, *, actor_uuid: str, ttl: datetime.timedelta | None = None
+    ) -> ActionFlow:
+        """Owner closes a draft and queues it for the administrator.
+
+        The proposal becomes final from here: the actions keep the base
+        they were re-based on while composing, and further changes mean
+        a new flow. ``ttl`` is the expected resolution window; it starts
+        counting now (drafts do not consume the window). A submitted
+        draft with no actions would leave the administrator with nothing
+        to review, so it is refused.
+        """
+        if flow.owner is None or flow.owner.uuid != actor_uuid:
+            raise NotActionOwner(f"Flow {flow.uuid} does not belong to user {actor_uuid}")
+        if flow.status != FlowStatus.DRAFT:
+            raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only draft flows can be submitted")
+        if not flow.actions.exists():
+            raise InvalidTransition(f"Flow {flow.uuid} has no actions to submit")
+        flow.status = FlowStatus.PENDING
+        flow.due_date = sql_now() + (ttl or datetime.timedelta(days=consts_mcp.FLOW_TTL_DAYS))
+        flow.save(update_fields=["status", "due_date"])
+        return flow
+
     def cancel_flow(self, flow: ActionFlow, *, actor_uuid: str) -> None:
-        """Owner withdraws its own pending flow.
+        """Owner withdraws its own draft or pending flow.
 
         A locked flow is in the administrator's hands: the owner can no
         longer cancel it (it is invisible to the agent anyway).
@@ -239,40 +263,10 @@ class FlowStore:
         self._decide_flow(
             flow,
             FlowStatus.CANCELLED,
-            allowed=(FlowStatus.PENDING,),
+            allowed=(FlowStatus.DRAFT, FlowStatus.PENDING),
             decided_by=actor_uuid,
             note="Cancelled by proposer",
         )
-
-    def reopen_flow(self, flow: ActionFlow, *, actor_uuid: str, ttl: datetime.timedelta) -> None:
-        """Proposer revives its own expired flow, within the grace window.
-
-        The whole proposal comes back: skipped actions turn pending again
-        and the expiration moves to ``now + ttl``. Cancelled/rejected (a
-        conscious decision) and flows expired beyond
-        :data:`consts_mcp.REOPEN_GRACE_DAYS` stay final.
-        """
-        if flow.owner is None or flow.owner.uuid != actor_uuid:
-            raise NotActionOwner(f"Flow {flow.uuid} does not belong to user {actor_uuid}")
-        if flow.status != FlowStatus.EXPIRED:
-            raise InvalidTransition(f"Flow {flow.uuid} is {flow.status}, only expired flows can be reopened")
-        if flow.due_date is None or sql_now() - flow.due_date > datetime.timedelta(
-            days=consts_mcp.REOPEN_GRACE_DAYS
-        ):
-            raise InvalidTransition(
-                f"Flow {flow.uuid} expired more than {consts_mcp.REOPEN_GRACE_DAYS} days ago "
-                "and can no longer be reopened"
-            )
-        flow.status = FlowStatus.PENDING
-        flow.due_date = sql_now() + ttl
-        flow.save(update_fields=["status", "due_date"])
-        # A pending action never carries a frozen approval nor a stale review
-        for action in flow.actions.filter(status=FlowActionStatus.SKIPPED):
-            action.status = FlowActionStatus.PENDING
-            action.save(update_fields=["status"])
-            action.properties.pop("snap_info", None)
-            action.properties.pop("approved_etag", None)
-            action.properties.pop("approved_values", None)
 
     def reject_flow(self, flow: ActionFlow, *, admin: str, reason: str | None = None) -> None:
         """Administrator declines a pending or locked flow (no way back)."""
@@ -568,13 +562,24 @@ class FlowStore:
     # ------------------------------------------------------------- expiry
 
     def maybe_expire_flow(self, flow: ActionFlow) -> bool:
-        """Expire (and persist) the flow if its due date is gone."""
-        if flow.status != FlowStatus.PENDING:
+        """Expire (and persist) the flow if its due date is gone.
+
+        Drafts get the short composing window (abandoned drafts expire on
+        their own); submitted flows get the resolution window set at
+        submit. Expiry is terminal: what the proposer wants back must be
+        proposed again as a new flow.
+        """
+        if flow.status not in (FlowStatus.DRAFT, FlowStatus.PENDING):
             return False
         if flow.due_date is None or sql_now() <= flow.due_date:
             return False
+        was_draft = flow.status == FlowStatus.DRAFT
         self._decide_flow(
-            flow, FlowStatus.EXPIRED, allowed=(FlowStatus.PENDING,), decided_by=None, note="Expired"
+            flow,
+            FlowStatus.EXPIRED,
+            allowed=(FlowStatus.DRAFT, FlowStatus.PENDING),
+            decided_by=None,
+            note="Draft abandoned" if was_draft else "Expired",
         )
         return True
 

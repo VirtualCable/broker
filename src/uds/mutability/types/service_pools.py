@@ -198,7 +198,7 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
 class ServicePoolGroups(M2MSetActionType):
     """Proposal: set the complete desired access groups of a service pool."""
 
-    type_id = "servicepool.groups"
+    type_id = "servicepool.groups.set"
     title = "Propose service pool groups"
     description = (
         "Propose the complete desired set of groups allowed to use a service pool. "
@@ -231,7 +231,7 @@ class ServicePoolGroups(M2MSetActionType):
 class ServicePoolTransports(M2MSetActionType):
     """Proposal: set the complete desired transports of a service pool."""
 
-    type_id = "servicepool.transports"
+    type_id = "servicepool.transports.set"
     title = "Propose service pool transports"
     description = (
         "Propose the complete desired set of transports of a service pool (the "

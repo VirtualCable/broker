@@ -5,10 +5,12 @@
 """
 Tests for the owner surface of proposal flows (``/flows/own``).
 
-Covers creation, listing (own pending only), single lookup (any own
-status, others are 404), cancel (own pending only), refusals of the
+Covers draft creation, listing (full own history), single lookup (any
+own status, others are 404), submit (draft -> pending with the declared
+resolution window), cancel (draft or pending only), refusals of the
 generic edit paths, and the actions detail (create/edit through the
-registry with MANAGEMENT over the target, CAS base and caps).
+registry with MANAGEMENT over the target, CAS base and caps, drafts
+only).
 """
 
 from __future__ import annotations
@@ -49,7 +51,7 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
         response = self.client.rest_post("flows/own", data={"name": "my proposal", "justification": "because"})
         self.assertEqual(response.status_code, 200, response.content)
         body = response.json()
-        self.assertEqual(body["status"], FlowStatus.PENDING)
+        self.assertEqual(body["status"], FlowStatus.DRAFT)
         flow = models.ActionFlow.objects.get(uuid=body["id"])
         self.assertEqual(flow.owner, self.staffs[0])
         self.assertEqual(flow.name, "my proposal")
@@ -84,6 +86,7 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
             base_values={"name": "y"},
             base_etag="e",
         )
+        FlowStore().submit_flow(flow, actor_uuid=self.staffs[0].uuid)
         action.status = FlowActionStatus.APPROVED
         action.approved_etag = "frozen"
         action.save(update_fields=["status"])
@@ -106,41 +109,100 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
         # Full history: decided flows remain listed with their outcome
         self.assertEqual(set(listed), {cancelled_id, kept_id})
         self.assertEqual(listed[cancelled_id], FlowStatus.CANCELLED)
-        self.assertEqual(listed[kept_id], FlowStatus.PENDING)
+        self.assertEqual(listed[kept_id], FlowStatus.DRAFT)
+
+    def test_draft_is_hidden_from_the_administration_surface(self) -> None:
+        """Drafts are the owner's composing space: they do not exist for admins."""
+        self.login(user=self.staffs[0])
+        draft_id = self.client.rest_post("flows/own", data={"name": "private draft"}).json()["id"]
+        store = FlowStore()
+        store.add_action(
+            models.ActionFlow.objects.get(uuid=draft_id),
+            action_type="provider.update",
+            target_uuid="any",
+            values={"name": "x"},
+            base_values={"name": "y"},
+            base_etag="e",
+        )
+        self.login(user=self.admins[0])
+        items: list[dict[str, typing.Any]] = self.client.rest_get("flows/management/overview").json()
+        self.assertNotIn(draft_id, {i["id"] for i in items})
+        # Not even reachable by direct uuid lookup
+        self.assertEqual(self.client.rest_get(f"flows/management/{draft_id}").status_code, 404)
+        self.assertEqual(self.client.rest_get(f"flows/management/{draft_id}/actions").status_code, 404)
+        # Submitting makes it visible to the administrator
+        self.login(user=self.staffs[0])
+        self.assertEqual(self.client.rest_post(f"flows/own/{draft_id}/submit", data={}).status_code, 200)
+        self.login(user=self.admins[0])
+        items = self.client.rest_get("flows/management/overview").json()
+        self.assertIn(draft_id, {i["id"] for i in items})
 
 
 class FlowsOwnTtlTest(rest.test.RESTTestCase):
-    """Proposer-declared expiration windows."""
+    """Resolution window declared at submit; expiry is terminal."""
 
     @typing.override
     def setUp(self) -> None:
         super().setUp()
         self.login(user=self.staffs[0])
 
-    def _create(self, **extra: typing.Any) -> typing.Any:
+    def _draft(self, **extra: typing.Any) -> typing.Any:
         response = self.client.rest_post("flows/own", data={"name": "ttl", **extra})
         self.assertEqual(response.status_code, 200, response.content)
         return response.json()
 
-    def test_create_honours_expires_in_hours(self) -> None:
-        body = self._create(expires_in_hours=48)
+    def _submit(self, flow_uuid: str, **extra: typing.Any) -> typing.Any:
+        response = self.client.rest_post(f"flows/own/{flow_uuid}/submit", data={**extra})
+        self.assertEqual(response.status_code, 200, response.content)
+        return response.json()
+
+    def test_draft_creation_ignores_the_resolution_window(self) -> None:
+        body = self._draft(expires_in_hours=48)
         flow = models.ActionFlow.objects.get(uuid=body["id"])
+        assert flow.due_date is not None
+        remaining = flow.due_date - sql_now()
+        self.assertLess(remaining, datetime.timedelta(days=consts_mcp.DRAFT_TTL_DAYS + 1))
+        self.assertGreater(remaining, datetime.timedelta(days=consts_mcp.DRAFT_TTL_DAYS - 1))
+
+    def test_submit_honours_expires_in_hours(self) -> None:
+        _grant_management(self.staffs[0], self.provider)
+        flow_uuid = self._draft()["id"]
+        self.client.rest_post(
+            f"flows/own/{flow_uuid}/actions",
+            data={
+                "action_type": "provider.update",
+                "target_uuid": self.provider.uuid,
+                "values": VALID_VALUES,
+            },
+        )
+        self._submit(flow_uuid, expires_in_hours=48)
+        flow = models.ActionFlow.objects.get(uuid=flow_uuid)
         assert flow.due_date is not None
         remaining = flow.due_date - sql_now()
         self.assertLess(remaining, datetime.timedelta(hours=49))
         self.assertGreater(remaining, datetime.timedelta(hours=47))
 
-    def test_create_clamps_expires_in_hours(self) -> None:
-        body = self._create(expires_in_hours=10**6)
-        flow = models.ActionFlow.objects.get(uuid=body["id"])
+    def test_submit_clamps_expires_in_hours(self) -> None:
+        _grant_management(self.staffs[0], self.provider)
+        flow_uuid = self._draft()["id"]
+        self.client.rest_post(
+            f"flows/own/{flow_uuid}/actions",
+            data={
+                "action_type": "provider.update",
+                "target_uuid": self.provider.uuid,
+                "values": VALID_VALUES,
+            },
+        )
+        self._submit(flow_uuid, expires_in_hours=10**6)
+        flow = models.ActionFlow.objects.get(uuid=flow_uuid)
         assert flow.due_date is not None
         remaining = flow.due_date - sql_now()
         self.assertLess(remaining, datetime.timedelta(hours=consts_mcp.MAX_TTL_HOURS + 1))
         self.assertGreater(remaining, datetime.timedelta(hours=consts_mcp.MAX_TTL_HOURS - 1))
 
-    def test_edit_revives_expired_flow(self) -> None:
+    def test_expired_draft_is_final(self) -> None:
         _grant_management(self.staffs[0], self.provider)
-        body = self._create()
+        body = self._draft()
         flow_uuid = body["id"]
         store = FlowStore()
         action = store.add_action(
@@ -151,7 +213,7 @@ class FlowsOwnTtlTest(rest.test.RESTTestCase):
             base_values={"name": "old"},
             base_etag="etag",
         )
-        # Force expiry (due date gone -> lazy pass skips the action)
+        # Force expiry (due date gone -> the lazy pass discards the draft)
         models.ActionFlow.objects.filter(uuid=flow_uuid).update(due_date=sql_now() - datetime.timedelta(days=1))
         store.get_flow(flow_uuid)
         self.assertEqual(
@@ -159,51 +221,69 @@ class FlowsOwnTtlTest(rest.test.RESTTestCase):
             FlowStatus.EXPIRED,
         )
 
-        response = self.client.rest_put(
-            f"flows/own/{flow_uuid}/actions/{action.uuid}",
-            data={"values": {"name": "v2"}, "expires_in_hours": 5},
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-        flow = models.ActionFlow.objects.get(uuid=flow_uuid)
-        self.assertEqual(flow.status, FlowStatus.PENDING)
-        assert flow.due_date is not None
-        remaining = flow.due_date - sql_now()
-        self.assertLess(remaining, datetime.timedelta(hours=6))
-        self.assertGreater(remaining, datetime.timedelta(hours=4))
-        self.assertEqual(action.refresh_from_db() or action.status, FlowActionStatus.PENDING)
-        self.assertEqual(action.values, {"name": "v2"})
-
-    def test_edit_revival_beyond_grace_is_refused(self) -> None:
-        _grant_management(self.staffs[0], self.provider)
-        body = self._create()
-        flow_uuid = body["id"]
-        store = FlowStore()
-        action = store.add_action(
-            models.ActionFlow.objects.get(uuid=flow_uuid),
-            action_type="provider.update",
-            target_uuid=self.provider.uuid,
-            values={"name": "v1"},
-            base_values={"name": "old"},
-            base_etag="etag",
-        )
-        models.ActionFlow.objects.filter(uuid=flow_uuid).update(
-            due_date=sql_now() - datetime.timedelta(days=consts_mcp.REOPEN_GRACE_DAYS + 10)
-        )
-        store.get_flow(flow_uuid)
-
+        # Terminal: neither the actions nor the flow come back, and no
+        # edit revives them
         response = self.client.rest_put(
             f"flows/own/{flow_uuid}/actions/{action.uuid}",
             data={"values": {"name": "v2"}},
         )
         self.assertEqual(response.status_code, 400, response.content)
+        self.assertEqual(
+            models.ActionFlow.objects.get(uuid=flow_uuid).status,
+            FlowStatus.EXPIRED,
+        )
 
 
 class FlowsOwnLifecycleTest(rest.test.RESTTestCase):
-    """Cancel and refusal of the generic edit paths."""
+    """Submit, cancel and refusal of the generic edit paths."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login(user=self.staffs[0])
+        _grant_management(self.staffs[0], self.provider)
+
+    def _draft_with_action(self) -> str:
+        flow_id = self.client.rest_post("flows/own", data={"name": "flow"}).json()["id"]
+        response = self.client.rest_post(
+            f"flows/own/{flow_id}/actions",
+            data={
+                "action_type": "provider.update",
+                "target_uuid": self.provider.uuid,
+                "values": VALID_VALUES,
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        return flow_id
+
+    def test_submit_flow_queues_it(self) -> None:
+        flow_id = self._draft_with_action()
+        response = self.client.rest_post(f"flows/own/{flow_id}/submit", data={})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["status"], FlowStatus.PENDING)
+        self.assertEqual(
+            models.ActionFlow.objects.get(uuid=flow_id).status,
+            FlowStatus.PENDING,
+        )
+
+    def test_submit_empty_flow_is_refused(self) -> None:
+        flow_id = self.client.rest_post("flows/own", data={"name": "nothing to review"}).json()["id"]
+        response = self.client.rest_post(f"flows/own/{flow_id}/submit", data={})
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertEqual(
+            models.ActionFlow.objects.get(uuid=flow_id).status,
+            FlowStatus.DRAFT,
+        )
+
+    def test_submit_twice_is_400(self) -> None:
+        flow_id = self._draft_with_action()
+        self.client.rest_post(f"flows/own/{flow_id}/submit", data={})
+        response = self.client.rest_post(f"flows/own/{flow_id}/submit", data={})
+        self.assertEqual(response.status_code, 400, response.content)
 
     def test_cancel_own_pending_flow(self) -> None:
-        self.login(user=self.staffs[0])
-        flow_id = self.client.rest_post("flows/own", data={"name": "cancel me"}).json()["id"]
+        flow_id = self._draft_with_action()
+        self.client.rest_post(f"flows/own/{flow_id}/submit", data={})
         response = self.client.rest_delete(f"flows/own/{flow_id}")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json()["status"], FlowStatus.CANCELLED)
@@ -316,9 +396,25 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         action = models.ActionFlow.objects.get(uuid=self.flow_id).actions.get(uuid=action_id)
         self.assertEqual(action.values, {"name": "rebased by owner"})
 
-    def test_edit_non_pending_action_is_400(self) -> None:
+    def test_edit_non_draft_action_is_400(self) -> None:
         action_id = self._add_action().json()["result"]["id"]
         self.client.rest_delete(f"flows/own/{self.flow_id}")  # Flow cancelled
+        response = self.client.rest_put(
+            f"{self._actions_url()}/{action_id}",
+            data={"values": {"name": "too late"}},
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_add_action_after_submit_is_400(self) -> None:
+        # A submitted flow is final: it no longer accepts actions or edits
+        self._add_action()
+        self.assertEqual(self.client.rest_post(f"flows/own/{self.flow_id}/submit", data={}).status_code, 200)
+        response = self._add_action(values={"name": "one more"})
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_edit_action_after_submit_is_400(self) -> None:
+        action_id = self._add_action().json()["result"]["id"]
+        self.assertEqual(self.client.rest_post(f"flows/own/{self.flow_id}/submit", data={}).status_code, 200)
         response = self.client.rest_put(
             f"{self._actions_url()}/{action_id}",
             data={"values": {"name": "too late"}},

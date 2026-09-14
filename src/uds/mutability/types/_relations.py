@@ -1,7 +1,7 @@
 """Shared machinery for pure many-to-many relation action types.
 
 ``M2MSetActionType`` covers the relation types whose rows carry no
-per-relation data (unlike ``metapool.members``, which stores priority
+per-relation data (unlike ``metapool.members.set``, which stores priority
 and enabled per row): the relation IS the set of related uuids
 (``assignedGroups``, ``transports``). Option A applies unchanged: the
 proposal carries the *complete desired set*, never a delta, and on

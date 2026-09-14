@@ -35,15 +35,17 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_user_update",
     "propose_group_update",
     "propose_servicepool_update",
-    "propose_servicepool_groups",
-    "propose_servicepool_transports",
+    "propose_servicepool_groups_set",
+    "propose_servicepool_transports_set",
     "propose_metapool_update",
-    "propose_metapool_members",
-    "propose_metapool_groups",
+    "propose_metapool_members_set",
+    "propose_metapool_groups_set",
     "propose_tunnel_update",
-    "list_pending_actions",
-    "update_pending_action",
-    "cancel_pending_action",
+    "create_flow",
+    "submit_flow",
+    "list_flow_actions",
+    "update_flow_action",
+    "cancel_flow",
 )
 
 
@@ -88,3 +90,13 @@ class FlowTestCase(UDSTestCase):
             base_values=kwargs.get("base_values", {"name": "old name"}),
             base_etag=kwargs.get("base_etag", "abc123"),
         )
+
+    def _submitted(self, flow: ActionFlow) -> ActionFlow:
+        """Submit a draft flow (owner side): the admin surface begins here."""
+        return self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+
+    def _open_flow(self, **kwargs: typing.Any) -> ActionFlow:
+        """A draft flow already holding one action, submitted for review."""
+        flow = self._flow(**kwargs)
+        self._action(flow)
+        return self._submitted(flow)

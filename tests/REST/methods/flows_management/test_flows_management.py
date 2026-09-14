@@ -91,6 +91,7 @@ class FlowsRestTest(rest.test.RESTTestCase):
             base_values={"comments": "old comment"},
             base_etag="def456",
         )
+        self.store.submit_flow(self.flow, actor_uuid=self.owner.uuid)
 
     def _get_json(self, path: str) -> dict[str, typing.Any]:
         response = self.client.rest_get(path)
@@ -202,6 +203,7 @@ class FlowsPermissionsTest(rest.test.RESTTestCase):
             base_values={"name": "y"},
             base_etag="etag",
         )
+        self.store.submit_flow(self.flow, actor_uuid=self.owner.uuid)
 
     def test_staff_is_forbidden_regardless_of_permissions(self) -> None:
         """The management surface is admin-only: 403 at the door.
@@ -275,6 +277,7 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
             base_values=base_values,
             base_etag=base_etag,
         )
+        self.store.submit_flow(self.flow, actor_uuid=self.owner.uuid)
 
     def _actions_url(self) -> str:
         return f"flows/management/{self.flow.uuid}/actions"
@@ -486,6 +489,7 @@ class FlowsApproveAsgiTest(TransactionTestCase):
             base_values=base_values,
             base_etag=base_etag,
         )
+        store.submit_flow(flow, actor_uuid=self.admin.uuid)
         client = UDSAsyncClient()
         client.add_header(consts.auth.AUTHORIZATION_HEADER, f"Bearer {self.raw_token}")
 

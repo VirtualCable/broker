@@ -120,6 +120,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             ("FlowsManagement", "approve", "POST"),
             ("FlowsManagement", "reject", "POST"),
             ("FlowsManagement", "lock", "POST"),
+            ("FlowsOwn", "submit", "POST"),
             ("FlowActions", "approve", "POST"),
             ("FlowActions", "skip", "POST"),
             ("MetaPools", "fallback_access", "POST"),
