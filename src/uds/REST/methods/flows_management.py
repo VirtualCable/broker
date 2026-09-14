@@ -286,6 +286,7 @@ class FlowsManagement(ModelHandler[FlowItem]):
         .datetime_column(name="created", title=_("Created"))
         .datetime_column(name="due_date", title=_("Due date"))
         .with_filter_fields("name", "status", "owner", "compliance")
+        .row_style(prefix="row-compliance-", field="compliance")
         .build()
     )
 
