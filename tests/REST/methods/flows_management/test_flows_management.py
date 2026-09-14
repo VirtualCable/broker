@@ -150,6 +150,7 @@ class FlowsRestTest(rest.test.RESTTestCase):
             ["name", "justification", "status", "compliance", "owner", "actions_count", "created", "due_date"],
         )
         self.assertIn("compliance", table["filter_fields"])
+        self.assertEqual(table["row_style"], {"prefix": "row-compliance-", "field": "compliance"})
 
     def test_post_create_refused(self) -> None:
         response = self.client.rest_post("flows/management", data={"name": "nope", "justification": "no"})
