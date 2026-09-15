@@ -7,7 +7,8 @@ from unittest import mock
 from uds.REST.methods.servers_management import ServersGroups, ServersServers
 from uds.core import types
 from uds.mcp.rest_proxy import RestProxy
-from uds.mutability.types.servers import ServerGroupUpdate, ServerUpdate
+from uds.mutability.types.servers import ServerGroupUpdate
+from uds.mutability.types.servers.server import ServerUpdate
 
 from tests.fixtures.servers import create_server, create_server_group
 from tests.mcp.mutability._helpers import build_action

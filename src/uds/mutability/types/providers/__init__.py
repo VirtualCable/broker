@@ -4,6 +4,11 @@ The mutable surface is an exact replica of the REST ``PUT
 /providers/{uuid}``: ``name``, ``comments``, ``tags`` and the gui
 configuration fields of the provider's data type. Validation,
 serialization and execution reuse the very same handler machinery.
+
+The services of a provider live in the sibling ``service`` module (its
+own action type, ``service.update``); the import at the bottom of this
+module pulls it in so the registry discovers every family of the
+package.
 """
 
 import collections.abc
@@ -20,9 +25,11 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
-from .. import base as mutability_base
-from .. import gui_view
-from ..etag import item_etag
+from ... import base as mutability_base
+from ... import gui_view
+from ...etag import item_etag
+
+from . import service as service
 
 JsonObject = dict[str, typing.Any]
 

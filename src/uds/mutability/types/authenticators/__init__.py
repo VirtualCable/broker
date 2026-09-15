@@ -8,12 +8,20 @@ reference are NOT part of the mutable surface.
 
 The authenticator PUT is form-shaped, so execution merges the proposal
 over the CAS-verified current values (see ``_module_update``).
+
+The users and groups of an authenticator live in sibling modules (their
+own action types, ``user.update`` and ``group.update``); the imports at
+the bottom of this module pull them in so the registry discovers every
+family of the package.
 """
 
 from uds import models
 from uds.REST.methods.authenticators import Authenticators
 
-from ._module_update import ModuleUpdateActionType
+from .._module_update import ModuleUpdateActionType
+
+from . import group as group
+from . import user as user
 
 
 class AuthenticatorUpdate(ModuleUpdateActionType):

@@ -130,6 +130,16 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
 
         priority = int(self._params["priority"])
 
+        # One rule per calendar: a pool (or meta pool) cannot ALLOW and
+        # DENY the same calendar at once. There is no DB unique constraint
+        # (legacy rows may collide), so the guard lives here: create when
+        # the calendar already has a rule, or edit onto a calendar another
+        # rule occupies, is a plain request error.
+        if parent.calendarAccess.filter(calendar=calendar).exclude(uuid=uuid).exists():
+            raise exceptions.rest.RequestError(
+                _("This pool already has an access rule for calendar {}").format(calendar.name)
+            )
+
         if uuid is not None:
             calendar_access = parent.calendarAccess.get(uuid=uuid)
             calendar_access.calendar = calendar

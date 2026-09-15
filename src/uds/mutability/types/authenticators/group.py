@@ -30,8 +30,8 @@ from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.REST.methods.authenticators import Authenticators
 from uds.REST.methods.users_groups import Groups
 
-from .. import base as mutability_base
-from ..etag import item_etag
+from ... import base as mutability_base
+from ...etag import item_etag
 
 JsonObject = dict[str, typing.Any]
 

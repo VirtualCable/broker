@@ -12,8 +12,9 @@ from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.base import ActionOperation, StalePolicy
-from uds.mutability.types.meta_pools import MetaPoolGroup
-from uds.mutability.types.service_pools import ServicePoolGroup, ServicePoolTransport
+from uds.mutability.types.meta_pools.group import MetaPoolGroup
+from uds.mutability.types.service_pools.group import ServicePoolGroup
+from uds.mutability.types.service_pools.transport import ServicePoolTransport
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.services_pools import ServicesPools
 from uds.REST.methods.user_services import Groups as AssignedGroups

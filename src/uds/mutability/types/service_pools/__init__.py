@@ -11,6 +11,11 @@ payload, because the pool PUT is form-shaped and requires them (and
 The readonly gui fields (``service_id``, ``osmanager_id``,
 ``publish_on_save``, ``account_id``) are additionally enforced by the
 REST layer on update: only the stored value passes.
+
+The other service pool families live in sibling modules, one per
+action type (``access``, ``fallback``, ``group``, ``transport``); the
+imports at the bottom of this module pull them in so the registry
+discovers every family of the package.
 """
 
 import collections.abc
@@ -26,13 +31,15 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.REST.methods.services_pools import ServicesPools
-from uds.REST.methods.user_services import Groups as AssignedGroups
-from uds.REST.methods.user_services import Transports
 
-from .. import base as mutability_base
-from .. import gui_view
-from ..etag import item_etag
-from ._relations import M2MRelationActionType
+from ... import base as mutability_base
+from ... import gui_view
+from ...etag import item_etag
+
+from . import access as access
+from . import fallback as fallback
+from . import group as group
+from . import transport as transport
 
 JsonObject = dict[str, typing.Any]
 
@@ -193,74 +200,3 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
             params,
         )
         return f'Service pool "{pool_name}" updated'
-
-
-class ServicePoolGroup(M2MRelationActionType):
-    """Proposal: set the complete desired access groups of a service pool."""
-
-    type_id = "servicepool.group"
-    relation_label = "access groups"
-    uuid_source = "get_servicepool_group (or the group list tools)"
-    title = "Propose service pool groups"
-    description = (
-        "Propose the complete desired set of groups allowed to use a service pool. "
-        "The 'groups' field is the FINAL set, not a delta: groups missing from it "
-        "lose access, new ones gain it. Group uuids come from the groups list tools "
-        "(authenticator groups are also assignable). An empty list removes access "
-        "for every group. The proposal does NOT apply anything: it is queued until "
-        "an administrator approves it."
-    )
-    handler = ServicesPools
-    model = models.ServicePool
-    noun = "Service pool"
-    subtype = "servicepool"
-
-    field_name = "groups"
-    field_label = "Allowed groups"
-    field_tooltip = (
-        "Complete desired set of group uuids allowed to use this service pool. Pairs "
-        "are validated against existing groups; discover the uuids with the groups tools."
-    )
-    item_label = "group"
-    related_model = models.Group
-    include_choices = False
-    relation_manager = "assignedGroups"
-    detail_handler = AssignedGroups
-    detail_path = "services_pools/{uuid}/groups"
-    parent_collection = "services_pools"
-
-
-class ServicePoolTransport(M2MRelationActionType):
-    """Proposal: set the complete desired transports of a service pool."""
-
-    type_id = "servicepool.transport"
-    relation_label = "transports"
-    uuid_source = "get_servicepool_transport (or the transport list tools)"
-    title = "Propose service pool transports"
-    description = (
-        "Propose the complete desired set of transports of a service pool (the "
-        "connections users may establish). The 'transports' field is the FINAL set, "
-        "not a delta: transports missing from it are detached, new ones are "
-        "attached. Use get_mutable_fields with the pool uuid to see the current "
-        "transports and the uuids available. An empty list detaches every "
-        "transport. The proposal does NOT apply anything: it is queued until an "
-        "administrator approves it."
-    )
-    handler = ServicesPools
-    model = models.ServicePool
-    noun = "Service pool"
-    subtype = "servicepool"
-
-    field_name = "transports"
-    field_label = "Transports"
-    field_tooltip = (
-        "Complete desired set of transport uuids attached to this service pool. "
-        "Transports are pool-independent objects; this only attaches and detaches them."
-    )
-    item_label = "transport"
-    related_model = models.Transport
-    include_choices = True
-    relation_manager = "transports"
-    detail_handler = Transports
-    detail_path = "services_pools/{uuid}/transports"
-    parent_collection = "services_pools"

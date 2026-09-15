@@ -27,9 +27,9 @@ from uds.core.exceptions import rest as rest_exceptions
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 
-from .. import base as mutability_base
-from .. import gui_view
-from ..etag import item_etag
+from ... import base as mutability_base
+from ... import gui_view
+from ...etag import item_etag
 
 JsonObject = dict[str, typing.Any]
 

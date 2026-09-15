@@ -9,7 +9,7 @@ from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
-from uds.mutability.types.meta_pools import MetaPoolMember
+from uds.mutability.types.meta_pools.members import MetaPoolMember
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.meta_service_pools import MetaServicesPool
 
@@ -203,7 +203,7 @@ class MetaPoolMemberExecuteTest(FlowTestCase):
         )
         proxy_cls = mock.MagicMock()
         proxy_cls.return_value.execute = mock.AsyncMock(return_value=None)
-        with mock.patch("uds.mutability.types.meta_pools.RestProxy", proxy_cls):
+        with mock.patch("uds.mutability.types.meta_pools.members.RestProxy", proxy_cls):
             summary = async_to_sync(_members().execute)(action, request=make_request())
         self._last_summary = summary
         return proxy_cls

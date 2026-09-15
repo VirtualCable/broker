@@ -48,6 +48,8 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_metapool_group_set",
     "propose_metapool_group_add",
     "propose_metapool_group_delete",
+    "propose_servicepool_access_set",
+    "propose_servicepool_fallback_update",
     "propose_tunnel_update",
     "create_flow",
     "submit_flow",
@@ -59,6 +61,7 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
 # Read views of the descriptor families: generated from the registry into
 # the always-active curated surface (reads are not mutations).
 READ_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
+    "get_servicepool_access",
     "get_servicepool_group",
     "get_servicepool_transport",
     "get_metapool_member",

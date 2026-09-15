@@ -7,7 +7,7 @@ from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
-from uds.mutability.types.users import UserUpdate
+from uds.mutability.types.authenticators.user import UserUpdate
 from uds.REST.methods.users_groups import Users
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
@@ -80,7 +80,7 @@ class UserUpdateExecuteTest(FlowTestCase):
             base_etag="etag",
         )
 
-        with mock.patch("uds.mutability.types.users.RestProxy._execute_sync") as execute_sync:
+        with mock.patch("uds.mutability.types.authenticators.user.RestProxy._execute_sync") as execute_sync:
             execute_sync.return_value = "done"
             summary = async_to_sync(UserUpdate().execute)(action, request=make_request())
 

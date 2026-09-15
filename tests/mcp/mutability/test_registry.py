@@ -8,10 +8,10 @@ from uds.mutability import (
 )
 from uds.mutability.base import ActionOperation, EntityDescriptor, MutableActionType
 from uds.mutability.registry import register
-from uds.mutability.types.meta_pools import MetaPoolMember
+from uds.mutability.types.meta_pools.members import MetaPoolMember
 from uds.mutability.types.providers import ProviderUpdate
-from uds.mutability.types.services import ServiceUpdate
-from uds.mutability.types.service_pools import ServicePoolGroup
+from uds.mutability.types.providers.service import ServiceUpdate
+from uds.mutability.types.service_pools.group import ServicePoolGroup
 
 
 class SupportedOperationsTest(unittest.TestCase):

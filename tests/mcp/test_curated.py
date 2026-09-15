@@ -52,6 +52,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     # family type_id, dots to underscores):
     "get_metapool_group",
     "get_metapool_member",
+    "get_servicepool_access",
     "get_servicepool_group",
     "get_servicepool_transport",
 )
@@ -457,6 +458,17 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         )
         self.assertEqual(result["entity_type"], "servicepool.transport")
         self.assertIn("transports", result["current_values"])
+
+    def test_get_servicepool_access(self) -> None:
+        pool = self._a_service_pool()
+        calendar = models.Calendar.objects.create(name="curated-access-calendar", comments="")
+        models.CalendarAccess.objects.create(service_pool=pool, calendar=calendar, access="ALLOW", priority=3)
+        result = json.loads(self._result_text(self._call("get_servicepool_access", {"target_uuid": pool.uuid})))
+        self.assertEqual(result["entity_type"], "servicepool.access")
+        rule = next(rule for rule in result["current_rules"] if rule["calendar_id"] == calendar.uuid)
+        self.assertEqual(rule["access"], "ALLOW")
+        self.assertEqual(rule["priority"], 3)
+        self.assertEqual(rule["calendar_name"], calendar.name)
 
     def test_get_metapool_member(self) -> None:
         metapool = self._a_metapool()
