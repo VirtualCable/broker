@@ -7,18 +7,18 @@ once per process: an agent cannot invent action types or mutate anything
 outside this surface — the mutability frontier is reviewed in code
 review, not configurable at runtime.
 
-Each class declares a root ``type_id`` plus the set of
-:class:`~uds.mutability.base.ActionOperation` it implements; this module
-expands the cross product into one full id per operation
-(``provider.update``, ``servicepool.groups.set``, ``.add``, ``.get``,
-...) and binds each to a zero-arg factory producing instances with that
-operation set. Call sites keep the old contract: ``registry.get(id)()``
-instantiates per use, so a type may hold per-request state.
+Each class declares only a root ``type_id``; the operations it exposes
+are *derived from the ``op_*`` hooks it overrides* (see
+:meth:`MutableActionType.supported_operations`). This module expands
+them into one full id per operation (``provider.update``,
+``servicepool.groups.set``, ``.add``, ``.get``, ...) and binds each to a
+zero-arg factory producing instances with that operation set. Call sites
+keep the old contract: ``registry.get(id)()`` instantiates per use, so a
+type may hold per-request state.
 
-Binding happens at registration: a declared operation must have a real
-``op_*`` implementation (not the rejecting base default), so a class
-that promises more than it delivers fails loudly at import, never on a
-late execution.
+Implementation is declaration: a verb exists exactly because a real
+``op_*`` (or the read ``read()``) was written for it, so the registry
+can never bind an operation a class promises but does not deliver.
 """
 
 import collections.abc
@@ -30,12 +30,6 @@ from uds.core.util import modfinder
 
 from . import types as types
 from .base import ActionOperation, JsonObject, MutableActionType
-
-#: Operation dispatchable through ``MutableActionType.execute`` (GET is a
-#: read binding served by ``read()``, never executed through a flow).
-_DISPATCHABLE: typing.Final[frozenset[ActionOperation]] = frozenset(
-    {ActionOperation.UPDATE, ActionOperation.SET, ActionOperation.ADD, ActionOperation.DELETE}
-)
 
 
 class Binding(typing.NamedTuple):
@@ -61,14 +55,17 @@ def register(action_type: type[MutableActionType] | MutableActionType) -> None:
     """Expand one action family into its full-id bindings, rejecting duplicates.
 
     Accepts the class (what modfinder passes) or an instance; only the
-    class declarations (root ``type_id``, ``operations``, ``op_*``
-    implementations) matter.
+    class matters: its ``type_id`` and the operations derived from its
+    ``op_*`` overrides.
     """
     cls: type[MutableActionType] = action_type if isinstance(action_type, type) else type(action_type)
-    if not cls.operations:
-        raise ValueError(f"{cls.type_id}: declares no operations")
-    for operation in cls.operations:
-        _check_operation(cls, operation)
+    operations = cls.supported_operations()
+    if not operations:
+        raise ValueError(
+            f"{cls.__name__} ({cls.type_id}): implements no operation hook "
+            "(op_update/op_set/op_add/op_delete) and does not override read()"
+        )
+    for operation in sorted(operations, key=lambda op: op.as_str()):
         full_id = f"{cls.type_id}.{operation.as_str()}"
         if full_id in _REGISTRY:
             raise ValueError(f"Mutable action type {full_id} already registered")
@@ -76,20 +73,6 @@ def register(action_type: type[MutableActionType] | MutableActionType) -> None:
             full_id=full_id,
             operation=operation,
             factory=typing.cast("_FACTORY", functools.partial(cls, operation)),
-        )
-
-
-def _check_operation(cls: type[MutableActionType], operation: ActionOperation) -> None:
-    """A declared operation must resolve to a real implementation."""
-    if operation not in _DISPATCHABLE | {ActionOperation.GET}:
-        raise ValueError(f"{cls.__name__}: operation {operation.as_str()} cannot be registered")
-    if operation is ActionOperation.GET:
-        return  # served by the generic (overridable) MutableActionType.read
-    hook = getattr(cls, f"op_{operation.as_str()}", None)
-    default = getattr(MutableActionType, f"op_{operation.as_str()}")
-    if hook is None or hook is default:
-        raise ValueError(
-            f"{cls.__name__}: declares the {operation.as_str()} operation but does not implement op_{operation.as_str()}"
         )
 
 

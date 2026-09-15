@@ -56,11 +56,13 @@ M2MOperation = tuple[types.rest.CustomMethodMethod, tuple[str, ...], JsonObject]
 
 
 class M2MRelationActionType(mutability_base.MutableActionType):
-    """One many-to-many relation family: set / add / delete / get."""
+    """One many-to-many relation family: set / add / delete / get.
 
-    operations: typing.ClassVar[frozenset[ActionOperation]] = frozenset(
-        {ActionOperation.SET, ActionOperation.ADD, ActionOperation.DELETE, ActionOperation.GET}
-    )
+    The four operations need no declaration: ``op_set``/``op_add``/
+    ``op_delete`` implemented here plus the :meth:`read` override are
+    exactly what the registry derives (implementation is declaration).
+    """
+
     stale_policies: typing.ClassVar[dict[ActionOperation, StalePolicy]] = {
         ActionOperation.SET: StalePolicy.DENY,
         # Delta operations re-read the live set at execution and skip

@@ -65,13 +65,15 @@ REDACTED: typing.Final[str] = "(redacted)"
 class ActionOperation(enum.StrEnum):
     """The fixed vocabulary of operations an action type may expose.
 
-    A single :class:`MutableActionType` declares a *root* ``type_id``
-    (e.g. ``servicepool.groups``) plus the set of :attr:`operations` it
-    implements; the registry expands that cross product into one full id
-    per operation (``servicepool.groups.set``, ``.add``, ``.delete``,
-    ``.get``), each registered as a zero-arg factory that binds the
-    operation on the instance. This lets one class serve several full
-    ids without a class per verb.
+    A single :class:`MutableActionType` declares only a *root*
+    ``type_id`` (e.g. ``servicepool.groups``); the operations it
+    implements are *derived from the hooks it overrides* (see
+    :meth:`MutableActionType.supported_operations`), and the registry
+    expands them into one full id per operation
+    (``servicepool.groups.set``, ``.add``, ``.delete``, ``.get``), each
+    registered as a zero-arg factory that binds the operation on the
+    instance. This lets one class serve several full ids without a class
+    per verb and without a declaration that could drift from the code.
 
     The names mirror HTTP so the payload semantics are predictable:
     ``update`` patches scalar fields, ``set`` replaces a whole relation,
@@ -89,6 +91,19 @@ class ActionOperation(enum.StrEnum):
     def as_str(self) -> str:
         """Plain string form for joining into a full ``type_id``."""
         return self.value
+
+
+#: Write operations dispatchable through ``execute``, mapped to the
+#: ``op_*`` hook whose presence declares them. ``create`` is reserved
+#: vocabulary (no create flow yet); ``get`` is not dispatchable — the
+#: read-only view lives in the synchronous ``MutableActionType.read``,
+#: whose override is what declares it.
+_WRITE_OPERATION_HOOKS: typing.Final[dict["ActionOperation", str]] = {
+    ActionOperation.UPDATE: "op_update",
+    ActionOperation.SET: "op_set",
+    ActionOperation.ADD: "op_add",
+    ActionOperation.DELETE: "op_delete",
+}
 
 
 def _json_safe(value: typing.Any) -> typing.Any:
@@ -114,10 +129,12 @@ class MutableActionType(abc.ABC):
     """One mutable action family in the registry.
 
     A concrete class declares a *root* ``type_id`` (``provider``,
-    ``servicepool.groups``) plus the :attr:`operations` it implements;
-    the registry expands each (class, operation) pair into a full id
-    binding (``provider.update``, ``servicepool.groups.set``, ``.add``,
-    ...). One instance serves one full id: it carries the bound
+    ``servicepool.groups``) and implements the ``op_*`` hooks it
+    supports; its operations are *derived from those overrides* (see
+    :meth:`supported_operations` — implementing a verb is declaring it).
+    The registry expands each operation into a full id binding
+    (``provider.update``, ``servicepool.groups.set``, ``.add``, ...).
+    One instance serves one full id: it carries the bound
     :attr:`operation` and the complete :attr:`full_id`, and
     :meth:`execute` dispatches to the matching ``op_*`` implementation.
     Call sites use ``registry.get(full_id)()`` exactly as before — the
@@ -126,10 +143,6 @@ class MutableActionType(abc.ABC):
 
     type_id: typing.ClassVar[str]
     """Root identifier, e.g. ``provider`` or ``servicepool.groups``."""
-
-    operations: typing.ClassVar[frozenset["ActionOperation"]] = frozenset({ActionOperation.UPDATE})
-    """Operations this family implements; the registry derives one full
-    id (and one factory binding) per operation."""
 
     operation: "ActionOperation | None" = None
     """The operation this instance is bound to (set by the registry factory)."""
@@ -178,16 +191,41 @@ class MutableActionType(abc.ABC):
     def __init__(self, operation: "ActionOperation | None" = None) -> None:
         """Bind one instance to one operation of the family.
 
-        ``operation`` defaults to the single declared operation when the
-        family has exactly one, so direct instantiation keeps working;
-        registry factories always pass the full-id operation explicitly.
+        ``operation`` defaults to the single implemented operation when
+        the family has exactly one, so direct instantiation keeps
+        working; registry factories always pass the full-id operation
+        explicitly. Multi-operation families stay unbound (raising on
+        use) unless an operation is given.
         """
         if operation is None:
-            if len(self.operations) == 1:
-                (operation,) = self.operations
-        elif operation not in self.operations:
+            supported = self.supported_operations()
+            if len(supported) == 1:
+                (operation,) = supported
+        elif operation not in self.supported_operations():
             raise ValueError(f"{self.type_id} does not support the {operation.as_str()} operation")
         self.operation = operation
+
+    @classmethod
+    def supported_operations(cls) -> frozenset["ActionOperation"]:
+        """Operations this family implements, derived from its overrides.
+
+        A verb is supported exactly when the class replaces the
+        corresponding rejecting ``op_*`` stub of this base (the
+        ``is not`` comparison also counts inherited intermediate
+        implementations, e.g. the module-backed ``op_update``). The
+        read-only ``get`` is the exception: it is served by the
+        synchronous :meth:`read` view, so overriding ``read`` is what
+        declares it. Implementation is declaration — there is nothing
+        to keep in sync.
+        """
+        derived = set(_WRITE_OPERATION_HOOKS) - {
+            operation
+            for operation, hook in _WRITE_OPERATION_HOOKS.items()
+            if getattr(cls, hook) is getattr(MutableActionType, hook)
+        }
+        if cls.read is not MutableActionType.read:
+            derived.add(ActionOperation.GET)
+        return frozenset(derived)
 
     def get_stale_policy(self) -> StalePolicy:
         """Stale policy resolved for the operation bound to this instance."""

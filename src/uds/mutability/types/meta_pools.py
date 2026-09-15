@@ -176,10 +176,11 @@ class MetaPoolMembers(mutability_base.MutableActionType):
     describes the final desired set. Execution diffs it against the live
     rows (keyed by pool) and applies the minimal create/edit/delete
     sequence through the canonical ``meta_pools/{uuid}/pools`` surface.
+    The exposed operations (set, plus get via the :meth:`read` override)
+    are derived from the implemented hooks, not declared.
     """
 
     type_id = "metapool.members"
-    operations = frozenset({mutability_base.ActionOperation.SET, mutability_base.ActionOperation.GET})
 
     title = "Propose meta pool members"
     description = (
