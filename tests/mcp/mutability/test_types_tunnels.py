@@ -8,7 +8,7 @@ from asgiref.sync import async_to_sync
 from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.tunnels import TunnelUpdate
 from uds.REST.methods.tunnels_management import Tunnels
 
@@ -32,8 +32,9 @@ def _create_tunnel(host: str = "tunnel.example.com", port: int = 443) -> models.
 class TunnelUpdateRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("tunnel.update")
-        self.assertIs(found, TunnelUpdate)
-        self.assertIn("tunnel.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), TunnelUpdate)
+        self.assertIn("tunnel.update", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):

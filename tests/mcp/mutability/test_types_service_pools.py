@@ -6,7 +6,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.service_pools import ServicePoolUpdate
 from uds.REST.methods.services_pools import ServicesPools
 
@@ -31,8 +31,9 @@ def _create_pool() -> tuple["models.ServicePool", "models.Service", "models.OSMa
 class ServicePoolUpdateRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("servicepool.update")
-        self.assertIs(found, ServicePoolUpdate)
-        self.assertIn("servicepool.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), ServicePoolUpdate)
+        self.assertIn("servicepool.update", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):

@@ -34,7 +34,7 @@ JsonObject = dict[str, typing.Any]
 class NetworkUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing network."""
 
-    type_id = "network.update"
+    type_id = "network"
     title = "Propose network update"
     description = (
         "Propose changes to an existing network (a range used by transports and "
@@ -94,7 +94,7 @@ class NetworkUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, fields)
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped (every FIELDS_TO_SAVE entry is required):
         # merge the proposal over the CAS-verified current values, so a
         # partial proposal applies instead of failing on approval.

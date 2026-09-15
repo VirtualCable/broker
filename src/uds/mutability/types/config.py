@@ -76,7 +76,7 @@ class ConfigUpdate(mutability_base.MutableActionType):
     value, so any concurrent change to it invalidates the proposal.
     """
 
-    type_id = "config.update"
+    type_id = "config"
     title = "Propose configuration change"
     description = (
         "Propose a change to one UDS global configuration value. The proposal does NOT "
@@ -165,7 +165,7 @@ class ConfigUpdate(mutability_base.MutableActionType):
     # ------------------------------------------------------------- hooks
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # Same shape the REST PUT accepts: {section: {key: {value}}}.
         # DB-free: a JSON bool is unambiguous, and it is normalized
         # exactly like ``Config.Value.set`` does (bool -> "0"/"1")

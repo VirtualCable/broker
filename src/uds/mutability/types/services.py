@@ -37,7 +37,7 @@ JsonObject = dict[str, typing.Any]
 class ServiceUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing service of a provider."""
 
-    type_id = "service.update"
+    type_id = "service"
     title = "Propose service update"
     description = (
         "Propose changes to an existing service (an offering of a provider). The proposal "
@@ -128,7 +128,7 @@ class ServiceUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(self.for_type_of(target), target))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped (save_item requires the whole save set and
         # serializes the instance from the flat params), so a partial
         # proposal is merged over the CAS-verified current values. The
@@ -163,7 +163,7 @@ class ServiceUpdate(mutability_base.MutableActionType):
 
     def _require_target(self, target: db_models.Model | None) -> models.Service:
         if target is None:
-            raise ValueError(f"{self.type_id} needs a target: its fields depend on the concrete service")
+            raise ValueError(f"{self.full_id} needs a target: its fields depend on the concrete service")
         return typing.cast(models.Service, target)
 
     def _gui(self, for_type: str, service: models.Service) -> list[types.ui.GuiElement]:

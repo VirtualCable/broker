@@ -19,7 +19,7 @@ from ._module_update import ModuleUpdateActionType
 class AuthenticatorUpdate(ModuleUpdateActionType):
     """Proposal: update an existing authenticator."""
 
-    type_id = "authenticator.update"
+    type_id = "authenticator"
     title = "Propose authenticator update"
     description = (
         "Propose changes to an existing authenticator (how users log in). The "

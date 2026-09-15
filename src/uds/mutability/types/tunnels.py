@@ -33,7 +33,7 @@ JsonObject = dict[str, typing.Any]
 class TunnelUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing tunnel (tunnel-type server group)."""
 
-    type_id = "tunnel.update"
+    type_id = "tunnel"
     title = "Propose tunnel update"
     description = (
         "Propose changes to an existing tunnel (a tunnel-type server group; the "
@@ -126,7 +126,7 @@ class TunnelUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context: resolve + snapshot
         # + merge in a single sync boundary
         def _build_params() -> tuple[str, JsonObject]:

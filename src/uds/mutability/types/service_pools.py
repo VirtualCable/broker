@@ -32,7 +32,7 @@ from uds.REST.methods.user_services import Transports
 from .. import base as mutability_base
 from .. import gui_view
 from ..etag import item_etag
-from ._relations import M2MSetActionType
+from ._relations import M2MRelationActionType
 
 JsonObject = dict[str, typing.Any]
 
@@ -40,7 +40,7 @@ JsonObject = dict[str, typing.Any]
 class ServicePoolUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing service pool."""
 
-    type_id = "servicepool.update"
+    type_id = "servicepool"
     title = "Propose service pool update"
     description = (
         "Propose changes to an existing service pool (a service made available to "
@@ -172,7 +172,7 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ALL the ORM work (target, FK context, tags) must stay out of the
         # async context: resolve + snapshot + merge in one sync boundary.
         def _build_params() -> tuple[str, JsonObject]:
@@ -195,10 +195,12 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         return f'Service pool "{pool_name}" updated'
 
 
-class ServicePoolGroups(M2MSetActionType):
+class ServicePoolGroups(M2MRelationActionType):
     """Proposal: set the complete desired access groups of a service pool."""
 
-    type_id = "servicepool.groups.set"
+    type_id = "servicepool.groups"
+    relation_label = "access groups"
+    uuid_source = "get_servicepool_groups (or the group list tools)"
     title = "Propose service pool groups"
     description = (
         "Propose the complete desired set of groups allowed to use a service pool. "
@@ -228,10 +230,12 @@ class ServicePoolGroups(M2MSetActionType):
     parent_collection = "services_pools"
 
 
-class ServicePoolTransports(M2MSetActionType):
+class ServicePoolTransports(M2MRelationActionType):
     """Proposal: set the complete desired transports of a service pool."""
 
-    type_id = "servicepool.transports.set"
+    type_id = "servicepool.transports"
+    relation_label = "transports"
+    uuid_source = "get_servicepool_transports (or the transport list tools)"
     title = "Propose service pool transports"
     description = (
         "Propose the complete desired set of transports of a service pool (the "

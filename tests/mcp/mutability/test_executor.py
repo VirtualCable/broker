@@ -32,6 +32,10 @@ class _FakeActionType:
     vanish_targets: frozenset[str] = frozenset()
     executed: typing.ClassVar[list[str]] = []
 
+    def get_stale_policy(self) -> StalePolicy:
+        """Same contract as the base: the binding resolves its policy."""
+        return self.stale_policy
+
     def resolve_target(self, target_uuid: str) -> object:
         if target_uuid in self.vanish_targets:
             raise LookupError(f"target {target_uuid} vanished")

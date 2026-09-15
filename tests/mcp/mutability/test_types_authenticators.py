@@ -5,7 +5,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.authenticators import AuthenticatorUpdate
 from uds.REST.methods.authenticators import Authenticators
 
@@ -16,8 +16,9 @@ from tests.mcp.mutability._helpers import FlowTestCase, make_request
 class AuthenticatorUpdateRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("authenticator.update")
-        self.assertIs(found, AuthenticatorUpdate)
-        self.assertIn("authenticator.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), AuthenticatorUpdate)
+        self.assertIn("authenticator.update", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):

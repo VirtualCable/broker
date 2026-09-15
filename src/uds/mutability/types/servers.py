@@ -41,7 +41,7 @@ JsonObject = dict[str, typing.Any]
 class ServerGroupUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing server group."""
 
-    type_id = "server_group.update"
+    type_id = "server_group"
     title = "Propose server group update"
     description = (
         "Propose changes to an existing server group (the container of registered/unmanaged "
@@ -115,7 +115,7 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(for_type))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped (the handler requires the whole save set,
         # weights included through post_save): merge the proposal over the
         # CAS-verified current values, so a partial proposal applies
@@ -144,7 +144,7 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
 class ServerUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing (unmanaged) server of a server group."""
 
-    type_id = "server.update"
+    type_id = "server"
     title = "Propose server update"
     description = (
         "Propose changes to an existing unmanaged server (hostname, ip or mac). The proposal "
@@ -219,7 +219,7 @@ class ServerUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(for_type, target))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context
         server = typing.cast(
             models.Server,
@@ -250,7 +250,7 @@ class ServerUpdate(mutability_base.MutableActionType):
 
     def _require_target(self, target: db_models.Model | None) -> models.Server:
         if target is None:
-            raise ValueError(f"{self.type_id} needs a target: its fields depend on the concrete server")
+            raise ValueError(f"{self.full_id} needs a target: its fields depend on the concrete server")
         return typing.cast(models.Server, target)
 
     @staticmethod

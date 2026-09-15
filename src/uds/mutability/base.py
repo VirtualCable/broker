@@ -62,6 +62,35 @@ SECRET_FIELD_TYPES: typing.Final[frozenset[types.ui.FieldType]] = frozenset(
 REDACTED: typing.Final[str] = "(redacted)"
 
 
+class ActionOperation(enum.StrEnum):
+    """The fixed vocabulary of operations an action type may expose.
+
+    A single :class:`MutableActionType` declares a *root* ``type_id``
+    (e.g. ``servicepool.groups``) plus the set of :attr:`operations` it
+    implements; the registry expands that cross product into one full id
+    per operation (``servicepool.groups.set``, ``.add``, ``.delete``,
+    ``.get``), each registered as a zero-arg factory that binds the
+    operation on the instance. This lets one class serve several full
+    ids without a class per verb.
+
+    The names mirror HTTP so the payload semantics are predictable:
+    ``update`` patches scalar fields, ``set`` replaces a whole relation,
+    ``add``/``delete`` apply to the listed members only, ``get`` reads
+    the current related set back (never proposed, never executed).
+    """
+
+    UPDATE = "update"
+    SET = "set"
+    ADD = "add"
+    DELETE = "delete"
+    GET = "get"
+    CREATE = "create"
+
+    def as_str(self) -> str:
+        """Plain string form for joining into a full ``type_id``."""
+        return self.value
+
+
 def _json_safe(value: typing.Any) -> typing.Any:
     """Coerce a structure into plain JSON-serializable data.
 
@@ -82,19 +111,41 @@ def _json_safe(value: typing.Any) -> typing.Any:
 
 
 class MutableActionType(abc.ABC):
-    """One mutable action (e.g. ``provider.update``) in the registry."""
+    """One mutable action family in the registry.
+
+    A concrete class declares a *root* ``type_id`` (``provider``,
+    ``servicepool.groups``) plus the :attr:`operations` it implements;
+    the registry expands each (class, operation) pair into a full id
+    binding (``provider.update``, ``servicepool.groups.set``, ``.add``,
+    ...). One instance serves one full id: it carries the bound
+    :attr:`operation` and the complete :attr:`full_id`, and
+    :meth:`execute` dispatches to the matching ``op_*`` implementation.
+    Call sites use ``registry.get(full_id)()`` exactly as before — the
+    registry value is a zero-arg factory that binds the operation.
+    """
 
     type_id: typing.ClassVar[str]
-    """Stable identifier, e.g. ``provider.update``."""
+    """Root identifier, e.g. ``provider`` or ``servicepool.groups``."""
+
+    operations: typing.ClassVar[frozenset["ActionOperation"]] = frozenset({ActionOperation.UPDATE})
+    """Operations this family implements; the registry derives one full
+    id (and one factory binding) per operation."""
+
+    operation: "ActionOperation | None" = None
+    """The operation this instance is bound to (set by the registry factory)."""
 
     title: typing.ClassVar[str]
-    """Human title for the generated proposal tool."""
+    """Human title for the generated proposal tool (single-op families)."""
 
     description: typing.ClassVar[str]
-    """Base description for the generated proposal tool."""
+    """Base description for the generated proposal tool (single-op families)."""
 
     handler: typing.ClassVar[type[Handler]]
     """REST handler whose canonical operation executes on approval."""
+
+    noun: typing.ClassVar[str] = "item"
+    """Human kind of the target (the model behind type_id): used by
+    generated tool text and error messages (``Service pool``, ``Server``)."""
 
     target_scoped_fields: typing.ClassVar[bool] = False
     """True when field definitions depend on the concrete target.
@@ -108,10 +159,67 @@ class MutableActionType(abc.ABC):
     """Approval-time behaviour when the target drifted from ``base_etag``.
 
     Defaults to :attr:`StalePolicy.DENY`: any drift invalidates the
-    flow. A single ``FORCE`` type is an explicit per-action-type
-    declaration (class attribute, code-reviewed); there is no
-    per-flow or per-admin override.
+    flow. A ``FORCE`` policy is an explicit per-action-type declaration
+    (class attribute or :attr:`stale_policies` entry, code-reviewed);
+    there is no per-flow or per-admin override.
     """
+
+    stale_policies: typing.ClassVar[dict["ActionOperation", StalePolicy]] = {}
+    """Per-operation approval-time behaviour (multi-operation families).
+
+    :meth:`get_stale_policy` resolves the policy of the operation the
+    binding carries through this map; operations not listed fall back to
+    :attr:`stale_policy`. This lets the delta operations
+    (``add``/``delete``, idempotent against concurrent edits of *other*
+    members) run FORCE while whole-set ``set``/``update`` stay DENY in
+    the same family.
+    """
+
+    def __init__(self, operation: "ActionOperation | None" = None) -> None:
+        """Bind one instance to one operation of the family.
+
+        ``operation`` defaults to the single declared operation when the
+        family has exactly one, so direct instantiation keeps working;
+        registry factories always pass the full-id operation explicitly.
+        """
+        if operation is None:
+            if len(self.operations) == 1:
+                (operation,) = self.operations
+        elif operation not in self.operations:
+            raise ValueError(f"{self.type_id} does not support the {operation.as_str()} operation")
+        self.operation = operation
+
+    def get_stale_policy(self) -> StalePolicy:
+        """Stale policy resolved for the operation bound to this instance."""
+        if self.operation is not None:
+            policy = self.stale_policies.get(self.operation)
+            if policy is not None:
+                return policy
+        return self.stale_policy
+
+    @property
+    def full_id(self) -> str:
+        """Complete registry id of this instance (root id + operation)."""
+        if self.operation is None:
+            return self.type_id
+        return f"{self.type_id}.{self.operation.as_str()}"
+
+    @property
+    def proposable(self) -> bool:
+        """True for write bindings (everything except the read-only GET)."""
+        return self.operation is not ActionOperation.GET
+
+    def tool_title(self) -> str:
+        """Human title of the MCP tool for the bound operation.
+
+        Single-operation families inherit the class ``title``; multi-op
+        families override to phrase each verb (or the read tool).
+        """
+        return self.title
+
+    def tool_description(self) -> str:
+        """Description of the MCP tool for the bound operation."""
+        return self.description
 
     # ------------------------------------------------------------- hooks
 
@@ -164,14 +272,68 @@ class MutableActionType(abc.ABC):
     def fingerprint(self, target: db_models.Model) -> str:
         """Current whole-item fingerprint (CAS soft-notice base)."""
 
-    @abc.abstractmethod
     async def execute(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        """Apply the approved action through the canonical REST machinery.
+        """Apply the approved action through the operation bound to this instance.
 
-        Runs as the approving administrator (the request owner), so
-        validation, audit and permissions are the standard ones.
-        Returns a human summary stored on the action.
+        The registry binds every instance to exactly one
+        :class:`ActionOperation` (its full id ends in it), and this
+        launcher dispatches to the matching ``op_*`` implementation.
+        Types only implement the ``op_*`` hooks they support; the
+        defaults below reject the rest, so an unsupported operation fails
+        loudly (never silently) if a persisted action outlives a code
+        change that removed it.
         """
+        op = self.operation
+        if op is None:
+            raise NotImplementedError(f"{self.type_id}: unbound action type (registry bug)")
+        implementation: (
+            collections.abc.Callable[[FlowAction, ExtendedHttpRequestWithUser], collections.abc.Awaitable[str]]
+            | None
+        ) = {
+            ActionOperation.UPDATE: self.op_update,
+            ActionOperation.SET: self.op_set,
+            ActionOperation.ADD: self.op_add,
+            ActionOperation.DELETE: self.op_delete,
+            ActionOperation.GET: self.op_get,
+        }.get(op)
+        if implementation is None:
+            raise NotImplementedError(f"{self.full_id}: unsupported operation")
+        return await implementation(action, request)
+
+    async def op_update(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the update operation")
+
+    async def op_set(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the set operation")
+
+    async def op_add(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the add operation")
+
+    async def op_delete(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the delete operation")
+
+    async def op_get(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the get operation")
+
+    def read(self, target_uuid: str) -> JsonObject:
+        """Live read view of a GET binding (no flow, no approval, no execution).
+
+        The generic view mirrors the discovery surface: the field definitions
+        of the concrete target plus its current values. Relation types
+        override it to add the human side of the current members.
+        """
+        if self.operation is not ActionOperation.GET:
+            raise NotImplementedError(f"{self.full_id}: not a read (get) action type")
+        target = self.resolve_target(target_uuid)
+        for_type = self.for_type_of(target)
+        fields = self.field_definitions(for_type, target)
+        return {
+            "action_type": self.full_id,
+            "target_uuid": self.target_uuid_of(target),
+            "for_type": for_type,
+            "fields": fields,
+            "current_values": self.snapshot_values(target, [d["name"] for d in fields]),
+        }
 
     # ------------------------------------------------- generic CAS layer
 
@@ -369,6 +531,3 @@ class MutableActionType(abc.ABC):
         except Exception:
             return "conflict"
         return "conflict" if drifted else "outdated"
-
-    def _path(self) -> str:
-        return self.type_id.split(".")[0] + "s"

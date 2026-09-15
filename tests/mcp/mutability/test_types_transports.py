@@ -5,7 +5,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.transports import TransportUpdate
 from uds.REST.methods.transports import Transports
 
@@ -20,8 +20,9 @@ TEST_TRANSPORT_TYPE = "TestTransport"
 class TransportUpdateRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("transport.update")
-        self.assertIs(found, TransportUpdate)
-        self.assertIn("transport.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), TransportUpdate)
+        self.assertIn("transport.update", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):

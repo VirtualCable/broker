@@ -30,7 +30,7 @@ JsonObject = dict[str, typing.Any]
 class ProviderUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing service provider."""
 
-    type_id = "provider.update"
+    type_id = "provider"
     title = "Propose provider update"
     description = (
         "Propose changes to an existing service provider. The proposal does NOT "
@@ -126,7 +126,7 @@ class ProviderUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(self.for_type_of(target)))
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped (name/comments/tags are all required) and
         # serializes the whole module instance from the "instance" payload,
         # so a partial proposal must be merged over the CAS-verified

@@ -15,7 +15,7 @@ from ._module_update import ModuleUpdateActionType
 class NotifierUpdate(ModuleUpdateActionType):
     """Proposal: update an existing notifier."""
 
-    type_id = "notifier.update"
+    type_id = "notifier"
     title = "Propose notifier update"
     description = (
         "Propose changes to an existing notifier (system notifications delivery). "

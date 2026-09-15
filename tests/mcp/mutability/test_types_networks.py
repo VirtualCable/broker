@@ -5,7 +5,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.networks import NetworkUpdate
 from uds.models import Network
 
@@ -17,8 +17,9 @@ from tests.mcp.mutability._helpers import FlowTestCase, make_request
 class NetworkUpdateRegistryTest(FlowTestCase):
     def test_network_update_is_registered(self) -> None:
         found = registry_get("network.update")
-        self.assertIs(found, NetworkUpdate)
-        self.assertIn("network.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), NetworkUpdate)
+        self.assertIn("network.update", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):

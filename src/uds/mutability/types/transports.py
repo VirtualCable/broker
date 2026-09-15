@@ -24,7 +24,7 @@ from ._module_update import ModuleUpdateActionType
 class TransportUpdate(ModuleUpdateActionType):
     """Proposal: update an existing transport."""
 
-    type_id = "transport.update"
+    type_id = "transport"
     title = "Propose transport update"
     description = (
         "Propose changes to an existing transport (how users access their services). "

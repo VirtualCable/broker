@@ -50,7 +50,7 @@ _GROUP_FIELDS: typing.Final[list[str]] = [
 class GroupUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing group."""
 
-    type_id = "group.update"
+    type_id = "group"
     title = "Propose group update"
     description = (
         "Propose changes to an existing group of an authenticator. The proposal does "
@@ -147,7 +147,7 @@ class GroupUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context, including the
         # parent lookup (the authenticator FK needs a query)
         def _resolve() -> tuple[models.Group, str]:

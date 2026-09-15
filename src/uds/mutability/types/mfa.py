@@ -15,7 +15,7 @@ from ._module_update import ModuleUpdateActionType
 class MFAUpdate(ModuleUpdateActionType):
     """Proposal: update an existing MFA provider."""
 
-    type_id = "mfa.update"
+    type_id = "mfa"
     title = "Propose MFA provider update"
     description = (
         "Propose changes to an existing MFA provider (multi factor authentication "

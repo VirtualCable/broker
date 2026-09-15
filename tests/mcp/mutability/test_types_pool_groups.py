@@ -5,7 +5,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.pool_groups import ServicePoolGroupUpdate
 from uds.models import ServicePoolGroup
 from uds.REST.methods.services_pool_groups import ServicesPoolGroups
@@ -18,8 +18,9 @@ from tests.mcp.mutability._helpers import FlowTestCase, make_request
 class ServicePoolGroupUpdateTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("service_pool_group.update")
-        self.assertIs(found, ServicePoolGroupUpdate)
-        self.assertIn("service_pool_group.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), ServicePoolGroupUpdate)
+        self.assertIn("service_pool_group.update", all_type_ids())
 
     def test_field_definitions_exclude_the_image_fk(self) -> None:
         names = [d["name"] for d in ServicePoolGroupUpdate().field_definitions("service_pool_group")]

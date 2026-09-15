@@ -3,7 +3,7 @@
 import unittest
 
 from uds.mutability import (
-    all_types,
+    all_type_ids,
     get as registry_get,
 )
 from uds.mutability.types.providers import ProviderUpdate
@@ -15,14 +15,16 @@ class MutabilityRegistryTest(unittest.TestCase):
 
     def test_provider_update_is_registered(self) -> None:
         found = registry_get("provider.update")
-        # The registry stores classes; call sites instantiate per use
-        self.assertIs(found, ProviderUpdate)
-        self.assertIn("provider.update", [t.type_id for t in all_types()])
+        # The registry stores factories; call sites instantiate per use
+        assert found is not None
+        self.assertIs(type(found()), ProviderUpdate)
+        self.assertIn("provider.update", all_type_ids())
 
     def test_service_update_is_registered(self) -> None:
         found = registry_get("service.update")
-        self.assertIs(found, ServiceUpdate)
-        self.assertIn("service.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), ServiceUpdate)
+        self.assertIn("service.update", all_type_ids())
 
     def test_unknown_type_returns_none(self) -> None:
         self.assertIsNone(registry_get("provider.destroy_everything"))

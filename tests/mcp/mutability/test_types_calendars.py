@@ -7,7 +7,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.calendars import CalendarRuleUpdate, CalendarUpdate
 from uds.models import Calendar, CalendarRule
 from uds.REST.methods.calendarrules import CalendarRules
@@ -20,8 +20,9 @@ from tests.mcp.mutability._helpers import FlowTestCase, make_request
 class CalendarUpdateTest(FlowTestCase):
     def test_calendar_update_is_registered(self) -> None:
         found = registry_get("calendar.update")
-        self.assertIs(found, CalendarUpdate)
-        self.assertIn("calendar.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), CalendarUpdate)
+        self.assertIn("calendar.update", all_type_ids())
 
     def test_fields_and_cas(self) -> None:
         calendar = Calendar.objects.create(name="work days")
@@ -56,8 +57,9 @@ class CalendarRuleUpdateTest(FlowTestCase):
 
     def test_calendar_rule_update_is_registered(self) -> None:
         found = registry_get("calendar_rule.update")
-        self.assertIs(found, CalendarRuleUpdate)
-        self.assertIn("calendar_rule.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), CalendarRuleUpdate)
+        self.assertIn("calendar_rule.update", all_type_ids())
 
     def test_field_definitions_are_the_save_item_shapes(self) -> None:
         names = [d["name"] for d in CalendarRuleUpdate().field_definitions("calendar_rule")]

@@ -14,7 +14,7 @@ from ._module_update import ModuleUpdateActionType
 class OsManagerUpdate(ModuleUpdateActionType):
     """Proposal: update an existing OS manager."""
 
-    type_id = "osmanager.update"
+    type_id = "osmanager"
     title = "Propose OS manager update"
     description = (
         "Propose changes to an existing OS manager (how deployed services publish "

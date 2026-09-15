@@ -8,7 +8,7 @@ from asgiref.sync import async_to_sync
 from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.meta_pools import MetaPoolMembers
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.meta_service_pools import MetaServicesPool
@@ -35,15 +35,23 @@ def _metapool(pools: list[models.ServicePool]) -> models.MetaPool:
     return create_db_metapool(pools, groups)
 
 
+def _members() -> typing.Any:
+    """SET binding of the members family (registry factories bind the operation)."""
+    factory = registry_get("metapool.members.set")
+    assert factory is not None
+    return factory()
+
+
 class MetaPoolMembersRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("metapool.members.set")
-        self.assertIs(found, MetaPoolMembers)
-        self.assertIn("metapool.members.set", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), MetaPoolMembers)
+        self.assertIn("metapool.members.set", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):
-            MetaPoolMembers().resolve_target("00000000-0000-0000-0000-000000000000")
+            _members().resolve_target("00000000-0000-0000-0000-000000000000")
 
     def test_is_target_scoped(self) -> None:
         self.assertIs(MetaPoolMembers.target_scoped_fields, True)
@@ -53,7 +61,7 @@ class MetaPoolMembersFieldsTest(FlowTestCase):
     def test_single_editlist_field_with_pool_choices(self) -> None:
         pool_a = _pool()
         pool_b = _pool()
-        defs = MetaPoolMembers().field_definitions("metapool")
+        defs = _members().field_definitions("metapool")
         self.assertEqual([d["name"] for d in defs], ["members"])
         members_def = defs[0]
         self.assertEqual(members_def["type"], types.ui.FieldType.EDITABLELIST.value)
@@ -67,12 +75,12 @@ class MetaPoolMembersFieldsTest(FlowTestCase):
             {"pool_id": m.pool.uuid, "priority": m.priority, "enabled": m.enabled}
             for m in meta_pool.members.all()
         ]
-        self.assertEqual(MetaPoolMembers().validate_values("metapool", {"members": rows}, meta_pool), [])
+        self.assertEqual(_members().validate_values("metapool", {"members": rows}, meta_pool), [])
         # Empty set is valid: it means "remove all members"
-        self.assertEqual(MetaPoolMembers().validate_values("metapool", {"members": []}, meta_pool), [])
+        self.assertEqual(_members().validate_values("metapool", {"members": []}, meta_pool), [])
 
     def test_missing_members_field_rejected(self) -> None:
-        errors = MetaPoolMembers().validate_values("metapool", {"other": 1})
+        errors = _members().validate_values("metapool", {"other": 1})
         self.assertTrue(any("unknown fields" in e for e in errors))
         self.assertTrue(any("members is required" in e for e in errors))
 
@@ -93,18 +101,18 @@ class MetaPoolMembersFieldsTest(FlowTestCase):
             ({**base, "enabled": "yes"}, "enabled must be a boolean"),
         ]
         for row, fragment in bad_rows:
-            errors = MetaPoolMembers().validate_values("metapool", {"members": [row]})
+            errors = _members().validate_values("metapool", {"members": [row]})
             self.assertTrue(any(fragment in e for e in errors), f"{row!r} -> {errors}")
 
     def test_duplicate_pool_id_rejected(self) -> None:
         pool = _pool()
         row = {"pool_id": pool.uuid, "priority": 0, "enabled": True}
-        errors = MetaPoolMembers().validate_values("metapool", {"members": [row, dict(row)]})
+        errors = _members().validate_values("metapool", {"members": [row, dict(row)]})
         self.assertTrue(any("duplicates pool_id" in e for e in errors))
 
     def test_case_insensitive_uuid_is_normalized(self) -> None:
         pool = _pool()
-        errors = MetaPoolMembers().validate_values(
+        errors = _members().validate_values(
             "metapool", {"members": [{"pool_id": pool.uuid.upper(), "priority": 0, "enabled": True}]}
         )
         self.assertEqual(errors, [])
@@ -114,7 +122,7 @@ class MetaPoolMembersFieldsTest(FlowTestCase):
         meta_pool = _metapool([pool])
         models.MetaPoolMember.objects.create(pool=pool, meta_pool=meta_pool, priority=7, enabled=False)
         rows = [{"pool_id": pool.uuid, "priority": 0, "enabled": True}]
-        errors = MetaPoolMembers().validate_values("metapool", {"members": rows}, meta_pool)
+        errors = _members().validate_values("metapool", {"members": rows}, meta_pool)
         self.assertTrue(any("duplicated member rows" in e for e in errors))
 
 
@@ -123,7 +131,7 @@ class MetaPoolMembersCasTest(FlowTestCase):
         pool_a = _pool()
         pool_b = _pool()
         meta_pool = _metapool([pool_a, pool_b])
-        action_type = MetaPoolMembers()
+        action_type = _members()
         snapshot = action_type.snapshot_values(meta_pool, ["members"])
         expected = sorted(
             [
@@ -137,7 +145,7 @@ class MetaPoolMembersCasTest(FlowTestCase):
     def test_fingerprint_tracks_membership_only(self) -> None:
         pool = _pool()
         meta_pool = _metapool([pool])
-        action_type = MetaPoolMembers()
+        action_type = _members()
 
         base = action_type.fingerprint(meta_pool)
         self.assertEqual(base, action_type.fingerprint(meta_pool))
@@ -153,7 +161,7 @@ class MetaPoolMembersCasTest(FlowTestCase):
         pool_a = _pool()
         pool_b = _pool()
         meta_pool = _metapool([pool_a, pool_b])
-        action_type = MetaPoolMembers()
+        action_type = _members()
         live = action_type.snapshot_values(meta_pool, ["members"])
         flow = self._flow()
         action = self._action(
@@ -184,7 +192,7 @@ class MetaPoolMembersExecuteTest(FlowTestCase):
         proxy_cls = mock.MagicMock()
         proxy_cls.return_value.execute = mock.AsyncMock(return_value=None)
         with mock.patch("uds.mutability.types.meta_pools.RestProxy", proxy_cls):
-            summary = async_to_sync(MetaPoolMembers().execute)(action, request=make_request())
+            summary = async_to_sync(_members().execute)(action, request=make_request())
         self._last_summary = summary
         return proxy_cls
 

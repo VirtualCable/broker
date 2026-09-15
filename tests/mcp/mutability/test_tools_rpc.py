@@ -14,8 +14,13 @@ from uds.models import ActionFlow
 from uds.mcp.default_catalog import get_catalog
 from uds.mutability import FlowStore
 
-from tests.fixtures.authenticators import create_db_authenticator, create_db_users
-from tests.fixtures.services import create_db_provider
+from tests.fixtures.authenticators import create_db_authenticator, create_db_groups, create_db_users
+from tests.fixtures.services import (
+    create_db_osmanager,
+    create_db_provider,
+    create_db_service,
+    create_db_servicepool,
+)
 from tests.mcp.mutability._helpers import MUTATION_TOOL_NAMES
 from tests.utils import rest
 
@@ -247,6 +252,27 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         by_type = self._result_json(self._call("get_mutable_fields", {"for_type": "OpenStackPlatform"}))
         secrets = [d["name"] for d in by_type["fields"] if d["secret"]]
         self.assertIn("instance.password", secrets)
+
+    def test_relation_read_tool_returns_current_members(self) -> None:
+        service = create_db_service(self.provider)
+        pool = create_db_servicepool(service=service, osmanager=create_db_osmanager())
+        group = create_db_groups(create_db_authenticator(), 1)[0]
+        pool.assignedGroups.add(group)
+        view = self._result_json(self._call("get_servicepool_groups", {"target_uuid": pool.uuid}))
+        self.assertEqual(view["action_type"], "servicepool.groups.get")
+        self.assertEqual(view["current_values"], {"groups": [group.uuid]})
+        self.assertEqual(view["current_members"], [{"uuid": group.uuid, "name": group.name}])
+
+    def test_relation_read_tool_refuses_unknown_target(self) -> None:
+        # The generated get_* tools answer directly (no flow): resolve or NotFound
+        body = self._call("get_servicepool_groups", {"target_uuid": "00000000-0000-0000-0000-000000000000"})
+        self.assertIn("error", body)
+        self.assertIn("not found", str(body["error"]).lower())
+
+    def test_relation_read_tool_requires_target_uuid(self) -> None:
+        body = self._call("get_metapool_members", {})
+        self.assertIn("error", body)
+        self.assertIn("target_uuid", str(body["error"]))
 
     def test_list_shows_only_own_proposals(self) -> None:
         self._propose(self._create_flow()["flow_id"], {"name": "mine"})

@@ -34,7 +34,7 @@ JsonObject = dict[str, typing.Any]
 class ServicePoolGroupUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing service pool group."""
 
-    type_id = "service_pool_group.update"
+    type_id = "service_pool_group"
     title = "Propose service pool group update"
     description = (
         "Propose changes to an existing service pool group (a folder of service pools "
@@ -96,7 +96,7 @@ class ServicePoolGroupUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, fields)
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped: image_id is a plain FIELDS_TO_SAVE entry
         # (required by fields_from_params) but hidden from the agent, and
         # pre_save indexes it directly. Merge the proposal over the

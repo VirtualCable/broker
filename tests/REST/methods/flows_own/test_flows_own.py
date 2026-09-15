@@ -386,6 +386,20 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         )
         self.assertEqual(response.status_code, 400, response.content)
 
+    def test_add_read_only_action_is_400(self) -> None:
+        # A GET binding is discovery and reading only: it cannot be
+        # proposed in a flow (refused before any target lookup)
+        response = self.client.rest_post(
+            self._actions_url(),
+            data={
+                "action_type": "servicepool.groups.get",
+                "target_uuid": self.provider.uuid,
+                "values": {"groups": []},
+            },
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn(b"read-only", response.content)
+
     def test_edit_action_rebases(self) -> None:
         action_id = self._add_action().json()["result"]["id"]
         response = self.client.rest_put(

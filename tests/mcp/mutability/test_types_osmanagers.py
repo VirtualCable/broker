@@ -5,7 +5,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.osmanagers import OsManagerUpdate
 from uds.REST.methods.osmanagers import OsManagers
 
@@ -18,8 +18,9 @@ TEST_OSMANAGER_TYPE = "TestOsManager"
 class OsManagerUpdateRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("osmanager.update")
-        self.assertIs(found, OsManagerUpdate)
-        self.assertIn("osmanager.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), OsManagerUpdate)
+        self.assertIn("osmanager.update", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):

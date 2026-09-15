@@ -68,7 +68,7 @@ def execute_flow(flow: ActionFlow, request: ExtendedHttpRequestWithUser) -> Json
             # approval. FORCE types skip it by design (their execute is an
             # idempotent set of the approved payload).
             stale: str | None = None
-            if action_type.stale_policy == StalePolicy.DENY:
+            if action_type.get_stale_policy() == StalePolicy.DENY:
                 try:
                     action_type.resolve_target(action.target_uuid)
                 except Exception:

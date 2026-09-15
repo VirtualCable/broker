@@ -36,7 +36,7 @@ from uds.REST.methods.user_services import Groups as AssignedGroups
 from .. import base as mutability_base
 from .. import gui_view
 from ..etag import item_etag
-from ._relations import M2MSetActionType
+from ._relations import M2MRelationActionType
 
 JsonObject = dict[str, typing.Any]
 
@@ -50,7 +50,7 @@ def _metapool_gui_elements() -> list[types.ui.GuiElement]:
 class MetaPoolUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing meta pool."""
 
-    type_id = "metapool.update"
+    type_id = "metapool"
     title = "Propose meta pool update"
     description = (
         "Propose changes to an existing meta pool (a pool that groups several "
@@ -127,7 +127,7 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ALL the ORM work (target, FK context, tags) must stay out of the
         # async context: resolve + snapshot + merge in one sync boundary.
         def _build_params() -> tuple[str, JsonObject]:
@@ -178,16 +178,18 @@ class MetaPoolMembers(mutability_base.MutableActionType):
     sequence through the canonical ``meta_pools/{uuid}/pools`` surface.
     """
 
-    type_id = "metapool.members.set"
+    type_id = "metapool.members"
+    operations = frozenset({mutability_base.ActionOperation.SET, mutability_base.ActionOperation.GET})
+
     title = "Propose meta pool members"
     description = (
         "Propose the complete desired set of member pools of a meta pool. The "
         "'members' field is the FINAL set, not a delta: pools missing from it "
         "will be removed, new ones added, and priority/enabled adjusted. Use "
-        "get_mutable_fields with the meta pool uuid to see the current members "
-        "and the uuids of the pools you can assign. An empty list removes all "
-        "members. The proposal does NOT apply anything: it is queued until an "
-        "administrator approves it."
+        "get_metapool_members to see the current members and the uuids of the "
+        "pools you can assign. An empty list removes all members. The proposal "
+        "does NOT apply anything: it is queued until an administrator approves "
+        "it."
     )
     handler = MetaPools
     model = models.MetaPool
@@ -307,10 +309,38 @@ class MetaPoolMembers(mutability_base.MutableActionType):
     def target_display_name(self, target: db_models.Model) -> str:
         return typing.cast(models.MetaPool, target).name
 
+    # ------------------------------------------------------- tool text / read
+
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.GET:
+            return "Read meta pool members"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.GET:
+            return (
+                "Read the current member pools of one meta pool: every member with its pool uuid "
+                "(to use in a metapool.members.set proposal), name, priority and enabled state. "
+                "Applies immediately; it is a plain read, never a proposal."
+            )
+        return self.description
+
+    @typing.override
+    def read(self, target_uuid: str) -> JsonObject:
+        result = super().read(target_uuid)
+        meta_pool = typing.cast(models.MetaPool, self.resolve_target(target_uuid))
+        names = {str(uuid): name for uuid, name in models.ServicePool.objects.values_list("uuid", "name")}
+        result["current_members"] = [
+            {**row, "pool_name": names.get(str(row["pool_id"]), "")} for row in _member_rows(meta_pool)
+        ]
+        return result
+
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_set(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # Plan the diff in one sync boundary (target + live rows), then run
         # the REST operations. The whole-set CAS check (stale policy DENY)
         # already validated the live set against the approved base before
@@ -401,10 +431,12 @@ def _validate_priority(value: typing.Any, where: str) -> list[str]:
     return []
 
 
-class MetaPoolGroups(M2MSetActionType):
+class MetaPoolGroups(M2MRelationActionType):
     """Proposal: set the complete desired access groups of a meta pool."""
 
-    type_id = "metapool.groups.set"
+    type_id = "metapool.groups"
+    relation_label = "access groups"
+    uuid_source = "get_metapool_groups (or the group list tools)"
     title = "Propose meta pool groups"
     description = (
         "Propose the complete desired set of groups allowed to use a meta pool. The "

@@ -5,7 +5,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.accounts import AccountUpdate
 from uds.models import Account
 from uds.REST.methods.accounts import Accounts
@@ -18,8 +18,9 @@ from tests.mcp.mutability._helpers import FlowTestCase, make_request
 class AccountUpdateTest(FlowTestCase):
     def test_is_registered(self) -> None:
         found = registry_get("account.update")
-        self.assertIs(found, AccountUpdate)
-        self.assertIn("account.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), AccountUpdate)
+        self.assertIn("account.update", all_type_ids())
 
     def test_fields_and_cas(self) -> None:
         account = Account.objects.create(name="acc1")

@@ -108,9 +108,14 @@ class FlowsOwnActions(FlowActions):
     def _registry_type(type_id: str) -> "mutability.registry.MutableActionType":
         found = registry.get(type_id)
         if found is None:
-            known = ", ".join(t.type_id for t in registry.all_types())
+            known = ", ".join(registry.all_type_ids())
             raise exceptions.rest.RequestError(f"Unknown action type {type_id} (known: {known})")
-        return found()
+        action_type = found()
+        if not action_type.proposable:
+            raise exceptions.rest.RequestError(
+                f"Action type {type_id} is a read-only type: it cannot be proposed in a flow"
+            )
+        return action_type
 
     def _require_management(
         self, action_type: "mutability.registry.MutableActionType", target_uuid: str
@@ -172,7 +177,7 @@ class FlowsOwnActions(FlowActions):
         try:
             action = store.add_action(
                 parent,
-                action_type=action_type.type_id,
+                action_type=action_type.full_id,
                 target_uuid=action_type.target_uuid_of(target),
                 values=values,
                 base_values=base_values,

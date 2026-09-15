@@ -534,7 +534,7 @@ class FlowStore:
             target = action_type.resolve_target(action.target_uuid)
         except Exception:
             return f"target {action.target_uuid} no longer exists"
-        if action_type.stale_policy == StalePolicy.FORCE:
+        if action_type.get_stale_policy() == StalePolicy.FORCE:
             return None
         if action_type.fingerprint(target) != (action.approved_etag or action.base_etag):
             return "target changed after the action was approved"

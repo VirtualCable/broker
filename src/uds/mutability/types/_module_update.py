@@ -140,7 +140,7 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ALL the ORM work (target, instance values, tags) must stay out
         # of the async context: resolve + merge in one sync boundary.
         def _build_params() -> tuple[str, JsonObject]:

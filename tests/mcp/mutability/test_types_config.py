@@ -6,7 +6,7 @@ from unittest import mock
 from uds.core.exceptions import rest as rest_exceptions
 from uds.core.util.config import Config as CfgConfig
 from uds.REST.methods.config import Config as ConfigHandler
-from uds.mutability import all_types, get as registry_get
+from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.types.config import NOT_MUTABLE_TYPES, ConfigUpdate
 from uds.models import Config as DBConfig
 
@@ -26,8 +26,9 @@ class ConfigUpdateRegistryTest(FlowTestCase):
 
     def test_config_update_is_registered(self) -> None:
         found = registry_get("config.update")
-        self.assertIs(found, ConfigUpdate)
-        self.assertIn("config.update", [t.type_id for t in all_types()])
+        assert found is not None
+        self.assertIs(type(found()), ConfigUpdate)
+        self.assertIn("config.update", all_type_ids())
 
     def test_resolve_target_splits_section_and_key(self) -> None:
         cfg = _db_value("Security", "Admin Trusted Sources", "", CfgConfig.FieldType.TEXT)

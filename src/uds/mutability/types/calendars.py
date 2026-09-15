@@ -66,7 +66,7 @@ def _def_from_choice(name: str, label: str, tooltip: str, choices: tuple[tuple[s
 class CalendarUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing calendar."""
 
-    type_id = "calendar.update"
+    type_id = "calendar"
     title = "Propose calendar update"
     description = (
         "Propose changes to an existing calendar (named date/time groups used by "
@@ -129,7 +129,7 @@ class CalendarUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, fields)
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped (every FIELDS_TO_SAVE entry is required):
         # merge the proposal over the CAS-verified current values, so a
         # partial proposal applies instead of failing on approval.
@@ -157,7 +157,7 @@ class CalendarUpdate(mutability_base.MutableActionType):
 class CalendarRuleUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing rule of a calendar (detail type)."""
 
-    type_id = "calendar_rule.update"
+    type_id = "calendar_rule"
     title = "Propose calendar rule update"
     description = (
         "Propose changes to an existing rule of a calendar. The proposal does NOT apply "
@@ -278,7 +278,7 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
     # ------------------------------------------------------------- hooks
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context, including the
         # parent lookup (the calendar FK needs a query)
         def _resolve() -> tuple[models.CalendarRule, str]:

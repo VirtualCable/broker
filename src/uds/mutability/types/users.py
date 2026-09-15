@@ -57,7 +57,7 @@ _USER_FIELDS: typing.Final[list[str]] = [
 class UserUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing user."""
 
-    type_id = "user.update"
+    type_id = "user"
     title = "Propose user update"
     description = (
         "Propose changes to an existing user of an authenticator. The proposal does "
@@ -169,7 +169,7 @@ class UserUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
-    async def execute(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ORM work must stay out of the async context, including the
         # parent lookup (the authenticator FK needs a query)
         def _resolve() -> tuple[models.User, str]:
