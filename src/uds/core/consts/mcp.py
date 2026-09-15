@@ -56,7 +56,7 @@ DRAFT_TTL_DAYS: typing.Final[int] = 1
 # submit (``expires_in_hours``): proposals carry the expected time an
 # administrator will need to resolve them, clamped to sane values.
 MIN_TTL_HOURS: typing.Final[int] = 1
-MAX_TTL_HOURS: typing.Final[int] = FLOW_TTL_DAYS * 24  # 30 days
+MAX_TTL_HOURS: typing.Final[int] = FLOW_TTL_DAYS * 24
 
 # Days of own-flow history the proposal tools surface to the agent.
 # Older flows remain visible to administrators (and in the database),
