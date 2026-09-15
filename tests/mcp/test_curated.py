@@ -48,6 +48,12 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_config",
     "report_failed_logins",
     "report_admin_activity",
+    # Descriptor read views generated from the mutability registry (the
+    # family type_id, dots to underscores):
+    "get_metapool_group",
+    "get_metapool_member",
+    "get_servicepool_group",
+    "get_servicepool_transport",
 )
 
 _MARKER: typing.Final[str] = "mcp-system-log-marker-for-test"
@@ -428,6 +434,46 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         )
         # Single counter: the bare points list, not the per-counter mapping.
         self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    # ------------------------------------------- generated descriptor reads
+
+    def _a_metapool(self) -> models.MetaPool:
+        from tests.fixtures.services import create_db_metapool
+
+        return create_db_metapool([self._a_service_pool()], self.groups)
+
+    def test_get_servicepool_group(self) -> None:
+        pool = self._a_service_pool()
+        result = json.loads(self._result_text(self._call("get_servicepool_group", {"target_uuid": pool.uuid})))
+        self.assertEqual(result["entity_type"], "servicepool.group")
+        self.assertEqual(result["target_uuid"], pool.uuid)
+        self.assertEqual([d["name"] for d in result["fields"]], ["groups"])
+        self.assertIsInstance(result["current_members"], list)
+
+    def test_get_servicepool_transport(self) -> None:
+        pool = self._a_service_pool()
+        result = json.loads(
+            self._result_text(self._call("get_servicepool_transport", {"target_uuid": pool.uuid}))
+        )
+        self.assertEqual(result["entity_type"], "servicepool.transport")
+        self.assertIn("transports", result["current_values"])
+
+    def test_get_metapool_member(self) -> None:
+        metapool = self._a_metapool()
+        result = json.loads(
+            self._result_text(self._call("get_metapool_member", {"target_uuid": metapool.uuid}))
+        )
+        self.assertEqual(result["entity_type"], "metapool.member")
+        self.assertEqual([row["pool_id"] for row in result["current_members"]], [self._a_service_pool().uuid])
+
+    def test_get_metapool_group(self) -> None:
+        metapool = self._a_metapool()
+        result = json.loads(self._result_text(self._call("get_metapool_group", {"target_uuid": metapool.uuid})))
+        self.assertEqual(result["entity_type"], "metapool.group")
+        # The metapool fixture assigns the test groups: they round-trip.
+        self.assertEqual(
+            sorted(entry["uuid"] for entry in result["current_members"]), sorted(g.uuid for g in self.groups)
+        )
 
 
 class CuratedContractTest(unittest.TestCase):

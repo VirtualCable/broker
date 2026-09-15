@@ -6,43 +6,51 @@ from uds.mutability import (
     all_type_ids,
     get as registry_get,
 )
-from uds.mutability.base import ActionOperation, MutableActionType
+from uds.mutability.base import ActionOperation, EntityDescriptor, MutableActionType
 from uds.mutability.registry import register
-from uds.mutability.types.meta_pools import MetaPoolMembers
+from uds.mutability.types.meta_pools import MetaPoolMember
 from uds.mutability.types.providers import ProviderUpdate
 from uds.mutability.types.services import ServiceUpdate
-from uds.mutability.types.service_pools import ServicePoolGroups
+from uds.mutability.types.service_pools import ServicePoolGroup
 
 
 class SupportedOperationsTest(unittest.TestCase):
-    """Operations are derived from the implemented hooks, never declared."""
+    """Write operations are derived from the implemented hooks, never declared."""
 
     def test_single_write_family_derives_update(self) -> None:
         self.assertEqual(ProviderUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
         self.assertEqual(ServiceUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
 
-    def test_relation_family_derives_all_four(self) -> None:
+    def test_relation_family_derives_all_write_verbs(self) -> None:
+        # Reads are not operations: only the implemented op_* hooks derive.
         self.assertEqual(
-            ServicePoolGroups.supported_operations(),
-            frozenset({ActionOperation.SET, ActionOperation.ADD, ActionOperation.DELETE, ActionOperation.GET}),
+            ServicePoolGroup.supported_operations(),
+            frozenset({ActionOperation.SET, ActionOperation.ADD, ActionOperation.DELETE}),
         )
 
-    def test_read_override_declares_get(self) -> None:
-        # MetaPoolMembers implements only op_set; its get binding comes from read().
-        self.assertEqual(
-            MetaPoolMembers.supported_operations(), frozenset({ActionOperation.SET, ActionOperation.GET})
-        )
-        self.assertIsNot(MetaPoolMembers.read, MutableActionType.read)
+    def test_read_override_publishes_a_read_not_an_operation(self) -> None:
+        # MetaPoolMember implements only op_set; its read view is not a
+        # binding, it publishes the curated get_* tool through readable().
+        self.assertEqual(MetaPoolMember.supported_operations(), frozenset({ActionOperation.SET}))
+        self.assertIsNot(MetaPoolMember.read, EntityDescriptor.read)
+        self.assertTrue(MetaPoolMember.readable())
+
+    def test_write_only_family_is_not_readableView(self) -> None:
+        # ProviderUpdate inherits the generic read but does not override it,
+        # so readable() is False: no get_* tool is generated for it.
+        self.assertFalse(ProviderUpdate.readable())
+        self.assertIs(ProviderUpdate.read, EntityDescriptor.read)
 
     def test_registration_rejects_a_family_with_no_hooks(self) -> None:
-        # The rejecting base op_get is not an implementation: a family that
-        # overrides no op_* and not read() has nothing to register. The
-        # class is only passed around (never instantiated), so the
-        # abstract hooks stay unimplemented.
+        # The rejecting base op_* stubs are not implementations: a family
+        # that overrides no op_* and is not readable has nothing to
+        # register. The class is only passed around (never instantiated),
+        # so the abstract hooks stay unimplemented.
         class _Nothing(MutableActionType):
             type_id = "nothing"
 
         self.assertEqual(_Nothing.supported_operations(), frozenset())
+        self.assertFalse(_Nothing.readable())
         with self.assertRaises(ValueError):
             register(_Nothing)
 

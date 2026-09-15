@@ -7,18 +7,23 @@ once per process: an agent cannot invent action types or mutate anything
 outside this surface — the mutability frontier is reviewed in code
 review, not configurable at runtime.
 
-Each class declares only a root ``type_id``; the operations it exposes
-are *derived from the ``op_*`` hooks it overrides* (see
+Each class declares only a root ``type_id``; the write operations it
+exposes are *derived from the ``op_*`` hooks it overrides* (see
 :meth:`MutableActionType.supported_operations`). This module expands
 them into one full id per operation (``provider.update``,
-``servicepool.groups.set``, ``.add``, ``.get``, ...) and binds each to a
-zero-arg factory producing instances with that operation set. Call sites
-keep the old contract: ``registry.get(id)()`` instantiates per use, so a
-type may hold per-request state.
+``servicepool.group.set``, ``.add``, ...) and binds each to a zero-arg
+factory producing instances with that operation set. Call sites keep the
+old contract: ``registry.get(id)()`` instantiates per use, so a type may
+hold per-request state.
 
-Implementation is declaration: a verb exists exactly because a real
-``op_*`` (or the read ``read()``) was written for it, so the registry
-can never bind an operation a class promises but does not deliver.
+The registry holds writes only. The read side of an entity is not an
+operation: it lives on the shared :class:`~uds.mutability.base.EntityDescriptor`
+base (its ``read`` view), from which the MCP read tools are generated
+outside this registry.
+
+Implementation is declaration: an operation exists exactly because a
+real ``op_*`` was written for it, so the registry can never bind an
+operation a class promises but does not deliver.
 """
 
 import collections.abc
@@ -39,15 +44,11 @@ class Binding(typing.NamedTuple):
     operation: ActionOperation
     factory: collections.abc.Callable[[], MutableActionType]
 
-    @property
-    def proposable(self) -> bool:
-        """True for write bindings (everything except the read-only GET)."""
-        return self.operation is not ActionOperation.GET
-
 
 _FACTORY = collections.abc.Callable[[], MutableActionType]
 
 _REGISTRY: dict[str, Binding] = {}
+_FAMILIES: dict[str, type[MutableActionType]] = {}
 _populated: bool = False
 
 
@@ -55,16 +56,24 @@ def register(action_type: type[MutableActionType] | MutableActionType) -> None:
     """Expand one action family into its full-id bindings, rejecting duplicates.
 
     Accepts the class (what modfinder passes) or an instance; only the
-    class matters: its ``type_id`` and the operations derived from its
-    ``op_*`` overrides.
+    class matters: its ``type_id`` and the write operations derived from
+    its ``op_*`` overrides. The class is always recorded as a family (so
+    the read tools of readable entities can be generated from it), even
+    when it registers no write binding.
     """
     cls: type[MutableActionType] = action_type if isinstance(action_type, type) else type(action_type)
+    if cls.type_id in _FAMILIES:
+        raise ValueError(f"Action type family {cls.type_id} already registered")
     operations = cls.supported_operations()
-    if not operations:
+    # A concrete family must publish something: at least one write binding
+    # or (via the descriptor base) a read view. A family that overrides no
+    # op_* and is not readable is dead weight in code, so reject it.
+    if not operations and not cls.readable():
         raise ValueError(
-            f"{cls.__name__} ({cls.type_id}): implements no operation hook "
+            f"{cls.__name__} ({cls.type_id}): implements no write operation hook "
             "(op_update/op_set/op_add/op_delete) and does not override read()"
         )
+    _FAMILIES[cls.type_id] = cls
     for operation in sorted(operations, key=lambda op: op.as_str()):
         full_id = f"{cls.type_id}.{operation.as_str()}"
         if full_id in _REGISTRY:
@@ -99,6 +108,17 @@ def all_bindings() -> tuple[Binding, ...]:
     """All registered bindings, sorted by full id."""
     _populate()
     return tuple(_REGISTRY[name] for name in sorted(_REGISTRY))
+
+
+def all_families() -> tuple[type[MutableActionType], ...]:
+    """All registered action families, sorted by root ``type_id``.
+
+    Families include pure read descriptors (no write bindings): the MCP
+    read tools are generated from the readable ones, outside the write
+    registry.
+    """
+    _populate()
+    return tuple(_FAMILIES[name] for name in sorted(_FAMILIES))
 
 
 def field_definitions(type_id: str, for_type: str) -> list[JsonObject]:

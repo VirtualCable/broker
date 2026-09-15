@@ -21,7 +21,7 @@ from tests.fixtures.services import (
     create_db_service,
     create_db_servicepool,
 )
-from tests.mcp.mutability._helpers import MUTATION_TOOL_NAMES
+from tests.mcp.mutability._helpers import MUTATION_TOOL_NAMES, READ_TOOL_NAMES
 from tests.utils import rest
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
@@ -88,6 +88,8 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         names = {t.name for t in get_catalog().tools()}
         for name in MUTATION_TOOL_NAMES:
             self.assertIn(name, names)
+        for name in READ_TOOL_NAMES:
+            self.assertIn(name, names)
 
     def test_mutation_tools_absent_when_disabled(self) -> None:
         GlobalConfig.MCP_MUTATIONS.set(False)
@@ -95,6 +97,9 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         names = {t.name for t in get_catalog().tools()}
         for name in MUTATION_TOOL_NAMES:
             self.assertNotIn(name, names)
+        # Reads are not mutations: the generated descriptor read tools stay.
+        for name in READ_TOOL_NAMES:
+            self.assertIn(name, names)
         GlobalConfig.MCP_MUTATIONS.set(True)
         get_catalog.cache_clear()
 
@@ -258,19 +263,19 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         pool = create_db_servicepool(service=service, osmanager=create_db_osmanager())
         group = create_db_groups(create_db_authenticator(), 1)[0]
         pool.assignedGroups.add(group)
-        view = self._result_json(self._call("get_servicepool_groups", {"target_uuid": pool.uuid}))
-        self.assertEqual(view["action_type"], "servicepool.groups.get")
+        view = self._result_json(self._call("get_servicepool_group", {"target_uuid": pool.uuid}))
+        self.assertEqual(view["entity_type"], "servicepool.group")
         self.assertEqual(view["current_values"], {"groups": [group.uuid]})
         self.assertEqual(view["current_members"], [{"uuid": group.uuid, "name": group.name}])
 
     def test_relation_read_tool_refuses_unknown_target(self) -> None:
         # The generated get_* tools answer directly (no flow): resolve or NotFound
-        body = self._call("get_servicepool_groups", {"target_uuid": "00000000-0000-0000-0000-000000000000"})
+        body = self._call("get_servicepool_group", {"target_uuid": "00000000-0000-0000-0000-000000000000"})
         self.assertIn("error", body)
         self.assertIn("not found", str(body["error"]).lower())
 
     def test_relation_read_tool_requires_target_uuid(self) -> None:
-        body = self._call("get_metapool_members", {})
+        body = self._call("get_metapool_member", {})
         self.assertIn("error", body)
         self.assertIn("target_uuid", str(body["error"]))
 

@@ -670,39 +670,6 @@ def _cancel_tool() -> ToolDefinition:
     )
 
 
-def _get_tool(action_type: registry.MutableActionType) -> ToolDefinition:
-    """Build the read tool of one GET binding (no flow, immediate answer)."""
-
-    def sync_body(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
-        _request_user(request)
-        target_uuid = str(arguments.get("target_uuid", "") or "")
-        if not target_uuid.strip():
-            raise ValueError("target_uuid is required")
-        return action_type.read(target_uuid)
-
-    root = action_type.type_id.replace(".", "_")
-    return ToolDefinition(
-        name=f"get_{root}",
-        title=action_type.tool_title(),
-        description=action_type.tool_description(),
-        input_schema={
-            "type": "object",
-            "properties": {
-                "target_uuid": {
-                    "type": "string",
-                    "description": f"UUID of the {action_type.noun.lower()} to read.",
-                },
-            },
-            "required": ["target_uuid"],
-            "additionalProperties": False,
-        },
-        access="Staff (the MCP endpoint gate).",
-        returns="The target's current related members (uuid and name) and field definitions.",
-        read_only=True,
-        executor=_wrap_sync(sync_body),
-    )
-
-
 def register_mutability_tools(catalog: Catalog) -> None:
     """Register the proposal tools of the registry plus the shared ones."""
     catalog.add_tool(_discovery_tool())
@@ -712,8 +679,4 @@ def register_mutability_tools(catalog: Catalog) -> None:
     catalog.add_tool(_update_tool())
     catalog.add_tool(_cancel_tool())
     for binding in registry.all_bindings():
-        action_type = binding.factory()
-        if action_type.proposable:
-            catalog.add_tool(_propose_tool(action_type))
-        else:
-            catalog.add_tool(_get_tool(action_type))
+        catalog.add_tool(_propose_tool(binding.factory()))

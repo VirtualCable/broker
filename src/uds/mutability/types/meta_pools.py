@@ -1,4 +1,4 @@
-"""``metapool.update`` / ``metapool.members.set``: meta pool mutations.
+"""``metapool.update`` / ``metapool.member.set``: meta pool mutations.
 
 Top level resource with a static gui (no module instance). Since the
 gui-coupling trial, ``metapool.update`` derives its mutable surface from
@@ -8,7 +8,7 @@ form-shaped PUT are annotated ``context`` on the gui and therefore join
 the fingerprint but never the proposable surface. GUI changes propagate
 to the agent automatically.
 
-``metapool.members.set`` is the first *relation* action type: it proposes the
+``metapool.member.set`` is the first *relation* action type: it proposes the
 complete desired set of member pools (option A: full desired set, never a
 delta), executed on approval as the minimal create/edit/delete diff
 through the canonical ``meta_pools/{uuid}/pools`` detail surface.
@@ -169,25 +169,25 @@ def _member_rows(meta_pool: models.MetaPool) -> list[MemberRow]:
     ]
 
 
-class MetaPoolMembers(mutability_base.MutableActionType):
+class MetaPoolMember(mutability_base.MutableActionType):
     """Proposal: set the complete desired member pool list of a meta pool.
 
     Relation action type (option A): ``members`` is never a delta — it
     describes the final desired set. Execution diffs it against the live
     rows (keyed by pool) and applies the minimal create/edit/delete
     sequence through the canonical ``meta_pools/{uuid}/pools`` surface.
-    The exposed operations (set, plus get via the :meth:`read` override)
-    are derived from the implemented hooks, not declared.
+    The exposed operations (set, plus the read view via the overridden
+    :meth:`read`) are derived from the implemented hooks, not declared.
     """
 
-    type_id = "metapool.members"
+    type_id = "metapool.member"
 
     title = "Propose meta pool members"
     description = (
         "Propose the complete desired set of member pools of a meta pool. The "
         "'members' field is the FINAL set, not a delta: pools missing from it "
         "will be removed, new ones added, and priority/enabled adjusted. Use "
-        "get_metapool_members to see the current members and the uuids of the "
+        "get_metapool_member to see the current members and the uuids of the "
         "pools you can assign. An empty list removes all members. The proposal "
         "does NOT apply anything: it is queued until an administrator approves "
         "it."
@@ -313,20 +313,16 @@ class MetaPoolMembers(mutability_base.MutableActionType):
     # ------------------------------------------------------- tool text / read
 
     @typing.override
-    def tool_title(self) -> str:
-        if self.operation is mutability_base.ActionOperation.GET:
-            return "Read meta pool members"
-        return self.title
+    def read_title(self) -> str:
+        return "Read meta pool members"
 
     @typing.override
-    def tool_description(self) -> str:
-        if self.operation is mutability_base.ActionOperation.GET:
-            return (
-                "Read the current member pools of one meta pool: every member with its pool uuid "
-                "(to use in a metapool.members.set proposal), name, priority and enabled state. "
-                "Applies immediately; it is a plain read, never a proposal."
-            )
-        return self.description
+    def read_description(self) -> str:
+        return (
+            "Read the current member pools of one meta pool: every member with its pool uuid "
+            "(to use in a metapool.member.set proposal), name, priority and enabled state. "
+            "Applies immediately; it is a plain read, never a proposal."
+        )
 
     @typing.override
     def read(self, target_uuid: str) -> JsonObject:
@@ -432,12 +428,12 @@ def _validate_priority(value: typing.Any, where: str) -> list[str]:
     return []
 
 
-class MetaPoolGroups(M2MRelationActionType):
+class MetaPoolGroup(M2MRelationActionType):
     """Proposal: set the complete desired access groups of a meta pool."""
 
-    type_id = "metapool.groups"
+    type_id = "metapool.group"
     relation_label = "access groups"
-    uuid_source = "get_metapool_groups (or the group list tools)"
+    uuid_source = "get_metapool_group (or the group list tools)"
     title = "Propose meta pool groups"
     description = (
         "Propose the complete desired set of groups allowed to use a meta pool. The "

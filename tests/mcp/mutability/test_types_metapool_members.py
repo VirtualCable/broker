@@ -1,4 +1,4 @@
-"""``metapool.members.set``: relation action type (option A, full desired set)."""
+"""``metapool.member.set``: relation action type (option A, full desired set)."""
 
 import typing
 from unittest import mock
@@ -9,7 +9,7 @@ from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
-from uds.mutability.types.meta_pools import MetaPoolMembers
+from uds.mutability.types.meta_pools import MetaPoolMember
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.meta_service_pools import MetaServicesPool
 
@@ -37,27 +37,39 @@ def _metapool(pools: list[models.ServicePool]) -> models.MetaPool:
 
 def _members() -> typing.Any:
     """SET binding of the members family (registry factories bind the operation)."""
-    factory = registry_get("metapool.members.set")
+    factory = registry_get("metapool.member.set")
     assert factory is not None
     return factory()
 
 
-class MetaPoolMembersRegistryTest(FlowTestCase):
+class MetaPoolMemberRegistryTest(FlowTestCase):
     def test_is_registered(self) -> None:
-        found = registry_get("metapool.members.set")
+        found = registry_get("metapool.member.set")
         assert found is not None
-        self.assertIs(type(found()), MetaPoolMembers)
-        self.assertIn("metapool.members.set", all_type_ids())
+        self.assertIs(type(found()), MetaPoolMember)
+        self.assertIn("metapool.member.set", all_type_ids())
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):
             _members().resolve_target("00000000-0000-0000-0000-000000000000")
 
     def test_is_target_scoped(self) -> None:
-        self.assertIs(MetaPoolMembers.target_scoped_fields, True)
+        self.assertIs(MetaPoolMember.target_scoped_fields, True)
+
+    def test_read_view_publishes_members(self) -> None:
+        pool = _pool()
+        meta_pool = _metapool([pool])
+        # The read generator instantiates the family unbound (reads are
+        # not operations).
+        view = MetaPoolMember().read(meta_pool.uuid)
+        self.assertEqual(view["entity_type"], "metapool.member")
+        self.assertEqual(
+            view["current_members"],
+            [{"pool_id": pool.uuid, "priority": 0, "enabled": True, "pool_name": pool.name}],
+        )
 
 
-class MetaPoolMembersFieldsTest(FlowTestCase):
+class MetaPoolMemberFieldsTest(FlowTestCase):
     def test_single_editlist_field_with_pool_choices(self) -> None:
         pool_a = _pool()
         pool_b = _pool()
@@ -126,7 +138,7 @@ class MetaPoolMembersFieldsTest(FlowTestCase):
         self.assertTrue(any("duplicated member rows" in e for e in errors))
 
 
-class MetaPoolMembersCasTest(FlowTestCase):
+class MetaPoolMemberCasTest(FlowTestCase):
     def test_snapshot_canonical_rows(self) -> None:
         pool_a = _pool()
         pool_b = _pool()
@@ -166,7 +178,7 @@ class MetaPoolMembersCasTest(FlowTestCase):
         flow = self._flow()
         action = self._action(
             flow,
-            action_type="metapool.members.set",
+            action_type="metapool.member.set",
             target_uuid=meta_pool.uuid,
             values={"members": [live["members"][0]]},  # keep one, drop the other
             base_values=live,
@@ -179,11 +191,11 @@ class MetaPoolMembersCasTest(FlowTestCase):
         self.assertNotIn("members", action_type.field_drift(action, ref_values={"members": live["members"]}))
 
 
-class MetaPoolMembersExecuteTest(FlowTestCase):
+class MetaPoolMemberExecuteTest(FlowTestCase):
     def _run(self, meta_pool: models.MetaPool, members: list[dict[str, typing.Any]]) -> mock.Mock:
         action = self._action(
             self._flow(),
-            action_type="metapool.members.set",
+            action_type="metapool.member.set",
             target_uuid=meta_pool.uuid,
             values={"members": members},
             base_values={},

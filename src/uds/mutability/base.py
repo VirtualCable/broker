@@ -63,29 +63,30 @@ REDACTED: typing.Final[str] = "(redacted)"
 
 
 class ActionOperation(enum.StrEnum):
-    """The fixed vocabulary of operations an action type may expose.
+    """The fixed vocabulary of write operations an action type may expose.
 
     A single :class:`MutableActionType` declares only a *root*
-    ``type_id`` (e.g. ``servicepool.groups``); the operations it
+    ``type_id`` (e.g. ``servicepool.group``); the operations it
     implements are *derived from the hooks it overrides* (see
     :meth:`MutableActionType.supported_operations`), and the registry
     expands them into one full id per operation
-    (``servicepool.groups.set``, ``.add``, ``.delete``, ``.get``), each
-    registered as a zero-arg factory that binds the operation on the
-    instance. This lets one class serve several full ids without a class
-    per verb and without a declaration that could drift from the code.
+    (``servicepool.group.set``, ``.add``, ``.delete``), each registered
+    as a zero-arg factory that binds the operation on the instance. This
+    lets one class serve several full ids without a class per verb and
+    without a declaration that could drift from the code.
 
     The names mirror HTTP so the payload semantics are predictable:
     ``update`` patches scalar fields, ``set`` replaces a whole relation,
-    ``add``/``delete`` apply to the listed members only, ``get`` reads
-    the current related set back (never proposed, never executed).
+    ``add``/``delete`` apply to the listed members only. Reads are not
+    operations: the live view of an entity is served by the synchronous
+    :meth:`EntityDescriptor.read` on the shared descriptor base, never
+    through the flow machinery.
     """
 
     UPDATE = "update"
     SET = "set"
     ADD = "add"
     DELETE = "delete"
-    GET = "get"
     CREATE = "create"
 
     def as_str(self) -> str:
@@ -93,12 +94,11 @@ class ActionOperation(enum.StrEnum):
         return self.value
 
 
-#: Write operations dispatchable through ``execute``, mapped to the
-#: ``op_*`` hook whose presence declares them. ``create`` is reserved
-#: vocabulary (no create flow yet); ``get`` is not dispatchable — the
-#: read-only view lives in the synchronous ``MutableActionType.read``,
-#: whose override is what declares it.
-_WRITE_OPERATION_HOOKS: typing.Final[dict["ActionOperation", str]] = {
+#: Operations dispatchable through ``execute``, mapped to the ``op_*``
+#: hook whose presence declares them. ``create`` is reserved vocabulary
+#: (no create flow yet). Reads are not operations at all — they belong to
+#: :class:`EntityDescriptor`, outside this enum.
+_OPERATION_HOOKS: typing.Final[dict["ActionOperation", str]] = {
     ActionOperation.UPDATE: "op_update",
     ActionOperation.SET: "op_set",
     ActionOperation.ADD: "op_add",
@@ -125,36 +125,25 @@ def _json_safe(value: typing.Any) -> typing.Any:
     return str(value)
 
 
-class MutableActionType(abc.ABC):
-    """One mutable action family in the registry.
+class EntityDescriptor(abc.ABC):
+    """The read-only identity and discovery surface of one entity type.
 
-    A concrete class declares a *root* ``type_id`` (``provider``,
-    ``servicepool.groups``) and implements the ``op_*`` hooks it
-    supports; its operations are *derived from those overrides* (see
-    :meth:`supported_operations` — implementing a verb is declaring it).
-    The registry expands each operation into a full id binding
-    (``provider.update``, ``servicepool.groups.set``, ``.add``, ...).
-    One instance serves one full id: it carries the bound
-    :attr:`operation` and the complete :attr:`full_id`, and
-    :meth:`execute` dispatches to the matching ``op_*`` implementation.
-    Call sites use ``registry.get(full_id)()`` exactly as before — the
-    registry value is a zero-arg factory that binds the operation.
+    A descriptor declares what the entity *is* — not what may be mutated
+    on it: the root ``type_id`` (singular, e.g. ``provider`` or
+    ``servicepool.group``), how to resolve and subtype a target, and the
+    field definitions / current values / fingerprint that both the
+    discovery surface and the CAS layer are built from. It also owns the
+    synchronous :meth:`read` view, so the MCP ``get_*`` tools and any
+    future read surface publish exactly one shape.
+
+    :class:`MutableActionType` *is* an ``EntityDescriptor`` that can also
+    propose and execute writes; pure read types (curated entities with
+    no mutations) inherit just this base. Nothing here knows about
+    flows, approvals or operations.
     """
 
     type_id: typing.ClassVar[str]
-    """Root identifier, e.g. ``provider`` or ``servicepool.groups``."""
-
-    operation: "ActionOperation | None" = None
-    """The operation this instance is bound to (set by the registry factory)."""
-
-    title: typing.ClassVar[str]
-    """Human title for the generated proposal tool (single-op families)."""
-
-    description: typing.ClassVar[str]
-    """Base description for the generated proposal tool (single-op families)."""
-
-    handler: typing.ClassVar[type[Handler]]
-    """REST handler whose canonical operation executes on approval."""
+    """Root identifier, e.g. ``provider`` or ``servicepool.group``."""
 
     noun: typing.ClassVar[str] = "item"
     """Human kind of the target (the model behind type_id): used by
@@ -167,6 +156,120 @@ class MutableActionType(abc.ABC):
     parent item plus the subtype, so discovery needs a ``target_uuid``
     and ``get_mutable_fields`` refuses a bare ``for_type``.
     """
+
+    @abc.abstractmethod
+    def resolve_target(self, target_uuid: str) -> db_models.Model:
+        """Return the target model instance, or raise a REST NotFound."""
+
+    def target_uuid_of(self, target: db_models.Model) -> str:
+        """Identifier of ``target`` for proposals (inverse of resolve).
+
+        Defaults to the model uuid. Types whose target has no uuid
+        (configuration: ``Section.key``) override this.
+        """
+        return typing.cast("str", getattr(target, "uuid", None))
+
+    @abc.abstractmethod
+    def for_type_of(self, target: db_models.Model) -> str:
+        """Return the ``data_type`` (subtype) of the target."""
+
+    @abc.abstractmethod
+    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+        """Ordered mutable field definitions for one subtype.
+
+        Each definition carries at least ``name``, ``type`` (gui field
+        type) and ``secret``; the rest of the gui metadata (label,
+        tooltip, choices, ranges, ...) is passed through for the agent
+        and the admin interface. This mirrors what the equivalent admin
+        form and the REST ``gui`` endpoint expose.
+
+        ``target`` carries the resolved model when available; types with
+        ``target_scoped_fields`` build their definitions from it (their
+        gui depends on the parent item, not only on the subtype) and
+        refuse when it is ``None``.
+        """
+
+    @abc.abstractmethod
+    def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
+        """Current values of ``names`` on ``target`` (CAS base)."""
+
+    def read(self, target_uuid: str) -> JsonObject:
+        """Live read view of the target (no flow, no approval, no execution).
+
+        The generic view mirrors the discovery surface: the field
+        definitions of the concrete target plus its current values.
+        Relation types override it to add the human side of the current
+        members. Overriding ``read`` is what publishes the entity's
+        ``get_*`` tool: implementation is declaration here too.
+        """
+        target = self.resolve_target(target_uuid)
+        for_type = self.for_type_of(target)
+        fields = self.field_definitions(for_type, target)
+        return {
+            "entity_type": self.type_id,
+            "target_uuid": self.target_uuid_of(target),
+            "for_type": for_type,
+            "fields": fields,
+            "current_values": self.snapshot_values(target, [d["name"] for d in fields]),
+        }
+
+    @classmethod
+    def readable(cls) -> bool:
+        """True when this descriptor publishes a live read (``get_*`` tool)."""
+        return cls.read is not EntityDescriptor.read
+
+    def read_title(self) -> str:
+        """Human title of the generated read tool (when :meth:`readable`)."""
+        return f"Read {self.noun.lower()}"
+
+    def read_description(self) -> str:
+        """Description of the generated read tool (when :meth:`readable`)."""
+        return (
+            f"Read one {self.noun.lower()} by uuid: its mutable field definitions and "
+            "current values. Applies immediately; it is a plain read."
+        )
+
+    def permission_target(self, target: db_models.Model) -> db_models.Model:
+        """Model whose ownership grants permission to act on the target.
+
+        Defaults to the target itself. Detail types (e.g. services)
+        inherit their permissions from their parent, so they return the
+        parent here; flows check MANAGEMENT over the returned model.
+        """
+        return target
+
+    def secret_names(self, for_type: str, target: db_models.Model | None = None) -> set[str]:
+        """Names of the secret fields of one subtype."""
+        return {d["name"] for d in self.field_definitions(for_type, target) if d.get("secret")}
+
+
+class MutableActionType(EntityDescriptor):
+    """One mutable action family in the registry: writes over a descriptor.
+
+    A concrete class declares a *root* ``type_id`` (``provider``,
+    ``servicepool.group``) and implements the ``op_*`` hooks it supports;
+    its write operations are *derived from those overrides* (see
+    :meth:`supported_operations` — implementing a verb is declaring it).
+    The registry expands each operation into a full id binding
+    (``provider.update``, ``servicepool.group.set``, ``.add``, ...). One
+    instance serves one full id: it carries the bound :attr:`operation`
+    and the complete :attr:`full_id`, and :meth:`execute` dispatches to
+    the matching ``op_*`` implementation. Call sites use
+    ``registry.get(full_id)()`` exactly as before — the registry value
+    is a zero-arg factory that binds the operation.
+    """
+
+    operation: "ActionOperation | None" = None
+    """The operation this instance is bound to (set by the registry factory)."""
+
+    title: typing.ClassVar[str]
+    """Human title for the generated proposal tool (single-op families)."""
+
+    description: typing.ClassVar[str]
+    """Base description for the generated proposal tool (single-op families)."""
+
+    handler: typing.ClassVar[type[Handler]]
+    """REST handler whose canonical operation executes on approval."""
 
     stale_policy: typing.ClassVar[StalePolicy] = StalePolicy.DENY
     """Approval-time behaviour when the target drifted from ``base_etag``.
@@ -207,25 +310,21 @@ class MutableActionType(abc.ABC):
 
     @classmethod
     def supported_operations(cls) -> frozenset["ActionOperation"]:
-        """Operations this family implements, derived from its overrides.
+        """Write operations this family implements, derived from its overrides.
 
         A verb is supported exactly when the class replaces the
         corresponding rejecting ``op_*`` stub of this base (the
         ``is not`` comparison also counts inherited intermediate
-        implementations, e.g. the module-backed ``op_update``). The
-        read-only ``get`` is the exception: it is served by the
-        synchronous :meth:`read` view, so overriding ``read`` is what
-        declares it. Implementation is declaration — there is nothing
-        to keep in sync.
+        implementations, e.g. the module-backed ``op_update``).
+        Implementation is declaration — there is nothing to keep in
+        sync. Reads are not operations: the live view belongs to the
+        descriptor base (see :meth:`EntityDescriptor.readable`).
         """
-        derived = set(_WRITE_OPERATION_HOOKS) - {
+        return frozenset(
             operation
-            for operation, hook in _WRITE_OPERATION_HOOKS.items()
-            if getattr(cls, hook) is getattr(MutableActionType, hook)
-        }
-        if cls.read is not MutableActionType.read:
-            derived.add(ActionOperation.GET)
-        return frozenset(derived)
+            for operation, hook in _OPERATION_HOOKS.items()
+            if getattr(cls, hook) is not getattr(MutableActionType, hook)
+        )
 
     def get_stale_policy(self) -> StalePolicy:
         """Stale policy resolved for the operation bound to this instance."""
@@ -242,16 +341,11 @@ class MutableActionType(abc.ABC):
             return self.type_id
         return f"{self.type_id}.{self.operation.as_str()}"
 
-    @property
-    def proposable(self) -> bool:
-        """True for write bindings (everything except the read-only GET)."""
-        return self.operation is not ActionOperation.GET
-
     def tool_title(self) -> str:
         """Human title of the MCP tool for the bound operation.
 
         Single-operation families inherit the class ``title``; multi-op
-        families override to phrase each verb (or the read tool).
+        families override to phrase each verb.
         """
         return self.title
 
@@ -260,42 +354,6 @@ class MutableActionType(abc.ABC):
         return self.description
 
     # ------------------------------------------------------------- hooks
-
-    @abc.abstractmethod
-    def resolve_target(self, target_uuid: str) -> db_models.Model:
-        """Return the target model instance, or raise a REST NotFound."""
-
-    def target_uuid_of(self, target: db_models.Model) -> str:
-        """Identifier of ``target`` for proposals (inverse of resolve).
-
-        Defaults to the model uuid. Types whose target has no uuid
-        (configuration: ``Section.key``) override this.
-        """
-        return typing.cast("str", getattr(target, "uuid", None))
-
-    @abc.abstractmethod
-    def for_type_of(self, target: db_models.Model) -> str:
-        """Return the ``data_type`` (subtype) of the target."""
-
-    @abc.abstractmethod
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        """Ordered mutable field definitions for one subtype.
-
-        Each definition carries at least ``name``, ``type`` (gui field
-        type) and ``secret``; the rest of the gui metadata (label,
-        tooltip, choices, ranges, ...) is passed through for the agent
-        and the admin interface. This mirrors what the equivalent admin
-        form and the REST ``gui`` endpoint expose.
-
-        ``target`` carries the resolved model when available; types with
-        ``target_scoped_fields`` build their definitions from it (their
-        gui depends on the parent item, not only on the subtype) and
-        refuse when it is ``None``.
-        """
-
-    @abc.abstractmethod
-    def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
-        """Current values of ``names`` on ``target`` (CAS base)."""
 
     @abc.abstractmethod
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
@@ -324,18 +382,12 @@ class MutableActionType(abc.ABC):
         op = self.operation
         if op is None:
             raise NotImplementedError(f"{self.type_id}: unbound action type (registry bug)")
-        implementation: (
-            collections.abc.Callable[[FlowAction, ExtendedHttpRequestWithUser], collections.abc.Awaitable[str]]
-            | None
-        ) = {
-            ActionOperation.UPDATE: self.op_update,
-            ActionOperation.SET: self.op_set,
-            ActionOperation.ADD: self.op_add,
-            ActionOperation.DELETE: self.op_delete,
-            ActionOperation.GET: self.op_get,
-        }.get(op)
-        if implementation is None:
+        hook = _OPERATION_HOOKS.get(op)
+        if hook is None:
             raise NotImplementedError(f"{self.full_id}: unsupported operation")
+        implementation: collections.abc.Callable[
+            [FlowAction, ExtendedHttpRequestWithUser], collections.abc.Awaitable[str]
+        ] = getattr(self, hook)
         return await implementation(action, request)
 
     async def op_update(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
@@ -350,39 +402,7 @@ class MutableActionType(abc.ABC):
     async def op_delete(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         raise NotImplementedError(f"{self.full_id}: does not support the delete operation")
 
-    async def op_get(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        raise NotImplementedError(f"{self.full_id}: does not support the get operation")
-
-    def read(self, target_uuid: str) -> JsonObject:
-        """Live read view of a GET binding (no flow, no approval, no execution).
-
-        The generic view mirrors the discovery surface: the field definitions
-        of the concrete target plus its current values. Relation types
-        override it to add the human side of the current members.
-        """
-        if self.operation is not ActionOperation.GET:
-            raise NotImplementedError(f"{self.full_id}: not a read (get) action type")
-        target = self.resolve_target(target_uuid)
-        for_type = self.for_type_of(target)
-        fields = self.field_definitions(for_type, target)
-        return {
-            "action_type": self.full_id,
-            "target_uuid": self.target_uuid_of(target),
-            "for_type": for_type,
-            "fields": fields,
-            "current_values": self.snapshot_values(target, [d["name"] for d in fields]),
-        }
-
     # ------------------------------------------------- generic CAS layer
-
-    def permission_target(self, target: db_models.Model) -> db_models.Model:
-        """Model whose ownership grants permission to execute the action.
-
-        Defaults to the target itself. Detail types (e.g. services)
-        inherit their permissions from their parent, so they return the
-        parent here; flows check MANAGEMENT over the returned model.
-        """
-        return target
 
     def check_propose_access(self, user: User, target: db_models.Model) -> None:
         """Authorization to *propose* this action over ``target``.
@@ -396,10 +416,6 @@ class MutableActionType(abc.ABC):
             user, self.permission_target(target), types.permissions.PermissionType.MANAGEMENT
         ):
             raise rest_exceptions.AccessDenied()
-
-    def secret_names(self, for_type: str, target: db_models.Model | None = None) -> set[str]:
-        """Names of the secret fields of one subtype."""
-        return {d["name"] for d in self.field_definitions(for_type, target) if d.get("secret")}
 
     @staticmethod
     def _field_type_errors(name: str, value: typing.Any, definition: JsonObject) -> list[str]:

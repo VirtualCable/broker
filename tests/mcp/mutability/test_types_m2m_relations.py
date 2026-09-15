@@ -1,5 +1,6 @@
-"""M2M relation action types: ``metapool.groups``, ``servicepool.groups``,
-``servicepool.transports`` (set/add/delete/get over pure many-to-many sets)."""
+"""M2M relation action types: ``metapool.group``, ``servicepool.group``,
+``servicepool.transport`` (set/add/delete over pure many-to-many sets,
+plus the descriptor read view)."""
 
 import typing
 from unittest import mock
@@ -11,8 +12,8 @@ from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.base import ActionOperation, StalePolicy
-from uds.mutability.types.meta_pools import MetaPoolGroups
-from uds.mutability.types.service_pools import ServicePoolGroups, ServicePoolTransports
+from uds.mutability.types.meta_pools import MetaPoolGroup
+from uds.mutability.types.service_pools import ServicePoolGroup, ServicePoolTransport
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.services_pools import ServicesPools
 from uds.REST.methods.user_services import Groups as AssignedGroups
@@ -51,52 +52,46 @@ def _groups(count: int) -> list[models.Group]:
 class M2MRegistryTest(FlowTestCase):
     def test_all_registered(self) -> None:
         for type_id, cls in (
-            ("metapool.groups.set", MetaPoolGroups),
-            ("servicepool.groups.set", ServicePoolGroups),
-            ("servicepool.transports.set", ServicePoolTransports),
+            ("metapool.group.set", MetaPoolGroup),
+            ("servicepool.group.set", ServicePoolGroup),
+            ("servicepool.transport.set", ServicePoolTransport),
         ):
             found = registry_get(type_id)
             assert found is not None
             self.assertIs(type(found()), cls)
         self.assertTrue(
-            {"metapool.groups.set", "servicepool.groups.set", "servicepool.transports.set"}
-            <= set(all_type_ids())
+            {"metapool.group.set", "servicepool.group.set", "servicepool.transport.set"} <= set(all_type_ids())
         )
 
-    def test_every_family_exposes_the_four_operations(self) -> None:
-        for cls in (MetaPoolGroups, ServicePoolGroups, ServicePoolTransports):
-            for operation in (
-                ActionOperation.SET,
-                ActionOperation.ADD,
-                ActionOperation.DELETE,
-                ActionOperation.GET,
-            ):
+    def test_every_family_exposes_the_three_write_operations(self) -> None:
+        for cls in (MetaPoolGroup, ServicePoolGroup, ServicePoolTransport):
+            for operation in (ActionOperation.SET, ActionOperation.ADD, ActionOperation.DELETE):
                 full_id = f"{cls.type_id}.{operation.as_str()}"
                 self.assertIn(full_id, all_type_ids())
                 instance = _bound(cls, operation)
                 self.assertIsInstance(instance, cls)
                 self.assertIs(instance.operation, operation)
                 self.assertEqual(instance.full_id, full_id)
-                self.assertEqual(instance.proposable, operation is not ActionOperation.GET)
+            # Reads are not operations: no ".get" binding exists anymore.
+            self.assertIsNone(registry_get(f"{cls.type_id}.get"))
+            self.assertTrue(cls.readable())
 
     def test_multi_op_family_needs_an_operation(self) -> None:
         with self.assertRaises(ValueError):
-            ServicePoolGroups().validate_values("servicepool", {"groups": []})
+            ServicePoolGroup().validate_values("servicepool", {"groups": []})
 
     def test_delta_operations_are_force_set_is_deny(self) -> None:
-        self.assertEqual(_bound(ServicePoolGroups).get_stale_policy(), StalePolicy.DENY)
-        self.assertEqual(_bound(ServicePoolGroups, ActionOperation.ADD).get_stale_policy(), StalePolicy.FORCE)
-        self.assertEqual(
-            _bound(ServicePoolGroups, ActionOperation.DELETE).get_stale_policy(), StalePolicy.FORCE
-        )
+        self.assertEqual(_bound(ServicePoolGroup).get_stale_policy(), StalePolicy.DENY)
+        self.assertEqual(_bound(ServicePoolGroup, ActionOperation.ADD).get_stale_policy(), StalePolicy.FORCE)
+        self.assertEqual(_bound(ServicePoolGroup, ActionOperation.DELETE).get_stale_policy(), StalePolicy.FORCE)
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
-        for cls in (MetaPoolGroups, ServicePoolGroups, ServicePoolTransports):
+        for cls in (MetaPoolGroup, ServicePoolGroup, ServicePoolTransport):
             with self.assertRaises(rest_exceptions.NotFound):
                 _bound(cls).resolve_target(_UNSET_UUID)
 
     def test_are_target_scoped(self) -> None:
-        for cls in (MetaPoolGroups, ServicePoolGroups, ServicePoolTransports):
+        for cls in (MetaPoolGroup, ServicePoolGroup, ServicePoolTransport):
             self.assertIs(cls.target_scoped_fields, True)
 
 
@@ -105,11 +100,11 @@ class M2MFieldsTest(FlowTestCase):
         pool = _servicepool()
         transport = create_db_transport()
 
-        groups_def = _bound(ServicePoolGroups).field_definitions("servicepool", pool)[0]
+        groups_def = _bound(ServicePoolGroup).field_definitions("servicepool", pool)[0]
         self.assertEqual(groups_def["type"], types.ui.FieldType.MULTICHOICE.value)
         self.assertNotIn("choices", groups_def)
 
-        transports_def = _bound(ServicePoolTransports).field_definitions("servicepool", pool)[0]
+        transports_def = _bound(ServicePoolTransport).field_definitions("servicepool", pool)[0]
         self.assertEqual(transports_def["choices"], [{"value": transport.uuid, "label": transport.name}])
 
     def test_tooltip_follows_the_operation(self) -> None:
@@ -118,37 +113,39 @@ class M2MFieldsTest(FlowTestCase):
             (ActionOperation.SET, "Complete desired set"),
             (ActionOperation.ADD, "attach"),
             (ActionOperation.DELETE, "detach"),
-            (ActionOperation.GET, "read view"),
         ):
-            definition = _bound(ServicePoolGroups, operation).field_definitions("servicepool", pool)[0]
+            definition = _bound(ServicePoolGroup, operation).field_definitions("servicepool", pool)[0]
             self.assertIn(fragment, definition["tooltip"], f"{operation}: {definition['tooltip']}")
+        # The unbound instance (the read generator) is the read flavor.
+        definition = ServicePoolGroup().field_definitions("servicepool", pool)[0]
+        self.assertIn("read view", definition["tooltip"])
 
     def test_valid_sets(self) -> None:
         pool = _servicepool()
-        action_type = _bound(ServicePoolGroups)
+        action_type = _bound(ServicePoolGroup)
         group = _groups(1)[0]
         self.assertEqual(action_type.validate_values("servicepool", {"groups": [group.uuid]}, pool), [])
         self.assertEqual(action_type.validate_values("servicepool", {"groups": []}, pool), [])
         # empty set through the rpc path (values must be a non-empty dict)
         self.assertEqual(
-            _bound(ServicePoolTransports).validate_values("servicepool", {"transports": []}, pool), []
+            _bound(ServicePoolTransport).validate_values("servicepool", {"transports": []}, pool), []
         )
 
     def test_delta_operations_reject_empty_lists(self) -> None:
         pool = _servicepool()
         for operation in (ActionOperation.ADD, ActionOperation.DELETE):
-            errors = _bound(ServicePoolGroups, operation).validate_values("servicepool", {"groups": []}, pool)
+            errors = _bound(ServicePoolGroup, operation).validate_values("servicepool", {"groups": []}, pool)
             self.assertTrue(any("at least one uuid" in e for e in errors), f"{operation}: {errors}")
 
     def test_missing_field_rejected(self) -> None:
-        errors = _bound(MetaPoolGroups).validate_values("metapool", {"other": 1})
+        errors = _bound(MetaPoolGroup).validate_values("metapool", {"other": 1})
         self.assertTrue(any("unknown fields" in e for e in errors))
         self.assertTrue(any("groups is required" in e for e in errors))
 
     def test_member_errors(self) -> None:
         pool = _servicepool()
         group = _groups(1)[0]
-        action_type = _bound(ServicePoolGroups)
+        action_type = _bound(ServicePoolGroup)
         cases: list[tuple[typing.Any, str]] = [
             (["no-uuid"], "not a valid uuid"),
             ([_UNSET_UUID], "does not match any existing group"),
@@ -165,11 +162,9 @@ class M2MFieldsTest(FlowTestCase):
         pool = _servicepool()
         group = _groups(1)[0]
         transport = create_db_transport()
-        errors = _bound(ServicePoolTransports).validate_values(
-            "servicepool", {"transports": [group.uuid]}, pool
-        )
+        errors = _bound(ServicePoolTransport).validate_values("servicepool", {"transports": [group.uuid]}, pool)
         self.assertTrue(any("does not match any existing transport" in e for e in errors))
-        errors = _bound(ServicePoolGroups).validate_values("servicepool", {"groups": [transport.uuid]}, pool)
+        errors = _bound(ServicePoolGroup).validate_values("servicepool", {"groups": [transport.uuid]}, pool)
         self.assertTrue(any("does not match any existing group" in e for e in errors))
 
 
@@ -178,7 +173,7 @@ class M2MCasTest(FlowTestCase):
         pool = _servicepool()
         first, second = _groups(2)
         pool.assignedGroups.add(first)
-        action_type = _bound(ServicePoolGroups)
+        action_type = _bound(ServicePoolGroup)
 
         self.assertEqual(action_type.snapshot_values(pool, ["groups"]), {"groups": [first.uuid]})
         base = action_type.fingerprint(pool)
@@ -192,9 +187,7 @@ class M2MCasTest(FlowTestCase):
 
     def test_empty_set_snapshot(self) -> None:
         pool = _servicepool()
-        self.assertEqual(
-            _bound(ServicePoolTransports).snapshot_values(pool, ["transports"]), {"transports": []}
-        )
+        self.assertEqual(_bound(ServicePoolTransport).snapshot_values(pool, ["transports"]), {"transports": []})
 
 
 class M2MReadTest(FlowTestCase):
@@ -203,15 +196,18 @@ class M2MReadTest(FlowTestCase):
         attached, other = _groups(2)
         pool.assignedGroups.add(attached)
         del other
-        view = _bound(ServicePoolGroups, ActionOperation.GET).read(pool.uuid)
-        self.assertEqual(view["action_type"], "servicepool.groups.get")
+        # Reads are not operations: the generator uses the unbound family.
+        view = ServicePoolGroup().read(pool.uuid)
+        self.assertEqual(view["entity_type"], "servicepool.group")
         self.assertEqual(view["current_values"], {"groups": [attached.uuid]})
         self.assertEqual(view["current_members"], [{"uuid": attached.uuid, "name": attached.name}])
 
-    def test_write_bindings_refuse_read(self) -> None:
+    def test_write_bindings_read_too(self) -> None:
+        # read() lives on the descriptor base: any instance of the family
+        # answers it, bound or not.
         pool = _servicepool()
-        with self.assertRaises(NotImplementedError):
-            _bound(ServicePoolGroups).read(pool.uuid)
+        view = _bound(ServicePoolGroup).read(pool.uuid)
+        self.assertEqual(view["entity_type"], "servicepool.group")
 
 
 class M2MExecuteTest(FlowTestCase):
@@ -241,7 +237,7 @@ class M2MExecuteTest(FlowTestCase):
         added = _groups(1)[0]
         pool.assignedGroups.add(kept, dropped)
 
-        proxy_cls = self._run(_bound(ServicePoolGroups), pool, {"groups": [kept.uuid, added.uuid]})
+        proxy_cls = self._run(_bound(ServicePoolGroup), pool, {"groups": [kept.uuid, added.uuid]})
 
         calls = proxy_cls.return_value.execute.await_args_list
         self.assertEqual(
@@ -268,7 +264,7 @@ class M2MExecuteTest(FlowTestCase):
         pool = _servicepool()
         group = _groups(1)[0]
         pool.assignedGroups.add(group)
-        proxy_cls = self._run(_bound(ServicePoolGroups), pool, {"groups": [group.uuid]})
+        proxy_cls = self._run(_bound(ServicePoolGroup), pool, {"groups": [group.uuid]})
         proxy_cls.return_value.execute.assert_not_awaited()
         self.assertIn("0 added, 0 removed", self._summary)
 
@@ -276,7 +272,7 @@ class M2MExecuteTest(FlowTestCase):
         pool = _servicepool()
         first, second = _groups(2)
         pool.assignedGroups.add(first, second)
-        proxy_cls = self._run(_bound(ServicePoolGroups), pool, {"groups": []})
+        proxy_cls = self._run(_bound(ServicePoolGroup), pool, {"groups": []})
         self.assertEqual(proxy_cls.return_value.execute.await_count, 2)
         for call in proxy_cls.return_value.execute.await_args_list:
             self.assertEqual(call[0][0].method, types.rest.CustomMethodMethod.DELETE)
@@ -289,7 +285,7 @@ class M2MExecuteTest(FlowTestCase):
         pool.assignedGroups.add(attached, untouched)
         # attached again (idempotent, skipped) plus the new one
         proxy_cls = self._run(
-            _bound(ServicePoolGroups, ActionOperation.ADD), pool, {"groups": [attached.uuid, new.uuid]}
+            _bound(ServicePoolGroup, ActionOperation.ADD), pool, {"groups": [attached.uuid, new.uuid]}
         )
         calls = proxy_cls.return_value.execute.await_args_list
         self.assertEqual([call[0][0].method for call in calls], [types.rest.CustomMethodMethod.POST])
@@ -300,7 +296,7 @@ class M2MExecuteTest(FlowTestCase):
         pool = _servicepool()
         attached = _groups(1)[0]
         pool.assignedGroups.add(attached)
-        proxy_cls = self._run(_bound(ServicePoolGroups, ActionOperation.ADD), pool, {"groups": [attached.uuid]})
+        proxy_cls = self._run(_bound(ServicePoolGroup, ActionOperation.ADD), pool, {"groups": [attached.uuid]})
         proxy_cls.return_value.execute.assert_not_awaited()
         self.assertIn("0 added, 0 removed", self._summary)
 
@@ -312,7 +308,7 @@ class M2MExecuteTest(FlowTestCase):
         del other
         # absent is not attached: skipped; attached is removed
         proxy_cls = self._run(
-            _bound(ServicePoolGroups, ActionOperation.DELETE), pool, {"groups": [attached.uuid, absent.uuid]}
+            _bound(ServicePoolGroup, ActionOperation.DELETE), pool, {"groups": [attached.uuid, absent.uuid]}
         )
         calls = proxy_cls.return_value.execute.await_args_list
         self.assertEqual([call[0][0].method for call in calls], [types.rest.CustomMethodMethod.DELETE])
@@ -324,7 +320,7 @@ class M2MExecuteTest(FlowTestCase):
         assigned = _groups(1)[0]
         meta_pool = create_db_metapool([pool], [assigned])
         # starts with one group assigned, propose none
-        proxy_cls = self._run(_bound(MetaPoolGroups), meta_pool, {"groups": []})
+        proxy_cls = self._run(_bound(MetaPoolGroup), meta_pool, {"groups": []})
         call = proxy_cls.return_value.execute.await_args_list[0]
         self.assertEqual(call[0][0].path, "meta_pools/{uuid}/groups")
         self.assertIs(call[0][0].parent.handler, MetaPools)
@@ -335,7 +331,7 @@ class M2MExecuteTest(FlowTestCase):
         attached, detached = create_db_transport(), create_db_transport()
         new = create_db_transport()
         pool.transports.add(attached, detached)
-        proxy_cls = self._run(_bound(ServicePoolTransports), pool, {"transports": [attached.uuid, new.uuid]})
+        proxy_cls = self._run(_bound(ServicePoolTransport), pool, {"transports": [attached.uuid, new.uuid]})
         calls = proxy_cls.return_value.execute.await_args_list
         self.assertEqual(calls[0][0][0].method, types.rest.CustomMethodMethod.DELETE)
         self.assertEqual(calls[0][0][0].args, (detached.uuid,))

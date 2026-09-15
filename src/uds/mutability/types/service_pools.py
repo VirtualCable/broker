@@ -195,12 +195,12 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         return f'Service pool "{pool_name}" updated'
 
 
-class ServicePoolGroups(M2MRelationActionType):
+class ServicePoolGroup(M2MRelationActionType):
     """Proposal: set the complete desired access groups of a service pool."""
 
-    type_id = "servicepool.groups"
+    type_id = "servicepool.group"
     relation_label = "access groups"
-    uuid_source = "get_servicepool_groups (or the group list tools)"
+    uuid_source = "get_servicepool_group (or the group list tools)"
     title = "Propose service pool groups"
     description = (
         "Propose the complete desired set of groups allowed to use a service pool. "
@@ -230,12 +230,12 @@ class ServicePoolGroups(M2MRelationActionType):
     parent_collection = "services_pools"
 
 
-class ServicePoolTransports(M2MRelationActionType):
+class ServicePoolTransport(M2MRelationActionType):
     """Proposal: set the complete desired transports of a service pool."""
 
-    type_id = "servicepool.transports"
+    type_id = "servicepool.transport"
     relation_label = "transports"
-    uuid_source = "get_servicepool_transports (or the transport list tools)"
+    uuid_source = "get_servicepool_transport (or the transport list tools)"
     title = "Propose service pool transports"
     description = (
         "Propose the complete desired set of transports of a service pool (the "

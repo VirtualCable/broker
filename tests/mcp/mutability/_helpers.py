@@ -37,27 +37,32 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_server_update",
     "propose_server_group_update",
     "propose_servicepool_update",
-    "propose_servicepool_groups_set",
-    "propose_servicepool_groups_add",
-    "propose_servicepool_groups_delete",
-    "get_servicepool_groups",
-    "propose_servicepool_transports_set",
-    "propose_servicepool_transports_add",
-    "propose_servicepool_transports_delete",
-    "get_servicepool_transports",
+    "propose_servicepool_group_set",
+    "propose_servicepool_group_add",
+    "propose_servicepool_group_delete",
+    "propose_servicepool_transport_set",
+    "propose_servicepool_transport_add",
+    "propose_servicepool_transport_delete",
     "propose_metapool_update",
-    "propose_metapool_members_set",
-    "get_metapool_members",
-    "propose_metapool_groups_set",
-    "propose_metapool_groups_add",
-    "propose_metapool_groups_delete",
-    "get_metapool_groups",
+    "propose_metapool_member_set",
+    "propose_metapool_group_set",
+    "propose_metapool_group_add",
+    "propose_metapool_group_delete",
     "propose_tunnel_update",
     "create_flow",
     "submit_flow",
     "list_flow_actions",
     "update_flow_action",
     "cancel_flow",
+)
+
+# Read views of the descriptor families: generated from the registry into
+# the always-active curated surface (reads are not mutations).
+READ_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
+    "get_servicepool_group",
+    "get_servicepool_transport",
+    "get_metapool_member",
+    "get_metapool_group",
 )
 
 

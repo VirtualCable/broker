@@ -111,10 +111,6 @@ class FlowsOwnActions(FlowActions):
             known = ", ".join(registry.all_type_ids())
             raise exceptions.rest.RequestError(f"Unknown action type {type_id} (known: {known})")
         action_type = found()
-        if not action_type.proposable:
-            raise exceptions.rest.RequestError(
-                f"Action type {type_id} is a read-only type: it cannot be proposed in a flow"
-            )
         return action_type
 
     def _require_management(

@@ -1,17 +1,18 @@
 """Shared machinery for pure many-to-many relation action types.
 
 ``M2MRelationActionType`` covers the relation types whose rows carry no
-per-relation data (unlike ``metapool.members``, which stores priority and
+per-relation data (unlike ``metapool.member``, which stores priority and
 enabled per row): the relation IS the set of related uuids
-(``assignedGroups``, ``transports``). One class family serves four
-full ids:
+(``assignedGroups``, ``transports``). One class family serves three
+write ids plus its read view:
 
 ``set``     — complete desired set (option A: never a delta); on approval
               it is diffed against the live set. ``[]`` clears the relation.
 ``add``     — the listed members only; already-attached ones are skipped.
 ``delete``  — the listed members only; absent ones are skipped.
-``get``     — read the current related set back (uuids and names). Never
-              proposed, never executed (the tool answers directly).
+``read()``  — the current related set back (uuids and names). Not an
+              operation: the curated read tool answers directly, never
+              through the flow machinery.
 
 ``set`` keeps the DENY stale policy (the whole-set fingerprint must still
 match at approval time). The delta operations are idempotent against
@@ -56,11 +57,12 @@ M2MOperation = tuple[types.rest.CustomMethodMethod, tuple[str, ...], JsonObject]
 
 
 class M2MRelationActionType(mutability_base.MutableActionType):
-    """One many-to-many relation family: set / add / delete / get.
+    """One many-to-many relation family: set / add / delete, plus the read view.
 
-    The four operations need no declaration: ``op_set``/``op_add``/
+    The write operations need no declaration: ``op_set``/``op_add``/
     ``op_delete`` implemented here plus the :meth:`read` override are
-    exactly what the registry derives (implementation is declaration).
+    exactly what the registry and the read generator derive
+    (implementation is declaration).
     """
 
     stale_policies: typing.ClassVar[dict[ActionOperation, StalePolicy]] = {
@@ -127,9 +129,11 @@ class M2MRelationActionType(mutability_base.MutableActionType):
     # ------------------------------------------------- per-operation text
 
     def _tooltip(self) -> str:
-        operation = self._op()
+        # The read generator instantiates the family unbound (reads are not
+        # operations), so an unbound tooltip is the read flavor.
+        operation = self.operation
         noun_lower = self.noun.lower()
-        if operation is ActionOperation.GET:
+        if operation is None:
             return (
                 f"Current {self.item_label} uuids attached to this {noun_lower} (read view; "
                 "use the set/add/delete operations to change them)."
@@ -264,6 +268,19 @@ class M2MRelationActionType(mutability_base.MutableActionType):
         result["current_members"] = [{"uuid": str(uuid), "name": name} for uuid, name in rows]
         return result
 
+    @typing.override
+    def read_title(self) -> str:
+        return f"Read {self.noun.lower()} {self.relation_label}"
+
+    @typing.override
+    def read_description(self) -> str:
+        noun_lower = self.noun.lower()
+        return (
+            f"Read the current {self.relation_label} of one {noun_lower}: every member with its "
+            f"uuid (to use in set/add/delete proposals) and name. Applies immediately; it is a "
+            "plain read, never a proposal."
+        )
+
     # ---------------------------------------------------------- tool text
 
     @typing.override
@@ -274,9 +291,7 @@ class M2MRelationActionType(mutability_base.MutableActionType):
             return f"Propose {noun_lower} {self.relation_label}"
         if operation is ActionOperation.ADD:
             return f"Propose adding {self.relation_label} to a {noun_lower}"
-        if operation is ActionOperation.DELETE:
-            return f"Propose removing {self.relation_label} from a {noun_lower}"
-        return f"Read {noun_lower} {self.relation_label}"
+        return f"Propose removing {self.relation_label} from a {noun_lower}"
 
     @typing.override
     def tool_description(self) -> str:
@@ -291,23 +306,15 @@ class M2MRelationActionType(mutability_base.MutableActionType):
                 f"({self.uuid_source}). The proposal does NOT apply anything: it is queued until "
                 "an administrator approves it."
             )
-        if operation in (ActionOperation.ADD, ActionOperation.DELETE):
-            verb = "attach" if operation is ActionOperation.ADD else "detach"
-            skipped = (
-                "already attached are skipped" if operation is ActionOperation.ADD else "absent are skipped"
-            )
-            return (
-                f"Propose to {verb} the listed {self.relation_label} of a {noun_lower}. The "
-                f"'{self.field_name}' field is a DELTA: only the listed {self.item_label}s are "
-                f"touched, every other member keeps its state; {skipped}. The list must not be "
-                f"empty. Discover current members and uuids with the read tool ({self.uuid_source}). "
-                "The proposal does NOT apply anything: it is queued until an administrator "
-                "approves it."
-            )
+        verb = "attach" if operation is ActionOperation.ADD else "detach"
+        skipped = "already attached are skipped" if operation is ActionOperation.ADD else "absent are skipped"
         return (
-            f"Read the current {self.relation_label} of one {noun_lower}: every member with its "
-            f"uuid (to use in set/add/delete proposals) and name. Applies immediately; it is a "
-            "plain read, never a proposal."
+            f"Propose to {verb} the listed {self.relation_label} of a {noun_lower}. The "
+            f"'{self.field_name}' field is a DELTA: only the listed {self.item_label}s are "
+            f"touched, every other member keeps its state; {skipped}. The list must not be "
+            f"empty. Discover current members and uuids with the read tool ({self.uuid_source}). "
+            "The proposal does NOT apply anything: it is queued until an administrator "
+            "approves it."
         )
 
     # ---------------------------------------------------------- execution

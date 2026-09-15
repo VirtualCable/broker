@@ -10,20 +10,23 @@ auto-imported modfinder style). The MCP tools live in
 and the REST owner/management surfaces are built on top.
 """
 
-from .base import ActionOperation, StalePolicy
+from .base import ActionOperation, EntityDescriptor, MutableActionType, StalePolicy
 from .etag import item_etag
-from .registry import all_bindings, all_type_ids, binding, get, register
+from .registry import all_bindings, all_families, all_type_ids, binding, get, register
 from .store import FlowStore, InvalidTransition, MutabilityError, NotActionOwner, StaleProposal
 
 __all__ = [
     "ActionOperation",
+    "EntityDescriptor",
     "FlowStore",
     "InvalidTransition",
     "MutabilityError",
+    "MutableActionType",
     "NotActionOwner",
     "StalePolicy",
     "StaleProposal",
     "all_bindings",
+    "all_families",
     "all_type_ids",
     "binding",
     "get",

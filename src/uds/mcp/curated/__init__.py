@@ -12,7 +12,10 @@ description, grouped by the domain they serve:
   single ``get_item_logs`` tool, and the admin-only global log tool;
 * :mod:`system` — platform-wide usage counters and the security
   self-assessment;
-* :mod:`reports` — CSV analytical reports (failed logins, admin activity).
+* :mod:`reports` — CSV analytical reports (failed logins, admin activity);
+* :mod:`descriptors` — the ``get_*`` read tools generated from the readable
+  descriptor families of the mutability registry (relation views, always
+  active: reads are not mutations).
 
 Every executor forwards the live request through :class:`RestProxy`, so the
 REST permission checks of each target handler stay in force: a staff
@@ -23,7 +26,7 @@ platform-wide stats) only work for administrators.
 
 from ..catalog import Catalog, ToolDefinition
 
-from . import authenticators, logs, providers, reports, servers, servicepools, system, tunnels
+from . import authenticators, descriptors, logs, providers, reports, servers, servicepools, system, tunnels
 
 __all__ = ["curated_tools", "register_curated_tools"]
 
@@ -39,6 +42,7 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
         *logs.curated_tools(),
         *system.curated_tools(),
         *reports.curated_tools(),
+        *descriptors.curated_tools(),
     )
 
 
