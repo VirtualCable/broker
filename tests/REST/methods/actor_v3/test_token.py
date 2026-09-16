@@ -29,6 +29,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+import typing
 
 from uds import models
 from uds.core import consts
@@ -183,6 +184,56 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
                 "token": old_token,
                 "version": consts.system.VERSION,
                 "ip": "1.2.3.4",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_initialize_accepts_rotated_token(self) -> None:
+        """
+        Test that a second initialize authenticates with the token returned by the first one
+        """
+        user_service = self.user_service_managed
+        actor_token = self.login_and_register()
+        unique_id = user_service.get_unique_id()
+
+        def initialize(token: str) -> dict[str, typing.Any]:
+            response = self.client.post(
+                "/uds/rest/actor/v3/initialize",
+                data={
+                    "type": "managed",
+                    "version": consts.system.VERSION,
+                    "token": token,
+                    "id": [{"mac": unique_id, "ip": "1.2.3.4"}],
+                },
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 200)
+            return response.json()["result"]
+
+        first_token = initialize(actor_token)["token"]
+        second_token = initialize(first_token)["token"]
+
+        self.assertIsNotNone(second_token)
+        self.assertNotEqual(first_token, second_token)
+
+        user_service.refresh_from_db()
+        self.assertEqual(models.user_service.hash_actor_token(second_token), user_service.token_hash)
+
+    def test_initialize_rejects_unknown_token(self) -> None:
+        """
+        Test that initialize blocks a token that is neither a registration nor an assignment token
+        """
+        unique_id = self.user_service_managed.get_unique_id()
+
+        response = self.client.post(
+            "/uds/rest/actor/v3/initialize",
+            data={
+                "type": "managed",
+                "version": consts.system.VERSION,
+                "token": "unknown_token_or_uuid",
+                "id": [{"mac": unique_id, "ip": "1.2.3.4"}],
             },
             content_type="application/json",
         )
