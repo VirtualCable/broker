@@ -65,7 +65,7 @@ class M2MRelationActionType(mutability_base.MutableActionType):
     (implementation is declaration).
     """
 
-    stale_policies: typing.ClassVar[dict[ActionOperation, StalePolicy]] = {
+    stale_policies_overrides: typing.ClassVar[dict[ActionOperation, StalePolicy]] = {
         ActionOperation.SET: StalePolicy.DENY,
         # Delta operations re-read the live set at execution and skip
         # members that no longer need the operation, so a concurrent

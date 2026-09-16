@@ -789,9 +789,9 @@ class UserServiceManager(metaclass=singleton.Singleton):
     def reset(self, userservice: UserService) -> None:
         userservice.refresh_from_db()
 
-        if not userservice.deployed_service.service.get_type().can_reset:
-            return
-
+        # The capability check belongs to the callers (the admin REST gate
+        # and the user portal action), not here: a silent early return used
+        # to hide the "this type cannot reset" fact from whoever asked.
         operations_logger.info("Reseting %s", userservice)
 
         userservice_instance = userservice.get_instance()

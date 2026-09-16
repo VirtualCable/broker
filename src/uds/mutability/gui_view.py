@@ -106,8 +106,10 @@ def fingerprint_names(elements: collections.abc.Iterable[ui_types.GuiElement]) -
 
     Everything the form-shaped payload carries except the non-fingerprint
     fields: hidden and relations never travel in it. INFO and readonly
-    fields ARE part of the fingerprint: the CAS base must track the whole
-    form state the PUT rebuilds from, exactly like the handler's own ETag.
+    fields ARE part of the fingerprint: the CAS base (compare-and-swap:
+    the proposal-time snapshot that approval re-checks) must track the
+    whole form state the PUT rebuilds from, exactly like the handler's
+    own ETag.
     """
     return [
         element.name

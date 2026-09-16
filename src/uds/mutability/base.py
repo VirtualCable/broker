@@ -9,6 +9,15 @@ administrator approves it.
 The generic CAS machinery (server-side snapshots, stale detection,
 descriptions for the agent and fresh diffs for the administrator) lives
 here so every concrete type only implements the small domain hooks.
+
+CAS (compare-and-swap) is the optimistic-concurrency scheme every
+proposal rides: creating a proposal freezes server-side snapshots of
+the live target (the current values of the proposed fields plus a
+whole-item fingerprint, ``base_values``/``base_etag``), and approval
+and execution re-check the live target against those snapshots. Drift
+resolves through :class:`StalePolicy` — ``DENY`` invalidates the flow,
+``FORCE`` proceeds — so an administrator never approves (nor executes)
+an action over a target that no longer looks like what the agent saw.
 """
 
 import abc
@@ -282,12 +291,12 @@ class MutableActionType(EntityDescriptor):
 
     Defaults to :attr:`StalePolicy.DENY`: any drift invalidates the
     flow. A ``FORCE`` policy is an explicit per-action-type declaration
-    (class attribute or :attr:`stale_policies` entry, code-reviewed);
-    there is no per-flow or per-admin override.
+    (class attribute or :attr:`stale_policies_overrides` entry,
+    code-reviewed); there is no per-flow or per-admin override.
     """
 
-    stale_policies: typing.ClassVar[dict["ActionOperation", StalePolicy]] = {}
-    """Per-operation approval-time behaviour (multi-operation families).
+    stale_policies_overrides: typing.ClassVar[dict["ActionOperation", StalePolicy]] = {}
+    """Per-operation overrides of :attr:`stale_policy` (multi-operation families).
 
     :meth:`get_stale_policy` resolves the policy of the operation the
     binding carries through this map; operations not listed fall back to
@@ -335,7 +344,7 @@ class MutableActionType(EntityDescriptor):
     def get_stale_policy(self) -> StalePolicy:
         """Stale policy resolved for the operation bound to this instance."""
         if self.operation is not None:
-            policy = self.stale_policies.get(self.operation)
+            policy = self.stale_policies_overrides.get(self.operation)
             if policy is not None:
                 return policy
         return self.stale_policy

@@ -1,24 +1,28 @@
-"""``servicepool.assignment``: act on or detach an assigned user service.
+"""``servicepool.assignment``: reassign, act on or detach an assigned user service.
 
 Operations over the ``services`` detail collection of a pool, never
-fields: ``custom`` applies one named verb to a single assigned user
-service — today only ``reset``, brought back to its base state through
-the ``reset`` custom method — and ``delete`` releases it (soft delete
-that marks the service for removal and frees it for reuse, exactly the
-DELETE the admin UI issues). Verbs are *data*, not operations: the
-``custom`` operation carries them in the ``action`` CHOICE field, so a
-future verb (reboot, stop, …) is a new entry in ``ACTIONS`` plus its
-execution branch, never a new tool or registered type. Members are
-discovered through the external immutable ``list_services_pools_services``
-list tool; the read view mirrors it plus the pool's capability flags and
-the verbs the type supports.
+fields: ``update`` changes the owner of one assigned user service (the
+PUT of the REST services detail, one user service per user and pool),
+``custom`` applies one named verb to it — today only ``reset``, brought
+back to its base state through the ``reset`` custom method — and
+``delete`` releases it (soft delete that marks the service for removal
+and frees it for reuse, exactly the DELETE the admin UI issues). Custom
+verbs are *data*, not operations: the ``custom`` operation carries them
+in the ``action`` CHOICE field, so a future verb (reboot, stop, …) is a
+new entry in ``ACTIONS`` plus its execution branch, never a new tool or
+registered type. Members are discovered through the external immutable
+``list_services_pools_services`` list tool; the read view mirrors it plus
+the pool's capability flags and the verbs the type supports.
 
-Both operations run under FORCE: the outcome is asynchronous (a reset may
-need an actor round-trip, releasing walks USABLE -> REMOVING -> REMOVABLE
-through the cleaners), exactly like publications. A pool whose type does
-not support resetting answers NotSupportedError at REST (the gate added
-with the capability contract); the same rule is checked here at propose
-time so a doomed proposal fails early.
+``update`` is a synchronous database write, so its approval-time CAS
+policy is DENY (owner changes anywhere in the pool invalidate pending
+proposals). ``custom`` and ``delete`` run under FORCE: the outcome is
+asynchronous (a reset may need an actor round-trip, releasing walks
+USABLE -> REMOVING -> REMOVABLE through the cleaners), exactly like
+publications. A pool whose type does not support resetting answers
+NotSupportedError at REST (the gate added with the capability contract);
+the same rule is checked here at propose time so a doomed proposal fails
+early.
 """
 
 import collections.abc
@@ -47,6 +51,9 @@ JsonObject = dict[str, typing.Any]
 State = types.states.State
 
 _RELEASABLE_STATES: typing.Final[frozenset[str]] = frozenset([State.USABLE, State.PREPARING, State.REMOVING])
+#: States an owner reassignment accepts (a service being removed cannot
+#: change owner; the REST PUT holds no state gate of its own).
+_ASSIGNABLE_STATES: typing.Final[frozenset[str]] = frozenset([State.USABLE, State.PREPARING])
 _CAS_STATES: typing.Final[frozenset[str]] = frozenset([*State.INFO_STATES, State.PREPARING])
 _MAX_TOOLTIP_MEMBERS: typing.Final[int] = 10
 
@@ -116,15 +123,20 @@ def _user_services_rows(
             "state_label": State.from_str(row.state).localized,
             "in_use": row.in_use,
             "owner": row.user.pretty_name if row.user else None,
+            "owner_uuid": row.user.uuid if row.user else None,
         }
         for row in rows
     ]
 
 
 def _cas_rows(pool: models.ServicePool) -> list[UserServicesRow]:
-    """Assigned rows in a state the operations care about."""
+    """Assigned rows in a state the operations care about.
+
+    The owner travels in the snapshot so an owner change anywhere in the
+    pool is visible to the CAS layer (``update`` runs DENY on it).
+    """
     rows = pool.assigned_user_services().filter(state__in=list(_CAS_STATES)).order_by("uuid")
-    return [{"uuid": row.uuid, "state": row.state} for row in rows]
+    return [{"uuid": row.uuid, "state": row.state, "user": row.user.uuid if row.user else None} for row in rows]
 
 
 def _cas_state(pool: models.ServicePool) -> JsonObject:
@@ -132,17 +144,21 @@ def _cas_state(pool: models.ServicePool) -> JsonObject:
 
 
 class ServicePoolAssignment(mutability_base.MutableActionType):
-    """Proposal: apply a verb to, or release, one assigned user service of a pool."""
+    """Proposal: reassign, act on or release one assigned user service of a pool."""
 
     type_id = "servicepool.assignment"
 
     handler = ServicesPools
     model = models.ServicePool
     noun = "Service pool"
-    # Verbs are asynchronous: the outcome is produced by actors and the
-    # cleaners, so pending proposals stay valid while states advance,
-    # execution re-reads and REST holds the authoritative checks.
+    # custom/delete verbs are asynchronous: the outcome is produced by actors
+    # and the cleaners, so pending proposals stay valid while states advance,
+    # execution re-reads and REST holds the authoritative checks. update is a
+    # synchronous owner swap, so it rides the strict whole-item CAS instead.
     stale_policy = StalePolicy.FORCE
+    stale_policies_overrides: typing.ClassVar[dict[ActionOperation, StalePolicy]] = {
+        ActionOperation.UPDATE: StalePolicy.DENY
+    }
     # Discovery without the pool is useless: the selectable services and
     # the verbs the type supports belong to the concrete pool.
     target_scoped_fields = True
@@ -159,7 +175,7 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
         return "servicepool"
 
     def _op(self) -> ActionOperation:
-        """The operation this instance is bound to (the family has two)."""
+        """The operation this instance is bound to (the family has three)."""
         if self.operation is None:
             raise ValueError(f"{self.type_id}: assignment types must be bound to an operation")
         return self.operation
@@ -177,6 +193,17 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
         }
         if self._op() is ActionOperation.DELETE:
             return [user_service]
+        if self._op() is ActionOperation.UPDATE:
+            return [
+                user_service,
+                {
+                    "name": "user",
+                    "type": types.ui.FieldType.TEXT.value,
+                    "label": "New owner user uuid",
+                    "tooltip": self._user_tooltip(target),
+                    "secret": False,
+                },
+            ]
         return [
             {
                 "name": "action",
@@ -212,14 +239,18 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
                 "can be released). "
             )
             supported_states = _RELEASABLE_STATES
+        elif self._op() is ActionOperation.UPDATE:
+            base = (
+                "uuid of the assigned user service whose owner will change (only usable "
+                "or preparing services can be reassigned). "
+            )
+            supported_states: frozenset[str] = _ASSIGNABLE_STATES
         else:
             base = (
                 "uuid of the assigned user service to act upon (the states the chosen "
                 "action accepts depend on the action; see the action field). "
             )
-            supported_states: frozenset[str] = frozenset(
-                state for action in ACTIONS.values() for state in action.states
-            )
+            supported_states = frozenset(state for action in ACTIONS.values() for state in action.states)
         if isinstance(target, models.ServicePool):
             listed = [
                 f"{row['uuid']} ({row['friendly_name']})"
@@ -233,6 +264,25 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
                 + "This pool has no assigned user service in a state any of these actions accepts right now."
             )
         return base + "Discover the uuids with list_services_pools_services or get_servicepool_assignment."
+
+    def _user_tooltip(self, target: db_models.Model | None) -> str:
+        base = (
+            "uuid of the User that will own the user service: a user can own at most one "
+            "user service of this pool, so the target must not already own another one. "
+        )
+        if isinstance(target, models.ServicePool):
+            listed = [
+                f"{row['owner_uuid']} ({row['owner']})"
+                for row in _user_services_rows(target, for_cached=False)
+                if row["owner_uuid"]
+            ][:_MAX_TOOLTIP_MEMBERS]
+            if listed:
+                return (
+                    base + f"Current owners of this pool: {', '.join(listed)}. "
+                    "Discover more users with list_authenticators_users."
+                )
+            return base + "Discover user uuids with list_authenticators_users."
+        return base + "Discover user uuids with list_authenticators_users."
 
     # -------------------------------------------------------- validation
 
@@ -251,12 +301,43 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
         if self._op() is ActionOperation.DELETE:
             errors.extend(self._validate_member(flat["user_service"], _RELEASABLE_STATES, "release", target))
             return errors
+        if self._op() is ActionOperation.UPDATE:
+            errors.extend(self._validate_member(flat["user_service"], _ASSIGNABLE_STATES, "reassign", target))
+            validated_user = self._validate_user(flat.get("user"))
+            if isinstance(validated_user, str):
+                errors.append(validated_user)
+            elif isinstance(target, models.ServicePool):
+                # Same one-service-per-user rule the REST PUT enforces
+                clash = (
+                    target.userServices.filter(user=validated_user)
+                    .exclude(uuid=process_uuid(typing.cast(str, flat["user_service"])))
+                    .exclude(state__in=State.INFO_STATES)
+                    .exists()
+                )
+                if clash:
+                    errors.append(
+                        f"user {validated_user.pretty_name} already owns another user service of this pool"
+                    )
+            return errors
         validated = self._validate_action_choice(flat.get("action"), target)
         if isinstance(validated, str):
             errors.append(validated)
         else:
             errors.extend(self._validate_member(flat["user_service"], validated.states, validated.name, target))
         return errors
+
+    def _validate_user(self, value: typing.Any) -> "models.User | str":
+        """The reassignment target user, or an error message."""
+        if not isinstance(value, str):
+            return "field user must be the uuid string of a user"
+        try:
+            uuid = process_uuid(value)
+        except ValueError:
+            return f"field user is not a valid uuid: {value!r}"
+        user = models.User.objects.filter(uuid=uuid).first()
+        if user is None:
+            return f"user {value} does not exist"
+        return user
 
     def _validate_action_choice(
         self, value: typing.Any, target: db_models.Model | None
@@ -296,6 +377,8 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
                 if action in ACTIONS
                 else "the service state does not accept the action"
             )
+        elif self._op() is ActionOperation.UPDATE:
+            hint = "only usable or preparing services can be reassigned"
         else:
             hint = "only usable, preparing or removing services can be released"
         row = pool.assigned_user_services().filter(uuid=uuid).first()
@@ -351,16 +434,20 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
     def read_description(self) -> str:
         return (
             "Read the assigned user services of one service pool with their uuids, "
-            "states and owners, plus the pool's capability flags and the action "
-            "literals its service type supports (resetting and future verbs go "
-            "through the custom proposal tool; releasing through delete). Applies "
-            "immediately; it is a plain read, never a proposal."
+            "states and owners (owner names and owner_uuids, the latter being what "
+            "reassignment proposals need), plus the pool's capability flags and the "
+            "action literals its service type supports (reassigning the owner goes "
+            "through the update proposal tool, custom verbs through the custom one, "
+            "releasing through delete). Applies immediately; it is a plain read, "
+            "never a proposal."
         )
 
     # -------------------------------------------------------- tool text
 
     @typing.override
     def tool_title(self) -> str:
+        if self._op() is ActionOperation.UPDATE:
+            return "Propose reassigning an assigned user service to a user"
         if self._op() is ActionOperation.CUSTOM:
             return "Propose an action on an assigned user service"
         return "Propose releasing an assigned user service"
@@ -368,6 +455,16 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
     @typing.override
     def tool_description(self) -> str:
         pool = "service pool"
+        if self._op() is ActionOperation.UPDATE:
+            return (
+                f"Propose to change the owner of an assigned user service of a {pool}. The "
+                "'user_service' field is the uuid of an assigned user service of this pool "
+                "in usable or preparing state, and the 'user' field is the uuid of the "
+                "User that will own it; a user can own at most one user service of this "
+                "pool. Read the current owners with get_servicepool_assignment or "
+                "list_services_pools_services. The proposal does NOT apply anything: it "
+                "is queued until an administrator approves it."
+            )
         if self._op() is ActionOperation.CUSTOM:
             verbs = ", ".join(f"'{action.name}' ({action.description})" for action in ACTIONS.values())
             return (
@@ -393,6 +490,41 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
+    async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        def _plan() -> tuple[str, str, str, JsonObject]:
+            pool = typing.cast(models.ServicePool, self.resolve_target(action.target_uuid))
+            values = self.flatten_values(action.values)
+            member_uuid = _resolve_member(pool, values["user_service"], _ASSIGNABLE_STATES, "reassign")
+            user = models.User.objects.filter(uuid=process_uuid(typing.cast(str, values["user"]))).first()
+            if user is None:
+                raise rest_exceptions.RequestError(
+                    f"user {values['user']!r} no longer exists (it disappeared after the proposal was approved)"
+                )
+            # Same one-service-per-user rule the REST PUT enforces
+            if (
+                pool.userServices.filter(user=user)
+                .exclude(uuid=member_uuid)
+                .exclude(state__in=State.INFO_STATES)
+                .exists()
+            ):
+                raise rest_exceptions.RequestError(
+                    f"There is already another user service assigned to {user.pretty_name}"
+                )
+            # auth_id is the REST payload gate (it must match the user's
+            # authenticator); the user_id uuid is the one actually resolved.
+            return pool.name, pool.uuid, member_uuid, {"user_id": user.uuid, "auth_id": user.manager.uuid}
+
+        pool_name, pool_uuid, member_uuid, params = await sync_to_async(_plan, thread_sensitive=True)()
+        await self._dispatch(
+            request,
+            pool_uuid,
+            (member_uuid,),
+            params,
+            method=types.rest.CustomMethodMethod.PUT,
+        )
+        return f'Service pool "{pool_name}" user service {member_uuid} ownership reassigned'
+
+    @typing.override
     async def op_custom(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         verb = action.values.get("action")
         spec = ACTIONS.get(verb) if isinstance(verb, str) else None
@@ -410,7 +542,7 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
             return pool.name, _resolve_member(pool, action.values["user_service"], spec.states, spec.name)
 
         pool_name, user_service_uuid = await sync_to_async(_plan, thread_sensitive=True)()
-        await self._post(request, action.target_uuid, (user_service_uuid, spec.name))
+        await self._dispatch(request, action.target_uuid, (user_service_uuid, spec.name))
         return f'Service pool "{pool_name}" user service {user_service_uuid} {spec.summary}'
 
     @typing.override
@@ -422,21 +554,32 @@ class ServicePoolAssignment(mutability_base.MutableActionType):
             )
 
         pool_name, user_service_uuid = await sync_to_async(_plan, thread_sensitive=True)()
-        await self._post(request, action.target_uuid, (user_service_uuid,))
+        await self._dispatch(request, action.target_uuid, (user_service_uuid,))
         return f'Service pool "{pool_name}" user service {user_service_uuid} releasing'
 
     @staticmethod
-    async def _post(
+    async def _dispatch(
         request: ExtendedHttpRequestWithUser,
         pool_uuid: str,
         args: tuple[str, ...],
         params: JsonObject | None = None,
+        method: "types.rest.CustomMethodMethod | None" = None,
     ) -> typing.Any:
+        """The REST services-detail call of the family.
+
+        Defaults to the custom-method POST when the args carry a verb and to
+        DELETE when they do not; explicit verbs (the update PUT) pass
+        ``method``.
+        """
+        if method is None:
+            method = (
+                types.rest.CustomMethodMethod.POST if len(args) > 1 else types.rest.CustomMethodMethod.DELETE
+            )
         return await RestProxy().execute(
             RestTarget(
                 AssignedUserService,
                 "services_pools/{uuid}/services",
-                types.rest.CustomMethodMethod.POST if len(args) > 1 else types.rest.CustomMethodMethod.DELETE,
+                method,
                 args=args,
                 parent=RestTarget(ServicesPools, "services_pools"),
             ),
