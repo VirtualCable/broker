@@ -37,6 +37,7 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_server_update",
     "propose_server_group_update",
     "propose_servicepool_update",
+    "propose_servicepool_delete",
     "propose_servicepool_group_set",
     "propose_servicepool_group_add",
     "propose_servicepool_group_delete",

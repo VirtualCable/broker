@@ -1,4 +1,4 @@
-"""``servicepool.update``: propose modifications to an existing service pool.
+"""``servicepool``: propose modifications to, or deletion of, a service pool.
 
 Top level resource with a static gui (no module instance): the mutable
 surface is model columns only. Publications, assignments and calendar
@@ -11,6 +11,12 @@ payload, because the pool PUT is form-shaped and requires them (and
 The readonly gui fields (``service_id``, ``osmanager_id``,
 ``publish_on_save``, ``account_id``) are additionally enforced by the
 REST layer on update: only the stored value passes.
+
+``delete`` takes no fields: the pool itself is the target. It only
+marks the pool REMOVABLE — the background cleaners then take its
+publications, cached and assigned user services away — so it runs under
+FORCE like the other asynchronous verbs of the package, while the
+form-shaped ``update`` keeps the strict DENY CAS.
 
 The other service pool families live in sibling modules, one per
 action type (``access``, ``action``, ``assignment``, ``cached``,
@@ -35,6 +41,7 @@ from uds.REST.methods.services_pools import ServicesPools
 
 from ... import base as mutability_base
 from ... import gui_view
+from ...base import ActionOperation, StalePolicy
 from ...etag import item_etag
 
 from . import access as access
@@ -50,7 +57,7 @@ JsonObject = dict[str, typing.Any]
 
 
 class ServicePoolUpdate(mutability_base.MutableActionType):
-    """Proposal: update an existing service pool."""
+    """Proposal: update or delete an existing service pool."""
 
     type_id = "servicepool"
     title = "Propose service pool update"
@@ -69,6 +76,14 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
     handler = ServicesPools
     model = models.ServicePool
     noun = "Service pool"
+    # update is a form-shaped synchronous write (strict whole-item CAS);
+    # delete only marks the pool REMOVABLE — the cleaners do the actual
+    # removal asynchronously — so it rides FORCE, like the asynchronous
+    # verbs of the sibling families.
+    stale_policy = StalePolicy.DENY
+    stale_policies_overrides: typing.ClassVar[dict[ActionOperation, StalePolicy]] = {
+        ActionOperation.DELETE: StalePolicy.FORCE
+    }
 
     @typing.override
     def resolve_target(self, target_uuid: str) -> db_models.Model:
@@ -83,6 +98,10 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+        # Deletion needs no fields: the target itself is what disappears.
+        # (An unbound instance serves the update surface, its default op.)
+        if self.operation is ActionOperation.DELETE:
+            return []
         # Agent view derived from the handler gui. What the gui marks
         # readonly (base service, os manager, account) or hides through the
         # mutability overlay (image, pool group, publish_on_save) is not
@@ -184,6 +203,25 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
+    def tool_title(self) -> str:
+        if self.operation is ActionOperation.DELETE:
+            return "Propose deleting a service pool"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is ActionOperation.DELETE:
+            return (
+                "Propose deleting a service pool: it is marked for removal and the "
+                "background cleaners then take its publications, cached and assigned "
+                "user services away; the pool disappears for good once everything is "
+                "gone. No fields are needed: the pool itself is the target of the "
+                "proposal. The proposal does NOT delete anything: it is queued until "
+                "an administrator approves it."
+            )
+        return self.description
+
+    @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ALL the ORM work (target, FK context, tags) must stay out of the
         # async context: resolve + snapshot + merge in one sync boundary.
@@ -205,3 +243,24 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
             params,
         )
         return f'Service pool "{pool_name}" updated'
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # REST only marks the pool REMOVABLE; the cleaners perform the real
+        # removal asynchronously (publications, caches and user services
+        # first, the pool row last).
+        pool = typing.cast(
+            models.ServicePool,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
+        await RestProxy().execute(
+            RestTarget(
+                ServicesPools,
+                "services_pools",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+            ),
+            request,
+            {},
+        )
+        return f'Service pool "{pool.name}" queued for removal'
