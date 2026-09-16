@@ -97,7 +97,7 @@ def create_db_service(provider: models.Provider, use_caching_version: bool = Tru
 
     service = provider.services.create(
         name="Service {}".format(glob["service_id"]),
-        data_type=TestServiceCache.type_type,
+        data_type=TestServiceCache.type_type if use_caching_version else TestServiceNoCache.type_type,
         data=(
             TestServiceCache(environment.Environment(str(glob["service_id"])), provider.get_instance()).serialize()
             if use_caching_version

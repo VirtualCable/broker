@@ -57,6 +57,8 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_group",
     "get_servicepool_publication",
     "get_servicepool_transport",
+    "get_servicepool_assignment",
+    "get_servicepool_cached",
 )
 
 _MARKER: typing.Final[str] = "mcp-system-log-marker-for-test"
@@ -515,6 +517,37 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
             (pool.current_pub_revision, "curated pub note"),
             [(entry["revision"], entry["log"]) for entry in result["changelog"]],
         )
+
+    def test_get_servicepool_assignment(self) -> None:
+        from tests.fixtures import services as service_fixtures
+
+        pool = self._a_service_pool()
+        publication = service_fixtures.create_db_publication(pool)
+        user = self.plain_users[0]
+        assigned = service_fixtures.create_db_userservice(pool, publication, user)
+        result = json.loads(
+            self._result_text(self._call("get_servicepool_assignment", {"target_uuid": pool.uuid}))
+        )
+        self.assertEqual(result["entity_type"], "servicepool.assignment")
+        self.assertIn("can_reset", result["capabilities"])
+        row = next(item for item in result["user_services"] if item["uuid"] == assigned.uuid)
+        self.assertEqual(row["state"], "U")
+        self.assertEqual(row["owner"], user.pretty_name)
+
+    def test_get_servicepool_cached(self) -> None:
+        from tests.fixtures import services as service_fixtures
+
+        pool = self._a_service_pool()
+        publication = service_fixtures.create_db_publication(pool)
+        cached = service_fixtures.create_db_userservice(pool, publication, user=None)
+        cached.cache_level = 1  # CacheLevel.L1
+        cached.save(update_fields=["cache_level"])
+        result = json.loads(self._result_text(self._call("get_servicepool_cached", {"target_uuid": pool.uuid})))
+        self.assertEqual(result["entity_type"], "servicepool.cached")
+        self.assertIn("uses_cache", result["capabilities"])
+        row = next(item for item in result["cached_user_services"] if item["uuid"] == cached.uuid)
+        self.assertEqual(row["state"], "U")
+        self.assertEqual(row["cache_level"], 1)
 
     def test_get_metapool_member(self) -> None:
         metapool = self._a_metapool()

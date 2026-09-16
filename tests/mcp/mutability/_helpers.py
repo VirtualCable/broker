@@ -53,6 +53,9 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_servicepool_fallback_update",
     "propose_servicepool_publication_add",
     "propose_servicepool_publication_delete",
+    "propose_servicepool_assignment_custom",
+    "propose_servicepool_assignment_delete",
+    "propose_servicepool_cached_delete",
     "propose_tunnel_update",
     "create_flow",
     "submit_flow",
@@ -69,6 +72,8 @@ READ_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_group",
     "get_servicepool_publication",
     "get_servicepool_transport",
+    "get_servicepool_assignment",
+    "get_servicepool_cached",
     "get_metapool_member",
     "get_metapool_group",
 )

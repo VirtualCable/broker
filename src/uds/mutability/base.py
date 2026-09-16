@@ -77,10 +77,12 @@ class ActionOperation(enum.StrEnum):
 
     The names mirror HTTP so the payload semantics are predictable:
     ``update`` patches scalar fields, ``set`` replaces a whole relation,
-    ``add``/``delete`` apply to the listed members only. Reads are not
-    operations: the live view of an entity is served by the synchronous
-    :meth:`EntityDescriptor.read` on the shared descriptor base, never
-    through the flow machinery.
+    ``add``/``delete`` apply to the listed members only. ``custom`` is
+    the open verb: the family declares a CHOICE field naming the verb to
+    perform (reset, and future ones), so growing the vocabulary is data,
+    not a new operation. Reads are not operations: the live view of an
+    entity is served by the synchronous :meth:`EntityDescriptor.read` on
+    the shared descriptor base, never through the flow machinery.
     """
 
     UPDATE = "update"
@@ -88,6 +90,7 @@ class ActionOperation(enum.StrEnum):
     ADD = "add"
     DELETE = "delete"
     CREATE = "create"
+    CUSTOM = "custom"
 
     def as_str(self) -> str:
         """Plain string form for joining into a full ``type_id``."""
@@ -96,13 +99,16 @@ class ActionOperation(enum.StrEnum):
 
 #: Operations dispatchable through ``execute``, mapped to the ``op_*``
 #: hook whose presence declares them. ``create`` is reserved vocabulary
-#: (no create flow yet). Reads are not operations at all — they belong to
-#: :class:`EntityDescriptor`, outside this enum.
+#: (no create flow yet). ``custom`` carries a family-defined verb as a
+#: CHOICE payload field (e.g. resetting an assigned user service), so
+#: future verbs are data, not new operations. Reads are not operations
+#: at all — they belong to :class:`EntityDescriptor`, outside this enum.
 _OPERATION_HOOKS: typing.Final[dict["ActionOperation", str]] = {
     ActionOperation.UPDATE: "op_update",
     ActionOperation.SET: "op_set",
     ActionOperation.ADD: "op_add",
     ActionOperation.DELETE: "op_delete",
+    ActionOperation.CUSTOM: "op_custom",
 }
 
 
@@ -401,6 +407,9 @@ class MutableActionType(EntityDescriptor):
 
     async def op_delete(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         raise NotImplementedError(f"{self.full_id}: does not support the delete operation")
+
+    async def op_custom(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the custom operation")
 
     # ------------------------------------------------- generic CAS layer
 

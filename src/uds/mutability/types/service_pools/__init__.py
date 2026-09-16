@@ -13,10 +13,10 @@ The readonly gui fields (``service_id``, ``osmanager_id``,
 REST layer on update: only the stored value passes.
 
 The other service pool families live in sibling modules, one per
-action type (``access``, ``action``, ``fallback``, ``group``,
-``publication``, ``transport``); the imports at the bottom of this
-module pull them in so the registry discovers every family of the
-package.
+action type (``access``, ``action``, ``assignment``, ``cached``,
+``fallback``, ``group``, ``publication``, ``transport``); the imports
+at the bottom of this module pull them in so the registry discovers
+every family of the package.
 """
 
 import collections.abc
@@ -39,6 +39,8 @@ from ...etag import item_etag
 
 from . import access as access
 from . import action as action
+from . import assignment as assignment
+from . import cached as cached
 from . import fallback as fallback
 from . import group as group
 from . import publication as publication

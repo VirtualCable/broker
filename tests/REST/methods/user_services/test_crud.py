@@ -50,9 +50,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 import typing
+from unittest import mock
 
 from uds import models
 
+from ....fixtures import services as services_fixtures
 from ....utils import rest
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -122,3 +124,99 @@ class PoolUserServicesCrudTest(rest.test.RESTTestCase):
         # explicitly noted via this contract snapshot.
         self.assertLess(response.status_code, 500, response.content)
         self.assertGreaterEqual(response.status_code, 400)
+
+
+class PoolCapabilitiesGatesTest(rest.test.RESTTestCase):
+    """The capability gates added with the pool capability contract.
+
+    Pools whose base service type does not support an operation must
+    answer ``400 Not supported`` (the dispatcher's ``NotSupportedError``
+    mapping) instead of silently succeeding, returning empty collections
+    or half-working surfaces:
+
+    - ``services/{uuid}/reset`` (POST) when ``can_reset`` is false;
+    - the whole ``cache`` detail when ``uses_cache`` is false;
+    - the ``publications`` and ``changelog`` details when the type does
+      not need publications at all.
+    """
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+
+    def _pool(self, caching: bool) -> models.ServicePool:
+        service = services_fixtures.create_db_service(self.provider, use_caching_version=caching)
+        return services_fixtures.create_db_servicepool(service)
+
+    def _assigned(self, pool: models.ServicePool) -> models.UserService:
+        publication = services_fixtures.create_db_publication(pool)
+        return services_fixtures.create_db_userservice(pool, publication, self.plain_users[0])
+
+    def test_reset_unsupported_answers_not_supported(self) -> None:
+        pool = self._pool(caching=True)
+        userservice = self._assigned(pool)
+        # TestServiceCache.can_reset is False by default.
+        response = self.client.rest_post(f"servicespools/{pool.uuid}/services/{userservice.uuid}/reset")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Not supported", response.content)
+
+    def test_reset_supported_reaches_the_manager(self) -> None:
+        from tests.fixtures.modules.service.service import TestServiceCache
+
+        pool = self._pool(caching=True)
+        userservice = self._assigned(pool)
+        manager = mock.MagicMock()
+        with (
+            mock.patch.object(TestServiceCache, "can_reset", True),
+            mock.patch("uds.REST.methods.user_services.UserServiceManager.manager", return_value=manager),
+        ):
+            response = self.client.rest_post(f"servicespools/{pool.uuid}/services/{userservice.uuid}/reset")
+        self.assertEqual(response.status_code, 200, response.content)
+        manager.reset.assert_called_once()
+        self.assertEqual(manager.reset.call_args[0][0].uuid, userservice.uuid)
+
+    def test_cache_detail_unsupported_answers_not_supported(self) -> None:
+        pool = self._pool(caching=False)
+        for verb, call in (
+            ("GET", self.client.rest_get),
+            ("DELETE", self.client.rest_delete),
+        ):
+            url = (
+                f"servicespools/{pool.uuid}/cache/overview"
+                if verb == "GET"
+                else f"servicespools/{pool.uuid}/cache/00000000-0000-0000-0000-000000000000"
+            )
+            response = call(url)
+            self.assertEqual(response.status_code, 400, f"{verb} {url}")
+            self.assertIn(b"Not supported", response.content)
+
+    def test_cache_detail_supported_answers_ok(self) -> None:
+        pool = self._pool(caching=True)
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/cache/overview")
+        self.assertEqual(response.status_code, 200)
+
+    def test_publications_unsupported_answers_not_supported(self) -> None:
+        pool = self._pool(caching=False)
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/publications/overview")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Not supported", response.content)
+        response = self.client.rest_post(f"servicespools/{pool.uuid}/publications/publish")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Not supported", response.content)
+
+    def test_publications_supported_answers_ok(self) -> None:
+        pool = self._pool(caching=True)
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/publications/overview")
+        self.assertEqual(response.status_code, 200)
+
+    def test_changelog_unsupported_answers_not_supported(self) -> None:
+        pool = self._pool(caching=False)
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/changelog/overview")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Not supported", response.content)
+
+    def test_changelog_supported_answers_ok(self) -> None:
+        pool = self._pool(caching=True)
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/changelog/overview")
+        self.assertEqual(response.status_code, 200)
