@@ -49,18 +49,6 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 READY_CACHE_TIMEOUT = 30
 
-# server: "192.168.1.100",
-# port: 3389,
-# user: "username",
-# password: "password",
-# domain: "DOMAIN",
-# verify_cert: true,
-# use_nla: true,
-# screen_width: 1920,
-# screen_height: 1080,
-# drives_to_redirect: ["C", "D"]
-
-
 @dataclasses.dataclass
 class RDPTunnelParams:
     host: str
