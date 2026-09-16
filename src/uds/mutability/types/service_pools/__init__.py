@@ -37,6 +37,7 @@ from ... import gui_view
 from ...etag import item_etag
 
 from . import access as access
+from . import action as action
 from . import fallback as fallback
 from . import group as group
 from . import transport as transport

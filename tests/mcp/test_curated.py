@@ -53,6 +53,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_metapool_group",
     "get_metapool_member",
     "get_servicepool_access",
+    "get_servicepool_action",
     "get_servicepool_group",
     "get_servicepool_transport",
 )
@@ -469,6 +470,26 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         self.assertEqual(rule["access"], "ALLOW")
         self.assertEqual(rule["priority"], 3)
         self.assertEqual(rule["calendar_name"], calendar.name)
+
+    def test_get_servicepool_action(self) -> None:
+        pool = self._a_service_pool()
+        calendar = models.Calendar.objects.create(name="curated-actions-calendar", comments="")
+        row = models.CalendarAction.objects.create(
+            service_pool=pool,
+            calendar=calendar,
+            action="PUBLISH",
+            at_start=True,
+            events_offset=-30,
+            params=json.dumps({}),
+        )
+        result = json.loads(self._result_text(self._call("get_servicepool_action", {"target_uuid": pool.uuid})))
+        self.assertEqual(result["entity_type"], "servicepool.action")
+        action = next(item for item in result["current_actions"] if item["uuid"] == row.uuid)
+        self.assertEqual(action["action"], "PUBLISH")
+        self.assertEqual(action["calendar_name"], calendar.name)
+        self.assertEqual(action["at_start"], True)
+        self.assertEqual(action["events_offset"], -30)
+        self.assertIn("PUBLISH", result["available_actions"])
 
     def test_get_metapool_member(self) -> None:
         metapool = self._a_metapool()
