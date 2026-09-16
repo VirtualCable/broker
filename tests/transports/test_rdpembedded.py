@@ -67,6 +67,11 @@ class RDPEmbeddedTest(UDSTestCase):
         self.assertEqual(data["redirections"]["audio"], True)
         self.assertEqual(data["redirections"]["mic"], False)
         self.assertEqual(data["redirections"]["drives"], [])
+        # Clipboard on, printing off by default.
+        self.assertEqual(data["redirections"]["clipboard"], True)
+        self.assertEqual(data["redirections"]["printing"], False)
+        # Unset sound latency threshold → key omitted, client keeps its own default.
+        self.assertNotIn("sound_latency_threshold", data["redirections"])
         # Webcam disabled by default → key omitted entirely.
         self.assertNotIn("webcam", data["redirections"])
         self.assertNotIn("smartcard", data["redirections"])
@@ -93,6 +98,27 @@ class RDPEmbeddedTest(UDSTestCase):
         redirections = self._build(transport)["redirections"]
         self.assertFalse(redirections["audio"])
         self.assertTrue(redirections["mic"])
+
+    def test_clipboard_printing_flags(self) -> None:
+        transport = self._transport()
+        transport.enable_clipboard.value = False
+        transport.enable_printers.value = True
+
+        redirections = self._build(transport)["redirections"]
+        self.assertFalse(redirections["clipboard"])
+        self.assertTrue(redirections["printing"])
+
+    def test_sound_latency_threshold_sent_when_set(self) -> None:
+        transport = self._transport()
+        transport.sound_latency_threshold.value = 120
+
+        self.assertEqual(self._build(transport)["redirections"]["sound_latency_threshold"], 120)
+
+    def test_sound_latency_threshold_zero_is_omitted(self) -> None:
+        transport = self._transport()
+        transport.sound_latency_threshold.value = 0
+
+        self.assertNotIn("sound_latency_threshold", self._build(transport)["redirections"])
 
     def test_drives_allow_any(self) -> None:
         transport = self._transport()

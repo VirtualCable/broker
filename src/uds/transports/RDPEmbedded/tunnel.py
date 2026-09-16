@@ -85,6 +85,9 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     webcam_max_width = BaseRDPEmbeddedTransport.webcam_max_width
     webcam_max_height = BaseRDPEmbeddedTransport.webcam_max_height
     enable_smartcard = BaseRDPEmbeddedTransport.enable_smartcard
+    enable_clipboard = BaseRDPEmbeddedTransport.enable_clipboard
+    enable_printers = BaseRDPEmbeddedTransport.enable_printers
+    sound_latency_threshold = BaseRDPEmbeddedTransport.sound_latency_threshold
 
     screen_size = BaseRDPEmbeddedTransport.screen_size
 

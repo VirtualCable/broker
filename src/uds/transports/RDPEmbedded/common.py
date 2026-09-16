@@ -99,8 +99,11 @@ class RDPRedirections:
     drives: list[str] | None = None
     audio: bool | None = None
     mic: bool | None = None
+    clipboard: bool | None = None
+    printing: bool | None = None
     webcam: WebcamParams | None = None
     smartcard: SmartcardParams | None = None
+    sound_latency_threshold: int | None = None
 
 
 @dataclasses.dataclass
@@ -275,6 +278,35 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
+    enable_clipboard = gui.CheckBoxField(
+        label=_("Enable clipboard"),
+        order=32,
+        default=True,
+        tooltip=_("If checked, copy-paste functions will be allowed"),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    enable_printers = gui.CheckBoxField(
+        label=_("Enable printers"),
+        order=33,
+        default=False,
+        tooltip=_("If checked, this transport will allow the use of user printers"),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    sound_latency_threshold = gui.NumericField(
+        label=_("Sound latency threshold (ms)"),
+        order=34,
+        length=5,
+        default=0,
+        tooltip=_(
+            "If the audio stream drifts more than this many milliseconds, packets are dropped to "
+            "resynchronize it. 0 = let the client decide. Too low drops audio constantly, too high "
+            "keeps audio smooth but lets it drift apart from video."
+        ),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
     rdp_port = gui.NumericField(
         order=35,
         length=5,  # That is, max allowed value is 65535
@@ -443,6 +475,10 @@ class BaseRDPEmbeddedTransport(transports.Transport):
                 drives=drives,
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),
+                clipboard=self.enable_clipboard.as_bool(),
+                printing=self.enable_printers.as_bool(),
+                # 0 means "unset": omitting the key lets the client pick its own threshold.
+                sound_latency_threshold=self.sound_latency_threshold.as_int() or None,
                 webcam=webcam,
                 smartcard=SmartcardParams(enabled=True) if self.enable_smartcard.as_bool() else None,
             ),
