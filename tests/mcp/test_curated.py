@@ -55,6 +55,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_access",
     "get_servicepool_action",
     "get_servicepool_group",
+    "get_servicepool_publication",
     "get_servicepool_transport",
 )
 
@@ -490,6 +491,30 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         self.assertEqual(action["at_start"], True)
         self.assertEqual(action["events_offset"], -30)
         self.assertIn("PUBLISH", result["available_actions"])
+
+    def test_get_servicepool_publication(self) -> None:
+        pool = self._a_service_pool()
+        now = timezone.now()
+        running = models.ServicePoolPublication.objects.create(
+            deployed_service=pool,
+            publish_date=now,
+            state_date=now,
+            state="L",
+            revision=pool.current_pub_revision,
+        )
+        pool.changelog.create(revision=pool.current_pub_revision, stamp=now, log="curated pub note")
+        result = json.loads(
+            self._result_text(self._call("get_servicepool_publication", {"target_uuid": pool.uuid}))
+        )
+        self.assertEqual(result["entity_type"], "servicepool.publication")
+        self.assertEqual(result["current_revision"], pool.current_pub_revision)
+        pub = next(item for item in result["publications"] if item["uuid"] == running.uuid)
+        self.assertEqual(pub["state"], "L")
+        self.assertEqual(pub["revision"], pool.current_pub_revision)
+        self.assertIn(
+            (pool.current_pub_revision, "curated pub note"),
+            [(entry["revision"], entry["log"]) for entry in result["changelog"]],
+        )
 
     def test_get_metapool_member(self) -> None:
         metapool = self._a_metapool()
