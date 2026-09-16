@@ -57,7 +57,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class MFAItem(types.rest.BaseRestItem):
+class MFAItem(types.rest.ManagedObjectItem[models.MFA]):
     id: str
     name: str
     remember_device: int
@@ -152,4 +152,5 @@ class MFA(ModelHandler[MFAItem]):
             type=type_.mod_type(),
             type_name=type_.mod_name(),
             permission=permissions.effective_permissions(self._user, item),
+            item=item,
         )
