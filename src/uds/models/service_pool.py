@@ -316,6 +316,14 @@ class ServicePool(UUIDModel, TaggingMixin):
     def is_in_maintenance(self) -> bool:
         return self.service.is_in_maintenance()
 
+    def capabilities(self) -> types.services.PoolCapabilities:
+        """Capability flags of the pool's base service type.
+
+        Delegates to :meth:`uds.models.service.Service.capabilities`; the
+        pool inherits what its type supports (cache, reset, publication).
+        """
+        return self.service.capabilities()
+
     def is_visible(self) -> bool:
         return self.visible
 
@@ -338,9 +346,9 @@ class ServicePool(UUIDModel, TaggingMixin):
 
         # Return the date
         try:
-            found = self.assigned_user_services().filter(user=for_user, state__in=types.states.State.VALID_STATES)[
-                0
-            ]  # Raises exception if at least one is not found
+            found = self.assigned_user_services().filter(
+                user=for_user, state__in=types.states.State.VALID_STATES
+            )[0]  # Raises exception if at least one is not found
             if active_publication and found.publication and active_publication.id != found.publication.id:
                 ret = self.get_value("toBeReplacedIn")
                 if ret:
@@ -515,7 +523,11 @@ class ServicePool(UUIDModel, TaggingMixin):
         Ensures that, if this service has publications, that a publication is active
         raises an IvalidServiceException if check fails
         """
-        if self.active_publication() is None and self.service and self.service.get_type().publication_type is not None:
+        if (
+            self.active_publication() is None
+            and self.service
+            and self.service.get_type().publication_type is not None
+        ):
             raise InvalidServiceException()
 
     def validate_transport(self, transport: "Transport") -> None:
@@ -560,7 +572,9 @@ class ServicePool(UUIDModel, TaggingMixin):
         """
         from uds.core import services  # pylint: disable=import-outside-toplevel
 
-        services_not_needing_publication = [t.mod_type() for t in services.factory().services_not_needing_publication()]
+        services_not_needing_publication = [
+            t.mod_type() for t in services.factory().services_not_needing_publication()
+        ]
         visible_kwargs = {"visible": True} if visible_only else {}
         # Get services that HAS publications
         query = (
@@ -682,7 +696,9 @@ class ServicePool(UUIDModel, TaggingMixin):
         maxs = self.get_max()
 
         if cached_value == -1:
-            cached_value = self.assigned_user_services().filter(state__in=types.states.State.VALID_STATES).count()
+            cached_value = (
+                self.assigned_user_services().filter(state__in=types.states.State.VALID_STATES).count()
+            )
 
         return types.pools.UsageInfo(cached_value, maxs)
 

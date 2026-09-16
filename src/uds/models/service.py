@@ -37,7 +37,7 @@ from django.db import models
 from uds.core.environment import Environment
 from uds.core.util import log
 from uds.core.util import net
-from uds.core.types.services import ServicesCountingType
+from uds.core.types.services import PoolCapabilities, ServicesCountingType
 
 from .managed_object_model import ManagedObjectModel
 from .tag import TaggingMixin
@@ -172,6 +172,23 @@ class Service(ManagedObjectModel, TaggingMixin):
     def is_in_maintenance(self) -> bool:
         # orphaned services?
         return self.provider.is_in_maintenance()
+
+    def capabilities(self) -> PoolCapabilities:
+        """Capability flags of this service's type, as the admin GUI sees them.
+
+        Mirrors the derivation of the REST ``service_info`` (honouring the
+        type's ``overrided_pools_fields`` for cache), so checking a
+        capability before an operation and the ``info`` the GUI shows can
+        never disagree.
+        """
+        type_ = self.get_type()
+        overrided = type_.overrided_pools_fields or {}
+        return PoolCapabilities(
+            uses_cache=type_.uses_cache and overrided.get("uses_cache", True),
+            uses_cache_l2=type_.uses_cache_l2,
+            can_reset=type_.can_reset,
+            needs_publication=type_.publication_type is not None,
+        )
 
     def test_connectivity(self, host: str, port: str | int, timeout: float = 4) -> bool:
         return net.test_connectivity(host, int(port), timeout)

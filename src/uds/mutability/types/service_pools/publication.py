@@ -156,6 +156,11 @@ class ServicePoolPublications(mutability_base.MutableActionType):
             "launching, preparing or canceling can be canceled). "
         )
         if isinstance(target, models.ServicePool):
+            if not target.capabilities().needs_publication:
+                return (
+                    base
+                    + "This pool does not support publications: publishing and canceling are not available."
+                )
             rows = _cancelable_rows(target)
             if rows:
                 listed = ", ".join(f"revision {row['revision']} = {row['uuid']}" for row in rows)
@@ -175,6 +180,8 @@ class ServicePoolPublications(mutability_base.MutableActionType):
         errors = super().validate_values(for_type, values, target)
         flat = self.flatten_values(values)
         operation = self._op()
+        if target is not None and not typing.cast(models.ServicePool, target).capabilities().needs_publication:
+            return [*errors, "this service pool does not support publications (its service type needs none)"]
         if operation is ActionOperation.ADD:
             changelog = flat.get("changelog")
             if changelog is not None and not isinstance(changelog, str):
@@ -248,6 +255,7 @@ class ServicePoolPublications(mutability_base.MutableActionType):
             "entity_type": self.type_id,
             "target_uuid": self.target_uuid_of(pool),
             "for_type": "servicepool",
+            "capabilities": pool.capabilities().as_dict(),
             "current_revision": pool.current_pub_revision,
             "publications": _publication_rows(pool),
             "changelog": [

@@ -131,6 +131,34 @@ class CacheLevel(enum.IntEnum):
     L2 = 2  # : Constant for Cache of level 2
 
 
+@dataclasses.dataclass(frozen=True)
+class PoolCapabilities:
+    """What a service pool's base service type actually supports.
+
+    Single source of truth for the capability flags the admin GUI reads
+    from the pool's ``info`` (``uses_cache``, ``needs_publication``,
+    ``can_reset``), so REST handlers, the mutability layer and the MCP
+    agent view never disagree on what an operation requires. Derived
+    from the service type definition, honouring its
+    ``overrided_pools_fields`` the same way the REST ``service_info``
+    does for cache.
+    """
+
+    uses_cache: bool
+    uses_cache_l2: bool
+    can_reset: bool
+    needs_publication: bool
+
+    def as_dict(self) -> dict[str, bool]:
+        """Plain serializable form for read views and tooltips."""
+        return {
+            "uses_cache": self.uses_cache,
+            "uses_cache_l2": self.uses_cache_l2,
+            "can_reset": self.can_reset,
+            "needs_publication": self.needs_publication,
+        }
+
+
 class Operation(enum.IntEnum):
     """
     Generic Operation type, to be used as a "status" for operations on userservices
@@ -237,7 +265,8 @@ class ServicePoolStats:
 
         l1_assigned_count = self.l1_cache_count + self.assigned_count
         return l1_assigned_count > self.servicepool.max_srvs or (
-            l1_assigned_count > self.servicepool.initial_srvs and self.l1_cache_count > self.servicepool.cache_l1_srvs
+            l1_assigned_count > self.servicepool.initial_srvs
+            and self.l1_cache_count > self.servicepool.cache_l1_srvs
         )
 
     def is_l1_cache_growth_required(self) -> bool:
@@ -253,7 +282,8 @@ class ServicePoolStats:
 
         l1_assigned_count = self.l1_cache_count + self.assigned_count
         return l1_assigned_count < self.servicepool.max_srvs and (
-            l1_assigned_count < self.servicepool.initial_srvs or self.l1_cache_count < self.servicepool.cache_l1_srvs
+            l1_assigned_count < self.servicepool.initial_srvs
+            or self.l1_cache_count < self.servicepool.cache_l1_srvs
         )
 
     def has_l2_cache_overflow(self) -> bool:

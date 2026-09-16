@@ -123,7 +123,9 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             unique_id=item.unique_id,
             friendly_name=item.friendly_name,
             state=(
-                item.state if not (props.get("destroy_after") and item.state == State.PREPARING) else State.CANCELING
+                item.state
+                if not (props.get("destroy_after") and item.state == State.PREPARING)
+                else State.CANCELING
             ),  # Destroy after means that we need to cancel AFTER finishing preparing, but not before...
             os_state=item.os_state,
             state_date=item.state_date,
@@ -225,7 +227,9 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
 
         return [
             AssignedUserService.userservice_item(k, properties.get(k.uuid, {}))
-            for k in self.odata_filter(get_qs().all().prefetch_related("deployed_service", "publication", "user"))
+            for k in self.odata_filter(
+                get_qs().all().prefetch_related("deployed_service", "publication", "user")
+            )
         ]
 
     @typing.override
@@ -337,9 +341,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             userservice.user = user
             userservice.save()
         elif "ip" in fields:
-            log_string = (
-                f"Changed IP of user service {userservice.friendly_name} to {fields['ip']} by {self._user.pretty_name}"
-            )
+            log_string = f"Changed IP of user service {userservice.friendly_name} to {fields['ip']} by {self._user.pretty_name}"
             userservice.log_ip(fields["ip"])
         else:
             raise exceptions.rest.RequestError("Invalid fields")
@@ -351,6 +353,10 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         return {"id": userservice.uuid}
 
     def reset(self, parent: "models.ServicePool", item: str) -> typing.Any:
+        if not parent.capabilities().can_reset:
+            raise exceptions.rest.NotSupportedError(
+                _("This service pool does not support resetting user services")
+            )
         userservice = parent.userServices.get(uuid=process_uuid(item))
         UserServiceManager.manager().reset(userservice)
 
@@ -363,6 +369,19 @@ class CachedService(AssignedUserService):
     CUSTOM_METHODS: typing.ClassVar[
         list[types.rest.ModelCustomMethod]
     ] = []  # Remove custom methods from assigned services
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Gate the whole detail surface on the pool's cache capability.
+
+        A pool whose type does not support caching has no cache tab in the
+        admin GUI; the endpoint must answer the same way: a single
+        ``NotSupportedError`` at construction, before any verb dispatch,
+        instead of empty or half-working collections.
+        """
+        super().__init__(*args, **kwargs)
+        parent = ensure.is_instance(self._parent_item, models.ServicePool)
+        if not parent.capabilities().uses_cache:
+            raise exceptions.rest.NotSupportedError(_("This service pool does not support cached services"))
 
     @typing.override
     def get_item_position(self, parent: Model, item_uuid: str) -> int:
@@ -541,7 +560,9 @@ class Transports(DetailHandler[TransportItem]):
 
     @typing.override
     def get_item(self, parent: "Model", item: str) -> TransportItem:
-        raise exceptions.rest.NotSupportedError("Single transport retrieval not implemented inside assigned transports")
+        raise exceptions.rest.NotSupportedError(
+            "Single transport retrieval not implemented inside assigned transports"
+        )
 
     @typing.override
     def get_table(self, parent: "Model") -> TableInfo:
@@ -619,6 +640,19 @@ class Publications(DetailHandler[PublicationItem]):
         ),
     ]  # We provided these custom methods
 
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Gate the whole detail surface on the pool's publication capability.
+
+        A pool whose type does not need (or support) publication has no
+        publications tab in the admin GUI; the endpoint must answer the
+        same way for every verb, so the check runs once at construction,
+        before dispatch.
+        """
+        super().__init__(*args, **kwargs)
+        parent = ensure.is_instance(self._parent_item, models.ServicePool)
+        if not parent.capabilities().needs_publication:
+            raise exceptions.rest.NotSupportedError(_("This service pool does not support publications"))
+
     def publish(self, parent: "Model") -> typing.Any:
         """
         Custom method "publish", provided to initiate a publication of a deployed service
@@ -627,7 +661,10 @@ class Publications(DetailHandler[PublicationItem]):
         parent = ensure.is_instance(parent, models.ServicePool)
         change_log = self._params.get("changelog")
 
-        if permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT) is False:
+        if (
+            permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT)
+            is False
+        ):
             logger.debug("Management Permission failed for user %s", self._user)
             raise exceptions.rest.AccessDenied(_("Access denied to publish service pool")) from None
 
@@ -651,7 +688,10 @@ class Publications(DetailHandler[PublicationItem]):
         :param uuid: uuid of the publication
         """
         parent = ensure.is_instance(parent, models.ServicePool)
-        if permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT) is False:
+        if (
+            permissions.has_access(self._user, parent, uds.core.types.permissions.PermissionType.MANAGEMENT)
+            is False
+        ):
             logger.debug("Management Permission failed for user %s", self._user)
             raise exceptions.rest.AccessDenied(_("Access denied to cancel service pool publication")) from None
 
@@ -720,6 +760,19 @@ class Changelog(DetailHandler[ChangelogItem]):
     """
     Processes the transports detail requests of a Service Pool
     """
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Gate the whole detail surface on the pool's publication capability.
+
+        The changelog is the history of publications; a pool whose type
+        does not support publications has no changelog either. Same
+        construction-time check as ``Publications``, so every verb answers
+        ``Not supported`` consistently instead of returning empty lists.
+        """
+        super().__init__(*args, **kwargs)
+        parent = ensure.is_instance(self._parent_item, models.ServicePool)
+        if not parent.capabilities().needs_publication:
+            raise exceptions.rest.NotSupportedError(_("This service pool does not support publications"))
 
     @typing.override
     def get_item_position(self, parent: "Model", item_uuid: str) -> int:
