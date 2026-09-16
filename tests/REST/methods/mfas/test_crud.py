@@ -41,6 +41,10 @@ TEST_MFA_TYPE: typing.Final[str] = "emailMFA"
 TEST_SUBJECT: typing.Final[str] = "Your verification code"
 TEST_HOSTNAME: typing.Final[str] = "smtp.example.com:587"
 
+TEST_TOTP_TYPE: typing.Final[str] = "TOTP_MFA"
+TEST_ISSUER: typing.Final[str] = "UDS Test Issuer"
+TEST_VALID_WINDOW: typing.Final[int] = 3
+
 
 def _create_payload(name: str) -> dict[str, typing.Any]:
     return {
@@ -62,6 +66,19 @@ def _create_payload(name: str) -> dict[str, typing.Any]:
     }
 
 
+def _totp_payload(name: str) -> dict[str, typing.Any]:
+    return {
+        "name": name,
+        "comments": "created by MFA CRUD test",
+        "data_type": TEST_TOTP_TYPE,
+        "tags": [],
+        "remember_device": 0,
+        "validity": 5,
+        "issuer": TEST_ISSUER,
+        "valid_window": TEST_VALID_WINDOW,
+    }
+
+
 class MFAsCrudTest(rest.test.RESTTestCase):
     """The module fields of an MFA must survive a GET and an edit round trip."""
 
@@ -70,8 +87,8 @@ class MFAsCrudTest(rest.test.RESTTestCase):
         super().setUp()
         self.login()
 
-    def _create(self, name: str) -> dict[str, typing.Any]:
-        response = self.client.rest_put("mfa", data=_create_payload(name))
+    def _create(self, payload: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        response = self.client.rest_put("mfa", data=payload)
         self.assertEqual(response.status_code, 200, response.content)
         return typing.cast("dict[str, typing.Any]", response.json())
 
@@ -82,14 +99,14 @@ class MFAsCrudTest(rest.test.RESTTestCase):
 
     def test_get_item_includes_module_fields(self) -> None:
         """GET must return the module own fields, not only the model columns."""
-        item = self._get(self._create("mfa-with-module-fields")["id"])
+        item = self._get(self._create(_create_payload("mfa-with-module-fields"))["id"])
 
         self.assertEqual(item["email_subject"], TEST_SUBJECT)
         self.assertEqual(item["hostname"], TEST_HOSTNAME)
 
     def test_edit_keeps_module_fields(self) -> None:
         """Editing through the payload the admin UI receives must not wipe the module fields."""
-        uuid: str = self._create("mfa-before-edit")["id"]
+        uuid: str = self._create(_create_payload("mfa-before-edit"))["id"]
 
         edit_payload = dict(self._get(uuid))
         edit_payload["name"] = "mfa-after-edit"
@@ -104,3 +121,21 @@ class MFAsCrudTest(rest.test.RESTTestCase):
         instance = models.MFA.objects.get(uuid=uuid).get_instance()
         self.assertEqual(instance.email_subject.value, TEST_SUBJECT)  # type: ignore[attr-defined]
         self.assertEqual(instance.hostname.value, TEST_HOSTNAME)  # type: ignore[attr-defined]
+
+    def test_edit_keeps_totp_module_fields(self) -> None:
+        """TOTP has only two fields, so the wipe went unnoticed, but it was wiped just the same."""
+        uuid: str = self._create(_totp_payload("totp-before-edit"))["id"]
+
+        edit_payload = dict(self._get(uuid))
+        edit_payload["name"] = "totp-after-edit"
+        response = self.client.rest_put(f"mfa/{uuid}", data=edit_payload)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        item = self._get(uuid)
+        self.assertEqual(item["name"], "totp-after-edit")
+        self.assertEqual(item["issuer"], TEST_ISSUER)
+        self.assertEqual(item["valid_window"], TEST_VALID_WINDOW)
+
+        instance = models.MFA.objects.get(uuid=uuid).get_instance()
+        self.assertEqual(instance.issuer.value, TEST_ISSUER)  # type: ignore[attr-defined]
+        self.assertEqual(instance.valid_window.value, TEST_VALID_WINDOW)  # type: ignore[attr-defined]
