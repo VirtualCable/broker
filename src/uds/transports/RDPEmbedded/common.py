@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import dataclasses

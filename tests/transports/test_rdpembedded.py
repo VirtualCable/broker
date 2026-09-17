@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import typing
