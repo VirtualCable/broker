@@ -1,14 +1,22 @@
-"""``provider.update``: propose modifications to an existing provider.
+"""``provider``: create, update and delete a service provider.
 
-The mutable surface is an exact replica of the REST ``PUT
-/providers/{uuid}``: ``name``, ``comments``, ``tags`` and the gui
-configuration fields of the provider's data type. Validation,
-serialization and execution reuse the very same handler machinery.
+``provider.update`` replicates the REST ``PUT /providers/{uuid}``:
+``name``, ``comments``, ``tags`` and the gui configuration fields of
+the provider's data type. ``provider.create`` proposes a NEW provider
+(``POST /providers``): no CAS (nothing exists yet), the proposal
+carries the subtype plus the initial values and the real uuid is
+assigned at execution. ``provider.delete`` replicates the REST
+``DELETE /providers/{uuid}`` (synchronous row removal, its services go
+with it): CAS DENY — any change after the proposal was taken cuts and
+denies the flow.
+
+Validation, serialization and execution reuse the very same handler
+machinery.
 
 The services of a provider live in the sibling ``service`` module (its
-own action type, ``service.update``); the import at the bottom of this
-module pulls it in so the registry discovers every family of the
-package.
+own action types, ``service.update``/``service.create``); the import at
+the bottom of this module pulls it in so the registry discovers every
+family of the package.
 """
 
 import collections.abc
@@ -35,7 +43,7 @@ JsonObject = dict[str, typing.Any]
 
 
 class ProviderUpdate(mutability_base.MutableActionType):
-    """Proposal: update an existing service provider."""
+    """Proposals over a service provider (update, create, delete)."""
 
     type_id = "provider"
     title = "Propose provider update"
@@ -47,6 +55,11 @@ class ProviderUpdate(mutability_base.MutableActionType):
         "discover them and their current values."
     )
     handler = Providers
+    noun = "Provider"
+    # update is a form-shaped synchronous write and delete is a
+    # synchronous row removal: strict whole-item CAS (DENY) for both —
+    # any change after the proposal was taken cuts and denies the flow.
+    stale_policy = mutability_base.StalePolicy.DENY
 
     # ------------------------------------------------- generic CAS layer
 
@@ -170,6 +183,90 @@ class ProviderUpdate(mutability_base.MutableActionType):
             params,
         )
         return f'Provider "{provider_name}" updated'
+
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return "Propose creating a provider"
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return "Propose deleting a provider"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return (
+                "Propose creating a NEW service provider. The values are the subtype "
+                "(data_type, one of the get_creatable_types listing) plus the initial "
+                "values of the provider form fields (name, comments, tags and the type "
+                "configuration fields; use get_mutable_fields with for_type to discover "
+                "them). There is no live state to conflict with, so the proposal carries "
+                "no freshness checks, and it does NOT create anything: it is queued "
+                "until an administrator approves it. The real uuid is assigned at "
+                "execution and reported back in the result."
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return (
+                "Propose deleting a service provider: the provider and ALL its services "
+                "are removed (the services it offers die with it), like the "
+                "administration interface does. No fields are needed: the provider "
+                "itself is the target of the proposal, and any change to it after the "
+                "proposal was taken cuts and denies the flow. The proposal does NOT "
+                "delete anything: it is queued until an administrator approves it."
+            )
+        return self.description
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The POST is form-shaped: re-nest the flat proposal (bare gui
+        # names) into the REST payload (config fields under "instance").
+        # Omitted config fields fall back to the module defaults (the
+        # module merges the partial instance over them); omitted
+        # comments/tags fall back to empty.
+        values = dict(action.values)
+        params: JsonObject = {
+            "name": values.get("name"),
+            "comments": values.get("comments", ""),
+            "tags": values.get("tags", []),
+        }
+        instance: JsonObject = {}
+        for name, value in values.items():
+            if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
+                continue
+            instance[name] = value
+        params["instance"] = instance
+        params["data_type"] = self.create_for_type(values)
+        name = str(params["name"])
+        response = await RestProxy().execute(
+            RestTarget(Providers, "providers", types.rest.CustomMethodMethod.POST),
+            request,
+            params,
+        )
+        new_uuid: typing.Any = None
+        if isinstance(response, dict):
+            new_uuid = typing.cast("JsonObject", response).get("id")
+        return f'Provider "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the row synchronously; the provider's
+        # services are removed along with it (cascade), exactly like the
+        # administration interface.
+        provider = typing.cast(
+            models.Provider,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
+        await RestProxy().execute(
+            RestTarget(
+                Providers,
+                "providers",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+            ),
+            request,
+            {},
+        )
+        return f'Provider "{provider.name}" deleted'
 
     # ------------------------------------------------------------ helpers
 

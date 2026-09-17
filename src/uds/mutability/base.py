@@ -11,13 +11,17 @@ descriptions for the agent and fresh diffs for the administrator) lives
 here so every concrete type only implements the small domain hooks.
 
 CAS (compare-and-swap) is the optimistic-concurrency scheme every
-proposal rides: creating a proposal freezes server-side snapshots of
-the live target (the current values of the proposed fields plus a
-whole-item fingerprint, ``base_values``/``base_etag``), and approval
-and execution re-check the live target against those snapshots. Drift
-resolves through :class:`StalePolicy` — ``DENY`` invalidates the flow,
-``FORCE`` proceeds — so an administrator never approves (nor executes)
-an action over a target that no longer looks like what the agent saw.
+proposal over an EXISTING target rides: creating a proposal freezes
+server-side snapshots of the live target (the current values of the
+proposed fields plus a whole-item fingerprint, ``base_values``/
+``base_etag``), and approval and execution re-check the live target
+against those snapshots. Drift resolves through :class:`StalePolicy` —
+``DENY`` invalidates the flow, ``FORCE`` proceeds — so an administrator
+never approves (nor executes) an action over a target that no longer
+looks like what the agent saw. Creation proposals (``op_create``) are
+the exception: there is no target to freeze, so they carry no CAS base
+at all; the idempotence of the flow lifecycle (an executed action never
+re-runs) is their safety net.
 """
 
 import abc
@@ -86,12 +90,16 @@ class ActionOperation(enum.StrEnum):
 
     The names mirror HTTP so the payload semantics are predictable:
     ``update`` patches scalar fields, ``set`` replaces a whole relation,
-    ``add``/``delete`` apply to the listed members only. ``custom`` is
-    the open verb: the family declares a CHOICE field naming the verb to
-    perform (reset, and future ones), so growing the vocabulary is data,
-    not a new operation. Reads are not operations: the live view of an
-    entity is served by the synchronous :meth:`EntityDescriptor.read` on
-    the shared descriptor base, never through the flow machinery.
+    ``add``/``delete`` apply to the listed members only. ``create`` is
+    the creation verb: there is no target yet (no CAS to freeze), the
+    proposal carries the subtype plus the initial values, and the real
+    uuid is assigned at execution. ``custom`` is the open verb for
+    entity-scoped actions: the family declares a CHOICE field naming the
+    verb to perform (reset, and future ones), so growing *those* is
+    data, not a new operation. Reads are not operations: the live view
+    of an entity is served by the synchronous
+    :meth:`EntityDescriptor.read` on the shared descriptor base, never
+    through the flow machinery.
     """
 
     UPDATE = "update"
@@ -107,18 +115,28 @@ class ActionOperation(enum.StrEnum):
 
 
 #: Operations dispatchable through ``execute``, mapped to the ``op_*``
-#: hook whose presence declares them. ``create`` is reserved vocabulary
-#: (no create flow yet). ``custom`` carries a family-defined verb as a
-#: CHOICE payload field (e.g. resetting an assigned user service), so
-#: future verbs are data, not new operations. Reads are not operations
-#: at all — they belong to :class:`EntityDescriptor`, outside this enum.
+#: hook whose presence declares them. ``custom`` carries a family-defined
+#: verb as a CHOICE payload field (e.g. resetting an assigned user
+#: service), so future entity-scoped verbs are data, not new operations.
+#: Reads are not operations at all — they belong to
+#: :class:`EntityDescriptor`, outside this enum.
 _OPERATION_HOOKS: typing.Final[dict["ActionOperation", str]] = {
     ActionOperation.UPDATE: "op_update",
     ActionOperation.SET: "op_set",
     ActionOperation.ADD: "op_add",
     ActionOperation.DELETE: "op_delete",
+    ActionOperation.CREATE: "op_create",
     ActionOperation.CUSTOM: "op_custom",
 }
+
+CREATE_TARGET_UUID: typing.Final[str] = "00000000-0000-0000-0000-000000000000"
+"""Sentinel ``target_uuid`` of root creation proposals.
+
+A creation has no target yet: root creates carry this sentinel as
+``FlowAction.target_uuid`` (detail creates carry the parent uuid, which
+is a real target for permissions and display). The real uuid is assigned
+by the REST create at execution and returned in the action result.
+"""
 
 
 def _json_safe(value: typing.Any) -> typing.Any:
@@ -306,6 +324,25 @@ class MutableActionType(EntityDescriptor):
     the same family.
     """
 
+    create_needs_parent: typing.ClassVar[bool] = False
+    """Create-family declaration: the creation happens inside a container.
+
+    ``False`` (default): the family creates first-level entities (a
+    provider, a server group); proposals carry
+    :data:`CREATE_TARGET_UUID` as target and propose-access is the root
+    ALL check (mirrors the REST create: administrators, or an explicit
+    type-level ALL grant).
+
+    ``True``: the family creates details of a container (a service of a
+    provider, a server of a server group); the proposal targets the
+    PARENT uuid and propose-access is MANAGEMENT over it, exactly the
+    REST detail-create semantics.
+    """
+
+    _RESERVED_CREATE_KEYS: typing.ClassVar[frozenset[str]] = frozenset({"data_type"})
+    """Proposal keys consumed by the create machinery itself (the subtype
+    being created), never validated against the field definitions."""
+
     def __init__(self, operation: "ActionOperation | None" = None) -> None:
         """Bind one instance to one operation of the family.
 
@@ -417,6 +454,9 @@ class MutableActionType(EntityDescriptor):
     async def op_delete(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         raise NotImplementedError(f"{self.full_id}: does not support the delete operation")
 
+    async def op_create(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        raise NotImplementedError(f"{self.full_id}: does not support the create operation")
+
     async def op_custom(self, action: "FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         raise NotImplementedError(f"{self.full_id}: does not support the custom operation")
 
@@ -473,6 +513,82 @@ class MutableActionType(EntityDescriptor):
         self-correct without an extra discovery round-trip.
         """
         definitions = {d["name"]: d for d in self.field_definitions(for_type, target)}
+        return self._validate_against(definitions, values)
+
+    def create_for_type(self, values: JsonObject) -> str:
+        """Subtype a creation proposal instantiates (reserved ``data_type`` key)."""
+        return str(values.get("data_type", ""))
+
+    def resolve_create_parent(self, parent_uuid: str) -> db_models.Model:
+        """Resolve the CONTAINER of a detail creation proposal.
+
+        Only meaningful for families declaring
+        :attr:`create_needs_parent`: the proposal targets the parent
+        uuid, which is a model of the PARENT kind (a provider for
+        services, a server group for servers) — never resolvable
+        through :meth:`resolve_target`, which looks up the family's own
+        entity.
+        """
+        raise NotImplementedError(f"{self.full_id}: family does not create inside a container")
+
+    def create_field_definitions(
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+    ) -> list[JsonObject]:
+        """Field definitions of a creation of one subtype.
+
+        ``target`` is the parent container when
+        :attr:`create_needs_parent` is set (whose gui may leak into the
+        detail's), ``None`` otherwise. Defaults to the plain definitions
+        without a live instance; families whose gui depends on the
+        parent override this.
+        """
+        return self.field_definitions(for_type, None)
+
+    def create_validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        """Validate a creation proposal against the creation definitions.
+
+        ``for_type`` must be a non-empty subtype; the reserved machinery
+        keys (``data_type``) are consumed before the definition checks.
+        """
+        if not for_type.strip():
+            return ["values must declare the data_type to create"]
+        payload = {k: v for k, v in values.items() if k not in self._RESERVED_CREATE_KEYS}
+        definitions = {d["name"]: d for d in self.create_field_definitions(for_type, target)}
+        return self._validate_against(definitions, payload)
+
+    def check_create_access(self, user: "User", parent: db_models.Model | None = None) -> None:
+        """Authorization to *propose* a creation.
+
+        Detail creations (``create_needs_parent``) check MANAGEMENT
+        directly over the resolved parent — the container itself, never
+        the ``permission_target`` hop (that one assumes the family's own
+        entity, which does not exist yet). Root creations check ``ALL``
+        over the model type at root, the exact REST create rule:
+        administrators pass, and so do explicit type-level ``ALL``
+        grants. Raises AccessDenied.
+        """
+        if parent is not None:
+            if not permissions.has_access(user, parent, types.permissions.PermissionType.MANAGEMENT):
+                raise rest_exceptions.AccessDenied()
+            return
+        handler_class = typing.cast("type[typing.Any]", self.handler)
+        model_class = typing.cast("type[db_models.Model]", handler_class.MODEL)
+        if not permissions.has_access(user, model_class(), types.permissions.PermissionType.ALL, True):
+            raise rest_exceptions.AccessDenied()
+
+    def _validate_against(
+        self,
+        definitions: dict[str, JsonObject],
+        values: JsonObject,
+    ) -> list[str]:
+        """Shared payload checks against one prebuilt definition map."""
         flat = self.flatten_values(values)
         errors: list[str] = []
         for name, value in flat.items():
@@ -489,13 +605,22 @@ class MutableActionType(EntityDescriptor):
         """Representation for the agent (secrets masked).
 
         If the target (or its type) has vanished, every value is masked:
-        a broken lookup must not become a leak.
+        a broken lookup must not become a leak. Creation proposals have
+        no live target (the parent, for details): the secrets come from
+        the declared subtype, masked wholesale if even that fails.
         """
         flat = self.flatten_values(action.values)
         secrets: set[str] = set()
         try:
-            target = self.resolve_target(action.target_uuid)
-            secrets = self.secret_names(self.for_type_of(target), target)
+            if self.operation is ActionOperation.CREATE:
+                for_type = self.create_for_type(flat)
+                target = self.resolve_create_parent(action.target_uuid) if self.create_needs_parent else None
+                secrets = {
+                    d["name"] for d in self.create_field_definitions(for_type, target) if d.get("secret")
+                }
+            else:
+                target = self.resolve_target(action.target_uuid)
+                secrets = self.secret_names(self.for_type_of(target), target)
         except Exception:
             secrets = set(flat)
         return {
@@ -510,10 +635,22 @@ class MutableActionType(EntityDescriptor):
         """Fresh representation for the administrator (CAS checked now).
 
         Secrets are included: visibility is decided by the admin
-        interface, never re-exposed to the agent.
+        interface, never re-exposed to the agent. Creation proposals
+        have no live state to compare against (no CAS): only the
+        proposed payload is shown, with empty drift keys.
         """
-        target = self.resolve_target(action.target_uuid)
         flat = self.flatten_values(action.values)
+        if self.operation is ActionOperation.CREATE:
+            return {
+                "type": action.action_type,
+                "target": action.target_uuid,
+                "status": action.status,
+                "proposed": action.values,
+                "current": {},
+                "stale_fields": [],
+                "item_changed": False,
+            }
+        target = self.resolve_target(action.target_uuid)
         current = self.snapshot_values(target, flat)
         stale_fields = sorted(
             name
@@ -552,11 +689,24 @@ class MutableActionType(EntityDescriptor):
         Stored on ``FlowAction.snap_info`` (Properties) so the admin diff
         survives deletion of the target. ``base_values``/``base_etag`` stay
         immutable: this is the *live* view at approval time, never the CAS
-        base.
+        base. Creation proposals freeze the declared subtype's field
+        definitions only (there is no live state to snapshot).
         """
+        flat = self.flatten_values(action.values)
+        if self.operation is ActionOperation.CREATE:
+            for_type = self.create_for_type(flat)
+            target = self.resolve_create_parent(action.target_uuid) if self.create_needs_parent else None
+            target_name = f"new {self.noun.lower()}"
+            if target is not None:
+                target_name += f" in {self.target_display_name(target)}"
+            return {
+                "target_name": target_name,
+                "for_type": for_type,
+                "current_values": {},
+                "fields": _json_safe(self.create_field_definitions(for_type, target)),
+            }
         target = self.resolve_target(action.target_uuid)
         for_type = self.for_type_of(target)
-        flat = self.flatten_values(action.values)
         return {
             "target_name": self.target_display_name(target),
             "for_type": for_type,

@@ -62,6 +62,8 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_assignment",
     "get_servicepool_cached",
     "get_gui_field_choices",
+    # The creation gallery: subtypes available for creation proposals
+    "get_creatable_types",
 )
 
 _MARKER: typing.Final[str] = "mcp-system-log-marker-for-test"
@@ -234,6 +236,20 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         self.login_with_api_token(as_admin=False)
         body = self._call("get_system_logs", {})
         self.assertEqual(body["error"]["code"], -32000)
+
+    def test_get_creatable_types_lists_provider_types(self) -> None:
+        body = self._call("get_creatable_types", {"kind": "provider"})
+        types_list = json.loads(self._result_text(body))
+        self.assertTrue(any(t.get("type") == self.provider.data_type for t in types_list))
+
+    def test_get_creatable_types_for_services_needs_the_parent(self) -> None:
+        body = self._call("get_creatable_types", {"kind": "service", "parent_uuid": self.provider.uuid})
+        types_list = json.loads(self._result_text(body))
+        self.assertIsInstance(types_list, list)
+
+    def test_get_creatable_types_rejects_unknown_kind(self) -> None:
+        body = self._call("get_creatable_types", {"kind": "nope"})
+        self.assertEqual(body["error"]["code"], -32602)
 
     def test_get_item_logs_for_a_service_pool(self) -> None:
         pool = self._a_service_pool()

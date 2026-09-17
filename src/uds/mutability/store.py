@@ -41,7 +41,7 @@ from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.models import ActionFlow, FlowAction, User
-from uds.mutability.base import MutableActionType, StalePolicy
+from uds.mutability.base import ActionOperation, MutableActionType, StalePolicy
 
 
 class MutabilityError(ValueError):
@@ -341,6 +341,21 @@ class FlowStore:
         ):
             raise InvalidTransition(f"Action {action.uuid} is {action.status}, it cannot be approved")
         action_type = self._action_type(action)
+        if action_type.operation is ActionOperation.CREATE:
+            # Creations have no CAS base: nothing exists yet to freeze.
+            # The approval is the review itself: the frozen display
+            # snapshot (the declared subtype's fields) is all there is.
+            try:
+                snap = action_type.approval_snapshot(action)
+            except Exception:
+                raise StaleProposal(f"action {action.uuid}: creation context no longer exists") from None
+            snap["approved_by"] = admin.name
+            snap["approved_at"] = sql_now().isoformat()
+            action.snap_info = snap
+            action.status = FlowActionStatus.APPROVED
+            action.save(update_fields=["status"])
+            self._acquire_flow(action.flow, admin=admin)
+            return action
         try:
             snap = action_type.approval_snapshot(action)
             target = action_type.resolve_target(action.target_uuid)
@@ -404,6 +419,8 @@ class FlowStore:
         ):
             return "ok"
         action_type = self._action_type(action)
+        if action_type.operation is ActionOperation.CREATE:
+            return "ok"  # no live target to drift from
         ref_etag: str
         ref_values: dict[str, typing.Any]
         if action.status in (FlowActionStatus.APPROVED, FlowActionStatus.REVOKED):
@@ -530,6 +547,8 @@ class FlowStore:
         if found is None:
             return f"unknown action type {action.action_type}"
         action_type = found()
+        if action_type.operation is ActionOperation.CREATE:
+            return None  # creations have no target to verify
         try:
             target = action_type.resolve_target(action.target_uuid)
         except Exception:

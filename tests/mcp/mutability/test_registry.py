@@ -8,7 +8,9 @@ from uds.mutability import (
 )
 from uds.mutability.base import ActionOperation, EntityDescriptor, MutableActionType
 from uds.mutability.registry import register
+from uds.mutability.types.config import ConfigUpdate
 from uds.mutability.types.meta_pools.members import MetaPoolMember
+from uds.mutability.types.networks import NetworkUpdate
 from uds.mutability.types.providers import ProviderUpdate
 from uds.mutability.types.providers.service import ServiceUpdate
 from uds.mutability.types.service_pools.group import ServicePoolGroup
@@ -18,8 +20,8 @@ class SupportedOperationsTest(unittest.TestCase):
     """Write operations are derived from the implemented hooks, never declared."""
 
     def test_single_write_family_derives_update(self) -> None:
-        self.assertEqual(ProviderUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
-        self.assertEqual(ServiceUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
+        self.assertEqual(ConfigUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
+        self.assertEqual(NetworkUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
 
     def test_relation_family_derives_all_write_verbs(self) -> None:
         # Reads are not operations: only the implemented op_* hooks derive.

@@ -1,4 +1,4 @@
-"""service.update action type: target-scoped discovery, CAS and parent permissions."""
+"""service action types: target-scoped discovery, CAS, parent permissions, create."""
 
 import asyncio
 import typing
@@ -7,6 +7,7 @@ from unittest import mock
 from uds.REST.methods.providers import Providers
 from uds.REST.methods.services import Services
 from uds.mcp.rest_proxy import RestProxy
+from uds.mutability.base import ActionOperation
 from uds.mutability.types.providers.service import ServiceUpdate
 
 from tests.fixtures.services import create_db_provider, create_db_service
@@ -24,7 +25,7 @@ class ServiceUpdateTypeTest(rest.test.RESTTestCase):
         super().setUp()
         self.provider = create_db_provider()
         self.service = create_db_service(self.provider)
-        self.action_type = ServiceUpdate()
+        self.action_type = ServiceUpdate(ActionOperation.UPDATE)
 
     def test_field_definitions_cover_top_level_fields(self) -> None:
         defs = self.action_type.field_definitions(self.service.data_type, self.service)
@@ -118,3 +119,75 @@ class ServiceUpdateTypeTest(rest.test.RESTTestCase):
             # data_type is injected from the target (never mutable)
             self.assertEqual(params["data_type"], self.service.data_type)
             self.assertEqual(params["name"], "new-name")
+
+
+class ServiceCreateTest(rest.test.RESTTestCase):
+    """service.create: a detail creation proposed against the parent."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.provider = create_db_provider()
+        self.service = create_db_service(self.provider)
+        self.action_type = ServiceUpdate(ActionOperation.CREATE)
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            ServiceUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE}),
+        )
+
+    def test_creation_targets_the_parent(self) -> None:
+        self.assertTrue(ServiceUpdate.create_needs_parent)
+        self.assertEqual(self.action_type.full_id, "service.create")
+
+    def test_create_field_definitions_build_from_parent(self) -> None:
+        defs = self.action_type.create_field_definitions(self.service.data_type, self.provider)
+        names = [d["name"] for d in defs]
+        for expected in ("name", "comments", "tags", "max_services_count_type"):
+            self.assertIn(expected, names)
+
+    def test_create_field_definitions_need_the_parent(self) -> None:
+        with self.assertRaises(Exception):
+            self.action_type.create_field_definitions(self.service.data_type, None)
+
+    def test_create_validation(self) -> None:
+        self.assertEqual(
+            self.action_type.create_validate_values(
+                self.service.data_type, {"data_type": self.service.data_type, "name": "s"}, self.provider
+            ),
+            [],
+        )
+        errors = self.action_type.create_validate_values(
+            self.service.data_type, {"data_type": self.service.data_type, "zzz": 1}, self.provider
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn("zzz", errors[0])
+
+    def test_execution_posts_the_detail_with_parent_uuid(self) -> None:
+        action = build_action(
+            action_type="service.create",
+            target_uuid=self.provider.uuid,
+            values={"data_type": self.service.data_type, "name": "new svc"},
+            base_values={},
+            base_etag="",
+        )
+        request = mock.MagicMock()
+        with mock.patch.object(RestProxy, "_execute_sync") as exec_sync:
+            exec_sync.return_value = {"id": "svc-uuid"}
+            summary = asyncio.run(self.action_type.execute(action, request))
+            exec_sync.assert_called_once()
+            target, called_request, params, parent_uuid = exec_sync.call_args[0]
+            self.assertEqual(target.handler, Services)
+            self.assertEqual(target.parent.handler, Providers)
+            self.assertEqual(target.method.value, "POST")
+            self.assertEqual(target.args, ())
+            self.assertEqual(called_request, request)
+            self.assertEqual(parent_uuid, str(self.provider.uuid))
+            # flat form shape with safe defaults and the injected data_type
+            self.assertEqual(params["name"], "new svc")
+            self.assertEqual(params["comments"], "")
+            self.assertEqual(params["tags"], [])
+            self.assertEqual(params["data_type"], self.service.data_type)
+        self.assertIn("new svc", summary)
+        self.assertIn("svc-uuid", summary)

@@ -57,6 +57,7 @@ from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
 from uds.core.util.model import process_uuid
 from uds.mutability import registry
+from uds.mutability.base import ActionOperation, CREATE_TARGET_UUID
 from uds.mutability.store import FlowStore, InvalidTransition, MutabilityError
 from uds.models import ActionFlow
 from uds.REST.model import DetailHandler, ModelHandler
@@ -168,7 +169,50 @@ class FlowsOwnActions(FlowActions):
 
         # Create: type and target come from the request
         action_type = self._registry_type(str(self._params.get("action_type", "") or ""))
-        target = self._require_management(action_type, str(self._params.get("target_uuid", "") or ""))
+        raw_target = str(self._params.get("target_uuid", "") or "")
+        justification = str(self._params.get("justification", "") or "")
+        if action_type.operation is ActionOperation.CREATE:
+            # Creations have no live target to ride the regular CAS path:
+            # no target resolution, no base values, no fingerprint.
+            create_target: models.Model | None = None
+            if action_type.create_needs_parent:
+                # Detail creation: the proposal targets the PARENT.
+                create_target = action_type.resolve_create_parent(raw_target)
+            elif raw_target not in ("", CREATE_TARGET_UUID):
+                raise exceptions.rest.RequestError(
+                    "A root creation takes no target_uuid: omit it (or pass the creation sentinel)"
+                )
+            # Create permission: MANAGEMENT over the parent for details,
+            # ALL over the model type at root for root creations.
+            action_type.check_create_access(self._user, create_target)
+            stored_target = (
+                action_type.target_uuid_of(create_target) if create_target is not None else CREATE_TARGET_UUID
+            )
+            values = self._params.get("values")
+            if not isinstance(values, dict) or not values:
+                raise exceptions.rest.RequestError("values is required and must be a non-empty object")
+            values = typing.cast("dict[str, typing.Any]", values)
+            errors = action_type.create_validate_values(
+                action_type.create_for_type(values), values, create_target
+            )
+            if errors:
+                raise exceptions.rest.RequestError("; ".join(errors))
+            try:
+                action = store.add_action(
+                    parent,
+                    action_type=action_type.full_id,
+                    target_uuid=stored_target,
+                    values=values,
+                    base_values={},
+                    base_etag="",
+                    justification=justification,
+                )
+            except InvalidTransition as e:
+                raise exceptions.rest.RequestError(str(e)) from None
+            except MutabilityError as e:
+                raise exceptions.rest.RequestError(str(e)) from None
+            return FlowActions.as_dict(action, permissions.effective_permissions(self._user, parent))
+        target = self._require_management(action_type, raw_target)
         values, base_values, base_etag, justification = self._validated_payload(action_type, target)
         try:
             action = store.add_action(

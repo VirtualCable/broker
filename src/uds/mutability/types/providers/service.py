@@ -1,12 +1,18 @@
-"""``service.update``: propose modifications to an existing service.
+"""``service``: create and update services of a provider.
 
-The mutable surface is an exact replica of the REST ``PUT
+``service.update`` replicates the REST ``PUT
 /providers/{uuid}/services/{uuid}``: ``name``, ``comments``, ``tags``,
 ``max_services_count_type`` and the gui configuration fields of the
 service's data type. Unlike providers, the services gui is flat (its
 config fields are not nested under ``instance``), so no flattening is
-needed. Validation, serialization and execution reuse the very same
-handler machinery.
+needed. ``service.create`` proposes a NEW service of a provider
+(``POST /providers/{uuid}/services``): the proposal targets the PARENT
+provider (MANAGEMENT over it is the create permission, exactly the REST
+detail semantics), carries the subtype plus the initial values and no
+CAS (nothing exists yet); the real uuid is assigned at execution.
+
+Validation, serialization and execution reuse the very same handler
+machinery.
 
 Services are a detail of their provider: the gui depends on the concrete
 target, and permissions are inherited from the parent provider.
@@ -35,7 +41,7 @@ JsonObject = dict[str, typing.Any]
 
 
 class ServiceUpdate(mutability_base.MutableActionType):
-    """Proposal: update an existing service of a provider."""
+    """Proposals over the services of a provider (update, create)."""
 
     type_id = "service"
     title = "Propose service update"
@@ -48,6 +54,9 @@ class ServiceUpdate(mutability_base.MutableActionType):
     )
     handler = Services
     target_scoped_fields = True
+    # A creation is a detail of the parent provider: the proposal targets
+    # the provider uuid and MANAGEMENT over it is the create permission.
+    create_needs_parent = True
 
     # Model columns the REST PUT reads from params (its save_item list,
     # minus ``data_type``, which is not mutable here). Unlike a module
@@ -79,10 +88,32 @@ class ServiceUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
-        service = self._require_target(target)
+        service = typing.cast(models.Service, self._require_target(target))
         columns = self._MUTABLE_COLUMNS
         return gui_view.agent_definitions(
-            self._gui(for_type, service),
+            self._gui(for_type, service.provider),
+            from_instance=lambda name: name not in columns,
+        )
+
+    @typing.override
+    def resolve_create_parent(self, parent_uuid: str) -> db_models.Model:
+        # The container of a service creation is its provider
+        try:
+            return models.Provider.objects.get(uuid__iexact=parent_uuid)
+        except models.Provider.DoesNotExist:
+            raise rest_exceptions.NotFound("Provider not found") from None
+
+    @typing.override
+    def create_field_definitions(
+        self, for_type: str, target: db_models.Model | None = None
+    ) -> list[JsonObject]:
+        # The creation gui is built from the parent provider (the target
+        # of the proposal) plus the declared subtype, without a live
+        # service instance.
+        provider = typing.cast(models.Provider, self._require_target(target))
+        columns = self._MUTABLE_COLUMNS
+        return gui_view.agent_definitions(
+            self._gui(for_type, provider),
             from_instance=lambda name: name not in columns,
         )
 
@@ -108,8 +139,8 @@ class ServiceUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
-        service = self._require_target(target)
-        return [element.name for element in self._gui(for_type, service)]
+        service = typing.cast(models.Service, self._require_target(target))
+        return [element.name for element in self._gui(for_type, service.provider)]
 
     @typing.override
     def fingerprint(self, target: db_models.Model) -> str:
@@ -159,14 +190,75 @@ class ServiceUpdate(mutability_base.MutableActionType):
         )
         return f'Service "{service_name}" updated'
 
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return "Propose creating a service"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return (
+                "Propose creating a NEW service of a provider (target_uuid is the PROVIDER's "
+                "uuid). The values are the subtype (data_type, one of the "
+                "get_creatable_types listing for this provider) plus the initial values "
+                "of the service form fields (name, comments, tags, max_services_count_type "
+                "and the type configuration fields; use get_mutable_fields with this "
+                "action type, the provider uuid and the for_type to discover them). "
+                "There is no live state to conflict with, so the proposal carries no "
+                "freshness checks, and it does NOT create anything: it is queued until "
+                "an administrator approves it. The real uuid is assigned at execution "
+                "and reported back in the result."
+            )
+        return self.description
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The POST is form-shaped and the services gui is flat: the
+        # proposal values map one to one (omitted comments/tags fall
+        # back to empty). ALL the ORM work stays out of the async context.
+        def _build_params() -> tuple[str, str, JsonObject]:
+            # The target of a creation proposal IS the parent provider
+            provider = self.resolve_create_parent(action.target_uuid)
+            values = dict(action.values)
+            params: JsonObject = {
+                "name": values.get("name"),
+                "comments": values.get("comments", ""),
+                "tags": values.get("tags", []),
+            }
+            for name, value in values.items():
+                if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
+                    continue
+                params[name] = value
+            params["data_type"] = self.create_for_type(values)
+            return str(params["name"]), str(typing.cast(models.Provider, provider).uuid), params
+
+        name, provider_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
+        target = RestTarget(
+            Services,
+            "providers/{uuid}/services",
+            types.rest.CustomMethodMethod.POST,
+            parent=RestTarget(Providers, "providers"),
+        )
+        # Detail targets need the parent uuid to resolve (and permission
+        # check) the provider, so the sync boundary is invoked directly.
+        response = await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+            target, request, params, provider_uuid
+        )
+        new_uuid: typing.Any = None
+        if isinstance(response, dict):
+            new_uuid = typing.cast("JsonObject", response).get("id")
+        return f'Service "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+
     # ------------------------------------------------------------ helpers
 
-    def _require_target(self, target: db_models.Model | None) -> models.Service:
+    def _require_target(self, target: db_models.Model | None) -> db_models.Model:
         if target is None:
             raise ValueError(f"{self.full_id} needs a target: its fields depend on the concrete service")
-        return typing.cast(models.Service, target)
+        return target
 
-    def _gui(self, for_type: str, service: models.Service) -> list[types.ui.GuiElement]:
+    def _gui(self, for_type: str, provider: db_models.Model) -> list[types.ui.GuiElement]:
         """Gui elements of one service type, without the auth machinery.
 
         ``Services.get_gui`` is request-independent; binding it to an
@@ -174,4 +266,4 @@ class ServiceUpdate(mutability_base.MutableActionType):
         parent chain resolves authentication).
         """
         shim = typing.cast(typing.Any, _Namespace())
-        return sorted(Services.get_gui(shim, service.provider, for_type), key=lambda f: f.gui.order)
+        return sorted(Services.get_gui(shim, provider, for_type), key=lambda f: f.gui.order)

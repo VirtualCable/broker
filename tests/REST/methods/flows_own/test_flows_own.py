@@ -24,9 +24,10 @@ from uds.core.types import permissions as permissions_types
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import objtype
 from uds.core.util.model import sql_now
+from uds.mutability.base import CREATE_TARGET_UUID
 from uds.mutability.store import FlowStore
 
-from tests.fixtures.services import create_db_provider
+from tests.fixtures.services import create_db_provider, create_db_service
 from tests.utils import rest
 
 VALID_VALUES: typing.Final[dict[str, typing.Any]] = {"name": "renamed by owner"}
@@ -584,3 +585,89 @@ class FlowsOwnConfigUpdateTest(rest.test.RESTTestCase):
             action.base_values,
             {f"Security.{cfg.key}": "0"},
         )
+
+
+class FlowsOwnCreateActionsTest(rest.test.RESTTestCase):
+    """Creation proposals: root creates carry no target (ALL at root);
+    detail creations target the parent (MANAGEMENT over it)."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.provider = create_db_provider()
+        self.service = create_db_service(self.provider)
+        self.login(user=self.staffs[0])
+        _grant_management(self.staffs[0], self.provider)
+        self.flow_id = self.client.rest_post("flows/own", data={"name": "with creates"}).json()["id"]
+
+    def _add(self, payload: dict[str, typing.Any]) -> typing.Any:
+        return self.client.rest_post(f"flows/own/{self.flow_id}/actions", data=payload)
+
+    def _new_flow(self) -> None:
+        """Replace the flow with one owned by the CURRENTLY logged user."""
+        self.flow_id = self.client.rest_post("flows/own", data={"name": "admin creates"}).json()["id"]
+
+    def _root_create_payload(self, **overrides: typing.Any) -> dict[str, typing.Any]:
+        payload: dict[str, typing.Any] = {
+            "action_type": "provider.create",
+            "values": {"data_type": self.provider.data_type, "name": "prov"},
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_root_create_by_staff_is_403(self) -> None:
+        # Root creation needs ALL at root: a staff user with only a
+        # MANAGEMENT grant over one provider cannot propose it
+        response = self._add(self._root_create_payload())
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test_root_create_by_admin_stores_the_sentinel(self) -> None:
+        self.login()  # administrator
+        self._new_flow()  # own surface: the flow must belong to the caller
+        response = self._add(self._root_create_payload())
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()["result"]
+        self.assertEqual(body["status"], FlowActionStatus.PENDING)
+        self.assertEqual(body["target_uuid"], CREATE_TARGET_UUID)
+
+    def test_root_create_with_explicit_target_is_400(self) -> None:
+        self.login()
+        self._new_flow()
+        response = self._add(self._root_create_payload(target_uuid=self.provider.uuid))
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_root_create_without_data_type_is_400(self) -> None:
+        self.login()
+        self._new_flow()
+        response = self._add(self._root_create_payload(values={"name": "x"}))
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_root_create_unknown_field_is_400(self) -> None:
+        self.login()
+        self._new_flow()
+        response = self._add(
+            self._root_create_payload(values={"data_type": self.provider.data_type, "name": "x", "zzz": 1})
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_detail_create_targets_the_parent(self) -> None:
+        response = self._add(
+            {
+                "action_type": "service.create",
+                "target_uuid": self.provider.uuid,
+                "values": {"data_type": self.service.data_type, "name": "svc"},
+            }
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["result"]["target_uuid"], self.provider.uuid)
+
+    def test_detail_create_without_management_over_parent_is_403(self) -> None:
+        other_provider = create_db_provider()
+        response = self._add(
+            {
+                "action_type": "service.create",
+                "target_uuid": other_provider.uuid,
+                "values": {"data_type": self.service.data_type, "name": "svc"},
+            }
+        )
+        self.assertEqual(response.status_code, 403, response.content)

@@ -16,6 +16,8 @@ description, grouped by the domain they serve:
 * :mod:`descriptors` — the ``get_*`` read tools generated from the readable
   descriptor families of the mutability registry (relation views, always
   active: reads are not mutations);
+* :mod:`creatable` — the creation gallery: subtypes available for creation
+  proposals, per kind (creations depend on types, not on objects);
 * :mod:`gui` — the gui callback resolver: dynamic field choices of
   module-based resources, self-described in the response (each entry names
   the field it fills).
@@ -29,7 +31,19 @@ platform-wide stats) only work for administrators.
 
 from ..catalog import Catalog, ToolDefinition
 
-from . import authenticators, descriptors, gui, logs, providers, reports, servers, servicepools, system, tunnels
+from . import (
+    authenticators,
+    creatable,
+    descriptors,
+    gui,
+    logs,
+    providers,
+    reports,
+    servers,
+    servicepools,
+    system,
+    tunnels,
+)
 
 __all__ = ["curated_tools", "register_curated_tools"]
 
@@ -46,6 +60,7 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
         *system.curated_tools(),
         *reports.curated_tools(),
         *descriptors.curated_tools(),
+        *creatable.curated_tools(),
         *gui.curated_tools(),
     )
 

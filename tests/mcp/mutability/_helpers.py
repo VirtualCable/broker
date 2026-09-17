@@ -20,7 +20,10 @@ def make_request() -> ExtendedHttpRequestWithUser:
 MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "get_mutable_fields",
     "propose_provider_update",
+    "propose_provider_create",
+    "propose_provider_delete",
     "propose_service_update",
+    "propose_service_create",
     "propose_config_update",
     "propose_network_update",
     "propose_calendar_update",

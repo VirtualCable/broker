@@ -16,6 +16,7 @@ from uds.mutability import (
     StalePolicy,
 )
 from uds.models import ActionFlow, FlowAction
+from uds.mutability.base import CREATE_TARGET_UUID
 from uds.mutability.types.providers import ProviderUpdate
 
 from tests.fixtures.services import create_db_provider
@@ -732,3 +733,56 @@ class FlowApproveCasTest(FlowTestCase):
         action = self._add_proposal()
         with self.assertRaises(InvalidTransition):
             self.store.revoke_action(action, reason="nope")
+
+
+class CreateActionLifecycleTest(FlowTestCase):
+    """Creation proposals ride the flow with NO CAS: nothing to freeze,
+    nothing to drift, nothing to revoke."""
+
+    def _create_action(self, flow: ActionFlow, *, data_type: str) -> FlowAction:
+        return self.store.add_action(
+            flow,
+            action_type="provider.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"data_type": data_type, "name": "new provider"},
+            base_values={},
+            base_etag="",
+        )
+
+    def _submitted_create(self) -> tuple[ActionFlow, FlowAction]:
+        provider = create_db_provider()
+        flow = self._flow()
+        action = self._create_action(flow, data_type=provider.data_type)
+        return self._submitted(flow), action
+
+    def test_approve_freezes_only_the_display_snapshot(self) -> None:
+        flow, action = self._submitted_create()
+        self.store.approve_action(action, admin=self.other)
+        action.refresh_from_db()
+        self.assertEqual(action.status, FlowActionStatus.APPROVED)
+        self.assertEqual(action.snap_info.get("target_name"), "new provider")
+        self.assertTrue(action.snap_info.get("fields"))
+        # no CAS freeze: there is no live item to fingerprint
+        self.assertEqual(action.approved_etag, "")
+        self.assertFalse(action.approved_values)
+        self.assertEqual(flow.refresh_from_db() or flow.status, FlowStatus.LOCKED)
+
+    def test_compliance_of_creations_is_always_ok(self) -> None:
+        _flow, action = self._submitted_create()
+        # empty base etag would be "conflict" for regular actions
+        self.assertEqual(self.store.compliance(action), "ok")
+        self.store.approve_action(action, admin=self.other)
+        self.assertEqual(self.store.compliance(action), "ok")
+
+    def test_verify_flow_keeps_creations_and_launches(self) -> None:
+        flow, action = self._submitted_create()
+        self.store.approve_action(action, admin=self.other)
+        self.assertEqual(self.store.verify_flow(flow), [])
+        self.store.approve_flow(flow, admin=self.other)
+        self.assertEqual(flow.status, FlowStatus.APPROVED)
+
+    def test_describe_masks_against_the_declared_subtype(self) -> None:
+        _flow, action = self._submitted_create()
+        described = self.store._action_type(action).describe(action)
+        self.assertEqual(described["changes"]["name"], "new provider")
+        self.assertEqual(described["type"], "provider.create")

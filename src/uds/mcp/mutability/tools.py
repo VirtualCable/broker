@@ -39,7 +39,7 @@ from uds.models import User
 
 from uds.mcp.catalog import Catalog, ToolDefinition
 from uds.mutability import registry
-from uds.mutability.base import JsonObject, REDACTED
+from uds.mutability.base import ActionOperation, CREATE_TARGET_UUID, JsonObject, REDACTED
 
 JsonDict = dict[str, typing.Any]
 
@@ -239,8 +239,12 @@ def _propose_sync(
     if not flow_id.strip():
         raise ValueError("flow_id is required: open a flow with create_flow first")
     target_uuid = str(arguments.get("target_uuid", "") or "")
+    is_root_create = action_type.operation is ActionOperation.CREATE and not action_type.create_needs_parent
     if not target_uuid.strip():
-        raise ValueError("target_uuid is required")
+        if is_root_create:
+            target_uuid = CREATE_TARGET_UUID  # root creation: no target yet
+        else:
+            raise ValueError("target_uuid is required")
     values = arguments.get("values")
     if not isinstance(values, dict) or not values:
         raise ValueError("values is required and must be a non-empty object")
@@ -286,6 +290,25 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
     target_uuid = str(arguments.get("target_uuid", "") or "")
     for_type = str(arguments.get("for_type", "") or "")
     result: JsonDict = {"action_type": type_id}
+    if action_type.operation is ActionOperation.CREATE:
+        # Creation surface: the fields depend on the declared subtype
+        # (values["data_type"]), not on a live target. Detail creations
+        # build their gui from the parent item.
+        if not for_type.strip():
+            raise ValueError(
+                f"{type_id} requires for_type: the subtype the proposal creates "
+                "(use get_creatable_types to list them)"
+            )
+        if action_type.create_needs_parent:
+            if not target_uuid.strip():
+                raise ValueError(f"{type_id} requires target_uuid: the uuid of the parent item")
+            target = action_type.resolve_target(target_uuid)
+            result["target_uuid"] = target_uuid
+        else:
+            target = None
+        result["for_type"] = for_type
+        result["fields"] = action_type.create_field_definitions(for_type, target)
+        return result
     if target_uuid.strip():
         target = action_type.resolve_target(target_uuid)
         for_type = action_type.for_type_of(target)
@@ -415,6 +438,18 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
     def sync_body(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
         return _propose_sync(action_type, arguments, request)
 
+    is_root_create = action_type.operation is ActionOperation.CREATE and not action_type.create_needs_parent
+    if action_type.operation is ActionOperation.CREATE:
+        target_description = (
+            "UUID of the PARENT item the new entity is created into."
+            if action_type.create_needs_parent
+            else "Must be omitted for a creation: there is no target yet."
+        )
+        required = ["flow_id", "values"] if is_root_create else ["flow_id", "target_uuid", "values"]
+    else:
+        target_description = "UUID of the item to mutate."
+        required = ["flow_id", "target_uuid", "values"]
+
     return ToolDefinition(
         name=f"propose_{action_type.full_id.replace('.', '_')}",
         title=action_type.tool_title(),
@@ -431,7 +466,7 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
                 },
                 "target_uuid": {
                     "type": "string",
-                    "description": "UUID of the item to mutate.",
+                    "description": target_description,
                 },
                 "values": {
                     "type": "object",
@@ -450,7 +485,7 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
                     ),
                 },
             },
-            "required": ["flow_id", "target_uuid", "values"],
+            "required": required,
             "additionalProperties": False,
         },
         access="Staff with MANAGEMENT permission over the target item.",
