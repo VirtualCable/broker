@@ -1,4 +1,4 @@
-"""``metapool.update``: propose modifications to an existing meta pool.
+"""``metapool``: propose modifications to, or deletion of, a meta pool.
 
 Top level resource with a static gui (no module instance). Since the
 gui-coupling trial, ``metapool.update`` derives its mutable surface from
@@ -8,9 +8,16 @@ form-shaped PUT are annotated ``context`` on the gui and therefore join
 the fingerprint but never the proposable surface. GUI changes propagate
 to the agent automatically.
 
+``delete`` takes no fields: the meta pool itself is the target. Unlike
+service pools (which are only marked REMOVABLE and cleaned up
+asynchronously), the REST DELETE removes the meta pool row right away,
+so it keeps the strict whole-item CAS: any change after the proposal
+(snapshot of the gui fields) denies it, no matter who made it.
+
 The other meta pool families live in sibling modules, one per action
-type (``members``, ``group``); the imports at the bottom of this module
-pull them in so the registry discovers every family of the package.
+type (``access``, ``assignment``, ``fallback``, ``group``,
+``members``); the imports at the bottom of this module pull them in so
+the registry discovers every family of the package.
 """
 
 import collections.abc
@@ -29,8 +36,12 @@ from uds.REST.methods.meta_pools import MetaPools
 
 from ... import base as mutability_base
 from ... import gui_view
+from ...base import ActionOperation, StalePolicy
 from ...etag import item_etag
 
+from . import access as access
+from . import assignment as assignment
+from . import fallback as fallback
 from . import group as group
 from . import members as members
 
@@ -44,7 +55,7 @@ def _metapool_gui_elements() -> list[types.ui.GuiElement]:
 
 
 class MetaPoolUpdate(mutability_base.MutableActionType):
-    """Proposal: update an existing meta pool."""
+    """Proposal: update or delete an existing meta pool."""
 
     type_id = "metapool"
     title = "Propose meta pool update"
@@ -60,6 +71,10 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
     handler = MetaPools
     model = models.MetaPool
     noun = "Meta pool"
+    # Both operations are synchronous writes gated by the strict whole-item
+    # CAS: the delete removes the row right away (no REMOVABLE intermediate
+    # state like service pools), so any change after the snapshot denies it.
+    stale_policy = StalePolicy.DENY
 
     @typing.override
     def resolve_target(self, target_uuid: str) -> db_models.Model:
@@ -74,6 +89,10 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+        # Deletion needs no fields: the target itself is what disappears.
+        # (An unbound instance serves the update surface, its default op.)
+        if self.operation is ActionOperation.DELETE:
+            return []
         # Agent view of the admin gui: only proposable fields are part of
         # the mutable surface (context references and relations stay out,
         # though context still travels in the fingerprint / PUT payload).
@@ -123,6 +142,25 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
     # ---------------------------------------------------------- execution
 
     @typing.override
+    def tool_title(self) -> str:
+        if self.operation is ActionOperation.DELETE:
+            return "Propose deleting a meta pool"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is ActionOperation.DELETE:
+            return (
+                "Propose deleting a meta pool: the grouping disappears for good — its "
+                "member service pools are NOT deleted, they simply stop being part of "
+                "this meta pool. No fields are needed: the meta pool itself is the "
+                "target of the proposal. The proposal does NOT delete anything: it is "
+                "queued until an administrator approves it, and it is refused if the "
+                "meta pool changed since it was proposed."
+            )
+        return self.description
+
+    @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # ALL the ORM work (target, FK context, tags) must stay out of the
         # async context: resolve + snapshot + merge in one sync boundary.
@@ -144,3 +182,23 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
             params,
         )
         return f'Meta pool "{meta_pool_name}" updated'
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the row synchronously (member service
+        # pools survive; only the grouping goes away).
+        meta_pool = typing.cast(
+            models.MetaPool,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
+        await RestProxy().execute(
+            RestTarget(
+                MetaPools,
+                "meta_pools",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+            ),
+            request,
+            {},
+        )
+        return f'Meta pool "{meta_pool.name}" deleted'

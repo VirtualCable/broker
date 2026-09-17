@@ -50,6 +50,8 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "report_admin_activity",
     # Descriptor read views generated from the mutability registry (the
     # family type_id, dots to underscores):
+    "get_metapool_access",
+    "get_metapool_assignment",
     "get_metapool_group",
     "get_metapool_member",
     "get_servicepool_access",
@@ -565,6 +567,40 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         self.assertEqual(
             sorted(entry["uuid"] for entry in result["current_members"]), sorted(g.uuid for g in self.groups)
         )
+
+    def test_get_metapool_access(self) -> None:
+        metapool = self._a_metapool()
+        calendar = models.Calendar.objects.create(name="curated-meta-access", comments="")
+        models.CalendarAccessMeta.objects.create(
+            meta_pool=metapool, calendar=calendar, access="ALLOW", priority=3
+        )
+        result = json.loads(
+            self._result_text(self._call("get_metapool_access", {"target_uuid": metapool.uuid}))
+        )
+        self.assertEqual(result["entity_type"], "metapool.access")
+        self.assertEqual(
+            result["current_rules"],
+            [{"calendar_id": calendar.uuid, "access": "ALLOW", "priority": 3, "calendar_name": calendar.name}],
+        )
+
+    def test_get_metapool_assignment(self) -> None:
+        from tests.fixtures import services as service_fixtures
+
+        metapool = self._a_metapool()
+        pool = self._a_service_pool()
+        assigned = service_fixtures.create_db_userservice(
+            pool, service_fixtures.create_db_publication(pool), self.plain_users[0]
+        )
+        result = json.loads(
+            self._result_text(self._call("get_metapool_assignment", {"target_uuid": metapool.uuid}))
+        )
+        self.assertEqual(result["entity_type"], "metapool.assignment")
+        row = next(item for item in result["user_services"] if item["uuid"] == assigned.uuid)
+        self.assertEqual(row["state"], "U")
+        self.assertEqual(row["owner"], self.plain_users[0].pretty_name)
+        self.assertEqual(row["pool_id"], pool.uuid)
+        # TestServiceCache.can_reset is False: reset is not offered on the row
+        self.assertEqual(row["supported_actions"], [])
 
 
 class CuratedContractTest(unittest.TestCase):

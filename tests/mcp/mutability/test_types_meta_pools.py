@@ -1,12 +1,14 @@
-"""``metapool.update``: registration, discovery, CAS and execution shape."""
+"""``metapool`` (update / delete): registration, discovery, CAS and execution."""
 
 import typing
 from unittest import mock
 
 from asgiref.sync import async_to_sync
 
+from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.meta_pools import MetaPoolUpdate
 from uds.REST.methods.meta_pools import MetaPools
 
@@ -21,12 +23,38 @@ from tests.fixtures.services import (
 from tests.mcp.mutability._helpers import FlowTestCase, make_request
 
 
+def _create_metapool() -> "object":
+    authenticator = create_db_authenticator()
+    _groups = create_db_groups(authenticator, 1)
+    service = create_db_service(create_db_provider())
+    pool = create_db_servicepool(service=service, osmanager=create_db_osmanager())
+    return create_db_metapool([pool], _groups)
+
+
+def _bound(operation: str) -> MetaPoolUpdate:
+    factory = registry_get(f"metapool.{operation}")
+    assert factory is not None
+    return typing.cast(MetaPoolUpdate, factory())
+
+
 class MetaPoolUpdateRegistryTest(FlowTestCase):
-    def test_is_registered(self) -> None:
+    def test_both_operations_are_registered(self) -> None:
         found = registry_get("metapool.update")
         assert found is not None
         self.assertIs(type(found()), MetaPoolUpdate)
+        self.assertIs(type(_bound("delete")), MetaPoolUpdate)
         self.assertIn("metapool.update", all_type_ids())
+        self.assertIn("metapool.delete", all_type_ids())
+        self.assertEqual(
+            MetaPoolUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.DELETE}),
+        )
+
+    def test_stale_policy_is_deny_for_update_and_delete(self) -> None:
+        # The meta pool DELETE removes the row synchronously, so both
+        # operations ride the strict whole-item CAS (no FORCE overrides)
+        self.assertIs(_bound("update").get_stale_policy(), StalePolicy.DENY)
+        self.assertIs(_bound("delete").get_stale_policy(), StalePolicy.DENY)
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):
@@ -78,6 +106,12 @@ class MetaPoolUpdateFieldsTest(FlowTestCase):
         errors = MetaPoolUpdate().validate_values("metapool", {"members": []})
         self.assertTrue(any("unknown fields" in e for e in errors))
 
+    def test_delete_publishes_no_fields(self) -> None:
+        self.assertEqual(_bound("delete").field_definitions("metapool"), [])
+        self.assertEqual(_bound("delete").validate_values("metapool", {}, None), [])
+        self.assertIn("Propose deleting a meta pool", _bound("delete").tool_title())
+        self.assertIn("queued until an administrator approves", _bound("delete").tool_description())
+
     def test_snapshot_covers_columns_and_context(self) -> None:
         authenticator = create_db_authenticator()
         _groups = create_db_groups(authenticator, 1)
@@ -102,11 +136,7 @@ class MetaPoolUpdateFieldsTest(FlowTestCase):
 
 class MetaPoolUpdateExecuteTest(FlowTestCase):
     def test_execute_sends_whole_form_with_proposed_values(self) -> None:
-        authenticator = create_db_authenticator()
-        _groups = create_db_groups(authenticator, 1)
-        service = create_db_service(create_db_provider())
-        pool = create_db_servicepool(service=service, osmanager=create_db_osmanager())
-        meta_pool = create_db_metapool([pool], _groups)
+        meta_pool = _create_metapool()
         action = self._action(
             self._flow(),
             action_type="metapool.update",
@@ -118,7 +148,7 @@ class MetaPoolUpdateExecuteTest(FlowTestCase):
 
         with mock.patch("uds.mutability.types.meta_pools.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value="done")
-            summary = async_to_sync(MetaPoolUpdate().execute)(action, request=make_request())
+            summary = async_to_sync(_bound("update").execute)(action, request=make_request())
 
         self.assertIn("updated", summary)
         execute_call = proxy_cls.return_value.execute.call_args
@@ -143,3 +173,42 @@ class MetaPoolUpdateExecuteTest(FlowTestCase):
         self.assertEqual(params["policy"], 1)
         self.assertEqual(params["image_id"], "-1")
         self.assertEqual(params["servicesPoolGroup_id"], "-1")
+
+    def test_delete_removes_the_meta_pool_row(self) -> None:
+        meta_pool = _create_metapool()
+        action = self._action(
+            self._flow(),
+            action_type="metapool.delete",
+            target_uuid=meta_pool.uuid,
+            values={},
+            base_values={},
+            base_etag="etag",
+        )
+
+        with mock.patch("uds.mutability.types.meta_pools.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value="OK")
+            summary = async_to_sync(_bound("delete").execute)(action, request=make_request())
+
+        self.assertIn("deleted", summary)
+        execute_call = proxy_cls.return_value.execute.call_args
+        target = execute_call[0][0]
+        self.assertIs(target.handler, MetaPools)
+        self.assertEqual(target.path, "meta_pools")
+        self.assertEqual(target.method, types.rest.CustomMethodMethod.DELETE)
+        self.assertEqual(target.args, (meta_pool.uuid,))
+        self.assertEqual(target.parent, None)
+        self.assertEqual(execute_call[1], {})
+
+    def test_delete_aborts_when_the_meta_pool_vanished(self) -> None:
+        meta_pool = _create_metapool()
+        action = self._action(
+            self._flow(),
+            action_type="metapool.delete",
+            target_uuid=meta_pool.uuid,
+            values={},
+            base_values={},
+            base_etag="etag",
+        )
+        meta_pool.delete()
+        with self.assertRaises(rest_exceptions.NotFound):
+            async_to_sync(_bound("delete").execute)(action, request=make_request())
