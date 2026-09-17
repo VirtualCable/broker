@@ -79,6 +79,7 @@ class RDPOptions:
     # Matches uds-client `JsRdpOptions`
     use_nla: bool | None = None
     verify_cert: bool | None = None
+    use_local_scaler: bool | None = None
 
 
 @dataclasses.dataclass
@@ -294,17 +295,24 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
-    sound_latency_threshold = gui.NumericField(
-        label=_("Sound latency threshold (ms)"),
+    sound_latency_threshold = gui.ChoiceField(
+        label=_("Sound latency threshold"),
         order=34,
-        length=5,
-        default=0,
+        default="",
+        choices=[
+            gui.choice_item("", _("Default")),
+            gui.choice_item("300", _("300 ms")),
+            gui.choice_item("400", _("400 ms")),
+            gui.choice_item("500", _("500 ms")),
+            gui.choice_item("750", _("750 ms")),
+            gui.choice_item("1000", _("1000 ms")),
+        ],
         tooltip=_(
-            "If the audio stream drifts more than this many milliseconds, packets are dropped to "
-            "resynchronize it. 0 = let the client decide. Too low drops audio constantly, too high "
-            "keeps audio smooth but lets it drift apart from video."
+            "If the audio stream drifts more than this, packets are dropped to resynchronize it. "
+            "Default lets the client decide. Lower values drop audio more often, higher ones keep "
+            "audio smooth but let it drift apart from video."
         ),
-        tab=types.ui.Tab.PARAMETERS,
+        tab=types.ui.Tab.ADVANCED,
     )
 
     rdp_port = gui.NumericField(
@@ -315,6 +323,17 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
         required=True,  #: Numeric fields have always a value, so this not really needed
         default=3389,
+    )
+
+    use_local_scaler = gui.CheckBoxField(
+        label=_("Scale locally"),
+        order=36,
+        default=True,
+        tooltip=_(
+            "If checked, the remote session renders at the virtual resolution and the client "
+            "upscales the image locally, saving bandwidth"
+        ),
+        tab=types.ui.Tab.ADVANCED,
     )
 
     screen_size = gui.ChoiceField(
@@ -472,15 +491,20 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             screen_height=int(height),
             # The client already enables it, so only the opt-out travels.
             best_experience=None if self.best_experience.as_bool() else False,
-            options=RDPOptions(use_nla=self.use_nla.as_bool(), verify_cert=False),
+            options=RDPOptions(
+                use_nla=self.use_nla.as_bool(),
+                verify_cert=False,
+                # The client already scales locally, so only the opt-out travels.
+                use_local_scaler=None if self.use_local_scaler.as_bool() else False,
+            ),
             redirections=RDPRedirections(
                 drives=drives,
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),
                 clipboard=self.enable_clipboard.as_bool(),
                 printing=self.enable_printers.as_bool(),
-                # 0 means "unset": omitting the key lets the client pick its own threshold.
-                sound_latency_threshold=self.sound_latency_threshold.as_int() or None,
+                # Empty means "unset": omitting the key lets the client pick its own threshold.
+                sound_latency_threshold=int(self.sound_latency_threshold.value or 0) or None,
                 webcam=webcam,
                 smartcard=SmartcardParams(enabled=True) if self.enable_smartcard.as_bool() else None,
             ),

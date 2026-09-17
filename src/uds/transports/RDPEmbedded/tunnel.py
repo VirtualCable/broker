@@ -89,6 +89,7 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     enable_clipboard = BaseRDPEmbeddedTransport.enable_clipboard
     enable_printers = BaseRDPEmbeddedTransport.enable_printers
     sound_latency_threshold = BaseRDPEmbeddedTransport.sound_latency_threshold
+    use_local_scaler = BaseRDPEmbeddedTransport.use_local_scaler
 
     screen_size = BaseRDPEmbeddedTransport.screen_size
 

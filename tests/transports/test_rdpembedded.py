@@ -122,15 +122,25 @@ class RDPEmbeddedTest(UDSTestCase):
 
     def test_sound_latency_threshold_sent_when_set(self) -> None:
         transport = self._transport()
-        transport.sound_latency_threshold.value = 120
+        transport.sound_latency_threshold.value = "400"
 
-        self.assertEqual(self._build(transport)["redirections"]["sound_latency_threshold"], 120)
+        self.assertEqual(self._build(transport)["redirections"]["sound_latency_threshold"], 400)
 
-    def test_sound_latency_threshold_zero_is_omitted(self) -> None:
+    def test_sound_latency_threshold_default_is_omitted(self) -> None:
         transport = self._transport()
-        transport.sound_latency_threshold.value = 0
+        transport.sound_latency_threshold.value = ""
 
         self.assertNotIn("sound_latency_threshold", self._build(transport)["redirections"])
+
+    def test_use_local_scaler_default_is_omitted(self) -> None:
+        """Scaling locally is what the client already does, so nothing travels."""
+        self.assertNotIn("use_local_scaler", self._build(self._transport())["options"])
+
+    def test_use_local_scaler_unchecked_is_sent(self) -> None:
+        transport = self._transport()
+        transport.use_local_scaler.value = False
+
+        self.assertFalse(self._build(transport)["options"]["use_local_scaler"])
 
     def test_drives_allow_any(self) -> None:
         transport = self._transport()
