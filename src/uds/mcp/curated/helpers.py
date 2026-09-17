@@ -76,13 +76,19 @@ def master_custom_tool(
     sensitive_fields: tuple[str, ...] = (),
     path_args: tuple[str, ...] = ("uuid",),
     method_first: bool = False,
+    method: types.rest.CustomMethodMethod = types.rest.CustomMethodMethod.GET,
 ) -> ToolDefinition:
-    """Build a tool around a GET custom method of a master handler.
+    """Build a tool around a custom method of a master handler.
 
     The URL is built from ``path``, the ordered arguments in ``path_args``,
     and ``custom_name`` (the method segment). With the default
     ``path_args=("uuid",)`` the URL is ``<path>/{uuid}/{custom_name}`` —
     the common case for ``needs_parent=True`` methods.
+
+    ``method`` selects the dispatched HTTP verb: GET (the default) for
+    query-like customs, POST for action toggles (e.g.
+    ``Providers.maintenance``, which requires MANAGEMENT and answers with
+    the updated item).
 
     For ``needs_parent=False`` methods the segment order flips: the method
     name comes first (``<path>/{custom_name}/...``) because the master
@@ -126,7 +132,7 @@ def master_custom_tool(
         arg_values = tuple(str(arguments[arg_name]) for arg_name in path_args)
         url_args = (custom_name, *arg_values) if method_first else (*arg_values, custom_name)
         params = {key: value for key, value in arguments.items() if key not in path_args}
-        target = RestTarget(handler, path, GET, args=url_args)
+        target = RestTarget(handler, path, method, args=url_args)
         return await RestProxy().execute(target, request, params)
 
     properties: JsonObject = dict(arg_properties)
@@ -163,8 +169,9 @@ def nested_custom_tool(
     returns: str,
     required_permission: str = "ALL",
     sensitive_fields: tuple[str, ...] = (),
+    method: types.rest.CustomMethodMethod = types.rest.CustomMethodMethod.GET,
 ) -> ToolDefinition:
-    """Build a tool around a GET custom method of a detail handler item.
+    """Build a tool around a custom method of a detail handler item.
 
     URL: ``<path>/{uuid}/{intermediate_name}/{item_id}/{custom_name}``
     (e.g. ``authenticators/{uuid}/users/{item_id}/services_pools``).
@@ -172,10 +179,15 @@ def nested_custom_tool(
     ``handler`` is the **master** handler that owns the detail collection
     (``Authenticators``, ``Providers``, ...), not the detail class: the
     call is routed exactly like the REST dispatcher does — the master is
-    instantiated with the full argument tuple and its ``get()`` falls
-    through to ``process_detail()``, which resolves the parent item by
-    UUID, checks the parent access level and dispatches the custom method
-    on the detail handler declared in the master's ``DETAIL`` mapping.
+    instantiated with the full argument tuple and its ``get()``/``post()``
+    falls through to ``process_detail()``, which resolves the parent item
+    by UUID, checks the parent access level and dispatches the custom
+    method on the detail handler declared in the master's ``DETAIL``
+    mapping.
+
+    ``method`` selects the dispatched HTTP verb: GET (the default) for
+    query-like customs, POST for management toggles (e.g.
+    ``ServersServers.maintenance``).
 
     Both the master UUID (``uuid``) and the detail item id (``item_id``)
     are path arguments and required inputs. Everything else travels to the
@@ -198,7 +210,7 @@ def nested_custom_tool(
             custom_name,
         )
         params = {key: value for key, value in arguments.items() if key not in path_args}
-        target = RestTarget(handler, path, GET, args=url_args)
+        target = RestTarget(handler, path, method, args=url_args)
         return await RestProxy().execute(target, request, params)
 
     properties: JsonObject = {"uuid": uuid_property, "item_id": item_property}

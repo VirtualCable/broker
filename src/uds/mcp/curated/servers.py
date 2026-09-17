@@ -9,7 +9,16 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from ..catalog import ToolDefinition
 from ..rest_proxy import RestProxy, RestTarget
-from .helpers import GET, JsonObject, check_required, master_custom_tool, schema, uuid_property
+from .helpers import (
+    GET,
+    POST,
+    JsonObject,
+    check_required,
+    master_custom_tool,
+    nested_custom_tool,
+    schema,
+    uuid_property,
+)
 
 __all__ = ["curated_tools"]
 
@@ -84,4 +93,23 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             returns="Per-server statistics for the group.",
         ),
         _server_stats_tool(),
+        nested_custom_tool(
+            name="set_server_maintenance",
+            title="Toggle server maintenance",
+            description=(
+                "Toggle the maintenance mode of one server of a server group (enable if "
+                "disabled, disable if enabled). A server in maintenance stops receiving "
+                "new user service assignments."
+            ),
+            handler=ServersGroups,
+            path="servers/groups",
+            intermediate_name="servers",
+            custom_name="maintenance",
+            uuid_property=uuid_property("UUID of the server group the server belongs to."),
+            item_property=uuid_property("UUID of the server inside that group."),
+            method=POST,
+            access="Available to authenticated UDS users with management permission on the server group.",
+            returns="``ok`` when the toggle is applied.",
+            required_permission="MANAGEMENT",
+        ),
     )

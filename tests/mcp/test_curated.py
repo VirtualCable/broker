@@ -39,6 +39,8 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_provider_allservices",
     "get_provider_service",
     "get_provider_service_servicepools",
+    "set_provider_maintenance",
+    "set_server_maintenance",
     "get_tunnel_group_unassigned_tunnels",
     "get_server_stats",
     "get_item_logs",
@@ -377,6 +379,33 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
             "get_provider_service_servicepools",
             {"uuid": self.provider.uuid, "item_id": service.uuid},
         )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_set_provider_maintenance_toggles_and_restores(self) -> None:
+        body = self._call("set_provider_maintenance", {"uuid": self.provider.uuid})
+        payload = json.loads(self._result_text(body))
+        self.assertTrue(payload.get("maintenance_mode"))
+        # Second call restores the original state (a toggle, not a setter)
+        body = self._call("set_provider_maintenance", {"uuid": self.provider.uuid})
+        payload = json.loads(self._result_text(body))
+        self.assertFalse(payload.get("maintenance_mode"))
+
+    def test_set_server_maintenance_answers_ok(self) -> None:
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=1)
+        server = group.servers.first()
+        assert server is not None, "the fixture must attach one server to the group"
+        body = self._call(
+            "set_server_maintenance",
+            {"uuid": group.uuid, "item_id": server.uuid},
+        )
+        self.assertEqual(json.loads(self._result_text(body)), "ok")
+        server.refresh_from_db()
+        self.assertTrue(server.maintenance_mode)
+
+    def test_get_item_logs_for_a_provider(self) -> None:
+        body = self._call("get_item_logs", {"collection": "provider", "uuid": self.provider.uuid})
         self.assertIsInstance(json.loads(self._result_text(body)), list)
 
     def test_get_tunnel_group_unassigned_tunnels(self) -> None:

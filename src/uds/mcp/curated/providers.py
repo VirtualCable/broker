@@ -3,7 +3,7 @@
 from uds.REST.methods.providers import Providers
 
 from ..catalog import ToolDefinition
-from .helpers import master_custom_tool, nested_custom_tool, uuid_property
+from .helpers import POST, master_custom_tool, nested_custom_tool, uuid_property
 
 __all__ = ["curated_tools"]
 
@@ -60,5 +60,23 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             item_property=uuid_property("UUID of the service inside that provider."),
             access="Available to users with read permission on the provider.",
             returns="An array of service pools that reference the service.",
+        ),
+        master_custom_tool(
+            name="set_provider_maintenance",
+            title="Toggle provider maintenance",
+            description=(
+                "Toggle the maintenance mode of a service provider (enable if disabled, "
+                "disable if enabled). While in maintenance the provider does not assign "
+                "new user services from its services. The answer carries the provider "
+                "item, so the resulting maintenance_mode can be checked directly."
+            ),
+            handler=Providers,
+            path="providers",
+            custom_name="maintenance",
+            uuid_property=uuid_property("UUID of the provider."),
+            method=POST,
+            access="Available to authenticated UDS users with management permission on the provider.",
+            returns="The provider item after the toggle (check maintenance_mode).",
+            required_permission="MANAGEMENT",
         ),
     )

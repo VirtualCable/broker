@@ -44,6 +44,10 @@ def _item_logs_tool() -> ToolDefinition:
             )
             return await RestProxy().execute(target, request, {})
 
+        if collection == "provider":
+            target = RestTarget(Providers, "providers", GET, args=(str(arguments["uuid"]), consts.rest.LOG))
+            return await RestProxy().execute(target, request, {})
+
         details: dict[str, tuple[type[Handler], str, type[Handler], str]] = {
             "user": (Users, "authenticators/{uuid}/users", Authenticators, "authenticators"),
             "service": (Services, "providers/{uuid}/services", Providers, "providers"),
@@ -57,7 +61,7 @@ def _item_logs_tool() -> ToolDefinition:
         }
         if collection not in details:
             raise ValueError(
-                f"Unknown collection: {collection} (expected one of service_pool, user, service, meta_pool_member, assigned_service)"
+                f"Unknown collection: {collection} (expected one of provider, service_pool, user, service, meta_pool_member, assigned_service)"
             )
         if not isinstance(item_id, str) or not item_id:
             raise ValueError(f"item_id is required for collection {collection}")
@@ -79,20 +83,23 @@ def _item_logs_tool() -> ToolDefinition:
         title="Get item logs",
         description=(
             "Read the UDS log trail of one object. Use ``collection`` to select what "
-            "the ``uuid`` refers to: ``service_pool`` (the pool itself), ``user`` (a user "
-            "of an authenticator, requires ``item_id``), ``service`` (a service of a "
-            "provider, requires ``item_id``), ``meta_pool_member`` (a pool member of a "
-            "meta pool, requires ``item_id``) or ``assigned_service`` (a deployed service "
-            "of a pool, requires ``item_id``)."
+            "the ``uuid`` refers to: ``provider`` (the provider itself), ``service_pool`` "
+            "(the pool itself), ``user`` (a user of an authenticator, requires "
+            "``item_id``), ``service`` (a service of a provider, requires ``item_id``), "
+            "``meta_pool_member`` (a pool member of a meta pool, requires ``item_id``) "
+            "or ``assigned_service`` (a deployed service of a pool, requires "
+            "``item_id``)."
         ),
         input_schema=schema(
             {
                 "collection": string_property(
-                    "What the logs belong to: service_pool, user, service, meta_pool_member or assigned_service."
+                    "What the logs belong to: provider, service_pool, user, service, "
+                    "meta_pool_member or assigned_service."
                 ),
                 "uuid": uuid_property(
-                    "UUID of the object: the pool for service_pool, or the parent "
-                    "(authenticator, provider, meta pool, service pool) for the rest."
+                    "UUID of the object: the provider or pool for provider/service_pool, "
+                    "or the parent (authenticator, provider, meta pool, service pool) "
+                    "for the rest."
                 ),
                 "item_id": string_property(
                     "Id or uuid of the detail item; required for every collection except service_pool."
