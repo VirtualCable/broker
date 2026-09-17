@@ -124,6 +124,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             ("FlowActions", "approve", "POST"),
             ("FlowActions", "skip", "POST"),
             ("MetaPools", "fallback_access", "POST"),
+            ("MetaAssignedService", "reset", "POST"),
             ("Providers", "maintenance", "POST"),
             ("ServicesPools", "fallback_access", "POST"),
             ("ServicesPools", "create_from_assignable", "POST"),

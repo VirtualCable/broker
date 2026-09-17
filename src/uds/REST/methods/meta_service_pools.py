@@ -46,6 +46,7 @@ from uds.core import types
 # from uds.models.service_pool import ServicePool
 # from uds.models.user_service import UserService
 # from uds.models.user import User
+from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.rest import TableInfo
 from uds.core.types.states import State
 from uds.core.util import ensure
@@ -171,6 +172,14 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
     """
     Rest handler for Assigned Services, wich parent is Service
     """
+
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
+        types.rest.ModelCustomMethod(
+            "reset",
+            method=types.rest.CustomMethodMethod.POST,
+            description="Reset a user service to its initial state, removing any cached or intermediate data",
+        ),
+    ]
 
     @staticmethod
     def item_as_dict(
@@ -331,7 +340,9 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             .count()
             > 0
         ):
-            raise exceptions.rest.RequestError(f"There is already another user service assigned to {user.pretty_name}")
+            raise exceptions.rest.RequestError(
+                f"There is already another user service assigned to {user.pretty_name}"
+            )
 
         userservice.user = user
         userservice.save()
@@ -340,3 +351,13 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
         log.log(parent, types.log.LogLevel.INFO, log_str, types.log.LogSource.ADMIN)
 
         return {"id": userservice.uuid}
+
+    def reset(self, parent: "models.MetaPool", item: str) -> typing.Any:
+        # The assigned service belongs to a member pool, so the reset
+        # capability is checked against THAT pool's service, not the meta pool
+        userservice = self._get_assigned_userservice(parent, item)
+        if not userservice.deployed_service.capabilities().can_reset:
+            raise exceptions.rest.NotSupportedError(
+                _("The member service does not support resetting user services")
+            )
+        UserServiceManager.manager().reset(userservice)

@@ -209,3 +209,55 @@ class MetaPoolTest(rest.test.RESTTestCase):
 
         pool.refresh_from_db()
         self.assertEqual(pool.fallbackAccess, State.ALLOW)
+
+    # ------------------------------------------------------------------
+    # Custom-method coverage: reset on the meta assigned services detail
+    # ------------------------------------------------------------------
+    def _metapool_with_assigned(self) -> tuple[models.MetaPool, models.UserService, models.ServicePool]:
+        """Meta pool with one member pool holding one assigned user service."""
+        service = services_fixtures.create_db_service(self.provider)
+        osmanager = services_fixtures.create_db_osmanager()
+        transport = services_fixtures.create_db_transport()
+        member_pool = services_fixtures.create_db_servicepool(service, osmanager, self.groups, [transport])
+        meta_pool = services_fixtures.create_db_metapool(
+            service_pools=[member_pool],
+            groups=self.groups,
+        )
+        publication = services_fixtures.create_db_publication(member_pool)
+        userservice = services_fixtures.create_db_userservice(member_pool, publication, self.plain_users[0])
+        return meta_pool, userservice, member_pool
+
+    def test_reset_unsupported_answers_not_supported(self) -> None:
+        """POST metapools/<id>/services/<id>/reset when can_reset is false."""
+        from tests.fixtures.modules.service.service import TestServiceCache
+
+        self.assertEqual(TestServiceCache.can_reset, False)
+        meta_pool, userservice, _member_pool = self._metapool_with_assigned()
+        response = self.client.rest_post(f"metapools/{meta_pool.uuid}/services/{userservice.uuid}/reset")
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn(b"Not supported", response.content)
+
+    def test_reset_unknown_userservice_answers_not_found(self) -> None:
+        """The meta surface refuses user services outside its member pools."""
+        meta_pool, _userservice, _member_pool = self._metapool_with_assigned()
+        response = self.client.rest_post(
+            f"metapools/{meta_pool.uuid}/services/00000000-0000-0000-0000-000000000000/reset"
+        )
+        self.assertEqual(response.status_code, 404, response.content)
+
+    def test_reset_supported_reaches_the_manager(self) -> None:
+        """With can_reset true, the reset lands on UserServiceManager.reset."""
+        from unittest import mock
+
+        from tests.fixtures.modules.service.service import TestServiceCache
+
+        meta_pool, userservice, _member_pool = self._metapool_with_assigned()
+        manager = mock.MagicMock()
+        with (
+            mock.patch.object(TestServiceCache, "can_reset", True),
+            mock.patch("uds.REST.methods.meta_service_pools.UserServiceManager.manager", return_value=manager),
+        ):
+            response = self.client.rest_post(f"metapools/{meta_pool.uuid}/services/{userservice.uuid}/reset")
+        self.assertEqual(response.status_code, 200, response.content)
+        manager.reset.assert_called_once()
+        self.assertEqual(manager.reset.call_args[0][0].uuid, userservice.uuid)
