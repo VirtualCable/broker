@@ -129,15 +129,6 @@ _OPERATION_HOOKS: typing.Final[dict["ActionOperation", str]] = {
     ActionOperation.CUSTOM: "op_custom",
 }
 
-CREATE_TARGET_UUID: typing.Final[str] = "00000000-0000-0000-0000-000000000000"
-"""Sentinel ``target_uuid`` of root creation proposals.
-
-A creation has no target yet: root creates carry this sentinel as
-``FlowAction.target_uuid`` (detail creates carry the parent uuid, which
-is a real target for permissions and display). The real uuid is assigned
-by the REST create at execution and returned in the action result.
-"""
-
 
 def _json_safe(value: typing.Any) -> typing.Any:
     """Coerce a structure into plain JSON-serializable data.

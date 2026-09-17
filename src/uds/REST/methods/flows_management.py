@@ -46,7 +46,8 @@ from uds.core.util.model import process_uuid
 
 from uds.models import ActionFlow, FlowAction
 from uds.mutability import executor
-from uds.mutability.store import FlowStore, InvalidTransition, StaleProposal
+from uds.core.exceptions.mcp import InvalidTransition, StaleProposal
+from uds.mutability.store import FlowStore
 from uds.REST.model import DetailHandler, ModelHandler
 
 logger: logging.Logger = logging.getLogger(__name__)

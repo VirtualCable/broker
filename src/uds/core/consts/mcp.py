@@ -62,3 +62,9 @@ MAX_TTL_HOURS: typing.Final[int] = FLOW_TTL_DAYS * 24
 # Older flows remain visible to administrators (and in the database),
 # they just disappear from the agent's view to keep its context bounded.
 VISIBILITY_DAYS: typing.Final[int] = 30
+
+# Sentinel target_uuid of ROOT creation proposals (a creation has no
+# target yet: root creates carry this sentinel on FlowAction.target_uuid;
+# detail creates carry the parent uuid, a real target). The real uuid is
+# assigned by the REST create at execution and reported in the result.
+CREATE_TARGET_UUID: typing.Final[str] = "00000000-0000-0000-0000-000000000000"

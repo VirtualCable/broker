@@ -57,8 +57,10 @@ from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
 from uds.core.util.model import process_uuid
 from uds.mutability import registry
-from uds.mutability.base import ActionOperation, CREATE_TARGET_UUID
-from uds.mutability.store import FlowStore, InvalidTransition, MutabilityError
+from uds.core.consts.mcp import CREATE_TARGET_UUID
+from uds.mutability.base import ActionOperation
+from uds.core.exceptions.mcp import InvalidTransition, MutabilityError
+from uds.mutability.store import FlowStore
 from uds.models import ActionFlow
 from uds.REST.model import DetailHandler, ModelHandler
 

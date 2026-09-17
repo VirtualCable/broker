@@ -5,7 +5,8 @@ import typing
 from unittest import mock
 
 from uds.REST.methods.providers import Providers
-from uds.mutability.base import CREATE_TARGET_UUID, ActionOperation, StalePolicy
+from uds.core.consts.mcp import CREATE_TARGET_UUID
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.providers import ProviderUpdate
 
 from tests.fixtures.services import create_db_provider

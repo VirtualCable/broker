@@ -39,7 +39,8 @@ from uds.models import User
 
 from uds.mcp.catalog import Catalog, ToolDefinition
 from uds.mutability import registry
-from uds.mutability.base import ActionOperation, CREATE_TARGET_UUID, JsonObject, REDACTED
+from uds.core.consts.mcp import CREATE_TARGET_UUID
+from uds.mutability.base import ActionOperation, JsonObject, REDACTED
 
 JsonDict = dict[str, typing.Any]
 

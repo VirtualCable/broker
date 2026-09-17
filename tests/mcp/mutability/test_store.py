@@ -16,7 +16,7 @@ from uds.mutability import (
     StalePolicy,
 )
 from uds.models import ActionFlow, FlowAction
-from uds.mutability.base import CREATE_TARGET_UUID
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.mutability.types.providers import ProviderUpdate
 
 from tests.fixtures.services import create_db_provider

@@ -24,7 +24,7 @@ from uds.core.types import permissions as permissions_types
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import objtype
 from uds.core.util.model import sql_now
-from uds.mutability.base import CREATE_TARGET_UUID
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.mutability.store import FlowStore
 
 from tests.fixtures.services import create_db_provider, create_db_service

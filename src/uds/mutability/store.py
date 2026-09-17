@@ -37,27 +37,12 @@ import datetime
 import typing
 
 from uds.core.consts import mcp as consts_mcp
+from uds.core.exceptions.mcp import InvalidTransition, MutabilityError, NotActionOwner, StaleProposal
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.models import ActionFlow, FlowAction, User
 from uds.mutability.base import ActionOperation, MutableActionType, StalePolicy
-
-
-class MutabilityError(ValueError):
-    """Base error for the mutability subsystem."""
-
-
-class InvalidTransition(MutabilityError):
-    """A flow or action cannot move to the requested state."""
-
-
-class NotActionOwner(MutabilityError):
-    """The actor is not the owner of the flow."""
-
-
-class StaleProposal(MutabilityError):
-    """The target drifted from the proposal base (or cannot be verified)."""
 
 
 class FlowStore:

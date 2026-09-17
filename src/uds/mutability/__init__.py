@@ -13,7 +13,11 @@ and the REST owner/management surfaces are built on top.
 from .base import ActionOperation, EntityDescriptor, MutableActionType, StalePolicy
 from .etag import item_etag
 from .registry import all_bindings, all_families, all_type_ids, binding, get, register
-from .store import FlowStore, InvalidTransition, MutabilityError, NotActionOwner, StaleProposal
+from .store import FlowStore
+
+# The mutability exceptions live in uds.core.exceptions.mcp (UDSException
+# based); re-exported here as the public face of the subsystem.
+from uds.core.exceptions.mcp import InvalidTransition, MutabilityError, NotActionOwner, StaleProposal
 
 __all__ = [
     "ActionOperation",

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -26,16 +26,28 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Author: Adolfo Gómez, dkmaster at dkmon dot com
+Exceptions of the MCP (supervised agent mutability) subsystem.
+
+The domain lives in :mod:`uds.mutability` (flows, proposals, CAS); these
+are the error types its surfaces raise. All of them derive from
+:class:`uds.core.exceptions.common.UDSException`, like every other UDS
+domain exception family.
 """
 
-from . import actor as actor
-from . import auth as auth
-from . import mcp as mcp
-from . import rest as rest
-from . import services as services
-from . import transport as transport
-from . import ui as ui
+from uds.core.exceptions.common import UDSException
 
-# Common exceptions inserted here
-from .common import UDSException as UDSException
+
+class MutabilityError(UDSException):
+    """Base error for the mutability subsystem."""
+
+
+class InvalidTransition(MutabilityError):
+    """A flow or action cannot move to the requested state."""
+
+
+class NotActionOwner(MutabilityError):
+    """The actor is not the owner of the flow."""
+
+
+class StaleProposal(MutabilityError):
+    """The target drifted from the proposal base (or cannot be verified)."""
