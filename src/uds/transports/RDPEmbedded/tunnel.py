@@ -75,6 +75,7 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     enforce_drives = BaseRDPEmbeddedTransport.enforce_drives
     use_nla = BaseRDPEmbeddedTransport.use_nla
     use_sso = BaseRDPEmbeddedTransport.use_sso
+    best_experience = BaseRDPEmbeddedTransport.best_experience
     rdp_port = BaseRDPEmbeddedTransport.rdp_port
 
     enable_audio = BaseRDPEmbeddedTransport.enable_audio

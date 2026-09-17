@@ -105,6 +105,7 @@ class RDPConnectionParams:
     domain: str | None = None
     screen_width: int | None = None
     screen_height: int | None = None
+    best_experience: bool | None = None
     options: RDPOptions | None = None
     redirections: RDPRedirections | None = None
     tunnel: RDPTunnelParams | None = None
@@ -176,6 +177,17 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         default=True,
         tooltip=_("If checked, Network Level Authentication will be used for RDP connections"),
         tab=types.ui.Tab.PARAMETERS,
+    )
+
+    best_experience = gui.CheckBoxField(
+        label=_("Best experience"),
+        order=21,
+        tooltip=_(
+            "If checked, wallpaper, desktop composition and font smoothing will be enabled "
+            "(better user experience, more bandwidth)"
+        ),
+        tab=types.ui.Tab.PARAMETERS,
+        default=True,
     )
 
     allow_drives = gui.ChoiceField(
@@ -458,6 +470,8 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             domain=ci.domain if not self.use_sso.as_bool() else "UDS",
             screen_width=int(width),
             screen_height=int(height),
+            # The client already enables it, so only the opt-out travels.
+            best_experience=None if self.best_experience.as_bool() else False,
             options=RDPOptions(use_nla=self.use_nla.as_bool(), verify_cert=False),
             redirections=RDPRedirections(
                 drives=drives,

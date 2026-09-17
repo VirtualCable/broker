@@ -108,6 +108,18 @@ class RDPEmbeddedTest(UDSTestCase):
         self.assertFalse(redirections["clipboard"])
         self.assertTrue(redirections["printing"])
 
+    def test_best_experience_default_is_omitted(self) -> None:
+        """Checked is what the client already does, so nothing travels."""
+        self.assertNotIn("best_experience", self._build(self._transport()))
+
+    def test_best_experience_unchecked_is_sent(self) -> None:
+        transport = self._transport()
+        transport.best_experience.value = False
+
+        data = self._build(transport)
+        self.assertIn("best_experience", data)
+        self.assertFalse(data["best_experience"])
+
     def test_sound_latency_threshold_sent_when_set(self) -> None:
         transport = self._transport()
         transport.sound_latency_threshold.value = 120
