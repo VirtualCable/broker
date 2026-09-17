@@ -61,6 +61,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_transport",
     "get_servicepool_assignment",
     "get_servicepool_cached",
+    "get_gui_field_choices",
 )
 
 _MARKER: typing.Final[str] = "mcp-system-log-marker-for-test"
@@ -601,6 +602,48 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         self.assertEqual(row["pool_id"], pool.uuid)
         # TestServiceCache.can_reset is False: reset is not offered on the row
         self.assertEqual(row["supported_actions"], [])
+
+    def test_get_gui_field_choices(self) -> None:
+        from uds.core import types as core_types
+        from uds.core.ui import gui as gui_registry
+
+        calls: list[dict[str, str]] = []
+
+        def filler(params: dict[str, str]) -> core_types.ui.CallbackResultType:
+            calls.append(params)
+            return [
+                {
+                    "name": "target_field",
+                    "choices": [
+                        core_types.ui.ChoiceItem(id="a", text="Alpha"),
+                        core_types.ui.ChoiceItem(id="b", text="Beta"),
+                    ],
+                }
+            ]
+
+        gui_registry.callbacks["test-curator-filler"] = filler
+        self.addCleanup(gui_registry.callbacks.pop, "test-curator-filler", None)
+
+        result = json.loads(
+            self._result_text(
+                self._call(
+                    "get_gui_field_choices",
+                    {"callback_name": "test-curator-filler", "parameters": {"datastore": "ds1"}},
+                )
+            )
+        )
+        # Self-describing response: each entry names the field it fills and
+        # ChoiceItem instances arrive as plain json objects
+        self.assertEqual(
+            result,
+            [{"name": "target_field", "choices": [{"id": "a", "text": "Alpha"}, {"id": "b", "text": "Beta"}]}],
+        )
+        self.assertEqual(calls, [{"datastore": "ds1"}])
+
+    def test_get_gui_field_choices_unknown_callback(self) -> None:
+        body = self._call("get_gui_field_choices", {"callback_name": "no-such-callback-anywhere"})
+        self.assertIn("error", body, body)
+        self.assertIn("not found", str(body["error"]).lower())
 
 
 class CuratedContractTest(unittest.TestCase):

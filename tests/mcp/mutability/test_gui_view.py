@@ -25,6 +25,7 @@ def _element(
     tooltip: str = "Tooltip",
     value: typing.Any = None,
     choices: types_ui.ChoicesType | None = None,
+    fills: types_ui.Filler | None = None,
     overlay: typing.Any = None,
 ) -> types_ui.GuiElement:
     return types_ui.GuiElement(
@@ -36,6 +37,7 @@ def _element(
             order=0,
             type=field_type,
             choices=choices,
+            fills=fills,
         ),
         overlay=overlay,
     )
@@ -229,6 +231,39 @@ class DefinitionsTest(unittest.TestCase):
             choices=lambda: [types_ui.ChoiceItem(id="u", text="Name")],
         )
         self.assertNotIn("choices", _definition(element))
+
+    def test_fills_annotate_the_resolver_contract(self) -> None:
+        element = _element(
+            "resource",
+            field_type=types_ui.FieldType.CHOICE,
+            fills=types_ui.Filler(callback_name="vcFillMachines", parameters=["datastore"]),
+        )
+        definition = _definition(element)
+        self.assertEqual(
+            definition["choices_callback"],
+            {"name": "vcFillMachines", "parameters": ["datastore"]},
+        )
+        # The tooltip carries the resolver contract so the agent learns the
+        # flow without out-of-band knowledge
+        self.assertIn("get_gui_field_choices", definition["tooltip"])
+        self.assertIn("'vcFillMachines'", definition["tooltip"])
+        self.assertIn("'datastore'", definition["tooltip"])
+
+    def test_fills_without_parameters_render_none_placeholder(self) -> None:
+        element = _element(
+            "resource",
+            field_type=types_ui.FieldType.CHOICE,
+            fills=types_ui.Filler(callback_name="onlyName"),
+        )
+        tooltip = _definition(element)["tooltip"]
+        self.assertIn("'onlyName'", tooltip)
+        self.assertIn("(none)", tooltip)
+
+    def test_no_fills_no_annotation(self) -> None:
+        element = _element("name", field_type=types_ui.FieldType.CHOICE)
+        definition = _definition(element)
+        self.assertNotIn("choices_callback", definition)
+        self.assertNotIn("get_gui_field_choices", definition["tooltip"])
 
     def test_as_dict_contract_unaffected_by_overlay(self) -> None:
         # The overlay must never reach the REST GUI payload

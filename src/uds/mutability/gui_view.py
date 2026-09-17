@@ -62,6 +62,34 @@ SECRET_FIELD_TYPES: typing.Final[frozenset[ui_types.FieldType]] = frozenset(
     {ui_types.FieldType.PASSWORD, ui_types.FieldType.HIDDEN}
 )
 
+# Fixed hint appended to the tooltip of callback-driven fields. The targets
+# of a filler are only known at runtime (each callback result item names the
+# field it fills), so the definition carries the resolver contract and the
+# tool response is the one naming the filled fields.
+_FILLS_TOOLTIP_SUFFIX: typing.Final[str] = (
+    " Its choices are resolved dynamically: call get_gui_field_choices with "
+    "callback_name {name!r} and the current values of the fields {params}; the "
+    "response entries name the field each one fills."
+)
+
+
+def _fills_annotation(gui: ui_types.FieldInfo) -> JsonObject | None:
+    """The ``choices_callback`` annotation of a field, if callback-driven.
+
+    Module gui fields can declare ``fills`` metadata: a named callback plus
+    the fields whose values the callback needs (the administration frontend
+    resolves the choices on demand; agents do it through the
+    ``get_gui_field_choices`` tool).
+    """
+    fills = gui.fills
+    if not fills:
+        return None
+    callback_name = fills.get("callback_name")
+    if not callback_name:
+        return None
+    parameters = list(fills.get("parameters", []))
+    return {"name": callback_name, "parameters": parameters}
+
 
 def mutability_of(element: ui_types.GuiElement) -> FieldMutability | None:
     """The mutability annotation of a gui element, if any.
@@ -155,7 +183,7 @@ def agent_definition(
         "secret": field_type in SECRET_FIELD_TYPES,
     }
     if from_instance is not None:
-        definition["from_instance"] = bool(from_instance(element.name))
+        definition["from_instance"] = from_instance(element.name)
     if gui.required:
         definition["required"] = True
     if gui.readonly:
@@ -176,6 +204,13 @@ def agent_definition(
         definition["choices"] = choices
     if gui.tab:
         definition["tab"] = _text(gui.tab)
+    choices_callback = _fills_annotation(gui)
+    if choices_callback is not None:
+        definition["choices_callback"] = choices_callback
+        definition["tooltip"] = _text(definition["tooltip"]) + _FILLS_TOOLTIP_SUFFIX.format(
+            name=choices_callback["name"],
+            params=", ".join(repr(param) for param in choices_callback["parameters"]) or "(none)",
+        )
     return definition
 
 

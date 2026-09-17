@@ -58,7 +58,7 @@ def _field_info(elements: list[types.ui.GuiElement], field_name: str) -> types.u
 def _fills_dict(info: types.ui.FieldInfo) -> dict[str, typing.Any]:
     fills = info.fills
     if not isinstance(fills, dict):
-        raise AssertionError(f"field has no fills dict (got {fills!r})")
+        raise TypeError(f"field has no fills dict (got {fills!r})")
     return typing.cast("dict[str, typing.Any]", fills)
 
 
