@@ -113,6 +113,102 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, self.etag_fields(for_type))
 
     @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return "Propose creating a server group"
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return "Propose deleting a server group"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return (
+                "Propose creating a NEW server group. The values are the subtype "
+                "(data_type, one of the get_creatable_types listing for kind "
+                "server_group) plus the initial values of the group form fields "
+                "(name, comments, tags and the load calculation weights; use "
+                "get_mutable_fields with for_type to discover them). There is no "
+                "live state to conflict with, so the proposal carries no freshness "
+                "checks, and it does NOT create anything: it is queued until an "
+                "administrator approves it. The real uuid is assigned at execution "
+                "and reported back in the result."
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return (
+                "Propose deleting a server group. The REST refuses the deletion while "
+                "providers/services still reference the group, and UNMANAGED groups "
+                "remove their registered servers along with it — exactly like the "
+                "administration interface. No fields are needed: the group itself is "
+                "the target of the proposal, and any change to it after the proposal "
+                "was taken cuts and denies the flow. The proposal does NOT delete "
+                "anything: it is queued until an administrator approves it."
+            )
+        return self.description
+
+    @typing.override
+    def create_field_definitions(
+        self, for_type: str, target: db_models.Model | None = None
+    ) -> list[JsonObject]:
+        # The creation gui is the same group gui (there is no live
+        # instance): name/comments/tags travel in params, the weights
+        # reach the model through the handler post_save.
+        shim = typing.cast(typing.Any, _Namespace())
+        elements = sorted(ServersGroups.get_gui(shim, for_type), key=lambda element: element.gui.order)
+        columns = frozenset(
+            name for name, _modifier in ServersGroups.parse_save_fields(ServersGroups.FIELDS_TO_SAVE)
+        )
+        return gui_view.agent_definitions(elements, from_instance=lambda name: name not in columns)
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The POST is form-shaped: the flat proposal maps one to one
+        # (weights included, applied post_save). Omitted comments/tags
+        # fall back to empty.
+        values = dict(action.values)
+        params: JsonObject = {
+            "name": values.get("name"),
+            "comments": values.get("comments", ""),
+            "tags": values.get("tags", []),
+            "data_type": self.create_for_type(values),
+        }
+        for name, value in values.items():
+            if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
+                continue
+            params[name] = value
+        name = str(params["name"])
+        response = await RestProxy().execute(
+            RestTarget(ServersGroups, "servers/groups", types.rest.CustomMethodMethod.POST),
+            request,
+            params,
+        )
+        new_uuid: typing.Any = None
+        if isinstance(response, dict):
+            new_uuid = typing.cast("JsonObject", response).get("id")
+        return f'Server group "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the row synchronously (and refuses
+        # while the group is still referenced); UNMANAGED groups take
+        # their servers along, exactly like the administration interface.
+        server_group = typing.cast(
+            models.ServerGroup,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
+        await RestProxy().execute(
+            RestTarget(
+                ServersGroups,
+                "servers/groups",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+            ),
+            request,
+            {},
+        )
+        return f'Server group "{server_group.name}" deleted'
+
+    @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
         # The PUT is form-shaped (the handler requires the whole save set,
         # weights included through post_save): merge the proposal over the

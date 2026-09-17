@@ -194,6 +194,8 @@ class ServiceUpdate(mutability_base.MutableActionType):
     def tool_title(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
             return "Propose creating a service"
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return "Propose deleting a service"
         return self.title
 
     @typing.override
@@ -210,6 +212,16 @@ class ServiceUpdate(mutability_base.MutableActionType):
                 "freshness checks, and it does NOT create anything: it is queued until "
                 "an administrator approves it. The real uuid is assigned at execution "
                 "and reported back in the result."
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return (
+                "Propose deleting a service of a provider. The service stops being "
+                "offered (service pools still using it refuse the deletion at the "
+                "REST handler), like the administration interface does. No fields "
+                "are needed: the service itself is the target of the proposal, and "
+                "any change to it after the proposal was taken cuts and denies the "
+                "flow. The proposal does NOT delete anything: it is queued until an "
+                "administrator approves it."
             )
         return self.description
 
@@ -250,6 +262,30 @@ class ServiceUpdate(mutability_base.MutableActionType):
         if isinstance(response, dict):
             new_uuid = typing.cast("JsonObject", response).get("id")
         return f'Service "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the row synchronously (service pools
+        # referencing the service refuse the deletion at the handler).
+        # ALL the ORM work stays out of the async context.
+        def _resolve() -> tuple[str, str]:
+            service = typing.cast(models.Service, self.resolve_target(action.target_uuid))
+            return service.name, service.provider.uuid
+
+        service_name, provider_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
+        await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+            RestTarget(
+                Services,
+                "providers/{uuid}/services",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+                parent=RestTarget(Providers, "providers"),
+            ),
+            request,
+            {},
+            provider_uuid,
+        )
+        return f'Service "{service_name}" deleted'
 
     # ------------------------------------------------------------ helpers
 

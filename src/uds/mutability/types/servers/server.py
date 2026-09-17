@@ -45,6 +45,9 @@ class ServerUpdate(mutability_base.MutableActionType):
     )
     handler = ServersServers
     target_scoped_fields = True
+    # A creation is a detail of its server group: the proposal targets
+    # the group uuid and MANAGEMENT over it is the create permission.
+    create_needs_parent = True
 
     _MUTABLE_FIELDS: typing.ClassVar[tuple[str, ...]] = ("hostname", "ip", "mac")
 
@@ -141,7 +144,130 @@ class ServerUpdate(mutability_base.MutableActionType):
         )
         return f'Server "{server.hostname}" updated'
 
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return "Propose creating a server"
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return "Propose deleting a server"
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return (
+                "Propose registering a NEW unmanaged server inside a server group "
+                "(hostname, ip and optional mac). Only UNMANAGED groups accept new "
+                "servers this way (managed groups attach already-registered servers "
+                "instead, not supported here). The proposal targets the group uuid, "
+                "and it does NOT create anything: it is queued until an "
+                "administrator approves it. The real uuid is assigned at execution "
+                "and reported back in the result."
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return (
+                "Propose removing a server from its server group. For UNMANAGED "
+                "groups the server record itself is deleted; for managed groups the "
+                "server is just detached from the group (it stays registered), "
+                "exactly like the administration interface. No fields are needed: "
+                "the server itself is the target of the proposal, and any change to "
+                "it after the proposal was taken cuts and denies the flow. The "
+                "proposal does NOT delete anything: it is queued until an "
+                "administrator approves it."
+            )
+        return self.description
+
+    # ----------------------------------------------------- creation hooks
+
+    @typing.override
+    def resolve_create_parent(self, parent_uuid: str) -> db_models.Model:
+        # The container of a server creation is its server group
+        try:
+            return models.ServerGroup.objects.get(uuid__iexact=parent_uuid)
+        except models.ServerGroup.DoesNotExist:
+            raise rest_exceptions.NotFound("Server group not found") from None
+
+    @typing.override
+    def create_field_definitions(
+        self, for_type: str, target: db_models.Model | None = None
+    ) -> list[JsonObject]:
+        # The creation gui is built from the parent group (the target of
+        # the proposal). Only UNMANAGED groups accept new servers through
+        # this verb: managed groups attach existing servers instead, a
+        # different operation with no form fields here (empty surface
+        # rejects any proposal with those groups as container).
+        group = self._require_parent(target)
+        if group.type != types.servers.ServerType.UNMANAGED:
+            return []
+        shim = typing.cast(typing.Any, _Namespace())
+        elements = sorted(ServersServers.get_gui(shim, group, for_type), key=lambda element: element.gui.order)
+        return gui_view.agent_definitions(elements, from_instance=lambda name: name not in self._MUTABLE_FIELDS)
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The POST is form-shaped and requires every field key present
+        # (mac is optional and defaults to empty). ALL the ORM work stays
+        # out of the async context.
+        def _build_params() -> tuple[str, str, JsonObject]:
+            group = typing.cast(models.ServerGroup, self.resolve_create_parent(action.target_uuid))
+            values = dict(action.values)
+            params: JsonObject = {
+                "hostname": values.get("hostname"),
+                "ip": values.get("ip"),
+                "mac": str(values.get("mac", "") or "").strip().upper(),
+            }
+            return str(params["hostname"]), group.uuid, params
+
+        hostname, group_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
+        target = RestTarget(
+            ServersServers,
+            "servers/groups/{uuid}/servers",
+            types.rest.CustomMethodMethod.POST,
+            parent=RestTarget(ServersGroups, "servers/groups"),
+        )
+        # Detail targets need the parent uuid to resolve (and permission
+        # check) the group, so the sync boundary is invoked directly.
+        response = await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+            target, request, params, group_uuid
+        )
+        new_uuid: typing.Any = None
+        if isinstance(response, dict):
+            new_uuid = typing.cast("JsonObject", response).get("id")
+        return f'Server "{hostname}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE detaches the server from its group (deleting
+        # the record for UNMANAGED groups, just the reference for managed
+        # ones). ALL the ORM work must stay out of the async context.
+        def _resolve() -> tuple[str, str]:
+            server = typing.cast(models.Server, self.resolve_target(action.target_uuid))
+            parent_group = self._parent_group(server)
+            if parent_group is None:
+                raise ValueError("Server does not belong to any server group")
+            return server.hostname, parent_group.uuid
+
+        hostname, group_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
+        await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+            RestTarget(
+                ServersServers,
+                "servers/groups/{uuid}/servers",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+                parent=RestTarget(ServersGroups, "servers/groups"),
+            ),
+            request,
+            {},
+            group_uuid,
+        )
+        return f'Server "{hostname}" deleted'
+
     # ------------------------------------------------------------ helpers
+
+    def _require_parent(self, target: db_models.Model | None) -> models.ServerGroup:
+        if target is None:
+            raise ValueError(f"{self.full_id} needs its parent server group for creation")
+        return typing.cast(models.ServerGroup, target)
 
     def _require_target(self, target: db_models.Model | None) -> models.Server:
         if target is None:

@@ -4,9 +4,11 @@ import asyncio
 import typing
 from unittest import mock
 
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.REST.methods.servers_management import ServersGroups, ServersServers
 from uds.core import types
 from uds.mcp.rest_proxy import RestProxy
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.servers import ServerGroupUpdate
 from uds.mutability.types.servers.server import ServerUpdate
 
@@ -24,7 +26,8 @@ class ServerGroupUpdateTypeTest(rest.test.RESTTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.group = create_server_group(num_servers=1)
-        self.action_type = ServerGroupUpdate()
+        # Multi-operation family: bind explicitly (UPDATE execute test)
+        self.action_type = ServerGroupUpdate(ActionOperation.UPDATE)
 
     def _for_type(self) -> str:
         return self.action_type.for_type_of(self.group)
@@ -135,7 +138,8 @@ class ServerUpdateTypeTest(rest.test.RESTTestCase):
         server = self.group.servers.first()
         assert server is not None
         self.server = server
-        self.action_type = ServerUpdate()
+        # Multi-operation family: bind explicitly (UPDATE execute test)
+        self.action_type = ServerUpdate(ActionOperation.UPDATE)
 
     def test_field_definitions_refuse_bare_type(self) -> None:
         self.assertTrue(ServerUpdate.target_scoped_fields)
@@ -209,6 +213,204 @@ class ServerUpdateTypeTest(rest.test.RESTTestCase):
             self.assertIn("mac", params)
 
 
+class ServerGroupCreateDeleteTest(rest.test.RESTTestCase):
+    """server_group.create / server_group.delete: the non-update verbs of the family."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.group = create_server_group(num_servers=1)
+        self.action_type = ServerGroupUpdate()
+
+    def _for_type(self) -> str:
+        return self.action_type.for_type_of(self.group)
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            ServerGroupUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_delete_rides_the_strict_deny_policy(self) -> None:
+        delete = ServerGroupUpdate(ActionOperation.DELETE)
+        self.assertEqual(delete.full_id, "server_group.delete")
+        self.assertEqual(delete.get_stale_policy(), StalePolicy.DENY)
+
+    def test_tool_text_phrases_each_verb(self) -> None:
+        create = ServerGroupUpdate(ActionOperation.CREATE)
+        delete = ServerGroupUpdate(ActionOperation.DELETE)
+        self.assertIn("creating", create.tool_title().lower())
+        self.assertIn("get_creatable_types", create.tool_description())
+        self.assertIn("does NOT create anything", create.tool_description())
+        self.assertIn("deleting", delete.tool_title().lower())
+        self.assertIn("does NOT delete anything", delete.tool_description())
+
+    def test_create_validation_rejects_unknown_fields_and_missing_type(self) -> None:
+        create = ServerGroupUpdate(ActionOperation.CREATE)
+        self.assertEqual(create.create_validate_values(self._for_type(), {"name": "x"}), [])
+        self.assertTrue(create.create_validate_values("", {"name": "x"}))
+        errors = create.create_validate_values(self._for_type(), {"data_type": self._for_type(), "zzz": 1})
+        self.assertEqual(len(errors), 1)
+        self.assertIn("zzz", errors[0])
+        # the reserved key is consumed by the machinery, never "unknown"
+        self.assertNotIn("data_type", errors[0])
+
+    def test_create_execution_posts_the_form_shape(self) -> None:
+        create = ServerGroupUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="server_group.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"data_type": self._for_type(), "name": "new group", "weights_cpu": 40},
+            base_values={},
+            base_etag="",
+        )
+        request = mock.MagicMock()
+        with mock.patch("uds.mutability.types.servers.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "grp-uuid"})
+            summary = asyncio.run(create.execute(action, request))
+            target, called_request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual((target.handler, target.method.value, target.args), (ServersGroups, "POST", ()))
+            self.assertEqual(called_request, request)
+            # Form shape: top-level columns with safe defaults and the
+            # injected subtype
+            self.assertEqual(params["name"], "new group")
+            self.assertEqual(params["comments"], "")
+            self.assertEqual(params["tags"], [])
+            self.assertEqual(params["weights_cpu"], 40)
+            self.assertEqual(params["data_type"], self._for_type())
+        self.assertIn("new group", summary)
+        self.assertIn("grp-uuid", summary)
+
+    def test_delete_execution_sends_canonical_delete(self) -> None:
+        delete = ServerGroupUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="server_group.delete",
+            target_uuid=self.group.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        request = mock.MagicMock()
+        with (
+            mock.patch("uds.mutability.types.servers.RestProxy") as proxy_cls,
+            mock.patch.object(delete, "resolve_target", return_value=self.group),
+        ):
+            proxy_cls.return_value.execute = mock.AsyncMock()
+            summary = asyncio.run(delete.execute(action, request))
+            target, _called_request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (ServersGroups, "DELETE", (self.group.uuid,)),
+            )
+            self.assertEqual(params, {})
+        self.assertIn(self.group.name, summary)
+        self.assertIn("deleted", summary)
+
+
+class ServerCreateDeleteTest(rest.test.RESTTestCase):
+    """server.create / server.delete: detail creation and removal against the parent group."""
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.group = create_server_group(type=types.servers.ServerType.UNMANAGED, num_servers=1)
+        server = self.group.servers.first()
+        assert server is not None
+        self.server = server
+        self.action_type = ServerUpdate(ActionOperation.CREATE)
+
+    def _for_type(self) -> str:
+        return self.action_type.for_type_of(self.server)
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            ServerUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_creation_targets_the_parent_group(self) -> None:
+        self.assertTrue(ServerUpdate.create_needs_parent)
+        self.assertEqual(self.action_type.full_id, "server.create")
+        self.assertEqual(ServerUpdate(ActionOperation.DELETE).full_id, "server.delete")
+
+    def test_create_field_definitions_build_from_parent(self) -> None:
+        defs = self.action_type.create_field_definitions(self._for_type(), self.group)
+        self.assertEqual([d["name"] for d in defs], ["hostname", "ip", "mac"])
+
+    def test_create_field_definitions_refuse_managed_groups(self) -> None:
+        managed_group = create_server_group()  # ServerType.SERVER
+        self.assertEqual(
+            self.action_type.create_field_definitions(
+                self.action_type.for_type_of(managed_group), managed_group
+            ),
+            [],
+        )
+
+    def test_create_validation(self) -> None:
+        self.assertEqual(
+            self.action_type.create_validate_values(
+                self._for_type(), {"hostname": "h", "ip": "1.2.3.4"}, self.group
+            ),
+            [],
+        )
+        errors = self.action_type.create_validate_values(self._for_type(), {"zzz": 1}, self.group)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("zzz", errors[0])
+
+    def test_create_execution_posts_the_detail_with_parent_uuid(self) -> None:
+        action = build_action(
+            action_type="server.create",
+            target_uuid=self.group.uuid,
+            values={"hostname": "new-host", "ip": "10.0.0.9"},
+            base_values={},
+            base_etag="",
+        )
+        request = mock.MagicMock()
+        with mock.patch.object(RestProxy, "_execute_sync") as exec_sync:
+            exec_sync.return_value = {"id": "srv-uuid"}
+            summary = asyncio.run(self.action_type.execute(action, request))
+            exec_sync.assert_called_once()
+            target, called_request, params, parent_uuid = exec_sync.call_args[0]
+            self.assertEqual(target.handler, ServersServers)
+            self.assertEqual(target.parent.handler, ServersGroups)
+            self.assertEqual(target.method.value, "POST")
+            self.assertEqual(target.args, ())
+            self.assertEqual(called_request, request)
+            self.assertEqual(parent_uuid, str(self.group.uuid))
+            # Every key the detail POST reads is present (mac optional,
+            # defaulted to empty)
+            self.assertEqual(params["hostname"], "new-host")
+            self.assertEqual(params["ip"], "10.0.0.9")
+            self.assertEqual(params["mac"], "")
+        self.assertIn("new-host", summary)
+        self.assertIn("srv-uuid", summary)
+
+    def test_delete_execution_detaches_from_the_parent(self) -> None:
+        delete = ServerUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="server.delete",
+            target_uuid=self.server.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        request = mock.MagicMock()
+        with mock.patch.object(RestProxy, "_execute_sync") as exec_sync:
+            exec_sync.return_value = None
+            summary = asyncio.run(delete.execute(action, request))
+            exec_sync.assert_called_once()
+            target, _called_request, params, parent_uuid = exec_sync.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (ServersServers, "DELETE", (self.server.uuid,)),
+            )
+            self.assertEqual(target.parent.handler, ServersGroups)
+            self.assertEqual(params, {})
+            self.assertEqual(parent_uuid, str(self.group.uuid))
+        self.assertIn(self.server.hostname, summary)
+        self.assertIn("deleted", summary)
+
+
 class ServerRegistrationTest(rest.test.RESTTestCase):
     """The registry exposes the new types alongside the existing ones."""
 
@@ -217,3 +419,7 @@ class ServerRegistrationTest(rest.test.RESTTestCase):
 
         self.assertIsNotNone(registry.get("server_group.update"))
         self.assertIsNotNone(registry.get("server.update"))
+        self.assertIsNotNone(registry.get("server_group.create"))
+        self.assertIsNotNone(registry.get("server_group.delete"))
+        self.assertIsNotNone(registry.get("server.create"))
+        self.assertIsNotNone(registry.get("server.delete"))

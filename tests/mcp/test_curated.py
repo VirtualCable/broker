@@ -247,6 +247,12 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         types_list = json.loads(self._result_text(body))
         self.assertIsInstance(types_list, list)
 
+    def test_get_creatable_types_lists_server_group_types(self) -> None:
+        body = self._call("get_creatable_types", {"kind": "server_group"})
+        types_list = json.loads(self._result_text(body))
+        self.assertIsInstance(types_list, list)
+        self.assertTrue(types_list)
+
     def test_get_creatable_types_rejects_unknown_kind(self) -> None:
         body = self._call("get_creatable_types", {"kind": "nope"})
         self.assertEqual(body["error"]["code"], -32602)

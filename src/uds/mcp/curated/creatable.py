@@ -8,11 +8,11 @@ interface shows, through the canonical ``GET {path}/types`` REST
 surface (master handlers and detail handlers alike).
 """
 
-import collections.abc
 import typing
 
 from uds.REST.methods.providers import Providers
 from uds.REST.methods.services import Services
+from uds.REST.methods.servers_management import ServersGroups
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from ..catalog import ToolDefinition
@@ -26,30 +26,32 @@ JsonObject = dict[str, typing.Any]
 _KIND_NEEDS_PARENT: typing.Final[dict[str, bool]] = {
     "provider": False,
     "service": True,
+    "server_group": False,
 }
 
-_KIND_TARGETS: typing.Final[dict[str, collections.abc.Callable[[str], RestTarget]]] = {
-    "provider": lambda _parent: RestTarget(Providers, "providers", GET, args=("types",)),
-    "service": lambda parent: RestTarget(
+_KIND_TARGETS: typing.Final[dict[str, RestTarget]] = {
+    "provider": RestTarget(Providers, "providers", GET, args=("types",)),
+    "service": RestTarget(
         Services,
         "providers/{uuid}/services",
         GET,
         args=("types",),
         parent=RestTarget(Providers, "providers"),
     ),
+    "server_group": RestTarget(ServersGroups, "servers/groups", GET, args=("types",)),
 }
 
 
 async def _executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
     check_required(arguments, ("kind",))
     kind = str(arguments["kind"])
-    builder = _KIND_TARGETS.get(kind)
-    if builder is None:
+    target = _KIND_TARGETS.get(kind)
+    if target is None:
         raise ValueError(f"Unknown kind: {kind} (expected one of {', '.join(sorted(_KIND_TARGETS))})")
     parent = str(arguments.get("parent_uuid", "") or "")
     if _KIND_NEEDS_PARENT[kind]:
         check_required(arguments, ("parent_uuid",))
-    return await RestProxy().execute(builder(parent), request, {}, parent or None)
+    return await RestProxy().execute(target, request, {}, parent or None)
 
 
 def curated_tools() -> tuple[ToolDefinition, ...]:
@@ -69,7 +71,7 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             input_schema=schema(
                 {
                     "kind": string_property(
-                        "Kind of entity to create (provider, service, ...).",
+                        "Kind of entity to create (provider, service, server_group, ...).",
                     ),
                     "parent_uuid": uuid_property(
                         "UUID of the parent item, for kinds created inside a container "

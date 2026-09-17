@@ -134,12 +134,13 @@ class ServiceCreateTest(rest.test.RESTTestCase):
     def test_supported_operations_derive_from_hooks(self) -> None:
         self.assertEqual(
             ServiceUpdate.supported_operations(),
-            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE}),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
         )
 
     def test_creation_targets_the_parent(self) -> None:
         self.assertTrue(ServiceUpdate.create_needs_parent)
         self.assertEqual(self.action_type.full_id, "service.create")
+        self.assertEqual(ServiceUpdate(ActionOperation.DELETE).full_id, "service.delete")
 
     def test_create_field_definitions_build_from_parent(self) -> None:
         defs = self.action_type.create_field_definitions(self.service.data_type, self.provider)
@@ -191,3 +192,29 @@ class ServiceCreateTest(rest.test.RESTTestCase):
             self.assertEqual(params["data_type"], self.service.data_type)
         self.assertIn("new svc", summary)
         self.assertIn("svc-uuid", summary)
+
+    def test_delete_execution_sends_canonical_detail_delete(self) -> None:
+        delete = ServiceUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="service.delete",
+            target_uuid=self.service.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        request = mock.MagicMock()
+        with mock.patch.object(RestProxy, "_execute_sync") as exec_sync:
+            exec_sync.return_value = None
+            summary = asyncio.run(delete.execute(action, request))
+            exec_sync.assert_called_once()
+            target, called_request, params, parent_uuid = exec_sync.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Services, "DELETE", (self.service.uuid,)),
+            )
+            self.assertEqual(target.parent.handler, Providers)
+            self.assertEqual(called_request, request)
+            self.assertEqual(params, {})
+            self.assertEqual(parent_uuid, str(self.provider.uuid))
+        self.assertIn(self.service.name, summary)
+        self.assertIn("deleted", summary)
