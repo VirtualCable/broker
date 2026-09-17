@@ -32,8 +32,9 @@ import typing
 
 from tests.utils.test import UDSTestCase
 from uds.core import types
-from uds.transports.RDPEmbedded.common import RDPTunnelParams
+from uds.transports.RDPEmbedded.common import BaseRDPEmbeddedTransport, RDPTunnelParams
 from uds.transports.RDPEmbedded.direct import RDPEmbeddedTransport
+from uds.transports.RDPEmbedded.tunnel import TRDPEmbeddedTransport
 
 
 def _connection_data(
@@ -204,6 +205,14 @@ class RDPEmbeddedTest(UDSTestCase):
         self.assertEqual(data["password"], "__NO_PASSWORD__")
         self.assertEqual(data["domain"], "UDS")
         self.assertIn("options", data)
+
+    def test_both_transports_expose_every_base_field(self) -> None:
+        """Fields are not inherited into the form: each concrete transport must re-export them."""
+        expected = set(BaseRDPEmbeddedTransport._gui_fields_template)
+
+        for transport_cls in (RDPEmbeddedTransport, TRDPEmbeddedTransport):
+            fields = set(transport_cls(self.create_environment(), None)._gui_fields_template)
+            self.assertEqual(expected - fields, set(), f"{transport_cls.__name__} is missing fields")
 
     def test_tunnel_block_included(self) -> None:
         transport = self._transport()
