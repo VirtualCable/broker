@@ -14,8 +14,15 @@ and ``mfa_data`` are optional (absent on the PUT = keep current).
 they are NOT proposable: they travel as immutable context in every
 payload (the PUT requires them) but the proposal cannot touch them.
 
-The ``groups`` relation (m2m) and the ``token``/``last_access``/``parent``
-columns are NOT part of the mutable surface either.
+The ``token``/``last_access``/``parent`` columns are NOT part of the
+mutable surface.
+
+The ``groups`` membership (m2m) IS part of the surface — on INTERNAL
+authenticators only: external ones sync their users (and their groups)
+from the provider, so there the relation is neither proposable nor part
+of the CAS snapshot (it changes on its own, which would revoke actions
+spuriously). The REST handler mirrors this: it only applies membership
+on internal authenticators, non-child users, and skips meta groups.
 
 ``password`` is write-only: never snapshotted (CAS cannot observe it),
 never sent unless the proposal carries it. The REST handler hashes it.
@@ -52,7 +59,15 @@ _USER_FIELDS: typing.Final[list[str]] = [
     "staff_member",
     "is_admin",
     "mfa_data",
+    "groups",
 ]
+
+
+def _as_uuid_list(value: typing.Any) -> list[str]:
+    """Normalize a proposal value into a uuid list (accepts list or csv)."""
+    if isinstance(value, str):
+        return [v.strip() for v in value.split(",") if v.strip()]
+    return [str(v) for v in value]
 
 
 class UserUpdate(mutability_base.MutableActionType):
@@ -63,10 +78,11 @@ class UserUpdate(mutability_base.MutableActionType):
     description = (
         "Propose changes to an existing user of an authenticator. The proposal does "
         "NOT apply anything: it is queued until an administrator approves it. Mutable "
-        "fields are name (username), real_name, comments, state, mfa_data and "
-        "password (write-only: only sent when proposed, and hashed by the broker). "
-        "The staff/admin privileges cannot be granted through proposals and group "
-        "membership is not part of this proposal."
+        "fields are name (username), real_name, comments, state, mfa_data, password "
+        "(write-only: only sent when proposed, and hashed by the broker) and, on "
+        "internal authenticators only, the group membership (groups, uuid list; "
+        "external ones sync it from the provider). "
+        "The staff/admin privileges cannot be granted through proposals."
     )
     model = models.User
     noun = "User"
@@ -91,6 +107,19 @@ class UserUpdate(mutability_base.MutableActionType):
     @typing.override
     def for_type_of(self, target: db_models.Model) -> str:
         return "user"
+
+    def membership_editable(self, target: db_models.Model | None) -> bool:
+        """Whether the groups membership is part of the surface.
+
+        Only on internal authenticators: external ones sync their users
+        (and their groups) from the provider. Without a target (creation
+        or discovery before choosing one) the field is kept with its
+        own tooltip explaining the restriction.
+        """
+        if target is None:
+            return True
+        user = typing.cast(models.User, target)
+        return not user.manager.get_instance().external_source
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
@@ -130,6 +159,22 @@ class UserUpdate(mutability_base.MutableActionType):
                 "tooltip": "MFA validation data (optional, empty keeps the current one)",
                 "secret": False,
             },
+            *(
+                [
+                    {
+                        "name": "groups",
+                        "type": "text",
+                        "label": "Groups",
+                        "tooltip": "Comma separated uuids of the direct groups the user belongs to "
+                        "(internal authenticators only: external ones sync their membership from "
+                        "the provider; meta groups are ignored). Replaces the current membership, "
+                        "like the administration interface does.",
+                        "secret": False,
+                    }
+                ]
+                if self.membership_editable(target)
+                else []
+            ),
             {
                 "name": "password",
                 "type": "password",
@@ -159,11 +204,18 @@ class UserUpdate(mutability_base.MutableActionType):
                 snapshot[name] = user.is_admin
             elif name == "mfa_data":
                 snapshot[name] = user.mfa_data
+            elif name == "groups":
+                snapshot[name] = [g.uuid for g in user.groups.all()]
         return snapshot
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
-        return list(_USER_FIELDS)
+        # On external authenticators the membership is provider synced:
+        # outside the CAS fingerprint (it drifts on its own)
+        fields = list(_USER_FIELDS)
+        if not self.membership_editable(target):
+            fields.remove("groups")
+        return fields
 
     @typing.override
     def fingerprint(self, target: db_models.Model) -> str:
@@ -186,9 +238,11 @@ class UserUpdate(mutability_base.MutableActionType):
         if self.operation is mutability_base.ActionOperation.CREATE:
             return mutability_verbs.create_tool_description(
                 "user",
-                "name (username), real_name, comments, state, mfa_data and password "
-                "(write-only: hashed on apply). Privileges (staff/admin) are never "
-                "granted from proposals: they always start disabled.",
+                "name (username), real_name, comments, state, mfa_data, password "
+                "(write-only: hashed on apply) and groups (optional uuid list, "
+                "internal authenticators only: external ones sync membership from "
+                "the provider). Privileges (staff/admin) are never granted from "
+                "proposals: they always start disabled.",
                 needs_parent=True,
             )
         if self.operation is mutability_base.ActionOperation.DELETE:
@@ -242,6 +296,10 @@ class UserUpdate(mutability_base.MutableActionType):
                 params["password"] = values["password"]
             if values.get("mfa_data"):
                 params["mfa_data"] = str(values["mfa_data"]).strip()
+            # Membership only applies on internal authenticators (external
+            # ones sync their membership from the provider)
+            if values.get("groups") and not authenticator.get_instance().external_source:
+                params["groups"] = _as_uuid_list(values["groups"])
             return str(params["name"]), authenticator.uuid, params
 
         name, authenticator_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
@@ -283,17 +341,24 @@ class UserUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context, including the
-        # parent lookup (the authenticator FK needs a query)
-        def _resolve() -> tuple[models.User, str]:
+        # ALL the ORM work must stay out of the async context: the target
+        # resolution, the parent lookup (the authenticator FK) AND the
+        # snapshot (the groups m2m needs a query)
+        def _build() -> tuple[str, str, JsonObject]:
             user = typing.cast(models.User, self.resolve_target(action.target_uuid))
-            return user, user.manager.uuid
+            # The users PUT is form-shaped (all listed fields required):
+            # merge the proposal over the CAS-verified current values.
+            params: JsonObject = self.snapshot_values(user, self.etag_fields("user", user))
+            params.update(action.values)
+            # The membership travels as a uuid list on the wire; normalize
+            # csv proposals and keep it internal-authenticators-only
+            if isinstance(params.get("groups"), str):
+                params["groups"] = _as_uuid_list(params["groups"])
+            if not self.membership_editable(user):
+                params.pop("groups", None)
+            return user.name, user.manager.uuid, params
 
-        user, authenticator_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
-        # The users PUT is form-shaped (all listed fields required):
-        # merge the proposal over the CAS-verified current values.
-        params: JsonObject = self.snapshot_values(user, self.etag_fields("user"))
-        params.update(action.values)
+        name, authenticator_uuid, params = await sync_to_async(_build, thread_sensitive=True)()
         target = RestTarget(
             Users,
             "authenticators/{uuid}/users",
@@ -306,4 +371,4 @@ class UserUpdate(mutability_base.MutableActionType):
         await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
             target, request, params, authenticator_uuid
         )
-        return f'User "{user.name}" updated'
+        return f'User "{name}" updated'

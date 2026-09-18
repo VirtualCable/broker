@@ -62,6 +62,13 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
     # the REST PUT expects (e.g. CSV storage -> list)
     snapshot_adapters: typing.ClassVar[dict[str, collections.abc.Callable[[typing.Any], typing.Any]]] = {}
 
+    # Params keys the handler reads that are NOT model columns (m2m
+    # relations riding post_save, e.g. the authenticator "networks").
+    # On creation they travel in params next to the columns instead of
+    # being mistaken for module configuration; on update the snapshot
+    # must resolve them (override snapshot_values for that).
+    extra_params_fields: typing.ClassVar[frozenset[str]] = frozenset()
+
     # ------------------------------------------------------------- hooks
 
     @typing.override
@@ -216,7 +223,7 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
             for name, value in values.items():
                 if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
                     continue
-                if name in columns:
+                if name in columns or name in self.extra_params_fields:
                     params[name] = value
                 else:
                     instance[name] = value

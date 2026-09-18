@@ -234,14 +234,17 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
                             name="mfa_id",
                             label=gettext("MFA Provider"),
                             choices=[ui.gui.choice_item("", str(_("None")))]
-                            + ui.gui.sorted_choices([ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]),
+                            + ui.gui.sorted_choices(
+                                [ui.gui.choice_item(v.uuid, v.name) for v in MFA.objects.all()]
+                            ),
                         )
 
-                    # Mutability overlay: the networks m2m relation and the
-                    # mfa provider reference are not part of the authenticator
-                    # update proposal (managed through their own surfaces)
-                    gui.with_overlay("networks", types.mutability.FieldMutability.hidden())
-                    gui.with_overlay("mfa_id", types.mutability.FieldMutability.hidden())
+                    # The networks m2m relation and the mfa provider
+                    # reference ARE part of the mutability surface: the
+                    # authenticator PUT/POST carries them (networks rides
+                    # post_save, mfa_id is a FIELDS_TO_SAVE column), so
+                    # proposals merge over the CAS-verified current values
+                    # exactly like every other field.
 
                     return gui.build()
 
@@ -352,7 +355,9 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
             return [i.as_dict() for i in itertools.islice(iterable, limit)]
         except Exception:
             logger.exception("Too many results")
-            return [types.auth.SearchResultItem(id=_("Too many results..."), name=_("Refine your query")).as_dict()]
+            return [
+                types.auth.SearchResultItem(id=_("Too many results..."), name=_("Refine your query")).as_dict()
+            ]
             # self.invalidResponseException('{}'.format(e))
 
     # Custom method "users_with_services" method

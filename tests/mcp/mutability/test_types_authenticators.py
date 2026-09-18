@@ -35,15 +35,38 @@ class AuthenticatorUpdateFieldsTest(FlowTestCase):
 
         for name in ("name", "comments", "tags", "priority", "small_name", "state", "net_filtering"):
             self.assertIn(name, by_name)
+        # The networks m2m relation and the mfa reference (uuid or empty)
+        # are part of the surface
+        self.assertIn("networks", by_name)
+        self.assertIn("mfa_id", by_name)
         # InternalDB module fields: unique_by_host/reverse_dns are readonly
         # in the gui (never mutable); accepts_proxy stays proposable
         self.assertNotIn("unique_by_host", by_name)
         self.assertNotIn("reverse_dns", by_name)
         self.assertIn("accepts_proxy", by_name)
         self.assertTrue(by_name["accepts_proxy"]["from_instance"])
-        # m2m relations and FK references are out of the surface
-        self.assertNotIn("networks", by_name)
-        self.assertNotIn("mfa_id", by_name)
+
+    def test_mfa_and_networks_snapshots_track_the_relations(self) -> None:
+        from tests.fixtures.mfas import create_db_mfa
+        from tests.fixtures.networks import create_network
+
+        authenticator = create_db_authenticator()
+        network = create_network()
+        mfa = create_db_mfa()
+        action_type = AuthenticatorUpdate()
+
+        # Empty relations snapshot as empty values (the PUT shape)
+        self.assertEqual(action_type.snapshot_values(authenticator, ["networks"])["networks"], [])
+        self.assertEqual(action_type.snapshot_values(authenticator, ["mfa_id"])["mfa_id"], "")
+
+        authenticator.networks.add(network)
+        authenticator.mfa = mfa
+        authenticator.save(update_fields=["mfa_id"])
+        self.assertEqual(
+            action_type.snapshot_values(authenticator, ["networks"])["networks"],
+            [network.uuid],
+        )
+        self.assertEqual(action_type.snapshot_values(authenticator, ["mfa_id"])["mfa_id"], mfa.uuid)
 
     def test_snapshot_and_fingerprint_track_model_and_instance(self) -> None:
         authenticator = create_db_authenticator()
@@ -87,6 +110,8 @@ class AuthenticatorUpdateExecuteTest(FlowTestCase):
             self.assertIn(name, params)
         self.assertEqual(params["priority"], 9)
         self.assertEqual(params["data_type"], authenticator.data_type)
+        # The relations ride the PUT too (uuid list / uuid or empty)
+        self.assertEqual(params["networks"], [])
 
 
 class AuthenticatorCreateDeleteTest(FlowTestCase):
@@ -135,6 +160,29 @@ class AuthenticatorCreateDeleteTest(FlowTestCase):
             self.assertIsInstance(params["instance"], dict)
         self.assertIn("new auth", summary)
         self.assertIn("auth-uuid", summary)
+
+    def test_create_execution_carries_networks_in_params(self) -> None:
+        authenticator = create_db_authenticator()
+        create = AuthenticatorUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="authenticator.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={
+                "data_type": authenticator.data_type,
+                "name": "networked auth",
+                "networks": ["net-uuid-1", "net-uuid-2"],
+            },
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "auth-uuid"})
+            async_to_sync(create.execute)(action, request=make_request())
+            _target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            # networks travels as a param (post_save reads it there),
+            # never as module configuration
+            self.assertEqual(params["networks"], ["net-uuid-1", "net-uuid-2"])
+            self.assertNotIn("networks", params["instance"])
 
     def test_delete_execution_sends_canonical_delete(self) -> None:
         authenticator = create_db_authenticator()

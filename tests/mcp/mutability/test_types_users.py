@@ -5,13 +5,14 @@ from unittest import mock
 
 from asgiref.sync import async_to_sync
 
+from uds import models
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.authenticators.user import UserUpdate
 from uds.REST.methods.users_groups import Users
 
-from tests.fixtures.authenticators import create_db_authenticator, create_db_users
+from tests.fixtures.authenticators import create_db_authenticator, create_db_groups, create_db_users
 from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
 
@@ -32,7 +33,7 @@ class UserUpdateFieldsTest(FlowTestCase):
         defs = UserUpdate().field_definitions("user")
         by_name = {d["name"]: d for d in defs}
 
-        for name in ("name", "real_name", "comments", "state", "mfa_data", "password"):
+        for name in ("name", "real_name", "comments", "state", "mfa_data", "password", "groups"):
             self.assertIn(name, by_name)
         # Privilege escalation vectors are not proposable
         self.assertNotIn("staff_member", by_name)
@@ -100,8 +101,84 @@ class UserUpdateExecuteTest(FlowTestCase):
         # Privileges travel as immutable context (the PUT requires them)
         self.assertIs(params["staff_member"], user.staff_member)
         self.assertIs(params["is_admin"], user.is_admin)
+        # The membership rides the PUT (current direct groups)
+        self.assertEqual(params["groups"], list(user.groups.values_list("uuid", flat=True)))
         # Parent authenticator derived from the manager FK
         self.assertEqual(execute_sync.call_args[0][3], authenticator.uuid)
+
+    def test_membership_update_normalizes_csv_proposals(self) -> None:
+        authenticator = create_db_authenticator()
+        groups = create_db_groups(authenticator, 2)
+        user = create_db_users(authenticator, 1)[0]
+        action = self._action(
+            self._flow(),
+            action_type="user.update",
+            target_uuid=user.uuid,
+            values={"groups": f"{groups[0].uuid},{groups[1].uuid}"},
+            base_values={"comments": user.comments},
+            base_etag="etag",
+        )
+
+        with mock.patch("uds.mutability.types.authenticators.user.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = "done"
+            async_to_sync(UserUpdate().execute)(action, request=make_request())
+
+        params: dict[str, typing.Any] = execute_sync.call_args[0][2]
+        self.assertEqual(params["groups"], [groups[0].uuid, groups[1].uuid])
+
+
+class ExternalAuthenticatorUserTest(FlowTestCase):
+    """External authenticators sync their users (and groups) from the
+    provider: membership is neither proposable nor part of the CAS."""
+
+    def _external_user(self) -> typing.Any:
+        from types import SimpleNamespace
+
+        authenticator = create_db_authenticator()
+        user = create_db_users(authenticator, 1, groups=create_db_groups(authenticator, 1))[0]
+        patcher = mock.patch.object(
+            models.Authenticator,
+            "get_instance",
+            return_value=SimpleNamespace(external_source=True),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return user
+
+    def test_membership_is_not_proposable_on_external_authenticators(self) -> None:
+        user = self._external_user()
+        action_type = UserUpdate()
+
+        by_name = {d["name"] for d in action_type.field_definitions("user", user)}
+        self.assertNotIn("groups", by_name)
+
+        errors = action_type.validate_values("user", {"groups": ["some-uuid"]}, target=user)
+        self.assertTrue(any("unknown fields" in e for e in errors))
+
+    def test_membership_is_outside_the_cas_on_external_authenticators(self) -> None:
+        user = self._external_user()
+        action_type = UserUpdate()
+
+        self.assertNotIn("groups", action_type.etag_fields("user", user))
+        self.assertNotIn("groups", action_type.snapshot_values(user, action_type.etag_fields("user", user)))
+
+    def test_membership_is_purged_from_the_execution_payload(self) -> None:
+        user = self._external_user()
+        action = self._action(
+            self._flow(),
+            action_type="user.update",
+            target_uuid=user.uuid,
+            values={"groups": ["some-uuid"]},
+            base_values={"comments": user.comments},
+            base_etag="etag",
+        )
+
+        with mock.patch("uds.mutability.types.authenticators.user.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = "done"
+            async_to_sync(UserUpdate().execute)(action, request=make_request())
+
+        params: dict[str, typing.Any] = execute_sync.call_args[0][2]
+        self.assertNotIn("groups", params)
 
 
 class UserCreateDeleteTest(FlowTestCase):

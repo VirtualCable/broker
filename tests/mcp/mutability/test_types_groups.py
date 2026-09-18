@@ -32,8 +32,12 @@ class GroupUpdateFieldsTest(FlowTestCase):
         defs = GroupUpdate().field_definitions("group")
         names = [d["name"] for d in defs]
 
-        # name and type are required context on the PUT but immutable
-        self.assertEqual(names, ["comments", "state", "skip_mfa", "meta_if_any"])
+        # name and type are required context on the PUT but immutable;
+        # groups/pools are the two relations the PUT also carries
+        self.assertEqual(
+            names,
+            ["comments", "state", "skip_mfa", "meta_if_any", "groups", "pools"],
+        )
 
     def test_snapshot_includes_context_and_fingerprint_tracks_changes(self) -> None:
         authenticator = create_db_authenticator()
@@ -86,6 +90,9 @@ class GroupUpdateExecuteTest(FlowTestCase):
         self.assertEqual(params["state"], group.state)
         self.assertIn("skip_mfa", params)
         self.assertIn("meta_if_any", params)
+        # The relations ride the PUT too (empty for a plain group)
+        self.assertEqual(params["groups"], [])
+        self.assertEqual(params["pools"], [])
         # Parent authenticator derived from the manager FK
         self.assertEqual(execute_sync.call_args[0][3], authenticator.uuid)
 
@@ -108,6 +115,33 @@ class GroupUpdateExecuteTest(FlowTestCase):
         params: dict[str, typing.Any] = execute_sync.call_args[0][2]
         self.assertEqual(params["type"], "meta")
         self.assertEqual(params["meta_if_any"], False)
+        self.assertEqual(params["groups"], [])
+
+    def test_meta_members_and_pool_grants_travel_normalized(self) -> None:
+        authenticator = create_db_authenticator()
+        members = create_db_groups(authenticator, 2)
+        meta_group = authenticator.groups.create(name="meta group", is_meta=True, meta_if_any=True)
+        meta_group.groups.set(members)
+        action = self._action(
+            self._flow(),
+            action_type="group.update",
+            target_uuid=meta_group.uuid,
+            values={
+                "groups": f"{members[0].uuid}, {members[1].uuid}",
+                "pools": ["pool-uuid-1"],
+            },
+            base_values={"comments": meta_group.comments},
+            base_etag="etag",
+        )
+
+        with mock.patch("uds.mutability.types.authenticators.group.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = "done"
+            async_to_sync(GroupUpdate().execute)(action, request=make_request())
+
+        params: dict[str, typing.Any] = execute_sync.call_args[0][2]
+        # csv proposals normalize into uuid lists
+        self.assertEqual(params["groups"], [members[0].uuid, members[1].uuid])
+        self.assertEqual(params["pools"], ["pool-uuid-1"])
 
 
 class GroupCreateDeleteTest(FlowTestCase):

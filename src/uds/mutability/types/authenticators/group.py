@@ -13,7 +13,10 @@ sent. On update the handler ignores ``name`` (cannot be renamed) and the
 context in every payload but are not proposable.
 
 The ``groups`` (m2m members of a meta group) and ``pools`` (m2m pool
-grants) relations are NOT part of the mutable surface.
+grants) relations ARE part of the update surface: the PUT merges over
+the CAS-verified current values. The handler only applies members on
+meta groups; pool grants cannot be cleared (an empty list keeps the
+current grants, exactly like the REST handler does).
 """
 
 import collections.abc
@@ -37,7 +40,8 @@ from ...etag import item_etag
 JsonObject = dict[str, typing.Any]
 
 # Snapshot keys: mutable columns plus the immutable context the PUT
-# requires (name, type) but the proposal cannot touch
+# requires (name, type) but the proposal cannot touch, plus the two
+# relations the PUT also carries (meta members and pool grants)
 _GROUP_FIELDS: typing.Final[list[str]] = [
     "name",
     "type",
@@ -45,7 +49,16 @@ _GROUP_FIELDS: typing.Final[list[str]] = [
     "state",
     "skip_mfa",
     "meta_if_any",
+    "groups",
+    "pools",
 ]
+
+
+def _as_uuid_list(value: typing.Any) -> list[str]:
+    """Normalize a proposal value into a uuid list (accepts list or csv)."""
+    if isinstance(value, str):
+        return [v.strip() for v in value.split(",") if v.strip()]
+    return [str(v) for v in value]
 
 
 class GroupUpdate(mutability_base.MutableActionType):
@@ -56,9 +69,10 @@ class GroupUpdate(mutability_base.MutableActionType):
     description = (
         "Propose changes to an existing group of an authenticator. The proposal does "
         "NOT apply anything: it is queued until an administrator approves it. Mutable "
-        "fields are comments, state, skip_mfa and, for meta groups, meta_if_any. The "
-        "group name and its kind (normal/meta) cannot be changed, and membership "
-        "(users of a meta group) or pool grants are not part of this proposal."
+        "fields are comments, state, skip_mfa and, for meta groups, meta_if_any plus "
+        "the member groups. The pool grants (pools, uuid list) can be granted through "
+        "proposals but not cleared (an empty list keeps the current grants). The "
+        "group name and its kind (normal/meta) cannot be changed."
     )
     model = models.Group
     noun = "Group"
@@ -116,6 +130,23 @@ class GroupUpdate(mutability_base.MutableActionType):
                 "group instead of ALL of them (meta groups only)",
                 "secret": False,
             },
+            {
+                "name": "groups",
+                "type": "text",
+                "label": "Member groups",
+                "tooltip": "Comma separated uuids of the member groups, replacing the "
+                "current ones (meta groups only; ignored on normal groups)",
+                "secret": False,
+            },
+            {
+                "name": "pools",
+                "type": "text",
+                "label": "Service pools",
+                "tooltip": "Comma separated uuids of the service pools granted to this "
+                "group, added to the current grants (an empty list keeps them: grants "
+                "cannot be cleared through proposals)",
+                "secret": False,
+            },
         ]
 
     @typing.override
@@ -137,6 +168,10 @@ class GroupUpdate(mutability_base.MutableActionType):
                 snapshot[name] = group.skip_mfa
             elif name == "meta_if_any":
                 snapshot[name] = group.meta_if_any
+            elif name == "groups":
+                snapshot[name] = [g.uuid for g in group.groups.all()]
+            elif name == "pools":
+                snapshot[name] = [p.uuid for p in group.deployedServices.all()]
         return snapshot
 
     @typing.override
@@ -165,8 +200,8 @@ class GroupUpdate(mutability_base.MutableActionType):
             return mutability_verbs.create_tool_description(
                 "group",
                 "name, comments, state, skip_mfa and, for meta groups, is_meta plus "
-                "the member group uuids (groups, comma separated). Pool grants are "
-                "not part of the creation.",
+                "the member group uuids (groups). Pool grants are not part of the "
+                "creation.",
                 needs_parent=True,
             )
         if self.operation is mutability_base.ActionOperation.DELETE:
@@ -200,7 +235,7 @@ class GroupUpdate(mutability_base.MutableActionType):
                 "tooltip": "Name of the group (prefix it with pat: to declare a pattern group)",
                 "secret": False,
             },
-            *self.field_definitions(for_type, None),
+            *[d for d in self.field_definitions(for_type, None) if d["name"] not in ("groups", "pools")],
             {
                 "name": "is_meta",
                 "type": "checkbox",
@@ -245,8 +280,7 @@ class GroupUpdate(mutability_base.MutableActionType):
                 "type": "meta" if is_meta else "normal",
             }
             if is_meta:
-                raw_groups = str(values.get("groups", "") or "")
-                params["groups"] = [g.strip() for g in raw_groups.split(",") if g.strip()]
+                params["groups"] = _as_uuid_list(values.get("groups", []))
             return str(params["name"]), authenticator.uuid, params
 
         name, authenticator_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
@@ -287,18 +321,24 @@ class GroupUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # ORM work must stay out of the async context, including the
-        # parent lookup (the authenticator FK needs a query)
-        def _resolve() -> tuple[models.Group, str]:
+        # ALL the ORM work must stay out of the async context: the target
+        # resolution, the parent lookup (the authenticator FK) AND the
+        # snapshot (members and pools are m2m queries)
+        def _build() -> tuple[str, str, JsonObject]:
             group = typing.cast(models.Group, self.resolve_target(action.target_uuid))
-            return group, group.manager.uuid
+            # The groups PUT is form-shaped (all listed fields required
+            # plus the type marker): merge the proposal over the
+            # CAS-verified current values.
+            params: JsonObject = self.snapshot_values(group, self.etag_fields("group"))
+            params.update(action.values)
+            # The two relations travel as uuid lists on the wire; normalize
+            # csv proposals
+            for key in ("groups", "pools"):
+                if isinstance(params.get(key), str):
+                    params[key] = _as_uuid_list(params[key])
+            return group.name, group.manager.uuid, params
 
-        group, authenticator_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
-        # The groups PUT is form-shaped (all listed fields required plus
-        # the type marker): merge the proposal over the CAS-verified
-        # current values.
-        params: JsonObject = self.snapshot_values(group, self.etag_fields("group"))
-        params.update(action.values)
+        name, authenticator_uuid, params = await sync_to_async(_build, thread_sensitive=True)()
         target = RestTarget(
             Groups,
             "authenticators/{uuid}/groups",
@@ -311,4 +351,4 @@ class GroupUpdate(mutability_base.MutableActionType):
         await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
             target, request, params, authenticator_uuid
         )
-        return f'Group "{group.name}" updated'
+        return f'Group "{name}" updated'
