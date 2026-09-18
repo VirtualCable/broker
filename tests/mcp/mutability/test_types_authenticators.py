@@ -1,16 +1,18 @@
-"""``authenticator.update``: registration, discovery, CAS and execution shape."""
+"""``authenticator.update`` / ``authenticator.create`` / ``.delete``: registration, discovery, CAS and execution shape."""
 
 from unittest import mock
 
 from asgiref.sync import async_to_sync
 
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.authenticators import AuthenticatorUpdate
 from uds.REST.methods.authenticators import Authenticators
 
 from tests.fixtures.authenticators import create_db_authenticator
-from tests.mcp.mutability._helpers import FlowTestCase, make_request
+from tests.mcp.mutability._helpers import FlowTestCase, make_request, build_action
 
 
 class AuthenticatorUpdateRegistryTest(FlowTestCase):
@@ -85,3 +87,73 @@ class AuthenticatorUpdateExecuteTest(FlowTestCase):
             self.assertIn(name, params)
         self.assertEqual(params["priority"], 9)
         self.assertEqual(params["data_type"], authenticator.data_type)
+
+
+class AuthenticatorCreateDeleteTest(FlowTestCase):
+    """authenticator.create / authenticator.delete: the module root verbs."""
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            AuthenticatorUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_delete_rides_the_strict_deny_policy(self) -> None:
+        delete = AuthenticatorUpdate(ActionOperation.DELETE)
+        self.assertEqual(delete.full_id, "authenticator.delete")
+        self.assertEqual(delete.get_stale_policy(), StalePolicy.DENY)
+
+    def test_create_execution_posts_the_module_form_shape(self) -> None:
+        authenticator = create_db_authenticator()
+        create = AuthenticatorUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="authenticator.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={
+                "data_type": authenticator.data_type,
+                "name": "new auth",
+                "priority": 5,
+            },
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "auth-uuid"})
+            summary = async_to_sync(create.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Authenticators, "POST", ()),
+            )
+            # Form shape: top-level columns (defaults included), the module
+            # configuration under instance, subtype injected
+            self.assertEqual(params["name"], "new auth")
+            self.assertEqual(params["comments"], "")
+            self.assertEqual(params["tags"], [])
+            self.assertEqual(params["priority"], 5)
+            self.assertEqual(params["data_type"], authenticator.data_type)
+            self.assertIsInstance(params["instance"], dict)
+        self.assertIn("new auth", summary)
+        self.assertIn("auth-uuid", summary)
+
+    def test_delete_execution_sends_canonical_delete(self) -> None:
+        authenticator = create_db_authenticator()
+        delete = AuthenticatorUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="authenticator.delete",
+            target_uuid=authenticator.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock()
+            summary = async_to_sync(delete.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Authenticators, "DELETE", (authenticator.uuid,)),
+            )
+            self.assertEqual(params, {})
+        self.assertIn(authenticator.name, summary)
+        self.assertIn("deleted", summary)

@@ -35,6 +35,7 @@ from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from ... import base as mutability_base
 from ... import gui_view
+from ... import verbs as mutability_verbs
 from ...etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -193,35 +194,28 @@ class ServiceUpdate(mutability_base.MutableActionType):
     @typing.override
     def tool_title(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return "Propose creating a service"
+            return mutability_verbs.create_tool_title("service")
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return "Propose deleting a service"
+            return mutability_verbs.delete_tool_title("service")
         return self.title
 
     @typing.override
     def tool_description(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return (
-                "Propose creating a NEW service of a provider (target_uuid is the PROVIDER's "
-                "uuid). The values are the subtype (data_type, one of the "
-                "get_creatable_types listing for this provider) plus the initial values "
-                "of the service form fields (name, comments, tags, max_services_count_type "
-                "and the type configuration fields; use get_mutable_fields with this "
-                "action type, the provider uuid and the for_type to discover them). "
-                "There is no live state to conflict with, so the proposal carries no "
-                "freshness checks, and it does NOT create anything: it is queued until "
-                "an administrator approves it. The real uuid is assigned at execution "
-                "and reported back in the result."
+            return mutability_verbs.create_tool_description(
+                "service",
+                "name, comments, tags, max_services_count_type and the type "
+                "configuration fields (discover them with this action type, the "
+                "provider uuid and the for_type)",
+                gallery="service",
+                needs_parent=True,
             )
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return (
-                "Propose deleting a service of a provider. The service stops being "
-                "offered (service pools still using it refuse the deletion at the "
-                "REST handler), like the administration interface does. No fields "
-                "are needed: the service itself is the target of the proposal, and "
-                "any change to it after the proposal was taken cuts and denies the "
-                "flow. The proposal does NOT delete anything: it is queued until an "
-                "administrator approves it."
+            return mutability_verbs.delete_tool_description(
+                "service of a provider",
+                "the service stops being offered (service pools still using it "
+                "refuse the deletion at the REST handler), like the administration "
+                "interface does.",
             )
         return self.description
 
@@ -247,21 +241,18 @@ class ServiceUpdate(mutability_base.MutableActionType):
             return str(params["name"]), str(typing.cast(models.Provider, provider).uuid), params
 
         name, provider_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
-        target = RestTarget(
-            Services,
-            "providers/{uuid}/services",
-            types.rest.CustomMethodMethod.POST,
-            parent=RestTarget(Providers, "providers"),
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(
+                Services,
+                "providers/{uuid}/services",
+                types.rest.CustomMethodMethod.POST,
+                parent=RestTarget(Providers, "providers"),
+            ),
+            request,
+            params,
+            provider_uuid,
         )
-        # Detail targets need the parent uuid to resolve (and permission
-        # check) the provider, so the sync boundary is invoked directly.
-        response = await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
-            target, request, params, provider_uuid
-        )
-        new_uuid: typing.Any = None
-        if isinstance(response, dict):
-            new_uuid = typing.cast("JsonObject", response).get("id")
-        return f'Service "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+        return mutability_verbs.created_message("Service", name, new_uuid)
 
     @typing.override
     async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
@@ -273,7 +264,7 @@ class ServiceUpdate(mutability_base.MutableActionType):
             return service.name, service.provider.uuid
 
         service_name, provider_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
-        await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+        await mutability_verbs.execute_delete(
             RestTarget(
                 Services,
                 "providers/{uuid}/services",
@@ -282,7 +273,6 @@ class ServiceUpdate(mutability_base.MutableActionType):
                 parent=RestTarget(Providers, "providers"),
             ),
             request,
-            {},
             provider_uuid,
         )
         return f'Service "{service_name}" deleted'

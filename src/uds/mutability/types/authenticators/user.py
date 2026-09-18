@@ -36,6 +36,7 @@ from uds.REST.methods.authenticators import Authenticators
 from uds.REST.methods.users_groups import Users
 
 from ... import base as mutability_base
+from ... import verbs as mutability_verbs
 from ...etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -69,6 +70,10 @@ class UserUpdate(mutability_base.MutableActionType):
     )
     model = models.User
     noun = "User"
+    # A creation is a detail of the parent authenticator: the proposal
+    # targets the authenticator uuid and MANAGEMENT over it is the
+    # create permission.
+    create_needs_parent = True
 
     @typing.override
     def permission_target(self, target: db_models.Model) -> db_models.Model:
@@ -167,6 +172,114 @@ class UserUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, fields)
 
     # ---------------------------------------------------------- execution
+
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_title("user")
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_title("user")
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_description(
+                "user",
+                "name (username), real_name, comments, state, mfa_data and password "
+                "(write-only: hashed on apply). Privileges (staff/admin) are never "
+                "granted from proposals: they always start disabled.",
+                needs_parent=True,
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_description(
+                "user of an authenticator",
+                "the user is removed and its active assigned services are "
+                "cancelled, like the administration interface does.",
+            )
+        return self.description
+
+    # ---------------------------------------------------- creation hooks
+
+    @typing.override
+    def resolve_create_parent(self, parent_uuid: str) -> db_models.Model:
+        # The container of a user creation is its authenticator
+        try:
+            return models.Authenticator.objects.get(uuid__iexact=parent_uuid)
+        except models.Authenticator.DoesNotExist:
+            raise rest_exceptions.NotFound("Authenticator not found") from None
+
+    @typing.override
+    def create_validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        # Users have no subtype gallery: the data_type is not required
+        return super().create_validate_values(for_type or "user", values, target)
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The users POST is form-shaped and the basic columns are
+        # required: safe defaults for the ones a proposal omits.
+        # Privileges (staff_member/is_admin) are NEVER granted from a
+        # proposal: they always start disabled, exactly like the handler
+        # forces for non-admin callers. ALL the ORM work stays out of the
+        # async context.
+        def _build_params() -> tuple[str, str, JsonObject]:
+            authenticator = typing.cast(models.Authenticator, self.resolve_create_parent(action.target_uuid))
+            values = dict(action.values)
+            params: JsonObject = {
+                "name": values.get("name"),
+                "real_name": values.get("real_name", ""),
+                "comments": values.get("comments", ""),
+                "state": values.get("state", "A"),
+                "staff_member": False,
+                "is_admin": False,
+            }
+            if values.get("password"):
+                params["password"] = values["password"]
+            if values.get("mfa_data"):
+                params["mfa_data"] = str(values["mfa_data"]).strip()
+            return str(params["name"]), authenticator.uuid, params
+
+        name, authenticator_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(
+                Users,
+                "authenticators/{uuid}/users",
+                types.rest.CustomMethodMethod.POST,
+                parent=RestTarget(Authenticators, "authenticators"),
+            ),
+            request,
+            params,
+            authenticator_uuid,
+        )
+        return mutability_verbs.created_message("User", name, new_uuid)
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the user and cancels its active
+        # assigned services. ALL the ORM work stays out of the async
+        # context, including the parent lookup (the manager FK).
+        def _resolve() -> tuple[str, str]:
+            user = typing.cast(models.User, self.resolve_target(action.target_uuid))
+            return user.name, user.manager.uuid
+
+        name, authenticator_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
+        await mutability_verbs.execute_delete(
+            RestTarget(
+                Users,
+                "authenticators/{uuid}/users",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+                parent=RestTarget(Authenticators, "authenticators"),
+            ),
+            request,
+            authenticator_uuid,
+        )
+        return f'User "{name}" deleted'
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:

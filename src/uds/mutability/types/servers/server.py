@@ -27,6 +27,7 @@ from uds.REST.methods.servers_management import ServersGroups, ServersServers
 
 from ... import base as mutability_base
 from ... import gui_view
+from ... import verbs as mutability_verbs
 from ...etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -147,33 +148,30 @@ class ServerUpdate(mutability_base.MutableActionType):
     @typing.override
     def tool_title(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return "Propose creating a server"
+            return mutability_verbs.create_tool_title("server")
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return "Propose deleting a server"
+            return mutability_verbs.delete_tool_title("server")
         return self.title
 
     @typing.override
     def tool_description(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return (
-                "Propose registering a NEW unmanaged server inside a server group "
-                "(hostname, ip and optional mac). Only UNMANAGED groups accept new "
-                "servers this way (managed groups attach already-registered servers "
-                "instead, not supported here). The proposal targets the group uuid, "
-                "and it does NOT create anything: it is queued until an "
-                "administrator approves it. The real uuid is assigned at execution "
-                "and reported back in the result."
+            return mutability_verbs.create_tool_description(
+                "unmanaged server inside a server group",
+                "hostname, ip and optional mac",
+                needs_parent=True,
+                extra=(
+                    "Only UNMANAGED groups accept new servers this way (managed "
+                    "groups attach already-registered servers instead, not "
+                    "supported here)."
+                ),
             )
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return (
-                "Propose removing a server from its server group. For UNMANAGED "
-                "groups the server record itself is deleted; for managed groups the "
-                "server is just detached from the group (it stays registered), "
-                "exactly like the administration interface. No fields are needed: "
-                "the server itself is the target of the proposal, and any change to "
-                "it after the proposal was taken cuts and denies the flow. The "
-                "proposal does NOT delete anything: it is queued until an "
-                "administrator approves it."
+            return mutability_verbs.delete_tool_description(
+                "server of a server group",
+                "for UNMANAGED groups the server record itself is deleted; for "
+                "managed groups the server is just detached from the group (it "
+                "stays registered), exactly like the administration interface.",
             )
         return self.description
 
@@ -219,21 +217,18 @@ class ServerUpdate(mutability_base.MutableActionType):
             return str(params["hostname"]), group.uuid, params
 
         hostname, group_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
-        target = RestTarget(
-            ServersServers,
-            "servers/groups/{uuid}/servers",
-            types.rest.CustomMethodMethod.POST,
-            parent=RestTarget(ServersGroups, "servers/groups"),
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(
+                ServersServers,
+                "servers/groups/{uuid}/servers",
+                types.rest.CustomMethodMethod.POST,
+                parent=RestTarget(ServersGroups, "servers/groups"),
+            ),
+            request,
+            params,
+            group_uuid,
         )
-        # Detail targets need the parent uuid to resolve (and permission
-        # check) the group, so the sync boundary is invoked directly.
-        response = await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
-            target, request, params, group_uuid
-        )
-        new_uuid: typing.Any = None
-        if isinstance(response, dict):
-            new_uuid = typing.cast("JsonObject", response).get("id")
-        return f'Server "{hostname}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+        return mutability_verbs.created_message("Server", hostname, new_uuid)
 
     @typing.override
     async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
@@ -248,7 +243,7 @@ class ServerUpdate(mutability_base.MutableActionType):
             return server.hostname, parent_group.uuid
 
         hostname, group_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
-        await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+        await mutability_verbs.execute_delete(
             RestTarget(
                 ServersServers,
                 "servers/groups/{uuid}/servers",
@@ -257,7 +252,6 @@ class ServerUpdate(mutability_base.MutableActionType):
                 parent=RestTarget(ServersGroups, "servers/groups"),
             ),
             request,
-            {},
             group_uuid,
         )
         return f'Server "{hostname}" deleted'

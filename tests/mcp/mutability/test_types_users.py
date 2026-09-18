@@ -7,11 +7,12 @@ from asgiref.sync import async_to_sync
 
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.authenticators.user import UserUpdate
 from uds.REST.methods.users_groups import Users
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
-from tests.mcp.mutability._helpers import FlowTestCase, make_request
+from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
 
 class UserUpdateRegistryTest(FlowTestCase):
@@ -101,3 +102,94 @@ class UserUpdateExecuteTest(FlowTestCase):
         self.assertIs(params["is_admin"], user.is_admin)
         # Parent authenticator derived from the manager FK
         self.assertEqual(execute_sync.call_args[0][3], authenticator.uuid)
+
+
+class UserCreateDeleteTest(FlowTestCase):
+    """user.create / user.delete: detail creation and removal."""
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            UserUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_creation_targets_the_parent_authenticator(self) -> None:
+        self.assertTrue(UserUpdate.create_needs_parent)
+        self.assertEqual(UserUpdate(ActionOperation.CREATE).full_id, "user.create")
+        delete = UserUpdate(ActionOperation.DELETE)
+        self.assertEqual(delete.full_id, "user.delete")
+        self.assertEqual(delete.get_stale_policy(), StalePolicy.DENY)
+
+    def test_create_execution_posts_the_detail_with_safe_defaults(self) -> None:
+        authenticator = create_db_authenticator()
+        create = UserUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="user.create",
+            target_uuid=authenticator.uuid,
+            values={"name": "new-user"},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = {"id": "usr-uuid"}
+            summary = async_to_sync(create.execute)(action, request=make_request())
+            target, _request, params, parent_uuid = execute_sync.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Users, "POST", ()),
+            )
+            self.assertEqual(parent_uuid, authenticator.uuid)
+            # The POST requires the basic columns: safe defaults fill the
+            # omitted ones...
+            self.assertEqual(params["name"], "new-user")
+            self.assertEqual(params["real_name"], "")
+            self.assertEqual(params["state"], "A")
+            # ...and privileges NEVER come from a proposal
+            self.assertFalse(params["staff_member"])
+            self.assertFalse(params["is_admin"])
+            # Write-only fields travel only when proposed
+            self.assertNotIn("password", params)
+            self.assertNotIn("mfa_data", params)
+        self.assertIn("new-user", summary)
+        self.assertIn("usr-uuid", summary)
+
+    def test_create_execution_sends_password_only_when_proposed(self) -> None:
+        authenticator = create_db_authenticator()
+        create = UserUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="user.create",
+            target_uuid=authenticator.uuid,
+            values={"name": "with-pass", "password": "s3cr3t", "mfa_data": "  mn  "},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = {"id": "usr-uuid"}
+            async_to_sync(create.execute)(action, request=make_request())
+            params = execute_sync.call_args[0][2]
+            self.assertEqual(params["password"], "s3cr3t")
+            self.assertEqual(params["mfa_data"], "mn")
+
+    def test_delete_execution_removes_with_parent_derived(self) -> None:
+        authenticator = create_db_authenticator()
+        user = create_db_users(authenticator, 1)[0]
+        delete = UserUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="user.delete",
+            target_uuid=user.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = None
+            summary = async_to_sync(delete.execute)(action, request=make_request())
+            target, _request, params, parent_uuid = execute_sync.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Users, "DELETE", (user.uuid,)),
+            )
+            self.assertEqual(params, {})
+            self.assertEqual(parent_uuid, authenticator.uuid)
+        self.assertIn(user.name, summary)
+        self.assertIn("deleted", summary)

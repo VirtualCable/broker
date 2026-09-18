@@ -37,6 +37,7 @@ from uds.REST.model.master import ModelHandler
 
 from .. import base as mutability_base
 from .. import gui_view
+from .. import verbs as mutability_verbs
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -166,3 +167,98 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
             params,
         )
         return f'{self.noun} "{name}" updated'
+
+    # ---------------------------------------------------- creation (root)
+
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_title(self.noun.lower())
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_title(self.noun.lower())
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_description(
+                self.noun.lower(),
+                "the module form fields (model columns and the type configuration "
+                "fields; the declared defaults fill any field the proposal omits)",
+                gallery=self.type_id,
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_description(
+                self.noun.lower(),
+                "the module stops being available (everything still referencing it "
+                "refuses the deletion at the REST handler), like the administration "
+                "interface does.",
+            )
+        return self.description
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The module POST is form-shaped: model columns travel in params
+        # (the handler FIELDS_TO_SAVE), the module configuration under
+        # "instance", and the subtype as data_type. Omitted columns fall
+        # back to the gui default; omitted comments/tags to empty. ALL
+        # the work building the payload (the gui rendering touches the
+        # module environment) must stay out of the async context.
+        def _build_params() -> JsonObject:
+            values = dict(action.values)
+            columns = self.params_columns()
+            params: JsonObject = {
+                "name": values.get("name"),
+                "comments": values.get("comments", ""),
+                "tags": values.get("tags", []),
+            }
+            instance: JsonObject = {}
+            for name, value in values.items():
+                if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
+                    continue
+                if name in columns:
+                    params[name] = value
+                else:
+                    instance[name] = value
+            for_type = self.create_for_type(values)
+            definitions = {d["name"]: d for d in self.create_field_definitions(for_type, None)}
+            for name in columns:
+                if name in params:
+                    continue
+                default = definitions.get(name, {}).get("default")
+                if default is not None:
+                    params[name] = default
+            # Always present (even empty): without it the handler would
+            # fall back to using ALL params as module configuration
+            params["instance"] = instance
+            params["data_type"] = for_type
+            return params
+
+        params = await sync_to_async(_build_params, thread_sensitive=True)()
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(self.handler, self.collection, types.rest.CustomMethodMethod.POST),
+            request,
+            params,
+        )
+        return mutability_verbs.created_message(self.noun, str(params["name"]), new_uuid)
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the row synchronously (refusing while
+        # anything still references the module), exactly like the
+        # administration interface. ALL the ORM work stays out of the
+        # async context.
+        target = typing.cast(
+            models.ManagedObjectModel,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
+        await mutability_verbs.execute_delete(
+            RestTarget(
+                self.handler,
+                self.collection,
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+            ),
+            request,
+        )
+        return f'{self.noun} "{target.name}" deleted'

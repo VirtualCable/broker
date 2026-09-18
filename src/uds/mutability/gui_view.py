@@ -182,6 +182,11 @@ def agent_definition(
         "tooltip": _text((annotation.agent_tooltip if annotation else None) or gui.tooltip),
         "secret": field_type in SECRET_FIELD_TYPES,
     }
+    # The declared default helps agents (and the generic module create)
+    # fill omitted fields with the same value the gui would send
+    default = gui.default() if callable(gui.default) else gui.default
+    if default is not None:
+        definition["default"] = default
     if from_instance is not None:
         definition["from_instance"] = from_instance(element.name)
     if gui.required:

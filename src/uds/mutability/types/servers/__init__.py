@@ -29,6 +29,7 @@ from uds.REST.methods.servers_management import ServersGroups
 
 from ... import base as mutability_base
 from ... import gui_view
+from ... import verbs as mutability_verbs
 from ...etag import item_etag
 
 from . import server as server
@@ -115,34 +116,25 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
     @typing.override
     def tool_title(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return "Propose creating a server group"
+            return mutability_verbs.create_tool_title("server group")
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return "Propose deleting a server group"
+            return mutability_verbs.delete_tool_title("server group")
         return self.title
 
     @typing.override
     def tool_description(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return (
-                "Propose creating a NEW server group. The values are the subtype "
-                "(data_type, one of the get_creatable_types listing for kind "
-                "server_group) plus the initial values of the group form fields "
-                "(name, comments, tags and the load calculation weights; use "
-                "get_mutable_fields with for_type to discover them). There is no "
-                "live state to conflict with, so the proposal carries no freshness "
-                "checks, and it does NOT create anything: it is queued until an "
-                "administrator approves it. The real uuid is assigned at execution "
-                "and reported back in the result."
+            return mutability_verbs.create_tool_description(
+                "server group",
+                "name, comments, tags and the load calculation weights",
+                gallery="server_group",
             )
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return (
-                "Propose deleting a server group. The REST refuses the deletion while "
-                "providers/services still reference the group, and UNMANAGED groups "
-                "remove their registered servers along with it — exactly like the "
-                "administration interface. No fields are needed: the group itself is "
-                "the target of the proposal, and any change to it after the proposal "
-                "was taken cuts and denies the flow. The proposal does NOT delete "
-                "anything: it is queued until an administrator approves it."
+            return mutability_verbs.delete_tool_description(
+                "server group",
+                "the REST refuses the deletion while providers/services still "
+                "reference the group, and UNMANAGED groups remove their registered "
+                "servers along with it — exactly like the administration interface.",
             )
         return self.description
 
@@ -176,16 +168,12 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
             if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
                 continue
             params[name] = value
-        name = str(params["name"])
-        response = await RestProxy().execute(
+        new_uuid = await mutability_verbs.execute_create(
             RestTarget(ServersGroups, "servers/groups", types.rest.CustomMethodMethod.POST),
             request,
             params,
         )
-        new_uuid: typing.Any = None
-        if isinstance(response, dict):
-            new_uuid = typing.cast("JsonObject", response).get("id")
-        return f'Server group "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+        return mutability_verbs.created_message("Server group", str(params["name"]), new_uuid)
 
     @typing.override
     async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
@@ -196,7 +184,7 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
             models.ServerGroup,
             await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
         )
-        await RestProxy().execute(
+        await mutability_verbs.execute_delete(
             RestTarget(
                 ServersGroups,
                 "servers/groups",
@@ -204,7 +192,6 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
                 args=(action.target_uuid,),
             ),
             request,
-            {},
         )
         return f'Server group "{server_group.name}" deleted'
 

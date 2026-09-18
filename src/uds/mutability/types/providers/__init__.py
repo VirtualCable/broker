@@ -35,6 +35,7 @@ from uds.mcp.rest_proxy import RestProxy, RestTarget
 
 from ... import base as mutability_base
 from ... import gui_view
+from ... import verbs as mutability_verbs
 from ...etag import item_etag
 
 from . import service as service
@@ -187,32 +188,24 @@ class ProviderUpdate(mutability_base.MutableActionType):
     @typing.override
     def tool_title(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return "Propose creating a provider"
+            return mutability_verbs.create_tool_title("provider")
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return "Propose deleting a provider"
+            return mutability_verbs.delete_tool_title("provider")
         return self.title
 
     @typing.override
     def tool_description(self) -> str:
         if self.operation is mutability_base.ActionOperation.CREATE:
-            return (
-                "Propose creating a NEW service provider. The values are the subtype "
-                "(data_type, one of the get_creatable_types listing) plus the initial "
-                "values of the provider form fields (name, comments, tags and the type "
-                "configuration fields; use get_mutable_fields with for_type to discover "
-                "them). There is no live state to conflict with, so the proposal carries "
-                "no freshness checks, and it does NOT create anything: it is queued "
-                "until an administrator approves it. The real uuid is assigned at "
-                "execution and reported back in the result."
+            return mutability_verbs.create_tool_description(
+                "service provider",
+                "name, comments, tags and the type configuration fields",
+                gallery="provider",
             )
         if self.operation is mutability_base.ActionOperation.DELETE:
-            return (
-                "Propose deleting a service provider: the provider and ALL its services "
-                "are removed (the services it offers die with it), like the "
-                "administration interface does. No fields are needed: the provider "
-                "itself is the target of the proposal, and any change to it after the "
-                "proposal was taken cuts and denies the flow. The proposal does NOT "
-                "delete anything: it is queued until an administrator approves it."
+            return mutability_verbs.delete_tool_description(
+                "service provider",
+                "the provider and ALL its services are removed (the services it "
+                "offers die with it), like the administration interface does.",
             )
         return self.description
 
@@ -236,16 +229,12 @@ class ProviderUpdate(mutability_base.MutableActionType):
             instance[name] = value
         params["instance"] = instance
         params["data_type"] = self.create_for_type(values)
-        name = str(params["name"])
-        response = await RestProxy().execute(
+        new_uuid = await mutability_verbs.execute_create(
             RestTarget(Providers, "providers", types.rest.CustomMethodMethod.POST),
             request,
             params,
         )
-        new_uuid: typing.Any = None
-        if isinstance(response, dict):
-            new_uuid = typing.cast("JsonObject", response).get("id")
-        return f'Provider "{name}" created' + (f" (uuid {new_uuid})" if new_uuid else "")
+        return mutability_verbs.created_message("Provider", str(params["name"]), new_uuid)
 
     @typing.override
     async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
@@ -256,7 +245,7 @@ class ProviderUpdate(mutability_base.MutableActionType):
             models.Provider,
             await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
         )
-        await RestProxy().execute(
+        await mutability_verbs.execute_delete(
             RestTarget(
                 Providers,
                 "providers",
@@ -264,7 +253,6 @@ class ProviderUpdate(mutability_base.MutableActionType):
                 args=(action.target_uuid,),
             ),
             request,
-            {},
         )
         return f'Provider "{provider.name}" deleted'
 

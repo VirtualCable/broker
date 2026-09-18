@@ -31,6 +31,7 @@ from uds.REST.methods.authenticators import Authenticators
 from uds.REST.methods.users_groups import Groups
 
 from ... import base as mutability_base
+from ... import verbs as mutability_verbs
 from ...etag import item_etag
 
 JsonObject = dict[str, typing.Any]
@@ -61,6 +62,10 @@ class GroupUpdate(mutability_base.MutableActionType):
     )
     model = models.Group
     noun = "Group"
+    # A creation is a detail of the parent authenticator: the proposal
+    # targets the authenticator uuid and MANAGEMENT over it is the
+    # create permission.
+    create_needs_parent = True
 
     @typing.override
     def permission_target(self, target: db_models.Model) -> db_models.Model:
@@ -145,6 +150,140 @@ class GroupUpdate(mutability_base.MutableActionType):
         return item_etag(item_dict, fields)
 
     # ---------------------------------------------------------- execution
+
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_title("group")
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_title("group")
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_description(
+                "group",
+                "name, comments, state, skip_mfa and, for meta groups, is_meta plus "
+                "the member group uuids (groups, comma separated). Pool grants are "
+                "not part of the creation.",
+                needs_parent=True,
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_description(
+                "group of an authenticator",
+                "the group is removed (users keep their other groups), like the administration interface does.",
+            )
+        return self.description
+
+    # ---------------------------------------------------- creation hooks
+
+    @typing.override
+    def resolve_create_parent(self, parent_uuid: str) -> db_models.Model:
+        # The container of a group creation is its authenticator
+        try:
+            return models.Authenticator.objects.get(uuid__iexact=parent_uuid)
+        except models.Authenticator.DoesNotExist:
+            raise rest_exceptions.NotFound("Authenticator not found") from None
+
+    @typing.override
+    def create_field_definitions(
+        self, for_type: str, target: db_models.Model | None = None
+    ) -> list[JsonObject]:
+        # The creation form adds the group name and the kind (normal vs
+        # meta, with its member groups) on top of the update surface
+        return [
+            {
+                "name": "name",
+                "type": "text",
+                "label": "Group name",
+                "tooltip": "Name of the group (prefix it with pat: to declare a pattern group)",
+                "secret": False,
+            },
+            *self.field_definitions(for_type, None),
+            {
+                "name": "is_meta",
+                "type": "checkbox",
+                "label": "Meta group",
+                "tooltip": "Meta groups hold no direct members: they match users through their member groups",
+                "secret": False,
+            },
+            {
+                "name": "groups",
+                "type": "text",
+                "label": "Member groups",
+                "tooltip": "Comma separated uuids of the member groups (meta groups only)",
+                "secret": False,
+            },
+        ]
+
+    @typing.override
+    def create_validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        # Groups have no subtype gallery: the data_type is not required
+        return super().create_validate_values(for_type or "group", values, target)
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The groups POST is form-shaped and requires every basic column
+        # plus the type marker: safe defaults for the ones a proposal
+        # omits. ALL the ORM work stays out of the async context.
+        def _build_params() -> tuple[str, str, JsonObject]:
+            authenticator = typing.cast(models.Authenticator, self.resolve_create_parent(action.target_uuid))
+            values = dict(action.values)
+            is_meta = bool(values.get("is_meta", False))
+            params: JsonObject = {
+                "name": values.get("name"),
+                "comments": values.get("comments", ""),
+                "state": values.get("state", "A"),
+                "skip_mfa": values.get("skip_mfa", False),
+                "meta_if_any": values.get("meta_if_any", False),
+                "type": "meta" if is_meta else "normal",
+            }
+            if is_meta:
+                raw_groups = str(values.get("groups", "") or "")
+                params["groups"] = [g.strip() for g in raw_groups.split(",") if g.strip()]
+            return str(params["name"]), authenticator.uuid, params
+
+        name, authenticator_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(
+                Groups,
+                "authenticators/{uuid}/groups",
+                types.rest.CustomMethodMethod.POST,
+                parent=RestTarget(Authenticators, "authenticators"),
+            ),
+            request,
+            params,
+            authenticator_uuid,
+        )
+        return mutability_verbs.created_message("Group", name, new_uuid)
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the group row. ALL the ORM work stays
+        # out of the async context, including the parent lookup.
+        def _resolve() -> tuple[str, str]:
+            group = typing.cast(models.Group, self.resolve_target(action.target_uuid))
+            return group.name, group.manager.uuid
+
+        name, authenticator_uuid = await sync_to_async(_resolve, thread_sensitive=True)()
+        await mutability_verbs.execute_delete(
+            RestTarget(
+                Groups,
+                "authenticators/{uuid}/groups",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+                parent=RestTarget(Authenticators, "authenticators"),
+            ),
+            request,
+            authenticator_uuid,
+        )
+        return f'Group "{name}" deleted'
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:

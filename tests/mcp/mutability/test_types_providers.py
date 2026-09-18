@@ -194,7 +194,7 @@ class ProviderCreateDeleteTest(rest.test.RESTTestCase):
             base_etag="",
         )
         request = mock.MagicMock()
-        with mock.patch("uds.mutability.types.providers.RestProxy") as proxy_cls:
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "new-uuid"})
             summary = asyncio.run(create.execute(action, request))
             target, called_request, params = proxy_cls.return_value.execute.call_args[0]
@@ -221,7 +221,7 @@ class ProviderCreateDeleteTest(rest.test.RESTTestCase):
         )
         request = mock.MagicMock()
         with (
-            mock.patch("uds.mutability.types.providers.RestProxy") as proxy_cls,
+            mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls,
             mock.patch.object(delete, "resolve_target", return_value=self.provider),
         ):
             proxy_cls.return_value.execute = mock.AsyncMock()

@@ -424,6 +424,14 @@ class MutableActionType(EntityDescriptor):
         """
         op = self.operation
         if op is None:
+            # A persisted action carries its operation in its full type
+            # id (``transport.update``): honor it even when the instance
+            # was not bound (tests, maintenance scripts).
+            try:
+                op = ActionOperation(action.action_type.rsplit(".", 1)[-1])
+            except ValueError:
+                op = None
+        if op is None:
             raise NotImplementedError(f"{self.type_id}: unbound action type (registry bug)")
         hook = _OPERATION_HOOKS.get(op)
         if hook is None:

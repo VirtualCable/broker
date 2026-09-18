@@ -4,13 +4,15 @@ from unittest import mock
 
 from asgiref.sync import async_to_sync
 
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
+from uds.mutability.base import ActionOperation
 from uds.mutability.types.mfa import MFAUpdate
 from uds.REST.methods.mfas import MFA
 
 from tests.fixtures.mfas import create_db_mfa
-from tests.mcp.mutability._helpers import FlowTestCase, make_request
+from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
 
 class MFAUpdateRegistryTest(FlowTestCase):
@@ -80,3 +82,55 @@ class MFAUpdateExecuteTest(FlowTestCase):
         self.assertEqual(params["validity"], 300)
         self.assertEqual(params["remember_device"], 2)
         self.assertEqual(params["data_type"], "testMFA")
+
+
+class MfaCreateDeleteTest(FlowTestCase):
+    """mfa.create / mfa.delete: the module root verbs."""
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            MFAUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_create_execution_posts_the_module_form_shape(self) -> None:
+        # Registers the TestMFA module in the factory (its gui is needed
+        # to build the creation payload)
+        create_db_mfa()
+        create = MFAUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="mfa.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"data_type": "testMFA", "name": "new mfa"},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "mfa-uuid"})
+            summary = async_to_sync(create.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual((target.handler, target.method.value, target.args), (MFA, "POST", ()))
+            self.assertEqual(params["name"], "new mfa")
+            self.assertEqual(params["data_type"], "testMFA")
+            self.assertEqual(params["instance"], {})
+        self.assertIn("new mfa", summary)
+        self.assertIn("mfa-uuid", summary)
+
+    def test_delete_execution_sends_canonical_delete(self) -> None:
+        mfa = create_db_mfa()
+        delete = MFAUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="mfa.delete",
+            target_uuid=mfa.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock()
+            summary = async_to_sync(delete.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual((target.handler, target.method.value, target.args), (MFA, "DELETE", (mfa.uuid,)))
+            self.assertEqual(params, {})
+        self.assertIn(mfa.name, summary)
+        self.assertIn("deleted", summary)

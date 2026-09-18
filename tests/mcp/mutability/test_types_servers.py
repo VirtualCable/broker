@@ -265,7 +265,7 @@ class ServerGroupCreateDeleteTest(rest.test.RESTTestCase):
             base_etag="",
         )
         request = mock.MagicMock()
-        with mock.patch("uds.mutability.types.servers.RestProxy") as proxy_cls:
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
             proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "grp-uuid"})
             summary = asyncio.run(create.execute(action, request))
             target, called_request, params = proxy_cls.return_value.execute.call_args[0]
@@ -292,7 +292,7 @@ class ServerGroupCreateDeleteTest(rest.test.RESTTestCase):
         )
         request = mock.MagicMock()
         with (
-            mock.patch("uds.mutability.types.servers.RestProxy") as proxy_cls,
+            mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls,
             mock.patch.object(delete, "resolve_target", return_value=self.group),
         ):
             proxy_cls.return_value.execute = mock.AsyncMock()
