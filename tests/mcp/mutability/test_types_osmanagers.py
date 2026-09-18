@@ -1,16 +1,18 @@
-"""``osmanager.update``: registration, discovery, CAS and execution shape."""
+"""``osmanager.update`` / ``osmanager.create`` / ``.delete``: registration, discovery, CAS and execution shape."""
 
 from unittest import mock
 
 from asgiref.sync import async_to_sync
 
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.osmanagers import OsManagerUpdate
 from uds.REST.methods.osmanagers import OsManagers
 
 from tests.fixtures.services import create_db_osmanager, ensure_test_modules_registered
-from tests.mcp.mutability._helpers import FlowTestCase, make_request
+from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
 TEST_OSMANAGER_TYPE = "TestOsManager"
 
@@ -89,3 +91,67 @@ class OsManagerUpdateExecuteTest(FlowTestCase):
         self.assertNotIn("on_logout", params)
         self.assertEqual(params["idle"], 600)
         self.assertEqual(params["data_type"], TEST_OSMANAGER_TYPE)
+
+
+class OsManagerCreateDeleteTest(FlowTestCase):
+    """osmanager.create / osmanager.delete: the module root verbs."""
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            OsManagerUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_delete_rides_the_strict_deny_policy(self) -> None:
+        delete = OsManagerUpdate(ActionOperation.DELETE)
+        self.assertEqual(delete.full_id, "osmanager.delete")
+        self.assertEqual(delete.get_stale_policy(), StalePolicy.DENY)
+
+    def test_create_execution_posts_the_module_form_shape(self) -> None:
+        # Registers the TestOsManager module in the factory (its gui is
+        # needed to build the creation payload)
+        ensure_test_modules_registered()
+        create = OsManagerUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="osmanager.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"data_type": TEST_OSMANAGER_TYPE, "name": "new osm", "idle": 600},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "osm-uuid"})
+            summary = async_to_sync(create.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual((target.handler, target.method.value, target.args), (OsManagers, "POST", ()))
+            # Form shape: the handler columns top-level, the module
+            # configuration under instance, the subtype injected
+            self.assertEqual(params["name"], "new osm")
+            self.assertEqual(params["comments"], "")
+            self.assertEqual(params["tags"], [])
+            self.assertEqual(params["data_type"], TEST_OSMANAGER_TYPE)
+            self.assertEqual(params["instance"], {"idle": 600})
+        self.assertIn("new osm", summary)
+        self.assertIn("osm-uuid", summary)
+
+    def test_delete_execution_sends_canonical_delete(self) -> None:
+        osmanager = create_db_osmanager()
+        delete = OsManagerUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="osmanager.delete",
+            target_uuid=osmanager.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock()
+            summary = async_to_sync(delete.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (OsManagers, "DELETE", (osmanager.uuid,)),
+            )
+            self.assertEqual(params, {})
+        self.assertIn(osmanager.name, summary)
+        self.assertIn("deleted", summary)

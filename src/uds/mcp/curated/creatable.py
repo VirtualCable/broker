@@ -12,6 +12,7 @@ import typing
 
 from uds.REST.methods.authenticators import Authenticators
 from uds.REST.methods.mfas import MFA
+from uds.REST.methods.osmanagers import OsManagers
 from uds.REST.methods.providers import Providers
 from uds.REST.methods.services import Services
 from uds.REST.methods.servers_management import ServersGroups
@@ -31,6 +32,7 @@ _KIND_NEEDS_PARENT: typing.Final[dict[str, bool]] = {
     "server_group": False,
     "authenticator": False,
     "mfa": False,
+    "osmanager": False,
 }
 
 _KIND_TARGETS: typing.Final[dict[str, RestTarget]] = {
@@ -45,6 +47,7 @@ _KIND_TARGETS: typing.Final[dict[str, RestTarget]] = {
     "server_group": RestTarget(ServersGroups, "servers/groups", GET, args=("types",)),
     "authenticator": RestTarget(Authenticators, "authenticators", GET, args=("types",)),
     "mfa": RestTarget(MFA, "mfa", GET, args=("types",)),
+    "osmanager": RestTarget(OsManagers, "osmanagers", GET, args=("types",)),
 }
 
 

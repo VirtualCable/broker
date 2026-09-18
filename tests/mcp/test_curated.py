@@ -255,6 +255,14 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         self.assertIsInstance(types_list, list)
         self.assertTrue(types_list)
 
+    def test_get_creatable_types_lists_osmanager_types(self) -> None:
+        from tests.fixtures.services import ensure_test_modules_registered
+
+        ensure_test_modules_registered()
+        body = self._call("get_creatable_types", {"kind": "osmanager"})
+        types_list = json.loads(self._result_text(body))
+        self.assertTrue(any(t.get("type") == "TestOsManager" for t in types_list))
+
     def test_get_creatable_types_rejects_unknown_kind(self) -> None:
         body = self._call("get_creatable_types", {"kind": "nope"})
         self.assertEqual(body["error"]["code"], -32602)

@@ -32,6 +32,8 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_account_update",
     "propose_transport_update",
     "propose_osmanager_update",
+    "propose_osmanager_create",
+    "propose_osmanager_delete",
     "propose_mfa_update",
     "propose_notifier_update",
     "propose_authenticator_update",
