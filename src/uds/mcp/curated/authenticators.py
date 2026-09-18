@@ -19,7 +19,13 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
         master_custom_tool(
             name="search_authenticator",
             title="Search authenticator users or groups",
-            description="Search users or groups of an authenticator by name or identifier.",
+            description=(
+                "Search users or groups of an authenticator by name or identifier. "
+                "Only some authenticators provide this provider-side lookup "
+                "(the external ones: the users/groups live in the provider and "
+                "may not be synchronized yet); for internal authenticators use "
+                "the regular user/group listings with a filter instead."
+            ),
             handler=Authenticators,
             path="authenticators",
             custom_name="search",
@@ -27,7 +33,11 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             extra_properties={
                 "type": string_property("What to search for: user or group."),
                 "term": string_property("Search text to match against user or group names."),
-                "limit": {"type": "integer", "description": "Maximum number of results. Default: 50.", "minimum": 1},
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of results. Default: 50.",
+                    "minimum": 1,
+                },
             },
             extra_required=("type", "term"),
             access="Available to authenticated UDS users with read permission on the authenticator.",

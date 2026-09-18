@@ -7,7 +7,7 @@ from asgiref.sync import sync_to_async
 from uds.core import consts
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.REST.handlers import Handler
-from uds.REST.methods.authenticators import Authenticators, Users
+from uds.REST.methods.authenticators import Authenticators, Groups, Users
 from uds.REST.methods.logs import Logs
 from uds.REST.methods.meta_pools import MetaPools
 from uds.REST.methods.meta_service_pools import MetaServicesPool
@@ -48,8 +48,15 @@ def _item_logs_tool() -> ToolDefinition:
             target = RestTarget(Providers, "providers", GET, args=(str(arguments["uuid"]), consts.rest.LOG))
             return await RestProxy().execute(target, request, {})
 
+        if collection == "authenticator":
+            target = RestTarget(
+                Authenticators, "authenticators", GET, args=(str(arguments["uuid"]), consts.rest.LOG)
+            )
+            return await RestProxy().execute(target, request, {})
+
         details: dict[str, tuple[type[Handler], str, type[Handler], str]] = {
             "user": (Users, "authenticators/{uuid}/users", Authenticators, "authenticators"),
+            "group": (Groups, "authenticators/{uuid}/groups", Authenticators, "authenticators"),
             "service": (Services, "providers/{uuid}/services", Providers, "providers"),
             "meta_pool_member": (MetaServicesPool, "metapools/{uuid}/services", MetaPools, "metapools"),
             "assigned_service": (
@@ -61,7 +68,8 @@ def _item_logs_tool() -> ToolDefinition:
         }
         if collection not in details:
             raise ValueError(
-                f"Unknown collection: {collection} (expected one of provider, service_pool, user, service, meta_pool_member, assigned_service)"
+                f"Unknown collection: {collection} (expected one of provider, service_pool, "
+                "authenticator, user, group, service, meta_pool_member, assigned_service)"
             )
         if not isinstance(item_id, str) or not item_id:
             raise ValueError(f"item_id is required for collection {collection}")
@@ -84,17 +92,18 @@ def _item_logs_tool() -> ToolDefinition:
         description=(
             "Read the UDS log trail of one object. Use ``collection`` to select what "
             "the ``uuid`` refers to: ``provider`` (the provider itself), ``service_pool`` "
-            "(the pool itself), ``user`` (a user of an authenticator, requires "
-            "``item_id``), ``service`` (a service of a provider, requires ``item_id``), "
-            "``meta_pool_member`` (a pool member of a meta pool, requires ``item_id``) "
-            "or ``assigned_service`` (a deployed service of a pool, requires "
-            "``item_id``)."
+            "(the pool itself), ``authenticator`` (the authenticator itself), ``user`` "
+            "(a user of an authenticator, requires ``item_id``), ``group`` (a group of "
+            "an authenticator, requires ``item_id``), ``service`` (a service of a "
+            "provider, requires ``item_id``), ``meta_pool_member`` (a pool member of a "
+            "meta pool, requires ``item_id``) or ``assigned_service`` (a deployed "
+            "service of a pool, requires ``item_id``)."
         ),
         input_schema=schema(
             {
                 "collection": string_property(
-                    "What the logs belong to: provider, service_pool, user, service, "
-                    "meta_pool_member or assigned_service."
+                    "What the logs belong to: provider, service_pool, authenticator, "
+                    "user, group, service, meta_pool_member or assigned_service."
                 ),
                 "uuid": uuid_property(
                     "UUID of the object: the provider or pool for provider/service_pool, "
@@ -102,7 +111,8 @@ def _item_logs_tool() -> ToolDefinition:
                     "for the rest."
                 ),
                 "item_id": string_property(
-                    "Id or uuid of the detail item; required for every collection except service_pool."
+                    "Id or uuid of the detail item; required for every collection except "
+                    "service_pool and authenticator."
                 ),
             },
             ("collection", "uuid"),

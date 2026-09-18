@@ -264,6 +264,20 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         body = self._call("get_item_logs", {"collection": "service_pool", "uuid": pool.uuid})
         self.assertIsInstance(json.loads(self._result_text(body)), list)
 
+    def test_get_item_logs_for_an_authenticator(self) -> None:
+        body = self._call("get_item_logs", {"collection": "authenticator", "uuid": self.auth.uuid})
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_item_logs_for_a_group(self) -> None:
+        from tests.fixtures.authenticators import create_db_groups
+
+        group = create_db_groups(self.auth, 1)[0]
+        body = self._call(
+            "get_item_logs",
+            {"collection": "group", "uuid": self.auth.uuid, "item_id": group.uuid},
+        )
+        self.assertIsInstance(json.loads(self._result_text(body)), list)
+
     def test_get_item_logs_requires_item_id_for_detail_collections(self) -> None:
         body = self._call("get_item_logs", {"collection": "user", "uuid": self.auth.uuid})
         self.assertEqual(body["error"]["code"], -32602)

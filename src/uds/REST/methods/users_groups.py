@@ -403,9 +403,23 @@ class Users(DetailHandler[UserItem]):
     def add_to_group(self, parent: "Authenticator", item: str) -> dict[str, str]:
         uuid = process_uuid(item)
         user = parent.users.get(uuid=process_uuid(uuid))
+        # On external authenticators the membership is synced from the
+        # provider (on edit and on login), so a manual addition would
+        # not survive the next refresh
+        if parent.get_instance().external_source:
+            raise exceptions.rest.NotSupportedError(
+                _(
+                    "Cannot add users to groups of an external authenticator: membership is synced from the provider"
+                )
+            )
         group = parent.groups.get(uuid=process_uuid(self._params["group"]))
         user.log(
             f"Added to group {group.name} by {self._user.pretty_name}",
+            types.log.LogLevel.INFO,
+            types.log.LogSource.REST,
+        )
+        group.log(
+            f"Added user {user.name} by {self._user.pretty_name}",
             types.log.LogLevel.INFO,
             types.log.LogSource.REST,
         )
@@ -528,6 +542,20 @@ class Groups(DetailHandler[GroupItem]):
         return [self.as_group_item(i) for i in q]
 
     @typing.override
+    def get_logs(self, parent: "Model", item: str) -> list[typing.Any]:
+        parent = ensure.is_instance(parent, Authenticator)
+        db_grp = None
+        try:
+            db_grp = parent.groups.get(uuid=process_uuid(item))
+        except Group.DoesNotExist:
+            raise exceptions.rest.NotFound(_("Group not found")) from None
+        except Exception as e:
+            logger.error("Error getting group %s: %s", item, e)
+            raise exceptions.rest.ResponseError(_("Error getting group")) from e
+
+        return log.get_logs(db_grp)
+
+    @typing.override
     def get_item(self, parent: "Model", item: str) -> "GroupItem":
         parent = ensure.is_instance(parent, Authenticator)
         db_grp = parent.groups.filter(uuid=process_uuid(item)).first()
@@ -596,6 +624,11 @@ class Groups(DetailHandler[GroupItem]):
             is_pattern = fields.get("name", "").find("pat:") == 0
             auth = parent.get_instance()
             to_save: dict[str, typing.Any] = {}
+            # Previous values, filled on the update branch to report what
+            # the save actually changed on the group trail
+            prev_columns: dict[str, typing.Any] = {}
+            prev_members: set[str] = set()
+            prev_pools: set[str] = set()
             if not item:  # Create new
                 if not is_meta and not is_pattern and not skip_check:
                     auth.create_group(
@@ -618,6 +651,11 @@ class Groups(DetailHandler[GroupItem]):
                 to_save["skip_mfa"] = fields["skip_mfa"]
 
                 group = parent.groups.get(uuid=process_uuid(item))
+                # Snapshot the current values to report what the save
+                # actually changed on the group trail
+                prev_columns = {k: getattr(group, k) for k in ("comments", "state", "skip_mfa", "meta_if_any")}
+                prev_members = set(group.groups.values_list("uuid", flat=True))
+                prev_pools = set(group.deployedServices.values_list("uuid", flat=True))
                 typing.cast(dict[str, typing.Any], group.__dict__).update(  # pyrefly: ignore[redundant-cast]
                     to_save
                 )
@@ -633,6 +671,29 @@ class Groups(DetailHandler[GroupItem]):
                 group.deployedServices.set(ServicePool.objects.filter(uuid__in=pools))
 
             group.save()
+            if not item:
+                kind = "meta" if is_meta else ("pattern" if is_pattern else "normal")
+                group.log(
+                    f"Created {kind} group {group.name} by {self._user.pretty_name}",
+                    types.log.LogLevel.INFO,
+                    types.log.LogSource.ADMIN,
+                )
+            else:
+                changes: list[str] = []
+                changed_columns = [k for k, v in prev_columns.items() if getattr(group, k) != v]
+                if changed_columns:
+                    changes.append("changed " + ", ".join(changed_columns))
+                new_members = set(group.groups.values_list("uuid", flat=True))
+                if is_meta and new_members != prev_members:
+                    changes.append(f"members updated ({len(new_members)})")
+                new_pools = set(group.deployedServices.values_list("uuid", flat=True))
+                if new_pools != prev_pools:
+                    changes.append(f"pool grants updated ({len(new_pools)})")
+                message = f"Modified group {group.name} by {self._user.pretty_name}"
+                if changes:
+                    message += ": " + "; ".join(changes)
+                group.log(message, types.log.LogLevel.INFO, types.log.LogSource.ADMIN)
+
             return {"id": group.uuid}
         except Group.DoesNotExist:
             raise exceptions.rest.NotFound(_("Group not found")) from None
@@ -651,7 +712,14 @@ class Groups(DetailHandler[GroupItem]):
         parent = ensure.is_instance(parent, Authenticator)
         try:
             group = parent.groups.get(uuid=item)
-
+            # The group trail dies with the row (pre_delete clears its
+            # logs), so the deletion is recorded on the authenticator
+            log.log(
+                parent,
+                types.log.LogLevel.INFO,
+                f"Deleted group {group.name} by {self._user.pretty_name}",
+                types.log.LogSource.ADMIN,
+            )
             group.delete()
         except exceptions.rest.NotFound:
             raise exceptions.rest.NotFound(_("Group not found")) from None

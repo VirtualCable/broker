@@ -34,6 +34,7 @@ import typing
 
 from django.db import models
 
+from uds.core import types
 from uds.core.types.states import State
 from uds.core.util import log
 
@@ -103,6 +104,15 @@ class Group(UUIDModel):
         :note: The returned value is an instance of the authenticator class used to manage this user, not a db record.
         """
         return self.manager.get_instance()
+
+    # Utility for logging
+    def log(
+        self,
+        message: str,
+        level: types.log.LogLevel = types.log.LogLevel.INFO,
+        source: types.log.LogSource = types.log.LogSource.INTERNAL,
+    ) -> None:
+        log.log(self, level, message, source)
 
     def __str__(self) -> str:
         if self.is_meta:
