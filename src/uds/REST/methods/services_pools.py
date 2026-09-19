@@ -556,18 +556,19 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             )
             .add_image_choice()
             # Mutability overlays: the reference columns travel on every
-            # form-shaped payload the pool PUT requires but are not
-            # proposable changes on update (they are identity/selection,
-            # fixed at creation). Marked ``context`` (not ``hidden``) so
-            # the creation view offers them: on creation references are
-            # selected, not changed, exactly like the admin form does
-            # (which unlocks every readonly field on "new"). The base
-            # service and the OS manager reach the same view through the
-            # readonly flag (the creation view unlocks it too; the
-            # update view keeps them out and the REST side enforces it).
-            # ``publish_on_save`` stays hidden: it is a create-time
-            # operator convenience (publishing is its own operation), so
-            # it belongs to no agent payload at all.
+            # form-shaped payload the pool PUT requires. The icon image is
+            # creation-only context (the gui unlocks it on "new" so the
+            # creation view offers it; the update view keeps it out). The
+            # base service and the OS manager stay out of the update view
+            # through the readonly flag (the creation view unlocks them
+            # too; the REST side refuses any change). ``publish_on_save``
+            # stays hidden: it is a create-time operator convenience
+            # (publishing is its own operation), so it belongs to no agent
+            # payload at all. The pool group, by contrast, is a pure
+            # display classification over a nullable SET_NULL fk, exactly
+            # like the icon of a pool group itself: the administrator can
+            # reclassify or unclassify a pool at any time, so the agent
+            # surface proposes it on update too (""/"-1" clear it).
             .with_overlay(
                 "image_id",
                 types.mutability.FieldMutability.context(
@@ -584,10 +585,8 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             )
             .with_overlay(
                 "pool_group_id",
-                types.mutability.FieldMutability.context(
-                    agent_tooltip=gettext(
-                        "Pool group for display classification (reference, fixed at creation)"
-                    )
+                types.mutability.FieldMutability.proposable(
+                    agent_tooltip=gettext("Pool group for display classification ('-1' or empty for no group)")
                 ),
             )
             .add_text(

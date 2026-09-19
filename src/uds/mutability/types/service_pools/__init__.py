@@ -3,10 +3,12 @@
 Top level resource with a static gui (no module instance): the mutable
 surface is model columns only. Publications, assignments and calendar
 associations are *operations*, never fields. On ``update`` the base
-service, OS manager, image, pool group and account are identity/reference
-columns and are NOT proposable — but they travel as immutable context in
-every payload, because the pool PUT is form-shaped and requires them (and
-``pre_save`` resolves the base service from its uuid).
+service, OS manager, image and account are identity/reference columns
+and are NOT proposable — they travel as immutable context in every
+payload, because the pool PUT is form-shaped and requires them (and
+``pre_save`` resolves the base service from its uuid). The pool group,
+by contrast, is a nullable SET_NULL display classification: the agent
+proposes it like any plain field (empty/``-1`` unclassifies the pool).
 
 The readonly gui fields (``service_id``, ``osmanager_id``,
 ``publish_on_save``, ``account_id``) are additionally enforced by the
@@ -82,10 +84,11 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         "are name, short_name, comments, tags, cache sizes (initial_srvs, "
         "cache_l1_srvs, cache_l2_srvs, max_srvs), visibility and user permissions "
         "(visible, show_transports, allow_users_remove, allow_users_reset, "
-        "ignores_unused) and messages (calendar_message, custom_message, "
-        "display_custom_message). The base service, OS manager, image, pool group "
-        "and account cannot be changed, and publications/assignments are "
-        "operations outside this proposal."
+        "ignores_unused), messages (calendar_message, custom_message, "
+        "display_custom_message) and pool_group_id (display classification; '-1' "
+        "or empty unclassifies the pool). The base service, OS manager, image and "
+        "account cannot be changed, and publications/assignments are operations "
+        "outside this proposal."
     )
     handler = ServicesPools
     model = models.ServicePool
@@ -214,9 +217,9 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
             return self.create_field_definitions(for_type, target)
         # Agent view derived from the handler gui. What the gui marks
         # readonly (base service, os manager, account) or hides through the
-        # mutability overlay (image, pool group, publish_on_save) is not
-        # proposable: those are reference columns, and publishing is an
-        # operation, not a field
+        # mutability overlay (publish_on_save) is not proposable, and
+        # neither is the image (context: identity reference, fixed at
+        # creation); publishing is an operation, not a field
         columns = frozenset(
             name for name, _modifier in ServicesPools.parse_save_fields(ServicesPools.FIELDS_TO_SAVE)
         )

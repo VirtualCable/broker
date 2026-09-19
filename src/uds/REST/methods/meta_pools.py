@@ -279,9 +279,14 @@ class MetaPools(ModelHandler[MetaPoolItem]):
                 ],
                 tooltip=gettext("Transport selection policy"),
             )
-            # Mutability overlay: the image and pool group travel on every
-            # payload the meta pool PUT requires but are not proposable
-            # changes (moved through their own dedicated surfaces).
+            # Mutability overlays: the references travel on every payload
+            # the meta pool PUT requires. The icon image is creation-only
+            # context (the creation view unlocks it, the update view keeps
+            # it out). The pool group is a pure display classification
+            # over a nullable SET_NULL fk, like the icon of a pool group
+            # itself: the administrator can reclassify a meta pool at any
+            # time, so the agent surface proposes it on update too
+            # (""/"-1" clear it). The member relation has its own verbs.
             .with_overlay(
                 "image_id",
                 types.mutability.FieldMutability.context(
@@ -290,8 +295,8 @@ class MetaPools(ModelHandler[MetaPoolItem]):
             )
             .with_overlay(
                 "servicesPoolGroup_id",
-                types.mutability.FieldMutability.context(
-                    agent_tooltip=gettext("Pool group for display classification (reference, not proposable)")
+                types.mutability.FieldMutability.proposable(
+                    agent_tooltip=gettext("Pool group for display classification ('-1' or empty for no group)")
                 ),
             )
             .build()

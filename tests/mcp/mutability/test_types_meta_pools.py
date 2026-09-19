@@ -82,9 +82,12 @@ class MetaPoolUpdateFieldsTest(FlowTestCase):
             "calendar_message",
         ):
             self.assertIn(name, by_name)
-        # References and relations are not proposable
-        for name in ("image_id", "servicesPoolGroup_id", "members"):
+        # The image reference and the member relation are not proposable;
+        # the pool group is a SET_NULL display classification and joins
+        # the update surface ("-1"/empty unclassifies the meta pool)
+        for name in ("image_id", "members"):
             self.assertNotIn(name, by_name)
+        self.assertIn("servicesPoolGroup_id", by_name)
 
         # Choices come straight from the gui and carry the human labels the
         # admin sees (option A of the gui coupling: no re-typed enum ids)

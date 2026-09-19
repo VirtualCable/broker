@@ -34,6 +34,7 @@ import logging
 import typing
 
 from django.db.models import Model
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from uds.core import types
@@ -102,9 +103,16 @@ class ServicesPoolGroups(ModelHandler[ServicePoolGroupItem]):
             .add_stock_field(types.rest.stock.StockField.PRIORITY)
             .new_tab(types.ui.Tab.DISPLAY)
             .add_image_choice()
-            # Mutability overlay: the image is a foreign key to an uploaded
-            # binary, not something the agent surface can propose
-            .with_overlay("image_id", types.mutability.FieldMutability.hidden())
+            # Mutability overlay: the image is a nullable SET_NULL foreign
+            # key to an uploaded icon, exactly like the pool group of a
+            # pool: the agent can select, change or clear it ("-1" is the
+            # picker's own "no image" option the gui itself offers)
+            .with_overlay(
+                "image_id",
+                types.mutability.FieldMutability.proposable(
+                    agent_tooltip=gettext("Icon image of the pool group ('-1' for no image)")
+                ),
+            )
             .build()
         )
 

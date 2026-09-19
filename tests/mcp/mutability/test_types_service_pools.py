@@ -85,6 +85,10 @@ class ServicePoolUpdateFieldsTest(FlowTestCase):
             "calendar_message",
             "custom_message",
             "display_custom_message",
+            # the pool group is a SET_NULL display classification, not an
+            # identity reference: it joins the update surface like a plain
+            # field ("-1"/empty unclassifies the pool)
+            "pool_group_id",
         ):
             self.assertIn(name, names)
         # The agent view is derived from the handler gui: the taglist is
@@ -97,7 +101,6 @@ class ServicePoolUpdateFieldsTest(FlowTestCase):
             "service_id",
             "osmanager_id",
             "image_id",
-            "pool_group_id",
             "account_id",
             "publish_on_save",
         ):

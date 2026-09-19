@@ -3,16 +3,17 @@
 Top level resource with a static gui (no module instance). Since the
 gui-coupling trial, ``metapool.update`` derives its mutable surface from
 ``MetaPools.get_gui`` itself (the same definitions the admin form uses):
-fields are proposable by default, FK references travelling on the
-form-shaped PUT are annotated ``context`` on the gui and therefore join
-the fingerprint but never the proposable surface. GUI changes propagate
-to the agent automatically.
+fields are proposable by default, the icon image travelling on the
+form-shaped PUT is annotated ``context`` on the gui (so it joins the
+fingerprint but never the proposable surface), and the pool group is a
+proposable SET_NULL display classification. GUI changes propagate to the
+agent automatically.
 
 ``create`` renders the creation view of the same gui, where the ``context``
-references (image and pool group) join the surface too: on creation they
-are selected, not changed, exactly like the administration form. A meta
-pool is created empty — its member pools are a relation with its own
-verb — so the creation carries only the form fields.
+image joins the surface too: on creation it is selected, not changed,
+exactly like the administration form. A meta pool is created empty — its
+member pools are a relation with its own verb — so the creation carries
+only the form fields.
 
 ``delete`` takes no fields: the meta pool itself is the target. Unlike
 service pools (which are only marked REMOVABLE and cleaned up
@@ -71,8 +72,9 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
         "service pools and selects one for each user). The proposal does NOT apply "
         "anything: it is queued until an administrator approves it. Mutable fields "
         "are name, short_name, comments, tags, visibility, selection policy, high "
-        "availability policy, transport grouping and calendar message. The "
-        "member pools, image and pool group cannot be changed through this "
+        "availability policy, transport grouping, calendar message and "
+        "servicesPoolGroup_id (display classification; '-1' or empty unclassifies "
+        "the meta pool). The member pools and image cannot be changed through this "
         "proposal."
     )
     handler = MetaPools
@@ -108,8 +110,9 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
             # the plain surface must answer with the creation view.
             return self.create_field_definitions(for_type, target)
         # Agent view of the admin gui: only proposable fields are part of
-        # the mutable surface (context references and relations stay out,
-        # though context still travels in the fingerprint / PUT payload).
+        # the mutable surface (the context image and the relations stay
+        # out, though the image still travels in the fingerprint / PUT
+        # payload; the pool group is a proposable SET_NULL classification)
         return gui_view.agent_definitions(_metapool_gui_elements())
 
     @typing.override
