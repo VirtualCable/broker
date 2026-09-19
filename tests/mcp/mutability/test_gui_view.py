@@ -253,7 +253,7 @@ class DefinitionsTest(unittest.TestCase):
         element = _element(
             "resource",
             field_type=types_ui.FieldType.CHOICE,
-            fills=types_ui.Filler(callback_name="onlyName"),
+            fills=types_ui.Filler(callback_name="onlyName", parameters=[]),
         )
         tooltip = _definition(element)["tooltip"]
         self.assertIn("'onlyName'", tooltip)

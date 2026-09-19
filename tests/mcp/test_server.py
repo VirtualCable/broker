@@ -7,6 +7,7 @@ from unittest import mock
 
 import mcp.types
 
+from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.mcp import Catalog, MCPServerCore, ResourceDefinition, ToolDefinition
 
 
@@ -106,7 +107,7 @@ class MCPServerCoreTest(unittest.IsolatedAsyncioTestCase):
             ToolDefinition("echo", "Echo", "Echo request", {}, "platform", "ok", executor=echo_request)
         )
         sentinel = object()
-        core = MCPServerCore(catalog, request=sentinel)
+        core = MCPServerCore(catalog, request=typing.cast("ExtendedHttpRequestWithUser", sentinel))
 
         await core.call_tool(None, mcp.types.CallToolRequestParams(name="echo"))
 

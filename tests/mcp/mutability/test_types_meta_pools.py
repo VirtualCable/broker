@@ -5,6 +5,7 @@ from unittest import mock
 
 from asgiref.sync import async_to_sync
 
+from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
@@ -23,7 +24,7 @@ from tests.fixtures.services import (
 from tests.mcp.mutability._helpers import FlowTestCase, make_request
 
 
-def _create_metapool() -> "object":
+def _create_metapool() -> models.MetaPool:
     authenticator = create_db_authenticator()
     _groups = create_db_groups(authenticator, 1)
     service = create_db_service(create_db_provider())
