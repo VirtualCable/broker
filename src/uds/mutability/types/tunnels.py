@@ -69,6 +69,8 @@ class TunnelUpdate(mutability_base.MutableActionType):
     handler = Tunnels
     model = models.ServerGroup
     noun = "Tunnel"
+    # A tunnel is not a module: no subtype gallery, no data_type
+    create_has_gallery = False
 
     @typing.override
     def resolve_target(self, target_uuid: str) -> db_models.Model:

@@ -70,23 +70,11 @@ class OverlayValidationTest(unittest.TestCase):
 
 
 class RolesTest(unittest.TestCase):
-    def test_hidden_and_relation_are_not_proposed(self) -> None:
+    def test_hidden_fields_are_not_proposed(self) -> None:
         hidden = _element("secret_ref", overlay=FieldMutability.hidden())
-        relation = _element(
-            "members",
-            overlay=FieldMutability.relation(
-                item_type="servicepool",
-                item_label="pool",
-                detail_handler="uds.REST.methods.meta_service_pools.MetaServicesPool",
-                detail_path="meta_pools/{uuid}/pools",
-                parent_collection="meta_pools",
-                relation_manager="members",
-            ),
-        )
         self.assertIsNone(gui_view.agent_definition(hidden))
-        self.assertIsNone(gui_view.agent_definition(relation))
-        # ... but they still exist for consumers that read the gui
-        self.assertIs(gui_view.role_of(relation), FieldMutabilityRole.RELATION)
+        # ... but it still exists for consumers that read the gui
+        self.assertIs(gui_view.role_of(hidden), FieldMutabilityRole.HIDDEN)
 
     def test_context_travels_in_fingerprint_but_not_in_definitions(self) -> None:
         context = _element(
@@ -166,6 +154,47 @@ class UniversalOmissionsTest(unittest.TestCase):
             _element("networks", overlay=FieldMutability.hidden()),
         ]
         self.assertEqual([e.name for e in gui_view.proposable_elements(elements)], ["name"])
+
+
+class CreationViewTest(unittest.TestCase):
+    """``for_creation`` mirrors the admin form on "new": references that
+    are locked on update are exactly what gets selected on creation."""
+
+    def test_readonly_reference_unlocks_but_keeps_flag_out(self) -> None:
+        element = _element("service_id", field_type=types_ui.FieldType.CHOICE)
+        element.gui.readonly = True
+        # update view: out...
+        self.assertIsNone(gui_view.agent_definition(element))
+        self.assertFalse(gui_view.is_proposable(element))
+        # ...creation view: in, without the readonly flag (it would tell
+        # the agent it cannot set the field it is being asked to select)
+        self.assertTrue(gui_view.is_proposable(element, for_creation=True))
+        definition = _definition(element, for_creation=True)
+        self.assertNotIn("readonly", definition)
+
+    def test_context_reference_joins_the_surface(self) -> None:
+        context = _element(
+            "image_id",
+            field_type=types_ui.FieldType.IMAGECHOICE,
+            overlay=FieldMutability.context(agent_tooltip="Icon reference"),
+        )
+        elements = [_element("name"), context]
+        self.assertEqual([d["name"] for d in gui_view.agent_definitions(elements)], ["name"])
+        self.assertEqual(
+            [d["name"] for d in gui_view.agent_definitions(elements, for_creation=True)],
+            ["name", "image_id"],
+        )
+        self.assertEqual(
+            [e.name for e in gui_view.proposable_elements(elements, for_creation=True)],
+            ["name", "image_id"],
+        )
+
+    def test_hidden_and_info_stay_out_even_on_creation(self) -> None:
+        hidden = _element("publish_on_save", overlay=FieldMutability.hidden())
+        info = _element("help_text", field_type=types_ui.FieldType.INFO)
+        for element in (hidden, info):
+            self.assertFalse(gui_view.is_proposable(element, for_creation=True))
+            self.assertIsNone(gui_view.agent_definition(element, for_creation=True))
 
 
 class FromInstanceTest(unittest.TestCase):

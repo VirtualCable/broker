@@ -64,6 +64,9 @@ class NetworkUpdate(mutability_base.MutableActionType):
     )
     handler = Networks
 
+    # A network is not a module: no subtype gallery, no data_type
+    create_has_gallery = False
+
     # ------------------------------------------------------------- hooks
 
     @typing.override

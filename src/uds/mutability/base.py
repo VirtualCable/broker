@@ -330,6 +330,22 @@ class MutableActionType(EntityDescriptor):
     REST detail-create semantics.
     """
 
+    create_has_gallery: typing.ClassVar[bool] = True
+    """Create-family declaration: the entity is instantiated from a subtype.
+
+    ``True`` (default): the kind is a module family (provider, service,
+    osmanager, transport, ...), so a creation declares which subtype to
+    build through ``data_type``; discovery requires ``for_type`` and
+    ``get_creatable_types`` lists the subtypes.
+
+    ``False``: the kind has no subtype gallery (a service pool is not a
+    module — neither is a network or a tunnel): the creation is fully
+    described by its form fields, there is no ``data_type`` to declare and
+    no gallery to consult. Discovery then defaults ``for_type`` to the
+    family root instead of demanding a subtype, and the create proposal
+    omits ``data_type``.
+    """
+
     _RESERVED_CREATE_KEYS: typing.ClassVar[frozenset[str]] = frozenset({"data_type"})
     """Proposal keys consumed by the create machinery itself (the subtype
     being created), never validated against the field definitions."""
@@ -476,19 +492,61 @@ class MutableActionType(EntityDescriptor):
 
     @staticmethod
     def _field_type_errors(name: str, value: typing.Any, definition: JsonObject) -> list[str]:
-        """Basic json-side type checks of one field value against its definition."""
-        field_type = types.ui.FieldType.from_str(str(definition.get("type", "")))
-        if field_type == types.ui.FieldType.NUMERIC and not isinstance(value, (int, float)):
-            return [f"field {name} must be numeric"]
-        if field_type == types.ui.FieldType.CHECKBOX and not isinstance(value, bool):
-            return [f"field {name} must be a boolean"]
-        if field_type in (
-            types.ui.FieldType.TAGLIST,
-            types.ui.FieldType.MULTICHOICE,
-            types.ui.FieldType.EDITABLELIST,
-        ) and not isinstance(value, (list, tuple)):
-            return [f"field {name} must be a list"]
-        return []
+        """Basic json-side type checks of one field value against its definition.
+
+        Beyond the shape of the value (numeric/bool/list), the checks
+        honor the constraints the gui itself declares: a CHOICE/
+        IMAGECHOICE with a static (inline) choices universe must receive
+        one of its values, and a NUMERIC must stay inside its declared
+        min/max. A proposal violating them could never be applied by the
+        REST handler anyway (the choice universe *is* the valid universe
+        at proposal time, and the handler clamps/refuses out-of-range
+        numbers silently), so failing loudly at propose time — with the
+        agent able to self-correct from the definition it already holds —
+        is strictly better than an unappliable approved action. An empty
+        string is the form-wide "no selection" sentinel and is never
+        rejected against the choices; dynamic (callable) universes carry
+        no inline choices in the definition and are not checked here
+        either.
+        """
+        match types.ui.FieldType.from_str(str(definition.get("type", ""))):
+            case types.ui.FieldType.NUMERIC:
+                if not isinstance(value, (int, float)):
+                    return [f"field {name} must be numeric"]
+                minimum, maximum = definition.get("min"), definition.get("max")
+                if isinstance(value, int) and not isinstance(value, bool):
+                    if minimum is not None and value < minimum:
+                        return [f"field {name} must be >= {minimum}"]
+                    if maximum is not None and value > maximum:
+                        return [f"field {name} must be <= {maximum}"]
+                return []
+            case types.ui.FieldType.CHECKBOX:
+                return [f"field {name} must be a boolean"] if not isinstance(value, bool) else []
+            case types.ui.FieldType.TAGLIST | types.ui.FieldType.MULTICHOICE | types.ui.FieldType.EDITABLELIST:
+                return [f"field {name} must be a list"] if not isinstance(value, (list, tuple)) else []
+            case types.ui.FieldType.CHOICE | types.ui.FieldType.IMAGECHOICE:
+                choices = definition.get("choices")
+                # The empty string is the form-wide "no selection"; a
+                # missing inline universe means dynamic choices, checked
+                # by whoever resolves them (or by the handler itself).
+                if value == "" or not isinstance(choices, list) or not choices:
+                    return []
+                # Two shapes coexist: the gui view renders {value, label}
+                # dicts, hand-built definitions (the action literals of the
+                # assignment verbs) list plain scalars.
+                accepted: list[str] = []
+                for item in typing.cast("list[typing.Any]", choices):
+                    if isinstance(item, dict):
+                        entry = typing.cast("JsonObject", item)
+                        accepted.append(str(entry.get("value")))
+                    else:
+                        accepted.append(str(item))
+                if str(value) in accepted:
+                    return []
+                listed = ", ".join(accepted) if len(accepted) <= 12 else f"{len(accepted)} accepted values"
+                return [f"field {name} must be one of the accepted choices ({listed})"]
+            case _:
+                return []
 
     def flatten_values(self, values: JsonObject) -> JsonObject:
         """Flat view of a proposed payload (identity by default).

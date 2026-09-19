@@ -1,4 +1,4 @@
-"""``metapool``: propose modifications to, or deletion of, a meta pool.
+"""``metapool``: propose to create, modify, or delete a meta pool.
 
 Top level resource with a static gui (no module instance). Since the
 gui-coupling trial, ``metapool.update`` derives its mutable surface from
@@ -7,6 +7,12 @@ fields are proposable by default, FK references travelling on the
 form-shaped PUT are annotated ``context`` on the gui and therefore join
 the fingerprint but never the proposable surface. GUI changes propagate
 to the agent automatically.
+
+``create`` renders the creation view of the same gui, where the ``context``
+references (image and pool group) join the surface too: on creation they
+are selected, not changed, exactly like the administration form. A meta
+pool is created empty — its member pools are a relation with its own
+verb — so the creation carries only the form fields.
 
 ``delete`` takes no fields: the meta pool itself is the target. Unlike
 service pools (which are only marked REMOVABLE and cleaned up
@@ -36,6 +42,7 @@ from uds.REST.methods.meta_pools import MetaPools
 
 from ... import base as mutability_base
 from ... import gui_view
+from ... import verbs as mutability_verbs
 from ...base import ActionOperation, StalePolicy
 from ...etag import item_etag
 
@@ -71,6 +78,8 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
     handler = MetaPools
     model = models.MetaPool
     noun = "Meta pool"
+    # A meta pool is not a module: no subtype gallery, no data_type
+    create_has_gallery = False
     # Both operations are synchronous writes gated by the strict whole-item
     # CAS: the delete removes the row right away (no REMOVABLE intermediate
     # state like service pools), so any change after the snapshot denies it.
@@ -93,10 +102,41 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
         # (An unbound instance serves the update surface, its default op.)
         if self.operation is ActionOperation.DELETE:
             return []
+        if self.operation is ActionOperation.CREATE:
+            # Defensive: the create machinery routes through
+            # create_field_definitions; a create-bound instance asked for
+            # the plain surface must answer with the creation view.
+            return self.create_field_definitions(for_type, target)
         # Agent view of the admin gui: only proposable fields are part of
         # the mutable surface (context references and relations stay out,
         # though context still travels in the fingerprint / PUT payload).
         return gui_view.agent_definitions(_metapool_gui_elements())
+
+    @typing.override
+    def create_field_definitions(
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+    ) -> list[JsonObject]:
+        # The creation view of the same gui: the context references (image,
+        # pool group) join the surface — selected, not changed.
+        return gui_view.agent_definitions(_metapool_gui_elements(), for_creation=True)
+
+    @typing.override
+    def create_validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        # Meta pools have no subtype gallery: the data_type is not required.
+        # The base validation already checks the choices universes (policies,
+        # image, pool group); the only thing it cannot enforce is that the
+        # name actually carries text.
+        errors = super().create_validate_values(for_type or "metapool", values, target)
+        if not str(values.get("name", "")).strip():
+            errors.append("field name: required")
+        return errors
 
     @typing.override
     def etag_fields(self, for_type: str, target: db_models.Model | None = None) -> list[str]:
@@ -143,12 +183,25 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def tool_title(self) -> str:
+        if self.operation is ActionOperation.CREATE:
+            return mutability_verbs.create_tool_title("meta pool")
         if self.operation is ActionOperation.DELETE:
             return "Propose deleting a meta pool"
         return self.title
 
     @typing.override
     def tool_description(self) -> str:
+        if self.operation is ActionOperation.CREATE:
+            return mutability_verbs.create_tool_description(
+                "meta pool",
+                "name (required), short_name, comments, tags, visible, policy "
+                "(load balancing), ha_policy, transport_grouping, calendar_message, "
+                "image_id and pool_group_id (the image and pool group pickers)",
+                extra=(
+                    "The new meta pool is created empty: its member service pools "
+                    "are attached through the metapool members verbs, not here."
+                ),
+            )
         if self.operation is ActionOperation.DELETE:
             return (
                 "Propose deleting a meta pool: the grouping disappears for good — its "
@@ -159,6 +212,36 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
                 "meta pool changed since it was proposed."
             )
         return self.description
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        values = dict(action.values)
+        # The POST is form-shaped: every required key of FIELDS_TO_SAVE
+        # rides, omitted ones take the value the admin form sends on "new"
+        # ("" for texts, the gui default for pickers/checkboxes, "-1" for
+        # the image/pool-group sentinels). The meta pool starts empty: no
+        # members travel with the creation.
+        params: JsonObject = {
+            "name": values.get("name"),
+            "short_name": values.get("short_name", ""),
+            "comments": values.get("comments", ""),
+            "tags": values.get("tags", []),
+            "image_id": values.get("image_id", "-1"),
+            "servicesPoolGroup_id": values.get("servicesPoolGroup_id", "-1"),
+            "visible": values.get("visible", True),
+            "policy": values.get("policy", int(types.pools.LoadBalancingPolicy.ROUND_ROBIN)),
+            "ha_policy": values.get("ha_policy", int(types.pools.HighAvailabilityPolicy.DISABLED)),
+            "calendar_message": values.get("calendar_message", ""),
+            "transport_grouping": values.get(
+                "transport_grouping", int(types.pools.TransportSelectionPolicy.AUTO)
+            ),
+        }
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(MetaPools, "meta_pools", types.rest.CustomMethodMethod.POST),
+            request,
+            params,
+        )
+        return mutability_verbs.created_message("Meta pool", str(params["name"]), new_uuid)
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:

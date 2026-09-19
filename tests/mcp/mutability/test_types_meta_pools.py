@@ -1,4 +1,4 @@
-"""``metapool`` (update / delete): registration, discovery, CAS and execution."""
+"""``metapool`` (create / update / delete): registration, discovery, CAS and execution."""
 
 import typing
 from unittest import mock
@@ -7,6 +7,7 @@ from asgiref.sync import async_to_sync
 
 from uds import models
 from uds.core import types
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.base import ActionOperation, StalePolicy
@@ -21,7 +22,7 @@ from tests.fixtures.services import (
     create_db_service,
     create_db_servicepool,
 )
-from tests.mcp.mutability._helpers import FlowTestCase, make_request
+from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
 
 def _create_metapool() -> models.MetaPool:
@@ -39,16 +40,18 @@ def _bound(operation: str) -> MetaPoolUpdate:
 
 
 class MetaPoolUpdateRegistryTest(FlowTestCase):
-    def test_both_operations_are_registered(self) -> None:
+    def test_all_three_operations_are_registered(self) -> None:
         found = registry_get("metapool.update")
         assert found is not None
         self.assertIs(type(found()), MetaPoolUpdate)
+        self.assertIs(type(_bound("create")), MetaPoolUpdate)
         self.assertIs(type(_bound("delete")), MetaPoolUpdate)
         self.assertIn("metapool.update", all_type_ids())
+        self.assertIn("metapool.create", all_type_ids())
         self.assertIn("metapool.delete", all_type_ids())
         self.assertEqual(
             MetaPoolUpdate.supported_operations(),
-            frozenset({ActionOperation.UPDATE, ActionOperation.DELETE}),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
         )
 
     def test_stale_policy_is_deny_for_update_and_delete(self) -> None:
@@ -213,3 +216,59 @@ class MetaPoolUpdateExecuteTest(FlowTestCase):
         meta_pool.delete()
         with self.assertRaises(rest_exceptions.NotFound):
             async_to_sync(_bound("delete").execute)(action, request=make_request())
+
+
+class MetaPoolCreateTest(FlowTestCase):
+    """metapool.create: the creation view, validation, POST shape."""
+
+    def test_creation_view_offers_the_references(self) -> None:
+        defs = _bound("create").create_field_definitions("metapool")
+        names = [d["name"] for d in defs]
+        for name in ("name", "policy", "ha_policy", "transport_grouping", "image_id", "servicesPoolGroup_id"):
+            self.assertIn(name, names)
+        # the member relation has its own verbs: never part of a creation
+        self.assertNotIn("members", names)
+
+    def test_create_requires_name_and_checks_choices(self) -> None:
+        create = _bound("create")
+        errors = create.create_validate_values("metapool", {})
+        self.assertTrue(any("name" in e for e in errors))
+        # a policy outside the gui universe is refused
+        self.assertTrue(
+            any("policy" in e for e in create.create_validate_values("metapool", {"name": "m", "policy": 9}))
+        )
+        # the minimal honest proposal validates clean
+        self.assertEqual(create.create_validate_values("metapool", {"name": "m"}), [])
+
+    def test_create_execution_posts_the_form_shape(self) -> None:
+        action = build_action(
+            action_type="metapool.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"name": "new meta", "visible": False, "policy": 1},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "meta-uuid"})
+            summary = async_to_sync(_bound("create").execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual(
+                (target.handler, target.path, target.method.value, target.args),
+                (MetaPools, "meta_pools", "POST", ()),
+            )
+        self.assertEqual(params["name"], "new meta")
+        self.assertEqual(params["visible"], False)
+        self.assertEqual(params["policy"], 1)
+        # omitted form fields ride the admin "new" defaults
+        self.assertEqual(params["ha_policy"], 0)
+        self.assertEqual(params["transport_grouping"], 0)
+        self.assertEqual(params["image_id"], "-1")
+        self.assertEqual(params["servicesPoolGroup_id"], "-1")
+        self.assertEqual(params["tags"], [])
+        self.assertIn("created", summary)
+        self.assertIn("meta-uuid", summary)
+
+    def test_create_tool_texts(self) -> None:
+        create = _bound("create")
+        self.assertIn("Propose creating a meta pool", create.tool_title())
+        self.assertIn("empty", create.tool_description())

@@ -261,7 +261,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                     "level": types.rest.api.SchemaProperty(
                         type="string", description="Log severity level (INFO, WARN, ERROR)"
                     ),
-                    "log_name": types.rest.api.SchemaProperty(type="string", description="Optional log source name"),
+                    "log_name": types.rest.api.SchemaProperty(
+                        type="string", description="Optional log source name"
+                    ),
                 },
             ),
         ),
@@ -303,13 +305,17 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":
         if field_info := self.get_sort_field_info("user_services_count"):
             # Annotate the count
-            qs = qs.annotate(valid_count=Count("userServices", filter=~Q(userServices__state__in=State.INFO_STATES)))
+            qs = qs.annotate(
+                valid_count=Count("userServices", filter=~Q(userServices__state__in=State.INFO_STATES))
+            )
             _, is_descending = field_info
             order_by_field = "-valid_count" if is_descending else "valid_count"
             return qs.order_by(order_by_field)
         if field_info := self.get_sort_field_info("user_services_in_preparation"):
             # Annotate the count
-            qs = qs.annotate(preparing_count=Count("userServices", filter=Q(userServices__state=State.PREPARING)))
+            qs = qs.annotate(
+                preparing_count=Count("userServices", filter=Q(userServices__state=State.PREPARING))
+            )
             _, is_descending = field_info
             order_by_field = "-preparing_count" if is_descending else "preparing_count"
             return qs.order_by(order_by_field)
@@ -489,7 +495,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         # if OSManager.objects.count() < 1:  # No os managers, can't create db
         #    raise exceptions.rest.ResponseError(gettext('Create at least one OS Manager before creating a new service pool'))
         if Service.objects.count() < 1:
-            raise exceptions.rest.ResponseError(gettext("Create at least a service before creating a new service pool"))
+            raise exceptions.rest.ResponseError(
+                gettext("Create at least a service before creating a new service pool")
+            )
 
         gui = (
             (
@@ -529,7 +537,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 default=True,
                 readonly=True,
                 label=gettext("Publish on save"),
-                tooltip=gettext("If active, the service will be published when saved (only for new service pools)"),
+                tooltip=gettext(
+                    "If active, the service will be published when saved (only for new service pools)"
+                ),
             )
             # Mutability overlay: readonly already keeps the field out of the
             # agent definitions, but it would still take part in the CAS
@@ -545,19 +555,41 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                 tooltip=gettext("If active, transport will be visible for users"),
             )
             .add_image_choice()
-            # Mutability overlay: the editable image/pool-group pickers are
-            # reference columns the agent cannot meaningfully change (the
-            # base service and OS manager are readonly for the same
-            # reason); the update payload carries the stored values as
-            # immutable context.
-            .with_overlay("image_id", types.mutability.FieldMutability.hidden())
+            # Mutability overlays: the reference columns travel on every
+            # form-shaped payload the pool PUT requires but are not
+            # proposable changes on update (they are identity/selection,
+            # fixed at creation). Marked ``context`` (not ``hidden``) so
+            # the creation view offers them: on creation references are
+            # selected, not changed, exactly like the admin form does
+            # (which unlocks every readonly field on "new"). The base
+            # service and the OS manager reach the same view through the
+            # readonly flag (the creation view unlocks it too; the
+            # update view keeps them out and the REST side enforces it).
+            # ``publish_on_save`` stays hidden: it is a create-time
+            # operator convenience (publishing is its own operation), so
+            # it belongs to no agent payload at all.
+            .with_overlay(
+                "image_id",
+                types.mutability.FieldMutability.context(
+                    agent_tooltip=gettext("Icon image of the service pool (reference, fixed at creation)")
+                ),
+            )
             .add_image_choice(
                 name="pool_group_id",
-                choices=[ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()],
+                choices=[
+                    ui.gui.choice_image(v.uuid, v.name, v.thumb64) for v in ServicePoolGroup.objects.all()
+                ],
                 label=gettext("Pool group"),
                 tooltip=gettext("Pool group for this pool (for pool classify on display)"),
             )
-            .with_overlay("pool_group_id", types.mutability.FieldMutability.hidden())
+            .with_overlay(
+                "pool_group_id",
+                types.mutability.FieldMutability.context(
+                    agent_tooltip=gettext(
+                        "Pool group for display classification (reference, fixed at creation)"
+                    )
+                ),
+            )
             .add_text(
                 name="calendar_message",
                 label=gettext("Calendar access denied text"),
@@ -679,7 +711,9 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
                         fields["osmanager_id"] = osmanager.id
                     except Exception:
                         if fields.get("state") != State.LOCKED:
-                            raise exceptions.rest.RequestError(gettext("This service requires an OS Manager")) from None
+                            raise exceptions.rest.RequestError(
+                                gettext("This service requires an OS Manager")
+                            ) from None
                         del fields["osmanager_id"]
                 else:
                     del fields["osmanager_id"]

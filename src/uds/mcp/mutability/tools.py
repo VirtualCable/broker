@@ -294,12 +294,17 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
     if action_type.operation is ActionOperation.CREATE:
         # Creation surface: the fields depend on the declared subtype
         # (values["data_type"]), not on a live target. Detail creations
-        # build their gui from the parent item.
+        # build their gui from the parent item. A gallery-less family
+        # (a pool, a network) has no subtype to declare: its single gui
+        # is reached with the family root as for_type.
         if not for_type.strip():
-            raise ValueError(
-                f"{type_id} requires for_type: the subtype the proposal creates "
-                "(use get_creatable_types to list them)"
-            )
+            if not action_type.create_has_gallery:
+                for_type = type_id.partition(".")[0]
+            else:
+                raise ValueError(
+                    f"{type_id} requires for_type: the subtype the proposal creates "
+                    "(use get_creatable_types to list them)"
+                )
         if action_type.create_needs_parent:
             if not target_uuid.strip():
                 raise ValueError(f"{type_id} requires target_uuid: the uuid of the parent item")

@@ -1,16 +1,29 @@
-"""``servicepool``: propose modifications to, or deletion of, a service pool.
+"""``servicepool``: propose to create, modify, or delete a service pool.
 
 Top level resource with a static gui (no module instance): the mutable
 surface is model columns only. Publications, assignments and calendar
-associations are *operations*, never fields. The base service, OS
-manager, image, pool group and account are identity/reference columns
-and are NOT proposable — but they travel as immutable context in every
-payload, because the pool PUT is form-shaped and requires them (and
+associations are *operations*, never fields. On ``update`` the base
+service, OS manager, image, pool group and account are identity/reference
+columns and are NOT proposable — but they travel as immutable context in
+every payload, because the pool PUT is form-shaped and requires them (and
 ``pre_save`` resolves the base service from its uuid).
 
 The readonly gui fields (``service_id``, ``osmanager_id``,
 ``publish_on_save``, ``account_id``) are additionally enforced by the
 REST layer on update: only the stored value passes.
+
+``create`` is the exception the update view hides: on creation the
+reference columns are *selected*, not changed (exactly what the
+administration form does by unlocking every readonly field on "new"), so
+the creation view of the same gui offers ``service_id``, ``osmanager_id``,
+``account_id``, ``image_id`` and ``pool_group_id`` alongside the plain
+fields. ``publish_on_save`` stays out — publishing is its own operation,
+and the field is a create-time convenience of the human operator, never
+an agent payload. The service's own capabilities (does it need an OS
+manager, does it cache, can users reset) decide which fields apply: the
+proposal is checked against them up front, mirroring the client-side
+form, so an agent never proposes a cached pool for a service without
+cache (the REST ``pre_save`` would silently zero it anyway).
 
 ``delete`` takes no fields: the pool itself is the target. It only
 marks the pool REMOVABLE — the background cleaners then take its
@@ -41,6 +54,7 @@ from uds.REST.methods.services_pools import ServicesPools
 
 from ... import base as mutability_base
 from ... import gui_view
+from ... import verbs as mutability_verbs
 from ...base import ActionOperation, StalePolicy
 from ...etag import item_etag
 
@@ -76,6 +90,8 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
     handler = ServicesPools
     model = models.ServicePool
     noun = "Service pool"
+    # A service pool is not a module: no subtype gallery, no data_type
+    create_has_gallery = False
     # update is a form-shaped synchronous write (strict whole-item CAS);
     # delete only marks the pool REMOVABLE — the cleaners do the actual
     # removal asynchronously — so it rides FORCE, like the asynchronous
@@ -97,11 +113,105 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         return "servicepool"
 
     @typing.override
+    def create_field_definitions(
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+    ) -> list[JsonObject]:
+        # The creation view of the same handler gui: readonly references
+        # (base service, OS manager, account) and context references
+        # (image, pool group) join the surface — on creation they are
+        # selected, not changed — while publish_on_save (hidden) never
+        # does: publishing is an operation, and the field is a create-time
+        # convenience of the human operator.
+        return gui_view.agent_definitions(self._gui_elements(for_type), for_creation=True)
+
+    @typing.override
+    def create_validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        # Pools have no subtype gallery: the data_type is not required
+        errors = super().create_validate_values(for_type or "servicepool", values, target)
+        if not str(values.get("name", "")).strip():
+            errors.append("field name: required")
+        service_id = str(values.get("service_id", "")).strip()
+        if not service_id:
+            errors.append("field service_id: required (the uuid of the base service)")
+            return errors
+        if any("service_id" in error for error in errors):
+            return errors  # the choice check already rejected it; no point resolving
+        try:
+            service = models.Service.objects.get(uuid__iexact=service_id)
+        except Exception:
+            errors.append("field service_id: no such service")
+            return errors
+        errors.extend(self._service_capability_errors(service, values))
+        return errors
+
+    @classmethod
+    def _service_capability_errors(cls, service: models.Service, values: JsonObject) -> list[str]:
+        """The decision cases the administration form applies from the base
+        service's own capabilities (``service_type`` flags). The REST
+        ``pre_save`` would enforce most of them silently (zeroing caches,
+        dropping the OS manager, clearing reset permissions); rejecting
+        the contradiction at proposal time keeps the approved payload
+        honest — what the administrator saw is what gets created.
+        """
+        errors: list[str] = []
+        service_type = service.get_type()
+
+        osmanager_id = str(values.get("osmanager_id", "")).strip()
+        if service_type.needs_osmanager:
+            if not osmanager_id or osmanager_id == "-1":
+                errors.append("field osmanager_id: required (the base service needs an OS manager)")
+            else:
+                try:
+                    osmanager = models.OSManager.objects.get(uuid__iexact=osmanager_id)
+                    if osmanager.get_type().services_types != service_type.services_type_provided:
+                        errors.append(
+                            "field osmanager_id: this OS manager does not manage the service type "
+                            "provided by the base service"
+                        )
+                except models.OSManager.DoesNotExist:
+                    errors.append("field osmanager_id: no such OS manager")
+        elif osmanager_id and osmanager_id != "-1":
+            # The form hides the field for services that do not need an OS
+            # manager and the REST drops it; proposing one is a mistake
+            # the agent should not have to discover through a silent drop.
+            errors.append("field osmanager_id: the base service does not need an OS manager")
+
+        cache_names = ("initial_srvs", "cache_l1_srvs", "cache_l2_srvs", "max_srvs")
+        if not service_type.uses_cache:
+            for name in cache_names:
+                if values.get(name, 0) != 0:
+                    errors.append(f"field {name}: the base service does not use cache (must be 0)")
+        else:
+            initial = int(typing.cast("int", values.get("initial_srvs", 0)))
+            cache_l1 = int(typing.cast("int", values.get("cache_l1_srvs", 0)))
+            maximum = int(typing.cast("int", values.get("max_srvs", 0)))
+            if not service_type.uses_cache_l2 and values.get("cache_l2_srvs", 0) != 0:
+                errors.append("field cache_l2_srvs: the base service does not use L2 cache (must be 0)")
+            if maximum < max(initial, cache_l1):
+                errors.append("field max_srvs: must be >= initial_srvs and cache_l1_srvs")
+        if not service_type.can_reset and values.get("allow_users_reset", False):
+            errors.append("field allow_users_reset: the base service cannot be reset by users")
+        return errors
+
+    @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
         # Deletion needs no fields: the target itself is what disappears.
         # (An unbound instance serves the update surface, its default op.)
         if self.operation is ActionOperation.DELETE:
             return []
+        if self.operation is ActionOperation.CREATE:
+            # Defensive: the create machinery routes through
+            # create_field_definitions; a create-bound instance asked for
+            # the plain surface must answer with the creation view, not
+            # the update one.
+            return self.create_field_definitions(for_type, target)
         # Agent view derived from the handler gui. What the gui marks
         # readonly (base service, os manager, account) or hides through the
         # mutability overlay (image, pool group, publish_on_save) is not
@@ -204,12 +314,28 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def tool_title(self) -> str:
+        if self.operation is ActionOperation.CREATE:
+            return mutability_verbs.create_tool_title("service pool")
         if self.operation is ActionOperation.DELETE:
             return "Propose deleting a service pool"
         return self.title
 
     @typing.override
     def tool_description(self) -> str:
+        if self.operation is ActionOperation.CREATE:
+            return mutability_verbs.create_tool_description(
+                "service pool",
+                "name (required), service_id (required: uuid of the base service), "
+                "osmanager_id (required when the service needs an OS manager), "
+                "short_name, comments, tags, cache sizes, visibility and user "
+                "permissions, account_id, image_id and pool_group_id",
+                extra=(
+                    "The base service capabilities decide what else applies: a service "
+                    "without cache accepts no cache sizes (they must be 0), a service "
+                    "that does not need an OS manager must not provide one, and user "
+                    "reset permission applies only to services that can be reset."
+                ),
+            )
         if self.operation is ActionOperation.DELETE:
             return (
                 "Propose deleting a service pool: it is marked for removal and the "
@@ -220,6 +346,45 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
                 "an administrator approves it."
             )
         return self.description
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        values = dict(action.values)
+        # The POST is form-shaped: every required key of FIELDS_TO_SAVE
+        # rides, omitted ones take the value the admin form would send on
+        # "new" ("" for texts, the gui default for the rest, "-1" for the
+        # image/pool-group pickers). publish_on_save is deliberately NOT
+        # sent: publishing is its own operation, and without the key the
+        # handler's post_save takes the False default.
+        params: JsonObject = {
+            "name": values.get("name"),
+            "short_name": values.get("short_name", ""),
+            "comments": values.get("comments", ""),
+            "tags": values.get("tags", []),
+            "service_id": values.get("service_id"),
+            "osmanager_id": values.get("osmanager_id", ""),
+            "image_id": values.get("image_id", "-1"),
+            "pool_group_id": values.get("pool_group_id", "-1"),
+            "initial_srvs": values.get("initial_srvs", 0),
+            "cache_l1_srvs": values.get("cache_l1_srvs", 0),
+            "cache_l2_srvs": values.get("cache_l2_srvs", 0),
+            "max_srvs": values.get("max_srvs", 0),
+            "show_transports": values.get("show_transports", True),
+            "visible": values.get("visible", True),
+            "allow_users_remove": values.get("allow_users_remove", False),
+            "allow_users_reset": values.get("allow_users_reset", False),
+            "ignores_unused": values.get("ignores_unused", False),
+            "account_id": values.get("account_id", ""),
+            "calendar_message": values.get("calendar_message", ""),
+            "custom_message": values.get("custom_message", ""),
+            "display_custom_message": values.get("display_custom_message", False),
+        }
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(ServicesPools, "services_pools", types.rest.CustomMethodMethod.POST),
+            request,
+            params,
+        )
+        return mutability_verbs.created_message("Service pool", str(params["name"]), new_uuid)
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:

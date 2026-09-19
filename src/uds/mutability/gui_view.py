@@ -23,6 +23,14 @@ warning: ``INFO`` fields (internal display helpers) and ``readonly``
 fields (the REST side refuses to change them too). ``from_instance`` is
 per action type context (which names are module-instance configuration
 instead of model columns), so it is a renderer input, never overlay data.
+
+``for_creation`` renders the creation view of the very same gui: like the
+admin frontend does on "new" (it unlocks every readonly field), the
+readonly references (the base service of a pool, its os manager) and the
+``context`` references (image, pool group, account) become proposable —
+they select, they are not changed — while ``hidden`` stays universal:
+what never belongs to an update payload (``publish_on_save``, a
+create-time operator convenience) never belongs to a creation either.
 """
 
 import collections.abc
@@ -109,7 +117,7 @@ def role_of(element: ui_types.GuiElement) -> FieldMutabilityRole:
     return annotation.role if annotation else FieldMutabilityRole.PROPOSABLE
 
 
-def is_proposable(element: ui_types.GuiElement) -> bool:
+def is_proposable(element: ui_types.GuiElement, *, for_creation: bool = False) -> bool:
     """Whether an element can reach the agent surface at all.
 
     Role (only PROPOSABLE fields apply), plus the two universal omissions:
@@ -118,22 +126,39 @@ def is_proposable(element: ui_types.GuiElement) -> bool:
     representable-type allowlist is NOT considered here: this answers
     "mutable by role/semantics", the renderer decides "expressable as a
     json definition" separately.
+
+    ``for_creation`` renders the creation view instead: the readonly
+    references and the ``context`` references become proposable (on
+    creation they are selected, not changed — exactly what the admin
+    frontend does by unlocking every readonly field on "new"), while
+    ``hidden`` stays out (publishing is an operation, not a field that
+    belongs to a creation payload) and INFO keeps being an internal
+    display helper.
     """
-    if role_of(element) is not FieldMutabilityRole.PROPOSABLE:
+    role = role_of(element)
+    if role is FieldMutabilityRole.HIDDEN:
         return False
-    return element.gui.type != ui_types.FieldType.INFO and not element.gui.readonly
+    if element.gui.type == ui_types.FieldType.INFO:
+        return False
+    if for_creation:
+        return role in (FieldMutabilityRole.PROPOSABLE, FieldMutabilityRole.CONTEXT)
+    return role is FieldMutabilityRole.PROPOSABLE and not element.gui.readonly
 
 
-def proposable_elements(elements: collections.abc.Iterable[ui_types.GuiElement]) -> list[ui_types.GuiElement]:
+def proposable_elements(
+    elements: collections.abc.Iterable[ui_types.GuiElement],
+    *,
+    for_creation: bool = False,
+) -> list[ui_types.GuiElement]:
     """Elements that can reach the agent surface (see ``is_proposable``)."""
-    return [element for element in elements if is_proposable(element)]
+    return [element for element in elements if is_proposable(element, for_creation=for_creation)]
 
 
 def fingerprint_names(elements: collections.abc.Iterable[ui_types.GuiElement]) -> list[str]:
     """Names taking part in the whole-item fingerprint.
 
     Everything the form-shaped payload carries except the non-fingerprint
-    fields: hidden and relations never travel in it. INFO and readonly
+    fields: hidden fields never travel in it. INFO and readonly
     fields ARE part of the fingerprint: the CAS base (compare-and-swap:
     the proposal-time snapshot that approval re-checks) must track the
     whole form state the PUT rebuilds from, exactly like the handler's
@@ -142,25 +167,27 @@ def fingerprint_names(elements: collections.abc.Iterable[ui_types.GuiElement]) -
     return [
         element.name
         for element in elements
-        if role_of(element) not in (FieldMutabilityRole.HIDDEN, FieldMutabilityRole.RELATION)
-        and element.gui.type != ui_types.FieldType.INFO
+        if role_of(element) is not FieldMutabilityRole.HIDDEN and element.gui.type != ui_types.FieldType.INFO
     ]
 
 
 def agent_definition(
     element: ui_types.GuiElement,
     from_instance: collections.abc.Callable[[str], bool] | None = None,
+    *,
+    for_creation: bool = False,
 ) -> JsonObject | None:
     """Definition of one gui element for the agent surface, or None.
 
     ``None`` means "not part of the proposable surface": see
-    :func:`is_proposable` for the role/semantics omissions, plus the
-    representable-type allowlist (a missing widget type is logged as a
-    warning). ``from_instance`` marks each definition with whether the
-    name resolves to module-instance configuration instead of a model
-    column; it is per action type context, not per field annotation.
+    :func:`is_proposable` for the role/semantics omissions (``for_creation``
+    selects the creation view), plus the representable-type allowlist (a
+    missing widget type is logged as a warning). ``from_instance`` marks
+    each definition with whether the name resolves to module-instance
+    configuration instead of a model column; it is per action type
+    context, not per field annotation.
     """
-    if not is_proposable(element):
+    if not is_proposable(element, for_creation=for_creation):
         return None
 
     gui = element.gui
@@ -191,7 +218,10 @@ def agent_definition(
         definition["from_instance"] = from_instance(element.name)
     if gui.required:
         definition["required"] = True
-    if gui.readonly:
+    if gui.readonly and not for_creation:
+        # The flag tells the agent the REST refuses the field. On the
+        # creation view the very same fields are precisely what gets
+        # selected, so echoing readonly would be misleading.
         definition["readonly"] = True
     if gui.default is not None:
         default = gui.default() if callable(gui.default) else gui.default
@@ -222,12 +252,19 @@ def agent_definition(
 def agent_definitions(
     elements: collections.abc.Iterable[ui_types.GuiElement],
     from_instance: collections.abc.Callable[[str], bool] | None = None,
+    *,
+    for_creation: bool = False,
 ) -> list[JsonObject]:
-    """Definitions of every proposable, representable element."""
+    """Definitions of every proposable, representable element.
+
+    ``for_creation`` renders the creation view of the gui (see
+    :func:`is_proposable`).
+    """
     return [
         definition
         for element in elements
-        if (definition := agent_definition(element, from_instance=from_instance)) is not None
+        if (definition := agent_definition(element, from_instance=from_instance, for_creation=for_creation))
+        is not None
     ]
 
 

@@ -258,6 +258,30 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         secrets = [d["name"] for d in by_type["fields"] if d["secret"]]
         self.assertIn("instance.password", secrets)
 
+    def test_discovery_create_without_gallery_defaults_for_type(self) -> None:
+        # Pool families (and network/tunnel) have no subtype gallery: the
+        # creation surface is reached without declaring for_type.
+        for action_type, root in (("servicepool.create", "servicepool"), ("metapool.create", "metapool")):
+            with self.subTest(action_type=action_type):
+                result = self._result_json(self._call("get_mutable_fields", {"action_type": action_type}))
+                self.assertEqual(result["action_type"], action_type)
+                self.assertEqual(result["for_type"], root)
+                names = [d["name"] for d in result["fields"]]
+                self.assertIn("name", names)
+                self.assertIn("tags", names)
+        servicepool_fields = self._result_json(
+            self._call("get_mutable_fields", {"action_type": "servicepool.create"})
+        )["fields"]
+        # The creation view selects references instead of hiding them
+        self.assertIn("service_id", [d["name"] for d in servicepool_fields])
+
+    def test_discovery_create_with_gallery_demands_for_type(self) -> None:
+        # Module families still require the subtype: the error points to
+        # the gallery tool instead of guessing a root for_type.
+        body = self._call("get_mutable_fields", {"action_type": "provider.create"})
+        self.assertIn("error", body)
+        self.assertIn("get_creatable_types", str(body["error"]))
+
     def test_relation_read_tool_returns_current_members(self) -> None:
         service = create_db_service(self.provider)
         pool = create_db_servicepool(service=service, osmanager=create_db_osmanager())
