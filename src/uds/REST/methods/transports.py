@@ -147,7 +147,9 @@ class Transports(ModelHandler[TransportItem]):
                 .add_multichoice(
                     name="allowed_oss",
                     label=gettext("Allowed Devices"),
-                    choices=[ui.gui.choice_item(x.db_value(), x.os_name().title()) for x in consts.os.KNOWN_OS_LIST],
+                    choices=[
+                        ui.gui.choice_item(x.db_value(), x.os_name().title()) for x in consts.os.KNOWN_OS_LIST
+                    ],
                     tooltip=gettext(
                         "If empty, any kind of device compatible with this transport will be allowed. Else, only devices compatible with selected values will be allowed"
                     ),
@@ -157,11 +159,6 @@ class Transports(ModelHandler[TransportItem]):
                     label=gettext("Label"),
                     tooltip=gettext("Metapool transport label (only used on metapool transports grouping)"),
                 )
-                # Mutability overlay: the networks and service pools m2m
-                # relations are managed through their own detail surfaces,
-                # never through the transport update proposal
-                .with_overlay("networks", types.mutability.FieldMutability.hidden())
-                .with_overlay("pools", types.mutability.FieldMutability.hidden())
                 .build()
             )
 
@@ -195,7 +192,9 @@ class Transports(ModelHandler[TransportItem]):
         fields["label"] = fields["label"].strip().replace(" ", "-")
         # And ensure small_name chars are valid [ a-zA-Z0-9:-]+
         if fields["label"] and not re.match(r"^[a-zA-Z0-9:-]+$", fields["label"]):
-            raise exceptions.rest.ValidationError(gettext('Label must contain only letters, numbers, ":" and "-"'))
+            raise exceptions.rest.ValidationError(
+                gettext('Label must contain only letters, numbers, ":" and "-"')
+            )
 
     @typing.override
     def post_save(self, item: "Model") -> None:

@@ -21,7 +21,14 @@ class SupportedOperationsTest(unittest.TestCase):
 
     def test_single_write_family_derives_update(self) -> None:
         self.assertEqual(ConfigUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
-        self.assertEqual(NetworkUpdate.supported_operations(), frozenset({ActionOperation.UPDATE}))
+
+    def test_connectivity_family_derives_all_write_verbs(self) -> None:
+        # networks (and transports/tunnels) gained the create/delete verbs
+        # alongside update: the set is derived from the implemented hooks
+        self.assertEqual(
+            NetworkUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
 
     def test_relation_family_derives_all_write_verbs(self) -> None:
         # Reads are not operations: only the implemented op_* hooks derive.

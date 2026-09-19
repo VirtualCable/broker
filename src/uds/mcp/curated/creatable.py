@@ -16,6 +16,7 @@ from uds.REST.methods.osmanagers import OsManagers
 from uds.REST.methods.providers import Providers
 from uds.REST.methods.services import Services
 from uds.REST.methods.servers_management import ServersGroups
+from uds.REST.methods.transports import Transports
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 
 from ..catalog import ToolDefinition
@@ -33,6 +34,7 @@ _KIND_NEEDS_PARENT: typing.Final[dict[str, bool]] = {
     "authenticator": False,
     "mfa": False,
     "osmanager": False,
+    "transport": False,
 }
 
 _KIND_TARGETS: typing.Final[dict[str, RestTarget]] = {
@@ -48,6 +50,7 @@ _KIND_TARGETS: typing.Final[dict[str, RestTarget]] = {
     "authenticator": RestTarget(Authenticators, "authenticators", GET, args=("types",)),
     "mfa": RestTarget(MFA, "mfa", GET, args=("types",)),
     "osmanager": RestTarget(OsManagers, "osmanagers", GET, args=("types",)),
+    "transport": RestTarget(Transports, "transports", GET, args=("types",)),
 }
 
 

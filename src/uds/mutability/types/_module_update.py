@@ -65,9 +65,20 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
     # Params keys the handler reads that are NOT model columns (m2m
     # relations riding post_save, e.g. the authenticator "networks").
     # On creation they travel in params next to the columns instead of
-    # being mistaken for module configuration; on update the snapshot
-    # must resolve them (override snapshot_values for that).
+    # being mistaken for module configuration, and they are ALWAYS
+    # present (omitted ones ride as ``[]``, the empty multiselect the
+    # gui sends): some handlers couple their post_save processing to the
+    # presence of these params, and mimicking the form is what keeps
+    # e.g. "create a transport with pools" from being silently dropped.
+    # On update the snapshot must resolve them (override
+    # snapshot_values for that).
     extra_params_fields: typing.ClassVar[frozenset[str]] = frozenset()
+
+    # Values for required model columns the form always submits but whose
+    # gui fields declare no default (e.g. the transport "allowed_oss" and
+    # "label"): on creation an omitted column rides this value instead of
+    # failing at the handler's required-params check on approval.
+    create_column_defaults: typing.ClassVar[dict[str, typing.Any]] = {}
 
     # ------------------------------------------------------------- hooks
 
@@ -235,6 +246,14 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
                 default = definitions.get(name, {}).get("default")
                 if default is not None:
                     params[name] = default
+                elif name in self.create_column_defaults:
+                    params[name] = self.create_column_defaults[name]
+            # The relations riding post_save are ALWAYS present: omitted
+            # ones ride as the empty multiselect the gui sends, so a
+            # handler coupling one relation's processing to the presence
+            # of another param never silently drops this one
+            for name in self.extra_params_fields:
+                params.setdefault(name, [])
             # Always present (even empty): without it the handler would
             # fall back to using ALL params as module configuration
             params["instance"] = instance

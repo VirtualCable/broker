@@ -1,4 +1,4 @@
-"""``tunnel.update``: propose modifications to an existing tunnel.
+"""``tunnel.update`` / ``tunnel.create`` / ``tunnel.delete``.
 
 A tunnel is a ``ServerGroup`` of type TUNNEL served by its own REST
 endpoint (``/tunnels``), separate from ``servers/groups``. The group
@@ -6,6 +6,10 @@ holds the address the *client* sees (``host``/``port``); the child
 servers are informational registrations of the external load balancer
 backends, so membership (``assign`` and friends) is a relation outside
 this proposal and has no functional effect on balancing.
+
+The creation payload mirrors the administration form: ``host`` is
+required and both address fields are validated at propose time with the
+very validators the handler's ``pre_save`` runs.
 """
 
 import collections.abc
@@ -25,13 +29,32 @@ from uds.REST.methods.tunnels_management import Tunnels
 
 from .. import base as mutability_base
 from .. import gui_view
+from .. import verbs as mutability_verbs
 from ..etag import item_etag
 
 JsonObject = dict[str, typing.Any]
 
 
+def _host_port_errors(values: JsonObject) -> list[str]:
+    """Same checks the handler's pre_save runs (plus the port range the
+    gui enforces), so a proposal that can never be applied fails at
+    propose time instead of on approval."""
+    errors: list[str] = []
+    if "host" in values:
+        try:
+            validators.validate_host(str(values["host"]))
+        except ui_exceptions.ValidationError as e:
+            errors.append(f"field host: {e}")
+    if "port" in values:
+        try:
+            validators.validate_port(values["port"])
+        except ui_exceptions.ValidationError as e:
+            errors.append(f"field port: {e}")
+    return errors
+
+
 class TunnelUpdate(mutability_base.MutableActionType):
-    """Proposal: update an existing tunnel (tunnel-type server group)."""
+    """Proposal: create, update, or delete a tunnel (tunnel-type server group)."""
 
     type_id = "tunnel"
     title = "Propose tunnel update"
@@ -80,19 +103,10 @@ class TunnelUpdate(mutability_base.MutableActionType):
         values: JsonObject,
         target: db_models.Model | None = None,
     ) -> list[str]:
-        errors = super().validate_values(for_type, values, target)
         # Same checks the handler's pre_save runs, so a proposal that can
         # never be applied fails at propose time instead of on approval
-        if "host" in values:
-            try:
-                validators.validate_host(str(values["host"]))
-            except ui_exceptions.ValidationError as e:
-                errors.append(f"field host: {e}")
-        if "port" in values:
-            try:
-                validators.validate_port(values["port"])
-            except ui_exceptions.ValidationError as e:
-                errors.append(f"field port: {e}")
+        errors = super().validate_values(for_type, values, target)
+        errors.extend(_host_port_errors(values))
         return errors
 
     @typing.override
@@ -123,7 +137,89 @@ class TunnelUpdate(mutability_base.MutableActionType):
         item_dict: JsonObject = self.snapshot_values(target, fields)
         return item_etag(item_dict, fields)
 
+    # ---------------------------------------------------- creation hooks
+
+    @typing.override
+    def tool_title(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_title("tunnel")
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_title("tunnel")
+        return self.title
+
+    @typing.override
+    def tool_description(self) -> str:
+        if self.operation is mutability_base.ActionOperation.CREATE:
+            return mutability_verbs.create_tool_description(
+                "tunnel",
+                "name, comments, tags, host (required: IP or hostname clients "
+                "reach through the external load balancer) and port (default "
+                "443; validated when proposing)",
+            )
+        if self.operation is mutability_base.ActionOperation.DELETE:
+            return mutability_verbs.delete_tool_description(
+                "tunnel",
+                "the REST refuses the deletion while transports are still "
+                "attached to it — exactly like the administration interface.",
+            )
+        return self.description
+
+    @typing.override
+    def create_validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        # Tunnels have no subtype gallery: the data_type is not required
+        errors = super().create_validate_values(for_type or "tunnel", values, target)
+        if not str(values.get("name", "")).strip():
+            errors.append("field name: required")
+        if not str(values.get("host", "")).strip():
+            errors.append("field host: required")
+        errors.extend(_host_port_errors(values))
+        return errors
+
     # ---------------------------------------------------------- execution
+
+    @typing.override
+    async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The tunnels POST is form-shaped (host required, port optional):
+        # an omitted port rides the gui default, never the handler's 0
+        values = dict(action.values)
+        params: JsonObject = {
+            "name": values.get("name"),
+            "comments": values.get("comments", ""),
+            "tags": values.get("tags", []),
+            "host": values.get("host", ""),
+            "port": values.get("port", 443),
+        }
+        new_uuid = await mutability_verbs.execute_create(
+            RestTarget(Tunnels, "tunnels", types.rest.CustomMethodMethod.POST),
+            request,
+            params,
+        )
+        return mutability_verbs.created_message("Tunnel", str(params["name"]), new_uuid)
+
+    @typing.override
+    async def op_delete(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The REST DELETE removes the row synchronously (refusing while
+        # transports are attached). ALL the ORM work stays out of the
+        # async context.
+        group = typing.cast(
+            models.ServerGroup,
+            await sync_to_async(self.resolve_target, thread_sensitive=True)(action.target_uuid),
+        )
+        await mutability_verbs.execute_delete(
+            RestTarget(
+                Tunnels,
+                "tunnels",
+                types.rest.CustomMethodMethod.DELETE,
+                args=(action.target_uuid,),
+            ),
+            request,
+        )
+        return f'Tunnel "{group.name}" deleted'
 
     @typing.override
     async def op_update(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:

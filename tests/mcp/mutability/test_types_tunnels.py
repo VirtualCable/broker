@@ -1,4 +1,4 @@
-"""``tunnel.update``: registration, type filter, validation and execution shape."""
+"""``tunnel.update`` / ``.create`` / ``.delete``: registration, type filter, validation and execution shape."""
 
 import typing
 from unittest import mock
@@ -7,12 +7,16 @@ from asgiref.sync import async_to_sync
 
 from uds import models
 from uds.core import types
+from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
+from uds.mutability.base import ActionOperation, StalePolicy
 from uds.mutability.types.tunnels import TunnelUpdate
 from uds.REST.methods.tunnels_management import Tunnels
 
-from tests.mcp.mutability._helpers import FlowTestCase, make_request
+from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
+
+# pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
 
 _counter = 0
 
@@ -35,6 +39,17 @@ class TunnelUpdateRegistryTest(FlowTestCase):
         assert found is not None
         self.assertIs(type(found()), TunnelUpdate)
         self.assertIn("tunnel.update", all_type_ids())
+
+    def test_supported_operations_derive_from_hooks(self) -> None:
+        self.assertEqual(
+            TunnelUpdate.supported_operations(),
+            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+        )
+
+    def test_delete_rides_the_strict_deny_policy(self) -> None:
+        delete = TunnelUpdate(ActionOperation.DELETE)
+        self.assertEqual(delete.full_id, "tunnel.delete")
+        self.assertEqual(delete.get_stale_policy(), StalePolicy.DENY)
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):
@@ -117,3 +132,91 @@ class TunnelUpdateExecuteTest(FlowTestCase):
                 "port": 8443,
             },
         )
+
+
+class TunnelCreateDeleteTest(FlowTestCase):
+    """tunnel.create / tunnel.delete: the root verbs."""
+
+    def test_create_requires_name_and_host(self) -> None:
+        create = TunnelUpdate(ActionOperation.CREATE)
+        errors = create.create_validate_values("tunnel", {})
+        self.assertTrue(any("name" in e for e in errors))
+        self.assertTrue(any("host" in e for e in errors))
+        # No data_type required: tunnels have no subtype gallery
+        self.assertEqual(create.create_validate_values("tunnel", {"name": "t", "host": "10.0.0.1"}), [])
+        # An invalid host/port still fails at propose time
+        self.assertTrue(
+            any(
+                "host" in e
+                for e in create.create_validate_values("tunnel", {"name": "t", "host": "bad host!!"})
+            )
+        )
+        self.assertTrue(
+            any(
+                "port" in e
+                for e in create.create_validate_values(
+                    "tunnel", {"name": "t", "host": "10.0.0.1", "port": 99999}
+                )
+            )
+        )
+
+    def test_create_execution_posts_the_form_shape(self) -> None:
+        create = TunnelUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="tunnel.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"name": "new tunnel", "host": "10.0.0.1", "port": 8443},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "tn-uuid"})
+            summary = async_to_sync(create.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual((target.handler, target.method.value, target.args), (Tunnels, "POST", ()))
+            self.assertEqual(
+                params,
+                {"name": "new tunnel", "comments": "", "tags": [], "host": "10.0.0.1", "port": 8443},
+            )
+        self.assertIn("new tunnel", summary)
+        self.assertIn("tn-uuid", summary)
+
+    def test_create_omitted_port_rides_the_gui_default(self) -> None:
+        create = TunnelUpdate(ActionOperation.CREATE)
+        action = build_action(
+            action_type="tunnel.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values={"name": "new tunnel", "host": "tunnel.example.com"},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value=None)
+            summary = async_to_sync(create.execute)(action, request=make_request())
+            _target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            # the gui default 443, never the handler's optional 0
+            self.assertEqual(params["port"], 443)
+        self.assertIn("created", summary)
+        self.assertNotIn("uuid", summary)
+
+    def test_delete_execution_sends_canonical_delete(self) -> None:
+        tunnel = _create_tunnel()
+        delete = TunnelUpdate(ActionOperation.DELETE)
+        action = build_action(
+            action_type="tunnel.delete",
+            target_uuid=tunnel.uuid,
+            values={},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock()
+            summary = async_to_sync(delete.execute)(action, request=make_request())
+            target, _request, params = proxy_cls.return_value.execute.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Tunnels, "DELETE", (tunnel.uuid,)),
+            )
+            self.assertEqual(params, {})
+        self.assertIn(tunnel.name, summary)
+        self.assertIn("deleted", summary)
