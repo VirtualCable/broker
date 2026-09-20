@@ -80,12 +80,21 @@ def created_message(noun: str, name: str, new_uuid: str | None) -> str:
 # ---------------------------------------------------- standard tool texts
 
 
+def _indefinite(noun: str) -> str:
+    """The indefinite article that precedes ``noun`` ("an account").
+
+    Simple initial-letter rule: the family nouns are plain English words,
+    the only vowel-initial ones needing "an".
+    """
+    return "an" if noun[:1].lower() in "aeiou" else "a"
+
+
 def create_tool_title(noun: str) -> str:
-    return f"Propose creating a {noun}"
+    return f"Propose creating {_indefinite(noun)} {noun}"
 
 
 def delete_tool_title(noun: str) -> str:
-    return f"Propose deleting a {noun}"
+    return f"Propose deleting {_indefinite(noun)} {noun}"
 
 
 def create_tool_description(
@@ -128,7 +137,7 @@ def delete_tool_description(noun: str, semantics: str) -> str:
     world (cascades, refusals), like the administration interface does.
     """
     return (
-        f"Propose deleting a {noun}: {semantics} No fields are needed: the {noun} "
+        f"Propose deleting {_indefinite(noun)} {noun}: {semantics} No fields are needed: the {noun} "
         "itself is the target of the proposal, and any change to it after the "
         "proposal was taken cuts and denies the flow. The proposal does NOT delete "
         "anything: it is queued until an administrator approves it."

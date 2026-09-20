@@ -136,7 +136,12 @@ class FlowsOwnActions(FlowActions):
         """Validate params and build values + fresh CAS base."""
         values = self._params.get("values")
         if not isinstance(values, dict) or not values:
-            raise exceptions.rest.RequestError("values is required and must be a non-empty object")
+            # Deletion proposals carry no fields: the target itself is
+            # what disappears, so an absent (or empty) payload is their
+            # normal shape, not a client error.
+            if action_type.operation is not ActionOperation.DELETE:
+                raise exceptions.rest.RequestError("values is required and must be a non-empty object")
+            values = {}
         values = typing.cast("dict[str, typing.Any]", values)
         justification = str(self._params.get("justification", "") or "") or justification_fallback
         for_type = action_type.for_type_of(target)

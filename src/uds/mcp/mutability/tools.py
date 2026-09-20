@@ -248,7 +248,12 @@ def _propose_sync(
             raise ValueError("target_uuid is required")
     values = arguments.get("values")
     if not isinstance(values, dict) or not values:
-        raise ValueError("values is required and must be a non-empty object")
+        # Deletion proposals carry no fields (the target itself is the
+        # payload), so an omitted or empty values object is valid there
+        # and only there; every other verb needs real changes.
+        if action_type.operation is not ActionOperation.DELETE:
+            raise ValueError("values is required and must be a non-empty object")
+        values = {}
     values = typing.cast("dict[str, typing.Any]", values)
     justification = str(arguments.get("justification", "") or "")
 
@@ -308,7 +313,11 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
         if action_type.create_needs_parent:
             if not target_uuid.strip():
                 raise ValueError(f"{type_id} requires target_uuid: the uuid of the parent item")
-            target = action_type.resolve_target(target_uuid)
+            # The uuid of a detail creation is the PARENT's: resolve it
+            # through the container hook (resolve_target looks up the
+            # family's own entity, which does not exist yet), exactly
+            # like the REST flows create path does.
+            target = action_type.resolve_create_parent(target_uuid)
             result["target_uuid"] = target_uuid
         else:
             target = None
@@ -445,6 +454,7 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
         return _propose_sync(action_type, arguments, request)
 
     is_root_create = action_type.operation is ActionOperation.CREATE and not action_type.create_needs_parent
+    is_delete = action_type.operation is ActionOperation.DELETE
     if action_type.operation is ActionOperation.CREATE:
         target_description = (
             "UUID of the PARENT item the new entity is created into."
@@ -452,6 +462,11 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
             else "Must be omitted for a creation: there is no target yet."
         )
         required = ["flow_id", "values"] if is_root_create else ["flow_id", "target_uuid", "values"]
+    elif is_delete:
+        # A deletion has no field payload: the target itself is what
+        # disappears, so values is not part of the contract here.
+        target_description = "UUID of the item to delete."
+        required = ["flow_id", "target_uuid"]
     else:
         target_description = "UUID of the item to mutate."
         required = ["flow_id", "target_uuid", "values"]

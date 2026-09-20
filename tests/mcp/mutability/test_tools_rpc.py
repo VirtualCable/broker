@@ -10,7 +10,7 @@ from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import permissions
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
-from uds.models import ActionFlow
+from uds.models import Account, ActionFlow, Calendar
 from uds.mcp.default_catalog import get_catalog
 from uds.mutability import FlowStore
 
@@ -179,6 +179,62 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         self.assertIn("accepted", str(body["error"]))
         # The rejected action leaves the draft flow alive for a retry
         self.assertEqual(ActionFlow.objects.count(), 1)
+
+    def test_delete_tools_do_not_require_values(self) -> None:
+        # The schema itself: flow_id + target_uuid, values not demanded
+        tool = next(t for t in get_catalog().tools() if t.name == "propose_account_delete")
+        schema = tool.input_schema or {}
+        self.assertNotIn("values", schema.get("required", []))
+        self.assertIn("target_uuid", schema.get("required", []))
+
+        account = Account.objects.create(name="rpc account")
+        flow_id = self._create_flow()["flow_id"]
+        # An omitted values object is the normal shape of a deletion
+        result = self._result_json(
+            self._call("propose_account_delete", {"flow_id": flow_id, "target_uuid": account.uuid})
+        )
+        self.assertEqual(result["status"], "pending")
+        stored = self.store.get_action(result["id"])
+        assert stored is not None
+        self.assertEqual(stored.action_type, "account.delete")
+        self.assertEqual(stored.values, {})
+
+        # And an explicit empty dict works the same
+        calendar = Calendar.objects.create(name="rpc calendar")
+        result = self._result_json(
+            self._call(
+                "propose_calendar_delete",
+                {"flow_id": flow_id, "target_uuid": calendar.uuid, "values": {}},
+            )
+        )
+        stored = self.store.get_action(result["id"])
+        assert stored is not None
+        self.assertEqual(stored.values, {})
+
+    def test_non_delete_verbs_still_require_values(self) -> None:
+        calendar = Calendar.objects.create(name="rpc calendar")
+        flow_id = self._create_flow()["flow_id"]
+        body = self._call("propose_calendar_update", {"flow_id": flow_id, "target_uuid": calendar.uuid})
+        self.assertIn("error", body)
+        self.assertIn("values", str(body["error"]))
+
+    def test_rule_creation_discovery_targets_the_parent_calendar(self) -> None:
+        # The registry fix: a detail creation resolves the PARENT uuid
+        # through the container hook, not resolve_target (the rule does
+        # not exist yet)
+        calendar = Calendar.objects.create(name="rpc calendar")
+        result = self._result_json(
+            self._call(
+                "get_mutable_fields",
+                {"action_type": "calendar_rule.create", "target_uuid": calendar.uuid},
+            )
+        )
+        self.assertEqual(result["target_uuid"], calendar.uuid)
+        names = [d["name"] for d in result["fields"]]
+        self.assertEqual(
+            names,
+            ["name", "comments", "frequency", "start", "end", "interval", "duration", "duration_unit"],
+        )
 
     def test_update_and_cancel_flow(self) -> None:
         flow_id = self._create_flow()["flow_id"]
