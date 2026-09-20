@@ -86,6 +86,7 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_metapool_assignment_delete",
     "propose_servicepool_access_set",
     "propose_servicepool_action_set",
+    "propose_servicepool_assignable_create",
     "propose_servicepool_fallback_update",
     "propose_servicepool_publication_add",
     "propose_servicepool_publication_delete",
