@@ -117,7 +117,7 @@ class Users(DetailHandler[UserItem]):
         types.rest.ModelCustomMethod(
             "clean_related",
             method=types.rest.CustomMethodMethod.POST,
-            description="Remove all related data for this user (assigned services, cached entries, pending operations)",
+            description="Reset the user's related external data (currently only the MFA data)",
         ),
         types.rest.ModelCustomMethod(
             "add_to_group",

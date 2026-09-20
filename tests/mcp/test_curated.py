@@ -47,6 +47,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_system_logs",
     "get_platform_stats",
     "get_security_check",
+    "get_dashboard",
     "get_config",
     "report_failed_logins",
     "report_admin_activity",
@@ -195,6 +196,31 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         )
         content = json.loads(self._result_text(self._call("get_config", {})))
         self.assertEqual(content["Security"]["Test Secret"]["value"], "********")
+
+    def test_get_dashboard_admin_full_payload(self) -> None:
+        body = self._call("get_dashboard", {"days": 7})
+        result = json.loads(self._result_text(body))
+        self.assertEqual(result["days"], 7)
+        self.assertIn("kpis", result)
+        for widget in ("pool_saturation", "failed_logins"):
+            self.assertIn(widget, result)
+
+    def test_get_dashboard_single_widget(self) -> None:
+        body = self._call("get_dashboard", {"widget": "kpis"})
+        result = json.loads(self._result_text(body))
+        self.assertEqual(result["widget"], "kpis")
+        self.assertEqual(set(result), {"days", "widget", "kpis"})
+
+    def test_get_dashboard_staff_gets_denied(self) -> None:
+        self.login_with_api_token(as_admin=False)
+        body = self._call("get_dashboard", {})
+        self.assertEqual(body["error"]["code"], -32000)
+
+    def test_get_dashboard_unknown_widget_rejected(self) -> None:
+        # The widget validation is executor-side, so it still answers
+        # invalid-params for the (now staff) session of the previous test.
+        body = self._call("get_dashboard", {"widget": "nope"})
+        self.assertEqual(body["error"]["code"], -32602)
 
     def test_report_failed_logins_csv(self) -> None:
         body = self._call(

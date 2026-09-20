@@ -1,8 +1,10 @@
-"""Platform tools: usage counters, the security self-assessment and the global configuration."""
+"""Platform tools: usage counters, the security self-assessment, the
+diagnostics dashboard and the global configuration."""
 
 import typing
 
 from uds.REST.methods.config import Config as ConfigHandler
+from uds.REST.methods.dashboard import Dashboard
 from uds.REST.methods.system import System
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 
@@ -13,6 +15,21 @@ from .helpers import GET, JsonObject, schema, string_property, uuid_property
 __all__ = ["curated_tools"]
 
 _COUNTERS: typing.Final[tuple[str, ...]] = ("assigned", "inuse", "cached", "complete")
+
+#: Widgets of the dashboard payload, as the REST builder names them. The
+#: agent can ask for a single one to keep the answer small.
+_DASHBOARD_WIDGETS: typing.Final[tuple[str, ...]] = (
+    "kpis",
+    "peak_concurrency",
+    "pool_saturation",
+    "cache_efficiency",
+    "tunnel_usage",
+    "client_platforms",
+    "top_users",
+    "session_duration",
+    "userservice_errors",
+    "failed_logins",
+)
 
 
 def _platform_stats_tool() -> ToolDefinition:
@@ -102,10 +119,63 @@ def _config_tool() -> ToolDefinition:
     )
 
 
+def _dashboard_tool() -> ToolDefinition:
+    """Build the diagnostics dashboard tool (``GET /dashboard/data``)."""
+
+    async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
+        widget = str(arguments.get("widget", "")).strip().lower() or None
+        if widget is not None and widget not in _DASHBOARD_WIDGETS:
+            raise ValueError(f"widget must be one of {', '.join(_DASHBOARD_WIDGETS)}")
+        params: JsonObject = {}
+        if arguments.get("days") is not None:
+            params["days"] = str(int(arguments["days"]))
+        data = await RestProxy().execute(
+            RestTarget(Dashboard, "dashboard", GET, args=("data",)), request, params
+        )
+        if widget is None:
+            return data
+        payload: dict[str, typing.Any] = {"days": data.get("days"), "widget": widget, widget: data.get(widget)}
+        return payload
+
+    return ToolDefinition(
+        name="get_dashboard",
+        title="Get diagnostics dashboard",
+        description=(
+            "Aggregated platform diagnostics, the same data the administration dashboard "
+            "shows over a look-back window (``days``, default 30, up to 365): point-in-time "
+            "kpis, peak concurrency, pool saturation, cache efficiency, tunnel usage, "
+            "client platforms, top users, session duration, userservice errors and failed "
+            "logins. Pass a single ``widget`` (one of "
+            f"{', '.join(_DASHBOARD_WIDGETS)}) to get only that slice; omit it for the "
+            "full payload. Use it to triage platform health before drilling into a "
+            "specific pool or user. Administrators only."
+        ),
+        input_schema=schema(
+            {
+                "days": {
+                    "type": "integer",
+                    "description": "Look-back window in days (1..365). Default: 30.",
+                },
+                "widget": string_property(
+                    "Optional single widget to return. Omit for the whole dashboard payload."
+                ),
+            }
+        ),
+        access="Administrators only (the backing dashboard endpoint requires the admin role).",
+        returns=(
+            "The dashboard payload: kpis plus one entry per widget, each bounded to its "
+            "top rows; or a single widget when one was requested."
+        ),
+        required_permission="ALL",
+        executor=executor,
+    )
+
+
 def curated_tools() -> tuple[ToolDefinition, ...]:
     """Return the platform tools."""
     return (
         _platform_stats_tool(),
         _security_check_tool(),
+        _dashboard_tool(),
         _config_tool(),
     )

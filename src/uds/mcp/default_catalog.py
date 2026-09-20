@@ -78,10 +78,32 @@ def _curated_tools(catalog: Catalog) -> None:
     the generic ``list_*`` generator: GET custom methods chosen by hand
     (fallback access policies, forecasting, cache recommendations, server
     statistics, authenticator search), the unified per-object logs tool,
-    and the admin-only global log tool. See :mod:`uds.mcp.curated`.
+    the admin-only global log tool and the diagnostics dashboard. See
+    :mod:`uds.mcp.curated`.
 
-    Surfaces deliberately left out until their tools are defined (reports
-    being the canonical candidate) are tracked in the implementation plan.
+    REST surfaces deliberately NOT offered over MCP, so this decision is
+    visible here and does not resurface as an accidental gap:
+
+    - ``servicespools/{id}/actions/{aid}/execute`` (launch a scheduled
+      action now): it exists for the administrator to test or fire an
+      action manually; a proposal flow *is* a deferred, approved
+      execution, so an immediate "execute now" would bypass the model.
+    - ``accounts/{id}/timemark``: closing an accounting period is a
+      human administrative act, not an agent operation.
+    - The ``permissions`` endpoints: access grants stay with humans and
+      the plain REST API, even for an administrator-role token. Not
+      exposed to the agent by policy.
+    - The user API-token issue/revoke endpoints (``users/{id}/token``):
+      credential minting is a security gate reserved for humans.
+    - ``cache/flush`` and the dashboard's ``flush=1``: pure performance
+      knobs over data the agent can already read; refreshing a cache is
+      not information.
+
+    Under evaluation for the next cycle: tunnel server assignment
+    (``tunnels/{id}/assign/{server}``), provider/server maintenance
+    toggles (currently live-action tools outside ``MCP_MUTATIONS``),
+    arbitrary report generation (needs a richer report descriptor) and
+    the user ``clean_related`` (MFA data reset).
     """
     register_curated_tools(catalog)
 
