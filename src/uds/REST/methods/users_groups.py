@@ -608,6 +608,12 @@ class Groups(DetailHandler[GroupItem]):
 
     @typing.override
     def save_item(self, parent: "Model", item: str | None) -> typing.Any:
+        # Write and answer-read share one transaction, so a failure on the
+        # serialized answer rolls the whole save back (same as Users).
+        with transaction.atomic():
+            return self._save_item(parent, item)
+
+    def _save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, Authenticator)
         group = None  # Avoid warning on reference before assignment
         try:

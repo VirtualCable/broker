@@ -117,6 +117,20 @@ class GroupsTrailTest(rest.test.RESTTestCase):
             self._messages(self.auth),
         )
 
+    def test_failure_on_the_answer_read_rolls_the_write_back(self) -> None:
+        """If serializing the answer fails, the created group is not persisted."""
+        from unittest import mock
+
+        from uds.REST.methods.users_groups import Groups
+
+        with mock.patch.object(Groups, "get_item", side_effect=RuntimeError("serialization boom")):
+            response = self.client.rest_put(
+                f"authenticators/{self.auth.uuid}/groups",
+                {"type": "normal", "name": "doomed-rollback", "comments": "", "state": "A", "skip_mfa": "F"},
+            )
+        self.assertEqual(response.status_code, 500, response.content)
+        self.assertFalse(models.Group.objects.filter(name="doomed-rollback").exists())
+
     def test_add_to_group_logs_both_sides_and_refuses_external(self) -> None:
         from types import SimpleNamespace
         from unittest import mock
