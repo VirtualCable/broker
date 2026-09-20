@@ -48,7 +48,6 @@ from uds.core.util.model import process_uuid
 from uds.REST.model.base import BaseModelHandler
 from uds.REST.utils import camel_and_snake_case_from
 from uds.REST.utils import is_camel_case
-from uds.REST.utils import rest_result
 from uds.REST.utils import sanitize_params
 
 T = typing.TypeVar("T", bound=models.Model)
@@ -333,7 +332,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         _not_used, etag = self._item_with_etag_from_uuuid(parent, item)
         self.check_if_match_header(etag)
 
-        return rest_result(self.save_item(parent, item))
+        return self.save_item(parent, item)
 
     def post(self) -> typing.Any:
         """
@@ -375,7 +374,7 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Common create logic used by both POST (preferred) and PUT (legacy).
         """
         logger.debug("Creating detail item under parent %s", parent)
-        return rest_result(self.save_item(parent, None))
+        return self.save_item(parent, None)
 
     def delete(self) -> typing.Any:
         """
@@ -450,12 +449,13 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
     # Default save
     def save_item(self, parent: models.Model, item: str | None) -> T_Item:
         """
-        Invoked for a valid "put" operation
+        Invoked for a valid "post" (create) or "put" (create-legacy/edit) operation.
         If this method is not overridden, the detail class will not have "Save/modify" operations.
         Parameters (probably object fields) must be retrieved from "_params" member variable
         :param parent: Parent of this detail (parent DB Object)
-        :param item: Item id (uuid)
-        :return: Normally "success" is expected, but can throw any "exception"
+        :param item: Item id (uuid), or None when creating
+        :return: The saved item, serialized exactly as "get_item" returns it (the
+            write answers with the same shape GET does, in root and detail alike)
         """
         logger.debug("Default save_item handler caller for %s", self._path)
         raise exceptions.rest.RequestError("Invalid PUT request") from None

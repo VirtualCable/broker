@@ -93,6 +93,12 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     Rest handler for Assigned Services, wich parent is Service
     """
 
+    #: Which queryset this endpoint writes: assigned services (False) or
+    #: cached ones (True, overridden by ``CachedService``). Saves and reads
+    #: go through the same filtered queryset, so a cached service cannot be
+    #: edited through the assigned URL (or the other way around).
+    FOR_CACHED: typing.ClassVar[bool] = False
+
     CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
         types.rest.ModelCustomMethod(
             "reset",
@@ -320,7 +326,9 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             raise exceptions.rest.RequestError("Only modify is allowed")
         fields = self.fields_from_params(["auth_id:_", "user_id:_", "ip:_"])
 
-        userservice = parent.userServices.get(uuid=process_uuid(item))
+        # Scope the write to this endpoint's queryset: a cached service is
+        # invisible to the assigned URL and vice versa.
+        userservice = self.get_qs(self.FOR_CACHED, parent).get(uuid=process_uuid(item))
         if "user_id" in fields and "auth_id" in fields:
             user = models.User.objects.get(uuid=process_uuid(fields["user_id"]))
 
@@ -350,7 +358,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         log.log(parent, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
         log.log(userservice, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
 
-        return {"id": userservice.uuid}
+        return self.get_item(parent, userservice.uuid)
 
     def reset(self, parent: "models.ServicePool", item: str) -> typing.Any:
         if not parent.capabilities().can_reset:
@@ -365,6 +373,8 @@ class CachedService(AssignedUserService):
     """
     Rest handler for Cached Services, which parent is ServicePool
     """
+
+    FOR_CACHED: typing.ClassVar[bool] = True
 
     CUSTOM_METHODS: typing.ClassVar[
         list[types.rest.ModelCustomMethod]
@@ -453,6 +463,19 @@ class Groups(DetailHandler[GroupItem]):
     Processes the groups detail requests of a Service Pool
     """
 
+    @staticmethod
+    def as_item(group: models.Group) -> GroupItem:
+        return GroupItem(
+            id=group.uuid,
+            auth_id=group.manager.uuid,
+            name=group.name,
+            group_name=group.pretty_name,
+            comments=group.comments,
+            state=group.state,
+            type="meta" if group.is_meta else "group",
+            auth_name=group.manager.name,
+        )
+
     @typing.override
     def get_item_position(self, parent: "Model", item_uuid: str) -> int:
         parent = typing.cast("models.ServicePool | models.MetaPool", parent)
@@ -463,16 +486,7 @@ class Groups(DetailHandler[GroupItem]):
         parent = typing.cast("models.ServicePool | models.MetaPool", parent)
 
         return [
-            GroupItem(
-                id=group.uuid,
-                auth_id=group.manager.uuid,
-                name=group.name,
-                group_name=group.pretty_name,
-                comments=group.comments,
-                state=group.state,
-                type="meta" if group.is_meta else "group",
-                auth_name=group.manager.name,
-            )
+            Groups.as_item(group)
             for group in typing.cast(
                 collections.abc.Iterable[models.Group], self.filter_odata_queryset(parent.assignedGroups.all())
             )
@@ -480,7 +494,12 @@ class Groups(DetailHandler[GroupItem]):
 
     @typing.override
     def get_item(self, parent: Model, item: str) -> GroupItem:
-        raise exceptions.rest.NotSupportedError("Single group retrieval not implemented inside assigned groups")
+        parent = typing.cast("models.ServicePool | models.MetaPool", parent)
+        try:
+            group = parent.assignedGroups.get(uuid=process_uuid(item))
+        except models.Group.DoesNotExist:
+            raise exceptions.rest.NotFound(_("Group not found: {}").format(item)) from None
+        return Groups.as_item(group)
 
     @typing.override
     def get_table(self, parent: "Model") -> TableInfo:
@@ -507,7 +526,7 @@ class Groups(DetailHandler[GroupItem]):
             types.log.LogSource.ADMIN,
         )
 
-        return {"id": group.uuid}
+        return self.get_item(parent, group.uuid)
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:
@@ -537,6 +556,17 @@ class Transports(DetailHandler[TransportItem]):
     Processes the transports detail requests of a Service Pool
     """
 
+    @staticmethod
+    def as_item(trans: models.Transport) -> TransportItem:
+        return TransportItem(
+            id=trans.uuid,
+            name=trans.name,
+            type=Transports.as_typeinfo(trans.get_type()).as_dict(),
+            comments=trans.comments,
+            priority=trans.priority,
+            trans_type=trans.get_type().mod_name(),
+        )
+
     @typing.override
     def get_item_position(self, parent: "Model", item_uuid: str) -> int:
         parent = ensure.is_instance(parent, models.ServicePool)
@@ -546,23 +576,16 @@ class Transports(DetailHandler[TransportItem]):
     def get_items(self, parent: "Model") -> types.rest.ItemsResult["TransportItem"]:
         parent = ensure.is_instance(parent, models.ServicePool)
 
-        return [
-            TransportItem(
-                id=trans.uuid,
-                name=trans.name,
-                type=type(self).as_typeinfo(trans.get_type()).as_dict(),
-                comments=trans.comments,
-                priority=trans.priority,
-                trans_type=trans.get_type().mod_name(),
-            )
-            for trans in self.filter_odata_queryset(parent.transports.all())
-        ]
+        return [Transports.as_item(trans) for trans in self.filter_odata_queryset(parent.transports.all())]
 
     @typing.override
     def get_item(self, parent: "Model", item: str) -> TransportItem:
-        raise exceptions.rest.NotSupportedError(
-            "Single transport retrieval not implemented inside assigned transports"
-        )
+        parent = ensure.is_instance(parent, models.ServicePool)
+        try:
+            trans = parent.transports.get(uuid=process_uuid(item))
+        except models.Transport.DoesNotExist:
+            raise exceptions.rest.NotFound(_("Transport not found: {}").format(item)) from None
+        return Transports.as_item(trans)
 
     @typing.override
     def get_table(self, parent: "Model") -> TableInfo:
@@ -588,7 +611,7 @@ class Transports(DetailHandler[TransportItem]):
             types.log.LogSource.ADMIN,
         )
 
-        return {"id": transport.uuid}
+        return self.get_item(parent, transport.uuid)
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:

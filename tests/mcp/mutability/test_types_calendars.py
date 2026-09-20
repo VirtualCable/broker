@@ -16,7 +16,7 @@ from uds.mutability.types.calendars import CalendarUpdate
 from uds.mutability.types.calendars.rule import CalendarRuleUpdate
 from uds.models import Calendar, CalendarRule
 from uds.REST.methods.calendars import Calendars
-from uds.REST.methods.calendarrules import CalendarRules
+from uds.REST.methods.calendarrules import CalendarRuleItem, CalendarRules
 
 from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
@@ -284,8 +284,20 @@ class CalendarRuleCreateTest(FlowTestCase):
         )
         rule_uuid = "11111111-2222-3333-4444-555555555555"
         with mock.patch.object(RestProxy, "_execute_sync") as execute_sync:
-            # detail operations answer wrapped in the REST envelope
-            execute_sync.return_value = {"result": {"id": rule_uuid}, "stamp": 0, "version": "v", "build": "b"}
+            # detail writes answer with the saved item itself (the handler's
+            # ``CalendarRuleItem``, before any JSON rendering)
+            execute_sync.return_value = CalendarRuleItem(
+                id=rule_uuid,
+                name="easter",
+                comments="",
+                start=datetime.datetime(2026, 4, 5, 0, 0, tzinfo=datetime.timezone.utc),
+                end=None,
+                frequency="YEARLY",
+                interval=1,
+                duration=0,
+                duration_unit="MINUTES",
+                permission=96,
+            )
             summary = async_to_sync(_rule_bound("create").execute)(action, request=make_request())
 
         target, _request, params, parent_uuid = execute_sync.call_args[0]

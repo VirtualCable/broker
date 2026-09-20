@@ -59,7 +59,7 @@ class GroupsTrailTest(rest.test.RESTTestCase):
             {"type": "normal", "name": "trail-group", "comments": "trail test", "state": "A", "skip_mfa": "F"},
         )
         self.assertEqual(response.status_code, 200, response.content.decode(errors="replace"))
-        group = models.Group.objects.get(uuid=response.json()["result"]["id"])
+        group = models.Group.objects.get(uuid=response.json()["id"])
 
         self.assertTrue(
             any("Created normal group trail-group by" in message for message in self._messages(group)),
@@ -94,7 +94,7 @@ class GroupsTrailTest(rest.test.RESTTestCase):
             },
         )
         self.assertEqual(response.status_code, 200, response.content.decode(errors="replace"))
-        meta = models.Group.objects.get(uuid=response.json()["result"]["id"])
+        meta = models.Group.objects.get(uuid=response.json()["id"])
 
         self.assertTrue(
             any("Created meta group trail-meta by" in message for message in self._messages(meta)),
@@ -107,7 +107,7 @@ class GroupsTrailTest(rest.test.RESTTestCase):
             {"type": "normal", "name": "doomed-group", "comments": "", "state": "A", "skip_mfa": "F"},
         )
         self.assertEqual(response.status_code, 200, response.content.decode(errors="replace"))
-        group = models.Group.objects.get(uuid=response.json()["result"]["id"])
+        group = models.Group.objects.get(uuid=response.json()["id"])
 
         response = self.client.rest_delete(f"authenticators/{self.auth.uuid}/groups/{group.uuid}")
         self.assertEqual(response.status_code, 200, response.content.decode(errors="replace"))

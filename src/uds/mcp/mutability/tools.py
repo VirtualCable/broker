@@ -104,9 +104,13 @@ def _as_dict(obj: typing.Any) -> typing.Any:
 
 
 def _detail_result(response: typing.Any) -> JsonDict:
-    """Unwrap the ``rest_result`` envelope of detail write operations."""
-    assert isinstance(response, dict) and "result" in response
-    return typing.cast("JsonDict", _as_dict(response["result"]))
+    """Serialize the item a detail write operation answers with.
+
+    Detail writes answer with the saved item itself (the same shape a GET
+    returns), so here it is only the dataclass-to-dict step the HTTP layer
+    would perform at render time.
+    """
+    return typing.cast("JsonDict", _as_dict(response))
 
 
 def _registry_type(type_id: str) -> registry.MutableActionType:

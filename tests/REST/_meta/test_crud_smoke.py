@@ -246,8 +246,8 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
         get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}")
         self.assertEqual(get_resp.status_code, 404)
 
-    def test_rule_create_reports_uuid(self) -> None:
-        """POST /calendars/{uuid}/rules → create, {"id": ...}, then GET by uuid."""
+    def test_rule_create_answers_with_the_item(self) -> None:
+        """POST /calendars/{uuid}/rules → full item (no envelope), same as GET."""
         create_resp = self.client.rest_post(
             self.BASE, {"name": "rules-test-calendar", "comments": "", "tags": []}
         )
@@ -269,12 +269,20 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
         self.assertEqual(
             rule_resp.status_code, 200, f"POST rule create failed: {rule_resp.content.decode(errors='replace')}"
         )
-        rule_uuid = rule_resp.json().get("result", {}).get("id")
-        self.assertIsNotNone(rule_uuid, f"detail create must report the new item uuid; got {rule_resp.json()}")
+        created = rule_resp.json()
+        # Flat full item: the create answers like GET does, not with an
+        # {"result": ...} envelope, and reports the new uuid in "id"
+        self.assertNotIn("result", created)
+        rule_uuid = created.get("id")
+        self.assertIsNotNone(rule_uuid, f"detail create must report the new item uuid; got {created}")
+        self.assertEqual(created["name"], "smoke-rule")
+        self.assertEqual(created["frequency"], "YEARLY")
 
         get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}/rules/{rule_uuid}")
         self.assertEqual(get_resp.status_code, 200)
-        self.assertEqual(get_resp.json()["name"], "smoke-rule")
+        # The save response (read inside the handler's transaction) must
+        # match the GET answer for the same item
+        self.assertEqual(created, get_resp.json())
 
         del_resp = self.client.rest_delete(f"{self.BASE}/{cal_uuid}/rules/{rule_uuid}")
         self.assertEqual(del_resp.status_code, 200)

@@ -56,14 +56,12 @@ async def execute_create(
     else:
         response = await RestProxy().execute(target, request, params)
     if isinstance(response, dict):
-        payload = typing.cast("JsonObject", response)
-        # Detail operations answer wrapped in the REST envelope
-        # ({"result": ..., "stamp": ...}); root ones answer with the
-        # plain item payload. Unwrap so both report the new uuid.
-        if "result" in payload and isinstance(payload["result"], dict):
-            payload = typing.cast("JsonObject", payload["result"])
-        return payload.get("id")
-    return None
+        # Root operations answer with the serialized item as a dict
+        return typing.cast("JsonObject", response).get("id")
+    # Detail operations answer with the serialized item itself (the handler's
+    # own ``T_Item``, before any JSON rendering); its ``id`` is the new uuid
+    new_id = getattr(response, "id", None)
+    return str(new_id) if new_id is not None else None
 
 
 async def execute_delete(

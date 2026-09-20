@@ -304,7 +304,9 @@ class Users(DetailHandler[UserItem]):
                     # Save but skip meta groups, they are not real groups, but just a way to group users based on rules
                     user.groups.set(g for g in parent.groups.filter(uuid__in=groups) if g.is_meta is False)
 
-                return {"id": user.uuid}
+                # Report the saved user with the same shape GET returns (read
+                # inside the transaction, so it reflects this very save)
+                return self.get_item(parent, user.uuid)
         except User.DoesNotExist:
             raise exceptions.rest.NotFound(_("User not found")) from None
         except IntegrityError:  # Duplicate key probably
@@ -694,7 +696,7 @@ class Groups(DetailHandler[GroupItem]):
                     message += ": " + "; ".join(changes)
                 group.log(message, types.log.LogLevel.INFO, types.log.LogSource.ADMIN)
 
-            return {"id": group.uuid}
+            return self.get_item(parent, group.uuid)
         except Group.DoesNotExist:
             raise exceptions.rest.NotFound(_("Group not found")) from None
         except IntegrityError:  # Duplicate key probably

@@ -155,7 +155,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
             types.log.LogSource.ADMIN,
         )
 
-        return {"id": member.uuid}
+        return self.get_item(parent, member.uuid)
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:
@@ -350,7 +350,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
         # Log change
         log.log(parent, types.log.LogLevel.INFO, log_str, types.log.LogSource.ADMIN)
 
-        return {"id": userservice.uuid}
+        return self.get_item(parent, userservice.uuid)
 
     def reset(self, parent: "models.MetaPool", item: str) -> typing.Any:
         # The assigned service belongs to a member pool, so the reset

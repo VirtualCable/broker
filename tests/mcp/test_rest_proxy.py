@@ -201,13 +201,13 @@ class DetailProxyIfMatchContractTest(rest.test.RESTTestCase):
     def test_put_without_precondition_is_allowed(self) -> None:
         """RFC 7232 optionality: headerless proxy PUT applies the update."""
         result = self._put(if_match=None, suffix=" (proxy no precondition)")
-        self.assertEqual(result["result"].item.uuid, self.service.uuid)
+        self.assertEqual(result.item.uuid, self.service.uuid)
         self.service.refresh_from_db()
         self.assertTrue(self.service.name.endswith(" (proxy no precondition)"))
 
     def test_put_with_matching_if_match_succeeds(self) -> None:
         result = self._put(if_match=f'"{self._current_etag()}"', suffix=" (proxy matching)")
-        self.assertEqual(result["result"].item.uuid, self.service.uuid)
+        self.assertEqual(result.item.uuid, self.service.uuid)
 
     def test_put_with_stale_if_match_raises_before_saving(self) -> None:
         """The contract case: a drifted item rejects the proxy PUT via the

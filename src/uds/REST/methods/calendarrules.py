@@ -166,12 +166,12 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
         try:
             if item is None:  # Create new
                 calendar_rule = parent.rules.create(**fields)
-                return {"id": calendar_rule.uuid}
             else:
                 calendar_rule = parent.rules.get(uuid=process_uuid(item))
                 typing.cast(typing.Any, calendar_rule.__dict__).update(fields)  # Disable type errors
                 calendar_rule.save()
-                return {"id": calendar_rule.uuid}
+            # Report the saved rule with the same shape GET returns
+            return self.get_item(parent, calendar_rule.uuid)
         except CalendarRule.DoesNotExist:
             raise exceptions.rest.NotFound(_("Calendar rule not found: {}").format(item)) from None
         except IntegrityError as e:  # Duplicate key probably

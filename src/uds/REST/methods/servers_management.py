@@ -352,7 +352,7 @@ class ServersServers(DetailHandler[ServerItem]):
                 )
                 # Add to group
                 parent.servers.add(server)
-                return {"id": server.uuid}
+                return self.get_item(parent, server.uuid)
             elif parent.type == types.servers.ServerType.SERVER:
                 # Get server
                 try:
@@ -368,14 +368,14 @@ class ServersServers(DetailHandler[ServerItem]):
                     logger.error("Error getting server: %s", e)
                     raise exceptions.rest.ResponseError("Error getting server") from None
 
-                return {"id": server.uuid}
+                return self.get_item(parent, server.uuid)
         else:
             if parent.type == types.servers.ServerType.UNMANAGED:
                 mac = self._params["mac"].strip().upper()
                 if mac and not net.is_valid_mac(mac):
                     raise exceptions.rest.RequestError("Invalid MAC address")
                 try:
-                    models.Server.objects.filter(uuid=process_uuid(item)).update(
+                    updated = parent.servers.filter(uuid=process_uuid(item)).update(
                         # Update register info also on update
                         register_username=self._user.pretty_name,
                         register_ip=self._request.ip,
@@ -384,6 +384,8 @@ class ServersServers(DetailHandler[ServerItem]):
                         mac=mac,
                         stamp=sql_now(),  # Modified now
                     )
+                    if updated == 0:
+                        raise models.Server.DoesNotExist  # Not found or not in this group
                 except models.Server.DoesNotExist:
                     raise exceptions.rest.NotFound(f"Server not found: {item}") from None
                 except Exception as e:
@@ -398,7 +400,7 @@ class ServersServers(DetailHandler[ServerItem]):
                 except models.Server.DoesNotExist:
                     raise exceptions.rest.NotFound(f"Server not found: {item}") from None
 
-            return {"id": item}
+            return self.get_item(parent, item)
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:

@@ -385,46 +385,6 @@ def gen_response(
     return data
 
 
-def gen_created_response(type: str) -> dict[str, types.rest.api.Response]:
-    """Responses of a detail-item creation (POST on the detail collection).
-
-    Detail creates return just the uuid of the new item ({"id": ...}), not
-    the serialized item: the handler builds it, persists it and reports
-    the identifier, exactly like the administration client does.
-    """
-    return {
-        "200": types.rest.api.Response(
-            description=f"{type} item created; the response carries the uuid of the new item",
-            content=types.rest.api.Content(
-                media_type="application/json",
-                schema=types.rest.api.SchemaProperty(
-                    type="object",
-                    properties={
-                        "id": types.rest.api.SchemaProperty(
-                            type="string",
-                            description="UUID of the created item",
-                        )
-                    },
-                ),
-            ),
-        ),
-        "403": types.rest.api.Response(
-            description="Forbidden. You do not have permission to access this resource with your current role.",
-            content=types.rest.api.Content(
-                media_type="application/json",
-                schema=types.rest.api.SchemaProperty(
-                    type="object",
-                    properties={
-                        "detail": types.rest.api.SchemaProperty(
-                            type="string",
-                        )
-                    },
-                ),
-            ),
-        ),
-    }
-
-
 def gen_request_body(type: str, create: bool = True) -> types.rest.api.RequestBody:
     return types.rest.api.RequestBody(
         description=f"{'New' if create else 'Updated'} {type} item{'s' if not create else ''} to create",

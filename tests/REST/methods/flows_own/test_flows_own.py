@@ -338,7 +338,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
     def test_add_action(self) -> None:
         response = self._add_action(justification="because")
         self.assertEqual(response.status_code, 200, response.content)
-        body = response.json()["result"]
+        body = response.json()
         self.assertEqual(body["status"], FlowActionStatus.PENDING)
         self.assertEqual(body["order"], 1)
         self.assertEqual(body["target_uuid"], self.provider.uuid)
@@ -353,7 +353,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
     def test_owner_has_no_admin_action_methods(self) -> None:
         # Not exposed on the owner surface: the POST falls through to an
         # opaque invalid-request refusal (no admin operation leaks here)
-        action_id = self._add_action().json()["result"]["id"]
+        action_id = self._add_action().json()["id"]
         approve = self.client.rest_post(f"{self._actions_url()}/{action_id}/approve", data={})
         self.assertEqual(approve.status_code, 400, approve.content)
         skip = self.client.rest_post(f"{self._actions_url()}/{action_id}/skip", data={})
@@ -403,7 +403,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         self.assertIn(b"Unknown action type", response.content)
 
     def test_edit_action_rebases(self) -> None:
-        action_id = self._add_action().json()["result"]["id"]
+        action_id = self._add_action().json()["id"]
         response = self.client.rest_put(
             f"{self._actions_url()}/{action_id}",
             data={"values": {"name": "rebased by owner"}},
@@ -413,7 +413,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         self.assertEqual(action.values, {"name": "rebased by owner"})
 
     def test_edit_non_draft_action_is_400(self) -> None:
-        action_id = self._add_action().json()["result"]["id"]
+        action_id = self._add_action().json()["id"]
         self.client.rest_delete(f"flows/own/{self.flow_id}")  # Flow cancelled
         response = self.client.rest_put(
             f"{self._actions_url()}/{action_id}",
@@ -429,7 +429,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     def test_edit_action_after_submit_is_400(self) -> None:
-        action_id = self._add_action().json()["result"]["id"]
+        action_id = self._add_action().json()["id"]
         self.assertEqual(self.client.rest_post(f"flows/own/{self.flow_id}/submit", data={}).status_code, 200)
         response = self.client.rest_put(
             f"{self._actions_url()}/{action_id}",
@@ -438,7 +438,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     def test_action_delete_is_refused(self) -> None:
-        action_id = self._add_action().json()["result"]["id"]
+        action_id = self._add_action().json()["id"]
         response = self.client.rest_delete(f"{self._actions_url()}/{action_id}")
         self.assertEqual(response.status_code, 400, response.content)
 
@@ -577,7 +577,7 @@ class FlowsOwnConfigUpdateTest(rest.test.RESTTestCase):
         ).json()["id"]
         response = self.client.rest_post(f"flows/own/{flow_id}/actions", data=self._payload(cfg))
         self.assertEqual(response.status_code, 200, response.content)
-        body = response.json()["result"]
+        body = response.json()
         self.assertEqual(body["status"], FlowActionStatus.PENDING)
         # The CAS base is the current value of the key
         action = models.FlowAction.objects.get(uuid=body["id"])
@@ -626,7 +626,7 @@ class FlowsOwnCreateActionsTest(rest.test.RESTTestCase):
         self._new_flow()  # own surface: the flow must belong to the caller
         response = self._add(self._root_create_payload())
         self.assertEqual(response.status_code, 200, response.content)
-        body = response.json()["result"]
+        body = response.json()
         self.assertEqual(body["status"], FlowActionStatus.PENDING)
         self.assertEqual(body["target_uuid"], CREATE_TARGET_UUID)
 
@@ -659,7 +659,7 @@ class FlowsOwnCreateActionsTest(rest.test.RESTTestCase):
             }
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertEqual(response.json()["result"]["target_uuid"], self.provider.uuid)
+        self.assertEqual(response.json()["target_uuid"], self.provider.uuid)
 
     def test_detail_create_without_management_over_parent_is_403(self) -> None:
         other_provider = create_db_provider()

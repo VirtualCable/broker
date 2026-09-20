@@ -118,12 +118,16 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
         uuid = process_uuid(item) if item is not None else None
 
         try:
-            calendar: models.Calendar = models.Calendar.objects.get(uuid=process_uuid(self._params["calendar_id"]))
+            calendar: models.Calendar = models.Calendar.objects.get(
+                uuid=process_uuid(self._params["calendar_id"])
+            )
             access: str = self._params["access"].upper()
             if access not in (ALLOW, DENY):
                 raise Exception()
         except models.Calendar.DoesNotExist:
-            raise exceptions.rest.NotFound(_("Calendar not found: {}").format(self._params["calendar_id"])) from None
+            raise exceptions.rest.NotFound(
+                _("Calendar not found: {}").format(self._params["calendar_id"])
+            ) from None
         except Exception as e:
             logger.error("Error saving calendar access: %s", e)
             raise exceptions.rest.RequestError(_("Invalid parameters on request")) from e
@@ -156,7 +160,7 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
             types.log.LogSource.ADMIN,
         )
 
-        return {"id": calendar_access.uuid}
+        return self.get_item(parent, calendar_access.uuid)
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:
@@ -223,7 +227,9 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
     @typing.override
     def get_items(self, parent: "Model") -> types.rest.ItemsResult[ActionCalendarItem]:
         parent = ensure.is_instance(parent, models.ServicePool)
-        return [ActionsCalendars.as_dict(i) for i in self.filter_odata_queryset(parent.calendaraction_set.all())]
+        return [
+            ActionsCalendars.as_dict(i) for i in self.filter_odata_queryset(parent.calendaraction_set.all())
+        ]
 
     @typing.override
     def get_item(self, parent: "Model", item: str) -> ActionCalendarItem:
@@ -286,7 +292,7 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
 
         log.log(parent, types.log.LogLevel.INFO, log_string, types.log.LogSource.ADMIN)
 
-        return {"id": calendar_action.uuid}
+        return self.get_item(parent, calendar_action.uuid)
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:
