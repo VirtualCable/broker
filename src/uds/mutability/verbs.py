@@ -3,10 +3,11 @@
 The ``op_create``/``op_delete`` implementations of every family repeat
 the same three concerns: dispatch the REST call through the proxy (the
 root boundary or the detail one, always outside the async event loop),
-extract the real uuid of the created item from the response, and phrase
-the result message. This module is the single home of those pieces, so
-each family stays down to its genuinely specific part: building the
-payload and resolving names.
+take the serialized item the creation answers with (the same shape a
+GET returns, in root and detail alike) and read the new uuid off it,
+and phrase the result message. This module is the single home of those
+pieces, so each family stays down to its genuinely specific part:
+building the payload and resolving names.
 
 It also hosts the standard tool texts of the verbs: every family phrases
 creation and deletion the same way, so the agent reads one consistent
