@@ -161,3 +161,17 @@ class AssignablesCustomMethodsTest(rest.test.RESTTestCase):
         self.assertEqual(args[0], self.pool)
         self.assertEqual(args[1], user)
         self.assertEqual(args[2], "m-1")
+
+    def test_create_answers_the_created_item_id(self) -> None:
+        # The answer carries the new user service's uuid so clients
+        # (notably the MCP proposal tool, which reports the created item)
+        # can reference it. The administration GUI discards the body.
+        user = self.plain_users[0]
+        created = self._created_userservice(user)
+        with mock.patch.object(UserServiceManager, "create_from_assignable", return_value=created):
+            response = self.client.rest_post(
+                f"servicespools/{self.pool.uuid}/create_from_assignable",
+                data={"user_id": user.uuid, "assignable_id": "m-1"},
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json(), {"id": created.uuid})

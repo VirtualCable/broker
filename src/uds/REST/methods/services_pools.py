@@ -230,21 +230,21 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
         types.rest.ModelCustomMethod(
             "list_assignables",
             True,
-            description="Enumerate all assignable services that can be used to create a new service pool",
+            description="Enumerate the pool service inventory elements that can be assigned to a user",
         ),
         types.rest.ModelCustomMethod(
             "create_from_assignable",
             True,
             method=types.rest.CustomMethodMethod.POST,
-            description="Create a new service pool from an existing assignable service",
+            description="Assign an existing inventory element of the pool's service to an user",
             params=types.rest.api.SchemaProperty(
                 type="object",
                 properties={
                     "user_id": types.rest.api.SchemaProperty(
-                        type="string", description="UUID of the user who will own the new service pool"
+                        type="string", description="UUID of the user that will own the new assigned service"
                     ),
                     "assignable_id": types.rest.api.SchemaProperty(
-                        type="string", description="Identifier of the assignable service to create from"
+                        type="string", description="Identifier of the assignable element to assign"
                     ),
                 },
             ),
@@ -898,13 +898,13 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             raise exceptions.rest.RequestError("Invalid parameters")
 
         logger.debug("Creating from assignable: %s", sanitize_params(self._params))
-        UserServiceManager.manager().create_from_assignable(
+        created = UserServiceManager.manager().create_from_assignable(
             item,
             User.objects.get(uuid__iexact=process_uuid(self._params["user_id"])),
             self._params["assignable_id"],
         )
 
-        return True
+        return {"id": created.uuid}
 
     def add_log(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
