@@ -52,7 +52,7 @@ _IMAGE_DEFINITIONS: typing.Final[list[JsonObject]] = [
         "name": "name",
         "type": "text",
         "label": "Name",
-        "tooltip": "Unique name of the image (the reference pools and groups pick it by)",
+        "tooltip": "Unique name of the image (pools, meta pools and pool groups reference it by this name)",
         "secret": False,
     },
     {
@@ -75,7 +75,7 @@ class ImageActions(mutability_base.MutableActionType):
     noun = "Image"
     title = "Propose creating a gallery image"
     description = (
-        "Propose creating a new image in the gallery (an icon a pool, a meta pool "
+        "Propose creating a new image in the gallery (an icon that a pool, a meta pool "
         "or a pool group can then reference): name (required, unique) and data "
         "(required, the base64 of the image). The proposal does NOT upload anything: "
         "it is queued until an administrator approves it."

@@ -70,10 +70,12 @@ def api_paths(
     else:
         base_type_name = base_type.__name__
 
-    # POST create operation (preferred way to create items per Change G)
+    # POST create operation (preferred way to create items per Change G).
+    # Root creates run the generic pipeline and return the full serialized
+    # item, which always carries the uuid of the new item in its "id".
     post_create_op = types.rest.api.Operation(
         summary=f"Create a new {name} item",
-        description=f"Create a new {name} item",
+        description=f"Create a new {name} item. The response carries the created item, including its uuid.",
         parameters=[],
         requestBody=api_utils.gen_request_body(base_type_name, create=True),
         responses=api_utils.gen_response(base_type_name, single=True),
@@ -191,7 +193,9 @@ def api_paths(
         ),
     }
 
-    def emit_custom_method(cm: "types.rest.ModelCustomMethod", method_name: str | None, deprecated: bool) -> None:
+    def emit_custom_method(
+        cm: "types.rest.ModelCustomMethod", method_name: str | None, deprecated: bool
+    ) -> None:
         method_name = method_name or cm.name
         cm_path = f"{path}/{{uuid}}/{method_name}" if cm.needs_parent else f"{path}/{method_name}"
         # Emit the declared HTTP method in the OpenAPI spec.

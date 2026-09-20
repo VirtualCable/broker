@@ -76,7 +76,9 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
 
         # GET the created item
         get_resp = self.client.rest_get(f"{self.BASE}/{account_uuid}")
-        self.assertEqual(get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}"
+        )
         item = get_resp.json()
         self.assertEqual(item["name"], "smoke-test-account")
         self.assertEqual(item["comments"], "Created by CRUD smoke test")
@@ -101,7 +103,9 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
 
         update_payload = {"name": "update-test-account", "comments": "After update", "tags": []}
         put_resp = self.client.rest_put(f"{self.BASE}/{account_uuid}", update_payload)
-        self.assertEqual(put_resp.status_code, 200, f"PUT update failed: {put_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            put_resp.status_code, 200, f"PUT update failed: {put_resp.content.decode(errors='replace')}"
+        )
 
         get_resp = self.client.rest_get(f"{self.BASE}/{account_uuid}")
         self.assertEqual(get_resp.json()["comments"], "After update")
@@ -113,7 +117,9 @@ class AccountsCrudSmokeTest(rest.test.RESTTestCase):
         account_uuid = create_resp.json().get("id")
 
         del_resp = self.client.rest_delete(f"{self.BASE}/{account_uuid}")
-        self.assertEqual(del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}"
+        )
 
         get_resp = self.client.rest_get(f"{self.BASE}/{account_uuid}")
         self.assertEqual(get_resp.status_code, 404)
@@ -240,6 +246,39 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
         get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}")
         self.assertEqual(get_resp.status_code, 404)
 
+    def test_rule_create_reports_uuid(self) -> None:
+        """POST /calendars/{uuid}/rules → create, {"id": ...}, then GET by uuid."""
+        create_resp = self.client.rest_post(
+            self.BASE, {"name": "rules-test-calendar", "comments": "", "tags": []}
+        )
+        cal_uuid = create_resp.json().get("id")
+
+        rule_resp = self.client.rest_post(
+            f"{self.BASE}/{cal_uuid}/rules",
+            {
+                "name": "smoke-rule",
+                "comments": "",
+                "frequency": "YEARLY",
+                "start": 1_777_000_000,
+                "end": None,
+                "interval": 1,
+                "duration": 0,
+                "duration_unit": "MINUTES",
+            },
+        )
+        self.assertEqual(
+            rule_resp.status_code, 200, f"POST rule create failed: {rule_resp.content.decode(errors='replace')}"
+        )
+        rule_uuid = rule_resp.json().get("result", {}).get("id")
+        self.assertIsNotNone(rule_uuid, f"detail create must report the new item uuid; got {rule_resp.json()}")
+
+        get_resp = self.client.rest_get(f"{self.BASE}/{cal_uuid}/rules/{rule_uuid}")
+        self.assertEqual(get_resp.status_code, 200)
+        self.assertEqual(get_resp.json()["name"], "smoke-rule")
+
+        del_resp = self.client.rest_delete(f"{self.BASE}/{cal_uuid}/rules/{rule_uuid}")
+        self.assertEqual(del_resp.status_code, 200)
+
 
 class MfasCrudSmokeTest(rest.test.RESTTestCase):
     """CRUD lifecycle for /mfa (using fixture to create, REST for read/update/delete)."""
@@ -359,13 +398,17 @@ class ServicePoolGroupsCrudSmokeTest(rest.test.RESTTestCase):
             "priority": 0,
         }
         create_resp = self.client.rest_post(self.BASE, payload)
-        self.assertEqual(create_resp.status_code, 200, f"POST failed: {create_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            create_resp.status_code, 200, f"POST failed: {create_resp.content.decode(errors='replace')}"
+        )
         data = create_resp.json()
         group_uuid = data.get("id")
         self.assertIsNotNone(group_uuid, f"No id in response: {data}")
 
         get_resp = self.client.rest_get(f"{self.BASE}/{group_uuid}")
-        self.assertEqual(get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}"
+        )
         self.assertEqual(get_resp.json()["name"], "smoke-test-group")
 
     def test_list(self) -> None:
@@ -421,7 +464,9 @@ class ServicePoolGroupsCrudSmokeTest(rest.test.RESTTestCase):
         group_uuid = create_resp.json().get("id")
 
         del_resp = self.client.rest_delete(f"{self.BASE}/{group_uuid}")
-        self.assertEqual(del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}"
+        )
 
         get_resp = self.client.rest_get(f"{self.BASE}/{group_uuid}")
         self.assertEqual(get_resp.status_code, 404)
@@ -466,13 +511,17 @@ class MetaPoolsCrudSmokeTest(rest.test.RESTTestCase):
         """POST /metapools → create, then GET by uuid."""
         payload = self._payload("smoke-meta", "Created by CRUD smoke test")
         create_resp = self.client.rest_post(self.BASE, payload)
-        self.assertEqual(create_resp.status_code, 200, f"POST failed: {create_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            create_resp.status_code, 200, f"POST failed: {create_resp.content.decode(errors='replace')}"
+        )
         data = create_resp.json()
         meta_uuid = data.get("id")
         self.assertIsNotNone(meta_uuid, f"No id in response: {data}")
 
         get_resp = self.client.rest_get(f"{self.BASE}/{meta_uuid}")
-        self.assertEqual(get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            get_resp.status_code, 200, f"GET item failed: {get_resp.content.decode(errors='replace')}"
+        )
         item = get_resp.json()
         self.assertEqual(item["name"], "smoke-meta")
         self.assertEqual(item["short_name"], "smoke-me")
@@ -523,7 +572,9 @@ class MetaPoolsCrudSmokeTest(rest.test.RESTTestCase):
         meta_uuid = create_resp.json().get("id")
 
         del_resp = self.client.rest_delete(f"{self.BASE}/{meta_uuid}")
-        self.assertEqual(del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}")
+        self.assertEqual(
+            del_resp.status_code, 200, f"DELETE failed: {del_resp.content.decode(errors='replace')}"
+        )
 
         get_resp = self.client.rest_get(f"{self.BASE}/{meta_uuid}")
         self.assertEqual(get_resp.status_code, 404)
@@ -551,9 +602,7 @@ class GalleryImagesCrudSmokeTest(rest.test.RESTTestCase):
 
         # Create an image so the list is non-empty (an empty list trivially
         # passes — we want to assert on actual item content).
-        create_resp = self.client.rest_post(
-            self.BASE, {"name": "smoke-thumb-size", "data": small}
-        )
+        create_resp = self.client.rest_post(self.BASE, {"name": "smoke-thumb-size", "data": small})
         self.assertEqual(
             create_resp.status_code,
             200,
@@ -568,9 +617,5 @@ class GalleryImagesCrudSmokeTest(rest.test.RESTTestCase):
 
         item = next(i for i in items if i.get("name") == "smoke-thumb-size")
         # The fields the table renders must be present and non-empty.
-        self.assertTrue(
-            item.get("thumb"), "list item missing non-empty 'thumb' (IMAGE column broken)"
-        )
-        self.assertTrue(
-            item.get("size"), "list item missing non-empty 'size' (SIZE column broken)"
-        )
+        self.assertTrue(item.get("thumb"), "list item missing non-empty 'thumb' (IMAGE column broken)")
+        self.assertTrue(item.get("size"), "list item missing non-empty 'size' (SIZE column broken)")

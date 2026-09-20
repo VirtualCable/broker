@@ -9,9 +9,9 @@ are the enum names of the model.
 
 A creation is a detail of its calendar: the proposal targets the CALENDAR
 uuid (``create_needs_parent``), and MANAGEMENT over that calendar is the
-create permission. The rules handler's create branch does not report the
-new uuid back (a REST quirk, not something this family changes), so the
-creation message names the rule without a uuid.
+create permission. The rules handler's create branch reports the new
+uuid (as every other detail create does), so the creation message names
+the rule with its uuid.
 
 The DELETE removes just the rule; the calendar survives (its own
 ``modified`` stamp is touched, exactly what the handler does), and nothing
@@ -340,8 +340,8 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
             return str(params["name"]), str(typing.cast(models.Calendar, calendar).uuid), params
 
         name, calendar_uuid, params = await sync_to_async(_build_params, thread_sensitive=True)()
-        # The rules create branch does not report the new uuid (a REST
-        # quirk); the message names the rule without it.
+        # The rules create branch reports the new uuid (like every other
+        # detail create), so the creation message carries it.
         new_uuid = await mutability_verbs.execute_create(
             RestTarget(
                 CalendarRules,

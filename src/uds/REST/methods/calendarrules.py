@@ -87,7 +87,11 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             name=item.name,
             comments=item.comments,
             start=item.start,
-            end=(timezone.make_aware(datetime.datetime.combine(item.end, datetime.time.max)) if item.end else None),
+            end=(
+                timezone.make_aware(datetime.datetime.combine(item.end, datetime.time.max))
+                if item.end
+                else None
+            ),
             frequency=item.frequency,
             interval=item.interval,
             duration=item.duration,
@@ -162,6 +166,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
         try:
             if item is None:  # Create new
                 calendar_rule = parent.rules.create(**fields)
+                return {"id": calendar_rule.uuid}
             else:
                 calendar_rule = parent.rules.get(uuid=process_uuid(item))
                 typing.cast(typing.Any, calendar_rule.__dict__).update(fields)  # Disable type errors

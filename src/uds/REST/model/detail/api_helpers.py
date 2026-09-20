@@ -70,25 +70,28 @@ def api_paths(
         return {}  # Skip
     else:
         base_type_name = base_type.__name__
-    # POST create operation (preferred way to create items per Change G)
+    # POST create operation (preferred way to create items per Change G).
+    # Detail creates return just the uuid of the new item ({"id": ...}),
+    # not the serialized item, so the response documents that shape.
     post_create_op = types.rest.api.Operation(
         summary=f"Create a new {name} item",
-        description=f"Create a new {name} item",
+        description=f"Create a new {name} item. The response carries the uuid of the created item.",
         parameters=[],
         requestBody=api_utils.gen_request_body(base_type_name, create=True),
-        responses=api_utils.gen_response(base_type_name, single=True),
+        responses=api_utils.gen_created_response(base_type_name),
         tags=post_tags,
         security=security,
     )
 
-    # PUT create operation (legacy — deprecated in favor of POST)
+    # PUT create operation (legacy — deprecated in favor of POST). Shares
+    # the create code path, so it returns the same {"id": ...} shape.
     put_create_op = types.rest.api.Operation(
         summary=f"Creates a new {name} item",
         description=(f"Creates a new {name} item. Deprecated: use POST /{path} instead."),
         deprecated=True,
         parameters=[],
         requestBody=api_utils.gen_request_body(base_type_name, create=True),
-        responses=api_utils.gen_response(base_type_name, single=True),
+        responses=api_utils.gen_created_response(base_type_name),
         tags=put_tags,
         security=security,
     )
@@ -192,7 +195,9 @@ def api_paths(
             )
         )
 
-    def emit_custom_method(cm: "types.rest.ModelCustomMethod", method_name: str | None, deprecated: bool) -> None:
+    def emit_custom_method(
+        cm: "types.rest.ModelCustomMethod", method_name: str | None, deprecated: bool
+    ) -> None:
         method_name = method_name or cm.name
         # Emit the declared HTTP method in the OpenAPI spec.
         # POST custom methods are documented as POST; GET methods as GET.

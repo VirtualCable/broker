@@ -282,8 +282,10 @@ class CalendarRuleCreateTest(FlowTestCase):
             base_values={},
             base_etag="",
         )
+        rule_uuid = "11111111-2222-3333-4444-555555555555"
         with mock.patch.object(RestProxy, "_execute_sync") as execute_sync:
-            execute_sync.return_value = None  # the rules create branch reports no uuid
+            # detail operations answer wrapped in the REST envelope
+            execute_sync.return_value = {"result": {"id": rule_uuid}, "stamp": 0, "version": "v", "build": "b"}
             summary = async_to_sync(_rule_bound("create").execute)(action, request=make_request())
 
         target, _request, params, parent_uuid = execute_sync.call_args[0]
@@ -309,6 +311,7 @@ class CalendarRuleCreateTest(FlowTestCase):
         )
         self.assertIn("created", summary)
         self.assertIn("easter", summary)
+        self.assertIn(rule_uuid, summary)
 
 
 class CalendarRuleDeleteTest(FlowTestCase):
