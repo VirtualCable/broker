@@ -185,7 +185,7 @@ class FlowsArchiveReadOnlyTest(rest.test.RESTTestCase):
             base_etag="etag",
         )
         self.store.submit_flow(self.flow, actor_uuid=self.owner.uuid)
-        self.store.reject_flow(self.flow, admin="admin-1")
+        self.store.reject_flow(self.flow, admin="admin-1", reason="not needed")
         ActionFlow.objects.filter(uuid=self.flow.uuid).update(
             decided_at=datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=30)
         )
@@ -196,6 +196,7 @@ class FlowsArchiveReadOnlyTest(rest.test.RESTTestCase):
         body = typing.cast("dict[str, typing.Any]", item.json())
         self.assertEqual(body["status"], FlowStatus.REJECTED)
         self.assertIsNotNone(body["decided_at"])
+        self.assertEqual(body["decided_note"], "not needed")
 
         actions = self.client.rest_get(f"flows/archive/{self.flow.uuid}/actions")
         self.assertEqual(actions.status_code, 200, actions.content)

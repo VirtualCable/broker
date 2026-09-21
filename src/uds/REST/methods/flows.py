@@ -111,6 +111,8 @@ class FlowItem(types.rest.BaseRestItem):
     decided_at: datetime.datetime | None = None
     # Worst compliance of the actions (ok/outdated/conflict); admin views
     compliance: str = ""
+    # Why the flow was decided (the reject reason, for instance); admin views
+    decided_note: str = ""
 
 
 class FlowActions(DetailHandler[FlowActionItem]):
