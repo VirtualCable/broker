@@ -143,6 +143,7 @@ class FlowsAdminSurface(ModelHandler[FlowItem]):
             decided_by=item.properties.get("decided_by", ""),
             decided_at=item.decided_at,
             compliance=FlowStore().flow_compliance(item),
+            decided_note=item.properties.get("decided_note", ""),
         )
 
     @typing.override
