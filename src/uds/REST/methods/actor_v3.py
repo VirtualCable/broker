@@ -691,6 +691,8 @@ class Login(ActorV3Action):
             src = userservice.get_connection_source()
             session_id = userservice.start_session()  # creates a session for every login requested
 
+            # For os managed services, let's check if we honor deadline
+            # For non os manager machines, process deadline as always            
             if osmanager and osmanager.ignore_deadline():
                 deadline = None
             else:
