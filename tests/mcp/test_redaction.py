@@ -1,4 +1,8 @@
-"""Tests for the defensive redaction of MCP responses."""
+"""Tests for the defensive redaction of MCP responses.
+
+Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
+"""
 
 import typing
 import unittest
@@ -91,3 +95,16 @@ class ModuleSensitiveFieldsTest(unittest.TestCase):
         self.assertEqual(redacted["instance"]["pin"], REDACTED)
         self.assertEqual(redacted["instance"]["test_url"], "https://x")
         self.assertEqual(redacted["instance"]["name"], "kept")
+
+    def test_a_declaration_widens_the_denylist_for_every_module(self) -> None:
+        """One module declaring a name blanks that name on every other module's payload."""
+        from tests.fixtures.services import ensure_test_modules_registered
+
+        ensure_test_modules_registered()
+
+        from uds.mcp.redaction import module_sensitive_fields
+
+        module_sensitive_fields.cache_clear()
+        unrelated = {"authenticator": {"name": "kept", "pin": "not a secret here"}}
+        redacted = redact(unrelated, module_sensitive_fields())
+        self.assertEqual(redacted["authenticator"]["pin"], REDACTED)

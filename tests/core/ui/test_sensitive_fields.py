@@ -27,13 +27,22 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import typing
 import unittest
 
+from uds.auths.SAML.saml import SAMLAuthenticator
 from uds.core.ui import gui
 from uds.core.ui.user_interface import UserInterface
+from uds.mfas.SMS.mfa import SMSMFA
+from uds.notifiers.telegram.notifier import TelegramNotifier
+from uds.services.PhysicalMachines.service_multi import IPMachinesService
+
+from ...utils.test import UDSTestCase
+
+DECLARING_MODULES = (SAMLAuthenticator, SMSMFA, TelegramNotifier, IPMachinesService)
 
 
 class _BaseWithSecret(UserInterface):
@@ -84,3 +93,24 @@ class SensitiveFieldsTest(unittest.TestCase):
 
     def test_plain_class_has_no_sensitive_fields(self) -> None:
         self.assertEqual(UserInterface.get_sensitive_fields(), set())
+
+
+class ShippedModulesSensitiveFieldsTest(UDSTestCase):
+    """Secrets held in plain text fields must still be declared."""
+
+    def test_modules_declare_their_non_password_secrets(self) -> None:
+        for module_type, expected in (
+            (SAMLAuthenticator, "private_key"),
+            (SMSMFA, "auth_user_or_token"),
+            (TelegramNotifier, "access_token"),
+            (TelegramNotifier, "secret"),
+            (IPMachinesService, "token"),
+        ):
+            with self.subTest(module=module_type.__name__, field=expected):
+                self.assertIn(expected, module_type.get_sensitive_fields())
+
+    def test_declaring_modules_have_no_subclasses(self) -> None:
+        # A subclass declaring its own sensitive_fields silently drops the parent's.
+        for module_type in DECLARING_MODULES:
+            with self.subTest(module=module_type.__name__):
+                self.assertEqual(module_type.__subclasses__(), [])

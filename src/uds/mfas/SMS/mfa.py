@@ -213,6 +213,8 @@ class SMSMFA(mfas.MFA):
         old_field_name="authenticationMethod",
     )
 
+    sensitive_fields = ("auth_user_or_token",)
+
     auth_user_or_token = gui.TextField(
         length=256,
         label=_("SMS authentication user or token"),

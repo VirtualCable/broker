@@ -66,6 +66,8 @@ class TelegramNotifier(messaging.Notifier):
     # : mark it as _ (using gettext_noop)
     icon_file = "telegram.png"
 
+    sensitive_fields = ("access_token", "secret")
+
     access_token = gui.TextField(
         length=64,
         label=_("Access Token"),

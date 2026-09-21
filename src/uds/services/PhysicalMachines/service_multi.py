@@ -77,6 +77,8 @@ class IPMachinesService(services.Service):
 
     services_type_provided = types.services.ServiceType.VDI
 
+    sensitive_fields = ("token",)
+
     # Gui
     token = gui.TextField(
         order=1,
