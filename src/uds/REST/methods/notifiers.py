@@ -59,7 +59,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class NotifierItem(types.rest.BaseRestItem):
+class NotifierItem(types.rest.ManagedObjectItem[Notifier]):
     id: str
     name: str
     level: str
@@ -160,4 +160,5 @@ class Notifiers(ModelHandler[NotifierItem]):
             type=type_.mod_type(),
             type_name=type_.mod_name(),
             permission=permissions.effective_permissions(self._user, item),
+            item=item,
         )
