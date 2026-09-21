@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import collections.abc
@@ -63,6 +64,8 @@ from ..handlers import Handler
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
+    from django.db.models.manager import BaseManager
+
     from uds.core import services
     from uds.core.types.requests import ExtendedHttpRequest
 
@@ -110,6 +113,19 @@ def check_ip_is_blocked(request: "ExtendedHttpRequest") -> None:
         # Sleep a while to try to minimize brute force attacks somehow
         time.sleep(3)  # 3 seconds should be enough
         raise exceptions.rest.BlockAccess()
+
+
+def get_managed_userservices_for_token(token: str) -> "BaseManager[UserService]":
+    if Server.validate_token(token, server_type=types.servers.ServerType.ACTOR):
+        return UserService.objects.all()
+
+    # Managed actors clear the registration token after their first initialize, so from then
+    # on they can only present the own_token we returned to them
+    userservices = UserService.objects.filter(token_hash=hash_actor_token(token))
+    if not userservices.exists():
+        raise exceptions.rest.BlockAccess()
+
+    return userservices
 
 
 def increase_failed_ip_count(request: "ExtendedHttpRequest") -> None:
@@ -477,11 +493,7 @@ class Initialize(ActorV3Action):
                 # Build the possible ids and make initial filter to match service
                 dbfilter = UserService.objects.filter(deployed_service__service=service)
             else:
-                # If not service provided token, use actor tokens
-                if not Server.validate_token(token, server_type=types.servers.ServerType.ACTOR):
-                    raise exceptions.rest.BlockAccess()
-                # Build the possible ids and make initial filter to match ANY userservice with provided MAC
-                dbfilter = UserService.objects.all()
+                dbfilter = get_managed_userservices_for_token(token)
 
             # Valid actor token, now validate access allowed. That is, look for a valid mac from the ones provided.
             try:
@@ -691,12 +703,11 @@ class Login(ActorV3Action):
             src = userservice.get_connection_source()
             session_id = userservice.start_session()  # creates a session for every login requested
 
-            if osmanager:  # For os managed services, let's check if we honor deadline
-                if osmanager.ignore_deadline():
-                    deadline = userservice.deployed_service.get_deadline()
-                else:
-                    deadline = None
-            else:  # For non os manager machines, process deadline as always
+            # For os managed services, let's check if we honor deadline
+            # For non os manager machines, process deadline as always            
+            if osmanager and osmanager.ignore_deadline():
+                deadline = None
+            else:
                 deadline = userservice.deployed_service.get_deadline()
 
         except (

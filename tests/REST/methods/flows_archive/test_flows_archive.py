@@ -205,6 +205,30 @@ class FlowsArchiveReadOnlyTest(rest.test.RESTTestCase):
         self.assertIn("compliance", items[0])
         self.assertIn("snap_info", items[0])
 
+    def test_flows_table_offers_the_review_columns(self) -> None:
+        """The archive's table is the approval's, with decided_at in place of due_date."""
+        table = self._get_json("flows/archive/tableinfo")
+        self.assertEqual(
+            [name for field in table["fields"] for name in field],
+            [
+                "name",
+                "justification",
+                "status",
+                "compliance",
+                "owner",
+                "actions_count",
+                "created",
+                "decided_at",
+            ],
+        )
+        self.assertIn("compliance", table["filter_fields"])
+        self.assertEqual(table["row_style"], {"prefix": "row-compliance-", "field": "compliance"})
+
+    def _get_json(self, path: str) -> dict[str, typing.Any]:
+        response = self.client.rest_get(path)
+        self.assertEqual(response.status_code, 200, response.content)
+        return typing.cast("dict[str, typing.Any]", response.json())
+
     def test_delete_is_denied_not_hidden(self) -> None:
         """The archive denies with a clean 403: the flow exists, it is immutable."""
         response = self.client.rest_delete(f"flows/archive/{self.flow.uuid}")

@@ -95,12 +95,15 @@ class FlowsArchive(FlowsAdminSurface):
     TABLE = (
         ui_utils.TableBuilder(_("Archived flows"))
         .text_column(name="name", title=_("Name"))
+        .text_column(name="justification", title=_("Justification"))
         .text_column(name="status", title=_("Status"))
+        .text_column(name="compliance", title=_("Compliance"))
         .text_column(name="owner", title=_("Owner"))
         .numeric_column(name="actions_count", title=_("Actions"))
         .datetime_column(name="created", title=_("Created"))
         .datetime_column(name="decided_at", title=_("Decided at"))
-        .with_filter_fields("name", "status", "owner")
+        .with_filter_fields("name", "status", "owner", "compliance")
+        .row_style(prefix="row-compliance-", field="compliance")
         .build()
     )
 

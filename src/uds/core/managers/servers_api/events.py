@@ -107,7 +107,9 @@ def process_login(server: "models.Server", data: dict[str, typing.Any]) -> typin
 
     logger.debug("Max idle: %s", max_idle)
 
-    deadline = userservice.deployed_service.get_deadline() if not osmanager or osmanager.ignore_deadline() else None
+    deadline = (
+        None if osmanager and osmanager.ignore_deadline() else userservice.deployed_service.get_deadline()
+    )
     result = {
         "ip": src.ip,
         "hostname": src.hostname,

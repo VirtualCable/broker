@@ -119,6 +119,8 @@ class SAMLAuthenticator(auths.Authenticator):
     # : We will define a simple form where we will use a simple
     # : list editor to allow entering a few group names
 
+    sensitive_fields = ("private_key",)
+
     private_key = gui.TextField(
         length=4096,
         lines=10,
