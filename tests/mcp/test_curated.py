@@ -30,6 +30,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_actions_list",
     "get_servicepool_assignables",
     "get_server_group_stats",
+    "get_server_group_usages",
     "search_authenticator",
     "get_authenticator_users_with_services",
     "get_authenticator_user_services_pools",
@@ -521,6 +522,57 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         for entry in stats:
             self.assertIn("server", entry)
             self.assertIn("stats", entry)
+
+    def test_get_server_group_usages(self) -> None:
+        """The tool answers with the referencing items, same as REST.
+
+        Mirrors the openuds-only coverage of
+        ``tests/REST/methods/servers_management/test_server_group_usages.py``:
+        the IPMachines service is the only registered openuds model with a
+        ``server_group`` field, so the discovery itself is pinned there —
+        here the tool wiring (path, schema, output shape) is what matters.
+        """
+        from uds.core import environment
+        from uds.services.PhysicalMachines.service_multi import IPMachinesService
+
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=0)
+
+        # Nothing references the group yet.
+        empty = json.loads(self._result_text(self._call("get_server_group_usages", {"uuid": group.uuid})))
+        self.assertEqual(empty, [])
+
+        provider = models.Provider()
+        provider.name = "ipmachines-provider"
+        provider.comments = ""
+        provider.data_type = "PhysicalMachinesServiceProvider"
+        provider.data = provider.get_instance().serialize()
+        provider.save()
+
+        service = provider.services.create(
+            name="ipmachines-service",
+            data_type=IPMachinesService.type_type,
+            data=IPMachinesService(
+                environment.Environment.testing_environment(), provider.get_instance()
+            ).serialize(),
+            token=f"token-{IPMachinesService.type_type}-{provider.uuid}",
+        )
+        instance = service.get_instance()
+        # server_group is a field of the concrete service type; the base
+        # instance type does not expose it (like _providers_using_server_group
+        # itself accesses it through a cast to Any).
+        typing.cast(typing.Any, instance).server_group.value = group.uuid
+        service.data = instance.serialize()
+        service.save(update_fields=["data"])
+
+        usages = json.loads(self._result_text(self._call("get_server_group_usages", {"uuid": group.uuid})))
+        self.assertIsInstance(usages, list)
+        self.assertEqual(len(usages), 1)
+        self.assertEqual(usages[0]["uuid"], service.uuid)
+        self.assertEqual(usages[0]["name"], service.name)
+        self.assertEqual(usages[0]["type"], IPMachinesService.type_type)
+        self.assertEqual(usages[0]["kind"], "service")
 
     def test_get_server_stats(self) -> None:
         from tests.fixtures.servers import create_server_group
