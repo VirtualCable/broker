@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
@@ -127,7 +126,9 @@ class Dashboard(Handler):
 
     def _kpis(self) -> dict[str, int]:
         """Fast, point-in-time counters shown on the dashboard header."""
-        users_with_valid_services = models.User.objects.filter(userServices__state__in=State.VALID_STATES).order_by()
+        users_with_valid_services = models.User.objects.filter(
+            userServices__state__in=State.VALID_STATES
+        ).order_by()
         return {
             "users": models.User.objects.count(),
             "groups": models.Group.objects.count(),
@@ -231,9 +232,12 @@ class Dashboard(Handler):
         }
 
     def _data(self) -> dict[str, typing.Any]:
-        # Clamp the requested window to a sane range
+        # Clamp the requested window to a sane range. The parameters come
+        # from ``self.params`` (the dispatcher's canonical channel): for a
+        # plain GET it holds the query string, and the MCP proxy fills it
+        # in-process, so both entrances reach the handler the same way.
         try:
-            days = int(typing.cast(str, self.query_params().get("days", DEFAULT_DAYS)))
+            days = int(typing.cast(str, self.params.get("days", DEFAULT_DAYS)))
         except (TypeError, ValueError):
             days = DEFAULT_DAYS
         days = max(MIN_DAYS, min(MAX_DAYS, days))
@@ -242,7 +246,7 @@ class Dashboard(Handler):
         # The GUI refresh button sends flush=1 to bypass the cached payload and
         # force a rebuild from fresh queries; otherwise the range/timestamps and
         # counters stay frozen for up to CACHE_TIME.
-        flush = str(self.query_params().get("flush", "")).lower() in ("1", "true", "yes")
+        flush = str(self.params.get("flush", "")).lower() in ("1", "true", "yes")
         if not flush:
             cached: dict[str, typing.Any] | None = cache.get(cache_key)
             if cached is not None:

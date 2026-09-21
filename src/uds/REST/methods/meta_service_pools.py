@@ -35,6 +35,7 @@ import dataclasses
 import logging
 import typing
 
+from django.db import transaction
 from django.db.models import Model
 from django.utils.translation import gettext as _
 
@@ -129,6 +130,12 @@ class MetaServicesPool(DetailHandler[MetaItem]):
 
     @typing.override
     def save_item(self, parent: "Model", item: str | None) -> typing.Any:
+        # Write and answer-read share one transaction, so a failure on the
+        # serialized answer rolls the whole save back (as Users does)
+        with transaction.atomic():
+            return self._save_item(parent, item)
+
+    def _save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.MetaPool)
         # If already exists
         uuid = process_uuid(item) if item else None
@@ -318,6 +325,12 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
     # Only owner is allowed to change right now
     @typing.override
     def save_item(self, parent: "Model", item: str | None) -> typing.Any:
+        # Ownership change and answer-read share one transaction, so a
+        # failure on the serialized answer rolls the whole save back
+        with transaction.atomic():
+            return self._save_item(parent, item)
+
+    def _save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.MetaPool)
         if item is None:
             raise exceptions.rest.RequestError(_("Invalid item specified"))

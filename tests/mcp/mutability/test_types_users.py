@@ -1,4 +1,4 @@
-"""``user.update``: registration, discovery, CAS and execution shape."""
+"""``user.update`` / ``user.custom``: registration, discovery, CAS and execution shape."""
 
 import typing
 from unittest import mock
@@ -6,6 +6,7 @@ from unittest import mock
 from asgiref.sync import async_to_sync
 
 from uds import models
+from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.base import ActionOperation, StalePolicy
@@ -13,6 +14,7 @@ from uds.mutability.types.authenticators.user import UserUpdate
 from uds.REST.methods.users_groups import Users
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_groups, create_db_users
+from tests.fixtures.mfas import create_db_mfa
 from tests.mcp.mutability._helpers import FlowTestCase, build_action, make_request
 
 
@@ -187,7 +189,14 @@ class UserCreateDeleteTest(FlowTestCase):
     def test_supported_operations_derive_from_hooks(self) -> None:
         self.assertEqual(
             UserUpdate.supported_operations(),
-            frozenset({ActionOperation.UPDATE, ActionOperation.CREATE, ActionOperation.DELETE}),
+            frozenset(
+                {
+                    ActionOperation.UPDATE,
+                    ActionOperation.CREATE,
+                    ActionOperation.DELETE,
+                    ActionOperation.CUSTOM,
+                }
+            ),
         )
 
     def test_creation_targets_the_parent_authenticator(self) -> None:
@@ -270,3 +279,105 @@ class UserCreateDeleteTest(FlowTestCase):
             self.assertEqual(parent_uuid, authenticator.uuid)
         self.assertIn(user.name, summary)
         self.assertIn("deleted", summary)
+
+
+class UserCustomTest(FlowTestCase):
+    """user.custom: the entity-scoped verbs of the user family."""
+
+    def _custom(self) -> UserUpdate:
+        return UserUpdate(ActionOperation.CUSTOM)
+
+    def _user_with_mfa(self) -> typing.Any:
+        authenticator = create_db_authenticator()
+        authenticator.mfa = create_db_mfa()
+        authenticator.save(update_fields=["mfa_id"])
+        return create_db_users(authenticator, 1)[0]
+
+    def test_is_registered_and_forced(self) -> None:
+        self.assertIn("user.custom", all_type_ids())
+        self.assertEqual(self._custom().full_id, "user.custom")
+        # An idempotent verb: unrelated drift must not revoke the proposal
+        self.assertIs(self._custom().get_stale_policy(), StalePolicy.FORCE)
+
+    def test_publishes_only_the_action_choice(self) -> None:
+        defs = self._custom().field_definitions("user")
+        self.assertEqual([d["name"] for d in defs], ["action"])
+        self.assertEqual(defs[0]["type"], types.ui.FieldType.CHOICE.value)
+        self.assertEqual(defs[0]["choices"], ["clean_related"])
+
+    def test_choices_follow_the_mfa_binding(self) -> None:
+        user = create_db_users(create_db_authenticator(), 1)[0]
+        defs = self._custom().field_definitions("user", user)
+        self.assertEqual(defs[0]["choices"], [])
+        self.assertIn("supports none of these actions", defs[0]["tooltip"])
+        mfa_user = self._user_with_mfa()
+        defs = self._custom().field_definitions("user", mfa_user)
+        self.assertEqual(defs[0]["choices"], ["clean_related"])
+        self.assertIn("supports: clean_related", defs[0]["tooltip"])
+
+    def test_action_field_is_required(self) -> None:
+        user = self._user_with_mfa()
+        errors = self._custom().validate_values("user", {"something": "x"}, user)
+        self.assertTrue(any("field action is required" in e for e in errors))
+
+    def test_unknown_verb_rejected(self) -> None:
+        user = self._user_with_mfa()
+        errors = self._custom().validate_values("user", {"action": "detach_services"}, user)
+        self.assertTrue(any("clean_related" in e for e in errors))
+
+    def test_no_mfa_verb_rejected(self) -> None:
+        user = create_db_users(create_db_authenticator(), 1)[0]
+        errors = self._custom().validate_values("user", {"action": "clean_related"}, user)
+        self.assertTrue(any("no MFA bound" in e for e in errors))
+
+    def test_valid_verb_passes(self) -> None:
+        user = self._user_with_mfa()
+        self.assertEqual(self._custom().validate_values("user", {"action": "clean_related"}, user), [])
+
+    def test_execution_posts_the_named_custom_method(self) -> None:
+        user = self._user_with_mfa()
+        action = build_action(
+            action_type="user.custom",
+            target_uuid=user.uuid,
+            values={"action": "clean_related"},
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mcp.rest_proxy.RestProxy._execute_sync") as execute_sync:
+            execute_sync.return_value = {"status": "ok"}
+            summary = async_to_sync(self._custom().execute)(action, request=make_request())
+            target, _request, params, parent_uuid = execute_sync.call_args[0]
+            self.assertEqual(
+                (target.handler, target.method.value, target.args),
+                (Users, "POST", (user.uuid, "clean_related")),
+            )
+            self.assertEqual(params, {})
+            self.assertEqual(parent_uuid, user.manager.uuid)
+        self.assertIn(user.name, summary)
+        self.assertIn("related data cleaned", summary)
+
+    def test_execution_revalidates_the_mfa_gate(self) -> None:
+        user = self._user_with_mfa()
+        action = build_action(
+            action_type="user.custom",
+            target_uuid=user.uuid,
+            values={"action": "clean_related"},
+            base_values={},
+            base_etag="",
+        )
+        # FORCE keeps the proposal alive through drift: if the MFA was
+        # unbound after proposing, the execution refuses on the live row
+        user.manager.mfa = None
+        user.manager.save(update_fields=["mfa_id"])
+        with mock.patch("uds.mcp.rest_proxy.RestProxy._execute_sync") as execute_sync:
+            with self.assertRaises(rest_exceptions.NotSupportedError):
+                async_to_sync(self._custom().execute)(action, request=make_request())
+            execute_sync.assert_not_called()
+
+    def test_tool_text_names_the_verb(self) -> None:
+        custom = self._custom()
+        self.assertEqual(custom.tool_title(), "Propose an action on a user")
+        description = custom.tool_description()
+        self.assertIn("clean_related", description)
+        self.assertIn("MFA", description)
+        self.assertIn("queued until an administrator approves it", description)

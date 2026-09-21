@@ -40,6 +40,7 @@ import pickle  # nosec: pickle is used to cache data, not to load it
 import pickletools
 import typing
 
+from django.db import transaction
 from django.db.models import Model
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -327,6 +328,12 @@ class ServersServers(DetailHandler[ServerItem]):
 
     @typing.override
     def save_item(self, parent: "Model", item: str | None) -> typing.Any:
+        # Membership and answer-read share one transaction, so a failure on
+        # the serialized answer rolls the whole write back (as Users does)
+        with transaction.atomic():
+            return self._save_item(parent, item)
+
+    def _save_item(self, parent: "Model", item: str | None) -> typing.Any:
         parent = ensure.is_instance(parent, models.ServerGroup)
         # Item is the uuid of the server to add
         server: models.Server | None = None  # Avoid warning on reference before assignment

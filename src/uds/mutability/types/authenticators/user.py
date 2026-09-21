@@ -1,10 +1,17 @@
-"""``user.update``: propose modifications to an existing user.
+"""``user.update`` / ``user.custom``: propose modifications to an existing user.
 
 Second level resource (authenticators detail): the proposal only needs
 the user uuid — the parent authenticator is derived from the ``manager``
 FK at execution time (an user never changes authenticator), exactly like
 ``calendar_rule.update`` does for rules. Permissions are MANAGEMENT over
 the authenticator, inherited through :meth:`permission_target`.
+
+``custom`` is the entity-scoped verb binding of the same family: the
+``action`` CHOICE names the verb to apply (today only ``clean_related``,
+the MCP shape of the administration interface's "clean related data",
+which resets the user's MFA), so growing the vocabulary is a new entry
+in :data:`ACTIONS`, not a new operation. The verb name doubles as the
+REST custom-method segment it dispatches to.
 
 The users PUT is form-shaped and requires ``name``, ``real_name``,
 ``comments``, ``state``, ``staff_member`` and ``is_admin``; ``password``
@@ -29,6 +36,7 @@ never sent unless the proposal carries it. The REST handler hashes it.
 """
 
 import collections.abc
+import dataclasses
 import typing
 
 from asgiref.sync import sync_to_async
@@ -70,6 +78,33 @@ def _as_uuid_list(value: typing.Any) -> list[str]:
     return [str(v) for v in value]
 
 
+@dataclasses.dataclass(frozen=True)
+class UserAction:
+    """One verb the ``custom`` binding of the user family can apply.
+
+    The verb name doubles as the REST custom-method segment it dispatches
+    to, so growing the vocabulary is a new entry here (plus, when a verb
+    needs parameters or a different REST shape, a small execution
+    branch), exactly like the assignment family's verbs.
+    """
+
+    name: str
+    description: str  # tooltip text explaining the verb itself
+    requires_mfa: bool  # the user's authenticator must have an MFA bound
+    summary: str  # word for the execution summary ("related data cleaned")
+
+
+CLEAN_RELATED = UserAction(
+    name="clean_related",
+    description="reset the user's related external data, currently its MFA data",
+    requires_mfa=True,
+    summary="related data cleaned",
+)
+
+#: The verbs ``user.custom`` accepts, in proposal order.
+ACTIONS: typing.Final[dict[str, UserAction]] = {CLEAN_RELATED.name: CLEAN_RELATED}
+
+
 class UserUpdate(mutability_base.MutableActionType):
     """Proposal: update an existing user."""
 
@@ -90,6 +125,14 @@ class UserUpdate(mutability_base.MutableActionType):
     # targets the authenticator uuid and MANAGEMENT over it is the
     # create permission.
     create_needs_parent = True
+    # The custom verbs are idempotent and depend only on what the verb
+    # itself needs (an MFA bound for clean_related), never on the rest of
+    # the user row, so unrelated drift between proposal and approval must
+    # not revoke them; execution re-validates and REST holds the
+    # authoritative checks.
+    stale_policies_overrides: typing.ClassVar[
+        dict[mutability_base.ActionOperation, mutability_base.StalePolicy]
+    ] = {mutability_base.ActionOperation.CUSTOM: mutability_base.StalePolicy.FORCE}
 
     @typing.override
     def permission_target(self, target: db_models.Model) -> db_models.Model:
@@ -123,6 +166,8 @@ class UserUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+        if self.operation is mutability_base.ActionOperation.CUSTOM:
+            return [self._action_definition(target)]
         return [
             {
                 "name": "name",
@@ -184,6 +229,61 @@ class UserUpdate(mutability_base.MutableActionType):
             },
         ]
 
+    def _action_definition(self, target: db_models.Model | None) -> JsonObject:
+        """The CHOICE field naming the verb to apply, scoped to the target.
+
+        Without a target the whole vocabulary is offered; with one, only
+        the verbs it currently applies to (a user whose authenticator has
+        no MFA bound cannot have its related data cleaned). An empty
+        choices list is the discovery signal that nothing applies: the
+        tooltip says why.
+        """
+        listed = "; ".join(f"'{action.name}' ({action.description})" for action in ACTIONS.values())
+        supported = [action.name for action in ACTIONS.values() if self._verb_applies(action, target)]
+        target_note = (
+            f"This user's authenticator supports: {', '.join(supported)}."
+            if supported
+            else "This user's authenticator supports none of these actions (no MFA bound)."
+        )
+        return {
+            "name": "action",
+            "type": types.ui.FieldType.CHOICE.value,
+            "label": "Action to apply",
+            "tooltip": f"verb to apply to the user (currently: {listed}). {target_note}",
+            "choices": supported,
+            "secret": False,
+        }
+
+    @staticmethod
+    def _verb_applies(action: UserAction, target: db_models.Model | None) -> bool:
+        """Whether the verb applies to the target user right now."""
+        if target is None or not action.requires_mfa:
+            return True
+        return typing.cast(models.User, target).manager.mfa is not None
+
+    @typing.override
+    def validate_values(
+        self,
+        for_type: str,
+        values: JsonObject,
+        target: db_models.Model | None = None,
+    ) -> list[str]:
+        if self.operation is not mutability_base.ActionOperation.CUSTOM:
+            return super().validate_values(for_type, values, target)
+        errors = super().validate_values(for_type, values, target)
+        flat = self.flatten_values(values)
+        action_name = flat.get("action")
+        if action_name is None:
+            errors.append("field action is required (the verb to apply, e.g. 'clean_related')")
+            return errors
+        action = ACTIONS.get(action_name) if isinstance(action_name, str) else None
+        if action is None:
+            accepted = ", ".join(sorted(ACTIONS))
+            errors.append(f"field action {action_name!r} is not supported (accepted: {accepted})")
+        elif not self._verb_applies(action, target):
+            errors.append(f"the '{action.name}' action does not apply to this user (no MFA bound)")
+        return errors
+
     @typing.override
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
         user = typing.cast(models.User, target)
@@ -231,6 +331,8 @@ class UserUpdate(mutability_base.MutableActionType):
             return mutability_verbs.create_tool_title("user")
         if self.operation is mutability_base.ActionOperation.DELETE:
             return mutability_verbs.delete_tool_title("user")
+        if self.operation is mutability_base.ActionOperation.CUSTOM:
+            return "Propose an action on a user"
         return self.title
 
     @typing.override
@@ -250,6 +352,16 @@ class UserUpdate(mutability_base.MutableActionType):
                 "user of an authenticator",
                 "the user is removed and its active assigned services are "
                 "cancelled, like the administration interface does.",
+            )
+        if self.operation is mutability_base.ActionOperation.CUSTOM:
+            verbs = ", ".join(f"'{action.name}' ({action.description})" for action in ACTIONS.values())
+            return (
+                "Propose to apply an action verb to a user. The 'action' field chooses the verb "
+                f"— currently: {verbs} — exactly like the corresponding button of the "
+                "administration interface. The clean_related verb is the fix for MFA problems: "
+                "it erases the user's stored MFA data so the next login enrolls again, and it "
+                "applies only when the user's authenticator has an MFA bound. The proposal does "
+                "NOT apply anything: it is queued until an administrator approves it."
             )
         return self.description
 
@@ -372,3 +484,40 @@ class UserUpdate(mutability_base.MutableActionType):
             target, request, params, authenticator_uuid
         )
         return f'User "{name}" updated'
+
+    @typing.override
+    async def op_custom(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
+        # The verb name is the REST custom-method segment (the handler
+        # registered it as a POST detail method). FORCE keeps the
+        # proposal alive through unrelated drift, so the applicability
+        # gate (an MFA still bound) is re-checked here, on the live row.
+        verb = action.values.get("action")
+        spec = ACTIONS.get(verb) if isinstance(verb, str) else None
+        if spec is None:
+            raise rest_exceptions.RequestError(
+                f"action {verb!r} is not supported (accepted: {', '.join(sorted(ACTIONS))})"
+            )
+
+        def _plan() -> tuple[str, str]:
+            user = typing.cast(models.User, self.resolve_target(action.target_uuid))
+            if not self._verb_applies(spec, user):
+                raise rest_exceptions.NotSupportedError(
+                    f'The "{spec.name}" action does not apply to user "{user.name}" '
+                    "(its authenticator no longer has an MFA bound)"
+                )
+            return user.name, user.manager.uuid
+
+        name, authenticator_uuid = await sync_to_async(_plan, thread_sensitive=True)()
+        await RestProxy().execute(
+            RestTarget(
+                Users,
+                "authenticators/{uuid}/users",
+                types.rest.CustomMethodMethod.POST,
+                args=(action.target_uuid, spec.name),
+                parent=RestTarget(Authenticators, "authenticators"),
+            ),
+            request,
+            {},
+            parent_uuid=authenticator_uuid,
+        )
+        return f'User "{name}" {spec.summary}'

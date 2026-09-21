@@ -88,9 +88,10 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             name="get_servicepool_assignables",
             title="Get service pool assignables",
             description=(
-                "Enumerate the assignable services this pool can spawn new "
-                "pools from (raw service-level resources usable to create more "
-                "pools of the same type)."
+                "Enumerate the pool service inventory elements that can be "
+                "assigned to a user (raw service-level resources the "
+                "administrator can hand out manually). Use them with the "
+                "assignment proposal for this pool."
             ),
             handler=ServicesPools,
             path="servicespools",

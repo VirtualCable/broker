@@ -186,7 +186,9 @@ class UsersTest(rest.test.RESTActorTestCase):
             permission=types.permissions.PermissionType.ALL,
         )
         self.login(user=staff)
-        self.assertEqual(self.client.rest_get(f"authenticators/{self.auth.uuid}/users/overview").status_code, 200)
+        self.assertEqual(
+            self.client.rest_get(f"authenticators/{self.auth.uuid}/users/overview").status_code, 200
+        )
         self.assertEqual(self.client.rest_post(token_url).status_code, 403)
         self.assertEqual(self.client.rest_delete(token_url).status_code, 403)
         user.refresh_from_db()
@@ -311,6 +313,18 @@ class UsersTest(rest.test.RESTActorTestCase):
         # Get user from database and ensure values are correct
         dbusr = self.auth.users.get(name=user_dct["name"])
         self.assertTrue(rest.assertions.assert_user_is(dbusr, user_dct, compare_password=True))
+
+    def test_failure_on_the_answer_read_rolls_the_write_back(self) -> None:
+        """If serializing the answer fails, the created user is not persisted."""
+        from unittest import mock
+
+        from uds.REST.methods.users_groups import Users
+
+        user_dct = rest_fixtures.createUser(name="doomed-rollback-user")
+        with mock.patch.object(Users, "get_item", side_effect=RuntimeError("serialization boom")):
+            response = self.client.rest_put(f"authenticators/{self.auth.uuid}/users", user_dct)
+        self.assertEqual(response.status_code, 500, response.content)
+        self.assertFalse(models.User.objects.filter(name="doomed-rollback-user").exists())
 
     def test_user_delete(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users"

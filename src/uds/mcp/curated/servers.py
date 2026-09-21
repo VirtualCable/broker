@@ -92,6 +92,23 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             access="Available to authenticated UDS users with read permission on the group.",
             returns="Per-server statistics for the group.",
         ),
+        master_custom_tool(
+            name="get_server_group_usages",
+            title="Get server group usages",
+            description=(
+                "Providers and services that reference a server group in their "
+                "configuration (the same scan the administration interface shows "
+                "before allowing the group to be deleted). Use it to find who "
+                "depends on a group, and as the pre-check before deleting it: a "
+                "group still in use cannot be deleted."
+            ),
+            handler=ServersGroups,
+            path="servers/groups",
+            custom_name="usages",
+            uuid_property=uuid_property("UUID of the server group."),
+            access="Available to authenticated UDS users with read permission on the group.",
+            returns="An array of referencing items, each with uuid, name, type and kind (provider or service).",
+        ),
         _server_stats_tool(),
         nested_custom_tool(
             name="set_server_maintenance",

@@ -34,10 +34,10 @@ FORCE like the other asynchronous verbs of the package, while the
 form-shaped ``update`` keeps the strict DENY CAS.
 
 The other service pool families live in sibling modules, one per
-action type (``access``, ``action``, ``assignment``, ``cached``,
-``fallback``, ``group``, ``publication``, ``transport``); the imports
-at the bottom of this module pull them in so the registry discovers
-every family of the package.
+action type (``access``, ``action``, ``assignable``, ``assignment``,
+``cached``, ``fallback``, ``group``, ``publication``, ``transport``);
+the imports at the bottom of this module pull them in so the registry
+discovers every family of the package.
 """
 
 import collections.abc
@@ -62,6 +62,7 @@ from ...etag import item_etag
 
 from . import access as access
 from . import action as action
+from . import assignable as assignable
 from . import assignment as assignment
 from . import cached as cached
 from . import fallback as fallback
