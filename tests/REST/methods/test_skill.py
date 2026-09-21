@@ -73,3 +73,50 @@ class SkillDownloadTest(rest.test.RESTTestCase):
 
         skill_md = files["uds-mcp/SKILL.md"].decode("utf-8")
         self.assertIn("http://testserver/uds/rest/mcp", skill_md)
+
+    def test_skill_md_is_a_compact_operating_guide(self) -> None:
+        """``SKILL.md`` guides the surface instead of repeating tool descriptions.
+
+        The per-tool contracts travel in ``tools/list``; the guide only
+        teaches how the pieces fit, and stays small enough to read whole.
+        """
+        from uds.mcp import build_catalog
+
+        skill_md = self._bundle_files()["uds-mcp/SKILL.md"].decode("utf-8")
+
+        self.assertLess(len(skill_md), 8000)
+
+        for section in (
+            "## Naming",
+            "## Proposals and flows",
+            "## Listing",
+            "## Permissions",
+        ):
+            self.assertIn(section, skill_md)
+        self.assertIn("create_flow", skill_md)
+        self.assertIn("get_mutable_fields", skill_md)
+
+        # The guide never inlines the tool descriptions it replaced.
+        catalog = build_catalog()
+        descriptions = [tool.description for tool in catalog.tools() if tool.description]
+        self.assertTrue(descriptions)
+        self.assertFalse(any(desc in skill_md for desc in descriptions))
+
+    def test_skill_md_derives_gallery_kinds_from_the_registry(self) -> None:
+        """The gallery list names exactly the creatable kinds with a gallery."""
+        from uds.mcp.skill import SkillBuilder
+        from uds.mutability import registry
+
+        gallery_roots = {f.type_id for f in registry.all_families() if f.create_has_gallery}
+        expected = {
+            entry.full_id.rpartition(".")[0]
+            for entry in registry.all_bindings()
+            if entry.full_id.endswith(".create") and entry.full_id.rpartition(".")[0] in gallery_roots
+        }
+        self.assertTrue(expected)
+
+        skill_md = self._bundle_files()["uds-mcp/SKILL.md"].decode("utf-8")
+        listed = set(SkillBuilder._gallery_kinds())
+        self.assertEqual(listed, expected)
+        for kind in expected:
+            self.assertIn(kind, skill_md)
