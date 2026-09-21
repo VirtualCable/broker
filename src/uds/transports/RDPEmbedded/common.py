@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import dataclasses
@@ -48,18 +49,6 @@ if typing.TYPE_CHECKING:
 logger: logging.Logger = logging.getLogger(__name__)
 
 READY_CACHE_TIMEOUT = 30
-
-# server: "192.168.1.100",
-# port: 3389,
-# user: "username",
-# password: "password",
-# domain: "DOMAIN",
-# verify_cert: true,
-# use_nla: true,
-# screen_width: 1920,
-# screen_height: 1080,
-# drives_to_redirect: ["C", "D"]
-
 
 @dataclasses.dataclass
 class RDPTunnelParams:
@@ -91,6 +80,7 @@ class RDPOptions:
     # Matches uds-client `JsRdpOptions`
     use_nla: bool | None = None
     verify_cert: bool | None = None
+    use_local_scaler: bool | None = None
 
 
 @dataclasses.dataclass
@@ -99,8 +89,11 @@ class RDPRedirections:
     drives: list[str] | None = None
     audio: bool | None = None
     mic: bool | None = None
+    clipboard: bool | None = None
+    printing: bool | None = None
     webcam: WebcamParams | None = None
     smartcard: SmartcardParams | None = None
+    sound_latency_threshold: int | None = None
 
 
 @dataclasses.dataclass
@@ -114,6 +107,7 @@ class RDPConnectionParams:
     domain: str | None = None
     screen_width: int | None = None
     screen_height: int | None = None
+    best_experience: bool | None = None
     options: RDPOptions | None = None
     redirections: RDPRedirections | None = None
     tunnel: RDPTunnelParams | None = None
@@ -185,6 +179,17 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         default=True,
         tooltip=_("If checked, Network Level Authentication will be used for RDP connections"),
         tab=types.ui.Tab.PARAMETERS,
+    )
+
+    best_experience = gui.CheckBoxField(
+        label=_("Best experience"),
+        order=21,
+        tooltip=_(
+            "If checked, wallpaper, desktop composition and font smoothing will be enabled "
+            "(better user experience, more bandwidth)"
+        ),
+        tab=types.ui.Tab.PARAMETERS,
+        default=True,
     )
 
     allow_drives = gui.ChoiceField(
@@ -275,6 +280,42 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
+    enable_clipboard = gui.CheckBoxField(
+        label=_("Enable clipboard"),
+        order=32,
+        default=True,
+        tooltip=_("If checked, copy-paste functions will be allowed"),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    enable_printers = gui.CheckBoxField(
+        label=_("Enable printers"),
+        order=33,
+        default=False,
+        tooltip=_("If checked, this transport will allow the use of user printers"),
+        tab=types.ui.Tab.PARAMETERS,
+    )
+
+    sound_latency_threshold = gui.ChoiceField(
+        label=_("Sound latency threshold"),
+        order=34,
+        default="",
+        choices=[
+            gui.choice_item("", _("Default")),
+            gui.choice_item("300", _("300 ms")),
+            gui.choice_item("400", _("400 ms")),
+            gui.choice_item("500", _("500 ms")),
+            gui.choice_item("750", _("750 ms")),
+            gui.choice_item("1000", _("1000 ms")),
+        ],
+        tooltip=_(
+            "If the audio stream drifts more than this, packets are dropped to resynchronize it. "
+            "Default lets the client decide. Lower values drop audio more often, higher ones keep "
+            "audio smooth but let it drift apart from video."
+        ),
+        tab=types.ui.Tab.ADVANCED,
+    )
+
     rdp_port = gui.NumericField(
         order=35,
         length=5,  # That is, max allowed value is 65535
@@ -283,6 +324,17 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
         required=True,  #: Numeric fields have always a value, so this not really needed
         default=3389,
+    )
+
+    use_local_scaler = gui.CheckBoxField(
+        label=_("Scale locally"),
+        order=36,
+        default=True,
+        tooltip=_(
+            "If checked, the remote session renders at the virtual resolution and the client "
+            "upscales the image locally, saving bandwidth"
+        ),
+        tab=types.ui.Tab.ADVANCED,
     )
 
     screen_size = gui.ChoiceField(
@@ -438,11 +490,22 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             domain=ci.domain if not self.use_sso.as_bool() else "UDS",
             screen_width=int(width),
             screen_height=int(height),
-            options=RDPOptions(use_nla=self.use_nla.as_bool(), verify_cert=False),
+            # The client already enables it, so only the opt-out travels.
+            best_experience=None if self.best_experience.as_bool() else False,
+            options=RDPOptions(
+                use_nla=self.use_nla.as_bool(),
+                verify_cert=False,
+                # The client already scales locally, so only the opt-out travels.
+                use_local_scaler=None if self.use_local_scaler.as_bool() else False,
+            ),
             redirections=RDPRedirections(
                 drives=drives,
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),
+                clipboard=self.enable_clipboard.as_bool(),
+                printing=self.enable_printers.as_bool(),
+                # Empty means "unset": omitting the key lets the client pick its own threshold.
+                sound_latency_threshold=int(self.sound_latency_threshold.value or 0) or None,
                 webcam=webcam,
                 smartcard=SmartcardParams(enabled=True) if self.enable_smartcard.as_bool() else None,
             ),

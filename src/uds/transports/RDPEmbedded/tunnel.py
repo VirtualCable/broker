@@ -75,6 +75,7 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     enforce_drives = BaseRDPEmbeddedTransport.enforce_drives
     use_nla = BaseRDPEmbeddedTransport.use_nla
     use_sso = BaseRDPEmbeddedTransport.use_sso
+    best_experience = BaseRDPEmbeddedTransport.best_experience
     rdp_port = BaseRDPEmbeddedTransport.rdp_port
 
     enable_audio = BaseRDPEmbeddedTransport.enable_audio
@@ -85,6 +86,10 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     webcam_max_width = BaseRDPEmbeddedTransport.webcam_max_width
     webcam_max_height = BaseRDPEmbeddedTransport.webcam_max_height
     enable_smartcard = BaseRDPEmbeddedTransport.enable_smartcard
+    enable_clipboard = BaseRDPEmbeddedTransport.enable_clipboard
+    enable_printers = BaseRDPEmbeddedTransport.enable_printers
+    sound_latency_threshold = BaseRDPEmbeddedTransport.sound_latency_threshold
+    use_local_scaler = BaseRDPEmbeddedTransport.use_local_scaler
 
     screen_size = BaseRDPEmbeddedTransport.screen_size
 

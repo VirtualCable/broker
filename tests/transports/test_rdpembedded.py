@@ -26,14 +26,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import typing
 
 from tests.utils.test import UDSTestCase
 from uds.core import types
-from uds.transports.RDPEmbedded.common import RDPTunnelParams
+from uds.transports.RDPEmbedded.common import BaseRDPEmbeddedTransport, RDPTunnelParams
 from uds.transports.RDPEmbedded.direct import RDPEmbeddedTransport
+from uds.transports.RDPEmbedded.tunnel import TRDPEmbeddedTransport
 
 
 def _connection_data(
@@ -67,6 +69,11 @@ class RDPEmbeddedTest(UDSTestCase):
         self.assertEqual(data["redirections"]["audio"], True)
         self.assertEqual(data["redirections"]["mic"], False)
         self.assertEqual(data["redirections"]["drives"], [])
+        # Clipboard on, printing off by default.
+        self.assertEqual(data["redirections"]["clipboard"], True)
+        self.assertEqual(data["redirections"]["printing"], False)
+        # Unset sound latency threshold → key omitted, client keeps its own default.
+        self.assertNotIn("sound_latency_threshold", data["redirections"])
         # Webcam disabled by default → key omitted entirely.
         self.assertNotIn("webcam", data["redirections"])
         self.assertNotIn("smartcard", data["redirections"])
@@ -93,6 +100,49 @@ class RDPEmbeddedTest(UDSTestCase):
         redirections = self._build(transport)["redirections"]
         self.assertFalse(redirections["audio"])
         self.assertTrue(redirections["mic"])
+
+    def test_clipboard_printing_flags(self) -> None:
+        transport = self._transport()
+        transport.enable_clipboard.value = False
+        transport.enable_printers.value = True
+
+        redirections = self._build(transport)["redirections"]
+        self.assertFalse(redirections["clipboard"])
+        self.assertTrue(redirections["printing"])
+
+    def test_best_experience_default_is_omitted(self) -> None:
+        """Checked is what the client already does, so nothing travels."""
+        self.assertNotIn("best_experience", self._build(self._transport()))
+
+    def test_best_experience_unchecked_is_sent(self) -> None:
+        transport = self._transport()
+        transport.best_experience.value = False
+
+        data = self._build(transport)
+        self.assertIn("best_experience", data)
+        self.assertFalse(data["best_experience"])
+
+    def test_sound_latency_threshold_sent_when_set(self) -> None:
+        transport = self._transport()
+        transport.sound_latency_threshold.value = "400"
+
+        self.assertEqual(self._build(transport)["redirections"]["sound_latency_threshold"], 400)
+
+    def test_sound_latency_threshold_default_is_omitted(self) -> None:
+        transport = self._transport()
+        transport.sound_latency_threshold.value = ""
+
+        self.assertNotIn("sound_latency_threshold", self._build(transport)["redirections"])
+
+    def test_use_local_scaler_default_is_omitted(self) -> None:
+        """Scaling locally is what the client already does, so nothing travels."""
+        self.assertNotIn("use_local_scaler", self._build(self._transport())["options"])
+
+    def test_use_local_scaler_unchecked_is_sent(self) -> None:
+        transport = self._transport()
+        transport.use_local_scaler.value = False
+
+        self.assertFalse(self._build(transport)["options"]["use_local_scaler"])
 
     def test_drives_allow_any(self) -> None:
         transport = self._transport()
@@ -156,6 +206,14 @@ class RDPEmbeddedTest(UDSTestCase):
         self.assertEqual(data["password"], "__NO_PASSWORD__")
         self.assertEqual(data["domain"], "UDS")
         self.assertIn("options", data)
+
+    def test_both_transports_expose_every_base_field(self) -> None:
+        """Fields are not inherited into the form: each concrete transport must re-export them."""
+        expected = set(BaseRDPEmbeddedTransport._gui_fields_template)
+
+        for transport_cls in (RDPEmbeddedTransport, TRDPEmbeddedTransport):
+            fields = set(transport_cls(self.create_environment(), None)._gui_fields_template)
+            self.assertEqual(expected - fields, set(), f"{transport_cls.__name__} is missing fields")
 
     def test_tunnel_block_included(self) -> None:
         transport = self._transport()
