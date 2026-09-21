@@ -36,6 +36,8 @@ Design (doc/plan/mcp-mutability.md):
 import datetime
 import typing
 
+from django.db.models import Q
+
 from uds.core.consts import mcp as consts_mcp
 from uds.core.exceptions.mcp import InvalidTransition, MutabilityError, NotActionOwner, StaleProposal
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
@@ -418,6 +420,76 @@ class FlowStore:
             return "conflict"
         return action_type.drift_against(action, ref_etag=ref_etag, ref_values=ref_values)
 
+    # ---------------------------------------------------------- surfaces
+
+    # Terminal decisions: a flow in one of these states is decided and
+    # carries a decided_at stamp (the reference of both the approval
+    # retention and the owner history horizons)
+    DECIDED_STATUSES: typing.ClassVar[tuple[FlowStatus, ...]] = (
+        FlowStatus.EXECUTED,
+        FlowStatus.REJECTED,
+        FlowStatus.CANCELLED,
+        FlowStatus.EXPIRED,
+    )
+
+    @staticmethod
+    def archived_q() -> Q:
+        """Query filter selecting the flows that belong to the archive.
+
+        The archive side of the admin partition: decided flows whose
+        retention window on the approval surface is over, and expired
+        flows, which always archive immediately (there is no outcome
+        context to keep around). Everything else — open flows and
+        decided ones still within the window — stays on the approval
+        surface. Drafts are neither surface's business (their owner's
+        private composing space); the surfaces exclude them anyway.
+        """
+        retention = datetime.timedelta(days=max(0, GlobalConfig.MCP_APPROVAL_RETENTION_DAYS.as_int()))
+        cutoff = sql_now() - retention
+        terminal = (FlowStatus.EXECUTED, FlowStatus.REJECTED, FlowStatus.CANCELLED)
+        return Q(status=FlowStatus.EXPIRED) | Q(status__in=terminal, decided_at__lte=cutoff)
+
+    @classmethod
+    def is_archived(cls, flow: ActionFlow) -> bool:
+        """Is this flow archived (vs. shown on the approval surface)?"""
+        if flow.status == FlowStatus.EXPIRED:
+            return True
+        if flow.status not in (FlowStatus.EXECUTED, FlowStatus.REJECTED, FlowStatus.CANCELLED):
+            return False
+        if flow.decided_at is None:  # undecided by the retention horizon itself
+            return False
+        retention = datetime.timedelta(days=max(0, GlobalConfig.MCP_APPROVAL_RETENTION_DAYS.as_int()))
+        return flow.decided_at <= sql_now() - retention
+
+    @staticmethod
+    def own_history_days(*, is_admin: bool) -> int:
+        """Decided-flow horizon of the owner surface, for this requester.
+
+        Administrators keep their full own history (they are also the
+        archive's audience); staff is bound to the configured horizon
+        (GlobalConfig, MCP, "Own History Days"; 0 means unlimited).
+        """
+        if is_admin:
+            return 0
+        return max(0, GlobalConfig.MCP_OWN_HISTORY_DAYS.as_int())
+
+    @classmethod
+    def visible_in_own_history(cls, flow: ActionFlow, *, days: int) -> bool:
+        """May this flow be listed on the owner surface?
+
+        Undecided flows (draft, pending, locked, running) are always
+        visible: they are live work, not history. Decided ones only
+        within the last ``days`` since their decision; ``days <= 0``
+        means unlimited. Decided flows missing the stamp (legacy rows
+        before decided_at existed) stay visible: the horizon cannot
+        date what it does not know.
+        """
+        if days <= 0 or flow.status not in cls.DECIDED_STATUSES:
+            return True
+        if flow.decided_at is None:
+            return True
+        return flow.decided_at >= sql_now() - datetime.timedelta(days=days)
+
     def flow_compliance(self, flow: ActionFlow) -> str:
         """Aggregate compliance of a flow: the worst of its actions.
 
@@ -618,7 +690,10 @@ class FlowStore:
             return
         if flow.status != FlowStatus.EXECUTED:
             flow.status = FlowStatus.EXECUTED
-            flow.save(update_fields=["status"])
+            # The run settling IS the decision of an executed flow: it is
+            # the timestamp the approval-surface retention counts from
+            flow.decided_at = sql_now()
+            flow.save(update_fields=["status", "decided_at"])
 
     def _decide_flow(
         self,
@@ -641,7 +716,10 @@ class FlowStore:
                 f"Flow {flow.uuid} is {flow.status}, only {', '.join(allowed)} flows allow this operation"
             )
         flow.status = status
-        flow.save(update_fields=["status"])
+        # decided_at is the retention stamp of the approval surface (what
+        # the administrator keeps around for context before it archives)
+        flow.decided_at = sql_now()
+        flow.save(update_fields=["status", "decided_at"])
         # decided_by/decided note are auxiliary (only approvals get columns)
         if decided_by is not None:
             flow.properties["decided_by"] = decided_by

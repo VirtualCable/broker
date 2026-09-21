@@ -63,6 +63,16 @@ MAX_TTL_HOURS: typing.Final[int] = FLOW_TTL_DAYS * 24
 # they just disappear from the agent's view to keep its context bounded.
 VISIBILITY_DAYS: typing.Final[int] = 30
 
+# Days a decided (executed/rejected/cancelled) flow stays on the approval
+# surface before it moves to the archive. Expired flows move immediately.
+# Configurable (GlobalConfig, MCP section, "Approval Retention Days").
+APPROVAL_RETENTION_DAYS: typing.Final[int] = 7
+
+# Days of decided-flow history a non-admin staff user sees on /flows/own.
+# Admins always see their full own history. Configurable (GlobalConfig,
+# MCP section, "Own History Days"); 0 means unlimited.
+OWN_HISTORY_DAYS: typing.Final[int] = 90
+
 # Sentinel target_uuid of ROOT creation proposals (a creation has no
 # target yet: root creates carry this sentinel on FlowAction.target_uuid;
 # detail creates carry the parent uuid, a real target). The real uuid is

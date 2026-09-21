@@ -32,8 +32,13 @@ Every user (staff level) manages HERE only the flows it has proposed:
 open a draft flow, append/edit its actions while it is still a draft,
 submit it for review (pending, invisible edits from now on), inspect
 them and cancel the whole flow while undecided. Approval and execution
-remain on the management surface (``/flows/management``), where drafts
-do not exist.
+remain on the administration surfaces (``/flows/approval`` and
+``/flows/archive``), where drafts do not exist.
+
+This module also holds the flow/action REST items and the actions
+detail handler shared by all three surfaces; the administration
+surfaces themselves live in :mod:`.flows_approval` and
+:mod:`.flows_archive`.
 
 The domain logic (caps, CAS bases, transitions) lives in
 :mod:`uds.mutability`; this handler only exposes it over REST, so the
@@ -42,6 +47,7 @@ permissions over ``ActionFlow``; ownership is the access rule).
 """
 
 import collections.abc
+import dataclasses
 import datetime
 import logging
 import typing
@@ -50,7 +56,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from uds import mutability
-from uds.core import exceptions, types
+from uds.core import consts, exceptions, types
 from uds.core.consts import mcp as consts_mcp
 from uds.core.util import ensure
 from uds.core.util import permissions
@@ -59,14 +65,191 @@ from uds.core.util.model import process_uuid
 from uds.mutability import registry
 from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.mutability.base import ActionOperation
-from uds.core.exceptions.mcp import InvalidTransition, MutabilityError
+from uds.core.exceptions.mcp import InvalidTransition, MutabilityError, StaleProposal
 from uds.mutability.store import FlowStore
-from uds.models import ActionFlow
+from uds.models import ActionFlow, FlowAction
 from uds.REST.model import DetailHandler, ModelHandler
 
-from .flows_management import FlowActionItem, FlowActions, FlowItem
-
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass
+class FlowActionItem(types.rest.BaseRestItem):
+    id: str
+    order: int
+    action_type: str
+    target_kind: str
+    target_uuid: str
+    justification: str
+    status: str
+    values: dict[str, typing.Any]
+    created: datetime.datetime
+    permission: int
+    result: str | None
+    # Live drift indicator (ok/outdated/conflict); only for admin views
+    compliance: str = ""
+    # Display snapshot frozen at approval time; only for admin views
+    snap_info: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
+
+
+@dataclasses.dataclass
+class FlowItem(types.rest.BaseRestItem):
+    id: str
+    name: str
+    justification: str
+    status: str
+    owner: str
+    approved_by: str
+    approved_at: datetime.datetime | None
+    due_date: datetime.datetime | None
+    created: datetime.datetime
+    actions_count: int
+    permission: int
+    decided_by: str
+    # When the flow reached its terminal decision (approval-surface
+    # retention reference); None while the flow is still open
+    decided_at: datetime.datetime | None = None
+    # Worst compliance of the actions (ok/outdated/conflict); admin views
+    compliance: str = ""
+
+
+class FlowActions(DetailHandler[FlowActionItem]):
+    """Detail of the actions of a flow (shared base for all surfaces).
+
+    Actions live and die with their flow: neither creation nor edition
+    nor individual removal is allowed here. Subclasses decide what each
+    surface exposes: the admin surfaces add the live ``compliance``
+    indicator and the approval snapshot (``snap_info``), the approval
+    one also the per-action ``approve``/``skip`` operations (see the
+    store lifecycle), and the owner one replaces the writes with the
+    proposal machinery.
+    """
+
+    # Admin-only surface: flows administration is not visible to
+    # non-admin users at all (the MANAGEMENT permission governs the
+    # wrapped types on the proposal surface, never this one)
+    ROLE: typing.ClassVar[consts.Role] = consts.Role.ADMIN
+
+    # Admin surface: expose compliance and the approval snapshot
+    _ADMIN_VIEW: typing.ClassVar[bool] = True
+
+    CUSTOM_METHODS: typing.ClassVar[list[types.rest.ModelCustomMethod]] = [
+        types.rest.ModelCustomMethod(
+            "approve",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Approve an action, freezing its live CAS state (also re-approves failed/revoked actions)",
+        ),
+        types.rest.ModelCustomMethod(
+            "skip",
+            True,
+            method=types.rest.CustomMethodMethod.POST,
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+            description="Skip an action: it will not run when the flow is launched",
+        ),
+    ]
+
+    @staticmethod
+    def as_dict(item: "FlowAction", perm: int, *, admin_view: bool = False) -> FlowActionItem:
+        compliance = ""
+        snap_info: dict[str, typing.Any] = {}
+        if admin_view:
+            # Pre-execution drift indicator; computed live, never stored
+            compliance = FlowStore().compliance(item)
+            snap_info = dict(item.snap_info)
+        return FlowActionItem(
+            id=item.uuid,
+            order=item.order,
+            action_type=item.action_type,
+            target_kind=item.target_kind,
+            target_uuid=item.target_uuid,
+            justification=item.justification,
+            status=item.status,
+            values=item.values or {},
+            created=item.created,
+            permission=perm,
+            result=item.properties.get("result"),
+            compliance=compliance,
+            snap_info=snap_info,
+        )
+
+    @typing.override
+    def get_item_position(self, parent: models.Model, item_uuid: str) -> int:
+        parent = ensure.is_instance(parent, ActionFlow)
+        return self.calc_item_position(item_uuid, parent.actions.order_by("order"))
+
+    @typing.override
+    def get_items(self, parent: models.Model) -> types.rest.ItemsResult[FlowActionItem]:
+        parent = ensure.is_instance(parent, ActionFlow)
+        perm = permissions.effective_permissions(self._user, parent)
+        return [
+            FlowActions.as_dict(action, perm, admin_view=self._ADMIN_VIEW)
+            for action in self.odata_filter(parent.actions.order_by("order"))
+        ]
+
+    @typing.override
+    def get_item(self, parent: models.Model, item: str) -> FlowActionItem:
+        parent = ensure.is_instance(parent, ActionFlow)
+        action = parent.actions.get(uuid=process_uuid(item))
+        return FlowActions.as_dict(
+            action, permissions.effective_permissions(self._user, parent), admin_view=self._ADMIN_VIEW
+        )
+
+    @typing.override
+    def get_table(self, parent: models.Model) -> types.rest.TableInfo:
+        parent = ensure.is_instance(parent, ActionFlow)
+        return (
+            ui_utils.TableBuilder(_("Actions of {0}").format(parent.name))
+            .numeric_column(name="order", title=_("Order"))
+            .text_column(name="action_type", title=_("Action"))
+            .text_column(name="target_kind", title=_("Target kind"))
+            .text_column(name="status", title=_("Status"))
+            .text_column(name="compliance", title=_("Compliance"))
+            .datetime_column(name="created", title=_("Created"))
+            .with_filter_fields("action_type", "target_kind", "status", "compliance")
+            .build()
+        )
+
+    @typing.override
+    def save_item(self, parent: models.Model, item: str | None) -> FlowActionItem:
+        raise exceptions.rest.RequestError("Flow actions cannot be created or edited")
+
+    @typing.override
+    def delete_item(self, parent: models.Model, item: str) -> None:
+        raise exceptions.rest.RequestError("Flow actions cannot be deleted individually")
+
+    # ------------------------------------------------------ domain actions
+
+    def approve(self, parent: models.Model, item: str) -> FlowActionItem:
+        """Approve an action, freezing its live CAS state.
+
+        The approval snapshot (``snap_info``) and the frozen CAS
+        reference are taken in the same step; failed/revoked actions can
+        be approved again (recovery). Approving a pending flow acquires
+        it (LOCKED).
+        """
+        parent = ensure.is_instance(parent, ActionFlow)
+        action = parent.actions.get(uuid=process_uuid(item))
+        try:
+            action = FlowStore().approve_action(action, admin=self._user)
+        except (InvalidTransition, StaleProposal) as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        return FlowActions.as_dict(
+            action, permissions.effective_permissions(self._user, parent), admin_view=True
+        )
+
+    def skip(self, parent: models.Model, item: str) -> FlowActionItem:
+        """Skip an action: it will not run when the flow is launched."""
+        parent = ensure.is_instance(parent, ActionFlow)
+        action = parent.actions.get(uuid=process_uuid(item))
+        try:
+            action = FlowStore().skip_action(action, admin=self._user)
+        except (InvalidTransition, StaleProposal) as e:
+            raise exceptions.rest.RequestError(str(e)) from None
+        return FlowActions.as_dict(
+            action, permissions.effective_permissions(self._user, parent), admin_view=True
+        )
 
 
 def _ttl_from_params(params: dict[str, typing.Any]) -> datetime.timedelta | None:
@@ -97,7 +280,7 @@ class FlowsOwnActions(FlowActions):
     Once the flow is submitted (pending) it is final: changes mean a new
     flow.
 
-    Approving and skipping actions are admin operations (management
+    Approving and skipping actions are admin operations (the approval
     surface only): neither the custom methods nor the admin view data
     (``snap_info`` may hold live secret field values) are exposed here.
     """
@@ -241,11 +424,15 @@ class FlowsOwnActions(FlowActions):
 class FlowsOwn(ModelHandler[FlowItem]):
     """Owner API for proposal flows (staff).
 
-    Users see and manage here ONLY their own flows. The list is the full
-    history (drafts and decisions included); a single lookup admits any
-    status; creation opens a fresh DRAFT flow (caps enforced); ``submit``
-    closes it for review; deletion cancels a draft or pending flow.
-    Mutations (actions) only apply while the flow is a draft.
+    Users see and manage here ONLY their own flows. The list is their
+    history (drafts and decisions included), trimmed to the configured
+    horizon for non-admin staff (GlobalConfig, MCP, "Own History
+    Days"): recent decided flows stay, old ones quietly disappear from
+    the list (housekeeping); administrators see their full history. A
+    single lookup admits any status; creation opens a fresh DRAFT flow
+    (caps enforced); ``submit`` closes it for review; deletion cancels a
+    draft or pending flow. Mutations (actions) only apply while the flow
+    is a draft.
     """
 
     PATH = "flows"
@@ -287,7 +474,10 @@ class FlowsOwn(ModelHandler[FlowItem]):
         """Ownership is the access rule: owners pass, the rest is not found.
 
         Root (generic create/modify paths) is never granted: creation and
-        cancel are domain operations handled by this handler.
+        cancel are domain operations handled by this handler. Decided
+        flows past the history horizon are not found either (same opaque
+        404 as the list): the horizon trims the surface, not only the
+        table.
         """
         item = ensure.is_instance(obj, ActionFlow)
         if root:
@@ -295,15 +485,24 @@ class FlowsOwn(ModelHandler[FlowItem]):
         if item.owner != self._user:
             # Opaque on purpose: do not disclose other users' flows
             raise exceptions.rest.NotFound("Item not found") from None
+        if not FlowStore.visible_in_own_history(item, days=self._history_days()):
+            raise exceptions.rest.NotFound("Item not found") from None
 
     # ------------------------------------------------------------- queries
+
+    def _history_days(self) -> int:
+        """Decided-flow horizon applied to this requester's own surface."""
+        return FlowStore.own_history_days(is_admin=self._user.is_admin)
 
     @typing.override
     def get_items(
         self, *, sumarize: bool = False, query: models.QuerySet[typing.Any] | None = None
     ) -> collections.abc.Generator[FlowItem, None, None]:
-        """All own flows, decided ones included (full history for the owner)."""
+        """Own flows: full history for admins, horizon-bound for staff."""
+        days = self._history_days()
         for flow in FlowStore().list_flows(owner_uuid=self._user.uuid):
+            if not FlowStore.visible_in_own_history(flow, days=days):
+                continue
             yield self.get_item(flow)
 
     @typing.override
@@ -322,6 +521,7 @@ class FlowsOwn(ModelHandler[FlowItem]):
             actions_count=item.actions.count(),
             permission=types.permissions.PermissionType.ALL,
             decided_by=item.properties.get("decided_by", ""),
+            decided_at=item.decided_at,
         )
 
     # ------------------------------------------------------------ mutation

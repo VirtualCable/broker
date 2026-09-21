@@ -526,6 +526,26 @@ class GlobalConfig:
         type=Config.FieldType.NUMERIC,
         help=_("Maximum actions inside a single proposal flow"),
     )
+    # Days a decided (executed/rejected/cancelled) flow stays visible on the
+    # approval surface before it moves to the archive. Expired flows move
+    # immediately: there is no context to keep around.
+    MCP_APPROVAL_RETENTION_DAYS: Config.Value = Config.section(Config.SectionType.MCP).value(
+        "Approval Retention Days",
+        str(consts.mcp.APPROVAL_RETENTION_DAYS),
+        type=Config.FieldType.NUMERIC,
+        help=_(
+            "Days a decided flow remains visible on the approval surface before moving to the archive. 0 archives immediately"
+        ),
+    )
+    # Days of decided-flow history a non-admin staff user sees on /flows/own
+    # (housekeeping of the proposal surface). Administrators always see their
+    # full own history. 0 means unlimited.
+    MCP_OWN_HISTORY_DAYS: Config.Value = Config.section(Config.SectionType.MCP).value(
+        "Own History Days",
+        str(consts.mcp.OWN_HISTORY_DAYS),
+        type=Config.FieldType.NUMERIC,
+        help=_("Days of decided flows a staff (non-admin) user sees in its own history. 0 means unlimited"),
+    )
     # Time an admi session can be idle before being "logged out"
     # ADMIN_IDLE_TIME: Config.Value = Config.section(Config.SectionType.SECURITY).value('adminIdleTime', '14400', type=Config.FieldType.NUMERIC_FIELD)  # Defaults to 4 hous
     # Time betwen checks of unused services by os managers

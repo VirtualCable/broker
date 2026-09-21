@@ -5,28 +5,31 @@
 """
 Tests for the owner surface of proposal flows (``/flows/own``).
 
-Covers draft creation, listing (full own history), single lookup (any
-own status, others are 404), submit (draft -> pending with the declared
-resolution window), cancel (draft or pending only), refusals of the
-generic edit paths, and the actions detail (create/edit through the
-registry with MANAGEMENT over the target, CAS base and caps, drafts
-only).
+Covers draft creation, listing (own history, horizon-bound for staff),
+single lookup (any own status, others are 404), submit (draft -> pending
+with the declared resolution window), cancel (draft or pending only),
+refusals of the generic edit paths, and the actions detail (create/edit
+through the registry with MANAGEMENT over the target, CAS base and caps,
+drafts only).
 """
 
 from __future__ import annotations
 
 import datetime
 import typing
+from unittest import mock
 
 from uds import models
 from uds.core.consts import mcp as consts_mcp
 from uds.core.types import permissions as permissions_types
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import objtype
+from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.core.consts.mcp import CREATE_TARGET_UUID
 from uds.mutability.store import FlowStore
 
+from tests.fixtures.authenticators import create_db_authenticator, create_db_users
 from tests.fixtures.services import create_db_provider, create_db_service
 from tests.utils import rest
 
@@ -126,16 +129,16 @@ class FlowsOwnAccessTest(rest.test.RESTTestCase):
             base_etag="e",
         )
         self.login(user=self.admins[0])
-        items: list[dict[str, typing.Any]] = self.client.rest_get("flows/management/overview").json()
+        items: list[dict[str, typing.Any]] = self.client.rest_get("flows/approval/overview").json()
         self.assertNotIn(draft_id, {i["id"] for i in items})
         # Not even reachable by direct uuid lookup
-        self.assertEqual(self.client.rest_get(f"flows/management/{draft_id}").status_code, 404)
-        self.assertEqual(self.client.rest_get(f"flows/management/{draft_id}/actions").status_code, 404)
+        self.assertEqual(self.client.rest_get(f"flows/approval/{draft_id}").status_code, 404)
+        self.assertEqual(self.client.rest_get(f"flows/approval/{draft_id}/actions").status_code, 404)
         # Submitting makes it visible to the administrator
         self.login(user=self.staffs[0])
         self.assertEqual(self.client.rest_post(f"flows/own/{draft_id}/submit", data={}).status_code, 200)
         self.login(user=self.admins[0])
-        items = self.client.rest_get("flows/management/overview").json()
+        items = self.client.rest_get("flows/approval/overview").json()
         self.assertIn(draft_id, {i["id"] for i in items})
 
 
@@ -671,3 +674,82 @@ class FlowsOwnCreateActionsTest(rest.test.RESTTestCase):
             }
         )
         self.assertEqual(response.status_code, 403, response.content)
+
+
+class FlowsOwnHistoryTest(rest.test.RESTTestCase):
+    """/flows/own history: staff is horizon-bound, admins keep it all."""
+
+    @staticmethod
+    def _own_days(days: int) -> typing.Any:
+        return mock.patch.object(
+            GlobalConfig, "MCP_OWN_HISTORY_DAYS", mock.Mock(as_int=mock.Mock(return_value=days))
+        )
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.store = FlowStore()
+        self.staff = create_db_users(create_db_authenticator(), is_staff=True)[0]
+        self.admin = create_db_users(create_db_authenticator(), is_staff=True, is_admin=True)[0]
+
+    def _decided_by(self, user: typing.Any, *, name: str) -> models.ActionFlow:
+        flow = self.store.create_flow(owner=user, name=name)
+        self.store.add_action(
+            flow,
+            action_type="provider.update",
+            target_uuid="target-1",
+            values={"name": "x"},
+            base_values={"name": "y"},
+            base_etag="etag",
+        )
+        self.store.submit_flow(flow, actor_uuid=user.uuid)
+        self.store.cancel_flow(flow, actor_uuid=user.uuid)
+        models.ActionFlow.objects.filter(uuid=flow.uuid).update(
+            decided_at=datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=40)
+        )
+        flow.refresh_from_db()
+        return flow
+
+    def test_staff_history_is_trimmed_to_the_horizon(self) -> None:
+        recent = self._decided_by(self.staff, name="recent decision")
+        old = self._decided_by(self.staff, name="old decision")
+        models.ActionFlow.objects.filter(uuid=recent.uuid).update(
+            decided_at=datetime.datetime.now(datetime.UTC)
+        )
+        self.login_with_api_token(user=self.staff, as_admin=False)
+        with self._own_days(30):
+            listed = {i["id"] for i in self.client.rest_get("flows/own").json()}
+        self.assertIn(recent.uuid, listed)
+        self.assertNotIn(old.uuid, listed)
+
+    def test_staff_undecided_flows_survive_the_horizon(self) -> None:
+        draft = self.store.create_flow(owner=self.staff, name="draft")
+        pending = self._decided_by(self.staff, name="pending")  # submitted...
+        # ...but decide nothing: reopen it as pending for the assertion
+        models.ActionFlow.objects.filter(uuid=pending.uuid).update(status=FlowStatus.PENDING, decided_at=None)
+        self.login_with_api_token(user=self.staff, as_admin=False)
+        with self._own_days(30):
+            listed = {i["id"] for i in self.client.rest_get("flows/own").json()}
+        self.assertEqual(listed, {draft.uuid, pending.uuid})
+
+    def test_admin_history_is_unlimited(self) -> None:
+        old = self._decided_by(self.admin, name="ancient decision")
+        self.login_with_api_token(user=self.admin)
+        with self._own_days(30):  # the staff config does not apply to admins
+            listed = {i["id"] for i in self.client.rest_get("flows/own").json()}
+        self.assertIn(old.uuid, listed)
+
+    def test_out_of_horizon_item_is_not_found(self) -> None:
+        old = self._decided_by(self.staff, name="old decision")
+        self.login_with_api_token(user=self.staff, as_admin=False)
+        with self._own_days(30):
+            self.assertEqual(self.client.rest_get(f"flows/own/{old.uuid}").status_code, 404)
+            self.assertEqual(self.client.rest_get(f"flows/own/{old.uuid}/actions").status_code, 404)
+
+    def test_unlimited_horizon_keeps_everything(self) -> None:
+        old = self._decided_by(self.staff, name="old decision")
+        self.login_with_api_token(user=self.staff, as_admin=False)
+        with self._own_days(0):
+            listed = {i["id"] for i in self.client.rest_get("flows/own").json()}
+            self.assertIn(old.uuid, listed)
+            self.assertEqual(self.client.rest_get(f"flows/own/{old.uuid}").status_code, 200)

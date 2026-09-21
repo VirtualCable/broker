@@ -42,6 +42,7 @@ class Migration(migrations.Migration):
                 ),
                 ("approved_at", models.DateTimeField(blank=True, default=None, null=True)),
                 ("due_date", models.DateTimeField(blank=True, db_index=True, default=None, null=True)),
+                ("decided_at", models.DateTimeField(blank=True, db_index=True, default=None, null=True)),
                 ("created", models.DateTimeField(blank=True, default=uds.core.util.model.sql_now)),
                 (
                     "approved_by",

@@ -51,7 +51,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
-import collections.abc
 import logging
 import typing
 
@@ -117,9 +116,9 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         {
             ("Accounts", "clear", "POST"),
             ("Accounts", "timemark", "POST"),
-            ("FlowsManagement", "approve", "POST"),
-            ("FlowsManagement", "reject", "POST"),
-            ("FlowsManagement", "lock", "POST"),
+            ("FlowsApproval", "approve", "POST"),
+            ("FlowsApproval", "reject", "POST"),
+            ("FlowsApproval", "lock", "POST"),
             ("FlowsOwn", "submit", "POST"),
             ("FlowActions", "approve", "POST"),
             ("FlowActions", "skip", "POST"),
@@ -149,20 +148,34 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
         }
     )
 
+    @staticmethod
+    def _handler_classes(base: type) -> list[type]:
+        """Every descendant of ``base``, at any depth.
+
+        The walk must be transitive: some handlers share behavior
+        through an intermediate abstract surface (e.g. the flows
+        approval/archive partition), and a direct-children-only scan
+        would silently skip their custom methods.
+        """
+        out: list[type] = []
+        for cls in base.__subclasses__():
+            out.append(cls)
+            out.extend(CustomMethodContractTest._handler_classes(cls))
+        return out
+
+    def _sources(self) -> list[tuple[str, type, list[types.rest.ModelCustomMethod]]]:
+        """(class name, class, custom methods) for every handler class with some."""
+        sources: list[tuple[str, type, list[types.rest.ModelCustomMethod]]] = []
+        for cls in self._handler_classes(ModelHandler) + self._handler_classes(DetailHandler):
+            cms = getattr(cls, "CUSTOM_METHODS", None)
+            if cms:
+                sources.append((cls.__name__, cls, cms))
+        return sources
+
     def test_unsafe_custom_methods_use_post(self) -> None:
         """Every unsafe (state-mutating) custom method is declared with method=POST."""
-        sources: list[tuple[str, type, list[types.rest.ModelCustomMethod]]] = []
-        for cls in typing.cast(collections.abc.Iterable[typing.Any], ModelHandler.__subclasses__()):
-            cms = getattr(cls, "CUSTOM_METHODS", None)
-            if cms:
-                sources.append((cls.__name__, cls, cms))
-        for cls in typing.cast(collections.abc.Iterable[typing.Any], DetailHandler.__subclasses__()):
-            cms = getattr(cls, "CUSTOM_METHODS", None)
-            if cms:
-                sources.append((cls.__name__, cls, cms))
-
         offenders: list[str] = []
-        for cls_name, _cls, cms in sources:
+        for cls_name, _cls, cms in self._sources():
             for cm in cms:
                 key = (cls_name, cm.name, cm.method.name)
                 if key in self._POST_CUSTOM_METHODS:
@@ -187,18 +200,8 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
 
     def test_post_custom_methods_set_exhaustive(self) -> None:
         """_POST_CUSTOM_METHODS must list every POST custom method in the codebase."""
-        sources: list[tuple[str, type, list[types.rest.ModelCustomMethod]]] = []
-        for cls in typing.cast(collections.abc.Iterable[typing.Any], ModelHandler.__subclasses__()):
-            cms = getattr(cls, "CUSTOM_METHODS", None)
-            if cms:
-                sources.append((cls.__name__, cls, cms))
-        for cls in typing.cast(collections.abc.Iterable[typing.Any], DetailHandler.__subclasses__()):
-            cms = getattr(cls, "CUSTOM_METHODS", None)
-            if cms:
-                sources.append((cls.__name__, cls, cms))
-
         actual_post: set[tuple[str, str, str]] = set()
-        for cls_name, _cls, cms in sources:
+        for cls_name, _cls, cms in self._sources():
             for cm in cms:
                 if cm.method == types.rest.CustomMethodMethod.POST:
                     actual_post.add((cls_name, cm.name, cm.method.name))

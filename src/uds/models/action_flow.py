@@ -83,6 +83,12 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
     # Pending flows past this date are expired (set by the application layer on creation)
     due_date = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
 
+    # When the flow reached a terminal decision (executed / rejected /
+    # cancelled / expired). Drives the approval-surface retention: decided
+    # flows linger on the approval surface this long after the decision and
+    # then move to the archive. NULL while the flow is still open.
+    decided_at = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
+
     created = models.DateTimeField(default=sql_now, blank=True)
 
     # "fake" declarations for type checking

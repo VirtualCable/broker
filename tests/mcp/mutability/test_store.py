@@ -9,6 +9,7 @@ from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
 from uds.mutability import (
+    FlowStore,
     InvalidTransition,
     MutabilityError,
     NotActionOwner,
@@ -786,3 +787,147 @@ class CreateActionLifecycleTest(FlowTestCase):
         described = self.store._action_type(action).describe(action)
         self.assertEqual(described["changes"]["name"], "new provider")
         self.assertEqual(described["type"], "provider.create")
+
+
+class FlowDecidedAtTest(FlowTestCase):
+    """The retention stamp: decided_at is set by every terminal decision."""
+
+    def test_reject_sets_decided_at(self) -> None:
+        flow = self._open_flow()
+        self.assertIsNone(flow.decided_at)
+        self.store.reject_flow(flow, admin="admin-1")
+        flow.refresh_from_db()
+        self.assertIsNotNone(flow.decided_at)
+
+    def test_cancel_sets_decided_at(self) -> None:
+        flow = self._open_flow()
+        self.store.cancel_flow(flow, actor_uuid=self.owner.uuid)
+        flow.refresh_from_db()
+        self.assertIsNotNone(flow.decided_at)
+
+    def test_expiry_sets_decided_at(self) -> None:
+        flow = self._flow()
+        self._action(flow)
+        ActionFlow.objects.filter(uuid=flow.uuid).update(
+            due_date=datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=1)
+        )
+        loaded = self.store.get_flow(flow.uuid)
+        assert loaded is not None
+        self.assertEqual(loaded.status, FlowStatus.EXPIRED)
+        self.assertIsNotNone(loaded.decided_at)
+
+    def test_execution_settling_sets_decided_at(self) -> None:
+        flow = self._open_flow()
+        _approve_all(flow)
+        action = flow.actions.first()
+        assert action is not None
+        self.store.approve_flow(flow, admin=self.other)
+        self.store.mark_action_executing(action)
+        # Still running: no decision timestamp yet
+        flow.refresh_from_db()
+        self.assertIsNone(flow.decided_at)
+        self.store.mark_action_result(action, result="done")
+        flow.refresh_from_db()
+        self.assertEqual(flow.status, FlowStatus.EXECUTED)
+        self.assertIsNotNone(flow.decided_at)
+
+    def test_open_states_have_no_decided_at(self) -> None:
+        draft = self._flow()
+        self._action(draft)
+        pending = self._submitted(draft)
+        self.store.lock_flow(pending, admin=self.other)
+        for flow in (draft, pending):
+            flow.refresh_from_db()
+            self.assertIsNone(flow.decided_at)
+            self.assertFalse(FlowStore.is_archived(flow))
+
+
+class FlowSurfacesTest(FlowTestCase):
+    """The approval/archive partition and the owner history horizon."""
+
+    @staticmethod
+    def _set_decided_in_past(flow: ActionFlow, days: int) -> None:
+        """Force the decision stamp N days back (as an archive would)."""
+        ActionFlow.objects.filter(uuid=flow.uuid).update(
+            decided_at=datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days)
+        )
+        flow.refresh_from_db()
+
+    def test_decided_within_window_stays_on_approval(self) -> None:
+        flow = self._open_flow()
+        self.store.reject_flow(flow, admin="admin-1")
+        with _config_limit("MCP_APPROVAL_RETENTION_DAYS", 7):
+            self.assertFalse(FlowStore.is_archived(flow))
+            self.assertFalse(flow in ActionFlow.objects.filter(FlowStore.archived_q()))
+
+    def test_decided_past_window_archives(self) -> None:
+        flow = self._open_flow()
+        self.store.reject_flow(flow, admin="admin-1")
+        self._set_decided_in_past(flow, 8)
+        with _config_limit("MCP_APPROVAL_RETENTION_DAYS", 7):
+            self.assertTrue(FlowStore.is_archived(flow))
+            self.assertIn(flow, list(ActionFlow.objects.filter(FlowStore.archived_q())))
+
+    def test_zero_retention_archives_immediately(self) -> None:
+        flow = self._open_flow()
+        self.store.reject_flow(flow, admin="admin-1")
+        with _config_limit("MCP_APPROVAL_RETENTION_DAYS", 0):
+            self.assertTrue(FlowStore.is_archived(flow))
+
+    def test_expired_archives_immediately(self) -> None:
+        """Even a just-expired flow is archive material: no outcome context."""
+        flow = self._flow()
+        self._action(flow)
+        loaded = self.store.get_flow(flow.uuid)
+        assert loaded is not None
+        ActionFlow.objects.filter(uuid=flow.uuid).update(
+            due_date=datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=1)
+        )
+        expired = self.store.get_flow(flow.uuid)
+        assert expired is not None
+        self.assertEqual(expired.status, FlowStatus.EXPIRED)
+        with _config_limit("MCP_APPROVAL_RETENTION_DAYS", 7):
+            self.assertTrue(FlowStore.is_archived(expired))
+
+    def test_open_flows_are_never_archived(self) -> None:
+        for flow in (self._flow(), self._open_flow()):
+            self.assertFalse(FlowStore.is_archived(flow))
+            self.assertNotIn(flow, list(ActionFlow.objects.filter(FlowStore.archived_q())))
+
+    def test_missing_stamp_stays_on_approval(self) -> None:
+        """A decided flow without stamp cannot be dated: it lingers."""
+        flow = self._open_flow()
+        self.store.reject_flow(flow, admin="admin-1")
+        ActionFlow.objects.filter(uuid=flow.uuid).update(decided_at=None)
+        flow.refresh_from_db()
+        with _config_limit("MCP_APPROVAL_RETENTION_DAYS", 0):
+            self.assertFalse(FlowStore.is_archived(flow))
+
+    # ------------------------------------------------------- own horizon
+
+    def test_own_history_days_by_role(self) -> None:
+        with _config_limit("MCP_OWN_HISTORY_DAYS", 90):
+            self.assertEqual(FlowStore.own_history_days(is_admin=True), 0)
+            self.assertEqual(FlowStore.own_history_days(is_admin=False), 90)
+
+    def test_own_horizon_keeps_undecided_always(self) -> None:
+        draft = self._flow()
+        pending = self._open_flow()
+        self.assertTrue(FlowStore.visible_in_own_history(draft, days=30))
+        self.assertTrue(FlowStore.visible_in_own_history(pending, days=30))
+
+    def test_own_horizon_trims_old_decisions(self) -> None:
+        flow = self._open_flow()
+        self.store.cancel_flow(flow, actor_uuid=self.owner.uuid)
+        self.assertTrue(FlowStore.visible_in_own_history(flow, days=30))
+        self._set_decided_in_past(flow, 31)
+        self.assertFalse(FlowStore.visible_in_own_history(flow, days=30))
+        self.assertTrue(FlowStore.visible_in_own_history(flow, days=0))  # unlimited
+
+    def test_own_horizon_keeps_legacy_undated(self) -> None:
+        """No stamp: the horizon cannot date what it does not know."""
+        flow = self._open_flow()
+        self.store.cancel_flow(flow, actor_uuid=self.owner.uuid)
+        ActionFlow.objects.filter(uuid=flow.uuid).update(decided_at=None)
+        flow.refresh_from_db()
+        self.assertTrue(FlowStore.visible_in_own_history(flow, days=30))
