@@ -58,6 +58,7 @@ MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (
     "propose_user_update",
     "propose_user_create",
     "propose_user_delete",
+    "propose_user_custom",
     "propose_group_update",
     "propose_group_create",
     "propose_group_delete",

@@ -100,10 +100,13 @@ def _curated_tools(catalog: Catalog) -> None:
       not information.
 
     Under evaluation for the next cycle: tunnel server assignment
-    (``tunnels/{id}/assign/{server}``), provider/server maintenance
-    toggles (currently live-action tools outside ``MCP_MUTATIONS``),
-    arbitrary report generation (needs a richer report descriptor) and
-    the user ``clean_related`` (MFA data reset).
+    (``tunnels/{id}/assign/{server}``) and provider/server maintenance
+    toggles (currently live-action tools outside ``MCP_MUTATIONS``). The
+    user ``clean_related`` verb (the MFA data reset) already travels the
+    supervised surface as the ``user.custom`` proposal; arbitrary report
+    generation (needs a richer report descriptor) and the accounts
+    ``clear`` button (it drops every account of a provider, an
+    operation no agent should ever be offered) stay out of it.
     """
     register_curated_tools(catalog)
 
