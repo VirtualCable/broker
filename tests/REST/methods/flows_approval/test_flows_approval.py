@@ -434,7 +434,9 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
         body = typing.cast("dict[str, typing.Any]", response.json())
         self.assertEqual(body["status"], "rejected")
         self.assertEqual(body["note"], "not now")
-        item = typing.cast("dict[str, typing.Any]", self.client.rest_get(f"flows/approval/{self.flow.uuid}").json())
+        item = typing.cast(
+            "dict[str, typing.Any]", self.client.rest_get(f"flows/approval/{self.flow.uuid}").json()
+        )
         self.assertEqual(item["decided_note"], "not now")
 
         self.flow.refresh_from_db()
