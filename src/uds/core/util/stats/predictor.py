@@ -26,7 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Prediction of service pool usage based on historical stats counters.
+Prediction and forecasting of service pool usage based on historical stats counters.
 
 Pure, testable helpers that build "usage profiles" from the hourly
 accumulated counters (uds_stats_c_accum) and use them to forecast future

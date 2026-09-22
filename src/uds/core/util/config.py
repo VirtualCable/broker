@@ -87,7 +87,7 @@ class Config:
         CUSTOM = "Custom"
         ADMIN = "Admin"
         MCP = "MCP"
-        STATS = "Stats"  # Statistics-related thresholds (saturation predictions)
+        STATS = "Stats"  # Statistics-related thresholds (saturation forecasts)
         WYSE = "WYSE"  # Legacy
         ENTERPRISE = "Enterprise"  # For enterprise pourposes
         OTHER = "Other"
@@ -547,7 +547,7 @@ class GlobalConfig:
         type=Config.FieldType.NUMERIC,
         help=_("Days of decided flows a staff (non-admin) user sees in its own history. 0 means unlimited"),
     )
-    # Saturation thresholds for the managed servers predictions. "Load" is the
+    # Saturation thresholds for the managed server forecasts. "Load" is the
     # weighted composite of cpu/memory/users that the server group weights
     # define (the common admin logic of what "saturated" means), so it is the
     # primary metric; the per-counter ones are secondary. Percentages (0-100).

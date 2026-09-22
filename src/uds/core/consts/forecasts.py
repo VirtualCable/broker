@@ -26,7 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Constants for the usage prediction subsystem.
+Constants for the usage forecasting subsystem.
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
