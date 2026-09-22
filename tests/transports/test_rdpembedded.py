@@ -150,6 +150,24 @@ class RDPEmbeddedTest(UDSTestCase):
 
         self.assertEqual(self._build(transport)["redirections"]["drives"], ["all"])
 
+    def _drives(self, policy: str, forced: str) -> list[str]:
+        transport = self._transport()
+        transport.allow_drives.value = policy
+        transport.enforce_drives.value = forced
+        return self._build(transport)["redirections"]["drives"]
+
+    def test_drives_allow_any_with_forced_drives(self) -> None:
+        self.assertEqual(self._drives("true", "c:, D:"), ["C:", "D:"])
+
+    def test_drives_allow_pnp(self) -> None:
+        self.assertEqual(self._drives("dynamic", ""), ["DynamicDrives"])
+
+    def test_drives_allow_pnp_with_forced_drives(self) -> None:
+        self.assertEqual(self._drives("dynamic", "C:"), ["C:", "DynamicDrives"])
+
+    def test_drives_allow_none_ignores_forced_drives(self) -> None:
+        self.assertEqual(self._drives("false", "C:"), [])
+
     def test_webcam_enabled_without_size_limit(self) -> None:
         transport = self._transport()
         transport.enable_webcam.value = True
