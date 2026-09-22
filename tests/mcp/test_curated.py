@@ -30,6 +30,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_servicepool_actions_list",
     "get_servicepool_assignables",
     "get_server_group_stats",
+    "get_server_group_forecast",
     "get_server_group_usages",
     "search_authenticator",
     "get_authenticator_users_with_services",
@@ -44,6 +45,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "set_server_maintenance",
     "get_tunnel_group_unassigned_tunnels",
     "get_server_stats",
+    "get_server_forecast",
     "get_item_logs",
     "get_system_logs",
     "get_platform_stats",
@@ -601,6 +603,78 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         )
         # Single counter: the bare points list, not the per-counter mapping.
         self.assertIsInstance(json.loads(self._result_text(body)), list)
+
+    def test_get_server_group_forecast(self) -> None:
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=1)
+        body = self._call("get_server_group_forecast", {"uuid": group.uuid})
+        result = json.loads(self._result_text(body))
+        # A fresh group has no stats history: the contract still holds (no_data).
+        self.assertEqual(result["group"], group.name)
+        self.assertEqual(result["status"], "no_data")
+        self.assertIsNone(result["min_days_to_saturation"])
+        self.assertEqual(len(result["per_server"]), 1)
+        self.assertEqual(result["per_server"][0]["status"], "no_data")
+
+    def test_get_server_forecast(self) -> None:
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=1)
+        server = group.servers.first()
+        assert server is not None
+        body = self._call("get_server_forecast", {"group_uuid": group.uuid, "server_uuid": server.uuid})
+        result = json.loads(self._result_text(body))
+        self.assertEqual(result["id"], server.uuid)
+        self.assertFalse(result["has_data"])
+        self.assertEqual(result["status"], "no_data")
+        self.assertIsInstance(result["metrics"], list)
+
+    def test_get_server_forecast_metric_and_hours(self) -> None:
+        import datetime as _datetime
+
+        from django.utils import timezone as _timezone
+
+        from uds import models as _models
+        from uds.core import types as _types
+
+        from tests.fixtures.servers import create_server_group
+
+        group = create_server_group(num_servers=1)
+        server = group.servers.first()
+        assert server is not None
+
+        # eight weeks of hourly disk samples over the default threshold (95)
+        now = _timezone.now().replace(minute=0, second=0, microsecond=0)
+        total = 8 * 7 * 24
+        _models.StatsCountersAccum.objects.bulk_create(
+            [
+                _models.StatsCountersAccum(
+                    owner_type=_types.stats.CounterOwnerType.SERVER,
+                    owner_id=server.id,
+                    counter_type=_types.stats.CounterType.DISK,
+                    interval_type=_models.StatsCountersAccum.IntervalType.HOUR,
+                    stamp=int((now - _datetime.timedelta(hours=total - 1 - i)).timestamp()),
+                    v_count=6,
+                    v_sum=6 * 96,
+                    v_max=96,
+                    v_min=0,
+                )
+                for i in range(total)
+            ]
+        )
+
+        body = self._call(
+            "get_server_forecast",
+            {"group_uuid": group.uuid, "server_uuid": server.uuid, "metric": "disk", "hours": 24},
+        )
+        result = json.loads(self._result_text(body))
+        self.assertTrue(result["has_data"])
+        self.assertEqual([m["counter"] for m in result["metrics"]], ["disk"])
+        disk = result["metrics"][0]
+        self.assertEqual(disk["status"], "saturated")
+        self.assertEqual(disk["days_to_saturation"], 0)
+        self.assertEqual(len(result["forecast"]["disk"]), 24)
 
     # ------------------------------------------- generated descriptor reads
 

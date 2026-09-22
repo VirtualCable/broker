@@ -60,6 +60,7 @@ from uds.core.util.cache import Cache
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_now
 from uds.core.util.stats import counters
+from uds.core.util.stats import saturation
 from uds.REST.model import DetailHandler
 from uds.REST.model import ModelHandler
 
@@ -81,6 +82,75 @@ SERVER_COUNTERS: typing.Final[dict[str, types.stats.CounterType]] = {
     "connections": types.stats.CounterType.CONNECTIONS,
     "disk": types.stats.CounterType.DISK,
 }
+
+# Counters the saturation forecast can restrict itself to (the composite load
+# plus the raw metrics with a threshold; cpu/memory have no threshold of their
+# own, they only enter through the load)
+FORECAST_COUNTERS: typing.Final[dict[str, types.stats.CounterType]] = {
+    "load": types.stats.CounterType.LOAD,
+    "disk": types.stats.CounterType.DISK,
+    "users": types.stats.CounterType.USERS,
+    "connections": types.stats.CounterType.CONNECTIONS,
+}
+
+
+def _forecast_hours(params: dict[str, typing.Any]) -> int:
+    hours = int(params.get("hours", consts.forecasts.SATURATION_FORECAST_HOURS_DEFAULT))
+    return max(1, min(hours, consts.forecasts.SATURATION_FORECAST_HOURS_MAX))
+
+
+def _saturation_metric_row(metric: saturation.MetricSaturation) -> dict[str, typing.Any]:
+    """JSON row of one metric of a server saturation view."""
+    return {
+        "counter": metric.counter.name.lower(),
+        "status": str(metric.status),
+        "current_p90": metric.current_p90,
+        "current_max": metric.current_max,
+        "threshold": metric.threshold,
+        "days_to_saturation": metric.days_to_saturation,
+        "saturation_date": int(metric.saturation_date.timestamp()) if metric.saturation_date else None,
+        "projected": metric.projected,
+        "confidence": metric.confidence,
+        "weeks_of_history": metric.weeks_of_history,
+        "growth": (
+            {
+                "slope_per_day": metric.growth.slope_per_day,
+                "intercept": metric.growth.intercept,
+                "r2": metric.growth.r2,
+                "method": metric.growth.method,
+                "days": metric.growth.days,
+            }
+            if metric.growth
+            else None
+        ),
+    }
+
+
+def _server_saturation_row(view: saturation.ServerSaturation) -> dict[str, typing.Any]:
+    """JSON row of a full server saturation view."""
+    return {
+        "id": view.server_uuid,
+        "label": view.label,
+        "group": view.group_name,
+        "status": str(view.status),
+        "has_data": view.has_data,
+        "saturating_in_days": view.saturating_in_days(),
+        "thresholds": {
+            "load": view.thresholds.load,
+            "disk": view.thresholds.disk,
+            "users": view.thresholds.users,
+            "connections": view.thresholds.connections,
+        },
+        "weights": view.weights.as_dict() if view.weights else None,
+        "metrics": [_saturation_metric_row(m) for m in view.metrics],
+        "forecast": {
+            counter.name.lower(): [
+                {"stamp": int(p.when.timestamp()), "value": p.value, "saturated": p.saturated} for p in points
+            ]
+            for counter, points in view.forecast.items()
+        },
+    }
+
 
 cache = Cache("ServersStatsDispatcher")
 
@@ -219,6 +289,25 @@ class ServersServers(DetailHandler[ServerItem]):
                     ),
                     "since": types.rest.api.SchemaProperty(
                         type="integer", description="Number of days to go back. Default: 14"
+                    ),
+                },
+            ),
+            required_permission=types.permissions.PermissionType.READ,
+        ),
+        types.rest.ModelCustomMethod(
+            "forecast",
+            method=types.rest.CustomMethodMethod.GET,
+            description="Saturation forecast of a managed server: per-metric trend, days until the configured thresholds are crossed and hourly forecast points",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "hours": types.rest.api.SchemaProperty(
+                        type="integer",
+                        description="Hours of hourly forecast points to return, from 1 to 168 (a week). Default: 72",
+                    ),
+                    "metric": types.rest.api.SchemaProperty(
+                        type="string",
+                        description="Restrict the forecast to one metric (load, disk, users, connections). Default: all enabled metrics",
                     ),
                 },
             ),
@@ -554,6 +643,26 @@ class ServersServers(DetailHandler[ServerItem]):
             for name, counter in SERVER_COUNTERS.items()
         }
 
+    def forecast(self, parent: "Model", item: str) -> typing.Any:
+        """Saturation forecast of one server of a group.
+
+        Query params (all optional):
+            - hours: hourly forecast points to return, 1-168 (default: 72)
+            - metric: restrict to one metric (load, disk, users, connections)
+        """
+        parent = ensure.is_instance(parent, models.ServerGroup)
+        server = parent.servers.get(uuid=process_uuid(item))
+
+        hours = _forecast_hours(self._params)
+        metric_name = str(self._params.get("metric", "") or "").lower()
+        metric = FORECAST_COUNTERS.get(metric_name)
+        if metric_name and metric is None:
+            raise RequestError(f"unknown forecast metric '{metric_name}'")
+        metrics = None if metric is None else [metric]
+
+        view = saturation.server_saturation_cached(server, forecast_hours=hours, metrics=metrics)
+        return _server_saturation_row(view)
+
 
 @dataclasses.dataclass
 class GroupItem(types.rest.BaseRestItem):
@@ -583,6 +692,22 @@ class ServersGroups(ModelHandler[GroupItem]):
             "usages",
             True,
             description="List providers whose 'server_group' field points to this server group",
+        ),
+        types.rest.ModelCustomMethod(
+            "forecast",
+            True,
+            method=types.rest.CustomMethodMethod.GET,
+            description="Saturation forecast rollup of a server group: the first server to cross its threshold is the honest collective saturation point",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "hours": types.rest.api.SchemaProperty(
+                        type="integer",
+                        description="Hours of hourly forecast points behind the per-server data, from 1 to 168 (a week). Default: 72",
+                    ),
+                },
+            ),
+            required_permission=types.permissions.PermissionType.READ,
         ),
     ]
     MODEL = models.ServerGroup
@@ -816,6 +941,34 @@ class ServersGroups(ModelHandler[GroupItem]):
     def usages(self, item: "Model") -> list[dict[str, str]]:
         item = ensure.is_instance(item, models.ServerGroup)
         return _providers_using_server_group(item.uuid)
+
+    def forecast(self, item: "Model") -> typing.Any:
+        """Saturation forecast rollup of a server group.
+
+        Query params (all optional):
+            - hours: hourly forecast points behind the per-server data,
+              1-168 (default: 72). The hourly series itself is per server,
+              via the server's own forecast endpoint.
+        """
+        item = ensure.is_instance(item, models.ServerGroup)
+
+        hours = _forecast_hours(self._params)
+        rollup = saturation.group_saturation(item, forecast_hours=hours)
+        return {
+            "group": rollup.group_name,
+            "status": str(rollup.status),
+            "worst_server": rollup.worst_server_label,
+            "min_days_to_saturation": rollup.min_days_to_saturation,
+            "per_server": [
+                {
+                    "id": row.server_uuid,
+                    "label": row.label,
+                    "status": str(row.status),
+                    "saturating_in_days": row.saturating_in_days,
+                }
+                for row in rollup.per_server
+            ],
+        }
 
 
 def get_server_counters(

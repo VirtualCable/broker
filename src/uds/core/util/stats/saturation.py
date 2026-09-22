@@ -546,6 +546,7 @@ def server_saturation_cached(
     server: Server,
     *,
     forecast_hours: int = consts.forecasts.SATURATION_FORECAST_HOURS_DEFAULT,
+    metrics: collections.abc.Sequence[types.stats.CounterType] | None = None,
 ) -> ServerSaturation:
     """:func:`server_saturation` memoized for a short window.
 
@@ -554,16 +555,20 @@ def server_saturation_cached(
     rollup repeats it over many servers. Results without data are not cached so
     a server that starts reporting shows up on the next call. The cache is
     best-effort: an unavailable backend simply recomputes.
+
+    *metrics* restricts which counters are evaluated (the request layer's
+    ``metric`` filter); it becomes part of the cache key.
     """
     cache = Cache(
         consts.forecasts.PROFILE_CACHE_OWNER,
         default_timeout=consts.forecasts.SATURATION_CACHE_TIMEOUT,
     )
-    key = f"saturation-{server.id}-{forecast_hours}"
+    suffix = "" if metrics is None else "-" + ",".join(sorted(m.name for m in metrics))
+    key = f"saturation-{server.id}-{forecast_hours}{suffix}"
     cached = cache.get(key)
     if isinstance(cached, ServerSaturation):
         return cached
-    result = server_saturation(server, forecast_hours=forecast_hours)
+    result = server_saturation(server, forecast_hours=forecast_hours, metrics=metrics)
     if result.has_data:
         cache.put(key, result, validity=consts.forecasts.SATURATION_CACHE_TIMEOUT)
     return result

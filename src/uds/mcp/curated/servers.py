@@ -1,4 +1,4 @@
-"""Server fleet tools: group aggregates and per-server usage series."""
+"""Server fleet tools: group aggregates, per-server usage series and forecasts."""
 
 import typing
 
@@ -23,13 +23,22 @@ from .helpers import (
 __all__ = ["curated_tools"]
 
 
-def _server_stats_tool() -> ToolDefinition:
-    """Build the per-server resource usage tool (a detail custom method).
+def _server_detail_tool(
+    *,
+    name: str,
+    title: str,
+    description: str,
+    method_name: str,
+    returns: str,
+    extra_props: JsonObject | None = None,
+) -> ToolDefinition:
+    """Build a tool around a GET detail custom method of a group's server.
 
-    The target is a ``DetailHandler`` custom method under
-    ``servers/groups``, so the executor resolves the parent group (its uuid
-    carries the permission check) and then dispatches the detail handler
-    with ``(server_uuid, "stats")`` as URL arguments.
+    Shared wiring for the per-server reads (``stats``, ``forecast``): the
+    target is a ``DetailHandler`` custom method under ``servers/groups``, so
+    the executor resolves the parent group (its uuid carries the permission
+    check) and then dispatches the detail handler with ``(server_uuid,
+    method_name)`` as URL arguments.
     """
 
     target_parent = RestTarget(ServersGroups, "servers/groups")
@@ -41,7 +50,7 @@ def _server_stats_tool() -> ToolDefinition:
             ServersServers,
             "servers/groups/{uuid}/servers",
             GET,
-            args=(str(arguments["server_uuid"]), "stats"),
+            args=(str(arguments["server_uuid"]), method_name),
             parent=target_parent,
         )
         return await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
@@ -49,32 +58,78 @@ def _server_stats_tool() -> ToolDefinition:
         )
 
     return ToolDefinition(
+        name=name,
+        title=title,
+        description=description,
+        input_schema=schema(
+            {
+                "group_uuid": uuid_property("UUID of the server group the server belongs to."),
+                "server_uuid": uuid_property("UUID of the server (list them with ``list_servers_servers``)."),
+                **(extra_props or {}),
+            },
+            ("group_uuid", "server_uuid"),
+        ),
+        access="Available to authenticated UDS users with read permission on the server group.",
+        returns=returns,
+        required_permission="READ",
+        executor=executor,
+    )
+
+
+def _server_stats_tool() -> ToolDefinition:
+    return _server_detail_tool(
         name="get_server_stats",
         title="Get server stats",
         description=(
             "Accumulated resource usage time-series for one server of a server group "
             "(cpu, memory, users, connections, disk)."
         ),
-        input_schema=schema(
-            {
-                "group_uuid": uuid_property("UUID of the server group the server belongs to."),
-                "server_uuid": uuid_property("UUID of the server (list them with ``list_servers_servers``)."),
-                "counter": {
-                    "type": "string",
-                    "description": "Counter to retrieve (all, cpu, memory, users, connections, disk). Default: all.",
-                },
-                "interval": {
-                    "type": "string",
-                    "description": "Accumulation interval (hour or day). Default: hour.",
-                },
-                "since": {"type": "integer", "description": "Number of days to go back. Default: 14."},
+        method_name="stats",
+        extra_props={
+            "counter": {
+                "type": "string",
+                "description": "Counter to retrieve (all, cpu, memory, users, connections, disk). Default: all.",
             },
-            ("group_uuid", "server_uuid"),
-        ),
-        access="Available to authenticated UDS users with read permission on the server group.",
+            "interval": {
+                "type": "string",
+                "description": "Accumulation interval (hour or day). Default: hour.",
+            },
+            "since": {"type": "integer", "description": "Number of days to go back. Default: 14."},
+        },
         returns="A dictionary with the requested usage time-series.",
-        required_permission="READ",
-        executor=executor,
+    )
+
+
+def _server_forecast_tool() -> ToolDefinition:
+    return _server_detail_tool(
+        name="get_server_forecast",
+        title="Get server saturation forecast",
+        description=(
+            "Saturation forecast of one managed server: per-metric status, fitted growth, "
+            "days until each configured threshold is crossed, and hourly forecast points. "
+            "The primary metric is the composite load (cpu/memory/users weighted by the "
+            "server group); disk, users and connections are secondary and only reported "
+            "when their threshold is enabled. Answers 'is this server heading to "
+            "saturation, and when?'; pair with ``get_server_stats`` for the past side."
+        ),
+        method_name="forecast",
+        extra_props={
+            "hours": {
+                "type": "integer",
+                "description": "Hours of hourly forecast points to return, from 1 to 168 (a week). Default: 72.",
+                "minimum": 1,
+                "maximum": 168,
+            },
+            "metric": {
+                "type": "string",
+                "description": "Restrict to one metric (load, disk, users, connections). Default: all enabled ones.",
+            },
+        },
+        returns=(
+            "Server status, saturating_in_days, effective thresholds and weights, one row "
+            "per metric (status, current p90, growth fit, days and date of saturation) and "
+            "the hourly forecast points flagged against each threshold."
+        ),
     )
 
 
@@ -91,6 +146,35 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             uuid_property=uuid_property("UUID of the server group."),
             access="Available to authenticated UDS users with read permission on the group.",
             returns="Per-server statistics for the group.",
+        ),
+        master_custom_tool(
+            name="get_server_group_forecast",
+            title="Get server group saturation forecast",
+            description=(
+                "Saturation forecast rollup of a server group: per-server status and days "
+                "until each crosses its configured thresholds, collapsed into the group "
+                "verdict. With the internal load balancer the first server to saturate is "
+                "the honest collective signal, so ``min_days_to_saturation`` answers "
+                "'when does this group need another server?'. A wide spread across "
+                "``per_server`` means balancing is not distributing evenly."
+            ),
+            handler=ServersGroups,
+            path="servers/groups",
+            custom_name="forecast",
+            uuid_property=uuid_property("UUID of the server group."),
+            extra_properties={
+                "hours": {
+                    "type": "integer",
+                    "description": "Hours of hourly forecast points behind the per-server data, 1 to 168. Default: 72.",
+                    "minimum": 1,
+                    "maximum": 168,
+                },
+            },
+            access="Available to authenticated UDS users with read permission on the group.",
+            returns=(
+                "Group status, worst server, minimum days to saturation and a per-server "
+                "list with id, label, status and saturating_in_days."
+            ),
         ),
         master_custom_tool(
             name="get_server_group_usages",
@@ -110,6 +194,7 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
             returns="An array of referencing items, each with uuid, name, type and kind (provider or service).",
         ),
         _server_stats_tool(),
+        _server_forecast_tool(),
         nested_custom_tool(
             name="set_server_maintenance",
             title="Toggle server maintenance",
