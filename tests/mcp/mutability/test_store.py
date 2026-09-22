@@ -213,13 +213,13 @@ class FlowLifecycleTest(FlowTestCase):
         first.refresh_from_db()
         second.refresh_from_db()
 
-        self.store.mark_action_executing(first)
+        self.store.mark_action_executing(first, actor=self.other.name)
         self.assertEqual(first.status, FlowActionStatus.EXECUTING)
         self.store.mark_action_result(first, result="provider renamed")
         flow.refresh_from_db()
         self.assertEqual(flow.status, FlowStatus.EXECUTING)  # second action still pending
 
-        self.store.mark_action_executing(second)
+        self.store.mark_action_executing(second, actor=self.other.name)
         self.store.mark_action_result(second, result="provider commented")
         flow.refresh_from_db()
         second.refresh_from_db()
@@ -237,7 +237,7 @@ class FlowLifecycleTest(FlowTestCase):
         self.store.approve_flow(flow, admin=self.other)
         first.refresh_from_db()
 
-        self.store.mark_action_executing(first)
+        self.store.mark_action_executing(first, actor=self.other.name)
         self.store.mark_action_result(first, result="target gone", failed=True)
         flow.refresh_from_db()
         second.refresh_from_db()
@@ -260,9 +260,9 @@ class FlowLifecycleTest(FlowTestCase):
         second.refresh_from_db()
 
         # First runs fine, second fails: the flow is locked again
-        self.store.mark_action_executing(first)
+        self.store.mark_action_executing(first, actor=self.other.name)
         self.store.mark_action_result(first, result="done")
-        self.store.mark_action_executing(second)
+        self.store.mark_action_executing(second, actor=self.other.name)
         self.store.mark_action_result(second, result="boom", failed=True)
         flow.refresh_from_db()
         self.assertEqual(flow.status, FlowStatus.LOCKED)
@@ -289,11 +289,11 @@ class FlowLifecycleTest(FlowTestCase):
         action = flow.actions.first()
         assert action is not None
         with self.assertRaises(InvalidTransition):
-            self.store.mark_action_executing(action)  # action still pending
+            self.store.mark_action_executing(action, actor=self.other.name)  # action still pending
         _approve_all(flow)
         self.store.approve_flow(flow, admin=self.other)
         action.refresh_from_db()
-        self.store.mark_action_executing(action)
+        self.store.mark_action_executing(action, actor=self.other.name)
         self.store.mark_action_result(action, result="done")
         with self.assertRaises(InvalidTransition):
             self.store.mark_action_result(action, result="again")
@@ -476,7 +476,7 @@ class FlowApproveCasTest(FlowTestCase):
         self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.store.approve_flow(self.flow, admin=self.other)
-        self.store.mark_action_executing(action)
+        self.store.mark_action_executing(action, actor=self.other.name)
         with self.assertRaises(InvalidTransition):
             self.store.approve_action(action, admin=self.other)
 
@@ -525,7 +525,7 @@ class FlowApproveCasTest(FlowTestCase):
         self._submitted(self.flow)
         self.store.approve_action(action, admin=self.other)
         self.store.approve_flow(self.flow, admin=self.other)
-        self.store.mark_action_executing(action)
+        self.store.mark_action_executing(action, actor=self.other.name)
         self.store.mark_action_result(action, result="done")
         with self.assertRaises(InvalidTransition):
             self.store.skip_action(action, admin=self.other)
@@ -822,7 +822,7 @@ class FlowDecidedAtTest(FlowTestCase):
         action = flow.actions.first()
         assert action is not None
         self.store.approve_flow(flow, admin=self.other)
-        self.store.mark_action_executing(action)
+        self.store.mark_action_executing(action, actor=self.other.name)
         # Still running: no decision timestamp yet
         flow.refresh_from_db()
         self.assertIsNone(flow.decided_at)

@@ -21,6 +21,10 @@ approved actions stay approved and only the failed/revoked ones need
 re-approval or skip. The flow's ``run_note`` property records where the
 run stopped and why.
 
+The launch is audited: the run records ``executed_by``/``executed_at``
+on the flow and on every action it starts (Properties, resolved from
+the request's user), so the execution trail survives user removal.
+
 All flow/bookkeeping work is synchronous (Django ORM); the ``async``
 boundary wraps exactly one ``action_type.execute`` call at a time through
 ``async_to_sync`` (the same pattern the MCP surface uses): under ASGI the
@@ -39,6 +43,7 @@ from asgiref.sync import async_to_sync
 
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.types.requests import ExtendedHttpRequestWithUser
+from uds.core.util.model import sql_now
 from uds.mutability.base import JsonObject, StalePolicy
 from uds.mutability.store import FlowStore
 from uds.models import ActionFlow
@@ -54,11 +59,19 @@ def execute_flow(flow: ActionFlow, request: ExtendedHttpRequestWithUser) -> Json
     if flow.status not in (FlowStatus.APPROVED, FlowStatus.EXECUTING):
         raise ValueError(f"Flow {flow.uuid} is {flow.status}, only approved flows can be executed")
 
+    # Launch audit: who is behind this run (on Properties, so it survives
+    # the user being removed). A request without an attached user (bare
+    # stubs) records an empty name.
+    user = getattr(request, "user", None)
+    actor = user.name if user is not None else ""
+
     store = FlowStore()
+    flow.executed_by = actor
+    flow.executed_at = sql_now()
     results: list[JsonObject] = []
     stop_note: str | None = None
     for action in flow.actions.filter(status=FlowActionStatus.APPROVED).order_by("order"):
-        store.mark_action_executing(action)
+        store.mark_action_executing(action, actor=actor)
         try:
             found = registry.get(action.action_type)
             if found is None:

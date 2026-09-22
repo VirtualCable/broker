@@ -4,17 +4,21 @@ import typing
 
 from uds.core.types.mcp import FlowActionStatus
 from uds.core.types.requests import ExtendedHttpRequestWithUser
-from uds.models import ActionFlow, FlowAction
+from uds.models import ActionFlow, FlowAction, User
 from uds.mutability import FlowStore
 
 from tests.fixtures.authenticators import create_db_authenticator, create_db_users
 from tests.utils.test import UDSTestCase
 
 
-def make_request() -> ExtendedHttpRequestWithUser:
+def make_request(user: User | None = None) -> ExtendedHttpRequestWithUser:
     """Bare request stub: executors and the proxy only carry it around
-    in the mocked paths these tests exercise."""
-    return ExtendedHttpRequestWithUser()
+    in the mocked paths these tests exercise. ``user`` is attached when
+    given (the executor records it as the launch audit)."""
+    request = ExtendedHttpRequestWithUser()
+    if user is not None:
+        request.user = user
+    return request
 
 
 MUTATION_TOOL_NAMES: typing.Final[tuple[str, ...]] = (

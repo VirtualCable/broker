@@ -102,7 +102,7 @@ class ExecuteFlowTest(FlowTestCase):
 
         fake = _fake_type()
         with mock.patch("uds.mutability.registry.get", return_value=fake):
-            summary = execute_flow(flow, request=make_request())
+            summary = execute_flow(flow, request=make_request(self.other))
 
         self.assertEqual(fake.executed, ["p1", "p2"])
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
@@ -113,6 +113,12 @@ class ExecuteFlowTest(FlowTestCase):
         self.assertEqual(actions[1].status, FlowActionStatus.EXECUTED)
         flow.refresh_from_db()
         self.assertEqual(flow.status, FlowStatus.EXECUTED)
+        # Launch audit: who ran it, on the flow and on each action
+        self.assertEqual(flow.executed_by, self.other.name)
+        self.assertIsNotNone(flow.executed_at)
+        for action in actions:
+            self.assertEqual(action.executed_by, self.other.name)
+            self.assertIsNotNone(action.executed_at)
 
     def test_unrelated_drift_does_not_block(self) -> None:
         """Pass 2 only checks the touched fields, not the whole item."""
@@ -147,6 +153,8 @@ class ExecuteFlowTest(FlowTestCase):
         # Where it stopped and why
         self.assertIn("stopped at action 1", str(flow.properties.get("run_note")))
         self.assertIn("cannot update p1", str(flow.properties.get("run_note")))
+        # A bare request (no user attached) audits an empty executor
+        self.assertEqual(flow.executed_by, "")
 
     def test_field_drift_after_approval_revokes_and_locks_flow(self) -> None:
         flow, actions = self._flow_with_actions(["p1", "p2"], approved_etag="approved-etag")
@@ -215,22 +223,29 @@ class ExecuteFlowTest(FlowTestCase):
         # First run: p1 executes, p2 fails -> flow locked, p2 approved
         first_run = _fake_type(fail_targets=frozenset({"p2"}))
         with mock.patch("uds.mutability.registry.get", return_value=first_run):
-            execute_flow(flow, request=make_request())
+            execute_flow(flow, request=make_request(self.other))
         actions[0].refresh_from_db()
         self.assertEqual(actions[0].status, FlowActionStatus.EXECUTED)
+        self.assertEqual(actions[0].executed_by, self.other.name)
 
-        # Recovery and relaunch
+        # Recovery and relaunch (by a different user: the audit moves on)
         actions[1].status = FlowActionStatus.APPROVED
         actions[1].save(update_fields=["status"])
         self.store.approve_flow(flow, admin=self.other)
         retried = _fake_type()
         with mock.patch("uds.mutability.registry.get", return_value=retried):
-            summary = execute_flow(flow, request=make_request())
+            summary = execute_flow(flow, request=make_request(self.owner))
 
         # p1 stays executed and is NOT repeated; only p2 runs
         self.assertEqual(retried.executed, ["p2"])
         actions[0].refresh_from_db()
+        actions[1].refresh_from_db()
         self.assertEqual(actions[0].status, FlowActionStatus.EXECUTED)
+        # Each action keeps the executor of its own run
+        self.assertEqual(actions[0].executed_by, self.other.name)
+        self.assertEqual(actions[1].executed_by, self.owner.name)
+        flow.refresh_from_db()
+        self.assertEqual(flow.executed_by, self.owner.name)
         self.assertEqual(summary["status"], FlowStatus.EXECUTED)
 
     def test_run_survives_current_thread_executor_context(self) -> None:

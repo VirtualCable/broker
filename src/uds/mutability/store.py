@@ -616,12 +616,21 @@ class FlowStore:
             return "target changed after the action was approved"
         return None
 
-    def mark_action_executing(self, action: FlowAction) -> None:
+    def mark_action_executing(self, action: FlowAction, *, actor: str) -> None:
+        """Move an approved action to EXECUTING, recording the launch audit.
+
+        ``actor`` is the name of the user that launched the run (the
+        executor resolves it from the request): it is frozen on
+        Properties alongside ``executed_at``, so the action remembers
+        who ran it even after the user is removed.
+        """
         if action.status != FlowActionStatus.APPROVED:
             raise InvalidTransition(
                 f"Action {action.uuid} is {action.status}, only approved actions can execute"
             )
         action.status = FlowActionStatus.EXECUTING
+        action.executed_by = actor
+        action.executed_at = sql_now()
         action.save(update_fields=["status"])
 
     def mark_action_result(self, action: FlowAction, *, result: str, failed: bool = False) -> None:

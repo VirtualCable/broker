@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import typing
 
 from uds import models
+from uds.core.util.model import sql_now
 from uds.models.action_flow import ActionFlow, FlowAction
 
 from tests.fixtures import authenticators as authenticators_fixtures
@@ -87,6 +88,34 @@ class ActionFlowModelTest(UDSTestCase):
 
         self.assertEqual(action.snap_info, {})
 
+    def test_execution_audit_roundtrip(self) -> None:
+        """executed_by/executed_at wrappers persist on Properties (flow and action)."""
+        flow = ActionFlow.objects.create(name="flow 1")
+        action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.update")
+        stamp = sql_now()
+
+        flow.executed_by = "admin-01"
+        flow.executed_at = stamp
+        action.executed_by = "admin-01"
+        action.executed_at = stamp
+
+        reloaded_flow = ActionFlow.objects.get(uuid=flow.uuid)
+        reloaded_action = FlowAction.objects.get(uuid=action.uuid)
+        self.assertEqual(reloaded_flow.executed_by, "admin-01")
+        self.assertEqual(reloaded_flow.executed_at, stamp)
+        self.assertEqual(reloaded_action.executed_by, "admin-01")
+        self.assertEqual(reloaded_action.executed_at, stamp)
+
+    def test_execution_audit_defaults(self) -> None:
+        """Never-launched flows/actions report an empty audit."""
+        flow = ActionFlow.objects.create(name="flow 1")
+        action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.update")
+
+        self.assertEqual(flow.executed_by, "")
+        self.assertIsNone(flow.executed_at)
+        self.assertEqual(action.executed_by, "")
+        self.assertIsNone(action.executed_at)
+
     def test_delete_flow_clears_properties(self) -> None:
         flow = ActionFlow.objects.create(name="flow 1")
         flow.properties["owner_name"] = "agent-01"
@@ -97,7 +126,9 @@ class ActionFlowModelTest(UDSTestCase):
         flow.delete()
 
         self.assertFalse(models.Properties.objects.filter(owner_id=flow_uuid, owner_type="actionflow").exists())
-        self.assertFalse(models.Properties.objects.filter(owner_id=action_uuid, owner_type="flowaction").exists())
+        self.assertFalse(
+            models.Properties.objects.filter(owner_id=action_uuid, owner_type="flowaction").exists()
+        )
 
     def test_order_unique_per_flow(self) -> None:
         flow = ActionFlow.objects.create(name="flow 1")

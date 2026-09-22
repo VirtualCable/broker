@@ -144,6 +144,8 @@ class FlowsAdminSurface(ModelHandler[FlowItem]):
             decided_at=item.decided_at,
             compliance=FlowStore().flow_compliance(item),
             decided_note=item.properties.get("decided_note", ""),
+            executed_by=item.executed_by,
+            executed_at=item.executed_at,
         )
 
     @typing.override

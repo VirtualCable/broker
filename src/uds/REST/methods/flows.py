@@ -90,6 +90,10 @@ class FlowActionItem(types.rest.BaseRestItem):
     compliance: str = ""
     # Display snapshot frozen at approval time; only for admin views
     snap_info: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
+    # Who launched the run that executed this action, and when (the
+    # launch audit frozen at EXECUTING); empty/None while not executed
+    executed_by: str = ""
+    executed_at: datetime.datetime | None = None
 
 
 @dataclasses.dataclass
@@ -113,6 +117,10 @@ class FlowItem(types.rest.BaseRestItem):
     compliance: str = ""
     # Why the flow was decided (the reject reason, for instance); admin views
     decided_note: str = ""
+    # Who launched the last execution run, and when (the launch audit,
+    # frozen by the executor at run start); empty/None when never run
+    executed_by: str = ""
+    executed_at: datetime.datetime | None = None
 
 
 class FlowActions(DetailHandler[FlowActionItem]):
@@ -174,6 +182,8 @@ class FlowActions(DetailHandler[FlowActionItem]):
             result=item.properties.get("result"),
             compliance=compliance,
             snap_info=snap_info,
+            executed_by=item.executed_by,
+            executed_at=item.executed_at,
         )
 
     @typing.override
@@ -524,6 +534,8 @@ class FlowsOwn(ModelHandler[FlowItem]):
             permission=types.permissions.PermissionType.ALL,
             decided_by=item.properties.get("decided_by", ""),
             decided_at=item.decided_at,
+            executed_by=item.executed_by,
+            executed_at=item.executed_at,
         )
 
     # ------------------------------------------------------------ mutation

@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import datetime
 import logging
 import typing
 
@@ -116,6 +117,34 @@ class ActionFlow(UUIDModel, properties.PropertiesMixin):
             return self.owner.name
         return str(self.properties.get("owner_name", ""))
 
+    @property
+    def executed_by(self) -> str:
+        """
+        Name of the user that launched the last execution run, kept on
+        Properties (survives the user being removed). Empty when the
+        flow has never been launched.
+        """
+        return str(self.properties.get("executed_by", ""))
+
+    @executed_by.setter
+    def executed_by(self, value: str) -> None:
+        self.properties["executed_by"] = value
+
+    @property
+    def executed_at(self) -> datetime.datetime | None:
+        """
+        When the last execution run started (stored as ISO string on
+        Properties, parsed back on read). None when never launched.
+        """
+        raw = self.properties.get("executed_at")
+        if raw in (None, ""):
+            return None
+        return datetime.datetime.fromisoformat(str(raw))
+
+    @executed_at.setter
+    def executed_at(self, value: datetime.datetime | None) -> None:
+        self.properties["executed_at"] = None if value is None else value.isoformat()
+
     @typing.override
     def __str__(self) -> str:
         return f"ActionFlow: {self.uuid} {self.name} ({self.status})"
@@ -128,8 +157,9 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     ``values`` is the proposed payload (same shape as the equivalent REST
     put). All the dynamic data — the CAS snapshots (``base_values``,
     ``base_etag`` taken at proposal time, ``approved_etag``/
-    ``approved_values`` frozen at approval time) and the approval display
-    cache (``snap_info``) — lives on Properties: free, schemaless, and
+    ``approved_values`` frozen at approval time), the approval display
+    cache (``snap_info``) and the launch audit (``executed_by``/
+    ``executed_at``) — lives on Properties: free, schemaless, and
     kept out of the row.
     """
 
@@ -223,6 +253,34 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     @snap_info.setter
     def snap_info(self, value: dict[str, typing.Any]) -> None:
         self.properties["snap_info"] = value
+
+    @property
+    def executed_by(self) -> str:
+        """
+        Name of the user that launched the run that executed this action,
+        frozen when the action entered EXECUTING. Empty while it has not
+        run (a retried action keeps the executor of its own run).
+        """
+        return str(self.properties.get("executed_by", ""))
+
+    @executed_by.setter
+    def executed_by(self, value: str) -> None:
+        self.properties["executed_by"] = value
+
+    @property
+    def executed_at(self) -> datetime.datetime | None:
+        """
+        When this action entered EXECUTING (ISO string on Properties,
+        parsed back on read). None while it has not run.
+        """
+        raw = self.properties.get("executed_at")
+        if raw in (None, ""):
+            return None
+        return datetime.datetime.fromisoformat(str(raw))
+
+    @executed_at.setter
+    def executed_at(self, value: datetime.datetime | None) -> None:
+        self.properties["executed_at"] = None if value is None else value.isoformat()
 
     @typing.override
     def __str__(self) -> str:
