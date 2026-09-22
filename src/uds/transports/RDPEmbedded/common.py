@@ -445,6 +445,18 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             domain=domain,
         )
 
+    def drives_to_redirect(self) -> list[str]:
+        # Same policy as the drivestoredirect line of the classic RDP transport. The
+        # client maps "all" to FreeRDP's "*" and passes "DynamicDrives" through.
+        # "Allow none" must send [] explicitly: an omitted key means ["all"] client-side.
+        policy = self.allow_drives.value
+        if policy == "false":
+            return []
+        forced = [d.strip().upper() for d in self.enforce_drives.value.split(",") if d.strip()]
+        if policy == "dynamic":
+            return forced + ["DynamicDrives"]
+        return forced or ["all"]
+
     def build_connection_params(
         self,
         server: str,
@@ -453,22 +465,6 @@ class BaseRDPEmbeddedTransport(transports.Transport):
     ) -> RDPConnectionParams:
         """Builds the RDPConnectionParams shared by direct and tunneled transports."""
         width, height = self.screen_size.value.split("x")
-
-        # Empty list (not None): client falls back to its default ["all"] when the key
-        # is omitted, so "Allow none" must send [] explicitly to disable redirection.
-        drives = (
-            []
-            if not self.allow_drives.as_bool()
-            else (
-                ["all"]
-                if not self.enforce_drives.as_bool()
-                else (
-                    ["fixed"]
-                    if not self.enforce_drives.value.strip()
-                    else [d.strip() for d in self.enforce_drives.value.split(",")]
-                )
-            )
-        )
 
         webcam = None
         if self.enable_webcam.as_bool():
@@ -499,7 +495,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
                 use_local_scaler=None if self.use_local_scaler.as_bool() else False,
             ),
             redirections=RDPRedirections(
-                drives=drives,
+                drives=self.drives_to_redirect(),
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),
                 clipboard=self.enable_clipboard.as_bool(),
