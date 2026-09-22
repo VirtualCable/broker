@@ -41,11 +41,11 @@ from . import actor as actor
 from . import auth as auth
 from . import cache as cache
 from . import calendar as calendar
+from . import forecasts as forecasts
 from . import images as images
 from . import mcp as mcp
 from . import net as net
 from . import os as os
-from . import predictions as predictions
 from . import rest as rest
 from . import security as security
 from . import services as services

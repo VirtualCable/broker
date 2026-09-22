@@ -131,12 +131,12 @@ class PredictorPureTest(UDSTestCase):
     def test_detect_anomaly_matching(self) -> None:
         profile = self._profile_value_equals_hour(weeks=2)
         recent = [predictor.Sample(when=_utc(2026, 1, 19, 10), mean=10.0, max=10.0, count=6)]
-        self.assertLess(predictor.detect_anomaly(profile, recent), consts.predictions.ANOMALY_THRESHOLD)
+        self.assertLess(predictor.detect_anomaly(profile, recent), consts.forecasts.ANOMALY_THRESHOLD)
 
     def test_detect_anomaly_broken(self) -> None:
         profile = self._profile_value_equals_hour(weeks=2)
         recent = [predictor.Sample(when=_utc(2026, 1, 19, 10), mean=100.0, max=100.0, count=6)]
-        self.assertGreaterEqual(predictor.detect_anomaly(profile, recent), consts.predictions.ANOMALY_THRESHOLD)
+        self.assertGreaterEqual(predictor.detect_anomaly(profile, recent), consts.forecasts.ANOMALY_THRESHOLD)
 
     def test_detect_anomaly_no_matching_cell(self) -> None:
         samples = [predictor.Sample(when=_utc(2026, 1, 5, 10), mean=10.0, max=10.0, count=6)]
@@ -300,11 +300,11 @@ class PredictorGetProfileTest(UDSTestCase):
     def setUp(self) -> None:
         super().setUp()
         timezone.activate(datetime.timezone.utc)
-        Cache.delete(consts.predictions.PROFILE_CACHE_OWNER)
+        Cache.delete(consts.forecasts.PROFILE_CACHE_OWNER)
 
     @typing.override
     def tearDown(self) -> None:
-        Cache.delete(consts.predictions.PROFILE_CACHE_OWNER)
+        Cache.delete(consts.forecasts.PROFILE_CACHE_OWNER)
         super().tearDown()
 
     def test_get_profile_empty_not_cached(self) -> None:
@@ -331,8 +331,39 @@ class PredictorGetProfileTest(UDSTestCase):
         StatsCountersAccum.objects.bulk_create(records)
         profile = predictor.get_profile(1, types.stats.CounterType.INUSE)
         self.assertGreater(profile.total_samples, 0)
-        cached = Cache(consts.predictions.PROFILE_CACHE_OWNER).get("1-3")
+        key = f"{types.stats.CounterOwnerType.SERVICEPOOL.value}-1-{types.stats.CounterType.INUSE.value}"
+        cached = Cache(consts.forecasts.PROFILE_CACHE_OWNER).get(key)
         self.assertIsInstance(cached, predictor.Profile)
+
+    def test_owner_type_isolates_the_cache_key(self) -> None:
+        """A pool and a server sharing an internal id never share a cached profile."""
+        now = timezone.now()
+        # Only the SERVICEPOOL side has samples; a key collision would leak its
+        # profile into the SERVER side (which must come back empty)
+        StatsCountersAccum.objects.bulk_create(
+            [
+                StatsCountersAccum(
+                    owner_type=types.stats.CounterOwnerType.SERVICEPOOL,
+                    owner_id=1,
+                    counter_type=types.stats.CounterType.INUSE,
+                    interval_type=StatsCountersAccum.IntervalType.HOUR,
+                    stamp=int((now - datetime.timedelta(hours=24 - i)).replace(minute=0, second=0).timestamp()),
+                    v_count=6,
+                    v_sum=6 * 5,
+                    v_max=5,
+                    v_min=0,
+                )
+                for i in range(24)
+            ]
+        )
+        pool_profile = predictor.get_profile(1, types.stats.CounterType.INUSE)
+        server_profile = predictor.get_profile(
+            1,
+            types.stats.CounterType.INUSE,
+            owner_type=types.stats.CounterOwnerType.SERVER,
+        )
+        self.assertGreater(pool_profile.total_samples, 0)
+        self.assertEqual(server_profile.total_samples, 0)
 
 
 class PredictorBandRecommendationsTest(UDSTestCase):
@@ -341,7 +372,9 @@ class PredictorBandRecommendationsTest(UDSTestCase):
         super().setUp()
         timezone.activate(datetime.timezone.utc)
 
-    def _slot(self, hour: int, verdict: str, *, p50: float = 0.0, p90: float = 0.0) -> predictor.CacheSlotRecommendation:
+    def _slot(
+        self, hour: int, verdict: str, *, p50: float = 0.0, p90: float = 0.0
+    ) -> predictor.CacheSlotRecommendation:
         return predictor.CacheSlotRecommendation(
             hour=hour,
             verdict=verdict,
@@ -363,9 +396,7 @@ class PredictorBandRecommendationsTest(UDSTestCase):
     def test_starved_band_suggests_peak_plus_headroom(self) -> None:
         slots = [self._slot(h, "STARVED", p50=12.0, p90=18.0) for h in range(24)]
         bands = predictor.band_recommendations(slots, cache_l1_srvs=10, max_srvs=50)
-        self.assertTrue(
-            all(b.suggested_cache_l1 == 18 + consts.predictions.CACHE_HEADROOM for b in bands)
-        )
+        self.assertTrue(all(b.suggested_cache_l1 == 18 + consts.forecasts.CACHE_HEADROOM for b in bands))
 
     def test_suggestion_never_above_max_srvs(self) -> None:
         slots = [self._slot(h, "STARVED", p50=40.0, p90=40.0) for h in range(24)]
@@ -388,7 +419,7 @@ class PredictorBandRecommendationsTest(UDSTestCase):
         bands = predictor.band_recommendations(slots, cache_l1_srvs=1, max_srvs=10)
         hours = [hour for band in bands for hour in band.hours]
         self.assertEqual(sorted(hours), list(range(24)))
-        self.assertEqual(len(bands), len(consts.predictions.DAY_BANDS))
+        self.assertEqual(len(bands), len(consts.forecasts.DAY_BANDS))
 
 
 class PredictorCrossPoolTest(UDSTestCase):
@@ -442,7 +473,7 @@ class PredictorAnnualComponentTest(UDSTestCase):
         return samples
 
     def test_no_fit_without_enough_history(self) -> None:
-        samples = self._yearly_samples(consts.predictions.MIN_DAYS_FOR_ANNUAL_FIT - 10)
+        samples = self._yearly_samples(consts.forecasts.MIN_DAYS_FOR_ANNUAL_FIT - 10)
         self.assertIsNone(predictor.fit_annual_component(samples))
 
     def test_no_fit_without_samples(self) -> None:
@@ -464,7 +495,7 @@ class PredictorAnnualComponentTest(UDSTestCase):
         samples = self._yearly_samples(400, amplitude=1000.0)
         component = predictor.fit_annual_component(samples)
         assert component is not None
-        factors = [
-            component.factor_at(_utc(2025, 1, 1) + datetime.timedelta(days=d)) for d in range(0, 365, 7)
-        ]
-        self.assertTrue(all(consts.predictions.ANNUAL_FACTOR_MIN <= f <= consts.predictions.ANNUAL_FACTOR_MAX for f in factors))
+        factors = [component.factor_at(_utc(2025, 1, 1) + datetime.timedelta(days=d)) for d in range(0, 365, 7)]
+        self.assertTrue(
+            all(consts.forecasts.ANNUAL_FACTOR_MIN <= f <= consts.forecasts.ANNUAL_FACTOR_MAX for f in factors)
+        )

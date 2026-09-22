@@ -134,7 +134,7 @@ def _weighted_mean(values: list[float]) -> float:
         return 0.0
     if n == 1:
         return values[0]
-    weights = [1.0 + consts.predictions.RECENCY_BIAS * i / (n - 1) for i in range(n)]
+    weights = [1.0 + consts.forecasts.RECENCY_BIAS * i / (n - 1) for i in range(n)]
     total = sum(weights)
     return sum(v * w for v, w in zip(values, weights, strict=True)) / total
 
@@ -203,9 +203,9 @@ def confidence(profile: Profile) -> float:
     if profile.total_samples == 0 or profile.first_sample is None or profile.last_sample is None:
         return 0.0
     weeks = (profile.last_sample - profile.first_sample).days / 7.0
-    coverage = profile.total_samples / consts.predictions.CELLS_IN_WEEK
-    span = max(0.0, min(1.0, weeks / consts.predictions.TRAINING_WEEKS))
-    density = max(0.0, min(1.0, coverage / consts.predictions.MIN_SAMPLES_PER_CELL))
+    coverage = profile.total_samples / consts.forecasts.CELLS_IN_WEEK
+    span = max(0.0, min(1.0, weeks / consts.forecasts.TRAINING_WEEKS))
+    density = max(0.0, min(1.0, coverage / consts.forecasts.MIN_SAMPLES_PER_CELL))
     return span * density
 
 
@@ -266,7 +266,7 @@ def load_samples(
     if to is None:
         to = sql_now()
     if since is None:
-        since = to - datetime.timedelta(weeks=consts.predictions.TRAINING_WEEKS)
+        since = to - datetime.timedelta(weeks=consts.forecasts.TRAINING_WEEKS)
 
     interval = interval_type.seconds()
     since_stamp = int(since.timestamp())
@@ -310,22 +310,24 @@ def get_profile(
 ) -> Profile:
     """Returns a usage profile, computing and caching it on first access.
 
-    Profiles are cached for 30 days (see consts.predictions.PROFILE_CACHE_TIMEOUT).
+    Profiles are cached for 30 days (see consts.forecasts.PROFILE_CACHE_TIMEOUT).
     On cache miss, the profile is built from the accumulated counters and stored.
     Empty profiles (no samples) are never cached so they recompute on retry.
     """
     cache = Cache(
-        consts.predictions.PROFILE_CACHE_OWNER,
-        default_timeout=consts.predictions.PROFILE_CACHE_TIMEOUT,
+        consts.forecasts.PROFILE_CACHE_OWNER,
+        default_timeout=consts.forecasts.PROFILE_CACHE_TIMEOUT,
     )
-    key = f"{owner_id}-{counter_type.value}"
+    # owner_type is part of the key: a pool and a server sharing an internal id
+    # must never share a cached profile
+    key = f"{owner_type.value}-{owner_id}-{counter_type.value}"
     cached = cache.get(key)
     if isinstance(cached, Profile):
         return cached
     samples = load_samples(owner_id, counter_type, owner_type=owner_type)
     profile = build_profile(samples, owner_id, counter_type)
     if profile.total_samples > 0:
-        cache.put(key, profile, validity=consts.predictions.PROFILE_CACHE_TIMEOUT)
+        cache.put(key, profile, validity=consts.forecasts.PROFILE_CACHE_TIMEOUT)
     return profile
 
 
@@ -469,7 +471,7 @@ VERDICT_SEVERITY: typing.Final[tuple[str, ...]] = ("SATURATED", "STARVED", "EXCE
 
 @dataclasses.dataclass
 class BandRecommendation:
-    """Cache recommendation for a band of the day (see consts.predictions.DAY_BANDS)."""
+    """Cache recommendation for a band of the day (see consts.forecasts.DAY_BANDS)."""
 
     band: str
     hours: tuple[int, ...]
@@ -493,7 +495,7 @@ def worst_verdict(verdicts: collections.abc.Iterable[str]) -> str:
 def _suggested_cache_l1(verdict: str, inuse_p90: float, *, cache_l1_srvs: int, max_srvs: int) -> int:
     """Returns the L1 cache size suggested for a band, never above the pool ceiling."""
     if verdict == "STARVED":
-        suggested = int(inuse_p90) + consts.predictions.CACHE_HEADROOM
+        suggested = int(inuse_p90) + consts.forecasts.CACHE_HEADROOM
     elif verdict == "EXCESS":
         suggested = int(inuse_p90)
     else:
@@ -517,7 +519,7 @@ def band_recommendations(
     """
     by_hour = {slot.hour: slot for slot in slots}
     bands: list[BandRecommendation] = []
-    for band, hours in consts.predictions.DAY_BANDS:
+    for band, hours in consts.forecasts.DAY_BANDS:
         in_band = [by_hour[hour] for hour in hours if hour in by_hour]
         if not in_band:
             continue
@@ -619,15 +621,15 @@ class AnnualComponent:
             return 1.0
         factor = self.value_at(when) / self.baseline
         return max(
-            consts.predictions.ANNUAL_FACTOR_MIN,
-            min(consts.predictions.ANNUAL_FACTOR_MAX, factor),
+            consts.forecasts.ANNUAL_FACTOR_MIN,
+            min(consts.forecasts.ANNUAL_FACTOR_MAX, factor),
         )
 
 
 def fit_annual_component(
     samples: collections.abc.Sequence[Sample],
     *,
-    harmonics: int = consts.predictions.ANNUAL_HARMONICS,
+    harmonics: int = consts.forecasts.ANNUAL_HARMONICS,
 ) -> AnnualComponent | None:
     """Fits the yearly seasonality of *samples*, or None when it cannot be fitted.
 
@@ -646,7 +648,7 @@ def fit_annual_component(
 
     days = sorted(daily)
     span = (days[-1] - days[0]).days
-    if span < consts.predictions.MIN_DAYS_FOR_ANNUAL_FIT:
+    if span < consts.forecasts.MIN_DAYS_FOR_ANNUAL_FIT:
         return None
 
     origin = timezone.make_aware(datetime.datetime.combine(days[0], datetime.time.min))

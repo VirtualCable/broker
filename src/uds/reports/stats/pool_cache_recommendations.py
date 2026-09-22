@@ -24,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 
 """
 Cache recommendations report, built on top of the usage predictor.
@@ -32,6 +31,7 @@ Cache recommendations report, built on top of the usage predictor.
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
+import collections.abc
 import csv
 import io
 import logging
@@ -102,9 +102,7 @@ class PoolCacheRecommendationsReport(StatsReport):
                 initial_srvs=pool.initial_srvs,
                 max_srvs=max_srvs,
             )
-            bands = predictor.band_recommendations(
-                slots, cache_l1_srvs=pool.cache_l1_srvs, max_srvs=max_srvs
-            )
+            bands = predictor.band_recommendations(slots, cache_l1_srvs=pool.cache_l1_srvs, max_srvs=max_srvs)
             confidence = predictor.confidence(inuse_profile)
 
             pools_data.append(
@@ -141,7 +139,7 @@ class PoolCacheRecommendationsReport(StatsReport):
         return {
             "pools": pools_data,
             "cross_pool": [_as_cross_pool_row(note) for note in predictor.cross_pool_notes(usage_by_hour)],
-            "training_weeks": consts.predictions.TRAINING_WEEKS,
+            "training_weeks": consts.forecasts.TRAINING_WEEKS,
             "stats_duration": config.GlobalConfig.STATS_DURATION.as_int(),
         }
 
@@ -191,9 +189,9 @@ def _as_cross_pool_row(note: predictor.CrossPoolHourNote) -> dict[str, typing.An
 
 
 def _slots_with_band(
-    slots: typing.Sequence[predictor.CacheSlotRecommendation],
-    bands: typing.Sequence[predictor.BandRecommendation],
-) -> typing.Iterator[tuple[predictor.CacheSlotRecommendation, predictor.BandRecommendation]]:
+    slots: collections.abc.Sequence[predictor.CacheSlotRecommendation],
+    bands: collections.abc.Sequence[predictor.BandRecommendation],
+) -> collections.abc.Iterator[tuple[predictor.CacheSlotRecommendation, predictor.BandRecommendation]]:
     """Yields every slot along with the band it belongs to."""
     band_of_hour = {hour: band for band in bands for hour in band.hours}
     for slot in slots:
@@ -202,7 +200,9 @@ def _slots_with_band(
             yield slot, band
 
 
-def _calendar_actions(bands: typing.Sequence[predictor.BandRecommendation]) -> list[dict[str, typing.Any]]:
+def _calendar_actions(
+    bands: collections.abc.Sequence[predictor.BandRecommendation],
+) -> list[dict[str, typing.Any]]:
     """Turns the bands that need a change into calendar action suggestions.
 
     The report only proposes: the administrator creates the calendar action

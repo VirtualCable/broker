@@ -36,7 +36,7 @@ from django.utils import timezone
 
 from uds import models
 from uds.core import types
-from uds.core.consts import predictions as pred_consts
+from uds.core.consts import forecasts as pred_consts
 from uds.core.util.cache import Cache
 from uds.core.types.states import State
 

@@ -24,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 
 """
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
@@ -132,9 +131,7 @@ class PoolCacheRecommendationsReportTest(UDSTestCase):
         healthy = self._pool(cache_l1_srvs=10, max_srvs=50)
         starved = self._pool(cache_l1_srvs=10, max_srvs=50)
         saturated = self._pool(cache_l1_srvs=10, max_srvs=50)
-        report = self._report(
-            {healthy.id: (5.0, 0.0), starved.id: (15.0, 2.0), saturated.id: (50.0, 0.0)}
-        )
+        report = self._report({healthy.id: (5.0, 0.0), starved.id: (15.0, 2.0), saturated.id: (50.0, 0.0)})
         verdicts = [p["verdict"] for p in report.get_data()["pools"]]
         self.assertEqual(verdicts, ["SATURATED", "STARVED", "OK"])
 
@@ -152,4 +149,4 @@ class PoolCacheRecommendationsReportTest(UDSTestCase):
         pool = self._pool(cache_l1_srvs=1, max_srvs=10)
         data = self._report({pool.id: (1.0, 0.0)}).get_data()
         self.assertGreater(data["stats_duration"], 0)
-        self.assertEqual(data["training_weeks"], consts.predictions.TRAINING_WEEKS)
+        self.assertEqual(data["training_weeks"], consts.forecasts.TRAINING_WEEKS)

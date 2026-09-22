@@ -87,6 +87,7 @@ class Config:
         CUSTOM = "Custom"
         ADMIN = "Admin"
         MCP = "MCP"
+        STATS = "Stats"  # Statistics-related thresholds (saturation predictions)
         WYSE = "WYSE"  # Legacy
         ENTERPRISE = "Enterprise"  # For enterprise pourposes
         OTHER = "Other"
@@ -545,6 +546,38 @@ class GlobalConfig:
         str(consts.mcp.OWN_HISTORY_DAYS),
         type=Config.FieldType.NUMERIC,
         help=_("Days of decided flows a staff (non-admin) user sees in its own history. 0 means unlimited"),
+    )
+    # Saturation thresholds for the managed servers predictions. "Load" is the
+    # weighted composite of cpu/memory/users that the server group weights
+    # define (the common admin logic of what "saturated" means), so it is the
+    # primary metric; the per-counter ones are secondary. Percentages (0-100).
+    STATS_SATURATION_LOAD: Config.Value = Config.section(Config.SectionType.STATS).value(
+        "Saturation Load Percent",
+        str(consts.forecasts.SATURATION_LOAD_DEFAULT),
+        type=Config.FieldType.NUMERIC,
+        help=_("Weighted cpu/memory/users load (0-100) at which a managed server is considered saturated"),
+    )
+    STATS_SATURATION_DISK: Config.Value = Config.section(Config.SectionType.STATS).value(
+        "Saturation Disk Percent",
+        str(consts.forecasts.SATURATION_DISK_DEFAULT),
+        type=Config.FieldType.NUMERIC,
+        help=_("Disk usage (0-100) at which a managed server is considered saturated"),
+    )
+    # 0 falls back to the server group's "max expected users" weight
+    STATS_SATURATION_USERS: Config.Value = Config.section(Config.SectionType.STATS).value(
+        "Saturation Max Users",
+        str(consts.forecasts.SATURATION_USERS_DEFAULT),
+        type=Config.FieldType.NUMERIC,
+        help=_(
+            "Current users at which a managed server is considered saturated. 0 uses the group max expected users"
+        ),
+    )
+    # 0 disables the connections projection entirely
+    STATS_SATURATION_CONNECTIONS: Config.Value = Config.section(Config.SectionType.STATS).value(
+        "Saturation Max Connections",
+        str(consts.forecasts.SATURATION_CONNECTIONS_DEFAULT),
+        type=Config.FieldType.NUMERIC,
+        help=_("Connections at which a managed server is considered saturated. 0 disables this metric"),
     )
     # Time an admi session can be idle before being "logged out"
     # ADMIN_IDLE_TIME: Config.Value = Config.section(Config.SectionType.SECURITY).value('adminIdleTime', '14400', type=Config.FieldType.NUMERIC_FIELD)  # Defaults to 4 hous

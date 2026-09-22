@@ -60,7 +60,7 @@ PROFILE_CACHE_TIMEOUT: typing.Final[int] = 30 * 24 * 3600  # 30 days
 DAY_BANDS: typing.Final[tuple[tuple[str, tuple[int, ...]], ...]] = (
     ("morning", tuple(range(6, 14))),
     ("afternoon", tuple(range(14, 22))),
-    ("night", tuple(range(22, 24)) + tuple(range(0, 6))),
+    ("night", tuple(range(22, 24)) + tuple(range(6))),
 )
 
 # Extra services added on top of the observed peak when suggesting a bigger L1 cache
@@ -76,3 +76,42 @@ ANNUAL_HARMONICS: typing.Final[int] = 2
 # Bounds the annual factor is clamped to, so a bad fit can never wreck a forecast
 ANNUAL_FACTOR_MIN: typing.Final[float] = 0.5
 ANNUAL_FACTOR_MAX: typing.Final[float] = 2.0
+
+# ------------------------------------------------------------- saturation
+
+# Default / maximum horizon (hours) of the saturation forecast window. The REST
+# layer clamps the requested hours between 1 and SATURATION_FORECAST_HOURS_MAX.
+SATURATION_FORECAST_HOURS_DEFAULT: typing.Final[int] = 72
+SATURATION_FORECAST_HOURS_MAX: typing.Final[int] = 168
+
+# Beyond this many days, a projected saturation date is not reported (the
+# extrapolation is not trustworthy that far out; the status becomes
+# GROWING_BEYOND_HORIZON with a null date).
+SATURATION_MAX_HORIZON_DAYS: typing.Final[int] = 365
+
+# Absolute daily growth (percent or units) at or below which a growing series
+# is considered flat: "it will not saturate at the current pace".
+SATURATION_STABLE_SLOPE_EPS: typing.Final[float] = 0.01
+
+# Profile confidence below which a saturation projection is not trusted: the
+# metric is reported as UNRELIABLE (current values are still exposed, but no
+# future date).
+SATURATION_MIN_CONFIDENCE: typing.Final[float] = 0.5
+
+# Recent window (days) checked for a broken weekly pattern before projecting
+# a future saturation date (uses ANOMALY_THRESHOLD).
+SATURATION_ANOMALY_WINDOW_DAYS: typing.Final[int] = 7
+
+# Default saturation thresholds (percentages or units), overridable through
+# the "Stats" section of the global config. Load is the weighted composite
+# (0..100) of cpu/memory/users from the server group weights.
+SATURATION_LOAD_DEFAULT: typing.Final[int] = 85
+SATURATION_DISK_DEFAULT: typing.Final[int] = 95
+# 0 means "fall back to the group's weights.max_expected_users"
+SATURATION_USERS_DEFAULT: typing.Final[int] = 0
+# 0 means disabled (not projected at all)
+SATURATION_CONNECTIONS_DEFAULT: typing.Final[int] = 0
+
+# TTL for the cached server/group saturation computations (the underlying
+# profiles are cached separately by get_profile)
+SATURATION_CACHE_TIMEOUT: typing.Final[int] = 6 * 3600  # 6 hours
