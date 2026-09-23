@@ -56,8 +56,10 @@ HMAC_PLACEHOLDER: typing.Final[str] = "{{hmac}}"
 ADVANCED_TAB: typing.Final[str] = _("Advanced")
 
 PLACEHOLDERS_HELP: typing.Final[str] = _(
-    "Placeholders: {{group}}, {{identificator}}, {{level}}, {{message}}, {{timestamp}} "
-    "and {{hmac}}. Values are JSON-escaped, so JSON templates are always valid."
+    "Placeholders: {{group}}, {{event_type}}, {{identificator}}, {{level}}, {{message}}, "
+    "{{timestamp}} and {{hmac}}. {{event_type}} is the event type (i.e. rest.create, "
+    "user.login) and matches {{identificator}} on EVENT notifications. Values are "
+    "JSON-escaped, so JSON templates are always valid."
 )
 
 
@@ -272,6 +274,9 @@ class WebhookNotifier(messaging.Notifier):
         """
         return {
             "group": group.kind,
+            # EVENT notifications carry the EventType value as identificator;
+            # {{event_type}} is the self-documenting alias for consumers
+            "event_type": identificator,
             "identificator": identificator,
             "level": str(level),
             "message": message,
@@ -285,6 +290,7 @@ class WebhookNotifier(messaging.Notifier):
         return json.dumps(
             {
                 "group": values["group"],
+                "event_type": values["event_type"],
                 "identificator": values["identificator"],
                 "level": values["level"],
                 "message": values["message"],

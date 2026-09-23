@@ -116,6 +116,7 @@ class WebhookRenderingTest(UDSTestCase):
         )
         payload = json.loads(element.body)
         self.assertEqual(payload["group"], "event")
+        self.assertEqual(payload["event_type"], "ID1")
         self.assertEqual(payload["identificator"], "ID1")
         self.assertEqual(payload["level"], "ERROR")
         self.assertEqual(payload["message"], 'He said "hi"\nbye')
@@ -126,7 +127,7 @@ class WebhookRenderingTest(UDSTestCase):
     def test_template_substitution_is_json_safe(self) -> None:
         notifier = notifiers_fixtures.createWebhookNotifier(
             url="http://example.com/hook",
-            dataTemplate='{"msg": "{{message}}", "id": "{{identificator}}"}',
+            dataTemplate='{"msg": "{{message}}", "id": "{{identificator}}", "event": "{{event_type}}"}',
         )
         instance = _instance(notifier)
         element = instance._build_request(
@@ -135,6 +136,7 @@ class WebhookRenderingTest(UDSTestCase):
         payload = json.loads(element.body)
         self.assertEqual(payload["msg"], 'value with "quotes" and\nnewlines')
         self.assertEqual(payload["id"], "ID1")
+        self.assertEqual(payload["event"], "ID1")
 
     def test_content_mode_hmac_and_auto_signature(self) -> None:
         notifier = notifiers_fixtures.createWebhookNotifier(url="http://example.com/hook", hmacSecret="secret")
@@ -143,6 +145,7 @@ class WebhookRenderingTest(UDSTestCase):
         payload = json.loads(element.body)
         values = {
             "group": payload["group"],
+            "event_type": payload["event_type"],
             "identificator": payload["identificator"],
             "level": payload["level"],
             "message": payload["message"],
