@@ -76,6 +76,8 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "brute-force-by-ip",
         "temporarily-blocked-logins",
         "internal-errors-24h",
+        # E-family (webhook_queue.py)
+        "webhook-queue-size",
     )
 )
 
@@ -846,6 +848,22 @@ class SecurityChecksTest(UDSTransactionTestCase):
     def test_run_returns_all_checks(self) -> None:
         results = security_checks.run_security_checks()
         self.assertEqual({result.id for result in results}, ALL_CHECK_IDS)
+
+    def test_webhook_queue_size(self) -> None:
+        from uds.notifiers.webhook import queue as webhook_queue
+
+        result = self._run_check("webhook-queue-size")
+        self.assertTrue(result.ok, result.message)
+
+        with mock.patch.object(webhook_queue, "pending_count", return_value=3000):
+            result = self._run_check("webhook-queue-size")
+        self.assertFalse(result.ok, result.message)
+        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+
+        with mock.patch.object(webhook_queue, "pending_count", return_value=20000):
+            result = self._run_check("webhook-queue-size")
+        self.assertFalse(result.ok, result.message)
+        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
 
     def test_build_report_summary_counts_failed_checks_only(self) -> None:
         results = security_checks.run_security_checks()

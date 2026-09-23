@@ -50,6 +50,8 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "brute-force-by-ip",
         "temporarily-blocked-logins",
         "internal-errors-24h",
+        # E-family (webhook_queue.py)
+        "webhook-queue-size",
     )
 )
 

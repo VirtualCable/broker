@@ -713,6 +713,14 @@ class GlobalConfig:
         help=_("Notify user of existence of a new version of a service on new publication"),
     )
 
+    # Webhook notifications dispatcher job frequency (seconds)
+    WEBHOOK_DISPATCH_FREQUENCY: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
+        "Webhook dispatch frequency",
+        "5",
+        type=Config.FieldType.NUMERIC,
+        help=_("Frequency (in seconds) at which queued webhook notifications are dispatched"),
+    )
+
     # Allowed "trusted sources" for request
     TRUSTED_SOURCES: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Trusted Hosts",

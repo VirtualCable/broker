@@ -52,6 +52,7 @@ from . import global_config as global_config
 from . import logs as logs
 from . import models as models
 from . import settings as settings
+from . import webhook_queue as webhook_queue
 from .factory import CheckFn as CheckFn
 from .factory import SecurityChecksFactory as SecurityChecksFactory
 
@@ -68,7 +69,7 @@ def _initialize() -> None:
     factory itself ignores duplicate check ids.
     """
     fact = SecurityChecksFactory()
-    for group in (settings, global_config, models, logs):
+    for group in (settings, global_config, models, logs, webhook_queue):
         group.register_checks(fact)
 
 
