@@ -31,7 +31,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
-from django.db.models import Model
 from uds import models
 from uds.core import consts
 from uds.core.audit.immutable import ImmutableLogger
@@ -106,6 +105,61 @@ def replace_path(path: str) -> str:
     return path
 
 
+# HTTP method -> event for "canonical" mutations on model handlers
+_REST_METHOD_EVENT_TYPES: typing.Final[dict[str, notifiers.EventType]] = {
+    "POST": notifiers.EventType.REST_CREATE,
+    "PUT": notifiers.EventType.REST_UPDATE,
+    "PATCH": notifiers.EventType.REST_UPDATE,
+    "DELETE": notifiers.EventType.REST_DELETE,
+}
+
+
+def _rest_event_type(handler: "Handler") -> notifiers.EventType | None:
+    """
+    Resolves the REST event type for a successful (mutating) request.
+
+    Only model handler based requests produce events. Canonical CRUD shapes
+    (collection/item paths, master or detail) map to create/update/delete;
+    any other mutation (custom methods such as publish, token, ...) maps to
+    REST_OPERATION. Non model handlers (auth, system, actor, ...) produce
+    no event.
+    """
+    method = (getattr(handler.request, "method", "") or "").upper()
+    event_type = _REST_METHOD_EVENT_TYPES.get(method)
+    if event_type is None:
+        return None
+
+    # Duck typed check: ModelHandler (at dispatcher level, detail operations
+    # are still dispatched through the master handler) has MODEL/DETAIL.
+    # Avoids a circular import with the model package.
+    if not hasattr(handler, "MODEL"):
+        return None
+
+    args: list[str] = list(getattr(handler, "_args", None) or [])
+    details = set(getattr(handler, "DETAIL", None) or {})
+    is_detail = len(args) >= 2 and args[1] in details
+
+    if method == "POST":
+        if not args:
+            return notifiers.EventType.REST_CREATE
+        if is_detail and len(args) == 2:
+            return notifiers.EventType.REST_CREATE  # detail create
+    elif method in ("PUT", "PATCH"):
+        if len(args) == 1:
+            return notifiers.EventType.REST_UPDATE
+        if not args:
+            return notifiers.EventType.REST_CREATE  # legacy create
+        if is_detail:
+            return notifiers.EventType.REST_CREATE if len(args) == 2 else notifiers.EventType.REST_UPDATE
+    elif method == "DELETE":
+        if len(args) == 1:
+            return notifiers.EventType.REST_DELETE
+        if is_detail and len(args) == 3:
+            return notifiers.EventType.REST_DELETE  # detail delete
+
+    return notifiers.EventType.REST_OPERATION
+
+
 def log_operation(handler: "Handler | None", response_code: int, level: LogLevel = LogLevel.INFO) -> None:
     """
     Logs a request
@@ -153,6 +207,14 @@ def log_operation(handler: "Handler | None", response_code: int, level: LogLevel
             }
         )
 
+    # Auditable event notification for successful mutations, derived from the
+    # request itself (same audit information, converted to an event)
+    if response_code < 400:
+        event_type = _rest_event_type(handler)
+        if event_type is not None:
+            method = (handler.request.method or "").upper()
+            event_type.notify(f"{username} ({handler.request.ip}): {method} {path}")
+
 
 def log_audit(handler: "Handler | None", action: str, level: LogLevel = LogLevel.INFO) -> None:
     """
@@ -186,50 +248,3 @@ def log_audit(handler: "Handler | None", action: str, level: LogLevel = LogLevel
                 "u": username,
             }
         )
-
-
-def notify_event(
-    handler: "Handler | None",
-    event_type: notifiers.EventType,
-    item: "Model | str | None" = None,
-    parent: Model | None = None,
-) -> None:
-    """
-    Notifies an auditable event (EventType) related to a REST operation.
-
-    Composes a human readable message ("username (ip): subject [on Parent 'name']")
-    and sends it through event_type.notify(), as a NotificationGroup.EVENT
-    notification (so EVENT notifiers, i.e. webhooks, receive it).
-
-    Args:
-        handler: REST handler performing the operation (for user and ip)
-        event_type: The EventType being notified
-        item: Affected item (model instance or plain identifier, i.e. an uuid
-            or a descriptive string). If None, only the user/ip is included
-        parent: Parent model for detail operations, appended as context
-    """
-    if handler is None:
-        return
-
-    user: typing.Any = handler.request.user
-    username = user.pretty_name if user else "Unknown"
-    # Defensive: some callers (i.e. MCP REST proxy internals) may provide
-    # plain HttpRequest-ish objects without the extended .ip attribute
-    ip = getattr(handler.request, "ip", "unknown")
-
-    subject = ""
-    if item is not None:
-        if isinstance(item, str):
-            subject = item
-        else:
-            name = getattr(item, "name", "") or str(getattr(item, "uuid", ""))
-            subject = f"{item.__class__.__name__} '{name}'"
-    if parent is not None:
-        parent_name = getattr(parent, "name", "") or str(getattr(parent, "uuid", ""))
-        subject = f"{subject} on {parent.__class__.__name__} '{parent_name}'".strip()
-
-    message = f"{username} ({ip})"
-    if subject:
-        message = f"{message}: {subject}"
-
-    event_type.notify(message)

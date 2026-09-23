@@ -35,7 +35,7 @@ class AuditEventsTest(rest.test.RESTTestCase):
         super().setUp()
         self.login()
 
-    def test_detail_user_create_emits_admin_create(self) -> None:
+    def test_detail_user_create_emits_rest_create(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users"
         user_dct = rest_fixtures.createUser(groups=[self.simple_groups[0].uuid])
 
@@ -43,14 +43,15 @@ class AuditEventsTest(rest.test.RESTTestCase):
             response = self.client.rest_put(url, user_dct)
 
         self.assertEqual(response.status_code, 200)
-        calls = events_of(notify, notifiers.EventType.ADMIN_CREATE)
+        calls = events_of(notify, notifiers.EventType.REST_CREATE)
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0].args[0], notifiers.NotificationGroup.EVENT)
         self.assertEqual(calls[0].args[2], types.log.LogLevel.OTHER)
         self.assertIn(self.admins[0].pretty_name, message_of(calls[0]))
         self.assertIn(self.auth.name, message_of(calls[0]))
+        self.assertEqual(events_of(notify, notifiers.EventType.REST_OPERATION), [])
 
-    def test_detail_user_modify_emits_admin_modify(self) -> None:
+    def test_detail_user_modify_emits_rest_update(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users"
         target = self.plain_users[0]
         user_dct = rest_fixtures.createUser(
@@ -64,12 +65,13 @@ class AuditEventsTest(rest.test.RESTTestCase):
             response = self.client.rest_put(url + f"/{target.uuid}", user_dct)
 
         self.assertEqual(response.status_code, 200, response.content)
-        calls = events_of(notify, notifiers.EventType.ADMIN_MODIFY)
+        calls = events_of(notify, notifiers.EventType.REST_UPDATE)
         self.assertEqual(len(calls), 1)
-        self.assertIn(target.uuid, message_of(calls[0]))
+        # The user still exists when logged, so the path is resolved to names
+        self.assertIn(target.name, message_of(calls[0]))
         self.assertIn(self.auth.name, message_of(calls[0]))
 
-    def test_detail_user_delete_emits_admin_delete(self) -> None:
+    def test_detail_user_delete_emits_rest_delete(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users"
         target = self.plain_users[0]
 
@@ -77,10 +79,23 @@ class AuditEventsTest(rest.test.RESTTestCase):
             response = self.client.rest_delete(url + f"/{target.uuid}")
 
         self.assertEqual(response.status_code, 200)
-        calls = events_of(notify, notifiers.EventType.ADMIN_DELETE)
+        calls = events_of(notify, notifiers.EventType.REST_DELETE)
         self.assertEqual(len(calls), 1)
+        # The user is gone when logged, so the raw uuid remains on the path
         self.assertIn(target.uuid, message_of(calls[0]))
         self.assertIn(self.auth.name, message_of(calls[0]))
+
+    def test_custom_method_post_emits_rest_operation(self) -> None:
+        url = f"authenticators/{self.auth.uuid}/users/{self.plain_users[0].uuid}/token"
+
+        with mock.patch.object(notifications_module.NotificationsManager, "notify") as notify:
+            response = self.client.rest_post(url)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        calls = events_of(notify, notifiers.EventType.REST_OPERATION)
+        self.assertEqual(len(calls), 1)
+        self.assertIn("/token", message_of(calls[0]))
+        self.assertEqual(events_of(notify, notifiers.EventType.REST_CREATE), [])
 
     def test_master_authenticator_create_modify_delete_emit_events(self) -> None:
         payload: dict[str, typing.Any] = {
@@ -99,24 +114,27 @@ class AuditEventsTest(rest.test.RESTTestCase):
             self.assertEqual(response.status_code, 200, response.content)
             auth_uuid = response.json()["id"]
 
-            calls = events_of(notify, notifiers.EventType.ADMIN_CREATE)
+            calls = events_of(notify, notifiers.EventType.REST_CREATE)
             self.assertEqual(len(calls), 1)
-            self.assertIn("audit-test-auth", message_of(calls[0]))
+            # Collection create: the new item is not on the path yet
+            self.assertIn("POST /uds/rest/authenticators", message_of(calls[0]))
 
             # Modify
             payload["comments"] = "modified by audit test"
             response = self.client.rest_put(f"authenticators/{auth_uuid}", payload)
             self.assertEqual(response.status_code, 200, response.content)
-            calls = events_of(notify, notifiers.EventType.ADMIN_MODIFY)
+            calls = events_of(notify, notifiers.EventType.REST_UPDATE)
             self.assertEqual(len(calls), 1)
+            # Item exists when logged, so the name is resolved on the path
             self.assertIn("audit-test-auth", message_of(calls[0]))
 
             # Delete
             response = self.client.rest_delete(f"authenticators/{auth_uuid}")
             self.assertEqual(response.status_code, 200, response.content)
-            calls = events_of(notify, notifiers.EventType.ADMIN_DELETE)
+            calls = events_of(notify, notifiers.EventType.REST_DELETE)
             self.assertEqual(len(calls), 1)
-            self.assertIn("audit-test-auth", message_of(calls[0]))
+            # Item is gone when logged, so the raw uuid remains
+            self.assertIn(auth_uuid, message_of(calls[0]))
 
     def test_login_emits_login_event(self) -> None:
         client = UDSClient()

@@ -91,10 +91,13 @@ class EventType(enum.StrEnum):
     "message" is a human readable description of the occurrence.
     """
 
-    # Administrative CRUD (REST model handlers, master and detail)
-    ADMIN_CREATE = "admin.create"
-    ADMIN_MODIFY = "admin.modify"
-    ADMIN_DELETE = "admin.delete"
+    # Administrative mutations on REST (derived from the request at
+    # log_operation, so every model handler is covered). Any other mutation
+    # (custom methods) is notified as REST_OPERATION
+    REST_CREATE = "rest.create"
+    REST_UPDATE = "rest.update"
+    REST_DELETE = "rest.delete"
+    REST_OPERATION = "rest.operation"
     # User authentication
     LOGIN = "user.login"
     LOGIN_FAILED = "user.login_failed"
