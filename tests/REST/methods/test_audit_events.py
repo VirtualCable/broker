@@ -137,6 +137,28 @@ class AuditEventsTest(rest.test.RESTTestCase):
         self.assertIn(self.admins[0].name, message_of(calls[0]))
         self.assertIn(self.auth.name, message_of(calls[0]))
 
+    def test_failed_login_emits_login_failed_event(self) -> None:
+        client = UDSClient()
+        with mock.patch.object(notifications_module.NotificationsManager, "notify") as notify:
+            response = client.post(
+                "/uds/rest/auth/login",
+                data={
+                    "auth_id": self.auth.uuid,
+                    "username": self.plain_users[0].name,
+                    "password": "wrong-password",
+                },
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 200, response.content)
+            self.assertEqual(response.json()["result"], "error")
+
+        calls = events_of(notify, notifiers.EventType.LOGIN_FAILED)
+        self.assertEqual(len(calls), 1)
+        self.assertIn(self.plain_users[0].name, message_of(calls[0]))
+        self.assertIn("Invalid password", message_of(calls[0]))
+        # No success event must be emitted on failed login
+        self.assertEqual(events_of(notify, notifiers.EventType.LOGIN), [])
+
     def test_logout_emits_logout_event(self) -> None:
         with mock.patch.object(notifications_module.NotificationsManager, "notify") as notify:
             rest.logout(self, self.client)

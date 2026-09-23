@@ -258,7 +258,6 @@ def register_user(
             browser=request.os.browser,
             version=request.os.version,
         )
-        types.notifiers.EventType.LOGIN.notify(f"{username} ({request.ip}) via '{authenticator.name}'")
         if not skip_callbacks:
             callbacks.weblogin(usr)
 
@@ -495,9 +494,6 @@ def weblogout(
                     username=request.user.name,
                     srcip=request.ip,
                 )
-                types.notifiers.EventType.LOGOUT.notify(
-                    f"{username} ({request.ip}) via '{request.user.manager.name}'"
-                )
             authenticator.hook_web_logout(username, request, HttpResponseRedirect(exit_url or exit_page))
     finally:
         # Try to delete session
@@ -570,6 +566,10 @@ def log_login(
             }
         )
 
+    # Auditable event notification (LOGIN, or LOGIN_FAILED on errors)
+    event_type = types.notifiers.EventType.LOGIN_FAILED if as_error else types.notifiers.EventType.LOGIN
+    event_type.notify(f"{username} ({request.ip}) via '{authenticator.name}': {log_string}")
+
 
 def log_logout(request: "types.requests.ExtendedHttpRequest") -> None:
     if request.user:
@@ -597,4 +597,10 @@ def log_logout(request: "types.requests.ExtendedHttpRequest") -> None:
                     "a": request.user.manager.name if request.user.manager.id else "root",
                     "i": request.ip,
                 }
+            )
+
+        # Auditable event notification (only for non-root users)
+        if request.user.manager.id:
+            types.notifiers.EventType.LOGOUT.notify(
+                f"{request.user.name} ({request.ip}) via '{request.user.manager.name}'"
             )

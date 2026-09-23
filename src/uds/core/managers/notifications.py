@@ -67,7 +67,10 @@ class NotificationsManager(metaclass=singleton.Singleton):
             try:
                 Notification.get_persistent_queryset().count()
             except Exception:
-                logger.info("Cannot create local notifications table right now. Will try later.")
+                # Expected until the table is created (i.e. early startup or
+                # test environments). Debug level to avoid flooding the
+                # syslog with one entry per notification attempt.
+                logger.debug("Cannot create local notifications table right now. Will try later.")
                 return False
 
         self._initialized = True
@@ -109,4 +112,6 @@ class NotificationsManager(metaclass=singleton.Singleton):
                 )
                 notify.save_persistent()
         except Exception:
-            logger.info("Error saving notification %s, %s, %s, %s", group, identificator, level, message)
+            # Debug level: a persistent failure here would flood both the
+            # logging system and the syslog (UDSLogHandler persists INFO+)
+            logger.debug("Error saving notification %s, %s, %s, %s", group, identificator, level, message)

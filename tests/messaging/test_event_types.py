@@ -16,7 +16,10 @@ class EventTypeTest(unittest.TestCase):
         self.assertEqual(notifiers.EventType.ADMIN_MODIFY.value, "admin.modify")
         self.assertEqual(notifiers.EventType.ADMIN_DELETE.value, "admin.delete")
         self.assertEqual(notifiers.EventType.LOGIN.value, "user.login")
+        self.assertEqual(notifiers.EventType.LOGIN_FAILED.value, "user.login_failed")
         self.assertEqual(notifiers.EventType.LOGOUT.value, "user.logout")
+        self.assertEqual(notifiers.EventType.USER_SERVICE_LOGIN.value, "userservice.login")
+        self.assertEqual(notifiers.EventType.USER_SERVICE_LOGOUT.value, "userservice.logout")
 
     def test_notify_defaults_to_other_level(self) -> None:
         manager = mock.MagicMock()

@@ -37,7 +37,7 @@ import typing
 from uds.core import consts
 from uds.core import exceptions
 from uds.core import types
-from uds.core.auths.auth import authenticate, is_trusted_source
+from uds.core.auths.auth import authenticate, is_trusted_source, log_login, log_logout
 from uds.core.managers.crypto import CryptoManager
 from uds.core.util.cache import Cache
 from uds.core.util.config import GlobalConfig
@@ -252,6 +252,10 @@ class Login(Handler):
                 fail_cache.put(self._request.ip, fails + 1, GlobalConfig.LOGIN_BLOCK.as_int())
 
                 return Login.result(error=auth_result.errstr or "Invalid credentials")
+
+            # Register the login on the common login log (audit + events)
+            log_login(self._request, auth, auth_result.user.name)
+
             return Login.result(
                 result="ok",
                 # Return the session token prefixed with ``ses-`` so a future
@@ -322,11 +326,8 @@ class Logout(Handler):
     }
 
     def get(self) -> typing.Any:
-        user = self.request.user
-        if user and user.manager:
-            types.notifiers.EventType.LOGOUT.notify(
-                f"{user.name} ({self.request.ip}) via '{user.manager.name}'"
-            )
+        # Register the logout on the common logout log (audit + events)
+        log_logout(self.request)
         # Remove auth token
         self.clear_auth_token()
         return {"result": "ok"}

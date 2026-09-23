@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2023 Virtual Cable S.L.
 # All rights reserved.
@@ -68,7 +67,7 @@ class OSManager(Module):
     # : Defaults to all. (list or tuple)
     services_types: typing.ClassVar[types.services.ServiceType] = types.services.ServiceType.VDI
 
-    _db_obj: typing.Optional["models.OSManager"] = None
+    _db_obj: "models.OSManager | None" = None
 
     def __init__(self, environment: "Environment", values: types.core.ValuesType = None):
         super().__init__(environment, values)
@@ -301,6 +300,10 @@ class OSManager(Module):
             counter = int(typing.cast(str, p.get("logins_counter", 0))) + 1
             p["logins_counter"] = counter
 
+        types.notifiers.EventType.USER_SERVICE_LOGIN.notify(
+            f"{username} ({know_user_ip}) on '{userservice.friendly_name}'"
+        )
+
     @staticmethod
     def logged_out(userservice: "models.UserService", username: str | None = None) -> None:
         """
@@ -357,6 +360,10 @@ class OSManager(Module):
             full_username,
             userservice.friendly_name,
             userservice.deployed_service.name,
+        )
+
+        types.notifiers.EventType.USER_SERVICE_LOGOUT.notify(
+            f"{username} ({known_user_ip}) on '{userservice.friendly_name}'"
         )
 
     def on_ready(self, userservice: "models.UserService") -> None:

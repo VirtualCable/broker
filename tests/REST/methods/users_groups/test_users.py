@@ -261,7 +261,11 @@ class UsersTest(rest.test.RESTActorTestCase):
         for user in self.users:
             response = self.client.rest_get(url + f"{user.uuid}/log")
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(response.json()), 4)  # INFO, WARN, ERROR, DEBUG
+            # INFO, WARN, ERROR, DEBUG logs created on setUp. The logged in
+            # user (admins[0] by setUp) has an extra one, written by
+            # log_login when the REST login succeeded.
+            expected = 5 if user is self.admins[0] else 4
+            self.assertEqual(len(response.json()), expected)
 
         # invalid user
         response = self.client.rest_get(url + "invalid/log")

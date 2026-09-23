@@ -97,7 +97,11 @@ class EventType(enum.StrEnum):
     ADMIN_DELETE = "admin.delete"
     # User authentication
     LOGIN = "user.login"
+    LOGIN_FAILED = "user.login_failed"
     LOGOUT = "user.logout"
+    # User session on a user service (VM, published app, RDS session, ...)
+    USER_SERVICE_LOGIN = "userservice.login"
+    USER_SERVICE_LOGOUT = "userservice.logout"
 
     def notify(self, message: str, level: "log.LogLevel | None" = None) -> None:
         """
