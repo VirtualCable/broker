@@ -551,6 +551,13 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         return len(self._args) == 0
 
+    def _add_request_to_params(self) -> None:
+        """
+        Makes the request available to subclasses through the params, as some of
+        them need it on initialization (e.g. to get the user IP or the server name)
+        """
+        self._params["_request"] = self._request
+
     def _perform_create(self) -> dict[str, typing.Any]:
         """
         Common create logic used by both POST (Change G) and PUT (legacy).
@@ -558,9 +565,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         field extraction, pre_save, tag handling, ManagedObjectModel, and
         post_save pipeline.
         """
-        # Append request to _params, may be needed by subclasses
-        # (e.g. to get the user IP, server name, etc.)
-        self._params["_request"] = self._request
+        self._add_request_to_params()
 
         self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
         # On create paths, only "If-Match: *" must trigger 412 (HTTP 428 was removed from
@@ -677,6 +682,8 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             return self._perform_create()
 
         # Here, self.model() indicates an "django model object with default params"
+        self._add_request_to_params()
+
         self.check_access(self.MODEL(), types.permissions.PermissionType.ALL, root=True)
 
         try:
