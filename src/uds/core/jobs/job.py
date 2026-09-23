@@ -56,6 +56,16 @@ class Job(Environmentable):
         except Exception:
             logger.exception("Job %s raised an exception:", self.__class__)
 
+    @classmethod
+    def register(cls: type["Job"]) -> None:
+        """
+        Registers this job with the manager
+        """
+
+        from uds.core import managers  # pylint: disable=import-outside-toplevel
+
+        managers.task_manager().register_job(cls)
+
     def run(self) -> None:
         """
         You must provide your own "run" method to do whatever you need

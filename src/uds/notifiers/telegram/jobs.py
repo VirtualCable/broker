@@ -32,7 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import logging
 import typing
 
-from uds.core import jobs, managers
+from uds.core import jobs
 
 
 from uds.models import Notifier
@@ -62,7 +62,3 @@ class TelegramReceiver(jobs.Job):
                 continue
 
             n.retrieve_messages()
-
-    @staticmethod
-    def register() -> None:
-        managers.task_manager().register_job(TelegramReceiver)

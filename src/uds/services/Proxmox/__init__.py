@@ -29,8 +29,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnusedImport=false
-from uds.core import managers
-
 from .jobs import ProxmoxDeferredRemoval
 from .jobs import ProxmoxVmidReleaser
 
@@ -39,4 +37,4 @@ from .provider import ProxmoxProvider as ProxmoxProvider
 
 # Scheduled task to do clean processes
 for cls in (ProxmoxDeferredRemoval, ProxmoxVmidReleaser):
-    managers.task_manager().register_job(cls)
+    cls.register()

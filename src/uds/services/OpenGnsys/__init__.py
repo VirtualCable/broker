@@ -28,12 +28,11 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from uds.core import managers
-
 from .jobs import OpenGnsysMaintainer
+
 # Make this visible to loaders
 from .provider import OGProvider as OGProvider
 
 # Scheduled task to do clean processes
 for cls in (OpenGnsysMaintainer,):
-    managers.task_manager().register_job(cls)
+    cls.register()

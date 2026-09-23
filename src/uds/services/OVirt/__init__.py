@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2024 Virtual Cable S.L.
 # All rights reserved.
@@ -29,8 +28,6 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-from uds.core import managers
-
 from .jobs import OVirtDeferredRemoval  # OVirtHouseKeeping,
 
 # Make this visible to loaders
@@ -38,4 +35,4 @@ from .provider import OVirtProvider as OVirtProvider
 
 # Scheduled task to do clean processes
 for cls in (OVirtDeferredRemoval,):  # OVirtHouseKeeping,
-    managers.task_manager().register_job(cls)
+    cls.register()
