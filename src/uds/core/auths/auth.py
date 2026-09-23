@@ -221,7 +221,9 @@ def needs_trusted_source(
 # it's designed to be used in ajax calls mainly
 def deny_non_authenticated(view_func: collections.abc.Callable[..., RT]) -> collections.abc.Callable[..., RT]:
     @wraps(view_func)
-    def _wrapped_view(request: "types.requests.ExtendedHttpRequest", *args: typing.Any, **kwargs: typing.Any) -> RT:
+    def _wrapped_view(
+        request: "types.requests.ExtendedHttpRequest", *args: typing.Any, **kwargs: typing.Any
+    ) -> RT:
         if not request.user or not request.authorized:
             return HttpResponseForbidden()  # type: ignore
         return view_func(request, *args, **kwargs)
@@ -256,6 +258,7 @@ def register_user(
             browser=request.os.browser,
             version=request.os.version,
         )
+        types.notifiers.EventType.LOGIN.notify(f"{username} ({request.ip}) via '{authenticator.name}'")
         if not skip_callbacks:
             callbacks.weblogin(usr)
 
@@ -457,7 +460,9 @@ def get_webpassword(request: HttpRequest) -> str:
             typing.cast(typing.Any, request)._scrambler,
         )
     passkey = base64.b64decode(request.session.get(consts.auth.SESSION_PASS_KEY, ""))
-    return CryptoManager.manager().symmetric_decrypt(passkey, uds_cookie(request))  # recover as original unicode string
+    return CryptoManager.manager().symmetric_decrypt(
+        passkey, uds_cookie(request)
+    )  # recover as original unicode string
 
 
 def weblogout(
@@ -489,6 +494,9 @@ def weblogout(
                     events.types.stats.EventType.LOGOUT,
                     username=request.user.name,
                     srcip=request.ip,
+                )
+                types.notifiers.EventType.LOGOUT.notify(
+                    f"{username} ({request.ip}) via '{request.user.manager.name}'"
                 )
             authenticator.hook_web_logout(username, request, HttpResponseRedirect(exit_url or exit_page))
     finally:

@@ -6,6 +6,10 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import dataclasses
 import enum
+import typing
+
+if typing.TYPE_CHECKING:
+    from uds.core.util import log
 
 
 @dataclasses.dataclass(frozen=True)
@@ -74,3 +78,42 @@ class NotificationGroup(enum.Enum):
         if default is None:
             raise ValueError(f"Unknown notification group kind: {kind}")
         return default
+
+
+class EventType(enum.StrEnum):
+    """
+    Auditable event types, delivered as NotificationGroup.EVENT notifications.
+
+    Values are prefixed by domain ("admin.", "user.") so third party consumers
+    (webhook notifiers, ...) can filter by domain or by exact value.
+
+    The "identificator" of the resulting notification is this value, and the
+    "message" is a human readable description of the occurrence.
+    """
+
+    # Administrative CRUD (REST model handlers, master and detail)
+    ADMIN_CREATE = "admin.create"
+    ADMIN_MODIFY = "admin.modify"
+    ADMIN_DELETE = "admin.delete"
+    # User authentication
+    LOGIN = "user.login"
+    LOGOUT = "user.logout"
+
+    def notify(self, message: str, level: "log.LogLevel | None" = None) -> None:
+        """
+        Notifies this event as a NotificationGroup.EVENT notification.
+
+        Args:
+            message: Human readable description of the occurrence
+                (who, where, what)
+            level: Notification level. If None (default), LogLevel.OTHER is
+                used, so the event reaches every EVENT notifier regardless of
+                its configured minimum level
+        """
+        # Imported here to avoid circular imports (types <-> managers / util.log)
+        from uds.core.managers import notifications  # pylint: disable=import-outside-toplevel
+        from uds.core.util import log  # pylint: disable=import-outside-toplevel
+
+        notifications.NotificationsManager.manager().notify(
+            NotificationGroup.EVENT, self.value, level or log.LogLevel.OTHER, message
+        )

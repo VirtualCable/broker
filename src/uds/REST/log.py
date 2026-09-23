@@ -31,9 +31,11 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
+from django.db.models import Model
 from uds import models
 from uds.core import consts
 from uds.core.audit.immutable import ImmutableLogger
+from uds.core.types import notifiers
 
 # Import for REST using this module can access constants easily
 # pylint: disable=unused-import
@@ -184,3 +186,50 @@ def log_audit(handler: "Handler | None", action: str, level: LogLevel = LogLevel
                 "u": username,
             }
         )
+
+
+def notify_event(
+    handler: "Handler | None",
+    event_type: notifiers.EventType,
+    item: "Model | str | None" = None,
+    parent: Model | None = None,
+) -> None:
+    """
+    Notifies an auditable event (EventType) related to a REST operation.
+
+    Composes a human readable message ("username (ip): subject [on Parent 'name']")
+    and sends it through event_type.notify(), as a NotificationGroup.EVENT
+    notification (so EVENT notifiers, i.e. webhooks, receive it).
+
+    Args:
+        handler: REST handler performing the operation (for user and ip)
+        event_type: The EventType being notified
+        item: Affected item (model instance or plain identifier, i.e. an uuid
+            or a descriptive string). If None, only the user/ip is included
+        parent: Parent model for detail operations, appended as context
+    """
+    if handler is None:
+        return
+
+    user: typing.Any = handler.request.user
+    username = user.pretty_name if user else "Unknown"
+    # Defensive: some callers (i.e. MCP REST proxy internals) may provide
+    # plain HttpRequest-ish objects without the extended .ip attribute
+    ip = getattr(handler.request, "ip", "unknown")
+
+    subject = ""
+    if item is not None:
+        if isinstance(item, str):
+            subject = item
+        else:
+            name = getattr(item, "name", "") or str(getattr(item, "uuid", ""))
+            subject = f"{item.__class__.__name__} '{name}'"
+    if parent is not None:
+        parent_name = getattr(parent, "name", "") or str(getattr(parent, "uuid", ""))
+        subject = f"{subject} on {parent.__class__.__name__} '{parent_name}'".strip()
+
+    message = f"{username} ({ip})"
+    if subject:
+        message = f"{message}: {subject}"
+
+    event_type.notify(message)

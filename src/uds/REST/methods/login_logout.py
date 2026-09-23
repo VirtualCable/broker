@@ -322,6 +322,11 @@ class Logout(Handler):
     }
 
     def get(self) -> typing.Any:
+        user = self.request.user
+        if user and user.manager:
+            types.notifiers.EventType.LOGOUT.notify(
+                f"{user.name} ({self.request.ip}) via '{user.manager.name}'"
+            )
         # Remove auth token
         self.clear_auth_token()
         return {"result": "ok"}

@@ -45,6 +45,7 @@ from uds.core.types.rest import T_Item
 from uds.core.util import api as api_utils
 from uds.core.util import model as model_utils
 from uds.core.util.model import process_uuid
+from uds.REST import log as rest_log
 from uds.REST.model.base import BaseModelHandler
 from uds.REST.utils import camel_and_snake_case_from
 from uds.REST.utils import is_camel_case
@@ -332,7 +333,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         _not_used, etag = self._item_with_etag_from_uuuid(parent, item)
         self.check_if_match_header(etag)
 
-        return self.save_item(parent, item)
+        res = self.save_item(parent, item)
+        rest_log.notify_event(self, types.notifiers.EventType.ADMIN_MODIFY, str(item), parent=parent)
+        return res
 
     def post(self) -> typing.Any:
         """
@@ -374,7 +377,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         Common create logic used by both POST (preferred) and PUT (legacy).
         """
         logger.debug("Creating detail item under parent %s", parent)
-        return self.save_item(parent, None)
+        res = self.save_item(parent, None)
+        rest_log.notify_event(self, types.notifiers.EventType.ADMIN_CREATE, parent)
+        return res
 
     def delete(self) -> typing.Any:
         """
@@ -411,7 +416,9 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         if len(self._args) != 1:
             raise exceptions.rest.RequestError("Invalid DELETE request") from None
 
-        self.delete_item(parent, process_uuid(self._args[0]))
+        item_id = process_uuid(self._args[0])
+        self.delete_item(parent, item_id)
+        rest_log.notify_event(self, types.notifiers.EventType.ADMIN_DELETE, item_id, parent=parent)
         return consts.OK
 
     def fallback_get(self) -> typing.Any:

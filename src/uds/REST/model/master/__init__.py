@@ -50,6 +50,7 @@ from uds.core.util import permissions
 from uds.models import ManagedObjectModel
 from uds.models import Tag
 from uds.models import TaggingMixin
+from uds.REST import log as rest_log
 from uds.REST.model.base import BaseModelHandler
 from uds.REST.utils import camel_and_snake_case_from
 from uds.REST.utils import is_camel_case
@@ -604,6 +605,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                 raise
 
             self.post_save(item)
+            rest_log.notify_event(self, types.notifiers.EventType.ADMIN_CREATE, item)
             return res.as_dict()
 
         except IntegrityError:
@@ -725,6 +727,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             res = self.get_item(item)
 
             self.post_save(item)
+            rest_log.notify_event(self, types.notifiers.EventType.ADMIN_MODIFY, item)
             return res.as_dict()
 
         except self.MODEL.DoesNotExist:
@@ -762,6 +765,7 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
             item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
             self.validate_delete(item)
             self.delete_item(item)
+            rest_log.notify_event(self, types.notifiers.EventType.ADMIN_DELETE, item)
         except self.MODEL.DoesNotExist:
             raise exceptions.rest.NotFound("Element do not exists") from None
 
