@@ -291,7 +291,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
             "cache_recommendations",
             True,
             method=types.rest.CustomMethodMethod.GET,
-            description="Cache sizing recommendations for this service pool based on predicted usage patterns",
+            description="Cache sizing recommendations for this service pool based on its usage forecast",
             required_permission=types.permissions.PermissionType.READ,
         ),
     ]

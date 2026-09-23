@@ -63,7 +63,7 @@ BAND_NAMES: typing.Final[dict[str, str]] = {
 class PoolCacheRecommendationsReport(StatsReport):
     filename = "pool_cache_recommendations.pdf"
     name = _("Cache recommendations per pool")
-    description = _("Predicted usage vs configured cache, with suggested cache sizes per pool and band")
+    description = _("Forecast usage vs configured cache, with suggested cache sizes per pool and band")
     uuid = "bb343b7d-1548-407e-b572-01d088ff3afe"
 
     pools = StatsReport.pools
