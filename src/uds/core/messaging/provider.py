@@ -33,6 +33,7 @@ import typing
 from django.utils.translation import gettext_noop as _
 
 from uds.core.module import Module
+from uds.core.types.notifiers import NotificationGroup
 from uds.core.util.log import LogLevel
 
 if typing.TYPE_CHECKING:
@@ -72,6 +73,11 @@ class Notifier(Module):
     # : your own :py:meth:uds.core.module.BaseModule.icon method.
     icon_file: typing.ClassVar[str] = "notifier.png"
 
+    # : Groups of notifications this notifier accepts.
+    # : This is a class level decision (not configurable on administration interface):
+    # : a notifier will only receive notifications belonging to one of these groups.
+    accepts: typing.ClassVar[frozenset[NotificationGroup]] = frozenset((NotificationGroup.LOG,))
+
     _db_obj: "models.Notifier | None" = None
 
     def __init__(self, environment: "Environment", values: "types.core.ValuesType") -> None:
@@ -108,12 +114,14 @@ class Notifier(Module):
             self._db_obj = Notifier.objects.get(uuid__iexact=self.get_uuid())
         return self._db_obj
 
-    def notify(self, group: str, identificator: str, level: LogLevel, message: str) -> None:
+    def notify(self, group: NotificationGroup, identificator: str, level: LogLevel, message: str) -> None:
         """
         This method will be invoked from UDS to notify an event to this notifier.
         This method will be invoked in real time, so ensure this method does not block or
         do any long operations. (use threading if you need to do that)
 
+        :param group: Group of the notification (see uds.core.types.notifiers.NotificationGroup)
+        :param identificator: Identificator of the notification
         :param level: Level of event
         :param message: Message to be shown
         :return: None

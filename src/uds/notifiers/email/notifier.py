@@ -166,7 +166,9 @@ class EmailNotifier(messaging.Notifier):
         # Done
 
     @typing.override
-    def notify(self, group: str, identificator: str, level: messaging.LogLevel, message: str) -> None:
+    def notify(
+        self, group: messaging.NotificationGroup, identificator: str, level: messaging.LogLevel, message: str
+    ) -> None:
         # Send and email with the notification
         with self.login() as smtp:
             try:

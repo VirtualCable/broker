@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -69,7 +68,7 @@ class EmailNotifierTest(UDSTestCase):
         )
 
         notifier.get_instance().notify(
-            "Group",
+            messaging.NotificationGroup.LOG,
             "Identificator",
             messaging.LogLevel.CRITICAL,
             "Test message cañón",

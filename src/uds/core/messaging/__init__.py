@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2022 Virtual Cable S.L.
 # All rights reserved.
@@ -35,6 +34,7 @@ from . import config as config
 from .msgfactory import NotifierFactory as NotifierFactory
 from .provider import LogLevel as LogLevel
 from .provider import Notifier as Notifier
+from uds.core.types.notifiers import NotificationGroup as NotificationGroup
 
 
 def factory() -> NotifierFactory:

@@ -37,6 +37,7 @@ from uds.core import consts
 from uds.core import types
 from uds.core.managers.notifications import NotificationsManager
 from uds.core.managers.task import BaseThread
+from uds.core.types.notifiers import NotificationGroup
 from uds.core.util.model import sql_now
 from uds.models import Notification
 from uds.models import Notifier
@@ -100,15 +101,21 @@ class MessageProcessorThread(BaseThread):
             not_before = sql_now() - datetime.timedelta(seconds=DO_NOT_REPEAT.as_int())
             # Limit to 128 notifications per iteration, to avoid long processing times and memory issues. If there are more, they will be processed in the next iteration.
             for n in Notification.get_persistent_queryset().all()[:128]:
-                # If there are any other notification simmilar to this on default db, skip it
-                # Simmilar means that group, identificator and message are already been logged less than DO_NOT_REPEAT seconds ago
-                # from last time
-                if Notification.objects.filter(
-                    group=n.group,
-                    identificator=n.identificator,
-                    message=n.message,
-                    stamp__gt=not_before,
-                ).exists():
+                # Resolve the group of this notification from its kind stored on db.
+                # Unknown kinds are treated as LOG (same behavior as before groups existed)
+                n_group = NotificationGroup.from_kind(n.group, default=NotificationGroup.LOG)
+                # If the group is not repeatable, skip it if a similar notification has been sent recently
+                # Similar means that group, identificator and message have been already logged less than
+                # DO_NOT_REPEAT seconds ago from last time
+                if (
+                    not n_group.repeatable
+                    and Notification.objects.filter(
+                        group=n.group,
+                        identificator=n.identificator,
+                        message=n.message,
+                        stamp__gt=not_before,
+                    ).exists()
+                ):
                     # Remove it from the persistent db
                     n.delete_persistent()
                     continue
@@ -140,13 +147,13 @@ class MessageProcessorThread(BaseThread):
                     # )
 
                 if notify:
-                    for p in (i[1] for i in self.providers if i[0] >= n.level):
+                    for p in (i[1] for i in self.providers if i[0] >= n.level and n_group in i[1].accepts):
                         # if we are asked to stop, we don't try to send anymore
                         if not self._keep_running:
                             break
                         try:
                             p.notify(
-                                n.group,
+                                n_group,
                                 n.identificator,
                                 types.log.LogLevel.from_int(n.level),
                                 n.message,

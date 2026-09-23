@@ -129,7 +129,9 @@ class TelegramNotifier(messaging.Notifier):
         return super().init_gui()
 
     @typing.override
-    def notify(self, group: str, identificator: str, level: messaging.LogLevel, message: str) -> None:
+    def notify(
+        self, group: messaging.NotificationGroup, identificator: str, level: messaging.LogLevel, message: str
+    ) -> None:
         telegram_msg = f"{group} - {identificator} - {level!s}: {message}"
         logger.debug("Sending telegram message: %s", telegram_msg)
         # load chat_ids

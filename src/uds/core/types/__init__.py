@@ -41,6 +41,7 @@ from . import log as log
 from . import mcp as mcp
 from . import mutability as mutability
 from . import net as net
+from . import notifiers as notifiers
 from . import os as os
 from . import osmanagers as osmanagers
 from . import permissions as permissions

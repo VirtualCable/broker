@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2021 Virtual Cable S.L.
 # All rights reserved.
@@ -40,6 +39,7 @@ from django.apps import apps
 
 from uds.core.types.log import LogLevel
 from uds.core.types.log import LogSource
+from uds.core.types.notifiers import NotificationGroup
 
 try:
     from systemd import journal
@@ -164,7 +164,7 @@ class UDSLogHandler(logging.handlers.RotatingFileHandler):
             return msg
 
         def notify(msg: str, identificator: str, loglevel: LogLevel) -> None:
-            NotificationsManager.manager().notify("log", identificator, loglevel, msg)
+            NotificationsManager.manager().notify(NotificationGroup.LOG, identificator, loglevel, msg)
 
         if apps.ready and record.levelno >= logging.INFO and not UDSLogHandler.emiting:
             try:

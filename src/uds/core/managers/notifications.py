@@ -35,6 +35,7 @@ from django.apps import apps
 from django.db import connections
 
 from uds.core import types
+from uds.core.types.notifiers import NotificationGroup
 from uds.core.util import singleton
 
 
@@ -77,7 +78,12 @@ class NotificationsManager(metaclass=singleton.Singleton):
         return NotificationsManager()  # Singleton pattern will return always the same instance
 
     def notify(
-        self, group: str, identificator: str, level: types.log.LogLevel, message: str, *args: typing.Any
+        self,
+        group: NotificationGroup,
+        identificator: str,
+        level: types.log.LogLevel,
+        message: str,
+        *args: typing.Any,
     ) -> None:
         from uds.models.notifications import Notification  # pylint: disable=import-outside-toplevel
 
@@ -98,7 +104,9 @@ class NotificationsManager(metaclass=singleton.Singleton):
         # Will be processed by UDS backend
         try:
             with Notification.atomic_persistent():
-                notify = Notification(group=group, identificator=identificator, level=level, message=message)
+                notify = Notification(
+                    group=group.kind, identificator=identificator, level=level, message=message
+                )
                 notify.save_persistent()
         except Exception:
             logger.info("Error saving notification %s, %s, %s, %s", group, identificator, level, message)
