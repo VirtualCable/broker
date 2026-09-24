@@ -31,43 +31,19 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import datetime
-import json
 import logging
 import typing
 
 from django.db import models
 
-from uds.core.managers.crypto import CryptoManager
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import properties
-from uds.core.util.model import sql_now
+from uds.core.util.model import EncryptedJSONField, decrypt_json, encrypt_json, sql_now
 
 from .user import User
 from .uuid_model import UUIDModel
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-
-def encrypt_json(value: typing.Any) -> str:
-    """The whole JSON document as one encrypted string, so the database never holds it in clear."""
-    return CryptoManager.manager().encrypt_password(json.dumps(value))
-
-
-def decrypt_json(stored: str) -> typing.Any:
-    """Counterpart of :func:`encrypt_json`."""
-    return json.loads(CryptoManager.manager().decrypt_password(stored))
-
-
-class EncryptedJSONField(models.JSONField):
-    """JSONField stored encrypted with :func:`encrypt_json`; ``None`` stays ``NULL``."""
-
-    def from_db_value(self, value: typing.Any, expression: typing.Any, connection: typing.Any) -> typing.Any:
-        stored = super().from_db_value(value, expression, connection)
-        return None if stored is None else decrypt_json(stored)
-
-    def get_prep_value(self, value: typing.Any) -> typing.Any:
-        return super().get_prep_value(None if value is None else encrypt_json(value))
-
 
 if typing.TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
