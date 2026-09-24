@@ -110,10 +110,10 @@ class FlowStore:
             target_kind=self._target_kind(action_type),
             target_uuid=target_uuid,
             justification=justification,
-            values=values,
             status=FlowActionStatus.PENDING,
         )
-        # Dynamic CAS data lives on Properties (kept out of the row)
+        # Payload and dynamic CAS data live on (encrypted) Properties, kept out of the row
+        action.values = values
         action.base_values = base_values
         action.base_etag = base_etag
         return action
@@ -146,7 +146,7 @@ class FlowStore:
         action.justification = justification
         action.base_values = base_values
         action.base_etag = base_etag
-        action.save(update_fields=["values", "justification"])
+        action.save(update_fields=["justification"])
         # Fresh base: any stale display cache is void
         action.properties.pop("snap_info", None)
         return action

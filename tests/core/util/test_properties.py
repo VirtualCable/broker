@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -73,3 +74,22 @@ class PropertiesTest(UDSTestCase):
 
             prop = models.Properties.objects.get(owner_id=us.uuid, owner_type="userservice", key=key)
             self.assertEqual(prop.value, value)
+
+    def testEncryptedProperties(self) -> None:
+        """
+        Encrypted properties store the value encrypted (the key stays in clear) and read it back as stored
+        """
+        us = self.user_services[0]
+        value = {"name": "x", "password": "s3cr3t-value"}
+
+        us.encrypted_properties["secret"] = value
+
+        prop = models.Properties.objects.get(owner_id=us.uuid, owner_type="userservice", key="secret")
+        self.assertIsInstance(prop.value, str)
+        self.assertNotIn("s3cr3t-value", prop.value)
+        self.assertEqual(us.encrypted_properties["secret"], value)
+        self.assertEqual(us.encrypted_properties.get("secret"), value)
+        self.assertEqual(dict(us.encrypted_properties.items()), {"secret": value})
+        self.assertEqual(list(us.encrypted_properties.values()), [value])
+        self.assertEqual(us.encrypted_properties.pop("secret"), value)
+        self.assertNotIn("secret", us.encrypted_properties)

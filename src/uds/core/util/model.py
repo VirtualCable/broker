@@ -31,7 +31,6 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import datetime
-import json
 import logging
 import re
 import threading
@@ -205,22 +204,14 @@ def get_position_in_queryset(obj: typing.Any, queryset: typing.Any) -> int:
         return -1
 
 
-def encrypt_json(value: typing.Any) -> str:
-    """The whole JSON document as one encrypted string, so the database never holds it in clear."""
-    return CryptoManager.manager().encrypt_password(json.dumps(value))
-
-
-def decrypt_json(stored: str) -> typing.Any:
-    """Counterpart of :func:`encrypt_json`."""
-    return json.loads(CryptoManager.manager().decrypt_password(stored))
-
-
 class EncryptedJSONField(models.JSONField):
-    """JSONField stored encrypted with :func:`encrypt_json`; ``None`` stays ``NULL``."""
+    """JSONField stored encrypted (``CryptoManager.encrypt_json``); ``None`` stays ``NULL``."""
 
+    @typing.override
     def from_db_value(self, value: typing.Any, expression: typing.Any, connection: typing.Any) -> typing.Any:
         stored = super().from_db_value(value, expression, connection)
-        return None if stored is None else decrypt_json(stored)
+        return None if stored is None else CryptoManager.manager().decrypt_json(stored)
 
+    @typing.override
     def get_prep_value(self, value: typing.Any) -> typing.Any:
-        return super().get_prep_value(None if value is None else encrypt_json(value))
+        return super().get_prep_value(None if value is None else CryptoManager.manager().encrypt_json(value))
