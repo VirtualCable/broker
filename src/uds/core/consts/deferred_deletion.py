@@ -34,7 +34,7 @@ import datetime
 import typing
 
 MAX_FATAL_ERROR_RETRIES: typing.Final[int] = 16
-MAX_RETRAYABLE_ERROR_RETRIES: typing.Final[int] = 8192  # Max retries before giving up at most 72 hours
+MAX_RETRAYABLE_ERROR_RETRIES: typing.Final[int] = 8192  # Max retries before giving up (~25h at base CHECK_INTERVAL, more with delay rates)
 # Retries to stop again or to shutdown again in STOPPING_GROUP or DELETING_GROUP
 RETRIES_TO_RETRY: typing.Final[int] = 32
 MAX_DELETIONS_AT_ONCE: typing.Final[int] = 32
