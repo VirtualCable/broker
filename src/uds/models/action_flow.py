@@ -52,14 +52,8 @@ def encrypt_json(value: typing.Any) -> str:
     return CryptoManager.manager().encrypt_password(json.dumps(value))
 
 
-def decrypt_json(stored: typing.Any) -> typing.Any:
-    """Counterpart of :func:`encrypt_json`.
-
-    Rows written before encryption hold the JSON document itself (never a
-    string), and are returned unchanged.
-    """
-    if not isinstance(stored, str):
-        return stored
+def decrypt_json(stored: str) -> typing.Any:
+    """Counterpart of :func:`encrypt_json`."""
     return json.loads(CryptoManager.manager().decrypt_password(stored))
 
 
@@ -67,7 +61,8 @@ class EncryptedJSONField(models.JSONField):
     """JSONField stored encrypted with :func:`encrypt_json`; ``None`` stays ``NULL``."""
 
     def from_db_value(self, value: typing.Any, expression: typing.Any, connection: typing.Any) -> typing.Any:
-        return decrypt_json(super().from_db_value(value, expression, connection))
+        stored = super().from_db_value(value, expression, connection)
+        return None if stored is None else decrypt_json(stored)
 
     def get_prep_value(self, value: typing.Any) -> typing.Any:
         return super().get_prep_value(None if value is None else encrypt_json(value))
@@ -227,10 +222,14 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     def get_owner_id_and_type(self) -> tuple[str, str]:
         return self.uuid, "flowaction"
 
+    def _decrypted_property(self, key: str) -> typing.Any:
+        stored = self.properties.get(key)
+        return {} if stored is None else decrypt_json(stored)
+
     @property
     def base_values(self) -> dict[str, typing.Any]:
         """CAS snapshot of the touched fields, taken at proposal time."""
-        return typing.cast("dict[str, typing.Any]", decrypt_json(self.properties.get("base_values", {})))
+        return typing.cast("dict[str, typing.Any]", self._decrypted_property("base_values"))
 
     @base_values.setter
     def base_values(self, value: dict[str, typing.Any]) -> None:
@@ -265,7 +264,7 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         ``approved_etag``; empty until approved, cleared when the action
         is skipped.
         """
-        return typing.cast("dict[str, typing.Any]", decrypt_json(self.properties.get("approved_values", {})))
+        return typing.cast("dict[str, typing.Any]", self._decrypted_property("approved_values"))
 
     @approved_values.setter
     def approved_values(self, value: dict[str, typing.Any]) -> None:
@@ -277,7 +276,7 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         Display data for the admin diff (target name, current values at
         approval time, field definitions, ...), stored on Properties.
         """
-        return typing.cast("dict[str, typing.Any]", decrypt_json(self.properties.get("snap_info", {})))
+        return typing.cast("dict[str, typing.Any]", self._decrypted_property("snap_info"))
 
     @snap_info.setter
     def snap_info(self, value: dict[str, typing.Any]) -> None:

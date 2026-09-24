@@ -29,12 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import importlib
 import typing
 
-from django.apps import apps
 from django.db import connection
-from django.db.models import JSONField, Value
 
 from uds import models
 from uds.core.util.model import sql_now
@@ -182,32 +179,3 @@ class ActionFlowModelTest(UDSTestCase):
 
         self.assertTrue(FlowAction.objects.filter(pk=action.pk, values__isnull=True).exists())
         self.assertIsNone(FlowAction.objects.get(pk=action.pk).values)
-
-    def _legacy_clear_action(self) -> FlowAction:
-        """An action as written before encryption: clear JSON in the column and on Properties."""
-        flow = ActionFlow.objects.create(name="flow 1")
-        action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.update")
-        FlowAction.objects.filter(pk=action.pk).update(
-            values=Value({"name": "old"}, output_field=JSONField())
-        )
-        action.properties["base_values"] = {"name": "before"}
-        return action
-
-    def test_rows_written_before_encryption_are_read(self) -> None:
-        action = self._legacy_clear_action()
-
-        reloaded = FlowAction.objects.get(pk=action.pk)
-        self.assertEqual(reloaded.values, {"name": "old"})
-        self.assertEqual(reloaded.base_values, {"name": "before"})
-
-    def test_migration_encrypts_rows_written_before(self) -> None:
-        action = self._legacy_clear_action()
-        migration = importlib.import_module("uds.migrations.0055_flowaction_encrypt_at_rest")
-
-        migration.encrypt_existing(apps, None)
-
-        self.assertNotIn("old", self._raw_values_column(action))
-        self.assertIsInstance(self._raw_property(action, "base_values"), str)
-        reloaded = FlowAction.objects.get(pk=action.pk)
-        self.assertEqual(reloaded.values, {"name": "old"})
-        self.assertEqual(reloaded.base_values, {"name": "before"})
