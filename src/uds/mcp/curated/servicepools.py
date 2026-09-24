@@ -57,7 +57,7 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
         master_custom_tool(
             name="get_servicepool_cache_recommendations",
             title="Get service pool cache recommendations",
-            description="Cache sizing recommendations for a service pool based on predicted usage patterns.",
+            description="Cache sizing recommendations for a service pool based on its usage forecast.",
             handler=ServicesPools,
             path="servicespools",
             custom_name="cache_recommendations",

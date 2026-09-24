@@ -423,7 +423,7 @@ class ServicePoolTest(rest.test.RESTTestCase):
         self.assertEqual(len(body["points"]), 72)  # default hours
 
     def test_get_forecast_with_data(self) -> None:
-        """GET forecast on a pool with stats returns predicted points."""
+        """GET forecast on a pool with stats returns forecast points."""
         Cache.delete(pred_consts.PROFILE_CACHE_OWNER)
         pool = self._create_pool_for_fallback_tests()
         self._create_forecast_data(pool, hours=24)
