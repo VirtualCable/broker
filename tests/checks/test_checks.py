@@ -79,6 +79,9 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "internal-errors-24h",
         # E-family (webhook_queue.py)
         "webhook-queue-size",
+        # HEALTH family (deferred_deletion.py, publications.py)
+        "deferred-deletion-stuck",
+        "stuck-publications",
     )
 )
 
@@ -857,7 +860,16 @@ class ChecksTest(UDSTransactionTestCase):
         health_ids = {result.id for result in runner_module.run_checks(types.checks.CheckCategory.HEALTH)}
         security_ids = {result.id for result in runner_module.run_checks(types.checks.CheckCategory.SECURITY)}
 
-        self.assertEqual(health_ids, {"webhook-queue-size", "internal-errors-24h", "restrained-service-pools"})
+        self.assertEqual(
+            health_ids,
+            {
+                "webhook-queue-size",
+                "internal-errors-24h",
+                "restrained-service-pools",
+                "deferred-deletion-stuck",
+                "stuck-publications",
+            },
+        )
         self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)
         self.assertEqual(len(health_ids & security_ids), 0)
 

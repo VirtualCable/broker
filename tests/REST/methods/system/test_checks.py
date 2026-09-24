@@ -53,11 +53,20 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "internal-errors-24h",
         # E-family (webhook_queue.py)
         "webhook-queue-size",
+        # HEALTH family (deferred_deletion.py, publications.py)
+        "deferred-deletion-stuck",
+        "stuck-publications",
     )
 )
 
 EXPECTED_HEALTH_IDS: typing.Final[frozenset[str]] = frozenset(
-    ("webhook-queue-size", "internal-errors-24h", "restrained-service-pools")
+    (
+        "webhook-queue-size",
+        "internal-errors-24h",
+        "restrained-service-pools",
+        "deferred-deletion-stuck",
+        "stuck-publications",
+    )
 )
 
 

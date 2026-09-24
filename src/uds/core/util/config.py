@@ -645,6 +645,27 @@ class GlobalConfig:
         type=Config.FieldType.NUMERIC,
         help=_('Max time needed to get a service "fully removed" before it\'s considered "failed" and purged'),
     )
+    # Max time an element may remain in the deferred deletion queues (to_stop,
+    # stopping, to_delete, deleting) before the self-assessment check flags it
+    # as stuck. Time is in seconds.
+    MAX_DEFERRED_DELETION_TIME: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
+        "maxDeferredDeletionTime",
+        "86400",
+        type=Config.FieldType.NUMERIC,
+        help=_("Max time (seconds) an element may remain in deferred deletion queues before being flagged as stuck"),
+    )
+    # Max time a service pool publication may remain in a transitional state
+    # (preparing, removing, canceling) before the self-assessment check flags
+    # it as stuck. Time is in seconds.
+    MAX_PUBLICATION_TIME: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
+        "maxPublicationTime",
+        "14400",
+        type=Config.FieldType.NUMERIC,
+        help=_(
+            "Max time (seconds) a publication may remain in a transitional state (preparing, removing, canceling)"
+            " before being flagged as stuck"
+        ),
+    )
     # Maximum logs per every log-capable administration element
     INDIVIDIAL_LOG_MAX_ELEMENTS: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "maxLogPerElement",
