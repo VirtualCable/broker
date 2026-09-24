@@ -73,6 +73,7 @@ class UDSAppConfig(AppConfig):
 
         from . import services as services
         from . import auths as auths
+        from . import checks as checks
         from . import mfas as mfas
         from . import osmanagers as osmanagers
         from . import notifiers as notifiers

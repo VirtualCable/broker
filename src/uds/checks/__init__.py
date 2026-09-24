@@ -28,34 +28,38 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Registry of self-assessment checks, keyed by their stable id.
+Concrete self-assessment checks for the OpenUDS broker.
 
-Check classes are inserted here by the auto-discovery of :mod:`uds.checks`
-(the same mechanism used by ``uds.services``, ``uds.auths``, ...) so new
-checks never need to touch this module or the runner.
+One class, one check: every :class:`uds.core.checks.Check` subclass found
+under this package is auto-registered at import time (same mechanism as
+``uds.services``, ``uds.auths``, ...) in the checks factory, keyed by its
+``id``.
+
+To add a new check, simply create a subclass in any module of this package
+defining ``id``, ``category`` and :meth:`uds.core.checks.Check.run`. Nothing
+else needs to be touched.
 """
 
 import logging
 
-from uds.core.util import factory
-
-from .base import Check
+from uds.core.checks import Check, ChecksFactory
+from uds.core.util import modfinder
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class ChecksFactory(factory.Factory[Check]):
-    """Registry of self-assessment checks keyed by stable id."""
+def __load_modules() -> None:
+    """Imports every module of this package and registers the check classes found.
 
-    def insert(self, check: type[Check]) -> None:
-        """
-        Registers a check class under its own ``id``.
+    Classes with an empty ``id`` (base or intermediate helper classes) are
+    skipped by the factory itself.
+    """
+    modfinder.dynamically_load_and_register_packages(
+        ChecksFactory().insert,
+        Check,
+        __name__,
+        checker=lambda cls: bool(cls.id),
+    )
 
-        Classes without an ``id`` (base or intermediate helper classes) are
-        skipped: they are not runnable checks.
-        """
-        if not check.id:
-            logger.debug("Check %s has no id, not registering it", check)
-            return
 
-        super().register(check.id, check)
+__load_modules()

@@ -28,7 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Tests for the self-assessment checks (uds.core.checks).
+Tests for the self-assessment checks (uds.checks).
 """
 
 import datetime
@@ -40,13 +40,12 @@ from django.utils import timezone
 from uds import models
 from uds.core import consts
 from uds.core import types
+from uds.core.checks import Check, CheckOutcome
 from uds.core.checks import runner as runner_module
-from uds.core.checks import CheckOutcome
-from uds.core.checks.factory import CheckEntry
 from uds.core.util.config import GlobalConfig
 
-from ...fixtures import services as services_fixtures
-from ...utils.test import UDSTransactionTestCase
+from ..fixtures import services as services_fixtures
+from ..utils.test import UDSTransactionTestCase
 
 ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
     (
@@ -263,7 +262,7 @@ class ChecksTest(UDSTransactionTestCase):
     # Check 10: old (legacy uuid) actor token flow
     # ------------------------------------------------------------------
     def _create_userservice_with_actor_version(self, version: str) -> models.UserService:
-        from ...fixtures import authenticators as authenticators_fixtures
+        from ..fixtures import authenticators as authenticators_fixtures
 
         auth = authenticators_fixtures.create_db_authenticator()
         groups = authenticators_fixtures.create_db_groups(auth, 1)
@@ -892,22 +891,18 @@ class ChecksTest(UDSTransactionTestCase):
             self.assertEqual(report["categories"][category.value], expected)
 
     def test_failing_check_does_not_abort_scan(self) -> None:
-        def broken() -> CheckOutcome:
-            raise RuntimeError("boom")
+        class BrokenCheck(Check):
+            id: typing.ClassVar[str] = "trusted-sources-wildcard"
+            category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+
+            @typing.override
+            def run(self) -> CheckOutcome:
+                raise RuntimeError("boom")
 
         original = runner_module._collect_checks
 
-        def patched() -> list[tuple[str, CheckEntry]]:
-            return [
-                (
-                    cid,
-                    CheckEntry(
-                        fn=broken if cid == "trusted-sources-wildcard" else entry.fn,
-                        category=entry.category,
-                    ),
-                )
-                for cid, entry in original()
-            ]
+        def patched() -> list[tuple[str, type[Check]]]:
+            return [(cid, BrokenCheck if cid == "trusted-sources-wildcard" else cls) for cid, cls in original()]
 
         with mock.patch.object(runner_module, "_collect_checks", new=patched):
             result = self._run_check("trusted-sources-wildcard")

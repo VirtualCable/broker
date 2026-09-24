@@ -30,9 +30,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 Runner that executes the self-assessment checks.
 
-Separated from :mod:`uds.core.checks.__init__` so the package can expose a flat
-namespace (factory, groups, ...) while keeping the actual ``run_checks`` /
-``build_report`` entry points in their own module.
+Separated from :mod:`uds.core.checks.__init__` so the package can expose a
+flat namespace (base class, factory, ...) while keeping the actual
+``run_checks`` / ``build_report`` entry points in their own module.
 """
 
 import logging
@@ -42,18 +42,19 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 
-from .factory import CheckEntry, ChecksFactory
+from .base import Check
+from .factory import ChecksFactory
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _collect_checks() -> list[tuple[str, CheckEntry]]:
-    """Returns the current registered checks as ``[(id, entry), ...]``.
+def _collect_checks() -> list[tuple[str, type[Check]]]:
+    """Returns the current registered checks as ``[(id, check_class), ...]``.
 
     Extracted so tests can monkey-patch the iteration source instead of
     mutating the singleton factory.
     """
-    return list(typing.cast("dict[str, CheckEntry]", ChecksFactory().objects()).items())
+    return list(ChecksFactory().objects().items())
 
 
 def run_checks(category: types.checks.CheckCategory | None = None) -> list[types.checks.CheckResult]:
@@ -65,11 +66,11 @@ def run_checks(category: types.checks.CheckCategory | None = None) -> list[types
     aborting the whole scan, so a single broken check never hides the rest.
     """
     results: list[types.checks.CheckResult] = []
-    for check_id, entry in _collect_checks():
-        if category is not None and entry.category is not category:
+    for check_id, check_class in _collect_checks():
+        if category is not None and check_class.category is not category:
             continue
         try:
-            severity, ok, message = entry.fn()
+            severity, ok, message = check_class().run()
         except Exception as e:
             logger.exception("Check %s could not be evaluated", check_id)
             results.append(
@@ -78,13 +79,13 @@ def run_checks(category: types.checks.CheckCategory | None = None) -> list[types
                     severity=types.checks.CheckSeverity.INFO,
                     ok=False,
                     message=_("Check could not be evaluated: {error}").format(error=e),
-                    category=entry.category,
+                    category=check_class.category,
                 )
             )
             continue
         results.append(
             types.checks.CheckResult(
-                id=check_id, severity=severity, ok=ok, message=message, category=entry.category
+                id=check_id, severity=severity, ok=ok, message=message, category=check_class.category
             )
         )
 

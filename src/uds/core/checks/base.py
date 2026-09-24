@@ -28,34 +28,50 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Registry of self-assessment checks, keyed by their stable id.
+Base class for the self-assessment checks.
 
-Check classes are inserted here by the auto-discovery of :mod:`uds.checks`
-(the same mechanism used by ``uds.services``, ``uds.auths``, ...) so new
-checks never need to touch this module or the runner.
+One subclass of :class:`Check` is one check. Concrete checks live in
+:mod:`uds.checks` (auto-discovered, like ``uds.services`` or ``uds.auths``)
+and must define the ``id`` and ``category`` class variables and implement
+:meth:`Check.run`.
 """
 
-import logging
+import typing
 
-from uds.core.util import factory
+from uds.core import types
 
-from .base import Check
+# A check evaluates a single condition and returns a ``CheckOutcome``: its
+# severity, whether it passes and a human readable detail. The severity is
+# part of the outcome (not a class attribute) because several checks graduate
+# it depending on the observed magnitude.
+CheckOutcome: typing.TypeAlias = tuple[types.checks.CheckSeverity, bool, str]
 
-logger: logging.Logger = logging.getLogger(__name__)
 
+class Check:
+    """Base class for every self-assessment check.
 
-class ChecksFactory(factory.Factory[Check]):
-    """Registry of self-assessment checks keyed by stable id."""
+    Concrete checks must define:
 
-    def insert(self, check: type[Check]) -> None:
+    - ``id``: stable machine-readable identifier (e.g. ``"debug-enabled"``).
+      Base and intermediate helper classes leave it empty, which keeps them
+      out of the registry.
+    - ``category``: the :class:`uds.core.types.checks.CheckCategory` the
+      check belongs to (security or health).
+
+    and implement :meth:`run`.
+    """
+
+    #: Stable machine-readable identifier. Empty on base/helper classes.
+    id: typing.ClassVar[str] = ""
+
+    #: Area the check belongs to.
+    category: typing.ClassVar[types.checks.CheckCategory]
+
+    def run(self) -> CheckOutcome:
+        """Evaluates the check condition.
+
+        Returns:
+            A :data:`CheckOutcome` tuple: severity, whether the check passes
+            and a human readable detail.
         """
-        Registers a check class under its own ``id``.
-
-        Classes without an ``id`` (base or intermediate helper classes) are
-        skipped: they are not runnable checks.
-        """
-        if not check.id:
-            logger.debug("Check %s has no id, not registering it", check)
-            return
-
-        super().register(check.id, check)
+        raise NotImplementedError

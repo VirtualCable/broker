@@ -39,8 +39,7 @@ import typing
 from django.utils.translation import gettext as _
 
 from uds.core import types
-
-from .factory import ChecksFactory, CheckOutcome
+from uds.core.checks import Check, CheckOutcome
 
 # Soft threshold: warn that the queue is growing
 SOFT_THRESHOLD: typing.Final[int] = 2000
@@ -48,36 +47,38 @@ SOFT_THRESHOLD: typing.Final[int] = 2000
 HARD_THRESHOLD: typing.Final[int] = 10000
 
 
-def _check_webhook_queue_size() -> CheckOutcome:
-    # Imported here to avoid pulling notifier modules unless this check runs
-    from uds.notifiers.webhook import queue
+class WebhookQueueSizeCheck(Check):
+    """Webhook notification queue size within control."""
 
-    count = queue.pending_count()
-    if count > HARD_THRESHOLD:
+    id: typing.ClassVar[str] = "webhook-queue-size"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        # Imported here to avoid pulling notifier modules unless this check runs
+        from uds.notifiers.webhook import queue
+
+        count = queue.pending_count()
+        if count > HARD_THRESHOLD:
+            return (
+                types.checks.CheckSeverity.HIGH,
+                False,
+                _(
+                    "Webhook notification queue holds {n} pending events (near the {cap} enqueue cap)."
+                    " Check the destination endpoints: undeliverable events will be dropped when the cap is reached."
+                ).format(n=count, cap=queue.MAX_PENDING),
+            )
+        if count > SOFT_THRESHOLD:
+            return (
+                types.checks.CheckSeverity.MEDIUM,
+                False,
+                _(
+                    "Webhook notification queue is growing ({n} pending events)."
+                    " Some webhook endpoint is probably failing or unreachable."
+                ).format(n=count),
+            )
         return (
-            types.checks.CheckSeverity.HIGH,
-            False,
-            _(
-                "Webhook notification queue holds {n} pending events (near the {cap} enqueue cap)."
-                " Check the destination endpoints: undeliverable events will be dropped when the cap is reached."
-            ).format(n=count, cap=queue.MAX_PENDING),
+            types.checks.CheckSeverity.INFO,
+            True,
+            _("Webhook notification queue size is under control ({n} pending events).").format(n=count),
         )
-    if count > SOFT_THRESHOLD:
-        return (
-            types.checks.CheckSeverity.MEDIUM,
-            False,
-            _(
-                "Webhook notification queue is growing ({n} pending events)."
-                " Some webhook endpoint is probably failing or unreachable."
-            ).format(n=count),
-        )
-    return (
-        types.checks.CheckSeverity.INFO,
-        True,
-        _("Webhook notification queue size is under control ({n} pending events).").format(n=count),
-    )
-
-
-def register_checks(factory: ChecksFactory) -> None:
-    """Registers the webhook queue checks into the shared factory."""
-    factory.register_check("webhook-queue-size", _check_webhook_queue_size, types.checks.CheckCategory.HEALTH)
