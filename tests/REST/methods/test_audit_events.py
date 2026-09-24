@@ -9,6 +9,7 @@ import typing
 from unittest import mock
 
 from uds.core import types
+from uds.core.audit.immutable import ImmutableLogger
 from uds.core.managers import notifications as notifications_module
 from uds.core.types import notifiers
 
@@ -39,7 +40,11 @@ class AuditEventsTest(rest.test.RESTTestCase):
         url = f"authenticators/{self.auth.uuid}/users"
         user_dct = rest_fixtures.createUser(groups=[self.simple_groups[0].uuid])
 
-        with mock.patch.object(notifications_module.NotificationsManager, "notify") as notify:
+        with (
+            mock.patch.object(notifications_module.NotificationsManager, "notify") as notify,
+            mock.patch.object(ImmutableLogger, "is_enabled", return_value=True),
+            mock.patch.object(ImmutableLogger, "append_object") as append,
+        ):
             response = self.client.rest_put(url, user_dct)
 
         self.assertEqual(response.status_code, 200)
@@ -50,6 +55,10 @@ class AuditEventsTest(rest.test.RESTTestCase):
         self.assertIn(self.admins[0].pretty_name, message_of(calls[0]))
         self.assertIn(self.auth.name, message_of(calls[0]))
         self.assertEqual(events_of(notify, notifiers.EventType.REST_OPERATION), [])
+        # The unified chokepoint writes the immutable audit entry too
+        self.assertEqual(append.call_count, 1)
+        self.assertEqual(append.call_args.args[0]["t"], "rest")
+        self.assertEqual(append.call_args.args[0]["m"], "PUT")
 
     def test_detail_user_modify_emits_rest_update(self) -> None:
         url = f"authenticators/{self.auth.uuid}/users"
@@ -138,7 +147,11 @@ class AuditEventsTest(rest.test.RESTTestCase):
 
     def test_login_emits_login_event(self) -> None:
         client = UDSClient()
-        with mock.patch.object(notifications_module.NotificationsManager, "notify") as notify:
+        with (
+            mock.patch.object(notifications_module.NotificationsManager, "notify") as notify,
+            mock.patch.object(ImmutableLogger, "is_enabled", return_value=True),
+            mock.patch.object(ImmutableLogger, "append_object") as append,
+        ):
             response = client.post(
                 "/uds/rest/auth/login",
                 data={
@@ -154,6 +167,14 @@ class AuditEventsTest(rest.test.RESTTestCase):
         self.assertEqual(len(calls), 1)
         self.assertIn(self.admins[0].name, message_of(calls[0]))
         self.assertIn(self.auth.name, message_of(calls[0]))
+        # Non model handlers (auth) go the semantic path: no rest.* event and
+        # no "rest" audit entry (log_login writes the "login" one instead)
+        self.assertEqual(events_of(notify, notifiers.EventType.REST_OPERATION), [])
+        self.assertEqual(
+            [call for call in append.call_args_list if call.args[0].get("t") == "rest"],
+            [],
+        )
+        self.assertEqual(append.call_args.args[0]["t"], "login")
 
     def test_failed_login_emits_login_failed_event(self) -> None:
         client = UDSClient()

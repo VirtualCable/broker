@@ -195,11 +195,24 @@ def log_operation(handler: "Handler | None", response_code: int, level: LogLevel
         source=LogSource.REST,
     )
 
+    # Immutable audit and event notification derive from the very same
+    # decision, so they cannot diverge: only successful mutations on model
+    # handlers produce both a "rest" audit entry and a rest.* event.
+    # Handlers without model (actor, auth, system, tickets, ...) and read
+    # methods are skipped here; their semantic facts, when they exist, are
+    # emitted (and audited) from their own emission points (i.e. log_login
+    # writes the "login"/"logout" audit entries and the user.* events)
+    event_type = _rest_event_type(handler) if response_code < 400 else None
+    if event_type is None:
+        return
+
+    method = (handler.request.method or "").upper()
+
     if ImmutableLogger.is_enabled():
         ImmutableLogger.append_object(
             {
                 "t": "rest",
-                "m": handler.request.method,
+                "m": method,
                 "p": path,
                 "c": response_code,
                 "i": handler.request.ip,
@@ -207,13 +220,7 @@ def log_operation(handler: "Handler | None", response_code: int, level: LogLevel
             }
         )
 
-    # Auditable event notification for successful mutations, derived from the
-    # request itself (same audit information, converted to an event)
-    if response_code < 400:
-        event_type = _rest_event_type(handler)
-        if event_type is not None:
-            method = (handler.request.method or "").upper()
-            event_type.notify(f"{username} ({handler.request.ip}): {method} {path}")
+    event_type.notify(f"{username} ({handler.request.ip}): {method} {path}")
 
 
 def log_audit(handler: "Handler | None", action: str, level: LogLevel = LogLevel.INFO) -> None:

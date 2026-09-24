@@ -35,6 +35,7 @@ import typing
 from django.utils.translation import gettext_noop as _
 
 from uds.core import types
+from uds.core.audit.immutable import ImmutableLogger
 from uds.core.module import Module
 from uds.core.types.states import State
 from uds.core.util import log
@@ -300,6 +301,18 @@ class OSManager(Module):
             counter = int(typing.cast(str, p.get("logins_counter", 0))) + 1
             p["logins_counter"] = counter
 
+        if ImmutableLogger.is_enabled():
+            ImmutableLogger.append_object(
+                {
+                    "t": "userservice",
+                    "r": "login",
+                    "u": username,
+                    "i": know_user_ip,
+                    "s": userservice.friendly_name,
+                    "p": userservice.deployed_service.name,
+                }
+            )
+
         types.notifiers.EventType.USER_SERVICE_LOGIN.notify(
             f"{username} ({know_user_ip}) on '{userservice.friendly_name}'"
         )
@@ -361,6 +374,18 @@ class OSManager(Module):
             userservice.friendly_name,
             userservice.deployed_service.name,
         )
+
+        if ImmutableLogger.is_enabled():
+            ImmutableLogger.append_object(
+                {
+                    "t": "userservice",
+                    "r": "logout",
+                    "u": username,
+                    "i": known_user_ip,
+                    "s": userservice.friendly_name,
+                    "p": userservice.deployed_service.name,
+                }
+            )
 
         types.notifiers.EventType.USER_SERVICE_LOGOUT.notify(
             f"{username} ({known_user_ip}) on '{userservice.friendly_name}'"

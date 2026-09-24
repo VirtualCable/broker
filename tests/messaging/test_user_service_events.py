@@ -8,6 +8,7 @@ the call arguments are asserted instead.
 import typing
 from unittest import mock
 
+from uds.core.audit.immutable import ImmutableLogger
 from uds.core.managers import notifications as notifications_module
 from uds.core.osmanagers.osmanager import OSManager
 from uds.core.types import notifiers
@@ -42,6 +43,23 @@ class UserServiceEventsTest(rest.test.RESTTestCase):
         self.assertIn("remote-user", message_of(calls[0]))
         self.assertIn(userservice.friendly_name, message_of(calls[0]))
 
+    def test_logged_in_writes_immutable_audit_entry(self) -> None:
+        userservice = self.user_service_managed
+
+        with (
+            mock.patch.object(ImmutableLogger, "is_enabled", return_value=True),
+            mock.patch.object(ImmutableLogger, "append_object") as append,
+        ):
+            OSManager.logged_in(userservice, "remote-user")
+
+        self.assertEqual(append.call_count, 1)
+        entry = append.call_args.args[0]
+        self.assertEqual(entry["t"], "userservice")
+        self.assertEqual(entry["r"], "login")
+        self.assertEqual(entry["u"], "remote-user")
+        self.assertEqual(entry["s"], userservice.friendly_name)
+        self.assertEqual(entry["p"], userservice.deployed_service.name)
+
     def test_logged_out_emits_user_service_logout(self) -> None:
         userservice = self.user_service_managed
         OSManager.logged_in(userservice, "remote-user")
@@ -53,6 +71,22 @@ class UserServiceEventsTest(rest.test.RESTTestCase):
         self.assertEqual(len(calls), 1)
         self.assertIn("remote-user", message_of(calls[0]))
         self.assertIn(userservice.friendly_name, message_of(calls[0]))
+
+    def test_logged_out_writes_immutable_audit_entry(self) -> None:
+        userservice = self.user_service_managed
+        OSManager.logged_in(userservice, "remote-user")
+
+        with (
+            mock.patch.object(ImmutableLogger, "is_enabled", return_value=True),
+            mock.patch.object(ImmutableLogger, "append_object") as append,
+        ):
+            OSManager.logged_out(userservice, "remote-user")
+
+        self.assertEqual(append.call_count, 1)
+        entry = append.call_args.args[0]
+        self.assertEqual(entry["t"], "userservice")
+        self.assertEqual(entry["r"], "logout")
+        self.assertEqual(entry["u"], "remote-user")
 
     def test_exclusive_logout_does_not_emit(self) -> None:
         """With exclusive logout enabled, a logout with pending sessions

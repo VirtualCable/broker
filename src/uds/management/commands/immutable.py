@@ -61,6 +61,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 _FILTERS: dict[str, set[str]] = {
     "rest_log": {"rest"},
     "login_log": {"login", "logout"},
+    "userservice_log": {"userservice"},
 }
 
 # -- readable formatters --------------------------------------------------
@@ -110,10 +111,31 @@ class _LoginLogFormatter:
         return ["sequence", "stamp", "type", "authenticator", "username", "ip", "os", "result", "error"]
 
 
+class _UserServiceLogFormatter:
+    """Formats a user service session (login/logout) entry into readable fields."""
+
+    @staticmethod
+    def format(entry: ImmutableLog, obj: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        return {
+            "sequence": entry.sequence,
+            "stamp": entry.stamp.isoformat(),
+            "action": obj.get("r", ""),
+            "username": obj.get("u", ""),
+            "ip": obj.get("i", ""),
+            "service": obj.get("s", ""),
+            "pool": obj.get("p", ""),
+        }
+
+    @staticmethod
+    def csv_fields() -> list[str]:
+        return ["sequence", "stamp", "action", "username", "ip", "service", "pool"]
+
+
 # Map filter name → formatter
-_FORMATTERS: dict[str, type[_RestLogFormatter | _LoginLogFormatter]] = {
+_FORMATTERS: dict[str, type[_RestLogFormatter | _LoginLogFormatter | _UserServiceLogFormatter]] = {
     "rest_log": _RestLogFormatter,
     "login_log": _LoginLogFormatter,
+    "userservice_log": _UserServiceLogFormatter,
 }
 
 
@@ -311,7 +333,10 @@ class Command(BaseCommand):
                 skipped += 1
                 continue
 
-            if not isinstance(obj, dict) or typing.cast(dict[str, typing.Any], obj).get("t", "") not in match_types:
+            if (
+                not isinstance(obj, dict)
+                or typing.cast(dict[str, typing.Any], obj).get("t", "") not in match_types
+            ):
                 skipped += 1
                 continue
 
@@ -329,7 +354,9 @@ class Command(BaseCommand):
 
             self.stdout.write(yaml.safe_dump(records, default_flow_style=False))
 
-        self.stderr.write(f"Exported {len(records)} entries ({skipped} skipped, {total} total in verified chain).")
+        self.stderr.write(
+            f"Exported {len(records)} entries ({skipped} skipped, {total} total in verified chain)."
+        )
 
     # -- helpers ------------------------------------------------------------
 
