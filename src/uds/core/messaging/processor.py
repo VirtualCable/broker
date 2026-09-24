@@ -147,7 +147,7 @@ class MessageProcessorThread(BaseThread):
                     # )
 
                 if notify:
-                    for p in (i[1] for i in self.providers if i[0] >= n.level and n_group in i[1].accepts):
+                    for p in (i[1] for i in self.providers if i[0] <= n.level and n_group in i[1].accepts):
                         # if we are asked to stop, we don't try to send anymore
                         if not self._keep_running:
                             break

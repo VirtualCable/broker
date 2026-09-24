@@ -73,7 +73,7 @@ class WebhookNotifier(messaging.Notifier):
     in strict FIFO order per notifier.
     """
 
-    type_name = _("Webhook notifications")
+    type_name = _("Webhook (event)")
     type_type = WEBHOOK_TYPE
     type_description = _("Webhook notifications (events) delivery")
     icon_file = "webhook.png"

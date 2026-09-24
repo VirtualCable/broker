@@ -56,11 +56,11 @@ class TelegramNotifier(messaging.Notifier):
     Email notifier
     """
 
-    type_name = _("Telegram notifications")
+    type_name = _("Telegram (logs)")
     # : Type used internally to identify this provider
     type_type = TELEGRAM_TYPE
     # : Description shown at administration interface for this provider
-    type_description = _("Telegram notifications")
+    type_description = _("Telegram (logs) notifications")
     # : Icon file used as icon for this provider. This string will be translated
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
