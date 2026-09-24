@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 
 Checks derived from runtime log/state.
 
@@ -60,6 +61,11 @@ _C4_MEDIUM_THRESHOLD: typing.Final[int] = 50
 # Threshold for ``brute-force-by-ip``: >= this many failed logins from a
 # single source IP in the last 24h is HIGH-fail (likely credential stuffing).
 _C2_PER_IP_THRESHOLD: typing.Final[int] = 20
+
+# Common tail of the warnings logged by ``uds.core.jobs.scheduler`` and
+# ``uds.core.jobs.delayed_task_runner`` when a row stamped by another broker
+# (or DB node) carries a time ahead of the local one.
+_CLOCK_SKEW_MARKER: typing.Final[str] = "being in the future"
 
 # Same log line format as ``src/uds/reports/lists/failed_logins.py:51`` —
 # kept duplicated here to avoid coupling this check module to the reports
@@ -241,4 +247,36 @@ class InternalErrors24hCheck(Check):
             types.checks.CheckSeverity.INFO,
             True,
             _("{count} internal ERROR entries in the last 24h (within normal range).").format(count=count),
+        )
+
+
+class ClockSkew24hCheck(Check):
+    """Clock differences between UDS servers or database nodes in the last 24h."""
+
+    id: typing.ClassVar[str] = "clock-skew-24h"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        count = Log.objects.filter(
+            created__gte=_window(),
+            owner_type=types.log.LogObjectType.SYSLOG,
+            level__gte=types.log.LogLevel.WARNING,
+            data__contains=_CLOCK_SKEW_MARKER,
+        ).count()
+        if count > 0:
+            return (
+                types.checks.CheckSeverity.MEDIUM,
+                False,
+                _(
+                    "{count} scheduled tasks were found with execution times in the future in the last 24h:"
+                    " the clocks of the UDS servers or database nodes are not in sync. Time-based controls"
+                    " (session and token expiry, MFA codes, SAML validity windows) may misbehave."
+                    " Enable NTP with the same time source on every server."
+                ).format(count=count),
+            )
+        return (
+            types.checks.CheckSeverity.INFO,
+            True,
+            _("No clock skew between UDS servers detected in the last 24h."),
         )

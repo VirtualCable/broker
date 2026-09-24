@@ -77,6 +77,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "brute-force-by-ip",
         "temporarily-blocked-logins",
         "internal-errors-24h",
+        "clock-skew-24h",
         # E-family (webhook_queue.py)
         "webhook-queue-size",
         # HEALTH family (deferred_deletion.py, publications.py)
@@ -500,6 +501,65 @@ class ChecksTest(UDSTransactionTestCase):
             Log.objects.filter(owner_id=0, owner_type=-1).delete()
 
     # ------------------------------------------------------------------
+    # Check: clock-skew-24h (logs)
+    # ------------------------------------------------------------------
+    def _create_clock_skew_warning(self, data: str, *, hours_ago: int = 1) -> None:
+        from uds.models import Log
+
+        Log.objects.create(
+            owner_id=-1,
+            owner_type=types.log.LogObjectType.SYSLOG,
+            created=timezone.now() - datetime.timedelta(hours=hours_ago),
+            source=types.log.LogSource.LOGS,
+            level=types.log.LogLevel.WARNING,
+            name="workers.log",
+            data=data,
+        )
+
+    def test_clock_skew_24h_passes_without_warnings(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_type=types.log.LogObjectType.SYSLOG).delete()
+        result = self._run_check("clock-skew-24h")
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
+
+    def test_clock_skew_24h_detects_scheduler_and_delayed_task_warnings(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_type=types.log.LogObjectType.SYSLOG).delete()
+        self._create_clock_skew_warning(
+            "uds.core.jobs.scheduler Executed Stats collector due to last_execution being in the future!:"
+            " 2026-09-23 13:37:05 > 2026-09-23 13:35:01 + 3"
+        )
+        self._create_clock_skew_warning(
+            "uds.core.jobs.delayed_task_runner Executed Remover due to insert_date being in the future!,"
+            " insert_date: 2026-09-23 13:37:05, now: 2026-09-23 13:35:01"
+        )
+        try:
+            result = self._run_check("clock-skew-24h")
+            self.assertFalse(result.ok, result.message)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
+            self.assertIn("2", result.message)
+        finally:
+            Log.objects.filter(owner_type=types.log.LogObjectType.SYSLOG).delete()
+
+    def test_clock_skew_24h_ignores_old_and_unrelated_warnings(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_type=types.log.LogObjectType.SYSLOG).delete()
+        self._create_clock_skew_warning(
+            "uds.core.jobs.scheduler Executed Stats collector due to last_execution being in the future!",
+            hours_ago=25,
+        )
+        self._create_clock_skew_warning("uds.core.jobs.scheduler Something unrelated happened")
+        try:
+            result = self._run_check("clock-skew-24h")
+            self.assertTrue(result.ok, result.message)
+        finally:
+            Log.objects.filter(owner_type=types.log.LogObjectType.SYSLOG).delete()
+
+    # ------------------------------------------------------------------
     # Check: csrf-middleware-disabled (settings)
     # ------------------------------------------------------------------
     def test_csrf_middleware_disabled_detected(self) -> None:
@@ -876,6 +936,7 @@ class ChecksTest(UDSTransactionTestCase):
             {
                 "webhook-queue-size",
                 "internal-errors-24h",
+                "clock-skew-24h",
                 "restrained-service-pools",
                 "deferred-deletion-stuck",
                 "stuck-publications",
