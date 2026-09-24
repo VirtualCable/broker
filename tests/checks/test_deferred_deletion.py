@@ -44,7 +44,7 @@ from ..utils.test import UDSTransactionTestCase
 
 class DeferredDeletionStuckCheckTest(UDSTransactionTestCase):
     def _run_check(self) -> types.checks.CheckResult:
-        results = {result.id: result for result in runner_module.run_checks()}
+        results = {result.id: result for result in runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)}
         self.assertIn("deferred-deletion-stuck", results)
         return results["deferred-deletion-stuck"]
 

@@ -46,6 +46,7 @@ Checks only *notify*: they never modify any configuration value.
 
 from .base import Check as Check
 from .base import CheckOutcome as CheckOutcome
+from .base import ManualCheck as ManualCheck
 from .factory import ChecksFactory as ChecksFactory
 from .runner import build_report as build_report
 from .runner import run_checks as run_checks

@@ -77,9 +77,13 @@ def _checks_tool() -> ToolDefinition:
 
     async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
         category = str(arguments.get("category", "")).strip().lower()
-        args: tuple[str, ...] = ("checks",)
+        kind = str(arguments.get("kind", "automatic")).strip().lower()
+        if kind not in ("automatic", "manual"):
+            return "Invalid kind: expected 'automatic' or 'manual'"
+        path = "checks" if kind == "automatic" else "manual_checks"
+        args: tuple[str, ...] = (path,)
         if category:
-            args = ("checks", category)
+            args = (path, category)
         return await RestProxy().execute(RestTarget(System, "system", GET, args=args), request, {})
 
     return ToolDefinition(
@@ -89,15 +93,21 @@ def _checks_tool() -> ToolDefinition:
             "Self-assessment of this broker across two categories: security (weak settings, "
             "insecure defaults, brute-force evidence, ...) and health (queues, restrained pools, "
             "internal error rate, ...). Pass an optional ``category`` (security or health) to get "
-            "only that slice; omit it for the full report. Every check carries its severity, "
-            "whether it passes and a human readable detail. Administrators only; staff get an "
-            "access-denied error."
+            "only that slice; omit it for the full report. Pass ``kind``: 'manual' (default: "
+            "'automatic') also runs the manual checks, which are slow and/or expensive deep scans "
+            "(platform inventory comparisons, ...) so they only run on explicit request. Every "
+            "check carries its severity, whether it passes and a human readable detail. "
+            "Administrators only; staff get an access-denied error."
         ),
         input_schema=schema(
             {
                 "category": string_property(
                     "Optional category filter: security or health. Omit for all categories."
-                )
+                ),
+                "kind": string_property(
+                    "Optional kind of checks to run: 'automatic' (default, fast) or 'manual'"
+                    " (slow/expensive deep scans)."
+                ),
             }
         ),
         access="Administrators only.",

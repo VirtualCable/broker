@@ -127,6 +127,11 @@ class System(Handler):
             "/system/checks", "Returns the full self-assessment report, security + health (only filled for admins)",
             "/system/checks/<category>", "Returns the self-assessment report for one category: security or health",
             "/system/security_check", "Deprecated alias of /system/checks/security (only filled for admins)",
+            "/system/manual_checks", "Runs and returns the manual checks report, security + health."
+            " Manual checks are slow and/or expensive (deep platform scans), so they only run on explicit request"
+            " (only filled for admins)",
+            "/system/manual_checks/<category>", "Runs and returns the manual checks report for one category:"
+            " security or health (only filled for admins)",
             "/system/overview", "Returns a json object with the number of services, service pools, users, etc",
             "/system/stats/assigned", "Returns a chart of assigned services (all pools)",
             "/system/stats/inuse", "Returns a chart of in use services (all pools)",
@@ -149,16 +154,22 @@ class System(Handler):
         logger.debug("args: %s", self._args)
         # Only allow admin user for global stats
         if len(self._args) == 1:
-            if self._args[0] == "checks":  # Self-assessment report (all categories)
+            if self._args[0] == "checks":  # Self-assessment report, automatic checks (all categories)
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
-                return build_report()
+                return build_report(run_checks(types.checks.CheckKind.AUTOMATIC))
+            if self._args[0] == "manual_checks":  # Manual checks report (slow/expensive, on explicit request)
+                if not self._user.is_admin:
+                    raise exceptions.rest.AccessDenied()
+                return build_report(run_checks(types.checks.CheckKind.MANUAL))
             if self._args[0] == "security_check":
                 # Deprecated alias of /system/checks/security, kept for
                 # compatibility with older clients
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
-                return build_report(run_checks(types.checks.CheckCategory.SECURITY))
+                return build_report(
+                    run_checks(types.checks.CheckKind.AUTOMATIC, types.checks.CheckCategory.SECURITY)
+                )
             if self._args[0] == "overview":  # System overview
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
@@ -205,10 +216,13 @@ class System(Handler):
                     "authenticators": auths,
                 }
 
-        if len(self._args) == 2 and self._args[0] == "checks":
-            # Self-assessment report for a single category
+        if len(self._args) == 2 and self._args[0] in ("checks", "manual_checks"):
+            # Self-assessment report for a single category (automatic or manual checks)
             if not self._user.is_admin:
                 raise exceptions.rest.AccessDenied()
+            kind = (
+                types.checks.CheckKind.AUTOMATIC if self._args[0] == "checks" else types.checks.CheckKind.MANUAL
+            )
             try:
                 category = types.checks.CheckCategory(self._args[1].lower())
             except ValueError:
@@ -216,7 +230,7 @@ class System(Handler):
                     f"Invalid category '{self._args[1]}', expected one of: "
                     f"{', '.join(c.value for c in types.checks.CheckCategory)}"
                 ) from None
-            return build_report(run_checks(category))
+            return build_report(run_checks(kind, category))
 
         if len(self.args) in (2, 3):
             # Extract pool if provided

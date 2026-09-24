@@ -114,7 +114,7 @@ class ChecksTest(UDSTransactionTestCase):
         super().tearDown()
 
     def _run_check(self, check_id: str) -> types.checks.CheckResult:
-        results = {result.id: result for result in runner_module.run_checks()}
+        results = {result.id: result for result in runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)}
         self.assertIn(check_id, results)
         return results[check_id]
 
@@ -850,15 +850,25 @@ class ChecksTest(UDSTransactionTestCase):
     # Runner and report
     # ------------------------------------------------------------------
     def test_run_returns_all_checks(self) -> None:
-        results = runner_module.run_checks()
+        results = runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)
         self.assertEqual({result.id for result in results}, ALL_CHECK_IDS)
         # Every result carries a valid category
         for result in results:
             self.assertIn(result.category, list(types.checks.CheckCategory))
 
     def test_category_filter_returns_only_that_category(self) -> None:
-        health_ids = {result.id for result in runner_module.run_checks(types.checks.CheckCategory.HEALTH)}
-        security_ids = {result.id for result in runner_module.run_checks(types.checks.CheckCategory.SECURITY)}
+        health_ids = {
+            result.id
+            for result in runner_module.run_checks(
+                types.checks.CheckKind.AUTOMATIC, types.checks.CheckCategory.HEALTH
+            )
+        }
+        security_ids = {
+            result.id
+            for result in runner_module.run_checks(
+                types.checks.CheckKind.AUTOMATIC, types.checks.CheckCategory.SECURITY
+            )
+        }
 
         self.assertEqual(
             health_ids,
@@ -891,7 +901,7 @@ class ChecksTest(UDSTransactionTestCase):
         self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
 
     def test_build_report_summary_counts_failed_checks_only(self) -> None:
-        results = runner_module.run_checks()
+        results = runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)
         report = runner_module.build_report(results)
         self.assertEqual(report["checks"], [result.as_dict() for result in results])
         for severity in types.checks.CheckSeverity:

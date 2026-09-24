@@ -42,7 +42,7 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 
-from .base import Check
+from .base import Check, ManualCheck
 from .factory import ChecksFactory
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -57,16 +57,25 @@ def _collect_checks() -> list[tuple[str, type[Check]]]:
     return list(ChecksFactory().objects().items())
 
 
-def run_checks(category: types.checks.CheckCategory | None = None) -> list[types.checks.CheckResult]:
+def run_checks(
+    kind: types.checks.CheckKind,
+    category: types.checks.CheckCategory | None = None,
+) -> list[types.checks.CheckResult]:
     """
-    Runs all the registered checks (or just the ones belonging to ``category``)
-    and returns their results.
+    Runs all the registered checks of the given ``kind`` (optionally just the
+    ones belonging to ``category``) and returns their results.
+
+    Automatic checks (everything not deriving from :class:`ManualCheck`) are
+    fast enough for every scan; manual ones only run on explicit request.
 
     A check that raises is reported as a failed ``INFO`` result instead of
     aborting the whole scan, so a single broken check never hides the rest.
     """
+    wants_manual = kind is types.checks.CheckKind.MANUAL
     results: list[types.checks.CheckResult] = []
     for check_id, check_class in _collect_checks():
+        if issubclass(check_class, ManualCheck) is not wants_manual:
+            continue
         if category is not None and check_class.category is not category:
             continue
         try:
@@ -92,21 +101,16 @@ def run_checks(category: types.checks.CheckCategory | None = None) -> list[types
     return results
 
 
-def build_report(
-    results: list[types.checks.CheckResult] | None = None,
-) -> dict[str, typing.Any]:
+def build_report(results: list[types.checks.CheckResult]) -> dict[str, typing.Any]:
     """
     Aggregates the check results into the JSON report returned by the
-    ``/system/checks`` endpoint: a summary with the number of failed checks per
-    severity, a per-category breakdown of the same, and the full check list.
+    ``/system/checks`` and ``/system/manual_checks`` endpoints: a summary with
+    the number of failed checks per severity, a per-category breakdown of the
+    same, and the full check list.
 
-    If ``results`` is ``None`` all the checks are run first. Passing a list
-    produced by :func:`run_checks` with a category filter yields the report for
-    that category only.
+    The results come from :func:`run_checks`, so the caller decides which
+    kind (automatic/manual) and category to run.
     """
-    if results is None:
-        results = run_checks()
-
     report: dict[str, typing.Any] = {severity.value: 0 for severity in types.checks.CheckSeverity}
     categories: dict[str, int] = {category.value: 0 for category in types.checks.CheckCategory}
     for result in results:

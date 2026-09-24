@@ -138,6 +138,32 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         checks = body["checks"]
         self.assertEqual({check["id"] for check in checks}, EXPECTED_CHECK_IDS - EXPECTED_HEALTH_IDS)
 
+    def test_manual_checks_report_is_empty_for_now(self) -> None:
+        # No production manual checks exist yet: the report is valid but empty
+        self.login()
+        body = self._get_report("system/manual_checks")
+        self.assertEqual(body["checks"], [])
+        for severity in types.checks.CheckSeverity:
+            self.assertEqual(body[severity.value], 0)
+        for category in types.checks.CheckCategory:
+            self.assertEqual(body["categories"][category.value], 0)
+
+    def test_manual_checks_filter_by_category(self) -> None:
+        self.login()
+        for category in types.checks.CheckCategory:
+            body = self._get_report(f"system/manual_checks/{category.value}")
+            self.assertEqual(body["checks"], [])
+
+    def test_manual_checks_requires_admin(self) -> None:
+        self.login(as_admin=False)
+        response = self.client.rest_get("system/manual_checks")
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test_manual_checks_invalid_category_is_rejected(self) -> None:
+        self.login()
+        response = self.client.rest_get("system/manual_checks/not-a-category")
+        self.assertEqual(response.status_code, 400, response.content)
+
     def test_admin_report_reflects_configuration_state(self) -> None:
         # Isolate this test from the other CRITICAL/HIGH findings the test
         # settings trigger (DEBUG=True, PROFILING=True, ALLOWED_HOSTS=['*'],

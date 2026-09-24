@@ -28,23 +28,22 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Base class for the self-assessment checks.
+Base classes for the self-assessment checks.
 
 One subclass of :class:`Check` is one check. Concrete checks live in
 :mod:`uds.checks` (auto-discovered, like ``uds.services`` or ``uds.auths``)
 and must define the ``id`` and ``category`` class variables and implement
 :meth:`Check.run`.
+
+Checks deriving (directly or through intermediate classes) from
+:class:`ManualCheck` are *manual* checks: slow and/or expensive, only run
+on explicit request. Everything else is *automatic* and runs on every scan.
 """
 
 import typing
 
 from uds.core import types
-
-# A check evaluates a single condition and returns a ``CheckOutcome``: its
-# severity, whether it passes and a human readable detail. The severity is
-# part of the outcome (not a class attribute) because several checks graduate
-# it depending on the observed magnitude.
-CheckOutcome: typing.TypeAlias = tuple[types.checks.CheckSeverity, bool, str]
+from uds.core.types.checks import CheckOutcome
 
 
 class Check:
@@ -75,3 +74,15 @@ class Check:
             and a human readable detail.
         """
         raise NotImplementedError
+
+
+class ManualCheck(Check):
+    """Base class for *manual* checks: slow and/or expensive ones.
+
+    Examples: comparing the real machines of a platform against the UDS
+    inventory, deep scans of providers, ...
+
+    They are excluded from the regular scan (``/system/checks``) and only
+    run on explicit request (``/system/manual_checks``). Anything not
+    deriving from this class is considered automatic and runs on every scan.
+    """

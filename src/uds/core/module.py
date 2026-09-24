@@ -189,6 +189,37 @@ class Module(UserInterface, Environmentable, Serializable, abc.ABC):
         """
         return _("No check method provided.")
 
+    def health_check(self) -> list["types.checks.CheckOutcome"]:
+        """
+        Self-assessment of this module instance.
+
+        Modules with something worth watching (providers that can drift from
+        the real platform, services with stuck elements, ...) override this
+        and return one outcome per detected condition. The default
+        implementation reports nothing, which is perfectly fine: only
+        modules with a real implementation are ever asked for results
+        (see :meth:`has_health_check`).
+
+        These outcomes are aggregated by *manual* checks (slow, run only on
+        explicit request through ``/system/manual_checks``), never by the
+        regular scan.
+
+        Returns:
+            A list of :data:`uds.core.types.checks.CheckOutcome` tuples
+            (severity, pass/fail, human readable detail). Empty by default.
+        """
+        return []
+
+    @classmethod
+    def has_health_check(cls) -> bool:
+        """
+        Whether this class provides a real :meth:`health_check` implementation.
+
+        Used by the aggregating checks to skip modules that have nothing to
+        report, without instantiating them.
+        """
+        return cls.health_check is not Module.health_check
+
     def get_uuid(self) -> str:
         return self._uuid
 

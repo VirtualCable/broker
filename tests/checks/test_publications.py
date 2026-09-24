@@ -45,7 +45,7 @@ from ..utils.test import UDSTransactionTestCase
 
 class StuckPublicationsCheckTest(UDSTransactionTestCase):
     def _run_check(self) -> types.checks.CheckResult:
-        results = {result.id: result for result in runner_module.run_checks()}
+        results = {result.id: result for result in runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)}
         self.assertIn("stuck-publications", results)
         return results["stuck-publications"]
 

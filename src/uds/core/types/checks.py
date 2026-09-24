@@ -66,6 +66,32 @@ class CheckCategory(str, enum.Enum):
     HEALTH = "health"
 
 
+class CheckKind(str, enum.Enum):
+    """
+    How a check gets executed.
+
+    - ``AUTOMATIC``: fast, safe to run on every scan (the ``/system/checks``
+      endpoint).
+    - ``MANUAL``: slow and/or expensive checks (deep platform scans such as
+      comparing real machines against the inventory), only run on explicit
+      request (the ``/system/manual_checks`` endpoint).
+    """
+
+    AUTOMATIC = "automatic"
+    MANUAL = "manual"
+
+
+# A check evaluates a single condition and returns a ``CheckOutcome``: its
+# severity, whether it passes and a human readable detail. The severity is
+# part of the outcome (not a class attribute) because several checks graduate
+# it depending on the observed magnitude.
+#
+# Lives here (and not on ``uds.core.checks``) so ``uds.core.module`` can use
+# it for ``Module.health_check`` without importing the checks package, which
+# would create a circular import (checks.factory -> util.factory -> module).
+CheckOutcome: typing.TypeAlias = tuple[CheckSeverity, bool, str]
+
+
 @dataclasses.dataclass(frozen=True)
 class CheckResult:
     """
