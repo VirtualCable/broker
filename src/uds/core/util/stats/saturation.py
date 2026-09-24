@@ -103,6 +103,11 @@ _STATUS_SEVERITY: typing.Final[tuple[SaturationStatus, ...]] = (
 )
 
 
+def status_severity(status: SaturationStatus) -> int:
+    """Rank of a status on the "worst wins" order, for sorting worst-first."""
+    return _STATUS_SEVERITY.index(status)
+
+
 def worst_status(statuses: collections.abc.Iterable[SaturationStatus]) -> SaturationStatus:
     """Returns the most severe status of the iterable (NO_DATA if empty)."""
     present = set(statuses)

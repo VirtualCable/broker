@@ -1,0 +1,89 @@
+{% load l10n i18n %}
+<html lang="en">
+    <head>
+        <title>{% trans 'Saturation forecast per server' %}</title>
+        <meta name="author" content="UDS">
+        <meta name="description" content="{% trans 'Saturation forecast per server' %}">
+        <meta name="keywords" content="uds,report,saturation,forecast,servers">
+        <meta name="generator" content="UDS Reporting">
+    </head>
+    <body>
+        <p style="font-size: 0.8em;">
+            {% blocktrans %}The trend of every server is fitted over the last {{ training_weeks }} weeks of its own history.{% endblocktrans %}
+            {% blocktrans %}Below {{ reliable_weeks }} weeks of history the curve is not trustworthy, and the server is flagged as such.{% endblocktrans %}
+            {% blocktrans %}Statistics are kept for {{ stats_duration }} days: raise the "statsDuration" setting to get forecasts from a longer history.{% endblocktrans %}
+        </p>
+
+        {% if attention %}
+        <h2 style="font-size: 1em;">{% trans 'Servers needing attention' %}</h2>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 30%">{% trans 'Server' %}</th>
+                    <th style="width: 25%">{% trans 'Group' %}</th>
+                    <th style="width: 25%">{% trans 'Status' %}</th>
+                    <th style="width: 10%">{% trans 'Days' %}</th>
+                    <th style="width: 10%">{% trans 'Date' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in attention %}
+                <tr>
+                    <td>{{ s.server }}</td>
+                    <td>{{ s.group }}</td>
+                    <td>{{ s.status_name }}</td>
+                    <td>{% if s.saturating_in_days is not None %}{{ s.saturating_in_days }}{% else %}-{% endif %}</td>
+                    <td>{% if s.saturation_date %}{{ s.saturation_date|date:"SHORT_DATE_FORMAT" }}{% else %}-{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% for g in groups %}
+        <h2 style="font-size: 1em;">{{ g.group }}</h2>
+        {% for s in g.servers %}
+        <p style="font-size: 0.8em;">
+            <b>{{ s.server }}</b> &middot;
+            {{ s.status_name }} &middot;
+            {% trans 'History' %}: {{ s.weeks_of_history }} {% trans 'weeks' %}
+            {% if not s.has_data %}({% trans 'no historical data yet' %}){% elif s.short_history %}({% trans 'short history: the trend is not trustworthy yet' %}){% endif %}
+        </p>
+        <table style="width: 100%; font-size: 0.8em;">
+            <thead>
+                <tr>
+                    <th style="width: 13%">{% trans 'Metric' %}</th>
+                    <th style="width: 20%">{% trans 'Status' %}</th>
+                    <th style="width: 9%">{% trans 'p90' %}</th>
+                    <th style="width: 9%">{% trans 'Max' %}</th>
+                    <th style="width: 10%">{% trans 'Threshold' %}</th>
+                    <th style="width: 8%">{% trans 'Days' %}</th>
+                    <th style="width: 11%">{% trans 'Date' %}</th>
+                    <th style="width: 10%">{% trans 'Slope/day' %}</th>
+                    <th style="width: 10%">{% trans 'Confidence' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for m in s.metrics %}
+                <tr>
+                    <td>{{ m.metric }}</td>
+                    <td>{{ m.status_name }}</td>
+                    <td>{{ m.current_p90 }}</td>
+                    <td>{{ m.current_max }}</td>
+                    <td>{{ m.threshold }}</td>
+                    <td>{% if m.days_to_saturation is not None %}{{ m.days_to_saturation }}{% else %}-{% endif %}</td>
+                    <td>{% if m.saturation_date %}{{ m.saturation_date|date:"SHORT_DATE_FORMAT" }}{% else %}-{% endif %}</td>
+                    <td>{% if m.slope_per_day is not None %}{{ m.slope_per_day }}{% else %}-{% endif %}</td>
+                    <td>{{ m.confidence }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% empty %}
+        <p style="font-size: 0.8em;">{% trans 'The group has no servers.' %}</p>
+        {% endfor %}
+        {% empty %}
+        <p style="font-size: 0.8em;">{% trans 'No server groups selected.' %}</p>
+        {% endfor %}
+    </body>
+</html>
