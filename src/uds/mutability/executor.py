@@ -112,6 +112,7 @@ def execute_flow(flow: ActionFlow, request: ExtendedHttpRequestWithUser) -> Json
                 # The store returned the flow to locked; remaining approved
                 # actions keep their approval for the retry
                 break
+            _ = action.values  # loaded here, in sync context: execute() cannot query the ORM
             summary = async_to_sync(action_type.execute)(action, request)
         except Exception as e:
             logger.warning("Action %s (%s) failed: %s", action.uuid, action.action_type, e)

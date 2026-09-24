@@ -193,6 +193,26 @@ class ExecuteFlowTest(FlowTestCase):
         self.assertEqual(actions[0].status, FlowActionStatus.REVOKED)
         self.assertIn("no longer exists", str(actions[0].properties.get("result")))
 
+    def test_execute_reads_the_payload_of_an_action_loaded_from_db(self) -> None:
+        """execute() runs async: the payload (on Properties) must already be on the action."""
+        flow, _actions = self._flow_with_actions(["p1"])
+
+        seen: list[typing.Any] = []
+
+        class _ReadsValues(_FakeActionType):
+            executed: typing.ClassVar[list[str]] = []
+
+            @typing.override
+            async def execute(self, action: FlowAction, request: typing.Any) -> str:
+                seen.append(action.values)
+                return "ok"
+
+        with mock.patch("uds.mutability.registry.get", return_value=_ReadsValues):
+            summary = execute_flow(ActionFlow.objects.get(pk=flow.pk), request=make_request())
+
+        self.assertEqual(summary["status"], FlowStatus.EXECUTED)
+        self.assertEqual(seen, [{"name": "p1"}])
+
     def test_create_does_not_resolve_its_parent_as_target(self) -> None:
         """A creation's target_uuid is its parent: pass 2 must not look it up as the target."""
         flow, actions = self._flow_with_actions(["parent"])

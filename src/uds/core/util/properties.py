@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -37,6 +38,7 @@ import typing
 from django.db import transaction
 from django.db.models import signals
 
+from uds.core.managers.crypto import CryptoManager
 from uds.models.properties import Properties
 
 if typing.TYPE_CHECKING:
@@ -53,21 +55,30 @@ class PropertyAccessor:
     transaction: "transaction.Atomic|None"
     owner_id: str
     owner_type: str
+    encrypted: bool
 
-    def __init__(self, owner_id: str, owner_type: str):
+    def __init__(self, owner_id: str, owner_type: str, encrypted: bool = False):
         self.owner_id = owner_id
         self.owner_type = owner_type
+        self.encrypted = encrypted
+
+    def _stored(self, value: typing.Any) -> typing.Any:
+        return CryptoManager.manager().encrypt_json(value) if self.encrypted else value
+
+    def _loaded(self, stored: typing.Any) -> typing.Any:
+        return CryptoManager.manager().decrypt_json(stored) if self.encrypted else stored
 
     def _filter(self) -> "models.QuerySet[Properties]":
         return Properties.objects.filter(owner_id=self.owner_id, owner_type=self.owner_type)
 
     def __getitem__(self, key: str) -> typing.Any:
         try:
-            return self._filter().get(key=key).value
+            return self._loaded(self._filter().get(key=key).value)
         except Properties.DoesNotExist:
             raise KeyError(key)
 
     def __setitem__(self, key: str, value: typing.Any) -> None:
+        value = self._stored(value)
         try:
             p = self._filter().get(key=key)
             p.value = value
@@ -107,10 +118,10 @@ class PropertyAccessor:
         return iter(self._filter().values_list("key", flat=True))
 
     def values(self) -> collections.abc.Iterator[typing.Any]:
-        return iter(self._filter().values_list("value", flat=True))
+        return (self._loaded(value) for value in self._filter().values_list("value", flat=True))
 
     def items(self) -> collections.abc.Iterator[tuple[str, typing.Any]]:
-        return iter(self._filter().values_list("key", "value"))
+        return ((key, self._loaded(value)) for key, value in self._filter().values_list("key", "value"))
 
     def clear(self) -> None:
         self._filter().delete()
@@ -155,6 +166,12 @@ class PropertiesMixin:
     def properties(self) -> PropertyAccessor:
         owner_id, owner_type = self.get_owner_id_and_type()
         return PropertyAccessor(owner_id=owner_id, owner_type=owner_type)
+
+    @property
+    def encrypted_properties(self) -> PropertyAccessor:
+        """Same properties, but the values are stored encrypted (keys stay in clear)."""
+        owner_id, owner_type = self.get_owner_id_and_type()
+        return PropertyAccessor(owner_id=owner_id, owner_type=owner_type, encrypted=True)
 
     @staticmethod
     def _pre_delete_properties_signal(sender: typing.Any, **kwargs: typing.Any) -> None:  # pylint: disable=unused-argument

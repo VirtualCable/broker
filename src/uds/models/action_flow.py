@@ -38,7 +38,7 @@ from django.db import models
 
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import properties
-from uds.core.util.model import EncryptedJSONField, decrypt_json, encrypt_json, sql_now
+from uds.core.util.model import sql_now
 
 from .user import User
 from .uuid_model import UUIDModel
@@ -161,7 +161,9 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     ``approved_values`` frozen at approval time), the approval display
     cache (``snap_info``) and the launch audit (``executed_by``/
     ``executed_at``) — lives on Properties: free, schemaless, and
-    kept out of the row.
+    kept out of the row. The payload, the snapshots and the display cache
+    may carry secret field values, so they go through the encrypted
+    properties.
     """
 
     flow = models.ForeignKey(ActionFlow, on_delete=models.CASCADE, related_name="actions")
@@ -172,8 +174,6 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     target_uuid = models.CharField(max_length=50, default="", db_index=True)
 
     justification = models.TextField(default="")
-
-    values: typing.Any = EncryptedJSONField(null=True, blank=True, default=None)
 
     status = models.CharField(
         max_length=16,
@@ -199,18 +199,36 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     def get_owner_id_and_type(self) -> tuple[str, str]:
         return self.uuid, "flowaction"
 
-    def _decrypted_property(self, key: str) -> typing.Any:
-        stored = self.properties.get(key)
-        return {} if stored is None else decrypt_json(stored)
+    @typing.override
+    def refresh_from_db(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        self.__dict__.pop("_values", None)
+        super().refresh_from_db(*args, **kwargs)
+
+    @property
+    def values(self) -> typing.Any:
+        """Proposed payload (same shape as the equivalent REST put).
+
+        Read once per instance and kept on it, as the column it replaces
+        was: action types read it inside their async ``execute``, where
+        the ORM cannot be queried.
+        """
+        if "_values" not in self.__dict__:
+            self.__dict__["_values"] = self.encrypted_properties.get("values")
+        return self.__dict__["_values"]
+
+    @values.setter
+    def values(self, value: typing.Any) -> None:
+        self.encrypted_properties["values"] = value
+        self.__dict__["_values"] = value
 
     @property
     def base_values(self) -> dict[str, typing.Any]:
         """CAS snapshot of the touched fields, taken at proposal time."""
-        return typing.cast("dict[str, typing.Any]", self._decrypted_property("base_values"))
+        return typing.cast("dict[str, typing.Any]", self.encrypted_properties.get("base_values", {}))
 
     @base_values.setter
     def base_values(self, value: dict[str, typing.Any]) -> None:
-        self.properties["base_values"] = encrypt_json(value)
+        self.encrypted_properties["base_values"] = value
 
     @property
     def base_etag(self) -> str:
@@ -241,11 +259,11 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         ``approved_etag``; empty until approved, cleared when the action
         is skipped.
         """
-        return typing.cast("dict[str, typing.Any]", self._decrypted_property("approved_values"))
+        return typing.cast("dict[str, typing.Any]", self.encrypted_properties.get("approved_values", {}))
 
     @approved_values.setter
     def approved_values(self, value: dict[str, typing.Any]) -> None:
-        self.properties["approved_values"] = encrypt_json(value)
+        self.encrypted_properties["approved_values"] = value
 
     @property
     def snap_info(self) -> dict[str, typing.Any]:
@@ -253,11 +271,11 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         Display data for the admin diff (target name, current values at
         approval time, field definitions, ...), stored on Properties.
         """
-        return typing.cast("dict[str, typing.Any]", self._decrypted_property("snap_info"))
+        return typing.cast("dict[str, typing.Any]", self.encrypted_properties.get("snap_info", {}))
 
     @snap_info.setter
     def snap_info(self, value: dict[str, typing.Any]) -> None:
-        self.properties["snap_info"] = encrypt_json(value)
+        self.encrypted_properties["snap_info"] = value
 
     @property
     def executed_by(self) -> str:
