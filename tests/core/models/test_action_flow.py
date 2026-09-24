@@ -29,7 +29,12 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import importlib
 import typing
+
+from django.apps import apps
+from django.db import connection
+from django.db.models import JSONField, Value
 
 from uds import models
 from uds.core.util.model import sql_now
@@ -139,3 +144,70 @@ class ActionFlowModelTest(UDSTestCase):
 
         with self.assertRaises(Exception):
             FlowAction.objects.create(flow=flow, order=0, action_type="provider.update")
+
+    def _raw_values_column(self, action: FlowAction) -> str:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT {connection.ops.quote_name('values')} FROM uds_flow_action WHERE id = %s", [action.pk]
+            )
+            return str(cursor.fetchone()[0])
+
+    def _raw_property(self, action: FlowAction, key: str) -> typing.Any:
+        return models.Properties.objects.get(owner_id=action.uuid, owner_type="flowaction", key=key).value
+
+    def test_values_and_snapshots_are_encrypted_at_rest(self) -> None:
+        """Nothing a flow stores (payload, CAS snapshots, review cache) is readable from the database."""
+        flow = ActionFlow.objects.create(name="flow 1")
+        secret = {"name": "prov", "password": "s3cr3t-value"}
+        action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.update", values=secret)
+        action.base_values = secret
+        action.approved_values = secret
+        action.snap_info = {"current_values": secret}
+
+        self.assertNotIn("s3cr3t-value", self._raw_values_column(action))
+        for key in ("base_values", "approved_values", "snap_info"):
+            raw = self._raw_property(action, key)
+            self.assertIsInstance(raw, str)
+            self.assertNotIn("s3cr3t-value", raw)
+
+        reloaded = FlowAction.objects.get(uuid=action.uuid)
+        self.assertEqual(reloaded.values, secret)
+        self.assertEqual(reloaded.base_values, secret)
+        self.assertEqual(reloaded.approved_values, secret)
+        self.assertEqual(reloaded.snap_info, {"current_values": secret})
+
+    def test_null_values_stay_null(self) -> None:
+        flow = ActionFlow.objects.create(name="flow 1")
+        action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.delete")
+
+        self.assertTrue(FlowAction.objects.filter(pk=action.pk, values__isnull=True).exists())
+        self.assertIsNone(FlowAction.objects.get(pk=action.pk).values)
+
+    def _legacy_clear_action(self) -> FlowAction:
+        """An action as written before encryption: clear JSON in the column and on Properties."""
+        flow = ActionFlow.objects.create(name="flow 1")
+        action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.update")
+        FlowAction.objects.filter(pk=action.pk).update(
+            values=Value({"name": "old"}, output_field=JSONField())
+        )
+        action.properties["base_values"] = {"name": "before"}
+        return action
+
+    def test_rows_written_before_encryption_are_read(self) -> None:
+        action = self._legacy_clear_action()
+
+        reloaded = FlowAction.objects.get(pk=action.pk)
+        self.assertEqual(reloaded.values, {"name": "old"})
+        self.assertEqual(reloaded.base_values, {"name": "before"})
+
+    def test_migration_encrypts_rows_written_before(self) -> None:
+        action = self._legacy_clear_action()
+        migration = importlib.import_module("uds.migrations.0055_flowaction_encrypt_at_rest")
+
+        migration.encrypt_existing(apps, None)
+
+        self.assertNotIn("old", self._raw_values_column(action))
+        self.assertIsInstance(self._raw_property(action, "base_values"), str)
+        reloaded = FlowAction.objects.get(pk=action.pk)
+        self.assertEqual(reloaded.values, {"name": "old"})
+        self.assertEqual(reloaded.base_values, {"name": "before"})

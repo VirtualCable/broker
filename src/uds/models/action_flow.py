@@ -30,11 +30,13 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import datetime
+import json
 import logging
 import typing
 
 from django.db import models
 
+from uds.core.managers.crypto import CryptoManager
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.util import properties
 from uds.core.util.model import sql_now
@@ -43,6 +45,33 @@ from .user import User
 from .uuid_model import UUIDModel
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def encrypt_json(value: typing.Any) -> str:
+    """The whole JSON document as one encrypted string, so the database never holds it in clear."""
+    return CryptoManager.manager().encrypt_password(json.dumps(value))
+
+
+def decrypt_json(stored: typing.Any) -> typing.Any:
+    """Counterpart of :func:`encrypt_json`.
+
+    Rows written before encryption hold the JSON document itself (never a
+    string), and are returned unchanged.
+    """
+    if not isinstance(stored, str):
+        return stored
+    return json.loads(CryptoManager.manager().decrypt_password(stored))
+
+
+class EncryptedJSONField(models.JSONField):
+    """JSONField stored encrypted with :func:`encrypt_json`; ``None`` stays ``NULL``."""
+
+    def from_db_value(self, value: typing.Any, expression: typing.Any, connection: typing.Any) -> typing.Any:
+        return decrypt_json(super().from_db_value(value, expression, connection))
+
+    def get_prep_value(self, value: typing.Any) -> typing.Any:
+        return super().get_prep_value(None if value is None else encrypt_json(value))
+
 
 if typing.TYPE_CHECKING:
     from django.db.models.manager import RelatedManager
@@ -172,7 +201,7 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
 
     justification = models.TextField(default="")
 
-    values: typing.Any = models.JSONField(null=True, blank=True, default=None)
+    values: typing.Any = EncryptedJSONField(null=True, blank=True, default=None)
 
     status = models.CharField(
         max_length=16,
@@ -201,11 +230,11 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
     @property
     def base_values(self) -> dict[str, typing.Any]:
         """CAS snapshot of the touched fields, taken at proposal time."""
-        return typing.cast("dict[str, typing.Any]", self.properties.get("base_values", {}))
+        return typing.cast("dict[str, typing.Any]", decrypt_json(self.properties.get("base_values", {})))
 
     @base_values.setter
     def base_values(self, value: dict[str, typing.Any]) -> None:
-        self.properties["base_values"] = value
+        self.properties["base_values"] = encrypt_json(value)
 
     @property
     def base_etag(self) -> str:
@@ -236,11 +265,11 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         ``approved_etag``; empty until approved, cleared when the action
         is skipped.
         """
-        return typing.cast("dict[str, typing.Any]", self.properties.get("approved_values", {}))
+        return typing.cast("dict[str, typing.Any]", decrypt_json(self.properties.get("approved_values", {})))
 
     @approved_values.setter
     def approved_values(self, value: dict[str, typing.Any]) -> None:
-        self.properties["approved_values"] = value
+        self.properties["approved_values"] = encrypt_json(value)
 
     @property
     def snap_info(self) -> dict[str, typing.Any]:
@@ -248,11 +277,11 @@ class FlowAction(UUIDModel, properties.PropertiesMixin):
         Display data for the admin diff (target name, current values at
         approval time, field definitions, ...), stored on Properties.
         """
-        return typing.cast("dict[str, typing.Any]", self.properties.get("snap_info", {}))
+        return typing.cast("dict[str, typing.Any]", decrypt_json(self.properties.get("snap_info", {})))
 
     @snap_info.setter
     def snap_info(self, value: dict[str, typing.Any]) -> None:
-        self.properties["snap_info"] = value
+        self.properties["snap_info"] = encrypt_json(value)
 
     @property
     def executed_by(self) -> str:
