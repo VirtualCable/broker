@@ -1,4 +1,4 @@
-"""Platform tools: usage counters, the security self-assessment, the
+"""Platform tools: usage counters, the self-assessment checks, the
 diagnostics dashboard and the global configuration."""
 
 import typing
@@ -72,25 +72,36 @@ def _platform_stats_tool() -> ToolDefinition:
     )
 
 
-def _security_check_tool() -> ToolDefinition:
-    """Build the security self-assessment tool (``/system/security_check``)."""
+def _checks_tool() -> ToolDefinition:
+    """Build the self-assessment checks tool (``/system/checks``)."""
 
     async def executor(arguments: JsonObject, request: ExtendedHttpRequestWithUser | None = None) -> typing.Any:
-        return await RestProxy().execute(
-            RestTarget(System, "system", GET, args=("security_check",)), request, {}
-        )
+        category = str(arguments.get("category", "")).strip().lower()
+        args: tuple[str, ...] = ("checks",)
+        if category:
+            args = ("checks", category)
+        return await RestProxy().execute(RestTarget(System, "system", GET, args=args), request, {})
 
     return ToolDefinition(
-        name="get_security_check",
-        title="Get security check",
+        name="get_checks",
+        title="Get system checks",
         description=(
-            "Security self-assessment of this broker: configuration findings that an "
-            "administrator should review (weak settings, insecure defaults, ...). "
-            "Administrators only; staff get an access-denied error."
+            "Self-assessment of this broker across two categories: security (weak settings, "
+            "insecure defaults, brute-force evidence, ...) and health (queues, restrained pools, "
+            "internal error rate, ...). Pass an optional ``category`` (security or health) to get "
+            "only that slice; omit it for the full report. Every check carries its severity, "
+            "whether it passes and a human readable detail. Administrators only; staff get an "
+            "access-denied error."
         ),
-        input_schema=schema({}),
+        input_schema=schema(
+            {
+                "category": string_property(
+                    "Optional category filter: security or health. Omit for all categories."
+                )
+            }
+        ),
         access="Administrators only.",
-        returns="An object with the security findings and their severity.",
+        returns="An object with failed-counts per severity, a per-category breakdown and the check list.",
         required_permission="ALL",
         executor=executor,
     )
@@ -108,7 +119,7 @@ def _config_tool() -> ToolDefinition:
         description=(
             "Current UDS global configuration, grouped by section (Security, UDS, Custom, ...). "
             "Secret values (passwords, hidden entries) are masked and never travel. "
-            "Administrators only. Use get_security_check to see which settings need attention, "
+            "Administrators only. Use get_checks to see which settings need attention, "
             "and the config.update proposal flow to suggest changes."
         ),
         input_schema=schema({}),
@@ -175,7 +186,7 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
     """Return the platform tools."""
     return (
         _platform_stats_tool(),
-        _security_check_tool(),
+        _checks_tool(),
         _dashboard_tool(),
         _config_tool(),
     )

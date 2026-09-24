@@ -28,8 +28,12 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security self-assessment types used by ``uds.core.security.checks`` and
-exposed by the REST ``/system/security_check`` endpoint.
+Self-assessment check types used by ``uds.core.checks`` and exposed by the REST
+``/system/checks`` endpoint.
+
+A check evaluates a single condition of the installation (weak settings, stuck
+queues, ...) and reports its severity, whether it passes and a human readable
+detail. The category tells which area the condition belongs to.
 """
 
 import dataclasses
@@ -37,9 +41,9 @@ import enum
 import typing
 
 
-class SecurityCheckSeverity(str, enum.Enum):
+class CheckSeverity(str, enum.Enum):
     """
-    Severity of a security check result, from most to least important.
+    Severity of a check result, from most to least important.
     """
 
     CRITICAL = "critical"
@@ -49,22 +53,37 @@ class SecurityCheckSeverity(str, enum.Enum):
     INFO = "info"
 
 
-@dataclasses.dataclass(frozen=True)
-class SecurityCheckResult:
+class CheckCategory(str, enum.Enum):
     """
-    Result of a single security check.
+    Area a check belongs to.
+
+    - ``SECURITY``: configuration or state weaknesses an attacker could use.
+    - ``HEALTH``: operational indicators (queues, stuck elements, ...) that
+      may degrade the system but are not exploitable by themselves.
+    """
+
+    SECURITY = "security"
+    HEALTH = "health"
+
+
+@dataclasses.dataclass(frozen=True)
+class CheckResult:
+    """
+    Result of a single check.
 
     - ``id``: stable machine-readable identifier of the check.
     - ``severity``: importance of the check when it fails.
     - ``ok``: ``True`` when the check passes, ``False`` when the checked
-      condition is a security concern.
+      condition deserves attention.
     - ``message``: human readable detail, suitable for operator notification.
+    - ``category``: area the check belongs to.
     """
 
     id: str
-    severity: SecurityCheckSeverity
+    severity: CheckSeverity
     ok: bool
     message: str
+    category: CheckCategory
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
@@ -72,4 +91,5 @@ class SecurityCheckResult:
             "severity": self.severity.value,
             "ok": self.ok,
             "message": self.message,
+            "category": self.category.value,
         }

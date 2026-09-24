@@ -30,9 +30,8 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 Check for the webhook notification delivery queue.
 
-Note: this is a system health check rather than a strict security one, but it
-lives here (for now) so administrators get notified before an ever-growing
-webhook queue can degrade the system.
+This is a ``HEALTH`` category check: an ever-growing queue is not exploitable,
+but it degrades the system, so administrators get notified before that happens.
 """
 
 import typing
@@ -41,7 +40,7 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 
-from .factory import SecurityChecksFactory
+from .factory import ChecksFactory, CheckOutcome
 
 # Soft threshold: warn that the queue is growing
 SOFT_THRESHOLD: typing.Final[int] = 2000
@@ -49,14 +48,14 @@ SOFT_THRESHOLD: typing.Final[int] = 2000
 HARD_THRESHOLD: typing.Final[int] = 10000
 
 
-def _check_webhook_queue_size() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_webhook_queue_size() -> CheckOutcome:
     # Imported here to avoid pulling notifier modules unless this check runs
     from uds.notifiers.webhook import queue
 
     count = queue.pending_count()
     if count > HARD_THRESHOLD:
         return (
-            types.security.SecurityCheckSeverity.HIGH,
+            types.checks.CheckSeverity.HIGH,
             False,
             _(
                 "Webhook notification queue holds {n} pending events (near the {cap} enqueue cap)."
@@ -65,7 +64,7 @@ def _check_webhook_queue_size() -> tuple[types.security.SecurityCheckSeverity, b
         )
     if count > SOFT_THRESHOLD:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "Webhook notification queue is growing ({n} pending events)."
@@ -73,12 +72,12 @@ def _check_webhook_queue_size() -> tuple[types.security.SecurityCheckSeverity, b
             ).format(n=count),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         True,
         _("Webhook notification queue size is under control ({n} pending events).").format(n=count),
     )
 
 
-def register_checks(factory: SecurityChecksFactory) -> None:
+def register_checks(factory: ChecksFactory) -> None:
     """Registers the webhook queue checks into the shared factory."""
-    factory.register_check("webhook-queue-size", _check_webhook_queue_size)
+    factory.register_check("webhook-queue-size", _check_webhook_queue_size, types.checks.CheckCategory.HEALTH)

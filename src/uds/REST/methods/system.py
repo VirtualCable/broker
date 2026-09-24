@@ -44,7 +44,8 @@ from uds.core import exceptions
 from uds.core import types
 from uds.core.types.states import State
 from uds.core.util import permissions
-from uds.core.security.checks import security_checks
+from uds.core.checks import build_report
+from uds.core.checks import run_checks
 from uds.core.util.cache import Cache
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_now
@@ -105,7 +106,9 @@ def get_servicepools_counters(
                 )
             else:
                 # Generate as much points as needed with 0 value
-                val = [{"stamp": since + datetime.timedelta(hours=i), "value": 0} for i in range(since_days * 24)]
+                val = [
+                    {"stamp": since + datetime.timedelta(hours=i), "value": 0} for i in range(since_days * 24)
+                ]
         else:
             val = pickle.loads(codecs.decode(cached_value, "zip"))  # nosec: pickle is used to cache data, not to load it
 
@@ -121,7 +124,9 @@ class System(Handler):
     """
     {
         'paths': [
-            "/system/security_check", "Returns the security self-assessment report (only filled for admins)",
+            "/system/checks", "Returns the full self-assessment report, security + health (only filled for admins)",
+            "/system/checks/<category>", "Returns the self-assessment report for one category: security or health",
+            "/system/security_check", "Deprecated alias of /system/checks/security (only filled for admins)",
             "/system/overview", "Returns a json object with the number of services, service pools, users, etc",
             "/system/stats/assigned", "Returns a chart of assigned services (all pools)",
             "/system/stats/inuse", "Returns a chart of in use services (all pools)",
@@ -144,13 +149,16 @@ class System(Handler):
         logger.debug("args: %s", self._args)
         # Only allow admin user for global stats
         if len(self._args) == 1:
-            if self._args[0] == "security_check":  # Security self-assessment
-                # Staff members can invoke it too (so the admin GUI can expose
-                # the panel to all of them), but only administrators get the
-                # actual report; anyone else receives an empty one.
+            if self._args[0] == "checks":  # Self-assessment report (all categories)
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
-                return security_checks.build_report()
+                return build_report()
+            if self._args[0] == "security_check":
+                # Deprecated alias of /system/checks/security, kept for
+                # compatibility with older clients
+                if not self._user.is_admin:
+                    raise exceptions.rest.AccessDenied()
+                return build_report(run_checks(types.checks.CheckCategory.SECURITY))
             if self._args[0] == "overview":  # System overview
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
@@ -168,7 +176,9 @@ class System(Handler):
                 services: int = models.Service.objects.count()
                 service_pools: int = models.ServicePool.objects.count()
                 meta_pools: int = models.MetaPool.objects.count()
-                user_services: int = models.UserService.objects.exclude(state__in=(State.REMOVED, State.ERROR)).count()
+                user_services: int = models.UserService.objects.exclude(
+                    state__in=(State.REMOVED, State.ERROR)
+                ).count()
                 restrained_services_pools: int = models.ServicePool.restraineds_queryset().count()
                 os_managers: int = models.OSManager.objects.count()
                 transports_: int = models.Transport.objects.count()
@@ -194,6 +204,19 @@ class System(Handler):
                     "tunnels": tunnels,
                     "authenticators": auths,
                 }
+
+        if len(self._args) == 2 and self._args[0] == "checks":
+            # Self-assessment report for a single category
+            if not self._user.is_admin:
+                raise exceptions.rest.AccessDenied()
+            try:
+                category = types.checks.CheckCategory(self._args[1].lower())
+            except ValueError:
+                raise exceptions.rest.RequestError(
+                    f"Invalid category '{self._args[1]}', expected one of: "
+                    f"{', '.join(c.value for c in types.checks.CheckCategory)}"
+                ) from None
+            return build_report(run_checks(category))
 
         if len(self.args) in (2, 3):
             # Extract pool if provided

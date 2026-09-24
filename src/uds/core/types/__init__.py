@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 # pyright: reportUnusedImport=false
 from . import auth as auth
 from . import calendar as calendar
+from . import checks as checks
 from . import connections as connections
 from . import core as core
 from . import crypto as crypto
@@ -49,7 +50,6 @@ from . import plugins as plugins
 from . import pools as pools
 from . import requests as requests
 from . import rest as rest
-from . import security as security
 from . import servers as servers
 from . import services as services
 from . import states as states

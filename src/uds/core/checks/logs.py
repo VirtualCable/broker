@@ -28,7 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security checks derived from runtime log/state.
+Checks derived from runtime log/state.
 
 The checks query ``uds.models.Log`` (the DB mirror of every ``UDSLogHandler``
 record, ``uds.core.util.log.py:169``) instead of parsing log files directly,
@@ -47,7 +47,7 @@ from django.utils.translation import gettext as _
 from uds.core import types
 from uds.models import Log
 
-from .factory import SecurityChecksFactory
+from .factory import ChecksFactory, CheckOutcome
 
 # Thresholds for C1 ``failed-logins-24h`` (in count of records).
 # >50 / 24h is HIGH-fail; >10 is MEDIUM-fail; otherwise pass with the count.
@@ -90,28 +90,30 @@ def _failed_login_rows() -> Iterator[str]:
     yield from qs
 
 
-def _check_failed_logins_24h() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_failed_logins_24h() -> CheckOutcome:
     count = sum(1 for _ in _failed_login_rows())
     if count >= _C1_HIGH_THRESHOLD:
         return (
-            types.security.SecurityCheckSeverity.HIGH,
+            types.checks.CheckSeverity.HIGH,
             False,
-            _("{count} failed login attempts in the last 24h: a brute force may be in progress.").format(count=count),
+            _("{count} failed login attempts in the last 24h: a brute force may be in progress.").format(
+                count=count
+            ),
         )
     if count >= _C1_MEDIUM_THRESHOLD:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _("{count} failed login attempts in the last 24h.").format(count=count),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         True,
         _("{count} failed login attempts in the last 24h (within normal range).").format(count=count),
     )
 
 
-def _check_brute_force_by_ip() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_brute_force_by_ip() -> CheckOutcome:
     by_ip: dict[str, int] = {}
     for data in _failed_login_rows():
         m = _LOGIN_RX.match(data or "")
@@ -124,18 +126,20 @@ def _check_brute_force_by_ip() -> tuple[types.security.SecurityCheckSeverity, bo
         flagged.sort(key=lambda x: x[1], reverse=True)
         top = ", ".join(f"{ip}={cnt}" for ip, cnt in flagged[:5])
         return (
-            types.security.SecurityCheckSeverity.HIGH,
+            types.checks.CheckSeverity.HIGH,
             False,
             _("Brute-force patterns detected by source IP in the last 24h: {top}.").format(top=top),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         True,
-        _("No IP exceeds {threshold} failed login attempts in the last 24h.").format(threshold=_C2_PER_IP_THRESHOLD),
+        _("No IP exceeds {threshold} failed login attempts in the last 24h.").format(
+            threshold=_C2_PER_IP_THRESHOLD
+        ),
     )
 
 
-def _check_temporarily_blocked_logins() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_temporarily_blocked_logins() -> CheckOutcome:
     # The lockout path in ``src/uds/web/util/authentication.py:87`` logs
     # "Temporarily blocked" via ``log_login(..., as_error=True)``; that
     # lands in the Log table as an ERROR row on the authenticator with that
@@ -149,7 +153,7 @@ def _check_temporarily_blocked_logins() -> tuple[types.security.SecurityCheckSev
     ).count()
     if count > 0:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "{count} account(s) were temporarily blocked in the last 24h: an attacker may be"
@@ -158,13 +162,13 @@ def _check_temporarily_blocked_logins() -> tuple[types.security.SecurityCheckSev
             ).format(count=count),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         True,
         _("No accounts were temporarily blocked in the last 24h."),
     )
 
 
-def _check_internal_errors_24h() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_internal_errors_24h() -> CheckOutcome:
     # Global syslog entries (owner_id=0, owner_type=-1) at ERROR+ from the last
     # 24h; equivalent to grepping ``ERROR`` across uds.log/services.log/etc.
     qs = Log.objects.filter(
@@ -176,7 +180,7 @@ def _check_internal_errors_24h() -> tuple[types.security.SecurityCheckSeverity, 
     count = qs.count()
     if count >= _C4_MEDIUM_THRESHOLD:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "{count} internal ERROR entries in the last 24h: check uds.log /"
@@ -184,15 +188,18 @@ def _check_internal_errors_24h() -> tuple[types.security.SecurityCheckSeverity, 
             ).format(count=count),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         True,
         _("{count} internal ERROR entries in the last 24h (within normal range).").format(count=count),
     )
 
 
-def register_checks(factory: SecurityChecksFactory) -> None:
+def register_checks(factory: ChecksFactory) -> None:
     """Registers the runtime-log checks into the shared factory."""
-    factory.register_check("failed-logins-24h", _check_failed_logins_24h)
-    factory.register_check("brute-force-by-ip", _check_brute_force_by_ip)
-    factory.register_check("temporarily-blocked-logins", _check_temporarily_blocked_logins)
-    factory.register_check("internal-errors-24h", _check_internal_errors_24h)
+    factory.register_check("failed-logins-24h", _check_failed_logins_24h, types.checks.CheckCategory.SECURITY)
+    factory.register_check("brute-force-by-ip", _check_brute_force_by_ip, types.checks.CheckCategory.SECURITY)
+    factory.register_check(
+        "temporarily-blocked-logins", _check_temporarily_blocked_logins, types.checks.CheckCategory.SECURITY
+    )
+    # Internal error rate is a system health signal, not an attack indicator
+    factory.register_check("internal-errors-24h", _check_internal_errors_24h, types.checks.CheckCategory.HEALTH)

@@ -3,12 +3,13 @@
 # All rights reserved.
 #
 """
-Tests for the REST ``/system/security_check`` endpoint.
+Tests for the REST ``/system/checks`` endpoint (and the deprecated
+``/system/security_check`` alias).
 
 Notes
 -----
-* The endpoint requires administrator privileges for the security report; staff
-  members receive ``403 Forbidden``.
+* The endpoint requires administrator privileges; staff members receive
+  ``403 Forbidden``.
 * The test database starts with the shipped configuration defaults, so the
   expected summary is deterministic (see each test's comments).
 """
@@ -55,10 +56,12 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
     )
 )
 
+EXPECTED_HEALTH_IDS: typing.Final[frozenset[str]] = frozenset(
+    ("webhook-queue-size", "internal-errors-24h", "restrained-service-pools")
+)
 
-class SecurityCheckEndpointTest(rest.test.RESTTestCase):
-    PATH = "system/security_check"
 
+class ChecksEndpointTest(rest.test.RESTTestCase):
     @typing.override
     def tearDown(self) -> None:
         # Restore the shipped default root password: config values keep an
@@ -66,18 +69,18 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
         GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
         super().tearDown()
 
-    def _get_report(self) -> dict[str, typing.Any]:
-        response = self.client.rest_get("system/security_check")
+    def _get_report(self, path: str = "system/checks") -> dict[str, typing.Any]:
+        response = self.client.rest_get(path)
         self.assertEqual(response.status_code, 200, response.content)
         return typing.cast("dict[str, typing.Any]", response.json())
 
     def test_anonymous_access_is_denied(self) -> None:
-        response = self.client.rest_get("system/security_check")
+        response = self.client.rest_get("system/checks")
         self.assertEqual(response.status_code, 403, response.content)
 
     def test_staff_access_is_denied(self) -> None:
         self.login(as_admin=False)
-        response = self.client.rest_get("system/security_check")
+        response = self.client.rest_get("system/checks")
         self.assertEqual(response.status_code, 403, response.content)
 
     def test_admin_gets_full_report(self) -> None:
@@ -85,17 +88,46 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
         body = self._get_report()
         checks = body["checks"]
         self.assertEqual({check["id"] for check in checks}, EXPECTED_CHECK_IDS)
-        # Every check carries its severity, state and message
+        # Every check carries its severity, state, category and message
         for check in checks:
-            self.assertIn(
-                check["severity"], [severity.value for severity in types.security.SecurityCheckSeverity]
-            )
+            self.assertIn(check["severity"], [severity.value for severity in types.checks.CheckSeverity])
+            self.assertIn(check["category"], [category.value for category in types.checks.CheckCategory])
             self.assertIsInstance(check["ok"], bool)
             self.assertTrue(check["message"])
         # Summary counts only failed checks, per severity
-        for severity in types.security.SecurityCheckSeverity:
+        for severity in types.checks.CheckSeverity:
             expected = sum(1 for check in checks if not check["ok"] and check["severity"] == severity.value)
             self.assertEqual(body[severity.value], expected)
+        # Category breakdown counts failed checks per category
+        for category in types.checks.CheckCategory:
+            expected = sum(1 for check in checks if not check["ok"] and check["category"] == category.value)
+            self.assertEqual(body["categories"][category.value], expected)
+
+    def test_admin_can_filter_by_category(self) -> None:
+        self.login()
+        security = self._get_report("system/checks/security")
+        health = self._get_report("system/checks/health")
+
+        self.assertEqual(
+            {check["id"] for check in security["checks"]}, EXPECTED_CHECK_IDS - EXPECTED_HEALTH_IDS
+        )
+        self.assertEqual(
+            {check["id"] for check in health["checks"]},
+            EXPECTED_HEALTH_IDS,
+        )
+        self.assertTrue(all(check["category"] == "health" for check in health["checks"]))
+        self.assertTrue(all(check["category"] == "security" for check in security["checks"]))
+
+    def test_invalid_category_is_rejected(self) -> None:
+        self.login()
+        response = self.client.rest_get("system/checks/not-a-category")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_deprecated_security_check_alias_still_works(self) -> None:
+        self.login()
+        body = self._get_report("system/security_check")
+        checks = body["checks"]
+        self.assertEqual({check["id"] for check in checks}, EXPECTED_CHECK_IDS - EXPECTED_HEALTH_IDS)
 
     def test_admin_report_reflects_configuration_state(self) -> None:
         # Isolate this test from the other CRITICAL/HIGH findings the test
@@ -124,7 +156,7 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
             # session signed with the active SECRET_KEY, so it must be issued
             # and validated under the same settings block.
             self.login()
-            body = self._get_report()
+            body = self._get_report("system/security_check")
             critical = {
                 check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]
             }
@@ -132,5 +164,5 @@ class SecurityCheckEndpointTest(rest.test.RESTTestCase):
 
             # Rotating the root password clears the only critical finding
             GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
-            body = self._get_report()
+            body = self._get_report("system/security_check")
             self.assertEqual(body["critical"], 0)

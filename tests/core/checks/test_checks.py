@@ -28,7 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Tests for the security self-assessment checks (uds.core.security.checks).
+Tests for the self-assessment checks (uds.core.checks).
 """
 
 import datetime
@@ -40,11 +40,13 @@ from django.utils import timezone
 from uds import models
 from uds.core import consts
 from uds.core import types
-from uds.core.security.checks import security_checks
+from uds.core.checks import runner as runner_module
+from uds.core.checks import CheckOutcome
+from uds.core.checks.factory import CheckEntry
 from uds.core.util.config import GlobalConfig
 
-from ....fixtures import services as services_fixtures
-from ....utils.test import UDSTransactionTestCase
+from ...fixtures import services as services_fixtures
+from ...utils.test import UDSTransactionTestCase
 
 ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
     (
@@ -82,7 +84,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
 )
 
 
-class SecurityChecksTest(UDSTransactionTestCase):
+class ChecksTest(UDSTransactionTestCase):
     @typing.override
     def setUp(self) -> None:
         super().setUp()
@@ -109,8 +111,8 @@ class SecurityChecksTest(UDSTransactionTestCase):
         GlobalConfig.ENHANCED_SECURITY.set(True)
         super().tearDown()
 
-    def _run_check(self, check_id: str) -> types.security.SecurityCheckResult:
-        results = {result.id: result for result in security_checks.run_security_checks()}
+    def _run_check(self, check_id: str) -> types.checks.CheckResult:
+        results = {result.id: result for result in runner_module.run_checks()}
         self.assertIn(check_id, results)
         return results[check_id]
 
@@ -141,14 +143,14 @@ class SecurityChecksTest(UDSTransactionTestCase):
     def test_default_superuser_credentials_detected(self) -> None:
         result = self._run_check("default-superuser-credentials")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.CRITICAL)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
         self.assertIn("root password", result.message.lower())
 
     def test_rotated_superuser_credentials_pass(self) -> None:
         GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
         result = self._run_check("default-superuser-credentials")
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.CRITICAL)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
 
     # ------------------------------------------------------------------
     # Check 2: root account web/API access
@@ -157,7 +159,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         result = self._run_check("superuser-web-access")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
 
     def test_superuser_web_access_disabled_passes(self) -> None:
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(False)
@@ -171,7 +173,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         # Baseline: both TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are "*"
         result = self._run_check("trusted-sources-wildcard")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         self.assertIn("TRUSTED_SOURCES", result.message)
         self.assertIn("ADMIN_TRUSTED_SOURCES", result.message)
 
@@ -194,21 +196,21 @@ class SecurityChecksTest(UDSTransactionTestCase):
         GlobalConfig.BEHIND_PROXY.set(False)
         result = self._run_check("ip-forwarders-wildcard")
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.INFO)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
 
     def test_ip_forwarders_wildcard_behind_proxy_fails(self) -> None:
         GlobalConfig.BEHIND_PROXY.set(True)
         GlobalConfig.ALLOWED_IP_FORWARDERS.set("*")
         result = self._run_check("ip-forwarders-wildcard")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
 
     def test_ip_forwarders_restricted_behind_proxy_passes(self) -> None:
         GlobalConfig.BEHIND_PROXY.set(True)
         GlobalConfig.ALLOWED_IP_FORWARDERS.set("10.0.0.1")
         result = self._run_check("ip-forwarders-wildcard")
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
 
     # ------------------------------------------------------------------
     # Check 8: session / security headers
@@ -217,7 +219,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         # The test settings do not enable the "Secure" cookie flags
         result = self._run_check("security-cookies-and-headers")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.LOW)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.LOW)
         self.assertIn("SESSION_COOKIE_SECURE", result.message)
         self.assertIn("CSRF_COOKIE_SECURE", result.message)
 
@@ -243,7 +245,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         self._create_saml_authenticator("Unsigned SAML")
         result = self._run_check("saml-assertions-signed")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         self.assertIn("Unsigned SAML", result.message)
 
     def test_saml_signed_assertions_pass(self) -> None:
@@ -261,7 +263,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
     # Check 10: old (legacy uuid) actor token flow
     # ------------------------------------------------------------------
     def _create_userservice_with_actor_version(self, version: str) -> models.UserService:
-        from ....fixtures import authenticators as authenticators_fixtures
+        from ...fixtures import authenticators as authenticators_fixtures
 
         auth = authenticators_fixtures.create_db_authenticator()
         groups = authenticators_fixtures.create_db_groups(auth, 1)
@@ -284,7 +286,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
 
         result = self._run_check("old-token-used-by-actor")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         self.assertIn(userservice.service_pool.name, result.message)
 
     def test_old_token_without_actor_version_passes(self) -> None:
@@ -312,7 +314,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         with self.settings(DEBUG=True, PROFILING=False):
             result = self._run_check("debug-enabled")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.CRITICAL)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
 
     def test_debug_enabled_fails_when_profiling_on(self) -> None:
         with self.settings(DEBUG=False, PROFILING=True):
@@ -334,7 +336,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         with self.settings(SECRET_KEY=consts.security.DEFAULT_SECRET_KEY):
             result = self._run_check("default-secret-key")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.CRITICAL)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
 
     def test_default_secret_key_passes_when_rotated(self) -> None:
         with self.settings(SECRET_KEY="a-rotated-not-default-secret-key"):
@@ -370,7 +372,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("login-hardening-weak")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
             self.assertIn("MAX_LOGIN_TRIES", result.message)
         finally:
             GlobalConfig.MAX_LOGIN_TRIES.set(5)
@@ -394,7 +396,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("actor-failure-blocking-disabled")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         finally:
             GlobalConfig.BLOCK_ACTOR_FAILURES.set(True)
 
@@ -435,7 +437,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         result = self._run_check("failed-logins-24h")
         # Default state may have leftover rows from earlier tests; we only
         # assert severity and that count is reported.
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.INFO)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
 
     def test_failed_logins_24h_medium_at_eleven(self) -> None:
         from uds.models import Log
@@ -449,7 +451,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("failed-logins-24h")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         finally:
             Log.objects.filter(
                 source=types.log.LogSource.WEB,
@@ -480,7 +482,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         Log.objects.filter(owner_id=0, owner_type=-1).delete()
         result = self._run_check("internal-errors-24h")
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.INFO)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
 
     def test_internal_errors_24h_fails_above_threshold(self) -> None:
         from uds.models import Log
@@ -490,7 +492,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("internal-errors-24h")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         finally:
             Log.objects.filter(owner_id=0, owner_type=-1).delete()
 
@@ -507,7 +509,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         with self.settings(MIDDLEWARE=middleware):
             result = self._run_check("csrf-middleware-disabled")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
 
     def test_csrf_middleware_disabled_passes_when_present(self) -> None:
         middleware: list[str] = [
@@ -533,7 +535,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         with self.settings(DEBUG=False, LOGGING=logging_cfg):
             result = self._run_check("sql-logging-enabled")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
 
     def test_sql_logging_passes_when_debug_is_on(self) -> None:
         logging_cfg: dict[str, typing.Any] = {
@@ -594,7 +596,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("brute-force-by-ip")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
             self.assertIn("10.0.0.1", result.message)
         finally:
             Log.objects.filter(
@@ -646,7 +648,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("temporarily-blocked-logins")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
             self.assertIn("1", result.message)
         finally:
             Log.objects.filter(
@@ -671,7 +673,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("no-mfa-configured")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
             self.assertIn("no-mfa-auth", result.message)
         finally:
             models.Authenticator.objects.all().delete()
@@ -748,7 +750,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("server-certificates-expiring")
             self.assertTrue(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
         finally:
             models.Server.objects.all().delete()
 
@@ -758,7 +760,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("server-certificates-expiring")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
         finally:
             models.Server.objects.all().delete()
 
@@ -768,7 +770,7 @@ class SecurityChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("server-certificates-expiring")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         finally:
             models.Server.objects.all().delete()
 
@@ -846,46 +848,69 @@ class SecurityChecksTest(UDSTransactionTestCase):
     # Runner and report
     # ------------------------------------------------------------------
     def test_run_returns_all_checks(self) -> None:
-        results = security_checks.run_security_checks()
+        results = runner_module.run_checks()
         self.assertEqual({result.id for result in results}, ALL_CHECK_IDS)
+        # Every result carries a valid category
+        for result in results:
+            self.assertIn(result.category, list(types.checks.CheckCategory))
+
+    def test_category_filter_returns_only_that_category(self) -> None:
+        health_ids = {result.id for result in runner_module.run_checks(types.checks.CheckCategory.HEALTH)}
+        security_ids = {result.id for result in runner_module.run_checks(types.checks.CheckCategory.SECURITY)}
+
+        self.assertEqual(health_ids, {"webhook-queue-size", "internal-errors-24h", "restrained-service-pools"})
+        self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)
+        self.assertEqual(len(health_ids & security_ids), 0)
 
     def test_webhook_queue_size(self) -> None:
         from uds.notifiers.webhook import queue as webhook_queue
 
         result = self._run_check("webhook-queue-size")
         self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.category, types.checks.CheckCategory.HEALTH)
 
         with mock.patch.object(webhook_queue, "pending_count", return_value=3000):
             result = self._run_check("webhook-queue-size")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.MEDIUM)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
 
         with mock.patch.object(webhook_queue, "pending_count", return_value=20000):
             result = self._run_check("webhook-queue-size")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.HIGH)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
 
     def test_build_report_summary_counts_failed_checks_only(self) -> None:
-        results = security_checks.run_security_checks()
-        report = security_checks.build_report(results)
+        results = runner_module.run_checks()
+        report = runner_module.build_report(results)
         self.assertEqual(report["checks"], [result.as_dict() for result in results])
-        for severity in types.security.SecurityCheckSeverity:
+        for severity in types.checks.CheckSeverity:
             expected = sum(1 for result in results if not result.ok and result.severity is severity)
             self.assertEqual(report[severity.value], expected)
+        # Category breakdown counts failed checks per category
+        for category in types.checks.CheckCategory:
+            expected = sum(1 for result in results if not result.ok and result.category is category)
+            self.assertEqual(report["categories"][category.value], expected)
 
     def test_failing_check_does_not_abort_scan(self) -> None:
-        from uds.core.security.checks import runner as runner_module
-
-        def broken() -> security_checks.CheckResult:
+        def broken() -> CheckOutcome:
             raise RuntimeError("boom")
 
         original = runner_module._collect_checks
 
-        def patched() -> list[tuple[str, security_checks.CheckFn]]:
-            return [(cid, broken if cid == "trusted-sources-wildcard" else fn) for cid, fn in original()]
+        def patched() -> list[tuple[str, CheckEntry]]:
+            return [
+                (
+                    cid,
+                    CheckEntry(
+                        fn=broken if cid == "trusted-sources-wildcard" else entry.fn,
+                        category=entry.category,
+                    ),
+                )
+                for cid, entry in original()
+            ]
 
         with mock.patch.object(runner_module, "_collect_checks", new=patched):
             result = self._run_check("trusted-sources-wildcard")
         self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.security.SecurityCheckSeverity.INFO)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
         self.assertIn("could not be evaluated", result.message)

@@ -28,7 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security checks derived from ``uds.core.util.config.GlobalConfig``.
+Checks derived from ``uds.core.util.config.GlobalConfig``.
 
 Grouped here because they all read their state from the admin-editable global
 configuration (DB-backed) rather than from ``django.conf.settings`` or live
@@ -41,10 +41,10 @@ from uds.core import consts, types
 from uds.core.managers.crypto import CryptoManager
 from uds.core.util.config import GlobalConfig
 
-from .factory import SecurityChecksFactory
+from .factory import ChecksFactory, CheckOutcome
 
 
-def _check_default_superuser_credentials() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_default_superuser_credentials() -> CheckOutcome:
     stored = GlobalConfig.SUPER_USER_PASS.get(True)
     # Both the raw comparison (legacy unhashed storage) and the hash check
     # (modern installs store an Argon2 hash of the password) are needed.
@@ -52,32 +52,34 @@ def _check_default_superuser_credentials() -> tuple[types.security.SecurityCheck
         consts.security.DEFAULT_SUPERUSER_PASSWORD, stored
     ):
         return (
-            types.security.SecurityCheckSeverity.CRITICAL,
+            types.checks.CheckSeverity.CRITICAL,
             False,
             _("Default superuser credentials are still active. Change the root password immediately."),
         )
     return (
-        types.security.SecurityCheckSeverity.CRITICAL,
+        types.checks.CheckSeverity.CRITICAL,
         True,
         _("Superuser password is not the shipped default."),
     )
 
 
-def _check_superuser_web_access() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_superuser_web_access() -> CheckOutcome:
     if GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.as_bool(True):
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
-            _("Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if not needed in production."),
+            _(
+                "Root web/API access is enabled (SUPER_USER_ALLOW_WEBACCESS). Disable it if not needed in production."
+            ),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("Root web/API access is disabled."),
     )
 
 
-def _check_trusted_sources_wildcard() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_trusted_sources_wildcard() -> CheckOutcome:
     wildcards: list[str] = []
     if GlobalConfig.TRUSTED_SOURCES.get(True).strip() == "*":
         wildcards.append("TRUSTED_SOURCES")
@@ -85,23 +87,23 @@ def _check_trusted_sources_wildcard() -> tuple[types.security.SecurityCheckSever
         wildcards.append("ADMIN_TRUSTED_SOURCES")
     if wildcards:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "{wildcards} set to wildcard (*): IP-based gating for tunnels, actors and admin operations is disabled."
             ).format(wildcards=", ".join(wildcards)),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not wildcards."),
     )
 
 
-def _check_ip_forwarders_wildcard() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_ip_forwarders_wildcard() -> CheckOutcome:
     if not GlobalConfig.BEHIND_PROXY.as_bool(True):
         return (
-            types.security.SecurityCheckSeverity.INFO,
+            types.checks.CheckSeverity.INFO,
             True,
             _(
                 "Broker is not behind a proxy; the default wildcard ALLOWED_IP_FORWARDERS is not exploitable until BEHIND_PROXY is enabled."
@@ -109,7 +111,7 @@ def _check_ip_forwarders_wildcard() -> tuple[types.security.SecurityCheckSeverit
         )
     if GlobalConfig.ALLOWED_IP_FORWARDERS.get(True).strip() == "*":
         return (
-            types.security.SecurityCheckSeverity.HIGH,
+            types.checks.CheckSeverity.HIGH,
             False,
             _(
                 "Broker is behind a proxy and ALLOWED_IP_FORWARDERS is a wildcard: any client can spoof X-Forwarded-For."
@@ -117,13 +119,13 @@ def _check_ip_forwarders_wildcard() -> tuple[types.security.SecurityCheckSeverit
             ),
         )
     return (
-        types.security.SecurityCheckSeverity.HIGH,
+        types.checks.CheckSeverity.HIGH,
         True,
         _("Broker is behind a proxy and ALLOWED_IP_FORWARDERS is restricted to concrete addresses."),
     )
 
 
-def _check_login_hardening_weak() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_login_hardening_weak() -> CheckOutcome:
     # Bundle of related knobs. Each one is reported separately so the operator
     # can see which one is off without re-reading the check.
     issues: list[str] = []
@@ -140,26 +142,26 @@ def _check_login_hardening_weak() -> tuple[types.security.SecurityCheckSeverity,
 
     if issues:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _("Login hardening knobs are weak: {issues}.").format(issues="; ".join(issues)),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("Login hardening knobs are within recommended ranges."),
     )
 
 
-def _check_actor_failure_blocking_disabled() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_actor_failure_blocking_disabled() -> CheckOutcome:
     if GlobalConfig.BLOCK_ACTOR_FAILURES.as_bool(True):
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             True,
             _("Actor failure blocking is enabled (BLOCK_ACTOR_FAILURES)."),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         False,
         _(
             "Actor failure blocking is disabled (BLOCK_ACTOR_FAILURES): /actor/ endpoints"
@@ -168,29 +170,29 @@ def _check_actor_failure_blocking_disabled() -> tuple[types.security.SecurityChe
     )
 
 
-def _check_experimental_features_on() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_experimental_features_on() -> CheckOutcome:
     if GlobalConfig.EXPERIMENTAL_FEATURES.as_bool(True):
         return (
-            types.security.SecurityCheckSeverity.LOW,
+            types.checks.CheckSeverity.LOW,
             False,
             _("EXPERIMENTAL_FEATURES is on: unsupported functionality is exposed."),
         )
     return (
-        types.security.SecurityCheckSeverity.LOW,
+        types.checks.CheckSeverity.LOW,
         True,
         _("EXPERIMENTAL_FEATURES is off."),
     )
 
 
-def _check_immutable_audit_log_off() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_immutable_audit_log_off() -> CheckOutcome:
     if GlobalConfig.IMMUTABLE_LOG_ENABLED.as_bool(True):
         return (
-            types.security.SecurityCheckSeverity.INFO,
+            types.checks.CheckSeverity.INFO,
             True,
             _("Immutable audit log is enabled (TSA-signed)."),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         False,
         _(
             "IMMUTABLE_LOG_ENABLED is off: logins and admin events are not written to"
@@ -199,13 +201,33 @@ def _check_immutable_audit_log_off() -> tuple[types.security.SecurityCheckSeveri
     )
 
 
-def register_checks(factory: SecurityChecksFactory) -> None:
+def register_checks(factory: ChecksFactory) -> None:
     """Registers the global-config checks into the shared factory."""
-    factory.register_check("default-superuser-credentials", _check_default_superuser_credentials)
-    factory.register_check("superuser-web-access", _check_superuser_web_access)
-    factory.register_check("trusted-sources-wildcard", _check_trusted_sources_wildcard)
-    factory.register_check("ip-forwarders-wildcard", _check_ip_forwarders_wildcard)
-    factory.register_check("login-hardening-weak", _check_login_hardening_weak)
-    factory.register_check("actor-failure-blocking-disabled", _check_actor_failure_blocking_disabled)
-    factory.register_check("experimental-features-on", _check_experimental_features_on)
-    factory.register_check("immutable-audit-log-off", _check_immutable_audit_log_off)
+    factory.register_check(
+        "default-superuser-credentials",
+        _check_default_superuser_credentials,
+        types.checks.CheckCategory.SECURITY,
+    )
+    factory.register_check(
+        "superuser-web-access", _check_superuser_web_access, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "trusted-sources-wildcard", _check_trusted_sources_wildcard, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "ip-forwarders-wildcard", _check_ip_forwarders_wildcard, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "login-hardening-weak", _check_login_hardening_weak, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "actor-failure-blocking-disabled",
+        _check_actor_failure_blocking_disabled,
+        types.checks.CheckCategory.SECURITY,
+    )
+    factory.register_check(
+        "experimental-features-on", _check_experimental_features_on, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "immutable-audit-log-off", _check_immutable_audit_log_off, types.checks.CheckCategory.SECURITY
+    )

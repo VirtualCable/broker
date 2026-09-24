@@ -28,16 +28,19 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Factory used by ``uds.core.security.checks`` to register security self-assessment
-checks by stable id.
+Factory used by ``uds.core.checks`` to register self-assessment checks by
+stable id.
 
-A check is a zero-argument callable returning
-``(SecurityCheckSeverity, bool, str)``. Group modules (settings, global_config,
-models, logs, ...) plug into the factory via :meth:`Factory.register` so new
-checks can be added without touching the runner.
+A check is a zero-argument callable returning a ``CheckOutcome``:
+``(CheckSeverity, bool, str)``. Group modules (settings, global_config, models,
+logs, queue, ...) plug into the factory via :meth:`ChecksFactory.register_check`
+so new checks can be added without touching the runner. Each check declares its
+:class:`uds.core.types.checks.CheckCategory` at registration time, so the
+endpoint can group or filter without reshuffling the package layout.
 """
 
 import collections.abc
+import dataclasses
 import logging
 import typing
 
@@ -46,18 +49,31 @@ from uds.core.util import factory
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-# A check evaluates a single security-relevant condition and returns a
-# ``CheckResult``: its severity, whether it passes and a human readable detail.
-CheckResult: typing.TypeAlias = tuple[types.security.SecurityCheckSeverity, bool, str]
-CheckFn: typing.TypeAlias = collections.abc.Callable[[], CheckResult]
+# A check evaluates a single condition and returns a ``CheckOutcome``: its
+# severity, whether it passes and a human readable detail.
+CheckOutcome: typing.TypeAlias = tuple[types.checks.CheckSeverity, bool, str]
+CheckFn: typing.TypeAlias = collections.abc.Callable[[], CheckOutcome]
 
 
-class SecurityChecksFactory(factory.Factory[CheckFn]):
-    """Registry of security self-assessment checks keyed by stable id."""
+@dataclasses.dataclass(frozen=True)
+class CheckEntry:
+    """A registered check: its callable and the category it belongs to."""
 
-    def register_check(self, check_id: str, check: CheckFn) -> None:
+    fn: CheckFn
+    category: types.checks.CheckCategory
+
+
+class ChecksFactory(factory.Factory[CheckFn]):
+    """Registry of self-assessment checks keyed by stable id."""
+
+    def register_check(
+        self,
+        check_id: str,
+        check: CheckFn,
+        category: types.checks.CheckCategory,
+    ) -> None:
         """
-        Inserts a check callable into the registry.
+        Inserts a check callable into the registry, under the given category.
 
         Named ``register_check`` (not ``register``) so it does not collide with
         :meth:`Factory.register`, which expects a module class (``type[V]``)
@@ -68,5 +84,5 @@ class SecurityChecksFactory(factory.Factory[CheckFn]):
             return
 
         # The base class types ``_objects`` as ``MutableMapping[str, type[V]]``,
-        # but we are intentionally storing instances (``V``), not classes.
-        self._objects[check_id.lower()] = check  # type: ignore[index]
+        # but we are intentionally storing instances (``CheckEntry``), not classes.
+        self._objects[check_id.lower()] = CheckEntry(fn=check, category=category)  # type: ignore[assignment]

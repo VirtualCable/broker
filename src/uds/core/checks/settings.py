@@ -28,7 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security checks derived from ``django.conf.settings``.
+Checks derived from ``django.conf.settings``.
 
 Grouped here because their state is fixed at process start (the settings file)
 and is the same across every request: cookies, headers, enhanced-security flag.
@@ -42,10 +42,10 @@ from django.utils.translation import gettext as _
 from uds.core import consts, types
 from uds.core.util.config import GlobalConfig
 
-from .factory import SecurityChecksFactory
+from .factory import ChecksFactory, CheckOutcome
 
 
-def _check_security_cookies_and_headers() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_security_cookies_and_headers() -> CheckOutcome:
     flags: dict[str, bool] = {
         "SESSION_COOKIE_HTTPONLY": settings.SESSION_COOKIE_HTTPONLY,
         "SESSION_COOKIE_SECURE": settings.SESSION_COOKIE_SECURE,
@@ -56,18 +56,18 @@ def _check_security_cookies_and_headers() -> tuple[types.security.SecurityCheckS
     missing = ", ".join(name for name, enabled in flags.items() if not enabled)
     if missing:
         return (
-            types.security.SecurityCheckSeverity.LOW,
+            types.checks.CheckSeverity.LOW,
             False,
             _("Security cookies/headers are disabled: {missing}.").format(missing=missing),
         )
     return (
-        types.security.SecurityCheckSeverity.LOW,
+        types.checks.CheckSeverity.LOW,
         True,
         _("Session/security cookies and enhanced security are enabled."),
     )
 
 
-def _check_debug_enabled() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_debug_enabled() -> CheckOutcome:
     problems: list[str] = []
     if settings.DEBUG:
         problems.append("DEBUG=True")
@@ -75,55 +75,55 @@ def _check_debug_enabled() -> tuple[types.security.SecurityCheckSeverity, bool, 
         problems.append("PROFILING=True")
     if problems:
         return (
-            types.security.SecurityCheckSeverity.CRITICAL,
+            types.checks.CheckSeverity.CRITICAL,
             False,
             _("Production debug switches are on: {problems}. Disable both in production.").format(
                 problems=", ".join(problems)
             ),
         )
     return (
-        types.security.SecurityCheckSeverity.CRITICAL,
+        types.checks.CheckSeverity.CRITICAL,
         True,
         _("DEBUG and PROFILING are both off."),
     )
 
 
-def _check_default_secret_key() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_default_secret_key() -> CheckOutcome:
     if str(getattr(settings, "SECRET_KEY", "")) == consts.security.DEFAULT_SECRET_KEY:
         return (
-            types.security.SecurityCheckSeverity.CRITICAL,
+            types.checks.CheckSeverity.CRITICAL,
             False,
             _("settings.SECRET_KEY is the shipped sample value: session tokens can be forged."),
         )
     return (
-        types.security.SecurityCheckSeverity.CRITICAL,
+        types.checks.CheckSeverity.CRITICAL,
         True,
         _("settings.SECRET_KEY has been rotated."),
     )
 
 
-def _check_default_rsa_key() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_default_rsa_key() -> CheckOutcome:
     if (
         consts.security.rsa_key_fingerprint(str(getattr(settings, "RSA_KEY", "")))
         == consts.security.DEFAULT_RSA_KEY_SHA256
     ):
         return (
-            types.security.SecurityCheckSeverity.CRITICAL,
+            types.checks.CheckSeverity.CRITICAL,
             False,
             _("settings.RSA_KEY is the shipped sample value: anyone can decrypt broker secrets."),
         )
     return (
-        types.security.SecurityCheckSeverity.CRITICAL,
+        types.checks.CheckSeverity.CRITICAL,
         True,
         _("settings.RSA_KEY has been rotated."),
     )
 
 
-def _check_csrf_middleware_disabled() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_csrf_middleware_disabled() -> CheckOutcome:
     middleware: list[str] = list(getattr(settings, "MIDDLEWARE", []) or [])
     if "django.middleware.csrf.CsrfViewMiddleware" not in middleware:
         return (
-            types.security.SecurityCheckSeverity.HIGH,
+            types.checks.CheckSeverity.HIGH,
             False,
             _(
                 "django.middleware.csrf.CsrfViewMiddleware is not in MIDDLEWARE: cross-site request"
@@ -131,13 +131,13 @@ def _check_csrf_middleware_disabled() -> tuple[types.security.SecurityCheckSever
             ),
         )
     return (
-        types.security.SecurityCheckSeverity.HIGH,
+        types.checks.CheckSeverity.HIGH,
         True,
         _("django.middleware.csrf.CsrfViewMiddleware is active."),
     )
 
 
-def _check_sql_logging_enabled() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_sql_logging_enabled() -> CheckOutcome:
     # Only flagged in production (DEBUG=False). In dev the SQL log is expected
     # noise; in prod every bound parameter (passwords, personal data) ends up
     # on disk forever, which is a sensitive-data-at-rest leak.
@@ -146,7 +146,7 @@ def _check_sql_logging_enabled() -> tuple[types.security.SecurityCheckSeverity, 
     level = str(db_logger.get("level", "")).upper() or "WARNING"
     if level == "DEBUG" and not settings.DEBUG:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "SQL logger 'django.db.backends' is at DEBUG while DEBUG is off: every SQL"
@@ -154,13 +154,13 @@ def _check_sql_logging_enabled() -> tuple[types.security.SecurityCheckSeverity, 
             ),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("SQL logger 'django.db.backends' is not writing bound SQL to disk in production."),
     )
 
 
-def _check_log_level_debug() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_log_level_debug() -> CheckOutcome:
     # If A1 already fires, the root logger is also DEBUG via LOGLEVEL. If
     # A1 does not fire (DEBUG=False in production) but the root/uds logger
     # is still at DEBUG, we are noisier than necessary.
@@ -169,23 +169,29 @@ def _check_log_level_debug() -> tuple[types.security.SecurityCheckSeverity, bool
     uds_level = str(root_loggers.get("uds", {}).get("level", "")).upper()
     if root_level == "DEBUG" or uds_level == "DEBUG":
         return (
-            types.security.SecurityCheckSeverity.LOW,
+            types.checks.CheckSeverity.LOW,
             False,
             _("Root or 'uds' logger is at DEBUG in production (verbose logs on disk)."),
         )
     return (
-        types.security.SecurityCheckSeverity.LOW,
+        types.checks.CheckSeverity.LOW,
         True,
         _("Root and 'uds' loggers are above DEBUG in production."),
     )
 
 
-def register_checks(factory: SecurityChecksFactory) -> None:
+def register_checks(factory: ChecksFactory) -> None:
     """Registers the settings-derived checks into the shared factory."""
-    factory.register_check("security-cookies-and-headers", _check_security_cookies_and_headers)
-    factory.register_check("debug-enabled", _check_debug_enabled)
-    factory.register_check("default-secret-key", _check_default_secret_key)
-    factory.register_check("default-rsa-key", _check_default_rsa_key)
-    factory.register_check("csrf-middleware-disabled", _check_csrf_middleware_disabled)
-    factory.register_check("sql-logging-enabled", _check_sql_logging_enabled)
-    factory.register_check("log-level-debug", _check_log_level_debug)
+    factory.register_check(
+        "security-cookies-and-headers", _check_security_cookies_and_headers, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check("debug-enabled", _check_debug_enabled, types.checks.CheckCategory.SECURITY)
+    factory.register_check("default-secret-key", _check_default_secret_key, types.checks.CheckCategory.SECURITY)
+    factory.register_check("default-rsa-key", _check_default_rsa_key, types.checks.CheckCategory.SECURITY)
+    factory.register_check(
+        "csrf-middleware-disabled", _check_csrf_middleware_disabled, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "sql-logging-enabled", _check_sql_logging_enabled, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check("log-level-debug", _check_log_level_debug, types.checks.CheckCategory.SECURITY)

@@ -184,7 +184,7 @@ class SkillBuilder:
         lines.append(
             '- Inventory: `list_*` with an OData `filter` (see "Listing"), '
             "`get_*` by uuid. Platform health: `get_dashboard`, "
-            "`get_security_check`, `get_platform_stats`, `get_system_logs`."
+            "`get_checks`, `get_platform_stats`, `get_system_logs`."
         )
         lines.append(
             "- Before a proposal, discover the accepted fields and their current "

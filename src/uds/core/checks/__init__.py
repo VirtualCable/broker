@@ -28,22 +28,25 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security self-assessment checks for the OpenUDS broker.
+Self-assessment checks for the OpenUDS broker.
 
-Each check evaluates a single security-relevant configuration condition and
-returns its severity, whether it passes and a human readable detail.
+Each check evaluates a single configuration or state condition and returns its
+severity, whether it passes and a human readable detail. Checks declare their
+:class:`uds.core.types.checks.CheckCategory` (``SECURITY`` or ``HEALTH``) at
+registration time.
 
 Checks are grouped by data source:
 
-- :mod:`uds.core.security.checks.settings`      -- ``django.conf.settings``
-- :mod:`uds.core.security.checks.global_config` -- admin-editable global config
-- :mod:`uds.core.security.checks.models`        -- live database state
-- :mod:`uds.core.security.checks.logs`          -- runtime log/state
+- :mod:`uds.core.checks.settings`      -- ``django.conf.settings``
+- :mod:`uds.core.checks.global_config` -- admin-editable global config
+- :mod:`uds.core.checks.models`        -- live database state
+- :mod:`uds.core.checks.logs`          -- runtime log/state
+- :mod:`uds.core.checks.webhook_queue` -- webhook delivery queue
 
 Every group exposes a :func:`register_checks` that plugs its callables into the
-shared :class:`SecurityChecksFactory` returned by :func:`factory`. The runner
-(:func:`runner.run_security_checks`) walks whatever the factory currently holds;
-new checks only need to register, no edits to the runner.
+shared :class:`ChecksFactory` returned by :func:`factory`. The runner
+(:func:`run_checks`, :func:`build_report`) walks whatever the factory currently
+holds; new checks only need to register, no edits to the runner.
 
 Checks only *notify*: they never modify any configuration value.
 """
@@ -53,13 +56,17 @@ from . import logs as logs
 from . import models as models
 from . import settings as settings
 from . import webhook_queue as webhook_queue
+from .factory import CheckEntry as CheckEntry
 from .factory import CheckFn as CheckFn
-from .factory import SecurityChecksFactory as SecurityChecksFactory
+from .factory import CheckOutcome as CheckOutcome
+from .factory import ChecksFactory as ChecksFactory
+from .runner import build_report as build_report
+from .runner import run_checks as run_checks
 
 
-def factory() -> SecurityChecksFactory:
-    """Returns the singleton :class:`SecurityChecksFactory`."""
-    return SecurityChecksFactory()
+def factory() -> ChecksFactory:
+    """Returns the singleton :class:`ChecksFactory`."""
+    return ChecksFactory()
 
 
 def _initialize() -> None:
@@ -68,7 +75,7 @@ def _initialize() -> None:
     Called once at import time; re-invoking it is harmless because the
     factory itself ignores duplicate check ids.
     """
-    fact = SecurityChecksFactory()
+    fact = ChecksFactory()
     for group in (settings, global_config, models, logs, webhook_queue):
         group.register_checks(fact)
 

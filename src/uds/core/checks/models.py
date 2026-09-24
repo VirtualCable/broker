@@ -28,7 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Security checks derived from live database state (models).
+Checks derived from live database state (models).
 
 Grouped here because they all inspect stored configuration rows
 (authenticators, user services, ...) rather than ``django.conf.settings``
@@ -43,10 +43,10 @@ from django.utils.translation import gettext as _
 from uds import models
 from uds.core import consts, types
 
-from .factory import SecurityChecksFactory
+from .factory import ChecksFactory, CheckOutcome
 
 
-def _check_saml_assertions_signed() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_saml_assertions_signed() -> CheckOutcome:
     # Imported here to avoid loading authenticator modules (and their optional
     # dependencies) unless this check actually runs.
     from uds.auths.SAML import SAMLAuthenticator
@@ -64,7 +64,7 @@ def _check_saml_assertions_signed() -> tuple[types.security.SecurityCheckSeverit
 
     if unsigned:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "SAML assertions are not required to be signed on: {unsigned}."
@@ -73,18 +73,18 @@ def _check_saml_assertions_signed() -> tuple[types.security.SecurityCheckSeverit
         )
     if found:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             True,
             _("All SAML authenticators require signed assertions or messages."),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("No SAML authenticators configured."),
     )
 
 
-def _check_old_token_used_by_actor() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_old_token_used_by_actor() -> CheckOutcome:
     # A user service is considered "still using the legacy flow" when its token
     # has never been rotated (INVALID_TOKEN_PREFIX) AND the actor has
     # actually reported a version (i.e. an actor connected to it), which means it
@@ -96,9 +96,7 @@ def _check_old_token_used_by_actor() -> tuple[types.security.SecurityCheckSeveri
         )
         .exclude(value="0.0.0")
         .values("owner_id"),
-    ).filter(
-        Q(token_hash__startswith=consts.auth.INVALID_TOKEN_PREFIX)
-    )
+    ).filter(Q(token_hash__startswith=consts.auth.INVALID_TOKEN_PREFIX))
 
     affected_pools = (
         models.ServicePool.objects.filter(userServices__in=legacy_actor_services).distinct().order_by("name")
@@ -107,7 +105,7 @@ def _check_old_token_used_by_actor() -> tuple[types.security.SecurityCheckSeveri
     if affected_pools:
         affected = ", ".join(pool.name for pool in affected_pools)
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _(
                 "Service pools with actors still using the legacy uuid token flow: {affected}."
@@ -115,31 +113,31 @@ def _check_old_token_used_by_actor() -> tuple[types.security.SecurityCheckSeveri
             ).format(affected=affected),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("No user services are using the legacy uuid actor token flow."),
     )
 
 
-def _check_no_mfa_configured() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_no_mfa_configured() -> CheckOutcome:
     authenticators = list(models.Authenticator.objects.all())
     if not authenticators:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             True,
             _("No authenticators configured (nothing to enforce MFA on)."),
         )
     without_mfa = [a.name for a in authenticators if a.mfa is None]
     if len(without_mfa) == len(authenticators):
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
-            _("No authenticator has MFA configured: {names}. Assign at least one MFA per authenticator.").format(
-                names=", ".join(without_mfa)
-            ),
+            _(
+                "No authenticator has MFA configured: {names}. Assign at least one MFA per authenticator."
+            ).format(names=", ".join(without_mfa)),
         )
     return (
-        types.security.SecurityCheckSeverity.MEDIUM,
+        types.checks.CheckSeverity.MEDIUM,
         True,
         _("MFA coverage: {with_mfa}/{total} authenticators have MFA assigned.").format(
             with_mfa=len(authenticators) - len(without_mfa),
@@ -148,7 +146,7 @@ def _check_no_mfa_configured() -> tuple[types.security.SecurityCheckSeverity, bo
     )
 
 
-def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_server_certificates_expiring() -> CheckOutcome:
     # Imported here to avoid pulling cryptography into the check module's
     # import-time surface unless this check actually runs.
     import datetime as _dt
@@ -179,7 +177,9 @@ def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckS
             expires_at = cert.not_valid_after
             if expires_at.tzinfo is None:
                 expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
-        label = server.hostname or server.register_username or server.properties.get("token_hint", server.uuid[:8])
+        label = (
+            server.hostname or server.register_username or server.properties.get("token_hint", server.uuid[:8])
+        )
         if expires_at < now:
             expired.append(f"{label} (expired {expires_at.date()})")
         elif expires_at < horizon:
@@ -187,7 +187,7 @@ def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckS
 
     if expired:
         return (
-            types.security.SecurityCheckSeverity.HIGH,
+            types.checks.CheckSeverity.HIGH,
             False,
             _("{n} server certificate(s) have expired: {names}. Renew and rotate the affected servers.").format(
                 n=len(expired), names=", ".join(expired)
@@ -195,45 +195,58 @@ def _check_server_certificates_expiring() -> tuple[types.security.SecurityCheckS
         )
     if expiring:
         return (
-            types.security.SecurityCheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.MEDIUM,
             False,
             _("{n} server certificate(s) expire within 30 days: {names}.").format(
                 n=len(expiring), names=", ".join(expiring)
             ),
         )
     return (
-        types.security.SecurityCheckSeverity.HIGH,
+        types.checks.CheckSeverity.HIGH,
         True,
         _("No server certificates expire within the next 30 days."),
     )
 
 
-def _check_restrained_service_pools() -> tuple[types.security.SecurityCheckSeverity, bool, str]:
+def _check_restrained_service_pools() -> CheckOutcome:
     from uds.core.types.states import State
 
     # ServicePool.restraineds_queryset is the canonical source (already used
     # by ``/system/overview``). Restraint usually means repeated failures
     # in RESTRAINT_TIME, which can be a symptom of broken images or
     # tampering.
-    restrained = models.ServicePool.restraineds_queryset().filter(state=State.RESTRAINED).values_list("name", flat=True)
+    restrained = (
+        models.ServicePool.restraineds_queryset().filter(state=State.RESTRAINED).values_list("name", flat=True)
+    )
     names = sorted(set(restrained))
     if names:
         return (
-            types.security.SecurityCheckSeverity.INFO,
+            types.checks.CheckSeverity.INFO,
             False,
-            _("{n} service pool(s) are currently restrained: {names}.").format(n=len(names), names=", ".join(names)),
+            _("{n} service pool(s) are currently restrained: {names}.").format(
+                n=len(names), names=", ".join(names)
+            ),
         )
     return (
-        types.security.SecurityCheckSeverity.INFO,
+        types.checks.CheckSeverity.INFO,
         True,
         _("No service pools are currently restrained."),
     )
 
 
-def register_checks(factory: SecurityChecksFactory) -> None:
+def register_checks(factory: ChecksFactory) -> None:
     """Registers the database-state checks into the shared factory."""
-    factory.register_check("saml-assertions-signed", _check_saml_assertions_signed)
-    factory.register_check("old-token-used-by-actor", _check_old_token_used_by_actor)
-    factory.register_check("no-mfa-configured", _check_no_mfa_configured)
-    factory.register_check("server-certificates-expiring", _check_server_certificates_expiring)
-    factory.register_check("restrained-service-pools", _check_restrained_service_pools)
+    factory.register_check(
+        "saml-assertions-signed", _check_saml_assertions_signed, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check(
+        "old-token-used-by-actor", _check_old_token_used_by_actor, types.checks.CheckCategory.SECURITY
+    )
+    factory.register_check("no-mfa-configured", _check_no_mfa_configured, types.checks.CheckCategory.SECURITY)
+    factory.register_check(
+        "server-certificates-expiring", _check_server_certificates_expiring, types.checks.CheckCategory.SECURITY
+    )
+    # Restraint is an operational symptom, not an exploitable weakness
+    factory.register_check(
+        "restrained-service-pools", _check_restrained_service_pools, types.checks.CheckCategory.HEALTH
+    )

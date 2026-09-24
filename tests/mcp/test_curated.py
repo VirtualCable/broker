@@ -49,7 +49,7 @@ _CURATED_NAMES: typing.Final[tuple[str, ...]] = (
     "get_item_logs",
     "get_system_logs",
     "get_platform_stats",
-    "get_security_check",
+    "get_checks",
     "get_dashboard",
     "get_config",
     "report_failed_logins",
@@ -176,9 +176,14 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         body = self._call("get_platform_stats", {"counter": "assigned"})
         self.assertEqual(body["error"]["code"], -32000)
 
-    def test_get_security_check_as_admin(self) -> None:
-        body = self._call("get_security_check", {})
+    def test_get_checks_as_admin(self) -> None:
+        body = self._call("get_checks", {})
         self.assertIsInstance(json.loads(self._result_text(body)), dict)
+
+    def test_get_checks_with_category(self) -> None:
+        body = self._call("get_checks", {"category": "health"})
+        content = json.loads(self._result_text(body))
+        self.assertTrue(all(check["category"] == "health" for check in content["checks"]))
 
     def test_get_config_as_admin(self) -> None:
         body = self._call("get_config", {})

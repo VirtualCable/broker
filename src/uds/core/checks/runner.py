@@ -28,11 +28,11 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 
-Runner that executes the security self-assessment checks.
+Runner that executes the self-assessment checks.
 
-Separated from :mod:`uds.core.security.checks.__init__` so the package can
-expose a flat namespace (factory, groups, ...) while keeping the actual
-``run_security_checks`` / ``build_report`` entry points in their own module.
+Separated from :mod:`uds.core.checks.__init__` so the package can expose a flat
+namespace (factory, groups, ...) while keeping the actual ``run_checks`` /
+``build_report`` entry points in their own module.
 """
 
 import logging
@@ -42,64 +42,77 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 
-from .factory import CheckFn, SecurityChecksFactory
+from .factory import CheckEntry, ChecksFactory
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _collect_checks() -> list[tuple[str, CheckFn]]:
-    """Returns the current registered checks as ``[(id, fn), ...]``.
+def _collect_checks() -> list[tuple[str, CheckEntry]]:
+    """Returns the current registered checks as ``[(id, entry), ...]``.
 
     Extracted so tests can monkey-patch the iteration source instead of
     mutating the singleton factory.
     """
-    return list(SecurityChecksFactory().objects().items())
+    return list(typing.cast("dict[str, CheckEntry]", ChecksFactory().objects()).items())
 
 
-def run_security_checks() -> list[types.security.SecurityCheckResult]:
+def run_checks(category: types.checks.CheckCategory | None = None) -> list[types.checks.CheckResult]:
     """
-    Runs all the registered security checks and returns their results.
+    Runs all the registered checks (or just the ones belonging to ``category``)
+    and returns their results.
 
     A check that raises is reported as a failed ``INFO`` result instead of
     aborting the whole scan, so a single broken check never hides the rest.
     """
-    results: list[types.security.SecurityCheckResult] = []
-    for check_id, check in _collect_checks():
+    results: list[types.checks.CheckResult] = []
+    for check_id, entry in _collect_checks():
+        if category is not None and entry.category is not category:
+            continue
         try:
-            severity, ok, message = check()
+            severity, ok, message = entry.fn()
         except Exception as e:
-            logger.exception("Security check %s could not be evaluated", check_id)
+            logger.exception("Check %s could not be evaluated", check_id)
             results.append(
-                types.security.SecurityCheckResult(
+                types.checks.CheckResult(
                     id=check_id,
-                    severity=types.security.SecurityCheckSeverity.INFO,
+                    severity=types.checks.CheckSeverity.INFO,
                     ok=False,
                     message=_("Check could not be evaluated: {error}").format(error=e),
+                    category=entry.category,
                 )
             )
             continue
-        results.append(types.security.SecurityCheckResult(id=check_id, severity=severity, ok=ok, message=message))
+        results.append(
+            types.checks.CheckResult(
+                id=check_id, severity=severity, ok=ok, message=message, category=entry.category
+            )
+        )
 
     return results
 
 
 def build_report(
-    results: list[types.security.SecurityCheckResult] | None = None,
+    results: list[types.checks.CheckResult] | None = None,
 ) -> dict[str, typing.Any]:
     """
     Aggregates the check results into the JSON report returned by the
-    ``/system/security_check`` endpoint: a summary with the number of failed
-    checks per severity plus the full check list.
+    ``/system/checks`` endpoint: a summary with the number of failed checks per
+    severity, a per-category breakdown of the same, and the full check list.
 
-    If ``results`` is ``None`` the checks are run first.
+    If ``results`` is ``None`` all the checks are run first. Passing a list
+    produced by :func:`run_checks` with a category filter yields the report for
+    that category only.
     """
     if results is None:
-        results = run_security_checks()
+        results = run_checks()
 
-    report: dict[str, typing.Any] = {severity.value: 0 for severity in types.security.SecurityCheckSeverity}
+    report: dict[str, typing.Any] = {severity.value: 0 for severity in types.checks.CheckSeverity}
+    categories: dict[str, int] = {category.value: 0 for category in types.checks.CheckCategory}
     for result in results:
         if not result.ok:
             report[result.severity.value] += 1
+            categories[result.category.value] += 1
+    report["categories"] = categories
     report["checks"] = [result.as_dict() for result in results]
 
     return report
