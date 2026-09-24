@@ -8,7 +8,7 @@ from asgiref.sync import AsyncToSync, sync_to_async
 
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.mutability import StalePolicy
-from uds.mutability.base import JsonObject
+from uds.mutability.base import ActionOperation, JsonObject
 from uds.mutability.executor import execute_flow
 from uds.models import ActionFlow, FlowAction
 
@@ -27,6 +27,7 @@ class _FakeActionType:
     """
 
     stale_policy = StalePolicy.DENY
+    operation: ActionOperation | None = ActionOperation.UPDATE
     drifted_fields: typing.ClassVar[dict[str, dict[str, typing.Any]]] = {}
     fail_targets: frozenset[str] = frozenset()
     vanish_targets: frozenset[str] = frozenset()
@@ -191,6 +192,19 @@ class ExecuteFlowTest(FlowTestCase):
         actions[0].refresh_from_db()
         self.assertEqual(actions[0].status, FlowActionStatus.REVOKED)
         self.assertIn("no longer exists", str(actions[0].properties.get("result")))
+
+    def test_create_does_not_resolve_its_parent_as_target(self) -> None:
+        """A creation's target_uuid is its parent: pass 2 must not look it up as the target."""
+        flow, actions = self._flow_with_actions(["parent"])
+
+        fake = _fake_type(operation=ActionOperation.CREATE, vanish_targets=frozenset({"parent"}))
+        with mock.patch("uds.mutability.registry.get", return_value=fake):
+            summary = execute_flow(flow, request=make_request())
+
+        self.assertEqual(summary["status"], FlowStatus.EXECUTED)
+        self.assertEqual(fake.executed, ["parent"])
+        actions[0].refresh_from_db()
+        self.assertEqual(actions[0].status, FlowActionStatus.EXECUTED)
 
     def test_retry_after_failure_runs_only_the_rest(self) -> None:
         """Relaunch of a partially-run flow: executed actions never repeat."""

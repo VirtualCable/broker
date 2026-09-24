@@ -352,6 +352,7 @@ class FlowsOwnActionsTest(rest.test.RESTTestCase):
         items = self.client.rest_get(self._actions_url()).json()
         self.assertEqual(items[0]["compliance"], "")
         self.assertEqual(items[0]["snap_info"], {})
+        self.assertEqual(items[0]["base_values"], {})
 
     def test_owner_has_no_admin_action_methods(self) -> None:
         # Not exposed on the owner surface: the POST falls through to an

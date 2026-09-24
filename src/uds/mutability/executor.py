@@ -44,7 +44,7 @@ from asgiref.sync import async_to_sync
 from uds.core.types.mcp import FlowActionStatus, FlowStatus
 from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.core.util.model import sql_now
-from uds.mutability.base import JsonObject, StalePolicy
+from uds.mutability.base import ActionOperation, JsonObject, StalePolicy
 from uds.mutability.store import FlowStore
 from uds.models import ActionFlow
 
@@ -81,7 +81,12 @@ def execute_flow(flow: ActionFlow, request: ExtendedHttpRequestWithUser) -> Json
             # approval. FORCE types skip it by design (their execute is an
             # idempotent set of the approved payload).
             stale: str | None = None
-            if action_type.get_stale_policy() == StalePolicy.DENY:
+            # Creations have no target to re-check: their target_uuid is the
+            # parent (or empty), as in FlowStore
+            if (
+                action_type.operation is not ActionOperation.CREATE
+                and action_type.get_stale_policy() == StalePolicy.DENY
+            ):
                 try:
                     action_type.resolve_target(action.target_uuid)
                 except Exception:
