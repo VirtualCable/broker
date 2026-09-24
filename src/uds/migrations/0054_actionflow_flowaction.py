@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
                 ("target_kind", models.CharField(db_index=True, default="", max_length=32)),
                 ("target_uuid", models.CharField(db_index=True, default="", max_length=50)),
                 ("justification", models.TextField(default="")),
-                ("values", models.JSONField(blank=True, default=None, null=True)),
+                ("values", uds.core.util.model.EncryptedJSONField(blank=True, default=None, null=True)),
                 (
                     "status",
                     models.CharField(
