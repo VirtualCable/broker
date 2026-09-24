@@ -42,6 +42,7 @@ from uds.core.util.log import LogLevel, LogSource, log
 
 if typing.TYPE_CHECKING:
     from .handlers import Handler
+    from uds.core.types.requests import ExtendedHttpRequest
 
 # This structct allows us to perform the following:
 #   If path has ".../providers/[uuid]/..." we will replace uuid with "provider nanme" sourrounded by []
@@ -195,6 +196,28 @@ def log_operation(handler: "Handler | None", response_code: int, level: LogLevel
         source=LogSource.REST,
     )
 
+    method = (handler.request.method or "").upper()
+
+    # Denied (401/403) requests on model handlers are kept on the immutable
+    # audit as evidence of the attempt ("e": true, i.e. privilege probing
+    # from a valid session). They produce no event: the event stream carries
+    # business facts (failed logins are the exception, having their own
+    # LOGIN_FAILED type)
+    if response_code in (401, 403) and hasattr(handler, "MODEL"):
+        if ImmutableLogger.is_enabled():
+            ImmutableLogger.append_object(
+                {
+                    "t": "rest",
+                    "m": method,
+                    "p": path,
+                    "c": response_code,
+                    "i": handler.request.ip,
+                    "u": username,
+                    "e": True,
+                }
+            )
+        return
+
     # Immutable audit and event notification derive from the very same
     # decision, so they cannot diverge: only successful mutations on model
     # handlers produce both a "rest" audit entry and a rest.* event.
@@ -205,8 +228,6 @@ def log_operation(handler: "Handler | None", response_code: int, level: LogLevel
     event_type = _rest_event_type(handler) if response_code < 400 else None
     if event_type is None:
         return
-
-    method = (handler.request.method or "").upper()
 
     if ImmutableLogger.is_enabled():
         ImmutableLogger.append_object(
@@ -221,6 +242,43 @@ def log_operation(handler: "Handler | None", response_code: int, level: LogLevel
         )
 
     event_type.notify(f"{username} ({handler.request.ip}): {method} {path}")
+
+
+def log_denied_request(request: "ExtendedHttpRequest") -> None:
+    """
+    Logs a REST request denied while authenticating (no handler was ever
+    created: invalid, expired or missing credentials).
+
+    Deliberately cheap, because this runs on the path that mitigates
+    invalid-auth floods: raw path (no uuid lookups on the database), one
+    syslog entry and, if the immutable log is enabled, one entry flagged as
+    denied.
+    """
+    method = (request.method or "").upper()
+    # Defensive: some callers may provide plain HttpRequest-ish objects
+    ip = getattr(request, "ip", request.META.get("REMOTE_ADDR", "unknown"))
+    user: typing.Any = getattr(request, "user", None)
+    username = user.pretty_name if user else "Unknown"
+
+    log(
+        None,  # > None Objects goes to SYSLOG (global log)
+        level=LogLevel.ERROR,
+        message=f"{ip} [{username}]: [{method}/403] {request.path}"[:4096],
+        source=LogSource.REST,
+    )
+
+    if ImmutableLogger.is_enabled():
+        ImmutableLogger.append_object(
+            {
+                "t": "rest",
+                "m": method,
+                "p": request.path,
+                "c": 403,
+                "i": ip,
+                "u": username,
+                "e": True,
+            }
+        )
 
 
 def log_audit(handler: "Handler | None", action: str, level: LogLevel = LogLevel.INFO) -> None:

@@ -222,6 +222,12 @@ class Dispatcher(View):
                 allowed_methods, content=b'{"error": "Invalid method"}', content_type="application/json"
             )
         except exceptions.rest.AccessDenied:
+            if handler is None:
+                # Authentication failed before the handler existed (invalid,
+                # expired or missing credentials). Deliberately cheap: keeps
+                # evidence (syslog + immutable audit) of the attempt without
+                # adding meaningful load to the invalid-auth mitigation path
+                log.log_denied_request(request)
             return Dispatcher.error_response(http.HttpResponseForbidden, handler, "Access denied")
         except exceptions.rest.RequestError as e:
             return Dispatcher.error_response(http.HttpResponseBadRequest, handler, str(e), e)

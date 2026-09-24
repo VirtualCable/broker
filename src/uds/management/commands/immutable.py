@@ -82,11 +82,12 @@ class _RestLogFormatter:
             "response_code": obj.get("c", 0),
             "ip": obj.get("i", ""),
             "username": obj.get("u", ""),
+            "denied": obj.get("e", False),
         }
 
     @staticmethod
     def csv_fields() -> list[str]:
-        return ["sequence", "stamp", "method", "path", "response_code", "ip", "username"]
+        return ["sequence", "stamp", "method", "path", "response_code", "ip", "username", "denied"]
 
 
 class _LoginLogFormatter:

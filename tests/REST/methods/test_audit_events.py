@@ -106,6 +106,66 @@ class AuditEventsTest(rest.test.RESTTestCase):
         self.assertIn("/token", message_of(calls[0]))
         self.assertEqual(events_of(notify, notifiers.EventType.REST_CREATE), [])
 
+    def test_denied_model_request_writes_immutable_entry(self) -> None:
+        """A 403 on a model handler (e.g. path scope denial with a valid
+        session) is kept on the immutable audit as evidence, without
+        emitting events."""
+        from types import SimpleNamespace
+
+        from uds.REST import log as rest_log
+        from uds.REST.handlers import Handler
+
+        handler = typing.cast(
+            "Handler",
+            SimpleNamespace(
+                request=SimpleNamespace(
+                    method="DELETE", path="/uds/rest/authenticators/xxxx", ip="1.2.3.4", user=None
+                ),
+                MODEL=int,
+                DETAIL={},
+                _args=["xxxx"],
+            ),
+        )
+
+        with (
+            mock.patch.object(notifications_module.NotificationsManager, "notify") as notify,
+            mock.patch.object(ImmutableLogger, "is_enabled", return_value=True),
+            mock.patch.object(ImmutableLogger, "append_object") as append,
+        ):
+            rest_log.log_operation(handler, 403, types.log.LogLevel.ERROR)
+
+        append.assert_called_once()
+        entry = append.call_args.args[0]
+        self.assertEqual(entry["t"], "rest")
+        self.assertEqual(entry["c"], 403)
+        self.assertTrue(entry["e"])
+        self.assertEqual(entry["m"], "DELETE")
+        self.assertEqual(entry["u"], "Unknown")
+        self.assertEqual(events_of(notify, notifiers.EventType.REST_DELETE), [])
+
+    def test_unauthenticated_request_leaves_denied_audit_entry(self) -> None:
+        """A request with invalid credentials (no handler) is denied, and
+        leaves syslog + immutable audit evidence without emitting events."""
+        client = UDSClient()  # not logged in
+
+        with (
+            mock.patch.object(notifications_module.NotificationsManager, "notify") as notify,
+            mock.patch.object(ImmutableLogger, "is_enabled", return_value=True),
+            mock.patch.object(ImmutableLogger, "append_object") as append,
+        ):
+            response = client.get("/uds/rest/authenticators")
+
+        self.assertEqual(response.status_code, 403, response.content)
+        self.assertEqual(events_of(notify, notifiers.EventType.REST_OPERATION), [])
+        self.assertEqual(events_of(notify, notifiers.EventType.REST_CREATE), [])
+        self.assertEqual(append.call_count, 1)
+        entry = append.call_args.args[0]
+        self.assertEqual(entry["t"], "rest")
+        self.assertEqual(entry["c"], 403)
+        self.assertTrue(entry["e"])
+        self.assertEqual(entry["m"], "GET")
+        self.assertEqual(entry["p"], "/uds/rest/authenticators")
+
     def test_master_authenticator_create_modify_delete_emit_events(self) -> None:
         payload: dict[str, typing.Any] = {
             "name": "audit-test-auth",
