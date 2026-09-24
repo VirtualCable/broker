@@ -90,6 +90,8 @@ class FlowActionItem(types.rest.BaseRestItem):
     compliance: str = ""
     # Display snapshot frozen at approval time; only for admin views
     snap_info: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
+    # Touched fields as they were when the proposal was made; only for admin views
+    base_values: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
     # Who launched the run that executed this action, and when (the
     # launch audit frozen at EXECUTING); empty/None while not executed
     executed_by: str = ""
@@ -164,10 +166,12 @@ class FlowActions(DetailHandler[FlowActionItem]):
     def as_dict(item: "FlowAction", perm: int, *, admin_view: bool = False) -> FlowActionItem:
         compliance = ""
         snap_info: dict[str, typing.Any] = {}
+        base_values: dict[str, typing.Any] = {}
         if admin_view:
             # Pre-execution drift indicator; computed live, never stored
             compliance = FlowStore().compliance(item)
             snap_info = dict(item.snap_info)
+            base_values = dict(item.base_values)
         return FlowActionItem(
             id=item.uuid,
             order=item.order,
@@ -182,6 +186,7 @@ class FlowActions(DetailHandler[FlowActionItem]):
             result=item.properties.get("result"),
             compliance=compliance,
             snap_info=snap_info,
+            base_values=base_values,
             executed_by=item.executed_by,
             executed_at=item.executed_at,
         )

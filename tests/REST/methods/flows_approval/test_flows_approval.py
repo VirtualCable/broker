@@ -140,6 +140,9 @@ class FlowsRestTest(rest.test.RESTTestCase):
         # The fake targets do not exist: unverifiable is never "ok"
         self.assertEqual(items[0]["compliance"], "conflict")
         self.assertEqual(items[0]["snap_info"], {})
+        # What the target held when the agent proposed it, frozen at proposal time
+        self.assertEqual(items[0]["base_values"], {"name": "old"})
+        self.assertEqual(items[1]["base_values"], {"comments": "old comment"})
 
     def test_actions_table_info(self) -> None:
         table = self._get_json(f"flows/approval/{self.flow.uuid}/actions/tableinfo")
