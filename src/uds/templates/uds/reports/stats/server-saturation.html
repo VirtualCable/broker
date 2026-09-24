@@ -10,8 +10,8 @@
     <body>
         <p style="font-size: 0.8em;">
             {% blocktrans %}The trend of every server is fitted over the last {{ training_weeks }} weeks of its own history.{% endblocktrans %}
-            {% blocktrans %}Below {{ reliable_weeks }} weeks of history the curve is not trustworthy, and the server is flagged as such.{% endblocktrans %}
-            {% blocktrans %}Statistics are kept for {{ stats_duration }} days: raise the "statsDuration" setting to get forecasts from a longer history.{% endblocktrans %}
+            {% trans 'When the samples do not support a trend, the status says so and no date is given.' %}
+            {% blocktrans %}Statistics are kept for {{ stats_duration }} days: below {{ training_days }} days the window is cut short.{% endblocktrans %}
         </p>
 
         {% if attention %}
@@ -47,7 +47,7 @@
             <b>{{ s.server }}</b> &middot;
             {{ s.status_name }} &middot;
             {% trans 'History' %}: {{ s.weeks_of_history }} {% trans 'weeks' %}
-            {% if not s.has_data %}({% trans 'no historical data yet' %}){% elif s.short_history %}({% trans 'short history: the trend is not trustworthy yet' %}){% endif %}
+            {% if not s.has_data %}({% trans 'no historical data yet' %}){% endif %}
         </p>
         <table style="width: 100%; font-size: 0.8em;">
             <thead>

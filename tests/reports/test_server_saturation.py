@@ -256,28 +256,24 @@ class ServerSaturationReportTest(UDSTestCase):
         self.assertEqual(data["groups"], [])
         self.assertEqual(data["attention"], [])
 
-    def test_short_history_is_flagged(self) -> None:
+    def test_a_history_too_short_to_trust_is_reported_by_the_status(self) -> None:
         group = self._group(2)
         long_history, short_history = self._servers_of(group)
         self._patch_engine(
             {
-                long_history.id: _view(long_history, group.name, SaturationStatus.STABLE, weeks=30.0),
+                long_history.id: _view(long_history, group.name, SaturationStatus.STABLE, weeks=6.0),
                 short_history.id: _view(
-                    short_history, group.name, SaturationStatus.UNRELIABLE, weeks=4.0
+                    short_history, group.name, SaturationStatus.UNRELIABLE, weeks=0.5
                 ),
             }
         )
-        flags = {s["server"]: s["short_history"] for s in self._report().get_data()["groups"][0]["servers"]}
-        self.assertFalse(flags[long_history.hostname])
-        self.assertTrue(flags[short_history.hostname])
-
-    def test_history_exactly_at_the_reliable_mark_is_not_short(self) -> None:
-        group = self._group(1)
-        server = group.servers.get()
-        weeks = server_saturation.RELIABLE_WEEKS
-        self._patch_engine({server.id: _view(server, group.name, SaturationStatus.STABLE, weeks=weeks)})
-        row = self._report().get_data()["groups"][0]["servers"][0]
-        self.assertFalse(row["short_history"])
+        names = {s["server"]: s["status_name"] for s in self._report().get_data()["groups"][0]["servers"]}
+        self.assertEqual(
+            names[long_history.hostname], str(server_saturation.STATUS_NAMES[SaturationStatus.STABLE])
+        )
+        self.assertEqual(
+            names[short_history.hostname], str(server_saturation.STATUS_NAMES[SaturationStatus.UNRELIABLE])
+        )
 
     def test_no_data_server_is_reported_and_sorts_last(self) -> None:
         group = self._group(2)
@@ -359,7 +355,6 @@ class ServerSaturationReportTest(UDSTestCase):
         )
         row = self._report().get_data()["groups"][0]["servers"][0]
         self.assertEqual(row["weeks_of_history"], 31.0)
-        self.assertFalse(row["short_history"])
 
     def test_metric_without_growth_reports_no_slope(self) -> None:
         group = self._group(1)
@@ -444,7 +439,7 @@ class ServerSaturationReportTest(UDSTestCase):
         self._patch_engine({})
         data = self._report().get_data()
         self.assertEqual(data["training_weeks"], consts.forecasts.TRAINING_WEEKS)
-        self.assertEqual(data["reliable_weeks"], server_saturation.RELIABLE_WEEKS)
+        self.assertEqual(data["training_days"], consts.forecasts.TRAINING_WEEKS * 7)
         self.assertGreater(data["stats_duration"], 0)
 
     def test_init_gui_offers_all_groups_and_hides_unmanaged_ones(self) -> None:
@@ -671,14 +666,13 @@ class ServerSaturationReportEndToEndTest(UDSTestCase):
         self.assertEqual(row["status"], SaturationStatus.NO_DATA)
         self.assertIsNone(row["saturating_in_days"])
 
-    def test_eight_weeks_of_history_still_count_as_short(self) -> None:
+    def test_history_never_exceeds_the_training_window(self) -> None:
         group = servers_fixtures.create_server_group(num_servers=1)
         server = group.servers.get()
         self._seed_disk(server, lambda d: 60.0)
 
         row = self._report().get_data()["groups"][0]["servers"][0]
-        self.assertTrue(row["short_history"])  # the training window is shorter than RELIABLE_WEEKS
-        self.assertLess(row["weeks_of_history"], server_saturation.RELIABLE_WEEKS)
+        self.assertLessEqual(row["weeks_of_history"], consts.forecasts.TRAINING_WEEKS)
 
     def test_csv_agrees_with_the_assembled_data(self) -> None:
         group = servers_fixtures.create_server_group(num_servers=2)

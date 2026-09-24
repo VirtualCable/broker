@@ -51,10 +51,6 @@ from .servers_base import servers_of
 
 logger = logging.getLogger(__name__)
 
-# A shorter history makes the yearly trend guesswork, which is why servers show up
-# as unreliable even when they do report stats
-RELIABLE_WEEKS: typing.Final[float] = 26.0
-
 METRIC_NAMES: typing.Final[dict[types.stats.CounterType, str]] = {
     types.stats.CounterType.LOAD: _("Load"),
     types.stats.CounterType.DISK: _("Disk"),
@@ -107,7 +103,7 @@ class ServerSaturationReport(ServersStatsReport):
             "groups": groups_data,
             "attention": attention,
             "training_weeks": consts.forecasts.TRAINING_WEEKS,
-            "reliable_weeks": RELIABLE_WEEKS,
+            "training_days": consts.forecasts.TRAINING_WEEKS * 7,
             "stats_duration": config.GlobalConfig.STATS_DURATION.as_int(),
         }
 
@@ -133,12 +129,11 @@ def _as_server_row(view: saturation.ServerSaturation) -> dict[str, typing.Any]:
         "server": view.label,
         "group": view.group_name,
         "status": view.status,
-        "status_name": gettext(str(STATUS_NAMES.get(view.status, str(view.status)))),
+        "status_name": str(STATUS_NAMES.get(view.status, view.status)),
         "has_data": view.has_data,
         "saturating_in_days": view.saturating_in_days(),
         "saturation_date": _earliest_saturation_date(view),
         "weeks_of_history": round(weeks, 1),
-        "short_history": weeks < RELIABLE_WEEKS,
         "metrics": [_as_metric_row(metric) for metric in view.metrics],
     }
 
@@ -150,9 +145,9 @@ def _earliest_saturation_date(view: saturation.ServerSaturation) -> datetime.dat
 
 def _as_metric_row(metric: saturation.MetricSaturation) -> dict[str, typing.Any]:
     return {
-        "metric": gettext(str(METRIC_NAMES.get(metric.counter, metric.counter.name.lower()))),
+        "metric": str(METRIC_NAMES.get(metric.counter, metric.counter.name.lower())),
         "status": metric.status,
-        "status_name": gettext(str(STATUS_NAMES.get(metric.status, str(metric.status)))),
+        "status_name": str(STATUS_NAMES.get(metric.status, metric.status)),
         "current_p90": round(metric.current_p90, 2),
         "current_max": round(metric.current_max, 2),
         "threshold": round(metric.threshold, 2),
