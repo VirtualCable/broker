@@ -464,3 +464,11 @@ class SaturationStatusTest(UDSTestCase):
         self.assertEqual(saturation.worst_status([s.NO_DATA, s.UNRELIABLE]), s.UNRELIABLE)
         self.assertEqual(saturation.worst_status([s.SHRINKING, s.STABLE]), s.STABLE)
         self.assertEqual(saturation.worst_status([]), s.NO_DATA)
+
+    def test_status_severity_ranks_worst_first(self) -> None:
+        s = saturation.SaturationStatus
+        ranks = [saturation.status_severity(status) for status in s]
+        self.assertEqual(sorted(ranks), list(range(len(ranks))))
+        self.assertLess(saturation.status_severity(s.SATURATED), saturation.status_severity(s.GROWING))
+        self.assertLess(saturation.status_severity(s.GROWING), saturation.status_severity(s.STABLE))
+        self.assertEqual(saturation.status_severity(s.NO_DATA), len(ranks) - 1)
