@@ -70,7 +70,9 @@ def _execute_actor_request(
     if "-" in version or version < min_actor_version:
         logger.warning("Pool %s has old actors (%s)", userservice.deployed_service.name, version)
         raise exceptions.actor.OldActorVersion(
-            f"Old actor version {version} for {userservice.friendly_name}".format(version, userservice.friendly_name)
+            f"Old actor version {version} for {userservice.friendly_name}".format(
+                version, userservice.friendly_name
+            )
         )
 
     url += "/" + method
@@ -80,11 +82,20 @@ def _execute_actor_request(
         cert = userservice.properties.get("cert", "")
         # cert = ''  # Uncomment to test without cert
         if cert:
+            # Certificate pinning: the broker only trusts the exact
+            # self-signed cert it issued for this userservice at "ready"
+            # time. This is the real machine-identity check: a different
+            # machine on the same IP fails TLS verification before any
+            # data is exchanged.
             # Generate temp file, and delete it after
             with tempfile.NamedTemporaryFile("wb", delete=False) as f:
                 f.write(cert.encode())  # Save cert
                 verify = f.name
         else:
+            # No cert stored (e.g. actor never completed "ready"): no
+            # pinning. In this case the uuid check in
+            # check_user_service_uuid is the only identity verification
+            # left, which is why we keep it (see its docstring).
             verify = False
         session = secure_requests_session(verify=cert)
         if data is None:
@@ -151,6 +162,12 @@ def notify_preconnect(userservice: "UserService", info: types.connections.Connec
 def check_user_service_uuid(user_service: "UserService") -> bool:
     """
     Checks if the uuid of the service is the same of our known uuid on DB
+
+    Note: kept as a redundant safety net. When the userservice has a stored
+    cert, certificate pinning (see _execute_actor_request) already guarantees
+    machine identity and this check adds nothing. But when there is no cert
+    (verify=False), this is the only identity check left, so we keep it for
+    now instead of removing it.
     """
     try:
         uuid = _execute_actor_request(user_service, "uuid")
