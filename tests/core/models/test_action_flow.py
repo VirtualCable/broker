@@ -32,7 +32,6 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 
 import typing
 
-from django.db import connection
 
 from uds import models
 from uds.core.util.model import sql_now
@@ -143,13 +142,6 @@ class ActionFlowModelTest(UDSTestCase):
         with self.assertRaises(Exception):
             FlowAction.objects.create(flow=flow, order=0, action_type="provider.update")
 
-    def _raw_values_column(self, action: FlowAction) -> str:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"SELECT {connection.ops.quote_name('values')} FROM uds_flow_action WHERE id = %s", [action.pk]
-            )
-            return str(cursor.fetchone()[0])
-
     def _raw_property(self, action: FlowAction, key: str) -> typing.Any:
         return models.Properties.objects.get(owner_id=action.uuid, owner_type="flowaction", key=key).value
 
@@ -162,8 +154,7 @@ class ActionFlowModelTest(UDSTestCase):
         action.approved_values = secret
         action.snap_info = {"current_values": secret}
 
-        self.assertNotIn("s3cr3t-value", self._raw_values_column(action))
-        for key in ("base_values", "approved_values", "snap_info"):
+        for key in ("values", "base_values", "approved_values", "snap_info"):
             raw = self._raw_property(action, key)
             self.assertIsInstance(raw, str)
             self.assertNotIn("s3cr3t-value", raw)
@@ -174,9 +165,8 @@ class ActionFlowModelTest(UDSTestCase):
         self.assertEqual(reloaded.approved_values, secret)
         self.assertEqual(reloaded.snap_info, {"current_values": secret})
 
-    def test_null_values_stay_null(self) -> None:
+    def test_values_default_to_none(self) -> None:
         flow = ActionFlow.objects.create(name="flow 1")
         action = FlowAction.objects.create(flow=flow, order=0, action_type="provider.delete")
 
-        self.assertTrue(FlowAction.objects.filter(pk=action.pk, values__isnull=True).exists())
         self.assertIsNone(FlowAction.objects.get(pk=action.pk).values)

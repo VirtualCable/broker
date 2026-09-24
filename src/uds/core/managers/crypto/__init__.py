@@ -320,6 +320,14 @@ class CryptoManager(metaclass=singleton.Singleton):
         except Exception:
             return value
 
+    def encrypt_json(self, value: typing.Any) -> str:
+        """The whole JSON document as one encrypted string (see ``encrypt_password``)."""
+        return self.encrypt_password(json.dumps(value))
+
+    def decrypt_json(self, value: str) -> typing.Any:
+        """Counterpart of ``encrypt_json``."""
+        return json.loads(self.decrypt_password(value))
+
     def load_private_key(
         self, rsa_key: str
     ) -> "RSAPrivateKey | DSAPrivateKey | DHPrivateKey | EllipticCurvePrivateKey":
