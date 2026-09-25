@@ -61,6 +61,8 @@ class DuplicateUsersCheckTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertIn(authenticator.name, result.message)
         self.assertIn("'John  Smith'", result.message)
+        self.assertEqual(len(result.details), 1)
+        self.assertTrue(result.details[0].startswith(f"{authenticator.name}: "), result.details)
 
     def test_fails_on_compatible_unicode_forms(self) -> None:
         # Full-width letters normalize (NFKC) to their ASCII equivalents

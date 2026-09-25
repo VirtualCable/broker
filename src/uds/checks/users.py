@@ -36,6 +36,7 @@ import typing
 import unicodedata
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -53,6 +54,11 @@ class DuplicateUsersInAuthenticatorCheck(ManualCheck):
 
     id: typing.ClassVar[str] = "duplicate-users-in-authenticator"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for users of the same authenticator whose names only differ in case, spacing or "
+        "equivalent Unicode characters. Some databases allow them, and each copy gets its own "
+        "services and permissions. Remove or merge the duplicated users listed in the details."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -80,6 +86,10 @@ class DuplicateUsersInAuthenticatorCheck(ManualCheck):
                     "{count} user name(s) are duplicated inside an authenticator once case and spacing are"
                     " ignored: {examples}. Each copy gets its own services and permissions."
                 ).format(count=len(duplicates), examples=examples),
+                [
+                    f"{authenticator}: {' / '.join(repr(name) for name in found)}"
+                    for authenticator, found in duplicates
+                ],
             )
         return (
             types.checks.CheckSeverity.MEDIUM,

@@ -116,6 +116,8 @@ class AuthenticatorsHealthCheckTest(UDSTransactionTestCase):
         self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
         self.assertIn("Corporate IdP", result.message)
         self.assertIn("expires on", result.message)
+        self.assertEqual(len(result.details), 1)
+        self.assertTrue(result.details[0].startswith("Corporate IdP: "), result.details)
 
     def test_fails_when_the_idp_certificate_has_expired(self) -> None:
         self._create_saml("Corporate IdP", _metadata(_certificate_valid_for(-1)))

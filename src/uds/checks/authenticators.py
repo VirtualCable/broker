@@ -34,6 +34,7 @@ Manual check that asks every authenticator able to assess itself.
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -49,6 +50,11 @@ class AuthenticatorsHealthCheck(ManualCheck):
 
     id: typing.ClassVar[str] = "authenticators-health"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Asks every authenticator that knows how to assess itself for problems. Today that covers "
+        "SAML, which reports signing certificates of the IdP that have expired, expire within 30 "
+        "days or cannot be read. The details list every problem found, worst first."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -62,7 +68,9 @@ class AuthenticatorsHealthCheck(ManualCheck):
                 problems.append((types.checks.CheckSeverity.MEDIUM, f"{authenticator.name}: {e}"))
                 continue
             problems.extend(
-                (severity, f"{authenticator.name}: {message}") for severity, ok, message in outcomes if not ok
+                (severity, f"{authenticator.name}: {message}")
+                for severity, ok, message, *_details in outcomes
+                if not ok
             )
 
         if problems:
@@ -70,7 +78,7 @@ class AuthenticatorsHealthCheck(ManualCheck):
             details = "; ".join(message for _severity, message in problems[:_MAX_EXAMPLES])
             if len(problems) > _MAX_EXAMPLES:
                 details += "..."
-            return (problems[0][0], False, details)
+            return (problems[0][0], False, details, [message for _severity, message in problems])
         return (
             types.checks.CheckSeverity.HIGH,
             True,
