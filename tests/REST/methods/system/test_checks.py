@@ -97,6 +97,14 @@ EXPECTED_HEALTH_IDS: typing.Final[frozenset[str]] = frozenset(
 )
 
 
+EXPECTED_MANUAL_IDS: typing.Final[frozenset[str]] = frozenset(
+    (
+        "authenticators-health",
+        "duplicate-users-in-authenticator",
+    )
+)
+
+
 class ChecksEndpointTest(rest.test.RESTTestCase):
     @typing.override
     def tearDown(self) -> None:
@@ -164,11 +172,11 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         response = self.client.rest_get("system/security_check")
         self.assertEqual(response.status_code, 400, response.content)
 
-    def test_manual_checks_report_is_empty_for_now(self) -> None:
-        # No production manual checks exist yet: the report is valid but empty
+    def test_manual_checks_report_lists_the_manual_checks(self) -> None:
+        # With nothing configured every manual check passes
         self.login()
         body = self._get_report("system/manual_checks")
-        self.assertEqual(body["checks"], [])
+        self.assertEqual({check["id"] for check in body["checks"]}, EXPECTED_MANUAL_IDS)
         for severity in types.checks.CheckSeverity:
             self.assertEqual(body[severity.value], 0)
         for category in types.checks.CheckCategory:
@@ -178,7 +186,7 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         self.login()
         for category in types.checks.CheckCategory:
             body = self._get_report(f"system/manual_checks/{category.value}")
-            self.assertEqual(body["checks"], [])
+            self.assertTrue(all(check["category"] == category.value for check in body["checks"]))
 
     def test_manual_checks_requires_admin(self) -> None:
         self.login(as_admin=False)
