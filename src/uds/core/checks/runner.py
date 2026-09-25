@@ -82,8 +82,9 @@ def run_checks(
             continue
         if category is not None and check_class.category is not category:
             continue
-        description = _(check_class.description)
+        description = ""
         try:
+            description = _(check_class.description)
             severity, ok, message, *extra = check_class().run()
         except Exception as e:
             logger.exception("Check %s could not be evaluated", check_id)

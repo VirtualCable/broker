@@ -167,3 +167,30 @@ class CheckDescriptionAndDetailsTest(UDSTransactionTestCase):
             result.details[: runner_module.MAX_DETAILS], tuple(affected[: runner_module.MAX_DETAILS])
         )
         self.assertIn("5", result.details[-1])
+
+
+class CheckWithoutDescription(Check):
+    id: typing.ClassVar[str] = "dummy-without-description"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+
+    @typing.override
+    def run(self) -> types.checks.CheckOutcome:
+        return (types.checks.CheckSeverity.INFO, True, "never reached")
+
+
+class MissingDescriptionTest(UDSTransactionTestCase):
+    def test_a_check_without_description_fails_alone(self) -> None:
+        with mock.patch.object(
+            runner_module,
+            "_collect_checks",
+            new=lambda: [
+                ("dummy-without-description", CheckWithoutDescription),
+                ("dummy-automatic", DummyAutomaticCheck),
+            ],
+        ):
+            results = runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)
+
+        by_id = {result.id: result for result in results}
+        self.assertFalse(by_id["dummy-without-description"].ok)
+        self.assertIn("could not be evaluated", by_id["dummy-without-description"].message)
+        self.assertTrue(by_id["dummy-automatic"].ok)
