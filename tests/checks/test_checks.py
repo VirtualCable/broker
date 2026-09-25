@@ -40,7 +40,7 @@ from django.utils import timezone
 from uds import models
 from uds.core import consts
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, Check, CheckOutcome
 from uds.core.checks import runner as runner_module
 from uds.core.util.config import GlobalConfig
 
@@ -914,7 +914,7 @@ class ChecksTest(UDSTransactionTestCase):
             self.assertEqual(report["categories"][category.value], expected)
 
     def test_failing_check_does_not_abort_scan(self) -> None:
-        class BrokenCheck(Check):
+        class BrokenCheck(AutomaticCheck):
             id: typing.ClassVar[str] = "trusted-sources-wildcard"
             category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
             description: typing.ClassVar[str] = "Broken check."

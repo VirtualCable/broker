@@ -46,7 +46,7 @@ from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.types.states import State
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
@@ -62,7 +62,7 @@ _TRANSITIONAL_STATES: typing.Final[list[str]] = [
 ]
 
 
-class StuckPublicationsCheck(Check):
+class StuckPublicationsCheck(AutomaticCheck):
     """Publications stuck in a transitional state (preparing/removing/canceling)."""
 
     id: typing.ClassVar[str] = "stuck-publications"

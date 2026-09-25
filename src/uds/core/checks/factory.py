@@ -37,6 +37,7 @@ checks never need to touch this module or the runner.
 
 import logging
 
+from uds.core import types
 from uds.core.util import factory
 
 from .base import Check
@@ -51,11 +52,20 @@ class ChecksFactory(factory.Factory[Check]):
         """
         Registers a check class under its own ``id``.
 
-        Classes without an ``id`` (base or intermediate helper classes) are
+        Classes without an ``id`` (base or intermediate helper classes) or
+        without a valid ``kind`` (deriving from ``Check`` directly, instead
+        of a kind marker such as ``AutomaticCheck``/``ManualCheck``) are
         skipped: they are not runnable checks.
         """
         if not check.id:
             logger.debug("Check %s has no id, not registering it", check)
+            return
+
+        if getattr(check, "kind", None) not in types.checks.CheckKind:
+            logger.error(
+                "Check %s does not derive from a kind marker (AutomaticCheck/ManualCheck/...), not registering it",
+                check,
+            )
             return
 
         super().register(check.id, check)

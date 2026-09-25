@@ -41,12 +41,12 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from uds.core import consts, types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.managers.crypto import CryptoManager
 from uds.core.util.config import GlobalConfig
 
 
-class DefaultSuperuserCredentialsCheck(Check):
+class DefaultSuperuserCredentialsCheck(AutomaticCheck):
     """Root password left at the shipped default."""
 
     id: typing.ClassVar[str] = "default-superuser-credentials"
@@ -76,7 +76,7 @@ class DefaultSuperuserCredentialsCheck(Check):
         )
 
 
-class SuperuserWebAccessCheck(Check):
+class SuperuserWebAccessCheck(AutomaticCheck):
     """Root web/API access enabled."""
 
     id: typing.ClassVar[str] = "superuser-web-access"
@@ -104,7 +104,7 @@ class SuperuserWebAccessCheck(Check):
         )
 
 
-class TrustedSourcesWildcardCheck(Check):
+class TrustedSourcesWildcardCheck(AutomaticCheck):
     """Trusted sources left as wildcard."""
 
     id: typing.ClassVar[str] = "trusted-sources-wildcard"
@@ -137,7 +137,7 @@ class TrustedSourcesWildcardCheck(Check):
         )
 
 
-class IpForwardersWildcardCheck(Check):
+class IpForwardersWildcardCheck(AutomaticCheck):
     """ALLOWED_IP_FORWARDERS wildcard while behind a proxy."""
 
     id: typing.ClassVar[str] = "ip-forwarders-wildcard"
@@ -175,7 +175,7 @@ class IpForwardersWildcardCheck(Check):
         )
 
 
-class LoginHardeningWeakCheck(Check):
+class LoginHardeningWeakCheck(AutomaticCheck):
     """Login hardening knobs outside recommended ranges."""
 
     id: typing.ClassVar[str] = "login-hardening-weak"
@@ -215,7 +215,7 @@ class LoginHardeningWeakCheck(Check):
         )
 
 
-class ActorFailureBlockingDisabledCheck(Check):
+class ActorFailureBlockingDisabledCheck(AutomaticCheck):
     """Actor failure blocking disabled."""
 
     id: typing.ClassVar[str] = "actor-failure-blocking-disabled"
@@ -244,7 +244,7 @@ class ActorFailureBlockingDisabledCheck(Check):
         )
 
 
-class ExperimentalFeaturesOnCheck(Check):
+class ExperimentalFeaturesOnCheck(AutomaticCheck):
     """Experimental features exposed."""
 
     id: typing.ClassVar[str] = "experimental-features-on"
@@ -270,7 +270,7 @@ class ExperimentalFeaturesOnCheck(Check):
         )
 
 
-class ImmutableAuditLogOffCheck(Check):
+class ImmutableAuditLogOffCheck(AutomaticCheck):
     """Immutable (TSA-signed) audit log disabled."""
 
     id: typing.ClassVar[str] = "immutable-audit-log-off"

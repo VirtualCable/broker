@@ -43,10 +43,10 @@ from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import consts, types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 
 
-class SamlAssertionsSignedCheck(Check):
+class SamlAssertionsSignedCheck(AutomaticCheck):
     """SAML authenticators not requiring signed assertions/messages."""
 
     id: typing.ClassVar[str] = "saml-assertions-signed"
@@ -97,7 +97,7 @@ class SamlAssertionsSignedCheck(Check):
         )
 
 
-class OldTokenUsedByActorCheck(Check):
+class OldTokenUsedByActorCheck(AutomaticCheck):
     """User services still authenticating with the legacy uuid token flow."""
 
     id: typing.ClassVar[str] = "old-token-used-by-actor"
@@ -147,7 +147,7 @@ class OldTokenUsedByActorCheck(Check):
         )
 
 
-class NoMfaConfiguredCheck(Check):
+class NoMfaConfiguredCheck(AutomaticCheck):
     """Authenticators without MFA assigned."""
 
     id: typing.ClassVar[str] = "no-mfa-configured"
@@ -188,7 +188,7 @@ class NoMfaConfiguredCheck(Check):
         )
 
 
-class ServerCertificatesExpiringCheck(Check):
+class ServerCertificatesExpiringCheck(AutomaticCheck):
     """Server certificates expired or expiring within 30 days."""
 
     id: typing.ClassVar[str] = "server-certificates-expiring"
@@ -266,7 +266,7 @@ class ServerCertificatesExpiringCheck(Check):
         )
 
 
-class RestrainedServicePoolsCheck(Check):
+class RestrainedServicePoolsCheck(AutomaticCheck):
     """Service pools currently in restrained state."""
 
     id: typing.ClassVar[str] = "restrained-service-pools"

@@ -41,11 +41,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from uds.core import consts, types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.util.config import GlobalConfig
 
 
-class SecurityCookiesAndHeadersCheck(Check):
+class SecurityCookiesAndHeadersCheck(AutomaticCheck):
     """Session/security cookies and enhanced security flag."""
 
     id: typing.ClassVar[str] = "security-cookies-and-headers"
@@ -80,7 +80,7 @@ class SecurityCookiesAndHeadersCheck(Check):
         )
 
 
-class DebugEnabledCheck(Check):
+class DebugEnabledCheck(AutomaticCheck):
     """Production debug switches (DEBUG/PROFILING)."""
 
     id: typing.ClassVar[str] = "debug-enabled"
@@ -113,7 +113,7 @@ class DebugEnabledCheck(Check):
         )
 
 
-class DefaultSecretKeyCheck(Check):
+class DefaultSecretKeyCheck(AutomaticCheck):
     """settings.SECRET_KEY left at the shipped sample value."""
 
     id: typing.ClassVar[str] = "default-secret-key"
@@ -139,7 +139,7 @@ class DefaultSecretKeyCheck(Check):
         )
 
 
-class DefaultRsaKeyCheck(Check):
+class DefaultRsaKeyCheck(AutomaticCheck):
     """settings.RSA_KEY left at the shipped sample value."""
 
     id: typing.ClassVar[str] = "default-rsa-key"
@@ -168,7 +168,7 @@ class DefaultRsaKeyCheck(Check):
         )
 
 
-class CsrfMiddlewareDisabledCheck(Check):
+class CsrfMiddlewareDisabledCheck(AutomaticCheck):
     """CsrfViewMiddleware presence in MIDDLEWARE."""
 
     id: typing.ClassVar[str] = "csrf-middleware-disabled"
@@ -198,7 +198,7 @@ class CsrfMiddlewareDisabledCheck(Check):
         )
 
 
-class SqlLoggingEnabledCheck(Check):
+class SqlLoggingEnabledCheck(AutomaticCheck):
     """SQL logger writing bound parameters to disk in production."""
 
     id: typing.ClassVar[str] = "sql-logging-enabled"
@@ -233,7 +233,7 @@ class SqlLoggingEnabledCheck(Check):
         )
 
 
-class LogLevelDebugCheck(Check):
+class LogLevelDebugCheck(AutomaticCheck):
     """Root/'uds' loggers left at DEBUG in production."""
 
     id: typing.ClassVar[str] = "log-level-debug"

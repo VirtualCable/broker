@@ -42,7 +42,7 @@ from django.utils.translation import gettext as _
 
 from uds.core import types
 
-from .base import Check, ManualCheck
+from .base import Check
 from .factory import ChecksFactory
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -69,16 +69,15 @@ def run_checks(
     Runs all the registered checks of the given ``kind`` (optionally just the
     ones belonging to ``category``) and returns their results.
 
-    Automatic checks (everything not deriving from :class:`ManualCheck`) are
-    fast enough for every scan; manual ones only run on explicit request.
+    Automatic checks (those whose kind is ``AUTOMATIC``) run on every scan;
+    manual ones only run on explicit request.
 
     A check that raises is reported as a failed ``INFO`` result instead of
     aborting the whole scan, so a single broken check never hides the rest.
     """
-    wants_manual = kind is types.checks.CheckKind.MANUAL
     results: list[types.checks.CheckResult] = []
     for check_id, check_class in _collect_checks():
-        if issubclass(check_class, ManualCheck) is not wants_manual:
+        if check_class.kind is not kind:
             continue
         if category is not None and check_class.category is not category:
             continue

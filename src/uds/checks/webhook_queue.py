@@ -40,7 +40,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 
 # Soft threshold: warn that the queue is growing
 SOFT_THRESHOLD: typing.Final[int] = 2000
@@ -48,7 +48,7 @@ SOFT_THRESHOLD: typing.Final[int] = 2000
 HARD_THRESHOLD: typing.Final[int] = 10000
 
 
-class WebhookQueueSizeCheck(Check):
+class WebhookQueueSizeCheck(AutomaticCheck):
     """Webhook notification queue size within control."""
 
     id: typing.ClassVar[str] = "webhook-queue-size"

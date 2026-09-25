@@ -35,18 +35,26 @@ One subclass of :class:`Check` is one check. Concrete checks live in
 and must define the ``id`` and ``category`` class variables and implement
 :meth:`Check.run`.
 
-Checks deriving (directly or through intermediate classes) from
-:class:`ManualCheck` are *manual* checks: slow and/or expensive, only run
-on explicit request. Everything else is *automatic* and runs on every scan.
+The *kind* of a check (when it runs) is explicit and comes from the marker
+class it derives from:
+
+- :class:`AutomaticCheck`: fast, runs on every scan (``/system/checks``).
+- :class:`ManualCheck`: slow and/or expensive, only runs on explicit request
+  (``/system/manual_checks``).
+
+New kinds (scheduled, startup, ...) are just new marker classes declaring
+their :class:`uds.core.types.checks.CheckKind`; the runner never needs to
+change.
 """
 
+import abc
 import typing
 
 from uds.core import types
 from uds.core.types.checks import CheckOutcome
 
 
-class Check:
+class Check(abc.ABC):
     """Base class for every self-assessment check.
 
     Concrete checks must define:
@@ -60,6 +68,11 @@ class Check:
       fails, marked with ``gettext_noop`` (translated when the report is built).
 
     and implement :meth:`run`.
+
+    They must also derive from one of the kind marker classes
+    (:class:`AutomaticCheck`, :class:`ManualCheck`, ...), which is what
+    provides the ``kind`` class variable; deriving from :class:`Check`
+    directly is a registration error.
     """
 
     #: Stable machine-readable identifier. Empty on base/helper classes.
@@ -71,6 +84,11 @@ class Check:
     #: What the check verifies and how to fix it (untranslated, gettext_noop).
     description: typing.ClassVar[str]
 
+    #: When this check runs. Provided by the kind marker subclasses;
+    #: a check without a valid kind is rejected at registration time.
+    kind: typing.ClassVar[types.checks.CheckKind]
+
+    @abc.abstractmethod
     def run(self) -> CheckOutcome:
         """Evaluates the check condition.
 
@@ -78,16 +96,27 @@ class Check:
             A :data:`CheckOutcome` tuple: severity, whether the check passes,
             a human readable detail and, optionally, the affected elements.
         """
-        raise NotImplementedError
+        ...
+
+
+class AutomaticCheck(Check):
+    """Marker for *automatic* checks: fast ones, run on every scan.
+
+    Anything deriving from this class (directly or through intermediate
+    classes) runs with the regular scan (``/system/checks``).
+    """
+
+    kind: typing.ClassVar[types.checks.CheckKind] = types.checks.CheckKind.AUTOMATIC
 
 
 class ManualCheck(Check):
-    """Base class for *manual* checks: slow and/or expensive ones.
+    """Marker for *manual* checks: slow and/or expensive ones.
 
     Examples: comparing the real machines of a platform against the UDS
     inventory, deep scans of providers, ...
 
     They are excluded from the regular scan (``/system/checks``) and only
-    run on explicit request (``/system/manual_checks``). Anything not
-    deriving from this class is considered automatic and runs on every scan.
+    run on explicit request (``/system/manual_checks``).
     """
+
+    kind: typing.ClassVar[types.checks.CheckKind] = types.checks.CheckKind.MANUAL

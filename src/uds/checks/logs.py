@@ -46,7 +46,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.models import Log
 
 # Thresholds for ``failed-logins-24h`` (in count of records).
@@ -90,7 +90,7 @@ def _failed_login_rows() -> Iterator[str]:
     yield from qs
 
 
-class FailedLogins24hCheck(Check):
+class FailedLogins24hCheck(AutomaticCheck):
     """Volume of failed login attempts in the last 24h."""
 
     id: typing.ClassVar[str] = "failed-logins-24h"
@@ -125,7 +125,7 @@ class FailedLogins24hCheck(Check):
         )
 
 
-class BruteForceByIpCheck(Check):
+class BruteForceByIpCheck(AutomaticCheck):
     """Brute-force patterns grouped by source IP."""
 
     id: typing.ClassVar[str] = "brute-force-by-ip"
@@ -164,7 +164,7 @@ class BruteForceByIpCheck(Check):
         )
 
 
-class TemporarilyBlockedLoginsCheck(Check):
+class TemporarilyBlockedLoginsCheck(AutomaticCheck):
     """Accounts temporarily blocked by the lockout in the last 24h."""
 
     id: typing.ClassVar[str] = "temporarily-blocked-logins"
@@ -205,7 +205,7 @@ class TemporarilyBlockedLoginsCheck(Check):
         )
 
 
-class InternalErrors24hCheck(Check):
+class InternalErrors24hCheck(AutomaticCheck):
     """Global internal ERROR entries in the last 24h."""
 
     id: typing.ClassVar[str] = "internal-errors-24h"

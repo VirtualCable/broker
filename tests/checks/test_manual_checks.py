@@ -35,13 +35,13 @@ import typing
 from unittest import mock
 
 from uds.core import types
-from uds.core.checks import Check, ManualCheck
+from uds.core.checks import AutomaticCheck, Check, ManualCheck
 from uds.core.checks import runner as runner_module
 
 from ..utils.test import UDSTransactionTestCase
 
 
-class DummyAutomaticCheck(Check):
+class DummyAutomaticCheck(AutomaticCheck):
     id: typing.ClassVar[str] = "dummy-automatic"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
     description: typing.ClassVar[str] = "Dummy automatic check."
@@ -91,10 +91,24 @@ class CheckKindFilterTest(UDSTransactionTestCase):
             )
         self.assertEqual(results, [])
 
-    def test_regular_checks_are_not_manual(self) -> None:
+    def test_regular_checks_are_automatic(self) -> None:
         # Every registered production check is automatic for now
         for _check_id, check_class in runner_module._collect_checks():
+            self.assertTrue(issubclass(check_class, AutomaticCheck), check_class.id)
             self.assertFalse(issubclass(check_class, ManualCheck), check_class.id)
+
+    def test_factory_rejects_checks_without_kind_marker(self) -> None:
+        from uds.core.checks import ChecksFactory
+
+        class NoKindCheck(Check):
+            # Derives from Check directly: no kind, must not register
+            id: typing.ClassVar[str] = "no-kind"
+            category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+            description: typing.ClassVar[str] = "Never registered."
+
+        factory = ChecksFactory()
+        factory.insert(NoKindCheck)
+        self.assertNotIn("no-kind", factory)
 
     def test_has_health_check_detects_real_implementations(self) -> None:
         from uds.core.module import Module
@@ -115,7 +129,7 @@ class CheckKindFilterTest(UDSTransactionTestCase):
         self.assertTrue(ModuleWithHealthCheck.has_health_check())
 
 
-class DummyDetailedCheck(Check):
+class DummyDetailedCheck(AutomaticCheck):
     id: typing.ClassVar[str] = "dummy-detailed"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
     description: typing.ClassVar[str] = "Dummy check with details."
@@ -169,7 +183,7 @@ class CheckDescriptionAndDetailsTest(UDSTransactionTestCase):
         self.assertIn("5", result.details[-1])
 
 
-class CheckWithoutDescription(Check):
+class CheckWithoutDescription(AutomaticCheck):
     id: typing.ClassVar[str] = "dummy-without-description"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
 

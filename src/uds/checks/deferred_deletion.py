@@ -44,7 +44,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.types.deferred_deletion import DeletionInfo, DeferredStorageGroup
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
@@ -53,7 +53,7 @@ from uds.core.util.model import sql_now
 _MAX_EXAMPLES: typing.Final[int] = 5
 
 
-class DeferredDeletionStuckCheck(Check):
+class DeferredDeletionStuckCheck(AutomaticCheck):
     """Elements stuck in the deferred deletion queues."""
 
     id: typing.ClassVar[str] = "deferred-deletion-stuck"

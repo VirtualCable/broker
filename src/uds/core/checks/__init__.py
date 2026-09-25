@@ -44,6 +44,7 @@ under its ``id``. One class, one check; each class declares its
 Checks only *notify*: they never modify any configuration value.
 """
 
+from .base import AutomaticCheck as AutomaticCheck
 from .base import Check as Check
 from .base import CheckOutcome as CheckOutcome
 from .base import ManualCheck as ManualCheck
