@@ -39,6 +39,7 @@ import typing
 
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import consts, types
@@ -50,6 +51,11 @@ class SamlAssertionsSignedCheck(Check):
 
     id: typing.ClassVar[str] = "saml-assertions-signed"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that every SAML authenticator requires signed assertions or signed messages. "
+        "Without a signature, a forged response could be accepted if the IdP is misconfigured. "
+        "Enable one of the two options in the listed authenticators."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -76,6 +82,7 @@ class SamlAssertionsSignedCheck(Check):
                     "SAML assertions are not required to be signed on: {unsigned}."
                     " Unsigned assertions can be forged against a misconfigured IdP."
                 ).format(unsigned=", ".join(unsigned)),
+                unsigned,
             )
         if found:
             return (
@@ -95,6 +102,11 @@ class OldTokenUsedByActorCheck(Check):
 
     id: typing.ClassVar[str] = "old-token-used-by-actor"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for machines whose actor still authenticates with the old token, the one based on "
+        "the user service id. Re-initialize the actor on the machines of the listed service pools "
+        "so they move to the new token."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -126,6 +138,7 @@ class OldTokenUsedByActorCheck(Check):
                     "Service pools with actors still using the legacy uuid token flow: {affected}."
                     " Re-initialize affected actors to rotate them to the new token."
                 ).format(affected=affected),
+                [pool.name for pool in affected_pools],
             )
         return (
             types.checks.CheckSeverity.MEDIUM,
@@ -139,6 +152,11 @@ class NoMfaConfiguredCheck(Check):
 
     id: typing.ClassVar[str] = "no-mfa-configured"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that at least one authenticator has multi-factor authentication (MFA) assigned; "
+        "it only fails when none has. The details list the authenticators without MFA. Assign an "
+        "MFA to the authenticators your users log in with."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -157,6 +175,7 @@ class NoMfaConfiguredCheck(Check):
                 _(
                     "No authenticator has MFA configured: {names}. Assign at least one MFA per authenticator."
                 ).format(names=", ".join(without_mfa)),
+                without_mfa,
             )
         return (
             types.checks.CheckSeverity.MEDIUM,
@@ -165,6 +184,7 @@ class NoMfaConfiguredCheck(Check):
                 with_mfa=len(authenticators) - len(without_mfa),
                 total=len(authenticators),
             ),
+            without_mfa,
         )
 
 
@@ -173,6 +193,11 @@ class ServerCertificatesExpiringCheck(Check):
 
     id: typing.ClassVar[str] = "server-certificates-expiring"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Reads the certificates of the registered servers and warns when one has expired, expires "
+        "within 30 days or cannot be read. Connections to a server with an expired certificate "
+        "fail. Renew the certificate of the listed servers."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -223,6 +248,7 @@ class ServerCertificatesExpiringCheck(Check):
                 _(
                     "{n} server certificate(s) have expired: {names}. Renew and rotate the affected servers."
                 ).format(n=len(expired), names=", ".join(expired)),
+                expired + expiring,
             )
         if expiring:
             return (
@@ -231,6 +257,7 @@ class ServerCertificatesExpiringCheck(Check):
                 _("{n} server certificate(s) expire within 30 days: {names}.").format(
                     n=len(expiring), names=", ".join(expiring)
                 ),
+                expiring,
             )
         return (
             types.checks.CheckSeverity.HIGH,
@@ -245,6 +272,11 @@ class RestrainedServicePoolsCheck(Check):
     id: typing.ClassVar[str] = "restrained-service-pools"
     # Restraint is an operational symptom, not an exploitable weakness
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Lists the service pools that UDS has restrained because too many of their machines "
+        "failed in a short time. A restrained pool stops creating machines. Check the logs of the "
+        "pool and its provider to find the cause."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -267,6 +299,7 @@ class RestrainedServicePoolsCheck(Check):
                 _("{n} service pool(s) are currently restrained: {names}.").format(
                     n=len(names), names=", ".join(names)
                 ),
+                names,
             )
         return (
             types.checks.CheckSeverity.INFO,

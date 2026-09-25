@@ -97,3 +97,18 @@ class StuckPublicationsCheckTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertIn(publication.deployed_service.name, result.message)
         self.assertIn("removing", result.message)
+
+    def test_details_list_every_stuck_publication(self) -> None:
+        # The message only shows a few examples; the details carry all of them
+        publications = [
+            self._create_publication(State.PREPARING, age=datetime.timedelta(hours=8)) for _ in range(7)
+        ]
+
+        result = self._run_check()
+        self.assertFalse(result.ok, result.message)
+        self.assertEqual(len(result.details), len(publications))
+        for publication in publications:
+            self.assertTrue(
+                any(line.startswith(publication.deployed_service.name) for line in result.details),
+                publication.deployed_service.name,
+            )

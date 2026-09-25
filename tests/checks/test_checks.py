@@ -249,6 +249,7 @@ class ChecksTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
         self.assertIn("Unsigned SAML", result.message)
+        self.assertEqual(result.details, ("Unsigned SAML",))
 
     def test_saml_signed_assertions_pass(self) -> None:
         self._create_saml_authenticator("Signed SAML", assertions_signed=True)
@@ -916,6 +917,7 @@ class ChecksTest(UDSTransactionTestCase):
         class BrokenCheck(Check):
             id: typing.ClassVar[str] = "trusted-sources-wildcard"
             category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+            description: typing.ClassVar[str] = "Broken check."
 
             @typing.override
             def run(self) -> CheckOutcome:

@@ -37,6 +37,7 @@ but it degrades the system, so administrators get notified before that happens.
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds.core import types
 from uds.core.checks import Check, CheckOutcome
@@ -52,6 +53,12 @@ class WebhookQueueSizeCheck(Check):
 
     id: typing.ClassVar[str] = "webhook-queue-size"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the webhook notifications waiting to be delivered: from 2000 it warns, and from "
+        "10000 the queue is close to its limit and new events will be dropped. A growing queue "
+        "means an endpoint is failing or unreachable. Check the webhook notifiers and their "
+        "endpoints."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:

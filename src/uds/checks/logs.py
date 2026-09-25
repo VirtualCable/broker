@@ -43,6 +43,7 @@ from collections.abc import Iterator
 
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds.core import types
 from uds.core.checks import Check, CheckOutcome
@@ -64,12 +65,12 @@ _C2_PER_IP_THRESHOLD: typing.Final[int] = 20
 # kept duplicated here to avoid coupling this check module to the reports
 # package. The message is built by ``uds.core.auths.auth.log_login`` at
 # ``src/uds/core/auths/auth.py:532``.
-_LOGIN_RX: typing.Final[re.Pattern[str]] = re.compile(
+LOGIN_RX: typing.Final[re.Pattern[str]] = re.compile(
     r"user (?P<user>.+?) has (?P<message>.+?) from (?P<ip>\S+) where os is (?P<os>.+)"
 )
 
 
-def _window() -> datetime.datetime:
+def window() -> datetime.datetime:
     """Returns ``now - 24h`` for the check windows."""
     return timezone.now() - datetime.timedelta(hours=24)
 
@@ -78,7 +79,7 @@ def _failed_login_rows() -> Iterator[str]:
     """Yields the ``data`` field of every failed-login log row in the last 24h."""
     qs = (
         Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             source=types.log.LogSource.WEB,
             owner_type=types.log.LogObjectType.AUTHENTICATOR,
             level__gte=types.log.LogLevel.ERROR,
@@ -94,6 +95,11 @@ class FailedLogins24hCheck(Check):
 
     id: typing.ClassVar[str] = "failed-logins-24h"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the failed logins of the last 24 hours: from 10 it is a warning and from 50 it "
+        "may be a brute force attack. The failed logins report shows the users and addresses "
+        "involved."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -124,12 +130,17 @@ class BruteForceByIpCheck(Check):
 
     id: typing.ClassVar[str] = "brute-force-by-ip"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Groups the failed logins of the last 24 hours by source address and flags every address "
+        "with 20 or more, a usual sign of password guessing. The details list each flagged "
+        "address with its count; consider blocking them in the firewall."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
         by_ip: dict[str, int] = {}
         for data in _failed_login_rows():
-            m = _LOGIN_RX.match(data or "")
+            m = LOGIN_RX.match(data or "")
             if not m:
                 continue
             ip = m.group("ip")
@@ -142,6 +153,7 @@ class BruteForceByIpCheck(Check):
                 types.checks.CheckSeverity.HIGH,
                 False,
                 _("Brute-force patterns detected by source IP in the last 24h: {top}.").format(top=top),
+                [f"{ip}: {cnt}" for ip, cnt in flagged],
             )
         return (
             types.checks.CheckSeverity.INFO,
@@ -157,6 +169,11 @@ class TemporarilyBlockedLoginsCheck(Check):
 
     id: typing.ClassVar[str] = "temporarily-blocked-logins"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the accounts temporarily blocked in the last 24 hours after too many wrong "
+        "passwords. It can be an attack or a client retrying with an old password. The failed "
+        "logins report shows the users and addresses involved."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -165,7 +182,7 @@ class TemporarilyBlockedLoginsCheck(Check):
         # lands in the Log table as an ERROR row on the authenticator with that
         # substring in ``data``.
         count = Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             source=types.log.LogSource.WEB,
             owner_type=types.log.LogObjectType.AUTHENTICATOR,
             level__gte=types.log.LogLevel.ERROR,
@@ -194,13 +211,18 @@ class InternalErrors24hCheck(Check):
     id: typing.ClassVar[str] = "internal-errors-24h"
     # Internal error rate is a system health signal, not an attack indicator
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the internal errors logged by the broker in the last 24 hours and warns from 50. "
+        "A high number usually means a failing provider or service. Check uds.log, services.log "
+        "and workers.log."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
         # Global syslog entries (owner_id=0, owner_type=-1) at ERROR+ from the last
         # 24h; equivalent to grepping ``ERROR`` across uds.log/services.log/etc.
         qs = Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             owner_id=0,
             owner_type=-1,
             level__gte=types.log.LogLevel.ERROR,

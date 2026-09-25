@@ -41,6 +41,7 @@ import datetime
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds.core import types
 from uds.core.checks import Check, CheckOutcome
@@ -57,6 +58,11 @@ class DeferredDeletionStuckCheck(Check):
 
     id: typing.ClassVar[str] = "deferred-deletion-stuck"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for machines that have been waiting in the deferred deletion queues for longer "
+        "than MAX_DEFERRED_DELETION_TIME. It usually means the platform is failing to stop or "
+        "delete them. Check the provider; the details list every stuck machine."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -85,6 +91,7 @@ class DeferredDeletionStuckCheck(Check):
                 ).format(
                     total=total, stuck=len(stuck), hours=max_age.total_seconds() / 3600, examples=examples
                 ),
+                stuck,
             )
         return (
             types.checks.CheckSeverity.MEDIUM,

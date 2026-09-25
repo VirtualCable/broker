@@ -47,6 +47,10 @@ from .factory import ChecksFactory
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+# A check can find thousands of affected elements (deferred deletions, stale
+# user services, ...); the report only needs enough of them to act on
+MAX_DETAILS: typing.Final[int] = 200
+
 
 def _collect_checks() -> list[tuple[str, type[Check]]]:
     """Returns the current registered checks as ``[(id, check_class), ...]``.
@@ -78,8 +82,10 @@ def run_checks(
             continue
         if category is not None and check_class.category is not category:
             continue
+        description = ""
         try:
-            severity, ok, message = check_class().run()
+            description = _(check_class.description)
+            severity, ok, message, *extra = check_class().run()
         except Exception as e:
             logger.exception("Check %s could not be evaluated", check_id)
             results.append(
@@ -89,16 +95,29 @@ def run_checks(
                     ok=False,
                     message=_("Check could not be evaluated: {error}").format(error=e),
                     category=check_class.category,
+                    description=description,
                 )
             )
             continue
         results.append(
             types.checks.CheckResult(
-                id=check_id, severity=severity, ok=ok, message=message, category=check_class.category
+                id=check_id,
+                severity=severity,
+                ok=ok,
+                message=message,
+                category=check_class.category,
+                description=description,
+                details=_capped(extra[0] if extra else []),
             )
         )
 
     return results
+
+
+def _capped(details: list[str]) -> tuple[str, ...]:
+    if len(details) <= MAX_DETAILS:
+        return tuple(details)
+    return (*details[:MAX_DETAILS], _("... and {count} more").format(count=len(details) - MAX_DETAILS))
 
 
 def build_report(results: list[types.checks.CheckResult]) -> dict[str, typing.Any]:

@@ -38,6 +38,7 @@ import typing
 
 from django.conf import settings
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds.core import consts, types
 from uds.core.checks import Check, CheckOutcome
@@ -49,6 +50,12 @@ class SecurityCookiesAndHeadersCheck(Check):
 
     id: typing.ClassVar[str] = "security-cookies-and-headers"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that the session and CSRF cookies are marked HttpOnly and Secure and that "
+        "ENHANCED_SECURITY is enabled. Without these flags the cookies can be read by scripts or "
+        "sent over plain HTTP. Enable the missing flags in the broker settings and "
+        "ENHANCED_SECURITY in the global configuration."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -78,6 +85,11 @@ class DebugEnabledCheck(Check):
 
     id: typing.ClassVar[str] = "debug-enabled"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that DEBUG and PROFILING are off in the broker settings. With DEBUG on, error "
+        "pages show code, settings and queries to anyone who triggers an error. Set both to False "
+        "and restart the broker."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -106,6 +118,11 @@ class DefaultSecretKeyCheck(Check):
 
     id: typing.ClassVar[str] = "default-secret-key"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that SECRET_KEY is not the sample value shipped with UDS. That key signs "
+        "sessions and tokens, so anyone who knows it can forge them. Set a new random SECRET_KEY "
+        "in the broker settings, the same on every broker."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -127,6 +144,11 @@ class DefaultRsaKeyCheck(Check):
 
     id: typing.ClassVar[str] = "default-rsa-key"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that RSA_KEY is not the sample key shipped with UDS. That key encrypts the "
+        "secrets stored by the broker, so anyone who knows it can decrypt them. Replacing it "
+        "affects the data already encrypted, so plan the change before doing it."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -151,6 +173,11 @@ class CsrfMiddlewareDisabledCheck(Check):
 
     id: typing.ClassVar[str] = "csrf-middleware-disabled"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that Django's CsrfViewMiddleware is enabled. Without it, a malicious page can "
+        "make the browser of a logged-in administrator send requests to the broker. Add "
+        "django.middleware.csrf.CsrfViewMiddleware back to MIDDLEWARE in the broker settings."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -176,6 +203,11 @@ class SqlLoggingEnabledCheck(Check):
 
     id: typing.ClassVar[str] = "sql-logging-enabled"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that the SQL logger is not at DEBUG when DEBUG is off. At that level every "
+        "query is written to log/sql.log with its values, including passwords and personal data. "
+        "Raise the level of the 'django.db.backends' logger in the broker settings."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -206,6 +238,10 @@ class LogLevelDebugCheck(Check):
 
     id: typing.ClassVar[str] = "log-level-debug"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that the root and 'uds' loggers are not at DEBUG. DEBUG logs grow fast and may "
+        "contain sensitive data. Set their level to INFO or higher in the broker settings."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:

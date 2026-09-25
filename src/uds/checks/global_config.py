@@ -38,6 +38,7 @@ database rows.
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds.core import consts, types
 from uds.core.checks import Check, CheckOutcome
@@ -50,6 +51,10 @@ class DefaultSuperuserCredentialsCheck(Check):
 
     id: typing.ClassVar[str] = "default-superuser-credentials"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that the superuser (root) password is not the default one. A known password "
+        "gives full administration access. Change SUPER_USER_PASS in the global configuration."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -76,6 +81,11 @@ class SuperuserWebAccessCheck(Check):
 
     id: typing.ClassVar[str] = "superuser-web-access"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies whether the superuser can log in to the administration and the REST API "
+        "(SUPER_USER_ALLOW_WEBACCESS). If it is not needed in production, disable it and use "
+        "administrators from an authenticator instead."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -99,6 +109,11 @@ class TrustedSourcesWildcardCheck(Check):
 
     id: typing.ClassVar[str] = "trusted-sources-wildcard"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that TRUSTED_SOURCES and ADMIN_TRUSTED_SOURCES are not '*'. These lists limit "
+        "which addresses can reach the tunnel, actor and administration endpoints. Set them to "
+        "the networks of your tunnels, machines and administrators."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -127,6 +142,12 @@ class IpForwardersWildcardCheck(Check):
 
     id: typing.ClassVar[str] = "ip-forwarders-wildcard"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "When the broker is behind a proxy (BEHIND_PROXY), verifies that ALLOWED_IP_FORWARDERS is "
+        "not '*'. Otherwise any client can fake its address with an X-Forwarded-For header and "
+        "get around the IP based rules. Set it to the addresses of your proxies or load "
+        "balancers."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -159,6 +180,11 @@ class LoginHardeningWeakCheck(Check):
 
     id: typing.ClassVar[str] = "login-hardening-weak"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies the login lockout settings: MAX_LOGIN_TRIES between 1 and 20, LOGIN_BLOCK of at "
+        "least 30 seconds and LOGIN_BLOCK_IP enabled. Weaker values make password guessing "
+        "easier. Adjust them in the global configuration."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -194,6 +220,11 @@ class ActorFailureBlockingDisabledCheck(Check):
 
     id: typing.ClassVar[str] = "actor-failure-blocking-disabled"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that BLOCK_ACTOR_FAILURES is enabled, so the addresses that send wrong tokens "
+        "to the actor endpoints get blocked. Without it, tokens can be tried without limit. "
+        "Enable it in the global configuration."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -218,6 +249,11 @@ class ExperimentalFeaturesOnCheck(Check):
 
     id: typing.ClassVar[str] = "experimental-features-on"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that EXPERIMENTAL_FEATURES is off. Experimental features are not supported and "
+        "may change or break. Disable it in the global configuration unless you are testing one "
+        "of them."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -239,6 +275,11 @@ class ImmutableAuditLogOffCheck(Check):
 
     id: typing.ClassVar[str] = "immutable-audit-log-off"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies whether the immutable audit log (IMMUTABLE_LOG_ENABLED) is enabled. When it is, "
+        "logins and administration events are also written to a tamper-evident log signed by a "
+        "time stamping authority. Enable it if you need an audit trail that cannot be altered."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
