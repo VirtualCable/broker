@@ -194,7 +194,7 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
             {check["id"] for check in content["checks"]},
             {result.id for result in run_checks(types.checks.CheckKind.AUTOMATIC)},
         )
-        self.assertIn("db-app-time-mismatch", {check["id"] for check in content["checks"]})
+        self.assertIn("provider-errors-24h", {check["id"] for check in content["checks"]})
 
     def test_get_checks_manual_exposes_the_manual_checks(self) -> None:
         content = json.loads(self._result_text(self._call("get_checks", {"kind": "manual"})))
