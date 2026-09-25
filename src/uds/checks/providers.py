@@ -41,7 +41,7 @@ from uds import models
 from uds.core import types
 from uds.core.checks import Check, CheckOutcome
 
-from .logs import _window
+from .logs import window
 
 _MAX_EXAMPLES: typing.Final[int] = 5
 
@@ -62,7 +62,7 @@ class ProviderErrors24hCheck(Check):
 
     @typing.override
     def run(self) -> CheckOutcome:
-        errors = models.Log.objects.filter(created__gte=_window(), level__gte=types.log.LogLevel.ERROR)
+        errors = models.Log.objects.filter(created__gte=window(), level__gte=types.log.LogLevel.ERROR)
         by_provider: collections.Counter[str] = collections.Counter()
 
         # Machine errors are logged on the user service, not on the provider

@@ -44,7 +44,7 @@ from uds.core import types
 from uds.core.checks import Check, CheckOutcome
 from uds.core.util.config import GlobalConfig
 
-from .logs import _LOGIN_RX, _window
+from .logs import LOGIN_RX, window
 
 _MAX_EXAMPLES: typing.Final[int] = 5
 
@@ -88,11 +88,11 @@ class ClientIpIsProxyAddressCheck(Check):
         users_by_ip: dict[str, set[str]] = collections.defaultdict(set)
         logins = 0
         for data in models.Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             source=types.log.LogSource.WEB,
             owner_type=types.log.LogObjectType.AUTHENTICATOR,
         ).values_list("data", flat=True):
-            match = _LOGIN_RX.match(data)
+            match = LOGIN_RX.match(data)
             if match:
                 logins += 1
                 users_by_ip[match.group("ip")].add(match.group("user"))
@@ -111,6 +111,12 @@ class ClientIpIsProxyAddressCheck(Check):
                         " apply to everybody at once. Enable 'Behind a proxy' and trust the balancer in"
                         " 'Allowed IP Forwarders'."
                     ).format(share=share, ip=ip),
+                    [
+                        f"{address}: {len(address_users)} user(s)"
+                        for address, address_users in sorted(
+                            users_by_ip.items(), key=lambda item: len(item[1]), reverse=True
+                        )
+                    ],
                 )
         return (
             types.checks.CheckSeverity.HIGH,
@@ -135,7 +141,7 @@ class ActorIpsBlocked24hCheck(Check):
     def run(self) -> CheckOutcome:
         ips: collections.Counter[str] = collections.Counter()
         for data in models.Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             owner_type=types.log.LogObjectType.SYSLOG,
             data__contains="Access to actor from",
         ).values_list("data", flat=True):
