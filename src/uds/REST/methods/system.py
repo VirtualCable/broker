@@ -126,7 +126,6 @@ class System(Handler):
         'paths': [
             "/system/checks", "Returns the full self-assessment report, security + health (only filled for admins)",
             "/system/checks/<category>", "Returns the self-assessment report for one category: security or health",
-            "/system/security_check", "Deprecated alias of /system/checks/security (only filled for admins)",
             "/system/manual_checks", "Runs and returns the manual checks report, security + health."
             " Manual checks are slow and/or expensive (deep platform scans), so they only run on explicit request"
             " (only filled for admins)",
@@ -162,14 +161,6 @@ class System(Handler):
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()
                 return build_report(run_checks(types.checks.CheckKind.MANUAL))
-            if self._args[0] == "security_check":
-                # Deprecated alias of /system/checks/security, kept for
-                # compatibility with older clients
-                if not self._user.is_admin:
-                    raise exceptions.rest.AccessDenied()
-                return build_report(
-                    run_checks(types.checks.CheckKind.AUTOMATIC, types.checks.CheckCategory.SECURITY)
-                )
             if self._args[0] == "overview":  # System overview
                 if not self._user.is_admin:
                     raise exceptions.rest.AccessDenied()

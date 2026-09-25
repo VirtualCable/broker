@@ -3,8 +3,7 @@
 # All rights reserved.
 #
 """
-Tests for the REST ``/system/checks`` endpoint (and the deprecated
-``/system/security_check`` alias).
+Tests for the REST ``/system/checks`` endpoint.
 
 Notes
 -----
@@ -132,11 +131,10 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         response = self.client.rest_get("system/checks/not-a-category")
         self.assertEqual(response.status_code, 400, response.content)
 
-    def test_deprecated_security_check_alias_still_works(self) -> None:
+    def test_removed_security_check_alias_is_not_served(self) -> None:
         self.login()
-        body = self._get_report("system/security_check")
-        checks = body["checks"]
-        self.assertEqual({check["id"] for check in checks}, EXPECTED_CHECK_IDS - EXPECTED_HEALTH_IDS)
+        response = self.client.rest_get("system/security_check")
+        self.assertEqual(response.status_code, 400, response.content)
 
     def test_manual_checks_report_is_empty_for_now(self) -> None:
         # No production manual checks exist yet: the report is valid but empty
@@ -191,7 +189,7 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
             # session signed with the active SECRET_KEY, so it must be issued
             # and validated under the same settings block.
             self.login()
-            body = self._get_report("system/security_check")
+            body = self._get_report("system/checks/security")
             critical = {
                 check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]
             }
@@ -199,5 +197,5 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
 
             # Rotating the root password clears the only critical finding
             GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
-            body = self._get_report("system/security_check")
+            body = self._get_report("system/checks/security")
             self.assertEqual(body["critical"], 0)
