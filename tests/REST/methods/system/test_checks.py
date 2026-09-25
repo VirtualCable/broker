@@ -134,7 +134,7 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
     def test_removed_security_check_alias_is_not_served(self) -> None:
         self.login()
         response = self.client.rest_get("system/security_check")
-        self.assertNotEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.status_code, 400, response.content)
 
     def test_manual_checks_report_is_empty_for_now(self) -> None:
         # No production manual checks exist yet: the report is valid but empty
