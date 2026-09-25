@@ -42,6 +42,7 @@ import datetime
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -66,6 +67,11 @@ class StuckPublicationsCheck(Check):
 
     id: typing.ClassVar[str] = "stuck-publications"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for publications that have been preparing, removing or canceling for longer than "
+        "MAX_PUBLICATION_TIME. They will not finish by themselves. Check the provider, then retry "
+        "or cancel the publication."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -82,11 +88,12 @@ class StuckPublicationsCheck(Check):
         )
         if stuck:
             now = sql_now()
-            examples = ", ".join(
+            stuck_lines = [
                 f"{publication.deployed_service.name} rev {publication.revision}"
                 f" ({State.from_str(publication.state).name.lower()}, {(now - publication.state_date).total_seconds() / 3600:.0f}h)"
-                for publication in stuck[:_MAX_EXAMPLES]
-            )
+                for publication in stuck
+            ]
+            examples = ", ".join(stuck_lines[:_MAX_EXAMPLES])
             if stuck.count() > _MAX_EXAMPLES:
                 examples += "..."
             return (
@@ -96,6 +103,7 @@ class StuckPublicationsCheck(Check):
                     "{n} publication(s) stuck in a transitional state for more than {hours}h: {examples}."
                     " The publication task will not complete by itself; check the provider and retry or cancel."
                 ).format(n=stuck.count(), hours=max_age.total_seconds() / 3600, examples=examples),
+                stuck_lines,
             )
         return (
             types.checks.CheckSeverity.MEDIUM,

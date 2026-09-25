@@ -44,6 +44,7 @@ from ..utils.test import UDSTransactionTestCase
 class DummyAutomaticCheck(Check):
     id: typing.ClassVar[str] = "dummy-automatic"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = "Dummy automatic check."
 
     @typing.override
     def run(self) -> types.checks.CheckOutcome:
@@ -58,6 +59,7 @@ class DummyManualCheck(DummyManualBase):
     # Derives from ManualCheck through an intermediate class: still manual
     id: typing.ClassVar[str] = "dummy-manual"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = "Dummy manual check."
 
     @typing.override
     def run(self) -> types.checks.CheckOutcome:
@@ -111,3 +113,57 @@ class CheckKindFilterTest(UDSTransactionTestCase):
                 return []
 
         self.assertTrue(ModuleWithHealthCheck.has_health_check())
+
+
+class DummyDetailedCheck(Check):
+    id: typing.ClassVar[str] = "dummy-detailed"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = "Dummy check with details."
+    affected: typing.ClassVar[list[str]] = []
+
+    @typing.override
+    def run(self) -> types.checks.CheckOutcome:
+        return (types.checks.CheckSeverity.MEDIUM, False, "some elements failed", self.affected)
+
+
+class CheckDescriptionAndDetailsTest(UDSTransactionTestCase):
+    def _run_detailed(self, affected: list[str]) -> types.checks.CheckResult:
+        DummyDetailedCheck.affected = affected
+        with mock.patch.object(
+            runner_module, "_collect_checks", new=lambda: [("dummy-detailed", DummyDetailedCheck)]
+        ):
+            return runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)[0]
+
+    def test_every_registered_check_has_a_description(self) -> None:
+        for check_id, check_class in runner_module._collect_checks():
+            self.assertIsInstance(check_class.description, str, check_id)
+            self.assertGreater(len(check_class.description.strip()), 20, check_id)
+
+    def test_description_and_details_reach_the_report(self) -> None:
+        result = self._run_detailed(["first", "second"])
+
+        self.assertEqual(result.description, "Dummy check with details.")
+        self.assertEqual(result.details, ("first", "second"))
+        report = runner_module.build_report([result])
+        self.assertEqual(report["checks"][0]["description"], "Dummy check with details.")
+        self.assertEqual(report["checks"][0]["details"], ["first", "second"])
+
+    def test_checks_without_details_report_an_empty_list(self) -> None:
+        with mock.patch.object(
+            runner_module, "_collect_checks", new=lambda: [("dummy-automatic", DummyAutomaticCheck)]
+        ):
+            result = runner_module.run_checks(types.checks.CheckKind.AUTOMATIC)[0]
+
+        self.assertEqual(result.details, ())
+        self.assertEqual(runner_module.build_report([result])["checks"][0]["details"], [])
+
+    def test_details_are_capped(self) -> None:
+        affected = [f"element {i}" for i in range(runner_module.MAX_DETAILS + 5)]
+
+        result = self._run_detailed(affected)
+
+        self.assertEqual(len(result.details), runner_module.MAX_DETAILS + 1)
+        self.assertEqual(
+            result.details[: runner_module.MAX_DETAILS], tuple(affected[: runner_module.MAX_DETAILS])
+        )
+        self.assertIn("5", result.details[-1])

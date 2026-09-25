@@ -56,6 +56,8 @@ class Check:
       out of the registry.
     - ``category``: the :class:`uds.core.types.checks.CheckCategory` the
       check belongs to (security or health).
+    - ``description``: what the check verifies and how to fix it when it
+      fails, marked with ``gettext_noop`` (translated when the report is built).
 
     and implement :meth:`run`.
     """
@@ -66,12 +68,15 @@ class Check:
     #: Area the check belongs to.
     category: typing.ClassVar[types.checks.CheckCategory]
 
+    #: What the check verifies and how to fix it (untranslated, gettext_noop).
+    description: typing.ClassVar[str]
+
     def run(self) -> CheckOutcome:
         """Evaluates the check condition.
 
         Returns:
-            A :data:`CheckOutcome` tuple: severity, whether the check passes
-            and a human readable detail.
+            A :data:`CheckOutcome` tuple: severity, whether the check passes,
+            a human readable detail and, optionally, the affected elements.
         """
         raise NotImplementedError
 

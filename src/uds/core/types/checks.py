@@ -82,14 +82,16 @@ class CheckKind(str, enum.Enum):
 
 
 # A check evaluates a single condition and returns a ``CheckOutcome``: its
-# severity, whether it passes and a human readable detail. The severity is
+# severity, whether it passes, a human readable detail and, optionally, the
+# list of affected elements (one line each), so the message can stay a short
+# summary while the full list is still available. The severity is
 # part of the outcome (not a class attribute) because several checks graduate
 # it depending on the observed magnitude.
 #
 # Lives here (and not on ``uds.core.checks``) so ``uds.core.module`` can use
 # it for ``Module.health_check`` without importing the checks package, which
 # would create a circular import (checks.factory -> util.factory -> module).
-CheckOutcome: typing.TypeAlias = tuple[CheckSeverity, bool, str]
+CheckOutcome: typing.TypeAlias = tuple[CheckSeverity, bool, str] | tuple[CheckSeverity, bool, str, list[str]]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -103,6 +105,8 @@ class CheckResult:
       condition deserves attention.
     - ``message``: human readable detail, suitable for operator notification.
     - ``category``: area the check belongs to.
+    - ``description``: what the check verifies and how to fix it when it fails.
+    - ``details``: affected elements, one line each (empty when not applicable).
     """
 
     id: str
@@ -110,6 +114,8 @@ class CheckResult:
     ok: bool
     message: str
     category: CheckCategory
+    description: str
+    details: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, typing.Any]:
         return {
@@ -118,4 +124,6 @@ class CheckResult:
             "ok": self.ok,
             "message": self.message,
             "category": self.category.value,
+            "description": self.description,
+            "details": list(self.details),
         }
