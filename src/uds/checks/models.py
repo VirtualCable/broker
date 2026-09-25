@@ -314,6 +314,12 @@ class AuthenticatorSslVerificationDisabledCheck(Check):
 
     id: typing.ClassVar[str] = "authenticator-ssl-verification-disabled"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for LDAP authenticators that use SSL without verifying the server certificate, and "
+        "SAML authenticators that download the IdP metadata over HTTPS without verifying it. "
+        "Anyone able to intercept that traffic can impersonate the directory or the identity "
+        "provider. Enable the verification and install the CA if it is an internal one."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -347,6 +353,7 @@ class AuthenticatorSslVerificationDisabledCheck(Check):
                     " Anyone able to intercept the traffic can impersonate the directory or the identity provider."
                     " Enable the verification and install the CA if it is an internal one."
                 ).format(names=", ".join(unverified)),
+                unverified,
             )
         return (
             types.checks.CheckSeverity.MEDIUM,

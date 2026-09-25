@@ -38,6 +38,7 @@ import typing
 
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -63,6 +64,11 @@ class DomainJoinFailures24hCheck(Check):
 
     id: typing.ClassVar[str] = "domain-join-failures-24h"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the domain join errors reported by the actors in the last 24 hours, grouped by "
+        "service pool. Check the account, password and OU of the OS manager and that the machines "
+        "can reach the domain controllers."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -91,6 +97,7 @@ class DomainJoinFailures24hCheck(Check):
                     " Check the account, password and OU of the OS manager and that the machines reach"
                     " the domain controllers."
                 ).format(count=sum(failures.values()), examples=examples or _("machines already removed")),
+                [f"{name} ({total})" for name, total in by_pool.most_common()],
             )
         return (
             types.checks.CheckSeverity.MEDIUM,

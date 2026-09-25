@@ -80,6 +80,7 @@ class AuthenticatorSslVerificationCheckTest(UDSTransactionTestCase):
         result = self._run_check()
         self.assertFalse(result.ok, result.message)
         self.assertIn("Plain LDAPS", result.message)
+        self.assertEqual(result.details, ("Plain LDAPS",))
 
     def test_passes_on_plain_ldap_or_verified_ldaps(self) -> None:
         from uds.auths.RegexLdap import RegexLdap

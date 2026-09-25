@@ -36,6 +36,7 @@ import typing
 
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds.core import types
 from uds.core.checks import Check, CheckOutcome
@@ -49,6 +50,12 @@ class DbAppTimeMismatchCheck(Check):
 
     id: typing.ClassVar[str] = "db-app-time-mismatch"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Compares the time of the database server with the time of this UDS server and fails when "
+        "they differ by more than 60 seconds. UDS takes the time from the database, so "
+        "expirations and schedules are off. Sync both with NTP and check that the database time "
+        "zone matches TIME_ZONE."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:

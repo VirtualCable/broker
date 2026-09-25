@@ -31,6 +31,8 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 Tests for the client/actor address checks (uds.checks.network).
 """
 
+import typing
+
 from django.utils import timezone
 
 from uds import models
@@ -64,6 +66,7 @@ def _log_actor_blocked(ip: str) -> None:
 
 
 class NetworkChecksTest(UDSTransactionTestCase):
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         GlobalConfig.BEHIND_PROXY.set(False)
@@ -111,3 +114,4 @@ class NetworkChecksTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertIn("2 address(es)", result.message)
         self.assertIn("192.168.1.50", result.message)
+        self.assertEqual(result.details, ("192.168.1.50: 2", "192.168.1.51: 1"))

@@ -73,6 +73,7 @@ class UserServicesChecksTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
         self.assertIn(userservice.deployed_service.name, result.message)
+        self.assertEqual(result.details, (f"{userservice.deployed_service.name} (1)",))
 
     def test_stuck_preparing_fails_when_actor_never_reported(self) -> None:
         self._create_userservice(

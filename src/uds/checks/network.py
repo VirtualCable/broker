@@ -37,6 +37,7 @@ import re
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -68,6 +69,12 @@ class ClientIpIsProxyAddressCheck(Check):
 
     id: typing.ClassVar[str] = "client-ip-is-proxy-address"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "When 'Behind a proxy' is off, checks whether most of the logins of the last 24 hours "
+        "come from one private address. That usually means UDS sees the load balancer instead of "
+        "the clients, so IP blocking and IP based rules apply to everybody at once. Enable "
+        "'Behind a proxy' and add the balancer to 'Allowed IP Forwarders'."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -117,6 +124,12 @@ class ActorIpsBlocked24hCheck(Check):
 
     id: typing.ClassVar[str] = "actor-ips-blocked-24h"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Lists the addresses blocked for actor access in the last 24 hours after too many wrong "
+        "requests. Actors behind a blocked address cannot report their state until the block "
+        "expires, and if several machines share the address (NAT, proxy) one failing actor blocks "
+        "all of them."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -142,6 +155,7 @@ class ActorIpsBlocked24hCheck(Check):
                     " Actors behind those addresses cannot report their state until the block expires."
                     " If several machines share one address (NAT, proxy), one failing actor blocks all of them."
                 ).format(count=len(ips), examples=examples),
+                [f"{ip}: {count}" for ip, count in ips.most_common()],
             )
         return (
             types.checks.CheckSeverity.HIGH,
