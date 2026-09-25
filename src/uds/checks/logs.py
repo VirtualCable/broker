@@ -255,6 +255,12 @@ class ClockSkew24hCheck(Check):
 
     id: typing.ClassVar[str] = "clock-skew-24h"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for the warnings the schedulers log when a task stamped by another broker or "
+        "database node carries a time in the future. It means the clocks of the UDS servers or "
+        "database nodes are not in sync, which affects expirations, MFA codes and SAML validity "
+        "windows. Enable NTP with the same time source on every server."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
