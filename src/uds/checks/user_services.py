@@ -34,8 +34,9 @@ Checks on the state of user services.
 import datetime
 import typing
 
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -50,16 +51,17 @@ _MAX_EXAMPLES: typing.Final[int] = 5
 _STALE_AGE: typing.Final[datetime.timedelta] = datetime.timedelta(days=90)
 
 
-def _pools_summary(user_services: "models.QuerySet[models.UserService]") -> str:
+def _pools_count(user_services: "QuerySet[models.UserService]") -> list[str]:
     by_pool = (
         user_services.values("deployed_service__name")
         .annotate(total=Count("id"))
         .order_by("-total", "deployed_service__name")
     )
-    summary = ", ".join(f"{row['deployed_service__name']} ({row['total']})" for row in by_pool[:_MAX_EXAMPLES])
-    if by_pool.count() > _MAX_EXAMPLES:
-        summary += "..."
-    return summary
+    return [f"{row['deployed_service__name']} ({row['total']})" for row in by_pool]
+
+
+def _pools_summary(pools: list[str]) -> str:
+    return ", ".join(pools[:_MAX_EXAMPLES]) + ("..." if len(pools) > _MAX_EXAMPLES else "")
 
 
 class UserServicesStuckPreparingCheck(Check):
@@ -67,6 +69,12 @@ class UserServicesStuckPreparingCheck(Check):
 
     id: typing.ClassVar[str] = "user-services-stuck-preparing"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for user services that have been preparing for longer than MAX_INITIALIZING_TIME, "
+        "or that are ready on the provider but whose actor never reported. Nothing removes them "
+        "on their own. Check the provider and whether the actor inside the machine can reach the "
+        "broker; the details list the affected pools."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -77,6 +85,7 @@ class UserServicesStuckPreparingCheck(Check):
         )
         count = stuck.count()
         if count:
+            pools = _pools_count(stuck)
             return (
                 types.checks.CheckSeverity.HIGH,
                 False,
@@ -84,7 +93,8 @@ class UserServicesStuckPreparingCheck(Check):
                     "{count} user service(s) have been preparing for more than {hours:.0f}h: {pools}."
                     " Nothing removes them on their own; check the provider and whether the actor"
                     " inside the machine can reach the broker."
-                ).format(count=count, hours=max_age.total_seconds() / 3600, pools=_pools_summary(stuck)),
+                ).format(count=count, hours=max_age.total_seconds() / 3600, pools=_pools_summary(pools)),
+                pools,
             )
         return (
             types.checks.CheckSeverity.HIGH,
@@ -98,6 +108,11 @@ class StaleUserServicesCheck(Check):
 
     id: typing.ClassVar[str] = "stale-user-services"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for assigned user services that nobody has used for more than 90 days. They count "
+        "against the pool limits and keep capacity on the provider. The details list the affected "
+        "pools; consider removing the machines or unassigning them."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -111,13 +126,15 @@ class StaleUserServicesCheck(Check):
         )
         count = stale.count()
         if count:
+            pools = _pools_count(stale)
             return (
                 types.checks.CheckSeverity.MEDIUM,
                 False,
                 _(
                     "{count} assigned user service(s) have not been used for more than {days} days: {pools}."
                     " They count against the pool limits and keep capacity on the provider."
-                ).format(count=count, days=_STALE_AGE.days, pools=_pools_summary(stale)),
+                ).format(count=count, days=_STALE_AGE.days, pools=_pools_summary(pools)),
+                pools,
             )
         return (
             types.checks.CheckSeverity.MEDIUM,

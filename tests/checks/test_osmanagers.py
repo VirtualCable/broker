@@ -79,6 +79,7 @@ class DomainJoinFailuresCheckTest(UDSTransactionTestCase):
         result = self._run_check()
         self.assertFalse(result.ok, result.message)
         self.assertIn(userservice.deployed_service.name, result.message)
+        self.assertEqual(result.details, (f"{userservice.deployed_service.name} (1)",))
 
     def test_fails_on_4_actor_error(self) -> None:
         self._log_actor("Error joining domain: 1326, The user name or password is incorrect")

@@ -35,6 +35,7 @@ import collections
 import typing
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
@@ -53,6 +54,11 @@ class ProviderErrors24hCheck(Check):
 
     id: typing.ClassVar[str] = "provider-errors-24h"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the errors of the last 24 hours for each provider, including the errors of its "
+        "machines, and flags the providers with 10 or more. Check their credentials, connectivity "
+        "and the hypervisor logs."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -91,6 +97,7 @@ class ProviderErrors24hCheck(Check):
                     "Providers with {threshold} or more errors in the last 24h: {examples}."
                     " Check their credentials and the hypervisor logs."
                 ).format(threshold=_ERRORS_THRESHOLD, examples=examples),
+                [f"{name} ({total})" for name, total in failing],
             )
         return (
             types.checks.CheckSeverity.HIGH,
@@ -104,6 +111,10 @@ class ProviderInMaintenanceModeCheck(Check):
 
     id: typing.ClassVar[str] = "provider-in-maintenance-mode"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Lists the providers left in maintenance mode. No machines are created or removed on them "
+        "until maintenance is turned off, so turn it off when the maintenance is over."
+    )
 
     @typing.override
     def run(self) -> CheckOutcome:
@@ -120,6 +131,7 @@ class ProviderInMaintenanceModeCheck(Check):
                     "Providers in maintenance mode: {names}."
                     " No machines are created or removed on them until maintenance is turned off."
                 ).format(names=", ".join(names)),
+                names,
             )
         return (
             types.checks.CheckSeverity.LOW,

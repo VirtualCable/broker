@@ -76,6 +76,7 @@ class ProvidersChecksTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
         self.assertIn(f"{userservice.deployed_service.service.provider.name} (10)", result.message)
+        self.assertEqual(result.details, (f"{userservice.deployed_service.service.provider.name} (10)",))
 
     def test_provider_errors_ignore_old_entries(self) -> None:
         userservice = self._create_userservice()
@@ -95,3 +96,4 @@ class ProvidersChecksTest(UDSTransactionTestCase):
         self.assertFalse(result.ok, result.message)
         self.assertEqual(result.severity, types.checks.CheckSeverity.LOW)
         self.assertIn(provider.name, result.message)
+        self.assertEqual(result.details, (provider.name,))
