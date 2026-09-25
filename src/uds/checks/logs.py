@@ -265,7 +265,7 @@ class ClockSkew24hCheck(Check):
     @typing.override
     def run(self) -> CheckOutcome:
         count = Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             owner_type=types.log.LogObjectType.SYSLOG,
             level__gte=types.log.LogLevel.WARNING,
             data__contains=_CLOCK_SKEW_MARKER,
@@ -282,7 +282,7 @@ class ClockSkew24hCheck(Check):
                 ).format(count=count),
             )
         return (
-            types.checks.CheckSeverity.INFO,
+            types.checks.CheckSeverity.MEDIUM,
             True,
             _("No clock skew between UDS servers detected in the last 24h."),
         )

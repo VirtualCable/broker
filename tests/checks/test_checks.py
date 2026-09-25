@@ -522,7 +522,7 @@ class ChecksTest(UDSTransactionTestCase):
         Log.objects.filter(owner_type=types.log.LogObjectType.SYSLOG).delete()
         result = self._run_check("clock-skew-24h")
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
 
     def test_clock_skew_24h_detects_scheduler_and_delayed_task_warnings(self) -> None:
         from uds.models import Log
