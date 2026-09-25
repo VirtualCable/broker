@@ -34,12 +34,13 @@
 # Translators:
 # Translators:
 # Translators:
+# Translators:
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: OpenUDS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-08 01:40+0200\n"
+"POT-Creation-Date: 2026-09-25 18:18+0200\n"
 "PO-Revision-Date: 2014-03-26 02:16+0000\n"
 "Last-Translator: Javier <jgonzalez@virtualcable.es>, 2014\n"
 "Language-Team: Japanese (http://app.transifex.com/openuds/openuds/language/"
@@ -50,45 +51,45 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:17
-#: static/admin/translations-fakejs.js:295
+#: static/admin/translations-fakejs.js:335
 msgid "Sunday"
 msgstr "日曜日"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:18
-#: static/admin/translations-fakejs.js:296
+#: static/admin/translations-fakejs.js:336
 msgid "Monday"
 msgstr "月曜日"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:19
-#: static/admin/translations-fakejs.js:297
+#: static/admin/translations-fakejs.js:337
 msgid "Tuesday"
 msgstr "火曜日"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:20
-#: static/admin/translations-fakejs.js:298
+#: static/admin/translations-fakejs.js:338
 msgid "Wednesday"
 msgstr "水曜日"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:21
-#: static/admin/translations-fakejs.js:299
+#: static/admin/translations-fakejs.js:339
 msgid "Thursday"
 msgstr "木曜日"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:22
-#: static/admin/translations-fakejs.js:300
+#: static/admin/translations-fakejs.js:340
 msgid "Friday"
 msgstr "金曜日"
 
-#: static/admin/main.js:1512 static/admin/main.js:5485
+#: static/admin/main.js:1512 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:23
-#: static/admin/translations-fakejs.js:301
+#: static/admin/translations-fakejs.js:341
 msgid "Saturday"
 msgstr "土曜日"
 
@@ -140,331 +141,72 @@ msgstr "11月"
 msgid "December"
 msgstr "12月"
 
-#: static/admin/main.js:1513 static/admin/main.js:5485
+#: static/admin/main.js:1513 static/admin/main.js:5483
 #: static/admin/translations-fakejs.js:36
-#: static/admin/translations-fakejs.js:290
+#: static/admin/translations-fakejs.js:330
 msgid "Never"
 msgstr "一度もない"
 
-#: static/admin/main.js:1513 static/admin/translations-fakejs.js:40
-#: static/modern/main.js:1129 static/modern/translations-fakejs.js:18
-msgid "seconds"
-msgstr "秒"
-
-#: static/admin/main.js:1513 static/admin/translations-fakejs.js:88
-msgid "Item changed by another administrator"
-msgstr "別の管理者によってアイテムが変更されました"
-
-#: static/admin/main.js:1513 static/admin/translations-fakejs.js:90
-msgid ""
-"This item was modified by another administrator while you were editing it. "
-"Reload it to get the current version before saving your changes again."
-msgstr ""
-"あなたが編集中に、別の管理者がこのアイテムを変更しました。変更を保存する前"
-"に、再度ページを読み込み、最新バージョンを取得してください。"
-
-#: static/admin/main.js:1513 static/admin/translations-fakejs.js:91
-msgid "Error saving element"
-msgstr "要素の保存中にエラーが発生しました"
-
-#: static/admin/main.js:1513 static/admin/translations-fakejs.js:92
-msgid "Error handling your request"
-msgstr "リクエストの処理中にエラーが発生しました"
-
-#: static/admin/main.js:1905 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:61
-#: static/admin/translations-fakejs.js:74
-msgid "Main"
-msgstr "主要"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:75
-msgid "Advanced"
-msgstr "高度な"
-
-#: static/admin/main.js:1905 static/admin/main.js:4513
-#: static/admin/main.js:4514 static/admin/main.js:4966
-#: static/admin/main.js:4969 static/admin/main.js:5485
-#: static/admin/translations-fakejs.js:44
-#: static/admin/translations-fakejs.js:59
-#: static/admin/translations-fakejs.js:130
-#: static/admin/translations-fakejs.js:132
-#: static/admin/translations-fakejs.js:134
-#: static/admin/translations-fakejs.js:151
-#: static/admin/translations-fakejs.js:154
-#: static/admin/translations-fakejs.js:253
-#: static/admin/translations-fakejs.js:258
-#: static/admin/translations-fakejs.js:260
-#: static/admin/translations-fakejs.js:262
-#: static/admin/translations-fakejs.js:271
-#: static/modern/translations-fakejs.js:17
-#: static/modern/translations-fakejs.js:37
-msgid "Error"
-msgstr "エラー"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:45
-#: static/admin/translations-fakejs.js:60
-msgid "Please, fill in require fields: "
-msgstr "必須項目を入力してください: "
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:41
-msgid "Test"
-msgstr "テスト"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:42
-#: static/admin/translations-fakejs.js:54
-msgid "Loading data..."
-msgstr "データを読み込んでいます..."
-
-#: static/admin/main.js:1905 static/admin/main.js:4512
-#: static/admin/main.js:4513 static/admin/main.js:4969
-#: static/admin/main.js:5485 static/admin/main.js:7057
-#: static/admin/translations-fakejs.js:39
-#: static/admin/translations-fakejs.js:43
-#: static/admin/translations-fakejs.js:47
-#: static/admin/translations-fakejs.js:49
-#: static/admin/translations-fakejs.js:51
-#: static/admin/translations-fakejs.js:53
-#: static/admin/translations-fakejs.js:55
-#: static/admin/translations-fakejs.js:58
-#: static/admin/translations-fakejs.js:128
-#: static/admin/translations-fakejs.js:137
-#: static/admin/translations-fakejs.js:142
-#: static/admin/translations-fakejs.js:191
-#: static/admin/translations-fakejs.js:195
-#: static/admin/translations-fakejs.js:199
-#: static/admin/translations-fakejs.js:201
-#: static/admin/translations-fakejs.js:246
-#: static/admin/translations-fakejs.js:251
-#: static/admin/translations-fakejs.js:327
-msgid "dismiss"
-msgstr "却下する"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:46
-msgid "Testing..."
-msgstr "テスト中..."
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:48
-msgid "Test failed:"
-msgstr "テストに失敗しました:"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:50
-msgid "Test passed successfully"
-msgstr "テストは正常に合格しました"
-
-#: static/admin/main.js:1905 static/admin/main.js:5485
-#: static/admin/translations-fakejs.js:52
-#: static/admin/translations-fakejs.js:136
-msgid "Successfully saved"
-msgstr "保存に成功しました"
-
-#: static/admin/main.js:1905 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:56
-#: static/admin/translations-fakejs.js:376
-msgid "Are you sure do you want to delete the following items?"
-msgstr "以下のアイテムを削除してもよろしいですか?"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:57
-msgid "Deletion finished"
-msgstr "削除完了"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:5
-msgid "provider"
-msgstr "プロバイダー"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:6
-msgid "service"
-msgstr "サービス"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:7
-msgid "service pool"
-msgstr "サービスプール"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:8
-msgid "authenticator"
-msgstr "認証子"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:9
-#: static/admin/translations-fakejs.js:547
-msgid "MFA"
-msgstr "外務省"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:10
-msgid "user"
-msgstr "ユーザー"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:11
-msgid "group"
-msgstr "グループ"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:12
-msgid "transport"
-msgstr "輸送"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:13
-msgid "OS manager"
-msgstr "OSマネージャー"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:14
-msgid "calendar"
-msgstr "カレンダー"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:15
-msgid "pool group"
-msgstr "プールグループ"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:16
-msgid "Go to"
-msgstr "へ移動"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:3
-msgid "yes"
-msgstr "はい"
-
-#: static/admin/main.js:1905 static/admin/translations-fakejs.js:4
-msgid "no"
-msgstr "いいえ"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:105
-msgid "Last 7 days"
-msgstr "過去7日間"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:106
-msgid "Last 30 days"
-msgstr "過去30日間"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:107
-msgid "Last 90 days"
-msgstr "過去90日間"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:108
-msgid "Last year"
-msgstr "去年"
-
-#: static/admin/main.js:2082 static/admin/main.js:4511
-#: static/admin/translations-fakejs.js:109
-#: static/admin/translations-fakejs.js:177
-#: static/admin/translations-fakejs.js:474
-#: static/admin/translations-fakejs.js:510
-#: static/admin/translations-fakejs.js:634
-#: static/admin/translations-fakejs.js:646
-msgid "Assigned services"
-msgstr "割り当てられたサービス"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:110
-msgid "Services in use"
-msgstr "利用中のサービス"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:111
-msgid "Peak sessions"
-msgstr "ピークセッション"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:112
-msgid "Saturation %"
-msgstr "飽和度（％）"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:113
-msgid "Hits"
-msgstr "ヒット"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:114
-msgid "Misses"
-msgstr "ミス"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:115
-msgid "Opens"
-msgstr "開く"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:116
-msgid "Closes"
-msgstr "閉店"
-
-#: static/admin/main.js:2082 static/admin/main.js:5485
-#: static/admin/translations-fakejs.js:117
-#: static/admin/translations-fakejs.js:292
-#: static/admin/translations-fakejs.js:494
-msgid "Hours"
-msgstr "営業時間"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:118
-#: static/admin/translations-fakejs.js:492
-msgid "Sessions"
-msgstr "セッション"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:119
-msgid "Errors"
-msgstr "エラー"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:120
-msgid "Failed attempts"
-msgstr "失敗した試み"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:121
-msgid "No data for this period"
-msgstr "この期間のデータはありません"
-
-#: static/admin/main.js:2082 static/admin/translations-fakejs.js:220
-#: static/modern/translations-fakejs.js:56
-msgid "Dashboard"
-msgstr "ダッシュボード"
-
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:86
-#: static/admin/translations-fakejs.js:445
-#: static/admin/translations-fakejs.js:454
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:86
+#: static/admin/translations-fakejs.js:499
+#: static/admin/translations-fakejs.js:508
 #: static/modern/translations-fakejs.js:78
 msgid "Filter"
 msgstr "フィルター"
 
-#: static/admin/main.js:4059 static/admin/main.js:7057
+#: static/admin/main.js:4085 static/admin/main.js:7310
 #: static/admin/translations-fakejs.js:67
 #: static/admin/translations-fakejs.js:69
 #: static/admin/translations-fakejs.js:87
 msgid "No entries found"
 msgstr "エントリが見つかりません"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:80
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:80
 msgid "Read only"
 msgstr "読み取り専用"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:81
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:81
 msgid "Full Access"
 msgstr "フルアクセス"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:82
-#: static/admin/translations-fakejs.js:491
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:82
 #: static/admin/translations-fakejs.js:546
-#: static/admin/translations-fakejs.js:612
-#: static/admin/translations-fakejs.js:630
+#: static/admin/translations-fakejs.js:646
+#: static/admin/translations-fakejs.js:719
+#: static/admin/translations-fakejs.js:737
 msgid "User"
 msgstr "ユーザー"
 
-#: static/admin/main.js:4059 static/admin/main.js:4511
+#: static/admin/main.js:4085 static/admin/main.js:4511
 #: static/admin/main.js:4512 static/admin/translations-fakejs.js:83
-#: static/admin/translations-fakejs.js:165
-#: static/admin/translations-fakejs.js:212
-#: static/admin/translations-fakejs.js:588
-#: static/admin/translations-fakejs.js:599
-#: static/admin/translations-fakejs.js:687
+#: static/admin/translations-fakejs.js:196
+#: static/admin/translations-fakejs.js:243
+#: static/admin/translations-fakejs.js:695
+#: static/admin/translations-fakejs.js:706
+#: static/admin/translations-fakejs.js:794
 msgid "Group"
 msgstr "グループ"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:84
-#: static/admin/translations-fakejs.js:587
-#: static/admin/translations-fakejs.js:598
-#: static/admin/translations-fakejs.js:611
-#: static/admin/translations-fakejs.js:629
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:84
+#: static/admin/translations-fakejs.js:694
+#: static/admin/translations-fakejs.js:705
+#: static/admin/translations-fakejs.js:718
+#: static/admin/translations-fakejs.js:736
 #: static/modern/translations-fakejs.js:83
 msgid "Authenticator"
 msgstr "認証子"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:85
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:85
 msgid "Permission"
 msgstr "許可"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:78
+#: static/admin/main.js:4085 static/admin/main.js:5738
+#: static/admin/translations-fakejs.js:78
+#: static/admin/translations-fakejs.js:155
 msgid "Remove"
 msgstr "取り除く"
 
-#: static/admin/main.js:4059 static/admin/translations-fakejs.js:79
+#: static/admin/main.js:4085 static/admin/translations-fakejs.js:79
 msgid "Confirm revokation of permission"
 msgstr "許可の取り消しを確認する"
 
@@ -473,125 +215,131 @@ msgid "Sorting is not available for this column"
 msgstr "この列では並べ替えはできません。"
 
 #: static/admin/main.js:4455 static/admin/translations-fakejs.js:77
-#: static/admin/translations-fakejs.js:412
-#: static/admin/translations-fakejs.js:500
-#: static/admin/translations-fakejs.js:513
-#: static/admin/translations-fakejs.js:554
+#: static/admin/translations-fakejs.js:464
+#: static/admin/translations-fakejs.js:555
+#: static/admin/translations-fakejs.js:568
+#: static/admin/translations-fakejs.js:654
+#: static/admin/translations-fakejs.js:813
 #: static/modern/translations-fakejs.js:52
 msgid "Close"
 msgstr "近い"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:338
-#: static/admin/translations-fakejs.js:357
+#: static/admin/translations-fakejs.js:378
+#: static/admin/translations-fakejs.js:397
 msgid "Maintenance"
 msgstr "メンテナンス"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:339
-#: static/admin/translations-fakejs.js:358
+#: static/admin/translations-fakejs.js:379
+#: static/admin/translations-fakejs.js:398
 msgid "Exit maintenance mode"
 msgstr "メンテナンスモードを終了する"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:340
-#: static/admin/translations-fakejs.js:359
+#: static/admin/translations-fakejs.js:380
+#: static/admin/translations-fakejs.js:399
 msgid "Enter maintenance mode"
 msgstr "メンテナンスモードに入る"
 
-#: static/admin/main.js:4455 static/admin/translations-fakejs.js:341
+#: static/admin/main.js:4455 static/admin/translations-fakejs.js:381
 msgid "New provider"
 msgstr "新しいプロバイダー"
 
-#: static/admin/main.js:4455 static/admin/translations-fakejs.js:342
+#: static/admin/main.js:4455 static/admin/translations-fakejs.js:382
 msgid "Edit provider"
 msgstr "プロバイダーを編集"
 
-#: static/admin/main.js:4455 static/admin/translations-fakejs.js:343
+#: static/admin/main.js:4455 static/admin/translations-fakejs.js:383
 msgid "Delete provider"
 msgstr "プロバイダーを削除"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:344
-#: static/admin/translations-fakejs.js:361
+#: static/admin/translations-fakejs.js:384
+#: static/admin/translations-fakejs.js:401
 msgid "Exit maintenance mode?"
 msgstr "メンテナンスモードを終了しますか?"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:345
-#: static/admin/translations-fakejs.js:362
+#: static/admin/translations-fakejs.js:385
+#: static/admin/translations-fakejs.js:402
 msgid "Enter maintenance mode?"
 msgstr "メンテナンスモードに入りますか?"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/translations-fakejs.js:346
-#: static/admin/translations-fakejs.js:363
+#: static/admin/translations-fakejs.js:386
+#: static/admin/translations-fakejs.js:403
 msgid "Maintenance mode for"
 msgstr "メンテナンスモード"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:149
-#: static/admin/translations-fakejs.js:184
-#: static/admin/translations-fakejs.js:347
-#: static/admin/translations-fakejs.js:379
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:180
+#: static/admin/translations-fakejs.js:215
+#: static/admin/translations-fakejs.js:387
+#: static/admin/translations-fakejs.js:426
 msgid "In Maintenance"
 msgstr "メンテナンス中"
 
 #: static/admin/main.js:4455 static/admin/main.js:4456
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:150
-#: static/admin/translations-fakejs.js:185
-#: static/admin/translations-fakejs.js:348
-#: static/admin/translations-fakejs.js:380
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:181
+#: static/admin/translations-fakejs.js:216
+#: static/admin/translations-fakejs.js:388
+#: static/admin/translations-fakejs.js:427
 msgid "Active"
 msgstr "アクティブ"
 
 #: static/admin/main.js:4455 static/admin/main.js:4511
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:167
-#: static/admin/translations-fakejs.js:205
-#: static/admin/translations-fakejs.js:334
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:198
+#: static/admin/translations-fakejs.js:236
+#: static/admin/translations-fakejs.js:374
 msgid "Pool"
 msgstr "プール"
 
 #: static/admin/main.js:4455 static/admin/main.js:4511
-#: static/admin/main.js:4512 static/admin/main.js:4969
+#: static/admin/main.js:4512 static/admin/main.js:4970
 #: static/admin/translations-fakejs.js:94
 #: static/admin/translations-fakejs.js:102
-#: static/admin/translations-fakejs.js:168
-#: static/admin/translations-fakejs.js:206
-#: static/admin/translations-fakejs.js:335
-#: static/admin/translations-fakejs.js:540
-#: static/admin/translations-fakejs.js:559
+#: static/admin/translations-fakejs.js:199
+#: static/admin/translations-fakejs.js:237
+#: static/admin/translations-fakejs.js:375
+#: static/admin/translations-fakejs.js:640
+#: static/admin/translations-fakejs.js:659
 msgid "State"
 msgstr "州"
 
 #: static/admin/main.js:4455 static/admin/main.js:4511
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:169
-#: static/admin/translations-fakejs.js:207
-#: static/admin/translations-fakejs.js:336
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:200
+#: static/admin/translations-fakejs.js:238
+#: static/admin/translations-fakejs.js:376
 msgid "User Services"
 msgstr "ユーザーサービス"
 
 #: static/admin/main.js:4455 static/admin/main.js:4512
-#: static/admin/translations-fakejs.js:217
-#: static/admin/translations-fakejs.js:337
-#: static/admin/translations-fakejs.js:398
-#: static/admin/translations-fakejs.js:472
-#: static/admin/translations-fakejs.js:645
+#: static/admin/translations-fakejs.js:248
+#: static/admin/translations-fakejs.js:377
+#: static/admin/translations-fakejs.js:445
+#: static/admin/translations-fakejs.js:527
+#: static/admin/translations-fakejs.js:752
 msgid "Service pools"
 msgstr "サービスプール"
 
-#: static/admin/main.js:4456 static/admin/main.js:7058
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:61
+#: static/admin/translations-fakejs.js:74
+msgid "Main"
+msgstr "主要"
+
+#: static/admin/main.js:4456 static/admin/main.js:7311
 #: static/admin/translations-fakejs.js:62
 #: static/admin/translations-fakejs.js:72
-#: static/admin/translations-fakejs.js:413
+#: static/admin/translations-fakejs.js:465
 #: static/modern/translations-fakejs.js:53
 msgid "Yes"
 msgstr "はい"
 
-#: static/admin/main.js:4456 static/admin/main.js:7058
+#: static/admin/main.js:4456 static/admin/main.js:7311
 #: static/admin/translations-fakejs.js:63
 #: static/admin/translations-fakejs.js:73
-#: static/admin/translations-fakejs.js:414
+#: static/admin/translations-fakejs.js:466
 #: static/modern/translations-fakejs.js:54
 msgid "No"
 msgstr "いいえ"
@@ -604,119 +352,176 @@ msgstr "（隠れた）"
 msgid "Selected items :"
 msgstr "選択したアイテム:"
 
-#: static/admin/main.js:4456 static/admin/main.js:4513
-#: static/admin/translations-fakejs.js:178
-#: static/admin/translations-fakejs.js:179
-#: static/admin/translations-fakejs.js:329
+#: static/admin/main.js:4456 static/admin/main.js:4514
+#: static/admin/translations-fakejs.js:209
+#: static/admin/translations-fakejs.js:210
+#: static/admin/translations-fakejs.js:369
 #: static/modern/translations-fakejs.js:68
 msgid "Information"
 msgstr "情報"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:330
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:370
 msgid "New service"
 msgstr "新サービス"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:331
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:371
 msgid "Edit service"
 msgstr "編集サービス"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:332
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:372
 msgid "Delete service"
 msgstr "サービスを削除"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:333
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:373
 msgid "Delete user service"
 msgstr "ユーザーサービスを削除する"
 
 #: static/admin/main.js:4456 static/admin/main.js:4457
-#: static/admin/translations-fakejs.js:365
-#: static/admin/translations-fakejs.js:368
+#: static/admin/translations-fakejs.js:405
+#: static/admin/translations-fakejs.js:413
 msgid "New server"
 msgstr "新しいサーバー"
 
 #: static/admin/main.js:4456 static/admin/main.js:4457
-#: static/admin/translations-fakejs.js:366
-#: static/admin/translations-fakejs.js:369
+#: static/admin/translations-fakejs.js:406
+#: static/admin/translations-fakejs.js:414
 msgid "Edit server"
 msgstr "サーバーを編集"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:370
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:415
 msgid ""
 "Cannot delete the following server groups because they are still in use:"
 msgstr "以下のサーバーグループは現在使用中のため、削除できません。"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:371
-#: static/admin/translations-fakejs.js:628
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:416
+#: static/admin/translations-fakejs.js:735
 msgid "Service"
 msgstr "サービス"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:372
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:417
 msgid "Provider"
 msgstr "プロバイダー"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:373
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:418
 msgid "Remove or reassign the references above before deleting these groups."
 msgstr ""
 "これらのグループを削除する前に、上記の参照を削除または再割り当てしてくださ"
 "い。"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:374
-#: static/admin/translations-fakejs.js:378
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:419
+#: static/admin/translations-fakejs.js:423
 msgid "Cannot delete server group"
 msgstr "サーバーグループを削除できません"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:375
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:420
 msgid "Delete server"
 msgstr "サーバーを削除"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:377
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:56
+#: static/admin/translations-fakejs.js:421
+msgid "Are you sure do you want to delete the following items?"
+msgstr "以下のアイテムを削除してもよろしいですか?"
+
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:422
 msgid "Unknown error"
 msgstr "不明なエラー"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:349
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:57
+#: static/admin/translations-fakejs.js:424
+msgid "Deletion finished"
+msgstr "削除完了"
+
+#: static/admin/main.js:4456 static/admin/main.js:4512
+#: static/admin/main.js:4514 static/admin/main.js:4970
+#: static/admin/main.js:5483 static/admin/main.js:7310
+#: static/admin/translations-fakejs.js:39
+#: static/admin/translations-fakejs.js:43
+#: static/admin/translations-fakejs.js:47
+#: static/admin/translations-fakejs.js:49
+#: static/admin/translations-fakejs.js:51
+#: static/admin/translations-fakejs.js:53
+#: static/admin/translations-fakejs.js:55
+#: static/admin/translations-fakejs.js:58
+#: static/admin/translations-fakejs.js:128
+#: static/admin/translations-fakejs.js:137
+#: static/admin/translations-fakejs.js:143
+#: static/admin/translations-fakejs.js:222
+#: static/admin/translations-fakejs.js:226
+#: static/admin/translations-fakejs.js:230
+#: static/admin/translations-fakejs.js:232
+#: static/admin/translations-fakejs.js:272
+#: static/admin/translations-fakejs.js:282
+#: static/admin/translations-fakejs.js:287
+#: static/admin/translations-fakejs.js:307
+#: static/admin/translations-fakejs.js:367
+#: static/admin/translations-fakejs.js:425
+msgid "dismiss"
+msgstr "却下する"
+
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:389
 msgid "CPU"
 msgstr "CPU"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:350
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:390
 msgid "Memory"
 msgstr "メモリ"
 
 #: static/admin/main.js:4456 static/admin/main.js:4512
-#: static/admin/translations-fakejs.js:218
-#: static/admin/translations-fakejs.js:351
-#: static/admin/translations-fakejs.js:456
-#: static/admin/translations-fakejs.js:470
-#: static/admin/translations-fakejs.js:574
-#: static/admin/translations-fakejs.js:578
+#: static/admin/translations-fakejs.js:249
+#: static/admin/translations-fakejs.js:391
+#: static/admin/translations-fakejs.js:510
+#: static/admin/translations-fakejs.js:525
+#: static/admin/translations-fakejs.js:674
+#: static/admin/translations-fakejs.js:678
 msgid "Users"
 msgstr "ユーザー"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:352
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:392
 #: static/modern/translations-fakejs.js:66
 msgid "Connections"
 msgstr "接続"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:353
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:393
 msgid "Disk"
 msgstr "ディスク"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:354
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:394
 msgid "Last 24 hours"
 msgstr "過去24時間"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:355
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:395
 msgid "Last week"
 msgstr "先週"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:356
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:396
 msgid "Last month"
 msgstr "先月"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:360
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:408
+#: static/admin/translations-fakejs.js:411
+#| msgid "Could not register biometrics"
+msgid "Could not load the forecast"
+msgstr "予報を読み込めませんでした"
+
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:412
+msgid "%(slope)s per day (fit %(r2)s over %(days)s days)"
+msgstr "%(slope)s 1日あたり（フィット） %(r2)s 以上 %(days)s 日）"
+
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:409
+#| msgid "Saturation %"
+msgid "Saturates in %s day"
+msgstr "飽和する %s 日"
+
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:410
+#| msgid "Saturation %"
+msgid "Saturates in %s days"
+msgstr "飽和する %s 日"
+
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:400
 msgid "Import CSV"
 msgstr "CSVをインポート"
 
-#: static/admin/main.js:4456 static/admin/translations-fakejs.js:364
+#: static/admin/main.js:4456 static/admin/translations-fakejs.js:404
 msgid "Import Servers"
 msgstr "インポートサーバー"
 
@@ -728,1228 +533,1859 @@ msgstr ""
 "ファイルの形式は「ホスト名、IPアドレス、MACアドレス、...」でなければなりませ"
 "ん。ホスト名以外のフィールドはオプションです。区切り文字は設定可能です。"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:367
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:407
 msgid "Remove server from server group"
 msgstr "サーバーグループからサーバーを削除する"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:162
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:193
 msgid "New Authenticator"
 msgstr "新しい認証システム"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:163
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:194
 msgid "Edit Authenticator"
 msgstr "認証コードを編集"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:164
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:195
 msgid "Delete Authenticator"
 msgstr "認証アプリを削除"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:159
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:190
 msgid "New MFA"
 msgstr "新しいMFA"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:160
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:191
 msgid "Edit MFA"
 msgstr "MFAを編集"
 
-#: static/admin/main.js:4457 static/admin/translations-fakejs.js:161
+#: static/admin/main.js:4457 static/admin/translations-fakejs.js:192
 msgid "Delete MFA"
 msgstr "MFAを削除"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:202
-#: static/admin/translations-fakejs.js:566
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:233
+#: static/admin/translations-fakejs.js:666
 msgid "Match mode"
 msgstr "マッチモード"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:203
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:234
 msgid "Any"
 msgstr "どれでも"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:204
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:235
 msgid "All"
 msgstr "全て"
 
 #: static/admin/main.js:4511 static/admin/main.js:4512
-#: static/admin/translations-fakejs.js:166
-#: static/admin/translations-fakejs.js:213
-#: static/admin/translations-fakejs.js:539
-#: static/admin/translations-fakejs.js:558
-#: static/admin/translations-fakejs.js:603
-#: static/admin/translations-fakejs.js:661
+#: static/admin/translations-fakejs.js:197
+#: static/admin/translations-fakejs.js:244
+#: static/admin/translations-fakejs.js:639
+#: static/admin/translations-fakejs.js:658
+#: static/admin/translations-fakejs.js:710
+#: static/admin/translations-fakejs.js:768
 msgid "Comments"
 msgstr "コメント"
 
-#: static/admin/main.js:4511 static/admin/main.js:4969
+#: static/admin/main.js:4511 static/admin/main.js:4970
 #: static/admin/translations-fakejs.js:101
-#: static/admin/translations-fakejs.js:170
+#: static/admin/translations-fakejs.js:201
 msgid "Unique ID"
 msgstr "固有ID"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:171
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:202
 msgid "Friendly Name"
 msgstr "フレンドリー名"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:172
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:203
 msgid "In Use"
 msgstr "使用中"
 
-#: static/admin/main.js:4511 static/admin/main.js:4969
+#: static/admin/main.js:4511 static/admin/main.js:4970
 #: static/admin/translations-fakejs.js:103
-#: static/admin/translations-fakejs.js:173
+#: static/admin/translations-fakejs.js:204
 msgid "IP"
 msgstr "IP"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:174
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:205
 msgid "Services Pool"
 msgstr "サービスプール"
 
 #: static/admin/main.js:4511 static/admin/main.js:4512
-#: static/admin/translations-fakejs.js:175
-#: static/admin/translations-fakejs.js:219
-#: static/admin/translations-fakejs.js:400
-#: static/admin/translations-fakejs.js:457
-#: static/admin/translations-fakejs.js:471
-#: static/admin/translations-fakejs.js:531
-#: static/admin/translations-fakejs.js:548
-#: static/admin/translations-fakejs.js:575
-#: static/admin/translations-fakejs.js:579
-#: static/admin/translations-fakejs.js:637
-#: static/admin/translations-fakejs.js:647
+#: static/admin/translations-fakejs.js:206
+#: static/admin/translations-fakejs.js:250
+#: static/admin/translations-fakejs.js:447
+#: static/admin/translations-fakejs.js:511
+#: static/admin/translations-fakejs.js:526
+#: static/admin/translations-fakejs.js:631
+#: static/admin/translations-fakejs.js:648
+#: static/admin/translations-fakejs.js:675
+#: static/admin/translations-fakejs.js:679
+#: static/admin/translations-fakejs.js:744
+#: static/admin/translations-fakejs.js:754
 #: static/modern/translations-fakejs.js:76
 msgid "Groups"
 msgstr "グループ"
 
-#: static/admin/main.js:4511 static/admin/translations-fakejs.js:176
-#: static/admin/translations-fakejs.js:532
-#: static/admin/translations-fakejs.js:573
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:207
+#: static/admin/translations-fakejs.js:632
+#: static/admin/translations-fakejs.js:673
 msgid "Services Pools"
 msgstr "サービスプール"
 
-#: static/admin/main.js:4512 static/admin/main.js:4969
+#: static/admin/main.js:4511 static/admin/translations-fakejs.js:109
+#: static/admin/translations-fakejs.js:208
+#: static/admin/translations-fakejs.js:529
+#: static/admin/translations-fakejs.js:565
+#: static/admin/translations-fakejs.js:741
+#: static/admin/translations-fakejs.js:753
+msgid "Assigned services"
+msgstr "割り当てられたサービス"
+
+#: static/admin/main.js:4512 static/admin/main.js:4970
 #: static/admin/translations-fakejs.js:93
 #: static/admin/translations-fakejs.js:99
-#: static/admin/translations-fakejs.js:208
-#: static/admin/translations-fakejs.js:660
+#: static/admin/translations-fakejs.js:239
+#: static/admin/translations-fakejs.js:767
 msgid "Name"
 msgstr "名前"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:209
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:240
 msgid "Real Name"
 msgstr "本名"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:210
+#: static/admin/main.js:4512 static/admin/polyfills.js:1
+#: static/admin/translations-fakejs.js:241
 msgid "state"
 msgstr "州"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:211
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:242
 msgid "Last access"
 msgstr "最終アクセス"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:214
-#: static/admin/translations-fakejs.js:541
-#: static/admin/translations-fakejs.js:560
-#: static/admin/translations-fakejs.js:563
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:245
+#: static/admin/translations-fakejs.js:641
+#: static/admin/translations-fakejs.js:660
+#: static/admin/translations-fakejs.js:663
 msgid "Enabled"
 msgstr "有効"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:215
-#: static/admin/translations-fakejs.js:542
-#: static/admin/translations-fakejs.js:561
-#: static/admin/translations-fakejs.js:564
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:246
+#: static/admin/translations-fakejs.js:642
+#: static/admin/translations-fakejs.js:661
+#: static/admin/translations-fakejs.js:664
 msgid "Disabled"
 msgstr "無効"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:216
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:247
 msgid "Blocked"
 msgstr "ブロックされました"
 
-#: static/admin/main.js:4512 static/admin/translations-fakejs.js:200
+#: static/admin/main.js:4512 static/admin/translations-fakejs.js:231
 msgid "Token copied to clipboard"
 msgstr "トークンがクリップボードにコピーされました"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:180
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:211
 msgid "Clean related (mfa,...)"
 msgstr "クリーン関連 (mfa、...)"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:181
-msgid "Enable client logging"
-msgstr "クライアントのログ記録を有効にする"
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:212
+#| msgid "Enable client logging"
+msgid "Enable Launcher logging"
+msgstr "ランチャーのログ記録を有効にする"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:182
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:213
 msgid "Issue API token"
 msgstr "APIトークンを発行する"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:183
-#: static/admin/translations-fakejs.js:196
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:214
+#: static/admin/translations-fakejs.js:227
 msgid "Revoke API token"
 msgstr "失効APIトークン"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:186
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:217
 msgid "Delete user"
 msgstr "ユーザーを削除"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:187
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:218
 msgid "Delete group"
 msgstr "グループを削除"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:188
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:219
 msgid "Clean data"
 msgstr "クリーンなデータ"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:189
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:220
 msgid "Clean related data (mfa, ...)?"
 msgstr "関連データ (mfa、...) をクリーンアップしますか?"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:190
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:221
 msgid "Related data cleaned"
 msgstr "関連データがクリーンアップされました"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:192
-msgid "Client logging"
-msgstr "クライアントのログ記録"
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:223
+#| msgid "Launcher"
+msgid "Launcher logging"
+msgstr "ランチャーのログ記録"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:193
-msgid "Enable client logging for user?"
-msgstr "ユーザーのクライアント ログを有効にしますか?"
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:224
+#| msgid "Enable client logging for user?"
+msgid "Enable Launcher logging for user?"
+msgstr "ユーザー向けにランチャーのログ記録を有効にしますか？"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:194
-msgid "Client logging enabled"
-msgstr "クライアントのログ記録が有効"
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:225
+#| msgid "Client logging enabled"
+msgid "Launcher logging enabled"
+msgstr "ランチャーのログ記録が有効になっています"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:197
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:228
 msgid "Revoke the API token of this user?"
 msgstr "このユーザーのAPIトークンを取り消しますか？"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:198
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:229
 msgid "API token revoked"
 msgstr "APIトークンが失効しました"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:381
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:428
 msgid "New OS Manager"
 msgstr "新しいOSマネージャー"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:382
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:429
 msgid "Edit OS Manager"
 msgstr "OSマネージャーを編集する"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:383
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:430
 msgid "Delete OS Manager"
 msgstr "OSマネージャーを削除する"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:156
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:187
 msgid "New Transport"
 msgstr "新しい交通機関"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:157
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:188
 msgid "Edit Transport"
 msgstr "トランスポート編集"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:158
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:189
 msgid "Delete Transport"
 msgstr "トランスポートを削除"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:143
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:174
 msgid "New Network"
 msgstr "新しいネットワーク"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:144
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:175
 msgid "Edit Network"
 msgstr "ネットワークを編集"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:145
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:176
 msgid "Delete Network"
 msgstr "ネットワークを削除"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:146
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:177
 msgid "New tunnel"
 msgstr "新しいトンネル"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:147
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:178
 msgid "Edit tunnel"
 msgstr "トンネルを編集"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:148
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:179
 msgid "Delete tunnel"
 msgstr "トンネルを削除"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:155
+#: static/admin/main.js:4514 static/admin/main.js:4515
+#: static/admin/main.js:4967 static/admin/main.js:4970
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:44
+#: static/admin/translations-fakejs.js:59
+#: static/admin/translations-fakejs.js:130
+#: static/admin/translations-fakejs.js:132
+#: static/admin/translations-fakejs.js:134
+#: static/admin/translations-fakejs.js:182
+#: static/admin/translations-fakejs.js:185
+#: static/admin/translations-fakejs.js:289
+#: static/admin/translations-fakejs.js:294
+#: static/admin/translations-fakejs.js:296
+#: static/admin/translations-fakejs.js:298
+#: static/admin/translations-fakejs.js:311
+#: static/modern/translations-fakejs.js:17
+#: static/modern/translations-fakejs.js:37
+msgid "Error"
+msgstr "エラー"
+
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:186
 msgid "Please, select a valid server"
 msgstr "有効なサーバーを選択してください"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:152
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:183
 msgid "This tunnel already has all the tunnel servers available"
 msgstr "このトンネルにはすでに利用可能なすべてのトンネルサーバーがあります"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:153
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:184
 msgid "Remove member from tunnel"
 msgstr "トンネルからメンバーを削除する"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:221
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:252
 msgid "(This service does not requires an OS Manager)"
 msgstr "（このサービスにはOSマネージャーは必要ありません）"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:222
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:253
 msgid "New service Pool"
 msgstr "新しいサービスプール"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:223
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:254
 msgid "Service Pool is locked"
 msgstr "サービスプールはロックされています"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:224
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:255
 msgid "This service pool is locked and cannot be edited"
 msgstr "このサービスプールはロックされており、編集できません"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:225
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:256
 msgid "Edit Service Pool"
 msgstr "サービスプールを編集"
 
-#: static/admin/main.js:4513 static/admin/translations-fakejs.js:226
+#: static/admin/main.js:4514 static/admin/translations-fakejs.js:257
 msgid "Delete service pool"
 msgstr "サービスプールを削除"
 
-#: static/admin/main.js:4513 static/admin/main.js:4966
-#: static/admin/translations-fakejs.js:259
-#: static/admin/translations-fakejs.js:263
+#: static/admin/main.js:4514 static/admin/main.js:4967
+#: static/admin/translations-fakejs.js:295
+#: static/admin/translations-fakejs.js:299
 msgid "Please, select a valid user"
 msgstr "有効なユーザーを選択してください"
 
-#: static/admin/main.js:4514 static/admin/translations-fakejs.js:254
+#: static/admin/main.js:4515 static/admin/translations-fakejs.js:290
 msgid "Please, select a valid group"
 msgstr "有効なグループを選択してください"
 
-#: static/admin/main.js:4514 static/admin/translations-fakejs.js:261
+#: static/admin/main.js:4515 static/admin/translations-fakejs.js:297
 msgid "Please, select a valid transport"
 msgstr "有効な輸送手段を選択してください"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:255
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:291
 msgid "Cached"
 msgstr "キャッシュ済み"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:256
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:292
 msgid "Assigned"
 msgstr "割り当て済み"
 
-#: static/admin/main.js:4966 static/admin/main.js:4969
+#: static/admin/main.js:4967 static/admin/main.js:4970
 #: static/admin/translations-fakejs.js:104
-#: static/admin/translations-fakejs.js:257
+#: static/admin/translations-fakejs.js:293
 msgid "In use"
 msgstr "使用中"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:227
-#: static/admin/translations-fakejs.js:452
-#: static/admin/translations-fakejs.js:534
-#: static/admin/translations-fakejs.js:580
-#: static/admin/translations-fakejs.js:643
-#: static/admin/translations-fakejs.js:649
-#: static/admin/translations-fakejs.js:678
-#: static/admin/translations-fakejs.js:681
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:258
+#: static/admin/translations-fakejs.js:506
+#: static/admin/translations-fakejs.js:634
+#: static/admin/translations-fakejs.js:680
+#: static/admin/translations-fakejs.js:750
+#: static/admin/translations-fakejs.js:756
+#: static/admin/translations-fakejs.js:785
+#: static/admin/translations-fakejs.js:788
 msgid "Logs"
 msgstr "ログ"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:228
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:259
 msgid "VNC"
 msgstr "VNC"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:229
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:260
 msgid "Launch now"
 msgstr "今すぐ起動"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:230
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:261
 msgid "Change owner"
 msgstr "所有者を変更する"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:231
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:262
+msgid "Reset"
+msgstr "リセット"
+
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:263
 msgid "Assign service"
 msgstr "サービスを割り当てる"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:232
-#: static/admin/translations-fakejs.js:424
-#: static/admin/translations-fakejs.js:437
-#: static/admin/translations-fakejs.js:462
-#: static/admin/translations-fakejs.js:520
-#: static/admin/translations-fakejs.js:528
-#: static/admin/translations-fakejs.js:549
-#: static/admin/translations-fakejs.js:570
-#: static/admin/translations-fakejs.js:589
-#: static/admin/translations-fakejs.js:600
-#: static/admin/translations-fakejs.js:604
-#: static/admin/translations-fakejs.js:613
-#: static/admin/translations-fakejs.js:617
-#: static/admin/translations-fakejs.js:625
-#: static/admin/translations-fakejs.js:631
-#: static/admin/translations-fakejs.js:655
-#: static/admin/translations-fakejs.js:672
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:264
+#: static/admin/translations-fakejs.js:468
+#: static/admin/translations-fakejs.js:478
+#: static/admin/translations-fakejs.js:491
+#: static/admin/translations-fakejs.js:516
+#: static/admin/translations-fakejs.js:575
+#: static/admin/translations-fakejs.js:628
+#: static/admin/translations-fakejs.js:649
+#: static/admin/translations-fakejs.js:670
+#: static/admin/translations-fakejs.js:686
+#: static/admin/translations-fakejs.js:696
+#: static/admin/translations-fakejs.js:707
+#: static/admin/translations-fakejs.js:711
+#: static/admin/translations-fakejs.js:720
+#: static/admin/translations-fakejs.js:724
+#: static/admin/translations-fakejs.js:732
+#: static/admin/translations-fakejs.js:738
+#: static/admin/translations-fakejs.js:762
+#: static/admin/translations-fakejs.js:779
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:233
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:265
 msgid "Changelog"
 msgstr "変更履歴"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:234
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:266
 msgid "Fallback: Allow"
 msgstr "フォールバック: 許可する"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:235
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:267
 msgid "Fallback: Deny"
 msgstr "フォールバック: 拒否"
 
-#: static/admin/main.js:4966 static/admin/translations-fakejs.js:236
+#: static/admin/main.js:4967 static/admin/translations-fakejs.js:268
 msgid "Refresh"
 msgstr "更新"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:237
-#: static/admin/translations-fakejs.js:268
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:269
+#: static/admin/translations-fakejs.js:304
+#: static/modern/translations-fakejs.js:65
+msgid "Reset service"
+msgstr "サービスをリセットする"
+
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:270
+#: static/admin/translations-fakejs.js:305
+msgid "Reset service to its initial state?"
+msgstr "サービスを初期状態にリセットしますか？"
+
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:271
+#: static/admin/translations-fakejs.js:306
+#| msgid "Service reseted"
+msgid "Service reset launched"
+msgstr "サービスリセットが開始されました"
+
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:273
+#: static/admin/translations-fakejs.js:308
 msgid "Delete assigned service"
 msgstr "割り当てられたサービスを削除する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:238
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:274
 msgid "Delete cached service"
 msgstr "キャッシュされたサービスを削除する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:239
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:275
 msgid "Service pool is locked"
 msgstr "サービスプールはロックされています"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:240
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:276
 msgid "Service pool is locked, no changes allowed"
 msgstr "サービスプールはロックされており、変更は許可されていません"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:241
-#: static/admin/translations-fakejs.js:269
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:277
+#: static/admin/translations-fakejs.js:309
 msgid "Delete assigned group"
 msgstr "割り当てられたグループを削除する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:242
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:278
 msgid "Delete assigned transport"
 msgstr "割り当てられたトランスポートを削除する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:243
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:279
 msgid "Publication"
 msgstr "出版物"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:244
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:280
 msgid "Cancel publication?"
 msgstr "公開をキャンセルしますか?"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:245
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:281
 msgid "Publication canceled"
 msgstr "出版はキャンセルされました"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:247
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:283
 msgid "Delete scheduled action"
 msgstr "スケジュールされたアクションを削除する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:248
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:284
 msgid "Execute scheduled action"
 msgstr "スケジュールされたアクションを実行する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:249
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:285
 msgid "Execute scheduled action right now?"
 msgstr "スケジュールされたアクションを今すぐ実行しますか?"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:250
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:286
 msgid "Scheduled action executed"
 msgstr "スケジュールされたアクションが実行されました"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:252
-#: static/admin/translations-fakejs.js:270
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:288
+#: static/admin/translations-fakejs.js:310
 msgid "Delete calendar access rule"
 msgstr "カレンダーアクセスルールを削除する"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:95
-#: static/admin/translations-fakejs.js:473
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:95
+#: static/admin/translations-fakejs.js:528
 msgid "User services"
 msgstr "ユーザーサービス"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:96
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:96
 msgid "In preparation"
 msgstr "準備中"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:97
-#: static/admin/translations-fakejs.js:677
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:97
+#: static/admin/translations-fakejs.js:784
 msgid "Usage"
 msgstr "使用法"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:98
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:98
 msgid "Pool group"
 msgstr "プールグループ"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:100
-#: static/admin/translations-fakejs.js:653
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:100
+#: static/admin/translations-fakejs.js:760
 msgid "Service pool"
 msgstr "サービスプール"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:264
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:300
 msgid "New meta pool"
 msgstr "新しいメタプール"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:265
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:301
 msgid "Edit meta pool"
 msgstr "メタプールを編集"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:266
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:302
 msgid "Delete meta pool"
 msgstr "メタプールを削除"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:272
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:312
 msgid "Please, select a valid service pool"
 msgstr "有効なサービスプールを選択してください"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:267
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:303
 msgid "Remove member pool"
 msgstr "メンバープールを削除"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:273
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:313
 msgid "New pool group"
 msgstr "新しいプールグループ"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:274
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:314
 msgid "Edit pool group"
 msgstr "プールグループを編集"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:275
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:315
 msgid "Delete pool group"
 msgstr "プールグループを削除"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:317
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:357
 msgid "New calendar"
 msgstr "新しいカレンダー"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:318
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:358
 msgid "Edit calendar"
 msgstr "カレンダーを編集"
 
-#: static/admin/main.js:4969 static/admin/translations-fakejs.js:319
+#: static/admin/main.js:4970 static/admin/translations-fakejs.js:359
 msgid "Delete calendar"
 msgstr "カレンダーを削除"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:277
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:317
 msgid "day"
 msgstr "日"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:278
-#: static/admin/translations-fakejs.js:467
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:318
+#: static/admin/translations-fakejs.js:522
 msgid "days"
 msgstr "日"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:279
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:319
 msgid "Daily"
 msgstr "毎日"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:280
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:320
 msgid "week"
 msgstr "週"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:281
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:321
 msgid "weeks"
 msgstr "数週間"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:282
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:322
 msgid "Weekly"
 msgstr "週刊"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:283
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:323
 msgid "month"
 msgstr "月"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:284
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:324
 msgid "months"
 msgstr "ヶ月"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:285
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:325
 msgid "Monthly"
 msgstr "毎月"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:286
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:326
 msgid "year"
 msgstr "年"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:287
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:327
 msgid "years"
 msgstr "年"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:288
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:328
 msgid "Yearly"
 msgstr "年間"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:289
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:329
 msgid "Weekdays"
 msgstr "平日"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:291
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:331
 msgid "Minutes"
 msgstr "分"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:293
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:117
+#: static/admin/translations-fakejs.js:332
+#: static/admin/translations-fakejs.js:549
+msgid "Hours"
+msgstr "営業時間"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:333
 msgid "Days"
 msgstr "日数"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:294
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:334
 msgid "Weeks"
 msgstr "数週間"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:302
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:342
 msgid "(no days)"
 msgstr "（日数なし）"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:303
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:343
 msgid "Forever"
 msgstr "永遠に"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:304
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:344
 msgid "Start date/time"
 msgstr "開始日時"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:305
-#: static/admin/translations-fakejs.js:512
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:345
+#: static/admin/translations-fakejs.js:567
 msgid "End date"
 msgstr "終了日"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:306
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:346
 msgid "Interval"
 msgstr "間隔"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:307
-#: static/admin/translations-fakejs.js:669
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:347
+#: static/admin/translations-fakejs.js:776
 msgid "Week days"
 msgstr "平日"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:308
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:348
 msgid "Invalid or incomplete rule. Please, fix field $FIELD"
 msgstr "ルールが無効または不完全です。フィールド $FIELD を修正してください。"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:309
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:349
 msgid "This rule will be valid every"
 msgstr "このルールは、"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:310
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:350
 msgid "of any week"
 msgstr "どの週でも"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:311
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:351
 msgid "from"
 msgstr "から"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:312
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:352
 msgid "until"
 msgstr "それまで"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:313
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:353
 msgid "onwards"
 msgstr "以降"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:314
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:354
 msgid "starting at"
 msgstr "開始価格"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:315
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:355
 msgid "and every event will be active for"
 msgstr "すべてのイベントは"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:316
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:356
 msgid "with no duration"
 msgstr "期間なし"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:276
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:316
 msgid "Delete calendar rule"
 msgstr "カレンダールールを削除"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:320
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:360
 msgid "Set time mark"
 msgstr "時間マークを設定する"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:321
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:361
 msgid "New account"
 msgstr "新しいアカウント"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:322
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:362
 msgid "Edit account"
 msgstr "アカウントを編集"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:323
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:363
 msgid "Delete account"
 msgstr "アカウントを削除"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:324
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:364
 msgid "Time mark"
 msgstr "タイムマーク"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:325
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:365
 msgid "Set time mark for $NAME to current date/time?"
 msgstr "$NAME のタイムマークを現在の日付/時刻に設定しますか?"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:326
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:366
 msgid "Time mark stablished"
 msgstr "時間マークが確立されました"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:328
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:368
 msgid "Delete account usage"
 msgstr "アカウントの使用状況を削除する"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:131
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:131
 msgid "Image is too big (max. upload size is 256Kb)"
 msgstr "画像が大きすぎます（最大アップロードサイズは 256 KB です）"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:133
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:133
 msgid "Invalid image type (only supports JPEG, PNG, GIF and SVG)"
 msgstr "無効な画像形式です（JPEG、PNG、GIF、SVGのみ対応）"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:135
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:135
 msgid "Please, provide a name and a image"
 msgstr "名前と画像を入力してください"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:129
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:52
+#: static/admin/translations-fakejs.js:136
+msgid "Successfully saved"
+msgstr "保存に成功しました"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:129
 msgid "Delete image"
 msgstr "画像を削除"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:124
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:124
 #: static/admin/translations-fakejs.js:125
 msgid "Generate report"
 msgstr "レポートを生成する"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:126
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:126
 msgid "Generating report..."
 msgstr "レポートを生成しています..."
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:127
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:127
 msgid "Report finished"
 msgstr "レポート終了"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:138
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:139
 msgid "New Notifier"
 msgstr "新しい通知機能"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:139
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:140
 msgid "Edit Notifier"
 msgstr "編集通知"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:123
-#: static/admin/translations-fakejs.js:140
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:123
+#: static/admin/translations-fakejs.js:141
 msgid "Delete actor token - USE WITH EXTREME CAUTION!!!"
 msgstr "アクター トークンを削除します - 細心の注意を払って使用してください。"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:141
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:142
 msgid "Configuration saved"
 msgstr "設定を保存しました"
 
-#: static/admin/main.js:5485 static/admin/translations-fakejs.js:122
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:122
 msgid "Delete servers token - USE WITH EXTREME CAUTION!!!"
 msgstr "サーバー トークンを削除します - 細心の注意を払って使用してください。"
 
-#: static/admin/main.js:7057 static/admin/translations-fakejs.js:38
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:138
+#: static/admin/translations-fakejs.js:453
+msgid "Manual checks"
+msgstr "手動チェック"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:144
+#| msgid "Downloads"
+msgid "Download skill"
+msgstr "スキルをダウンロード"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:152
+msgid "Pending review"
+msgstr "審査待ち"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:153
+msgid "Pending launch"
+msgstr "発売予定"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:145
+#: static/admin/translations-fakejs.js:605
+msgid "Lock"
+msgstr "ロック"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:146
+msgid "Reject"
+msgstr "拒否する"
+
+#: static/admin/main.js:5483 static/admin/translations-fakejs.js:147
+#| msgid "Delete"
+msgid "Delete flow"
+msgstr "削除フロー"
+
+#: static/admin/main.js:5483 static/admin/main.js:5738
+#: static/admin/translations-fakejs.js:148
+#: static/admin/translations-fakejs.js:163
+#: static/admin/translations-fakejs.js:607
+msgid "Reject flow"
+msgstr "拒否フロー"
+
+#: static/admin/main.js:5483 static/admin/main.js:5738
+#: static/admin/translations-fakejs.js:149
+#: static/admin/translations-fakejs.js:164
+msgid ""
+"Its pending actions will be skipped. The reason is stored with the flow."
+msgstr "保留中のアクションはスキップされます。その理由はフローと共に保存されます。"
+
+#: static/admin/main.js:5483 static/admin/main.js:5738
+#: static/admin/translations-fakejs.js:150
+#: static/admin/translations-fakejs.js:165
+#: static/admin/translations-fakejs.js:602
+msgid "Reason"
+msgstr "理由"
+
+#: static/admin/main.js:5483 static/admin/main.js:5738
+#: static/admin/translations-fakejs.js:92
+#: static/admin/translations-fakejs.js:151
+#: static/admin/translations-fakejs.js:172
+msgid "Error handling your request"
+msgstr "リクエストの処理中にエラーが発生しました"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:154
+msgid "Create"
+msgstr "作成する"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:156
+#: static/admin/translations-fakejs.js:498
+#: static/admin/translations-fakejs.js:505
+msgid "Delete"
+msgstr "消去"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:157
+#| msgid "Select"
+msgid "Set"
+msgstr "セット"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:158
+msgid "Add"
+msgstr "追加"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:159
+#| msgid "Return"
+msgid "Run"
+msgstr "走る"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:160
+#| msgid "Changelog"
+msgid "Change"
+msgstr "変化"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:161
+msgid "Approve a changed action"
+msgstr "変更されたアクションを承認する"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:162
+msgid ""
+"A field this action changes has been modified since it was proposed. "
+"Approving accepts the value it holds now as the starting point. Continue?"
+msgstr ""
+"この操作で変更されるフィールドは、提案されてから変更されています。承認すると"
+"、現在の値が開始値として受け入れられます。続行しますか？"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:166
+#| msgid "Launch now"
+msgid "Launch flow"
+msgstr "起動フロー"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:168
+msgid ""
+"Launching runs every approved action of this flow, in order, as you. This "
+"cannot be undone. Continue?"
+msgstr ""
+"起動すると、このフローで承認されたすべてのアクションが順番に実行されます。こ"
+"れは元に戻せません。続行しますか？"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:169
+msgid "Flow"
+msgstr "流れ"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:170
+msgid "The flow was not changed"
+msgstr "流れは変更されなかった"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:171
+msgid ""
+"Something changed since the actions were approved. Review them again: re-"
+"approve or skip the ones marked as revoked or failed."
+msgstr ""
+"承認されたアクション以降、何らかの変更がありました。再度内容を確認し、再承認"
+"するか、取り消しまたは失敗とマークされたものはスキップしてください。"
+
+#: static/admin/main.js:5738 static/admin/translations-fakejs.js:173
+#| msgid "Scheduled action executed"
+msgid "No actions were executed."
+msgstr "何も実行されませんでした。"
+
+#: static/admin/main.js:7310 static/admin/translations-fakejs.js:38
 msgid "Cache flushed"
 msgstr "キャッシュがフラッシュされました"
 
-#: static/admin/main.js:7057 static/admin/translations-fakejs.js:37
+#: static/admin/main.js:7310 static/admin/translations-fakejs.js:37
 msgid "Items per page"
 msgstr "ページあたりの項目数"
 
-#: static/admin/main.js:7057 static/admin/translations-fakejs.js:66
+#: static/admin/main.js:7310 static/admin/translations-fakejs.js:66
 #: static/admin/translations-fakejs.js:68
 msgid "Search"
 msgstr "検索"
 
-#: static/admin/main.js:7057 static/admin/translations-fakejs.js:70
+#: static/admin/main.js:7310 static/admin/translations-fakejs.js:70
 msgid "Select"
 msgstr "選択"
 
-#: static/admin/main.js:7058 static/admin/translations-fakejs.js:71
+#: static/admin/main.js:7311 static/admin/translations-fakejs.js:71
 msgid ", (%i more items)"
 msgstr "、（さらに%i件）"
 
+#: static/admin/polyfills.js:1
+msgid "DISABLE_WRAPPING_UNCAUGHT_PROMISE_REJECTION"
+msgstr "未捕捉の約束拒否のラッピングを無効にする"
+
+#: static/admin/polyfills.js:1
+msgid "Promise"
+msgstr "約束"
+
+#: static/admin/polyfills.js:1
+msgid "then"
+msgstr "それから"
+
+#: static/admin/polyfills.js:1
+msgid "unhandledPromiseRejectionHandler"
+msgstr "unhandledPromiseRejectionハンドラ"
+
+#: static/admin/polyfills.js:1
+msgid "value"
+msgstr "価値"
+
+#: static/admin/polyfills.js:1
+msgid "finally"
+msgstr "ついに"
+
+#: static/admin/polyfills.js:1
+msgid "parentPromiseValue"
+msgstr "parentPromiseValue"
+
+#: static/admin/polyfills.js:1
+msgid "parentPromiseState"
+msgstr "parentPromiseState"
+
+#: static/admin/polyfills.js:1
+msgid "currentTaskTrace"
+msgstr "現在のタスクトレース"
+
+#: static/admin/polyfills.js:2
+msgid "rejectionHandledHandler"
+msgstr "拒否処理済みハンドラー"
+
+#: static/admin/polyfills.js:2
+msgid "thenPatched"
+msgstr "その後パッチを適用しました"
+
+#: static/admin/translations-fakejs.js:3
+msgid "yes"
+msgstr "はい"
+
+#: static/admin/translations-fakejs.js:4
+msgid "no"
+msgstr "いいえ"
+
+#: static/admin/translations-fakejs.js:5
+msgid "provider"
+msgstr "プロバイダー"
+
+#: static/admin/translations-fakejs.js:6
+msgid "service"
+msgstr "サービス"
+
+#: static/admin/translations-fakejs.js:7
+msgid "service pool"
+msgstr "サービスプール"
+
+#: static/admin/translations-fakejs.js:8
+msgid "authenticator"
+msgstr "認証子"
+
+#: static/admin/translations-fakejs.js:9
+#: static/admin/translations-fakejs.js:647
+msgid "MFA"
+msgstr "外務省"
+
+#: static/admin/translations-fakejs.js:10
+msgid "user"
+msgstr "ユーザー"
+
+#: static/admin/translations-fakejs.js:11
+msgid "group"
+msgstr "グループ"
+
+#: static/admin/translations-fakejs.js:12
+msgid "transport"
+msgstr "輸送"
+
+#: static/admin/translations-fakejs.js:13
+msgid "OS manager"
+msgstr "OSマネージャー"
+
+#: static/admin/translations-fakejs.js:14
+msgid "calendar"
+msgstr "カレンダー"
+
+#: static/admin/translations-fakejs.js:15
+msgid "pool group"
+msgstr "プールグループ"
+
+#: static/admin/translations-fakejs.js:16
+msgid "Go to"
+msgstr "へ移動"
+
+#: static/admin/translations-fakejs.js:40 static/modern/main.js:1129
+#: static/modern/translations-fakejs.js:18
+msgid "seconds"
+msgstr "秒"
+
+#: static/admin/translations-fakejs.js:41
+msgid "Test"
+msgstr "テスト"
+
+#: static/admin/translations-fakejs.js:42
+#: static/admin/translations-fakejs.js:54
+msgid "Loading data..."
+msgstr "データを読み込んでいます..."
+
+#: static/admin/translations-fakejs.js:45
+#: static/admin/translations-fakejs.js:60
+msgid "Please, fill in require fields: "
+msgstr "必須項目を入力してください: "
+
+#: static/admin/translations-fakejs.js:46
+msgid "Testing..."
+msgstr "テスト中..."
+
+#: static/admin/translations-fakejs.js:48
+msgid "Test failed:"
+msgstr "テストに失敗しました:"
+
+#: static/admin/translations-fakejs.js:50
+msgid "Test passed successfully"
+msgstr "テストは正常に合格しました"
+
+#: static/admin/translations-fakejs.js:75
+msgid "Advanced"
+msgstr "高度な"
+
+#: static/admin/translations-fakejs.js:88
+msgid "Item changed by another administrator"
+msgstr "別の管理者によってアイテムが変更されました"
+
 #: static/admin/translations-fakejs.js:89
+#: static/admin/translations-fakejs.js:167
 msgid "<literal>"
 msgstr "<literal>"
 
-#: static/admin/translations-fakejs.js:385
-#: static/admin/translations-fakejs.js:524
-#: static/admin/translations-fakejs.js:577
-#: static/admin/translations-fakejs.js:633
-#: static/admin/translations-fakejs.js:644
-#: static/admin/translations-fakejs.js:671
-#: static/admin/translations-fakejs.js:675
-#: static/admin/translations-fakejs.js:694
+#: static/admin/translations-fakejs.js:90
+msgid ""
+"This item was modified by another administrator while you were editing it. "
+"Reload it to get the current version before saving your changes again."
+msgstr ""
+"あなたが編集中に、別の管理者がこのアイテムを変更しました。変更を保存する前"
+"に、再度ページを読み込み、最新バージョンを取得してください。"
+
+#: static/admin/translations-fakejs.js:91
+msgid "Error saving element"
+msgstr "要素の保存中にエラーが発生しました"
+
+#: static/admin/translations-fakejs.js:105
+msgid "Last 7 days"
+msgstr "過去7日間"
+
+#: static/admin/translations-fakejs.js:106
+msgid "Last 30 days"
+msgstr "過去30日間"
+
+#: static/admin/translations-fakejs.js:107
+msgid "Last 90 days"
+msgstr "過去90日間"
+
+#: static/admin/translations-fakejs.js:108
+msgid "Last year"
+msgstr "去年"
+
+#: static/admin/translations-fakejs.js:110
+msgid "Services in use"
+msgstr "利用中のサービス"
+
+#: static/admin/translations-fakejs.js:111
+msgid "Peak sessions"
+msgstr "ピークセッション"
+
+#: static/admin/translations-fakejs.js:112
+msgid "Saturation %"
+msgstr "飽和度（％）"
+
+#: static/admin/translations-fakejs.js:113
+msgid "Hits"
+msgstr "ヒット"
+
+#: static/admin/translations-fakejs.js:114
+msgid "Misses"
+msgstr "ミス"
+
+#: static/admin/translations-fakejs.js:115
+msgid "Opens"
+msgstr "開く"
+
+#: static/admin/translations-fakejs.js:116
+msgid "Closes"
+msgstr "閉店"
+
+#: static/admin/translations-fakejs.js:118
+#: static/admin/translations-fakejs.js:547
+msgid "Sessions"
+msgstr "セッション"
+
+#: static/admin/translations-fakejs.js:119
+msgid "Errors"
+msgstr "エラー"
+
+#: static/admin/translations-fakejs.js:120
+msgid "Failed attempts"
+msgstr "失敗した試み"
+
+#: static/admin/translations-fakejs.js:121
+msgid "No data for this period"
+msgstr "この期間のデータはありません"
+
+#: static/admin/translations-fakejs.js:251
+#: static/modern/translations-fakejs.js:56
+msgid "Dashboard"
+msgstr "ダッシュボード"
+
+#: static/admin/translations-fakejs.js:432
+#: static/admin/translations-fakejs.js:624
+#: static/admin/translations-fakejs.js:677
+#: static/admin/translations-fakejs.js:740
+#: static/admin/translations-fakejs.js:751
+#: static/admin/translations-fakejs.js:778
+#: static/admin/translations-fakejs.js:782
+#: static/admin/translations-fakejs.js:814
 msgid "Summary"
 msgstr "まとめ"
 
-#: static/admin/translations-fakejs.js:386
-#: static/admin/translations-fakejs.js:676
+#: static/admin/translations-fakejs.js:433
+#: static/admin/translations-fakejs.js:783
 msgid "Services"
 msgstr "サービス"
 
-#: static/admin/translations-fakejs.js:387
+#: static/admin/translations-fakejs.js:434
 msgid "Providers"
 msgstr "プロバイダー"
 
-#: static/admin/translations-fakejs.js:388
-#: static/admin/translations-fakejs.js:409
-#: static/admin/translations-fakejs.js:636
-#: static/admin/translations-fakejs.js:688
-#: static/admin/translations-fakejs.js:695
+#: static/admin/translations-fakejs.js:435
+#: static/admin/translations-fakejs.js:457
+#: static/admin/translations-fakejs.js:743
+#: static/admin/translations-fakejs.js:795
+#: static/admin/translations-fakejs.js:815
 msgid "Servers"
 msgstr "サーバー"
 
-#: static/admin/translations-fakejs.js:389
+#: static/admin/translations-fakejs.js:436
 msgid "Authentication"
 msgstr "認証"
 
-#: static/admin/translations-fakejs.js:390
-#: static/admin/translations-fakejs.js:476
+#: static/admin/translations-fakejs.js:437
+#: static/admin/translations-fakejs.js:531
 msgid "Authenticators"
 msgstr "認証子"
 
-#: static/admin/translations-fakejs.js:391
+#: static/admin/translations-fakejs.js:438
 msgid "Multi Factor"
 msgstr "マルチファクター"
 
-#: static/admin/translations-fakejs.js:392
+#: static/admin/translations-fakejs.js:439
 msgid "Os Managers"
 msgstr "OSマネージャー"
 
-#: static/admin/translations-fakejs.js:393
+#: static/admin/translations-fakejs.js:440
 msgid "Connectivity"
 msgstr "接続性"
 
-#: static/admin/translations-fakejs.js:394
-#: static/admin/translations-fakejs.js:638
+#: static/admin/translations-fakejs.js:441
+#: static/admin/translations-fakejs.js:745
 #: static/modern/translations-fakejs.js:72
 msgid "Transports"
 msgstr "輸送"
 
-#: static/admin/translations-fakejs.js:395
+#: static/admin/translations-fakejs.js:442
 #: static/modern/translations-fakejs.js:74
 msgid "Networks"
 msgstr "ネットワーク"
 
-#: static/admin/translations-fakejs.js:396
+#: static/admin/translations-fakejs.js:443
 msgid "Tunnels"
 msgstr "トンネル"
 
-#: static/admin/translations-fakejs.js:397
+#: static/admin/translations-fakejs.js:444
 msgid "Pools"
 msgstr "プール"
 
-#: static/admin/translations-fakejs.js:399
+#: static/admin/translations-fakejs.js:446
 msgid "Meta pools"
 msgstr "メタプール"
 
-#: static/admin/translations-fakejs.js:401
+#: static/admin/translations-fakejs.js:448
 msgid "Calendars"
 msgstr "カレンダー"
 
-#: static/admin/translations-fakejs.js:402
+#: static/admin/translations-fakejs.js:449
 msgid "Accounting"
 msgstr "会計"
 
-#: static/admin/translations-fakejs.js:403
+#: static/admin/translations-fakejs.js:450
 msgid "Tools"
 msgstr "ツール"
 
-#: static/admin/translations-fakejs.js:404
+#: static/admin/translations-fakejs.js:451
 msgid "Gallery"
 msgstr "ギャラリー"
 
-#: static/admin/translations-fakejs.js:405
+#: static/admin/translations-fakejs.js:452
 msgid "Reports"
 msgstr "レポート"
 
-#: static/admin/translations-fakejs.js:406
+#: static/admin/translations-fakejs.js:454
 msgid "Notifiers"
 msgstr "通知者"
 
-#: static/admin/translations-fakejs.js:407
+#: static/admin/translations-fakejs.js:455
 msgid "Tokens"
 msgstr "トークン"
 
-#: static/admin/translations-fakejs.js:408
+#: static/admin/translations-fakejs.js:456
 msgid "Actor"
 msgstr "俳優"
 
-#: static/admin/translations-fakejs.js:410
+#: static/admin/translations-fakejs.js:458
 msgid "Configuration"
 msgstr "構成"
 
-#: static/admin/translations-fakejs.js:411
+#: static/admin/translations-fakejs.js:459
 msgid "Flush Cache"
 msgstr "キャッシュをフラッシュする"
 
-#: static/admin/translations-fakejs.js:415
+#: static/admin/translations-fakejs.js:460
+#| msgid "CPU"
+msgid "MCP"
+msgstr "MCP"
+
+#: static/admin/translations-fakejs.js:461
+#: static/admin/translations-fakejs.js:586
+msgid "Skills"
+msgstr "スキル"
+
+#: static/admin/translations-fakejs.js:462
+msgid "Flows"
+msgstr "流れ"
+
+#: static/admin/translations-fakejs.js:463
+msgid "Flows Archive"
+msgstr "フローアーカイブ"
+
+#: static/admin/translations-fakejs.js:467
+#: static/admin/translations-fakejs.js:479
+#: static/admin/translations-fakejs.js:490
+#: static/admin/translations-fakejs.js:513
+#: static/admin/translations-fakejs.js:517
+#: static/admin/translations-fakejs.js:576
+#: static/admin/translations-fakejs.js:629
+#: static/admin/translations-fakejs.js:635
+#: static/admin/translations-fakejs.js:650
+#: static/admin/translations-fakejs.js:671
+#: static/admin/translations-fakejs.js:676
+#: static/admin/translations-fakejs.js:697
+#: static/admin/translations-fakejs.js:708
+#: static/admin/translations-fakejs.js:712
+#: static/admin/translations-fakejs.js:714
+#: static/admin/translations-fakejs.js:716
+#: static/admin/translations-fakejs.js:721
+#: static/admin/translations-fakejs.js:725
+#: static/admin/translations-fakejs.js:733
+#: static/admin/translations-fakejs.js:739
+#: static/admin/translations-fakejs.js:763
+#: static/admin/translations-fakejs.js:780
+#: static/admin/translations-fakejs.js:789
+msgid "Ok"
+msgstr "わかりました"
+
+#: static/admin/translations-fakejs.js:469
 msgid "User mode"
 msgstr "ユーザーモード"
 
-#: static/admin/translations-fakejs.js:416
-#: static/admin/translations-fakejs.js:419
+#: static/admin/translations-fakejs.js:470
+#: static/admin/translations-fakejs.js:473
 msgid "Light theme"
 msgstr "ライトテーマ"
 
-#: static/admin/translations-fakejs.js:417
-#: static/admin/translations-fakejs.js:420
+#: static/admin/translations-fakejs.js:471
+#: static/admin/translations-fakejs.js:474
 msgid "Dark theme"
 msgstr "ダークテーマ"
 
-#: static/admin/translations-fakejs.js:418
+#: static/admin/translations-fakejs.js:472
 #: static/modern/translations-fakejs.js:58
 msgid "Logout"
 msgstr "ログアウト"
 
-#: static/admin/translations-fakejs.js:421
+#: static/admin/translations-fakejs.js:475
 msgid "Discard & close"
 msgstr "破棄して閉じる"
 
-#: static/admin/translations-fakejs.js:422
-#: static/admin/translations-fakejs.js:523
+#: static/admin/translations-fakejs.js:476
+#: static/admin/translations-fakejs.js:585
 msgid "Save"
 msgstr "保存"
 
-#: static/admin/translations-fakejs.js:423
+#: static/admin/translations-fakejs.js:477
 msgid "Remove all"
 msgstr "すべて削除"
 
-#: static/admin/translations-fakejs.js:425
-#: static/admin/translations-fakejs.js:436
-#: static/admin/translations-fakejs.js:459
-#: static/admin/translations-fakejs.js:463
-#: static/admin/translations-fakejs.js:521
-#: static/admin/translations-fakejs.js:529
-#: static/admin/translations-fakejs.js:535
-#: static/admin/translations-fakejs.js:550
-#: static/admin/translations-fakejs.js:571
-#: static/admin/translations-fakejs.js:576
-#: static/admin/translations-fakejs.js:590
-#: static/admin/translations-fakejs.js:601
-#: static/admin/translations-fakejs.js:605
-#: static/admin/translations-fakejs.js:607
-#: static/admin/translations-fakejs.js:609
-#: static/admin/translations-fakejs.js:614
-#: static/admin/translations-fakejs.js:618
-#: static/admin/translations-fakejs.js:626
-#: static/admin/translations-fakejs.js:632
-#: static/admin/translations-fakejs.js:656
-#: static/admin/translations-fakejs.js:673
-#: static/admin/translations-fakejs.js:682
-msgid "Ok"
-msgstr "わかりました"
-
-#: static/admin/translations-fakejs.js:426
+#: static/admin/translations-fakejs.js:480
 msgid "CVS Import options for"
 msgstr "CVSインポートオプション"
 
-#: static/admin/translations-fakejs.js:427
+#: static/admin/translations-fakejs.js:481
 msgid "Header"
 msgstr "ヘッダ"
 
-#: static/admin/translations-fakejs.js:428
+#: static/admin/translations-fakejs.js:482
 msgid "CSV contains header line"
 msgstr "CSVにはヘッダー行が含まれています"
 
-#: static/admin/translations-fakejs.js:429
+#: static/admin/translations-fakejs.js:483
 msgid "CSV DOES NOT contains header line"
 msgstr "CSVにはヘッダー行が含まれていません"
 
-#: static/admin/translations-fakejs.js:430
+#: static/admin/translations-fakejs.js:484
 msgid "Separator"
 msgstr "セパレーター"
 
-#: static/admin/translations-fakejs.js:431
+#: static/admin/translations-fakejs.js:485
 msgid "Use comma"
 msgstr "カンマを使う"
 
-#: static/admin/translations-fakejs.js:432
+#: static/admin/translations-fakejs.js:486
 msgid "Use semicolon"
 msgstr "セミコロンを使用する"
 
-#: static/admin/translations-fakejs.js:433
+#: static/admin/translations-fakejs.js:487
 msgid "Use pipe"
 msgstr "パイプを使用する"
 
-#: static/admin/translations-fakejs.js:434
+#: static/admin/translations-fakejs.js:488
 msgid "Use tab"
 msgstr "タブを使用する"
 
-#: static/admin/translations-fakejs.js:435
+#: static/admin/translations-fakejs.js:489
 msgid "File"
 msgstr "ファイル"
 
-#: static/admin/translations-fakejs.js:438
-#: static/admin/translations-fakejs.js:439
-#: static/admin/translations-fakejs.js:440
+#: static/admin/translations-fakejs.js:492
+#: static/admin/translations-fakejs.js:493
+#: static/admin/translations-fakejs.js:494
 msgid "New"
 msgstr "新しい"
 
-#: static/admin/translations-fakejs.js:441
-#: static/admin/translations-fakejs.js:449
+#: static/admin/translations-fakejs.js:495
+#: static/admin/translations-fakejs.js:503
 msgid "Edit"
 msgstr "編集"
 
-#: static/admin/translations-fakejs.js:442
-#: static/admin/translations-fakejs.js:450
+#: static/admin/translations-fakejs.js:496
+#: static/admin/translations-fakejs.js:504
 msgid "Permissions"
 msgstr "権限"
 
-#: static/admin/translations-fakejs.js:443
+#: static/admin/translations-fakejs.js:497
 msgid "Export CSV"
 msgstr "CSVエクスポート"
 
-#: static/admin/translations-fakejs.js:444
-#: static/admin/translations-fakejs.js:451
-msgid "Delete"
-msgstr "消去"
-
-#: static/admin/translations-fakejs.js:446
+#: static/admin/translations-fakejs.js:500
 msgid "Selected items"
 msgstr "選択したアイテム"
 
-#: static/admin/translations-fakejs.js:447
+#: static/admin/translations-fakejs.js:501
 msgid "Copy"
 msgstr "コピー"
 
-#: static/admin/translations-fakejs.js:448
+#: static/admin/translations-fakejs.js:502
 msgid "Detail"
 msgstr "詳細"
 
-#: static/admin/translations-fakejs.js:453
+#: static/admin/translations-fakejs.js:507
 msgid "Export"
 msgstr "輸出"
 
-#: static/admin/translations-fakejs.js:455
+#: static/admin/translations-fakejs.js:509
 msgid "Permissions for"
 msgstr "権限"
 
-#: static/admin/translations-fakejs.js:458
+#: static/admin/translations-fakejs.js:512
 msgid "New permission..."
 msgstr "新しい権限..."
 
-#: static/admin/translations-fakejs.js:460
+#: static/admin/translations-fakejs.js:514
 msgid "New user permission for"
 msgstr "新しいユーザー権限"
 
-#: static/admin/translations-fakejs.js:461
+#: static/admin/translations-fakejs.js:515
 msgid "New group permission for"
 msgstr "新しいグループ権限"
 
-#: static/admin/translations-fakejs.js:464
+#: static/admin/translations-fakejs.js:518
 msgid "Updated"
 msgstr "更新済み"
 
-#: static/admin/translations-fakejs.js:465
+#: static/admin/translations-fakejs.js:519
+msgid "flows waiting for approval"
+msgstr "承認待ちのフロー"
+
+#: static/admin/translations-fakejs.js:520
 msgid "License expired"
 msgstr "ライセンスの有効期限が切れました"
 
-#: static/admin/translations-fakejs.js:466
+#: static/admin/translations-fakejs.js:521
 msgid "License expires in"
 msgstr "ライセンスの有効期限は"
 
-#: static/admin/translations-fakejs.js:468
+#: static/admin/translations-fakejs.js:523
 msgid "License valid until"
 msgstr "ライセンスの有効期限"
 
-#: static/admin/translations-fakejs.js:469
+#: static/admin/translations-fakejs.js:524
 msgid "Loading dashboard data..."
 msgstr "ダッシュボードデータを読み込んでいます..."
 
-#: static/admin/translations-fakejs.js:475
-#: static/admin/translations-fakejs.js:509
+#: static/admin/translations-fakejs.js:530
+#: static/admin/translations-fakejs.js:564
 msgid "Users with services"
 msgstr "サービスを利用するユーザー"
 
-#: static/admin/translations-fakejs.js:477
+#: static/admin/translations-fakejs.js:532
 msgid "Restrained pools"
 msgstr "制限されたプール"
 
-#: static/admin/translations-fakejs.js:478
+#: static/admin/translations-fakejs.js:533
 msgid "Peak concurrent sessions per pool"
 msgstr "プールごとの同時セッション数のピーク"
 
-#: static/admin/translations-fakejs.js:479
+#: static/admin/translations-fakejs.js:534
 msgid "Pool saturation (% of capacity)"
 msgstr "Pool saturation (% of capacity)"
 
-#: static/admin/translations-fakejs.js:480
+#: static/admin/translations-fakejs.js:535
 msgid "Cache hits / misses per pool"
 msgstr "プールごとのキャッシュヒット数／ミス数"
 
-#: static/admin/translations-fakejs.js:481
+#: static/admin/translations-fakejs.js:536
 msgid "Tunnel sessions per pool"
 msgstr "プールごとのトンネルセッション"
 
-#: static/admin/translations-fakejs.js:482
+#: static/admin/translations-fakejs.js:537
 msgid "Client platforms"
 msgstr "クライアントプラットフォーム"
 
-#: static/admin/translations-fakejs.js:483
+#: static/admin/translations-fakejs.js:538
 msgid "Client browsers"
 msgstr "クライアントブラウザ"
 
-#: static/admin/translations-fakejs.js:484
+#: static/admin/translations-fakejs.js:539
 msgid "Session duration distribution"
 msgstr "セッション期間の分布"
 
-#: static/admin/translations-fakejs.js:485
+#: static/admin/translations-fakejs.js:540
 msgid "User services in error per pool"
 msgstr "プールごとのユーザーサービスエラー"
 
-#: static/admin/translations-fakejs.js:486
+#: static/admin/translations-fakejs.js:541
 msgid "Failed logins per user"
 msgstr "ユーザーごとのログイン失敗回数"
 
-#: static/admin/translations-fakejs.js:487
+#: static/admin/translations-fakejs.js:542
 msgid "Top users by session time"
 msgstr "セッション時間別トップユーザー"
 
-#: static/admin/translations-fakejs.js:488
+#: static/admin/translations-fakejs.js:543
 msgid "Assigned services chart"
 msgstr "割り当てられたサービスチャート"
 
-#: static/admin/translations-fakejs.js:489
+#: static/admin/translations-fakejs.js:544
 msgid "In use services chart"
 msgstr "使用中のサービスチャート"
 
-#: static/admin/translations-fakejs.js:490
+#: static/admin/translations-fakejs.js:545
 msgid "Top users detail"
 msgstr "トップユーザーの詳細"
 
-#: static/admin/translations-fakejs.js:493
+#: static/admin/translations-fakejs.js:548
 msgid "Pools used"
 msgstr "プール利用"
 
-#: static/admin/translations-fakejs.js:495
+#: static/admin/translations-fakejs.js:550
 msgid "Avg hours/session"
 msgstr "セッションあたりの平均時間"
 
-#: static/admin/translations-fakejs.js:496
+#: static/admin/translations-fakejs.js:551
 msgid "restrained services"
 msgstr "制限されたサービス"
 
-#: static/admin/translations-fakejs.js:497
+#: static/admin/translations-fakejs.js:552
 msgid "View service pools"
 msgstr "サービスプールを表示"
 
-#: static/admin/translations-fakejs.js:498
+#: static/admin/translations-fakejs.js:553
 msgid "Security checks"
 msgstr "セキュリティチェック"
 
-#: static/admin/translations-fakejs.js:499
+#: static/admin/translations-fakejs.js:554
 msgid "checks passed"
 msgstr "チェックに合格しました"
 
-#: static/admin/translations-fakejs.js:501
+#: static/admin/translations-fakejs.js:556
 msgid "failed security checks"
 msgstr "セキュリティチェックに失敗しました"
 
-#: static/admin/translations-fakejs.js:502
+#: static/admin/translations-fakejs.js:557
 msgid "License information"
 msgstr "ライセンス情報"
 
-#: static/admin/translations-fakejs.js:503
+#: static/admin/translations-fakejs.js:558
 msgid "UDS ID"
 msgstr "UDS ID"
 
-#: static/admin/translations-fakejs.js:504
+#: static/admin/translations-fakejs.js:559
 msgid "Brand"
 msgstr "ブランド"
 
-#: static/admin/translations-fakejs.js:505
+#: static/admin/translations-fakejs.js:560
 msgid "Support level"
 msgstr "サポートレベル"
 
-#: static/admin/translations-fakejs.js:506
+#: static/admin/translations-fakejs.js:561
 msgid "Licensed users"
 msgstr "ライセンスユーザー"
 
-#: static/admin/translations-fakejs.js:507
+#: static/admin/translations-fakejs.js:562
 msgid "Model"
 msgstr "モデル"
 
-#: static/admin/translations-fakejs.js:508
+#: static/admin/translations-fakejs.js:563
 msgid "Total users"
 msgstr "総ユーザー数"
 
-#: static/admin/translations-fakejs.js:511
-#: static/admin/translations-fakejs.js:666
+#: static/admin/translations-fakejs.js:566
+#: static/admin/translations-fakejs.js:773
 msgid "Start date"
 msgstr "開始日"
 
-#: static/admin/translations-fakejs.js:514
+#: static/admin/translations-fakejs.js:569
 msgid "New image for"
 msgstr "新しい画像"
 
-#: static/admin/translations-fakejs.js:515
+#: static/admin/translations-fakejs.js:570
 msgid "Edit for"
 msgstr "編集"
 
-#: static/admin/translations-fakejs.js:516
+#: static/admin/translations-fakejs.js:571
 msgid "Image name"
 msgstr "画像名"
 
-#: static/admin/translations-fakejs.js:517
+#: static/admin/translations-fakejs.js:572
 msgid "Image (click to change)"
 msgstr "画像（クリックして変更）"
 
-#: static/admin/translations-fakejs.js:518
+#: static/admin/translations-fakejs.js:573
 msgid "For optimal results, use \"squared\" images."
 msgstr "最適な結果を得るには、「正方形」の画像を使用します。"
 
-#: static/admin/translations-fakejs.js:519
+#: static/admin/translations-fakejs.js:574
 msgid "The image will be resized on upload to"
 msgstr "画像はアップロード時にサイズが変更されます"
 
-#: static/admin/translations-fakejs.js:522
+#: static/admin/translations-fakejs.js:577
+msgid ""
+"Slow or expensive checks, such as comparing what a provider holds with what "
+"UDS knows. They run only when requested here and never change anything."
+msgstr ""
+"プロバイダーが保持している情報とUDSが把握している情報を比較するなど、処理に時"
+"間がかかったり、コストがかかったりするチェック。これらはここで要求された場合"
+"にのみ実行され、何も変更されることはありません。"
+
+#: static/admin/translations-fakejs.js:578
+#| msgid "Security checks"
+msgid "Run checks"
+msgstr "チェックを実行する"
+
+#: static/admin/translations-fakejs.js:579
+msgid "Running checks, this can take a while..."
+msgstr "チェックを実行中です。時間がかかる場合があります。"
+
+#: static/admin/translations-fakejs.js:580
+msgid "The checks could not be run."
+msgstr "チェックを実行できませんでした。"
+
+#: static/admin/translations-fakejs.js:581
+#| msgid "checks passed"
+msgid "passed"
+msgstr "合格した"
+
+#: static/admin/translations-fakejs.js:582
+#| msgid "Test failed:"
+msgid "failed"
+msgstr "失敗した"
+
+#: static/admin/translations-fakejs.js:583
+msgid "Affected elements"
+msgstr "影響を受ける要素"
+
+#: static/admin/translations-fakejs.js:584
 msgid "UDS Configuration"
 msgstr "UDS構成"
 
-#: static/admin/translations-fakejs.js:525
+#: static/admin/translations-fakejs.js:587
+msgid "MCP Skill"
+msgstr "MCPスキル"
+
+#: static/admin/translations-fakejs.js:588
+msgid ""
+"Skill bundle for external agents, already configured against this server. It "
+"lets an MCP-aware client read this UDS and propose changes that an "
+"administrator approves in Flows."
+msgstr ""
+"外部エージェント用のスキルバンドルは、既にこのサーバーに対して設定済みです。"
+"これにより、MCP対応クライアントがこのUDSを読み取り、管理者がフローで承認する"
+"変更を提案できるようになります。"
+
+#: static/admin/translations-fakejs.js:589
+#| msgid "Downloads"
+msgid "Download"
+msgstr "ダウンロード"
+
+#: static/admin/translations-fakejs.js:590
+msgid "What is inside"
+msgstr "中身は？"
+
+#: static/admin/translations-fakejs.js:591
+msgid ""
+"A short guide for the agent: how the tools are named, how to find things and "
+"how proposals and flows work. Each tool describes its own arguments."
+msgstr ""
+"エージェント向けの簡単なガイド：ツールの命名規則、検索方法、提案とフローの仕"
+"組みについて説明します。各ツールは、それぞれの引数について説明しています。"
+
+#: static/admin/translations-fakejs.js:592
+msgid ""
+"Connection settings for the client: the MCP endpoint of this server and how "
+"to authenticate."
+msgstr "クライアントの接続設定：このサーバーのMCPエンドポイントと認証方法。"
+
+#: static/admin/translations-fakejs.js:593
+msgid "Installation and update steps."
+msgstr "インストールおよびアップデートの手順。"
+
+#: static/admin/translations-fakejs.js:594
+msgid "How to use it"
+msgstr "使用方法"
+
+#: static/admin/translations-fakejs.js:595
+msgid ""
+"Download the bundle and extract it into the skills directory of your MCP-"
+"aware client."
+msgstr ""
+"バンドルをダウンロードし、MCP対応クライアントのスキルディレクトリに解凍してく"
+"ださい。"
+
+#: static/admin/translations-fakejs.js:596
+msgid ""
+"Issue an API token for the user the agent will act as, from the users of its "
+"authenticator (Issue API token)."
+msgstr ""
+"エージェントが操作するユーザーに対して、その認証器のユーザーからAPIトークンを"
+"発行します（APIトークンの発行）。"
+
+#: static/admin/translations-fakejs.js:597
+msgid "Export it before starting the client:"
+msgstr "クライアントを起動する前にエクスポートしてください。"
+
+#: static/admin/translations-fakejs.js:598
+msgid ""
+"Restart the client. The agent works with the permissions of that user, and "
+"any change it proposes waits in Flows for an administrator."
+msgstr ""
+"クライアントを再起動してください。エージェントはそのユーザーの権限で動作し、"
+"提案された変更はすべて管理者による承認を待ってフロー内で処理されます。"
+
+#: static/admin/translations-fakejs.js:599
+msgid "Owner"
+msgstr "所有者"
+
+#: static/admin/translations-fakejs.js:600
+#: static/admin/translations-fakejs.js:610
+msgid "Approved by"
+msgstr "承認者"
+
+#: static/admin/translations-fakejs.js:601
+msgid "Decided by"
+msgstr "決定者"
+
+#: static/admin/translations-fakejs.js:603
+msgid "Expand all"
+msgstr "すべて展開"
+
+#: static/admin/translations-fakejs.js:604
+msgid "Collapse all"
+msgstr "すべて折りたたむ"
+
+#: static/admin/translations-fakejs.js:606
+msgid "Skip pending"
+msgstr "スキップ保留中"
+
+#: static/admin/translations-fakejs.js:608
+msgid "Verify and launch"
+msgstr "検証して起動する"
+
+#: static/admin/translations-fakejs.js:609
+msgid "No reason was recorded for this change"
+msgstr "この変更の理由は記録されていません。"
+
+#: static/admin/translations-fakejs.js:611
+#| msgid "Delete"
+msgid "Deletes"
+msgstr "削除"
+
+#: static/admin/translations-fakejs.js:612
+msgid "Field"
+msgstr "分野"
+
+#: static/admin/translations-fakejs.js:613
+msgid "When proposed"
+msgstr "提案されたとき"
+
+#: static/admin/translations-fakejs.js:614
+msgid "When approved"
+msgstr "承認された場合"
+
+#: static/admin/translations-fakejs.js:615
+#| msgid "New user"
+msgid "New value"
+msgstr "新しい価値"
+
+#: static/admin/translations-fakejs.js:616
+#: static/admin/translations-fakejs.js:618
+#: static/admin/translations-fakejs.js:619
+msgid "(empty)"
+msgstr "（空の）"
+
+#: static/admin/translations-fakejs.js:617
+msgid "Known once approved"
+msgstr "承認されると判明する"
+
+#: static/admin/translations-fakejs.js:620
+msgid "This action writes no fields"
+msgstr "このアクションはフィールドを書き込みません"
+
+#: static/admin/translations-fakejs.js:621
+#| msgid "Skip MFA"
+msgid "Skip"
+msgstr "スキップ"
+
+#: static/admin/translations-fakejs.js:622
+msgid "Re-approve"
+msgstr "再承認"
+
+#: static/admin/translations-fakejs.js:623
+#| msgid "provider"
+msgid "Approve"
+msgstr "承認する"
+
+#: static/admin/translations-fakejs.js:625
 msgid "Tunnel servers"
 msgstr "トンネルサーバー"
 
-#: static/admin/translations-fakejs.js:526
+#: static/admin/translations-fakejs.js:626
 msgid "Assign new server to tunnel group"
 msgstr "トンネルグループに新しいサーバーを割り当てる"
 
-#: static/admin/translations-fakejs.js:527
+#: static/admin/translations-fakejs.js:627
 msgid "Tunnel"
 msgstr "トンネル"
 
-#: static/admin/translations-fakejs.js:530
-#: static/admin/translations-fakejs.js:572
-#: static/admin/translations-fakejs.js:679
+#: static/admin/translations-fakejs.js:630
+#: static/admin/translations-fakejs.js:672
+#: static/admin/translations-fakejs.js:786
 msgid "Information for"
 msgstr "情報"
 
-#: static/admin/translations-fakejs.js:533
+#: static/admin/translations-fakejs.js:633
 msgid "Assigned Services"
 msgstr "割り当てられたサービス"
 
-#: static/admin/translations-fakejs.js:536
+#: static/admin/translations-fakejs.js:636
 msgid "Edit user"
 msgstr "ユーザーを編集"
 
-#: static/admin/translations-fakejs.js:537
+#: static/admin/translations-fakejs.js:637
 msgid "New user"
 msgstr "新規ユーザー"
 
-#: static/admin/translations-fakejs.js:538
+#: static/admin/translations-fakejs.js:638
 msgid "Real name"
 msgstr "本名"
 
-#: static/admin/translations-fakejs.js:543
+#: static/admin/translations-fakejs.js:643
 msgid "Role"
 msgstr "役割"
 
-#: static/admin/translations-fakejs.js:544
+#: static/admin/translations-fakejs.js:644
 msgid "Admin"
 msgstr "管理者"
 
-#: static/admin/translations-fakejs.js:545
+#: static/admin/translations-fakejs.js:645
 msgid "Staff member"
 msgstr "スタッフ"
 
-#: static/admin/translations-fakejs.js:551
+#: static/admin/translations-fakejs.js:651
 msgid "API token for"
 msgstr "APIトークン"
 
-#: static/admin/translations-fakejs.js:552
+#: static/admin/translations-fakejs.js:652
 msgid ""
 "Only the first and last characters are shown. Copy the token now: it cannot "
 "be recovered later, only replaced."
@@ -1957,266 +2393,359 @@ msgstr ""
 "最初と最後の文字のみが表示されます。トークンは今すぐコピーしてください。後で"
 "復元することはできず、置き換えることしかできません。"
 
-#: static/admin/translations-fakejs.js:553
+#: static/admin/translations-fakejs.js:653
 msgid "Copy token"
 msgstr "トークンをコピー"
 
-#: static/admin/translations-fakejs.js:555
+#: static/admin/translations-fakejs.js:655
 msgid "Edit group"
 msgstr "グループを編集"
 
-#: static/admin/translations-fakejs.js:556
+#: static/admin/translations-fakejs.js:656
 msgid "New group"
 msgstr "新しいグループ"
 
-#: static/admin/translations-fakejs.js:557
+#: static/admin/translations-fakejs.js:657
 msgid "Meta group name"
 msgstr "メタグループ名"
 
-#: static/admin/translations-fakejs.js:562
+#: static/admin/translations-fakejs.js:662
 msgid "Skip MFA"
 msgstr "MFAをスキップ"
 
-#: static/admin/translations-fakejs.js:565
+#: static/admin/translations-fakejs.js:665
 msgid "Service Pools"
 msgstr "サービスプール"
 
-#: static/admin/translations-fakejs.js:567
+#: static/admin/translations-fakejs.js:667
 msgid "Any group"
 msgstr "あらゆるグループ"
 
-#: static/admin/translations-fakejs.js:568
+#: static/admin/translations-fakejs.js:668
 msgid "All groups"
 msgstr "すべてのグループ"
 
-#: static/admin/translations-fakejs.js:569
+#: static/admin/translations-fakejs.js:669
 msgid "Selected Groups"
 msgstr "選択されたグループ"
 
-#: static/admin/translations-fakejs.js:581
+#: static/admin/translations-fakejs.js:681
+#| msgid "Issue API token"
+msgid "Issue API token for"
+msgstr "APIトークンを発行する"
+
+#: static/admin/translations-fakejs.js:682
+msgid "MCP only"
+msgstr "MCPのみ"
+
+#: static/admin/translations-fakejs.js:683
+msgid ""
+"The token will only reach the MCP endpoint, not the rest of the REST API. "
+"The restriction belongs to the user and stays after revoking or reissuing "
+"the token."
+msgstr ""
+"このトークンはMCPエンドポイントにのみ到達し、REST APIの残りの部分には到達しま"
+"せん。この制限はユーザーに適用され、トークンの失効または再発行後も有効です。"
+
+#: static/admin/translations-fakejs.js:684
+msgid ""
+"Only API tokens are restricted: signing in with user and password is never "
+"affected."
+msgstr ""
+"制限されるのはAPIトークンのみであり、ユーザー名とパスワードによるログインは一"
+"切影響を受けません。"
+
+#: static/admin/translations-fakejs.js:685
+#| msgid "Revoke the API token of this user?"
+msgid "A new API token will be issued for this user."
+msgstr "このユーザーに対して新しいAPIトークンが発行されます。"
+
+#: static/admin/translations-fakejs.js:687
+#| msgid "Issue API token"
+msgid "Issue token"
+msgstr "トークンを発行する"
+
+#: static/admin/translations-fakejs.js:688
 msgid "UDS Administration"
 msgstr "UDS管理"
 
-#: static/admin/translations-fakejs.js:582
+#: static/admin/translations-fakejs.js:689
 msgid "You are accessing UDS Administration as staff member."
 msgstr "スタッフ メンバーとして UDS 管理にアクセスしています。"
 
-#: static/admin/translations-fakejs.js:583
+#: static/admin/translations-fakejs.js:690
 msgid "This means that you have restricted access to elements."
 msgstr "これは、要素へのアクセスが制限されていることを意味します。"
 
-#: static/admin/translations-fakejs.js:584
+#: static/admin/translations-fakejs.js:691
 msgid ""
 "In order to increase your access privileges, please contact your local UDS "
 "administrator."
 msgstr ""
 "アクセス権限を増やすには、ローカルの UDS 管理者に問い合わせてください。"
 
-#: static/admin/translations-fakejs.js:585
+#: static/admin/translations-fakejs.js:692
 msgid "Thank you."
 msgstr "ありがとう。"
 
-#: static/admin/translations-fakejs.js:586
+#: static/admin/translations-fakejs.js:693
 msgid "New group for"
 msgstr "新しいグループ"
 
-#: static/admin/translations-fakejs.js:591
+#: static/admin/translations-fakejs.js:698
 msgid "Edit action for"
 msgstr "編集アクション"
 
-#: static/admin/translations-fakejs.js:592
+#: static/admin/translations-fakejs.js:699
 msgid "New action for"
 msgstr "新しいアクション"
 
-#: static/admin/translations-fakejs.js:593
-#: static/admin/translations-fakejs.js:623
+#: static/admin/translations-fakejs.js:700
+#: static/admin/translations-fakejs.js:730
 msgid "Calendar"
 msgstr "カレンダー"
 
-#: static/admin/translations-fakejs.js:594
+#: static/admin/translations-fakejs.js:701
 msgid "Events offset (minutes)"
 msgstr "イベントオフセット（分）"
 
-#: static/admin/translations-fakejs.js:595
+#: static/admin/translations-fakejs.js:702
 msgid "At the beginning of the interval?"
 msgstr "インターバルの初めに?"
 
-#: static/admin/translations-fakejs.js:596
-#: static/admin/translations-fakejs.js:624
+#: static/admin/translations-fakejs.js:703
+#: static/admin/translations-fakejs.js:731
 msgid "Action"
 msgstr "アクション"
 
-#: static/admin/translations-fakejs.js:597
-#: static/admin/translations-fakejs.js:616
+#: static/admin/translations-fakejs.js:704
+#: static/admin/translations-fakejs.js:723
 msgid "Transport"
 msgstr "輸送"
 
-#: static/admin/translations-fakejs.js:602
+#: static/admin/translations-fakejs.js:709
 msgid "New publication for"
 msgstr "新しい出版物"
 
-#: static/admin/translations-fakejs.js:606
+#: static/admin/translations-fakejs.js:713
 msgid "Changelog of"
 msgstr "変更履歴"
 
-#: static/admin/translations-fakejs.js:608
+#: static/admin/translations-fakejs.js:715
 msgid "Logs of"
 msgstr "ログの"
 
-#: static/admin/translations-fakejs.js:610
+#: static/admin/translations-fakejs.js:717
 msgid "Change owner of assigned service"
 msgstr "割り当てられたサービスの所有者を変更する"
 
-#: static/admin/translations-fakejs.js:615
+#: static/admin/translations-fakejs.js:722
 msgid "New transport for"
 msgstr "新しい交通手段"
 
-#: static/admin/translations-fakejs.js:619
+#: static/admin/translations-fakejs.js:726
 msgid "New access rule for"
 msgstr "新しいアクセスルール"
 
-#: static/admin/translations-fakejs.js:620
+#: static/admin/translations-fakejs.js:727
 msgid "Edit access rule for"
 msgstr "アクセスルールを編集"
 
-#: static/admin/translations-fakejs.js:621
+#: static/admin/translations-fakejs.js:728
 msgid "Default fallback access for"
 msgstr "デフォルトのフォールバックアクセス"
 
-#: static/admin/translations-fakejs.js:622
-#: static/admin/translations-fakejs.js:652
+#: static/admin/translations-fakejs.js:729
+#: static/admin/translations-fakejs.js:759
 msgid "Priority"
 msgstr "優先度"
 
-#: static/admin/translations-fakejs.js:627
+#: static/admin/translations-fakejs.js:734
 msgid "Assign service to user manually"
 msgstr "ユーザーにサービスを手動で割り当てる"
 
-#: static/admin/translations-fakejs.js:635
+#: static/admin/translations-fakejs.js:742
 msgid "Cache"
 msgstr "キャッシュ"
 
-#: static/admin/translations-fakejs.js:639
+#: static/admin/translations-fakejs.js:746
 msgid "Publications"
 msgstr "出版物"
 
-#: static/admin/translations-fakejs.js:640
+#: static/admin/translations-fakejs.js:747
 msgid "Scheduled actions"
 msgstr "スケジュールされたアクション"
 
-#: static/admin/translations-fakejs.js:641
-#: static/admin/translations-fakejs.js:648
+#: static/admin/translations-fakejs.js:748
+#: static/admin/translations-fakejs.js:755
 msgid "Access calendars"
 msgstr "カレンダーにアクセスする"
 
-#: static/admin/translations-fakejs.js:642
+#: static/admin/translations-fakejs.js:749
 msgid "Charts"
 msgstr "チャート"
 
-#: static/admin/translations-fakejs.js:650
+#: static/admin/translations-fakejs.js:757
 msgid "New member pool"
 msgstr "新メンバープール"
 
-#: static/admin/translations-fakejs.js:651
+#: static/admin/translations-fakejs.js:758
 msgid "Edit member pool"
 msgstr "メンバープールを編集"
 
-#: static/admin/translations-fakejs.js:654
+#: static/admin/translations-fakejs.js:761
 msgid "Enabled?"
 msgstr "有効ですか?"
 
-#: static/admin/translations-fakejs.js:657
+#: static/admin/translations-fakejs.js:764
 msgid "Rules"
 msgstr "ルール"
 
-#: static/admin/translations-fakejs.js:658
+#: static/admin/translations-fakejs.js:765
 msgid "Edit rule"
 msgstr "ルールを編集"
 
-#: static/admin/translations-fakejs.js:659
+#: static/admin/translations-fakejs.js:766
 msgid "New rule"
 msgstr "新しいルール"
 
-#: static/admin/translations-fakejs.js:662
+#: static/admin/translations-fakejs.js:769
 msgid "Event"
 msgstr "イベント"
 
-#: static/admin/translations-fakejs.js:663
+#: static/admin/translations-fakejs.js:770
 msgid "Start time"
 msgstr "開始時間"
 
-#: static/admin/translations-fakejs.js:664
+#: static/admin/translations-fakejs.js:771
 msgid "Duration"
 msgstr "間隔"
 
-#: static/admin/translations-fakejs.js:665
+#: static/admin/translations-fakejs.js:772
 msgid "Duration units"
 msgstr "期間単位"
 
-#: static/admin/translations-fakejs.js:667
+#: static/admin/translations-fakejs.js:774
 msgid "Repeat until date"
 msgstr "日付まで繰り返す"
 
-#: static/admin/translations-fakejs.js:668
+#: static/admin/translations-fakejs.js:775
 msgid "Frequency"
 msgstr "頻度"
 
-#: static/admin/translations-fakejs.js:670
+#: static/admin/translations-fakejs.js:777
 msgid "Repeat every"
 msgstr "繰り返し"
 
-#: static/admin/translations-fakejs.js:674
+#: static/admin/translations-fakejs.js:781
 msgid "Account usage"
 msgstr "アカウントの使用状況"
 
-#: static/admin/translations-fakejs.js:680
+#: static/admin/translations-fakejs.js:787
 msgid "Services pools"
 msgstr "サービスプール"
 
-#: static/admin/translations-fakejs.js:683
+#: static/admin/translations-fakejs.js:790
 msgid "Counters"
 msgstr "カウンター"
 
-#: static/admin/translations-fakejs.js:684
+#: static/admin/translations-fakejs.js:791
 msgid "Period"
 msgstr "期間"
 
-#: static/admin/translations-fakejs.js:685
+#: static/admin/translations-fakejs.js:792
 msgid "By groups"
 msgstr "グループ別"
 
-#: static/admin/translations-fakejs.js:686
+#: static/admin/translations-fakejs.js:793
 msgid "Selected servers"
 msgstr "選択されたサーバー"
 
-#: static/admin/translations-fakejs.js:689
+#: static/admin/translations-fakejs.js:796
 msgid "Select all"
 msgstr "すべて選択"
 
-#: static/admin/translations-fakejs.js:690
+#: static/admin/translations-fakejs.js:797
 msgid "Clear"
 msgstr "クリア"
 
-#: static/admin/translations-fakejs.js:691
+#: static/admin/translations-fakejs.js:798
 msgid "Loading..."
 msgstr "読み込み中…"
 
-#: static/admin/translations-fakejs.js:692
+#: static/admin/translations-fakejs.js:799
 msgid "Select at least one server"
 msgstr "少なくとも1つのサーバーを選択してください"
 
-#: static/admin/translations-fakejs.js:693
+#: static/admin/translations-fakejs.js:800
 msgid "No statistics available for the selected servers"
 msgstr "選択されたサーバーに関する統計情報はありません"
 
-#: static/admin/translations-fakejs.js:696
+#: static/admin/translations-fakejs.js:801
+#| msgid "Loading data..."
+msgid "Loading forecast..."
+msgstr "天気予報を読み込んでいます..."
+
+#: static/admin/translations-fakejs.js:802
+msgid ""
+"Server forecasts are being computed, this can take a moment on first load"
+msgstr ""
+"サーバーの予測を計算しています。初回読み込み時には少し時間がかかる場合があり"
+"ます。"
+
+#: static/admin/translations-fakejs.js:803
+#| msgid "Edit server"
+msgid "Worst server"
+msgstr "最悪のサーバー"
+
+#: static/admin/translations-fakejs.js:804
+#| msgid "Servers"
+msgid "Server"
+msgstr "サーバ"
+
+#: static/admin/translations-fakejs.js:805
+#: static/admin/translations-fakejs.js:816
+msgid "Forecast"
+msgstr "予報"
+
+#: static/admin/translations-fakejs.js:806
+#| msgid "Saturation %"
+msgid "Saturates in"
+msgstr "飽和する"
+
+#: static/admin/translations-fakejs.js:807
+#| msgid "Remove server from server group"
+msgid "No servers in this group"
+msgstr "このグループにはサーバーがありません"
+
+#: static/admin/translations-fakejs.js:808
+#| msgid "Saturation %"
+msgid "days to saturation"
+msgstr "飽和までの日数"
+
+#: static/admin/translations-fakejs.js:809
+#| msgid "Duration units"
+msgid "No saturation in sight"
+msgstr "飽和状態は見当たらない"
+
+#: static/admin/translations-fakejs.js:810
+msgid "Current"
+msgstr "現在"
+
+#: static/admin/translations-fakejs.js:811
+#| msgid "days"
+msgid "days left"
+msgstr "残り日数"
+
+#: static/admin/translations-fakejs.js:812
+msgid "Not enough history for this server"
+msgstr "このサーバーの履歴が不足しています"
+
+#: static/admin/translations-fakejs.js:817
 msgid "Statistics"
 msgstr "統計"
 
 #: static/modern/main.js:2106 static/modern/translations-fakejs.js:9
-#| msgid ""
-#| "It seems that you don't have UDS Client installed. Please, install it "
-#| "from here:"
 msgid ""
 "It seems that you don't have UDS Launcher installed. Please, install it from "
 "here:"
@@ -2225,7 +2754,6 @@ msgstr ""
 "ださい。"
 
 #: static/modern/main.js:2107 static/modern/translations-fakejs.js:10
-#| msgid "UDS Client Download"
 msgid "UDS Launcher Download"
 msgstr "UDSランチャーのダウンロード"
 
@@ -2244,15 +2772,12 @@ msgstr "サービス開始までお待ちください。"
 
 #: static/modern/translations-fakejs.js:6
 #: static/modern/translations-fakejs.js:14
-#| msgid ""
-#| "Remember that you will need the UDS client on your platform to access the "
-#| "service."
 msgid ""
 "Remember that you will need the UDS launcher on your platform to access the "
 "service."
 msgstr ""
-"サービスにアクセスするには、お使いのプラットフォームにUDSランチャーが"
-"インストールされている必要があることを覚えておいてください。"
+"サービスにアクセスするには、お使いのプラットフォームにUDSランチャーがインス"
+"トールされている必要があることを覚えておいてください。"
 
 #: static/modern/translations-fakejs.js:7
 #: static/modern/translations-fakejs.js:11
@@ -2260,12 +2785,10 @@ msgid "Service ready"
 msgstr "サービス準備完了"
 
 #: static/modern/translations-fakejs.js:8
-#| msgid "UDS Client not launching"
 msgid "UDS Launcher not launching"
 msgstr "UDSランチャーが起動しない"
 
 #: static/modern/translations-fakejs.js:12
-#| msgid "Launching UDS Client...</br>Please wait."
 msgid "Launching UDS Launcher...</br>Please wait."
 msgstr "UDS Launcher を起動しています...しばらくお待ちください。"
 
@@ -2413,7 +2936,6 @@ msgstr "{{ api.isDarkTheme ? 'Light theme' : 'Dark theme' }}"
 #: static/modern/translations-fakejs.js:60
 #: static/modern/translations-fakejs.js:62
 #: static/modern/translations-fakejs.js:95
-#| msgid "Launcher"
 msgid "UDS Launcher"
 msgstr "UDSランチャー"
 
@@ -2425,10 +2947,6 @@ msgstr "について"
 #: static/modern/translations-fakejs.js:64
 msgid "Release service"
 msgstr "リリースサービス"
-
-#: static/modern/translations-fakejs.js:65
-msgid "Reset service"
-msgstr "サービスをリセットする"
 
 #: static/modern/translations-fakejs.js:67
 msgid "Actions"
@@ -2484,9 +3002,6 @@ msgid "To relaunch service, you will have to do it from origin."
 msgstr "サービスを再起動するには、元の状態から実行する必要があります。"
 
 #: static/modern/translations-fakejs.js:90
-#| msgid ""
-#| "If the service does not launchs automatically, probably you dont have the "
-#| "UDS Client installed"
 msgid ""
 "If the service does not launchs automatically, probably you dont have the "
 "UDS Launcher installed"
@@ -2499,7 +3014,6 @@ msgid "You can obtain it from the"
 msgstr "入手するには"
 
 #: static/modern/translations-fakejs.js:92
-#| msgid "UDS Client download page"
 msgid "UDS Launcher download page"
 msgstr "UDS Launcherのダウンロードページ"
 
@@ -2512,7 +3026,6 @@ msgid "Return"
 msgstr "戻る"
 
 #: static/modern/translations-fakejs.js:96
-#| msgid "Download UDS client for your platform"
 msgid "Download UDS launcher for your platform"
 msgstr "お使いのプラットフォーム用のUDSランチャーをダウンロードしてください。"
 
