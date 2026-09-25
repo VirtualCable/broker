@@ -48,6 +48,19 @@ from .provider import Notifier as NotificationProviderModule
 logger = logging.getLogger(__name__)
 
 
+def reaches_provider(
+    provider_level: int,
+    accepts: frozenset[NotificationGroup],
+    group: NotificationGroup,
+    level: int,
+) -> bool:
+    # Only logs have a severity. Events (and any group added later) are notified
+    # as LogLevel.OTHER, so the minimum level of a notifier must not filter them
+    if group not in accepts:
+        return False
+    return group is not NotificationGroup.LOG or provider_level <= level
+
+
 # Note that this thread will be running on the scheduler process
 class MessageProcessorThread(BaseThread):
     _keep_running: bool = True
@@ -147,7 +160,9 @@ class MessageProcessorThread(BaseThread):
                     # )
 
                 if notify:
-                    for p in (i[1] for i in self.providers if i[0] <= n.level and n_group in i[1].accepts):
+                    for p in (
+                        i[1] for i in self.providers if reaches_provider(i[0], i[1].accepts, n_group, n.level)
+                    ):
                         # if we are asked to stop, we don't try to send anymore
                         if not self._keep_running:
                             break
