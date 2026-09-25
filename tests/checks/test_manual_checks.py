@@ -91,10 +91,13 @@ class CheckKindFilterTest(UDSTransactionTestCase):
             )
         self.assertEqual(results, [])
 
-    def test_regular_checks_are_not_manual(self) -> None:
-        # Every registered production check is automatic for now
-        for _check_id, check_class in runner_module._collect_checks():
-            self.assertFalse(issubclass(check_class, ManualCheck), check_class.id)
+    def test_only_the_known_production_checks_are_manual(self) -> None:
+        manual = {
+            check_id
+            for check_id, check_class in runner_module._collect_checks()
+            if issubclass(check_class, ManualCheck)
+        }
+        self.assertEqual(manual, {"authenticators-health", "duplicate-users-in-authenticator"})
 
     def test_has_health_check_detects_real_implementations(self) -> None:
         from uds.core.module import Module

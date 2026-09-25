@@ -196,6 +196,13 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         )
         self.assertIn("db-app-time-mismatch", {check["id"] for check in content["checks"]})
 
+    def test_get_checks_manual_exposes_the_manual_checks(self) -> None:
+        content = json.loads(self._result_text(self._call("get_checks", {"kind": "manual"})))
+        self.assertEqual(
+            {check["id"] for check in content["checks"]},
+            {"authenticators-health", "duplicate-users-in-authenticator"},
+        )
+
     def test_get_config_as_admin(self) -> None:
         body = self._call("get_config", {})
         content = json.loads(self._result_text(body))
