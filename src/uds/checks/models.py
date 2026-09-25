@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 
 Checks derived from live database state (models).
 
@@ -305,4 +306,50 @@ class RestrainedServicePoolsCheck(Check):
             types.checks.CheckSeverity.INFO,
             True,
             _("No service pools are currently restrained."),
+        )
+
+
+class AuthenticatorSslVerificationDisabledCheck(Check):
+    """Authenticators that talk TLS without verifying the certificate of the other end."""
+
+    id: typing.ClassVar[str] = "authenticator-ssl-verification-disabled"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        # Imported here to avoid loading authenticator modules (and their optional
+        # dependencies) unless this check actually runs.
+        from uds.auths.RegexLdap import RegexLdap
+        from uds.auths.SAML import SAMLAuthenticator
+        from uds.auths.SimpleLDAP import SimpleLDAPAuthenticator
+
+        unverified: list[str] = []
+        for authenticator in models.Authenticator.objects.all():
+            auth_type = authenticator.get_type()
+            if auth_type in (SimpleLDAPAuthenticator, RegexLdap):
+                ldap = typing.cast("SimpleLDAPAuthenticator | RegexLdap", authenticator.get_instance())
+                if ldap.use_ssl.as_bool() and not ldap.verify_ssl.as_bool():
+                    unverified.append(authenticator.name)
+            elif auth_type is SAMLAuthenticator:
+                saml = typing.cast("SAMLAuthenticator", authenticator.get_instance())
+                if (
+                    saml.idp_metadata.value.startswith("https://")
+                    and not saml.check_https_certificate.as_bool()
+                ):
+                    unverified.append(authenticator.name)
+
+        if unverified:
+            return (
+                types.checks.CheckSeverity.MEDIUM,
+                False,
+                _(
+                    "TLS certificate verification is disabled on: {names}."
+                    " Anyone able to intercept the traffic can impersonate the directory or the identity provider."
+                    " Enable the verification and install the CA if it is an internal one."
+                ).format(names=", ".join(unverified)),
+            )
+        return (
+            types.checks.CheckSeverity.MEDIUM,
+            True,
+            _("All authenticators using TLS verify the certificate of the other end."),
         )

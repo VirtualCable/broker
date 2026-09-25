@@ -82,6 +82,17 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         # HEALTH family (deferred_deletion.py, publications.py)
         "deferred-deletion-stuck",
         "stuck-publications",
+        # Checks from support tickets (models.py, user_services.py, providers.py,
+        # database.py, network.py, osmanagers.py)
+        "authenticator-ssl-verification-disabled",
+        "user-services-stuck-preparing",
+        "stale-user-services",
+        "provider-errors-24h",
+        "provider-in-maintenance-mode",
+        "db-app-time-mismatch",
+        "client-ip-is-proxy-address",
+        "actor-ips-blocked-24h",
+        "domain-join-failures-24h",
     )
 )
 
@@ -879,6 +890,14 @@ class ChecksTest(UDSTransactionTestCase):
                 "restrained-service-pools",
                 "deferred-deletion-stuck",
                 "stuck-publications",
+                "user-services-stuck-preparing",
+                "stale-user-services",
+                "provider-errors-24h",
+                "provider-in-maintenance-mode",
+                "db-app-time-mismatch",
+                "client-ip-is-proxy-address",
+                "actor-ips-blocked-24h",
+                "domain-join-failures-24h",
             },
         )
         self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)

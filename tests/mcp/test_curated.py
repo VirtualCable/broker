@@ -185,6 +185,17 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         content = json.loads(self._result_text(body))
         self.assertTrue(all(check["category"] == "health" for check in content["checks"]))
 
+    def test_get_checks_exposes_every_automatic_check(self) -> None:
+        from uds.core import types
+        from uds.core.checks import run_checks
+
+        content = json.loads(self._result_text(self._call("get_checks", {})))
+        self.assertEqual(
+            {check["id"] for check in content["checks"]},
+            {result.id for result in run_checks(types.checks.CheckKind.AUTOMATIC)},
+        )
+        self.assertIn("db-app-time-mismatch", {check["id"] for check in content["checks"]})
+
     def test_get_config_as_admin(self) -> None:
         body = self._call("get_config", {})
         content = json.loads(self._result_text(body))
