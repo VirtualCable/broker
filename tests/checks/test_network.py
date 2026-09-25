@@ -81,6 +81,7 @@ class NetworkChecksTest(UDSTransactionTestCase):
         result = self._run_check("client-ip-is-proxy-address")
         self.assertFalse(result.ok, result.message)
         self.assertIn("10.0.0.1", result.message)
+        self.assertEqual(result.details[0].split(":")[0], "10.0.0.1")
 
     def test_proxy_address_passes_with_distinct_client_ips(self) -> None:
         for i in range(20):

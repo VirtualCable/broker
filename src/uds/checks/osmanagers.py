@@ -44,7 +44,7 @@ from uds import models
 from uds.core import types
 from uds.core.checks import Check, CheckOutcome
 
-from .logs import _window
+from .logs import window
 
 _MAX_EXAMPLES: typing.Final[int] = 5
 
@@ -74,7 +74,7 @@ class DomainJoinFailures24hCheck(Check):
     def run(self) -> CheckOutcome:
         failed_ids = models.Log.objects.filter(
             functools.reduce(operator.or_, (Q(data__icontains=marker) for marker in _DOMAIN_JOIN_MARKERS)),
-            created__gte=_window(),
+            created__gte=window(),
             owner_type=types.log.LogObjectType.USERSERVICE,
             source=types.log.LogSource.ACTOR,
             level__gte=types.log.LogLevel.ERROR,
