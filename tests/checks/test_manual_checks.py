@@ -41,6 +41,12 @@ from uds.core.checks import runner as runner_module
 from ..utils.test import UDSTransactionTestCase
 
 
+_PRODUCTION_MANUAL_CHECKS: typing.Final[set[str]] = {
+    "authenticators-health",
+    "duplicate-users-in-authenticator",
+}
+
+
 class DummyAutomaticCheck(AutomaticCheck):
     id: typing.ClassVar[str] = "dummy-automatic"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
@@ -92,10 +98,19 @@ class CheckKindFilterTest(UDSTransactionTestCase):
         self.assertEqual(results, [])
 
     def test_regular_checks_are_automatic(self) -> None:
-        # Every registered production check is automatic for now
-        for _check_id, check_class in runner_module._collect_checks():
+        for check_id, check_class in runner_module._collect_checks():
+            if check_id in _PRODUCTION_MANUAL_CHECKS:
+                continue
             self.assertTrue(issubclass(check_class, AutomaticCheck), check_class.id)
             self.assertFalse(issubclass(check_class, ManualCheck), check_class.id)
+
+    def test_only_the_known_production_checks_are_manual(self) -> None:
+        manual = {
+            check_id
+            for check_id, check_class in runner_module._collect_checks()
+            if issubclass(check_class, ManualCheck)
+        }
+        self.assertEqual(manual, _PRODUCTION_MANUAL_CHECKS)
 
     def test_factory_rejects_checks_without_kind_marker(self) -> None:
         from uds.core.checks import ChecksFactory

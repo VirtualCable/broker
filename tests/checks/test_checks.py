@@ -87,6 +87,17 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "cluster-nodes-timezones",
         "cluster-node-clock-drift",
         "db-clock-spread",
+        # Checks from support tickets (models.py, user_services.py, providers.py,
+        # database.py, network.py, osmanagers.py)
+        "authenticator-ssl-verification-disabled",
+        "user-services-stuck-preparing",
+        "stale-user-services",
+        "provider-errors-24h",
+        "provider-in-maintenance-mode",
+        "db-app-time-mismatch",
+        "client-ip-is-proxy-address",
+        "actor-ips-blocked-24h",
+        "domain-join-failures-24h",
     )
 )
 
@@ -960,6 +971,14 @@ class ChecksTest(UDSTransactionTestCase):
                 "cluster-nodes-timezones",
                 "cluster-node-clock-drift",
                 "db-clock-spread",
+                "user-services-stuck-preparing",
+                "stale-user-services",
+                "provider-errors-24h",
+                "provider-in-maintenance-mode",
+                "db-app-time-mismatch",
+                "client-ip-is-proxy-address",
+                "actor-ips-blocked-24h",
+                "domain-join-failures-24h",
             },
         )
         self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)

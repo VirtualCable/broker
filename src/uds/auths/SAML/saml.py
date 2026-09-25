@@ -27,8 +27,10 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+import base64
 import collections.abc
 import datetime
 import html
@@ -40,6 +42,7 @@ from urllib.parse import urlparse
 
 import requests
 
+from cryptography import x509
 from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -65,6 +68,9 @@ if typing.TYPE_CHECKING:
 
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+# Warn this long before the IdP signing certificate expires
+CERTIFICATE_WARNING_DAYS: typing.Final[int] = 30
 
 
 def CACHING_KEY_FNC(auth: "SAMLAuthenticator") -> str:
@@ -508,6 +514,59 @@ class SAMLAuthenticator(auths.Authenticator):
             val = self.idp_metadata.value
 
         return OneLogin_Saml2_IdPMetadataParser.parse(val)  # pyright: ignore reportUnknownVariableType
+
+    @typing.override
+    def health_check(self) -> list[types.checks.CheckOutcome]:
+        try:
+            idp: dict[str, typing.Any] = self.get_idp_metadata_dict()["idp"]
+        except Exception as e:
+            return [
+                (
+                    types.checks.CheckSeverity.MEDIUM,
+                    False,
+                    gettext("Can't read the IdP metadata: {error}").format(error=e),
+                )
+            ]
+
+        certificates: list[str] = idp.get("x509certMulti", {}).get("signing", []) or [
+            cert for cert in [idp.get("x509cert", "")] if cert
+        ]
+        now = datetime.datetime.now(datetime.UTC)
+        outcomes: list[types.checks.CheckOutcome] = []
+        for certificate in certificates:
+            try:
+                expires = x509.load_der_x509_certificate(base64.b64decode(certificate)).not_valid_after_utc
+            except Exception as e:
+                outcomes.append(
+                    (
+                        types.checks.CheckSeverity.MEDIUM,
+                        False,
+                        gettext("The IdP signing certificate can't be read: {error}").format(error=e),
+                    )
+                )
+                continue
+            if expires < now:
+                outcomes.append(
+                    (
+                        types.checks.CheckSeverity.HIGH,
+                        False,
+                        gettext("The IdP signing certificate expired on {date}: logins will fail.").format(
+                            date=expires.date()
+                        ),
+                    )
+                )
+            elif expires < now + datetime.timedelta(days=CERTIFICATE_WARNING_DAYS):
+                outcomes.append(
+                    (
+                        types.checks.CheckSeverity.HIGH,
+                        False,
+                        gettext(
+                            "The IdP signing certificate expires on {date}: update the IdP metadata"
+                            " when the new certificate is published."
+                        ).format(date=expires.date()),
+                    )
+                )
+        return outcomes
 
     def build_onelogin_settings(self) -> dict[str, typing.Any]:
         return {
