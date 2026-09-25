@@ -1,8 +1,10 @@
 import datetime
 import logging
 import socket
+import time
 import typing
 
+from django.conf import settings
 from django.db import OperationalError
 from django.db import transaction
 from django.utils import timezone
@@ -25,8 +27,17 @@ class UDSClusterNode(typing.NamedTuple):
     ip: str
     last_seen: datetime.datetime
     mac: str = consts.NULL_MAC
+    # IANA timezone of the node. Nodes that have not reported it yet (rows
+    # stored by older versions, or nodes down since the upgrade) are assumed
+    # to share the timezone of the node doing the lookup: any active node
+    # refreshes its own row within minutes.
+    timezone: str = ""
+    # Offset in seconds between the node local clock and the database clock,
+    # measured by the node itself when storing its info. None if the node has
+    # not reported a measurement yet.
+    db_offset: float | None = None
 
-    def as_dict(self) -> dict[str, str]:
+    def as_dict(self) -> dict[str, str | float | None]:
         """
         Returns a dictionary representation of the UDSClusterNode.
         """
@@ -35,6 +46,8 @@ class UDSClusterNode(typing.NamedTuple):
             "ip": self.ip,
             "last_seen": self.last_seen.isoformat(),
             "mac": self.mac,
+            "timezone": self.timezone,
+            "db_offset": self.db_offset,
         }
 
     def __str__(self) -> str:
@@ -52,21 +65,30 @@ def store_cluster_info() -> None:
 
     try:
         hostname = socket.getfqdn() + "|" + ip
-        date = sql_now().isoformat()
+        date = sql_now()
         with transaction.atomic():
             current_host_property = (
                 models.Properties.objects.select_for_update()
                 .filter(owner_id="cluster", owner_type="cluster", key=hostname)
                 .first()
             )
+            value: dict[str, str | float] = {
+                "last_seen": date.isoformat(),
+                "mac": mac,
+                "timezone": settings.TIME_ZONE,
+                # Offset between this node local clock and the database clock,
+                # in seconds. Measured here, while storing, so consumers can
+                # detect nodes with unsynchronized clocks later.
+                "db_offset": round(time.time() - date.timestamp(), 3),
+            }
             if current_host_property:
                 # Update existing property
-                current_host_property.value = {"last_seen": date, "mac": mac}
+                current_host_property.value = value
                 current_host_property.save()
             else:
                 # Create new property
                 models.Properties.objects.create(
-                    owner_id="cluster", owner_type="cluster", key=hostname, value={"last_seen": date}
+                    owner_id="cluster", owner_type="cluster", key=hostname, value=value
                 )
 
     except OperationalError as e:
@@ -81,16 +103,24 @@ def enumerate_cluster_nodes() -> list[UDSClusterNode]:
     """
     try:
         properties = models.Properties.objects.filter(owner_type="cluster")
-        return [
-            UDSClusterNode(
-                hostname=prop.key.split("|")[0],
-                ip=prop.key.split("|")[1],
-                last_seen=timezone.make_aware(datetime.datetime.fromisoformat(prop.value["last_seen"])),
-                mac=prop.value.get("mac", consts.NULL_MAC),
+        nodes: list[UDSClusterNode] = []
+        for prop in properties:
+            if "last_seen" not in prop.value or "|" not in prop.key:
+                continue
+            last_seen = datetime.datetime.fromisoformat(prop.value["last_seen"])
+            if timezone.is_naive(last_seen):
+                last_seen = timezone.make_aware(last_seen)
+            nodes.append(
+                UDSClusterNode(
+                    hostname=prop.key.split("|")[0],
+                    ip=prop.key.split("|")[1],
+                    last_seen=last_seen,
+                    mac=prop.value.get("mac", consts.NULL_MAC),
+                    timezone=prop.value.get("timezone", settings.TIME_ZONE),
+                    db_offset=prop.value.get("db_offset"),
+                )
             )
-            for prop in properties
-            if "last_seen" in prop.value and "|" in prop.key
-        ]
+        return nodes
     except OperationalError as e:
         # If we cannot connect to the database, we log the error and return an empty list
         logger.error("Could not enumerate cluster nodes: %s", e)

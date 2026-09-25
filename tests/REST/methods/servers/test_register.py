@@ -140,6 +140,42 @@ class ServerRegisterTest(rest.test.RESTTestCase):
             self.assertEqual(server.mac, self._data2["mac"])
             # Rest of fields should be the same
 
+    def test_register_with_optional_timezone(self) -> None:
+        """
+        Test the optional timezone field: legacy clients (no timezone) must
+        keep working, and servers reporting it get it stored as a property.
+        """
+        response: UDSHttpResponse
+
+        self._data["hostname"] = random_hostname()
+        self._data["ip"] = random_ip_v4()
+        self._data["type"] = types.servers.ServerType.SERVER.value
+        self._data["os"] = types.os.KnownOS.LINUX.value[0]
+
+        # Without timezone: registered, but no timezone stored (legacy path)
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        token = response.json()["result"]
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(token))
+        self.assertIsNone(server.properties.get("timezone"))
+
+        # Re-register with a timezone: same row (token rotated), property stored
+        self._data["timezone"] = "Europe/Madrid"
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        token2 = response.json()["result"]
+        self.assertNotEqual(token, token2)
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(token2))
+        self.assertEqual(server.properties.get("timezone"), "Europe/Madrid")
+
     def test_invalid_register(self) -> None:
         def _do_test(where: str) -> None:
             response = self.client.rest_post(

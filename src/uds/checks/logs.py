@@ -57,6 +57,15 @@ _C1_MEDIUM_THRESHOLD: typing.Final[int] = 10
 # Threshold for ``internal-errors-24h`` (count of global ERROR records).
 _C4_MEDIUM_THRESHOLD: typing.Final[int] = 50
 
+# Thresholds for ``clock-skew-24h`` (count of scheduler warnings about a job
+# whose last_execution was in the future). Any occurrence already means some
+# clock was out of sync; >= 20 in 24h means the skew is continuous.
+_C5_LOW_THRESHOLD: typing.Final[int] = 1
+_C5_HIGH_THRESHOLD: typing.Final[int] = 20
+
+# Maximum affected job names listed in the clock-skew details
+_MAX_EXAMPLES: typing.Final[int] = 5
+
 # Threshold for ``brute-force-by-ip``: >= this many failed logins from a
 # single source IP in the last 24h is HIGH-fail (likely credential stuffing).
 _C2_PER_IP_THRESHOLD: typing.Final[int] = 20
@@ -67,6 +76,13 @@ _C2_PER_IP_THRESHOLD: typing.Final[int] = 20
 # ``src/uds/core/auths/auth.py:532``.
 LOGIN_RX: typing.Final[re.Pattern[str]] = re.compile(
     r"user (?P<user>.+?) has (?P<message>.+?) from (?P<ip>\S+) where os is (?P<os>.+)"
+)
+
+# Same line the scheduler writes (``uds.core.jobs.scheduler.execute_job``) when
+# it picks up a job whose last_execution is in the future: a symptom of clock
+# skew between broker nodes or database nodes.
+CLOCK_SKEW_RX: typing.Final[re.Pattern[str]] = re.compile(
+    r"Executed (?P<job>.+?) due to last_execution being in the future"
 )
 
 
@@ -241,4 +257,59 @@ class InternalErrors24hCheck(AutomaticCheck):
             types.checks.CheckSeverity.INFO,
             True,
             _("{count} internal ERROR entries in the last 24h (within normal range).").format(count=count),
+        )
+
+
+class ClockSkew24hCheck(AutomaticCheck):
+    """Scheduler warnings about a job with a future last_execution (clock skew)."""
+
+    id: typing.ClassVar[str] = "clock-skew-24h"
+    # Clock skew is a system health signal: scheduling uses the database clock,
+    # so these warnings mean some clock (broker node or database node) drifted
+    # and the scheduler had to compensate
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Counts the scheduler warnings of jobs executed because their last_execution was in the future "
+        "in the last 24 hours. It means some clock (a broker node or a database node) was out of sync. "
+        "Any occurrence is worth investigating; the cluster checks (clock drift, timezones, db clock spread)"
+        " help locate the source."
+    )
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        # The scheduler writes this warning (uds.core.jobs.scheduler.execute_job)
+        # whenever it picks up a job whose last_execution is ahead of the
+        # database clock; UDSLogHandler mirrors it here as a global WARNING row
+        qs = Log.objects.filter(
+            created__gte=window(),
+            owner_id=0,
+            owner_type=-1,
+            level=types.log.LogLevel.WARNING,
+            data__icontains="last_execution being in the future",
+        )
+        count = qs.count()
+        if count >= _C5_LOW_THRESHOLD:
+            rows = list(qs.order_by("-created").values_list("data", flat=True)[:100])
+            # Most recent unique affected job names, capped for the details
+            jobs = list(
+                dict.fromkeys(match.group("job") for row in rows if (match := CLOCK_SKEW_RX.search(row or "")))
+            )[:_MAX_EXAMPLES]
+            severity = (
+                types.checks.CheckSeverity.HIGH
+                if count >= _C5_HIGH_THRESHOLD
+                else types.checks.CheckSeverity.LOW
+            )
+            return (
+                severity,
+                False,
+                _(
+                    "Scheduler executed {count} job(s) whose last_execution was in the future in the last 24h:"
+                    " clocks were (or are) out of sync between broker or database nodes. Affected jobs: {jobs}."
+                ).format(count=count, jobs=", ".join(jobs) if jobs else _("unknown")),
+                jobs,
+            )
+        return (
+            types.checks.CheckSeverity.INFO,
+            True,
+            _("No scheduler clock-skew warnings in the last 24h."),
         )

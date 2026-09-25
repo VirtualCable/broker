@@ -652,7 +652,9 @@ class GlobalConfig:
         "maxDeferredDeletionTime",
         "86400",
         type=Config.FieldType.NUMERIC,
-        help=_("Max time (seconds) an element may remain in deferred deletion queues before being flagged as stuck"),
+        help=_(
+            "Max time (seconds) an element may remain in deferred deletion queues before being flagged as stuck"
+        ),
     )
     # Max time a service pool publication may remain in a transitional state
     # (preparing, removing, canceling) before the self-assessment check flags
@@ -665,6 +667,25 @@ class GlobalConfig:
             "Max time (seconds) a publication may remain in a transitional state (preparing, removing, canceling)"
             " before being flagged as stuck"
         ),
+    )
+    # Max offset (seconds) between a cluster node local clock and the database
+    # clock before the self-assessment check flags the node. Scheduling always
+    # uses the database clock; this is an operational warning about nodes whose
+    # local clock (used for row stamps, tokens, logs...) has drifted.
+    MAX_CLOCK_DRIFT: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
+        "maxClockDrift",
+        "60",
+        type=Config.FieldType.NUMERIC,
+        help=_("Max offset (seconds) between a node local clock and the database clock before being flagged"),
+    )
+    # Max spread (seconds) between raw database clock samples taken through
+    # consecutive connections. With a load balanced SQL cluster, a big spread
+    # means the database nodes themselves are not time synchronized.
+    MAX_DB_CLOCK_SPREAD: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
+        "maxDbClockSpread",
+        "5",
+        type=Config.FieldType.NUMERIC,
+        help=_("Max spread (seconds) between database clock samples before flagging the database cluster"),
     )
     # Maximum logs per every log-capable administration element
     INDIVIDIAL_LOG_MAX_ELEMENTS: Config.Value = Config.section(Config.SectionType.GLOBAL).value(

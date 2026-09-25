@@ -77,11 +77,16 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "brute-force-by-ip",
         "temporarily-blocked-logins",
         "internal-errors-24h",
+        "clock-skew-24h",
         # E-family (webhook_queue.py)
         "webhook-queue-size",
         # HEALTH family (deferred_deletion.py, publications.py)
         "deferred-deletion-stuck",
         "stuck-publications",
+        # HEALTH family (cluster.py)
+        "cluster-nodes-timezones",
+        "cluster-node-clock-drift",
+        "db-clock-spread",
     )
 )
 
@@ -500,6 +505,78 @@ class ChecksTest(UDSTransactionTestCase):
             Log.objects.filter(owner_id=0, owner_type=-1).delete()
 
     # ------------------------------------------------------------------
+    # Check: clock-skew-24h (logs)
+    # ------------------------------------------------------------------
+    def _create_clock_skew_logs(self, count: int, *, job: str = "_TestJob_1") -> None:
+        from uds.models import Log
+
+        now = timezone.now()
+        for i in range(count):
+            Log.objects.create(
+                owner_id=0,
+                owner_type=-1,
+                created=now - datetime.timedelta(minutes=i + 1),
+                source=types.log.LogSource.LOGS,
+                level=types.log.LogLevel.WARNING,
+                name="uds.log",
+                data=(
+                    f"Executed {job} due to last_execution being in the future!: "
+                    "2026-01-01 00:03:00+00:00 > 2026-01-01 00:00:00+00:00 + 3"
+                ),
+            )
+
+    def test_clock_skew_24h_passes_with_zero(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_id=0, owner_type=-1).delete()
+        result = self._run_check("clock-skew-24h")
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
+
+    def test_clock_skew_24h_fails_low_with_single_warning(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_id=0, owner_type=-1).delete()
+        self._create_clock_skew_logs(1, job="_TestJob_skew")
+        try:
+            result = self._run_check("clock-skew-24h")
+            self.assertFalse(result.ok, result.message)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.LOW)
+            self.assertIn("_TestJob_skew", result.message)
+            self.assertEqual(result.details, ("_TestJob_skew",))
+        finally:
+            Log.objects.filter(owner_id=0, owner_type=-1).delete()
+
+    def test_clock_skew_24h_fails_high_with_continuous_skew(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_id=0, owner_type=-1).delete()
+        self._create_clock_skew_logs(20, job="_TestJob_storm")
+        try:
+            result = self._run_check("clock-skew-24h")
+            self.assertFalse(result.ok, result.message)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
+        finally:
+            Log.objects.filter(owner_id=0, owner_type=-1).delete()
+
+    def test_clock_skew_24h_ignores_old_warnings(self) -> None:
+        from uds.models import Log
+
+        Log.objects.filter(owner_id=0, owner_type=-1).delete()
+        # 25h old: outside the window, must not count
+        Log.objects.create(
+            owner_id=0,
+            owner_type=-1,
+            created=timezone.now() - datetime.timedelta(hours=25),
+            source=types.log.LogSource.LOGS,
+            level=types.log.LogLevel.WARNING,
+            name="uds.log",
+            data="Executed _TestJob_old due to last_execution being in the future!",
+        )
+        result = self._run_check("clock-skew-24h")
+        self.assertTrue(result.ok, result.message)
+
+    # ------------------------------------------------------------------
     # Check: csrf-middleware-disabled (settings)
     # ------------------------------------------------------------------
     def test_csrf_middleware_disabled_detected(self) -> None:
@@ -876,9 +953,13 @@ class ChecksTest(UDSTransactionTestCase):
             {
                 "webhook-queue-size",
                 "internal-errors-24h",
+                "clock-skew-24h",
                 "restrained-service-pools",
                 "deferred-deletion-stuck",
                 "stuck-publications",
+                "cluster-nodes-timezones",
+                "cluster-node-clock-drift",
+                "db-clock-spread",
             },
         )
         self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)

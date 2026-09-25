@@ -66,6 +66,10 @@ class ServerRegisterBase(Handler):
         os = self._params.get("os", types.os.KnownOS.UNKNOWN.os_name()).lower()
         certificate = self._params.get("certificate", "")
         version = self._params.get("version", "")
+        # Optional IANA timezone of the server, used for informational
+        # purposes (inventories, clock consistency checks...). Servers not
+        # reporting it simply have no timezone stored.
+        timezone_param = self._params.get("timezone", "")
 
         type = self._params["type"]  # MUST be present
         hostname = self._params["hostname"]  # MUST be present
@@ -77,6 +81,8 @@ class ServerRegisterBase(Handler):
                 raise ValueError(_("Invalid type. Type must be an integer."))
             if len(subtype) > 16:
                 raise ValueError(_("Invalid subtype. Max length is 16."))
+            if timezone_param and len(timezone_param) > 64:
+                raise ValueError(_("Invalid timezone. Max length is 64."))
             if len(os) > 16:
                 raise ValueError(_("Invalid os. Max length is 16."))
             if data and len(data) > 2048:
@@ -120,12 +126,17 @@ class ServerRegisterBase(Handler):
             server_token.token_hash = models.Server.hash_token(raw_token)
             server_token.save()
             server_token.properties["token_hint"] = models.Server.token_hint(raw_token)
+            # Only stored when provided; absence is treated as "unknown timezone"
+            if timezone_param:
+                server_token.properties["timezone"] = timezone_param
         except Exception:
             try:
                 raw_token = models.Server.create_token()
                 server_token = models.Server.objects.create(
                     register_username=self._user.pretty_name,
-                    register_ip=self._request.ip.split("%")[0],  # Ensure we do not store zone if IPv6 and present
+                    register_ip=self._request.ip.split("%")[
+                        0
+                    ],  # Ensure we do not store zone if IPv6 and present
                     ip=ip,
                     listen_port=port,
                     hostname=self._params["hostname"],
@@ -134,13 +145,18 @@ class ServerRegisterBase(Handler):
                     stamp=now,
                     type=self._params["type"],
                     subtype=self._params.get("subtype", ""),  # Optional
-                    os_type=typing.cast(str, (self._params.get("os") or types.os.KnownOS.UNKNOWN.os_name())).lower(),
+                    os_type=typing.cast(
+                        str, (self._params.get("os") or types.os.KnownOS.UNKNOWN.os_name())
+                    ).lower(),
                     mac=mac,
                     data=data,
                     version=version,
                     token_hash=models.Server.hash_token(raw_token),
                 )
                 server_token.properties["token_hint"] = models.Server.token_hint(raw_token)
+                # Only stored when provided; absence is treated as "unknown timezone"
+                if timezone_param:
+                    server_token.properties["timezone"] = timezone_param
             except Exception as e:
                 return rest_result("error", error=str(e))
         return rest_result(result=raw_token)
@@ -223,11 +239,15 @@ class ServerEvent(Handler):
             server = models.Server.objects.get(token_hash=models.Server.hash_token(self._params["token"]))
         except models.Server.DoesNotExist:
             logger.error(
-                "Token error from %s (%s is an invalid token)", self._request.ip, sanitize_params(self._params)["token"]
+                "Token error from %s (%s is an invalid token)",
+                self._request.ip,
+                sanitize_params(self._params)["token"],
             )
             raise rest_exceptions.BlockAccess() from None  # Block access if token is not valid
         except KeyError:
-            raise rest_exceptions.RequestError("Token not present") from None  # Invalid request if token is not present
+            raise rest_exceptions.RequestError(
+                "Token not present"
+            ) from None  # Invalid request if token is not present
         # Notify a server that a new service has been assigned to it
         # Get action from parameters
         # Parameters:
