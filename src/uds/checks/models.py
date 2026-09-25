@@ -309,7 +309,7 @@ class RestrainedServicePoolsCheck(AutomaticCheck):
         )
 
 
-class AuthenticatorSslVerificationDisabledCheck(Check):
+class AuthenticatorSslVerificationDisabledCheck(AutomaticCheck):
     """Authenticators that talk TLS without verifying the certificate of the other end."""
 
     id: typing.ClassVar[str] = "authenticator-ssl-verification-disabled"

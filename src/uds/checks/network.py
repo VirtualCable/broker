@@ -41,7 +41,7 @@ from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.util.config import GlobalConfig
 
 from .logs import LOGIN_RX, window
@@ -64,7 +64,7 @@ def _is_private(ip: str) -> bool:
         return False
 
 
-class ClientIpIsProxyAddressCheck(Check):
+class ClientIpIsProxyAddressCheck(AutomaticCheck):
     """Logins that all come from one private address while "Behind a proxy" is off."""
 
     id: typing.ClassVar[str] = "client-ip-is-proxy-address"
@@ -125,7 +125,7 @@ class ClientIpIsProxyAddressCheck(Check):
         )
 
 
-class ActorIpsBlocked24hCheck(Check):
+class ActorIpsBlocked24hCheck(AutomaticCheck):
     """Addresses blocked for actor access in the last 24h."""
 
     id: typing.ClassVar[str] = "actor-ips-blocked-24h"

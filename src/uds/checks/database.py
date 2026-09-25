@@ -39,13 +39,13 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.util.model import sql_now
 
 _MAX_TIME_DIFFERENCE: typing.Final[datetime.timedelta] = datetime.timedelta(seconds=60)
 
 
-class DbAppTimeMismatchCheck(Check):
+class DbAppTimeMismatchCheck(AutomaticCheck):
     """Time of the database server against the time of this UDS server."""
 
     id: typing.ClassVar[str] = "db-app-time-mismatch"

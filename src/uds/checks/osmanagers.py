@@ -42,7 +42,7 @@ from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 
 from .logs import window
 
@@ -59,7 +59,7 @@ _DOMAIN_JOIN_MARKERS: typing.Final[tuple[str, ...]] = (
 )
 
 
-class DomainJoinFailures24hCheck(Check):
+class DomainJoinFailures24hCheck(AutomaticCheck):
     """Domain join errors reported by the actors in the last 24h."""
 
     id: typing.ClassVar[str] = "domain-join-failures-24h"

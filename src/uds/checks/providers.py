@@ -39,7 +39,7 @@ from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 
 from .logs import window
 
@@ -49,7 +49,7 @@ _MAX_EXAMPLES: typing.Final[int] = 5
 _ERRORS_THRESHOLD: typing.Final[int] = 10
 
 
-class ProviderErrors24hCheck(Check):
+class ProviderErrors24hCheck(AutomaticCheck):
     """Providers with repeated errors in the last 24h."""
 
     id: typing.ClassVar[str] = "provider-errors-24h"
@@ -106,7 +106,7 @@ class ProviderErrors24hCheck(Check):
         )
 
 
-class ProviderInMaintenanceModeCheck(Check):
+class ProviderInMaintenanceModeCheck(AutomaticCheck):
     """Providers left in maintenance mode."""
 
     id: typing.ClassVar[str] = "provider-in-maintenance-mode"

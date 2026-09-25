@@ -41,7 +41,11 @@ from uds.core.checks import runner as runner_module
 from ..utils.test import UDSTransactionTestCase
 
 
-_PRODUCTION_MANUAL_CHECKS: typing.Final[set[str]] = {"authenticators-health", "duplicate-users-in-authenticator"}
+_PRODUCTION_MANUAL_CHECKS: typing.Final[set[str]] = {
+    "authenticators-health",
+    "duplicate-users-in-authenticator",
+}
+
 
 class DummyAutomaticCheck(AutomaticCheck):
     id: typing.ClassVar[str] = "dummy-automatic"

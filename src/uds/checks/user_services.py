@@ -40,7 +40,7 @@ from django.utils.translation import gettext_noop
 
 from uds import models
 from uds.core import types
-from uds.core.checks import Check, CheckOutcome
+from uds.core.checks import AutomaticCheck, CheckOutcome
 from uds.core.types.states import State
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
@@ -64,7 +64,7 @@ def _pools_summary(pools: list[str]) -> str:
     return ", ".join(pools[:_MAX_EXAMPLES]) + ("..." if len(pools) > _MAX_EXAMPLES else "")
 
 
-class UserServicesStuckPreparingCheck(Check):
+class UserServicesStuckPreparingCheck(AutomaticCheck):
     """User services that never become ready: still preparing, or usable but the actor never reported."""
 
     id: typing.ClassVar[str] = "user-services-stuck-preparing"
@@ -103,7 +103,7 @@ class UserServicesStuckPreparingCheck(Check):
         )
 
 
-class StaleUserServicesCheck(Check):
+class StaleUserServicesCheck(AutomaticCheck):
     """Assigned user services not used for months."""
 
     id: typing.ClassVar[str] = "stale-user-services"
