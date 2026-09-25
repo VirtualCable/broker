@@ -65,12 +65,12 @@ _C2_PER_IP_THRESHOLD: typing.Final[int] = 20
 # kept duplicated here to avoid coupling this check module to the reports
 # package. The message is built by ``uds.core.auths.auth.log_login`` at
 # ``src/uds/core/auths/auth.py:532``.
-_LOGIN_RX: typing.Final[re.Pattern[str]] = re.compile(
+LOGIN_RX: typing.Final[re.Pattern[str]] = re.compile(
     r"user (?P<user>.+?) has (?P<message>.+?) from (?P<ip>\S+) where os is (?P<os>.+)"
 )
 
 
-def _window() -> datetime.datetime:
+def window() -> datetime.datetime:
     """Returns ``now - 24h`` for the check windows."""
     return timezone.now() - datetime.timedelta(hours=24)
 
@@ -79,7 +79,7 @@ def _failed_login_rows() -> Iterator[str]:
     """Yields the ``data`` field of every failed-login log row in the last 24h."""
     qs = (
         Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             source=types.log.LogSource.WEB,
             owner_type=types.log.LogObjectType.AUTHENTICATOR,
             level__gte=types.log.LogLevel.ERROR,
@@ -140,7 +140,7 @@ class BruteForceByIpCheck(Check):
     def run(self) -> CheckOutcome:
         by_ip: dict[str, int] = {}
         for data in _failed_login_rows():
-            m = _LOGIN_RX.match(data or "")
+            m = LOGIN_RX.match(data or "")
             if not m:
                 continue
             ip = m.group("ip")
@@ -182,7 +182,7 @@ class TemporarilyBlockedLoginsCheck(Check):
         # lands in the Log table as an ERROR row on the authenticator with that
         # substring in ``data``.
         count = Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             source=types.log.LogSource.WEB,
             owner_type=types.log.LogObjectType.AUTHENTICATOR,
             level__gte=types.log.LogLevel.ERROR,
@@ -222,7 +222,7 @@ class InternalErrors24hCheck(Check):
         # Global syslog entries (owner_id=0, owner_type=-1) at ERROR+ from the last
         # 24h; equivalent to grepping ``ERROR`` across uds.log/services.log/etc.
         qs = Log.objects.filter(
-            created__gte=_window(),
+            created__gte=window(),
             owner_id=0,
             owner_type=-1,
             level__gte=types.log.LogLevel.ERROR,
