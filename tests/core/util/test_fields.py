@@ -16,7 +16,7 @@ class VerifySslFieldTabTest(UDSTestCase):
 
     def test_any_explicit_tab_lands_on_advanced(self) -> None:
         for tab in (types.ui.Tab.PARAMETERS, types.ui.Tab.TUNNEL, types.ui.Tab.ADVANCED):
-            with self.subTest(tab=tab):
+            with self.subTest(tab=tab.value):
                 self.assertEqual(fields.verify_ssl_field(tab=tab)._field_info.tab, types.ui.Tab.ADVANCED)
 
     def test_default_is_true_and_can_be_turned_off(self) -> None:
