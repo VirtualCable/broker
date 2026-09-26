@@ -160,6 +160,7 @@ class TunnelTicketResponse:
     remotes: list[TunnelTicketRemote]
     notify: str
     shared_secret: str  # Shared secret in hex
+    enable_udp: bool = False  # Whether the tunnel should accept a parallel UDP leg
 
     def as_dict(self) -> dict[str, typing.Any]:
         """Returns a dict representation of the ticket response"""
@@ -167,6 +168,7 @@ class TunnelTicketResponse:
             "remotes": [r.as_dict() for r in self.remotes],
             "notify": self.notify,
             "shared_secret": self.shared_secret,
+            "enable_udp": self.enable_udp,
         }
 
     def as_encrypted_dict(self, kem_key: str, ticket_id: str) -> dict[str, str]:
@@ -193,6 +195,7 @@ class TunnelTicketResponse:
             ],
             notify=data["notify"],
             shared_secret=data["shared_secret"],
+            enable_udp=bool(data.get("enable_udp", False)),
         )
 
 

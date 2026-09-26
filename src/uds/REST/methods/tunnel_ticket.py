@@ -148,6 +148,8 @@ class TunnelTicket(Handler):
                         remotes=ticket.remotes,
                         notify=notify_ticket,
                         shared_secret=ticket.shared_secret.hex() if ticket.shared_secret else "",
+                        # Transports flag UDP support per remote via its extra dict
+                        enable_udp=any(r.extra.get("enable_udp") for r in ticket.remotes),
                     ).as_encrypted_dict(req.kem_kyber_key, ticket_id=req.ticket)
                 case _:
                     raise Exception("Invalid command")

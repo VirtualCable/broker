@@ -153,6 +153,9 @@ class TRDPTransport(BaseRDPTransport):
             userservice=userservice,
             port=self.rdp_port.as_int(),
             validity=self.startup_time.as_int() + 60,  # Ticket overtime
+            # Tunneled RDP always offers the parallel UDP leg (RDPUDP); the
+            # tunnel-server and launcher decide whether to actually use it
+            extra={"enable_udp": True},
         )
 
         # sign has to happen client-side, after {address} is replaced
