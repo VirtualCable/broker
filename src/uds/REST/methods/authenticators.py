@@ -158,7 +158,7 @@ class Authenticators(ModelHandler[AuthenticatorItem]):
         .text_column(name="type_name", title=_("Type"))
         .text_column(name="comments", title=_("Comments"))
         .numeric_column(name="priority", title=_("Priority"), width="8rem")
-        .text_column(name="small_name", title=_("Label"))
+        .text_column(name="small_name", title=_("URL Label"))
         .numeric_column(name="users_count", title=_("Users"), width="6rem")
         .text_column(name="mfa_name", title=_("MFA"))
         .text_column(name="tags", title=_("tags"), visible=False)

@@ -68,3 +68,12 @@ class AuthenticatorsGuiOrderTest(rest.test.RESTTestCase):
         names = self._field_names()
         stock = [name for name in names if name in ("name", "small_name", "priority", "comments", "tags")]
         self.assertEqual(stock, ["name", "small_name", "priority", "comments", "tags"])
+
+    def test_stock_fields_labels_and_tooltips_clarified(self) -> None:
+        response = self.client.rest_get(f"authenticators/gui/{TEST_AUTH_TYPE}")
+        self.assertEqual(response.status_code, 200, response.content)
+        fields_by_name = {field["name"]: field["gui"] for field in response.json()}
+        self.assertEqual(fields_by_name["small_name"]["label"], "URL Label")
+        self.assertIn("URL", fields_by_name["small_name"]["tooltip"])
+        self.assertEqual(fields_by_name["tags"]["label"], "Tags")
+        self.assertIn("API", fields_by_name["tags"]["tooltip"])

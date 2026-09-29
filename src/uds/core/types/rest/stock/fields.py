@@ -80,7 +80,7 @@ _STATIC_FLDS: typing.Final[dict[StockField, list["ui.GuiElement"]]] = {
             gui=ui.FieldInfo(
                 label=_("Tags"),
                 type=ui.FieldType.TAGLIST,
-                tooltip=_("Tags for this element"),
+                tooltip=_("Tags for identification, classification or filtering via API"),
                 order=0 - 110,
             ),
         )
@@ -129,11 +129,11 @@ _STATIC_FLDS: typing.Final[dict[StockField, list["ui.GuiElement"]]] = {
         ui.GuiElement(
             name="small_name",
             gui=ui.FieldInfo(
-                label=_("Label"),
+                label=_("URL Label"),
                 type=ui.FieldType.TEXT,
                 required=True,
                 length=128,
-                tooltip=_("Label for this element"),
+                tooltip=_("Label used in URL to access or redirect directly to this authenticator"),
                 order=0 - 70,
             ),
         )
