@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -167,9 +168,16 @@ class BaseRDPTransport(transports.Transport):
         default=True,
         old_field_name="allowAudio",
     )
+    allow_microphone = gui.CheckBoxField(
+        label=_("Enable microphone"),
+        order=27,
+        tooltip=_("If checked, microphone will be redirected."),
+        tab=types.ui.Tab.PARAMETERS,
+        default=False,
+    )
     allow_webcam = gui.CheckBoxField(
         label=_("Enable webcam"),
-        order=27,
+        order=28,
         tooltip=_("If checked, webcam will be redirected (ONLY Windows)."),
         tab=types.ui.Tab.PARAMETERS,
         default=False,
@@ -177,7 +185,7 @@ class BaseRDPTransport(transports.Transport):
     )
     allow_usb_redirection = gui.ChoiceField(
         label=_("USB redirection"),
-        order=28,
+        order=29,
         tooltip=_("USB redirection policy"),
         default="false",
         choices=[
