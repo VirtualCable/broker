@@ -384,6 +384,7 @@ class OpenshiftClient:
         cloned_pvc_name: str,
         storage_class: str,
         storage_size: str,
+        access_modes: list[str] | None = None,
     ) -> None:
         """
         Clone a PVC using a DataVolume.
@@ -397,7 +398,7 @@ class OpenshiftClient:
             "spec": {
                 "source": {"pvc": {"name": source_pvc_name, "namespace": self._namespace}},
                 "pvc": {
-                    "accessModes": ["ReadWriteOnce"],
+                    "accessModes": access_modes or ["ReadWriteOnce"],
                     "resources": {"requests": {"storage": storage_size}},
                     "storageClassName": storage_class,
                 },
@@ -444,8 +445,11 @@ class OpenshiftClient:
 
         source_storage_class, source_volume_mode = self.get_pvc_storage_class_and_volume_mode(source_pvc_name)
 
+        eviction_strategy = vm_obj.get("spec", {}).get("template", {}).get("spec", {}).get("evictionStrategy")
+        access_modes = ["ReadWriteMany"] if eviction_strategy == "LiveMigrate" else ["ReadWriteOnce"]
+
         pvc_spec = {
-            "accessModes": ["ReadWriteOnce"],
+            "accessModes": access_modes,
             "resources": {"requests": {"storage": pvc_size}},
             "storageClassName": source_storage_class,
         }
@@ -573,8 +577,27 @@ class OpenshiftClient:
         source_pvc_name, _vol_type = self.get_vm_pvc_or_dv_name(source_vm_name)
         size = self.get_pvc_size(source_pvc_name)
         new_pvc_name = f"{new_vm_name}-disk"
-        self.clone_pvc_with_datavolume(source_pvc_name, new_pvc_name, storage_class, size)
+        access_modes = self._access_modes_for_live_migration(source_vm_name)
+        self.clone_pvc_with_datavolume(
+            source_pvc_name, new_pvc_name, storage_class, size, access_modes=access_modes
+        )
         self.create_vm_from_pvc(source_vm_name, new_vm_name, new_pvc_name, source_pvc_name)
+
+    def _access_modes_for_live_migration(self, source_vm_name: str) -> list[str]:
+        """
+        Return the access modes the cloned volume of `source_vm_name` must use.
+        LiveMigration needs the volume attachable from the destination node, so the
+        cloned DataVolume must be ReadWriteMany; otherwise we keep ReadWriteOnce so
+        RWO-only storage classes still work.
+        """
+        path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{source_vm_name}"
+        source_vm_obj = self.do_request("GET", path)
+        eviction_strategy = (
+            source_vm_obj.get("spec", {}).get("template", {}).get("spec", {}).get("evictionStrategy")
+        )
+        if eviction_strategy == "LiveMigrate":
+            return ["ReadWriteMany"]
+        return ["ReadWriteOnce"]
 
     def test(self) -> bool:
         # Simple test: try to enumerate VMs to check connectivity and authentication
