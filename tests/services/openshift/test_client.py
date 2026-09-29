@@ -235,3 +235,175 @@ class TestOpenshiftClientToken(UDSTransactionTestCase):
             client.connect()
             client.connect(force=True)
             self.assertEqual(get_token.call_count, 2)
+
+
+class TestOpenshiftClientMigratableVolumes(UDSTransactionTestCase):
+    """LiveMigration needs the cloned volume to be attached from the destination node,
+    so DataVolumes created for VMs whose template has evictionStrategy=LiveMigrate
+    must use ReadWriteMany access modes (otherwise OpenShift flags the VM as
+    "Not migratable" and emits the VMCannotBeEvicted alert). When the template
+    does NOT request LiveMigration we keep ReadWriteOnce so RWO-only storage
+    classes still work."""
+
+    def _client(self) -> openshift_client.OpenshiftClient:
+        return openshift_client.OpenshiftClient(
+            cluster_url="https://oauth-openshift.apps-crc.testing",
+            api_url="https://api.crc.testing:6443",
+            username="kubeadmin",
+            password="test-password",
+            namespace="default",
+        )
+
+    def _source_vm(self, eviction_strategy: str | None) -> dict[str, typing.Any]:
+        template_spec: dict[str, typing.Any] = {
+            "volumes": [{"dataVolume": {"name": "src-dv"}}],
+            "domain": {"devices": {"interfaces": [{"macAddress": "aa:bb"}]}},
+        }
+        if eviction_strategy is not None:
+            template_spec["evictionStrategy"] = eviction_strategy
+        return {
+            "metadata": {"name": "tpl-win11", "resourceVersion": "1"},
+            "spec": {"running": True, "template": {"spec": template_spec}},
+        }
+
+    def _source_pvc(self) -> dict[str, typing.Any]:
+        return {
+            "status": {"capacity": {"storage": "45Gi"}},
+            "spec": {
+                "storageClassName": "px-rwx-block-kubevirt",
+                "volumeMode": "Block",
+            },
+        }
+
+    def test_clone_pvc_with_datavolume_defaults_to_read_write_once(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, "do_request", return_value={}) as do_request:
+            client.clone_pvc_with_datavolume(
+                source_pvc_name="src-pvc",
+                cloned_pvc_name="cloned-pvc",
+                storage_class="px-rwx-block-kubevirt",
+                storage_size="45Gi",
+            )
+        sent_body = do_request.call_args.kwargs["data"]
+        self.assertEqual(sent_body["spec"]["pvc"]["accessModes"], ["ReadWriteOnce"])
+
+    def test_clone_pvc_with_datavolume_respects_explicit_access_modes(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, "do_request", return_value={}) as do_request:
+            client.clone_pvc_with_datavolume(
+                source_pvc_name="src-pvc",
+                cloned_pvc_name="cloned-pvc",
+                storage_class="px-rwx-block-kubevirt",
+                storage_size="45Gi",
+                access_modes=["ReadWriteMany"],
+            )
+        sent_body = do_request.call_args.kwargs["data"]
+        self.assertEqual(sent_body["spec"]["pvc"]["accessModes"], ["ReadWriteMany"])
+
+    def _create_vm(self, eviction_strategy: str | None) -> dict[str, typing.Any]:
+        client = self._client()
+        vm_obj = self._source_vm(eviction_strategy)
+        pvc_obj = self._source_pvc()
+
+        def fake_do_request(method: str, path: str, **kwargs: typing.Any) -> typing.Any:
+            if "virtualmachines/tpl-win11" in path:
+                return vm_obj
+            if "persistentvolumeclaims/src-pvc" in path:
+                return pvc_obj
+            return {}
+
+        with mock.patch.object(client, "do_request", side_effect=fake_do_request) as do_request:
+            client.create_vm_from_pvc(
+                source_vm_name="tpl-win11",
+                new_vm_name="udsglz003",
+                new_dv_name="udsglz003-disk",
+                source_pvc_name="src-pvc",
+            )
+        return do_request.call_args.kwargs["data"]
+
+    def test_create_vm_from_pvc_uses_read_write_many_when_eviction_strategy_is_live_migrate(self) -> None:
+        body = self._create_vm("LiveMigrate")
+        dvt = body["spec"]["dataVolumeTemplates"][0]
+        self.assertEqual(dvt["spec"]["pvc"]["accessModes"], ["ReadWriteMany"])
+        self.assertEqual(dvt["spec"]["pvc"]["storageClassName"], "px-rwx-block-kubevirt")
+        self.assertEqual(dvt["spec"]["pvc"]["volumeMode"], "Block")
+
+    def test_create_vm_from_pvc_uses_read_write_once_without_eviction_strategy(self) -> None:
+        body = self._create_vm(None)
+        dvt = body["spec"]["dataVolumeTemplates"][0]
+        self.assertEqual(dvt["spec"]["pvc"]["accessModes"], ["ReadWriteOnce"])
+
+    def test_create_vm_from_pvc_uses_read_write_once_with_non_live_eviction_strategy(self) -> None:
+        # "None" or any value other than "LiveMigrate" must NOT trigger RWX.
+        body = self._create_vm("None")
+        dvt = body["spec"]["dataVolumeTemplates"][0]
+        self.assertEqual(dvt["spec"]["pvc"]["accessModes"], ["ReadWriteOnce"])
+
+    def test_access_modes_for_live_migration_helper(self) -> None:
+        client = self._client()
+        with mock.patch.object(client, "do_request", return_value=self._source_vm("LiveMigrate")):
+            self.assertEqual(
+                client._access_modes_for_live_migration("tpl-win11"),
+                ["ReadWriteMany"],
+            )
+        with mock.patch.object(client, "do_request", return_value=self._source_vm(None)):
+            self.assertEqual(
+                client._access_modes_for_live_migration("tpl-win11"),
+                ["ReadWriteOnce"],
+            )
+
+    def test_copy_vm_same_size_uses_read_write_many_only_when_live_migrate(self) -> None:
+        client = self._client()
+        captured: list[dict[str, typing.Any]] = []
+
+        def fake_do_request(method: str, path: str, **kwargs: typing.Any) -> typing.Any:
+            if method == "GET" and "virtualmachines/tpl-win11" in path:
+                return self._source_vm(current_eviction[0])
+            if method == "GET" and "persistentvolumeclaims/src-pvc" in path:
+                return self._source_pvc()
+            if method == "POST" and "/datavolumes" in path:
+                captured.append({"which": "dv", "data": kwargs["data"]})
+                return {}
+            if method == "POST" and "/virtualmachines" in path:
+                captured.append({"which": "vm", "data": kwargs["data"]})
+                return {}
+            return {}
+
+        with (
+            mock.patch.object(client, "do_request", side_effect=fake_do_request),
+            mock.patch.object(client, "get_pvc_size", return_value="45Gi"),
+            mock.patch.object(client, "get_vm_pvc_or_dv_name", return_value=("src-pvc", "pvc")),
+        ):
+            current_eviction: list[str | None] = ["LiveMigrate"]
+            client.copy_vm_same_size(
+                source_vm_name="tpl-win11",
+                new_vm_name="udsglz003",
+                storage_class="px-rwx-block-kubevirt",
+            )
+        dv_call = next(c for c in captured if c["which"] == "dv")
+        vm_call = next(c for c in captured if c["which"] == "vm")
+        self.assertEqual(dv_call["data"]["spec"]["pvc"]["accessModes"], ["ReadWriteMany"])
+        self.assertEqual(
+            vm_call["data"]["spec"]["dataVolumeTemplates"][0]["spec"]["pvc"]["accessModes"],
+            ["ReadWriteMany"],
+        )
+
+        captured.clear()
+        with (
+            mock.patch.object(client, "do_request", side_effect=fake_do_request),
+            mock.patch.object(client, "get_pvc_size", return_value="45Gi"),
+            mock.patch.object(client, "get_vm_pvc_or_dv_name", return_value=("src-pvc", "pvc")),
+        ):
+            current_eviction[0] = None
+            client.copy_vm_same_size(
+                source_vm_name="tpl-win11",
+                new_vm_name="udsglz003",
+                storage_class="px-rwx-block-kubevirt",
+            )
+        dv_call = next(c for c in captured if c["which"] == "dv")
+        vm_call = next(c for c in captured if c["which"] == "vm")
+        self.assertEqual(dv_call["data"]["spec"]["pvc"]["accessModes"], ["ReadWriteOnce"])
+        self.assertEqual(
+            vm_call["data"]["spec"]["dataVolumeTemplates"][0]["spec"]["pvc"]["accessModes"],
+            ["ReadWriteOnce"],
+        )
