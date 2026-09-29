@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -93,6 +94,7 @@ class TRDPTransport(BaseRDPTransport):
     allow_serial_ports = BaseRDPTransport.allow_serial_ports
     allow_clipboard = BaseRDPTransport.allow_clipboard
     allow_audio = BaseRDPTransport.allow_audio
+    allow_microphone = BaseRDPTransport.allow_microphone
     allow_webcam = BaseRDPTransport.allow_webcam
     allow_usb_redirection = BaseRDPTransport.allow_usb_redirection
 
@@ -189,6 +191,7 @@ class TRDPTransport(BaseRDPTransport):
         r.redir_serials = self.allow_serial_ports.as_bool()
         r.enable_clipboard = self.allow_clipboard.as_bool()
         r.redir_audio = self.allow_audio.as_bool()
+        r.redir_microphone = self.allow_microphone.as_bool()
         r.redir_webcam = self.allow_webcam.as_bool()
         r.show_wallpaper = self.wallpaper.as_bool()
         r.multimon = self.multimon.as_bool()

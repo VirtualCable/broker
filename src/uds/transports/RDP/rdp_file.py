@@ -30,6 +30,7 @@
 Created on Jul 29, 2011
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 
 """
 
@@ -54,6 +55,7 @@ class RDPFile:
     redir_home_dir: bool = False
     redir_smartcards: bool = False
     redir_audio: bool = True
+    redir_microphone: bool = False
     redir_webcam: bool = False
     redir_usb: str = "false"  # Can have, false, true, or a GUID
     compression: bool = True
@@ -119,11 +121,14 @@ class RDPFile:
         if self.redir_audio:
             if self.alsa and self.target != types.os.KnownOS.MAC_OS:
                 params.append("/sound:sys:alsa,format:1,quality:high")
-                params.append("/microphone:sys:alsa")
             else:
                 params.append("/sound")  # Mac does not support alsa
-                # And microphone seems to not work on mac
-                # params.append('/microphone')
+
+        if self.redir_microphone:
+            if self.alsa and self.target != types.os.KnownOS.MAC_OS:
+                params.append("/microphone:sys:alsa")
+            else:
+                params.append("/microphone")
 
         if self.multimedia:
             params.append("/video")
@@ -260,7 +265,7 @@ class RDPFile:
         if self.desktop_composition is True:
             res += "allow desktop composition:i:1\n"
 
-        if self.redir_audio is True:
+        if self.redir_microphone is True:
             res += "audiocapturemode:i:1\n"
 
         if self.redir_webcam:
@@ -340,6 +345,9 @@ class RDPFile:
 
         if self.smooth_fonts:
             parameters.append(("allow font smoothing", "i:1"))
+
+        if self.redir_microphone:
+            parameters.append(("audiocapturemode", "i:1"))
 
         if self.redir_drives != "false":  # Only "all drives" is supported
             parameters.append(("drivestoredirect", "s:*"))
