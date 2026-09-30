@@ -134,11 +134,13 @@ class FlowsRestTest(rest.test.RESTTestCase):
         items: list[dict[str, typing.Any]] = self.client.rest_get(
             f"flows/approval/{self.flow.uuid}/actions"
         ).json()
-        # Admin view: live compliance indicator and approval snapshot (empty until approved)
+        # Admin view: live compliance indicator and review snapshot
         self.assertIn("compliance", items[0])
         self.assertIn("snap_info", items[0])
         # The fake targets do not exist: unverifiable is never "ok"
         self.assertEqual(items[0]["compliance"], "conflict")
+        # Unresolvable target: no live GUI cache either (pending actions show
+        # the snapshot of the target when it exists, see FlowsApproveRejectTest)
         self.assertEqual(items[0]["snap_info"], {})
         # What the target held when the agent proposed it, frozen at proposal time
         self.assertEqual(items[0]["base_values"], {"name": "old"})
@@ -316,6 +318,19 @@ class FlowsApproveRejectTest(rest.test.RESTTestCase):
         return typing.cast("dict[str, typing.Any]", response.json())
 
     # ------------------------------------------------- per-action endpoints
+
+    def test_pending_action_shows_the_live_review_cache(self) -> None:
+        """The approval view labels pending actions from the live GUI metadata."""
+        items = typing.cast(
+            "list[dict[str, typing.Any]]",
+            self.client.rest_get(self._actions_url()).json(),
+        )
+        snap = items[0]["snap_info"]
+        self.assertEqual(snap["current_values"], {"name": self.provider.name})
+        self.assertEqual(snap["target_name"], str(self.provider))
+        self.assertIn("name", {field["name"] for field in snap["fields"]})
+        # Nothing approved yet: the live view carries no approval stamp
+        self.assertNotIn("approved_by", snap)
 
     def test_approve_action_freezes_live_state_and_acquires_flow(self) -> None:
         response = self._approve_action()

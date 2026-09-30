@@ -384,6 +384,28 @@ class FlowStore:
         self._acquire_flow(action.flow, admin=admin)
         return action
 
+    def review_snapshot(self, action: FlowAction) -> dict[str, typing.Any]:
+        """Display cache for the administrator review of one action.
+
+        Hybrid source: approved actions serve the snapshot frozen at
+        approval (the state the administrator actually accepted, and the
+        only one that survives target deletion); undecided actions still
+        without a snapshot are rendered *live* through the same
+        machinery, in the requester's language, so the pending review
+        shows field labels, target names and current values instead of
+        raw field names. Empty dict when nothing can be resolved (type
+        gone, target gone): the proposal base and the compliance
+        indicator still describe the action.
+        """
+        if action.snap_info:
+            return dict(action.snap_info)
+        if action.status != FlowActionStatus.PENDING:
+            return {}
+        try:
+            return self._action_type(action).approval_snapshot(action)
+        except Exception:
+            return {}
+
     def compliance(self, action: FlowAction) -> str:
         """Live drift indicator of one action: ``ok``/``outdated``/``conflict``.
 

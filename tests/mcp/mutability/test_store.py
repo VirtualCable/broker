@@ -487,6 +487,37 @@ class FlowApproveCasTest(FlowTestCase):
         with self.assertRaises(StaleProposal):
             self.store.approve_action(action, admin=self.other)
 
+    # ---------------------------------------------------------- review cache
+
+    def test_pending_action_reviews_the_live_gui_cache(self) -> None:
+        """Hybrid review source: undecided actions snapshot live state."""
+        action = self._add_proposal()
+        self._submitted(self.flow)
+        snap = self.store.review_snapshot(action)
+        self.assertEqual(snap["current_values"], {"name": self.provider.name})
+        self.assertTrue(snap["target_name"])
+        # Labels, not raw field names: what the approval view renders from
+        self.assertTrue(any(field.get("label") for field in snap["fields"]))
+        self.assertNotIn("approved_by", snap)
+
+    def test_pending_action_with_vanished_target_has_no_cache(self) -> None:
+        action = self._add_proposal()
+        self._submitted(self.flow)
+        self.provider.delete()
+        self.assertEqual(self.store.review_snapshot(action), {})
+
+    def test_approved_action_serves_the_frozen_cache(self) -> None:
+        """Once approved the frozen view wins, even if the target drifts on."""
+        action = self._add_proposal()
+        self._submitted(self.flow)
+        frozen_name = self.provider.name
+        approved = self.store.approve_action(action, admin=self.other)
+        self.provider.name = "changed after approval"
+        self.provider.save()
+        snap = self.store.review_snapshot(approved)
+        self.assertEqual(snap["current_values"], {"name": frozen_name})
+        self.assertEqual(snap["approved_by"], self.other.name)
+
     def test_revoked_action_is_recovered_by_approve(self) -> None:
         action = self._add_proposal()
         self._submitted(self.flow)

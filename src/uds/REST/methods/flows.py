@@ -88,7 +88,7 @@ class FlowActionItem(types.rest.BaseRestItem):
     result: str | None
     # Live drift indicator (ok/outdated/conflict); only for admin views
     compliance: str = ""
-    # Display snapshot frozen at approval time; only for admin views
+    # Frozen at approval when there is one, derived live while pending; admin views
     snap_info: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
     # Touched fields as they were when the proposal was made; only for admin views
     base_values: dict[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
@@ -168,9 +168,11 @@ class FlowActions(DetailHandler[FlowActionItem]):
         snap_info: dict[str, typing.Any] = {}
         base_values: dict[str, typing.Any] = {}
         if admin_view:
+            store = FlowStore()
             # Pre-execution drift indicator; computed live, never stored
-            compliance = FlowStore().compliance(item)
-            snap_info = dict(item.snap_info)
+            compliance = store.compliance(item)
+            # Frozen at approval when there is one, live otherwise (pending review)
+            snap_info = store.review_snapshot(item)
             base_values = dict(item.base_values)
         return FlowActionItem(
             id=item.uuid,
