@@ -510,7 +510,9 @@ class GlobalConfig:
         # same budget, so it must be generous.
         "600",
         type=Config.FieldType.NUMERIC,
-        help=_("Maximum MCP requests per user and minute. 0 means unlimited"),
+        help=_(
+            "Maximum MCP requests per user in any 60-second window. Further requests are rejected until older ones leave the window. 0 means unlimited"
+        ),
     )
     # Caps of the supervised mutability proposal queue. The flows cap only
     # counts open flows (drafts being composed and pending ones awaiting
@@ -519,13 +521,15 @@ class GlobalConfig:
         "Max Pending Flows per User",
         str(consts.mcp.MAX_FLOWS_PER_USER),
         type=Config.FieldType.NUMERIC,
-        help=_("Maximum draft or pending (not yet decided) proposal flows a single user can have"),
+        help=_(
+            "Maximum open proposal flows (draft or pending, not yet decided) a single user can have. Opening another is refused until one is decided or discarded"
+        ),
     )
     MCP_MAX_ACTIONS_PER_FLOW: Config.Value = Config.section(Config.SectionType.MCP).value(
         "Max Actions per Flow",
         str(consts.mcp.MAX_ACTIONS_PER_FLOW),
         type=Config.FieldType.NUMERIC,
-        help=_("Maximum actions inside a single proposal flow"),
+        help=_("Maximum actions inside a single proposal flow. Adding more to that flow is refused"),
     )
     # Days a decided (executed/rejected/cancelled) flow stays visible on the
     # approval surface before it moves to the archive. Expired flows move
