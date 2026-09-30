@@ -27,7 +27,8 @@ const tunnel = await Tasks.startTunnel({
     ticket: data.tunnel.ticket,
     startup_time_ms: data.tunnel.startup_time,
     check_certificate: data.tunnel.verify_ssl,
-    shared_secret: data.shared_secret
+    shared_secret: data.shared_secret,
+    use_udp: true
 });
 
 let content = data.as_file.replace(/\{password\}/g, password);
