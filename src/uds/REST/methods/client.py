@@ -154,10 +154,9 @@ class Client(Handler):
         except TicketStore.DoesNotExist:
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
-        self._request.user = User.objects.get(uuid=data["user"])
-        self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
-
         try:
+            self._request.user = User.objects.get(uuid=data["user"])
+            self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
             logger.debug(data)
             info = UserServiceManager.manager().get_user_service_info(
                 self._request.user,

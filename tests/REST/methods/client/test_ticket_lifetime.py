@@ -36,7 +36,7 @@ from uds.core import consts
 from uds.core import types
 from uds.core.exceptions.services import ServiceNotReadyError
 from uds.core.managers.crypto import CryptoManager
-from uds.models import TicketStore
+from uds.models import TicketStore, User
 from uds.REST.methods.client import Client
 
 from ....utils import test
@@ -85,6 +85,16 @@ class ClientTicketLifetimeTest(test.UDSTestCase):
             manager.manager.return_value.get_user_service_info.return_value.ip = '172.27.0.1'
             client.process(ticket, SCRAMBLER)
 
+        self.assertFalse(TicketStore.objects.filter(uuid=ticket).exists())
+
+    def test_unresolvable_user_consumes_ticket(self) -> None:
+        client, ticket = self._build()
+
+        with mock.patch('uds.REST.methods.client.User') as user_model:
+            user_model.objects.get.side_effect = User.DoesNotExist
+            result = client.process(ticket, SCRAMBLER)
+
+        self.assertEqual(result['error']['message'], 'Invalid request')
         self.assertFalse(TicketStore.objects.filter(uuid=ticket).exists())
 
     def test_unknown_ticket_is_denied(self) -> None:
