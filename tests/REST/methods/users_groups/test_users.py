@@ -409,31 +409,34 @@ class UsersTest(rest.test.RESTActorTestCase):
     def test_import_csv_three_columns(self) -> None:
         auth = self._create_external_authenticator()
         url = f"authenticators/{auth.uuid}/users/importcsv"
-        csv_data = "user_three_col_1,Chief inspector,mfa_token_123\nuser_three_col_2,,mfa_token_456"
+        csv_data = "user_three_col_1,Chief inspector,extra_col\nuser_three_col_2,,extra_col_2"
         response = self.client.rest_post(url, {"data": csv_data, "has_header": False})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [])
 
         u1 = auth.users.get(name="user_three_col_1")
+        self.assertEqual(u1.real_name, "user_three_col_1")
         self.assertEqual(u1.comments, "Chief inspector (import)")
-        self.assertEqual(u1.mfa_data, "mfa_token_123")
+        self.assertEqual(u1.mfa_data, "")
 
         u2 = auth.users.get(name="user_three_col_2")
+        self.assertEqual(u2.real_name, "user_three_col_2")
         self.assertEqual(u2.comments, "")
-        self.assertEqual(u2.mfa_data, "mfa_token_456")
+        self.assertEqual(u2.mfa_data, "")
 
     def test_import_csv_header_and_separator(self) -> None:
         auth = self._create_external_authenticator()
         url = f"authenticators/{auth.uuid}/users/importcsv"
-        csv_data = "username;notes;mfa\nuser_custom_sep;Some Note;mfa_999"
+        csv_data = "username;notes;extra\nuser_custom_sep;Some Note;ignored"
         response = self.client.rest_post(url, {"data": csv_data, "has_header": True, "separator": ";"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [])
 
         self.assertFalse(auth.users.filter(name="username").exists())
         u = auth.users.get(name="user_custom_sep")
+        self.assertEqual(u.real_name, "user_custom_sep")
         self.assertEqual(u.comments, "Some Note (import)")
-        self.assertEqual(u.mfa_data, "mfa_999")
+        self.assertEqual(u.mfa_data, "")
 
     def test_import_csv_duplicates_and_empty_skipping(self) -> None:
         auth = self._create_external_authenticator()

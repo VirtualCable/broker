@@ -579,10 +579,6 @@ class Users(DetailHandler[UserItem]):
             if len(row) > 1 and row[1].strip():
                 comments = f"{row[1].strip()} (import)"
 
-            mfa_data = ""
-            if len(row) > 2:
-                mfa_data = row[2].strip()
-
             if parent.users.filter(name=username).exists():
                 import_errors.append(
                     _("Line {line}: User '{username}' already exists, skipping").format(
@@ -598,7 +594,7 @@ class Users(DetailHandler[UserItem]):
                     comments=comments,
                     state=State.ACTIVE,
                     password="",
-                    mfa_data=mfa_data,
+                    mfa_data="",
                     staff_member=False,
                     is_admin=False,
                 )
