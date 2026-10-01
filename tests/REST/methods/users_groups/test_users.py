@@ -356,3 +356,119 @@ class UsersTest(rest.test.RESTActorTestCase):
         count = len(list(models.ServicePool.get_pools_for_groups(groups)))
 
         self.assertEqual(len(response.json()), count)
+
+    def _create_external_authenticator(self) -> models.Authenticator:
+        from uds.auths.SAML.saml import SAMLAuthenticator
+
+        auth = models.Authenticator.objects.create(
+            name="External SAML Test Auth",
+            data_type=SAMLAuthenticator.type_type,
+        )
+        auth.data = auth.get_instance().serialize()
+        auth.save()
+        return auth
+
+    def test_import_csv_rejects_internal_authenticator(self) -> None:
+        url = f"authenticators/{self.auth.uuid}/users/importcsv"
+        response = self.client.rest_post(url, {"data": "user1\nuser2"})
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_import_csv_one_column(self) -> None:
+        auth = self._create_external_authenticator()
+        url = f"authenticators/{auth.uuid}/users/importcsv"
+        csv_data = "user_one_col_1\nuser_one_col_2"
+        response = self.client.rest_post(url, {"data": csv_data, "has_header": False})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+        u1 = auth.users.get(name="user_one_col_1")
+        self.assertEqual(u1.comments, "")
+        self.assertEqual(u1.mfa_data, "")
+        self.assertEqual(u1.state, types.states.State.ACTIVE)
+
+        u2 = auth.users.get(name="user_one_col_2")
+        self.assertEqual(u2.comments, "")
+        self.assertEqual(u2.mfa_data, "")
+
+    def test_import_csv_two_columns(self) -> None:
+        auth = self._create_external_authenticator()
+        url = f"authenticators/{auth.uuid}/users/importcsv"
+        csv_data = "user_two_col_1,First officer\nuser_two_col_2,Second officer"
+        response = self.client.rest_post(url, {"data": csv_data, "has_header": False})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+        u1 = auth.users.get(name="user_two_col_1")
+        self.assertEqual(u1.comments, "First officer (import)")
+        self.assertEqual(u1.mfa_data, "")
+
+        u2 = auth.users.get(name="user_two_col_2")
+        self.assertEqual(u2.comments, "Second officer (import)")
+        self.assertEqual(u2.mfa_data, "")
+
+    def test_import_csv_three_columns(self) -> None:
+        auth = self._create_external_authenticator()
+        url = f"authenticators/{auth.uuid}/users/importcsv"
+        csv_data = "user_three_col_1,Chief inspector,extra_col\nuser_three_col_2,,extra_col_2"
+        response = self.client.rest_post(url, {"data": csv_data, "has_header": False})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+        u1 = auth.users.get(name="user_three_col_1")
+        self.assertEqual(u1.real_name, "user_three_col_1")
+        self.assertEqual(u1.comments, "Chief inspector (import)")
+        self.assertEqual(u1.mfa_data, "")
+
+        u2 = auth.users.get(name="user_three_col_2")
+        self.assertEqual(u2.real_name, "user_three_col_2")
+        self.assertEqual(u2.comments, "")
+        self.assertEqual(u2.mfa_data, "")
+
+    def test_import_csv_header_and_separator(self) -> None:
+        auth = self._create_external_authenticator()
+        url = f"authenticators/{auth.uuid}/users/importcsv"
+        csv_data = "username;notes;extra\nuser_custom_sep;Some Note;ignored"
+        response = self.client.rest_post(url, {"data": csv_data, "has_header": True, "separator": ";"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+        self.assertFalse(auth.users.filter(name="username").exists())
+        u = auth.users.get(name="user_custom_sep")
+        self.assertEqual(u.real_name, "user_custom_sep")
+        self.assertEqual(u.comments, "Some Note (import)")
+        self.assertEqual(u.mfa_data, "")
+
+    def test_import_csv_duplicates_and_empty_skipping(self) -> None:
+        auth = self._create_external_authenticator()
+        auth.users.create(name="existing_user", state=types.states.State.ACTIVE)
+        url = f"authenticators/{auth.uuid}/users/importcsv"
+        csv_data = "existing_user,Duplicate note\n  \nnew_valid_user,Valid note"
+        response = self.client.rest_post(url, {"data": csv_data, "has_header": False})
+        self.assertEqual(response.status_code, 200)
+        errors = response.json()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("existing_user", errors[0])
+        self.assertTrue(auth.users.filter(name="new_valid_user").exists())
+
+    def test_import_csv_list_format_compat(self) -> None:
+        auth = self._create_external_authenticator()
+        url = f"authenticators/{auth.uuid}/users/importcsv"
+        data = [["header_usr", "header_comment"], ["list_usr_1", "Comment 1"], ["list_usr_2"]]
+        response = self.client.rest_post(url, {"data": data, "has_header": True})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+        self.assertFalse(auth.users.filter(name="header_usr").exists())
+        self.assertTrue(auth.users.filter(name="list_usr_1").exists())
+        self.assertTrue(auth.users.filter(name="list_usr_2").exists())
+
+    def test_import_csv_via_put_and_import_alias(self) -> None:
+        auth = self._create_external_authenticator()
+        url_put = f"authenticators/{auth.uuid}/users/{auth.uuid}/importcsv"
+        response = self.client.rest_put(url_put, {"data": "put_user,Put comment"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(auth.users.filter(name="put_user").exists())
+
+        url_post_import = f"authenticators/{auth.uuid}/users/import"
+        response = self.client.rest_post(url_post_import, {"data": "alias_user,Alias comment"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(auth.users.filter(name="alias_user").exists())

@@ -27,11 +27,14 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+        Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
+import csv
 import dataclasses
 import datetime
+import io
 import logging
 import typing
 
@@ -151,6 +154,38 @@ class Users(DetailHandler[UserItem]):
             "token",
             method=types.rest.CustomMethodMethod.DELETE,
             description="Revoke this user's REST/MCP API token if one is active",
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+        ),
+        types.rest.ModelCustomMethod(
+            "importcsv",
+            method=types.rest.CustomMethodMethod.POST,
+            description="Import users from CSV data into an external authenticator",
+            params=types.rest.api.SchemaProperty(
+                type="object",
+                properties={
+                    "data": types.rest.api.SchemaProperty(
+                        type="string", description="CSV content with user entries"
+                    ),
+                    "has_header": types.rest.api.SchemaProperty(
+                        type="boolean", description="Whether the CSV has a header row"
+                    ),
+                    "separator": types.rest.api.SchemaProperty(
+                        type="string", description="CSV field separator character (default comma)"
+                    ),
+                },
+            ),
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+        ),
+        types.rest.ModelCustomMethod(
+            "importcsv",
+            method=types.rest.CustomMethodMethod.PUT,
+            description="Import users from CSV data into an external authenticator (compat)",
+            required_permission=types.permissions.PermissionType.MANAGEMENT,
+        ),
+        types.rest.ModelCustomMethod(
+            "import",
+            method=types.rest.CustomMethodMethod.POST,
+            description="Import users from CSV data into an external authenticator",
             required_permission=types.permissions.PermissionType.MANAGEMENT,
         ),
     ]
@@ -494,6 +529,87 @@ class Users(DetailHandler[UserItem]):
     def token(self, parent: "Model", item: str) -> dict[str, str | None]:
         """Create (POST) or revoke (DELETE) this user's REST/MCP API token."""
         return self._manage_token(parent, item)
+
+    def importcsv(self, parent: "Model") -> list[str]:
+        parent = ensure.is_instance(parent, Authenticator)
+
+        if not parent.get_instance().external_source:
+            raise exceptions.rest.NotSupportedError(
+                _("Only external authenticators support CSV user import")
+            )
+
+        data: typing.Any = self._params.get("data", "")
+        has_header: bool = self._params.get("has_header", False)
+        separator: str = self._params.get("separator", ",")
+        if not separator or len(separator) != 1:
+            separator = ","
+
+        logger.debug(
+            "User CSV import: data len %s, has_header: %s, separator: %s",
+            len(str(data)),
+            has_header,
+            separator,
+        )
+
+        rows: collections.abc.Iterable[list[str]]
+        if isinstance(data, list):
+            rows = data
+            if has_header and rows:
+                rows = list(rows)[1:]
+        else:
+            csv_file = io.StringIO(str(data))
+            reader = csv.reader(csv_file, delimiter=separator)
+            if has_header:
+                try:
+                    next(reader)
+                except StopIteration:
+                    return [_("CSV has no data rows")]
+            rows = reader
+
+        import_errors: list[str] = []
+        for line_number, row in enumerate(rows, 1):
+            if len(row) == 0 or not any(field.strip() for field in row):
+                continue
+            username = row[0].strip()
+            if not username:
+                import_errors.append(_("Line {line}: Username cannot be empty, skipping").format(line=line_number))
+                continue
+
+            comments = ""
+            if len(row) > 1 and row[1].strip():
+                comments = f"{row[1].strip()} (import)"
+
+            if parent.users.filter(name=username).exists():
+                import_errors.append(
+                    _("Line {line}: User '{username}' already exists, skipping").format(
+                        line=line_number, username=username
+                    )
+                )
+                continue
+
+            try:
+                parent.users.create(
+                    name=username,
+                    real_name=username,
+                    comments=comments,
+                    state=State.ACTIVE,
+                    password="",
+                    mfa_data="",
+                    staff_member=False,
+                    is_admin=False,
+                )
+            except Exception as e:
+                import_errors.append(
+                    _("Line {line}: Error creating user '{username}': {error}").format(
+                        line=line_number, username=username, error=e
+                    )
+                )
+                logger.exception("Error importing user %s on line %s", username, line_number)
+
+        return import_errors
+
+
+setattr(Users, "import", Users.importcsv)
 
 
 @dataclasses.dataclass
