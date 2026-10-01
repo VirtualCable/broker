@@ -211,18 +211,18 @@ class HTML5RDPTransport(transports.Transport):
 
     force_new_window = ui.gui.ChoiceField(
         order=91,
-        label=_("Force new HTML Window"),
-        tooltip=_("Select windows behavior for new connections on HTML5"),
+        label=_("Browser tab behavior"),
+        tooltip=_("Select how new HTML5 connections are opened in the browser"),
         required=True,
         choices=[
             ui.gui.choice_item(
                 "false",
-                _("Open every connection on the same window, but keeps UDS window."),
+                _("Open the connection in a tab of its own for this transport, replacing the previous one. UDS stays open."),
             ),
-            ui.gui.choice_item("true", _("Force every connection to be opened on a new window.")),
+            ui.gui.choice_item("true", _("Open the connection in a tab of its own for each service pool. UDS stays open.")),
             ui.gui.choice_item(
                 "overwrite",
-                _("Override UDS window and replace it with the connection."),
+                _("Replace the UDS page with the connection in the same tab."),
             ),
         ],
         default="true",
