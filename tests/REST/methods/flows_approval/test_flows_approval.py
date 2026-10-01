@@ -166,7 +166,8 @@ class FlowsRestTest(rest.test.RESTTestCase):
                 "decided_at",
             ],
         )
-        self.assertIn("compliance", table["filter_fields"])
+        # compliance is computed and owner is a relation: the query parser takes neither
+        self.assertEqual(table["filter_fields"], ["name", "status"])
         self.assertEqual(table["row_style"], {"prefix": "row-compliance-", "field": "compliance"})
 
     def test_post_create_refused(self) -> None:

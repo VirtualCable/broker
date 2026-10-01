@@ -222,7 +222,8 @@ class FlowsArchiveReadOnlyTest(rest.test.RESTTestCase):
                 "decided_at",
             ],
         )
-        self.assertIn("compliance", table["filter_fields"])
+        # compliance is computed and owner is a relation: the query parser takes neither
+        self.assertEqual(table["filter_fields"], ["name", "status"])
         self.assertEqual(table["row_style"], {"prefix": "row-compliance-", "field": "compliance"})
 
     def _get_json(self, path: str) -> dict[str, typing.Any]:

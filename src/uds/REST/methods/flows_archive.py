@@ -102,7 +102,7 @@ class FlowsArchive(FlowsAdminSurface):
         .numeric_column(name="actions_count", title=_("Actions"))
         .datetime_column(name="created", title=_("Created"))
         .datetime_column(name="decided_at", title=_("Decided at"))
-        .with_filter_fields("name", "status", "owner", "compliance")
+        .with_filter_fields("name", "status")
         .row_style(prefix="row-compliance-", field="compliance")
         .build()
     )

@@ -188,6 +188,7 @@ class Tunnels(ModelHandler[TunnelItem]):
         .numeric_column(name="port", title=_("Port"), width="6em")
         .numeric_column(name="servers_count", title=_("Servers"), width="1rem")
         .text_column(name="tags", title=_("tags"), visible=False)
+        .with_filter_fields("name", "comments", "host")
         .build()
     )
 

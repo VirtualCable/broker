@@ -740,6 +740,7 @@ class ServersGroups(ModelHandler[GroupItem]):
         .text_column(name="subtype", title=_("Subtype"), visible=True)
         .numeric_column(name="servers_count", title=_("Servers"), width="5rem")
         .text_column(name="tags", title=_("tags"), visible=False)
+        .with_filter_fields("name", "comments", "subtype")
         .build()
     )
 

@@ -87,6 +87,8 @@ class ActorTokens(ModelHandler[ActorTokenItem]):
         .text_column("run_once_command", _("Run Once"))
         .text_column("log_level", _("Log level"))
         .text_column("os", _("OS"))
+        .with_field_mappings(username="register_username", os="os_type")
+        .with_filter_fields("hostname", "ip", "register_username", "os_type", "version")
         .build()
     )
 
