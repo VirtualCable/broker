@@ -77,6 +77,7 @@ class Networks(ModelHandler[NetworkItem]):
         .numeric_column("transports_count", _("Transports"), width="8em")
         .numeric_column("authenticators_count", _("Authenticators"), width="8em")
         .text_column("tags", _("Tags"), visible=False)
+        .with_filter_fields("name", "net_string")
         .build()
     )
 

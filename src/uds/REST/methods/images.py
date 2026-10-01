@@ -70,6 +70,7 @@ class Images(ModelHandler[ImageItem]):
         .image("thumb", _("Image"), width="96px")
         .text_column("name", _("Name"))
         .text_column("size", _("Size"))
+        .with_filter_fields("name")
         .build()
     )
 

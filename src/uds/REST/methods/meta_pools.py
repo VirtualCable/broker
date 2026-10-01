@@ -130,6 +130,7 @@ class MetaPools(ModelHandler[MetaPoolItem]):
         .text_column(name="pool_group_name", title=_("Pool Group"), width="16em")
         .text_column(name="short_name", title=_("Label"))
         .text_column(name="tags", title=_("tags"), visible=False)
+        .with_filter_fields("name", "comments", "short_name")
         .build()
     )
 
