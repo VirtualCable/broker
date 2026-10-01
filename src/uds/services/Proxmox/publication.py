@@ -33,6 +33,7 @@ import logging
 import time
 import typing
 
+from uds import models
 from uds.core import types
 from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.util import autoserializable
@@ -141,6 +142,28 @@ class ProxmoxPublication(DynamicPublication, autoserializable.AutoSerializable):
 
         return types.states.TaskState.FINISHED
 
+    def _has_machines(self) -> bool:
+        # Same criterion the core uses when unpublishing: machines in INFO_STATES do not hold the template
+        return (
+            models.UserService.objects.filter(publication__uuid=self.get_uuid())
+            .exclude(state__in=types.states.State.INFO_STATES)
+            .exists()
+        )
+
     @typing.override
     def op_delete(self) -> None:
-        self.service().delete(self, self._vmid)
+        if not self._has_machines():
+            self.service().delete(self, self._vmid)
+
+    @typing.override
+    def op_delete_checker(self) -> types.states.TaskState:
+        if self._has_machines():
+            return types.states.TaskState.RUNNING
+        # Not requested yet (machines were still there) or released after the deferred
+        # deletion gave up: ask for it again, the template may be free now
+        if not self.service().is_deletion_in_progress(self, self._vmid) and not self.service().is_deleted(
+            self._vmid
+        ):
+            self.service().delete(self, self._vmid)
+            return types.states.TaskState.RUNNING
+        return super().op_delete_checker()
