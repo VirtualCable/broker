@@ -140,11 +140,18 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             ("Users", "add_to_group", "POST"),
             ("Users", "enable_launcher_logging", "POST"),
             ("Users", "token", "POST"),
+            ("Users", "importcsv", "POST"),
+            ("Users", "import", "POST"),
         }
     )
     _DELETE_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str, str]]] = frozenset(
         {
             ("Users", "token", "DELETE"),
+        }
+    )
+    _PUT_CUSTOM_METHODS: typing.ClassVar[frozenset[tuple[str, str, str]]] = frozenset(
+        {
+            ("Users", "importcsv", "PUT"),
         }
     )
 
@@ -184,6 +191,9 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
                 elif key in self._DELETE_CUSTOM_METHODS:
                     if cm.method != types.rest.CustomMethodMethod.DELETE:
                         offenders.append(f"{cls_name}.{cm.name}: expected DELETE, got {cm.method!r}")
+                elif key in self._PUT_CUSTOM_METHODS:
+                    if cm.method != types.rest.CustomMethodMethod.PUT:
+                        offenders.append(f"{cls_name}.{cm.name}: expected PUT, got {cm.method!r}")
                 else:
                     # Not in unsafe set → must be GET
                     if cm.method != types.rest.CustomMethodMethod.GET:
