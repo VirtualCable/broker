@@ -701,7 +701,9 @@ class ServicePool(UUIDModel, TaggingMixin):
             )
 
         if maxs != consts.UNLIMITED:
-            in_maintenance = self.service.get_instance().machines_in_maintenance()
+            in_maintenance = (
+                maxs if self.is_in_maintenance() else self.service.get_instance().machines_in_maintenance()
+            )
             maxs = max(maxs - in_maintenance, cached_value)
 
         return types.pools.UsageInfo(cached_value, maxs)

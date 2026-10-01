@@ -79,3 +79,32 @@ class TestPoolUsageWithMaintenance(UDSTransactionTestCase):
         second = services_fixtures.create_db_servicepool(first.service)
         meta = services_fixtures.create_db_metapool([first, second], [])
         self.assertEqual(meta.usage().total, 2 * (TOTAL_MACHINES - 2))
+
+
+class TestPoolUsageWithProviderInMaintenance(UDSTransactionTestCase):
+    def _pool_on_provider_in_maintenance(self) -> models.ServicePool:
+        pool = services_fixtures.create_db_servicepool(fixtures.create_service_multi().db_obj())
+        provider = pool.service.provider
+        provider.maintenance_mode = True
+        provider.save(update_fields=["maintenance_mode"])
+        return pool
+
+    def test_pool_reports_no_capacity(self) -> None:
+        self.assertEqual(self._pool_on_provider_in_maintenance().usage().total, 0)
+
+    def test_total_never_drops_below_machines_in_use(self) -> None:
+        usage = self._pool_on_provider_in_maintenance().usage(cached_value=2)
+        self.assertEqual((usage.used, usage.total), (2, 2))
+
+    def test_limit_of_user_services_is_untouched(self) -> None:
+        self.assertEqual(self._pool_on_provider_in_maintenance().get_max(), TOTAL_MACHINES)
+
+    def test_metapool_leaves_out_the_capacity_of_the_pool_in_maintenance(self) -> None:
+        stopped = self._pool_on_provider_in_maintenance()
+        running = services_fixtures.create_db_servicepool(
+            fixtures.create_service_single(prov=fixtures.create_provider()).db_obj()
+        )
+        running.max_srvs = 3
+        running.save(update_fields=["max_srvs"])
+        meta = services_fixtures.create_db_metapool([stopped, running], [])
+        self.assertEqual(meta.usage().total, 3)
