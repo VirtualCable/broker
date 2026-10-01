@@ -62,8 +62,8 @@ def _descendants(cls: _MasterHandler) -> collections.abc.Iterator[_MasterHandler
 def _listable_tables() -> list[tuple[str, _MasterHandler, TableInfo]]:
     tables: list[tuple[str, _MasterHandler, TableInfo]] = []
     for handler in _descendants(ModelHandler):
-        table = getattr(handler, 'TABLE', None)
-        if not isinstance(table, TableInfo) or not table.fields or getattr(handler, 'MODEL', None) is None:
+        table = handler.TABLE
+        if not table.fields or getattr(handler, 'MODEL', None) is None:
             continue
         tables.append((f'{handler.__module__}.{handler.__qualname__}', handler, table))
     return tables
