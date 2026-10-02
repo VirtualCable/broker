@@ -104,3 +104,12 @@ class ClientTicketLifetimeTest(test.UDSTestCase):
         result = client.process(ticket, SCRAMBLER)
 
         self.assertEqual(result['error']['message'], types.errors.Error.ACCESS_DENIED.message)
+
+    def test_invalidate_only_consumes_the_ticket_of_its_owner(self) -> None:
+        ticket = TicketStore.create({'user': 'a-user-uuid'}, owner='an-owner')
+
+        TicketStore.invalidate(ticket)
+        self.assertTrue(TicketStore.objects.filter(uuid=ticket).exists())
+
+        TicketStore.invalidate(ticket, owner='an-owner')
+        self.assertFalse(TicketStore.objects.filter(uuid=ticket).exists())
