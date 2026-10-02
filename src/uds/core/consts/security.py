@@ -38,6 +38,19 @@ import typing
 # Detects installations where the root password has never been rotated.
 DEFAULT_SUPERUSER_PASSWORD: typing.Final[str] = "udsmam0"
 
+# Shipped default of ``GlobalConfig.PASSWORD_MIN_LENGTH``. Common guidance:
+# 8 characters minimum for administered accounts.
+PASSWORD_MIN_LENGTH: typing.Final[int] = 8
+
+# Maximum accepted password length, bounded by ``models.User.password``
+# (128 chars raw before hashing). Longer input would be silently truncated by
+# the database, so the validator rejects it outright instead.
+PASSWORD_MAX_LENGTH: typing.Final[int] = 128
+
+# Passwords must span at least this many character categories out of the four:
+# lowercase letters, uppercase letters, digits and symbols (classic AD-style rule).
+PASSWORD_MIN_CATEGORIES: typing.Final[int] = 3
+
 # Shipped default of ``settings.SECRET_KEY`` (``src/server/settings.py.sample:183``).
 # OSS installs that copied the sample verbatim are running with this key, which
 # means any attacker who read the public source can forge session tokens.

@@ -58,6 +58,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "actor-failure-blocking-disabled",
         "experimental-features-on",
         "immutable-audit-log-off",
+        "password-complexity-disabled",
         # A-family (settings.py)
         "security-cookies-and-headers",
         "debug-enabled",
@@ -926,6 +927,32 @@ class ChecksTest(UDSTransactionTestCase):
             self.assertTrue(result.ok, result.message)
         finally:
             GlobalConfig.IMMUTABLE_LOG_ENABLED.set(False)
+
+    # ------------------------------------------------------------------
+    # Check: password-complexity-disabled (global_config)
+    # ------------------------------------------------------------------
+    def test_password_complexity_disabled_detected(self) -> None:
+        GlobalConfig.ENFORCE_PASSWORD_COMPLEXITY.set(False)
+        try:
+            result = self._run_check("password-complexity-disabled")
+            self.assertFalse(result.ok, result.message)
+            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
+            self.assertIn("ENFORCE_PASSWORD_COMPLEXITY", result.message)
+        finally:
+            GlobalConfig.ENFORCE_PASSWORD_COMPLEXITY.set(True)
+
+    def test_password_complexity_weak_min_length_detected(self) -> None:
+        GlobalConfig.PASSWORD_MIN_LENGTH.set("4")
+        try:
+            result = self._run_check("password-complexity-disabled")
+            self.assertFalse(result.ok, result.message)
+            self.assertIn("PASSWORD_MIN_LENGTH", result.message)
+        finally:
+            GlobalConfig.PASSWORD_MIN_LENGTH.set(str(consts.security.PASSWORD_MIN_LENGTH))
+
+    def test_password_complexity_enabled_passes(self) -> None:
+        result = self._run_check("password-complexity-disabled")
+        self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------
     # Check: restrained-service-pools (models)

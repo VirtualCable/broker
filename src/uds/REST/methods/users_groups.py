@@ -55,6 +55,8 @@ from uds.core.types.states import State
 from uds.core.util import ensure
 from uds.core.util import log
 from uds.core.util import ui as ui_utils
+from uds.core.util import validators
+from uds.core.util.config import GlobalConfig
 from uds.core.util.model import process_uuid
 from uds.core.util.model import sql_stamp_seconds
 from uds.models import Authenticator
@@ -304,6 +306,21 @@ class Users(DetailHandler[UserItem]):
 
         if "password" in self._params:
             valid_fields.append("password")
+            # Check password complexity for internal users. Done
+            # before hashing: only the administrator-assigned plain password is
+            # evaluated, and only when the authenticator stores it in our own
+            # database (external sources manage their own passwords).
+            if (
+                parent.get_instance().external_source is False
+                and GlobalConfig.ENFORCE_PASSWORD_COMPLEXITY.as_bool(True)
+            ):
+                try:
+                    validators.validate_password_complexity(
+                        self._params["password"],
+                        min_length=GlobalConfig.PASSWORD_MIN_LENGTH.as_int(),
+                    )
+                except exceptions.ui.ValidationError as e:
+                    raise exceptions.rest.RequestError(str(e)) from e
             self._params["password"] = CryptoManager.manager().hash(self._params["password"])
 
         if "mfa_data" in self._params:
@@ -534,9 +551,7 @@ class Users(DetailHandler[UserItem]):
         parent = ensure.is_instance(parent, Authenticator)
 
         if not parent.get_instance().external_source:
-            raise exceptions.rest.NotSupportedError(
-                _("Only external authenticators support CSV user import")
-            )
+            raise exceptions.rest.NotSupportedError(_("Only external authenticators support CSV user import"))
 
         data: typing.Any = self._params.get("data", "")
         has_header: bool = self._params.get("has_header", False)
@@ -551,9 +566,8 @@ class Users(DetailHandler[UserItem]):
             separator,
         )
 
-        rows: collections.abc.Iterable[list[str]]
         if isinstance(data, list):
-            rows = data
+            rows = typing.cast(collections.abc.Iterable[list[str]], data)
             if has_header and rows:
                 rows = list(rows)[1:]
         else:
@@ -564,7 +578,7 @@ class Users(DetailHandler[UserItem]):
                     next(reader)
                 except StopIteration:
                     return [_("CSV has no data rows")]
-            rows = reader
+            rows = typing.cast("collections.abc.Iterable[list[str]]", reader)
 
         import_errors: list[str] = []
         for line_number, row in enumerate(rows, 1):
@@ -572,7 +586,9 @@ class Users(DetailHandler[UserItem]):
                 continue
             username = row[0].strip()
             if not username:
-                import_errors.append(_("Line {line}: Username cannot be empty, skipping").format(line=line_number))
+                import_errors.append(
+                    _("Line {line}: Username cannot be empty, skipping").format(line=line_number)
+                )
                 continue
 
             comments = ""

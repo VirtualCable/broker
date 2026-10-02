@@ -31,6 +31,7 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "actor-failure-blocking-disabled",
         "experimental-features-on",
         "immutable-audit-log-off",
+        "password-complexity-disabled",
         # A-family (settings.py)
         "security-cookies-and-headers",
         "debug-enabled",
