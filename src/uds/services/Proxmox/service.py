@@ -346,6 +346,11 @@ class ProxmoxService(DynamicService):
     @typing.override
     def is_deleted(self, vmid: str) -> bool:
         try:
+            with self.storage.as_dict() as storage:
+                if f"pdeleting_{vmid}" not in storage:
+                    storage[f"pdeleting_{vmid}"] = True
+                    return False
+                del storage[f"pdeleting_{vmid}"]
             self.provider().api.get_vm_info(int(vmid))
             return False
         except prox_exceptions.ProxmoxNotFound:
