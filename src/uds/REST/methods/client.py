@@ -232,7 +232,7 @@ class Client(Handler):
 
     def post(self) -> dict[str, typing.Any]:
         """
-        Processes put requests
+        Processes post requests
 
         post /client/<ticket>/<command>
         """
@@ -302,23 +302,6 @@ class Client(Handler):
 
         return self.sign_rdp(self._params.get("rdp") or "")
 
-    def put(self) -> dict[str, typing.Any]:
-        """
-        Processes put requests
-
-        put /client/<ticket>/rdp_sign  (body: {"rdp": "..."})
-        """
-        logger.debug("Client args for PUT: %s", self._args)
-        try:
-            ticket, command = self._args[:2]
-        except ValueError:
-            return Client.result(error="Invalid request")
-
-        if command != "rdp_sign":
-            return Client.result(error="Invalid command")
-
-        return self._sign_rdp_ticket(ticket)
-
     def get(self) -> dict[str, typing.Any]:
         """
         Processes get requests
@@ -347,6 +330,8 @@ class Client(Handler):
             _error,  # In case of error, raises RequestError
             ((), _noargs),  # No args, return version
             (("test",), self.test),  # Test request, returns "Correct"
+            # Compat for old script not our client.
+            # Our launcher uses POST not GET, but this is for compat with old script
             (
                 (
                     "<ticket>",
