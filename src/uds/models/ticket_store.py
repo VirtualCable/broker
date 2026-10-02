@@ -166,6 +166,16 @@ class TicketStore(UUIDModel):
         return loaded
 
     @staticmethod
+    def invalidate(uuid: str, owner: str | None = None) -> None:
+        """Consumes a ticket that was read with ``invalidate=False``
+
+        Args:
+            uuid: Ticket id
+            owner: Owner of the ticket, if it has one
+        """
+        TicketStore.objects.filter(uuid=uuid, owner=owner).delete()
+
+    @staticmethod
     def update(
         uuid: str,
         secure: bool = False,

@@ -146,16 +146,17 @@ class Client(Handler):
             src_ip,
         )
 
+        # The ticket is consumed when the request is resolved, not when it is read: a service
+        # that is still being prepared makes the client retry with this very same ticket
+        keep_ticket = False
         try:
-            # On debug, the tickets will not be invalidated (but will caduce in their validity time)
-            data: dict[str, typing.Any] = TicketStore.get(ticket, invalidate=not settings.DEBUG)
+            data: dict[str, typing.Any] = TicketStore.get(ticket, invalidate=False)
         except TicketStore.DoesNotExist:
             return Client.result(error=types.errors.Error.ACCESS_DENIED)
 
-        self._request.user = User.objects.get(uuid=data["user"])
-        self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
-
         try:
+            self._request.user = User.objects.get(uuid=data["user"])
+            self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
             logger.debug(data)
             info = UserServiceManager.manager().get_user_service_info(
                 self._request.user,
@@ -212,10 +213,7 @@ class Client(Handler):
             else:
                 return Client.result(result=transport_script.as_encrypted_dict(kem_key, ticket_id=ticket))
         except ServiceNotReadyError as e:
-            # Refresh ticket and make this retrayable
-            # TODO: This is test case, so ticket does not get refreshed never, beause refresh
-            # TODO: makes it invalidable. Testing tickets are hard modified on db right now for testing
-            # TODO: TicketStore.revalidate(ticket, 20)  # Retry will be in at most 5 seconds, so 20 is fine :)
+            keep_ticket = True
             return Client.result(
                 error=types.errors.Error.SERVICE_IN_PREPARATION, percent=e.code * 25, is_retrayable=True
             )
@@ -224,6 +222,9 @@ class Client(Handler):
             return Client.result(error="Invalid request")
 
         finally:
+            # On debug, the tickets will not be invalidated (but will caduce in their validity time)
+            if not keep_ticket and not settings.DEBUG:
+                TicketStore.invalidate(ticket)
             # ensures that we mark the service as accessed by client
             # so web interface can show can react to this
             if info and info.userservice:
