@@ -241,7 +241,7 @@ class OAuth2Authenticator(auths.Authenticator):
             return types.auth.SUCCESS_AUTH
 
         return types.auth.AuthenticationResult(
-            types.auth.AuthenticationState.SUCCESS,
+            types.auth.AuthenticationState.REDIRECT,
             url=self.logout_url.value.replace("{token}", urllib.parse.quote(token)),
         )
 
