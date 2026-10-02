@@ -82,6 +82,7 @@ class Calendars(ModelHandler[CalendarItem]):
         .numeric_column(name="number_access", title=_("Pools with Accesses"), width="5rem")
         .numeric_column(name="number_actions", title=_("Pools with Actions"), width="5rem")
         .text_column(name="tags", title=_("tags"), visible=False)
+        .with_filter_fields("name", "comments")
         .build()
     )
 

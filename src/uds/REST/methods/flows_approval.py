@@ -229,7 +229,7 @@ class FlowsApproval(FlowsAdminSurface):
         .datetime_column(name="created", title=_("Created"))
         .datetime_column(name="due_date", title=_("Due date"))
         .datetime_column(name="decided_at", title=_("Decided at"))
-        .with_filter_fields("name", "status", "owner", "compliance")
+        .with_filter_fields("name", "status")
         .row_style(prefix="row-compliance-", field="compliance")
         .build()
     )
