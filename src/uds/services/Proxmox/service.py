@@ -341,11 +341,14 @@ class ProxmoxService(DynamicService):
     def execute_delete(self, vmid: str) -> None:
         # All removals are deferred, so we can do it async
         # Try to stop it if already running... Hard stop
+        # 1.- Get current VM disks and store for later lookup
+        # 2.- Invoke the delete_vm
         self.provider().api.delete_vm(int(vmid))
 
     @typing.override
     def is_deleted(self, vmid: str) -> bool:
         try:
+            # This is a cuban changa. TBR
             with self.storage.as_dict() as storage:
                 if f"pdeleting_{vmid}" not in storage:
                     storage[f"pdeleting_{vmid}"] = True
@@ -354,6 +357,8 @@ class ProxmoxService(DynamicService):
             self.provider().api.get_vm_info(int(vmid))
             return False
         except prox_exceptions.ProxmoxNotFound:
+            # Check the stored disks, if the already exists, try to remove and return False
+
             return True
 
     @typing.override
