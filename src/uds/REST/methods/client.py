@@ -248,8 +248,8 @@ class Client(Handler):
                     self._params.get("kem_kyber_key", ""),
                 )
 
-            # rdp_sign moved to POST; its ticket carries no user/userservice,
-            # so resolve it before the lookup below. PUT still works for old clients.
+            # rdp_sign: its ticket carries no user/userservice, so resolve it
+            # before the lookup below.
             if command == "rdp_sign":
                 return self._sign_rdp_ticket(ticket)
 

@@ -179,10 +179,14 @@ class ProxmoxService(DynamicService):
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         if values:
-            self.basename.value = validators.validate_basename(self.basename.value, length=self.lenname.as_int())
+            self.basename.value = validators.validate_basename(
+                self.basename.value, length=self.lenname.as_int()
+            )
             # Do not allow linked clones on lvm-thin
             try:
-                storage = next(filter(lambda x: x.storage == self.datastore.value, self.provider().api.list_storages()))
+                storage = next(
+                    filter(lambda x: x.storage == self.datastore.value, self.provider().api.list_storages())
+                )
             except StopIteration:
                 raise exceptions.ui.ValidationError(_("Selected storage not found on Proxmox"))
             if not storage.supports_linked_clone() and not self.use_full_clone.value:
@@ -214,7 +218,8 @@ class ProxmoxService(DynamicService):
             ]
         )
         self.pool.set_choices(
-            [gui.choice_item("", _("None"))] + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
+            [gui.choice_item("", _("None"))]
+            + [gui.choice_item(p.id, p.id) for p in self.provider().api.list_pools()]
         )
         self.ha.set_choices(
             [gui.choice_item("", _("Enabled")), gui.choice_item("__", _("Disabled"))]
@@ -241,7 +246,9 @@ class ProxmoxService(DynamicService):
     def clone_vm(self, name: str, description: str, vmid: int = -1) -> "prox_types.VmCreationResult":
         name = self.sanitized_name(name)
         pool = self.pool.value or None
-        clone_vm_args: dict[str, typing.Any] = {"must_have_vgpus": {"1": True, "2": False}.get(self.gpu.value, None)}
+        clone_vm_args: dict[str, typing.Any] = {
+            "must_have_vgpus": {"1": True, "2": False}.get(self.gpu.value, None)
+        }
         use_linked_clones = not self.use_full_clone.value and vmid > 0
 
         return self.provider().clone_vm(
@@ -349,11 +356,11 @@ class ProxmoxService(DynamicService):
     def is_deleted(self, vmid: str) -> bool:
         try:
             # This is a cuban changa. TBR
-            with self.storage.as_dict() as storage:
-                if f"pdeleting_{vmid}" not in storage:
-                    storage[f"pdeleting_{vmid}"] = True
-                    return False
-                del storage[f"pdeleting_{vmid}"]
+            # with self.storage.as_dict() as storage:
+            #     if f"pdeleting_{vmid}" not in storage:
+            #         storage[f"pdeleting_{vmid}"] = True
+            #         return False
+            #     del storage[f"pdeleting_{vmid}"]
             self.provider().api.get_vm_info(int(vmid))
             return False
         except prox_exceptions.ProxmoxNotFound:

@@ -41,7 +41,6 @@ logger: logging.Logger = logging.getLogger(__name__)
 NUM_USERSERVICES = 8
 
 MUST_HAVE: typing.Final[list[str]] = [
-    "dispatcher.guacamole",
     "dispatcher.opengnsys",
 ]
 

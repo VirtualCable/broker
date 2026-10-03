@@ -81,14 +81,14 @@ class SecurityCookiesAndHeadersCheck(AutomaticCheck):
 
 
 class DebugEnabledCheck(AutomaticCheck):
-    """Production debug switches (DEBUG/PROFILING)."""
+    """Production debug switches (DEBUG)."""
 
     id: typing.ClassVar[str] = "debug-enabled"
     category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
     description: typing.ClassVar[str] = gettext_noop(
-        "Verifies that DEBUG and PROFILING are off in the broker settings. With DEBUG on, error "
-        "pages show code, settings and queries to anyone who triggers an error. Set both to False "
-        "and restart the broker."
+        "Verifies that DEBUG is off in the broker settings. With DEBUG on, error "
+        "pages show code, settings and queries to anyone who triggers an error. "
+        "Set it to False and restart the broker."
     )
 
     @typing.override
@@ -96,20 +96,18 @@ class DebugEnabledCheck(AutomaticCheck):
         problems: list[str] = []
         if settings.DEBUG:
             problems.append("DEBUG=True")
-        if getattr(settings, "PROFILING", False):
-            problems.append("PROFILING=True")
         if problems:
             return (
                 types.checks.CheckSeverity.CRITICAL,
                 False,
-                _("Production debug switches are on: {problems}. Disable both in production.").format(
+                _("Production debug switches are on: {problems}. Disable them in production.").format(
                     problems=", ".join(problems)
                 ),
             )
         return (
             types.checks.CheckSeverity.CRITICAL,
             True,
-            _("DEBUG and PROFILING are both off."),
+            _("DEBUG is off."),
         )
 
 

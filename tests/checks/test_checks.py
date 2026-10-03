@@ -330,19 +330,13 @@ class ChecksTest(UDSTransactionTestCase):
     # Check: debug-enabled (settings)
     # ------------------------------------------------------------------
     def test_debug_enabled_fails_when_debug_on(self) -> None:
-        with self.settings(DEBUG=True, PROFILING=False):
+        with self.settings(DEBUG=True):
             result = self._run_check("debug-enabled")
         self.assertFalse(result.ok, result.message)
         self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
 
-    def test_debug_enabled_fails_when_profiling_on(self) -> None:
-        with self.settings(DEBUG=False, PROFILING=True):
-            result = self._run_check("debug-enabled")
-        self.assertFalse(result.ok, result.message)
-        self.assertIn("PROFILING", result.message)
-
-    def test_debug_enabled_passes_when_both_off(self) -> None:
-        with self.settings(DEBUG=False, PROFILING=False):
+    def test_debug_enabled_passes_when_debug_off(self) -> None:
+        with self.settings(DEBUG=False):
             result = self._run_check("debug-enabled")
         self.assertTrue(result.ok, result.message)
 

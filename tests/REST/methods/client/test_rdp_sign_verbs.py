@@ -27,6 +27,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
+
 import typing
 from unittest import mock
 
@@ -36,7 +37,7 @@ from ....utils import test
 
 
 class ClientRdpSignVerbsTest(test.UDSTestCase):
-    """rdp_sign is reachable through both PUT (legacy) and POST (current)."""
+    """rdp_sign is reachable through POST only (legacy PUT verb was removed)."""
 
     def _build(self, sentinel: dict[str, typing.Any]) -> tuple[Client, mock.MagicMock]:
         client = object.__new__(Client)
@@ -46,12 +47,9 @@ class ClientRdpSignVerbsTest(test.UDSTestCase):
         client._sign_rdp_ticket = signer  # type: ignore[method-assign]
         return client, signer
 
-    def test_put_signs_ticket(self) -> None:
-        sentinel: dict[str, typing.Any] = {"result": "signed"}
-        client, signer = self._build(sentinel)
-
-        self.assertIs(client.put(), sentinel)
-        signer.assert_called_once_with("a-ticket")
+    def test_put_verb_is_not_supported(self) -> None:
+        client, _ = self._build({})
+        self.assertFalse(hasattr(client, "put"))
 
     def test_post_signs_ticket(self) -> None:
         sentinel: dict[str, typing.Any] = {"result": "signed"}
