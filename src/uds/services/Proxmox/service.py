@@ -346,27 +346,34 @@ class ProxmoxService(DynamicService):
 
     @typing.override
     def execute_delete(self, vmid: str) -> None:
-        # All removals are deferred, so we can do it async
-        # Try to stop it if already running... Hard stop
-        # 1.- Get current VM disks and store for later lookup
-        # 2.- Invoke the delete_vm
-        self.provider().api.delete_vm(int(vmid))
+        api = self.provider().api
+        node = api.get_vm_info(int(vmid)).node
+        with self.storage.as_dict() as storage:
+            if f"disks_{vmid}" not in storage:
+                storage[f"disks_{vmid}"] = (node, api.get_vm_disks(int(vmid), node))
+        api.delete_vm(int(vmid))
 
     @typing.override
     def is_deleted(self, vmid: str) -> bool:
+        api = self.provider().api
         try:
-            # This is a cuban changa. TBR
-            # with self.storage.as_dict() as storage:
-            #     if f"pdeleting_{vmid}" not in storage:
-            #         storage[f"pdeleting_{vmid}"] = True
-            #         return False
-            #     del storage[f"pdeleting_{vmid}"]
-            self.provider().api.get_vm_info(int(vmid))
+            api.get_vm_info(int(vmid))
             return False
         except prox_exceptions.ProxmoxNotFound:
-            # Check the stored disks, if the already exists, try to remove and return False
+            pass
 
-            return True
+        # Proxmox answers OK to the VM removal before its disks are gone
+        with self.storage.as_dict() as storage:
+            stored = storage.get(f"disks_{vmid}")
+            if stored is None:
+                return True
+            node, disks = stored
+            existing = api.get_existing_disks(int(vmid), disks, node)
+            if existing:
+                api.delete_disks(existing, node)
+                return False
+            del storage[f"disks_{vmid}"]
+        return True
 
     @typing.override
     def snapshot_creation(self, userservice_instance: DynamicUserService) -> None:
