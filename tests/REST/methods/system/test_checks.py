@@ -31,6 +31,7 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "actor-failure-blocking-disabled",
         "experimental-features-on",
         "immutable-audit-log-off",
+        "password-complexity-disabled",
         # A-family (settings.py)
         "security-cookies-and-headers",
         "debug-enabled",
@@ -198,7 +199,7 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
 
     def test_admin_report_reflects_configuration_state(self) -> None:
         # Isolate this test from the other CRITICAL/HIGH findings the test
-        # settings trigger (DEBUG=True, PROFILING=True, ALLOWED_HOSTS=['*'],
+        # settings trigger (DEBUG=True, ALLOWED_HOSTS=['*'],
         # CSRF middleware commented out, and the shipped sample SECRET_KEY /
         # RSA_KEY when running off a pristine settings.py). The
         # superuser-credentials check is the one we want to exercise here.
@@ -213,7 +214,6 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         ]
         with self.settings(
             DEBUG=False,
-            PROFILING=False,
             ALLOWED_HOSTS=["testserver"],
             MIDDLEWARE=middleware,
             SECRET_KEY="a-rotated-not-default-secret-key",

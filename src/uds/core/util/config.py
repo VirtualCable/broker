@@ -472,6 +472,21 @@ class GlobalConfig:
         type=Config.FieldType.BOOLEAN,
         help=_("Enable enhanced security modules"),
     )
+    # Password complexity enforcement. Applies when an
+    # administrator sets the password of a user that lives in the internal
+    # database (i.e. not synchronized from an external source).
+    ENFORCE_PASSWORD_COMPLEXITY: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "Enforce passwords complexity",
+        "1",
+        type=Config.FieldType.BOOLEAN,
+        help=_("Enforce a minimum complexity policy when assigning passwords to internal database users"),
+    )
+    PASSWORD_MIN_LENGTH: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "Password minimum length",
+        str(consts.security.PASSWORD_MIN_LENGTH),
+        type=Config.FieldType.NUMERIC,
+        help=_("Minimum length of the password for internal database users"),
+    )
     # Paranoid security
     ENFORCE_ZERO_TRUST: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Enforce Zero-Trust Mode",

@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2014-2022 Virtual Cable S.L.
 # All rights reserved.
@@ -39,6 +38,7 @@ from cryptography.x509 import load_pem_x509_certificate
 from django.core import validators as dj_validators
 from django.utils.translation import gettext as _
 
+from uds.core import consts
 from uds.core import exceptions
 from uds.core.util import security
 
@@ -171,7 +171,9 @@ def validate_ipv4(ipv4: str, field_name: str | None = None) -> str:
     try:
         dj_validators.validate_ipv4_address(ipv4)
     except Exception:
-        raise exceptions.ui.ValidationError(_("{} is not a valid IPv4 address").format(ipv4 + field_name)) from None
+        raise exceptions.ui.ValidationError(
+            _("{} is not a valid IPv4 address").format(ipv4 + field_name)
+        ) from None
     return ipv4
 
 
@@ -194,7 +196,9 @@ def validate_ipv6(ipv6: str, field_name: str | None = None) -> str:
     try:
         dj_validators.validate_ipv6_address(ipv6)
     except Exception:
-        raise exceptions.ui.ValidationError(_("{} is not a valid IPv6 address").format(ipv6 + field_name)) from None
+        raise exceptions.ui.ValidationError(
+            _("{} is not a valid IPv6 address").format(ipv6 + field_name)
+        ) from None
     return ipv6
 
 
@@ -420,7 +424,9 @@ def validate_mac_range(macrange: str, field_name: str | None = None) -> str:
         raise
 
     except Exception:
-        raise exceptions.ui.ValidationError(_("{} is not a valid MAC range").format(macrange + field_name)) from None
+        raise exceptions.ui.ValidationError(
+            _("{} is not a valid MAC range").format(macrange + field_name)
+        ) from None
 
     return macrange
 
@@ -552,3 +558,65 @@ def validate_server_certificate_multiple(value: str | None) -> str:
             raise exceptions.ui.ValidationError(_("Invalid certificate") + f" :{e}") from e
 
     return value
+
+
+def validate_password_complexity(
+    password: str,
+    min_length: int | None = None,
+    min_categories: int | None = None,
+    field_name: str | None = None,
+) -> str:
+    """
+    Validates that a password is complex enough.
+
+    The password must be at least ``min_length`` characters long and span at
+    least ``min_categories`` of the four character categories: lowercase,
+    uppercase, digits and symbols. Anything not letter or digit (spaces,
+    punctuation, non-ascii symbols) counts as the symbols category.
+
+    Args:
+        password (str): Password to validate (plain, before hashing).
+        min_length (int | None, optional): Minimum length. Defaults to the
+            ``consts.security.PASSWORD_MIN_LENGTH`` shipped value.
+        min_categories (int | None, optional): Minimum number of character
+            categories the password must span. Defaults to the
+            ``consts.security.PASSWORD_MIN_CATEGORIES`` shipped value.
+        field_name (str | None, optional): If present, the name of the field for
+            "Raising" exceptions, defaults to "Password". Defaults to None.
+
+    Returns:
+        str: The validated password
+
+    Raises:
+        exceptions.ui.ValidationError: If password is not complex enough
+    """
+    min_length = min_length if min_length is not None else consts.security.PASSWORD_MIN_LENGTH
+    min_categories = min_categories if min_categories is not None else consts.security.PASSWORD_MIN_CATEGORIES
+    field_name = field_name or _("Password")
+
+    if len(password) < min_length:
+        raise exceptions.ui.ValidationError(
+            _("{0} must be at least {1} characters long").format(field_name, min_length)
+        )
+
+    if len(password) > consts.security.PASSWORD_MAX_LENGTH:
+        raise exceptions.ui.ValidationError(
+            _("{0} must be at most {1} characters long").format(field_name, consts.security.PASSWORD_MAX_LENGTH)
+        )
+
+    categories = sum(
+        (
+            any(c.islower() for c in password),
+            any(c.isupper() for c in password),
+            any(c.isdigit() for c in password),
+            any(not c.isalnum() for c in password),
+        )
+    )
+    if categories < min_categories:
+        raise exceptions.ui.ValidationError(
+            _("{0} must contain at least {1} of these: lowercase, uppercase, digits, symbols").format(
+                field_name, min_categories
+            )
+        )
+
+    return password

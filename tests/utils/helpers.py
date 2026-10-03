@@ -28,6 +28,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import collections.abc
 import contextlib
 import logging
 import random
@@ -52,6 +53,32 @@ def random_utf8_string(size: int = 6) -> str:
     # Generate a random utf-8 string of length "length"
     # some utf-8 non ascii chars are generated, but not all of them
     return "".join(random.choice(constants.UTF_CHARS) for _ in range(size))  # nosec
+
+
+def random_password(size: int = 12) -> str:
+    """
+    Generate a random password that satisfies the default internal users
+    complexity policy (at least one lowercase, one uppercase, one digit and
+    one symbol, ``size`` characters long, ``size`` >= 4).
+    """
+    # Note the missing letters 'l' and 'o' in lowercase and 'I' and 'O' in uppercase
+    # also the 1 and 0 digits are missing, to avoid confusion with letters
+    # 'l' and 'o' and 'I' and 'O'
+    lowercase = "abcdefghijkmnpqrstuvwxyz"
+    uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    digits = "23456789"
+    symbols = "!@#$%&*_"
+
+    chars = [
+        random.choice(lowercase),
+        random.choice(uppercase),
+        random.choice(digits),
+        random.choice(symbols),
+    ]
+    all_chars = lowercase + uppercase + digits + symbols
+    chars += [random.choice(all_chars) for _ in range(max(size - len(chars), 0))]
+    random.shuffle(chars)  # nosec: Not used for cryptography, just for testing
+    return "".join(chars)
 
 
 def random_uuid() -> str:
@@ -83,7 +110,9 @@ def random_mac(mac_range: str | None = None) -> str:
         return ":".join(f"{mac:012X}"[i : i + 2] for i in range(0, 12, 2))
 
 
-def limited_iterator(while_checker: typing.Callable[[], bool], limit: int = 128) -> typing.Generator[int, None, None]:
+def limited_iterator(
+    while_checker: collections.abc.Callable[[], bool], limit: int = 128
+) -> collections.abc.Generator[int, None, None]:
     """
     Limit an iterator to a number of elements
     Will continue until limit is reached or check() returns False
@@ -100,7 +129,9 @@ def limited_iterator(while_checker: typing.Callable[[], bool], limit: int = 128)
     raise Exception(f"Limit reached: {current}/{limit}: {while_checker()}")
 
 
-def waiter(finish_checker: typing.Callable[[], bool], timeout: int = 64, msg: str | None = None) -> None:
+def waiter(
+    finish_checker: collections.abc.Callable[[], bool], timeout: int = 64, msg: str | None = None
+) -> None:
     start_time = time.time()
     for _ in limited_iterator(lambda: time.time() - start_time < timeout):
         if finish_checker():
@@ -161,7 +192,7 @@ def disable_http_debug() -> None:
 
 
 @contextlib.contextmanager
-def timeit(name: str) -> typing.Generator[None, None, None]:
+def timeit(name: str) -> collections.abc.Generator[None, None, None]:
     """
     Context manager to time a block of code
     """

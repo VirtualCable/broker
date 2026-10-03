@@ -297,3 +297,41 @@ class ImmutableAuditLogOffCheck(AutomaticCheck):
                 " the tamper-evident log (src/uds/models/immutable_log.py)."
             ),
         )
+
+
+class PasswordComplexityDisabledCheck(AutomaticCheck):
+    """Password complexity policy for internal users disabled or too weak."""
+
+    id: typing.ClassVar[str] = "password-complexity-disabled"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that the internal users password policy (ENFORCE_PASSWORD_COMPLEXITY) is on and "
+        "the minimum length (PASSWORD_MIN_LENGTH) is at least 8. When off, administrators can "
+        "assign trivially weak passwords to internal database users."
+    )
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        if not GlobalConfig.ENFORCE_PASSWORD_COMPLEXITY.as_bool(True):
+            return (
+                types.checks.CheckSeverity.MEDIUM,
+                False,
+                _(
+                    "ENFORCE_PASSWORD_COMPLEXITY is off: internal users passwords are not checked "
+                    "against any complexity policy."
+                ),
+            )
+        min_length = GlobalConfig.PASSWORD_MIN_LENGTH.as_int()
+        if min_length < consts.security.PASSWORD_MIN_LENGTH:
+            return (
+                types.checks.CheckSeverity.MEDIUM,
+                False,
+                _("PASSWORD_MIN_LENGTH={value} (recommended: >= {minimum})").format(
+                    value=min_length, minimum=consts.security.PASSWORD_MIN_LENGTH
+                ),
+            )
+        return (
+            types.checks.CheckSeverity.MEDIUM,
+            True,
+            _("Internal users password complexity policy is active."),
+        )

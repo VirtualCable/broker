@@ -37,8 +37,9 @@ import typing
 from django.utils import timezone
 
 from uds import models
-from uds.core import types
+from uds.core import consts, types
 from uds.core.util import objtype
+from uds.core.util.config import GlobalConfig
 from uds.models.user import hash_api_token
 
 from ....fixtures import rest as rest_fixtures
@@ -472,3 +473,87 @@ class UsersTest(rest.test.RESTActorTestCase):
         response = self.client.rest_post(url_post_import, {"data": "alias_user,Alias comment"})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(auth.users.filter(name="alias_user").exists())
+
+
+class UsersPasswordPolicyTest(rest.test.RESTActorTestCase):
+    """
+    Internal users password complexity enforcement.
+    """
+
+    @typing.override
+    def setUp(self) -> None:
+        timezone.activate(datetime.timezone.utc)
+        super().setUp()
+        self.login()
+
+    def _create_external_authenticator(self) -> models.Authenticator:
+        from uds.auths.SAML.saml import SAMLAuthenticator
+
+        auth = models.Authenticator.objects.create(
+            name="External SAML Test Auth",
+            data_type=SAMLAuthenticator.type_type,
+        )
+        auth.data = auth.get_instance().serialize()
+        auth.save()
+        return auth
+
+    @typing.override
+    def tearDown(self) -> None:
+        # Config values keep an in-memory copy that would leak into other tests
+        GlobalConfig.ENFORCE_PASSWORD_COMPLEXITY.set(True)
+        GlobalConfig.PASSWORD_MIN_LENGTH.set(str(consts.security.PASSWORD_MIN_LENGTH))
+        super().tearDown()
+
+    def test_weak_password_rejected_on_create(self) -> None:
+        url = f"authenticators/{self.auth.uuid}/users"
+        user_dct = rest_fixtures.createUser(password="weak")
+        response = self.client.rest_put(url, user_dct)
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn("Password", response.json()["error"])
+        self.assertFalse(self.auth.users.filter(name=user_dct["name"]).exists())
+
+    def test_weak_password_rejected_on_update(self) -> None:
+        user = self.plain_users[0]
+        url = f"authenticators/{self.auth.uuid}/users"
+        user_dct = rest_fixtures.createUser(id=user.uuid, name=user.name, password="weak")
+        response = self.client.rest_put(url, user_dct)
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn("Password", response.json()["error"])
+
+    def test_strong_password_accepted_on_create(self) -> None:
+        url = f"authenticators/{self.auth.uuid}/users"
+        user_dct = rest_fixtures.createUser(password="Str0ng!Pass")
+        response = self.client.rest_put(url, user_dct)
+        self.assertEqual(response.status_code, 200, response.content)
+        dbusr = self.auth.users.get(name=user_dct["name"])
+        self.assertTrue(rest.assertions.assert_user_is(dbusr, user_dct, compare_password=True))
+
+    def test_policy_disabled_allows_weak_password(self) -> None:
+        GlobalConfig.ENFORCE_PASSWORD_COMPLEXITY.set(False)
+        url = f"authenticators/{self.auth.uuid}/users"
+        user_dct = rest_fixtures.createUser(password="weak")
+        response = self.client.rest_put(url, user_dct)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(self.auth.users.filter(name=user_dct["name"]).exists())
+
+    def test_honors_custom_minimum_length(self) -> None:
+        GlobalConfig.PASSWORD_MIN_LENGTH.set("12")
+        url = f"authenticators/{self.auth.uuid}/users"
+        response = self.client.rest_put(
+            url, rest_fixtures.createUser(name="short-but-10", password="Str0ng!Pass")
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn("at least 12", response.json()["error"])
+
+        response = self.client.rest_put(
+            url, rest_fixtures.createUser(name="long-enough", password="Str0ng!Pass1234")
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+    def test_external_authenticator_not_enforced(self) -> None:
+        auth = self._create_external_authenticator()
+        url = f"authenticators/{auth.uuid}/users"
+        user_dct = rest_fixtures.createUser(name="ext-weak-user", password="weak")
+        response = self.client.rest_put(url, user_dct)
+        # The complexity policy only applies to internal users
+        self.assertEqual(response.status_code, 200, response.content)
