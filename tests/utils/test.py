@@ -38,6 +38,7 @@ from django.test import TestCase
 from django.test import TransactionTestCase
 from django.test.client import AsyncClient  # type: ignore   # Pylance does not know about AsyncClient, but it is there
 from django.test.client import Client  # type: ignore   # Pylance does not know about AsyncClient, but it is there
+from django.utils import translation
 
 from uds.core.environment import Environment
 from uds.core.managers.crypto import CryptoManager
@@ -55,6 +56,7 @@ class UDSHttpResponse(HttpResponse):
     def __init__(self, content: bytes, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(content, *args, **kwargs)
 
+    @typing.override
     def json(self) -> typing.Any:
         return super().json()
 
@@ -122,6 +124,7 @@ class UDSClient(UDSClientMixin, Client):
         # and required UDS cookie
         self.cookies["uds"] = CryptoManager.manager().random_string(48)
 
+    @typing.override
     def request(self, **request: typing.Any) -> "UDSHttpResponse":
         # Copy request dict
         # request = request.copy()
@@ -129,6 +132,7 @@ class UDSClient(UDSClientMixin, Client):
         # request.update(self.uds_headers)
         return typing.cast("UDSHttpResponse", super().request(**request))
 
+    @typing.override
     def get(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         return typing.cast("UDSHttpResponse", super().get(*args, **kwargs))
@@ -137,6 +141,7 @@ class UDSClient(UDSClientMixin, Client):
         # compose url
         return self.get(self.compose_rest_url(method), *args, **kwargs)
 
+    @typing.override
     def post(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         return typing.cast("UDSHttpResponse", super().post(*args, **kwargs))
@@ -146,6 +151,7 @@ class UDSClient(UDSClientMixin, Client):
         kwargs["content_type"] = kwargs.get("content_type", "application/json")
         return self.post(self.compose_rest_url(method), *args, **kwargs)
 
+    @typing.override
     def put(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         return typing.cast("UDSHttpResponse", super().put(*args, **kwargs))
@@ -154,6 +160,7 @@ class UDSClient(UDSClientMixin, Client):
         kwargs["content_type"] = kwargs.get("content_type", "application/json")
         return self.put(self.compose_rest_url(method), *args, **kwargs)
 
+    @typing.override
     def delete(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         kwargs["content_type"] = kwargs.get("content_type", "application/json")
@@ -179,14 +186,16 @@ class UDSAsyncClient(UDSClientMixin, AsyncClient):  # type: ignore   # Django st
         # and required UDS cookie
         self.cookies["uds"] = CryptoManager.manager().random_string(48)
 
+    @typing.override
     async def request(self, **request: typing.Any) -> "UDSHttpResponse":
         # Copy request dict
         request = request.copy()
         # Add headers
         request.update(self.uds_headers)
-        return await super().request(**request)  # pyright: ignore
+        return typing.cast("UDSHttpResponse", await super().request(**request))  # pyright: ignore
 
     # pylint: disable=invalid-overridden-method
+    @typing.override
     async def get(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         return typing.cast("UDSHttpResponse", await super().get(*args, **kwargs))
@@ -196,6 +205,7 @@ class UDSAsyncClient(UDSClientMixin, AsyncClient):  # type: ignore   # Django st
         return await self.get(self.compose_rest_url(method), *args, **kwargs)
 
     # pylint: disable=invalid-overridden-method
+    @typing.override
     async def post(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         return typing.cast("UDSHttpResponse", await super().post(*args, **kwargs))
@@ -205,6 +215,7 @@ class UDSAsyncClient(UDSClientMixin, AsyncClient):  # type: ignore   # Django st
         return await self.post(self.compose_rest_url(method), *args, **kwargs)
 
     # pylint: disable=invalid-overridden-method
+    @typing.override
     async def put(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         kwargs["content_type"] = kwargs.get("content_type", "application/json")
         return typing.cast("UDSHttpResponse", await super().put(*args, **kwargs))
@@ -214,6 +225,7 @@ class UDSAsyncClient(UDSClientMixin, AsyncClient):  # type: ignore   # Django st
         return await self.put(self.compose_rest_url(method), *args, **kwargs)
 
     # pylint: disable=invalid-overridden-method
+    @typing.override
     async def delete(self, *args: typing.Any, **kwargs: typing.Any) -> "UDSHttpResponse":
         self.update_request_kwargs(kwargs)
         return typing.cast("UDSHttpResponse", await super().delete(*args, **kwargs))
@@ -229,6 +241,14 @@ class UDSTestCaseMixin:
 
     client: UDSClient
     async_client: UDSAsyncClient
+
+    def setUp(self) -> None:
+        super().setUp()  # type: ignore[misc]
+        # Views may call translation.activate() (some dispatcher does,
+        # from the terminal "kl" parameter) and Django does not reset the active
+        # language when the request ends, so it leaks to whatever test runs next
+        # on the same process. Reset to the defaults before every test.
+        translation.deactivate_all()
 
     @staticmethod
     def add_middleware(middleware: str) -> None:
@@ -246,6 +266,7 @@ class UDSTestCaseMixin:
 
 class UDSTestCase(UDSTestCaseMixin, TestCase):  # pyright: ignore   # Overrides superclass client
     @classmethod
+    @typing.override
     def setUpClass(cls) -> None:
         super().setUpClass()
         setupClass(cls)  # The one local to this module
@@ -256,6 +277,7 @@ class UDSTestCase(UDSTestCaseMixin, TestCase):  # pyright: ignore   # Overrides 
 
 class UDSTransactionTestCase(UDSTestCaseMixin, TransactionTestCase):  # pyright: ignore  # superclass client
     @classmethod
+    @typing.override
     def setUpClass(cls) -> None:
         super().setUpClass()
         setupClass(cls)
