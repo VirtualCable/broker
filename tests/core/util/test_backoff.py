@@ -46,6 +46,43 @@ class _DummyCache:
         return self._store.pop(key, None) is not None
 
 
+class _ExpiringCache:
+    """In-memory cache that enforces ``validity`` on read, mimicking the real
+    ``uds.core.util.cache.Cache`` (an expired entry returns ``default``).
+
+    Time is manual: tests advance ``now`` to simulate the clock.
+    """
+
+    def __init__(self) -> None:
+        self._store: dict[str, tuple[typing.Any, float]] = {}
+        self.now: float = 1000.0
+
+    def get(
+        self,
+        skey: str | bytes,
+        default: typing.Any = None,
+    ) -> typing.Any:
+        key: str = skey if isinstance(skey, str) else skey.decode()
+        entry: tuple[typing.Any, float] | None = self._store.get(key)
+        if entry is None:
+            return default
+        value, expires_at = entry
+        return default if self.now >= expires_at else value
+
+    def put(
+        self,
+        skey: str | bytes,
+        value: typing.Any,
+        validity: int | None = None,
+    ) -> None:
+        key = skey if isinstance(skey, str) else skey.decode()
+        self._store[key] = (value, self.now + (validity if validity is not None else 0))
+
+    def remove(self, skey: str | bytes) -> bool:
+        key = skey if isinstance(skey, str) else skey.decode()
+        return self._store.pop(key, None) is not None
+
+
 def _real_cache() -> cache.CacheLike:
     """A real ``Cache`` instance (we never call ``put`` with valid > TTL, so
     no DB row gets persisted beyond what the test does)."""
@@ -162,6 +199,50 @@ class RealCacheTest(UDSTestCase):
         self.assertEqual(bo.ttl("h1:389"), 30)
         bo.clear_bad("h1:389")
         self.assertFalse(bo.is_bad("h1:389"))
+
+
+class NaturalExpiryProgressionTest(UDSTestCase):
+    """Progression must survive the ``bad`` flag expiring naturally (TTL
+    enforced on read, as the real ``Cache`` backend does)."""
+
+    def test_escalates_across_natural_expiries(self) -> None:
+        c = _ExpiringCache()
+        bo = Backoff(c, owner="svc", fail_time=30, max_time=28800)
+        self.assertEqual(bo.mark_bad("h1:389"), 30)
+        c.now += 31  # bad flag expires; ghost cooldown (ttl 120) survives
+        self.assertFalse(bo.is_bad("h1:389"))
+        self.assertEqual(bo.mark_bad("h1:389"), 60)
+        c.now += 61
+        self.assertEqual(bo.mark_bad("h1:389"), 120)
+        c.now += 121
+        self.assertEqual(bo.mark_bad("h1:389"), 240)
+
+    def test_ghost_resets_after_full_expiry(self) -> None:
+        c = _ExpiringCache()
+        bo = Backoff(c, owner="svc", fail_time=30, max_time=28800)
+        bo.mark_bad("h1:389")  # ghost ttl = 30 * COOLDOWN_TTL_FACTOR = 120
+        c.now += 121  # both flag and ghost are gone now
+        self.assertFalse(bo.is_bad("h1:389"))
+        self.assertEqual(bo.mark_bad("h1:389"), 30)
+
+    def test_clear_bad_resets_even_after_natural_expiry(self) -> None:
+        c = _ExpiringCache()
+        bo = Backoff(c, owner="svc", fail_time=30, max_time=28800)
+        bo.mark_bad("h1:389")
+        c.now += 31  # bad flag expires, ghost still alive
+        bo.clear_bad("h1:389")
+        self.assertFalse(bo.is_bad("h1:389"))
+        self.assertEqual(bo.mark_bad("h1:389"), 30)
+
+    def test_reaches_max_time_across_natural_expiries(self) -> None:
+        c = _ExpiringCache()
+        bo = Backoff(c, owner="svc", fail_time=30, max_time=1000)
+        value = 0
+        for _ in range(10):
+            value = bo.mark_bad("h1:389")
+            c.now += value + 1  # wait out each full cooldown before retrying
+        self.assertEqual(value, 1000)
+        self.assertEqual(bo.ttl("h1:389"), 1000)
 
 
 if __name__ == "__main__":

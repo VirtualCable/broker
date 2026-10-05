@@ -36,6 +36,13 @@ from uds.core.util.cache import CacheLike
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+# Storage TTL of a cooldown entry is the current cooldown multiplied by this
+# factor (capped at ``Backoff._max_ttl``). It must be greater than 1: the
+# ``bad`` flag expires with the cooldown itself, while the cooldown entry
+# must outlive it so the next ``mark_bad`` can read the stale value and keep
+# escalating instead of restarting from the seed.
+COOLDOWN_TTL_FACTOR: typing.Final[int] = 4
+
 """
 Exponential backoff cache for per-key "bad host / bad resource" tracking.
 
@@ -94,9 +101,9 @@ class Backoff:
     _fail_time: int
     _max_time: int
     _scale: float
-    # Per-entry TTL is the current cooldown *this* — but we cap it
-    # generously so a stale entry survives long enough to be consumed
-    # by the next mark_bad after a real outage.
+    # Hard cap for the storage TTL of a cooldown entry (see ``mark_bad``):
+    # it must survive long enough past its ``bad`` flag to be consumed
+    # by the next ``mark_bad`` after a real outage.
     _max_ttl: int
 
     def __init__(
@@ -124,10 +131,9 @@ class Backoff:
         self._fail_time = fail_time
         self._max_time = max_time
         self._scale = scale
-        # Per-entry TTL is the current cooldown *this* — but we cap it
-        # generously so a stale entry survives long enough to be consumed
-        # by the next mark_bad after a real outage.
-        self._max_ttl = max_time * 4
+        # Generous cap so a stale cooldown entry survives long enough to be
+        # consumed by the next mark_bad after a real outage.
+        self._max_ttl = max_time * COOLDOWN_TTL_FACTOR
 
     def _bad_key(self, key: str) -> str:
         return f"{self._owner}.bad.{key}"
@@ -140,7 +146,11 @@ class Backoff:
         return bool(self._cache.get(self._bad_key(key), default=None))
 
     def ttl(self, key: str) -> int:
-        """Current backoff (seconds) for ``key``; ``0`` if not bad."""
+        """Last known backoff (seconds) for ``key``.
+
+        May return a stale ("ghost") value while ``key`` is no longer bad;
+        ``0`` only means the key was never marked or the state was cleared.
+        """
         try:
             return self._cache.get(self._cooldown_key(key), default=None) or 0
         except (TypeError, ValueError):
@@ -161,9 +171,13 @@ class Backoff:
             prev = 0
         next_value = self._fail_time if prev == 0 else int(prev * self._scale)
         next_value = min(next_value, self._max_time)
-        ttl = min(next_value, self._max_ttl)
-        self._safe_put(self._cooldown_key(key), next_value, ttl)
-        self._safe_put(self._bad_key(key), True, ttl)
+        # The ``bad`` flag expires with the cooldown; the cooldown entry
+        # outlives it so the next ``mark_bad`` can consume the stale value
+        # (see module docstring).
+        self._safe_put(
+            self._cooldown_key(key), next_value, min(next_value * COOLDOWN_TTL_FACTOR, self._max_ttl)
+        )
+        self._safe_put(self._bad_key(key), True, next_value)
         return next_value
 
     def clear_bad(self, key: str, *, force: bool = False) -> None:
