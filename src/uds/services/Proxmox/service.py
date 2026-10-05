@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import collections.abc
@@ -349,9 +350,15 @@ class ProxmoxService(DynamicService):
         api = self.provider().api
         node = api.get_vm_info(int(vmid)).node
         with self.storage.as_dict() as storage:
-            if f"disks_{vmid}" not in storage:
-                storage[f"disks_{vmid}"] = (node, api.get_vm_disks(int(vmid), node))
+            storage[f"disks_{vmid}"] = (node, api.get_vm_disks(int(vmid), node))
         api.delete_vm(int(vmid))
+
+    @typing.override
+    def notify_deleted(self, vmid: str) -> None:
+        # The deferred worker can stop tracking the vm before its disks are gone, and proxmox reuses vmids
+        with self.storage.as_dict() as storage:
+            storage.pop(f"disks_{vmid}", None)
+        super().notify_deleted(vmid)
 
     @typing.override
     def is_deleted(self, vmid: str) -> bool:
