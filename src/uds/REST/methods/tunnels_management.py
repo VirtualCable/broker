@@ -114,6 +114,8 @@ class TunnelServers(DetailHandler[TunnelServerItem]):
                 dct={True: _("Maintenance"), False: _("Normal")},
             )
             .row_style(prefix="row-maintenance-", field="maintenance")
+            .with_field_mappings(maintenance="maintenance_mode")
+            .with_filter_fields("hostname", "ip", "mac", "maintenance_mode")
         ).build()
 
     # Cannot save a tunnel server, it's not editable...
