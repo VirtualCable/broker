@@ -131,6 +131,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             .numeric_column(name="interval", title=_("Interval"))
             .numeric_column(name="duration", title=_("Duration"))
             .text_column(name="comments", title=_("Comments"))
+            .with_filter_fields("name", "start", "end", "frequency", "interval", "duration", "comments")
             .build()
         )
 

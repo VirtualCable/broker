@@ -366,6 +366,7 @@ class ServersServers(DetailHandler[ServerItem]):
                 dct={True: _("Maintenance"), False: _("Normal")},
             )
             .row_style(prefix="row-maintenance-", field="maintenance_mode")
+            .with_filter_fields("hostname", "ip", "mac", "listen_port", "maintenance_mode")
             .build()
         )
 
