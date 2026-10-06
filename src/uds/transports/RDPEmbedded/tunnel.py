@@ -130,7 +130,12 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
                 startup_time=self.startup_time.as_int() * 1000,  # In milliseconds
             ),
         )
-        if os.os not in (types.os.KnownOS.WINDOWS, types.os.KnownOS.LINUX, types.os.KnownOS.MAC_OS):
+        if os.os not in (
+            types.os.KnownOS.WINDOWS,
+            types.os.KnownOS.LINUX,
+            types.os.KnownOS.MAC_OS,
+            types.os.KnownOS.ANDROID,
+        ):
             logger.error(
                 "Os not valid for RDP Transport: %s",
                 request.META.get("HTTP_USER_AGENT", "Unknown"),

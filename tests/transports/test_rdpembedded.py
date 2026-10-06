@@ -240,3 +240,15 @@ class RDPEmbeddedTest(UDSTestCase):
         data = transport.build_connection_params("1.2.3.4", _connection_data(), tunnel=tunnel).as_dict()
         self.assertEqual(data["tunnel"]["host"], "tunnel-host")
         self.assertEqual(data["tunnel"]["port"], 7777)
+
+    def test_android_supported_and_scripts(self) -> None:
+        self.assertIn(types.os.KnownOS.ANDROID, BaseRDPEmbeddedTransport.supported_oss)
+        env = self.create_environment()
+        direct = RDPEmbeddedTransport(env, None)
+        tunnel = TRDPEmbeddedTransport(env, None)
+        script_direct = direct.get_script("android", "direct", {"server": "1.2.3.4"})
+        self.assertTrue(script_direct.script)
+        self.assertTrue(script_direct.signature_b64)
+        script_tunnel = tunnel.get_script("android", "tunnel", {"server": "1.2.3.4"})
+        self.assertTrue(script_tunnel.script)
+        self.assertTrue(script_tunnel.signature_b64)

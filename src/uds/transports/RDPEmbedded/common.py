@@ -132,7 +132,12 @@ class BaseRDPEmbeddedTransport(transports.Transport):
     is_base = True
 
     PROTOCOL = types.transports.Protocol.RDP
-    supported_oss = (types.os.KnownOS.WINDOWS, types.os.KnownOS.LINUX, types.os.KnownOS.MAC_OS)
+    supported_oss = (
+        types.os.KnownOS.WINDOWS,
+        types.os.KnownOS.LINUX,
+        types.os.KnownOS.MAC_OS,
+        types.os.KnownOS.ANDROID,
+    )
 
     force_empty_creds = gui.CheckBoxField(
         label=_("Empty creds"),

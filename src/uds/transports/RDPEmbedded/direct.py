@@ -105,7 +105,12 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
         ci = self.get_connection_info(userservice, user, password)
 
         data = self.build_connection_params(ip, ci)
-        if os.os not in (types.os.KnownOS.WINDOWS, types.os.KnownOS.LINUX, types.os.KnownOS.MAC_OS):
+        if os.os not in (
+            types.os.KnownOS.WINDOWS,
+            types.os.KnownOS.LINUX,
+            types.os.KnownOS.MAC_OS,
+            types.os.KnownOS.ANDROID,
+        ):
             logger.error(
                 "Os not valid for RDP Transport: %s",
                 request.META.get("HTTP_USER_AGENT", "Unknown"),
