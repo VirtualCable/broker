@@ -194,7 +194,11 @@ class HTML5RDPTransport(transports.Transport):
         label=_("Webcam max width"),
         order=30,
         length=5,
-        tooltip=_("Cap webcam width in pixels, keeping aspect ratio. 0 = original size."),
+        tooltip=_(
+            "Maximum webcam video capture width in pixels (0 = native resolution). "
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
+        ),
         default=0,
         tab=types.ui.Tab.PARAMETERS,
     )
@@ -202,7 +206,11 @@ class HTML5RDPTransport(transports.Transport):
         label=_("Webcam max height"),
         order=31,
         length=5,
-        tooltip=_("Cap webcam height in pixels, keeping aspect ratio. 0 = original size."),
+        tooltip=_(
+            "Maximum webcam video capture height in pixels (0 = native resolution). "
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
+        ),
         default=0,
         tab=types.ui.Tab.PARAMETERS,
     )
