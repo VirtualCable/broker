@@ -112,7 +112,9 @@ class TestUserserviceManager(UDSTransactionTestCase):
 
         assigned_info = self.manager.get_user_service_info(
             user,
-            core_types.os.DetectedOsInfo(core_types.os.KnownOS.LINUX, core_types.os.KnownBrowser.CHROME, "1.0.0"),
+            core_types.os.DetectedOsInfo(
+                core_types.os.KnownOS.LINUX, core_types.os.KnownBrowser.CHROME, "1.0.0"
+            ),
             "1.2.3.4",
             f"P{service_pool.uuid}",
             service_pool.transports.all()[0].uuid,
