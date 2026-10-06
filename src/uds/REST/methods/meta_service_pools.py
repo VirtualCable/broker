@@ -125,6 +125,7 @@ class MetaServicesPool(DetailHandler[MetaItem]):
             .text_column(name="comments", title=_("Comments"))
             .numeric_column(name="priority", title=_("Priority"))
             .text_column(name="enabled", title=_("Enabled"))
+            .with_filter_fields("priority", "enabled")
             .build()
         )
 
@@ -228,7 +229,7 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
     def _assigned_userservices_for_pools(
         self, parent: "models.MetaPool"
     ) -> collections.abc.Generator[tuple[models.UserService, dict[str, typing.Any]], None, None]:
-        for m in self.odata_filter(parent.members.filter(enabled=True)):
+        for m in parent.members.filter(enabled=True):
             properties: dict[str, dict[str, typing.Any]] = collections.defaultdict(dict)
             for id, key, value in models.Properties.objects.filter(
                 owner_type="userservice",
@@ -246,7 +247,9 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
     def get_items(self, parent: "Model") -> types.rest.ItemsResult[UserServiceItem]:
         parent = ensure.is_instance(parent, models.MetaPool)
 
-        return list(
+        # The services of every member pool are merged here, so the filter cannot
+        # reach the database and is applied over the already built items.
+        return self.filter_odata_data(
             {
                 k.uuid: MetaAssignedService.item_as_dict(parent, k, props)
                 for k, props in self._assigned_userservices_for_pools(parent)
@@ -285,6 +288,18 @@ class MetaAssignedService(DetailHandler[UserServiceItem]):
             .text_column(name="owner", title=_("Owner"))
             .text_column(name="actor_version", title=_("Actor version"))
             .row_style(prefix="row-state-", field="state")
+            .with_filter_fields(
+                "creation_date",
+                "pool_name",
+                "unique_id",
+                "friendly_name",
+                "state",
+                "in_use",
+                "source_host",
+                "source_ip",
+                "owner",
+                "actor_version",
+            )
             .build()
         )
 

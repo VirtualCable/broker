@@ -156,6 +156,8 @@ class ServicesUsage(DetailHandler[ServicesUsageItem]):
             .text_column(name="source_ip", title=_("Src Ip"))
             .text_column(name="source_host", title=_("Src Host"))
             .row_style(prefix="row-state-", field="state")
+            .with_field_mappings(source_ip="src_ip", source_host="src_hostname")
+            .with_filter_fields("state_date", "unique_id", "friendly_name", "src_ip", "src_hostname")
             .build()
         )
 

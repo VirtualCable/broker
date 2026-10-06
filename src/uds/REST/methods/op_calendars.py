@@ -108,6 +108,7 @@ class AccessCalendars(DetailHandler[AccessCalendarItem]):
             .numeric_column("priority", _("Priority"))
             .text_column("calendar", _("Calendar"))
             .text_column("access", _("Access"))
+            .with_filter_fields("priority", "access")
             .build()
         )
 
@@ -247,6 +248,8 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
             .text_column("events_offset", _("Time offset"))
             .datetime_column("next_execution", _("Next execution"))
             .datetime_column("last_execution", _("Last execution"))
+            .with_field_mappings(description="action")
+            .with_filter_fields("action", "at_start", "events_offset", "next_execution", "last_execution")
             .build()
         )
 

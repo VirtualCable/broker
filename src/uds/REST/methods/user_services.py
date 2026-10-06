@@ -510,6 +510,8 @@ class Groups(DetailHandler[GroupItem]):
             .text_column(name="comments", title=_("comments"))
             .dict_column(name="state", title=_("State"), dct=State.literals_dict())
             .row_style(prefix="row-state-", field="state")
+            .with_field_mappings(group_name="name")
+            .with_filter_fields("name", "comments", "state")
             .build()
         )
 
@@ -596,6 +598,8 @@ class Transports(DetailHandler[TransportItem]):
             .text_column(name="name", title=_("Name"))
             .text_column(name="trans_type", title=_("Type"))
             .text_column(name="comments", title=_("Comments"))
+            .with_field_mappings(trans_type="data_type")
+            .with_filter_fields("priority", "name", "data_type", "comments")
             .build()
         )
 
@@ -769,6 +773,7 @@ class Publications(DetailHandler[PublicationItem]):
             .dict_column(name="state", title=_("State"), dct=State.literals_dict())
             .text_column(name="reason", title=_("Reason"))
             .row_style(prefix="row-state-", field="state")
+            .with_filter_fields("revision", "publish_date", "state")
         ).build()
 
 
@@ -826,4 +831,5 @@ class Changelog(DetailHandler[ChangelogItem]):
             .numeric_column(name="revision", title=_("Revision"), width="6em")
             .datetime_column(name="stamp", title=_("Publish date"))
             .text_column(name="log", title=_("Comment"))
+            .with_filter_fields("revision", "stamp", "log")
         ).build()

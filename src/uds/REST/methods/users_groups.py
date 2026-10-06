@@ -273,6 +273,7 @@ class Users(DetailHandler[UserItem]):
             .datetime_column(name="last_access", title=_("Last access"))
             .text_column(name="token", title=_("API token"))
             .row_style(prefix="row-state-", field="state")
+            .with_filter_fields("name", "real_name", "comments", "state", "last_access")
         ).build()
 
     @typing.override
@@ -708,6 +709,7 @@ class Groups(DetailHandler[GroupItem]):
             .text_column(name="comments", title=_("Comments"))
             .dict_column(name="state", title=_("Status"), dct=State.literals_dict())
             .dict_column(name="skip_mfa", title=_("Skip MFA"), dct=State.literals_dict())
+            .with_filter_fields("name", "comments", "state", "skip_mfa")
         ).build()
 
     @typing.override

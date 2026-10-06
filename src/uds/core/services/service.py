@@ -274,6 +274,14 @@ class Service(Module):
         """
         return True
 
+    def machines_in_maintenance(self) -> int:
+        """
+        Returns how many of the machines this service can serve from are in maintenance.
+        Pools subtract them from the capacity they report (it does not change the
+        user services limit). By default, this method returns 0.
+        """
+        return 0
+
     def allows_errored_userservice_cleanup(self) -> bool:
         """
         Returns if this service can clean errored services. This is used to check if a service can be cleaned

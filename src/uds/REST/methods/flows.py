@@ -226,7 +226,7 @@ class FlowActions(DetailHandler[FlowActionItem]):
             .text_column(name="status", title=_("Status"))
             .text_column(name="compliance", title=_("Compliance"))
             .datetime_column(name="created", title=_("Created"))
-            .with_filter_fields("action_type", "target_kind", "status", "compliance")
+            .with_filter_fields("action_type", "target_kind", "status")
             .build()
         )
 
