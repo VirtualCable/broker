@@ -105,3 +105,42 @@ def createWebhookNotifier(
     notifier.save()
 
     return notifier
+
+
+def createWebhookLogNotifier(
+    url: str,
+    verb: str = "POST",
+    dataTemplate: str = "",
+    headers: str = "",
+    contentType: str = "application/json",
+    verifySsl: bool = True,
+    timeout: int = 10,
+    maxRetentionHours: int = 24,
+    backoffCap: int = 300,
+    hmacSecret: str = "",
+    hmacMode: str = "content",
+) -> models.Notifier:
+    from uds.notifiers.webhook.notifier import WebhookLogNotifier
+
+    notifier = models.Notifier()
+    notifier.name = "Testing webhook log notifier"
+    notifier.comments = "Testing webhook log notifier"
+    notifier.data_type = WebhookLogNotifier.type_type
+    instance: WebhookLogNotifier = typing.cast(WebhookLogNotifier, notifier.get_instance())
+    # Fill up fields
+    instance.url.value = url
+    instance.verb.value = verb
+    instance.data_template.value = dataTemplate
+    instance.content_type.value = contentType
+    instance.headers.value = headers
+    instance.verify_ssl.value = verifySsl
+    instance.timeout.value = timeout
+    instance.max_retention.value = maxRetentionHours
+    instance.backoff_cap.value = backoffCap
+    instance.hmac_secret.value = hmacSecret
+    instance.hmac_mode.value = hmacMode
+    # Save
+    notifier.data = instance.serialize()
+    notifier.save()
+
+    return notifier
