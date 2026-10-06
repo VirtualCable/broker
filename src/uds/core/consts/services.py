@@ -46,3 +46,5 @@ PUB_MAX_RETRIES: typing.Final[int] = 24 * 3600 // PUB_SUGGESTED_CHECK_INTERVAL  
 PUB_MAX_STATE_CHECKS: typing.Final[int] = (
     HOURS_BEFORE_CONSIDERED_LOCKED * 3600 // PUB_SUGGESTED_CHECK_INTERVAL
 )  # hours for a single state at most
+
+USERSERVICE_LAST_ACCESS_PROPERTY: typing.Final[str] = "last_access"
