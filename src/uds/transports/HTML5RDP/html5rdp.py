@@ -196,7 +196,8 @@ class HTML5RDPTransport(transports.Transport):
         length=5,
         tooltip=_(
             "Maximum webcam video capture width in pixels (0 = native resolution). "
-            "Scales down the camera stream; does not affect session window size."
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
         ),
         default=0,
         tab=types.ui.Tab.PARAMETERS,
@@ -207,7 +208,8 @@ class HTML5RDPTransport(transports.Transport):
         length=5,
         tooltip=_(
             "Maximum webcam video capture height in pixels (0 = native resolution). "
-            "Scales down the camera stream; does not affect session window size."
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
         ),
         default=0,
         tab=types.ui.Tab.PARAMETERS,

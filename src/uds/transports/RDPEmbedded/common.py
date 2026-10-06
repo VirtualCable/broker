@@ -262,7 +262,8 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         default=0,
         tooltip=_(
             "Maximum webcam video capture width in pixels (0 = native resolution). "
-            "Scales down the camera stream; does not affect session window size."
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
         ),
         tab=types.ui.Tab.PARAMETERS,
     )
@@ -273,7 +274,8 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         default=0,
         tooltip=_(
             "Maximum webcam video capture height in pixels (0 = native resolution). "
-            "Scales down the camera stream; does not affect session window size."
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
         ),
         tab=types.ui.Tab.PARAMETERS,
     )
