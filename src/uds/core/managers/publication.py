@@ -41,6 +41,7 @@ from uds.core.exceptions.services import PublishException
 from uds.core.jobs.delayed_task import DelayedTask
 from uds.core.jobs.delayed_task_runner import DelayedTaskRunner
 from uds.core.types.states import State
+from uds.core.util import config
 from uds.core.util import log
 from uds.core.util import singleton
 from uds.core.util.config import GlobalConfig
@@ -83,7 +84,9 @@ class PublicationOldMachinesCleaner(DelayedTask):
                     in_use=True, publication=servicepool_publication
                 ):
                     user_service.set_in_use(False)  # Mark as not in use, saves the object
-                    user_service.log("Service maked as removable due to publication session timeout", log.LogLevel.INFO)
+                    user_service.log(
+                        "Service maked as removable due to publication session timeout", log.LogLevel.INFO
+                    )
                 # .update(in_use=False, state_date=now)
                 servicepool_publication.deployed_service.mark_old_userservices_as_removable(current_publication)
         except Exception:  #  nosec: Removed publication, no problem at all, just continue
@@ -173,6 +176,9 @@ class PublicationFinishChecker(DelayedTask):
                     for old in publication.deployed_service.publications.filter(state=State.USABLE):
                         old.set_state(State.REMOVABLE)
 
+                        is_locked = publication.deployed_service.state == State.LOCKED
+                        skip_cached = config.GlobalConfig.ALT_LOCKED_PUBLISH_METHOD.as_bool() and is_locked
+
                         osm = publication.deployed_service.osmanager
                         # If os manager says "machine is persistent", do not try to delete "previous version" assigned machines
                         if osm is None or osm.get_instance().is_persistent() is False:
@@ -182,9 +188,23 @@ class PublicationFinishChecker(DelayedTask):
                                 "pclean-" + str(old.id),
                                 True,
                             )
-                            publication.deployed_service.mark_old_userservices_as_removable(publication)
+                            publication.deployed_service.mark_old_userservices_as_removable(
+                                publication,
+                                skip_cached=skip_cached,
+                            )
                         else:  # Remove only cache services, not assigned
-                            publication.deployed_service.mark_old_userservices_as_removable(publication, True)
+                            if skip_cached:
+                                pc = PublicationOldMachinesCleaner(old.id)
+                                pc.register(
+                                    GlobalConfig.SESSION_EXPIRE_TIME.as_int(True) * 3600,
+                                    "pclean-" + str(old.id),
+                                    True,
+                                )
+                            publication.deployed_service.mark_old_userservices_as_removable(
+                                publication,
+                                True,
+                                skip_cached=skip_cached,
+                            )
 
                     publication.set_state(State.USABLE)
                 elif publication_state.is_removing():
@@ -268,7 +288,9 @@ class PublicationManager(metaclass=singleton.Singleton):
             changelog: Optional changelog to store
         """
         if servicepool.publications.filter(state__in=State.PUBLISH_STATES).count() > 0:
-            raise PublishException(_("Already publishing. Wait for previous publication to finish and try again"))
+            raise PublishException(
+                _("Already publishing. Wait for previous publication to finish and try again")
+            )
 
         if servicepool.is_in_maintenance():
             raise PublishException(_("Service is in maintenance mode and new publications are not allowed"))
@@ -283,9 +305,13 @@ class PublicationManager(metaclass=singleton.Singleton):
                 revision=servicepool.current_pub_revision,
             )
             if changelog:
-                servicepool.changelog.create(revision=servicepool.current_pub_revision, log=changelog, stamp=now)
+                servicepool.changelog.create(
+                    revision=servicepool.current_pub_revision, log=changelog, stamp=now
+                )
             if publication:
-                DelayedTaskRunner.runner().insert(PublicationLauncher(publication), 4, PUBTAG + str(publication.id))
+                DelayedTaskRunner.runner().insert(
+                    PublicationLauncher(publication), 4, PUBTAG + str(publication.id)
+                )
         except Exception as e:
             logger.debug("Caught exception at publish: %s", e)
             if publication is not None:
