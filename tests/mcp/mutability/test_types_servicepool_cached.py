@@ -22,7 +22,7 @@ from uds.mutability import all_type_ids, get as registry_get
 from uds.mutability.base import ActionOperation, MutableActionType, StalePolicy
 from uds.mutability.types.service_pools.cached import ServicePoolCached
 from uds.REST.methods.services_pools import ServicesPools
-from uds.REST.methods.user_services import CachedService
+from uds.REST.methods.user_services import CachedUserService
 
 from tests.mcp.mutability._helpers import FlowTestCase, make_request
 
@@ -220,7 +220,7 @@ class ServicePoolCachedExecuteTest(FlowTestCase):
         proxy_cls = self._run(pool, {"user_service": row.uuid})
         call = proxy_cls.return_value.execute.await_args_list[0]
         target = call[0][0]
-        self.assertIs(target.handler, CachedService)
+        self.assertIs(target.handler, CachedUserService)
         self.assertEqual(target.path, "services_pools/{uuid}/cache")
         self.assertEqual(target.method, types.rest.CustomMethodMethod.DELETE)
         self.assertEqual(target.args, (row.uuid,))
