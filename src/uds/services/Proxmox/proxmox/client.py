@@ -574,7 +574,7 @@ class ProxmoxClient:
             storage, volume = disk.split(":", 1)
             try:
                 self.do_delete(
-                    f"nodes/{node}/storage/{urllib.parse.quote(storage)}/content/{urllib.parse.quote(volume)}",
+                    f"nodes/{node}/storage/{urllib.parse.quote(storage)}/content/{urllib.parse.quote(volume, safe='')}",
                     node=node,
                 )
             except Exception:

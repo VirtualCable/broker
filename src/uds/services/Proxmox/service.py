@@ -348,9 +348,13 @@ class ProxmoxService(DynamicService):
     @typing.override
     def execute_delete(self, vmid: str) -> None:
         api = self.provider().api
-        node = api.get_vm_info(int(vmid)).node
-        with self.storage.as_dict() as storage:
-            storage[f"disks_{vmid}"] = (node, api.get_vm_disks(int(vmid), node))
+        try:
+            node = api.get_vm_info(int(vmid)).node
+            disks = api.get_vm_disks(int(vmid), node)
+            with self.storage.as_dict() as storage:
+                storage[f"disks_{vmid}"] = (node, disks)
+        except Exception as e:
+            logger.debug("Could not inspect disks for vm %s before deletion: %s", vmid, e)
         api.delete_vm(int(vmid))
 
     @typing.override

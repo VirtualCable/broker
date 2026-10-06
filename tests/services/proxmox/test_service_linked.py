@@ -170,6 +170,16 @@ class TestProxmovLinkedService(UDSTestCase):
                     with self.assertRaises(type(error)):
                         service.is_deleted("100")
 
+    def test_service_execute_delete_proceeds_even_if_disk_inspection_fails(self) -> None:
+        with fixtures.patched_provider() as provider:
+            api = typing.cast(mock.MagicMock, provider.api)
+            service = fixtures.create_service_linked(provider=provider)
+            vm = fixtures.VMINFO_LIST[0]
+            api.get_vm_info.side_effect = prox_exceptions.ProxmoxError("cannot read info")
+
+            service.execute_delete(str(vm.id))
+            api.delete_vm.assert_called_once_with(vm.id)
+
     def test_service_methods_1(self) -> None:
         with fixtures.patched_provider() as provider:
             api = typing.cast(mock.MagicMock, provider.api)
