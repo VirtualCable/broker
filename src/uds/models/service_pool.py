@@ -700,6 +700,12 @@ class ServicePool(UUIDModel, TaggingMixin):
                 self.assigned_user_services().filter(state__in=types.states.State.VALID_STATES).count()
             )
 
+        if maxs != consts.UNLIMITED:
+            in_maintenance = (
+                maxs if self.is_in_maintenance() else self.service.get_instance().machines_in_maintenance()
+            )
+            maxs = max(maxs - in_maintenance, cached_value)
+
         return types.pools.UsageInfo(cached_value, maxs)
 
     def test_connectivity(self, host: str, port: str | int, timeout: float = 4) -> bool:
