@@ -596,6 +596,11 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         if servicepool.uses_cache:
             cache: UserService | None = None
+            # Only cache user services of the current publication are assignable.
+            # During the publish window ``current_pub_revision`` is already bumped
+            # but the new publication is not yet USABLE, so the filter yields no
+            # cache hit and we fall through to a fresh assigned creation — intended.
+            active_revision = servicepool.current_pub_revision
             # Now try to locate 1 from cache already "ready" (must be usable and at level 1)
             # First, a cached service that is "fully" ready
             with transaction.atomic():
@@ -607,6 +612,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                         cache_level=types.services.CacheLevel.L1,
                         state=State.USABLE,
                         os_state=State.USABLE,
+                        publication__revision=active_revision,
                     )[:1],
                 )
                 if caches:
@@ -636,6 +642,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                         .filter(
                             cache_level=types.services.CacheLevel.L1,
                             state=State.USABLE,
+                            publication__revision=active_revision,
                         )[:1],
                     )
                     if caches:  # If there is a cache, we will use it
@@ -679,6 +686,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                     .filter(
                         cache_level=types.services.CacheLevel.L1,
                         state=State.PREPARING,
+                        publication__revision=active_revision,
                     )[:1]
                 )
                 if caches:  # If there is a cache, we will use it
