@@ -306,7 +306,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
 
     sound_latency_threshold = gui.ChoiceField(
         label=_("Sound latency threshold"),
-        order=34,
+        order=50,
         default="",
         choices=[
             gui.choice_item("", _("Default")),
@@ -325,7 +325,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
     )
 
     rdp_port = gui.NumericField(
-        order=35,
+        order=34,
         length=5,  # That is, max allowed value is 65535
         label=_("RDP Port"),
         tooltip=_("Use this port as RDP port. Defaults to 3389."),
@@ -336,7 +336,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
 
     use_local_scaler = gui.CheckBoxField(
         label=_("Scale locally"),
-        order=36,
+        order=51,
         default=True,
         tooltip=_(
             "If checked, the remote session renders at the virtual resolution and the client "
@@ -347,7 +347,7 @@ class BaseRDPEmbeddedTransport(transports.Transport):
 
     screen_size = gui.ChoiceField(
         label=_("Screen Size"),
-        order=31,
+        order=40,
         tooltip=_("Screen size for this transport"),
         default="0x0",
         choices=[

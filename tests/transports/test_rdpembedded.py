@@ -36,6 +36,7 @@ from uds.core import types
 from uds.transports.RDPEmbedded.common import BaseRDPEmbeddedTransport, RDPTunnelParams
 from uds.transports.RDPEmbedded.direct import RDPEmbeddedTransport
 from uds.transports.RDPEmbedded.tunnel import TRDPEmbeddedTransport
+from uds.transports.RDP.rdptunnel import TRDPTransport
 
 
 def _connection_data(
@@ -240,3 +241,45 @@ class RDPEmbeddedTest(UDSTestCase):
         data = transport.build_connection_params("1.2.3.4", _connection_data(), tunnel=tunnel).as_dict()
         self.assertEqual(data["tunnel"]["host"], "tunnel-host")
         self.assertEqual(data["tunnel"]["port"], 7777)
+
+
+def _form_layout(transport_cls: type) -> list[tuple[int, str]]:
+    return sorted(
+        (field.gui.order, str(field.gui.tab or ""))
+        for field in transport_cls.describe_fields()
+    )
+
+
+def _tab_sequence(layout: list[tuple[int, str]]) -> list[str]:
+    """Tab order as the admin renders it: insertion order, with Advanced pushed last."""
+    tabs: list[str] = []
+    for _order, tab in layout:
+        if tab not in tabs:
+            tabs.append(tab)
+    advanced = str(types.ui.Tab.ADVANCED)
+    return [tab for tab in tabs if tab != advanced] + [advanced for tab in tabs if tab == advanced]
+
+
+class RDPEmbeddedFormLayoutTest(UDSTestCase):
+    """The admin sorts the whole form by `order` and takes the tab order from the result."""
+
+    def test_no_two_fields_share_an_order(self) -> None:
+        for transport_cls in (RDPEmbeddedTransport, TRDPEmbeddedTransport):
+            orders = [order for order, _tab in _form_layout(transport_cls)]
+            self.assertEqual(
+                sorted(set(orders)), orders, f"{transport_cls.__name__} has colliding field orders"
+            )
+
+    def test_every_tab_is_a_contiguous_block(self) -> None:
+        for transport_cls in (RDPEmbeddedTransport, TRDPEmbeddedTransport):
+            seen: list[str] = []
+            for _order, tab in _form_layout(transport_cls):
+                if not seen or seen[-1] != tab:
+                    self.assertNotIn(tab, seen, f"{transport_cls.__name__} interleaves tab {tab}")
+                    seen.append(tab)
+
+    def test_tab_sequence_matches_the_tunneled_rdp_transport(self) -> None:
+        reference = _tab_sequence(_form_layout(TRDPTransport))
+        embedded = _tab_sequence(_form_layout(TRDPEmbeddedTransport))
+
+        self.assertEqual(embedded, [tab for tab in reference if tab in embedded])
