@@ -69,7 +69,7 @@ class UserServiceItem(types.rest.BaseRestItem):
     os_state: str
     state_date: datetime.datetime
     creation_date: datetime.datetime
-    revision: str
+    revision: int
     ip: str
     actor_version: str
 
@@ -136,7 +136,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             os_state=item.os_state,
             state_date=item.state_date,
             creation_date=item.creation_date,
-            revision=f"{item.publication.revision if item.publication else ''}",
+            revision=item.publication.revision if item.publication else 0,
             ip=props.get("ip", _("unknown")),
             actor_version=props.get("actor_version", _("unknown")),
         )
