@@ -154,6 +154,12 @@ class IPMachinesService(services.Service):
         return fields.get_server_group_from_field(self.server_group).servers.count()
 
     @typing.override
+    def machines_in_maintenance(self) -> int:
+        return (
+            fields.get_server_group_from_field(self.server_group).servers.filter(maintenance_mode=True).count()
+        )
+
+    @typing.override
     def get_token(self) -> str | None:
         return self.token.as_str() or None
 

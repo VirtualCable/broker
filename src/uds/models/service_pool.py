@@ -473,6 +473,7 @@ class ServicePool(UUIDModel, TaggingMixin):
         self,
         active_publication: "ServicePoolPublication | None",
         skip_assigned: bool = False,
+        skip_cached: bool = False,
     ) -> None:
         """
         Used when a new publication is finished.
@@ -500,9 +501,10 @@ class ServicePool(UUIDModel, TaggingMixin):
             for userservice in non_active_publication.userServices.filter(state=types.states.State.PREPARING):
                 userservice.cancel()
             with transaction.atomic():
-                non_active_publication.userServices.exclude(cache_level=0).filter(
-                    state=types.states.State.USABLE
-                ).update(state=types.states.State.REMOVABLE, state_date=now)
+                if not skip_cached:
+                    non_active_publication.userServices.exclude(cache_level=0).filter(
+                        state=types.states.State.USABLE
+                    ).update(state=types.states.State.REMOVABLE, state_date=now)
                 if not skip_assigned:
                     non_active_publication.userServices.filter(
                         cache_level=0, state=types.states.State.USABLE, in_use=False
@@ -699,6 +701,12 @@ class ServicePool(UUIDModel, TaggingMixin):
             cached_value = (
                 self.assigned_user_services().filter(state__in=types.states.State.VALID_STATES).count()
             )
+
+        if maxs != consts.UNLIMITED:
+            in_maintenance = (
+                maxs if self.is_in_maintenance() else self.service.get_instance().machines_in_maintenance()
+            )
+            maxs = max(maxs - in_maintenance, cached_value)
 
         return types.pools.UsageInfo(cached_value, maxs)
 

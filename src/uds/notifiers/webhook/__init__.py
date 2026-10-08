@@ -30,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 # Make this available to loaders
 
+from .notifier import WebhookLogNotifier as WebhookLogNotifier
 from .notifier import WebhookNotifier as WebhookNotifier
 
 from . import jobs

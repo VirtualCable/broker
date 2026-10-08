@@ -265,7 +265,11 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         order=29,
         length=5,
         default=0,
-        tooltip=_("Cap webcam width in pixels, keeping aspect ratio. 0 = original size."),
+        tooltip=_(
+            "Maximum webcam video capture width in pixels (0 = native resolution). "
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
+        ),
         tab=types.ui.Tab.PARAMETERS,
     )
     webcam_max_height = gui.NumericField(
@@ -273,7 +277,11 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         order=30,
         length=5,
         default=0,
-        tooltip=_("Cap webcam height in pixels, keeping aspect ratio. 0 = original size."),
+        tooltip=_(
+            "Maximum webcam video capture height in pixels (0 = native resolution). "
+            "Scales down the camera stream; does not affect session window size. "
+            "Aspect ratio is kept."
+        ),
         tab=types.ui.Tab.PARAMETERS,
     )
 

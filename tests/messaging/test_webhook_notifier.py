@@ -45,8 +45,9 @@ from uds.core.types.notifiers import NotificationGroup
 from uds.core.util.backoff import Backoff
 from uds.models import Notifier
 from uds.notifiers.webhook import queue
+from uds.notifiers.webhook.base import BaseWebhookNotifier
 from uds.notifiers.webhook.jobs import WebhookDispatcherJob
-from uds.notifiers.webhook.notifier import WebhookNotifier
+from uds.notifiers.webhook.notifier import WebhookLogNotifier, WebhookNotifier
 
 from ..fixtures import notifiers as notifiers_fixtures
 from ..utils.test import UDSTestCase
@@ -86,6 +87,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
     def do_PATCH(self) -> None:
         self._handle()
 
+    @typing.override
     def log_message(self, format: str, *args: typing.Any) -> None:
         pass  # Silence request logging
 
@@ -228,17 +230,59 @@ class WebhookRenderingTest(UDSTestCase):
             instance.initialize({"any": "value"})
 
 
+class WebhookRegistrationTest(UDSTestCase):
+    """
+    Tests for notifier registration: only the leaf flavors are registered
+    """
+
+    def test_only_leaf_notifiers_are_registered(self) -> None:
+        factory = messaging.factory()
+        self.assertIs(factory.lookup(WebhookNotifier.type_type), WebhookNotifier)
+        self.assertIs(factory.lookup(WebhookLogNotifier.type_type), WebhookLogNotifier)
+        # The common base is not registered (is_base = True)
+        self.assertTrue(BaseWebhookNotifier.is_base)
+        self.assertFalse(WebhookNotifier.is_base)
+        self.assertFalse(WebhookLogNotifier.is_base)
+        self.assertIsNot(factory.lookup(BaseWebhookNotifier.type_type), BaseWebhookNotifier)
+
+    def test_accepts_groups(self) -> None:
+        self.assertEqual(WebhookNotifier.accepts, frozenset((NotificationGroup.EVENT,)))
+        self.assertEqual(WebhookLogNotifier.accepts, frozenset((NotificationGroup.LOG,)))
+
+
+class WebhookLogNotifierTest(UDSTestCase):
+    """
+    Tests for the LOG flavor of the webhook notifier
+    """
+
+    def test_default_body_renders_log_group(self) -> None:
+        notifier = notifiers_fixtures.createWebhookLogNotifier(url="http://example.com/hook")
+        instance = typing.cast(WebhookLogNotifier, notifier.get_instance())
+        element = instance._build_request(
+            NotificationGroup.LOG, "uds.log", messaging.LogLevel.ERROR, "something happened"
+        )
+        payload = json.loads(element.body)
+        self.assertEqual(payload["group"], "log")
+        self.assertEqual(payload["identificator"], "uds.log")
+        self.assertEqual(payload["event_type"], "uds.log")
+        self.assertEqual(payload["level"], "ERROR")
+        self.assertEqual(payload["message"], "something happened")
+        self.assertIn("timestamp", payload)
+
+
 class WebhookDispatcherJobTest(UDSTestCase):
     """
     Tests for the dispatcher job against a local HTTP server
     """
 
+    @typing.override
     def setUp(self) -> None:
         self.server = _TestHttpServer()
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.job = WebhookDispatcherJob(Environment.testing_environment())
 
+    @typing.override
     def tearDown(self) -> None:
         self.server.shutdown()
         self.server.server_close()
@@ -262,6 +306,20 @@ class WebhookDispatcherJobTest(UDSTestCase):
         bodies = [json.loads(r["body"]) for r in self.server.requests]
         self.assertEqual(bodies[0]["identificator"], "ID1")
         self.assertEqual(bodies[1]["identificator"], "ID2")
+
+    def test_delivery_of_log_notifications(self) -> None:
+        notifier = notifiers_fixtures.createWebhookLogNotifier(url=f"{self.server.base_url}/hook")
+        instance = typing.cast(WebhookLogNotifier, notifier.get_instance())
+        instance.notify(NotificationGroup.LOG, "uds.log", messaging.LogLevel.INFO, "msg1")
+        self.assertEqual(queue.pending_count(), 1)
+
+        self.job.run()
+
+        self.assertEqual(queue.pending_count(), 0)
+        self.assertEqual(len(self.server.requests), 1)
+        payload = json.loads(self.server.requests[0]["body"])
+        self.assertEqual(payload["group"], "log")
+        self.assertEqual(payload["message"], "msg1")
 
     def test_strict_fifo_blocks_on_http_error(self) -> None:
         notifier = notifiers_fixtures.createWebhookNotifier(url=f"{self.server.base_url}/hook")

@@ -1039,6 +1039,12 @@ class GlobalConfig:
         type=Config.FieldType.NUMERIC,
         help=_("Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"),
     )
+    ALT_LOCKED_PUBLISH_METHOD: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
+        "Alternate locked publish method",
+        "0",
+        type=Config.FieldType.BOOLEAN,
+        help=_("Enable alternate publish method for LOCKED service pools."),
+    )
 
     @staticmethod
     def is_initialized() -> bool:

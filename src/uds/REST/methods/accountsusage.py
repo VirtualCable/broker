@@ -125,6 +125,7 @@ class AccountsUsage(DetailHandler[AccountItem]):  # pylint: disable=too-many-pub
             .text_column(name="elapsed", title=_("Elapsed"))
             .datetime_column(name="elapsed_timemark", title=_("Elapsed timemark"))
             .row_style(prefix="row-running-", field="running")
+            .with_filter_fields("pool_name", "user_name")
             .build()
         )
 
