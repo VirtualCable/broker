@@ -706,7 +706,9 @@ class SAMLAuthenticator(auths.Authenticator):
 
         return types.auth.AuthenticationResult(
             success=types.auth.AuthenticationState.REDIRECT,
-            url=url or types.auth.AuthenticationInternalUrl.LOGIN.get_url(),
+            # Callback redirects are only honored as absolute http(s) urls, so the internal
+            # login route must be resolved against the current request
+            url=url or request.build_absolute_uri(types.auth.AuthenticationInternalUrl.LOGIN.get_url()),
         )
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
