@@ -94,7 +94,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
     """
 
     #: Which queryset this endpoint writes: assigned services (False) or
-    #: cached ones (True, overridden by ``CachedService``). Saves and reads
+    #: cached ones (True, overridden by ``CachedUserService``). Saves and reads
     #: go through the same filtered queryset, so a cached service cannot be
     #: edited through the assigned URL (or the other way around).
     FOR_CACHED: typing.ClassVar[bool] = False
@@ -288,7 +288,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             logger.error("Error getting user service logs for %s: %s", item, e)
             raise exceptions.rest.ResponseError(_("Error getting user service logs")) from e
 
-    # This is also used by CachedService, so we use "userServices" directly and is valid for both
+    # This is also used by CachedUserService, so we use "userServices" directly and is valid for both
     @typing.override
     def delete_item(self, parent: "Model", item: str, cache: bool = False) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
@@ -369,7 +369,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
         UserServiceManager.manager().reset(userservice)
 
 
-class CachedService(AssignedUserService):
+class CachedUserService(AssignedUserService):
     """
     Rest handler for Cached Services, which parent is ServicePool
     """

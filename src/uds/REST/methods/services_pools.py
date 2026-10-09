@@ -79,7 +79,7 @@ from .op_calendars import ActionsCalendars
 from .services import ServiceInfo
 from .services import Services
 from .user_services import AssignedUserService
-from .user_services import CachedService
+from .user_services import CachedUserService
 from .user_services import Changelog
 from .user_services import Groups
 from .user_services import Publications
@@ -143,8 +143,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     MODEL = ServicePool
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {
         "services": AssignedUserService,
-        "cache": CachedService,
-        # "servers": CachedService,  # Seems dead. Alias kept for compat only; to be removed.
+        "cache": CachedUserService,
         "groups": Groups,
         "transports": Transports,
         "publications": Publications,
