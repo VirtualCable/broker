@@ -30,6 +30,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import logging
 import typing
+from unittest import mock
 
 from uds.core import types
 from uds.core.environment import Environment
@@ -55,11 +56,12 @@ class ServiceCacheUpdaterTest(UDSTestCase):
     def setUp(self) -> None:
         services_fixtures.ensure_test_modules_registered()
 
-        # Default values for max
-        TestProvider.concurrent_creation_limit = 1000
-        TestProvider.concurrent_removal_limit = 1000
-        TestServiceCache.userservices_limit = 1000
-        TestServiceNoCache.userservices_limit = 1000
+        # Default values for max. Patched so the tests that lower them cannot leak
+        # the lowered value into other test classes of the same process.
+        self.enterContext(mock.patch.object(TestProvider, 'concurrent_creation_limit', 1000))
+        self.enterContext(mock.patch.object(TestProvider, 'concurrent_removal_limit', 1000))
+        self.enterContext(mock.patch.object(TestServiceCache, 'userservices_limit', 1000))
+        self.enterContext(mock.patch.object(TestServiceNoCache, 'userservices_limit', 1000))
 
         userService = services_fixtures.create_db_assigned_userservices()[0]
         self.servicepool = userService.deployed_service
