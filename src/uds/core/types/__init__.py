@@ -57,6 +57,7 @@ from . import stats as stats
 from . import tickets as tickets
 from . import transports as transports
 from . import ui as ui
+from . import webauthn as webauthn
 
 # Log is not imported here, as it is a special case with lots of dependencies
 # Preferences must be include explicitly, as it is not a "normal use" type

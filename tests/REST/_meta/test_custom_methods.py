@@ -137,6 +137,7 @@ class CustomMethodContractTest(rest.test.RESTTestCase):
             ("ServersServers", "maintenance", "POST"),
             ("ServersServers", "importcsv", "POST"),
             ("Users", "clean_related", "POST"),
+            ("Users", "revoke_biometric", "POST"),
             ("Users", "add_to_group", "POST"),
             ("Users", "enable_launcher_logging", "POST"),
             ("Users", "token", "POST"),

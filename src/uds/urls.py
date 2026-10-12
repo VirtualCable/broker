@@ -49,6 +49,7 @@ from uds.web.views import (
     download,
     custom,
     images,
+    webauthn,
 )
 
 # Admin
@@ -264,6 +265,27 @@ urlpatterns = [
         r"^uds/webapi/customAuth/(?P<auth_id>[a-zA-Z0-9:-]*)$",
         auth.custom_auth,
         name="uds.web.views.custom_auth",
+    ),
+    # WebAuthn (biometric login) endpoints, protected by CSRF middleware
+    re_path(
+        r"^uds/webapi/webauthn/biometric-start$",
+        webauthn.biometric_start,
+        name="webapi.webauthn.biometric_start",
+    ),
+    re_path(
+        r"^uds/webapi/webauthn/biometric-finish$",
+        webauthn.biometric_finish,
+        name="webapi.webauthn.biometric_finish",
+    ),
+    re_path(
+        r"^uds/webapi/webauthn/save-start$",
+        webauthn.save_start,
+        name="webapi.webauthn.save_start",
+    ),
+    re_path(
+        r"^uds/webapi/webauthn/save-finish$",
+        webauthn.save_finish,
+        name="webapi.webauthn.save_finish",
     ),
     # Error message
     re_path(

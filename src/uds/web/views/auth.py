@@ -28,6 +28,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import json
 import logging
 import random
 import time
@@ -41,6 +42,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 
+from uds.core import consts
 from uds.core import auths, exceptions, types
 from uds.core.auths import auth
 from uds.core.auths.auth import authenticate_via_callback, log_login, uds_cookie, weblogin, weblogout
@@ -55,7 +57,14 @@ from uds.models import Authenticator, ServicePool, TicketStore
 from uds.web.forms.login_form import LoginForm
 from uds.web.util import errors
 from uds.web.util.authentication import check_login
+from uds.web.views import webauthn as webauthn_views
 from uds.web.views.main import index
+from uds.web.views.webauthn import (
+    apply_pending_save,
+    apply_pending_unlock,
+    clear_pending_state,
+    discard_pending_unlock,
+)
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequestWithUser
@@ -294,7 +303,9 @@ def ticket_auth(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpR
         weblogin(request, None, usr, password)
 
         # Log the login
-        log_login(request, auth, username, "Ticket authentication")  # Nice login, just indicating it's using a ticket
+        log_login(
+            request, auth, username, "Ticket authentication"
+        )  # Nice login, just indicating it's using a ticket
 
         request.user = (
             usr  # Temporarily store this user as "authenticated" user, next requests will be done using session
@@ -323,7 +334,9 @@ def ticket_auth(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpR
 
             transport_instance = info.transport.get_instance()
             if transport_instance.own_link is True:
-                link = reverse("webapi.transport_own_link", args=("A" + info.userservice.uuid, info.transport.uuid))
+                link = reverse(
+                    "webapi.transport_own_link", args=("A" + info.userservice.uuid, info.transport.uuid)
+                )
             else:
                 link = html.uds_access_link(request, "A" + info.userservice.uuid, info.transport.uuid)
 
@@ -352,6 +365,50 @@ def ticket_auth(request: "ExtendedHttpRequestWithUser", ticket_id: str) -> HttpR
         return errors.exception_view(request, e)
 
 
+def _process_pending_webauthn(request: "types.requests.ExtendedHttpRequest", user: "models.User") -> None:
+    """
+    Processes the pending WebAuthn (biometric) state, if any, attached to a
+    successful login POST.
+
+    The client adds an optional "webauthn" JSON field to the login form with
+    the data collected while the user still had the credentials typed (see
+    the biometric service on the user interface):
+
+    * ``rotated_vault``: the vault re-encrypted with the new PRF salt, during
+      the same touch that verified the unlock. Applied only if the login
+      succeeded, and only if the unlock was verified by the server.
+
+    A pending *registration* (challenge, salts and encrypted vault gathered
+    right before this POST) is committed ONLY on success, so a wrong password
+    attempt leaves no biometric data behind.
+    """
+    rotated_vault = ""
+    payload = request.POST.get("webauthn", "")
+    if payload:
+        try:
+            data: dict[str, typing.Any] | None = json.loads(payload)
+            if isinstance(data, dict) and isinstance(data.get("rotated_vault", ""), str):
+                rotated_vault = data.get("rotated_vault", "")
+        except ValueError:
+            logger.warning("Invalid webauthn payload on login POST")
+
+    # If the facility is not allowed anymore (disabled while a pending state
+    # exists), silently discard every pending biometric state: nothing gets
+    # committed to the database.
+    if not webauthn_views.biometric_enabled():
+        webauthn_views.clear_pending_state(request)
+        return
+
+    apply_pending_save(request, user)
+
+    if rotated_vault:
+        apply_pending_unlock(request, user, rotated_vault)
+    else:
+        # No rotation sent (PRF evaluation failed, etc.): vault is untouched,
+        # just drop the pending unlock state.
+        request.session.pop(consts.webauthn.SESSION_UNLOCK_DATA, None)
+
+
 @never_cache
 def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -> HttpResponse:
     # Default empty form
@@ -370,7 +427,14 @@ def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -
             # Tag is not removed from session, so next login will have it even if not provided
             # This means than once an url is used, unless manually goes to "/uds/page/login/xxx"
             # The tag will be used again
-            auth.weblogin(request, response, login_result.user, login_result.password)  # data is user password here
+            auth.weblogin(
+                request, response, login_result.user, login_result.password
+            )  # data is user password here
+
+            # Biometric (WebAuthn) pending state: a registration done during
+            # this same login page visit, or the rotation of a vault unlocked
+            # just before this POST. Applied only because the login succeeded.
+            _process_pending_webauthn(request, login_result.user)
 
             # If MFA is provided, we need to redirect to MFA page
             request.authorized = True
@@ -383,6 +447,13 @@ def login(request: types.requests.ExtendedHttpRequest, tag: str | None = None) -
                 response = HttpResponseRedirect(reverse("page.mfa"))
 
         else:
+            # Biometric (WebAuthn): a failed login with an unlocked vault means
+            # the stored blob is stale (user password changed, expired, ...),
+            # so the credential is invalidated to avoid useless loops. A
+            # pending registration of this same visit is simply discarded.
+            discard_pending_unlock(request)
+            clear_pending_state(request)
+
             # If redirection on login failure is found, honor it
             if login_result.url:  # Redirection
                 return HttpResponseRedirect(login_result.url)

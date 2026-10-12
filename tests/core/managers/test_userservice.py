@@ -202,13 +202,6 @@ class TestUserserviceManager(UDSTransactionTestCase):
         manager falls through to fresh-assignment, leaving the old cache untouched.
         """
         from tests.fixtures import authenticators as auth_fixtures
-        from tests.fixtures.modules.service.provider import TestProvider
-        from tests.fixtures.modules.service.service import TestServiceCache
-
-        # Other tests change these class-level limits and leave them changed; this test
-        # creates a fresh assigned service, so it must not inherit a limit of 0.
-        self.enterContext(mock.patch.object(TestServiceCache, 'userservices_limit', 1000))
-        self.enterContext(mock.patch.object(TestProvider, 'concurrent_creation_limit', 1000))
 
         provider = services_fixtures.create_db_provider()
         service = services_fixtures.create_db_service(provider)
