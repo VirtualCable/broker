@@ -39,6 +39,7 @@ from django.db import models
 from django.db.models import Count, Q, signals
 from uds.core import auths, mfas, types, consts
 from uds.core.util import log, storage, properties
+from uds.core.util import webauthn_credentials
 
 from .authenticator import Authenticator
 from ..core.consts import NEVER
@@ -247,6 +248,16 @@ class User(UUIDModel, properties.PropertiesMixin):
         """
         self.last_access = sql_now()
         self.save(update_fields=["last_access"])
+
+    @property
+    def webauthn_credentials(self) -> webauthn_credentials.StoredCredentialsAccessor:
+        """
+        WebAuthn (biometric login) credentials of this user.
+
+        Stored as serialized values on this user's encrypted properties (no
+        model nor migration needed), and deleted automatically with the user.
+        """
+        return webauthn_credentials.StoredCredentialsAccessor(self)
 
     def logout(self, request: "types.requests.ExtendedHttpRequest") -> types.auth.AuthenticationResult:
         """

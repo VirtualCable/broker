@@ -174,6 +174,13 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
                 "webapi.transport.update_transport_ticket",
                 kwargs={"ticket_id": "param1", "scrambler": "param2"},
             ),
+            # WebAuthn (biometric login) endpoints
+            "webauthn": {
+                "biometric_start": reverse("webapi.webauthn.biometric_start"),
+                "biometric_finish": reverse("webapi.webauthn.biometric_finish"),
+                "save_start": reverse("webapi.webauthn.save_start"),
+                "save_finish": reverse("webapi.webauthn.save_finish"),
+            },
             # Launcher URL if exists
             "launch": request.session.get("launch", ""),
             "brand": settings.UDSBRAND if hasattr(settings, "UDSBRAND") else "",
@@ -181,7 +188,11 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
         "min_for_filter": GlobalConfig.SITE_FILTER_MIN.as_int(True),
         "enable_favorite_services": GlobalConfig.ENABLE_FAVORITE_SERVICES.as_bool(),
         "allow_animated_backgrounds": GlobalConfig.ALLOW_ANIMATED_BACKGROUNDS.as_bool(),
-        "allow_biometric_auth": GlobalConfig.ALLOW_BIOMETRIC_AUTH.as_bool(),
+        # Biometric login (WebAuthn) is also forbidden under zero trust, as it
+        # implies caching the authentication credentials (in an opaque,
+        # client-encrypted form, but caching them nonetheless)
+        "allow_biometric_auth": GlobalConfig.ALLOW_BIOMETRIC_AUTH.as_bool()
+        and not GlobalConfig.ENFORCE_ZERO_TRUST.as_bool(False),
         # CSRF token for the modern UI. The endpoint that serves this file
         # (uds.web.views.main.js) is ``@never_cache``, so the Angular app
         # always re-fetches it and gets a fresh token per session. The token

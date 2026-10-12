@@ -4,6 +4,7 @@
         "tests/**/*.py",
     ],
     "exclude": [
+        "src/uds/migrations",
         "src/**/scripts",
         "**/__pycache__",
         "**/node_modules",

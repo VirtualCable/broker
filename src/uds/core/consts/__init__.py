@@ -53,6 +53,7 @@ from . import system as system
 from . import ticket as ticket
 from . import transports as transports
 from . import ui as ui
+from . import webauthn as webauthn
 
 # Date related constants
 NEVER: typing.Final[datetime.datetime] = datetime.datetime(1972, 7, 1, tzinfo=datetime.timezone.utc)
