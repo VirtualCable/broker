@@ -250,6 +250,29 @@ class WebhookRegistrationTest(UDSTestCase):
         self.assertEqual(WebhookLogNotifier.accepts, frozenset((NotificationGroup.LOG,)))
 
 
+class WebhookGuiFieldsTest(UDSTestCase):
+    """
+    The concrete flavors must expose the fields declared on the common base
+    """
+
+    def test_gui_exposes_base_fields(self) -> None:
+        expected = {field for field in BaseWebhookNotifier._gui_fields_template}  # pyright: ignore[reportPrivateUsage]
+        self.assertIn("url", expected)
+        for flavor in (WebhookNotifier, WebhookLogNotifier):
+            with Environment.temporary_environment() as env:
+                names = {element.name for element in flavor(env, None).gui_description()}
+            self.assertTrue(expected <= names, f"{flavor.__name__} misses {expected - names}")
+
+    def test_values_survive_serialization(self) -> None:
+        notifier = notifiers_fixtures.createWebhookNotifier(
+            url="http://example.com/hook", verifySsl=False, timeout=7
+        )
+        instance = _instance(Notifier.objects.get(pk=notifier.pk))
+        self.assertEqual(instance.url.value, "http://example.com/hook")
+        self.assertFalse(instance.verify_ssl.value)
+        self.assertEqual(instance.timeout.value, 7)
+
+
 class WebhookLogNotifierTest(UDSTestCase):
     """
     Tests for the LOG flavor of the webhook notifier
