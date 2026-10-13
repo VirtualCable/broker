@@ -26,9 +26,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import logging
+
+from uds.core import consts
 
 from ....fixtures import servers as servers_fixtures
 from ....utils import rest
@@ -53,3 +56,28 @@ class ServerTestTest(rest.test.RESTTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_server_test_not_blocked_by_other_endpoint_failures(self) -> None:
+        """
+        Token failures on the event endpoint must not deny a valid server test
+        from the same ip, but must still block the event endpoint itself.
+        """
+        server = servers_fixtures.create_server()
+        token = servers_fixtures.raw_token(server)
+
+        for _ in range(consts.system.ALLOWED_FAILS + 1):
+            response = self.client.rest_post(
+                "servers/event",
+                data={"token": "invalid token", "event": "login", "uuid": server.uuid, "data": {}},
+            )
+            self.assertEqual(response.status_code, 403)
+
+        response = self.client.rest_post("servers/test", data={"token": token})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["result"])
+
+        response = self.client.rest_post(
+            "servers/event",
+            data={"token": token, "event": "login", "uuid": server.uuid, "data": {}},
+        )
+        self.assertEqual(response.status_code, 403)

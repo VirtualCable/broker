@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import collections.abc
@@ -368,6 +369,10 @@ def blocker(
     max_failures = max_failures or consts.system.ALLOWED_FAILS
 
     def decorator(f: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
+        # Failures are counted per protected method: failures against one endpoint
+        # must not deny access to a different, unrelated one from the same ip.
+        failures_key_prefix = f.__qualname__
+
         @functools.wraps(f)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
             if not GlobalConfig.BLOCK_ACTOR_FAILURES.as_bool(True) and not ignore_block_config:
@@ -385,10 +390,10 @@ def blocker(
 
             request = typing.cast(types.requests.ExtendedHttpRequest, req)
 
-            ip = request.ip
+            failures_key = f'{failures_key_prefix}:{request.ip}'
 
             # if ip is blocked, raise exception
-            failures_count: int = mycache.get(ip, 0)
+            failures_count: int = mycache.get(failures_key, 0)
             if failures_count >= max_failures:
                 raise exceptions.rest.AccessDenied()
 
@@ -396,14 +401,14 @@ def blocker(
                 result = f(*args, **kwargs)
             except uds.core.exceptions.rest.BlockAccess:
                 # Increment
-                mycache.put(ip, failures_count + 1, GlobalConfig.LOGIN_BLOCK.as_int())
+                mycache.put(failures_key, failures_count + 1, GlobalConfig.LOGIN_BLOCK.as_int())
                 raise exceptions.rest.AccessDenied()
             # Any other exception will be raised
             except Exception:
                 raise
 
             # If we are here, it means that the call was successfull, so we reset the counter
-            mycache.delete(ip)
+            mycache.delete(failures_key)
 
             return result
 
