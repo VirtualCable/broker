@@ -371,7 +371,7 @@ def blocker(
     def decorator(f: collections.abc.Callable[P, R_co]) -> collections.abc.Callable[P, R_co]:
         # Failures are counted per protected method: failures against one endpoint
         # must not deny access to a different, unrelated one from the same ip.
-        failures_key_prefix = f.__qualname__
+        failures_key_prefix = f'{f.__module__}.{f.__qualname__}'
 
         @functools.wraps(f)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
