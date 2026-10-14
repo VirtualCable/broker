@@ -527,6 +527,48 @@ class FlowStore:
                 worst = "outdated"
         return worst
 
+    # Terminal-failure outcomes a flow can carry into the approval surface.
+    # A flow that fails mid-run reverts to LOCKED with one or more actions
+    # in this set; the administrator re-approves or skips them. The flow's
+    # ``status`` is unchanged on purpose (``FlowStatus`` is a phase, not a
+    # verdict), so the listing needs a derived flag to distinguish a flow
+    # waiting for first-review from one waiting for a retry.
+    _RUN_FAILURE_STATUSES: typing.ClassVar[tuple[FlowActionStatus, ...]] = (
+        FlowActionStatus.FAILED,
+        FlowActionStatus.REVOKED,
+    )
+
+    def flow_has_failed_actions(self, flow: ActionFlow) -> bool:
+        """Whether the flow is in ``LOCKED`` because of a run failure.
+
+        True when at least one action is in a terminal-failure state.
+        The flag only matters while the flow is undecided; once decided
+        (executed/rejected/cancelled/expired) it stays false because the
+        retention reason is the decision itself.
+        """
+        if flow.status not in (FlowStatus.LOCKED, FlowStatus.PENDING, FlowStatus.DRAFT):
+            return False
+        return flow.actions.filter(status__in=self._RUN_FAILURE_STATUSES).exists()
+
+    def flow_run_note(self, flow: ActionFlow) -> str:
+        """Latest run note of an ``LOCKED`` flow with failed/revoked actions.
+
+        Concatenates the ``properties.result`` of every failed/revoked
+        action in execution order, ``order`` first, then ``id``. Returns
+        ``""`` when the flow carries no terminal failures or the failures
+        have no note (the executor omits ``properties.result`` if the
+        failure had no payload). The list view uses this so the
+        administrator sees why a flow is stuck without opening each one.
+        """
+        notes: list[str] = []
+        qs = flow.actions.filter(status__in=self._RUN_FAILURE_STATUSES).order_by("order", "id")
+        for action in qs:
+            note = action.properties.get("result")
+            if isinstance(note, str) and note:
+                notes.append(note)
+        return "\n".join(notes)
+
+
     def verify_flow(self, flow: ActionFlow) -> list[FlowAction]:
         """Pass 1 of the launch: strict CAS re-check of every approved action.
 

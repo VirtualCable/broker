@@ -247,6 +247,41 @@ class FlowLifecycleTest(FlowTestCase):
         self.assertEqual(first.status, FlowActionStatus.FAILED)
         self.assertEqual(second.status, FlowActionStatus.APPROVED)
 
+    def test_failure_inspection_surfaces_note_and_flag(self) -> None:
+        """`flow_run_note` and `flow_has_failed_actions` only light up
+        for an undecided flow with failed/revoked actions."""
+        flow = self._flow()
+        first = self._action(flow, values={"n": 1})
+        second = self._action(flow, values={"n": 2})
+        self._submitted(flow)
+        _approve_all(flow)
+        self.store.approve_flow(flow, admin=self.other)
+        flow.refresh_from_db()
+
+        # Before any run: clean listing, empty note.
+        self.assertFalse(self.store.flow_has_failed_actions(flow))
+        self.assertEqual(self.store.flow_run_note(flow), "")
+
+        # First action fails with a note, second is revoked without one.
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.store.mark_action_executing(first, actor=self.other.name)
+        self.store.mark_action_result(first, result="target gone", failed=True)
+        second.status = FlowActionStatus.REVOKED
+        second.save(update_fields=["status"])
+        flow.refresh_from_db()
+
+        self.assertTrue(self.store.flow_has_failed_actions(flow))
+        # Empty notes (revoked-without-msg) drop; only `target gone` stays.
+        self.assertEqual(self.store.flow_run_note(flow), "target gone")
+
+        # Rejecting decides the flow: the listing drops the flag and note.
+        self.store.reject_flow(flow, admin=self.other.name, reason="abandon")
+        flow.refresh_from_db()
+        self.assertFalse(self.store.flow_has_failed_actions(flow))
+        self.assertEqual(self.store.flow_run_note(flow), "")
+
+
     def test_relaunch_after_partial_execution_skips_executed(self) -> None:
         """A partially-run flow relaunches; executed actions never repeat."""
         flow = self._flow()
