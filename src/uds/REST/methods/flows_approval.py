@@ -128,6 +128,7 @@ class FlowsAdminSurface(ModelHandler[FlowItem]):
     @typing.override
     def get_item(self, item: models.Model) -> FlowItem:
         item = ensure.is_instance(item, ActionFlow)
+        store = FlowStore()
         return FlowItem(
             id=item.uuid,
             name=item.name,
@@ -142,10 +143,16 @@ class FlowsAdminSurface(ModelHandler[FlowItem]):
             permission=permissions.effective_permissions(self._user, item),
             decided_by=item.properties.get("decided_by", ""),
             decided_at=item.decided_at,
-            compliance=FlowStore().flow_compliance(item),
+            compliance=store.flow_compliance(item),
             decided_note=item.properties.get("decided_note", ""),
             executed_by=item.executed_by,
             executed_at=item.executed_at,
+            # Derived flags so the listing can tell a freshly-locked flow
+            # (waiting for first review) from one that failed mid-run and
+            # came back with failed/revoked actions (waiting for retry).
+            # Both default to False/empty for decided flows.
+            has_failed_actions=store.flow_has_failed_actions(item),
+            run_note=store.flow_run_note(item),
         )
 
     @typing.override
