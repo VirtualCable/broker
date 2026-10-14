@@ -317,8 +317,7 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
         self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str
     ) -> bool:
         """
-        Checks if the deferred deletion of a machine is running
-        Default implementation is return False always
+        Checks if the deferred deletion of a machine is still running
         """
         with self.storage.as_dict() as storage:
             return f"deleting_{vmid}" in storage
