@@ -65,6 +65,9 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     icon_file = "rdp-tunnel.png"
     group = types.transports.Grouping.TUNNELED
 
+    tunnel = fields.tunnel_field()
+    startup_time = fields.tunnel_startup_time_secs()
+
     force_empty_creds = BaseRDPEmbeddedTransport.force_empty_creds
     forced_username = BaseRDPEmbeddedTransport.forced_username
     forced_password = BaseRDPEmbeddedTransport.forced_password
@@ -92,9 +95,6 @@ class TRDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     use_local_scaler = BaseRDPEmbeddedTransport.use_local_scaler
 
     screen_size = BaseRDPEmbeddedTransport.screen_size
-
-    tunnel = fields.tunnel_field()
-    startup_time = fields.tunnel_startup_time_secs()
 
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals
