@@ -34,7 +34,7 @@ from uds.core.types.requests import ExtendedHttpRequestWithUser
 from uds.core.util.model import process_uuid
 from uds.mcp.rest_proxy import RestProxy, RestTarget
 from uds.REST.methods.services_pools import ServicesPools
-from uds.REST.methods.user_services import CachedService
+from uds.REST.methods.user_services import CachedUserService
 
 from ... import base as mutability_base
 from ...base import StalePolicy
@@ -276,7 +276,7 @@ class ServicePoolCached(mutability_base.MutableActionType):
         pool_name, user_service_uuid = await sync_to_async(_plan, thread_sensitive=True)()
         await RestProxy().execute(
             RestTarget(
-                CachedService,
+                CachedUserService,
                 "services_pools/{uuid}/cache",
                 types.rest.CustomMethodMethod.DELETE,
                 args=(user_service_uuid,),

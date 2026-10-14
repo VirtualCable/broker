@@ -125,6 +125,15 @@ class Users(DetailHandler[UserItem]):
             description="Reset the user's related external data (currently only the MFA data)",
         ),
         types.rest.ModelCustomMethod(
+            "biometric_credentials",
+            description="List the WebAuthn (biometric) credentials registered for this user",
+        ),
+        types.rest.ModelCustomMethod(
+            "revoke_biometric",
+            method=types.rest.CustomMethodMethod.POST,
+            description="Revoke all WebAuthn (biometric) credentials registered for this user",
+        ),
+        types.rest.ModelCustomMethod(
             "add_to_group",
             method=types.rest.CustomMethodMethod.POST,
             description="Add this user to an existing group within the same authenticator",
@@ -454,6 +463,39 @@ class Users(DetailHandler[UserItem]):
         user = parent.users.get(uuid=process_uuid(uuid))
         user.clean_related_data()
         return {"status": "ok"}
+
+    def biometric_credentials(self, parent: "Authenticator", item: str) -> list[dict[str, typing.Any]]:
+        """Lists the WebAuthn (biometric) credentials registered for this user."""
+        parent = ensure.is_instance(parent, Authenticator)
+        user = parent.users.get(uuid=process_uuid(item))
+        return [
+            {
+                "credential_id": credential.credential_id,
+                "rp_id": credential.rp_id,
+                "aaguid": credential.aaguid,
+                "generation": credential.generation,
+                "created": credential.created,
+                "last_used": credential.last_used,
+            }
+            for credential in user.webauthn_credentials.all()
+        ]
+
+    def revoke_biometric(self, parent: "Authenticator", item: str) -> dict[str, typing.Any]:
+        """Revokes (deletes) all WebAuthn (biometric) credentials of this user.
+
+        The affected user will simply login normally (password) on his next
+        visit, and can register again if the facility is allowed.
+        """
+        parent = ensure.is_instance(parent, Authenticator)
+        user = parent.users.get(uuid=process_uuid(item))
+        revoked = user.webauthn_credentials.remove_all()
+        if revoked:
+            user.log(
+                f"Biometric credentials ({revoked}) revoked by {self._user.pretty_name}",
+                types.log.LogLevel.INFO,
+                types.log.LogSource.REST,
+            )
+        return {"status": "ok", "revoked": revoked}
 
     def add_to_group(self, parent: "Authenticator", item: str) -> dict[str, str]:
         uuid = process_uuid(item)

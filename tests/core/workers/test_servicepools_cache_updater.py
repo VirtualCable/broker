@@ -26,10 +26,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
+import io
 import logging
 import typing
+import unittest
+from unittest import mock
 
 from uds.core import types
 from uds.core.environment import Environment
@@ -55,11 +59,11 @@ class ServiceCacheUpdaterTest(UDSTestCase):
     def setUp(self) -> None:
         services_fixtures.ensure_test_modules_registered()
 
-        # Default values for max
-        TestProvider.concurrent_creation_limit = 1000
-        TestProvider.concurrent_removal_limit = 1000
-        TestServiceCache.userservices_limit = 1000
-        TestServiceNoCache.userservices_limit = 1000
+        # Patched, not assigned: the tests below lower these and must not leak the lowered value
+        self.enterContext(mock.patch.object(TestProvider, 'concurrent_creation_limit', 1000))
+        self.enterContext(mock.patch.object(TestProvider, 'concurrent_removal_limit', 1000))
+        self.enterContext(mock.patch.object(TestServiceCache, 'userservices_limit', 1000))
+        self.enterContext(mock.patch.object(TestServiceNoCache, 'userservices_limit', 1000))
 
         userService = services_fixtures.create_db_assigned_userservices()[0]
         self.servicepool = userService.deployed_service
@@ -188,3 +192,31 @@ class ServiceCacheUpdaterTest(UDSTestCase):
         # This allows us to "honor" some external providers that, in some cases, will not have services available...
         TestServiceCache.userservices_limit = 0
         self.assertEqual(self.execute_cache_updater(self.servicepool.cache_l1_srvs + 10), 0)
+
+
+class ServiceCacheUpdaterLimitsIsolationTest(UDSTestCase):
+    def test_lowered_limits_do_not_outlive_their_test(self) -> None:
+        """The limits are class attributes of fixture classes shared by every test of the process."""
+        before = (
+            TestProvider.concurrent_creation_limit,
+            TestProvider.concurrent_removal_limit,
+            TestServiceCache.userservices_limit,
+            TestServiceNoCache.userservices_limit,
+        )
+
+        suite = unittest.TestSuite(
+            ServiceCacheUpdaterTest(name)
+            for name in ('test_provider_preparing_limits', 'test_service_max_deployed')
+        )
+        result = unittest.TextTestRunner(stream=io.StringIO()).run(suite)
+        self.assertTrue(result.wasSuccessful(), result.errors + result.failures)
+
+        self.assertEqual(
+            (
+                TestProvider.concurrent_creation_limit,
+                TestProvider.concurrent_removal_limit,
+                TestServiceCache.userservices_limit,
+                TestServiceNoCache.userservices_limit,
+            ),
+            before,
+        )
