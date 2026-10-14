@@ -365,6 +365,9 @@ class OpenshiftClient:
         """
         path = f"/api/v1/namespaces/{self._namespace}/persistentvolumeclaims/{pvc_name}"
         response = self.do_request("GET", path)
+        requested = response.get("spec", {}).get("resources", {}).get("requests", {}).get("storage")
+        if requested:
+            return requested
         capacity = response.get("status", {}).get("capacity", {}).get("storage")
         if capacity:
             return capacity
