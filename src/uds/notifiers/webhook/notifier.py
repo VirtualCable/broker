@@ -56,6 +56,18 @@ class WebhookNotifier(BaseWebhookNotifier):
     # Webhooks are intended for events, not for logs
     accepts = frozenset((NotificationGroup.EVENT,))
 
+    url = BaseWebhookNotifier.url
+    verb = BaseWebhookNotifier.verb
+    data_template = BaseWebhookNotifier.data_template
+    content_type = BaseWebhookNotifier.content_type
+    headers = BaseWebhookNotifier.headers
+    verify_ssl = BaseWebhookNotifier.verify_ssl
+    timeout = BaseWebhookNotifier.timeout
+    max_retention = BaseWebhookNotifier.max_retention
+    backoff_cap = BaseWebhookNotifier.backoff_cap
+    hmac_secret = BaseWebhookNotifier.hmac_secret
+    hmac_mode = BaseWebhookNotifier.hmac_mode
+
 
 class WebhookLogNotifier(BaseWebhookNotifier):
     """
@@ -70,3 +82,15 @@ class WebhookLogNotifier(BaseWebhookNotifier):
 
     # Webhooks are intended for logs, not for events
     accepts = frozenset((NotificationGroup.LOG,))
+
+    url = BaseWebhookNotifier.url
+    verb = BaseWebhookNotifier.verb
+    data_template = BaseWebhookNotifier.data_template
+    content_type = BaseWebhookNotifier.content_type
+    headers = BaseWebhookNotifier.headers
+    verify_ssl = BaseWebhookNotifier.verify_ssl
+    timeout = BaseWebhookNotifier.timeout
+    max_retention = BaseWebhookNotifier.max_retention
+    backoff_cap = BaseWebhookNotifier.backoff_cap
+    hmac_secret = BaseWebhookNotifier.hmac_secret
+    hmac_mode = BaseWebhookNotifier.hmac_mode
