@@ -31,6 +31,8 @@
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+from django.utils import translation
+
 from uds.core.util.config import Config, GlobalConfig
 
 from ...utils.test import UDSTestCase
@@ -38,7 +40,8 @@ from ...utils.test import UDSTestCase
 
 class ConfigGroupsTest(UDSTestCase):
     def test_declared_group_reaches_overview(self) -> None:
-        values = Config.get_config_values()
+        with translation.override('en'):
+            values = Config.get_config_values()
         self.assertEqual(values['Security']['maxLoginTries']['group'], 'Login and passwords')
         self.assertEqual(values['UDS']['cacheCheckDelay']['group'], 'Publications and cache')
 

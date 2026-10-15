@@ -153,7 +153,7 @@ class Config:
             self._default = default or ""
             self._help = help
             if group:
-                Config._config_groups[section.name() + key] = group
+                Config._config_groups[f"{section.name()}.{key}"] = group
 
             logger.debug(self)
 
@@ -241,7 +241,7 @@ class Config:
             return gettext(self._help)
 
         def get_group(self) -> str:
-            return gettext(Config._config_groups.get(self._section.name() + self._key, ""))
+            return gettext(Config._config_groups.get(f"{self._section.name()}.{self._key}", ""))
 
         def set(self, value: str | bool | int) -> None:
             if GlobalConfig.is_initialized() is False or Config._is_migrating is True:
@@ -717,7 +717,7 @@ class GlobalConfig:
         help=_(
             "Max time (seconds) an element may remain in deferred deletion queues before being flagged as stuck"
         ),
-        group=_("Publications and cache"),
+        group=_("User services"),
     )
     # Max time a service pool publication may remain in a transitional state
     # (preparing, removing, canceling) before the self-assessment check flags
