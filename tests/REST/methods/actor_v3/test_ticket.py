@@ -122,6 +122,49 @@ class ActorTestTicket(rest.test.RESTActorTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["result"], data)
 
+    def test_valid_ticket_from_userservice_rotated_token(self) -> None:
+        """
+        SSO credential tickets are owned by the userservice uuid, but the actor
+        authenticates with the token rotated on initialize
+        """
+        actor_token = models.user_service.create_actor_token()
+        self.userservice.token_hash = models.user_service.hash_actor_token(actor_token)
+        self.userservice.save(update_fields=["token_hash"])
+        data = {"field1": "fld1", "field2": "fld2"}
+        ticket = models.TicketStore.create(owner=self.userservice.uuid, data=data)
+
+        response = self.client.post(
+            "/uds/rest/actor/v3/ticket/userservice",
+            data={"token": actor_token, "ticket": ticket},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"], data)
+        self.assertFalse(models.TicketStore.objects.filter(uuid=ticket).exists())
+
+    def test_ticket_from_other_userservice_is_rejected(self) -> None:
+        """
+        A valid actor token must not consume a ticket owned by another userservice
+        """
+        other_userservice = services_fixtures.create_db_userservice(
+            self.userservice.deployed_service, self.userservice.publication
+        )
+        actor_token = models.user_service.create_actor_token()
+        self.userservice.token_hash = models.user_service.hash_actor_token(actor_token)
+        self.userservice.save(update_fields=["token_hash"])
+        ticket = models.TicketStore.create(owner=other_userservice.uuid, data={"field1": "fld1"})
+
+        response = self.client.post(
+            "/uds/rest/actor/v3/ticket/userservice",
+            data={"token": actor_token, "ticket": ticket},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json()["error"], str)
+        self.assertTrue(models.TicketStore.objects.filter(uuid=ticket).exists())
+
     def test_invalid_token_from_userservice(self) -> None:
         """
         Test actorv3 ticket generation from a server request
