@@ -254,6 +254,33 @@ class TestUserserviceManager(UDSTransactionTestCase):
         self.assertIsNone(old_cache.user)
         self.assertTrue(old_cache.is_usable())
 
+    def test_get_user_service_with_usable_cache_and_os_not_ready(self) -> None:
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        user = userservice.user
+        assert user is not None
+
+        userservice.cache_level = core_types.services.CacheLevel.L1
+        userservice.user = None
+        userservice.state = core_types.states.State.USABLE
+        userservice.os_state = core_types.states.State.PREPARING
+        userservice.save()
+
+        service_pool = userservice.service_pool
+
+        service_pool.initial_srvs = 1
+        service_pool.cache_l1_srvs = 0
+        service_pool.cache_l2_srvs = 0
+        service_pool.max_srvs = 3
+        service_pool.save()
+
+        assigned = self.manager.get_assignation_for_user(service_pool, user)
+
+        self.assertIsNotNone(assigned)
+        assert assigned is not None
+        self.assertEqual(assigned.uuid, userservice.uuid)
+        self.assertEqual(assigned.cache_level, core_types.services.CacheLevel.NONE)
+        self.assertEqual(service_pool.assigned_user_services().filter(user=user).count(), 1)
+
     def test_check_user_service_uuid(self) -> None:
         userservice = services_fixtures.create_db_assigned_userservices()[0]
         actor_token = models.user_service.create_actor_token()
