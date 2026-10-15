@@ -657,7 +657,7 @@ class UserServiceManager(metaclass=singleton.Singleton):
                             cache = None
                     else:
                         cache = None
-            else:
+            if cache:
                 # Early assign
                 cache.assign_to(user)
 
