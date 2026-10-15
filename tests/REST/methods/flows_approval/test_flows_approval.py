@@ -116,6 +116,64 @@ class FlowsRestTest(rest.test.RESTTestCase):
         self.assertEqual(item["justification"], "testing")
         self.assertEqual(item["actions_count"], 2)
 
+    def _failed_mid_run(self) -> ActionFlow:
+        """Build a second flow, LOCKED with its only action failed, as a run leaves it.
+
+        Approval re-verifies the target against the registry, so the
+        action that runs needs a real one; the fixture flow of this case
+        targets placeholders on purpose.
+        """
+        provider = create_db_provider()
+        values = {"name": "renamed by agent"}
+        base_values, base_etag = ProviderUpdate().snapshot_and_fingerprint(provider, values)
+        flow = self.store.create_flow(
+            owner=self.owner,
+            agent="test-agent/1.0",
+            name="failed flow",
+            justification="testing a failed run",
+        )
+        action = self.store.add_action(
+            flow,
+            action_type="provider.update",
+            target_uuid=provider.uuid,
+            values=values,
+            base_values=base_values,
+            base_etag=base_etag,
+        )
+        self.store.submit_flow(flow, actor_uuid=self.owner.uuid)
+        self.store.approve_action(action, admin=self.staff)
+        action.refresh_from_db()
+        self.store.mark_action_executing(action, actor=self.staff.name)
+        self.store.mark_action_result(action, result="boom: target vanished", failed=True)
+        flow.refresh_from_db()
+        return flow
+
+    def _overview_item(self, flow: ActionFlow) -> dict[str, typing.Any]:
+        items: list[dict[str, typing.Any]] = self.client.rest_get("flows/approval/overview").json()
+        return next(item for item in items if item["id"] == flow.uuid)
+
+    def test_overview_exposes_the_run_failure(self) -> None:
+        flow = self._failed_mid_run()
+        self.assertEqual(flow.status, FlowStatus.LOCKED)
+        item = self._overview_item(flow)
+        self.assertTrue(item["has_failed_actions"])
+        self.assertEqual(item["run_note"], "boom: target vanished")
+
+    def test_overview_hides_the_run_failure_once_decided(self) -> None:
+        flow = self._failed_mid_run()
+        self.store.reject_flow(flow, admin=self.staff.name, reason="not retrying")
+        flow.refresh_from_db()
+        self.assertEqual(flow.status, FlowStatus.REJECTED)
+        item = self._overview_item(flow)
+        self.assertFalse(item["has_failed_actions"])
+        self.assertEqual(item["run_note"], "")
+
+    def test_undecided_flow_without_failures_carries_no_run_note(self) -> None:
+        item = self._overview_item(self.flow)
+        self.assertEqual(item["status"], FlowStatus.PENDING)
+        self.assertFalse(item["has_failed_actions"])
+        self.assertEqual(item["run_note"], "")
+
     def test_actions_detail_listed_in_order(self) -> None:
         items: list[dict[str, typing.Any]] = self.client.rest_get(
             f"flows/approval/{self.flow.uuid}/actions"

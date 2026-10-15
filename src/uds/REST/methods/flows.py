@@ -123,13 +123,18 @@ class FlowItem(types.rest.BaseRestItem):
     # frozen by the executor at run start); empty/None when never run
     executed_by: str = ""
     executed_at: datetime.datetime | None = None
-    # ``True`` only for ``LOCKED`` flows that failed mid-run (one or more
-    # actions in ``failed`` or ``revoked``); the listing uses this to
-    # distinguish "waiting for first review" from "waiting for retry".
-    # Admin views only; the owner surface keeps it ``False``.
+    # ``True`` only for ``LOCKED`` or ``PENDING`` flows that failed
+    # mid-run (one or more actions in ``failed`` or ``revoked``); the
+    # listing uses this to distinguish "waiting for first review" from
+    # "waiting for retry". ``DRAFT`` is excluded: a draft has never
+    # been launched, so it cannot have a run failure. Admin views only;
+    # the owner surface keeps it ``False``.
     has_failed_actions: bool = False
     # Newline-joined ``properties.result`` of the failing actions, in
     # execution order; ``""`` when there are none. Admin views only.
+    # Plain text: the executor's literal error can carry names of
+    # tables, columns or objects. The admin UI renders it through
+    # Angular interpolation (auto-escaped).
     run_note: str = ""
 
 
