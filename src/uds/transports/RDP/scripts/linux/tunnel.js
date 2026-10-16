@@ -49,7 +49,7 @@ if (data.as_file) {
 
     // Append to removable task to delete the file later
     Tasks.addEarlyUnlinkableFile(rdpFilePath);
-    let password = data.password ? `/p:${data.password}` : '';
+    let password = data.password ? `/p:${data.password}` : '/p:';
     // Launch the RDP client with the temp file, the addres in INSIDE the file is already set to
     process = Process.launch(executablePath, [password, rdpFilePath]);
 } else {

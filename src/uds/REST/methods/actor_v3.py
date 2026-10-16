@@ -836,10 +836,11 @@ class Ticket(ActorV3Action):
 
                 case "userservice":
                     # Userservice also has owner, to increase security
-                    self.get_userservice()  # We just want to check that is valid, do not need assignment
+                    # The actor authenticates with its rotated token, but tickets are owned by the userservice uuid
+                    userservice = self.get_userservice()
 
                     return ActorV3Action.actor_result(
-                        TicketStore.get(uuid=self._params["ticket"], owner=self._params["token"], invalidate=True)
+                        TicketStore.get(uuid=self._params["ticket"], owner=userservice.uuid, invalidate=True)
                     )
 
                 case _:
