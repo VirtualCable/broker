@@ -892,7 +892,7 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable/Disable Actor attack detection ip blocking"),
-        group=_("Network and proxies"),
+        group=_("Login and passwords"),
     )
 
     # Max session length configuration values
