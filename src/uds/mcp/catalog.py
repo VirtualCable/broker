@@ -17,7 +17,15 @@ ResourceReader: typing.TypeAlias = collections.abc.Callable[[str], collections.a
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class ToolDefinition:
-    """Describe an MCP tool independently from its transport implementation."""
+    """Describe an MCP tool independently from its transport implementation.
+
+    A tool is considered "fully documented" when ``title``, ``description``,
+    ``access`` and ``returns`` are non empty, every property of
+    ``input_schema`` that carries semantic meaning has a ``description``
+    the model can rely on, and ``examples`` contains at least one JSON
+    call/response pair. Missing any of these turns the documentation
+    contract test red; see ``tests/mcp/test_documentation.py``.
+    """
 
     name: str
     title: str
@@ -25,6 +33,7 @@ class ToolDefinition:
     input_schema: dict[str, typing.Any]
     access: str
     returns: str
+    examples: tuple[str, ...] = ()
     required_permission: str | None = None
     read_only: bool = True
     sensitive_fields: tuple[str, ...] = ()
