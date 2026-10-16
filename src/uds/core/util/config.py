@@ -57,7 +57,8 @@ class Config:
     # For custom params (for choices mainly)
     _config_params: typing.ClassVar[dict[str, typing.Any]] = {}
 
-    # Group of each value, only kept in memory: values rebuilt from database (enumerate) do not carry it
+    # Group of each value, only kept in memory. Filled when the declaring module is imported and keyed
+    # by section.key, so values rebuilt from database (enumerate) resolve their group too
     _config_groups: typing.ClassVar[dict[str, str]] = {}
 
     # If we are migrating, we do not want to access database
