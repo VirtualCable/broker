@@ -515,6 +515,14 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
         },
         access="Staff with MANAGEMENT permission over the target item.",
         returns="The added action id, its masked description and the draft-flow notice.",
+        examples=(
+            "Request: {\"flow_id\": \"<draft-uuid>\", \"values\": {\"username\": \"root@pam\", "
+            "\"password\": \"<password>\", \"host\": \"192.168.1.151\", \"port\": 8006, "
+            "\"verify_ssl\": false}, \"justification\": \"Set up Proxmox provider David wants to demo.\"}\n"
+            "Expected response: {\"id\": \"<action-uuid>\", \"action_type\": \"provider.create\", "
+            "\"flow\": {\"id\": \"<draft-uuid>\", \"status\": \"draft\"}, \"target_uuid\": null, "
+            "\"fields\": {\"username\": \"root@pam\", \"password\": \"***\", ...}}",
+        ),
         required_permission="MANAGEMENT",
         read_only=False,
         executor=_wrap_sync(sync_body),
@@ -527,28 +535,43 @@ def _create_flow_tool() -> ToolDefinition:
         name="create_flow",
         title="Open a draft flow",
         description=(
-            "Open an empty draft flow to compose a batch of changes. Add actions with the "
-            "propose_* tools and finish with submit_flow. A draft is private to you: no "
-            "administrator can see or touch it until you submit it. Unsubmitted drafts are "
-            "auto-discarded after a short window, so submit when the flow is complete."
+            "Open an empty draft flow to compose a batch of related changes. The flow is the "
+            "scope the administrator reviews: call ``propose_*`` once per change (create / "
+            "update / delete) and finish with ``submit_flow``. Drafts are private to the "
+            "caller until submitted — no administrator can see them. Unsubmitted drafts are "
+            "auto-discarded after a short window, so only open a draft when the batch of "
+            "changes is ready to write. Drafts that depend on each other must live in the "
+            "same flow so the administrator approves them together."
         ),
         input_schema={
             "type": "object",
             "properties": {
                 "name": {
                     "type": "string",
-                    "description": "Short name for the proposal (what this batch of changes is about).",
+                    "description": (
+                        "Short, human-readable title for the whole batch of changes "
+                        "(e.g. 'Create Proxmox provider and 2 pools'). Shown in the admin "
+                        "queue and in ``list_flows_own`` output; keep it under 80 chars."
+                    ),
                 },
                 "justification": {
                     "type": "string",
-                    "description": "Why the whole flow is needed. The administrator reads it to decide.",
+                    "description": (
+                        "Plain-language reason the administrator should approve this batch. "
+                        "Mention the user-visible impact, the requester (if known) and any "
+                        "rollback plan. Required for traceability, even when the flow is short."
+                    ),
                 },
             },
-            "required": [],
+            "required": ["name", "justification"],
             "additionalProperties": False,
         },
         access="Staff (the MCP endpoint gate).",
-        returns="The draft flow id and its summary.",
+        returns="The new draft flow id and its summary (id, name, status='draft', due_date, actions_count=0).",
+        examples=(
+            "Request: {\"name\": \"Create Proxmox provider and 2 pools\", \"justification\": \"Bring up the Proxmox provider David wants to test; pool W11 and pool W11-SSO.\"}\n"
+            "Expected response: {\"id\": \"<new-draft-uuid>\", \"name\": \"...\", \"status\": \"draft\", \"due_date\": \"2026-10-16T18:00:00Z\", \"actions\": 0}",
+        ),
         read_only=False,
         executor=_wrap_sync(_create_flow_sync),
     )
@@ -563,7 +586,9 @@ def _submit_flow_tool() -> ToolDefinition:
             "Close one of your draft flows and queue it for the administrator. From this "
             "moment the flow is final: it can no longer be edited, and it does nothing until "
             "an administrator approves it. To change something afterwards, cancel it (if not "
-            "yet locked) and open a new flow."
+            "yet locked) and open a new flow. Submission is the only way to get a draft in "
+            "front of a human reviewer, so check every action (type, target_uuid, fields) "
+            "before calling this tool."
         ),
         input_schema={
             "type": "object",
@@ -583,6 +608,10 @@ def _submit_flow_tool() -> ToolDefinition:
         },
         access="Only the owner of the draft flow.",
         returns="The submitted flow id, its pending status and the approval notice.",
+        examples=(
+            "Request: {\"flow_id\": \"<draft-uuid>\", \"expires_in_hours\": 48}\n"
+            "Expected response: {\"id\": \"<draft-uuid>\", \"name\": \"...\", \"status\": \"pending\", \"due_date\": \"2026-10-18T16:00:00Z\"}",
+        ),
         read_only=False,
         executor=_wrap_sync(_submit_flow_sync),
     )
@@ -596,29 +625,60 @@ def _discovery_tool() -> ToolDefinition:
         description=(
             "Field definitions of a mutable action type, resolved either from an item UUID "
             "(includes its current values) or from a data type name. Use it before proposing "
-            "changes to know exactly which fields the proposal accepts."
+            "changes to know exactly which fields the proposal accepts, their types, the "
+            "human-readable label, and any choice list. The tool is the genapi-style entry "
+            "point for action shapes — pick this before constructing any ``propose_*`` call "
+            "so the model does not invent field names."
         ),
         input_schema={
             "type": "object",
             "properties": {
                 "action_type": {
                     "type": "string",
-                    "description": "Mutable action type. Defaults to provider.update.",
+                    "description": (
+                        "Mutable action type identifier (e.g. ``provider.create``, "
+                        "``provider.update``, ``service.update``). Defaults to "
+                        "``provider.update`` when omitted. Use ``list_flow_actions`` or "
+                        "the registry output to discover available types in this UDS install."
+                    ),
                 },
                 "target_uuid": {
                     "type": "string",
-                    "description": "UUID of an existing item (returns its current values too).",
+                    "description": (
+                        "UUID of an existing item. When provided, the response also carries "
+                        "the current values of the listed fields, so you can compose a "
+                        "differential update without guessing. For create actions, pass the "
+                        "parent UUID (the container that will own the new item)."
+                    ),
                 },
                 "for_type": {
                     "type": "string",
-                    "description": "Data type name (e.g. the provider module type), when no UUID is at hand.",
+                    "description": (
+                        "Data type name (e.g. ``IPServiceProvider`` for a Proxmox "
+                        "provider, or any subclass declared in the provider module). "
+                        "Required when ``target_uuid`` is empty and the action_type has "
+                        "no single canonical type."
+                    ),
                 },
             },
             "required": [],
             "additionalProperties": False,
         },
         access="Staff (the MCP endpoint gate).",
-        returns="Ordered field definitions (name, type, label, choices, ...) and, with a UUID, the current values.",
+        returns=(
+            "An object with ``action_type``, ``for_type``, and ``fields`` (list of "
+            "field definitions in their render order). When ``target_uuid`` is provided, "
+            "the response also carries ``target_uuid`` and ``current_values``."
+        ),
+        examples=(
+            "Request: {\"action_type\": \"provider.update\", \"target_uuid\": \"<provider-uuid>\"}\n"
+            "Expected response: {\"action_type\": \"provider.update\", \"target_uuid\": \"<provider-uuid>\", "
+            "\"for_type\": \"IPServiceProvider\", \"fields\": [{\"name\":\"username\",\"type\":\"text\",\"label\":\"Username\",\"required\":true}, ...], "
+            "\"current_values\": {\"username\": \"root@pam\", ...}}",
+            "Request: {\"action_type\": \"provider.create\", \"for_type\": \"IPServiceProvider\"}\n"
+            "Expected response: {\"action_type\": \"provider.create\", \"for_type\": \"IPServiceProvider\", "
+            "\"fields\": [{\"name\":\"username\", ...}, {\"name\":\"password\",\"type\":\"password\",\"label\":\"Password\",\"required\":true}, ...]}",
+        ),
         read_only=True,
         executor=_wrap_sync(_discovery_sync),
     )
@@ -669,6 +729,14 @@ def _list_tool() -> ToolDefinition:
         },
         access="Staff (only the actions of the calling identity are returned).",
         returns="The list of actions with their flow, state, masked changes and outcomes.",
+        examples=(
+            "Request: {\"status\": \"draft\", \"top\": 10}\n"
+            "Expected response: {\"items\": [{\"id\": \"<action-uuid>\", \"flow\": {\"id\": \"<flow-uuid>\", \"status\": \"draft\"}, "
+            "\"action_type\": \"provider.create\", \"fields\": {\"username\": \"root@pam\", ...}, ...}], \"count\": N}",
+            "Request: {\"status\": \"failed\", \"created_after\": \"2026-10-01T00:00:00Z\"}\n"
+            "Expected response: actions whose flow ended in failure since the date, with "
+            "``result`` and ``run_note`` filled in (no secrets).",
+        ),
         read_only=True,
         executor=_wrap_sync(_list_sync),
     )
@@ -683,15 +751,30 @@ def _update_tool() -> ToolDefinition:
             "Replace the values of one of your own draft actions (iterative refinement before "
             "submitting). Only actions of a draft flow can be edited: once the flow is "
             "submitted it is final and a change means a new flow. The action is re-validated "
-            "and re-based on the current state. It does NOT apply anything."
+            "and re-based on the current state. It does NOT apply anything. The ``values`` "
+            "object must match the field set returned by ``get_mutable_fields`` for this action "
+            "type, otherwise the broker rejects the call with a 400 and the action returns to "
+            "its previous state."
         ),
         input_schema={
             "type": "object",
             "properties": {
-                "id": {"type": "string", "description": "Action id (of a draft flow)."},
+                "id": {
+                    "type": "string",
+                    "description": (
+                        "Action id returned by ``list_flow_actions`` or by the ``propose_*`` "
+                        "call that created it. The action must belong to a flow whose status "
+                        "is still ``draft``; otherwise the broker returns a conflict error."
+                    ),
+                },
                 "values": {
                     "type": "object",
-                    "description": "New complete set of field values.",
+                    "description": (
+                        "New complete set of field values, keyed by field name. Must follow the "
+                        "same shape as ``get_mutable_fields(...)['fields']`` for this "
+                        "action_type. Sensitive fields (e.g. passwords) are accepted but stored "
+                        "encrypted and never echoed back in subsequent reads."
+                    ),
                     "additionalProperties": True,
                 },
             },
@@ -700,6 +783,11 @@ def _update_tool() -> ToolDefinition:
         },
         access="Only the owner, while the flow is still a draft.",
         returns="The updated action id and its masked description.",
+        examples=(
+            "Request: {\"id\": \"<action-uuid>\", \"values\": {\"username\": \"ops@pam\", \"password\": \"<new-value>\", \"host\": \"192.168.1.151\"}}\n"
+            "Expected response: {\"id\": \"<action-uuid>\", \"action_type\": \"provider.update\", "
+            "\"fields\": {\"username\": \"ops@pam\", \"password\": \"***\", \"host\": \"192.168.1.151\"}}",
+        ),
         read_only=False,
         executor=_wrap_sync(_update_sync),
     )
@@ -713,18 +801,32 @@ def _cancel_tool() -> ToolDefinition:
         description=(
             "Withdraw one of your own flows: a draft you are composing, or a submitted flow "
             "the administrator has not locked yet. Once a flow is locked (in review) it can "
-            "no longer be cancelled here."
+            "no longer be cancelled here. Cancelling a flow removes it from the administrator "
+            "queue (pending) or the caller's drafts; nothing is applied. Use this to retire a "
+            "proposal that became obsolete before approval — for partial changes, "
+            "open a new flow instead of resubmitting the cancelled one."
         ),
         input_schema={
             "type": "object",
             "properties": {
-                "flow_id": {"type": "string", "description": "Flow id to cancel."},
+                "flow_id": {
+                    "type": "string",
+                    "description": (
+                        "Id of the flow to withdraw. Must be either your own draft (any time) "
+                        "or your own submitted flow that has not been locked by an "
+                        "administrator yet."
+                    ),
+                },
             },
             "required": ["flow_id"],
             "additionalProperties": False,
         },
         access="Only the owner, while the flow is a draft or pending (not yet locked).",
         returns="The cancelled flow id and state.",
+        examples=(
+            "Request: {\"flow_id\": \"<draft-or-pending-uuid>\"}\n"
+            "Expected response: {\"id\": \"<flow-uuid>\", \"status\": \"cancelled\"}",
+        ),
         read_only=False,
         executor=_wrap_sync(_cancel_sync),
     )
