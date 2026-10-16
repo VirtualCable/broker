@@ -296,9 +296,16 @@ urlpatterns = [
     # END WEB API
     # Custumization of GUI
     re_path(
-        r"^uds/custom/(?P<component>[a-zA-Z.-]+)$",
+        r"^uds/custom/(?P<component>[a-zA-Z0-9_.-]+)$",
         custom.custom,
         name="custom",
+    ),
+    # Per-authenticator CSS: served from the same view as /uds/custom/<tag>.css.
+    # Frontend (gui/user index.html) loads /uds/res/<tag>.css at runtime.
+    re_path(
+        r"^uds/res/(?P<component>[a-zA-Z0-9_-]+\.css)$",
+        custom.custom,
+        name="custom_tag_css",
     ),
     # REST API
     re_path(

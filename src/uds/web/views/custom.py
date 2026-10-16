@@ -28,10 +28,16 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import os
+import re
+
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 
 # from django.views.decorators.cache import cache_page
 from uds.core.util.config import GlobalConfig
+
+_TAG_CSS_NAME_RE = re.compile(r"^[a-zA-Z0-9_-]+\.css$")
 
 
 # @cache_page(3600, key_prefix='custom', cache='memory')
@@ -42,5 +48,22 @@ def custom(request: "HttpRequest", component: str) -> "HttpResponse":
     if component == "styles.css":
         content_type = "text/css"
         value = GlobalConfig.SITE_CSS.get(True)
+    elif _TAG_CSS_NAME_RE.match(component):
+        # Per-authenticator CSS: look for <tag>.css in STATICFILES_DIRS.
+        # Intentionally returns empty 200 text/css (not 404) when the file
+        # does not exist: the frontend injects <link href="/uds/res/<tag>.css">
+        # unconditionally whenever a tag is set, and a 404 would pollute browser
+        # consoles and nginx error logs on standard setups without overrides.
+        content_type = "text/css"
+        for directory in settings.STATICFILES_DIRS:
+            path = os.path.join(directory, component)
+            if os.path.isfile(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        value = f.read()
+                    break
+                except OSError:
+                    # Unreadable file: fall back silently to empty stylesheet
+                    break
 
     return HttpResponse(content_type=content_type, content=value)
