@@ -85,6 +85,28 @@ def _list_input_schema(
     }
 
 
+def _list_tool_examples(parent_required: bool) -> tuple[str, ...]:
+    """Return the JSON-shaped examples shown for a generated ``list_*`` tool.
+
+    The strings are kept as raw JSON snippets (call on the left, expected
+    response on the right) so the model can copy them directly. Both shapes
+    are bounded so the model does not infer an unbounded streaming format.
+    """
+    if parent_required:
+        return (
+            "Request: {\"parent_uuid\": \"e3b0c442-98fc-1c26-9b9b-d91a9d9acf43\", \"top\": 10}\n"
+            "Expected response: an array of items from the parent-scoped "
+            "collection, each as a dictionary with the OData $select'd fields. "
+            "Page size is bounded by top (1..500).",
+        )
+    return (
+        "Request: {\"top\": 10}\n"
+        "Expected response: an array of items from the collection, each as a "
+        "dictionary. Apply ``filter`` / ``orderby`` / ``skip`` / ``select`` "
+        "with the standard OData operators to narrow the page.",
+    )
+
+
 def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
     """Build a paginated list tool for a REST collection handler.
 
@@ -92,6 +114,11 @@ def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
     pattern (for example, a handler that does not expose ``get_items``).
     Detail entries produce a tool whose target carries the parent target so
     the proxy can resolve the parent item and scope the query to it.
+
+    The generated ``description`` documents the OData contract the model
+    can rely on (filter / orderby / top / skip / select) and the
+    parent-scoping rule for detail collections, so the agent does not
+    confuse master and detail lists at first contact.
     """
     if not entry.exposes_get_items:
         return None
@@ -124,26 +151,37 @@ def _generate_list_tool(entry: HandlerInventoryEntry) -> ToolDefinition | None:
 
     schema = _list_input_schema(parent_desc)
     title_base = tool_name.removeprefix("list_")
+    handler_name = entry.handler.__name__
+    parent_name = entry.parent.handler.__name__ if entry.parent is not None else None
+    if entry.parent is not None:
+        scope_text = (
+            f" Detail lists require a ``parent_uuid`` so the query is scoped to a concrete "
+            f"``{parent_name}`` item; without it the tool fails with a permission/validation error."
+        )
+    else:
+        scope_text = ""
+    description = (
+        f"List items exposed by the ``{handler_name}`` REST collection with optional OData-style "
+        f"filtering (``filter``), ordering (``orderby``), pagination (``top`` / ``skip``) and "
+        f"projection (``select``). ``top`` defaults to 100 and is hard-capped at 500; pagination is "
+        f"cursor-style: raise ``skip`` to fetch the next page rather than retrying with a higher ``top``. "
+        f"The read endpoint mirrors the catalog handlers, so OData operators and field names match the "
+        f"same names visible in the admin GUI."
+        f"{scope_text}"
+    )
     return ToolDefinition(
         name=tool_name,
         title=f"List {_humanize(title_base)}",
-        description=(
-            f"List items exposed by the ``{entry.handler.__name__}`` REST collection with "
-            "optional OData-style filtering, ordering, pagination and projection."
-            + (
-                " The collection is scoped to the given parent item; the parent "
-                f"is a ``{entry.parent.handler.__name__ if entry.parent else ''}``."
-                if entry.parent is not None
-                else ""
-            )
-        ),
+        description=description,
         input_schema=schema,
         access=(
-            f"Available to authenticated UDS users with permission to read {entry.handler.__name__} items."
+            f"Available to authenticated UDS users with permission to read {handler_name} items."
         ),
         returns=(
-            f"An array of items from the ``{entry.handler.__name__}`` REST collection, each as a dictionary."
+            f"An array of items from the ``{handler_name}`` REST collection, each as a dictionary. "
+            f"Use ``skip`` to page through large collections."
         ),
+        examples=_list_tool_examples(entry.parent is not None),
         required_permission="READ",
         executor=executor,
     )
