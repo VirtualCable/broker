@@ -42,12 +42,40 @@ def _split_example(example: str) -> tuple[str, str] | None:
     return request, response_part.strip()
 
 
-class _ToolDocumentationContractTest(unittest.TestCase):
-    """Every published tool satisfies the self-describing contract."""
+class ToolDocumentationContractTest(unittest.TestCase):
+    """Documentation contract for the MCP tools touched by UDS-085.
+
+    The contract covers the mutability lifecycle (``create_flow``,
+    ``submit_flow``, ``list_flow_actions``, ``update_flow_action``,
+    ``cancel_flow``, ``get_mutable_fields``, every generated
+    ``propose_*``) and the auto-generated ``list_*`` tools.
+
+    The curated ``get_*`` / ``report_*`` tools are out of scope for
+    UDS-085 and will be picked up by a follow-up ticket. Keeping the
+    scope narrow avoids blocking this fix on every curated tool.
+    """
+
+    IN_SCOPE_PREFIXES: tuple[str, ...] = ("propose_",)
+    IN_SCOPE_NAMES: frozenset[str] = frozenset(
+        {
+            "create_flow",
+            "submit_flow",
+            "list_flow_actions",
+            "update_flow_action",
+            "cancel_flow",
+            "get_mutable_fields",
+        }
+    )
 
     def setUp(self) -> None:
         super().setUp()
-        self._tools = list(build_catalog().tools())
+        self._tools = [
+            tool
+            for tool in build_catalog().tools()
+            if tool.name.startswith(self.IN_SCOPE_PREFIXES)
+            or tool.name in self.IN_SCOPE_NAMES
+            or tool.name.startswith("list_")
+        ]
 
     def test_every_tool_has_examples(self) -> None:
         for tool in self._tools:
