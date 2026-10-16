@@ -177,7 +177,7 @@ class ProviderCreateDeleteTest(rest.test.RESTTestCase):
         self.assertEqual(create.create_validate_values(self.provider.data_type, {"name": "x"}), [])
         self.assertTrue(create.create_validate_values("", {"name": "x"}))
         errors = create.create_validate_values(
-            self.provider.data_type, {"data_type": self.provider.data_type, "zzz": 1}
+            self.provider.data_type, {"data_type": self.provider.data_type, "name": "x", "zzz": 1}
         )
         self.assertEqual(len(errors), 1)
         self.assertIn("zzz", errors[0])
@@ -189,7 +189,7 @@ class ProviderCreateDeleteTest(rest.test.RESTTestCase):
         action = build_action(
             action_type="provider.create",
             target_uuid=CREATE_TARGET_UUID,
-            values={"data_type": self.provider.data_type, "name": "new prov", "host": "h"},
+            values={"data_type": self.provider.data_type, "name": "new prov", "instance.host": "h"},
             base_values={},
             base_etag="",
         )
@@ -200,8 +200,9 @@ class ProviderCreateDeleteTest(rest.test.RESTTestCase):
             target, called_request, params = proxy_cls.return_value.execute.call_args[0]
             self.assertEqual((target.handler, target.method.value, target.args), (Providers, "POST", ()))
             self.assertEqual(called_request, request)
-            # Form shape: top-level columns with safe defaults, bare config
-            # names nested under "instance", data_type injected
+            # Form shape: top-level columns with safe defaults, config
+            # names nested under "instance" with their "instance." prefix
+            # dropped, data_type injected
             self.assertEqual(params["name"], "new prov")
             self.assertEqual(params["comments"], "")
             self.assertEqual(params["tags"], [])
@@ -263,3 +264,96 @@ class ProviderCreateDeleteTest(rest.test.RESTTestCase):
         self.assertEqual(diff["stale_fields"], [])
         self.assertFalse(diff["item_changed"])
         self.assertEqual(diff["proposed"], action.values)
+
+
+class ProviderCreateInstanceFieldsTest(rest.test.RESTTestCase):
+    """Creation of a real provider subtype, whose gui has instance fields.
+
+    The in-tree test provider declares no module configuration at all, so
+    only a real subtype exercises the "instance." keyspace that
+    add_fields(parent="instance") builds and that validation, snapshots
+    and execution must all agree on.
+    """
+
+    DATA_TYPE: typing.Final[str] = "ProxmoxPlatform"
+    PASSWORD: typing.Final[str] = "not-a-real-secret"
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.create = ProviderUpdate(ActionOperation.CREATE)
+
+    def _minimal_values(self) -> dict[str, typing.Any]:
+        return {
+            "data_type": self.DATA_TYPE,
+            "name": "prox",
+            "instance.host": "pve.example.invalid",
+            "instance.password": self.PASSWORD,
+        }
+
+    def test_definitions_expose_the_prefixed_names(self) -> None:
+        names = [d["name"] for d in self.create.create_field_definitions(self.DATA_TYPE)]
+        self.assertIn("instance.username", names)
+        self.assertIn("instance.password", names)
+
+    def test_validation_accepts_both_accepted_shapes(self) -> None:
+        self.assertEqual(self.create.create_validate_values(self.DATA_TYPE, self._minimal_values()), [])
+        nested = {
+            "data_type": self.DATA_TYPE,
+            "name": "prox",
+            "instance": {"host": "pve.example.invalid", "password": self.PASSWORD},
+        }
+        self.assertEqual(self.create.create_validate_values(self.DATA_TYPE, nested), [])
+
+    def test_validation_refuses_an_omitted_mandatory_secret(self) -> None:
+        values = self._minimal_values()
+        del values["instance.password"]
+        errors = self.create.create_validate_values(self.DATA_TYPE, values)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("instance.password", errors[0])
+
+    def test_validation_refuses_an_empty_mandatory_secret(self) -> None:
+        values = self._minimal_values() | {"instance.password": ""}
+        errors = self.create.create_validate_values(self.DATA_TYPE, values)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("instance.password", errors[0])
+
+    def test_validation_keeps_fields_with_a_usable_default_omittable(self) -> None:
+        # instance.username is mandatory but defaults to root@pam, and
+        # instance.port to 8006: a default that is not empty is a value
+        values = self._minimal_values()
+        self.assertEqual(self.create.create_validate_values(self.DATA_TYPE, values), [])
+        self.assertNotIn("instance.username", values)
+
+    def _posted_params(self, values: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        action = build_action(
+            action_type="provider.create",
+            target_uuid=CREATE_TARGET_UUID,
+            values=values,
+            base_values={},
+            base_etag="",
+        )
+        with mock.patch("uds.mutability.verbs.RestProxy") as proxy_cls:
+            proxy_cls.return_value.execute = mock.AsyncMock(return_value={"id": "new-uuid"})
+            asyncio.run(self.create.execute(action, mock.MagicMock()))
+            return proxy_cls.return_value.execute.call_args[0][2]
+
+    def test_execution_posts_the_proposed_credentials(self) -> None:
+        # The bug: the prefixed names reached the module verbatim, which
+        # recognized none of them and fell back to its own defaults
+        params = self._posted_params(self._minimal_values() | {"instance.username": "root@pve"})
+        self.assertEqual(
+            params["instance"],
+            {"host": "pve.example.invalid", "password": self.PASSWORD, "username": "root@pve"},
+        )
+        self.assertEqual(params["data_type"], self.DATA_TYPE)
+
+    def test_execution_accepts_the_nested_shape(self) -> None:
+        params = self._posted_params(
+            {
+                "data_type": self.DATA_TYPE,
+                "name": "prox",
+                "instance": {"host": "pve.example.invalid", "password": self.PASSWORD},
+            }
+        )
+        self.assertEqual(params["instance"], {"host": "pve.example.invalid", "password": self.PASSWORD})

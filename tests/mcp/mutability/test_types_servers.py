@@ -249,7 +249,9 @@ class ServerGroupCreateDeleteTest(rest.test.RESTTestCase):
         create = ServerGroupUpdate(ActionOperation.CREATE)
         self.assertEqual(create.create_validate_values(self._for_type(), {"name": "x"}), [])
         self.assertTrue(create.create_validate_values("", {"name": "x"}))
-        errors = create.create_validate_values(self._for_type(), {"data_type": self._for_type(), "zzz": 1})
+        errors = create.create_validate_values(
+            self._for_type(), {"data_type": self._for_type(), "name": "x", "zzz": 1}
+        )
         self.assertEqual(len(errors), 1)
         self.assertIn("zzz", errors[0])
         # the reserved key is consumed by the machinery, never "unknown"
