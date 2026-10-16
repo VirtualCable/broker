@@ -451,6 +451,45 @@ def _cancel_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) ->
     }
 
 
+def _propose_examples(
+    is_root_create: bool, is_delete: bool, full_id: str
+) -> tuple[str, ...]:
+    """Return a JSON example for a ``propose_*`` tool, adapted to the operation.
+
+    Create and update expect a ``values`` payload; delete expects only a
+    ``target_uuid``. Mismatching the shape confuses a model that copies
+    the example verbatim, so the example mirrors the ``required`` schema.
+    """
+    if is_delete:
+        return (
+            "Request: {\"flow_id\": \"<draft-uuid>\", \"target_uuid\": \"<item-uuid>\", "
+            "\"justification\": \"Remove the obsolete item per UDS-NNN.\"}\n"
+            f"Expected response: {{\"id\": \"<action-uuid>\", \"action_type\": \"{full_id}\", "
+            "\"flow\": {\"id\": \"<draft-uuid>\", \"status\": \"draft\"}, "
+            "\"target_uuid\": \"<item-uuid>\", \"fields\": {}}",
+        )
+    if is_root_create:
+        return (
+            "Request: {\"flow_id\": \"<draft-uuid>\", "
+            "\"values\": {\"username\": \"root@pam\", \"password\": \"<password>\", "
+            "\"host\": \"192.168.1.151\", \"port\": 8006, \"verify_ssl\": false}, "
+            "\"justification\": \"Set up Proxmox provider David wants to demo.\"}\n"
+            f"Expected response: {{\"id\": \"<action-uuid>\", \"action_type\": \"{full_id}\", "
+            "\"flow\": {\"id\": \"<draft-uuid>\", \"status\": \"draft\"}, "
+            "\"target_uuid\": null, "
+            "\"fields\": {\"username\": \"root@pam\", \"password\": \"***\", ...}}",
+        )
+    return (
+        "Request: {\"flow_id\": \"<draft-uuid>\", \"target_uuid\": \"<item-uuid>\", "
+        "\"values\": {\"username\": \"ops@pam\", \"password\": \"<new-value>\"}, "
+        "\"justification\": \"Rotate the Proxmox credentials per UDS-NNN.\"}\n"
+        f"Expected response: {{\"id\": \"<action-uuid>\", \"action_type\": \"{full_id}\", "
+        "\"flow\": {\"id\": \"<draft-uuid>\", \"status\": \"draft\"}, "
+        "\"target_uuid\": \"<item-uuid>\", "
+        "\"fields\": {\"username\": \"ops@pam\", \"password\": \"***\", ...}}",
+    )
+
+
 def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
     """Build the proposal tool of one registered action type."""
 
@@ -515,14 +554,7 @@ def _propose_tool(action_type: registry.MutableActionType) -> ToolDefinition:
         },
         access="Staff with MANAGEMENT permission over the target item.",
         returns="The added action id, its masked description and the draft-flow notice.",
-        examples=(
-            "Request: {\"flow_id\": \"<draft-uuid>\", \"values\": {\"username\": \"root@pam\", "
-            "\"password\": \"<password>\", \"host\": \"192.168.1.151\", \"port\": 8006, "
-            "\"verify_ssl\": false}, \"justification\": \"Set up Proxmox provider David wants to demo.\"}\n"
-            "Expected response: {\"id\": \"<action-uuid>\", \"action_type\": \"provider.create\", "
-            "\"flow\": {\"id\": \"<draft-uuid>\", \"status\": \"draft\"}, \"target_uuid\": null, "
-            "\"fields\": {\"username\": \"root@pam\", \"password\": \"***\", ...}}",
-        ),
+        examples=_propose_examples(is_root_create, is_delete, action_type.full_id),
         required_permission="MANAGEMENT",
         read_only=False,
         executor=_wrap_sync(sync_body),
