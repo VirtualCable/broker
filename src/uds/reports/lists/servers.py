@@ -35,6 +35,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from uds.core.ui import gui
+from uds.core.util import dateutils
 from uds.models import ServerGroup
 
 from .base import ListReport
@@ -157,7 +158,7 @@ class ServersListReportCSV(ServersListReport):
                     r["os"],
                     r["version"],
                     r["maintenance"],
-                    r["locked_until"],
+                    dateutils.as_local_str(r["locked_until"]) if r["locked_until"] else "",
                     r["last_stats"],
                     r["users"],
                     r["cpu"],
@@ -170,4 +171,4 @@ class ServersListReportCSV(ServersListReport):
 def _stamp_as_str(stamp: float) -> str:
     if not stamp:
         return gettext("Never")
-    return str(timezone.make_aware(datetime.datetime.fromtimestamp(stamp)))
+    return dateutils.as_local_str(datetime.datetime.fromtimestamp(stamp))

@@ -39,6 +39,7 @@ import datetime
 import io
 import time
 
+from django.test import override_settings
 from django.utils import timezone
 
 from uds.core import types
@@ -133,3 +134,18 @@ class AuditReportTest(UDSTransactionTestCase):
         body = self._generate_rows()[1:]
         self.assertEqual(len(body), 1)
         self.assertEqual(body[0][6], "/in-range")
+
+    @override_settings(TIME_ZONE="Europe/Madrid")
+    def test_date_column_in_broker_local_time(self) -> None:
+        Log.objects.create(
+            owner_id=0,
+            owner_type=int(types.log.LogObjectType.SYSLOG),
+            created=datetime.datetime(2024, 1, 15, 12, 0, 0, tzinfo=datetime.timezone.utc),
+            source=types.log.LogSource.REST,
+            level=int(log_util.LogLevel.INFO),
+            data="10.0.0.7 [admin]: [GET/200] /tz-row",
+        )
+
+        body = self._generate_rows()[1:]
+        self.assertEqual(len(body), 1)
+        self.assertEqual(body[0][0], "2024-01-15 13:00:00")

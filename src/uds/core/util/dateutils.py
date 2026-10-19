@@ -29,6 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from django.utils import timezone
+
 from uds.core.util.model import sql_now
 
 import calendar
@@ -78,3 +80,11 @@ def yesterday() -> datetime.date:
 
 def tomorrow() -> datetime.date:
     return today() + datetime.timedelta(days=1)
+
+def as_local_str(dt: datetime.datetime | None) -> str:
+    """Wall-clock time in the broker's timezone, for CSV cells (DB datetimes come back in UTC)."""
+    if dt is None:
+        return ""
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    return timezone.localtime(dt).strftime("%Y-%m-%d %H:%M:%S")
