@@ -81,6 +81,68 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
     # How many "retries" operation on same state will be allowed before giving up
     max_retries: typing.ClassVar[int] = consts.services.USRV_MAX_RETRIES
 
+    # Default delay, in seconds, inserted as NOP operations between
+    # CREATE_COMPLETED and START on _create_queue and _create_queue_l1_cache.
+    # Lets external storage or cluster managers settle their affinity rules
+    # before the broker asks the provider to power on the new VM.
+    # Set to 0 to keep the original behaviour. Subclasses and services can
+    # override ``delay_after_create_seconds`` to expose a UI field that drives
+    # the wait at deploy time.
+    DELAY_AFTER_CREATE_SECONDS_DEFAULT: typing.ClassVar[int] = 0
+
+    def delay_after_create_seconds(self) -> int:
+        '''
+        Per-instance delay, in seconds, between CREATE_COMPLETED and START.
+        Default is :attr:`DELAY_AFTER_CREATE_SECONDS_DEFAULT`. Subclasses and
+        services can override this to expose a UI field; the value is
+        consulted at deployment time on every queue build.
+        '''
+        return int(self.DELAY_AFTER_CREATE_SECONDS_DEFAULT)
+
+    @classmethod
+    def _delay_after_create_ops(cls, seconds: int) -> list[types.services.Operation]:
+        '''
+        Returns a list of NOP operations whose total wait time approximates
+        ``seconds``. Each NOP consumes one broker cycle, so wall time per
+        NOP is roughly ``USRV_SUGGESTED_CHECK_INTERVAL``.
+        '''
+        seconds = max(0, int(seconds))
+        if seconds <= 0:
+            return []
+        per_nop = max(1, int(consts.services.USRV_SUGGESTED_CHECK_INTERVAL))
+        return [types.services.Operation.NOP] * -(-seconds // per_nop)
+
+    def _insert_delay(self, queue: typing.Sequence[types.services.Operation]) -> list[types.services.Operation]:
+        '''
+        Returns a copy of ``queue`` with ``_delay_after_create_ops`` inserted
+        right before ``START``. If the queue has no ``START``, the NOPs are
+        not appended (they would sit past ``FINISH`` and never run).
+        '''
+        ops = list(queue)
+        delay = self._delay_after_create_ops(self.delay_after_create_seconds())
+        if not delay:
+            return ops
+        try:
+            insert_at = ops.index(types.services.Operation.START)
+        except ValueError:
+            return ops
+        ops[insert_at:insert_at] = delay
+        return ops
+
+    def _create_queue_with_delay(self) -> list[types.services.Operation]:
+        '''
+        Returns ``_create_queue`` with the configured delay inserted right
+        before ``START``. Returns a copy so the class variable stays
+        untouched.
+        '''
+        return self._insert_delay(self._create_queue)
+
+    def _create_queue_l1_cache_with_delay(self) -> list[types.services.Operation]:
+        '''
+        Same as :meth:`_create_queue_with_delay` for the L1 cache queue.
+        '''
+        return self._insert_delay(self._create_queue_l1_cache)
+
     # Some customization fields
     # If ip can be manually overriden, normally True... (set by actor, for example)
     can_set_ip: typing.ClassVar[bool] = True
@@ -415,7 +477,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
         Deploys an service instance for an user.
         """
         logger.debug("Deploying for user")
-        self._set_queue(self._create_queue.copy())  # copy is needed to avoid modifying class var
+        self._set_queue(self._create_queue_with_delay())  # copy is needed to avoid modifying class var
 
         # if back to cache with snapshot, add wait and snapshot creation to queue, so we can create the snapshot before going to cache
         # before finish
@@ -427,7 +489,7 @@ class DynamicUserService(services.UserService, autoserializable.AutoSerializable
     @typing.override
     def deploy_for_cache(self, level: types.services.CacheLevel) -> types.states.TaskState:
         if level == types.services.CacheLevel.L1:
-            self._set_queue(self._create_queue_l1_cache.copy())
+            self._set_queue(self._create_queue_l1_cache_with_delay())
             self._insert_restore_snapshot_on_back_to_cache(for_deploy=True)
         else:
             self._set_queue(self._create_queue_l2_cache.copy())
