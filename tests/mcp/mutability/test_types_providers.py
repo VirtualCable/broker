@@ -357,3 +357,69 @@ class ProviderCreateInstanceFieldsTest(rest.test.RESTTestCase):
             }
         )
         self.assertEqual(params["instance"], {"host": "pve.example.invalid", "password": self.PASSWORD})
+
+
+class ProviderCreateRequiredEmptinessTest(rest.test.RESTTestCase):
+    """What counts as empty for a required field on creation.
+
+    The gui of a real subtype carries no required list field and no
+    required field without a declared default, so the universe of
+    emptiness is driven from a definition map instead of a hypervisor's
+    gui.
+    """
+
+    DATA_TYPE: typing.Final[str] = "AnySubtype"
+    DEFINITIONS: typing.Final[list[dict[str, typing.Any]]] = [
+        {"name": "name", "type": "text", "required": True},
+        {"name": "instance.host", "type": "text", "required": True},
+        {"name": "instance.port", "type": "numeric", "required": True, "default": 8006, "min": 0},
+        {"name": "instance.networks", "type": "taglist", "required": True, "default": []},
+    ]
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.create = ProviderUpdate(ActionOperation.CREATE)
+        patcher = mock.patch.object(
+            ProviderUpdate, "create_field_definitions", return_value=self.DEFINITIONS
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _errors(self, **overrides: typing.Any) -> list[str]:
+        values: dict[str, typing.Any] = {
+            "data_type": self.DATA_TYPE,
+            "name": "prox",
+            "instance.host": "pve.example.invalid",
+            "instance.networks": ["vmbr0"],
+        }
+        values.update(overrides)
+        return self.create.create_validate_values(self.DATA_TYPE, values)
+
+    def test_an_empty_list_is_empty(self) -> None:
+        errors = self._errors(**{"instance.networks": []})
+        self.assertEqual(len(errors), 1)
+        self.assertIn("instance.networks", errors[0])
+
+    def test_a_list_defaulting_to_empty_is_empty_when_omitted(self) -> None:
+        values = {
+            "data_type": self.DATA_TYPE,
+            "name": "prox",
+            "instance.host": "pve.example.invalid",
+        }
+        errors = self.create.create_validate_values(self.DATA_TYPE, values)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("instance.networks", errors[0])
+
+    def test_zero_is_a_value(self) -> None:
+        self.assertEqual(self._errors(**{"instance.port": 0}), [])
+
+    def test_a_field_without_a_declared_default_is_empty_when_omitted(self) -> None:
+        values = {
+            "data_type": self.DATA_TYPE,
+            "name": "prox",
+            "instance.networks": ["vmbr0"],
+        }
+        errors = self.create.create_validate_values(self.DATA_TYPE, values)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("instance.host", errors[0])
