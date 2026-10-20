@@ -211,12 +211,12 @@ class ProviderUpdate(mutability_base.MutableActionType):
 
     @typing.override
     async def op_create(self, action: "models.FlowAction", request: ExtendedHttpRequestWithUser) -> str:
-        # The POST is form-shaped: re-nest the flat proposal (bare gui
-        # names) into the REST payload (config fields under "instance").
-        # Omitted config fields fall back to the module defaults (the
-        # module merges the partial instance over them); omitted
-        # comments/tags fall back to empty.
-        values = dict(action.values)
+        # The POST is form-shaped: re-nest the proposal (config names
+        # dotted under "instance.", as add_fields(parent="instance")
+        # renamed them) into the REST payload. Omitted config fields fall
+        # back to the module defaults (the module merges the partial
+        # instance over them); omitted comments/tags fall back to empty.
+        values = self.flatten_values(dict(action.values))
         params: JsonObject = {
             "name": values.get("name"),
             "comments": values.get("comments", ""),
@@ -226,7 +226,7 @@ class ProviderUpdate(mutability_base.MutableActionType):
         for name, value in values.items():
             if name in self._RESERVED_CREATE_KEYS or name in ("name", "comments", "tags"):
                 continue
-            instance[name] = value
+            instance[name.removeprefix("instance.")] = value
         params["instance"] = instance
         params["data_type"] = self.create_for_type(values)
         new_uuid = await mutability_verbs.execute_create(
