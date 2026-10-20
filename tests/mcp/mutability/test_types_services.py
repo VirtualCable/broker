@@ -160,7 +160,7 @@ class ServiceCreateTest(rest.test.RESTTestCase):
             [],
         )
         errors = self.action_type.create_validate_values(
-            self.service.data_type, {"data_type": self.service.data_type, "zzz": 1}, self.provider
+            self.service.data_type, {"data_type": self.service.data_type, "name": "s", "zzz": 1}, self.provider
         )
         self.assertEqual(len(errors), 1)
         self.assertIn("zzz", errors[0])

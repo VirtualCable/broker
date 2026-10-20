@@ -281,6 +281,65 @@ class FlowLifecycleTest(FlowTestCase):
         self.assertFalse(self.store.flow_has_failed_actions(flow))
         self.assertEqual(self.store.flow_run_note(flow), "")
 
+    def test_failure_inspection_ignores_drafts_and_decided_flows(self) -> None:
+        """A draft has never been launched; a decided flow carries the
+        decision as its retention reason. Neither surfaces the flag."""
+        flow = self._flow()
+        action = self._action(flow, values={"n": 1})
+        # Mark the action as failed in the database: in real life this can
+        # only happen post-launch, but the helper exercises the store
+        # guard, not the lifecycle.
+        action.status = FlowActionStatus.FAILED
+        action.properties["result"] = "should not be surfaced"
+        action.save(update_fields=["status"])
+        flow.refresh_from_db()
+
+        # Draft: never launched, no flag, no note.
+        self.assertEqual(flow.status, FlowStatus.DRAFT)
+        self.assertFalse(self.store.flow_has_failed_actions(flow))
+        self.assertEqual(self.store.flow_run_note(flow), "")
+
+        # Decided: a locked flow that gets rejected (rejection moves
+        # LOCKED -> REJECTED through the store, which the helper allows).
+        self._submitted(flow)
+        _approve_all(flow)
+        # Flow is PENDING; the store keeps it pending after approval
+        # (approve_flow does not move the status to LOCKED). Lock it
+        # manually to exercise the reject path on a locked flow.
+        flow.refresh_from_db()
+        flow.status = FlowStatus.LOCKED
+        flow.save(update_fields=["status"])
+        self.store.reject_flow(flow, admin=self.other.name, reason="done")
+        flow.refresh_from_db()
+        self.assertEqual(flow.status, FlowStatus.REJECTED)
+        self.assertFalse(self.store.flow_has_failed_actions(flow))
+        self.assertEqual(self.store.flow_run_note(flow), "")
+
+    def test_failure_inspection_ignores_executed_flow(self) -> None:
+        """A flow that has run and ended (executed) with a failed action
+        carries the decision as its retention reason. The flag stays
+        False and the note stays empty."""
+        flow = self._flow()
+        first = self._action(flow, values={"n": 1})
+        self._action(flow, values={"n": 2})
+        self._submitted(flow)
+        _approve_all(flow)
+        self.store.approve_flow(flow, admin=self.other)
+
+        # First action fails, second executes. The flow reaches
+        # EXECUTED (the broker's terminal state for a run that
+        # completed with a failure the executor did not retry).
+        first.refresh_from_db()
+        self.store.mark_action_executing(first, actor=self.other.name)
+        self.store.mark_action_result(first, result="boom", failed=True)
+        flow.refresh_from_db()
+        flow.status = FlowStatus.EXECUTED
+        flow.save(update_fields=["status"])
+        flow.refresh_from_db()
+        self.assertEqual(flow.status, FlowStatus.EXECUTED)
+
+        self.assertFalse(self.store.flow_has_failed_actions(flow))
+        self.assertEqual(self.store.flow_run_note(flow), "")
 
     def test_relaunch_after_partial_execution_skips_executed(self) -> None:
         """A partially-run flow relaunches; executed actions never repeat."""

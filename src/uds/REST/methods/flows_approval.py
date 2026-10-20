@@ -101,6 +101,10 @@ class FlowsAdminSurface(ModelHandler[FlowItem]):
         self, qs: models.QuerySet[typing.Any] | None = None
     ) -> models.QuerySet[typing.Any]:
         qs = super().filter_model_queryset(qs)
+        # Prefetch the actions once: flow_has_failed_actions and
+        # flow_run_note (and flow_compliance) all iterate actions, and the
+        # listing turns those calls into 2N queries without this.
+        qs = qs.prefetch_related("actions")
         archived_q = FlowStore.archived_q()
         if self._ARCHIVED_VIEW:
             return qs.filter(archived_q)

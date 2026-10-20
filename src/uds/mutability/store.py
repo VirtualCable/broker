@@ -36,6 +36,7 @@ Design (doc/plan/mcp-mutability.md):
 import datetime
 import typing
 
+from django.db import models
 from django.db.models import Q
 
 from uds.core.consts import mcp as consts_mcp
@@ -182,6 +183,11 @@ class FlowStore:
             qs = qs.filter(status=status)
         if owner_uuid is not None:
             qs = qs.filter(owner__uuid=owner_uuid)
+        # Prefetch the actions so flow_has_failed_actions / flow_run_note do
+        # not turn the listing into 2N queries. The relation is small for
+        # a single flow, and the existing code already touches it in
+        # flow_compliance.
+        qs = qs.prefetch_related("actions")
         result: list[ActionFlow] = []
         for flow in qs.order_by("created"):
             if self.maybe_expire_flow(flow):
@@ -538,20 +544,25 @@ class FlowStore:
         FlowActionStatus.REVOKED,
     )
 
+    def _failed_actions_qs(self, flow: ActionFlow) -> models.QuerySet[FlowAction]:
+        return flow.actions.filter(status__in=self._RUN_FAILURE_STATUSES).order_by("order", "id")
+
     def flow_has_failed_actions(self, flow: ActionFlow) -> bool:
         """Whether the flow is in ``LOCKED`` because of a run failure.
 
-        True when at least one action is in a terminal-failure state.
-        The flag only matters while the flow is undecided; once decided
-        (executed/rejected/cancelled/expired) it stays false because the
-        retention reason is the decision itself.
+        True when the flow is undecided (``LOCKED`` or ``PENDING``) and
+        at least one action is in a terminal-failure state. ``DRAFT`` is
+        excluded on purpose: a draft has never been launched, so it
+        cannot have a run failure. Decided flows (``APPROVED``,
+        ``EXECUTED``, ``REJECTED``, ``CANCELLED``, ``EXPIRED``) stay
+        False because the retention reason is the decision itself.
         """
-        if flow.status not in (FlowStatus.LOCKED, FlowStatus.PENDING, FlowStatus.DRAFT):
+        if flow.status not in (FlowStatus.LOCKED, FlowStatus.PENDING):
             return False
-        return flow.actions.filter(status__in=self._RUN_FAILURE_STATUSES).exists()
+        return self._failed_actions_qs(flow).exists()
 
     def flow_run_note(self, flow: ActionFlow) -> str:
-        """Latest run note of an ``LOCKED`` flow with failed/revoked actions.
+        """Latest run note of an undecided flow with failed/revoked actions.
 
         Concatenates the ``properties.result`` of every failed/revoked
         action in execution order, ``order`` first, then ``id``. Returns
@@ -559,10 +570,16 @@ class FlowStore:
         have no note (the executor omits ``properties.result`` if the
         failure had no payload). The list view uses this so the
         administrator sees why a flow is stuck without opening each one.
+
+        The note is plain text: it is the executor's literal error and
+        can include names of tables, columns or objects. The admin UI
+        renders it inside ``{{ }}`` so Angular escapes it; if a future
+        surface embeds it as HTML it must escape first.
         """
+        if flow.status not in (FlowStatus.LOCKED, FlowStatus.PENDING):
+            return ""
         notes: list[str] = []
-        qs = flow.actions.filter(status__in=self._RUN_FAILURE_STATUSES).order_by("order", "id")
-        for action in qs:
+        for action in self._failed_actions_qs(flow):
             note = action.properties.get("result")
             if isinstance(note, str) and note:
                 notes.append(note)

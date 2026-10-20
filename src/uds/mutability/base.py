@@ -618,7 +618,7 @@ class MutableActionType(EntityDescriptor):
             return ["values must declare the data_type to create"]
         payload = {k: v for k, v in values.items() if k not in self._RESERVED_CREATE_KEYS}
         definitions = {d["name"]: d for d in self.create_field_definitions(for_type, target)}
-        return self._validate_against(definitions, payload)
+        return self._validate_against(definitions, payload) + self._required_value_errors(definitions, payload)
 
     def check_create_access(self, user: "User", parent: db_models.Model | None = None) -> None:
         """Authorization to *propose* a creation.
@@ -639,6 +639,31 @@ class MutableActionType(EntityDescriptor):
         model_class = typing.cast("type[db_models.Model]", handler_class.MODEL)
         if not permissions.has_access(user, model_class(), types.permissions.PermissionType.ALL, True):
             raise rest_exceptions.AccessDenied()
+
+    def _required_value_errors(
+        self,
+        definitions: dict[str, JsonObject],
+        values: JsonObject,
+    ) -> list[str]:
+        """Creation-only check that no required field ends up empty.
+
+        A creation has no stored value to fall back on: what the module
+        will store is the proposed value or, when omitted, the default
+        the gui declares. A required field whose declared default is
+        itself empty (a password, a host) therefore silently produces an
+        unusable entity, so an empty effective value is refused here.
+        Updates are exempt on purpose: a partial update omits what it
+        does not change. ``0`` and ``False`` are values, not emptiness.
+        """
+        flat = self.flatten_values(values)
+        errors: list[str] = []
+        for name, definition in definitions.items():
+            if not definition.get("required"):
+                continue
+            value = flat[name] if name in flat else definition.get("default")
+            if value is None or (isinstance(value, (str, list, tuple, dict)) and not value):
+                errors.append(f"field {name} is required and cannot be empty")
+        return errors
 
     def _validate_against(
         self,
