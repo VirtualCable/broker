@@ -212,3 +212,46 @@ class CsrfServerTest(UDSTransactionTestCase):
             HTTP_X_CSRFTOKEN=token,
         )
         self.assertIn(response.status_code, (200, 302))
+
+    def test_uds_js_uses_etc_udsversion_if_present(self) -> None:
+        import json
+        import re
+        from unittest import mock
+        from uds.web.util import configjs
+
+        fake_content = "Version: 5.0.0.99\nBuild: 20261020-test\n"
+        configjs.get_uds_version_and_stamp.cache_clear()
+        try:
+            with mock.patch("builtins.open", mock.mock_open(read_data=fake_content)):
+                response = self.csrf_client.get("/uds/utility/uds.js")
+                self.assertEqual(response.status_code, 200)
+                body = response.content.decode("utf-8")
+                m = re.search(r"var udsData\s*=\s*(\{.+\});", body)
+                self.assertIsNotNone(m)
+                if m:
+                    data = json.loads(m.group(1))
+                    self.assertEqual(data["config"]["version"], "5.0.0.99")
+                    self.assertEqual(data["config"]["version_stamp"], "20261020-test")
+        finally:
+            configjs.get_uds_version_and_stamp.cache_clear()
+
+    def test_uds_js_falls_back_to_internal_version(self) -> None:
+        import json
+        import re
+        from unittest import mock
+        from uds.web.util import configjs
+
+        configjs.get_uds_version_and_stamp.cache_clear()
+        try:
+            with mock.patch("builtins.open", side_effect=FileNotFoundError):
+                response = self.csrf_client.get("/uds/utility/uds.js")
+                self.assertEqual(response.status_code, 200)
+                body = response.content.decode("utf-8")
+                m = re.search(r"var udsData\s*=\s*(\{.+\});", body)
+                self.assertIsNotNone(m)
+                if m:
+                    data = json.loads(m.group(1))
+                    self.assertEqual(data["config"]["version"], consts.system.VERSION)
+                    self.assertEqual(data["config"]["version_stamp"], consts.system.VERSION_STAMP)
+        finally:
+            configjs.get_uds_version_and_stamp.cache_clear()

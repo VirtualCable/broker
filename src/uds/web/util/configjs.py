@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import functools
 import json
 import logging
 import typing
@@ -53,6 +54,33 @@ if typing.TYPE_CHECKING:
     from uds.models import User
 
 logger = logging.getLogger(__name__)
+
+
+@functools.cache
+def get_uds_version_and_stamp(version_file: str = "/etc/udsversion") -> tuple[str, str]:
+    """Read Version and Build from /etc/udsversion if present; return (version, version_stamp).
+
+    Falls back to consts.system.VERSION and consts.system.VERSION_STAMP if the
+    file is absent or unreadable (e.g. running outside an appliance).
+    """
+    version: str = consts.system.VERSION
+    stamp: str = consts.system.VERSION_STAMP
+    try:
+        with open(version_file, "r", encoding="utf-8") as f:
+            for line in f:
+                key, sep, val = line.partition(":")
+                if not sep:
+                    continue
+                k = key.strip()
+                v = val.strip()
+                if k == "Version" and v:
+                    version = v
+                elif k == "Build" and v:
+                    stamp = v
+    except Exception:
+        pass
+    return version, stamp
+
 
 register = template.Library()
 
@@ -116,9 +144,11 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
             auth.state == consts.auth.VISIBLE or (auth.state == consts.auth.HIDDEN and use_hidden)
         )
 
+    version, version_stamp = get_uds_version_and_stamp()
+
     config: dict[str, typing.Any] = {
-        "version": consts.system.VERSION,
-        "version_stamp": consts.system.VERSION_STAMP,
+        "version": version,
+        "version_stamp": version_stamp,
         "language": get_language(),
         "available_languages": [{"id": k, "name": gettext(v)} for k, v in settings.LANGUAGES],
         "authenticators": [_get_auth_info(auth) for auth in authenticators if _is_auth_visible(auth)],
