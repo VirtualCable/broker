@@ -193,6 +193,6 @@ class InactiveUsersReportCSV(InactiveUsersReport):
         for v in rows:
             last_access = v["last_access"]
             if isinstance(last_access, datetime.datetime):
-                last_access = dateutils.as_local_str(last_access)
+                last_access = dateutils.as_utc_iso(last_access)
             writer.writerow([v["auth"], v["name"], v["real_name"], last_access, v["inactive_days"]])
         return output.getvalue().encode()

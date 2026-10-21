@@ -220,5 +220,5 @@ class FailedLoginsReportCSV(FailedLoginsReport):
         )
         _summary, detail = self.get_data()
         for v in detail:
-            writer.writerow([dateutils.as_local_str(v["date"]), v["auth"], v["user"], v["ip"], v["message"]])
+            writer.writerow([dateutils.as_utc_iso(v["date"]), v["auth"], v["user"], v["ip"], v["message"]])
         return output.getvalue().encode()

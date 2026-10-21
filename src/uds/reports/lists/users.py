@@ -117,7 +117,7 @@ class ListReportsUsersCSV(ListReportUsers):
         writer.writerow([gettext("User ID"), gettext("Real Name"), gettext("Last access")])
 
         for v in users:
-            writer.writerow([v.name, v.real_name, dateutils.as_local_str(v.last_access)])
+            writer.writerow([v.name, v.real_name, dateutils.as_utc_iso(v.last_access)])
 
         return output.getvalue().encode()
 

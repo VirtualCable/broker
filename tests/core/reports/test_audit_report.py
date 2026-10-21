@@ -136,7 +136,7 @@ class AuditReportTest(UDSTransactionTestCase):
         self.assertEqual(body[0][6], "/in-range")
 
     @override_settings(TIME_ZONE="Europe/Madrid")
-    def test_date_column_in_broker_local_time(self) -> None:
+    def test_date_column_in_utc_iso(self) -> None:
         Log.objects.create(
             owner_id=0,
             owner_type=int(types.log.LogObjectType.SYSLOG),
@@ -148,4 +148,4 @@ class AuditReportTest(UDSTransactionTestCase):
 
         body = self._generate_rows()[1:]
         self.assertEqual(len(body), 1)
-        self.assertEqual(body[0][0], "2024-01-15 13:00:00")
+        self.assertEqual(body[0][0], "2024-01-15T12:00:00Z")
