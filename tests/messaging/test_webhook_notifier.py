@@ -34,6 +34,9 @@ import hashlib
 import hmac as hmac_module
 import http.server
 import json
+import os
+import ssl
+import tempfile
 import threading
 import time
 import typing
@@ -42,6 +45,7 @@ from unittest import mock
 from uds.core import exceptions, messaging
 from uds.core.environment import Environment
 from uds.core.types.notifiers import NotificationGroup
+from uds.core.util import security
 from uds.core.util.backoff import Backoff
 from uds.models import Notifier
 from uds.notifiers.webhook import queue
@@ -103,6 +107,27 @@ class _TestHttpServer(http.server.ThreadingHTTPServer):
     @property
     def base_url(self) -> str:
         return f"http://127.0.0.1:{self.server_port}"
+
+
+class _TestHttpsServer(_TestHttpServer):
+    """Local HTTPS server with a self-signed certificate (fails verification)"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        key, certificate, password = security.create_self_signed_cert("127.0.0.1", with_password=True)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cert_file, key_file = os.path.join(tmpdir, "cert.pem"), os.path.join(tmpdir, "key.pem")
+            with open(cert_file, "w") as f:
+                f.write(certificate)
+            with open(key_file, "w") as f:
+                f.write(key)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            context.load_cert_chain(cert_file, key_file, password=password)
+        self.socket = context.wrap_socket(self.socket, server_side=True)
+
+    @property
+    def base_url(self) -> str:
+        return f"https://127.0.0.1:{self.server_port}"
 
 
 class WebhookRenderingTest(UDSTestCase):
@@ -430,3 +455,23 @@ class WebhookDispatcherJobTest(UDSTestCase):
         self.assertEqual(queue.pending_count(), 0)
         bodies = [json.loads(r["body"]) for r in self.server.requests]
         self.assertEqual([b["identificator"] for b in bodies], ["ID0", "ID1", "ID2"])
+
+    def test_verify_ssl_is_applied_per_notifier(self) -> None:
+        https_server = _TestHttpsServer()
+        threading.Thread(target=https_server.serve_forever, daemon=True).start()
+        self.addCleanup(https_server.server_close)
+        self.addCleanup(https_server.shutdown)
+
+        unverified = notifiers_fixtures.createWebhookNotifier(
+            url=f"{https_server.base_url}/unverified", verifySsl=False
+        )
+        verified = notifiers_fixtures.createWebhookNotifier(url=f"{https_server.base_url}/verified")
+        _instance(unverified).notify(NotificationGroup.EVENT, "ID1", messaging.LogLevel.INFO, "msg")
+        _instance(verified).notify(NotificationGroup.EVENT, "ID2", messaging.LogLevel.INFO, "msg")
+
+        self.job.run()
+
+        # Self-signed certificate: only the notifier with verify_ssl disabled gets through
+        self.assertEqual([r["path"] for r in https_server.requests], ["/unverified"])
+        self.assertEqual(queue.pending_count(), 1)
+        self.assertTrue(self._backoff(verified.uuid).is_bad(verified.uuid))
