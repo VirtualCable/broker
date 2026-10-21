@@ -289,7 +289,7 @@ def _propose_sync(
 
 
 def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser) -> JsonDict:
-    _request_user(request)
+    user = _request_user(request)
     type_id = str(arguments.get("action_type", "") or "provider.update")
     found = registry.get(type_id)
     if found is None:
@@ -330,6 +330,7 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
         return result
     if target_uuid.strip():
         target = action_type.resolve_target(target_uuid)
+        action_type.check_read_access(user, target)
         for_type = action_type.for_type_of(target)
         result["target_uuid"] = target_uuid
         result["for_type"] = for_type

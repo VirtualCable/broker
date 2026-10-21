@@ -292,6 +292,36 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         result = self._propose(flow_id)
         self.assertIn("id", result)
 
+    def test_discovery_requires_read_permission(self) -> None:
+        authenticator = create_db_authenticator()
+        staff = create_db_users(authenticator, is_staff=True)[0]
+        self.login_with_api_token(user=staff, as_admin=False)
+
+        body = self._call("get_mutable_fields", {"target_uuid": self.provider.uuid})
+        self.assertIn("error", body)
+        self.assertNotIn("result", body)
+
+        permissions.add_user_permission(staff, self.provider, types.permissions.PermissionType.READ)
+        self.login_with_api_token(user=staff, as_admin=False)
+        result = self._result_json(self._call("get_mutable_fields", {"target_uuid": self.provider.uuid}))
+        self.assertEqual(result["target_uuid"], self.provider.uuid)
+        self.assertIn("current_values", result)
+
+    def test_descriptor_read_requires_read_permission(self) -> None:
+        authenticator = create_db_authenticator()
+        staff = create_db_users(authenticator, is_staff=True)[0]
+        pool = create_db_servicepool(create_db_service(self.provider), create_db_osmanager())
+        self.login_with_api_token(user=staff, as_admin=False)
+
+        body = self._call("get_servicepool_group", {"target_uuid": pool.uuid})
+        self.assertIn("error", body)
+        self.assertNotIn("result", body)
+
+        permissions.add_user_permission(staff, pool, types.permissions.PermissionType.READ)
+        self.login_with_api_token(user=staff, as_admin=False)
+        result = self._result_json(self._call("get_servicepool_group", {"target_uuid": pool.uuid}))
+        self.assertEqual(result["target_uuid"], pool.uuid)
+
     def test_create_flow_enforces_open_cap(self) -> None:
         limit = mock.patch.object(
             GlobalConfig, "MCP_MAX_FLOWS_PER_USER", mock.Mock(as_int=mock.Mock(return_value=2))
