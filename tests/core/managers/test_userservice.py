@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import datetime
@@ -130,13 +131,7 @@ class TestUserserviceManager(UDSTransactionTestCase):
         self.assertEqual(assigned_info.userservice.src_hostname, "1.2.3.4")
         self.assertEqual(assigned_info.transport.uuid, service_pool.transports.all()[0].uuid)
 
-    def test_get_user_service_skips_cache_of_old_publication_revision(self) -> None:
-        """Cache user services of an older publication revision must not be assigned
-        to new users: ``current_pub_revision`` already advanced, so the alternate
-        publish method (ALT_LOCKED_PUBLISH_METHOD) left the old cache alive but
-        the assignment filter must exclude it. The new cache (revision == current)
-        is the only valid candidate.
-        """
+    def _create_cacheable_pool(self) -> models.ServicePool:
         from tests.fixtures import authenticators as auth_fixtures
 
         provider = services_fixtures.create_db_provider()
@@ -145,114 +140,140 @@ class TestUserserviceManager(UDSTransactionTestCase):
         groups = auth_fixtures.create_db_groups(auth_fixtures.create_db_authenticator(), 1)
         transport = services_fixtures.create_db_transport()
         service_pool = services_fixtures.create_db_servicepool(service, osmanager, groups, [transport])
-
-        # Simulate post-publish state: pool is at N+1, two USABLE publications exist
-        # because ALT_LOCKED_PUBLISH_METHOD left the old one alive.
-        service_pool.current_pub_revision = 2
-        service_pool.initial_srvs = 2
-        service_pool.cache_l1_srvs = 0
+        service_pool.initial_srvs = 0
+        service_pool.cache_l1_srvs = 2
         service_pool.cache_l2_srvs = 0
-        service_pool.max_srvs = 2
+        service_pool.max_srvs = 4
         service_pool.save()
+        return service_pool
 
-        old_publication = service_pool.publications.create(
-            revision=1,
-            publish_date=timezone.localtime() - datetime.timedelta(hours=1),
-            state=core_types.states.State.USABLE,
-            state_date=timezone.localtime() - datetime.timedelta(hours=1),
-        )
-        new_publication = service_pool.publications.create(
-            revision=2,
+    def _publish(
+        self, service_pool: models.ServicePool, state: core_types.states.State
+    ) -> models.ServicePoolPublication:
+        # Same revision bookkeeping as PublicationManager.publish + PublicationLauncher.run
+        publication = service_pool.publications.create(
+            revision=service_pool.current_pub_revision,
             publish_date=timezone.localtime(),
-            state=core_types.states.State.USABLE,
+            state=state,
             state_date=timezone.localtime(),
         )
+        service_pool.current_pub_revision += 1
+        service_pool.save()
+        return publication
 
-        old_cache = services_fixtures.create_db_userservice(service_pool, old_publication)
-        old_cache.cache_level = core_types.services.CacheLevel.L1
-        old_cache.user = None
-        old_cache.os_state = core_types.states.State.USABLE
-        old_cache.save()
+    def _create_l1_cache(
+        self,
+        service_pool: models.ServicePool,
+        publication: models.ServicePoolPublication,
+        state: core_types.states.State = core_types.states.State.USABLE,
+        os_state: core_types.states.State = core_types.states.State.USABLE,
+    ) -> models.UserService:
+        cache = services_fixtures.create_db_userservice(service_pool, publication)
+        cache.cache_level = core_types.services.CacheLevel.L1
+        cache.state = state
+        cache.os_state = os_state
+        cache.save()
+        return cache
 
-        new_cache = services_fixtures.create_db_userservice(service_pool, new_publication)
-        new_cache.cache_level = core_types.services.CacheLevel.L1
-        new_cache.user = None
-        new_cache.os_state = core_types.states.State.USABLE
-        new_cache.save()
-
-        # Fresh user that has no assigned user service yet
+    def _create_user(self) -> models.User:
         from tests.fixtures import authenticators as auth_fixtures
 
         auth = auth_fixtures.create_db_authenticator()
-        user_groups = auth_fixtures.create_db_groups(auth, 1)
-        user = auth_fixtures.create_db_users(auth, 1, groups=user_groups)[0]
+        return auth_fixtures.create_db_users(auth, 1, groups=auth_fixtures.create_db_groups(auth, 1))[0]
 
-        assigned = self.manager.get_assignation_for_user(service_pool, user)
-        # Must get the cache of the *new* publication (revision == current_pub_revision),
-        # not the old one (revision 1).
+    def assert_cache_assigned(
+        self, assigned: models.UserService | None, cache: models.UserService, user: models.User
+    ) -> None:
         self.assertIsNotNone(assigned)
-        self.assertEqual(assigned.uuid, new_cache.uuid)
-        self.assertEqual(assigned.publication_id, new_publication.id)
+        assert assigned is not None
+        self.assertEqual(assigned.uuid, cache.uuid)
         self.assertEqual(assigned.cache_level, core_types.services.CacheLevel.NONE)
-        self.assertEqual(assigned.user_id, user.id)
+        self.assertEqual(assigned.user, user)
+        self.assertEqual(models.UserService.objects.filter(user=user).count(), 1)
 
-    def test_get_user_service_no_cache_when_publication_not_published_yet(self) -> None:
-        """During the publish window ``current_pub_revision`` is bumped but the new
-        publication is not yet USABLE. The cache filter yields no candidate and the
-        manager falls through to fresh-assignment, leaving the old cache untouched.
-        """
-        from tests.fixtures import authenticators as auth_fixtures
+    def test_get_user_service_assigns_ready_cache_of_active_publication(self) -> None:
+        service_pool = self._create_cacheable_pool()
+        publication = self._publish(service_pool, core_types.states.State.USABLE)
+        cache = self._create_l1_cache(service_pool, publication)
+        user = self._create_user()
 
-        provider = services_fixtures.create_db_provider()
-        service = services_fixtures.create_db_service(provider)
-        osmanager = services_fixtures.create_db_osmanager()
-        groups = auth_fixtures.create_db_groups(auth_fixtures.create_db_authenticator(), 1)
-        transport = services_fixtures.create_db_transport()
-        service_pool = services_fixtures.create_db_servicepool(service, osmanager, groups, [transport])
-
-        # current_pub_revision is N+1 but no USABLE publication has that revision yet
-        service_pool.current_pub_revision = 2
-        service_pool.initial_srvs = 1
-        service_pool.cache_l1_srvs = 0
-        service_pool.cache_l2_srvs = 0
-        service_pool.max_srvs = 2
-        service_pool.save()
-
-        old_publication = service_pool.publications.create(
-            revision=1,
-            publish_date=timezone.localtime() - datetime.timedelta(hours=1),
-            state=core_types.states.State.USABLE,
-            state_date=timezone.localtime() - datetime.timedelta(hours=1),
-        )
-        # New publication in PREPARING (publish in flight, not yet USABLE)
-        service_pool.publications.create(
-            revision=2,
-            publish_date=timezone.localtime(),
-            state=core_types.states.State.PREPARING,
-            state_date=timezone.localtime(),
-        )
-
-        old_cache = services_fixtures.create_db_userservice(service_pool, old_publication)
-        old_cache.cache_level = core_types.services.CacheLevel.L1
-        old_cache.user = None
-        old_cache.os_state = core_types.states.State.USABLE
-        old_cache.save()
-
-        from tests.fixtures import authenticators as auth_fixtures
-
-        auth = auth_fixtures.create_db_authenticator()
-        user_groups = auth_fixtures.create_db_groups(auth, 1)
-        user = auth_fixtures.create_db_users(auth, 1, groups=user_groups)[0]
-
-        # Old cache must remain untouched (its user still None)
         assigned = self.manager.get_assignation_for_user(service_pool, user)
-        # No cache match → fresh assigned creation (cache_level=NONE, not the old cache)
-        if assigned is not None:
-            self.assertNotEqual(assigned.uuid, old_cache.uuid)
-        # Old cache must remain free (user is None) so the 24h alternate window still works
+
+        self.assert_cache_assigned(assigned, cache, user)
+        self.assertEqual(models.UserService.objects.count(), 1)
+
+    def test_get_user_service_assigns_cache_of_active_publication_with_os_not_ready(self) -> None:
+        service_pool = self._create_cacheable_pool()
+        publication = self._publish(service_pool, core_types.states.State.USABLE)
+        cache = self._create_l1_cache(service_pool, publication, os_state=core_types.states.State.PREPARING)
+        user = self._create_user()
+
+        assigned = self.manager.get_assignation_for_user(service_pool, user)
+
+        self.assert_cache_assigned(assigned, cache, user)
+        self.assertEqual(models.UserService.objects.count(), 1)
+
+    def test_get_user_service_assigns_preparing_cache_of_active_publication(self) -> None:
+        service_pool = self._create_cacheable_pool()
+        publication = self._publish(service_pool, core_types.states.State.USABLE)
+        cache = self._create_l1_cache(
+            service_pool,
+            publication,
+            state=core_types.states.State.PREPARING,
+            os_state=core_types.states.State.PREPARING,
+        )
+        user = self._create_user()
+
+        with mock.patch.object(self.manager, "check_user_service_uuid", return_value=True):
+            assigned = self.manager.get_assignation_for_user(service_pool, user)
+
+        self.assert_cache_assigned(assigned, cache, user)
+        self.assertEqual(models.UserService.objects.count(), 1)
+
+    def test_get_user_service_skips_cache_of_replaced_publication(self) -> None:
+        # ALT_LOCKED_PUBLISH_METHOD keeps the cache of the replaced publication alive
+        service_pool = self._create_cacheable_pool()
+        old_publication = self._publish(service_pool, core_types.states.State.REMOVABLE)
+        new_publication = self._publish(service_pool, core_types.states.State.USABLE)
+        old_cache = self._create_l1_cache(service_pool, old_publication)
+        new_cache = self._create_l1_cache(service_pool, new_publication)
+        user = self._create_user()
+
+        assigned = self.manager.get_assignation_for_user(service_pool, user)
+
+        self.assert_cache_assigned(assigned, new_cache, user)
         old_cache.refresh_from_db()
         self.assertIsNone(old_cache.user)
-        self.assertTrue(old_cache.is_usable())
+        self.assertEqual(old_cache.cache_level, core_types.services.CacheLevel.L1)
+
+    def test_get_user_service_never_assigns_cache_of_replaced_publication(self) -> None:
+        service_pool = self._create_cacheable_pool()
+        old_publication = self._publish(service_pool, core_types.states.State.REMOVABLE)
+        new_publication = self._publish(service_pool, core_types.states.State.USABLE)
+        old_cache = self._create_l1_cache(service_pool, old_publication)
+        user = self._create_user()
+
+        assigned = self.manager.get_assignation_for_user(service_pool, user)
+
+        self.assertIsNotNone(assigned)
+        assert assigned is not None
+        self.assertNotEqual(assigned.uuid, old_cache.uuid)
+        self.assertEqual(assigned.publication, new_publication)
+        old_cache.refresh_from_db()
+        self.assertIsNone(old_cache.user)
+        self.assertEqual(old_cache.cache_level, core_types.services.CacheLevel.L1)
+
+    def test_get_user_service_assigns_cache_of_active_publication_while_publishing(self) -> None:
+        # Until the new publication finishes, the previous one is still the active one
+        service_pool = self._create_cacheable_pool()
+        active_publication = self._publish(service_pool, core_types.states.State.USABLE)
+        self._publish(service_pool, core_types.states.State.PREPARING)
+        cache = self._create_l1_cache(service_pool, active_publication)
+        user = self._create_user()
+
+        assigned = self.manager.get_assignation_for_user(service_pool, user)
+
+        self.assert_cache_assigned(assigned, cache, user)
 
     def test_get_user_service_with_usable_cache_and_os_not_ready(self) -> None:
         userservice = services_fixtures.create_db_assigned_userservices()[0]
