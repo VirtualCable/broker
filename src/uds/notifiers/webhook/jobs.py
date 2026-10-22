@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import contextlib
 import logging
 import time
 import typing
@@ -104,13 +105,17 @@ class WebhookDispatcherJob(jobs.Job):
         if not due:
             return
 
-        with security.secure_requests_session() as session:
+        # The session adapter enforces its own verify value, so one session per verify setting
+        with contextlib.ExitStack() as stack:
+            sessions = {
+                verify: stack.enter_context(security.secure_requests_session(verify=verify)) for verify in (True, False)
+            }
             for notifier_uuid, elements in due.items():
                 elements.sort(key=lambda item: item[1].created)  # FIFO
-                self._drain(session, notifier_uuid, elements[:MAX_PER_NOTIFIER])
+                self._drain(sessions, notifier_uuid, elements[:MAX_PER_NOTIFIER])
 
     def _drain(
-        self, session: requests.Session, notifier_uuid: str, elements: list[tuple[str, QueuedRequest]]
+        self, sessions: dict[bool, requests.Session], notifier_uuid: str, elements: list[tuple[str, QueuedRequest]]
     ) -> None:
         if not elements:
             return
@@ -126,7 +131,7 @@ class WebhookDispatcherJob(jobs.Job):
 
         for key, element in elements:
             try:
-                response = session.request(
+                response = sessions[element.verify_ssl].request(
                     element.method,
                     element.url,
                     headers=element.headers,
