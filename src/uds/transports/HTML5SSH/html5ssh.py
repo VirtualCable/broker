@@ -191,6 +191,8 @@ class HTML5SSHTransport(transports.Transport):
         password: str,
         request: "ExtendedHttpRequestWithUser",
     ) -> str:
+        validity = self.ticket_validity.as_int()
+
         # Build extra params dict for sshhtml5 gateway
         extra = {
             "username": self.username.value.strip(),
@@ -204,13 +206,14 @@ class HTML5SSHTransport(transports.Transport):
             "allow_clipboard": self.enable_clipboard.value,
             "max_upload_size": self.max_upload_size.as_int() * 1024 * 1024,
             "title": f"UDS SSH {ip}",
+            "once": validity < 10,
         }
 
         ticket = models.TicketStore.create_for_tunnel(
             userservice=userservice,
             port=self.ssh_port.as_int(),
             extra=extra,
-            validity=self.ticket_validity.as_int(),
+            validity=validity if validity > 10 else 30,
         )
 
         onw = f"&{consts.transports.ON_NEW_WINDOW_VAR}={transport.uuid}"

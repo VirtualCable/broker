@@ -95,6 +95,7 @@ class HTML5SSHTest(UDSTestCase):
                 self.assertEqual(extra["allow_clipboard"], True)
                 self.assertEqual(extra["max_upload_size"], 64 * 1024 * 1024)
                 self.assertEqual(extra["title"], "UDS SSH 1.2.3.4")
+                self.assertEqual(extra["once"], False)
 
                 # Check link format
                 self.assertIn("https://tunnel-host:443/ssh/?ticket=", link)
@@ -135,6 +136,27 @@ class HTML5SSHTest(UDSTestCase):
                 self.assertEqual(extra["enable_sftp"], expect_sftp, f"enable_sftp wrong for '{sharing_value}'")
                 self.assertEqual(extra["allow_upload"], expect_up, f"allow_upload wrong for '{sharing_value}'")
                 self.assertEqual(extra["allow_download"], expect_down, f"allow_download wrong for '{sharing_value}'")
+
+    def test_ticket_validity_once(self) -> None:
+        transport = HTML5SSHTransport(self.create_environment(), None)
+        transport.username.value = "user"
+        transport.ssh_port.value = 22
+        transport_model = mock.MagicMock()
+        transport_model.uuid = "transport-uuid"
+        for validity, once, stored in ((0, True, 30), (9, True, 30), (10, False, 30), (60, False, 60)):
+            transport.ticket_validity.value = validity
+            with (
+                mock.patch("uds.models.TicketStore.create_for_tunnel") as create_for_tunnel,
+                mock.patch("uds.core.util.fields.get_tunnel_from_field") as get_tunnel,
+            ):
+                create_for_tunnel.return_value = "x" * 48
+                get_tunnel.return_value = mock.MagicMock(host="h", port=443)
+                transport.get_link(
+                    mock.MagicMock(), transport_model, "1.2.3.4", mock.MagicMock(), mock.MagicMock(), "", mock.MagicMock()
+                )
+                kwargs = create_for_tunnel.call_args[1]
+                self.assertEqual(kwargs["extra"]["once"], once, f"once wrong for validity {validity}")
+                self.assertEqual(kwargs["validity"], stored, f"stored validity wrong for {validity}")
 
     def test_tickets_serialization(self) -> None:
         from uds.core.types.tickets import TunnelTicket

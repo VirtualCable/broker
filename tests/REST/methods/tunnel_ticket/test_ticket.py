@@ -199,3 +199,35 @@ class TicketTest(rest.test.RESTTestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
+
+    def _start(self, ticket: str) -> typing.Any:
+        self._bearer_sk(self.server_token)
+        return self.client.post(
+            self.get_url(),
+            data=types.tickets.TunnelTicketRequest(
+                ticket=ticket,
+                command="start",
+                ip="127.0.0.1",
+                kem_kyber_key=self.kyber_public_key,
+            ).as_dict(),
+            content_type="application/json",
+        )
+
+    def _ticket_with_extra(self, extra: dict[str, typing.Any]) -> str:
+        userservice = self.user_services[0]
+        return models.TicketStore.create_for_tunnel(
+            userservice,
+            remotes=[types.tickets.TunnelTicketRemote("", 1234, extra=extra)],
+        )
+
+    def test_start_one_time_ticket_is_not_sent_and_cannot_be_reused(self) -> None:
+        ticket = self._ticket_with_extra({"once": True, "title": "RDP"})
+
+        response = self._start(ticket)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = self.cm.decrypted_dict(response.json(), ticket, self.kyber_private_key)
+        extra = types.tickets.TunnelTicketResponse.from_dict(data).remotes[0].extra
+        self.assertNotIn("once", extra)
+        self.assertEqual(extra["title"], "RDP")
+
+        self.assertNotEqual(self._start(ticket).status_code, 200)

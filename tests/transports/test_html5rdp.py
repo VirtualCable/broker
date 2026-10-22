@@ -191,3 +191,21 @@ class HTML5RDPTest(UDSTestCase):
         self.assertIsNone(extra["user"])  # empty string → None
         self.assertIsNone(extra["password"])
         self.assertIsNone(extra["domain"])
+
+    def test_ticket_validity_once(self) -> None:
+        transport = HTML5RDPTransport(self.create_environment(), None)
+        userservice, user, transport_model = _make_mocks()
+        for validity, once, stored in ((0, True, 30), (9, True, 30), (10, False, 30), (60, False, 60)):
+            transport.ticket_validity.value = validity
+            with (
+                mock.patch("uds.models.TicketStore.create_for_tunnel") as create_for_tunnel,
+                mock.patch("uds.core.util.fields.get_tunnel_from_field") as get_tunnel,
+            ):
+                create_for_tunnel.return_value = "x" * 48
+                get_tunnel.return_value = mock.MagicMock(host="tunnel-host", port=443)
+                transport.get_link(
+                    userservice, transport_model, "1.2.3.4", mock.MagicMock(), user, "pw", mock.MagicMock()
+                )
+                kwargs = create_for_tunnel.call_args[1]
+                self.assertEqual(kwargs["extra"]["once"], once, f"once wrong for validity {validity}")
+                self.assertEqual(kwargs["validity"], stored, f"stored validity wrong for {validity}")
