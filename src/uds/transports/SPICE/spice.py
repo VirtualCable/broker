@@ -89,7 +89,6 @@ class SPICETransport(BaseSpiceTransport):
             logger.exception("Error getting console connection data")
             raise
 
-        logger.debug("Connection data: %s", con)
         if not con:
             raise exceptions.transport.TransportError("No console connection data")
 

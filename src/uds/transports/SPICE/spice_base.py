@@ -152,8 +152,6 @@ class BaseSpiceTransport(transports.Transport):
             userservice_instance = userservice.get_instance()
             con = userservice_instance.get_console_connection()
 
-            logger.debug("Connection data: %s", con)
-
             if con is None:
                 return False
 
@@ -166,7 +164,7 @@ class BaseSpiceTransport(transports.Transport):
                 self.cache.put(
                     "cached_message", "Could not find the PORT for connection", 120
                 )  # Write a message, that will be used from getCustom
-                logger.info("SPICE didn't find has any port: %s", con)
+                logger.info("SPICE didn't find any port for %s", con.address)
                 return False
 
             self.cache.put(

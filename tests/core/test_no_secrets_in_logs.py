@@ -40,10 +40,12 @@ from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.servers_api.requester import ServerApiRequester
 from uds.models import TicketStore
 from uds.REST.methods.client import Client
+from uds.REST.processors import JsonProcessor, ParametersException
 from uds.transports.RDP.rdp import RDPTransport
 from uds.transports.RDP.rdptunnel import TRDPTransport
 from uds.transports.RDPEmbedded.direct import RDPEmbeddedTransport
 from uds.transports.RDPEmbedded.tunnel import TRDPEmbeddedTransport
+from uds.transports.SPICE.spice import SPICETransport
 
 from tests.fixtures.modules.transport import TestTransport
 from tests.utils import test
@@ -112,6 +114,47 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
 
         with _debug_logs() as collector, mock.patch.object(requester, 'post'):
             self.assertTrue(requester.notify_preconnect(mock.MagicMock(), info))
+
+        self.assertSecretNotLogged(collector)
+
+    def test_client_ticket_scrambler(self) -> None:
+        with _debug_logs() as collector:
+            self._launch(RDPTransport)
+
+        self.assertTrue(any('Got Ticket' in m for m in collector.messages))
+        self.assertEqual([m for m in collector.messages if SCRAMBLER in m], [])
+
+    def test_unparseable_request_body(self) -> None:
+        body = f'{{"password": "{SECRET}",'.encode()
+        request = mock.MagicMock(method='POST', body=body, META={'CONTENT_LENGTH': str(len(body))})
+        request.headers = {'Content-Length': str(len(body))}
+
+        with _debug_logs() as collector, self.assertRaises(ParametersException):
+            JsonProcessor(request).process_parameters()
+
+        self.assertSecretNotLogged(collector)
+
+    def test_spice_console_ticket(self) -> None:
+        console = types.services.ConsoleConnectionInfo(
+            type='spice',
+            address='10.0.0.1',
+            ticket=types.services.ConsoleConnectionTicket(value=SECRET),
+        )
+        userservice = mock.MagicMock()
+        userservice.get_instance.return_value.get_console_connection.return_value = console
+        transport = SPICETransport(self.create_environment(), None)
+
+        with _debug_logs() as collector:
+            self.assertFalse(transport.is_ip_allowed(userservice, '10.0.0.1'))
+            transport.get_transport_script(
+                userservice,
+                mock.MagicMock(),
+                '10.0.0.1',
+                types.os.DetectedOsInfo(os=types.os.KnownOS.WINDOWS, browser=types.os.KnownBrowser.CHROME, version='1'),
+                mock.MagicMock(),
+                '',
+                mock.MagicMock(),
+            )
 
         self.assertSecretNotLogged(collector)
 
