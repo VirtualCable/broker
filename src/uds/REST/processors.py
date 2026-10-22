@@ -58,7 +58,11 @@ def _sanitize_params(params: typing.Any) -> dict[str, typing.Any]:
     if not isinstance(params, collections.abc.Mapping):
         return {}
     typed_params = typing.cast("collections.abc.Mapping[str, typing.Any]", params)
-    return {k: v for k, v in typed_params.items() if k not in ("password", "passwd", "token", "secret", "scrambler")}
+    return {
+        k: v
+        for k, v in typed_params.items()
+        if k not in ("password", "passwd", "token", "secret", "scrambler", "rdp")
+    }
 
 
 if typing.TYPE_CHECKING:

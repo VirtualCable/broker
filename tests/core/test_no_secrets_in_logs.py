@@ -30,6 +30,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 
 import contextlib
 import collections.abc
+import json
 import logging
 import typing
 from unittest import mock
@@ -84,15 +85,19 @@ def _debug_logs() -> collections.abc.Iterator[_Collector]:
 @override_settings(DEBUG=False)
 class NoSecretsInDebugLogsTest(test.UDSTestCase):
     def assertSecretNotLogged(self, collector: _Collector) -> None:
-        self.assertTrue(collector.messages)
         self.assertEqual([m for m in collector.messages if SECRET in m], [])
+
+    def test_collector_captures_uds_debug_records(self) -> None:
+        with _debug_logs() as collector:
+            logging.getLogger("uds.REST.methods.client").debug("probe %s", SECRET)
+
+        self.assertIn(f"probe {SECRET}", collector.messages)
 
     def test_module_field_values(self) -> None:
         transport = TestTransport(self.create_environment(), {"pin": SECRET})
 
         with _debug_logs() as collector:
             self.assertEqual(transport.get_fields_as_dict()["pin"], SECRET)
-            collector.messages.append("module fields read")
 
         self.assertSecretNotLogged(collector)
 
@@ -133,6 +138,17 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
         with _debug_logs() as collector, self.assertRaises(ParametersException):
             JsonProcessor(request).process_parameters()
 
+        self.assertSecretNotLogged(collector)
+
+    def test_rdp_sign_request_body(self) -> None:
+        body = json.dumps({"rdp": f"full address:s:10.0.0.1\npassword 51:b:{SECRET}\n"}).encode()
+        request = mock.MagicMock(method="POST", body=body, META={"CONTENT_LENGTH": str(len(body))})
+        request.headers = {"Content-Length": str(len(body))}
+
+        with _debug_logs() as collector:
+            self.assertIn(SECRET, JsonProcessor(request).process_parameters()["rdp"])
+
+        self.assertTrue(any("Unmarshalled content" in m for m in collector.messages))
         self.assertSecretNotLogged(collector)
 
     def test_spice_console_ticket(self) -> None:
