@@ -83,7 +83,7 @@ def tomorrow() -> datetime.date:
 
 
 def as_utc_iso(dt: datetime.datetime | None) -> str:
-    """ISO 8601 in UTC with ``Z`` suffix, for CSV cells. Naive datetimes are taken as broker local time."""
+    """ISO 8601 in UTC with ``Z`` suffix. Naive datetimes are taken as broker local time."""
     if dt is None:
         return ""
     if timezone.is_naive(dt):

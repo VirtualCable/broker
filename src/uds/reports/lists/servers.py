@@ -174,6 +174,7 @@ def _stamp_as_str(stamp: float) -> str:
         return gettext("Never")
     return str(timezone.make_aware(datetime.datetime.fromtimestamp(stamp)))
 
+
 def _stamp_as_datetime(stamp: float) -> datetime.datetime | None:
     if not stamp:
         return None
