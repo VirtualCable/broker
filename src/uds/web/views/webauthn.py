@@ -455,6 +455,9 @@ def apply_pending_save(request: HttpRequest, user: models.User) -> None:
     if time.time() - float(session_data.get("created", 0)) > consts.webauthn.PENDING_SAVE_MAX_AGE:
         logger.info("Pending biometric registration expired, discarding")
         return
+    if "credential_id" not in session_data:
+        logger.info("Pending biometric registration not finished, discarding")
+        return
 
     user.webauthn_credentials.add(
         types.webauthn.StoredCredential(
