@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2026 Virtual Cable S.L.
 # All rights reserved.
@@ -39,17 +38,38 @@ from ...utils.test import UDSTestCase
 
 class ConfigGroupsTest(UDSTestCase):
     def test_declared_group_reaches_overview(self) -> None:
-        with translation.override('en'):
+        with translation.override("en"):
             values = Config.get_config_values()
-        self.assertEqual(values['Security']['maxLoginTries']['group'], 'Login and passwords')
-        self.assertEqual(values['UDS']['cacheCheckDelay']['group'], 'Publications and cache')
+        self.assertEqual(values["Security"]["maxLoginTries"]["group"], "Login and access")
+        self.assertEqual(values["UDS"]["cacheCheckDelay"]["group"], "Publications and cache")
+
+    def test_same_group_is_shared_across_sections(self) -> None:
+        for value in (
+            GlobalConfig.TRUSTED_SOURCES,
+            GlobalConfig.ADMIN_TRUSTED_SOURCES,
+            GlobalConfig.STATS_DURATION,
+            GlobalConfig.STATS_SATURATION_LOAD,
+        ):
+            value.get(force=True)
+        with translation.override("en"):
+            values = Config.get_config_values()
+        self.assertEqual(values["Security"]["Trusted Hosts"]["group"], "Network and proxies")
+        self.assertEqual(values["Admin"]["Trusted Hosts for Admin"]["group"], "Network and proxies")
+        self.assertEqual(values["UDS"]["statsDuration"]["group"], "Statistics")
+        self.assertEqual(values["Stats"]["Saturation Load Percent"]["group"], "Statistics")
 
     def test_value_without_group_reports_empty_group(self) -> None:
         Config.section(Config.SectionType.OTHER).value(
-            'ungroupedTestValue', '1', type=Config.FieldType.TEXT, help='test'
+            "ungroupedTestValue", "1", type=Config.FieldType.TEXT, help="test"
         ).get()
         values = Config.get_config_values()
-        self.assertEqual(values['Other']['ungroupedTestValue']['group'], '')
+        self.assertEqual(values["Other"]["ungroupedTestValue"]["group"], "")
+
+    def test_every_group_has_a_label(self) -> None:
+        with translation.override("en"):
+            labels = [group.label() for group in Config.GroupType]
+        self.assertNotIn("", labels)
+        self.assertEqual(len(labels), len(set(labels)))
 
     def test_every_visible_core_value_has_a_group(self) -> None:
         core_sections = {
@@ -57,10 +77,12 @@ class ConfigGroupsTest(UDSTestCase):
             Config.SectionType.SECURITY,
             Config.SectionType.CUSTOM,
             Config.SectionType.MCP,
+            Config.SectionType.ADMIN,
+            Config.SectionType.STATS,
         }
         GlobalConfig.initialize()
         ungrouped = [
-            f'{cfg.section()}.{cfg.key()}'
+            f"{cfg.section()}.{cfg.key()}"
             for cfg in Config.enumerate()
             if cfg.section() in core_sections and not cfg.get_group()
         ]

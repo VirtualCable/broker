@@ -42,7 +42,7 @@ DO_NOT_REPEAT: typing.Final[cfg.Config.Value] = cfg.Config.section(cfg.Config.Se
     "10",
     help=_("Number of seconds to ignore repeated messages"),
     type=cfg.Config.FieldType.NUMERIC,
-    group=_("Logs and statistics"),
+    group=cfg.Config.GroupType.LOGS,
 )
 
 # Ensure that we have a default value for this on startup
