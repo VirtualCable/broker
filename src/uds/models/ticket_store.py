@@ -305,8 +305,8 @@ class TicketStore(UUIDModel):
     @staticmethod
     def invalidate_for_tunnel(ticket: str) -> None:
         """Invalidates a tunnel ticket"""
-        uuid, owner = _get_uuid_and_owner_from_tunnel_ticket(ticket)
-        TicketStore.invalidate(uuid, owner=owner)
+        uuid, _owner = _get_uuid_and_owner_from_tunnel_ticket(ticket)
+        TicketStore.invalidate(uuid, owner=consts.ticket.TICKET_SECURED_OWNER)
 
     # Sets shared secret for a tunnel ticket
     @staticmethod

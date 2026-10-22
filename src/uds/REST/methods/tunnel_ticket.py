@@ -129,6 +129,7 @@ class TunnelTicket(Handler):
                         raise Exception("Ticket has no remotes")
 
                     if ticket.remotes[0].extra.get("once"):
+                        del ticket.remotes[0].extra["once"]
                         # Ticket is one-time use, delete it now
                         models.TicketStore.invalidate_for_tunnel(req.ticket)
 
