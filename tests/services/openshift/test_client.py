@@ -407,3 +407,80 @@ class TestOpenshiftClientMigratableVolumes(UDSTransactionTestCase):
             vm_call["data"]["spec"]["dataVolumeTemplates"][0]["spec"]["pvc"]["accessModes"],
             ["ReadWriteOnce"],
         )
+
+    def _create_vm_with_fallbacks(
+        self,
+        template_strategy: str | None,
+        vmi: dict[str, typing.Any] | Exception,
+        kubevirts: dict[str, typing.Any] | Exception,
+    ) -> list[str]:
+        client = self._client()
+        vm_obj = self._source_vm(template_strategy)
+        pvc_obj = self._source_pvc()
+
+        def fake_do_request(method: str, path: str, **kwargs: typing.Any) -> typing.Any:
+            if "virtualmachineinstances/tpl-win11" in path:
+                if isinstance(vmi, Exception):
+                    raise vmi
+                return vmi
+            if path == "/apis/kubevirt.io/v1/kubevirts":
+                if isinstance(kubevirts, Exception):
+                    raise kubevirts
+                return kubevirts
+            if "virtualmachines/tpl-win11" in path:
+                return vm_obj
+            if "persistentvolumeclaims/src-pvc" in path:
+                return pvc_obj
+            return {}
+
+        with mock.patch.object(client, "do_request", side_effect=fake_do_request) as do_request:
+            client.create_vm_from_pvc(
+                source_vm_name="tpl-win11",
+                new_vm_name="udsglz003",
+                new_dv_name="udsglz003-disk",
+                source_pvc_name="src-pvc",
+            )
+        body = do_request.call_args.kwargs["data"]
+        return body["spec"]["dataVolumeTemplates"][0]["spec"]["pvc"]["accessModes"]
+
+    @staticmethod
+    def _kubevirts(strategy: str | None) -> dict[str, typing.Any]:
+        configuration = {"evictionStrategy": strategy} if strategy else {}
+        return {"items": [{"spec": {"configuration": configuration}}]}
+
+    @staticmethod
+    def _vmi(strategy: str | None) -> dict[str, typing.Any]:
+        return {"spec": {"evictionStrategy": strategy} if strategy else {}}
+
+    def test_template_strategy_wins_over_vmi_and_cluster(self) -> None:
+        self.assertEqual(
+            self._create_vm_with_fallbacks("None", self._vmi("LiveMigrate"), self._kubevirts("LiveMigrate")),
+            ["ReadWriteOnce"],
+        )
+
+    def test_vmi_strategy_used_when_template_has_none(self) -> None:
+        self.assertEqual(
+            self._create_vm_with_fallbacks(None, self._vmi("LiveMigrate"), self._kubevirts("None")),
+            ["ReadWriteMany"],
+        )
+
+    def test_cluster_default_used_when_template_and_vmi_have_none(self) -> None:
+        not_running = openshift_exceptions.OpenshiftNotFoundError("vmi not found")
+        self.assertEqual(
+            self._create_vm_with_fallbacks(None, not_running, self._kubevirts("LiveMigrate")),
+            ["ReadWriteMany"],
+        )
+
+    def test_read_write_once_when_cluster_default_is_not_readable(self) -> None:
+        not_running = openshift_exceptions.OpenshiftNotFoundError("vmi not found")
+        forbidden = openshift_exceptions.OpenshiftPermissionError("forbidden")
+        self.assertEqual(
+            self._create_vm_with_fallbacks(None, not_running, forbidden),
+            ["ReadWriteOnce"],
+        )
+
+    def test_read_write_once_when_nothing_sets_a_strategy(self) -> None:
+        self.assertEqual(
+            self._create_vm_with_fallbacks(None, self._vmi(None), self._kubevirts(None)),
+            ["ReadWriteOnce"],
+        )
