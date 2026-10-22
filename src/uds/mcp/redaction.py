@@ -50,12 +50,21 @@ SENSITIVE_FIELDS: typing.Final[frozenset[str]] = frozenset(
 )
 
 
+def _is_sensitive(key: str, item: typing.Any, sensitive: frozenset[str]) -> bool:
+    # Module configuration travels with a dotted prefix (``instance.password``),
+    # so the field name is the last segment. Booleans and None are flags, not
+    # secrets: the ``secret`` flag of a field definition must survive.
+    if item is None or isinstance(item, bool):
+        return False
+    return key.lower().rsplit(".", 1)[-1] in sensitive
+
+
 def _redact_with(value: typing.Any, sensitive: frozenset[str]) -> typing.Any:
     """Recursive worker that already has the unioned sensitive-key set."""
     if isinstance(value, collections.abc.Mapping):
         mapping = typing.cast(collections.abc.Mapping[str, typing.Any], value)
         return {
-            key: REDACTED if key.lower() in sensitive else _redact_with(item, sensitive)
+            key: REDACTED if _is_sensitive(key, item, sensitive) else _redact_with(item, sensitive)
             for key, item in mapping.items()
         }
     if isinstance(value, list):

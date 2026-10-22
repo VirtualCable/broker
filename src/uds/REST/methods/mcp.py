@@ -39,6 +39,7 @@ from uds.core.util.log import LogLevel, LogSource, log
 from uds.REST import Handler
 from uds.mcp import MCPServerCore, get_catalog
 from uds.mcp.limits import allow_request
+from uds.mcp.redaction import module_sensitive_fields, redact
 
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -254,7 +255,8 @@ class MCP(Handler):
             except ValueError as exc:
                 return self._jsonrpc_error(request_id, _JSONRPC_INVALID_PARAMS, str(exc))
             arguments = call_params.arguments or {}
-            operation = f"tools/call {call_params.name}({json.dumps(arguments, default=str)})"
+            audited_arguments = redact(arguments, module_sensitive_fields())
+            operation = f"tools/call {call_params.name}({json.dumps(audited_arguments, default=str)})"
             try:
                 result = async_to_sync(self._mcp_server().call_tool)(None, call_params)
             except rest_exceptions.HandlerError as exc:
@@ -308,11 +310,12 @@ class MCP(Handler):
         """Record an MCP operation in the global (syslog) audit log.
 
         Follows the same shape as the REST operation log: ip, user,
-        operation and outcome. Tool arguments are part of ``operation``
-        and are already non-secret by schema (OData filters and UUIDs);
-        the whole line is truncated to the log entry limit. The
-        client-controlled fragments are JSON-escaped so embedded control
-        characters cannot forge or split log lines.
+        operation and outcome. Tool arguments are part of ``operation``,
+        redacted by the caller like any MCP response, since the proposal
+        tools carry the proposed values (secrets included); the whole line
+        is truncated to the log entry limit. The client-controlled fragments
+        are JSON-escaped so embedded control characters cannot forge or
+        split log lines.
         """
         username = self._user.pretty_name
         level = LogLevel.ERROR if outcome.startswith("error") else LogLevel.INFO

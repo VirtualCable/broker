@@ -10,8 +10,11 @@ from unittest import mock
 
 from uds.core.exceptions import rest as rest_exceptions
 from uds.core.util.config import GlobalConfig
-from uds.mcp import redact
+from uds.mcp import get_catalog, redact
+from uds.mcp.redaction import SENSITIVE_FIELDS, module_sensitive_fields
+from uds.models import ActionFlow
 
+from tests.fixtures.services import create_db_provider
 from tests.utils import rest
 
 
@@ -110,6 +113,78 @@ class MCPRPCTest(rest.test.RESTTestCase):
         outcomes = [args[1] for args, _kwargs in audit.call_args_list]
         self.assertIn("ok", outcomes)
         self.assertIn("error -32602", outcomes)
+
+    def test_audit_line_redacts_proposed_secrets(self) -> None:
+        GlobalConfig.MCP_MUTATIONS.set(True)
+        get_catalog.cache_clear()
+        self.addCleanup(get_catalog.cache_clear)
+        with mock.patch("uds.REST.methods.mcp.MCP._audit") as audit:
+            self._post_jsonrpc(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 42,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "create_flow",
+                        "arguments": {"name": "audit", "justification": "password=kept-in-text"},
+                    },
+                }
+            )
+            self._post_jsonrpc(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 43,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "update_flow_action",
+                        "arguments": {
+                            "id": "missing-action",
+                            "values": {
+                                "name": "kept-name",
+                                "instance": {"password": "proposed-pass"},
+                                "instance.client_secret": "flat-proposed-secret",
+                            },
+                        },
+                    },
+                }
+            )
+
+        operations = [typing.cast(str, args[0]) for args, _kwargs in audit.call_args_list]
+        self.assertTrue(operations[1].startswith("tools/call update_flow_action"))
+        self.assertNotIn("proposed-pass", operations[1])
+        self.assertNotIn("flat-proposed-secret", operations[1])
+        self.assertIn("kept-name", operations[1])
+        self.assertIn("password=kept-in-text", operations[0])
+
+    def _audited_call(self, name: str, arguments: dict[str, typing.Any]) -> str:
+        GlobalConfig.MCP_MUTATIONS.set(True)
+        get_catalog.cache_clear()
+        self.addCleanup(get_catalog.cache_clear)
+        with mock.patch("uds.REST.methods.mcp.MCP._audit") as audit:
+            self._post_jsonrpc(
+                {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": arguments}}
+            )
+        return typing.cast(str, audit.call_args_list[-1].args[0])
+
+    def test_audit_line_redacts_module_declared_secrets(self) -> None:
+        module_only = sorted(module_sensitive_fields() - SENSITIVE_FIELDS)
+        self.assertTrue(module_only, "no module declares an extra sensitive field")
+        line = self._audited_call(
+            "update_flow_action", {"id": "missing-action", "values": {f"instance.{module_only[0]}": "module-secret"}}
+        )
+        self.assertNotIn("module-secret", line)
+
+    def test_audit_line_redacts_proposal_values(self) -> None:
+        provider = create_db_provider()
+        self._audited_call("create_flow", {"name": "audit"})
+        flow = ActionFlow.objects.order_by("-id").first()
+        assert flow is not None
+        line = self._audited_call(
+            "propose_provider_update",
+            {"flow_id": flow.uuid, "target_uuid": provider.uuid, "values": {"instance.password": "propose-secret"}},
+        )
+        self.assertTrue(line.startswith("tools/call propose_provider_update"))
+        self.assertNotIn("propose-secret", line)
 
     def test_initialize_returns_protocol_version_and_capabilities(self) -> None:
         """``initialize`` returns the protocol version and empty capabilities."""

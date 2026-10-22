@@ -39,6 +39,42 @@ class RedactionTest(unittest.TestCase):
             {"ok": {"nested": [{"token": REDACTED, "name": "kept"}, ("password", {"pair": "y"})]}},
         )
 
+    def test_dotted_module_fields_are_matched_by_their_last_segment(self) -> None:
+        value = {"instance.password": "a", "instance.client_secret": "b", "instance.host": "kept"}
+        self.assertEqual(
+            redact(value),
+            {"instance.password": REDACTED, "instance.client_secret": REDACTED, "instance.host": "kept"},
+        )
+
+    def test_flags_are_not_secrets(self) -> None:
+        definition = {"name": "instance.password", "secret": True, "required": False}
+        self.assertEqual(redact(definition), definition)
+        self.assertEqual(redact({"secret": False, "token": None}), {"secret": False, "token": None})
+
+    def test_structured_secret_values_are_masked_whole(self) -> None:
+        value = {"instance.private_key": ["line1", "line2"], "credentials": {"user": "u", "pin": 1234}}
+        self.assertEqual(redact(value), {"instance.private_key": REDACTED, "credentials": REDACTED})
+
+    def test_last_segment_must_match_whole(self) -> None:
+        value = {"instance.password_policy": "strict", "instance.passwordless": "yes", "password.hint": "kept"}
+        self.assertEqual(redact(value), value)
+
+    def test_last_segment_is_matched_case_insensitively_at_any_depth(self) -> None:
+        self.assertEqual(
+            redact({"Instance.PassWord": "a", "a.b.c.token": "b"}),
+            {"Instance.PassWord": REDACTED, "a.b.c.token": REDACTED},
+        )
+
+    def test_dotted_keys_inside_sequences_are_redacted(self) -> None:
+        value = {"items": [{"instance.client_secret": "s", "instance.host": "h"}, ({"x.api_key": "k"},)]}
+        self.assertEqual(
+            redact(value),
+            {"items": [{"instance.client_secret": REDACTED, "instance.host": "h"}, ({"x.api_key": REDACTED},)]},
+        )
+
+    def test_extra_keys_are_matched_by_last_segment(self) -> None:
+        self.assertEqual(redact({"instance.vcpass": "s"}, ["VCPASS"]), {"instance.vcpass": REDACTED})
+
     def test_innocuous_names_survive(self) -> None:
         """Ordinary fields are not touched, so data is not distorted."""
         value = {"name": "kept", "uuid": "abc", "id": 7, "count": 3}
