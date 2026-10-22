@@ -27,6 +27,7 @@
 """
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
+
 import contextlib
 import collections.abc
 import logging
@@ -50,8 +51,8 @@ from uds.transports.SPICE.spice import SPICETransport
 from tests.fixtures.modules.transport import TestTransport
 from tests.utils import test
 
-SECRET: typing.Final[str] = 'Sentinel-Pw-9f2c'
-SCRAMBLER: typing.Final[str] = 'a-scrambler'
+SECRET: typing.Final[str] = "Sentinel-Pw-9f2c"
+SCRAMBLER: typing.Final[str] = "a-scrambler"
 
 
 class _Collector(logging.Handler):
@@ -67,7 +68,7 @@ class _Collector(logging.Handler):
 def _debug_logs() -> collections.abc.Iterator[_Collector]:
     # The "uds" loggers do not propagate to root, so every one of them gets the handler
     collector = _Collector()
-    names = [''] + [name for name in logging.root.manager.loggerDict if name.startswith('uds')]
+    names = [""] + [name for name in logging.root.manager.loggerDict if name.startswith("uds")]
     previous = [(logging.getLogger(name), logging.getLogger(name).level) for name in names]
     for logger, _level in previous:
         logger.addHandler(collector)
@@ -87,11 +88,11 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
         self.assertEqual([m for m in collector.messages if SECRET in m], [])
 
     def test_module_field_values(self) -> None:
-        transport = TestTransport(self.create_environment(), {'pin': SECRET})
+        transport = TestTransport(self.create_environment(), {"pin": SECRET})
 
         with _debug_logs() as collector:
-            self.assertEqual(transport.get_fields_as_dict()['pin'], SECRET)
-            collector.messages.append('module fields read')
+            self.assertEqual(transport.get_fields_as_dict()["pin"], SECRET)
+            collector.messages.append("module fields read")
 
         self.assertSecretNotLogged(collector)
 
@@ -102,17 +103,17 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
                 self.assertSecretNotLogged(collector)
 
     def test_server_preconnect(self) -> None:
-        server = mock.MagicMock(uuid='a-server-uuid', token_hash='a-hash', host='a-host')
+        server = mock.MagicMock(uuid="a-server-uuid", token_hash="a-hash", host="a-host")
         server.is_restrained.return_value = False
         info = types.connections.ConnectionData(
             protocol=types.transports.Protocol.RDP,
-            username='a-user',
+            username="a-user",
             password=SECRET,
             service_type=types.services.ServiceType.VDI,
         )
         requester = ServerApiRequester(server)
 
-        with _debug_logs() as collector, mock.patch.object(requester, 'post'):
+        with _debug_logs() as collector, mock.patch.object(requester, "post"):
             self.assertTrue(requester.notify_preconnect(mock.MagicMock(), info))
 
         self.assertSecretNotLogged(collector)
@@ -121,13 +122,13 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
         with _debug_logs() as collector:
             self._launch(RDPTransport)
 
-        self.assertTrue(any('Got Ticket' in m for m in collector.messages))
+        self.assertTrue(any("Got Ticket" in m for m in collector.messages))
         self.assertEqual([m for m in collector.messages if SCRAMBLER in m], [])
 
     def test_unparseable_request_body(self) -> None:
         body = f'{{"password": "{SECRET}",'.encode()
-        request = mock.MagicMock(method='POST', body=body, META={'CONTENT_LENGTH': str(len(body))})
-        request.headers = {'Content-Length': str(len(body))}
+        request = mock.MagicMock(method="POST", body=body, META={"CONTENT_LENGTH": str(len(body))})
+        request.headers = {"Content-Length": str(len(body))}
 
         with _debug_logs() as collector, self.assertRaises(ParametersException):
             JsonProcessor(request).process_parameters()
@@ -136,8 +137,8 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
 
     def test_spice_console_ticket(self) -> None:
         console = types.services.ConsoleConnectionInfo(
-            type='spice',
-            address='10.0.0.1',
+            type="spice",
+            address="10.0.0.1",
             ticket=types.services.ConsoleConnectionTicket(value=SECRET),
         )
         userservice = mock.MagicMock()
@@ -145,46 +146,52 @@ class NoSecretsInDebugLogsTest(test.UDSTestCase):
         transport = SPICETransport(self.create_environment(), None)
 
         with _debug_logs() as collector:
-            self.assertFalse(transport.is_ip_allowed(userservice, '10.0.0.1'))
+            self.assertFalse(transport.is_ip_allowed(userservice, "10.0.0.1"))
             transport.get_transport_script(
                 userservice,
                 mock.MagicMock(),
-                '10.0.0.1',
-                types.os.DetectedOsInfo(os=types.os.KnownOS.WINDOWS, browser=types.os.KnownBrowser.CHROME, version='1'),
+                "10.0.0.1",
+                types.os.DetectedOsInfo(
+                    os=types.os.KnownOS.WINDOWS, browser=types.os.KnownBrowser.CHROME, version="1"
+                ),
                 mock.MagicMock(),
-                '',
+                "",
                 mock.MagicMock(),
             )
 
         self.assertSecretNotLogged(collector)
 
-    def _launch(self, transport_type: type[RDPTransport | TRDPTransport | RDPEmbeddedTransport | TRDPEmbeddedTransport]) -> None:
+    def _launch(
+        self, transport_type: type[RDPTransport | TRDPTransport | RDPEmbeddedTransport | TRDPEmbeddedTransport]
+    ) -> None:
         ticket = TicketStore.create(
             {
-                'user': 'a-user-uuid',
-                'service': 'a-service-uuid',
-                'transport': 'a-transport-uuid',
-                'password': CryptoManager.manager().symmetric_encrypt(SECRET, SCRAMBLER),
+                "user": "a-user-uuid",
+                "service": "a-service-uuid",
+                "transport": "a-transport-uuid",
+                "password": CryptoManager.manager().symmetric_encrypt(SECRET, SCRAMBLER),
             }
         )
         client = object.__new__(Client)
         client._args = [ticket, SCRAMBLER]
-        client._params = {'version': consts.system.VERSION}
+        client._params = {"version": consts.system.VERSION}
         client._request = mock.MagicMock()
         client._request.os = types.os.DetectedOsInfo(
-            os=types.os.KnownOS.WINDOWS, browser=types.os.KnownBrowser.CHROME, version='1'
+            os=types.os.KnownOS.WINDOWS, browser=types.os.KnownBrowser.CHROME, version="1"
         )
         connection = types.connections.ConnectionData(
             protocol=types.transports.Protocol.RDP,
-            username='a-user',
+            username="a-user",
             password=SECRET,
             service_type=types.services.ServiceType.VDI,
         )
 
-        with mock.patch('uds.REST.methods.client.User'), mock.patch(
-            'uds.REST.methods.client.UserServiceManager'
-        ) as manager, mock.patch.object(transport_type, 'get_connection_info', return_value=connection):
+        with (
+            mock.patch("uds.REST.methods.client.User"),
+            mock.patch("uds.REST.methods.client.UserServiceManager") as manager,
+            mock.patch.object(transport_type, "get_connection_info", return_value=connection),
+        ):
             info = manager.manager.return_value.get_user_service_info.return_value
-            info.ip = '10.0.0.1'
+            info.ip = "10.0.0.1"
             info.transport.get_instance.return_value = transport_type(self.create_environment(), None)
-            client.process(ticket, SCRAMBLER)
+            client.get()
