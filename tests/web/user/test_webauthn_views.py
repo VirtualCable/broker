@@ -34,6 +34,7 @@ Uses synthetic WebAuthn payloads (see tests.utils.webauthn) to exercise:
 * the login POST integration (registration commit + vault rotation)
 """
 
+import dataclasses
 import json
 import typing
 
@@ -144,6 +145,37 @@ class WebAuthnViewsTest(test.WEBTestCase):
             {"username": self.user.name, "auth_id": self.auth.uuid},
         )
         self.assertEqual(result, {"available": False})
+
+    def test_biometric_start_rejects_credential_of_other_rp(self) -> None:
+        credential = self._register_and_login()
+        credential.rp_id = "other.example.com"
+        self._reloaded_user().webauthn_credentials.add(credential)
+        result = self.post_json(
+            reverse("webapi.webauthn.biometric_start"),
+            {"username": self.user.name, "auth_id": self.auth.uuid, "credential_id": credential.credential_id},
+        )
+        self.assertEqual(result, {"available": False})
+
+    def test_biometric_start_rejects_disabled_credential(self) -> None:
+        credential = self._register_and_login()
+        credential.enabled = False
+        self._reloaded_user().webauthn_credentials.add(credential)
+        result = self.post_json(
+            reverse("webapi.webauthn.biometric_start"),
+            {"username": self.user.name, "auth_id": self.auth.uuid, "credential_id": credential.credential_id},
+        )
+        self.assertEqual(result, {"available": False})
+
+    def test_biometric_start_uses_requested_credential(self) -> None:
+        first = self._register_and_login()
+        second = dataclasses.replace(first, credential_id=b64url_encode(b"\x02" * 32), created=first.created + 1)
+        self._reloaded_user().webauthn_credentials.add(second)
+        result = self.post_json(
+            reverse("webapi.webauthn.biometric_start"),
+            {"username": self.user.name, "auth_id": self.auth.uuid, "credential_id": first.credential_id},
+        )
+        self.assertTrue(result.get("available"))
+        self.assertEqual(result.get("credential_id"), first.credential_id)
 
     def test_save_requires_vault(self) -> None:
         start = self.post_json(

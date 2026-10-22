@@ -150,9 +150,12 @@ def _get_credential(
     credential_id: str | None,
 ) -> types.webauthn.StoredCredential | None:
     """Locates a credential of the user for this rp (specific, or latest usable)."""
-    if credential_id:
-        return user.webauthn_credentials.get(credential_id)
-    return user.webauthn_credentials.latest(rp_id)
+    if not credential_id:
+        return user.webauthn_credentials.latest(rp_id)
+    credential = user.webauthn_credentials.get(credential_id)
+    if credential is None or credential.rp_id != rp_id or not credential.enabled:
+        return None
+    return credential
 
 
 # ---------------------------------------------------------------------------
